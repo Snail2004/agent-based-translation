@@ -61,3 +61,4 @@ Sau S4, tính năng bonus S1–S4 hoàn tất.
 - Fallback: missing surfaces are not highlighted and do not raise an error; block-level chips remain visible.
 - Backend/storage: no new endpoint and no write path; preview remains `working/translation_preview/` only.
 - Verification: run backend tests plus browser smoke on a preview run with entity/term mentions.
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

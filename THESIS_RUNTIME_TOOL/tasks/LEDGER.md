@@ -24,4 +24,4 @@
 
 | Task | Tóm tắt | Status | Commit | Review | Ghi chú |
 |---|---|---|---|---|---|
-| P0-01 | Vệ sinh clone + skeleton pipeline/ + migration schema v3 | READY | — | — | Spec: TASK_P0_01_scaffold_migration.md |
+| P0-01 | Vệ sinh clone + skeleton pipeline/ + migration schema v3 | DONE | `P0-01:` (xem git log) | PASS (Claude, 2026-06-12) | 4/4 migration + 88/88 smoke; DDL khớp spec |

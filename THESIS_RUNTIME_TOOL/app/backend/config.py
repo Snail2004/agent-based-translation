@@ -13,7 +13,7 @@ SAMPLE_ROOT = DATASET_SPEC_ROOT / "sample"
 TEMPLATE_ROOT = DATASET_SPEC_ROOT / "templates"
 TRANSLATION_REVIEW_TEMPLATE = TEMPLATE_ROOT / "translation_review_log.csv"
 
-PROJECTS_ROOT = Path(os.environ.get("AILAB_PROJECTS_ROOT", HANDOFF_ROOT / "ailab_projects")).resolve()
+PROJECTS_ROOT = Path(os.environ.get("THESIS_TOOL_PROJECTS_ROOT", HANDOFF_ROOT / "projects")).resolve()
 HOST = os.environ.get("AILAB_BACKEND_HOST", "127.0.0.1")
 PORT = int(os.environ.get("AILAB_BACKEND_PORT", "5000"))
 

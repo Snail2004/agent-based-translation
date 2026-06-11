@@ -251,3 +251,4 @@ Pilot của Phase 1 chính là **golden sample/spec kit** của nhóm: một t�
 3. Khi spec kit pass và nguồn MVP được chốt, tiếp tục các phần còn lại của Phase 1 theo exit criteria.
 
 *(Các bước này chưa thực hiện trong file này; file này chỉ là kế hoạch.)*
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

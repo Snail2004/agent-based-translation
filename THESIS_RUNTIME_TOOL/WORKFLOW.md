@@ -141,3 +141,4 @@ jekyll_txt,jekyll_txt_ch01_b002,Vu Hai,Minh Khang,entity,no,2026-06-10,"A: White
 
 ---
 *SOP cho nhóm AI-LAB. Schema 1.5.0. Không phải hệ agent/app dịch.*
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

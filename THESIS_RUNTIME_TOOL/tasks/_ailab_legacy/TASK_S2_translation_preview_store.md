@@ -90,3 +90,4 @@ Trước khi lưu, kiểm trên dataset **đã có** của project:
 - `skills/dataset-translation-preview/references/TRANSLATION_PREVIEW_CONTRACT.md` (shape input/output S1).
 - `app/backend/services/annotation_flow.py` (mẫu lưu working artifact + referential check).
 - `dataset_spec/sample/gold_demo_01/` (dataset để validate referential khi import).
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

@@ -80,3 +80,4 @@ R1 = vá đúng 2 chỗ đó, ở mức **xem** trước (V1).
 - `dataset_spec/sample/gold_demo_01/entity_relations.jsonl` (rel_001 để nghiệm thu).
 - `app/prototype/parts_right.jsx` (`TABS` line 526, mẫu `GlossaryTab`/`EntitiesTab`, `<Empty>`).
 - `app/prototype/app.jsx` (`adaptDataset` line ≈74–83, `loadDataset` line ≈283, ctx truyền `RightPanel`).
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

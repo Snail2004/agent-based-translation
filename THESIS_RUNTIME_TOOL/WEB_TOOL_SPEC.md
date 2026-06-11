@@ -325,3 +325,4 @@ App này **chỉ phục vụ dataset construction**. Extraction là **backend Py
 
 ---
 *Spec cho AILAB Dataset Tool. Schema 1.5.0. Một app end-to-end, local + git, không phải app dịch.*
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

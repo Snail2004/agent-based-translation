@@ -105,3 +105,4 @@ Bundle = `{ doc_id, chapter_id, blocks[], known_entities[], known_terms[], known
 - `app/backend/services/translation_preview.py` (mẫu read canonical: `_read_document`, `flatten_document`, `read_jsonl`, `_jsonl_path`) + `routes/translation_preview.py` (endpoint S2 list/load/import).
 - `app/prototype/parts_center.jsx` (`TranslationPreviewView`, nút/binding) + `api.js` (thêm `getTranslationPreviewInput`, `importTranslationPreviewRun`).
 - `dataset_spec/sample/gold_demo_01/` (dữ liệu nghiệm thu).
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

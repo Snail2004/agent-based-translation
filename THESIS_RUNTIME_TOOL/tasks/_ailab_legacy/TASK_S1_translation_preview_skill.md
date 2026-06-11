@@ -116,3 +116,4 @@ Tham chiếu bản dịch tay (đúng kỳ vọng) cho 2 block thoại:
 - `../SCHEMA_AGENT_FILL_POLICY.md` (precedence xưng hô động).
 - `skills/dataset-annotation-drafter/` (mẫu SKILL.md / contract / agents.yaml / examples).
 - `dataset_spec/sample/gold_demo_01/` (canonical để dựng input + nghiệm thu).
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

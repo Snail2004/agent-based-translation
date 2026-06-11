@@ -2,6 +2,10 @@
 
 Thư mục này là gói tài liệu riêng để giao cho nhóm AI-LAB. Người nhận chỉ cần đọc và làm theo các file trong thư mục này.
 
+## PROVENANCE
+
+Thư mục này được vendor từ `AILAB_HANDOFF` ngày 2026-06-11 để làm nền cho `THESIS_RUNTIME_TOOL`. Từ thời điểm này bản copy phục vụ khóa luận tiến hóa độc lập; tài liệu AI-LAB còn lại chỉ là tham khảo donor, không phải chỉ thị thesis.
+
 ## Mục Tiêu
 
 Nhóm thực hiện nhiệm vụ AIL-202:

@@ -1,8 +1,8 @@
 # TASK_P0_01_scaffold_migration — Vệ sinh clone + skeleton `pipeline/` + migration schema v3
 
-- **Status:** READY
+- **Status:** DONE
 - **Refs:** THESIS_ARCHITECTURE_LOCK §3.2 (delta DB), §8.7 (layout + checklist vệ sinh), §2.2 (model stack — chưa dùng ở task này), RUN_EVAL_SCHEMA §1–§4, §7
-- **Branch/Commit:** (điền khi imple xong; commit message `P0-01: ...` trên nhánh `thesis/main`)
+- **Branch/Commit:** branch `main`; commit pending (`P0-01: ...`)
 
 ## 1. Bối cảnh & mục tiêu
 
@@ -111,8 +111,49 @@ python -m unittest discover app/backend/tests
 
 ## 5. Implementation notes *(CodeX điền)*
 
-—
+- Vệ sinh clone:
+  - `app/backend/config.py`: đổi env workspace từ `AILAB_PROJECTS_ROOT` sang `THESIS_TOOL_PROJECTS_ROOT`; default path là `THESIS_RUNTIME_TOOL/projects/`.
+  - `app/backend/tests/test_api_smoke.py`: cập nhật env test tương ứng.
+  - `.gitignore`: ignore `projects/` runtime workspace.
+  - `README.md`: thêm `PROVENANCE` cho bản vendor từ `AILAB_HANDOFF` ngày 2026-06-11.
+  - `AILAB_PLAN.md`, `WORKFLOW.md`, `WEB_TOOL_SPEC.md` và các task donor: thêm header "Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis."
+  - Di chuyển task donor vào `tasks/_ailab_legacy/`; root `tasks/` giữ `LEDGER.md`, `TASK_TEMPLATE.md`, `TASK_P0_01_scaffold_migration.md`.
+- Skeleton runtime:
+  - Tạo `pipeline/` với package rỗng: `ingest`, `prepass`, `memory`, `retrieval`, `context`, `agents`, `critic`, `runner`, `eval`.
+  - Tạo `pipeline/configs`, `pipeline/scripts`, `pipeline/tests`, `pipeline/README.md`.
+- Schema/migration:
+  - Vendor schema v2 vào `pipeline/memory/schema_v2_base.sql` với 2 dòng provenance.
+  - Thêm `pipeline/memory/migrations/003_thesis_runs.sql` gồm 5 bảng mới: `translation_runs`, `evaluation_runs`, `reference_eval_only`, `entity_relations`, `qa_issues`, và bump `memory_meta.schema_version` lên `3`.
+  - Thêm `pipeline/memory/store_init.py` với `init_db(path)` và `migrate_db(path)`. Cột `memory_packs.config` được thêm bằng `PRAGMA table_info` để idempotent.
+- Tests:
+  - Thêm `pipeline/tests/test_migration.py` với 4 test acceptance.
 
-## 6. Review *(Claude điền)*
+Test output:
 
-—
+```text
+python -m pytest pipeline/tests/test_migration.py -v
+4 passed
+
+python -m unittest discover app/backend/tests
+Ran 88 tests
+OK
+```
+
+## 6. Review *(Claude điền — 2026-06-12)*
+
+- **Verdict: PASS**
+- Đã tự chạy lại acceptance (không chỉ tin §5): `pytest pipeline/tests/test_migration.py`
+  → 4/4 PASSED; `unittest discover app/backend/tests` → 88/88 OK.
+- Đối chiếu DDL 003 với spec §3: khớp từng field/CHECK/index/UNIQUE; FK có ON DELETE
+  đúng phong cách v2; `schema_version=3` qua INSERT OR REPLACE; cột `config` đúng
+  pattern add_column_if_missing (kèm guard RuntimeError nếu thiếu memory_packs — chấp
+  nhận: chặn migrate nhầm DB không phải v2).
+- Vệ sinh: env rename đúng 2 file, default `projects/`; provenance README + header
+  legacy đủ; `_ailab_legacy/` đúng chỗ; `.gitignore` đổi `ailab_projects/`→`projects/`
+  hợp lý; không đụng gì ngoài scope.
+- Test chất lượng thật: kiểm data sống sót sau migrate (block text, pack hash),
+  idempotent không nhân đôi cột, unique constraint bằng insert thật.
+- Findings nhỏ (không chặn): `migrate_db` chưa bump version nếu DB đã v3 chạy lại —
+  vô hại vì INSERT OR REPLACE; `schema_v2_base.sql` có BOM đầu file — sqlite chịu được,
+  để nguyên.
+- Follow-up: TASK_P0_02 (LLM client + replay cache) — task mới, không nhét vào đây.

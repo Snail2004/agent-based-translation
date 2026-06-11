@@ -151,3 +151,4 @@ Với **MỖI** sách, trong báo cáo phải có (sinh từ raw JSON):
 - [ ] Phase 3 = **propose-only**, không sửa extractor (trừ blocking nhỏ, commit riêng).
 - [ ] Báo cáo committed đầy đủ 8 mục + provenance + lệnh re-verify.
 - [ ] Tests OK; scope 0; data gitignored; Commit 1 riêng; chưa push.
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

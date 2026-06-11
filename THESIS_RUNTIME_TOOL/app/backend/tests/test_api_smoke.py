@@ -12,7 +12,7 @@ class BackendApiSmokeTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
-        os.environ["AILAB_PROJECTS_ROOT"] = cls.tmp.name
+        os.environ["THESIS_TOOL_PROJECTS_ROOT"] = cls.tmp.name
         backend_root = Path(__file__).resolve().parents[1]
         sys.path.insert(0, str(backend_root))
 
@@ -23,7 +23,7 @@ class BackendApiSmokeTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.tmp.cleanup()
-        os.environ.pop("AILAB_PROJECTS_ROOT", None)
+        os.environ.pop("THESIS_TOOL_PROJECTS_ROOT", None)
 
     def test_health(self):
         response = self.client.get("/api/health")

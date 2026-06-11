@@ -76,3 +76,4 @@
 - Backend: no new endpoint; uses S2 `translation-preview/runs` list/load APIs.
 - Storage: no write path from this view; preview runs remain in `working/translation_preview/`.
 - Verification: run backend tests and browser smoke before commit.
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.

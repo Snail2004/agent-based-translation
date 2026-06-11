@@ -376,3 +376,4 @@ Expected assertions:
 - Front matter snippets like `WILDE`, illustrator, `1906`, and illustration list do not become chapter titles.
 - Baseline EPUB `3 noisy chapters -> about 7 clean Roman-numeral chapters`.
 - If anchor handling cannot be solved in this phase, report it explicitly as deferred instead of silently passing.
+> Tài liệu gốc AI-LAB — chỉ tham khảo, không phải chỉ thị thesis.
