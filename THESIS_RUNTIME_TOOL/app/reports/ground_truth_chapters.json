@@ -1,0 +1,306 @@
+{
+  "schema_version": "0.1",
+  "status": "approved",
+  "prepared_by": "Codex",
+  "prepared_before_extraction": true,
+  "source_note": "Draft ground truth was prepared from raw TXT Contents and EPUB NCX/nav TOC, then manually filtered to bodymatter/content chapters. It is not derived from extractor output.",
+  "global_caveat": "EPUB navPoint/nav.xhtml entries are not equal to true content chapters because they often include titlepage, imprint, contents, dedication, colophon, endnotes, and other front/back matter.",
+  "approval_note": "Approved by project lead on 2026-06-02: time_machine_epub counts Epilogue as a content unit; frankenstein_epub v0.3.3 counts 'Walton, in Continuation' as a separate content unit because extractor anchor-splitting now supports same-file TOC anchors; Introduction/Preface remain authorial front matter if emitted.",
+  "ambiguities_requiring_approval": [
+    {
+      "doc_id": "time_machine_epub",
+      "question": "Should Epilogue be counted as a content chapter/unit?",
+      "draft_choice": "include_as_content_unit",
+      "approved_decision": "include_as_content_unit"
+    },
+    {
+      "doc_id": "frankenstein_epub",
+      "question": "Should 'Walton, in Continuation' be a separate content unit or a nested section inside Chapter XXIV?",
+      "draft_choice": "track_as_nested_section_inside_chapter_xxiv_not_top_level",
+      "approved_decision": "count_as_separate_content_unit_after_anchor_splitting_v0.3.3"
+    }
+  ],
+  "books": {
+    "jekyll_txt": {
+      "work_title": "The Strange Case of Dr. Jekyll and Mr. Hyde",
+      "source_folder": "jekyll_hyde",
+      "source_file": "source.txt",
+      "format": "txt",
+      "ground_truth_source": "Project Gutenberg TXT Contents, lines 51-67",
+      "expected_count": 10,
+      "expected_chapters": [
+        { "index": 1, "title": "STORY OF THE DOOR" },
+        { "index": 2, "title": "SEARCH FOR MR. HYDE" },
+        { "index": 3, "title": "DR. JEKYLL WAS QUITE AT EASE" },
+        { "index": 4, "title": "THE CAREW MURDER CASE" },
+        { "index": 5, "title": "INCIDENT OF THE LETTER" },
+        { "index": 6, "title": "REMARKABLE INCIDENT OF DR. LANYON" },
+        { "index": 7, "title": "INCIDENT AT THE WINDOW" },
+        { "index": 8, "title": "THE LAST NIGHT" },
+        { "index": 9, "title": "DR. LANYON’S NARRATIVE" },
+        { "index": 10, "title": "HENRY JEKYLL’S FULL STATEMENT OF THE CASE" }
+      ],
+      "excluded_toc_items": [
+        "Contents",
+        "Project Gutenberg license/footer"
+      ],
+      "review_notes": "Clear bodymatter chapters. No ambiguity."
+    },
+    "jekyll_epub": {
+      "work_title": "The Strange Case of Dr. Jekyll and Mr. Hyde",
+      "source_folder": "jekyll_hyde",
+      "source_file": "source.epub",
+      "format": "epub",
+      "ground_truth_source": "Project Gutenberg EPUB NCX filtered to body chapters",
+      "expected_count": 10,
+      "expected_chapters": [
+        { "index": 1, "title": "STORY OF THE DOOR" },
+        { "index": 2, "title": "SEARCH FOR MR. HYDE" },
+        { "index": 3, "title": "DR. JEKYLL WAS QUITE AT EASE" },
+        { "index": 4, "title": "THE CAREW MURDER CASE" },
+        { "index": 5, "title": "INCIDENT OF THE LETTER" },
+        { "index": 6, "title": "REMARKABLE INCIDENT OF DR. LANYON" },
+        { "index": 7, "title": "INCIDENT AT THE WINDOW" },
+        { "index": 8, "title": "THE LAST NIGHT" },
+        { "index": 9, "title": "DR. LANYON’S NARRATIVE" },
+        { "index": 10, "title": "HENRY JEKYLL’S FULL STATEMENT OF THE CASE" }
+      ],
+      "excluded_toc_items": [
+        "The Strange Case of Dr. Jekyll and Mr. Hyde",
+        "Contents",
+        "THE FULL PROJECT GUTENBERG™ LICENSE"
+      ],
+      "review_notes": "Clear bodymatter chapters. No ambiguity."
+    },
+    "gatsby_txt": {
+      "work_title": "The Great Gatsby",
+      "source_folder": "gatsby",
+      "source_file": "source.txt",
+      "format": "txt",
+      "ground_truth_source": "Project Gutenberg TXT Table of Contents, lines 37-63",
+      "expected_count": 9,
+      "expected_chapters": [
+        { "index": 1, "title": "I" },
+        { "index": 2, "title": "II" },
+        { "index": 3, "title": "III" },
+        { "index": 4, "title": "IV" },
+        { "index": 5, "title": "V" },
+        { "index": 6, "title": "VI" },
+        { "index": 7, "title": "VII" },
+        { "index": 8, "title": "VIII" },
+        { "index": 9, "title": "IX" }
+      ],
+      "excluded_toc_items": [
+        "Table of Contents",
+        "Dedication to Zelda",
+        "Thomas Parke d’Invilliers epigraph",
+        "Project Gutenberg license/footer"
+      ],
+      "review_notes": "Clear bodymatter chapters. Dedication and epigraph are content-adjacent front matter, not chapter units."
+    },
+    "gatsby_epub": {
+      "work_title": "The Great Gatsby",
+      "source_folder": "gatsby",
+      "source_file": "source.epub",
+      "format": "epub",
+      "ground_truth_source": "Project Gutenberg EPUB NCX filtered to Roman numeral body chapters",
+      "expected_count": 9,
+      "expected_chapters": [
+        { "index": 1, "title": "I" },
+        { "index": 2, "title": "II" },
+        { "index": 3, "title": "III" },
+        { "index": 4, "title": "IV" },
+        { "index": 5, "title": "V" },
+        { "index": 6, "title": "VI" },
+        { "index": 7, "title": "VII" },
+        { "index": 8, "title": "VIII" },
+        { "index": 9, "title": "IX" }
+      ],
+      "excluded_toc_items": [
+        "The Great Gatsby by F. Scott Fitzgerald",
+        "Table of Contents",
+        "THE FULL PROJECT GUTENBERG™ LICENSE"
+      ],
+      "review_notes": "Clear bodymatter chapters. No ambiguity."
+    },
+    "wizard_oz_epub": {
+      "work_title": "The Wonderful Wizard of Oz",
+      "source_folder": "wizard_oz",
+      "source_file": "source.epub",
+      "format": "epub",
+      "ground_truth_source": "Standard Ebooks NCX/nav filtered to child chapter items under The Wonderful Wizard of Oz",
+      "expected_count": 24,
+      "expected_chapters": [
+        { "index": 1, "title": "I: The Cyclone" },
+        { "index": 2, "title": "II: The Council with the Munchkins" },
+        { "index": 3, "title": "III: How Dorothy Saved the Scarecrow" },
+        { "index": 4, "title": "IV: The Road Through the Forest" },
+        { "index": 5, "title": "V: The Rescue of the Tin Woodman" },
+        { "index": 6, "title": "VI: The Cowardly Lion" },
+        { "index": 7, "title": "VII: The Journey to the Great Oz" },
+        { "index": 8, "title": "VIII: The Deadly Poppy Field" },
+        { "index": 9, "title": "IX: The Queen of the Field Mice" },
+        { "index": 10, "title": "X: The Guardian of the Gate" },
+        { "index": 11, "title": "XI: The Wonderful City of Oz" },
+        { "index": 12, "title": "XII: The Search for the Wicked Witch" },
+        { "index": 13, "title": "XIII: The Rescue" },
+        { "index": 14, "title": "XIV: The Winged Monkeys" },
+        { "index": 15, "title": "XV: The Discovery of Oz, the Terrible" },
+        { "index": 16, "title": "XVI: The Magic Art of the Great Humbug" },
+        { "index": 17, "title": "XVII: How the Balloon Was Launched" },
+        { "index": 18, "title": "XVIII: Away to the South" },
+        { "index": 19, "title": "XIX: Attacked by the Fighting Trees" },
+        { "index": 20, "title": "XX: The Dainty China Country" },
+        { "index": 21, "title": "XXI: The Lion Becomes the King of Beasts" },
+        { "index": 22, "title": "XXII: The Country of the Quadlings" },
+        { "index": 23, "title": "XXIII: Glinda the Good Witch Grants Dorothy’s Wish" },
+        { "index": 24, "title": "XXIV: Home Again" }
+      ],
+      "excluded_toc_items": [
+        "Titlepage",
+        "Imprint",
+        "Introduction",
+        "The Wonderful Wizard of Oz",
+        "Colophon",
+        "Uncopyright"
+      ],
+      "review_notes": "Clear 24 chapter children. Introduction and halftitle are excluded as front matter/title matter."
+    },
+    "alice_epub": {
+      "work_title": "Alice’s Adventures in Wonderland",
+      "source_folder": "alice_wonderland",
+      "source_file": "source.epub",
+      "format": "epub",
+      "ground_truth_source": "Global Grey EPUB NCX chapter list",
+      "expected_count": 12,
+      "expected_chapters": [
+        { "index": 1, "title": "1. Down The Rabbit-Hole" },
+        { "index": 2, "title": "2. The Pool Of Tears" },
+        { "index": 3, "title": "3. A Caucus-Race And A Long Tale" },
+        { "index": 4, "title": "4. The Rabbit Sends In A Little Bill" },
+        { "index": 5, "title": "5. Advice From A Caterpillar" },
+        { "index": 6, "title": "6. Pig And Pepper" },
+        { "index": 7, "title": "7. A Mad Tea-Party" },
+        { "index": 8, "title": "8. The Queen’s Croquet-Ground" },
+        { "index": 9, "title": "9. The Mock Turtle’s Story" },
+        { "index": 10, "title": "10. The Lobster Quadrille" },
+        { "index": 11, "title": "11. Who Stole The Tarts?" },
+        { "index": 12, "title": "12. Alice’s Evidence" }
+      ],
+      "excluded_toc_items": [
+        "Table of Contents",
+        "Cover/title page"
+      ],
+      "review_notes": "Clear chapter list. No ambiguity."
+    },
+    "time_machine_epub": {
+      "work_title": "The Time Machine",
+      "source_folder": "time_machine",
+      "source_file": "source.epub",
+      "format": "epub",
+      "ground_truth_source": "Standard Ebooks NCX/nav filtered to chapter items plus Epilogue",
+      "expected_count": 13,
+      "expected_chapters": [
+        { "index": 1, "title": "I" },
+        { "index": 2, "title": "II" },
+        { "index": 3, "title": "III" },
+        { "index": 4, "title": "IV" },
+        { "index": 5, "title": "V" },
+        { "index": 6, "title": "VI" },
+        { "index": 7, "title": "VII" },
+        { "index": 8, "title": "VIII" },
+        { "index": 9, "title": "IX" },
+        { "index": 10, "title": "X" },
+        { "index": 11, "title": "XI" },
+        { "index": 12, "title": "XII" },
+        { "index": 13, "title": "Epilogue" }
+      ],
+      "excluded_toc_items": [
+        "Titlepage",
+        "Imprint",
+        "Endnotes",
+        "Colophon",
+        "Uncopyright"
+      ],
+      "review_notes": "Approved: Epilogue is counted as a content unit because it is narrative bodymatter, not back matter."
+    },
+    "frankenstein_epub": {
+      "work_title": "Frankenstein",
+      "source_folder": "frankenstein",
+      "source_file": "source.epub",
+      "format": "epub",
+      "ground_truth_source": "Standard Ebooks NCX/nav filtered to letters and chapters under Frankenstein",
+      "expected_count": 29,
+      "expected_chapters": [
+        { "index": 1, "title": "Letter I" },
+        { "index": 2, "title": "Letter II" },
+        { "index": 3, "title": "Letter III" },
+        { "index": 4, "title": "Letter IV" },
+        { "index": 5, "title": "Chapter I" },
+        { "index": 6, "title": "Chapter II" },
+        { "index": 7, "title": "Chapter III" },
+        { "index": 8, "title": "Chapter IV" },
+        { "index": 9, "title": "Chapter V" },
+        { "index": 10, "title": "Chapter VI" },
+        { "index": 11, "title": "Chapter VII" },
+        { "index": 12, "title": "Chapter VIII" },
+        { "index": 13, "title": "Chapter IX" },
+        { "index": 14, "title": "Chapter X" },
+        { "index": 15, "title": "Chapter XI" },
+        { "index": 16, "title": "Chapter XII" },
+        { "index": 17, "title": "Chapter XIII" },
+        { "index": 18, "title": "Chapter XIV" },
+        { "index": 19, "title": "Chapter XV" },
+        { "index": 20, "title": "Chapter XVI" },
+        { "index": 21, "title": "Chapter XVII" },
+        { "index": 22, "title": "Chapter XVIII" },
+        { "index": 23, "title": "Chapter XIX" },
+        { "index": 24, "title": "Chapter XX" },
+        { "index": 25, "title": "Chapter XXI" },
+        { "index": 26, "title": "Chapter XXII" },
+        { "index": 27, "title": "Chapter XXIII" },
+        { "index": 28, "title": "Chapter XXIV" },
+        { "index": 29, "title": "Walton, in Continuation" }
+      ],
+      "excluded_toc_items": [
+        "Titlepage",
+        "Imprint",
+        "Introduction",
+        "Preface",
+        "Dedication",
+        "Epigraph",
+        "Frankenstein",
+        "Endnotes",
+        "Colophon",
+        "Uncopyright"
+      ],
+      "review_notes": "Approved: Introduction/Preface/Dedication/Epigraph are excluded as front matter; Introduction/Preface should be classified as authorial front matter if emitted. Walton, in Continuation is counted as a separate content unit after v0.3.3 anchor-splitting support because the EPUB TOC exposes a distinct same-file anchor."
+    },
+    "call_wild_epub": {
+      "work_title": "The Call of the Wild",
+      "source_folder": "call_wild",
+      "source_file": "source.epub",
+      "format": "epub",
+      "ground_truth_source": "Standard Ebooks NCX/nav filtered to child chapter items under The Call of the Wild",
+      "expected_count": 7,
+      "expected_chapters": [
+        { "index": 1, "title": "I: Into the Primitive" },
+        { "index": 2, "title": "II: The Law of Club and Fang" },
+        { "index": 3, "title": "III: The Dominant Primordial Beast" },
+        { "index": 4, "title": "IV: Who Has Won to Mastership" },
+        { "index": 5, "title": "V: The Toil of Trace and Trail" },
+        { "index": 6, "title": "VI: For the Love of a Man" },
+        { "index": 7, "title": "VII: The Sounding of the Call" }
+      ],
+      "excluded_toc_items": [
+        "Titlepage",
+        "Imprint",
+        "Epigraph",
+        "The Call of the Wild",
+        "Colophon",
+        "Uncopyright"
+      ],
+      "review_notes": "Clear 7 chapter children. Epigraph and halftitle are excluded as front matter/title matter."
+    }
+  }
+}

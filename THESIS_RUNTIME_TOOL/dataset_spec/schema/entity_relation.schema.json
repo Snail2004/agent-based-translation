@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ailab.local/schema/entity_relation.schema.json",
+  "title": "AILAB Entity Relation",
+  "description": "One directed relation edge between two entities (one line of entity_relations.jsonl). Optional sidecar. Primary purpose: Vietnamese address/pronoun resolution (how the pair address each other and refer to themselves). Convention: source_entity IS the relation_type of target_entity (e.g. relation_type='parent' => source is the parent of target). A relation may be phased over the document via optional state_label + valid_from_block_id + valid_to_block_id; absent phase fields mean the relation applies to the whole document. Block ranges are compared by document order (order_index), not by string. Mirrors DATASET_DESIGN.md section 5.3b.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["relation_id", "doc_id", "source_entity_id", "target_entity_id", "relation_type"],
+  "$defs": {
+    "address_term_pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How the speaking side refers to itself (self_term) and addresses the other side (address_term).",
+      "properties": {
+        "self_term": { "type": ["string", "null"] },
+        "address_term": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "properties": {
+    "relation_id": { "type": "string", "minLength": 1 },
+    "doc_id": { "type": "string", "minLength": 1 },
+    "source_entity_id": { "type": "string", "minLength": 1 },
+    "target_entity_id": { "type": "string", "minLength": 1 },
+    "relation_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Free-text with recommended values: sibling, parent, child, spouse, lover, friend, close_friend, master, servant, mentor, stranger, rival, enemy, betrayed_friend, creator_creation, guardian. Not a closed enum."
+    },
+    "state_label": { "type": ["string", "null"], "description": "Optional phase label, e.g. before_betrayal / after_betrayal." },
+    "valid_from_block_id": { "type": ["string", "null"], "description": "Block where this phase starts (by document order). null/absent = from document start." },
+    "valid_to_block_id": { "type": ["string", "null"], "description": "Block where this phase ends. null/absent = open / to document end." },
+    "trigger_event_id": { "type": ["string", "null"], "description": "Free-text label for the turning-point event (no referential target in 1.5.0; AI-LAB has no events file)." },
+    "address_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_to_target": { "$ref": "#/$defs/address_term_pair" },
+        "target_to_source": { "$ref": "#/$defs/address_term_pair" }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["block_id"],
+        "properties": {
+          "block_id": { "type": "string", "minLength": 1 },
+          "surface": { "type": "string" }
+        }
+      }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "notes": { "type": ["string", "null"] }
+  }
+}

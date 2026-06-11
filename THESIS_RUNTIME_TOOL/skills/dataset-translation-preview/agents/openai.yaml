@@ -1,0 +1,4 @@
+interface:
+display_name: "Translation Preview"
+short_description: "Draft read-only EN-VI preview from AI-LAB metadata"
+default_prompt: "Use $dataset-translation-preview to draft read-only per-block Vietnamese translation preview JSON from one AI-LAB chapter with entity, glossary, relation, and summary context."

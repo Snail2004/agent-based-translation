@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ailab.local/schema/chapter_summary.schema.json",
+  "title": "AILAB Chapter Summary",
+  "description": "One chapter-level summary (one line of chapter_summaries.jsonl). Optional sidecar. AI-LAB minimal requirement for the MVP source is summary_source + source; other fields are optional and not graded.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["doc_id", "chapter_id", "summary_source", "source"],
+  "properties": {
+    "doc_id": { "type": "string", "minLength": 1 },
+    "chapter_id": { "type": "string", "minLength": 1 },
+    "summary_source": { "type": "string", "minLength": 1 },
+    "source": { "enum": ["human", "ai_assisted_verified"] },
+    "characters_present": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "key_events": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "setting": { "type": ["string", "null"] },
+    "emotional_tone": { "type": ["string", "null"] },
+    "motifs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "summary_target": { "type": ["string", "null"] },
+    "open_threads": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "translation_notes": { "type": ["string", "null"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

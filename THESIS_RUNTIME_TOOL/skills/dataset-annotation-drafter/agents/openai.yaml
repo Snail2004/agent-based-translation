@@ -1,0 +1,3 @@
+display_name: Dataset Annotation Drafter
+short_description: Draft linked entity, glossary, character-relation (Vietnamese address), discourse, and summary candidates.
+default_prompt: Use this skill to draft linked annotation candidate JSON (entity, glossary, relation, discourse, summary) for one AI-LAB chapter without writing offsets or treating AI output as gold.

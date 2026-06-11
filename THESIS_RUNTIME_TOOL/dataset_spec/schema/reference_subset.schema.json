@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ailab.local/schema/reference_subset.schema.json",
+  "title": "AILAB Manual Reference Subset Entry",
+  "description": "One human-owned EN->VI reference passage (one line of manual_reference_subset.jsonl). Small stratified subset only; NOT a full parallel translation. This is a freeze-clean canonical file: only reviewed/locked entries belong here (in-progress drafts live in the working translation_review_log.csv). 'source' records the method; AI-assisted output must be human-revised and reviewed before entering this file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reference_id", "doc_id", "block_id", "source_text", "reference_vi", "source", "status"],
+  "properties": {
+    "reference_id": { "type": "string", "minLength": 1 },
+    "doc_id": { "type": "string", "minLength": 1 },
+    "block_id": { "type": "string", "minLength": 1 },
+    "source_text": { "type": "string", "minLength": 1 },
+    "reference_vi": { "type": "string", "minLength": 1 },
+    "source": { "enum": ["human", "ai_assisted_verified"] },
+    "status": { "enum": ["reviewed", "locked"] },
+    "stratum": { "enum": ["chapter_opening", "dialogue", "narrative", "term_heavy", "random"] },
+    "translated_by": { "type": "string" },
+    "reviewed_by": { "type": "string" },
+    "ai_model": { "type": ["string", "null"] },
+    "prompt_id": { "type": ["string", "null"] },
+    "ai_used_at": { "type": ["string", "null"] },
+    "notes": { "type": ["string", "null"] }
+  }
+}

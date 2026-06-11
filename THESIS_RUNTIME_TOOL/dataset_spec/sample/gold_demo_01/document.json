@@ -1,0 +1,347 @@
+{
+  "schema_version": "1.5.0",
+  "doc_id": "gold_demo_01",
+  "metadata": {
+    "title": "[SYNTHETIC DEMO] The Turning",
+    "author": "AILAB (synthetic)",
+    "domain": "literature",
+    "genre": "fantasy",
+    "source_language": "en",
+    "target_language": "vi",
+    "source_format": "txt",
+    "license": "CC0-1.0 (synthetic sample - not a real source)",
+    "license_url": "",
+    "source_url": "",
+    "raw_sha256": "",
+    "retrieved_at": "",
+    "extraction_tool": "manual-synthetic",
+    "pipeline_version": "0.1.0",
+    "contamination_risk": "low"
+  },
+  "chapters": [
+    {
+      "chapter_id": "gold_demo_01_ch01",
+      "order_index": 1,
+      "title": "Chapter One - The Hollow at Dawn",
+      "blocks": [
+        {
+          "block_id": "gold_demo_01_ch01_b001",
+          "order_index": 1,
+          "page_ids": [1],
+          "block_type": "heading",
+          "is_chapter_opening": false,
+          "source_text": "Chapter One - The Hollow at Dawn",
+          "clean_text": "Chapter One - The Hollow at Dawn",
+          "sentences": [
+            {"sent_id": "s001", "text": "Chapter One - The Hollow at Dawn", "span": [0, 32]}
+          ],
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 32], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch01_b002",
+          "order_index": 2,
+          "page_ids": [1],
+          "block_type": "paragraph",
+          "is_chapter_opening": true,
+          "source_text": "Mira woke before the Turning, while the valley still slept.",
+          "clean_text": "Mira woke before the Turning, while the valley still slept.",
+          "sentences": [
+            {"sent_id": "s002", "text": "Mira woke before the Turning, while the valley still slept.", "span": [0, 59]}
+          ],
+          "annotations": {
+            "term_occurrences": ["g_001"],
+            "entity_mentions": ["e_001"],
+            "motifs": ["time", "awakening"],
+            "tone": "wistful",
+            "implicit_meaning": null,
+            "narrative_note": "Opening block introduces Mira and the recurring time motif."
+          },
+          "reference_translation_id": "ref_001",
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 59], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch01_b003",
+          "order_index": 3,
+          "page_ids": [1],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "The girl had not slept; she watched the valley breathe.",
+          "clean_text": "The girl had not slept; she watched the valley breathe.",
+          "sentences": [
+            {"sent_id": "s003", "text": "The girl had not slept; she watched the valley breathe.", "span": [0, 55]}
+          ],
+          "annotations": {
+            "term_occurrences": [],
+            "entity_mentions": ["e_001"],
+            "motifs": ["time"],
+            "tone": "wistful",
+            "implicit_meaning": null,
+            "narrative_note": "Alias mention demonstrates entity consistency across non-canonical surfaces."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 55], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch01_b004",
+          "order_index": 4,
+          "page_ids": [1],
+          "block_type": "dialogue",
+          "is_chapter_opening": false,
+          "source_text": "\"Clockkeeper,\" Mira called, \"why does the dawn come so slowly here?\"",
+          "clean_text": "\"Clockkeeper,\" Mira called, \"why does the dawn come so slowly here?\"",
+          "sentences": [
+            {"sent_id": "s004", "text": "\"Clockkeeper,\" Mira called, \"why does the dawn come so slowly here?\"", "span": [0, 68]}
+          ],
+          "discourse": {
+            "speaker_entity_id": "e_001",
+            "addressee_entity_id": "e_002",
+            "pronoun_hints": []
+          },
+          "annotations": {
+            "term_occurrences": [],
+            "entity_mentions": ["e_001", "e_002"],
+            "motifs": ["time"],
+            "tone": "curious",
+            "implicit_meaning": null,
+            "narrative_note": "Dialogue block demonstrates speaker/addressee annotation."
+          },
+          "reference_translation_id": "ref_002",
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 68], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch01_b005",
+          "order_index": 5,
+          "page_ids": [1],
+          "block_type": "dialogue",
+          "is_chapter_opening": false,
+          "source_text": "\"The Turning is not slow,\" the Clockkeeper said, turning his hourglass. \"You are simply early.\"",
+          "clean_text": "\"The Turning is not slow,\" the Clockkeeper said, turning his hourglass. \"You are simply early.\"",
+          "sentences": [
+            {"sent_id": "s005", "text": "\"The Turning is not slow,\" the Clockkeeper said, turning his hourglass. \"You are simply early.\"", "span": [0, 95]}
+          ],
+          "discourse": {
+            "speaker_entity_id": "e_002",
+            "addressee_entity_id": "e_001",
+            "pronoun_hints": []
+          },
+          "annotations": {
+            "term_occurrences": ["g_001", "g_002"],
+            "entity_mentions": ["e_002"],
+            "motifs": ["time"],
+            "tone": "dry",
+            "implicit_meaning": "The Clockkeeper corrects Mira gently while implying she has misread time.",
+            "narrative_note": "Term-heavy dialogue with glossary and entity constraints."
+          },
+          "reference_translation_id": "ref_003",
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 95], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch01_b006",
+          "order_index": 6,
+          "page_ids": [1],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "Beyond them the Hollow opened like a held breath.",
+          "clean_text": "Beyond them the Hollow opened like a held breath.",
+          "sentences": [
+            {"sent_id": "s006", "text": "Beyond them the Hollow opened like a held breath.", "span": [0, 49]}
+          ],
+          "annotations": {
+            "term_occurrences": [],
+            "entity_mentions": ["e_003"],
+            "motifs": ["threshold"],
+            "tone": "still",
+            "implicit_meaning": "The place is presented as if it were alive and waiting.",
+            "narrative_note": "Place entity plus figurative setting description."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 49], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch01_b007",
+          "order_index": 7,
+          "page_ids": [1],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "An old inscription on the dial marked the passage of time.",
+          "clean_text": "An old inscription on the dial marked the passage of time.",
+          "sentences": [
+            {"sent_id": "s007", "text": "An old inscription on the dial marked the passage of time.", "span": [0, 58]}
+          ],
+          "annotations": {
+            "term_occurrences": [],
+            "entity_mentions": [],
+            "motifs": ["time"],
+            "tone": "quiet",
+            "implicit_meaning": null,
+            "narrative_note": "The dial acts as a quiet marker of time."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 58], "corrected_by": null, "correction_note": null}
+        }
+      ]
+    },
+    {
+      "chapter_id": "gold_demo_01_ch02",
+      "order_index": 2,
+      "title": "Chapter Two - The Second Turning",
+      "blocks": [
+        {
+          "block_id": "gold_demo_01_ch02_b008",
+          "order_index": 1,
+          "page_ids": [2],
+          "block_type": "heading",
+          "is_chapter_opening": false,
+          "source_text": "Chapter Two - The Second Turning",
+          "clean_text": "Chapter Two - The Second Turning",
+          "sentences": [
+            {"sent_id": "s008", "text": "Chapter Two - The Second Turning", "span": [0, 32]}
+          ],
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 32], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch02_b009",
+          "order_index": 2,
+          "page_ids": [2],
+          "block_type": "paragraph",
+          "is_chapter_opening": true,
+          "source_text": "When the second Turning came, Mira was ready.",
+          "clean_text": "When the second Turning came, Mira was ready.",
+          "sentences": [
+            {"sent_id": "s009", "text": "When the second Turning came, Mira was ready.", "span": [0, 45]}
+          ],
+          "annotations": {
+            "term_occurrences": ["g_001"],
+            "entity_mentions": ["e_001"],
+            "motifs": ["time", "return"],
+            "tone": "resolute",
+            "implicit_meaning": null,
+            "narrative_note": "Second chapter opening shows state change from uncertainty to readiness."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 45], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch02_b010",
+          "order_index": 3,
+          "page_ids": [2],
+          "block_type": "dialogue",
+          "is_chapter_opening": false,
+          "source_text": "\"Then walk with me,\" said the old man, \"and watch the sand fall.\"",
+          "clean_text": "\"Then walk with me,\" said the old man, \"and watch the sand fall.\"",
+          "sentences": [
+            {"sent_id": "s010", "text": "\"Then walk with me,\" said the old man, \"and watch the sand fall.\"", "span": [0, 65]}
+          ],
+          "discourse": {
+            "speaker_entity_id": "e_002",
+            "addressee_entity_id": "e_001",
+            "pronoun_hints": []
+          },
+          "annotations": {
+            "term_occurrences": [],
+            "entity_mentions": ["e_002"],
+            "motifs": ["time"],
+            "tone": "guiding",
+            "implicit_meaning": null,
+            "narrative_note": "Alias mention for the Clockkeeper demonstrates entity resolution."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 65], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch02_b011",
+          "order_index": 4,
+          "page_ids": [2],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "They climbed the dial-path together, counting nothing at all.",
+          "clean_text": "They climbed the dial-path together, counting nothing at all.",
+          "sentences": [
+            {"sent_id": "s011", "text": "They climbed the dial-path together, counting nothing at all.", "span": [0, 61]}
+          ],
+          "annotations": {
+            "term_occurrences": [],
+            "entity_mentions": [],
+            "motifs": ["time"],
+            "tone": "calm",
+            "implicit_meaning": "The refusal to count suggests trust rather than measurement.",
+            "narrative_note": "Provenance shows an example of a corrected extraction block."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 61], "corrected_by": "annotator_01", "correction_note": "Merged two layout-broken lines."}
+        },
+        {
+          "block_id": "gold_demo_01_ch02_b012",
+          "order_index": 5,
+          "page_ids": [2],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "Rule of the Hollow: never count the final grain.",
+          "clean_text": "Rule of the Hollow: never count the final grain.",
+          "sentences": [
+            {"sent_id": "s012", "text": "Rule of the Hollow: never count the final grain.", "span": [0, 48]}
+          ],
+          "annotations": {
+            "term_occurrences": [],
+            "entity_mentions": ["e_003"],
+            "motifs": ["time", "rule"],
+            "tone": "formal",
+            "implicit_meaning": null,
+            "narrative_note": "Rule-like prose is represented as a paragraph in the literary schema."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 48], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch02_b013",
+          "order_index": 6,
+          "page_ids": [2],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "The hourglass emptied, and the valley woke.",
+          "clean_text": "The hourglass emptied, and the valley woke.",
+          "sentences": [
+            {"sent_id": "s013", "text": "The hourglass emptied, and the valley woke.", "span": [0, 43]}
+          ],
+          "annotations": {
+            "term_occurrences": ["g_002"],
+            "entity_mentions": [],
+            "motifs": ["time", "awakening"],
+            "tone": "quiet",
+            "implicit_meaning": null,
+            "narrative_note": "Term occurrence with a recurring awakening motif."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 43], "corrected_by": null, "correction_note": null}
+        },
+        {
+          "block_id": "gold_demo_01_ch02_b014",
+          "order_index": 7,
+          "page_ids": [2],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "Mira did not look back at the Turning.",
+          "clean_text": "Mira did not look back at the Turning.",
+          "sentences": [
+            {"sent_id": "s014", "text": "Mira did not look back at the Turning.", "span": [0, 38]}
+          ],
+          "annotations": {
+            "term_occurrences": ["g_001"],
+            "entity_mentions": ["e_001"],
+            "motifs": ["time", "departure"],
+            "tone": "wistful",
+            "implicit_meaning": "Mira accepts the change without seeking reassurance.",
+            "narrative_note": "Closing block repeats the central term and main character."
+          },
+          "quality_flags": ["ok"],
+          "provenance": {"raw_span": [0, 38], "corrected_by": null, "correction_note": null}
+        }
+      ]
+    }
+  ]
+}

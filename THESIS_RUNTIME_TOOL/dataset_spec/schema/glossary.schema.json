@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ailab.local/schema/glossary.schema.json",
+  "title": "AILAB Glossary Entry",
+  "description": "One term record (one line of glossary.jsonl). Mirrors DATASET_DESIGN.md section 5.2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["term_id", "doc_id", "source_term", "expected_target", "status", "occurrences"],
+  "$defs": {
+    "span": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 },
+      "minItems": 2,
+      "maxItems": 2
+    }
+  },
+  "properties": {
+    "term_id": { "type": "string", "minLength": 1 },
+    "doc_id": { "type": "string", "minLength": 1 },
+    "source_term": { "type": "string", "minLength": 1 },
+    "expected_target": { "type": "string", "minLength": 1 },
+    "allowed_variants": { "type": "array", "items": { "type": "string" } },
+    "forbidden_variants": { "type": "array", "items": { "type": "string" } },
+    "domain": { "type": "string" },
+    "chapter_scope": { "type": "string", "description": "global or chapter id" },
+    "status": { "enum": ["candidate", "verified", "locked", "human_verified"] },
+    "occurrences": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["block_id", "span"],
+        "properties": {
+          "block_id": { "type": "string", "minLength": 1 },
+          "span": { "$ref": "#/$defs/span" }
+        }
+      }
+    },
+    "annotated_by": { "type": "string" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}
