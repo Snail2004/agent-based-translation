@@ -25,4 +25,4 @@
 | Task | Tóm tắt | Status | Commit | Review | Ghi chú |
 |---|---|---|---|---|---|
 | P0-01 | Vệ sinh clone + skeleton pipeline/ + migration schema v3 | DONE | `P0-01:` (xem git log) | PASS (Claude, 2026-06-12) | 4/4 migration + 88/88 smoke; DDL khớp spec |
-| P0-02 | LLM client: pin model + seed + reasoning_effort + replay cache + quota | READY | — | — | Spec: TASK_P0_02_llm_client.md; tests offline 100% |
+| P0-02 | LLM client: pin model + seed + reasoning_effort + replay cache + quota | DONE | `P0-02:` (xem git log) | PASS (Claude, 2026-06-12) | 11/11 tests; chặn alias latest từ config; **P0 hoàn thành** |

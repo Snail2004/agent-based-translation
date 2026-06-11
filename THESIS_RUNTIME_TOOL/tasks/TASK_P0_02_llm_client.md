@@ -1,8 +1,8 @@
 # TASK_P0_02_llm_client — LLM client (pin model, seed, reasoning_effort) + replay cache + quota tracking
 
-- **Status:** READY
+- **Status:** DONE
 - **Refs:** THESIS_ARCHITECTURE_LOCK §2.2 (model stack), §5.1 (replay cache, reasoning tokens), §2.1 (failure policy — phần của Coordinator, KHÔNG nằm trong client này)
-- **Branch/Commit:** (điền khi imple xong; commit `P0-02: ...` trên nhánh `main`)
+- **Branch/Commit:** branch `main`; commit pending
 
 ## 1. Bối cảnh & mục tiêu
 
@@ -114,8 +114,49 @@ python -m pytest pipeline/tests/ -v   # toàn bộ pipeline tests (gồm migrati
 
 ## 5. Implementation notes *(CodeX điền)*
 
-—
+- Added `pipeline/agents/llm_config.py` with `LLMConfig`, pinned-model validation, pricing
+  validation, and YAML loader.
+- Added `pipeline/agents/llm_client.py` with one shared OpenAI Chat Completions client,
+  deterministic cache key, SQLite replay cache, daily quota table, retry/backoff handling,
+  JSON parse reporting, usage extraction, and cost estimation.
+- Added `pipeline/configs/llm_default.yaml`, `pipeline/requirements.txt`, and manual
+  smoke script `pipeline/scripts/llm_smoke.py`.
+- Added offline tests in `pipeline/tests/test_llm_client.py`; every test injects a fake
+  transport and does not touch network.
+- SDK/API check: local `openai` SDK 2.30.0 exposes `verbosity` on Chat Completions. The
+  runtime request sends `model`, `messages`, `temperature`, `seed`, `reasoning_effort`,
+  `verbosity`, `response_format`, and `max_completion_tokens`. No `tools` or streaming
+  parameter is exposed.
 
-## 6. Review *(Claude điền)*
+Test output:
 
-—
+```bash
+cd C:\work\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME_TOOL
+python -m pytest pipeline/tests/test_llm_client.py -v
+# 7 passed in 0.92s
+
+python -m pytest pipeline/tests/ -v
+# 11 passed in 3.79s
+```
+
+## 6. Review *(Claude điền — 2026-06-12)*
+
+- **Verdict: PASS**
+- Tự chạy lại acceptance: 7/7 llm_client + 11/11 toàn pipeline (gồm migration P0-01) PASSED.
+- Đối chiếu spec §3: cache key đủ 6 thành phần + canonical json; cache HIT trả về
+  TRƯỚC quota check và transport (không cộng quota — đúng); quota guard chạy TRƯỚC
+  call với ước lượng chars/4 + max_output; retry đúng phân loại (429/5xx/timeout
+  backoff + jitter + tôn trọng Retry-After cả attr lẫn header; 4xx khác raise ngay,
+  wrap LLMTransportError có status_code); KHÔNG tools/streaming; không log key;
+  cost tính đúng uncached/cached/output; JSON parse không raise, không retry;
+  system_fingerprint + reasoning_tokens được trích.
+- Vượt spec (tốt): `LLMConfig.__post_init__` chặn model alias chứa "latest" — enforce
+  kỷ luật pin ngay tầng config; cache replay re-parse JSON theo response_format hiện
+  tại thay vì lưu parsed cũ.
+- Deviation đã khai đúng quy trình (§5): SDK openai 2.30.0 hỗ trợ `verbosity` trên
+  Chat Completions → giữ trong request.
+- Findings nhỏ (không chặn): (1) `with sqlite3.connect(...)` commit nhưng không close
+  connection — CPython refcount đóng sớm nên vô hại, nếu sau này chạy PyPy/threadpool
+  thì thêm close tường minh; (2) `_retry_delay` khi có Retry-After không cộng jitter —
+  chấp nhận được vì tôn trọng server hint.
+- Follow-up: không có. P0 HOÀN THÀNH — sẵn sàng P1 ingest.
