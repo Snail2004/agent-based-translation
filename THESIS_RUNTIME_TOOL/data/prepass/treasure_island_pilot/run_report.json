@@ -1,0 +1,59 @@
+{
+  "document": "treasure_island",
+  "chapters_requested": [
+    "ch02",
+    "ch03"
+  ],
+  "chapters": [
+    {
+      "chapter_id": "treasure_island_ch02",
+      "status": "passed",
+      "calls": 1,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cost_usd": 0,
+      "from_cache": true,
+      "system_fingerprint": null,
+      "counts": {
+        "terms": 16,
+        "entities": 8,
+        "relations": 4,
+        "mentions": 8,
+        "motifs": 4
+      },
+      "errors": []
+    },
+    {
+      "chapter_id": "treasure_island_ch03",
+      "status": "passed",
+      "calls": 1,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cost_usd": 0,
+      "from_cache": true,
+      "system_fingerprint": null,
+      "counts": {
+        "terms": 12,
+        "entities": 2,
+        "relations": 4,
+        "mentions": 2,
+        "motifs": 3
+      },
+      "errors": []
+    }
+  ],
+  "json_fail_rate": 0.0,
+  "total_usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "reasoning_tokens": 0,
+    "cost_usd": 0,
+    "calls": 2,
+    "cache_hits": 2
+  },
+  "model": "gpt-5.4-mini",
+  "seed": 20260612,
+  "system_fingerprint": null
+}

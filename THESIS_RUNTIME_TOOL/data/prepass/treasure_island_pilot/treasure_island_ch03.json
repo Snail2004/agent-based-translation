@@ -1,0 +1,263 @@
+{
+  "chapter_id": "treasure_island_ch03",
+  "glossary_candidates": [
+    {
+      "source_term": "Black Dog",
+      "proposed_target_vi": "Black Dog",
+      "do_not_translate": false,
+      "category": "other",
+      "block_ids": [
+        "treasure_island_ch03_b002",
+        "treasure_island_ch03_b024",
+        "treasure_island_ch03_b031",
+        "treasure_island_ch03_b046"
+      ]
+    },
+    {
+      "source_term": "Admiral Benbow Inn",
+      "proposed_target_vi": "quán trọ Admiral Benbow",
+      "do_not_translate": false,
+      "category": "place",
+      "block_ids": [
+        "treasure_island_ch03_b024",
+        "treasure_island_ch03_b031"
+      ]
+    },
+    {
+      "source_term": "cutlass",
+      "proposed_target_vi": "kiếm quắm",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch03_b004",
+        "treasure_island_ch03_b005",
+        "treasure_island_ch03_b017",
+        "treasure_island_ch03_b031"
+      ]
+    },
+    {
+      "source_term": "brass telescope",
+      "proposed_target_vi": "ống nhòm bằng đồng",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch03_b004"
+      ]
+    },
+    {
+      "source_term": "parlor",
+      "proposed_target_vi": "phòng khách",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch03_b005",
+        "treasure_island_ch03_b016",
+        "treasure_island_ch03_b017",
+        "treasure_island_ch03_b029",
+        "treasure_island_ch03_b036"
+      ]
+    },
+    {
+      "source_term": "grog",
+      "proposed_target_vi": "rượu grog",
+      "do_not_translate": false,
+      "category": "cultural",
+      "block_ids": [
+        "treasure_island_ch03_b006",
+        "treasure_island_ch03_b028"
+      ]
+    },
+    {
+      "source_term": "rum",
+      "proposed_target_vi": "rượu rum",
+      "do_not_translate": false,
+      "category": "cultural",
+      "block_ids": [
+        "treasure_island_ch03_b006",
+        "treasure_island_ch03_b027",
+        "treasure_island_ch03_b033",
+        "treasure_island_ch03_b035",
+        "treasure_island_ch03_b038",
+        "treasure_island_ch03_b040",
+        "treasure_island_ch03_b047",
+        "treasure_island_ch03_b049",
+        "treasure_island_ch03_b051"
+      ]
+    },
+    {
+      "source_term": "breakfast table",
+      "proposed_target_vi": "bàn ăn sáng",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch03_b018",
+        "treasure_island_ch03_b027"
+      ]
+    },
+    {
+      "source_term": "basin",
+      "proposed_target_vi": "chậu",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch03_b040",
+        "treasure_island_ch03_b044"
+      ]
+    },
+    {
+      "source_term": "lancet",
+      "proposed_target_vi": "lưỡi trích máu",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch03_b044"
+      ]
+    },
+    {
+      "source_term": "stroke",
+      "proposed_target_vi": "tai biến",
+      "do_not_translate": false,
+      "category": "other",
+      "block_ids": [
+        "treasure_island_ch03_b040",
+        "treasure_island_ch03_b047",
+        "treasure_island_ch03_b053"
+      ]
+    },
+    {
+      "source_term": "signboard",
+      "proposed_target_vi": "biển hiệu",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch03_b031",
+        "treasure_island_ch03_b032"
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "entity_id": "ent_jim_hawkins",
+      "canonical_source": "Jim Hawkins / first-person narrator",
+      "aliases_source": [
+        "I",
+        "me",
+        "my",
+        "Jim"
+      ],
+      "entity_type": "person",
+      "proposed_target_vi": "Jim Hawkins",
+      "aliases_target_vi": [
+        "tôi",
+        "tôi",
+        "của tôi",
+        "Jim"
+      ]
+    },
+    {
+      "entity_id": "ent_black_dog",
+      "canonical_source": "Black Dog",
+      "aliases_source": [
+        "Black Dog",
+        "the stranger",
+        "the other"
+      ],
+      "entity_type": "person",
+      "proposed_target_vi": "Black Dog",
+      "aliases_target_vi": [
+        "Black Dog",
+        "tên lạ mặt",
+        "hắn ta"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "a": "ent_jim_hawkins",
+      "b": "ent_black_dog",
+      "relation": "cautious_observation_then_fear",
+      "address_a_to_b_vi": "ông",
+      "address_b_to_a_vi": "sonny / cậu bé",
+      "state_label": "initial_wary_contact",
+      "trigger_block_id": "treasure_island_ch03_b006",
+      "notes": "Black Dog gọi Jim thân mật nhưng ra lệnh gắt; Jim sợ và dè chừng."
+    },
+    {
+      "a": "ent_captain",
+      "b": "ent_black_dog",
+      "relation": "hostile_old_acquaintance",
+      "address_a_to_b_vi": "mày / hắn",
+      "address_b_to_a_vi": "Bill / Billy / old shipmate",
+      "state_label": "recognition_to_violence",
+      "trigger_block_id": "treasure_island_ch03_b024",
+      "notes": "Từ nhận ra nhau sang đối đầu và đánh nhau bằng kiếm."
+    },
+    {
+      "a": "ent_jim_hawkins",
+      "b": "ent_captain",
+      "relation": "obedient_dependency",
+      "address_a_to_b_vi": "ông",
+      "address_b_to_a_vi": "Jim",
+      "state_label": "crisis_care",
+      "trigger_block_id": "treasure_island_ch03_b033",
+      "notes": "Jim làm theo lời gọi rượu và hỗ trợ khi thuyền trưởng ngã bệnh."
+    },
+    {
+      "a": "ent_doctor_livesey",
+      "b": "ent_captain",
+      "relation": "stern_medical_control",
+      "address_a_to_b_vi": "ông",
+      "address_b_to_a_vi": "doctor / sir",
+      "state_label": "authoritative_treatment",
+      "trigger_block_id": "treasure_island_ch03_b040",
+      "notes": "Doctor Livesey chẩn đoán stroke, trách việc uống rum và điều trị."
+    }
+  ],
+  "mention_surfaces": [
+    {
+      "entity_id": "ent_jim_hawkins",
+      "surfaces": [
+        "I",
+        "me",
+        "my",
+        "Jim"
+      ]
+    },
+    {
+      "entity_id": "ent_black_dog",
+      "surfaces": [
+        "Black Dog",
+        "the stranger",
+        "the other"
+      ]
+    }
+  ],
+  "chapter_summary_vi": "Một người lạ, sau này được gọi là Black Dog, bất ngờ đến quán trọ và dò hỏi về thuyền trưởng. Jim nghi ngờ nhưng bị hắn dụ vào phòng khách. Khi thuyền trưởng trở về, hai kẻ nhận ra nhau rồi cãi vã, sau đó lao vào đánh nhau dữ dội. Black Dog bị chém và bỏ chạy. Thuyền trưởng đột quỵ vì rượu và được Doctor Livesey đến chữa trị, cảnh báo phải dừng uống rum ngay lập tức.",
+  "motifs": [
+    {
+      "note": "Đối mặt bí ẩn dẫn tới bộc lộ quá khứ bạo lực và thù hằn cũ.",
+      "block_ids": [
+        "treasure_island_ch03_b005",
+        "treasure_island_ch03_b024",
+        "treasure_island_ch03_b031"
+      ]
+    },
+    {
+      "note": "Rượu rum gắn với sa sút thể chất và nguy cơ cái chết.",
+      "block_ids": [
+        "treasure_island_ch03_b033",
+        "treasure_island_ch03_b038",
+        "treasure_island_ch03_b049",
+        "treasure_island_ch03_b051"
+      ]
+    },
+    {
+      "note": "Bệnh tật và y thuật đối lập với cơn say và bạo lực.",
+      "block_ids": [
+        "treasure_island_ch03_b040",
+        "treasure_island_ch03_b044",
+        "treasure_island_ch03_b053"
+      ]
+    }
+  ]
+}

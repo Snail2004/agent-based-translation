@@ -1,6 +1,6 @@
 # TASK_P2_01_world_builder_prepass — World Builder Agent: trích registry T1–T4 từ text trắng (pilot 2 chương TI)
 
-- **Status:** READY
+- **Status:** REVIEW
 - **Refs:** THESIS_ARCHITECTURE_LOCK §2.1 (A1 World Builder: 1 agent/1 lượt đọc chương,
   TUẦN TỰ với registry-so-far nén; failure policy re-ask 1 lần), §2.2 (model stack,
   gpt-5.4-mini pin), §3 (T1–T4), §9 P2 (**go/no-go #1: JSON fail < 5%**), V3 Directional
@@ -163,8 +163,99 @@ python -m pytest pipeline/tests/ -v   # toàn bộ pipeline tests vẫn PASS
 
 ## 5. Implementation notes *(CodeX điền)*
 
-—
+- Added `pipeline/configs/llm_prepass.yaml`.
+  - API deviation from spec: real Chat Completions rejected `reasoning_effort: minimal`
+    for `gpt-5.4-mini`; accepted values are `none|low|medium|high|xhigh`, so prepass uses
+    `reasoning_effort: low`.
+  - API deviation from spec: real Chat Completions rejected `temperature: 0.2`; this
+    model currently only accepts the default temperature value, so prepass uses
+    `temperature: 1.0`.
+- Added World Builder modules:
+  - `pipeline/prepass/schemas.py`
+  - `pipeline/prepass/prompt.py`
+  - `pipeline/prepass/registry.py`
+  - `pipeline/prepass/runner.py`
+  - `pipeline/scripts/run_prepass.py`
+- Added offline fake-transport tests in `pipeline/tests/test_world_builder.py`.
+- Runner normalizes short block ids to full block ids before writing artifacts, re-asks
+  once on JSON/schema failure, does not merge failed chapter output, and reports cached
+  replay calls as zero incremental usage/cost.
+- Prompt was tightened after first real run: required exact enum categories, exact motif
+  key `note`, required `block_ids`, and explicit first-person narrator extraction. No
+  `AILAB_HANDOFF`, oracle, glossary, entities, or annotations are read by the runner.
 
-## 6. Review *(Claude điền)*
+Test/output:
 
-—
+```bash
+cd C:\work\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME_TOOL
+python -m pytest pipeline/tests/test_world_builder.py -v
+# 6 passed in 0.62s
+
+python -m pipeline.scripts.run_prepass --source data/sources/treasure_island/document.json --chapters ch02 ch03 --out data/prepass/treasure_island_pilot
+# First clean 2-chapter run:
+# json_fail_rate: 0.0
+# ch02: passed, calls=1, terms=16, entities=8, relations=4, mentions=8, motifs=4
+# ch03: passed, calls=1, terms=12, entities=2, relations=4, mentions=2, motifs=3
+# total_usage: prompt_tokens=7840, completion_tokens=4686, reasoning_tokens=182, cost_usd=0.011332
+
+python -m pipeline.scripts.run_prepass --source data/sources/treasure_island/document.json --chapters ch02 ch03 --out data/prepass/treasure_island_pilot
+# Replay run:
+# json_fail_rate: 0.0
+# total_usage: prompt_tokens=0, completion_tokens=0, reasoning_tokens=0, cost_usd=0, cache_hits=2
+
+python -m pytest pipeline/tests/ -v
+# 29 passed in 7.28s
+```
+
+Tracked artifacts:
+
+- `data/prepass/treasure_island_pilot/treasure_island_ch02.json`
+- `data/prepass/treasure_island_pilot/treasure_island_ch03.json`
+- `data/prepass/treasure_island_pilot/run_report.json`
+
+Spot-check:
+
+- `treasure_island_ch02` includes `ent_jim_hawkins`, `ent_captain`,
+  `ent_admiral_benbow_inn` context via glossary term `Admiral Benbow Inn`, and VI address
+  hints in relations.
+- Glossary avoids the EV-01 ordinary-word failure examples `council`, `chart`, `terms`,
+  and `bearing`.
+- Category enum and motif schema spot-check passed for ch02/ch03.
+
+## 6. Review *(Claude điền — 2026-06-12)*
+
+- **Verdict: PASS — GO/NO-GO #1: GO** (json_fail_rate 0.0 trên 2 chương thật ch02+ch03,
+  ngưỡng <5%). Tự chạy lại: 29/29 pipeline tests; đọc artifact + code runner/prompt/
+  registry; key không xuất hiện trong artifact/console; `API-KEY.txt` đã gitignore.
+- **Xác minh deviation bằng probe API thật (5 call tí hon):** claim "minimal không
+  được nhận" → ĐÚNG (tập hợp lệ: none/low/medium/high/xhigh). Claim "model không nhận
+  temperature 0.2" → KHÔNG CHÍNH XÁC HOÀN TOÀN: temperature tùy chỉnh hợp lệ khi
+  `reasoning_effort=none`, chỉ bị ép 1.0 khi reasoning bật (≥low). Quyết định (LOCK
+  changelog (v)): pre-pass GIỮ low + temp 1.0 như CodeX làm; Translator/Critic dùng
+  none + temp 0.3 — đã sửa `llm_default.yaml` (nếu không sẽ vỡ ở P3).
+- **Chất lượng trích xuất (đọc tay 2 artifact):** đáng nể cho lần tự đọc đầu tiên —
+  registry-so-far hoạt động thật (ch03 reuse `ent_captain`/`ent_doctor_livesey`,
+  relations Black Dog↔captain "recognition_to_violence" đúng truyện); xưng hô VI có
+  pha (Jim→captain "ông"/"cậu bé"→"thằng bé" theo coercive_secrecy); summary VI chuẩn.
+- **Findings PHẢI VÁ ở P2-02 trước khi chạy full-book (không chặn task này):**
+  1. **[NGHIÊM TRỌNG NHẤT] Prompt hardcode tri thức ngoài văn bản:** system prompt ghi
+     "For Treasure Island, use ent_jim_hawkins / Jim Hawkins". Đã xác minh: chuỗi "Jim"
+     KHÔNG xuất hiện trong text ch02 → tên trong artifact ch02 đến từ hint, không từ
+     sách. Vi phạm tinh thần Directional Lock §0. Trách nhiệm một phần do acceptance §4
+     của chính spec này đòi "ch02 phải có Jim". Fix P2-02: rule generic
+     (`ent_narrator`, lấy tên khi text lộ tên — ch03 đã có "Jim"; Consolidation merge).
+  2. Đại từ trong aliases_source/surfaces ("I","me","my") → persist P2-02 phải lọc,
+     nếu không ECS (EV-01 §3.3) coi đại từ là name mention — đụng đúng artifact đã biết.
+  3. canonical_source bẩn ("Jim Hawkins / first-person narrator", "the captain / old
+     seaman") → cần normalize khi persist.
+  4. Termhood vẫn rò từ phổ thông ở ch03 (parlor, basin, breakfast table, stroke) —
+     siết prompt thêm 1 nấc.
+  5. Surface MỚI của entity cũ không được ghi (ch03 lộ tên thật "Bill/Billy" của
+     captain nhưng chỉ nằm trong notes) → Span Resolver sẽ miss; prompt phải yêu cầu
+     mention_surfaces cho CẢ entity registry khi xuất hiện lại với tên mới.
+  6. `run_report.json` tracked là bản replay (usage=0 do tính incremental); usage thật
+     (7.840 prompt / 4.686 completion / 182 reasoning / $0,0113) chỉ còn trong §5 —
+     P2-02 re-run nên ghi cả usage gốc đọc từ cache record.
+- Lý do PASS dù có findings: acceptance của task = cơ chế chạy + JSON validity +
+  spot-check cơ bản — đạt trọn; các finding thuộc vòng prompt-iteration + persist
+  (đúng scope P2-02), chi phí re-run ~12k token/2 chương = không đáng kể.
