@@ -20,6 +20,7 @@ class ChapterRunReport:
     completion_tokens: int
     reasoning_tokens: int
     cost_usd: float
+    incremental_cost_usd: float
     from_cache: bool
     system_fingerprint: str | None
     counts: dict[str, int]
@@ -208,15 +209,16 @@ def _chapter_report(
         status=status,
         calls=len(results),
         prompt_tokens=sum(
-            result.usage.prompt_tokens for result in results if not result.from_cache
+            result.usage.prompt_tokens for result in results
         ),
         completion_tokens=sum(
-            result.usage.completion_tokens for result in results if not result.from_cache
+            result.usage.completion_tokens for result in results
         ),
         reasoning_tokens=sum(
-            result.usage.reasoning_tokens for result in results if not result.from_cache
+            result.usage.reasoning_tokens for result in results
         ),
-        cost_usd=round(
+        cost_usd=round(sum(result.cost_usd for result in results), 12),
+        incremental_cost_usd=round(
             sum(result.cost_usd for result in results if not result.from_cache), 12
         ),
         from_cache=bool(results) and all(result.from_cache for result in results),
@@ -239,15 +241,16 @@ def _counts(obj: dict[str, Any]) -> dict[str, int]:
 def _total_usage(results: list[LLMResult]) -> dict[str, int | float]:
     return {
         "prompt_tokens": sum(
-            result.usage.prompt_tokens for result in results if not result.from_cache
+            result.usage.prompt_tokens for result in results
         ),
         "completion_tokens": sum(
-            result.usage.completion_tokens for result in results if not result.from_cache
+            result.usage.completion_tokens for result in results
         ),
         "reasoning_tokens": sum(
-            result.usage.reasoning_tokens for result in results if not result.from_cache
+            result.usage.reasoning_tokens for result in results
         ),
-        "cost_usd": round(
+        "cost_usd": round(sum(result.cost_usd for result in results), 12),
+        "incremental_cost_usd": round(
             sum(result.cost_usd for result in results if not result.from_cache), 12
         ),
         "calls": len(results),

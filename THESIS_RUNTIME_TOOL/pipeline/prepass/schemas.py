@@ -16,6 +16,30 @@ ROOT_FIELDS = {
 TERM_CATEGORIES = {"nautical", "cultural", "object", "place", "other"}
 ENTITY_TYPES = {"person", "place", "object", "other"}
 ENTITY_ID_RE = re.compile(r"^ent_[a-z0-9_]+$")
+PLAIN_PRONOUNS = {
+    "i",
+    "me",
+    "my",
+    "mine",
+    "myself",
+    "you",
+    "your",
+    "he",
+    "him",
+    "his",
+    "she",
+    "her",
+    "hers",
+    "it",
+    "its",
+    "we",
+    "us",
+    "our",
+    "they",
+    "them",
+    "their",
+}
+ASCII_WORD_RE = re.compile(r"\b[A-Za-z]{4,}\b")
 
 
 def validate_chapter_output(
@@ -24,6 +48,7 @@ def validate_chapter_output(
     expected_chapter_id: str | None = None,
     known_entity_ids: set[str] | None = None,
     valid_block_ids: set[str] | None = None,
+    warnings: list[str] | None = None,
 ) -> list[str]:
     """Return human-readable validation errors; empty list means valid."""
 
@@ -56,14 +81,22 @@ def validate_chapter_output(
         _require(entity, "entities", index, "proposed_target_vi", str, errors)
         _require(entity, "entities", index, "aliases_target_vi", list, errors)
         entity_id = str(entity.get("entity_id") or "")
+        canonical_source = str(entity.get("canonical_source") or "")
         if entity_id and not ENTITY_ID_RE.match(entity_id):
             errors.append(f"entities[{index}].entity_id must match ent_[a-z0-9_]+")
+        if "/" in canonical_source:
+            errors.append(f"entities[{index}].canonical_source must not contain '/'")
         if entity.get("entity_type") not in ENTITY_TYPES:
             errors.append(f"entities[{index}].entity_type is invalid")
         if entity_id:
             chapter_entity_ids.add(entity_id)
         _require_str_list(entity, "entities", index, "aliases_source", errors)
         _require_str_list(entity, "entities", index, "aliases_target_vi", errors)
+        _validate_no_plain_pronouns(
+            entity.get("aliases_source") or [],
+            f"entities[{index}].aliases_source",
+            errors,
+        )
 
     allowed_entity_ids = set(known_entity_ids or set()) | chapter_entity_ids
 
@@ -110,6 +143,10 @@ def validate_chapter_output(
             entity_id = relation.get(field)
             if isinstance(entity_id, str) and entity_id not in allowed_entity_ids:
                 errors.append(f"relations[{index}].{field} references unknown entity_id")
+        for field in ["address_a_to_b_vi", "address_b_to_a_vi"]:
+            address = relation.get(field)
+            if isinstance(address, str):
+                _warn_english_address(address, f"relations[{index}].{field}", warnings)
         trigger = relation.get("trigger_block_id")
         if trigger is not None:
             _validate_block_ids(
@@ -128,6 +165,11 @@ def validate_chapter_output(
                 f"mention_surfaces[{index}].entity_id references unknown entity_id"
             )
         _require_str_list(mention, "mention_surfaces", index, "surfaces", errors)
+        _validate_no_plain_pronouns(
+            mention.get("surfaces") or [],
+            f"mention_surfaces[{index}].surfaces",
+            errors,
+        )
 
     for index, motif in enumerate(obj["motifs"]):
         if not isinstance(motif, dict):
@@ -144,6 +186,10 @@ def validate_chapter_output(
         )
 
     return errors
+
+
+def is_plain_pronoun(value: str) -> bool:
+    return value.strip().casefold() in PLAIN_PRONOUNS
 
 
 def _require(
@@ -185,3 +231,27 @@ def _validate_block_ids(
     for block_id in block_ids:
         if isinstance(block_id, str) and block_id not in valid_block_ids:
             errors.append(f"{label} contains unknown block_id: {block_id}")
+
+
+def _validate_no_plain_pronouns(
+    values: list[Any],
+    label: str,
+    errors: list[str],
+) -> None:
+    for value in values:
+        if isinstance(value, str) and is_plain_pronoun(value):
+            errors.append(f"{label} contains plain pronoun: {value}")
+
+
+def _warn_english_address(
+    value: str,
+    label: str,
+    warnings: list[str] | None,
+) -> None:
+    if warnings is None:
+        return
+    ascii_words = ASCII_WORD_RE.findall(value)
+    if ascii_words:
+        warnings.append(
+            f"{label} contains English-looking address token: {ascii_words[0]}"
+        )

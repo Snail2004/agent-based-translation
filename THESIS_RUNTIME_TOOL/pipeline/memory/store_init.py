@@ -6,6 +6,7 @@ from pathlib import Path
 
 BASE_SCHEMA_PATH = Path(__file__).with_name("schema_v2_base.sql")
 MIGRATION_003_PATH = Path(__file__).parent / "migrations" / "003_thesis_runs.sql"
+MIGRATION_004_PATH = Path(__file__).parent / "migrations" / "004_freeze_triggers.sql"
 
 
 def _connect(path: str | Path) -> sqlite3.Connection:
@@ -48,12 +49,17 @@ def _apply_migration_003(connection: sqlite3.Connection) -> None:
     connection.executescript(_read_sql(MIGRATION_003_PATH))
 
 
+def _apply_migration_004(connection: sqlite3.Connection) -> None:
+    connection.executescript(_read_sql(MIGRATION_004_PATH))
+
+
 def init_db(path: str | Path) -> sqlite3.Connection:
     """Create a fresh thesis runtime DB from schema v2 plus migration 003."""
     connection = _connect(path)
     try:
         connection.executescript(_read_sql(BASE_SCHEMA_PATH))
         _apply_migration_003(connection)
+        _apply_migration_004(connection)
         connection.commit()
     except Exception:
         connection.close()
@@ -66,6 +72,7 @@ def migrate_db(path: str | Path) -> sqlite3.Connection:
     connection = _connect(path)
     try:
         _apply_migration_003(connection)
+        _apply_migration_004(connection)
         connection.commit()
     except Exception:
         connection.close()

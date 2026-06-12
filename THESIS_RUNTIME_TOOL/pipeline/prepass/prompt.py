@@ -4,7 +4,10 @@ import re
 from typing import Any
 
 
-def build_messages(chapter: dict[str, Any], registry_so_far_text: str) -> list[dict[str, str]]:
+def build_messages(
+    chapter: dict[str, Any],
+    registry_so_far_text: str,
+) -> list[dict[str, str]]:
     """Build the World Builder messages from stripped source text only."""
 
     system = (
@@ -26,13 +29,26 @@ def build_messages(chapter: dict[str, Any], registry_so_far_text: str) -> list[d
         "- Mention surfaces only store source surfaces; do not invent offsets.\n"
         "- Terms are words or phrases that need book-wide consistency and can drift: "
         "nautical terms, culturally specific objects, special objects, place names, "
-        "or domain-specific phrases. Do not add ordinary words. Negative examples: "
-        "council, chart, terms, bearing. Aim for 5-20 glossary terms per substantial "
-        "chapter. Human/person entities belong in entities, not glossary.\n"
-        "- If the chapter uses first-person narration (I, me, my), create a person "
-        "entity for the narrator. For Treasure Island, use entity_id ent_jim_hawkins, "
-        "canonical_source \"Jim Hawkins / first-person narrator\", aliases_source "
-        "[\"I\", \"me\", \"my\", \"Jim\"], and proposed_target_vi \"Jim Hawkins\".\n"
+        "or domain-specific phrases. Do not add ordinary words or everyday household "
+        "objects. Negative examples: council, chart, terms, bearing, parlor, basin, "
+        "breakfast table, stroke. Aim for 5-20 glossary terms per substantial chapter. "
+        "Human/person entities belong in entities, not glossary.\n"
+        "- If the chapter uses first-person narration, create entity_id ent_narrator. "
+        "If the narrator's name is not explicitly visible in the provided chapter text, "
+        "set canonical_source to \"the narrator\". When a later chapter reveals a name, "
+        "re-emit the SAME entity_id ent_narrator with that visible name as "
+        "canonical_source and add visible aliases.\n"
+        "- Re-emit any existing registry entity that appears again with a new visible "
+        "name, nickname, shortened name, or spelling variant, using the same entity_id.\n"
+        "- mention_surfaces is required for EVERY entity that appears in this chapter, "
+        "including registry entities that return with new surfaces.\n"
+        "- Do not put plain pronouns in aliases_source or mention_surfaces: i, me, my, "
+        "mine, myself, you, your, he, him, his, she, her, hers, it, its, we, us, our, "
+        "they, them, their.\n"
+        "- canonical_source must be one clean source name or label from the text; do "
+        "not join alternatives with slashes.\n"
+        "- address_a_to_b_vi and address_b_to_a_vi must be Vietnamese address terms, "
+        "not mixed English/Vietnamese strings.\n"
         "- Use the visible block markers for block_ids and trigger_block_id.\n\n"
         "Required JSON shape:\n"
         "{\n"
@@ -43,17 +59,17 @@ def build_messages(chapter: dict[str, Any], registry_so_far_text: str) -> list[d
         '"block_ids": ["ch02_b003"]}\n'
         "  ],\n"
         '  "entities": [\n'
-        '    {"entity_id": "ent_jim_hawkins", "canonical_source": "Jim Hawkins", '
-        '"aliases_source": ["Jim"], "entity_type": "person|place|object|other", '
-        '"proposed_target_vi": "Jim Hawkins", "aliases_target_vi": ["Jim"]}\n'
+        '    {"entity_id": "ent_narrator", "canonical_source": "the narrator", '
+        '"aliases_source": ["the narrator"], "entity_type": "person|place|object|other", '
+        '"proposed_target_vi": "nguoi ke chuyen", "aliases_target_vi": ["nguoi ke chuyen"]}\n'
         "  ],\n"
         '  "relations": [\n'
-        '    {"a": "ent_jim_hawkins", "b": "ent_captain", "relation": "...", '
-        '"address_a_to_b_vi": "ông", "address_b_to_a_vi": "cậu bé", '
+        '    {"a": "ent_narrator", "b": "ent_captain", "relation": "...", '
+        '"address_a_to_b_vi": "ong", "address_b_to_a_vi": "cau be", '
         '"state_label": "wary_curiosity", "trigger_block_id": "ch02_b003", "notes": ""}\n'
         "  ],\n"
-        '  "mention_surfaces": [{"entity_id": "ent_jim_hawkins", "surfaces": ["Jim"]}],\n'
-        '  "chapter_summary_vi": "≤150 Vietnamese words",\n'
+        '  "mention_surfaces": [{"entity_id": "ent_narrator", "surfaces": ["the narrator"]}],\n'
+        '  "chapter_summary_vi": "<=150 Vietnamese words",\n'
         '  "motifs": [{"note": "...", "block_ids": ["ch02_b003"]}]\n'
         "}"
     )

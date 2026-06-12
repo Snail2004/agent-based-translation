@@ -8,15 +8,13 @@
       "category": "place",
       "block_ids": [
         "treasure_island_ch02_b003",
-        "treasure_island_ch02_b006",
         "treasure_island_ch02_b010",
-        "treasure_island_ch02_b011",
         "treasure_island_ch02_b018"
       ]
     },
     {
       "source_term": "Treasure Island",
-      "proposed_target_vi": "Đảo Kho Báu",
+      "proposed_target_vi": "Đảo Châu Báu",
       "do_not_translate": false,
       "category": "place",
       "block_ids": [
@@ -24,8 +22,27 @@
       ]
     },
     {
+      "source_term": "sea-chest",
+      "proposed_target_vi": "rương biển",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch02_b004",
+        "treasure_island_ch02_b017"
+      ]
+    },
+    {
+      "source_term": "handbarrow",
+      "proposed_target_vi": "xe cút kít tay",
+      "do_not_translate": false,
+      "category": "object",
+      "block_ids": [
+        "treasure_island_ch02_b004"
+      ]
+    },
+    {
       "source_term": "saber cut",
-      "proposed_target_vi": "vết chém kiếm",
+      "proposed_target_vi": "vết chém kiếm cong",
       "do_not_translate": false,
       "category": "other",
       "block_ids": [
@@ -34,76 +51,26 @@
       ]
     },
     {
-      "source_term": "sea-chest",
-      "proposed_target_vi": "hòm biển",
+      "source_term": "brass telescope",
+      "proposed_target_vi": "ống nhòm bằng đồng",
       "do_not_translate": false,
       "category": "object",
       "block_ids": [
-        "treasure_island_ch02_b004",
-        "treasure_island_ch02_b017",
-        "treasure_island_ch02_b021"
-      ]
-    },
-    {
-      "source_term": "handbarrow",
-      "proposed_target_vi": "xe cút kít",
-      "do_not_translate": false,
-      "category": "object",
-      "block_ids": [
-        "treasure_island_ch02_b004",
-        "treasure_island_ch02_b009"
-      ]
-    },
-    {
-      "source_term": "cove",
-      "proposed_target_vi": "vịnh nhỏ",
-      "do_not_translate": false,
-      "category": "place",
-      "block_ids": [
-        "treasure_island_ch02_b004",
-        "treasure_island_ch02_b007",
         "treasure_island_ch02_b011"
       ]
     },
     {
-      "source_term": "grogshop",
-      "proposed_target_vi": "quán rượu grog",
+      "source_term": "silver fourpenny",
+      "proposed_target_vi": "đồng bốn xu bạc",
       "do_not_translate": false,
-      "category": "cultural",
+      "category": "object",
       "block_ids": [
-        "treasure_island_ch02_b007"
-      ]
-    },
-    {
-      "source_term": "berth",
-      "proposed_target_vi": "chỗ trú",
-      "do_not_translate": false,
-      "category": "other",
-      "block_ids": [
-        "treasure_island_ch02_b009"
-      ]
-    },
-    {
-      "source_term": "Royal George",
-      "proposed_target_vi": "Royal George",
-      "do_not_translate": true,
-      "category": "place",
-      "block_ids": [
-        "treasure_island_ch02_b010"
-      ]
-    },
-    {
-      "source_term": "Bristol",
-      "proposed_target_vi": "Bristol",
-      "do_not_translate": true,
-      "category": "place",
-      "block_ids": [
-        "treasure_island_ch02_b011"
+        "treasure_island_ch02_b012"
       ]
     },
     {
       "source_term": "weather eye",
-      "proposed_target_vi": "để mắt kỹ",
+      "proposed_target_vi": "mắt cảnh giác",
       "do_not_translate": false,
       "category": "other",
       "block_ids": [
@@ -111,21 +78,13 @@
       ]
     },
     {
-      "source_term": "fourpenny",
-      "proposed_target_vi": "bốn xu",
+      "source_term": "seafaring man with one leg",
+      "proposed_target_vi": "người đi biển cụt một chân",
       "do_not_translate": false,
-      "category": "object",
+      "category": "other",
       "block_ids": [
-        "treasure_island_ch02_b012"
-      ]
-    },
-    {
-      "source_term": "Spanish Main",
-      "proposed_target_vi": "vùng biển Tây Ban Nha",
-      "do_not_translate": false,
-      "category": "place",
-      "block_ids": [
-        "treasure_island_ch02_b015"
+        "treasure_island_ch02_b012",
+        "treasure_island_ch02_b013"
       ]
     },
     {
@@ -138,53 +97,82 @@
       ]
     },
     {
-      "source_term": "clasp-knife",
-      "proposed_target_vi": "dao gập",
+      "source_term": "Spanish Main",
+      "proposed_target_vi": "Spanish Main",
+      "do_not_translate": true,
+      "category": "place",
+      "block_ids": [
+        "treasure_island_ch02_b015"
+      ]
+    },
+    {
+      "source_term": "the Dead Man's Chest",
+      "proposed_target_vi": "Rương Người Chết",
+      "do_not_translate": false,
+      "category": "other",
+      "block_ids": [
+        "treasure_island_ch02_b005",
+        "treasure_island_ch02_b019",
+        "treasure_island_ch02_b020",
+        "treasure_island_ch02_b021"
+      ]
+    },
+    {
+      "source_term": "sailor's clasp-knife",
+      "proposed_target_vi": "dao gập của thủy thủ",
       "do_not_translate": false,
       "category": "object",
       "block_ids": [
-        "treasure_island_ch02_b023"
+        "treasure_island_ch02_b023",
+        "treasure_island_ch02_b025"
       ]
     },
     {
       "source_term": "assizes",
-      "proposed_target_vi": "phiên toà lưu động",
+      "proposed_target_vi": "phiên tòa đại hình",
       "do_not_translate": false,
       "category": "cultural",
       "block_ids": [
         "treasure_island_ch02_b025"
       ]
+    },
+    {
+      "source_term": "magistrate",
+      "proposed_target_vi": "quan tư pháp",
+      "do_not_translate": false,
+      "category": "cultural",
+      "block_ids": [
+        "treasure_island_ch02_b027"
+      ]
     }
   ],
   "entities": [
     {
-      "entity_id": "ent_jim_hawkins",
-      "canonical_source": "Jim Hawkins / first-person narrator",
+      "entity_id": "ent_narrator",
+      "canonical_source": "the narrator",
       "aliases_source": [
-        "I",
-        "me",
-        "my",
-        "Jim"
+        "the narrator"
       ],
       "entity_type": "person",
-      "proposed_target_vi": "Jim Hawkins",
+      "proposed_target_vi": "người kể chuyện",
       "aliases_target_vi": [
-        "Jim"
+        "người kể chuyện"
       ]
     },
     {
       "entity_id": "ent_captain",
-      "canonical_source": "the captain / old seaman",
+      "canonical_source": "the captain",
       "aliases_source": [
-        "captain",
         "the captain",
-        "old seaman",
-        "man with one leg"
+        "old fellow",
+        "the ruffian"
       ],
       "entity_type": "person",
       "proposed_target_vi": "thuyền trưởng",
       "aliases_target_vi": [
-        "thuyền trưởng"
+        "thuyền trưởng",
+        "lão già",
+        "tên côn đồ"
       ]
     },
     {
@@ -192,160 +180,188 @@
       "canonical_source": "Doctor Livesey",
       "aliases_source": [
         "Doctor Livesey",
-        "doctor",
         "the doctor"
       ],
       "entity_type": "person",
-      "proposed_target_vi": "Bác sĩ Livesey",
+      "proposed_target_vi": "bác sĩ Livesey",
       "aliases_target_vi": [
-        "bác sĩ"
+        "bác sĩ Livesey",
+        "ông bác sĩ"
       ]
     },
     {
       "entity_id": "ent_squire_trelawney",
       "canonical_source": "Squire Trelawney",
       "aliases_source": [
-        "Squire Trelawney",
-        "Squire"
+        "Squire Trelawney"
       ],
       "entity_type": "person",
-      "proposed_target_vi": "ông Squire Trelawney",
+      "proposed_target_vi": "quý ông Trelawney",
       "aliases_target_vi": [
-        "ông Squire"
+        "quý ông Trelawney"
       ]
     },
     {
-      "entity_id": "ent_jim_father",
-      "canonical_source": "Jim's father",
+      "entity_id": "ent_father",
+      "canonical_source": "my father",
       "aliases_source": [
         "my father",
         "father"
       ],
       "entity_type": "person",
-      "proposed_target_vi": "cha Jim",
+      "proposed_target_vi": "cha tôi",
       "aliases_target_vi": [
+        "cha tôi",
         "cha"
       ]
     },
     {
-      "entity_id": "ent_old_taylor",
-      "canonical_source": "old Taylor, the gardener",
-      "aliases_source": [
-        "old Taylor",
-        "Taylor, the gardener"
-      ],
-      "entity_type": "person",
-      "proposed_target_vi": "ông Taylor",
-      "aliases_target_vi": [
-        "ông Taylor"
-      ]
-    },
-    {
-      "entity_id": "ent_man_with_barrow",
-      "canonical_source": "man who trundled the barrow",
-      "aliases_source": [
-        "the man who trundled the barrow",
-        "man with the barrow"
-      ],
-      "entity_type": "person",
-      "proposed_target_vi": "người đẩy xe cút kít",
-      "aliases_target_vi": [
-        "người đẩy xe"
-      ]
-    },
-    {
       "entity_id": "ent_mother",
-      "canonical_source": "Jim's mother",
+      "canonical_source": "my mother",
       "aliases_source": [
         "my mother",
         "mother"
       ],
       "entity_type": "person",
-      "proposed_target_vi": "mẹ Jim",
+      "proposed_target_vi": "mẹ tôi",
       "aliases_target_vi": [
+        "mẹ tôi",
         "mẹ"
+      ]
+    },
+    {
+      "entity_id": "ent_old_taylor",
+      "canonical_source": "old Taylor",
+      "aliases_source": [
+        "old Taylor"
+      ],
+      "entity_type": "person",
+      "proposed_target_vi": "ông Taylor già",
+      "aliases_target_vi": [
+        "ông Taylor già"
+      ]
+    },
+    {
+      "entity_id": "ent_admiral_benbow_inn",
+      "canonical_source": "Admiral Benbow Inn",
+      "aliases_source": [
+        "the Admiral Benbow",
+        "our house",
+        "the old Benbow"
+      ],
+      "entity_type": "place",
+      "proposed_target_vi": "quán trọ Admiral Benbow",
+      "aliases_target_vi": [
+        "quán trọ Admiral Benbow",
+        "nhà chúng tôi",
+        "Benbow cũ"
+      ]
+    },
+    {
+      "entity_id": "ent_royal_george",
+      "canonical_source": "the Royal George",
+      "aliases_source": [
+        "the Royal George"
+      ],
+      "entity_type": "place",
+      "proposed_target_vi": "Royal George",
+      "aliases_target_vi": [
+        "Royal George"
       ]
     }
   ],
   "relations": [
     {
-      "a": "ent_jim_hawkins",
+      "a": "ent_narrator",
       "b": "ent_captain",
-      "relation": "host_observes_guest_and_fears_him",
+      "relation": "thường xuyên ở chung nhà; narrator dè chừng, captain áp đặt",
       "address_a_to_b_vi": "ông",
-      "address_b_to_a_vi": "cậu bé",
-      "state_label": "fearful_wary_observation",
+      "address_b_to_a_vi": "cậu",
+      "state_label": "wary_curiosity",
       "trigger_block_id": "treasure_island_ch02_b011",
-      "notes": "Giai đoạn đầu: Jim chủ yếu quan sát và sợ hãi; xưng hô nên giữ khách sáo nhưng xa cách."
+      "notes": "Giai đoạn đầu; narrator quan sát và tránh xung đột."
     },
     {
-      "a": "ent_jim_hawkins",
-      "b": "ent_captain",
-      "relation": "warned_to_watch_for_one_legged_seaman",
+      "a": "ent_narrator",
+      "b": "ent_doctor_livesey",
+      "relation": "người kể chứng kiến bác sĩ can thiệp vào xung đột",
       "address_a_to_b_vi": "ông",
-      "address_b_to_a_vi": "thằng bé",
-      "state_label": "coercive_secrecy",
-      "trigger_block_id": "treasure_island_ch02_b012",
-      "notes": "Trong cảnh báo bí mật, giọng điệu của captain thô bạo hơn; bản dịch nên phản ánh sự ép buộc."
+      "address_b_to_a_vi": "cháu",
+      "state_label": "observing_respect",
+      "trigger_block_id": "treasure_island_ch02_b018",
+      "notes": "Tông kính trọng; chưa có xưng hô thân mật."
     },
     {
       "a": "ent_doctor_livesey",
       "b": "ent_captain",
-      "relation": "confronts_and_threatens",
+      "relation": "đối đầu công khai về việc uống rượu và đe dọa bạo lực",
       "address_a_to_b_vi": "ông",
-      "address_b_to_a_vi": "bác sĩ",
-      "state_label": "open_hostility",
+      "address_b_to_a_vi": "ông",
+      "state_label": "open_confrontation",
       "trigger_block_id": "treasure_island_ch02_b022",
-      "notes": "Doctor đứng trên thế công khai, xưng hô chuẩn mực; captain đáp lại kiểu đối đầu nhưng không dùng kính ngữ."
+      "notes": "Bác sĩ dùng giọng lạnh và quyền lực pháp lý."
     },
     {
-      "a": "ent_jim_father",
-      "b": "ent_captain",
-      "relation": "innkeeper_hosts_and_is_intimidated_by_guest",
-      "address_a_to_b_vi": "ông",
-      "address_b_to_a_vi": "ông chủ",
-      "state_label": "submissive_fear",
-      "trigger_block_id": "treasure_island_ch02_b016",
-      "notes": "Cha Jim chịu lép vế; khi dịch lời gọi đáp cần giữ sắc thái nể sợ."
+      "a": "ent_narrator",
+      "b": "ent_father",
+      "relation": "quan hệ cha con",
+      "address_a_to_b_vi": "cha",
+      "address_b_to_a_vi": "con",
+      "state_label": "family_bond",
+      "trigger_block_id": "treasure_island_ch02_b003",
+      "notes": "Nhắc lại quá khứ tại quán trọ."
+    },
+    {
+      "a": "ent_narrator",
+      "b": "ent_mother",
+      "relation": "quan hệ cha con mẹ con trong gia đình",
+      "address_a_to_b_vi": "mẹ",
+      "address_b_to_a_vi": "con",
+      "state_label": "family_bond",
+      "trigger_block_id": "treasure_island_ch02_b018",
+      "notes": "Xuất hiện trong bối cảnh chăm sóc bệnh nhân."
     }
   ],
   "mention_surfaces": [
     {
-      "entity_id": "ent_jim_hawkins",
+      "entity_id": "ent_narrator",
       "surfaces": [
-        "I",
-        "me",
-        "my"
+        "the narrator"
       ]
     },
     {
       "entity_id": "ent_captain",
       "surfaces": [
         "captain",
-        "the captain",
-        "old seaman",
-        "man with one leg"
+        "old fellow",
+        "the ruffian"
       ]
     },
     {
       "entity_id": "ent_doctor_livesey",
       "surfaces": [
         "Doctor Livesey",
-        "doctor"
+        "the doctor"
       ]
     },
     {
       "entity_id": "ent_squire_trelawney",
       "surfaces": [
-        "Squire Trelawney",
-        "Squire"
+        "Squire Trelawney"
       ]
     },
     {
-      "entity_id": "ent_jim_father",
+      "entity_id": "ent_father",
       "surfaces": [
         "my father",
         "father"
+      ]
+    },
+    {
+      "entity_id": "ent_mother",
+      "surfaces": [
+        "my mother",
+        "mother"
       ]
     },
     {
@@ -355,51 +371,46 @@
       ]
     },
     {
-      "entity_id": "ent_man_with_barrow",
+      "entity_id": "ent_admiral_benbow_inn",
       "surfaces": [
-        "the man who trundled the barrow"
+        "Admiral Benbow Inn",
+        "the Admiral Benbow",
+        "our house",
+        "the old Benbow"
       ]
     },
     {
-      "entity_id": "ent_mother",
+      "entity_id": "ent_royal_george",
       "surfaces": [
-        "my mother"
+        "Royal George"
       ]
     }
   ],
-  "chapter_summary_vi": "Jim kể lại thời thơ ấu ở quán trọ Admiral Benbow, nơi một lão thủy thủ dữ tợn đến ở, say rượu, hát hò và ám ảnh cả nhà. Ông ta ép Jim canh chừng người đàn ông một chân, khiến cậu sống trong nỗi sợ hãi. Khi Bác sĩ Livesey tới khám cho cha Jim, ông đối đầu thẳng với lão thủy thủ, làm căng thẳng bùng nổ. Sau đó lão im lặng hơn nhưng vẫn gieo nỗi bất an nặng nề.",
+  "chapter_summary_vi": "Người kể chuyện nhìn lại quán trọ Admiral Benbow thuở cha mình còn sống, khi một lão thủy thủ thô bạo, đầy sẹo, tới trú ngụ với chiếc rương biển và tính nết đáng sợ. Hắn uống rum, hát đi hát lại khúc ca biển, thường xuyên đe dọa mọi người và đặc biệt ám ảnh về “người đi biển cụt một chân”. Hắn sống lặng lẽ nhưng kiểm soát cả quán trọ bằng sự hung hãn và nỗi sợ. Cuối chương, bác sĩ Livesey đối mặt trực diện với hắn sau một cuộc cãi vã căng thẳng.",
   "motifs": [
     {
-      "note": "Rượu rum gắn với bạo lực, say xỉn và sự sa đọa của captain.",
-      "block_ids": [
-        "treasure_island_ch02_b006",
-        "treasure_island_ch02_b011",
-        "treasure_island_ch02_b014",
-        "treasure_island_ch02_b022"
-      ]
-    },
-    {
-      "note": "Bài hát hải tặc lặp đi lặp lại như dấu hiệu ám ảnh và đe dọa.",
-      "block_ids": [
-        "treasure_island_ch02_b005",
-        "treasure_island_ch02_b019",
-        "treasure_island_ch02_b020",
-        "treasure_island_ch02_b021"
-      ]
-    },
-    {
-      "note": "Hình ảnh người đàn ông một chân là nỗi sợ trung tâm, nuôi dưỡng ác mộng của Jim.",
+      "note": "Bóng dáng người đi biển cụt một chân ám ảnh trí nhớ và giấc mơ của người kể.",
       "block_ids": [
         "treasure_island_ch02_b012",
         "treasure_island_ch02_b013"
       ]
     },
     {
-      "note": "Chiếc hòm biển chưa mở và những bí mật chưa lộ ra tạo cảm giác chôn giấu kho báu/nguy cơ.",
+      "note": "Rượu rum gắn với sự hỗn loạn, bạo lực và tiếng hát biển lặp đi lặp lại.",
       "block_ids": [
-        "treasure_island_ch02_b004",
-        "treasure_island_ch02_b017",
-        "treasure_island_ch02_b021"
+        "treasure_island_ch02_b006",
+        "treasure_island_ch02_b014",
+        "treasure_island_ch02_b019",
+        "treasure_island_ch02_b020"
+      ]
+    },
+    {
+      "note": "Sự im lặng căng thẳng và quyền lực cưỡng ép của kẻ mạnh trong không gian quán trọ.",
+      "block_ids": [
+        "treasure_island_ch02_b011",
+        "treasure_island_ch02_b014",
+        "treasure_island_ch02_b026",
+        "treasure_island_ch02_b028"
       ]
     }
   ]

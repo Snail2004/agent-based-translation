@@ -1,0 +1,16 @@
+{
+  "doc_id": "treasure_island",
+  "glossary": 22,
+  "entities": 10,
+  "mentions": 165,
+  "relations": 10,
+  "memory_items": 8,
+  "coverage": {
+    "terms_zero_occurrence": [
+      "sailor's clasp-knife",
+      "the Dead Man's Chest"
+    ],
+    "entities_zero_mention": []
+  },
+  "frozen_at": "2026-06-12T14:53:14.210345+00:00"
+}

@@ -1,6 +1,6 @@
 # TASK_P2_02_span_resolver_persist_freeze — Fix prompt P2-01 + re-run pilot + Span Resolver + persist T1–T4 + FREEZE
 
-- **Status:** READY
+- **Status:** REVIEW
 - **Refs:** THESIS_ARCHITECTURE_LOCK §2.1 (Span Resolver: code tính offset, LLM không
   đếm), §3 (bảng T1–T4: `glossary_entries`, `entities`, `mentions`, `entity_relations`,
   `memory_items`), §3.3 (quy tắc FREEZE), §9 P2; **6 findings bắt buộc vá:
@@ -151,8 +151,88 @@ python -m pytest pipeline/tests/ -v   # toàn bộ pipeline tests vẫn PASS
 
 ## 5. Implementation notes *(CodeX điền)*
 
-—
+- Implemented prompt fixes in `pipeline/prepass/prompt.py`: removed all book/person
+  hardcode, switched first-person narration to generic `ent_narrator`, added re-emit
+  guidance, required mention surfaces for returning registry entities, banned plain
+  pronouns in aliases/surfaces, banned slash-joined canonical names, and tightened
+  termhood negatives (`parlor`, `basin`, `breakfast table`, `stroke`).
+- Extended `pipeline/prepass/schemas.py`: canonical_source containing `/` fails;
+  plain pronouns in `aliases_source` or `mention_surfaces` fail; English-looking
+  address tokens can be emitted as warnings.
+- Updated `pipeline/prepass/runner.py`: tracked report records original usage/cost
+  even for cache hits, while `incremental_cost_usd` records only non-cache cost.
+- Added pure-code span resolver in `pipeline/prepass/span_resolver.py`: NFC text,
+  `re.IGNORECASE`, Unicode word-boundary `(?<!\w)...(?!\w)`, offsets on original
+  `clean_text`, longest surface wins at the same start offset, and coverage warnings
+  for zero-occurrence terms/entities.
+- Added SQLite persist/freeze: `pipeline/prepass/persist.py`,
+  `pipeline/memory/freeze.py`, `pipeline/memory/migrations/004_freeze_triggers.sql`,
+  and `pipeline/scripts/build_memory.py`. Build auto-loads `blocks` if empty,
+  refuses frozen DBs, persists T1-T4, and freezes via DB triggers.
+- Added offline tests in `pipeline/tests/test_span_resolver.py` and
+  `pipeline/tests/test_persist_freeze.py`.
 
-## 6. Review *(Claude điền)*
+Validation:
 
-—
+```bash
+python -m pytest pipeline/tests/test_span_resolver.py pipeline/tests/test_persist_freeze.py -v
+# 8 passed in 4.37s
+
+python -m pipeline.scripts.run_prepass --source data/sources/treasure_island/document.json --chapters ch02 ch03 --out data/prepass/treasure_island_pilot
+# json_fail_rate: 0.0
+# ch02: passed, calls=1, terms=15, entities=9, relations=5, mentions=9, motifs=3
+# ch03: passed, calls=1, terms=7, entities=5, relations=5, mentions=5, motifs=3
+# total_usage: prompt_tokens=8232, completion_tokens=5786, reasoning_tokens=1082
+# cost_usd=0.01363, incremental_cost_usd=0.01363, cache_hits=0
+
+python -m pipeline.scripts.build_memory --source data/sources/treasure_island/document.json --prepass data/prepass/treasure_island_pilot --db data/jobs/treasure_island_p2/memory.sqlite3 --freeze
+# glossary=22, entities=10, mentions=165, relations=10, memory_items=8
+# coverage terms_zero_occurrence=["sailor's clasp-knife", "the Dead Man's Chest"]
+# coverage entities_zero_mention=[]
+# frozen_at=2026-06-12T14:53:14.210345+00:00
+
+python -m pytest pipeline/tests/ -v
+# 37 passed in 12.76s
+```
+
+Spot-checks:
+
+- `treasure_island_ch02.json` no longer contains `Jim` or `Hawkins`; narrator is
+  `ent_narrator` with canonical_source `the narrator`.
+- `treasure_island_ch03.json` may contain `Jim` because the text reveals it; the
+  captain has Bill/Billy/Billy Bones surfaces.
+- ch03 glossary no longer contains `parlor`, `basin`, `breakfast table`, or `stroke`.
+- `data/jobs/treasure_island_p2/memory.sqlite3` is under gitignored `data/jobs/`;
+  tracked build report is `data/reports/memory_build_pilot.json`.
+
+## 6. Review *(Claude điền — 2026-06-12)*
+
+- **Verdict: PASS — Phase P2 (pilot) HOÀN THÀNH** (deliverable LOCK §9 P2 đạt:
+  registry T1–T4 trên 2 chương TI trong SQLite, json_fail 0.0 < 5%) → tag `P2-done`.
+- Tự chạy lại: 37/37 pipeline tests; đọc đầy đủ span_resolver.py / persist.py /
+  freeze.py / 004_freeze_triggers.sql; xác minh artifact + report + DB thật.
+- **Bằng chứng tự học (Directional Lock — quan trọng cho luận văn):** ch02 narrator
+  = `ent_narrator` / "the narrator", KHÔNG còn Jim/Hawkins (đã grep); ch03 re-emit
+  CÙNG entity_id với canonical "Jim" — tên học TỪ VĂN BẢN (b033 "Jim," says he);
+  captain nhận surfaces mới Bill / Billy Bones / Mr. Bones / Master Billy Bones.
+  Finding #1 (P2-01) đóng đúng cách.
+- **FREEZE probe trên DB thật (không chỉ tin test):** INSERT glossary_entries và
+  UPDATE entities → `IntegrityError: memory frozen (LOCK §3.3)`; translation_runs
+  vẫn ghi được; bonus phát hiện schema có CHECK `config IN ('S0'..'SLC')` hoạt động.
+  FREEZE giờ là ràng buộc vật lý, kể cả UI app/ sau này cũng không sửa được memory.
+- **Relations timeline xác minh trên DB:** valid_from/valid_to nối đúng XUYÊN chương
+  theo order_index (vd captain↔narrator: wary_curiosity ch02_b011 → ch03_b004, rồi
+  tense_obedience ch03_b005 → NULL). Đây chính là cấu trúc xưng hô động cần cho S3.
+- **Root cause 2 term zero-occurrence (tự điều tra):** văn bản chỉ dùng apostrophe
+  cong U+2019 (’), LLM viết ASCII (') → "sailor's clasp-knife" / "the Dead Man's
+  Chest" không match. Coverage report bắt đúng như thiết kế. **Follow-up nhỏ cho task
+  kế:** normalize apostrophe (’→') hai phía trong `_find_word_boundary_matches` (và
+  cân nhắc đồng bộ trong `eval/consistency.py` để hai thước đo cùng triết lý).
+- Findings nhỏ không chặn: (1) dedupe mention theo (block, char_start) — surface lồng
+  nhau khác điểm bắt đầu (vd "Benbow" trong "Admiral Benbow") vẫn có thể đếm đôi,
+  hiếm và vô hại ở pilot; (2) reasoning_tokens tăng 182→1.082 do prompt chặt hơn —
+  chi phí vẫn ~$0,014/2 chương, không đáng kể; (3) persist gán confidence cố định
+  (0.7/0.75) — chấp nhận, LLM không trả confidence đáng tin.
+- Kết quả persist: glossary 22, entities 10, mentions 165, relations 10 (timeline),
+  memory_items 8 (2 summary + 6 motif). Memory ĐÓNG BĂNG, sẵn sàng làm nguồn
+  retrieval cho P3/P4.
