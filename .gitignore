@@ -4,6 +4,10 @@ __pycache__/
 .venv/
 .env
 
+# Secrets — KHÔNG BAO GIỜ commit
+API-KEY.txt
+*.key
+
 # AI-LAB track — KHÔNG thuộc thesis repo (two-tracks separation)
 AILAB_HANDOFF/
 ailab/
