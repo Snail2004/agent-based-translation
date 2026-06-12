@@ -1,0 +1,651 @@
+{
+  "scored_at": "2026-06-12T18:17:40.050728+00:00",
+  "ruler": {
+    "registry": "frozen_p2",
+    "provider": "span_resolver+apostrophe_safe_adapter",
+    "metric_version": "consistency_v1"
+  },
+  "s0": {
+    "project": "thesis_exp_pilot_p3_S0",
+    "scored_at": "2026-06-12T18:17:40.050728+00:00",
+    "source": "thesis_exp_pilot_p3_S0:frozen_p2_registry + span_resolver",
+    "metric_version": "consistency_v1",
+    "tar": {
+      "overall": 0.41509433962264153,
+      "pairs": 53,
+      "occurrence_weighted": 0.38596491228070173,
+      "per_chapter": {
+        "ch02": 0.38235294117647056,
+        "ch03": 0.47368421052631576
+      },
+      "worst_terms": [
+        {
+          "term": "cutlass",
+          "rate": 0.0,
+          "pairs": 3
+        },
+        {
+          "term": "the Dead Man's Chest",
+          "rate": 0.0,
+          "pairs": 3
+        },
+        {
+          "term": "brass telescope",
+          "rate": 0.0,
+          "pairs": 2
+        },
+        {
+          "term": "saber cut",
+          "rate": 0.0,
+          "pairs": 2
+        },
+        {
+          "term": "seafaring man with one leg",
+          "rate": 0.0,
+          "pairs": 2
+        },
+        {
+          "term": "assizes",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "handbarrow",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "lancet",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "magistrate",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "sailor's clasp-knife",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "signboard of Admiral Benbow",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "silver fourpenny",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "weather eye",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "sea-chest",
+          "rate": 0.5,
+          "pairs": 2
+        },
+        {
+          "term": "rum",
+          "rate": 0.5263157894736842,
+          "pairs": 19
+        }
+      ]
+    },
+    "fvr": {
+      "overall": 0.0,
+      "violations": []
+    },
+    "ecs": {
+      "overall": 0.7555555555555555,
+      "entities_scored": 10,
+      "entities_skipped": 0,
+      "per_entity": [
+        {
+          "entity": "Billy Bones",
+          "entity_id": "ent_captain",
+          "coverage": 0.8,
+          "name_mention_blocks": 35,
+          "forms_used": {
+            "Billy Bones": 2,
+            "lão già": 1,
+            "thuyền trưởng": 28,
+            "ông Bones": 1
+          }
+        },
+        {
+          "entity": "Doctor Livesey",
+          "entity_id": "ent_doctor_livesey",
+          "coverage": 0.35294117647058826,
+          "name_mention_blocks": 17,
+          "forms_used": {
+            "bác sĩ Livesey": 7
+          }
+        },
+        {
+          "entity": "my father",
+          "entity_id": "ent_father",
+          "coverage": 1.0,
+          "name_mention_blocks": 11,
+          "forms_used": {
+            "cha": 12,
+            "cha tôi": 8
+          }
+        },
+        {
+          "entity": "Black Dog",
+          "entity_id": "ent_black_dog",
+          "coverage": 1.0,
+          "name_mention_blocks": 9,
+          "forms_used": {
+            "Black Dog": 9
+          }
+        },
+        {
+          "entity": "Admiral Benbow Inn",
+          "entity_id": "ent_admiral_benbow_inn",
+          "coverage": 0.6666666666666666,
+          "name_mention_blocks": 6,
+          "forms_used": {
+            "Benbow cũ": 1,
+            "nhà chúng tôi": 2,
+            "quán trọ Admiral Benbow": 2
+          }
+        },
+        {
+          "entity": "Mrs. Hawkins",
+          "entity_id": "ent_mother",
+          "coverage": 1.0,
+          "name_mention_blocks": 6,
+          "forms_used": {
+            "bà Hawkins": 1,
+            "mẹ": 6,
+            "mẹ tôi": 4
+          }
+        },
+        {
+          "entity": "Jim",
+          "entity_id": "ent_narrator",
+          "coverage": 1.0,
+          "name_mention_blocks": 3,
+          "forms_used": {
+            "Jim": 3
+          }
+        },
+        {
+          "entity": "Squire Trelawney",
+          "entity_id": "ent_squire_trelawney",
+          "coverage": 0.0,
+          "name_mention_blocks": 1,
+          "forms_used": {}
+        },
+        {
+          "entity": "old Taylor",
+          "entity_id": "ent_old_taylor",
+          "coverage": 0.0,
+          "name_mention_blocks": 1,
+          "forms_used": {}
+        },
+        {
+          "entity": "the Royal George",
+          "entity_id": "ent_royal_george",
+          "coverage": 1.0,
+          "name_mention_blocks": 1,
+          "forms_used": {
+            "Royal George": 1
+          }
+        }
+      ],
+      "lowest_coverage": [
+        {
+          "entity": "Squire Trelawney",
+          "entity_id": "ent_squire_trelawney",
+          "coverage": 0.0,
+          "name_mention_blocks": 1,
+          "forms_used": {}
+        },
+        {
+          "entity": "old Taylor",
+          "entity_id": "ent_old_taylor",
+          "coverage": 0.0,
+          "name_mention_blocks": 1,
+          "forms_used": {}
+        },
+        {
+          "entity": "Doctor Livesey",
+          "entity_id": "ent_doctor_livesey",
+          "coverage": 0.35294117647058826,
+          "name_mention_blocks": 17,
+          "forms_used": {
+            "bác sĩ Livesey": 7
+          }
+        },
+        {
+          "entity": "Admiral Benbow Inn",
+          "entity_id": "ent_admiral_benbow_inn",
+          "coverage": 0.6666666666666666,
+          "name_mention_blocks": 6,
+          "forms_used": {
+            "Benbow cũ": 1,
+            "nhà chúng tôi": 2,
+            "quán trọ Admiral Benbow": 2
+          }
+        },
+        {
+          "entity": "Billy Bones",
+          "entity_id": "ent_captain",
+          "coverage": 0.8,
+          "name_mention_blocks": 35,
+          "forms_used": {
+            "Billy Bones": 2,
+            "lão già": 1,
+            "thuyền trưởng": 28,
+            "ông Bones": 1
+          }
+        },
+        {
+          "entity": "my father",
+          "entity_id": "ent_father",
+          "coverage": 1.0,
+          "name_mention_blocks": 11,
+          "forms_used": {
+            "cha": 12,
+            "cha tôi": 8
+          }
+        },
+        {
+          "entity": "Black Dog",
+          "entity_id": "ent_black_dog",
+          "coverage": 1.0,
+          "name_mention_blocks": 9,
+          "forms_used": {
+            "Black Dog": 9
+          }
+        },
+        {
+          "entity": "Mrs. Hawkins",
+          "entity_id": "ent_mother",
+          "coverage": 1.0,
+          "name_mention_blocks": 6,
+          "forms_used": {
+            "bà Hawkins": 1,
+            "mẹ": 6,
+            "mẹ tôi": 4
+          }
+        },
+        {
+          "entity": "Jim",
+          "entity_id": "ent_narrator",
+          "coverage": 1.0,
+          "name_mention_blocks": 3,
+          "forms_used": {
+            "Jim": 3
+          }
+        },
+        {
+          "entity": "the Royal George",
+          "entity_id": "ent_royal_george",
+          "coverage": 1.0,
+          "name_mention_blocks": 1,
+          "forms_used": {
+            "Royal George": 1
+          }
+        }
+      ],
+      "limitation": "ECS v1 measures approved-form coverage only. It does not detect unregistered wrong forms directly; a suspicious entity is surfaced when no approved form appears in a target block that has a source name mention."
+    },
+    "inspection": {
+      "lowest_tar_blocks": [
+        "treasure_island_ch02_b012",
+        "treasure_island_ch02_b005",
+        "treasure_island_ch02_b014",
+        "treasure_island_ch02_b019",
+        "treasure_island_ch02_b007",
+        "treasure_island_ch02_b018",
+        "treasure_island_ch02_b020",
+        "treasure_island_ch02_b021",
+        "treasure_island_ch02_b023",
+        "treasure_island_ch02_b025"
+      ],
+      "lowest_ecs_entities": [
+        "Squire Trelawney",
+        "old Taylor",
+        "Doctor Livesey",
+        "Admiral Benbow Inn",
+        "Billy Bones",
+        "my father",
+        "Black Dog",
+        "Mrs. Hawkins",
+        "Jim",
+        "the Royal George"
+      ]
+    }
+  },
+  "oracle_same_ruler": {
+    "project": "oracle_preview_same_ruler",
+    "scored_at": "2026-06-12T18:17:40.086380+00:00",
+    "source": "oracle_preview",
+    "metric_version": "consistency_v1",
+    "tar": {
+      "overall": 0.6226415094339622,
+      "pairs": 53,
+      "occurrence_weighted": 0.631578947368421,
+      "per_chapter": {
+        "ch02": 0.6176470588235294,
+        "ch03": 0.631578947368421
+      },
+      "worst_terms": [
+        {
+          "term": "cutlass",
+          "rate": 0.0,
+          "pairs": 3
+        },
+        {
+          "term": "Admiral Benbow Inn",
+          "rate": 0.0,
+          "pairs": 2
+        },
+        {
+          "term": "saber cut",
+          "rate": 0.0,
+          "pairs": 2
+        },
+        {
+          "term": "sea-chest",
+          "rate": 0.0,
+          "pairs": 2
+        },
+        {
+          "term": "seafaring man with one leg",
+          "rate": 0.0,
+          "pairs": 2
+        },
+        {
+          "term": "Treasure Island",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "handbarrow",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "lancet",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "magistrate",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "sailor's clasp-knife",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "signboard of Admiral Benbow",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "the beach",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "weather eye",
+          "rate": 0.0,
+          "pairs": 1
+        },
+        {
+          "term": "cove",
+          "rate": 0.8,
+          "pairs": 5
+        },
+        {
+          "term": "rum",
+          "rate": 1.0,
+          "pairs": 19
+        }
+      ]
+    },
+    "fvr": {
+      "overall": 0.0,
+      "violations": []
+    },
+    "ecs": {
+      "overall": 0.7666666666666667,
+      "entities_scored": 10,
+      "entities_skipped": 0,
+      "per_entity": [
+        {
+          "entity": "Billy Bones",
+          "entity_id": "ent_captain",
+          "coverage": 0.8285714285714286,
+          "name_mention_blocks": 35,
+          "forms_used": {
+            "Billy Bones": 2,
+            "lão già": 1,
+            "thuyền trưởng": 28,
+            "tên côn đồ": 1,
+            "ông Bones": 1
+          }
+        },
+        {
+          "entity": "Doctor Livesey",
+          "entity_id": "ent_doctor_livesey",
+          "coverage": 0.35294117647058826,
+          "name_mention_blocks": 17,
+          "forms_used": {
+            "bác sĩ Livesey": 7,
+            "ông bác sĩ": 1
+          }
+        },
+        {
+          "entity": "my father",
+          "entity_id": "ent_father",
+          "coverage": 1.0,
+          "name_mention_blocks": 11,
+          "forms_used": {
+            "cha": 15,
+            "cha tôi": 11
+          }
+        },
+        {
+          "entity": "Black Dog",
+          "entity_id": "ent_black_dog",
+          "coverage": 1.0,
+          "name_mention_blocks": 9,
+          "forms_used": {
+            "Black Dog": 10
+          }
+        },
+        {
+          "entity": "Admiral Benbow Inn",
+          "entity_id": "ent_admiral_benbow_inn",
+          "coverage": 0.6666666666666666,
+          "name_mention_blocks": 6,
+          "forms_used": {
+            "Benbow cũ": 1,
+            "nhà chúng tôi": 3
+          }
+        },
+        {
+          "entity": "Mrs. Hawkins",
+          "entity_id": "ent_mother",
+          "coverage": 1.0,
+          "name_mention_blocks": 6,
+          "forms_used": {
+            "bà Hawkins": 1,
+            "mẹ": 6,
+            "mẹ tôi": 5
+          }
+        },
+        {
+          "entity": "Jim",
+          "entity_id": "ent_narrator",
+          "coverage": 1.0,
+          "name_mention_blocks": 3,
+          "forms_used": {
+            "Jim": 3
+          }
+        },
+        {
+          "entity": "Squire Trelawney",
+          "entity_id": "ent_squire_trelawney",
+          "coverage": 0.0,
+          "name_mention_blocks": 1,
+          "forms_used": {}
+        },
+        {
+          "entity": "old Taylor",
+          "entity_id": "ent_old_taylor",
+          "coverage": 0.0,
+          "name_mention_blocks": 1,
+          "forms_used": {}
+        },
+        {
+          "entity": "the Royal George",
+          "entity_id": "ent_royal_george",
+          "coverage": 1.0,
+          "name_mention_blocks": 1,
+          "forms_used": {
+            "Royal George": 1
+          }
+        }
+      ],
+      "lowest_coverage": [
+        {
+          "entity": "Squire Trelawney",
+          "entity_id": "ent_squire_trelawney",
+          "coverage": 0.0,
+          "name_mention_blocks": 1,
+          "forms_used": {}
+        },
+        {
+          "entity": "old Taylor",
+          "entity_id": "ent_old_taylor",
+          "coverage": 0.0,
+          "name_mention_blocks": 1,
+          "forms_used": {}
+        },
+        {
+          "entity": "Doctor Livesey",
+          "entity_id": "ent_doctor_livesey",
+          "coverage": 0.35294117647058826,
+          "name_mention_blocks": 17,
+          "forms_used": {
+            "bác sĩ Livesey": 7,
+            "ông bác sĩ": 1
+          }
+        },
+        {
+          "entity": "Admiral Benbow Inn",
+          "entity_id": "ent_admiral_benbow_inn",
+          "coverage": 0.6666666666666666,
+          "name_mention_blocks": 6,
+          "forms_used": {
+            "Benbow cũ": 1,
+            "nhà chúng tôi": 3
+          }
+        },
+        {
+          "entity": "Billy Bones",
+          "entity_id": "ent_captain",
+          "coverage": 0.8285714285714286,
+          "name_mention_blocks": 35,
+          "forms_used": {
+            "Billy Bones": 2,
+            "lão già": 1,
+            "thuyền trưởng": 28,
+            "tên côn đồ": 1,
+            "ông Bones": 1
+          }
+        },
+        {
+          "entity": "my father",
+          "entity_id": "ent_father",
+          "coverage": 1.0,
+          "name_mention_blocks": 11,
+          "forms_used": {
+            "cha": 15,
+            "cha tôi": 11
+          }
+        },
+        {
+          "entity": "Black Dog",
+          "entity_id": "ent_black_dog",
+          "coverage": 1.0,
+          "name_mention_blocks": 9,
+          "forms_used": {
+            "Black Dog": 10
+          }
+        },
+        {
+          "entity": "Mrs. Hawkins",
+          "entity_id": "ent_mother",
+          "coverage": 1.0,
+          "name_mention_blocks": 6,
+          "forms_used": {
+            "bà Hawkins": 1,
+            "mẹ": 6,
+            "mẹ tôi": 5
+          }
+        },
+        {
+          "entity": "Jim",
+          "entity_id": "ent_narrator",
+          "coverage": 1.0,
+          "name_mention_blocks": 3,
+          "forms_used": {
+            "Jim": 3
+          }
+        },
+        {
+          "entity": "the Royal George",
+          "entity_id": "ent_royal_george",
+          "coverage": 1.0,
+          "name_mention_blocks": 1,
+          "forms_used": {
+            "Royal George": 1
+          }
+        }
+      ],
+      "limitation": "ECS v1 measures approved-form coverage only. It does not detect unregistered wrong forms directly; a suspicious entity is surfaced when no approved form appears in a target block that has a source name mention."
+    },
+    "inspection": {
+      "lowest_tar_blocks": [
+        "treasure_island_ch02_b003",
+        "treasure_island_ch02_b007",
+        "treasure_island_ch02_b023",
+        "treasure_island_ch02_b027",
+        "treasure_island_ch03_b005",
+        "treasure_island_ch03_b017",
+        "treasure_island_ch03_b024",
+        "treasure_island_ch03_b031",
+        "treasure_island_ch03_b044",
+        "treasure_island_ch02_b004"
+      ],
+      "lowest_ecs_entities": [
+        "Squire Trelawney",
+        "old Taylor",
+        "Doctor Livesey",
+        "Admiral Benbow Inn",
+        "Billy Bones",
+        "my father",
+        "Black Dog",
+        "Mrs. Hawkins",
+        "Jim",
+        "the Royal George"
+      ]
+    }
+  },
+  "note": "FVR is always 0 because thesis registry has no forbidden_variants (this is not a bug — registry thesis does not populate forbidden list)."
+}

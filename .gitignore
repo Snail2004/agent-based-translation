@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 .env
+.pytest_cache/
 
 # Secrets — KHÔNG BAO GIỜ commit
 API-KEY.txt
