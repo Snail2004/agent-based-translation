@@ -26,5 +26,5 @@
 |---|---|---|---|---|---|
 | P0-01 | Vệ sinh clone + skeleton pipeline/ + migration schema v3 | DONE | `P0-01:` (xem git log) | PASS (Claude, 2026-06-12) | 4/4 migration + 88/88 smoke; DDL khớp spec |
 | P0-02 | LLM client: pin model + seed + reasoning_effort + replay cache + quota | DONE | `P0-02:` (xem git log) | PASS (Claude, 2026-06-12) | 11/11 tests; chặn alias latest từ config; **P0 hoàn thành** |
-| P1-01 | Nguồn TI sạch (strip annotations) + loader document.json → blocks | READY | — | — | Spec: TASK_P1_01_ingest_document_loader.md; giữ trục block_id trùng oracle |
-| EV-01 | Module TAR/ECS/FVR + đo lần đầu trên oracle output | READY | — | — | Spec: TASK_EV_01_consistency_metrics.md; **ưu tiên trước P1-01** (số cho GVHD); read-only AILAB_HANDOFF |
+| P1-01 | Nguồn TI sạch (strip annotations) + loader document.json → blocks | REVIEW | — | — | Implemented by CodeX; source stripped; 6/6 loader + 23/23 pipeline tests pass |
+| EV-01 | Module TAR/ECS/FVR + đo lần đầu trên oracle output | DONE | `EV-01:` (xem git log) | PASS (Claude, 2026-06-12) | 23/23 tests; **số đầu tiên: TAR 0.8866 / FVR 0.0 / ECS 0.9195**; 3 caveat đọc số ghi ở §6 task (Jim=artifact narrator, glossary termhood, occurrence provider) |

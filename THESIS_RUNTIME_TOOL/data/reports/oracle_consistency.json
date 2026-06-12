@@ -1,0 +1,472 @@
+{
+  "project": "treasure_island",
+  "scored_at": "2026-06-11T20:40:33.273448+00:00",
+  "source": "oracle_gpt55_preview",
+  "metric_version": "consistency_v1",
+  "tar": {
+    "overall": 0.8865598027127004,
+    "pairs": 811,
+    "occurrence_weighted": 0.8882211538461539,
+    "per_chapter": {
+      "ch01": 1.0,
+      "ch02": 0.9285714285714286,
+      "ch03": 1.0,
+      "ch04": 0.9333333333333333,
+      "ch05": 1.0,
+      "ch06": 1.0,
+      "ch07": 1.0,
+      "ch08": 1.0,
+      "ch09": 0.9444444444444444,
+      "ch10": 0.875,
+      "ch11": 0.96875,
+      "ch12": 0.8947368421052632,
+      "ch13": 0.9130434782608695,
+      "ch14": 0.8823529411764706,
+      "ch15": 1.0,
+      "ch16": 0.9444444444444444,
+      "ch17": 1.0,
+      "ch18": 1.0,
+      "ch19": 0.0,
+      "ch20": 1.0,
+      "ch21": 0.95,
+      "ch22": 1.0,
+      "ch23": 0.9285714285714286,
+      "ch24": 0.5357142857142857,
+      "ch25": 0.8571428571428571,
+      "ch26": 0.0,
+      "ch27": 0.96,
+      "ch28": 0.9411764705882353,
+      "ch29": 0.8529411764705882,
+      "ch30": 0.8888888888888888,
+      "ch31": 0.8571428571428571,
+      "ch32": 0.8076923076923077,
+      "ch33": 0.0,
+      "ch34": 0.7931034482758621,
+      "ch35": 0.8571428571428571,
+      "ch36": 0.84375,
+      "ch37": 0.6842105263157895,
+      "ch38": 0.92,
+      "ch39": 0.8636363636363636,
+      "ch40": 0.8571428571428571
+    },
+    "worst_terms": [
+      {
+        "term": "council",
+        "rate": 0.0,
+        "pairs": 3
+      },
+      {
+        "term": "overboard",
+        "rate": 0.0,
+        "pairs": 3
+      },
+      {
+        "term": "terms",
+        "rate": 0.0,
+        "pairs": 3
+      },
+      {
+        "term": "bearing",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "chart",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "gentlemen o’ fortune",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "hand over hand",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "porch",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "rope’s end",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "swell",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "tall trees",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "truantry",
+        "rate": 0.0,
+        "pairs": 2
+      },
+      {
+        "term": "All’s well",
+        "rate": 0.0,
+        "pairs": 1
+      },
+      {
+        "term": "anchor was short up",
+        "rate": 0.0,
+        "pairs": 1
+      },
+      {
+        "term": "bated breath",
+        "rate": 0.0,
+        "pairs": 1
+      }
+    ]
+  },
+  "fvr": {
+    "overall": 0.0,
+    "violations": []
+  },
+  "ecs": {
+    "overall": 0.919496855345912,
+    "entities_scored": 58,
+    "entities_skipped": 0,
+    "per_entity": [
+      {
+        "entity": "Long John Silver",
+        "entity_id": "e_008",
+        "coverage": 1.0,
+        "name_mention_blocks": 149,
+        "forms_used": {
+          "Long John": 27,
+          "Long John Silver": 5,
+          "Silver": 138,
+          "người đi biển một chân": 2
+        }
+      },
+      {
+        "entity": "Doctor Livesey",
+        "entity_id": "e_002",
+        "coverage": 0.9746835443037974,
+        "name_mention_blocks": 79,
+        "forms_used": {
+          "bác sĩ": 94,
+          "bác sĩ Livesey": 38
+        }
+      },
+      {
+        "entity": "Jim Hawkins",
+        "entity_id": "e_014",
+        "coverage": 0.19298245614035087,
+        "name_mention_blocks": 57,
+        "forms_used": {
+          "Jim Hawkins": 11
+        }
+      },
+      {
+        "entity": "Hispaniola",
+        "entity_id": "e_032",
+        "coverage": 1.0,
+        "name_mention_blocks": 45,
+        "forms_used": {
+          "Hispaniola": 48,
+          "tàu Hispaniola": 41
+        }
+      },
+      {
+        "entity": "Ben Gunn",
+        "entity_id": "e_046",
+        "coverage": 1.0,
+        "name_mention_blocks": 38,
+        "forms_used": {
+          "Ben Gunn": 38,
+          "Benjamin Gunn": 1,
+          "Gunn": 41,
+          "người bị bỏ lại": 6
+        }
+      },
+      {
+        "entity": "Squire Trelawney",
+        "entity_id": "e_001",
+        "coverage": 0.7941176470588235,
+        "name_mention_blocks": 34,
+        "forms_used": {
+          "ngài Trelawney": 11,
+          "ngài địa chủ": 20
+        }
+      },
+      {
+        "entity": "Abraham Gray",
+        "entity_id": "e_047",
+        "coverage": 1.0,
+        "name_mention_blocks": 31,
+        "forms_used": {
+          "Abraham Gray": 3,
+          "Gray": 33
+        }
+      },
+      {
+        "entity": "Israel Hands",
+        "entity_id": "e_039",
+        "coverage": 1.0,
+        "name_mention_blocks": 31,
+        "forms_used": {
+          "Hands": 27,
+          "Israel Hands": 8,
+          "viên lái trưởng": 9
+        }
+      },
+      {
+        "entity": "old Flint",
+        "entity_id": "e_017",
+        "coverage": 1.0,
+        "name_mention_blocks": 26,
+        "forms_used": {
+          "Flint": 39,
+          "lão Flint": 3
+        }
+      },
+      {
+        "entity": "Captain Smollett",
+        "entity_id": "e_037",
+        "coverage": 1.0,
+        "name_mention_blocks": 25,
+        "forms_used": {
+          "Smollett": 25,
+          "thuyền trưởng Smollett": 24
+        }
+      },
+      {
+        "entity": "Tom Morgan",
+        "entity_id": "e_036",
+        "coverage": 1.0,
+        "name_mention_blocks": 21,
+        "forms_used": {
+          "Morgan": 22,
+          "Tom Morgan": 4
+        }
+      },
+      {
+        "entity": "Dick",
+        "entity_id": "e_041",
+        "coverage": 0.9444444444444444,
+        "name_mention_blocks": 18,
+        "forms_used": {
+          "Dick": 20
+        }
+      },
+      {
+        "entity": "The Spy-glass",
+        "entity_id": "e_026",
+        "coverage": 1.0,
+        "name_mention_blocks": 18,
+        "forms_used": {
+          "Đồi Ống Nhòm": 18
+        }
+      },
+      {
+        "entity": "Ben Gunn’s boat",
+        "entity_id": "e_048",
+        "coverage": 0.9375,
+        "name_mention_blocks": 16,
+        "forms_used": {
+          "chiếc coracle": 16
+        }
+      },
+      {
+        "entity": "George Merry",
+        "entity_id": "e_054",
+        "coverage": 0.9375,
+        "name_mention_blocks": 16,
+        "forms_used": {
+          "George": 18,
+          "George Merry": 7
+        }
+      }
+    ],
+    "lowest_coverage": [
+      {
+        "entity": "Jim Hawkins",
+        "entity_id": "e_014",
+        "coverage": 0.19298245614035087,
+        "name_mention_blocks": 57,
+        "forms_used": {
+          "Jim Hawkins": 11
+        }
+      },
+      {
+        "entity": "Squire Trelawney",
+        "entity_id": "e_001",
+        "coverage": 0.7941176470588235,
+        "name_mention_blocks": 34,
+        "forms_used": {
+          "ngài Trelawney": 11,
+          "ngài địa chủ": 20
+        }
+      },
+      {
+        "entity": "the captain",
+        "entity_id": "e_005",
+        "coverage": 0.8,
+        "name_mention_blocks": 10,
+        "forms_used": {
+          "lão thuyền trưởng": 7,
+          "lão thủy thủ": 3
+        }
+      },
+      {
+        "entity": "Jim Hawkins's mother",
+        "entity_id": "e_004",
+        "coverage": 0.8571428571428571,
+        "name_mention_blocks": 14,
+        "forms_used": {
+          "mẹ tôi": 13
+        }
+      },
+      {
+        "entity": "the blind man",
+        "entity_id": "e_016",
+        "coverage": 0.875,
+        "name_mention_blocks": 8,
+        "forms_used": {
+          "gã ăn mày mù": 4,
+          "người mù": 6
+        }
+      },
+      {
+        "entity": "O’Brien",
+        "entity_id": "e_052",
+        "coverage": 0.9,
+        "name_mention_blocks": 10,
+        "forms_used": {
+          "O’Brien": 7,
+          "gã mũ đỏ": 2
+        }
+      },
+      {
+        "entity": "Ben Gunn’s boat",
+        "entity_id": "e_048",
+        "coverage": 0.9375,
+        "name_mention_blocks": 16,
+        "forms_used": {
+          "chiếc coracle": 16
+        }
+      },
+      {
+        "entity": "George Merry",
+        "entity_id": "e_054",
+        "coverage": 0.9375,
+        "name_mention_blocks": 16,
+        "forms_used": {
+          "George": 18,
+          "George Merry": 7
+        }
+      },
+      {
+        "entity": "Dick",
+        "entity_id": "e_041",
+        "coverage": 0.9444444444444444,
+        "name_mention_blocks": 18,
+        "forms_used": {
+          "Dick": 20
+        }
+      },
+      {
+        "entity": "Doctor Livesey",
+        "entity_id": "e_002",
+        "coverage": 0.9746835443037974,
+        "name_mention_blocks": 79,
+        "forms_used": {
+          "bác sĩ": 94,
+          "bác sĩ Livesey": 38
+        }
+      },
+      {
+        "entity": "Long John Silver",
+        "entity_id": "e_008",
+        "coverage": 1.0,
+        "name_mention_blocks": 149,
+        "forms_used": {
+          "Long John": 27,
+          "Long John Silver": 5,
+          "Silver": 138,
+          "người đi biển một chân": 2
+        }
+      },
+      {
+        "entity": "Hispaniola",
+        "entity_id": "e_032",
+        "coverage": 1.0,
+        "name_mention_blocks": 45,
+        "forms_used": {
+          "Hispaniola": 48,
+          "tàu Hispaniola": 41
+        }
+      },
+      {
+        "entity": "Ben Gunn",
+        "entity_id": "e_046",
+        "coverage": 1.0,
+        "name_mention_blocks": 38,
+        "forms_used": {
+          "Ben Gunn": 38,
+          "Benjamin Gunn": 1,
+          "Gunn": 41,
+          "người bị bỏ lại": 6
+        }
+      },
+      {
+        "entity": "Abraham Gray",
+        "entity_id": "e_047",
+        "coverage": 1.0,
+        "name_mention_blocks": 31,
+        "forms_used": {
+          "Abraham Gray": 3,
+          "Gray": 33
+        }
+      },
+      {
+        "entity": "Israel Hands",
+        "entity_id": "e_039",
+        "coverage": 1.0,
+        "name_mention_blocks": 31,
+        "forms_used": {
+          "Hands": 27,
+          "Israel Hands": 8,
+          "viên lái trưởng": 9
+        }
+      }
+    ],
+    "limitation": "ECS v1 measures approved-form coverage only. It does not detect unregistered wrong forms directly; a suspicious entity is surfaced when no approved form appears in a target block that has a source name mention."
+  },
+  "inspection": {
+    "lowest_tar_blocks": [
+      "treasure_island_ch37_b004",
+      "treasure_island_ch24_b009",
+      "treasure_island_ch32_b014",
+      "treasure_island_ch04_b034",
+      "treasure_island_ch09_b018",
+      "treasure_island_ch10_b029",
+      "treasure_island_ch12_b016",
+      "treasure_island_ch13_b030",
+      "treasure_island_ch13_b031",
+      "treasure_island_ch14_b006"
+    ],
+    "lowest_ecs_entities": [
+      "Jim Hawkins",
+      "Squire Trelawney",
+      "the captain",
+      "Jim Hawkins's mother",
+      "the blind man",
+      "O’Brien",
+      "Ben Gunn’s boat",
+      "George Merry",
+      "Dick",
+      "Doctor Livesey"
+    ]
+  }
+}
