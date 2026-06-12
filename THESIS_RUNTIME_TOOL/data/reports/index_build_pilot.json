@@ -1,0 +1,11 @@
+{
+  "passages": 81,
+  "motifs": 8,
+  "tm": 0,
+  "model": "text-embedding-3-large",
+  "dimension": 3072,
+  "embed_tokens": 0,
+  "cost_usd": 0.0,
+  "cache_hits": 89,
+  "skipped_existing": 89
+}

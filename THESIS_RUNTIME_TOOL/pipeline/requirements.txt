@@ -1,3 +1,4 @@
 openai
 pyyaml
 pytest
+chromadb>=1,<2

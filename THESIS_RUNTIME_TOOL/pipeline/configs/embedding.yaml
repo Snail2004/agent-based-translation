@@ -1,0 +1,5 @@
+model: "text-embedding-3-large"
+dimensions: 3072
+batch_size: 64
+pricing:
+  input: 0.13
