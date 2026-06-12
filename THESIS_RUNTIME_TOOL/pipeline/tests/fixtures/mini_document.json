@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.5.0",
+  "doc_id": "mini_doc",
+  "metadata": {
+    "title": "Mini Fixture",
+    "source_language": "en",
+    "target_language": "vi"
+  },
+  "chapters": [
+    {
+      "chapter_id": "mini_ch01",
+      "order_index": 0,
+      "title": "Chapter 1",
+      "blocks": [
+        {
+          "block_id": "mini_ch01_b001",
+          "order_index": 0,
+          "page_ids": [],
+          "block_type": "heading",
+          "is_chapter_opening": true,
+          "source_text": "Chapter 1",
+          "clean_text": "Chương 1",
+          "sentences": [],
+          "quality_flags": ["ok"],
+          "annotations": {}
+        },
+        {
+          "block_id": "mini_ch01_b002",
+          "order_index": 1,
+          "page_ids": [1],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "A “quote” — and Vietnamese dấu.",
+          "clean_text": "Một “quote” — và tiếng Việt có dấu.",
+          "sentences": [
+            {
+              "sent_id": "mini_ch01_b002_s001",
+              "text": "Một “quote” — và tiếng Việt có dấu.",
+              "span": [0, 38]
+            }
+          ],
+          "quality_flags": ["ok"],
+          "annotations": {}
+        },
+        {
+          "block_id": "mini_ch01_b003",
+          "order_index": 2,
+          "page_ids": [2],
+          "block_type": "dialogue",
+          "is_chapter_opening": false,
+          "source_text": "Hello!",
+          "clean_text": "Xin chào!",
+          "sentences": [],
+          "quality_flags": ["ok"],
+          "annotations": {}
+        }
+      ]
+    },
+    {
+      "chapter_id": "mini_ch02",
+      "order_index": 1,
+      "title": "Chapter 2",
+      "blocks": [
+        {
+          "block_id": "mini_ch02_b001",
+          "order_index": 0,
+          "page_ids": [],
+          "block_type": "heading",
+          "is_chapter_opening": true,
+          "source_text": "Chapter 2",
+          "clean_text": "Chương 2",
+          "sentences": [],
+          "quality_flags": ["ok"],
+          "annotations": {}
+        },
+        {
+          "block_id": "mini_ch02_b002",
+          "order_index": 1,
+          "page_ids": [3],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "Second paragraph.",
+          "clean_text": "Đoạn thứ hai.",
+          "sentences": [],
+          "quality_flags": ["ok"],
+          "annotations": {}
+        },
+        {
+          "block_id": "mini_ch02_b003",
+          "order_index": 2,
+          "page_ids": [4],
+          "block_type": "paragraph",
+          "is_chapter_opening": false,
+          "source_text": "",
+          "clean_text": "",
+          "sentences": [],
+          "quality_flags": ["empty"],
+          "annotations": {}
+        }
+      ]
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 # TASK_P1_01_ingest_document_loader — Nguồn Treasure Island sạch + loader document.json → SQLite blocks
 
-- **Status:** READY
+- **Status:** REVIEW
 - **Refs:** THESIS_ARCHITECTURE_LOCK §8.1#3 (canonical tool-generated dùng được), §6.3 (CẤM nạp annotation oracle vào thesis), §9 P1, V3 Directional Lock §0; schema blocks = `pipeline/memory/schema_v2_base.sql`
-- **Branch/Commit:** (điền khi imple xong; commit `P1-01: ...`)
+- **Branch/Commit:** branch `main`; commit pending
 
 ## 1. Bối cảnh & mục tiêu
 
@@ -110,8 +110,65 @@ python -m pytest pipeline/tests/ -v   # toàn bộ (migration + llm_client + loa
 
 ## 5. Implementation notes *(CodeX điền)*
 
-—
+- Added `pipeline/scripts/prepare_source.py` to copy a canonical `document.json`, preserve
+  the allowed source-structure fields, set every block `annotations` to `{}`, and write
+  `PROVENANCE.md` with source/target paths, timestamp, and sha256 hashes.
+- Ran the prepare script for Treasure Island, producing
+  `data/sources/treasure_island/document.json` and
+  `data/sources/treasure_island/PROVENANCE.md`. `AILAB_HANDOFF` was read-only.
+- Added `pipeline/ingest/document_loader.py` with `load_document(db_path,
+  document_json_path) -> LoadReport`. It writes `documents`/`blocks`, preserves `block_id`,
+  uses global 0..N-1 `order_index`, stores source extras in `style_json`, raises on
+  duplicate `block_id`, and raises if annotations are not stripped.
+- Added `pipeline/scripts/ingest_document.py` CLI and ignored `data/jobs/` runtime DBs.
+- Added `pipeline/tests/fixtures/mini_document.json` and
+  `pipeline/tests/test_document_loader.py`.
 
-## 6. Review *(Claude điền)*
+Test/output:
 
-—
+```bash
+cd C:\work\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME_TOOL
+python -m pipeline.scripts.prepare_source --from "../AILAB_HANDOFF/ailab_projects/treasure_island/canonical/document.json" --to data/sources/treasure_island/document.json
+# Prepared stripped source: data\sources\treasure_island\document.json
+
+@'
+import json
+d = json.load(open('data/sources/treasure_island/document.json', encoding='utf-8'))
+assert all(not b.get('annotations') for c in d['chapters'] for b in c['blocks'])
+print('annotations stripped OK')
+'@ | python -
+# annotations stripped OK
+
+python -m pipeline.scripts.ingest_document --source data/sources/treasure_island/document.json --db data/jobs/treasure_island_p1/memory.sqlite3
+# {"doc_id": "treasure_island", "chapters": 40, "blocks": 1476, "warnings": []}
+
+python -m pytest pipeline/tests/test_document_loader.py -v
+# 6 passed in 3.30s
+
+python -m pytest pipeline/tests/ -v
+# 23 passed in 7.39s
+```
+
+## 6. Review *(Claude điền — 2026-06-12)*
+
+- **Verdict: PASS**
+- Tự chạy lại: assert strip trên `data/sources/treasure_island/document.json` →
+  "annotations stripped OK | 40 chapters, 1476 blocks"; 23/23 pipeline tests PASS.
+- Đối chiếu spec §2–§3 (đọc `prepare_source.py` + `document_loader.py` đầy đủ):
+  prepare_source copy theo whitelist key đúng danh sách, mọi block `annotations = {}`,
+  PROVENANCE.md đủ nguồn gốc + timestamp + sha256 gốc/sau-strip; loader giữ `block_id`
+  nguyên vẹn, `order_index` = counter TOÀN CỤC 0..N-1 (docstring ghi rõ lý do
+  entity_relations), `text` = clean_text, `original_text` = source_text, extras vào
+  `style_json`, raise đúng cả hai chốt (duplicate block_id, annotations chưa strip —
+  chốt chặn Directional Lock ở tầng load hoạt động), warning cho paragraph/dialogue
+  rỗng, chapter metadata không tạo bảng mới.
+- Deviation nhỏ chấp nhận: idempotency cài bằng documents UPSERT + `DELETE FROM blocks
+  WHERE doc_id` + insert lại (thay vì INSERT OR REPLACE per-row như spec gợi ý) — kết
+  quả tương đương và sạch hơn (block biến mất khỏi nguồn không để lại mồ côi trong DB).
+- Lưu ý cho phase sau (không chặn): (1) reload xóa-ghi-lại toàn bộ blocks của doc — khi
+  P2 có bảng con FK trỏ vào blocks (spans/annotations thesis), reload document đồng
+  nghĩa phải ingest lại dữ liệu con; (2) prepare_source whitelist nghĩa là field lạ
+  trong nguồn bị drop im lặng — deterministic, đúng ý strip, nhưng nếu canonical schema
+  nâng version thì phải cập nhật BLOCK_KEYS.
+- Trục align block_id thesis ↔ oracle đã được pin: cùng 1476 blocks, so sánh tương lai
+  hợp lệ. Follow-up: không có. P1-01 xong → P1-02 (D2L adapter) là việc kế tiếp của P1.

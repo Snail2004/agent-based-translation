@@ -26,5 +26,5 @@
 |---|---|---|---|---|---|
 | P0-01 | Vệ sinh clone + skeleton pipeline/ + migration schema v3 | DONE | `P0-01:` (xem git log) | PASS (Claude, 2026-06-12) | 4/4 migration + 88/88 smoke; DDL khớp spec |
 | P0-02 | LLM client: pin model + seed + reasoning_effort + replay cache + quota | DONE | `P0-02:` (xem git log) | PASS (Claude, 2026-06-12) | 11/11 tests; chặn alias latest từ config; **P0 hoàn thành** |
-| P1-01 | Nguồn TI sạch (strip annotations) + loader document.json → blocks | REVIEW | — | — | Implemented by CodeX; source stripped; 6/6 loader + 23/23 pipeline tests pass |
+| P1-01 | Nguồn TI sạch (strip annotations) + loader document.json → blocks | DONE | `P1-01:` (xem git log) | PASS (Claude, 2026-06-12) | 23/23 tests; source 40ch/1476 blocks tracked + PROVENANCE sha256; chốt chặn Directional Lock (raise nếu còn annotations) hoạt động; trục block_id thesis↔oracle pinned |
 | EV-01 | Module TAR/ECS/FVR + đo lần đầu trên oracle output | DONE | `EV-01:` (xem git log) | PASS (Claude, 2026-06-12) | 23/23 tests; **số đầu tiên: TAR 0.8866 / FVR 0.0 / ECS 0.9195**; 3 caveat đọc số ghi ở §6 task (Jim=artifact narrator, glossary termhood, occurrence provider) |
