@@ -43,6 +43,10 @@ Resolver string-match offsets, persist T1–T4 đúng schema, và **FREEZE** —
    artifacts mới ĐÈ file tracked cũ.
 
 ### 2b. Span Resolver (code thuần, 0 LLM)
+> Prior art: `app/backend/services/annotation_flow.py::_resolve_surface` (AI-LAB) giải
+> bài KHÁC — resolve TỪNG candidate kèm context, mơ hồ → trả "unresolved" cho NGƯỜI xử.
+> Thesis cần liệt kê HẾT match của surface, không người xử — VIẾT MỚI, KHÔNG import
+> (quyết định LOCK changelog (x)); được phép mượn test case/ý tưởng từ đó.
 5. `pipeline/prepass/span_resolver.py`:
    - Input: document.json (stripped) + các artifact chương (`data/prepass/.../*.json`).
    - Match trên `clean_text` (NFC, `re.IGNORECASE`, word-boundary
