@@ -463,10 +463,14 @@ lỗi chính tả (`biễu diễn`). → **Bằng chứng thật cho doctrine (d
 thành agreement.** Builder học thuật ngữ hợp ngôn ngữ, đôi khi hơn cả bản người.
 
 **3 follow-up cho P3-D2L (KHÔNG chặn PASS):**
-1. **Termhood lỏng:** ~20–30% trong 1,487 extra là non-term (idiom "garbage in, garbage out",
-   heading "Third-Order Polynomial...", generic "input data"). Phần lớn extra là term kỹ thuật
-   THẬT (gold chỉ 458, phủ một phần). Anchor-injection của Translator hạn chế tác hại, nhưng
-   nên siết termhood trước khi scale / trước khi bơm S1.
+1. **Lọc occ≥2 khi INJECTION (sắc hơn 'termhood', theo phát hiện user 2026-06-14):** registry có
+   **743/1608 (46%) term occ≤1 (hapax)** — hapax không thể trôi → đóng góp consistency ≈0 (gồm rác
+   `.shape`/`16kHz`/`1:1 correspondence`). Lọc occ≤1 khỏi injection: registry 1608→865 (-46%), giữ
+   96/123 gold matched (27 mất đều hapax = mất ~0 consistency). Builder VẪN trích hết + đếm occurrence
+   (cột `occurrences_count` đã có); CHỈ bước inject lọc occ≥2 (tách 'biết gì' khỏi 'ép gì'). Report
+   recall TÁCH: flat (vs all gold, = Builder quality) + recurring (occ≥2, = consistency-relevant).
+   Caveat: tính occurrence ở quy mô đang dịch (sách dài tần suất khác). Fix nhỏ: 71 term occ=0 dù có
+   evidence = counting gap, occurrence phải ≥1 nếu có evidence.
 2. **Chuẩn hóa source-term:** `ground-truth` vs `ground truth` → 2 VI khác (`chân trị`/`nhãn thật`),
    không consolidate. Cần chuẩn hóa hyphen/space/case trong khóa gộp.
 3. **allowed_variants nhiễu:** variants của `agent` gồm `đặc vụ`/`đại diện` (sai nghĩa). → P3-D2L
