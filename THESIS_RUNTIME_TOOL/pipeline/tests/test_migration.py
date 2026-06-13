@@ -11,6 +11,7 @@ NEW_TABLES = {
     "translation_runs",
     "evaluation_runs",
     "reference_eval_only",
+    "eval_glossary_gold",
     "entity_relations",
     "qa_issues",
 }

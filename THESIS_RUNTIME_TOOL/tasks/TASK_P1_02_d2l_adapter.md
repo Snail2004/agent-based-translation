@@ -1,6 +1,6 @@
 # TASK_P1_02_d2l_adapter — Nạp nguồn D2L (EN gốc → blocks) + glossary gold EVAL-ONLY + báo cáo coverage chọn chương
 
-- **Status:** READY
+- **Status:** DONE (PASS — Claude 2026-06-13; xem §6)
 - **Refs:** LOCK (cc) (nguồn D2L = MT thô, glossary = gold; reference-metrics hoãn),
   (aa) (chia vai 2 dataset; D2L = track TAR có nghĩa nhất), §6.3 (gold = EVAL-ONLY, CẤM
   bơm vào prompt runtime — như AILAB), Directional Lock (memory tự học từ text, không
@@ -107,8 +107,141 @@ python -m pytest pipeline/tests/ -v   # toàn bộ vẫn PASS
 
 ## 5. Implementation notes *(CodeX điền)*
 
-—
+- Added migration `pipeline/memory/migrations/006_eval_glossary_gold.sql` and wired it through
+  `pipeline/memory/store_init.py`. D2L glossary gold is stored in `eval_glossary_gold`, not
+  `glossary_entries`; the latter remains the runtime registry for World Builder output only.
+- Added `pipeline/ingest/d2l_markdown_loader.py`:
+  - reads only `*_origin.md` under `data/sources/d2l-vi/chapter_*/`;
+  - ignores Vietnamese `.md` files;
+  - preserves book/chapter order from D2L `index.md`/chapter TOCs;
+  - splits markdown deterministically by blank lines while preserving fenced code/math blocks;
+  - writes EN source blocks to `documents`/`blocks` with stable ids
+    `d2l_<chapter_slug>_<section_slug>_bNNN`;
+  - marks only `prose` as `translation_mode='translate'`; heading/code/math/image/label are
+    `passthrough`.
+- Added `pipeline/ingest/d2l_glossary.py`:
+  - parses `glossary.md` tables under `## A`..`## Z`;
+  - skips headers/separators and dedupes repeated `(source_term, target_term)` pairs observed in
+    the real glossary;
+  - stores 458 eval-only gold terms with source commit/path/line provenance.
+- Added `pipeline/scripts/ingest_d2l.py`:
+  - initializes/migrates the job DB;
+  - loads the full D2L source snapshot;
+  - stores glossary gold in `eval_glossary_gold`;
+  - emits `data/reports/d2l_ingest_coverage.json` with per-chapter block/prose/token counts,
+    glossary term coverage, density, and `has_agent_term`.
+- Added `pipeline/tests/test_d2l_ingest.py` with parser tests, block-type tests, idempotency,
+  provenance, coverage, and the required guard proving `context_builder` does not read gold:
+  `glossary_entries` stays empty while `eval_glossary_gold` is populated.
+
+Real ingest output:
+
+```bash
+cd C:\Users\nguye\OneDrive\Tài liệu\Baitap\DuAnCNTT\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME_TOOL
+python -m pipeline.scripts.ingest_d2l --src data/sources/d2l-vi --db data/jobs/d2l_p1/memory.sqlite3 --out data/reports/d2l_ingest_coverage.json
+```
+
+```text
+{
+  "doc_id": "d2l",
+  "chapters": 23,
+  "loaded_chapters": 22,
+  "sections": 165,
+  "blocks": 8803,
+  "prose_blocks": 4609,
+  "glossary_gold_entries": 458,
+  "report": "data\\reports\\d2l_ingest_coverage.json"
+}
+
+Top chapters by glossary term density:
+d2l_attention_mechanisms: density=39.50 occ=529 terms=62 agent=False
+d2l_linear_networks: density=38.38 occ=837 terms=73 agent=False
+d2l_generative_adversarial_networks: density=36.81 occ=127 terms=42 agent=False
+d2l_convolutional_modern: density=36.76 occ=622 terms=76 agent=False
+d2l_computer_vision: density=34.99 occ=1083 terms=84 agent=False
+d2l_multilayer_perceptrons: density=34.97 occ=1169 terms=108 agent=False
+d2l_convolutional_neural_networks: density=33.22 occ=498 terms=57 agent=False
+d2l_notation: density=29.03 occ=29 terms=13 agent=False
+d2l_deep_learning_computation: density=28.06 occ=345 terms=40 agent=False
+d2l_natural_language_processing_applications: density=27.55 occ=294 terms=49 agent=False
+```
+
+DB guard spot-check:
+
+```text
+blocks 8803
+glossary_entries 0
+eval_glossary_gold 458
+prose 4609
+translate_mode [('passthrough', 4194), ('translate', 4609)]
+warnings ['no_origin_sections:chapter_references']
+agent chapters [('d2l_introduction', 528, 26.6451), ('d2l_preliminaries', 504, 22.9174)]
+```
+
+Notes/deviations:
+- Source snapshot has 23 `chapter_*` directories, but `chapter_references` contains only
+  `zreferences.md` and no `_origin.md`; loader reports `chapters=23`, `loaded_chapters=22`,
+  and warning `no_origin_sections:chapter_references`. No synthetic reference blocks were created.
+- Existing `reference_eval_only` is block-target oriented and has no `source_term` column, so a
+  dedicated eval-only table `eval_glossary_gold` is cleaner than stuffing glossary pairs into
+  `target_text`.
+
+Tests:
+
+```text
+python -m pytest pipeline/tests/test_d2l_ingest.py -v
+# 11 passed in 3.20s
+
+python -m pipeline.scripts.ingest_d2l ...  # run twice on same DB
+# identical counts both times: 23 chapters / 22 loaded / 165 sections / 8803 blocks / 458 gold
+
+python -m pytest pipeline/tests/ -v
+# 97 passed in 59.79s
+```
+
+Windows note: pytest still prints the known `PermissionError` cleanup warning for
+`D:\temp\pytest-of-Snail\pytest-current` after exit, but pytest exits 0 and all tests pass.
 
 ## 6. Review *(Claude điền)*
 
-—
+**Verdict: PASS** (Claude, 2026-06-13). Nền móng D2L vững; ràng buộc cốt tử (gold eval-only,
+không bơm vào model) được hiện thực hóa bằng **kiến trúc + test hành vi**, không phải lời hứa.
+Số tái tính độc lập từ DB, KHỚP 100%.
+
+### 6.1 Tái xác minh độc lập (từ `data/jobs/d2l_p1/memory.sqlite3`)
+- blocks 8803 / prose(translate) 4609 / passthrough 4194 / 22 chương — KHỚP §5.
+- `eval_glossary_gold` 458 / `glossary_entries` (registry bơm) **0** — KHỚP.
+- block_type: prose 4609, code 2371, heading 1293, math 286, image 215, label 29 (tổng 8803).
+- "agent"→"tác nhân" có trong gold; chương cờ agent: introduction (528 occ), preliminaries (504).
+
+### 6.2 Audit guard tách gold↔registry (ràng buộc quan trọng nhất của user) — ĐẠT loại mạnh
+- `grep eval_glossary_gold` toàn pipeline: chỉ d2l_glossary.py (ghi) + store_init.py (migration)
+  + tests. **context_builder/prompt/runner KHÔNG hề tham chiếu** gold (grep rỗng).
+- `test_gold_eval_only_not_injected_into_context` không chỉ đếm `glossary_entries==0` mà CHẠY
+  thật đường injection (`plan_anchors`/`build_context_pack`) trên dữ liệu D2L → khẳng định
+  `term_counts=={}` + `glossary_lines==[]`. Đây là bằng chứng HÀNH VI rằng không gì bị ném
+  vào model — đúng y câu chốt "dùng gold để chấm, không ném đáp án cho model".
+
+### 6.3 Đánh giá lệch spec — TÁN THÀNH
+- CodeX KHÔNG dùng `reference_eval_only` (nó block-target, không có cột source_term) mà tạo
+  bảng riêng `eval_glossary_gold`. Sạch hơn đề xuất trong spec → ĐỒNG Ý.
+- `chapter_references` không có `_origin.md` → loaded 22/23 + warning, KHÔNG tạo block giả.
+  Xử lý trung thực (references là thư mục, không phải prose để dịch).
+
+### 6.4 Ghi chú nhỏ (không chặn PASS)
+- migration 006 đặt `schema_version='3'` (nhãn thế hệ schema, không phải số migration) — mỹ
+  thuật, không ảnh hưởng (006 đã chạy, bảng tồn tại 458 dòng).
+- Đếm term-coverage là heuristic để CHỌN chương (không phải metric chấm điểm) → sai số nhỏ
+  chấp nhận; khi P3-D2L chấm TAR thật phải dùng matching chuẩn (word-boundary + apostrophe).
+
+### 6.5 Dữ liệu chọn Tầng-2 (chốt ở spec P3-D2L)
+Mật độ thuật ngữ cao: multilayer_perceptrons (1169 occ), computer_vision (1083), linear_networks
+(837), attention (529, density cao nhất). "agent" chỉ ở introduction + preliminaries.
+**Đề xuất run liên tiếp:** introduction → preliminaries → linear-networks → multilayer-perceptrons
+(2 chương agent + 2 chương đặc thuật-ngữ nhất; ~1019 prose). Nếu pilot đầu cần gọn: introduction
++ linear-networks (~380 prose). Lock cuối ở P3-D2L kèm `--sample` judge (LOCK bb).
+
+### 6.6 Follow-up
+- **P2-D2L:** World Builder dựng registry bơm từ text D2L (Directional Lock).
+- **P3-D2L:** dịch S0/S1 chương Tầng-2 + chấm **TAR vs gold** (cách B trung lập) + judge sample.
+

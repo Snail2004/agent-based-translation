@@ -8,6 +8,7 @@ BASE_SCHEMA_PATH = Path(__file__).with_name("schema_v2_base.sql")
 MIGRATION_003_PATH = Path(__file__).parent / "migrations" / "003_thesis_runs.sql"
 MIGRATION_004_PATH = Path(__file__).parent / "migrations" / "004_freeze_triggers.sql"
 MIGRATION_005_PATH = Path(__file__).parent / "migrations" / "005_window_id.sql"
+MIGRATION_006_PATH = Path(__file__).parent / "migrations" / "006_eval_glossary_gold.sql"
 
 
 def _connect(path: str | Path) -> sqlite3.Connection:
@@ -64,14 +65,19 @@ def _apply_migration_005(connection: sqlite3.Connection) -> None:
     connection.executescript(_read_sql(MIGRATION_005_PATH))
 
 
+def _apply_migration_006(connection: sqlite3.Connection) -> None:
+    connection.executescript(_read_sql(MIGRATION_006_PATH))
+
+
 def init_db(path: str | Path) -> sqlite3.Connection:
-    """Create a fresh thesis runtime DB from schema v2 plus migrations 003–005."""
+    """Create a fresh thesis runtime DB from schema v2 plus migrations 003-006."""
     connection = _connect(path)
     try:
         connection.executescript(_read_sql(BASE_SCHEMA_PATH))
         _apply_migration_003(connection)
         _apply_migration_004(connection)
         _apply_migration_005(connection)
+        _apply_migration_006(connection)
         connection.commit()
     except Exception:
         connection.close()
@@ -80,12 +86,13 @@ def init_db(path: str | Path) -> sqlite3.Connection:
 
 
 def migrate_db(path: str | Path) -> sqlite3.Connection:
-    """Apply all migrations to an existing DB (003, 004, 005)."""
+    """Apply all migrations to an existing DB (003, 004, 005, 006)."""
     connection = _connect(path)
     try:
         _apply_migration_003(connection)
         _apply_migration_004(connection)
         _apply_migration_005(connection)
+        _apply_migration_006(connection)
         connection.commit()
     except Exception:
         connection.close()
