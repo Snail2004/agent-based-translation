@@ -23,3 +23,6 @@ THESIS_RUNTIME_TOOL/data/eval/human_ratings.csv
 *.sqlite3
 *.sqlite3-journal
 .chroma/
+
+# D2L raw clone — track provenance only, not the 214MB repo
+THESIS_RUNTIME_TOOL/data/sources/d2l-vi/
