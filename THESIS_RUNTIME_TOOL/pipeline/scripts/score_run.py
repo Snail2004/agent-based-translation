@@ -64,7 +64,7 @@ def main() -> int:
             "provider": "span_resolver+apostrophe_safe_adapter",
             "metric_version": thesis_report.get("metric_version", ""),
         },
-        "s0": thesis_report,
+        args.config.lower(): thesis_report,
         "oracle_same_ruler": oracle_report,
         "note": (
             "FVR is always 0 because thesis registry has no forbidden_variants "
@@ -79,7 +79,7 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    _print_summary("S0", thesis_report)
+    _print_summary(args.config.upper(), thesis_report)
     _print_summary("Oracle (same ruler)", oracle_report)
     print(f"\nReport written: {out_path}")
     return 0

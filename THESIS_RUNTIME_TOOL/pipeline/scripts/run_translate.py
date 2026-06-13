@@ -14,7 +14,7 @@ from pipeline.translate.windower import build_windows
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run S0 translation over specified chapters."
+        description="Run S0/S1 translation over specified chapters."
     )
     parser.add_argument(
         "--db",
@@ -30,6 +30,7 @@ def main() -> int:
     parser.add_argument(
         "--config",
         default="S0",
+        choices=["S0", "S1"],
         help="Config name (default: S0).",
     )
     parser.add_argument(
@@ -54,6 +55,12 @@ def main() -> int:
     parser.add_argument(
         "--report",
         help="Write JSON report to this path.",
+    )
+    parser.add_argument(
+        "--context-budget",
+        type=int,
+        default=500,
+        help="S1 hard-constraints context budget in rough tokens.",
     )
     args = parser.parse_args()
 
@@ -81,7 +88,12 @@ def main() -> int:
 
     # Run translation
     report = translate_windows(
-        db, windows, client, experiment_id=args.experiment, config=args.config
+        db,
+        windows,
+        client,
+        experiment_id=args.experiment,
+        config=args.config,
+        context_budget_tokens=args.context_budget,
     )
     db.close()
 
@@ -103,6 +115,12 @@ def main() -> int:
     print(f"  calls:             {usage['calls']}")
     print(f"  cache_hits:        {usage['cache_hits']}")
     print(f"Model: {report.model}  Seed: {report.seed}")
+    if args.config.upper() == "S1":
+        context_stats = report.context_stats
+        print(f"\n=== Context ===")
+        print(f"  windows_with_context: {context_stats['windows_with_context']}")
+        print(f"  low_context_windows:  {context_stats['windows_low_context']}")
+        print(f"  dropped_by_budget:    {context_stats['dropped_by_budget']}")
 
     if args.report:
         out_path = Path(args.report)

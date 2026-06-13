@@ -245,6 +245,46 @@ def test_runner_memory_packs_persisted(tmp_path):
     assert payload["window_id"] == "w_ch02_001"
 
 
+def test_runner_persists_pack_breakdown(tmp_path):
+    """S1 memory_packs payload logs hard-constraint context observability."""
+    conn, doc_id = _make_doc_db(tmp_path)
+    conn.execute(
+        """
+        INSERT INTO glossary_entries (glossary_id, doc_id, source_term, target_term)
+        VALUES ('gl_jim', 'ti', 'Jim', 'Jim')
+        """
+    )
+    conn.commit()
+    client = _FakeClient([_fake_result(_ok_response(["ch02_b001"]))])
+    client.config = _Config()
+    windows = [
+        Window(window_id="w_ch02_001", block_ids=["ch02_b001"], est_src_tokens=50),
+    ]
+
+    report = translate_windows(conn, windows, client, "exp_test", "S1")
+
+    pack = conn.execute(
+        "SELECT payload_json, config FROM memory_packs WHERE pack_id = 'pk_S1_w_ch02_001'"
+    ).fetchone()
+    run = conn.execute(
+        "SELECT config, prompt_version FROM translation_runs WHERE block_id = 'ch02_b001'"
+    ).fetchone()
+    payload = json.loads(pack["payload_json"])
+    user_prompt = client.calls[0]["messages"][1]["content"]
+
+    assert report.context_stats["windows_with_context"] == 1
+    assert pack["config"] == "S1"
+    assert run["config"] == "S1"
+    assert run["prompt_version"] == "s1_v1"
+    assert payload["zones"]["system_tokens"] > 0
+    assert payload["zones"]["hard_constraints_tokens"] > 0
+    assert payload["zones"]["source_tokens"] > 0
+    assert payload["anchors_count"]["terms"] == 1
+    assert payload["low_context"] is False
+    assert payload["dropped_by_budget"] == []
+    assert "MANDATORY TERMINOLOGY & NAMES" in user_prompt
+
+
 def test_runner_multiple_windows(tmp_path):
     """Multiple windows translate sequentially."""
     conn, doc_id = _make_doc_db(tmp_path)

@@ -1,6 +1,6 @@
 # TASK_P4_02_context_builder_s1 — Context Builder (anchor → hard constraints) + chạy S1 + số S0/S1/oracle
 
-- **Status:** READY
+- **Status:** DONE
 - **Refs:** THESIS_ARCHITECTURE_LOCK §2.1 (code modules: Query Planner / Hybrid
   Retriever / Reranker+Budget / Coverage Checker; Deterministic Context Feeding),
   §5 (quy tắc anchor-based: "chỉ nhét thứ match anchor trong window, KHÔNG BAO GIỜ
@@ -125,8 +125,306 @@ python -m pytest pipeline/tests/ -v   # toàn bộ vẫn PASS
 
 ## 5. Implementation notes *(CodeX điền)*
 
-—
+### 5.1. Files changed
 
-## 6. Review *(Claude điền)*
+- `pipeline/retrieval/context_builder.py`
+  - Added deterministic `plan_anchors` + `build_context_pack`.
+  - Anchor matching is NFC + ignorecase + apostrophe-normalized + word-boundary.
+  - Entity matching de-duplicates overlapping aliases by longest span, so `the captain`
+    and `captain` do not double-count the same mention.
+  - Context pack only includes anchors matched inside the current window; no registry dump.
+  - Active address policy is selected from `entity_relations` by `blocks.order_index` at
+    window start. Multiple active candidates are resolved by latest `valid_from` and logged
+    as warning.
+  - Budget order: address policies kept first, then entity cards, then glossary by occurrence
+    count. Dropped items go into `dropped_by_budget`.
+  - Coverage checker rebuilds once; unresolved missing anchor sets `low_context=true`.
+- `pipeline/translate/prompt.py`
+  - `build_messages(..., config="S0"|"S1", context_pack=None)` is backward-compatible:
+    S0 default output remains unchanged.
+  - S1 uses prompt version `s1_v1` and prepends `MANDATORY TERMINOLOGY & NAMES`,
+    `ADDRESS POLICY (xung ho)`, then `SOURCE WINDOW`.
+- `pipeline/translate/runner.py`
+  - Added S1 context-builder hook.
+  - Persists `memory_packs.payload_json` with `zones`, `prompt_version`, `anchors_count`,
+    `dropped_by_budget`, `low_context`, and full `context_pack`.
+  - `translation_runs.prompt_version` is now `s1_v1` for S1.
+- `pipeline/scripts/run_translate.py`
+  - `--config` accepts `S0|S1`; prints context sanity summary for S1.
+- `pipeline/scripts/score_run.py`
+  - Report key and console label now follow requested config (`s0`, `s1`, ...), not hardcoded
+    S0.
+- `pipeline/tests/test_context_builder.py`
+  - Offline tests for anchor scan, no registry dump, active address state, budget drop
+    priority, coverage checker, and S1 prompt/S0 unchanged.
+- `pipeline/tests/test_translate_runner.py`
+  - Added S1 pack-breakdown persistence test.
+- `data/reports/s1_pilot_consistency.json`
+  - Tracked S1 consistency report on the same ruler as S0/oracle.
 
-—
+No changes to `app/`, `AILAB_HANDOFF/`, or `eval/consistency.py`.
+
+### 5.2. Test output
+
+```text
+python -m pytest pipeline/tests/test_context_builder.py pipeline/tests/test_translate_runner.py -v
+
+collected 14 items
+14 passed in 14.96s
+```
+
+```text
+python -m pytest pipeline/tests/ -v
+
+collected 75 items
+75 passed in 49.15s
+```
+
+Windows still prints the known pytest temp cleanup warning after success:
+`PermissionError: [WinError 5] Access is denied: 'D:\temp\pytest-of-Snail\pytest-current'`.
+Exit code is still 0.
+
+### 5.3. Real S1 run
+
+First run:
+
+```text
+python -m pipeline.scripts.run_translate --db data/jobs/treasure_island_p2/memory.sqlite3 --chapters ch02 ch03 --config S1 --experiment exp_pilot_p3 --source data/sources/treasure_island/document.json
+
+Windows total:     31
+  translated:      31
+  failed:         0
+  skipped:        0
+Blocks translated: 81
+Blocks failed:    0
+JSON fail rate:   0.0000
+
+prompt_tokens:      21457
+completion_tokens:  8393
+total_cost_usd:    $0.022150
+incremental_cost:   $0.022150
+calls:             31
+cache_hits:        0
+Model: gpt-5.4-mini  Seed: 20260612
+
+windows_with_context: 31
+low_context_windows:  0
+dropped_by_budget:    0
+```
+
+Resume run:
+
+```text
+Windows total:     31
+  translated:      0
+  failed:         0
+  skipped:        31
+Blocks translated: 0
+Blocks failed:    0
+JSON fail rate:   0.0000
+
+prompt_tokens:      0
+completion_tokens:  0
+total_cost_usd:    $0.000000
+incremental_cost:   $0.000000
+calls:             0
+cache_hits:        0
+```
+
+DB aggregate check:
+
+```text
+runs_by_config [('S0', 81), ('S1', 81)]
+s1_packs 31
+low_context 0
+dropped_by_budget 0
+```
+
+### 5.4. Score output
+
+```text
+python -m pipeline.scripts.score_run --db data/jobs/treasure_island_p2/memory.sqlite3 --experiment exp_pilot_p3 --config S1 --prepass data/prepass/treasure_island_pilot --source data/sources/treasure_island/document.json --oracle "../AILAB_HANDOFF/ailab_projects/treasure_island" --out data/reports/s1_pilot_consistency.json
+
+=== S1 ===
+  TAR overall:    1.0000  (53 pairs)
+  FVR overall:   0.0000
+  ECS overall:   0.8111
+    ch02: 1.0000
+    ch03: 1.0000
+
+=== Oracle (same ruler) ===
+  TAR overall:    0.6226  (53 pairs)
+  FVR overall:   0.0000
+  ECS overall:   0.7667
+    ch02: 0.6176
+    ch03: 0.6316
+```
+
+Same-ruler comparison:
+
+| Metric | S0 | S1 | Oracle | Delta S1-S0 |
+|---|---:|---:|---:|---:|
+| TAR overall | 0.4151 | 1.0000 | 0.6226 | +0.5849 |
+| TAR occurrence-weighted | 0.3860 | 1.0000 | 0.6316 | +0.6140 |
+| TAR ch02 | 0.3824 | 1.0000 | 0.6176 | +0.6176 |
+| TAR ch03 | 0.4737 | 1.0000 | 0.6316 | +0.5263 |
+| ECS overall | 0.7556 | 0.8111 | 0.7667 | +0.0556 |
+| FVR overall | 0.0000 | 0.0000 | 0.0000 | +0.0000 |
+
+Interpretation: S1 hard constraints fully cover the thesis registry's 53 TAR pairs on this
+pilot. This is expected to be easier than oracle on TAR because oracle did not receive the
+frozen glossary; it is not a claim of overall translation quality.
+
+### 5.5. Real sample blocks
+
+#### `treasure_island_ch02_b005` — Dead Man's Chest
+
+Source:
+
+```text
+“Fifteen men on the dead man’s chest, Yo-ho-ho and a bottle of rum!”
+```
+
+S0:
+
+```text
+“Mười lăm người trên ngực người chết, Yo-ho-ho và một chai rum!”
+```
+
+S1:
+
+```text
+“Mười lăm người trên Rương Người Chết, Yo-ho-ho và một chai rượu rum!”
+```
+
+Oracle:
+
+```text
+“Mười lăm người trên rương người chết, Yo-ho-ho và một chai rượu rum!”
+```
+
+Pack evidence for this window:
+
+```json
+{
+  "anchors_count": {"terms": 8, "entities": 4, "address_policies": 0},
+  "dropped_by_budget": [],
+  "low_context": false,
+  "glossary_lines": [
+    "saber cut -> vết chém kiếm cong",
+    "Admiral Benbow Inn -> quán trọ Admiral Benbow",
+    "cove -> vịnh nhỏ",
+    "handbarrow -> xe cút kít tay",
+    "rum -> rượu rum",
+    "sea-chest -> rương biển",
+    "the Dead Man's Chest -> Rương Người Chết",
+    "Treasure Island -> Đảo Châu Báu"
+  ]
+}
+```
+
+#### `treasure_island_ch02_b006` — rum
+
+Source:
+
+```text
+in the high, old tottering voice that seemed to have been tuned and broken at the capstan bars. Then he rapped on the door with a bit of stick like a handspike that he carried, and when my father appeared, called roughly for a glass of rum. This, when it was brought to him, he drank slowly, like a connoisseur, lingering on the taste, and still looking about him at the cliffs and up at our signboard.
+```
+
+S0:
+
+```text
+bằng giọng cao, già nua, run rẩy, nghe như đã được lên dây và làm vỡ ở những thanh quay tời. Rồi ông ta gõ cửa bằng một mẩu gậy như một cây xà beng mà ông mang theo, và khi cha tôi xuất hiện, ông ta thô lỗ gọi một cốc rượu rum. Khi được mang ra, ông ta uống chậm rãi, như một tay sành sỏi, nấn ná thưởng vị, mà vẫn nhìn quanh những vách đá và ngước lên tấm biển hiệu của chúng tôi.
+```
+
+S1:
+
+```text
+bằng giọng cao, cũ kỹ, run rẩy như thể đã được lên dây và làm hỏng ở những thanh quay tời. Rồi hắn gõ cửa bằng một đoạn gậy trông như một cây đòn bẩy mà hắn mang theo, và khi cha tôi xuất hiện, hắn thô lỗ gọi một cốc rượu rum. Khi được mang ra cho hắn, hắn uống chậm rãi, như một tay sành sỏi, nấn ná thưởng thức vị, và vẫn nhìn quanh những vách đá rồi ngước lên tấm biển hiệu của chúng tôi.
+```
+
+Oracle:
+
+```text
+bằng cái giọng cao, già nua, lảo đảo, tưởng như từng được lên dây rồi bị bẻ gãy bên những thanh quay tời neo. Rồi lão gõ cửa bằng một mẩu gậy mang theo, giống như đòn bẩy tàu, và khi cha tôi xuất hiện, lão thô lỗ gọi một ly rượu rum. Khi ly rượu được mang ra, lão uống chậm rãi như kẻ sành sỏi, nấn ná tận hưởng vị rượu, mắt vẫn nhìn quanh các vách đá rồi ngước lên tấm biển hiệu của chúng tôi.
+```
+
+#### `treasure_island_ch02_b022` — dialogue/address policy
+
+Source:
+
+```text
+“Were you addressing me, sir?” said the doctor; and when the ruffian had told him, with another oath, that this was so, replied, “I have only one thing to say to you, sir, that if you keep on drinking rum, the world will soon be quit of a very dirty scoundrel!”
+```
+
+S0:
+
+```text
+“Ông đang nói với tôi đấy à, thưa ông?” vị bác sĩ nói; và khi tên du côn kia, kèm thêm một lời thề độc, bảo ông rằng đúng là như vậy, ông đáp: “Tôi chỉ có một điều muốn nói với ông, thưa ông: nếu ông cứ tiếp tục uống rượu rum, chẳng bao lâu nữa thế gian này sẽ bớt đi một tên khốn kiếp rất bẩn thỉu!”
+```
+
+S1:
+
+```text
+“Ông đang nói với tôi đấy à, thưa ông?” bác sĩ nói; và khi tên côn đồ đã nói với ông, kèm thêm một lời thề thốt khác, rằng đúng là như vậy, ông đáp: “Tôi chỉ có một điều muốn nói với ông, thưa ông, rằng nếu ông cứ tiếp tục uống rượu rum, chẳng bao lâu nữa thế gian này sẽ bớt đi một tên khốn bẩn thỉu!”
+```
+
+Oracle:
+
+```text
+“Có phải ông đang nói với tôi không, thưa ông?” bác sĩ hỏi; và khi tên côn đồ ấy, kèm một câu chửi khác, cho biết đúng là vậy, ông đáp: “Tôi chỉ có một điều để nói với ông, thưa ông: nếu ông cứ tiếp tục uống rượu rum, chẳng bao lâu thế gian này sẽ thoát được một tên vô lại bẩn thỉu!”
+```
+
+Pack evidence:
+
+```json
+{
+  "anchors_count": {"terms": 1, "entities": 2, "address_policies": 1},
+  "dropped_by_budget": [],
+  "low_context": false,
+  "address_lines": [
+    "Billy Bones->Doctor Livesey: \"ông\", Doctor Livesey->Billy Bones: \"ông\" (open_confrontation)"
+  ]
+}
+```
+
+## 6. Review *(Claude điền — 2026-06-13)*
+
+- **Verdict: PASS.** Số liệu đã tái tính độc lập (quy tắc sau vụ agent ngoài): tự chạy
+  75/75 tests; tự đọc report → **S1 TAR 1.0 / S0 0.4151 / oracle 0.6226 trên CÙNG 53
+  pairs**; tự kéo b005/b011/b033 từ DB khớp report; S0 report không bị đụng (vẫn
+  0.4151). Code context_builder đúng spec: anchor-keyed (chỉ query term/entity match
+  trong window — `WHERE glossary_id IN (...)`, không dump registry), budget ưu tiên
+  address-policy giữ trước, coverage re-build 1 lần rồi mới `low_context`. low_context=0,
+  dropped=0 (registry nhỏ — đúng kỳ vọng). Hard constraints trung bình 58,9 tok/window
+  (≤ budget 500, dư địa lớn). Không bịa, không giả danh reviewer.
+- **Bằng chứng demo đắt nhất ĐÃ về:** b005 "ngực người chết" (S0, sai nghĩa) →
+  **"Rương Người Chết"** (S1) nhờ hard constraint `the Dead Man's Chest → Rương Người
+  Chết` — pack evidence chứng minh đúng dòng được bơm. Đây là slide trung tâm cho Thầy.
+- **PHÁT HIỆN PHƯƠNG PHÁP LUẬN QUAN TRỌNG (đã khóa LOCK changelog (z)): TAR BÃO HÒA
+  ở S1.** TAR=1.0 KHÔNG phải "S1 dịch hoàn hảo" mà là hệ quả cấu trúc: provider
+  (span_resolver) chấm đúng tập term có source xuất hiện trong window, mà context
+  builder bơm thẳng target đã duyệt cho CHÍNH tập đó → model tuân lệnh → 1.0 gần như
+  tất yếu một khi injection chạy. Hệ quả cho luận văn:
+  1. TAR là thước TUYỆT VỜI để chứng minh "memory injection ăn tiền" (Δ +0.585 vs S0,
+     vượt oracle) — nhưng nó **không phân biệt được S1 vs S2 vs S3** (đều sẽ ~1.0).
+  2. Phân hóa S1→S3 PHẢI đo bằng trục khác: **ECS** (mới 0.8111, còn dư địa — xưng hô
+     động + narrator artifact), **semantic quality** (judge/COMET — pha eval sau), và
+     **case study arc xưng hô** Jim↔Silver (cần chương dài hơn).
+  3. Chống câu hỏi hội đồng "S1 đã TAR=1.0 thì cần S3 làm gì?": câu trả lời nằm ở
+     những thứ hard constraint KHÔNG vá được — mạch văn, xưng hô theo pha, trung
+     thành ngữ nghĩa. b022 minh chứng: address policy captain↔doctor = "ông"/"ông"
+     nên S1 ≈ S0 ở thoại này — hard constraint vô hại nhưng cũng vô tác dụng khi
+     quan hệ không đổi đại từ; giá trị thật của address policy chỉ lộ ở cặp có
+     ĐỔI pha (Jim↔Silver, ngoài phạm vi 2 chương pilot).
+- **Caveat trung thực phải mang theo:** TAR=1.0 là TRẦN của pilot 53 pairs / 2 chương /
+  registry nhỏ / dropped=0. Ở quy mô sách (budget ép, term nhiều, dropped>0) TAR sẽ
+  tụt dưới 1.0 — KHÔNG quảng cáo 1.0 như số vĩnh viễn.
+- Findings nhỏ (không chặn): (1) `[GIU NGUYEN]` viết không dấu trong prompt — nhất
+  quán, vô hại; (2) ECS ch02/ch03 = 1.0 từng chương nhưng overall 0.8111 do trung bình
+  có trọng số gồm entity narrator/Doctor coverage thấp kéo xuống — đúng công thức EV-01,
+  không phải lỗi.
+- **P4-02 xong → P4-03 (Zone 2: rolling window + chapter summary → S2).** Lưu ý chiến
+  lược: vì TAR đã bão hòa, từ P4-03 trở đi headline metric chuyển sang ECS + chuẩn bị
+  hạ tầng judge; cân nhắc kéo một phần eval đa trục (P5) lên sớm để S2/S3 có thước phân
+  biệt — sẽ bàn khi viết spec P4-03.

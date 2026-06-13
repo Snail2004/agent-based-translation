@@ -7,7 +7,11 @@ from hashlib import sha256
 from typing import Any
 
 from pipeline.agents.llm_client import LLMResult
-from pipeline.translate.prompt import build_messages, extract_translations, PROMPT_VERSION
+from pipeline.translate.prompt import (
+    build_messages,
+    extract_translations,
+    prompt_version_for_config,
+)
 
 
 @dataclass(frozen=True)
@@ -38,6 +42,7 @@ class TranslateReport:
     blocks_failed: int
     json_fail_rate: float
     total_usage: dict[str, int | float]
+    context_stats: dict[str, int]
     model: str
     seed: int
     system_fingerprint: str | None
@@ -55,6 +60,7 @@ class TranslateReport:
             "blocks_failed": self.blocks_failed,
             "json_fail_rate": self.json_fail_rate,
             "total_usage": self.total_usage,
+            "context_stats": self.context_stats,
             "model": self.model,
             "seed": self.seed,
             "system_fingerprint": self.system_fingerprint,
@@ -68,6 +74,8 @@ def translate_windows(
     client: Any,
     experiment_id: str,
     config: str = "S0",
+    context_builder: Any | None = None,
+    context_budget_tokens: int = 500,
 ) -> TranslateReport:
     """Run translation over a list of Window objects.
 
@@ -80,6 +88,13 @@ def translate_windows(
     failed = 0
     skipped = 0
     all_results: list[LLMResult] = []
+    context_stats = {
+        "windows_with_context": 0,
+        "windows_low_context": 0,
+        "dropped_by_budget": 0,
+    }
+    config = config.upper()
+    prompt_version = prompt_version_for_config(config)
 
     for window in windows:
         window_id = window.window_id
@@ -112,7 +127,28 @@ def translate_windows(
         block_map = {str(row["block_id"]): dict(row) for row in block_rows}
         blocks_for_prompt = [block_map[bid] for bid in block_ids if bid in block_map]
 
-        messages = build_messages(blocks_for_prompt, prompt_version=PROMPT_VERSION)
+        context_pack = None
+        if config == "S1":
+            context_pack = _build_context_pack_for_window(
+                db,
+                window,
+                blocks_for_prompt,
+                context_builder=context_builder,
+                budget_tokens=context_budget_tokens,
+            )
+            context_stats["windows_with_context"] += 1
+            if bool(getattr(context_pack, "low_context", False)):
+                context_stats["windows_low_context"] += 1
+            context_stats["dropped_by_budget"] += len(
+                getattr(context_pack, "dropped_by_budget", []) or []
+            )
+
+        messages = build_messages(
+            blocks_for_prompt,
+            prompt_version=prompt_version,
+            config=config,
+            context_pack=context_pack,
+        )
 
         # --- Call with re-ask ---
         result, status, errors = _call_with_reask(
@@ -131,7 +167,18 @@ def translate_windows(
         seed = int(getattr(client.config, "seed", 0) if hasattr(client, "config") else 0)
 
         pack_id = f"pk_{config}_{window_id}"
-        _persist_pack(db, pack_id, window_id, block_ids, config, messages, result)
+        _persist_pack(
+            db,
+            pack_id,
+            window_id,
+            block_ids,
+            config,
+            messages,
+            result,
+            prompt_version=prompt_version,
+            context_pack=context_pack,
+            blocks_for_prompt=blocks_for_prompt,
+        )
 
         if status == "translated":
             translations, _ = extract_translations(result.parsed_json, block_ids)
@@ -140,7 +187,7 @@ def translate_windows(
                 _persist_run(
                     db, run_id, experiment_id, block_id, config, "draft",
                     window_id, pack_id, translation,
-                    model_name, PROMPT_VERSION, temperature, seed, result,
+                    model_name, prompt_version, temperature, seed, result,
                 )
 
         reports.append(
@@ -175,6 +222,7 @@ def translate_windows(
         blocks_failed=sum(r.block_count for r in reports if r.status == "failed"),
         json_fail_rate=failed / total_windows if total_windows else 0.0,
         total_usage=_total_usage(all_results),
+        context_stats=context_stats,
         model=model_name,
         seed=seed,
         system_fingerprint=_last_fingerprint(all_results),
@@ -183,6 +231,23 @@ def translate_windows(
 
     db.commit()
     return report
+
+
+def _build_context_pack_for_window(
+    db: sqlite3.Connection,
+    window: Any,
+    blocks_for_prompt: list[dict[str, Any]],
+    *,
+    context_builder: Any | None,
+    budget_tokens: int,
+) -> Any:
+    if context_builder is not None:
+        return context_builder(db, window, blocks_for_prompt)
+
+    from pipeline.retrieval.context_builder import build_context_pack, plan_anchors
+
+    anchors = plan_anchors(db, blocks_for_prompt)
+    return build_context_pack(db, window, anchors, budget_tokens=budget_tokens)
 
 
 def _call_with_reask(
@@ -269,19 +334,28 @@ def _persist_pack(
     config: str,
     messages: list[dict],
     result: LLMResult,
+    *,
+    prompt_version: str,
+    context_pack: Any | None,
+    blocks_for_prompt: list[dict[str, Any]],
 ) -> None:
     # Store window context in payload_json (existing column).
     # config is stored via _add_column_if_missing during migration 005.
+    zones = _zone_estimates(messages, blocks_for_prompt, context_pack)
     payload = {
         "window_id": window_id,
         "block_ids": block_ids,
         "config": config,
-        "zones": {
-            "system_tokens": result.usage.prompt_tokens,
-            "source_tokens": 0,
-        },
-        "prompt_version": PROMPT_VERSION,
+        "zones": zones,
+        "prompt_version": prompt_version,
+        "anchors_count": _context_anchors_count(context_pack),
+        "dropped_by_budget": _context_dropped_by_budget(context_pack),
+        "low_context": bool(getattr(context_pack, "low_context", False))
+        if context_pack is not None
+        else False,
     }
+    if context_pack is not None and hasattr(context_pack, "to_dict"):
+        payload["context_pack"] = context_pack.to_dict()
     pack_hash = sha256(
         json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()
     ).hexdigest()[:16]
@@ -315,7 +389,7 @@ def _persist_pack(
             doc_id,
             first_block,
             pack_hash,
-            PROMPT_VERSION,
+            prompt_version,
             result.usage.prompt_tokens + result.usage.completion_tokens,
             json.dumps(payload, ensure_ascii=False),
             config,
@@ -382,3 +456,49 @@ def _last_fingerprint(results: list[LLMResult]) -> str | None:
         if result.system_fingerprint:
             return result.system_fingerprint
     return None
+
+
+def _zone_estimates(
+    messages: list[dict],
+    blocks_for_prompt: list[dict[str, Any]],
+    context_pack: Any | None,
+) -> dict[str, int]:
+    system_text = str(messages[0].get("content", "")) if messages else ""
+    hard_tokens = int(getattr(context_pack, "token_estimate", 0) or 0)
+    source_text = "\n".join(
+        str(block.get("clean_text") or block.get("source_text") or "")
+        for block in blocks_for_prompt
+    )
+    return {
+        "system_tokens": _estimate_tokens(system_text),
+        "hard_constraints_tokens": hard_tokens,
+        "source_tokens": _estimate_tokens(source_text),
+    }
+
+
+def _context_anchors_count(context_pack: Any | None) -> dict[str, int]:
+    if context_pack is None:
+        return {"terms": 0, "entities": 0, "address_policies": 0}
+    anchors = getattr(context_pack, "anchors", None)
+    count = getattr(anchors, "count_by_type", {"terms": 0, "entities": 0})
+    return {
+        "terms": int(count.get("terms", 0)),
+        "entities": int(count.get("entities", 0)),
+        "address_policies": len(getattr(context_pack, "address_lines", []) or []),
+    }
+
+
+def _context_dropped_by_budget(context_pack: Any | None) -> list[dict[str, str]]:
+    if context_pack is None:
+        return []
+    result = []
+    for item in getattr(context_pack, "dropped_by_budget", []) or []:
+        if hasattr(item, "to_dict"):
+            result.append(item.to_dict())
+        else:
+            result.append(dict(item))
+    return result
+
+
+def _estimate_tokens(text: str) -> int:
+    return max(1, len(text) // 4)

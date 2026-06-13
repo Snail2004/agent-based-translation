@@ -5,17 +5,29 @@ from typing import Any
 
 
 PROMPT_VERSION = "s0_v1"
+S1_PROMPT_VERSION = "s1_v1"
+
+
+def prompt_version_for_config(config: str) -> str:
+    return S1_PROMPT_VERSION if config.upper() == "S1" else PROMPT_VERSION
 
 
 def build_messages(
     window_blocks: list[dict[str, Any]],
     prompt_version: str = PROMPT_VERSION,
+    *,
+    config: str = "S0",
+    context_pack: Any | None = None,
 ) -> list[dict[str, str]]:
     """Build the S0 translator messages — style policy + source window only.
 
     S0 PURITY: prompt does NOT contain glossary, entities, summaries, motifs,
     or address/pronoun policy from memory.  Pure style guidance + source text.
     """
+
+    config = config.upper()
+    if config == "S1" and prompt_version == PROMPT_VERSION:
+        prompt_version = prompt_version_for_config(config)
 
     system = (
         "You are an autonomous literary translator operating in a structured pipeline. "
@@ -46,7 +58,10 @@ def build_messages(
         f"- PROMPT VERSION: {prompt_version}\n"
     )
 
-    user = _render_source_blocks(window_blocks)
+    if config == "S1":
+        user = _render_s1_user(window_blocks, context_pack)
+    else:
+        user = _render_source_blocks(window_blocks)
 
     return [
         {"role": "system", "content": system},
@@ -64,6 +79,23 @@ def _render_source_blocks(blocks: list[dict[str, Any]]) -> str:
         )
         lines.append(f"[{block_id}] {text}")
     return "\n\n".join(lines)
+
+
+def _render_s1_user(
+    blocks: list[dict[str, Any]],
+    context_pack: Any | None,
+) -> str:
+    constraints = ""
+    if context_pack is not None and hasattr(context_pack, "render_hard_constraints"):
+        constraints = str(context_pack.render_hard_constraints())
+    if not constraints:
+        constraints = (
+            "MANDATORY TERMINOLOGY & NAMES\n"
+            "(none)\n"
+            "ADDRESS POLICY (xung ho)\n"
+            "(none)"
+        )
+    return f"{constraints}\n\nSOURCE WINDOW\n{_render_source_blocks(blocks)}"
 
 
 def extract_translations(
