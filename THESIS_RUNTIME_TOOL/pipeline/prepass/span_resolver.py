@@ -52,6 +52,13 @@ def resolve_spans(
     artifact_paths: list[str | Path],
 ) -> ResolvedSpans:
     document = json.loads(Path(document_json_path).read_text(encoding="utf-8"))
+    return resolve_spans_for_document(document, artifact_paths)
+
+
+def resolve_spans_for_document(
+    document: dict[str, Any],
+    artifact_paths: list[str | Path],
+) -> ResolvedSpans:
     artifacts = [json.loads(Path(path).read_text(encoding="utf-8")) for path in artifact_paths]
     chapter_ids = {str(artifact.get("chapter_id") or "") for artifact in artifacts}
     blocks = _blocks_for_chapters(document, chapter_ids)

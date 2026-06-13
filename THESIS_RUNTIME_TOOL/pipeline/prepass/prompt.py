@@ -4,11 +4,27 @@ import re
 from typing import Any
 
 
+D2L_TERMINOLOGY_PROMPT_VERSION = "d2l_terminology_v7"
+D2L_REGISTRY_OMITTED_TEXT = (
+    "Registry intentionally omitted for D2L extraction. Extract terms visible "
+    "in this window independently; deterministic consolidation will merge "
+    "duplicates and resolve target variants after extraction."
+)
+LITERARY_PROMPT_VERSION = "literary_v2"
+
+
 def build_messages(
     chapter: dict[str, Any],
     registry_so_far_text: str,
+    *,
+    mode: str = "literary",
 ) -> list[dict[str, str]]:
     """Build the World Builder messages from stripped source text only."""
+
+    if mode == "d2l_terminology":
+        return build_d2l_terminology_messages(chapter, registry_so_far_text)
+    if mode != "literary":
+        raise ValueError(f"Unknown prepass mode: {mode}")
 
     system = (
         "You are the World Builder agent for an autonomous English-Vietnamese "
@@ -77,6 +93,94 @@ def build_messages(
         f"REGISTRY_SO_FAR\n{registry_so_far_text}\n\n"
         f"CHAPTER_ID\n{chapter['chapter_id']}\n\n"
         "CHAPTER_TEXT_WITH_BLOCK_MARKERS\n"
+        f"{render_chapter_blocks(chapter)}"
+    )
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+
+def build_d2l_terminology_messages(
+    chapter: dict[str, Any],
+    registry_so_far_text: str,
+) -> list[dict[str, str]]:
+    system = (
+        "You are the World Builder agent for an autonomous English-Vietnamese "
+        "technical-book translation pipeline. Read only the English source blocks "
+        "provided by the user. Build a compact terminology registry for D2L. "
+        "Never use any Vietnamese reference, glossary, gold, or external answer key.\n\n"
+        "Hard rules:\n"
+        f"- Prompt version: {D2L_TERMINOLOGY_PROMPT_VERSION}.\n"
+        "- Return only valid JSON matching the requested contract.\n"
+        "- Focus on technical terminology that needs book-wide consistency: ML concepts, "
+        "math/statistics terms, model/layer names, abbreviations, framework/API names, "
+        "and named datasets or algorithms.\n"
+        "- The user gives you one source WINDOW, not necessarily a whole chapter. "
+        "Extract every controlled technical term visible in this window. Do not impose "
+        "a per-chapter cap; windowing is how we keep each call small.\n"
+        "- No prior registry is provided for D2L extraction. Re-emit every controlled "
+        "term that is visible in the current window even if it might have appeared in "
+        "earlier windows. Downstream code consolidates duplicates deterministically.\n"
+        "- Keep every string concise. Do not add commentary outside JSON. Keep termhood "
+        "under 12 words per term.\n"
+        "- Keep JSON compact: include only the 1-3 strongest evidence block ids per term, "
+        "not every occurrence in the window.\n"
+        "- Do not add ordinary English words unless they are used as technical terms.\n"
+        "- Prefer concise exact source surfaces that appear in the window. Include "
+        "foundational terms when they are used technically, not only long compounds.\n"
+        "- Prefer one canonical source entry per concept. Do not emit separate near-duplicate "
+        "subphrases when a more precise source term in the same window covers them.\n"
+        "- Each glossary candidate must commit to ONE canonical Vietnamese target in "
+        "proposed_target_vi/canonical_target. Put other acceptable Vietnamese forms in "
+        "allowed_variants. Put literal wrong translations in forbidden_variants when clear.\n"
+        "- All Vietnamese terminology targets MUST use full Vietnamese diacritics. "
+        "Do not output ASCII-only Vietnamese such as 'tac nhan', 'mo hinh', "
+        "'sieu tham so', or 'dao ham'. Output 'tác nhân', 'mô hình', "
+        "'siêu tham số', 'đạo hàm'.\n"
+        "- Use do_not_translate=true for framework/library/API names, code identifiers, "
+        "dataset names, or terms conventionally kept in English.\n"
+        "- term_type must be exactly one of: term, abbreviation, proper_noun, code_api.\n"
+        "- category is kept for compatibility and must be exactly one of: nautical, "
+        "cultural, object, place, other. Use other for normal D2L terms.\n"
+        "- termhood must briefly state why this is a controlled term, not an ordinary word.\n"
+        "- evidence_span_ids and block_ids must contain visible block markers from this chapter.\n"
+        "- This D2L task is glossary-only. Return entities=[], relations=[], "
+        "mention_surfaces=[], and motifs=[] exactly. Put named systems, datasets, "
+        "libraries, APIs, and organizations in glossary_candidates with term_type "
+        "proper_noun or code_api.\n"
+        "- Do not read, infer from, or mention eval_glossary_gold, D2L Vietnamese markdown, "
+        "human glossary, gold, or reference translations.\n\n"
+        "Required JSON shape:\n"
+        "{\n"
+        '  "chapter_id": "...",\n'
+        '  "glossary_candidates": [\n'
+        "    {\n"
+        '      "source_term": "agent",\n'
+        '      "canonical_source": "agent",\n'
+        '      "proposed_target_vi": "tác nhân",\n'
+        '      "canonical_target": "tác nhân",\n'
+        '      "termhood": "technical term for an acting system",\n'
+        '      "term_type": "term|abbreviation|proper_noun|code_api",\n'
+        '      "do_not_translate": false,\n'
+        '      "category": "other",\n'
+        '      "allowed_variants": ["tác tử"],\n'
+        '      "forbidden_variants": ["đại lý"],\n'
+        '      "block_ids": ["d2l_introduction_index_b001"],\n'
+        '      "evidence_span_ids": ["d2l_introduction_index_b001"]\n'
+        "    }\n"
+        "  ],\n"
+        '  "entities": [],\n'
+        '  "relations": [],\n'
+        '  "mention_surfaces": [],\n'
+        '  "chapter_summary_vi": "<=80 Vietnamese words about the technical content",\n'
+        '  "motifs": []\n'
+        "}"
+    )
+    user = (
+        f"REGISTRY_POLICY\n{D2L_REGISTRY_OMITTED_TEXT}\n\n"
+        f"CHAPTER_ID\n{chapter['chapter_id']}\n\n"
+        "ENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n"
         f"{render_chapter_blocks(chapter)}"
     )
     return [

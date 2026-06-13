@@ -1,0 +1,6292 @@
+{
+  "doc_id": "d2l",
+  "chapters": [
+    "d2l_introduction",
+    "d2l_preliminaries",
+    "d2l_linear_networks",
+    "d2l_multilayer_perceptrons"
+  ],
+  "gold_terms_present": 163,
+  "builder_terms": 1608,
+  "matched_terms": 121,
+  "agreement_terms": 90,
+  "recall": 0.742331,
+  "agreement": 0.743802,
+  "missing_terms": [
+    {
+      "source_term": "analogy",
+      "gold_target": "loại suy"
+    },
+    {
+      "source_term": "bandit",
+      "gold_target": "máy đánh bạc"
+    },
+    {
+      "source_term": "broadcast",
+      "gold_target": "lan truyền"
+    },
+    {
+      "source_term": "constrain",
+      "gold_target": "ràng buộc"
+    },
+    {
+      "source_term": "covariate",
+      "gold_target": "hiệp biến"
+    },
+    {
+      "source_term": "distributed",
+      "gold_target": "phân tán"
+    },
+    {
+      "source_term": "edge detector",
+      "gold_target": "bộ phát hiện biên"
+    },
+    {
+      "source_term": "end-to-end",
+      "gold_target": "đầu-cuối"
+    },
+    {
+      "source_term": "flatten",
+      "gold_target": "trải phẳng"
+    },
+    {
+      "source_term": "heuristic",
+      "gold_target": "thực nghiệm"
+    },
+    {
+      "source_term": "implement",
+      "gold_target": "lập trình"
+    },
+    {
+      "source_term": "implementation",
+      "gold_target": "cách lập trình"
+    },
+    {
+      "source_term": "iteration",
+      "gold_target": "vòng lặp"
+    },
+    {
+      "source_term": "kernel",
+      "gold_target": "hạt nhân"
+    },
+    {
+      "source_term": "key",
+      "gold_target": "khóa"
+    },
+    {
+      "source_term": "linear",
+      "gold_target": "tuyến tính"
+    },
+    {
+      "source_term": "metric",
+      "gold_target": "phép đo"
+    },
+    {
+      "source_term": "mislabeled",
+      "gold_target": "bị gán nhãn nhầm"
+    },
+    {
+      "source_term": "moment",
+      "gold_target": "mô-men"
+    },
+    {
+      "source_term": "multi-armed bandit",
+      "gold_target": "máy đánh bạc đa cần"
+    },
+    {
+      "source_term": "nonparametric",
+      "gold_target": "phi tham số"
+    },
+    {
+      "source_term": "nonstationary distribution",
+      "gold_target": "phân phối không dừng"
+    },
+    {
+      "source_term": "normalize",
+      "gold_target": "chuẩn hóa"
+    },
+    {
+      "source_term": "orthogonal",
+      "gold_target": "trực giao"
+    },
+    {
+      "source_term": "penalty",
+      "gold_target": "lượng phạt"
+    },
+    {
+      "source_term": "perceptron",
+      "gold_target": "perceptron"
+    },
+    {
+      "source_term": "performance",
+      "gold_target": "chất lượng"
+    },
+    {
+      "source_term": "pipeline",
+      "gold_target": "pipeline"
+    },
+    {
+      "source_term": "population",
+      "gold_target": "tổng thể"
+    },
+    {
+      "source_term": "quadratic",
+      "gold_target": "toàn phương"
+    },
+    {
+      "source_term": "query",
+      "gold_target": "(câu) truy vấn"
+    },
+    {
+      "source_term": "recall",
+      "gold_target": "recall"
+    },
+    {
+      "source_term": "recognition",
+      "gold_target": "nhận dạng"
+    },
+    {
+      "source_term": "running time",
+      "gold_target": "thời gian chạy"
+    },
+    {
+      "source_term": "scale",
+      "gold_target": "(phép) biến đổi tỉ lệ"
+    },
+    {
+      "source_term": "sensitivity",
+      "gold_target": "độ nhạy"
+    },
+    {
+      "source_term": "sequence to sequence",
+      "gold_target": "chuỗi sang chuỗi"
+    },
+    {
+      "source_term": "subscript",
+      "gold_target": "chỉ số dưới"
+    },
+    {
+      "source_term": "switch",
+      "gold_target": "bộ chuyển mạch"
+    },
+    {
+      "source_term": "text data",
+      "gold_target": "dữ liệu văn bản"
+    },
+    {
+      "source_term": "underfit",
+      "gold_target": "dưới khớp"
+    },
+    {
+      "source_term": "value",
+      "gold_target": "giá trị"
+    }
+  ],
+  "conflicts": [
+    {
+      "source_term": "attention mechanisms",
+      "builder_target": "cơ chế chú ý",
+      "gold_target": "cơ chế tập trung"
+    },
+    {
+      "source_term": "automatic differentiation",
+      "builder_target": "tự động vi phân",
+      "gold_target": "tính vi phân tự động"
+    },
+    {
+      "source_term": "batch",
+      "builder_target": "lô",
+      "gold_target": "batch"
+    },
+    {
+      "source_term": "batch size",
+      "builder_target": "kích thước lô",
+      "gold_target": "kích thước batch"
+    },
+    {
+      "source_term": "benchmark",
+      "builder_target": "chuẩn đánh giá",
+      "gold_target": "đánh giá xếp hạng"
+    },
+    {
+      "source_term": "bias-variance tradeoff",
+      "builder_target": "đánh đổi chệch-phương sai",
+      "gold_target": "đánh đổi độ chệch - phương sai"
+    },
+    {
+      "source_term": "closed-form solution",
+      "builder_target": "lời giải đóng",
+      "gold_target": "biểu thức dạng đóng"
+    },
+    {
+      "source_term": "cosine",
+      "builder_target": "cosin",
+      "gold_target": "cô-sin"
+    },
+    {
+      "source_term": "data manipulation",
+      "builder_target": "thao tác dữ liệu",
+      "gold_target": "thao tác với dữ liệu"
+    },
+    {
+      "source_term": "dense layer",
+      "builder_target": "lớp dày đặc",
+      "gold_target": "tầng kết nối dày đặc"
+    },
+    {
+      "source_term": "dimensionality",
+      "builder_target": "số chiều",
+      "gold_target": "kích thước chiều"
+    },
+    {
+      "source_term": "dot product",
+      "builder_target": "tích vô hướng",
+      "gold_target": "tích vô hướng (hoặc tích trong)"
+    },
+    {
+      "source_term": "elementwise",
+      "builder_target": "theo phần tử",
+      "gold_target": "(theo) từng phần tử"
+    },
+    {
+      "source_term": "error rate",
+      "builder_target": "tỷ lệ lỗi",
+      "gold_target": "tỉ lệ lỗi"
+    },
+    {
+      "source_term": "explicit feedback",
+      "builder_target": "phản hồi tường minh",
+      "gold_target": "phản hồi trực tiếp"
+    },
+    {
+      "source_term": "exploding gradient",
+      "builder_target": "gradient bùng nổ",
+      "gold_target": "bùng nổ gradient"
+    },
+    {
+      "source_term": "forward pass",
+      "builder_target": "lan truyền xuôi",
+      "gold_target": "lượt truyền xuôi"
+    },
+    {
+      "source_term": "Gaussian distribution",
+      "builder_target": "phân phối Gaussian",
+      "gold_target": "phân phối Gauss (phân phối chuẩn)"
+    },
+    {
+      "source_term": "generalization error",
+      "builder_target": "sai số khái quát hóa",
+      "gold_target": "lỗi khái quát"
+    },
+    {
+      "source_term": "generalization gap",
+      "builder_target": "khoảng cách tổng quát hóa",
+      "gold_target": "khoảng cách khái quát"
+    },
+    {
+      "source_term": "ground truth",
+      "builder_target": "nhãn thật",
+      "gold_target": "nhãn gốc"
+    },
+    {
+      "source_term": "implicit feedback",
+      "builder_target": "phản hồi ngầm",
+      "gold_target": "phản hồi gián tiếp"
+    },
+    {
+      "source_term": "iterator",
+      "builder_target": "bộ lặp",
+      "gold_target": "iterator"
+    },
+    {
+      "source_term": "model family",
+      "builder_target": "họ mô hình",
+      "gold_target": "nhóm mô hình"
+    },
+    {
+      "source_term": "normal distribution",
+      "builder_target": "phân phối chuẩn",
+      "gold_target": "phân phối chuẩn (phân phối Gauss)"
+    },
+    {
+      "source_term": "object recognition",
+      "builder_target": "nhận dạng đối tượng",
+      "gold_target": "nhận dạng vật thể"
+    },
+    {
+      "source_term": "one-hot encoding",
+      "builder_target": "mã hóa one-hot",
+      "gold_target": "biễu diễn one-hot"
+    },
+    {
+      "source_term": "recommender system",
+      "builder_target": "hệ gợi ý",
+      "gold_target": "hệ thống đề xuất"
+    },
+    {
+      "source_term": "standardize",
+      "builder_target": "chuẩn hóa",
+      "gold_target": "chuẩn tắc hóa"
+    },
+    {
+      "source_term": "transcription",
+      "builder_target": "bản ghi phiên âm",
+      "gold_target": "bản ghi thoại"
+    },
+    {
+      "source_term": "vanishing gradient",
+      "builder_target": "gradient tiêu biến",
+      "gold_target": "tiêu biến gradient"
+    }
+  ],
+  "extra_terms": [
+    {
+      "source_term": "+ operator",
+      "builder_target": "+"
+    },
+    {
+      "source_term": "-1",
+      "builder_target": "-1"
+    },
+    {
+      "source_term": ".shape",
+      "builder_target": ".shape"
+    },
+    {
+      "source_term": "16kHz",
+      "builder_target": "16 kHz"
+    },
+    {
+      "source_term": "1:1 correspondence",
+      "builder_target": "tương ứng 1:1"
+    },
+    {
+      "source_term": "28×28 images",
+      "builder_target": "ảnh 28×28"
+    },
+    {
+      "source_term": "37°C",
+      "builder_target": "37°C"
+    },
+    {
+      "source_term": "8kHz",
+      "builder_target": "8 kHz"
+    },
+    {
+      "source_term": "absolute error",
+      "builder_target": "sai số tuyệt đối"
+    },
+    {
+      "source_term": "absolute value",
+      "builder_target": "giá trị tuyệt đối"
+    },
+    {
+      "source_term": "Accumulator",
+      "builder_target": "Accumulator"
+    },
+    {
+      "source_term": "action",
+      "builder_target": "hành động"
+    },
+    {
+      "source_term": "actions",
+      "builder_target": "hành động"
+    },
+    {
+      "source_term": "activation",
+      "builder_target": "kích hoạt"
+    },
+    {
+      "source_term": "activation functions",
+      "builder_target": "các hàm kích hoạt"
+    },
+    {
+      "source_term": "activation vector",
+      "builder_target": "vector kích hoạt"
+    },
+    {
+      "source_term": "activations",
+      "builder_target": "giá trị kích hoạt"
+    },
+    {
+      "source_term": "actual class",
+      "builder_target": "lớp thực"
+    },
+    {
+      "source_term": "Adam optimizer",
+      "builder_target": "bộ tối ưu Adam"
+    },
+    {
+      "source_term": "additive Gaussian noise",
+      "builder_target": "nhiễu Gaussian cộng"
+    },
+    {
+      "source_term": "additive noise",
+      "builder_target": "nhiễu cộng"
+    },
+    {
+      "source_term": "adversarial",
+      "builder_target": "đối kháng"
+    },
+    {
+      "source_term": "aeronautics",
+      "builder_target": "hàng không học"
+    },
+    {
+      "source_term": "affine function",
+      "builder_target": "hàm affine"
+    },
+    {
+      "source_term": "affine functions",
+      "builder_target": "hàm affine"
+    },
+    {
+      "source_term": "affine transformation",
+      "builder_target": "biến đổi affine"
+    },
+    {
+      "source_term": "affine transformations",
+      "builder_target": "biến đổi affine"
+    },
+    {
+      "source_term": "age",
+      "builder_target": "tuổi"
+    },
+    {
+      "source_term": "AI",
+      "builder_target": "trí tuệ nhân tạo"
+    },
+    {
+      "source_term": "AI apocalypse",
+      "builder_target": "ngày tận thế AI"
+    },
+    {
+      "source_term": "AI singularity",
+      "builder_target": "kỳ dị AI"
+    },
+    {
+      "source_term": "AI systems",
+      "builder_target": "hệ thống AI"
+    },
+    {
+      "source_term": "alerts",
+      "builder_target": "cảnh báo"
+    },
+    {
+      "source_term": "Alexa",
+      "builder_target": "Alexa"
+    },
+    {
+      "source_term": "algorithm",
+      "builder_target": "thuật toán"
+    },
+    {
+      "source_term": "algorithms",
+      "builder_target": "thuật toán"
+    },
+    {
+      "source_term": "alignment",
+      "builder_target": "căn chỉnh"
+    },
+    {
+      "source_term": "AliPay",
+      "builder_target": "AliPay"
+    },
+    {
+      "source_term": "Alley",
+      "builder_target": "Alley"
+    },
+    {
+      "source_term": "AlphaGo",
+      "builder_target": "AlphaGo"
+    },
+    {
+      "source_term": "ambient dimension",
+      "builder_target": "số chiều bao quanh"
+    },
+    {
+      "source_term": "amplitude",
+      "builder_target": "biên độ"
+    },
+    {
+      "source_term": "Analytic Solution",
+      "builder_target": "nghiệm giải tích"
+    },
+    {
+      "source_term": "animal classification",
+      "builder_target": "phân loại động vật"
+    },
+    {
+      "source_term": "Animator",
+      "builder_target": "Animator"
+    },
+    {
+      "source_term": "annotation",
+      "builder_target": "chú giải"
+    },
+    {
+      "source_term": "annotators",
+      "builder_target": "người gán nhãn"
+    },
+    {
+      "source_term": "anomaly detection",
+      "builder_target": "phát hiện bất thường"
+    },
+    {
+      "source_term": "Apache MXNet",
+      "builder_target": "Apache MXNet"
+    },
+    {
+      "source_term": "API",
+      "builder_target": "API"
+    },
+    {
+      "source_term": "API documentation",
+      "builder_target": "tài liệu API"
+    },
+    {
+      "source_term": "apparel classification dataset",
+      "builder_target": "tập dữ liệu phân loại trang phục"
+    },
+    {
+      "source_term": "Apple",
+      "builder_target": "Apple"
+    },
+    {
+      "source_term": "arange",
+      "builder_target": "arange"
+    },
+    {
+      "source_term": "arbitrage opportunity",
+      "builder_target": "cơ hội kinh doanh chênh lệch giá"
+    },
+    {
+      "source_term": "arbitrary lengths",
+      "builder_target": "độ dài tùy ý"
+    },
+    {
+      "source_term": "architecture",
+      "builder_target": "kiến trúc"
+    },
+    {
+      "source_term": "area",
+      "builder_target": "diện tích"
+    },
+    {
+      "source_term": "argmax",
+      "builder_target": "argmax"
+    },
+    {
+      "source_term": "argmin",
+      "builder_target": "argmin"
+    },
+    {
+      "source_term": "arms",
+      "builder_target": "cánh tay"
+    },
+    {
+      "source_term": "array",
+      "builder_target": "mảng"
+    },
+    {
+      "source_term": "artificial general intelligence",
+      "builder_target": "trí tuệ nhân tạo tổng quát"
+    },
+    {
+      "source_term": "artificial neural networks",
+      "builder_target": "mạng nơ-ron nhân tạo"
+    },
+    {
+      "source_term": "artificial neuron",
+      "builder_target": "nơ-ron nhân tạo"
+    },
+    {
+      "source_term": "artificial neurons",
+      "builder_target": "nơ-ron nhân tạo"
+    },
+    {
+      "source_term": "artificially intelligent bots",
+      "builder_target": "tác nhân trí tuệ nhân tạo"
+    },
+    {
+      "source_term": "assign",
+      "builder_target": "gán"
+    },
+    {
+      "source_term": "astronomy",
+      "builder_target": "thiên văn học"
+    },
+    {
+      "source_term": "Atari games",
+      "builder_target": "Atari games"
+    },
+    {
+      "source_term": "attributes",
+      "builder_target": "thuộc tính"
+    },
+    {
+      "source_term": "audio file",
+      "builder_target": "tệp âm thanh"
+    },
+    {
+      "source_term": "audio frames",
+      "builder_target": "khung âm thanh"
+    },
+    {
+      "source_term": "audio recording",
+      "builder_target": "bản ghi âm thanh"
+    },
+    {
+      "source_term": "audio snippets",
+      "builder_target": "đoạn âm thanh"
+    },
+    {
+      "source_term": "auto differentiation",
+      "builder_target": "tự động vi phân"
+    },
+    {
+      "source_term": "Auto-tagging",
+      "builder_target": "gán thẻ tự động"
+    },
+    {
+      "source_term": "autograd",
+      "builder_target": "autograd"
+    },
+    {
+      "source_term": "automated",
+      "builder_target": "tự động hóa"
+    },
+    {
+      "source_term": "Automatic Speech Recognition",
+      "builder_target": "nhận dạng tiếng nói tự động"
+    },
+    {
+      "source_term": "autonomous cars",
+      "builder_target": "ô tô tự hành"
+    },
+    {
+      "source_term": "autopilots",
+      "builder_target": "hệ thống lái tự động"
+    },
+    {
+      "source_term": "average",
+      "builder_target": "trung bình"
+    },
+    {
+      "source_term": "average loss",
+      "builder_target": "loss trung bình"
+    },
+    {
+      "source_term": "averaging",
+      "builder_target": "lấy trung bình"
+    },
+    {
+      "source_term": "AWS",
+      "builder_target": "AWS"
+    },
+    {
+      "source_term": "axes",
+      "builder_target": "trục"
+    },
+    {
+      "source_term": "axiom system",
+      "builder_target": "hệ tiên đề"
+    },
+    {
+      "source_term": "Axioms of Probability Theory",
+      "builder_target": "tiên đề của lý thuyết xác suất"
+    },
+    {
+      "source_term": "axis",
+      "builder_target": "trục"
+    },
+    {
+      "source_term": "axis 1",
+      "builder_target": "trục 1"
+    },
+    {
+      "source_term": "axon",
+      "builder_target": "sợi trục"
+    },
+    {
+      "source_term": "axon terminals",
+      "builder_target": "cúc tận cùng sợi trục"
+    },
+    {
+      "source_term": "backgammon",
+      "builder_target": "backgammon"
+    },
+    {
+      "source_term": "backpropagate",
+      "builder_target": "truyền ngược"
+    },
+    {
+      "source_term": "backpropagating",
+      "builder_target": "lan truyền ngược"
+    },
+    {
+      "source_term": "backpropagation function",
+      "builder_target": "hàm lan truyền ngược"
+    },
+    {
+      "source_term": "backward",
+      "builder_target": "backward"
+    },
+    {
+      "source_term": "Backward Propagation",
+      "builder_target": "lan truyền ngược"
+    },
+    {
+      "source_term": "backwards pass",
+      "builder_target": "lan truyền ngược"
+    },
+    {
+      "source_term": "Banach spaces",
+      "builder_target": "không gian Banach"
+    },
+    {
+      "source_term": "bandits",
+      "builder_target": "bài toán băng-đit"
+    },
+    {
+      "source_term": "base 2",
+      "builder_target": "cơ số 2"
+    },
+    {
+      "source_term": "base e",
+      "builder_target": "cơ số e"
+    },
+    {
+      "source_term": "baseline",
+      "builder_target": "mốc cơ sở"
+    },
+    {
+      "source_term": "basic math",
+      "builder_target": "toán học cơ bản"
+    },
+    {
+      "source_term": "Batch Learning",
+      "builder_target": "học theo lô"
+    },
+    {
+      "source_term": "batch_size",
+      "builder_target": "kích thước lô"
+    },
+    {
+      "source_term": "Bayes' theorem",
+      "builder_target": "định lý Bayes"
+    },
+    {
+      "source_term": "Bayesian statistics",
+      "builder_target": "thống kê Bayes"
+    },
+    {
+      "source_term": "behavioral models",
+      "builder_target": "mô hình hành vi"
+    },
+    {
+      "source_term": "benchmark dataset",
+      "builder_target": "bộ dữ liệu chuẩn"
+    },
+    {
+      "source_term": "benchmarks",
+      "builder_target": "các bộ chuẩn đánh giá"
+    },
+    {
+      "source_term": "Bernoulli",
+      "builder_target": "Bernoulli"
+    },
+    {
+      "source_term": "Bernoulli distribution",
+      "builder_target": "phân phối Bernoulli"
+    },
+    {
+      "source_term": "beta_i",
+      "builder_target": "beta_i"
+    },
+    {
+      "source_term": "bias",
+      "builder_target": "độ lệch"
+    },
+    {
+      "source_term": "bias parameter",
+      "builder_target": "tham số độ lệch"
+    },
+    {
+      "source_term": "bias penalty",
+      "builder_target": "phạt độ chệch"
+    },
+    {
+      "source_term": "bias term",
+      "builder_target": "hạng tử chệch"
+    },
+    {
+      "source_term": "bias vector",
+      "builder_target": "vectơ độ lệch"
+    },
+    {
+      "source_term": "bias.data",
+      "builder_target": "bias.data"
+    },
+    {
+      "source_term": "biases",
+      "builder_target": "độ lệch"
+    },
+    {
+      "source_term": "binary classification",
+      "builder_target": "phân loại nhị phân"
+    },
+    {
+      "source_term": "binary classifier",
+      "builder_target": "bộ phân loại nhị phân"
+    },
+    {
+      "source_term": "binary code",
+      "builder_target": "mã nhị phân"
+    },
+    {
+      "source_term": "binary elementwise operation",
+      "builder_target": "phép toán nhị ngôi từng phần tử"
+    },
+    {
+      "source_term": "binary entries",
+      "builder_target": "phần tử nhị phân"
+    },
+    {
+      "source_term": "binary labels",
+      "builder_target": "nhãn nhị phân"
+    },
+    {
+      "source_term": "binary operator",
+      "builder_target": "toán tử hai ngôi"
+    },
+    {
+      "source_term": "binary scalar operator",
+      "builder_target": "toán tử hai ngôi vô hướng"
+    },
+    {
+      "source_term": "binary tensor",
+      "builder_target": "tensor nhị phân"
+    },
+    {
+      "source_term": "binary-classification training set",
+      "builder_target": "tập huấn luyện phân loại nhị phân"
+    },
+    {
+      "source_term": "BioASQ",
+      "builder_target": "BioASQ"
+    },
+    {
+      "source_term": "biological neural networks",
+      "builder_target": "mạng nơ-ron sinh học"
+    },
+    {
+      "source_term": "biomedical literature",
+      "builder_target": "tài liệu y sinh"
+    },
+    {
+      "source_term": "bit",
+      "builder_target": "bit"
+    },
+    {
+      "source_term": "bits",
+      "builder_target": "bit"
+    },
+    {
+      "source_term": "body temperature",
+      "builder_target": "nhiệt độ cơ thể"
+    },
+    {
+      "source_term": "break the symmetry",
+      "builder_target": "phá vỡ tính đối xứng"
+    },
+    {
+      "source_term": "broadcasting",
+      "builder_target": "broadcasting"
+    },
+    {
+      "source_term": "broadcasting mechanism",
+      "builder_target": "cơ chế broadcasting"
+    },
+    {
+      "source_term": "business logic",
+      "builder_target": "logic nghiệp vụ"
+    },
+    {
+      "source_term": "Caffe",
+      "builder_target": "Caffe"
+    },
+    {
+      "source_term": "Caffe 2",
+      "builder_target": "Caffe 2"
+    },
+    {
+      "source_term": "calculus",
+      "builder_target": "giải tích"
+    },
+    {
+      "source_term": "calibration",
+      "builder_target": "hiệu chuẩn"
+    },
+    {
+      "source_term": "Cambrian explosion",
+      "builder_target": "bùng nổ kỷ Cambri"
+    },
+    {
+      "source_term": "candidate models",
+      "builder_target": "mô hình ứng viên"
+    },
+    {
+      "source_term": "Canny edge detector",
+      "builder_target": "bộ phát hiện cạnh Canny"
+    },
+    {
+      "source_term": "Carnegie Mellon University",
+      "builder_target": "Đại học Carnegie Mellon"
+    },
+    {
+      "source_term": "categorical",
+      "builder_target": "phân loại"
+    },
+    {
+      "source_term": "categorical data",
+      "builder_target": "dữ liệu phân loại"
+    },
+    {
+      "source_term": "categorical features",
+      "builder_target": "đặc trưng phân loại"
+    },
+    {
+      "source_term": "categories",
+      "builder_target": "hạng mục"
+    },
+    {
+      "source_term": "censored feedback",
+      "builder_target": "phản hồi bị kiểm duyệt"
+    },
+    {
+      "source_term": "Chainer",
+      "builder_target": "Chainer"
+    },
+    {
+      "source_term": "channel",
+      "builder_target": "kênh"
+    },
+    {
+      "source_term": "channel axis",
+      "builder_target": "trục kênh"
+    },
+    {
+      "source_term": "channels",
+      "builder_target": "kênh"
+    },
+    {
+      "source_term": "chess",
+      "builder_target": "cờ vua"
+    },
+    {
+      "source_term": "choice models",
+      "builder_target": "mô hình lựa chọn"
+    },
+    {
+      "source_term": "cholesterol levels",
+      "builder_target": "nồng độ cholesterol"
+    },
+    {
+      "source_term": "Christopher Bishop",
+      "builder_target": "Christopher Bishop"
+    },
+    {
+      "source_term": "circle",
+      "builder_target": "đường tròn"
+    },
+    {
+      "source_term": "class",
+      "builder_target": "lớp"
+    },
+    {
+      "source_term": "class 0",
+      "builder_target": "lớp 0"
+    },
+    {
+      "source_term": "class 1",
+      "builder_target": "lớp 1"
+    },
+    {
+      "source_term": "class distribution",
+      "builder_target": "phân phối lớp"
+    },
+    {
+      "source_term": "class-conditional distribution",
+      "builder_target": "phân phối có điều kiện theo lớp"
+    },
+    {
+      "source_term": "classes",
+      "builder_target": "lớp"
+    },
+    {
+      "source_term": "classical approaches",
+      "builder_target": "phương pháp cổ điển"
+    },
+    {
+      "source_term": "Classification",
+      "builder_target": "phân loại"
+    },
+    {
+      "source_term": "classification accuracy",
+      "builder_target": "độ chính xác phân loại"
+    },
+    {
+      "source_term": "classification algorithms",
+      "builder_target": "thuật toán phân loại"
+    },
+    {
+      "source_term": "classification models",
+      "builder_target": "mô hình phân loại"
+    },
+    {
+      "source_term": "classification problem",
+      "builder_target": "bài toán phân loại"
+    },
+    {
+      "source_term": "classification problems",
+      "builder_target": "bài toán phân loại"
+    },
+    {
+      "source_term": "classification task",
+      "builder_target": "bài toán phân loại"
+    },
+    {
+      "source_term": "classification tasks",
+      "builder_target": "các tác vụ phân loại"
+    },
+    {
+      "source_term": "classifiers",
+      "builder_target": "bộ phân loại"
+    },
+    {
+      "source_term": "classify",
+      "builder_target": "phân loại"
+    },
+    {
+      "source_term": "classifying images of cats and dogs",
+      "builder_target": "phân loại ảnh mèo và chó"
+    },
+    {
+      "source_term": "click-through rate predictor",
+      "builder_target": "bộ dự đoán tỷ lệ nhấp chuột"
+    },
+    {
+      "source_term": "closed form solution",
+      "builder_target": "nghiệm đóng"
+    },
+    {
+      "source_term": "CNTK",
+      "builder_target": "CNTK"
+    },
+    {
+      "source_term": "co-adaptation",
+      "builder_target": "phối hợp đồng thích nghi"
+    },
+    {
+      "source_term": "coefficients",
+      "builder_target": "hệ số"
+    },
+    {
+      "source_term": "column",
+      "builder_target": "cột"
+    },
+    {
+      "source_term": "column dimension",
+      "builder_target": "số chiều cột"
+    },
+    {
+      "source_term": "column vector",
+      "builder_target": "vectơ cột"
+    },
+    {
+      "source_term": "column vectors",
+      "builder_target": "vector cột"
+    },
+    {
+      "source_term": "columns",
+      "builder_target": "cột"
+    },
+    {
+      "source_term": "competition",
+      "builder_target": "cuộc thi"
+    },
+    {
+      "source_term": "components",
+      "builder_target": "thành phần"
+    },
+    {
+      "source_term": "composite functions",
+      "builder_target": "hàm hợp"
+    },
+    {
+      "source_term": "compression",
+      "builder_target": "nén dữ liệu"
+    },
+    {
+      "source_term": "computation",
+      "builder_target": "tính toán"
+    },
+    {
+      "source_term": "computational advertising",
+      "builder_target": "quảng cáo tính toán"
+    },
+    {
+      "source_term": "computational advertising model",
+      "builder_target": "mô hình quảng cáo tính toán"
+    },
+    {
+      "source_term": "computational biology",
+      "builder_target": "sinh học tính toán"
+    },
+    {
+      "source_term": "computational budget",
+      "builder_target": "ngân sách tính toán"
+    },
+    {
+      "source_term": "computational graphs",
+      "builder_target": "đồ thị tính toán"
+    },
+    {
+      "source_term": "computational overhead",
+      "builder_target": "chi phí tính toán phụ trội"
+    },
+    {
+      "source_term": "computational performance",
+      "builder_target": "hiệu năng tính toán"
+    },
+    {
+      "source_term": "computational power",
+      "builder_target": "năng lực tính toán"
+    },
+    {
+      "source_term": "computer gaming",
+      "builder_target": "chơi game trên máy tính"
+    },
+    {
+      "source_term": "computer science",
+      "builder_target": "khoa học máy tính"
+    },
+    {
+      "source_term": "computer tomography image",
+      "builder_target": "ảnh chụp cắt lớp vi tính"
+    },
+    {
+      "source_term": "concept shift",
+      "builder_target": "dịch chuyển khái niệm"
+    },
+    {
+      "source_term": "Concept Shift Correction",
+      "builder_target": "Hiệu chỉnh dịch chuyển khái niệm"
+    },
+    {
+      "source_term": "conditional independence",
+      "builder_target": "độc lập có điều kiện"
+    },
+    {
+      "source_term": "conditional probabilities",
+      "builder_target": "xác suất có điều kiện"
+    },
+    {
+      "source_term": "conditional probability",
+      "builder_target": "xác suất có điều kiện"
+    },
+    {
+      "source_term": "conditional probability table",
+      "builder_target": "bảng xác suất có điều kiện"
+    },
+    {
+      "source_term": "conditionally independent",
+      "builder_target": "độc lập có điều kiện"
+    },
+    {
+      "source_term": "constant",
+      "builder_target": "hằng số"
+    },
+    {
+      "source_term": "constant multiple rule",
+      "builder_target": "quy tắc nhân hằng số"
+    },
+    {
+      "source_term": "contextual bandit problem",
+      "builder_target": "bài toán bandit theo ngữ cảnh"
+    },
+    {
+      "source_term": "continuous",
+      "builder_target": "liên tục"
+    },
+    {
+      "source_term": "continuous numerical features",
+      "builder_target": "đặc trưng số liên tục"
+    },
+    {
+      "source_term": "Control",
+      "builder_target": "điều khiển"
+    },
+    {
+      "source_term": "control theory",
+      "builder_target": "lý thuyết điều khiển"
+    },
+    {
+      "source_term": "controller",
+      "builder_target": "bộ điều khiển"
+    },
+    {
+      "source_term": "converges",
+      "builder_target": "hội tụ"
+    },
+    {
+      "source_term": "convolutional neural networks",
+      "builder_target": "mạng nơ-ron tích chập"
+    },
+    {
+      "source_term": "cooperative games",
+      "builder_target": "trò chơi hợp tác"
+    },
+    {
+      "source_term": "coordinate system",
+      "builder_target": "hệ tọa độ"
+    },
+    {
+      "source_term": "cost sensitivity",
+      "builder_target": "độ nhạy chi phí"
+    },
+    {
+      "source_term": "countable sequence",
+      "builder_target": "dãy đếm được"
+    },
+    {
+      "source_term": "covariate shift",
+      "builder_target": "lệch hiệp biến"
+    },
+    {
+      "source_term": "Covariate Shift Correction",
+      "builder_target": "hiệu chỉnh dịch chuyển hiệp biến"
+    },
+    {
+      "source_term": "covariate shift corrector",
+      "builder_target": "bộ hiệu chỉnh lệch hiệp biến"
+    },
+    {
+      "source_term": "covariate shift detector",
+      "builder_target": "bộ phát hiện lệch hiệp biến"
+    },
+    {
+      "source_term": "covariates",
+      "builder_target": "biến đồng biến"
+    },
+    {
+      "source_term": "CPU",
+      "builder_target": "CPU"
+    },
+    {
+      "source_term": "CPU-based computation",
+      "builder_target": "tính toán dựa trên CPU"
+    },
+    {
+      "source_term": "credit assignment",
+      "builder_target": "phân bổ công lao"
+    },
+    {
+      "source_term": "creditworthiness",
+      "builder_target": "khả năng tín dụng"
+    },
+    {
+      "source_term": "critical point",
+      "builder_target": "điểm tới hạn"
+    },
+    {
+      "source_term": "cross entropy",
+      "builder_target": "entropy chéo"
+    },
+    {
+      "source_term": "cross-entropy",
+      "builder_target": "entropy chéo"
+    },
+    {
+      "source_term": "cross-entropy loss",
+      "builder_target": "hàm mất mát entropy chéo"
+    },
+    {
+      "source_term": "cross-entropy loss function",
+      "builder_target": "hàm mất mát entropy chéo"
+    },
+    {
+      "source_term": "cross_entropy",
+      "builder_target": "cross_entropy"
+    },
+    {
+      "source_term": "csv",
+      "builder_target": "csv"
+    },
+    {
+      "source_term": "csv file",
+      "builder_target": "tệp CSV"
+    },
+    {
+      "source_term": "csv files",
+      "builder_target": "tệp CSV"
+    },
+    {
+      "source_term": "cubic polynomial",
+      "builder_target": "đa thức bậc ba"
+    },
+    {
+      "source_term": "cumsum",
+      "builder_target": "cumsum"
+    },
+    {
+      "source_term": "cumulative sum",
+      "builder_target": "tổng tích lũy"
+    },
+    {
+      "source_term": "curve",
+      "builder_target": "đường cong"
+    },
+    {
+      "source_term": "cyberneticists",
+      "builder_target": "nhà điều khiển học"
+    },
+    {
+      "source_term": "d",
+      "builder_target": "d"
+    },
+    {
+      "source_term": "d2l",
+      "builder_target": "d2l"
+    },
+    {
+      "source_term": "d2l.sgd",
+      "builder_target": "d2l.sgd"
+    },
+    {
+      "source_term": "data distributions",
+      "builder_target": "phân phối dữ liệu"
+    },
+    {
+      "source_term": "data example",
+      "builder_target": "ví dụ dữ liệu"
+    },
+    {
+      "source_term": "data examples",
+      "builder_target": "mẫu dữ liệu"
+    },
+    {
+      "source_term": "data instance",
+      "builder_target": "thể hiện dữ liệu"
+    },
+    {
+      "source_term": "data iterator",
+      "builder_target": "bộ lặp dữ liệu"
+    },
+    {
+      "source_term": "data mining",
+      "builder_target": "khai phá dữ liệu"
+    },
+    {
+      "source_term": "data module",
+      "builder_target": "mô-đun dữ liệu"
+    },
+    {
+      "source_term": "data pipeline",
+      "builder_target": "đường ống dữ liệu"
+    },
+    {
+      "source_term": "data point",
+      "builder_target": "điểm dữ liệu"
+    },
+    {
+      "source_term": "data preprocessing",
+      "builder_target": "tiền xử lý dữ liệu"
+    },
+    {
+      "source_term": "data type",
+      "builder_target": "kiểu dữ liệu"
+    },
+    {
+      "source_term": "DATA_HUB",
+      "builder_target": "DATA_HUB"
+    },
+    {
+      "source_term": "data_iter",
+      "builder_target": "data_iter"
+    },
+    {
+      "source_term": "DATA_URL",
+      "builder_target": "DATA_URL"
+    },
+    {
+      "source_term": "database engine",
+      "builder_target": "công cụ cơ sở dữ liệu"
+    },
+    {
+      "source_term": "dataset",
+      "builder_target": "tập dữ liệu"
+    },
+    {
+      "source_term": "Dataset Size",
+      "builder_target": "Kích thước tập dữ liệu"
+    },
+    {
+      "source_term": "datasets",
+      "builder_target": "bộ dữ liệu"
+    },
+    {
+      "source_term": "decision trees",
+      "builder_target": "cây quyết định"
+    },
+    {
+      "source_term": "decision-making",
+      "builder_target": "ra quyết định"
+    },
+    {
+      "source_term": "decision-making protocol",
+      "builder_target": "giao thức ra quyết định"
+    },
+    {
+      "source_term": "decision-making systems",
+      "builder_target": "hệ thống ra quyết định"
+    },
+    {
+      "source_term": "decoding",
+      "builder_target": "giải mã"
+    },
+    {
+      "source_term": "deep",
+      "builder_target": "sâu"
+    },
+    {
+      "source_term": "deep learning framework",
+      "builder_target": "khung học sâu"
+    },
+    {
+      "source_term": "deep learning frameworks",
+      "builder_target": "khung học sâu"
+    },
+    {
+      "source_term": "deep learning models",
+      "builder_target": "mô hình học sâu"
+    },
+    {
+      "source_term": "deep learning optimization algorithms",
+      "builder_target": "thuật toán tối ưu hóa học sâu"
+    },
+    {
+      "source_term": "deep network",
+      "builder_target": "mạng sâu"
+    },
+    {
+      "source_term": "deep networks",
+      "builder_target": "mạng sâu"
+    },
+    {
+      "source_term": "deep neural networks",
+      "builder_target": "mạng nơ-ron sâu"
+    },
+    {
+      "source_term": "deep Q-network",
+      "builder_target": "deep Q-network"
+    },
+    {
+      "source_term": "Deep reinforcement learning",
+      "builder_target": "học tăng cường sâu"
+    },
+    {
+      "source_term": "DeepBlue",
+      "builder_target": "DeepBlue"
+    },
+    {
+      "source_term": "Default Initialization",
+      "builder_target": "khởi tạo mặc định"
+    },
+    {
+      "source_term": "deferred",
+      "builder_target": "trì hoãn"
+    },
+    {
+      "source_term": "degree",
+      "builder_target": "bậc"
+    },
+    {
+      "source_term": "degrees of freedom",
+      "builder_target": "bậc tự do"
+    },
+    {
+      "source_term": "deletion",
+      "builder_target": "xóa bỏ"
+    },
+    {
+      "source_term": "dementia status",
+      "builder_target": "tình trạng sa sút trí tuệ"
+    },
+    {
+      "source_term": "dendrites",
+      "builder_target": "sợi nhánh"
+    },
+    {
+      "source_term": "Dense",
+      "builder_target": "Dense"
+    },
+    {
+      "source_term": "dense.weight",
+      "builder_target": "dense.weight"
+    },
+    {
+      "source_term": "density",
+      "builder_target": "mật độ"
+    },
+    {
+      "source_term": "density estimation",
+      "builder_target": "ước lượng mật độ"
+    },
+    {
+      "source_term": "dependence",
+      "builder_target": "phụ thuộc"
+    },
+    {
+      "source_term": "dependency assumption",
+      "builder_target": "giả định phụ thuộc"
+    },
+    {
+      "source_term": "dependent variable",
+      "builder_target": "biến phụ thuộc"
+    },
+    {
+      "source_term": "deploy",
+      "builder_target": "triển khai"
+    },
+    {
+      "source_term": "deployment",
+      "builder_target": "triển khai"
+    },
+    {
+      "source_term": "derivative",
+      "builder_target": "đạo hàm"
+    },
+    {
+      "source_term": "derivatives",
+      "builder_target": "đạo hàm"
+    },
+    {
+      "source_term": "design matrix",
+      "builder_target": "ma trận thiết kế"
+    },
+    {
+      "source_term": "detach",
+      "builder_target": "detach"
+    },
+    {
+      "source_term": "deterministic",
+      "builder_target": "tất định"
+    },
+    {
+      "source_term": "diagnoses",
+      "builder_target": "chẩn đoán"
+    },
+    {
+      "source_term": "Dialogue problems",
+      "builder_target": "bài toán đối thoại"
+    },
+    {
+      "source_term": "diastolic blood pressure",
+      "builder_target": "huyết áp tâm trương"
+    },
+    {
+      "source_term": "differentiable function",
+      "builder_target": "hàm khả vi"
+    },
+    {
+      "source_term": "differentiable operators",
+      "builder_target": "toán tử khả vi"
+    },
+    {
+      "source_term": "differential calculus",
+      "builder_target": "giải tích vi phân"
+    },
+    {
+      "source_term": "differentiating",
+      "builder_target": "vi phân"
+    },
+    {
+      "source_term": "differentiation",
+      "builder_target": "vi phân"
+    },
+    {
+      "source_term": "differentiation operators",
+      "builder_target": "toán tử vi phân"
+    },
+    {
+      "source_term": "dimensions",
+      "builder_target": "số chiều"
+    },
+    {
+      "source_term": "dir",
+      "builder_target": "dir"
+    },
+    {
+      "source_term": "discrete",
+      "builder_target": "rời rạc"
+    },
+    {
+      "source_term": "discrete random variables",
+      "builder_target": "biến ngẫu nhiên rời rạc"
+    },
+    {
+      "source_term": "discrete values",
+      "builder_target": "giá trị rời rạc"
+    },
+    {
+      "source_term": "discriminator",
+      "builder_target": "bộ phân biệt"
+    },
+    {
+      "source_term": "disease",
+      "builder_target": "bệnh"
+    },
+    {
+      "source_term": "distribution shift",
+      "builder_target": "dịch chuyển phân phối"
+    },
+    {
+      "source_term": "documentation",
+      "builder_target": "tài liệu"
+    },
+    {
+      "source_term": "domain",
+      "builder_target": "miền"
+    },
+    {
+      "source_term": "domain-specific preprocessing",
+      "builder_target": "tiền xử lý theo miền"
+    },
+    {
+      "source_term": "dot",
+      "builder_target": "dot"
+    },
+    {
+      "source_term": "dot products",
+      "builder_target": "tích vô hướng"
+    },
+    {
+      "source_term": "download",
+      "builder_target": "tải xuống"
+    },
+    {
+      "source_term": "Dropout in Practice",
+      "builder_target": "Dropout trong thực hành"
+    },
+    {
+      "source_term": "Dropout masks",
+      "builder_target": "mặt nạ dropout"
+    },
+    {
+      "source_term": "dropout probabilities",
+      "builder_target": "xác suất dropout"
+    },
+    {
+      "source_term": "dropout probability",
+      "builder_target": "xác suất dropout"
+    },
+    {
+      "source_term": "dropout regularization",
+      "builder_target": "chính quy hóa dropout"
+    },
+    {
+      "source_term": "dropout_layer",
+      "builder_target": "hàm dropout_layer"
+    },
+    {
+      "source_term": "e-commerce payment systems",
+      "builder_target": "hệ thống thanh toán thương mại điện tử"
+    },
+    {
+      "source_term": "e-commerce platform",
+      "builder_target": "nền tảng thương mại điện tử"
+    },
+    {
+      "source_term": "efficiency",
+      "builder_target": "tính hiệu quả"
+    },
+    {
+      "source_term": "eigenvalues",
+      "builder_target": "trị riêng"
+    },
+    {
+      "source_term": "element",
+      "builder_target": "phần tử"
+    },
+    {
+      "source_term": "elements",
+      "builder_target": "phần tử"
+    },
+    {
+      "source_term": "elementwise multiplication",
+      "builder_target": "phép nhân từng phần tử"
+    },
+    {
+      "source_term": "elementwise multiplication operator",
+      "builder_target": "toán tử nhân theo từng phần tử"
+    },
+    {
+      "source_term": "elementwise operation",
+      "builder_target": "phép toán từng phần tử"
+    },
+    {
+      "source_term": "elementwise operations",
+      "builder_target": "phép toán theo phần tử"
+    },
+    {
+      "source_term": "elementwise sum",
+      "builder_target": "tổng theo phần tử"
+    },
+    {
+      "source_term": "elementwise unary operation",
+      "builder_target": "phép toán đơn ngôi từng phần tử"
+    },
+    {
+      "source_term": "empirical error",
+      "builder_target": "sai số thực nghiệm"
+    },
+    {
+      "source_term": "empirical risk",
+      "builder_target": "rủi ro thực nghiệm"
+    },
+    {
+      "source_term": "empirical risk minimization",
+      "builder_target": "tối thiểu hóa rủi ro thực nghiệm"
+    },
+    {
+      "source_term": "encoding",
+      "builder_target": "mã hóa"
+    },
+    {
+      "source_term": "end-to-end training",
+      "builder_target": "huấn luyện đầu cuối"
+    },
+    {
+      "source_term": "English",
+      "builder_target": "tiếng Anh"
+    },
+    {
+      "source_term": "entries",
+      "builder_target": "phần tử"
+    },
+    {
+      "source_term": "entropy",
+      "builder_target": "entropy"
+    },
+    {
+      "source_term": "entropy of a distribution",
+      "builder_target": "entropy của một phân phối"
+    },
+    {
+      "source_term": "environment",
+      "builder_target": "môi trường"
+    },
+    {
+      "source_term": "epoch",
+      "builder_target": "epoch"
+    },
+    {
+      "source_term": "epochs",
+      "builder_target": "epoch"
+    },
+    {
+      "source_term": "epsilon",
+      "builder_target": "sai số"
+    },
+    {
+      "source_term": "equality",
+      "builder_target": "đẳng thức"
+    },
+    {
+      "source_term": "estimate",
+      "builder_target": "ước lượng"
+    },
+    {
+      "source_term": "estimated conditional probabilities",
+      "builder_target": "xác suất có điều kiện ước lượng"
+    },
+    {
+      "source_term": "estimated rating",
+      "builder_target": "điểm xếp hạng ước tính"
+    },
+    {
+      "source_term": "estimates",
+      "builder_target": "ước lượng"
+    },
+    {
+      "source_term": "Euclidean distance",
+      "builder_target": "khoảng cách Euclid"
+    },
+    {
+      "source_term": "Euclidean space",
+      "builder_target": "không gian Euclid"
+    },
+    {
+      "source_term": "evaluate_accuracy",
+      "builder_target": "evaluate_accuracy"
+    },
+    {
+      "source_term": "event",
+      "builder_target": "biến cố"
+    },
+    {
+      "source_term": "example features",
+      "builder_target": "đặc trưng của mẫu"
+    },
+    {
+      "source_term": "examples",
+      "builder_target": "mẫu"
+    },
+    {
+      "source_term": "exp",
+      "builder_target": "exp"
+    },
+    {
+      "source_term": "expectation operator",
+      "builder_target": "toán tử kỳ vọng"
+    },
+    {
+      "source_term": "expected risk",
+      "builder_target": "rủi ro kỳ vọng"
+    },
+    {
+      "source_term": "expected surprisal",
+      "builder_target": "độ bất ngờ kỳ vọng"
+    },
+    {
+      "source_term": "expected value",
+      "builder_target": "giá trị kỳ vọng"
+    },
+    {
+      "source_term": "exploding gradients",
+      "builder_target": "gradient bùng nổ"
+    },
+    {
+      "source_term": "exploit",
+      "builder_target": "khai thác"
+    },
+    {
+      "source_term": "explore",
+      "builder_target": "khám phá"
+    },
+    {
+      "source_term": "exponent",
+      "builder_target": "số mũ"
+    },
+    {
+      "source_term": "exponential families",
+      "builder_target": "họ hàm mũ"
+    },
+    {
+      "source_term": "exponential family",
+      "builder_target": "họ mũ"
+    },
+    {
+      "source_term": "exponentiate",
+      "builder_target": "lấy hàm mũ"
+    },
+    {
+      "source_term": "exponentiation",
+      "builder_target": "lũy thừa"
+    },
+    {
+      "source_term": "expressive power",
+      "builder_target": "năng lực biểu đạt"
+    },
+    {
+      "source_term": "face detector",
+      "builder_target": "bộ phát hiện khuôn mặt"
+    },
+    {
+      "source_term": "face recognition",
+      "builder_target": "nhận dạng khuôn mặt"
+    },
+    {
+      "source_term": "Facebook",
+      "builder_target": "Facebook"
+    },
+    {
+      "source_term": "failure mode",
+      "builder_target": "chế độ lỗi"
+    },
+    {
+      "source_term": "fair die",
+      "builder_target": "xúc xắc công bằng"
+    },
+    {
+      "source_term": "false alarms",
+      "builder_target": "báo động giả"
+    },
+    {
+      "source_term": "family of models",
+      "builder_target": "họ mô hình"
+    },
+    {
+      "source_term": "Fashion-MNIST",
+      "builder_target": "Fashion-MNIST"
+    },
+    {
+      "source_term": "Fashion-MNIST dataset",
+      "builder_target": "bộ dữ liệu Fashion-MNIST"
+    },
+    {
+      "source_term": "Fashion-MNIST image classification dataset",
+      "builder_target": "bộ dữ liệu phân loại ảnh Fashion-MNIST"
+    },
+    {
+      "source_term": "feature dimensionality",
+      "builder_target": "số chiều đặc trưng"
+    },
+    {
+      "source_term": "feature engineering",
+      "builder_target": "kỹ thuật đặc trưng"
+    },
+    {
+      "source_term": "feature selection",
+      "builder_target": "chọn đặc trưng"
+    },
+    {
+      "source_term": "feature vector",
+      "builder_target": "vector đặc trưng"
+    },
+    {
+      "source_term": "feature vectors",
+      "builder_target": "vectơ đặc trưng"
+    },
+    {
+      "source_term": "feature's mean",
+      "builder_target": "trung bình của đặc trưng"
+    },
+    {
+      "source_term": "feature-label pair",
+      "builder_target": "cặp đặc trưng-nhãn"
+    },
+    {
+      "source_term": "features",
+      "builder_target": "đặc trưng"
+    },
+    {
+      "source_term": "feedback loops",
+      "builder_target": "vòng lặp phản hồi"
+    },
+    {
+      "source_term": "fill_",
+      "builder_target": "fill_"
+    },
+    {
+      "source_term": "filters",
+      "builder_target": "bộ lọc"
+    },
+    {
+      "source_term": "finite samples",
+      "builder_target": "mẫu hữu hạn"
+    },
+    {
+      "source_term": "first principles",
+      "builder_target": "nguyên lý cơ bản"
+    },
+    {
+      "source_term": "first-order tensors",
+      "builder_target": "tensor bậc một"
+    },
+    {
+      "source_term": "Fisher information matrix",
+      "builder_target": "ma trận thông tin Fisher"
+    },
+    {
+      "source_term": "Fisher's Iris dataset",
+      "builder_target": "bộ dữ liệu Iris của Fisher"
+    },
+    {
+      "source_term": "five-point scale",
+      "builder_target": "thang năm điểm"
+    },
+    {
+      "source_term": "fixed number of inputs",
+      "builder_target": "số lượng đầu vào cố định"
+    },
+    {
+      "source_term": "fixed number of outputs",
+      "builder_target": "số lượng đầu ra cố định"
+    },
+    {
+      "source_term": "fixed-length input",
+      "builder_target": "đầu vào độ dài cố định"
+    },
+    {
+      "source_term": "fixed-length vector representations",
+      "builder_target": "biểu diễn vector độ dài cố định"
+    },
+    {
+      "source_term": "fixed-length vectors",
+      "builder_target": "vector độ dài cố định"
+    },
+    {
+      "source_term": "floating point calculations per second",
+      "builder_target": "phép tính dấu phẩy động mỗi giây"
+    },
+    {
+      "source_term": "for-loop",
+      "builder_target": "vòng lặp for"
+    },
+    {
+      "source_term": "formalism",
+      "builder_target": "hình thức luận"
+    },
+    {
+      "source_term": "forward propagation",
+      "builder_target": "lan truyền xuôi"
+    },
+    {
+      "source_term": "frames",
+      "builder_target": "khung hình"
+    },
+    {
+      "source_term": "framework's predefined layers",
+      "builder_target": "các tầng định sẵn của framework"
+    },
+    {
+      "source_term": "fraud",
+      "builder_target": "gian lận"
+    },
+    {
+      "source_term": "French",
+      "builder_target": "tiếng Pháp"
+    },
+    {
+      "source_term": "Frobenius norm",
+      "builder_target": "chuẩn Frobenius"
+    },
+    {
+      "source_term": "full autonomy",
+      "builder_target": "tự hành hoàn toàn"
+    },
+    {
+      "source_term": "fully connected",
+      "builder_target": "kết nối đầy đủ"
+    },
+    {
+      "source_term": "fully observed",
+      "builder_target": "được quan sát đầy đủ"
+    },
+    {
+      "source_term": "fully-connected hidden layers",
+      "builder_target": "các lớp ẩn kết nối đầy đủ"
+    },
+    {
+      "source_term": "fully-connected layer",
+      "builder_target": "lớp kết nối đầy đủ"
+    },
+    {
+      "source_term": "fully-connected layers",
+      "builder_target": "các lớp kết nối đầy đủ"
+    },
+    {
+      "source_term": "function",
+      "builder_target": "hàm"
+    },
+    {
+      "source_term": "future observations",
+      "builder_target": "quan sát tương lai"
+    },
+    {
+      "source_term": "gamma function",
+      "builder_target": "hàm gamma"
+    },
+    {
+      "source_term": "garbage in, garbage out",
+      "builder_target": "rác vào, rác ra"
+    },
+    {
+      "source_term": "Gaussian",
+      "builder_target": "Gaussian"
+    },
+    {
+      "source_term": "Gaussian random matrices",
+      "builder_target": "ma trận ngẫu nhiên Gaussian"
+    },
+    {
+      "source_term": "general pattern",
+      "builder_target": "mẫu hình tổng quát"
+    },
+    {
+      "source_term": "generalizability",
+      "builder_target": "khả năng khái quát hóa"
+    },
+    {
+      "source_term": "generalization",
+      "builder_target": "khả năng khái quát hóa"
+    },
+    {
+      "source_term": "generalization properties",
+      "builder_target": "đặc tính khái quát"
+    },
+    {
+      "source_term": "generalization theory",
+      "builder_target": "lý thuyết khái quát"
+    },
+    {
+      "source_term": "generalize",
+      "builder_target": "tổng quát hóa"
+    },
+    {
+      "source_term": "generalized linear models",
+      "builder_target": "mô hình tuyến tính tổng quát"
+    },
+    {
+      "source_term": "Generating the Dataset",
+      "builder_target": "tạo bộ dữ liệu"
+    },
+    {
+      "source_term": "generative adversarial networks",
+      "builder_target": "mạng đối nghịch sinh"
+    },
+    {
+      "source_term": "genetic markers",
+      "builder_target": "dấu ấn di truyền"
+    },
+    {
+      "source_term": "genomics",
+      "builder_target": "di truyền học hệ gen"
+    },
+    {
+      "source_term": "Glivenko–Cantelli theorem",
+      "builder_target": "định lý Glivenko–Cantelli"
+    },
+    {
+      "source_term": "Gluon",
+      "builder_target": "Gluon"
+    },
+    {
+      "source_term": "Gluon API",
+      "builder_target": "Gluon API"
+    },
+    {
+      "source_term": "gluon.loss",
+      "builder_target": "gluon.loss"
+    },
+    {
+      "source_term": "Go",
+      "builder_target": "Go"
+    },
+    {
+      "source_term": "Google search engine",
+      "builder_target": "công cụ tìm kiếm Google"
+    },
+    {
+      "source_term": "GPU",
+      "builder_target": "GPU"
+    },
+    {
+      "source_term": "GPUs",
+      "builder_target": "GPU"
+    },
+    {
+      "source_term": "gradient",
+      "builder_target": "gradient"
+    },
+    {
+      "source_term": "gradient based learning",
+      "builder_target": "học dựa trên gradient"
+    },
+    {
+      "source_term": "gradient of a scalar-valued function with respect to a vector",
+      "builder_target": "gradient của hàm vô hướng theo vectơ"
+    },
+    {
+      "source_term": "gradient vector",
+      "builder_target": "vectơ độ dốc"
+    },
+    {
+      "source_term": "gradient-based iteration",
+      "builder_target": "lặp dựa trên gradient"
+    },
+    {
+      "source_term": "gradient-based learning algorithms",
+      "builder_target": "thuật toán học dựa trên gradient"
+    },
+    {
+      "source_term": "gradients",
+      "builder_target": "gradient"
+    },
+    {
+      "source_term": "gradients explode",
+      "builder_target": "gradient bùng nổ"
+    },
+    {
+      "source_term": "gradients of intermediate variables",
+      "builder_target": "đạo hàm của biến trung gian"
+    },
+    {
+      "source_term": "graphical models",
+      "builder_target": "mô hình đồ họa"
+    },
+    {
+      "source_term": "grayscale",
+      "builder_target": "xám"
+    },
+    {
+      "source_term": "grayscale image",
+      "builder_target": "ảnh thang xám"
+    },
+    {
+      "source_term": "grayscale images",
+      "builder_target": "ảnh xám"
+    },
+    {
+      "source_term": "grayscale thumbnail-sized images",
+      "builder_target": "ảnh thu nhỏ xám"
+    },
+    {
+      "source_term": "ground-truth",
+      "builder_target": "chân trị"
+    },
+    {
+      "source_term": "ground-truth counterparts",
+      "builder_target": "giá trị chuẩn tương ứng"
+    },
+    {
+      "source_term": "ground-truth label",
+      "builder_target": "nhãn chân lý cơ sở"
+    },
+    {
+      "source_term": "ground-truth labels",
+      "builder_target": "nhãn chuẩn"
+    },
+    {
+      "source_term": "h",
+      "builder_target": "h"
+    },
+    {
+      "source_term": "Hadamard product",
+      "builder_target": "tích Hadamard"
+    },
+    {
+      "source_term": "hand-written character recognition",
+      "builder_target": "nhận dạng ký tự viết tay"
+    },
+    {
+      "source_term": "handwritten digits",
+      "builder_target": "chữ số viết tay"
+    },
+    {
+      "source_term": "hard assignments",
+      "builder_target": "gán cứng"
+    },
+    {
+      "source_term": "healthcare",
+      "builder_target": "y tế"
+    },
+    {
+      "source_term": "healthy",
+      "builder_target": "khỏe mạnh"
+    },
+    {
+      "source_term": "healthy controls",
+      "builder_target": "nhóm đối chứng khỏe mạnh"
+    },
+    {
+      "source_term": "heart attack",
+      "builder_target": "nhồi máu cơ tim"
+    },
+    {
+      "source_term": "Hebbian learning rule",
+      "builder_target": "quy tắc học Hebb"
+    },
+    {
+      "source_term": "height",
+      "builder_target": "chiều cao"
+    },
+    {
+      "source_term": "help",
+      "builder_target": "trợ giúp"
+    },
+    {
+      "source_term": "heuristics",
+      "builder_target": "phương pháp heuristic"
+    },
+    {
+      "source_term": "Hey Siri",
+      "builder_target": "Hey Siri"
+    },
+    {
+      "source_term": "hidden layer",
+      "builder_target": "lớp ẩn"
+    },
+    {
+      "source_term": "hidden layer's outputs",
+      "builder_target": "đầu ra của lớp ẩn"
+    },
+    {
+      "source_term": "hidden layers",
+      "builder_target": "các lớp ẩn"
+    },
+    {
+      "source_term": "hidden neurons",
+      "builder_target": "nơ-ron ẩn"
+    },
+    {
+      "source_term": "hidden nodes",
+      "builder_target": "nút ẩn"
+    },
+    {
+      "source_term": "hidden representations",
+      "builder_target": "biểu diễn ẩn"
+    },
+    {
+      "source_term": "hidden units",
+      "builder_target": "đơn vị ẩn"
+    },
+    {
+      "source_term": "hidden-layer variable",
+      "builder_target": "biến tầng ẩn"
+    },
+    {
+      "source_term": "hierarchical classification",
+      "builder_target": "phân loại phân cấp"
+    },
+    {
+      "source_term": "hierarchies",
+      "builder_target": "phân cấp"
+    },
+    {
+      "source_term": "high-capacity models",
+      "builder_target": "mô hình dung lượng lớn"
+    },
+    {
+      "source_term": "high-dimensional datasets",
+      "builder_target": "bộ dữ liệu nhiều chiều"
+    },
+    {
+      "source_term": "High-Dimensional Linear Regression",
+      "builder_target": "hồi quy tuyến tính nhiều chiều"
+    },
+    {
+      "source_term": "high-dimensional objects",
+      "builder_target": "đối tượng nhiều chiều"
+    },
+    {
+      "source_term": "high-level APIs",
+      "builder_target": "API cấp cao"
+    },
+    {
+      "source_term": "high-order tensors",
+      "builder_target": "tensor bậc cao"
+    },
+    {
+      "source_term": "high-performance computing",
+      "builder_target": "tính toán hiệu năng cao"
+    },
+    {
+      "source_term": "Higher-Order Polynomial Function Fitting",
+      "builder_target": "khớp hàm đa thức bậc cao"
+    },
+    {
+      "source_term": "HIV",
+      "builder_target": "HIV"
+    },
+    {
+      "source_term": "HIV test",
+      "builder_target": "xét nghiệm HIV"
+    },
+    {
+      "source_term": "holdout data",
+      "builder_target": "dữ liệu giữ lại"
+    },
+    {
+      "source_term": "host results",
+      "builder_target": "kết quả trên host"
+    },
+    {
+      "source_term": "house price prediction",
+      "builder_target": "dự đoán giá nhà"
+    },
+    {
+      "source_term": "house price prediction competition",
+      "builder_target": "cuộc thi dự đoán giá nhà"
+    },
+    {
+      "source_term": "Huber's loss",
+      "builder_target": "mất mát Huber"
+    },
+    {
+      "source_term": "human parity",
+      "builder_target": "ngang bằng con người"
+    },
+    {
+      "source_term": "hyperbolic tangent",
+      "builder_target": "tang hyperbolic"
+    },
+    {
+      "source_term": "hyperparameter optimization",
+      "builder_target": "tối ưu siêu tham số"
+    },
+    {
+      "source_term": "hyperparameter selection",
+      "builder_target": "chọn siêu tham số"
+    },
+    {
+      "source_term": "hyperparameter settings",
+      "builder_target": "thiết lập siêu tham số"
+    },
+    {
+      "source_term": "Hyperparameter tuning",
+      "builder_target": "tinh chỉnh siêu tham số"
+    },
+    {
+      "source_term": "hyperparameters",
+      "builder_target": "siêu tham số"
+    },
+    {
+      "source_term": "i.i.d. assumption",
+      "builder_target": "giả định i.i.d."
+    },
+    {
+      "source_term": "ID",
+      "builder_target": "ID"
+    },
+    {
+      "source_term": "id()",
+      "builder_target": "id()"
+    },
+    {
+      "source_term": "identical distributions",
+      "builder_target": "phân phối giống hệt"
+    },
+    {
+      "source_term": "iloc",
+      "builder_target": "iloc"
+    },
+    {
+      "source_term": "image",
+      "builder_target": "ảnh"
+    },
+    {
+      "source_term": "image classification",
+      "builder_target": "phân loại ảnh"
+    },
+    {
+      "source_term": "image classification dataset",
+      "builder_target": "bộ dữ liệu phân loại ảnh"
+    },
+    {
+      "source_term": "image classifier",
+      "builder_target": "bộ phân loại ảnh"
+    },
+    {
+      "source_term": "image datasets",
+      "builder_target": "tập dữ liệu ảnh"
+    },
+    {
+      "source_term": "image resizing",
+      "builder_target": "thay đổi kích thước ảnh"
+    },
+    {
+      "source_term": "ImageNet",
+      "builder_target": "ImageNet"
+    },
+    {
+      "source_term": "images",
+      "builder_target": "ảnh"
+    },
+    {
+      "source_term": "implementation details",
+      "builder_target": "chi tiết triển khai"
+    },
+    {
+      "source_term": "importance weight",
+      "builder_target": "trọng số quan trọng"
+    },
+    {
+      "source_term": "importance weights",
+      "builder_target": "trọng số tầm quan trọng"
+    },
+    {
+      "source_term": "imputation",
+      "builder_target": "điền khuyết"
+    },
+    {
+      "source_term": "in-place",
+      "builder_target": "tại chỗ"
+    },
+    {
+      "source_term": "in-place operation",
+      "builder_target": "phép toán tại chỗ"
+    },
+    {
+      "source_term": "independence",
+      "builder_target": "tính độc lập"
+    },
+    {
+      "source_term": "independence assumptions",
+      "builder_target": "giả định độc lập"
+    },
+    {
+      "source_term": "independent variable",
+      "builder_target": "biến độc lập"
+    },
+    {
+      "source_term": "independent variables",
+      "builder_target": "biến độc lập"
+    },
+    {
+      "source_term": "independently",
+      "builder_target": "độc lập"
+    },
+    {
+      "source_term": "index",
+      "builder_target": "chỉ số"
+    },
+    {
+      "source_term": "indexing",
+      "builder_target": "lập chỉ mục"
+    },
+    {
+      "source_term": "indicator features",
+      "builder_target": "các đặc trưng chỉ báo"
+    },
+    {
+      "source_term": "indices",
+      "builder_target": "chỉ số"
+    },
+    {
+      "source_term": "industry",
+      "builder_target": "công nghiệp"
+    },
+    {
+      "source_term": "inference",
+      "builder_target": "suy luận"
+    },
+    {
+      "source_term": "inferences",
+      "builder_target": "suy luận"
+    },
+    {
+      "source_term": "information",
+      "builder_target": "thông tin"
+    },
+    {
+      "source_term": "information retrieval",
+      "builder_target": "truy hồi thông tin"
+    },
+    {
+      "source_term": "information theory",
+      "builder_target": "lý thuyết thông tin"
+    },
+    {
+      "source_term": "inhibition",
+      "builder_target": "ức chế"
+    },
+    {
+      "source_term": "init",
+      "builder_target": "init"
+    },
+    {
+      "source_term": "init.Normal(sigma=0.01)",
+      "builder_target": "init.Normal(sigma=0.01)"
+    },
+    {
+      "source_term": "initial value",
+      "builder_target": "giá trị khởi tạo"
+    },
+    {
+      "source_term": "Initialization",
+      "builder_target": "khởi tạo"
+    },
+    {
+      "source_term": "initialization scheme",
+      "builder_target": "chiến lược khởi tạo"
+    },
+    {
+      "source_term": "initializers module",
+      "builder_target": "mô-đun initializers"
+    },
+    {
+      "source_term": "initializing the weights",
+      "builder_target": "khởi tạo trọng số"
+    },
+    {
+      "source_term": "input",
+      "builder_target": "đầu vào"
+    },
+    {
+      "source_term": "input data",
+      "builder_target": "dữ liệu đầu vào"
+    },
+    {
+      "source_term": "input dimension",
+      "builder_target": "chiều đầu vào"
+    },
+    {
+      "source_term": "input distribution",
+      "builder_target": "phân phối đầu vào"
+    },
+    {
+      "source_term": "input feature dimension",
+      "builder_target": "chiều đặc trưng đầu vào"
+    },
+    {
+      "source_term": "input features",
+      "builder_target": "đặc trưng đầu vào"
+    },
+    {
+      "source_term": "input layer",
+      "builder_target": "lớp đầu vào"
+    },
+    {
+      "source_term": "input layers",
+      "builder_target": "các lớp đầu vào"
+    },
+    {
+      "source_term": "input noise",
+      "builder_target": "nhiễu đầu vào"
+    },
+    {
+      "source_term": "input shape",
+      "builder_target": "hình dạng đầu vào"
+    },
+    {
+      "source_term": "input spaces",
+      "builder_target": "không gian đầu vào"
+    },
+    {
+      "source_term": "inputs",
+      "builder_target": "đầu vào"
+    },
+    {
+      "source_term": "instantaneous rate of change",
+      "builder_target": "tốc độ thay đổi tức thời"
+    },
+    {
+      "source_term": "integral calculus",
+      "builder_target": "giải tích tích phân"
+    },
+    {
+      "source_term": "Intel 80186",
+      "builder_target": "Intel 80186"
+    },
+    {
+      "source_term": "Intel 80486",
+      "builder_target": "Intel 80486"
+    },
+    {
+      "source_term": "Intel 8080",
+      "builder_target": "Intel 8080"
+    },
+    {
+      "source_term": "Intel Core",
+      "builder_target": "Intel Core"
+    },
+    {
+      "source_term": "intelligent agents",
+      "builder_target": "tác nhân thông minh"
+    },
+    {
+      "source_term": "Intelligent assistants",
+      "builder_target": "trợ lý thông minh"
+    },
+    {
+      "source_term": "intensive care unit",
+      "builder_target": "đơn vị hồi sức tích cực"
+    },
+    {
+      "source_term": "interactions among groups of features",
+      "builder_target": "tương tác giữa các nhóm đặc trưng"
+    },
+    {
+      "source_term": "intercept",
+      "builder_target": "hệ số chặn"
+    },
+    {
+      "source_term": "interface",
+      "builder_target": "giao diện"
+    },
+    {
+      "source_term": "intermediate activation",
+      "builder_target": "kích hoạt trung gian"
+    },
+    {
+      "source_term": "intermediate values",
+      "builder_target": "giá trị trung gian"
+    },
+    {
+      "source_term": "intermediate variable",
+      "builder_target": "biến trung gian"
+    },
+    {
+      "source_term": "Iris dataset",
+      "builder_target": "Iris dataset"
+    },
+    {
+      "source_term": "is_train",
+      "builder_target": "is_train"
+    },
+    {
+      "source_term": "item",
+      "builder_target": "mục"
+    },
+    {
+      "source_term": "J",
+      "builder_target": "J"
+    },
+    {
+      "source_term": "Jax",
+      "builder_target": "Jax"
+    },
+    {
+      "source_term": "joint probability",
+      "builder_target": "xác suất đồng thời"
+    },
+    {
+      "source_term": "Jupyter notebook",
+      "builder_target": "sổ tay Jupyter"
+    },
+    {
+      "source_term": "K-Fold Cross-Validation",
+      "builder_target": "kiểm định chéo K-fold"
+    },
+    {
+      "source_term": "Kaggle",
+      "builder_target": "Kaggle"
+    },
+    {
+      "source_term": "Kaggle competition",
+      "builder_target": "cuộc thi Kaggle"
+    },
+    {
+      "source_term": "Keras",
+      "builder_target": "Keras"
+    },
+    {
+      "source_term": "kernel methods",
+      "builder_target": "phương pháp kernel"
+    },
+    {
+      "source_term": "kernel_initializer",
+      "builder_target": "kernel_initializer"
+    },
+    {
+      "source_term": "kernel_regularizer",
+      "builder_target": "kernel_regularizer"
+    },
+    {
+      "source_term": "knobs",
+      "builder_target": "siêu tham số"
+    },
+    {
+      "source_term": "Kolmogorov",
+      "builder_target": "Kolmogorov"
+    },
+    {
+      "source_term": "Kryder's law",
+      "builder_target": "định luật Kryder"
+    },
+    {
+      "source_term": "L1 norm",
+      "builder_target": "chuẩn L1"
+    },
+    {
+      "source_term": "L1 regularization",
+      "builder_target": "chuẩn hóa L1"
+    },
+    {
+      "source_term": "L1-regularized linear regression",
+      "builder_target": "hồi quy tuyến tính regular hóa L1"
+    },
+    {
+      "source_term": "L2 norm",
+      "builder_target": "chuẩn L2"
+    },
+    {
+      "source_term": "L2 regularization",
+      "builder_target": "chuẩn hóa L2"
+    },
+    {
+      "source_term": "L2-regularized linear models",
+      "builder_target": "mô hình tuyến tính regular hóa L2"
+    },
+    {
+      "source_term": "L2Loss",
+      "builder_target": "L2Loss"
+    },
+    {
+      "source_term": "L_1 norm",
+      "builder_target": "chuẩn L1"
+    },
+    {
+      "source_term": "L_2 norm",
+      "builder_target": "chuẩn L2"
+    },
+    {
+      "source_term": "L_2 penalty",
+      "builder_target": "hình phạt L2"
+    },
+    {
+      "source_term": "L_2 regularization",
+      "builder_target": "chuẩn hóa L2"
+    },
+    {
+      "source_term": "L_2 regularizer",
+      "builder_target": "bộ điều chuẩn L_2"
+    },
+    {
+      "source_term": "L_p norm",
+      "builder_target": "chuẩn Lp"
+    },
+    {
+      "source_term": "label",
+      "builder_target": "nhãn"
+    },
+    {
+      "source_term": "label distribution",
+      "builder_target": "phân phối nhãn"
+    },
+    {
+      "source_term": "label indices",
+      "builder_target": "chỉ số nhãn"
+    },
+    {
+      "source_term": "label likelihood ratios",
+      "builder_target": "tỷ số hợp lý của nhãn"
+    },
+    {
+      "source_term": "label marginal",
+      "builder_target": "phân phối biên của nhãn"
+    },
+    {
+      "source_term": "label noise",
+      "builder_target": "nhiễu nhãn"
+    },
+    {
+      "source_term": "label shift",
+      "builder_target": "dịch chuyển nhãn"
+    },
+    {
+      "source_term": "label shift assumption",
+      "builder_target": "giả định dịch chuyển nhãn"
+    },
+    {
+      "source_term": "Label Shift Correction",
+      "builder_target": "hiệu chỉnh lệch nhãn"
+    },
+    {
+      "source_term": "label values",
+      "builder_target": "giá trị nhãn"
+    },
+    {
+      "source_term": "label y",
+      "builder_target": "nhãn y"
+    },
+    {
+      "source_term": "labeled dataset",
+      "builder_target": "tập dữ liệu gán nhãn"
+    },
+    {
+      "source_term": "labeled examples",
+      "builder_target": "ví dụ có nhãn"
+    },
+    {
+      "source_term": "labeling function",
+      "builder_target": "hàm gán nhãn"
+    },
+    {
+      "source_term": "labels",
+      "builder_target": "nhãn"
+    },
+    {
+      "source_term": "lambda",
+      "builder_target": "lambda"
+    },
+    {
+      "source_term": "language translation",
+      "builder_target": "dịch ngôn ngữ"
+    },
+    {
+      "source_term": "lasso regression",
+      "builder_target": "hồi quy lasso"
+    },
+    {
+      "source_term": "law of large numbers",
+      "builder_target": "luật số lớn"
+    },
+    {
+      "source_term": "layers",
+      "builder_target": "lớp"
+    },
+    {
+      "source_term": "layerwise adaptive rate scaling",
+      "builder_target": "tỉ lệ tốc độ thích nghi theo lớp"
+    },
+    {
+      "source_term": "leaderboard",
+      "builder_target": "bảng xếp hạng"
+    },
+    {
+      "source_term": "learnable parameters",
+      "builder_target": "tham số học được"
+    },
+    {
+      "source_term": "learned model",
+      "builder_target": "mô hình đã học"
+    },
+    {
+      "source_term": "learning",
+      "builder_target": "học"
+    },
+    {
+      "source_term": "learning algorithms",
+      "builder_target": "thuật toán học"
+    },
+    {
+      "source_term": "learning many layers of transformations",
+      "builder_target": "học nhiều tầng biến đổi"
+    },
+    {
+      "source_term": "learning rates",
+      "builder_target": "tốc độ học"
+    },
+    {
+      "source_term": "learning theory",
+      "builder_target": "lý thuyết học máy"
+    },
+    {
+      "source_term": "learning_rate",
+      "builder_target": "learning_rate"
+    },
+    {
+      "source_term": "least mean squares algorithm",
+      "builder_target": "thuật toán bình phương tối thiểu trung bình"
+    },
+    {
+      "source_term": "left-hand-side derivative",
+      "builder_target": "đạo hàm bên trái"
+    },
+    {
+      "source_term": "len",
+      "builder_target": "len"
+    },
+    {
+      "source_term": "len()",
+      "builder_target": "len()"
+    },
+    {
+      "source_term": "lending",
+      "builder_target": "cho vay"
+    },
+    {
+      "source_term": "length",
+      "builder_target": "độ dài"
+    },
+    {
+      "source_term": "libraries",
+      "builder_target": "thư viện"
+    },
+    {
+      "source_term": "library functions",
+      "builder_target": "hàm thư viện"
+    },
+    {
+      "source_term": "Libratus",
+      "builder_target": "Libratus"
+    },
+    {
+      "source_term": "lifting",
+      "builder_target": "nâng ánh xạ"
+    },
+    {
+      "source_term": "Liked",
+      "builder_target": "Liked"
+    },
+    {
+      "source_term": "likelihood",
+      "builder_target": "hợp lý"
+    },
+    {
+      "source_term": "likelihood of the entire dataset",
+      "builder_target": "hợp lý của toàn bộ tập dữ liệu"
+    },
+    {
+      "source_term": "limit",
+      "builder_target": "giới hạn"
+    },
+    {
+      "source_term": "linalg.norm",
+      "builder_target": "linalg.norm"
+    },
+    {
+      "source_term": "linear algebra libraries",
+      "builder_target": "thư viện đại số tuyến tính"
+    },
+    {
+      "source_term": "linear algebra notation",
+      "builder_target": "ký hiệu đại số tuyến tính"
+    },
+    {
+      "source_term": "linear and nonlinear processing units",
+      "builder_target": "đơn vị xử lý tuyến tính và phi tuyến"
+    },
+    {
+      "source_term": "linear and softmax regression",
+      "builder_target": "hồi quy tuyến tính và softmax"
+    },
+    {
+      "source_term": "linear correlation",
+      "builder_target": "tương quan tuyến tính"
+    },
+    {
+      "source_term": "linear discriminant analysis",
+      "builder_target": "phân tích biệt thức tuyến tính"
+    },
+    {
+      "source_term": "linear function",
+      "builder_target": "hàm tuyến tính"
+    },
+    {
+      "source_term": "Linear Function Fitting",
+      "builder_target": "khớp hàm tuyến tính"
+    },
+    {
+      "source_term": "linear layer",
+      "builder_target": "lớp tuyến tính"
+    },
+    {
+      "source_term": "linear logistic regression model",
+      "builder_target": "mô hình hồi quy logistic tuyến tính"
+    },
+    {
+      "source_term": "linear model",
+      "builder_target": "mô hình tuyến tính"
+    },
+    {
+      "source_term": "linear models",
+      "builder_target": "mô hình tuyến tính"
+    },
+    {
+      "source_term": "linear network",
+      "builder_target": "mạng tuyến tính"
+    },
+    {
+      "source_term": "Linear Neural Networks",
+      "builder_target": "mạng nơ-ron tuyến tính"
+    },
+    {
+      "source_term": "linear predictor",
+      "builder_target": "bộ dự đoán tuyến tính"
+    },
+    {
+      "source_term": "linear system",
+      "builder_target": "hệ tuyến tính"
+    },
+    {
+      "source_term": "linear transformation",
+      "builder_target": "biến đổi tuyến tính"
+    },
+    {
+      "source_term": "linearity",
+      "builder_target": "tính tuyến tính"
+    },
+    {
+      "source_term": "linearity assumption",
+      "builder_target": "giả định tuyến tính"
+    },
+    {
+      "source_term": "Linnaeus",
+      "builder_target": "Linnaeus"
+    },
+    {
+      "source_term": "Linux",
+      "builder_target": "Linux"
+    },
+    {
+      "source_term": "load_data_fashion_mnist",
+      "builder_target": "load_data_fashion_mnist"
+    },
+    {
+      "source_term": "loan defaults",
+      "builder_target": "vỡ nợ khoản vay"
+    },
+    {
+      "source_term": "log",
+      "builder_target": "log"
+    },
+    {
+      "source_term": "log of the likelihood",
+      "builder_target": "log của hàm hợp lý"
+    },
+    {
+      "source_term": "Log-Likelihood",
+      "builder_target": "log-hợp lý"
+    },
+    {
+      "source_term": "log-partition function",
+      "builder_target": "hàm log-phân hoạch"
+    },
+    {
+      "source_term": "log-space",
+      "builder_target": "không gian log"
+    },
+    {
+      "source_term": "logarithm",
+      "builder_target": "logarit"
+    },
+    {
+      "source_term": "logarithms",
+      "builder_target": "logarit"
+    },
+    {
+      "source_term": "logical statements",
+      "builder_target": "mệnh đề logic"
+    },
+    {
+      "source_term": "logistics",
+      "builder_target": "hậu cần"
+    },
+    {
+      "source_term": "logit",
+      "builder_target": "logit"
+    },
+    {
+      "source_term": "logits",
+      "builder_target": "logit"
+    },
+    {
+      "source_term": "LogSumExp trick",
+      "builder_target": "mẹo LogSumExp"
+    },
+    {
+      "source_term": "long short-term memory",
+      "builder_target": "bộ nhớ dài-ngắn hạn"
+    },
+    {
+      "source_term": "lookup table",
+      "builder_target": "bảng tra cứu"
+    },
+    {
+      "source_term": "loss",
+      "builder_target": "hàm mất mát"
+    },
+    {
+      "source_term": "loss functions",
+      "builder_target": "hàm mất mát"
+    },
+    {
+      "source_term": "loss module",
+      "builder_target": "mô-đun loss"
+    },
+    {
+      "source_term": "loss term",
+      "builder_target": "hạng mất mát"
+    },
+    {
+      "source_term": "losses",
+      "builder_target": "các giá trị mất mát"
+    },
+    {
+      "source_term": "low-level perceptual data",
+      "builder_target": "dữ liệu tri giác mức thấp"
+    },
+    {
+      "source_term": "machine learning algorithm",
+      "builder_target": "thuật toán học máy"
+    },
+    {
+      "source_term": "machine learning algorithms",
+      "builder_target": "thuật toán học máy"
+    },
+    {
+      "source_term": "machine learning competitions",
+      "builder_target": "các cuộc thi học máy"
+    },
+    {
+      "source_term": "machine learning model",
+      "builder_target": "mô hình học máy"
+    },
+    {
+      "source_term": "machine learning models",
+      "builder_target": "mô hình học máy"
+    },
+    {
+      "source_term": "machine learning scientist",
+      "builder_target": "nhà khoa học học máy"
+    },
+    {
+      "source_term": "machine learning systems",
+      "builder_target": "hệ thống học máy"
+    },
+    {
+      "source_term": "machine translation system",
+      "builder_target": "hệ thống dịch máy"
+    },
+    {
+      "source_term": "magnitude",
+      "builder_target": "độ lớn"
+    },
+    {
+      "source_term": "main memory",
+      "builder_target": "bộ nhớ chính"
+    },
+    {
+      "source_term": "majority class",
+      "builder_target": "lớp đa số"
+    },
+    {
+      "source_term": "Manhattan distance",
+      "builder_target": "khoảng cách Manhattan"
+    },
+    {
+      "source_term": "manipulating",
+      "builder_target": "xử lý"
+    },
+    {
+      "source_term": "mantissa",
+      "builder_target": "mantuysa"
+    },
+    {
+      "source_term": "mapping",
+      "builder_target": "ánh xạ"
+    },
+    {
+      "source_term": "Maps application",
+      "builder_target": "ứng dụng Maps"
+    },
+    {
+      "source_term": "marginal distribution",
+      "builder_target": "phân phối biên"
+    },
+    {
+      "source_term": "marginal probability",
+      "builder_target": "xác suất biên"
+    },
+    {
+      "source_term": "Markov Chain",
+      "builder_target": "chuỗi Markov"
+    },
+    {
+      "source_term": "Markov decision process",
+      "builder_target": "quá trình ra quyết định Markov"
+    },
+    {
+      "source_term": "Massachusetts General Hospital",
+      "builder_target": "Massachusetts General Hospital"
+    },
+    {
+      "source_term": "MasterCard",
+      "builder_target": "MasterCard"
+    },
+    {
+      "source_term": "mathematical concepts",
+      "builder_target": "khái niệm toán học"
+    },
+    {
+      "source_term": "mathematical content",
+      "builder_target": "nội dung toán học"
+    },
+    {
+      "source_term": "mathematics",
+      "builder_target": "toán học"
+    },
+    {
+      "source_term": "matplotlib",
+      "builder_target": "matplotlib"
+    },
+    {
+      "source_term": "matrices",
+      "builder_target": "ma trận"
+    },
+    {
+      "source_term": "matrix",
+      "builder_target": "ma trận"
+    },
+    {
+      "source_term": "matrix decompositions",
+      "builder_target": "phân rã ma trận"
+    },
+    {
+      "source_term": "matrix multiplication",
+      "builder_target": "phép nhân ma trận"
+    },
+    {
+      "source_term": "matrix notation",
+      "builder_target": "ký hiệu ma trận"
+    },
+    {
+      "source_term": "matrix operations",
+      "builder_target": "phép toán ma trận"
+    },
+    {
+      "source_term": "matrix product",
+      "builder_target": "tích ma trận"
+    },
+    {
+      "source_term": "matrix-matrix multiplication",
+      "builder_target": "phép nhân ma trận-ma trận"
+    },
+    {
+      "source_term": "matrix-matrix product",
+      "builder_target": "tích ma trận-ma trận"
+    },
+    {
+      "source_term": "matrix-vector dot product",
+      "builder_target": "tích vô hướng ma trận-vectơ"
+    },
+    {
+      "source_term": "matrix-vector multiplication",
+      "builder_target": "phép nhân ma trận-vector"
+    },
+    {
+      "source_term": "matrix-vector product",
+      "builder_target": "tích ma trận-vectơ"
+    },
+    {
+      "source_term": "Matrix-Vector Products",
+      "builder_target": "tích ma trận-vectơ"
+    },
+    {
+      "source_term": "matvec",
+      "builder_target": "matvec"
+    },
+    {
+      "source_term": "max",
+      "builder_target": "max"
+    },
+    {
+      "source_term": "maximum entropy principle",
+      "builder_target": "nguyên lý entropy cực đại"
+    },
+    {
+      "source_term": "maximum likelihood",
+      "builder_target": "cực đại hợp lý"
+    },
+    {
+      "source_term": "maximum likelihood estimation",
+      "builder_target": "ước lượng hợp lý cực đại"
+    },
+    {
+      "source_term": "maximum likelihood estimators",
+      "builder_target": "ước lượng cực đại hợp lý"
+    },
+    {
+      "source_term": "maximum predicted probabilities",
+      "builder_target": "xác suất dự đoán lớn nhất"
+    },
+    {
+      "source_term": "mean",
+      "builder_target": "trung bình"
+    },
+    {
+      "source_term": "mean model outputs",
+      "builder_target": "đầu ra trung bình của mô hình"
+    },
+    {
+      "source_term": "mean squared error",
+      "builder_target": "sai số bình phương trung bình"
+    },
+    {
+      "source_term": "MeanSquaredError",
+      "builder_target": "MeanSquaredError"
+    },
+    {
+      "source_term": "measurements",
+      "builder_target": "các phép đo"
+    },
+    {
+      "source_term": "medical diagnosis",
+      "builder_target": "chẩn đoán y khoa"
+    },
+    {
+      "source_term": "medical diagnostics",
+      "builder_target": "chẩn đoán y khoa"
+    },
+    {
+      "source_term": "medical informatics",
+      "builder_target": "tin học y tế"
+    },
+    {
+      "source_term": "membership",
+      "builder_target": "quan hệ thuộc"
+    },
+    {
+      "source_term": "memory",
+      "builder_target": "bộ nhớ"
+    },
+    {
+      "source_term": "memory footprint",
+      "builder_target": "dung lượng bộ nhớ"
+    },
+    {
+      "source_term": "memory locations",
+      "builder_target": "vị trí bộ nhớ"
+    },
+    {
+      "source_term": "memory networks",
+      "builder_target": "mạng nhớ"
+    },
+    {
+      "source_term": "memory overhead",
+      "builder_target": "chi phí bộ nhớ"
+    },
+    {
+      "source_term": "MeSH",
+      "builder_target": "MeSH"
+    },
+    {
+      "source_term": "metadata",
+      "builder_target": "siêu dữ liệu"
+    },
+    {
+      "source_term": "method of exhaustion",
+      "builder_target": "phương pháp vét kiệt"
+    },
+    {
+      "source_term": "microphone",
+      "builder_target": "microphone"
+    },
+    {
+      "source_term": "mild cognitive impairment",
+      "builder_target": "suy giảm nhận thức nhẹ"
+    },
+    {
+      "source_term": "minibatch $\\mathcal{B}$",
+      "builder_target": "tiểu lô"
+    },
+    {
+      "source_term": "minibatch logits",
+      "builder_target": "logit minibatch"
+    },
+    {
+      "source_term": "Minibatch Stochastic Gradient Descent",
+      "builder_target": "hạ gradient ngẫu nhiên theo minibatch"
+    },
+    {
+      "source_term": "minibatches",
+      "builder_target": "mini lô"
+    },
+    {
+      "source_term": "minimize",
+      "builder_target": "tối thiểu hóa"
+    },
+    {
+      "source_term": "minimizers",
+      "builder_target": "nghiệm cực tiểu"
+    },
+    {
+      "source_term": "minimum",
+      "builder_target": "giá trị nhỏ nhất"
+    },
+    {
+      "source_term": "minimum-norm",
+      "builder_target": "chuẩn tối thiểu"
+    },
+    {
+      "source_term": "misclassifying",
+      "builder_target": "phân loại sai"
+    },
+    {
+      "source_term": "missing data",
+      "builder_target": "dữ liệu thiếu"
+    },
+    {
+      "source_term": "missing values",
+      "builder_target": "giá trị thiếu"
+    },
+    {
+      "source_term": "mixed dataset",
+      "builder_target": "tập dữ liệu hỗn hợp"
+    },
+    {
+      "source_term": "MLP",
+      "builder_target": "MLP"
+    },
+    {
+      "source_term": "MLPs",
+      "builder_target": "MLP"
+    },
+    {
+      "source_term": "MNIST",
+      "builder_target": "MNIST"
+    },
+    {
+      "source_term": "MNIST dataset",
+      "builder_target": "bộ dữ liệu MNIST"
+    },
+    {
+      "source_term": "mobile application",
+      "builder_target": "ứng dụng di động"
+    },
+    {
+      "source_term": "model architecture",
+      "builder_target": "kiến trúc mô hình"
+    },
+    {
+      "source_term": "model class",
+      "builder_target": "lớp mô hình"
+    },
+    {
+      "source_term": "model complexity",
+      "builder_target": "độ phức tạp mô hình"
+    },
+    {
+      "source_term": "model design",
+      "builder_target": "thiết kế mô hình"
+    },
+    {
+      "source_term": "model parameter initialization",
+      "builder_target": "khởi tạo tham số mô hình"
+    },
+    {
+      "source_term": "model parameters",
+      "builder_target": "tham số mô hình"
+    },
+    {
+      "source_term": "model performance",
+      "builder_target": "hiệu năng mô hình"
+    },
+    {
+      "source_term": "Model Prediction and Evaluation",
+      "builder_target": "Dự đoán và đánh giá mô hình"
+    },
+    {
+      "source_term": "model selection",
+      "builder_target": "chọn mô hình"
+    },
+    {
+      "source_term": "model training",
+      "builder_target": "huấn luyện mô hình"
+    },
+    {
+      "source_term": "model weights",
+      "builder_target": "trọng số mô hình"
+    },
+    {
+      "source_term": "model's capacity",
+      "builder_target": "năng lực mô hình"
+    },
+    {
+      "source_term": "model's parameters",
+      "builder_target": "tham số mô hình"
+    },
+    {
+      "source_term": "model's performance",
+      "builder_target": "hiệu năng của mô hình"
+    },
+    {
+      "source_term": "model-based decisions",
+      "builder_target": "quyết định dựa trên mô hình"
+    },
+    {
+      "source_term": "modeling decisions",
+      "builder_target": "quyết định mô hình hóa"
+    },
+    {
+      "source_term": "modeling questions",
+      "builder_target": "câu hỏi mô hình hóa"
+    },
+    {
+      "source_term": "models",
+      "builder_target": "mô hình"
+    },
+    {
+      "source_term": "modern models",
+      "builder_target": "mô hình hiện đại"
+    },
+    {
+      "source_term": "monomial basis functions",
+      "builder_target": "hàm cơ sở đơn thức"
+    },
+    {
+      "source_term": "monomials",
+      "builder_target": "đơn thức"
+    },
+    {
+      "source_term": "monotonicity",
+      "builder_target": "tính đơn điệu"
+    },
+    {
+      "source_term": "Monte Carlo tree sampling",
+      "builder_target": "lấy mẫu cây Monte Carlo"
+    },
+    {
+      "source_term": "Moore's law",
+      "builder_target": "định luật Moore"
+    },
+    {
+      "source_term": "mortality risk predictor",
+      "builder_target": "bộ dự đoán nguy cơ tử vong"
+    },
+    {
+      "source_term": "MSELoss",
+      "builder_target": "MSELoss"
+    },
+    {
+      "source_term": "multi-armed bandit problem",
+      "builder_target": "bài toán bandit đa tay nắm"
+    },
+    {
+      "source_term": "multi-label classification",
+      "builder_target": "phân loại đa nhãn"
+    },
+    {
+      "source_term": "multiclass classification",
+      "builder_target": "phân loại đa lớp"
+    },
+    {
+      "source_term": "multiclass labels",
+      "builder_target": "nhãn đa lớp"
+    },
+    {
+      "source_term": "multilayer architectures",
+      "builder_target": "kiến trúc nhiều tầng"
+    },
+    {
+      "source_term": "multilayer neural network architectures",
+      "builder_target": "kiến trúc mạng nơ-ron nhiều lớp"
+    },
+    {
+      "source_term": "multilayer perceptron",
+      "builder_target": "perceptron đa lớp"
+    },
+    {
+      "source_term": "multilayer perceptrons",
+      "builder_target": "perceptron nhiều lớp"
+    },
+    {
+      "source_term": "multinomial distribution",
+      "builder_target": "phân phối đa thức"
+    },
+    {
+      "source_term": "multiple random variables",
+      "builder_target": "nhiều biến ngẫu nhiên"
+    },
+    {
+      "source_term": "multiple testing",
+      "builder_target": "kiểm định đa lần"
+    },
+    {
+      "source_term": "multiplication rule",
+      "builder_target": "quy tắc nhân"
+    },
+    {
+      "source_term": "multivariate data",
+      "builder_target": "dữ liệu đa biến"
+    },
+    {
+      "source_term": "multivariate function",
+      "builder_target": "hàm nhiều biến"
+    },
+    {
+      "source_term": "multivariate functions",
+      "builder_target": "hàm đa biến"
+    },
+    {
+      "source_term": "mutually exclusive",
+      "builder_target": "loại trừ lẫn nhau"
+    },
+    {
+      "source_term": "mv",
+      "builder_target": "mv"
+    },
+    {
+      "source_term": "mxnet",
+      "builder_target": "MXNet"
+    },
+    {
+      "source_term": "n-dimensional array",
+      "builder_target": "mảng n chiều"
+    },
+    {
+      "source_term": "n-dimensional arrays",
+      "builder_target": "mảng n chiều"
+    },
+    {
+      "source_term": "n-dimensional vector",
+      "builder_target": "vector n chiều"
+    },
+    {
+      "source_term": "named entities",
+      "builder_target": "thực thể có tên"
+    },
+    {
+      "source_term": "nan",
+      "builder_target": "NaN"
+    },
+    {
+      "source_term": "nats",
+      "builder_target": "nat"
+    },
+    {
+      "source_term": "natural language processing",
+      "builder_target": "xử lý ngôn ngữ tự nhiên"
+    },
+    {
+      "source_term": "ndarray",
+      "builder_target": "ndarray"
+    },
+    {
+      "source_term": "negative gradient",
+      "builder_target": "gradient âm"
+    },
+    {
+      "source_term": "negative indices",
+      "builder_target": "chỉ số âm"
+    },
+    {
+      "source_term": "negative log-likelihood",
+      "builder_target": "log-khả năng âm"
+    },
+    {
+      "source_term": "net(X)",
+      "builder_target": "net(X)"
+    },
+    {
+      "source_term": "net.collect_params()",
+      "builder_target": "net.collect_params()"
+    },
+    {
+      "source_term": "net[0].weight",
+      "builder_target": "net[0].weight"
+    },
+    {
+      "source_term": "Netflix prize",
+      "builder_target": "Netflix Prize"
+    },
+    {
+      "source_term": "network",
+      "builder_target": "mạng nơ-ron"
+    },
+    {
+      "source_term": "neural network architectures",
+      "builder_target": "kiến trúc mạng nơ-ron"
+    },
+    {
+      "source_term": "neural network layers",
+      "builder_target": "lớp mạng nơ-ron"
+    },
+    {
+      "source_term": "neural network learning",
+      "builder_target": "học mạng nơ-ron"
+    },
+    {
+      "source_term": "neural network parameters",
+      "builder_target": "tham số mạng nơ-đi-ron"
+    },
+    {
+      "source_term": "neural networks",
+      "builder_target": "mạng nơ-ron"
+    },
+    {
+      "source_term": "neural programmer-interpreter",
+      "builder_target": "bộ phiên dịch-lập trình viên nơ-ron"
+    },
+    {
+      "source_term": "neurons",
+      "builder_target": "nơ-ron"
+    },
+    {
+      "source_term": "neurophysiologists",
+      "builder_target": "nhà sinh lý thần kinh"
+    },
+    {
+      "source_term": "neuroscience",
+      "builder_target": "khoa học thần kinh"
+    },
+    {
+      "source_term": "nn module",
+      "builder_target": "mô-đun nn"
+    },
+    {
+      "source_term": "nn.Linear",
+      "builder_target": "nn.Linear"
+    },
+    {
+      "source_term": "noise",
+      "builder_target": "nhiễu"
+    },
+    {
+      "source_term": "noise injection",
+      "builder_target": "bơm nhiễu"
+    },
+    {
+      "source_term": "noise is normally distributed",
+      "builder_target": "nhiễu có phân phối chuẩn"
+    },
+    {
+      "source_term": "noise model",
+      "builder_target": "mô hình nhiễu"
+    },
+    {
+      "source_term": "noise term",
+      "builder_target": "thành phần nhiễu"
+    },
+    {
+      "source_term": "non-linearity",
+      "builder_target": "phi tuyến"
+    },
+    {
+      "source_term": "non-negative",
+      "builder_target": "không âm"
+    },
+    {
+      "source_term": "non-negative number",
+      "builder_target": "số không âm"
+    },
+    {
+      "source_term": "non-uniform",
+      "builder_target": "không đồng đều"
+    },
+    {
+      "source_term": "non-zero-sum games",
+      "builder_target": "trò chơi tổng không"
+    },
+    {
+      "source_term": "nonconvex nonlinear optimization problems",
+      "builder_target": "bài toán tối ưu phi lồi phi tuyến"
+    },
+    {
+      "source_term": "nonlinear activation function",
+      "builder_target": "hàm kích hoạt phi tuyến"
+    },
+    {
+      "source_term": "nonlinear processing",
+      "builder_target": "xử lý phi tuyến"
+    },
+    {
+      "source_term": "nonlinearities",
+      "builder_target": "phi tuyến"
+    },
+    {
+      "source_term": "nonparametric models",
+      "builder_target": "mô hình phi tham số"
+    },
+    {
+      "source_term": "Nonstationary Distributions",
+      "builder_target": "phân phối không dừng"
+    },
+    {
+      "source_term": "normal_",
+      "builder_target": "normal_"
+    },
+    {
+      "source_term": "normalization constant",
+      "builder_target": "hằng số chuẩn hóa"
+    },
+    {
+      "source_term": "norms",
+      "builder_target": "chuẩn"
+    },
+    {
+      "source_term": "np",
+      "builder_target": "np"
+    },
+    {
+      "source_term": "np.dot",
+      "builder_target": "np.dot"
+    },
+    {
+      "source_term": "npx",
+      "builder_target": "npx"
+    },
+    {
+      "source_term": "nucleus",
+      "builder_target": "nhân"
+    },
+    {
+      "source_term": "num_epochs",
+      "builder_target": "num_epochs"
+    },
+    {
+      "source_term": "number of bathrooms",
+      "builder_target": "số phòng tắm"
+    },
+    {
+      "source_term": "number of bedrooms",
+      "builder_target": "số phòng ngủ"
+    },
+    {
+      "source_term": "number of bits",
+      "builder_target": "số bit"
+    },
+    {
+      "source_term": "number of inputs",
+      "builder_target": "số đầu vào"
+    },
+    {
+      "source_term": "number of layers",
+      "builder_target": "số lớp"
+    },
+    {
+      "source_term": "number of outputs",
+      "builder_target": "số đầu ra"
+    },
+    {
+      "source_term": "numerical computing",
+      "builder_target": "tính toán số"
+    },
+    {
+      "source_term": "numerical features",
+      "builder_target": "các đặc trưng số"
+    },
+    {
+      "source_term": "numerical overflow",
+      "builder_target": "tràn số"
+    },
+    {
+      "source_term": "numerical simulations",
+      "builder_target": "mô phỏng số"
+    },
+    {
+      "source_term": "numerical stability",
+      "builder_target": "ổn định số học"
+    },
+    {
+      "source_term": "numerical underflow",
+      "builder_target": "tràn số dưới"
+    },
+    {
+      "source_term": "NumPy",
+      "builder_target": "NumPy"
+    },
+    {
+      "source_term": "numpy_extension",
+      "builder_target": "numpy_extension"
+    },
+    {
+      "source_term": "NumRooms",
+      "builder_target": "NumRooms"
+    },
+    {
+      "source_term": "Nvidia C2050",
+      "builder_target": "Nvidia C2050"
+    },
+    {
+      "source_term": "Nvidia DGX-2",
+      "builder_target": "Nvidia DGX-2"
+    },
+    {
+      "source_term": "objective",
+      "builder_target": "hàm mục tiêu"
+    },
+    {
+      "source_term": "objective functions",
+      "builder_target": "hàm mục tiêu"
+    },
+    {
+      "source_term": "objects",
+      "builder_target": "đối tượng"
+    },
+    {
+      "source_term": "observation",
+      "builder_target": "quan sát"
+    },
+    {
+      "source_term": "observational data",
+      "builder_target": "dữ liệu quan sát"
+    },
+    {
+      "source_term": "observations",
+      "builder_target": "quan sát"
+    },
+    {
+      "source_term": "observed values",
+      "builder_target": "giá trị quan sát"
+    },
+    {
+      "source_term": "odot",
+      "builder_target": "odot"
+    },
+    {
+      "source_term": "off-the-shelf tools",
+      "builder_target": "công cụ có sẵn"
+    },
+    {
+      "source_term": "official documentation",
+      "builder_target": "tài liệu chính thức"
+    },
+    {
+      "source_term": "OK Google",
+      "builder_target": "OK Google"
+    },
+    {
+      "source_term": "one star ratings",
+      "builder_target": "đánh giá một sao"
+    },
+    {
+      "source_term": "one-dimensional tensors",
+      "builder_target": "tensor một chiều"
+    },
+    {
+      "source_term": "one-hidden-layer MLP",
+      "builder_target": "MLP một tầng ẩn"
+    },
+    {
+      "source_term": "one-hot label vector",
+      "builder_target": "vector nhãn one-hot"
+    },
+    {
+      "source_term": "one-hot vector",
+      "builder_target": "vector one-hot"
+    },
+    {
+      "source_term": "one-hot vectors",
+      "builder_target": "vector one-hot"
+    },
+    {
+      "source_term": "ones",
+      "builder_target": "số 1"
+    },
+    {
+      "source_term": "online appendix",
+      "builder_target": "phụ lục trực tuyến"
+    },
+    {
+      "source_term": "online learning",
+      "builder_target": "học trực tuyến"
+    },
+    {
+      "source_term": "open source",
+      "builder_target": "mã nguồn mở"
+    },
+    {
+      "source_term": "open-source deep learning frameworks",
+      "builder_target": "các framework học sâu mã nguồn mở"
+    },
+    {
+      "source_term": "operand",
+      "builder_target": "toán hạng"
+    },
+    {
+      "source_term": "operand tensor",
+      "builder_target": "tensor toán hạng"
+    },
+    {
+      "source_term": "Operations",
+      "builder_target": "phép toán"
+    },
+    {
+      "source_term": "operators",
+      "builder_target": "toán tử"
+    },
+    {
+      "source_term": "optical character recognition",
+      "builder_target": "nhận dạng ký tự quang học"
+    },
+    {
+      "source_term": "optim",
+      "builder_target": "optim"
+    },
+    {
+      "source_term": "optimal action",
+      "builder_target": "hành động tối ưu"
+    },
+    {
+      "source_term": "optimization",
+      "builder_target": "tối ưu hóa"
+    },
+    {
+      "source_term": "optimization algorithm",
+      "builder_target": "thuật toán tối ưu hóa"
+    },
+    {
+      "source_term": "optimization algorithms",
+      "builder_target": "thuật toán tối ưu hóa"
+    },
+    {
+      "source_term": "optimization function",
+      "builder_target": "hàm tối ưu"
+    },
+    {
+      "source_term": "optimization problem",
+      "builder_target": "bài toán tối ưu"
+    },
+    {
+      "source_term": "optimization problems",
+      "builder_target": "bài toán tối ưu"
+    },
+    {
+      "source_term": "optimizer",
+      "builder_target": "bộ tối ưu hóa"
+    },
+    {
+      "source_term": "optimizers",
+      "builder_target": "bộ tối ưu"
+    },
+    {
+      "source_term": "order inversion",
+      "builder_target": "đảo thứ tự"
+    },
+    {
+      "source_term": "order tensor",
+      "builder_target": "tensor bậc"
+    },
+    {
+      "source_term": "ordered subsets",
+      "builder_target": "tập con có thứ tự"
+    },
+    {
+      "source_term": "origin",
+      "builder_target": "gốc tọa độ"
+    },
+    {
+      "source_term": "ornithology",
+      "builder_target": "điểu học"
+    },
+    {
+      "source_term": "out of memory",
+      "builder_target": "hết bộ nhớ"
+    },
+    {
+      "source_term": "outcome",
+      "builder_target": "kết quả"
+    },
+    {
+      "source_term": "outcome space",
+      "builder_target": "không gian kết quả"
+    },
+    {
+      "source_term": "output",
+      "builder_target": "đầu ra"
+    },
+    {
+      "source_term": "output class",
+      "builder_target": "lớp đầu ra"
+    },
+    {
+      "source_term": "output dimension",
+      "builder_target": "chiều đầu ra"
+    },
+    {
+      "source_term": "output feature dimension",
+      "builder_target": "chiều đặc trưng đầu ra"
+    },
+    {
+      "source_term": "output layer",
+      "builder_target": "lớp đầu ra"
+    },
+    {
+      "source_term": "output layers",
+      "builder_target": "các lớp đầu ra"
+    },
+    {
+      "source_term": "output probabilities",
+      "builder_target": "xác suất đầu ra"
+    },
+    {
+      "source_term": "outputs",
+      "builder_target": "đầu ra"
+    },
+    {
+      "source_term": "overfitting",
+      "builder_target": "quá khớp"
+    },
+    {
+      "source_term": "overflow",
+      "builder_target": "tràn số"
+    },
+    {
+      "source_term": "P(y = \"cat\")",
+      "builder_target": "P(y = \"cat\")"
+    },
+    {
+      "source_term": "P(y \\mid \\mathbf{x})",
+      "builder_target": "P(y \\mid \\mathbf{x})"
+    },
+    {
+      "source_term": "PageRank",
+      "builder_target": "PageRank"
+    },
+    {
+      "source_term": "pandas",
+      "builder_target": "pandas"
+    },
+    {
+      "source_term": "parameter",
+      "builder_target": "tham số"
+    },
+    {
+      "source_term": "parameter initialization",
+      "builder_target": "khởi tạo tham số"
+    },
+    {
+      "source_term": "parameter updates",
+      "builder_target": "cập nhật tham số"
+    },
+    {
+      "source_term": "parameterization cost",
+      "builder_target": "chi phí tham số hóa"
+    },
+    {
+      "source_term": "parameterized function",
+      "builder_target": "hàm tham số hóa"
+    },
+    {
+      "source_term": "parameterized ReLU",
+      "builder_target": "ReLU tham số hóa"
+    },
+    {
+      "source_term": "parameters",
+      "builder_target": "tham số"
+    },
+    {
+      "source_term": "parameters closest to the output layer",
+      "builder_target": "tham số gần tầng đầu ra nhất"
+    },
+    {
+      "source_term": "parametric machine learning models",
+      "builder_target": "mô hình học máy tham số"
+    },
+    {
+      "source_term": "parametric statistical descriptions",
+      "builder_target": "mô tả thống kê tham số"
+    },
+    {
+      "source_term": "parametrization",
+      "builder_target": "tham số hóa"
+    },
+    {
+      "source_term": "partial derivative",
+      "builder_target": "đạo hàm riêng"
+    },
+    {
+      "source_term": "partial derivatives",
+      "builder_target": "đạo hàm riêng"
+    },
+    {
+      "source_term": "partial differential equations",
+      "builder_target": "phương trình đạo hàm riêng"
+    },
+    {
+      "source_term": "partial observability",
+      "builder_target": "khả năng quan sát một phần"
+    },
+    {
+      "source_term": "partially observed",
+      "builder_target": "được quan sát một phần"
+    },
+    {
+      "source_term": "particle physics",
+      "builder_target": "vật lý hạt"
+    },
+    {
+      "source_term": "passive prediction",
+      "builder_target": "dự đoán thụ động"
+    },
+    {
+      "source_term": "patient history",
+      "builder_target": "tiền sử bệnh nhân"
+    },
+    {
+      "source_term": "patterns",
+      "builder_target": "mẫu hình"
+    },
+    {
+      "source_term": "PayPal",
+      "builder_target": "PayPal"
+    },
+    {
+      "source_term": "penalty term",
+      "builder_target": "hạng phạt"
+    },
+    {
+      "source_term": "perceptron learning algorithm",
+      "builder_target": "thuật toán học perceptron"
+    },
+    {
+      "source_term": "permutation symmetry",
+      "builder_target": "đối xứng hoán vị"
+    },
+    {
+      "source_term": "personalization",
+      "builder_target": "cá nhân hóa"
+    },
+    {
+      "source_term": "personalization algorithms",
+      "builder_target": "thuật toán cá nhân hóa"
+    },
+    {
+      "source_term": "perturbations",
+      "builder_target": "nhiễu loạn"
+    },
+    {
+      "source_term": "Ph.D.",
+      "builder_target": "tiến sĩ"
+    },
+    {
+      "source_term": "phi",
+      "builder_target": "phi"
+    },
+    {
+      "source_term": "photographs",
+      "builder_target": "ảnh chụp"
+    },
+    {
+      "source_term": "PID",
+      "builder_target": "PID"
+    },
+    {
+      "source_term": "piecewise linear function",
+      "builder_target": "hàm tuyến tính từng đoạn"
+    },
+    {
+      "source_term": "pixel",
+      "builder_target": "điểm ảnh"
+    },
+    {
+      "source_term": "pixel value",
+      "builder_target": "giá trị pixel"
+    },
+    {
+      "source_term": "pixels",
+      "builder_target": "pixel"
+    },
+    {
+      "source_term": "Planck's Law",
+      "builder_target": "định luật Planck"
+    },
+    {
+      "source_term": "plot",
+      "builder_target": "plot"
+    },
+    {
+      "source_term": "point symmetry",
+      "builder_target": "đối xứng tâm"
+    },
+    {
+      "source_term": "poison-detection classifier",
+      "builder_target": "bộ phân loại phát hiện độc tố"
+    },
+    {
+      "source_term": "policy",
+      "builder_target": "chính sách"
+    },
+    {
+      "source_term": "poly_features",
+      "builder_target": "poly_features"
+    },
+    {
+      "source_term": "polygon",
+      "builder_target": "đa giác"
+    },
+    {
+      "source_term": "polynomial",
+      "builder_target": "đa thức"
+    },
+    {
+      "source_term": "Polynomial Regression",
+      "builder_target": "hồi quy đa thức"
+    },
+    {
+      "source_term": "polynomials",
+      "builder_target": "đa thức"
+    },
+    {
+      "source_term": "Popper's criterion of falsifiability",
+      "builder_target": "tiêu chuẩn khả bác của Popper"
+    },
+    {
+      "source_term": "post hoc",
+      "builder_target": "hậu nghiệm"
+    },
+    {
+      "source_term": "power rule",
+      "builder_target": "quy tắc lũy thừa"
+    },
+    {
+      "source_term": "pre-softmax",
+      "builder_target": "trước softmax"
+    },
+    {
+      "source_term": "predicted category",
+      "builder_target": "lớp dự đoán"
+    },
+    {
+      "source_term": "predicted probabilities",
+      "builder_target": "xác suất dự đoán"
+    },
+    {
+      "source_term": "predicted probability",
+      "builder_target": "xác suất dự đoán"
+    },
+    {
+      "source_term": "predicted probability distribution",
+      "builder_target": "phân phối xác suất dự đoán"
+    },
+    {
+      "source_term": "predicted value",
+      "builder_target": "giá trị dự đoán"
+    },
+    {
+      "source_term": "prediction",
+      "builder_target": "dự đoán"
+    },
+    {
+      "source_term": "prediction loss",
+      "builder_target": "mất mát dự đoán"
+    },
+    {
+      "source_term": "prediction problem",
+      "builder_target": "bài toán dự đoán"
+    },
+    {
+      "source_term": "prediction problems",
+      "builder_target": "bài toán dự đoán"
+    },
+    {
+      "source_term": "prediction score",
+      "builder_target": "điểm dự đoán"
+    },
+    {
+      "source_term": "predictions",
+      "builder_target": "dự đoán"
+    },
+    {
+      "source_term": "predictive model",
+      "builder_target": "mô hình dự đoán"
+    },
+    {
+      "source_term": "predictive models",
+      "builder_target": "mô hình dự đoán"
+    },
+    {
+      "source_term": "predictive policing",
+      "builder_target": "cảnh sát dự báo"
+    },
+    {
+      "source_term": "predictive policing systems",
+      "builder_target": "hệ thống dự báo cảnh sát"
+    },
+    {
+      "source_term": "pReLU",
+      "builder_target": "pReLU"
+    },
+    {
+      "source_term": "preprocessed",
+      "builder_target": "được tiền xử lý"
+    },
+    {
+      "source_term": "preprocessing",
+      "builder_target": "tiền xử lý"
+    },
+    {
+      "source_term": "price",
+      "builder_target": "giá"
+    },
+    {
+      "source_term": "principal component analysis",
+      "builder_target": "phân tích thành phần chính"
+    },
+    {
+      "source_term": "prior state",
+      "builder_target": "trạng thái trước đó"
+    },
+    {
+      "source_term": "probabilistic graphical models",
+      "builder_target": "mô hình đồ họa xác suất"
+    },
+    {
+      "source_term": "probabilities",
+      "builder_target": "xác suất"
+    },
+    {
+      "source_term": "probability",
+      "builder_target": "xác suất"
+    },
+    {
+      "source_term": "probability 1/6",
+      "builder_target": "xác suất 1/6"
+    },
+    {
+      "source_term": "probability axioms",
+      "builder_target": "tiên đề xác suất"
+    },
+    {
+      "source_term": "probability density",
+      "builder_target": "mật độ xác suất"
+    },
+    {
+      "source_term": "probability distribution",
+      "builder_target": "phân phối xác suất"
+    },
+    {
+      "source_term": "probability distributions",
+      "builder_target": "phân phối xác suất"
+    },
+    {
+      "source_term": "probability of death",
+      "builder_target": "xác suất tử vong"
+    },
+    {
+      "source_term": "probability of purchase",
+      "builder_target": "xác suất mua"
+    },
+    {
+      "source_term": "probability of repayment",
+      "builder_target": "xác suất trả nợ"
+    },
+    {
+      "source_term": "probability ratios",
+      "builder_target": "tỷ số xác suất"
+    },
+    {
+      "source_term": "probability vector",
+      "builder_target": "vector xác suất"
+    },
+    {
+      "source_term": "problem",
+      "builder_target": "bài toán"
+    },
+    {
+      "source_term": "procedural fairness",
+      "builder_target": "công bằng thủ tục"
+    },
+    {
+      "source_term": "prod",
+      "builder_target": "prod"
+    },
+    {
+      "source_term": "product ID",
+      "builder_target": "ID sản phẩm"
+    },
+    {
+      "source_term": "product of two matrices",
+      "builder_target": "tích của hai ma trận"
+    },
+    {
+      "source_term": "product rule",
+      "builder_target": "quy tắc tích"
+    },
+    {
+      "source_term": "programming languages",
+      "builder_target": "ngôn ngữ lập trình"
+    },
+    {
+      "source_term": "programming with data",
+      "builder_target": "lập trình bằng dữ liệu"
+    },
+    {
+      "source_term": "properties",
+      "builder_target": "thuộc tính"
+    },
+    {
+      "source_term": "proportional-integral-derivative",
+      "builder_target": "tỷ lệ-tích phân-vi phân"
+    },
+    {
+      "source_term": "prototypes",
+      "builder_target": "nguyên mẫu"
+    },
+    {
+      "source_term": "psychology",
+      "builder_target": "tâm lý học"
+    },
+    {
+      "source_term": "PubMed",
+      "builder_target": "PubMed"
+    },
+    {
+      "source_term": "purchase habits",
+      "builder_target": "thói quen mua hàng"
+    },
+    {
+      "source_term": "Python",
+      "builder_target": "Python"
+    },
+    {
+      "source_term": "Python `for` loop",
+      "builder_target": "vòng lặp `for` của Python"
+    },
+    {
+      "source_term": "Python control flow",
+      "builder_target": "luồng điều khiển Python"
+    },
+    {
+      "source_term": "PyTorch",
+      "builder_target": "PyTorch"
+    },
+    {
+      "source_term": "Q-Learning",
+      "builder_target": "Q-learning"
+    },
+    {
+      "source_term": "quadratic function",
+      "builder_target": "hàm bậc hai"
+    },
+    {
+      "source_term": "quadratic losses",
+      "builder_target": "hàm mất mát bậc hai"
+    },
+    {
+      "source_term": "quantitative comparisons",
+      "builder_target": "so sánh định lượng"
+    },
+    {
+      "source_term": "query-dependent relevance scores",
+      "builder_target": "điểm liên quan phụ thuộc truy vấn"
+    },
+    {
+      "source_term": "quotient rule",
+      "builder_target": "quy tắc thương"
+    },
+    {
+      "source_term": "R",
+      "builder_target": "R"
+    },
+    {
+      "source_term": "random event",
+      "builder_target": "biến cố ngẫu nhiên"
+    },
+    {
+      "source_term": "random experiment",
+      "builder_target": "phép thử ngẫu nhiên"
+    },
+    {
+      "source_term": "random guessing",
+      "builder_target": "đoán ngẫu nhiên"
+    },
+    {
+      "source_term": "random initialization",
+      "builder_target": "khởi tạo ngẫu nhiên"
+    },
+    {
+      "source_term": "random noise",
+      "builder_target": "nhiễu ngẫu nhiên"
+    },
+    {
+      "source_term": "random numbers",
+      "builder_target": "số ngẫu nhiên"
+    },
+    {
+      "source_term": "random variables",
+      "builder_target": "biến ngẫu nhiên"
+    },
+    {
+      "source_term": "random weights",
+      "builder_target": "trọng số ngẫu nhiên"
+    },
+    {
+      "source_term": "random-access memory",
+      "builder_target": "bộ nhớ truy cập ngẫu nhiên"
+    },
+    {
+      "source_term": "randomly initialized model",
+      "builder_target": "mô hình khởi tạo ngẫu nhiên"
+    },
+    {
+      "source_term": "randomly sample",
+      "builder_target": "lấy mẫu ngẫu nhiên"
+    },
+    {
+      "source_term": "range",
+      "builder_target": "range"
+    },
+    {
+      "source_term": "ranking",
+      "builder_target": "xếp hạng"
+    },
+    {
+      "source_term": "ratings",
+      "builder_target": "điểm đánh giá"
+    },
+    {
+      "source_term": "raw audio",
+      "builder_target": "âm thanh thô"
+    },
+    {
+      "source_term": "raw audio signal",
+      "builder_target": "tín hiệu âm thanh thô"
+    },
+    {
+      "source_term": "raw dataset",
+      "builder_target": "tập dữ liệu thô"
+    },
+    {
+      "source_term": "raw pixel values",
+      "builder_target": "giá trị điểm ảnh thô"
+    },
+    {
+      "source_term": "read_csv",
+      "builder_target": "read_csv"
+    },
+    {
+      "source_term": "real number",
+      "builder_target": "số thực"
+    },
+    {
+      "source_term": "real value",
+      "builder_target": "giá trị thực"
+    },
+    {
+      "source_term": "real-valued data",
+      "builder_target": "dữ liệu giá trị thực"
+    },
+    {
+      "source_term": "real-valued scalars",
+      "builder_target": "vô hướng thực"
+    },
+    {
+      "source_term": "real-world datasets",
+      "builder_target": "tập dữ liệu thực tế"
+    },
+    {
+      "source_term": "real-world knowledge",
+      "builder_target": "tri thức thế giới thực"
+    },
+    {
+      "source_term": "RealSoftMax",
+      "builder_target": "RealSoftMax"
+    },
+    {
+      "source_term": "recommendation algorithm",
+      "builder_target": "thuật toán gợi ý"
+    },
+    {
+      "source_term": "recommendation settings",
+      "builder_target": "bối cảnh gợi ý"
+    },
+    {
+      "source_term": "recommendation system",
+      "builder_target": "hệ thống gợi ý"
+    },
+    {
+      "source_term": "recommendation systems",
+      "builder_target": "hệ thống gợi ý"
+    },
+    {
+      "source_term": "Recommender Systems",
+      "builder_target": "hệ thống gợi ý"
+    },
+    {
+      "source_term": "rectified linear unit",
+      "builder_target": "đơn vị tuyến tính chỉnh lưu"
+    },
+    {
+      "source_term": "recurrent neural networks",
+      "builder_target": "mạng nơ-ron hồi tiếp"
+    },
+    {
+      "source_term": "Reduction",
+      "builder_target": "phép giảm"
+    },
+    {
+      "source_term": "Regression",
+      "builder_target": "hồi quy"
+    },
+    {
+      "source_term": "regression model",
+      "builder_target": "mô hình hồi quy"
+    },
+    {
+      "source_term": "regression models",
+      "builder_target": "mô hình hồi quy"
+    },
+    {
+      "source_term": "regression problem",
+      "builder_target": "bài toán hồi quy"
+    },
+    {
+      "source_term": "regression problems",
+      "builder_target": "bài toán hồi quy"
+    },
+    {
+      "source_term": "regression techniques",
+      "builder_target": "kỹ thuật hồi quy"
+    },
+    {
+      "source_term": "regularization constant",
+      "builder_target": "hằng số điều chuẩn"
+    },
+    {
+      "source_term": "regularization techniques",
+      "builder_target": "kỹ thuật điều chuẩn"
+    },
+    {
+      "source_term": "regularization term",
+      "builder_target": "hạng chuẩn hóa"
+    },
+    {
+      "source_term": "regularized loss",
+      "builder_target": "hàm mất mát đã chuẩn hóa"
+    },
+    {
+      "source_term": "regularized regression",
+      "builder_target": "hồi quy regular hóa"
+    },
+    {
+      "source_term": "regularizing",
+      "builder_target": "chuẩn hóa"
+    },
+    {
+      "source_term": "regularizing models",
+      "builder_target": "chuẩn hóa mô hình"
+    },
+    {
+      "source_term": "relative error",
+      "builder_target": "sai số tương đối"
+    },
+    {
+      "source_term": "relative errors",
+      "builder_target": "sai số tương đối"
+    },
+    {
+      "source_term": "relative frequency",
+      "builder_target": "tần suất tương đối"
+    },
+    {
+      "source_term": "relevance score",
+      "builder_target": "điểm liên quan"
+    },
+    {
+      "source_term": "ReLU",
+      "builder_target": "ReLU"
+    },
+    {
+      "source_term": "ReLU activation function",
+      "builder_target": "hàm kích hoạt ReLU"
+    },
+    {
+      "source_term": "ReLU activation functions",
+      "builder_target": "hàm kích hoạt ReLU"
+    },
+    {
+      "source_term": "ReLU Function",
+      "builder_target": "hàm ReLU"
+    },
+    {
+      "source_term": "ReLUs",
+      "builder_target": "ReLU"
+    },
+    {
+      "source_term": "representation",
+      "builder_target": "biểu diễn"
+    },
+    {
+      "source_term": "representational learning",
+      "builder_target": "học biểu diễn"
+    },
+    {
+      "source_term": "rescaling",
+      "builder_target": "tái tỉ lệ hóa"
+    },
+    {
+      "source_term": "reshape",
+      "builder_target": "reshape"
+    },
+    {
+      "source_term": "resize",
+      "builder_target": "thay đổi kích thước"
+    },
+    {
+      "source_term": "ResNet-50",
+      "builder_target": "ResNet-50"
+    },
+    {
+      "source_term": "resolution",
+      "builder_target": "độ phân giải"
+    },
+    {
+      "source_term": "resume screening",
+      "builder_target": "sàng lọc hồ sơ xin việc"
+    },
+    {
+      "source_term": "retina",
+      "builder_target": "võng mạc"
+    },
+    {
+      "source_term": "reward",
+      "builder_target": "phần thưởng"
+    },
+    {
+      "source_term": "reward signal",
+      "builder_target": "tín hiệu phần thưởng"
+    },
+    {
+      "source_term": "rewards",
+      "builder_target": "phần thưởng"
+    },
+    {
+      "source_term": "ridge regression",
+      "builder_target": "hồi quy ridge"
+    },
+    {
+      "source_term": "risk",
+      "builder_target": "rủi ro"
+    },
+    {
+      "source_term": "risk models",
+      "builder_target": "mô hình rủi ro"
+    },
+    {
+      "source_term": "risk of death",
+      "builder_target": "nguy cơ tử vong"
+    },
+    {
+      "source_term": "robotics",
+      "builder_target": "người máy học"
+    },
+    {
+      "source_term": "robust classifier",
+      "builder_target": "bộ phân loại bền vững"
+    },
+    {
+      "source_term": "robustness",
+      "builder_target": "độ bền vững"
+    },
+    {
+      "source_term": "root-mean-squared-error",
+      "builder_target": "căn bậc hai của sai số bình phương trung bình"
+    },
+    {
+      "source_term": "rotations",
+      "builder_target": "phép quay"
+    },
+    {
+      "source_term": "row",
+      "builder_target": "hàng"
+    },
+    {
+      "source_term": "row vector",
+      "builder_target": "vectơ hàng"
+    },
+    {
+      "source_term": "row vectors",
+      "builder_target": "vectơ hàng"
+    },
+    {
+      "source_term": "rows",
+      "builder_target": "hàng"
+    },
+    {
+      "source_term": "rowwise",
+      "builder_target": "theo hàng"
+    },
+    {
+      "source_term": "rules",
+      "builder_target": "luật"
+    },
+    {
+      "source_term": "runaway feedback loops",
+      "builder_target": "vòng phản hồi mất kiểm soát"
+    },
+    {
+      "source_term": "SalePrice",
+      "builder_target": "SalePrice"
+    },
+    {
+      "source_term": "sample",
+      "builder_target": "mẫu"
+    },
+    {
+      "source_term": "sample space",
+      "builder_target": "không gian mẫu"
+    },
+    {
+      "source_term": "sampled",
+      "builder_target": "được lấy mẫu"
+    },
+    {
+      "source_term": "sampler",
+      "builder_target": "bộ lấy mẫu"
+    },
+    {
+      "source_term": "samples",
+      "builder_target": "mẫu"
+    },
+    {
+      "source_term": "sampling",
+      "builder_target": "lấy mẫu"
+    },
+    {
+      "source_term": "sanity checks",
+      "builder_target": "kiểm tra tính hợp lý"
+    },
+    {
+      "source_term": "Saving Memory",
+      "builder_target": "tiết kiệm bộ nhớ"
+    },
+    {
+      "source_term": "scalability",
+      "builder_target": "khả năng mở rộng"
+    },
+    {
+      "source_term": "scalar operation",
+      "builder_target": "phép toán vô hướng"
+    },
+    {
+      "source_term": "scalar output",
+      "builder_target": "đầu ra vô hướng"
+    },
+    {
+      "source_term": "scalar-valued function",
+      "builder_target": "hàm vô hướng"
+    },
+    {
+      "source_term": "scalars",
+      "builder_target": "vô hướng"
+    },
+    {
+      "source_term": "scatter plot",
+      "builder_target": "biểu đồ phân tán"
+    },
+    {
+      "source_term": "scientific computing package",
+      "builder_target": "gói tính toán khoa học"
+    },
+    {
+      "source_term": "score",
+      "builder_target": "chấm điểm"
+    },
+    {
+      "source_term": "scores",
+      "builder_target": "điểm số"
+    },
+    {
+      "source_term": "Search",
+      "builder_target": "Tìm kiếm"
+    },
+    {
+      "source_term": "search and ranking",
+      "builder_target": "tìm kiếm và xếp hạng"
+    },
+    {
+      "source_term": "search engines",
+      "builder_target": "công cụ tìm kiếm"
+    },
+    {
+      "source_term": "second derivative",
+      "builder_target": "đạo hàm bậc hai"
+    },
+    {
+      "source_term": "second derivatives",
+      "builder_target": "đạo hàm bậc hai"
+    },
+    {
+      "source_term": "second-order tensors",
+      "builder_target": "tensor bậc hai"
+    },
+    {
+      "source_term": "self-driving cars",
+      "builder_target": "ô tô tự lái"
+    },
+    {
+      "source_term": "Self-Supervised Learning",
+      "builder_target": "học tự giám sát"
+    },
+    {
+      "source_term": "sentient",
+      "builder_target": "có tri giác"
+    },
+    {
+      "source_term": "sequence",
+      "builder_target": "chuỗi"
+    },
+    {
+      "source_term": "sequence models",
+      "builder_target": "mô hình chuỗi"
+    },
+    {
+      "source_term": "sequence to sequence learning",
+      "builder_target": "học chuỗi sang chuỗi"
+    },
+    {
+      "source_term": "sequences",
+      "builder_target": "chuỗi"
+    },
+    {
+      "source_term": "Sequential",
+      "builder_target": "Sequential"
+    },
+    {
+      "source_term": "set",
+      "builder_target": "tập hợp"
+    },
+    {
+      "source_term": "set_axes",
+      "builder_target": "set_axes"
+    },
+    {
+      "source_term": "set_figsize",
+      "builder_target": "set_figsize"
+    },
+    {
+      "source_term": "set_np",
+      "builder_target": "set_np"
+    },
+    {
+      "source_term": "sgd",
+      "builder_target": "sgd"
+    },
+    {
+      "source_term": "SHA-1",
+      "builder_target": "SHA-1"
+    },
+    {
+      "source_term": "shallow models",
+      "builder_target": "mô hình nông"
+    },
+    {
+      "source_term": "shape",
+      "builder_target": "hình dạng"
+    },
+    {
+      "source_term": "shared parameters",
+      "builder_target": "tham số dùng chung"
+    },
+    {
+      "source_term": "shopping cart database table",
+      "builder_target": "bảng cơ sở dữ liệu giỏ hàng"
+    },
+    {
+      "source_term": "shuffle",
+      "builder_target": "xáo trộn"
+    },
+    {
+      "source_term": "SIFT feature extractor",
+      "builder_target": "bộ trích xuất đặc trưng SIFT"
+    },
+    {
+      "source_term": "sigma",
+      "builder_target": "sigma"
+    },
+    {
+      "source_term": "Sigmoid Function",
+      "builder_target": "hàm sigmoid"
+    },
+    {
+      "source_term": "sigmoid units",
+      "builder_target": "các đơn vị sigmoid"
+    },
+    {
+      "source_term": "simple model",
+      "builder_target": "mô hình đơn giản"
+    },
+    {
+      "source_term": "single variable",
+      "builder_target": "một biến"
+    },
+    {
+      "source_term": "single-hidden-layer network",
+      "builder_target": "mạng một tầng ẩn"
+    },
+    {
+      "source_term": "single-layer model",
+      "builder_target": "mô hình một tầng"
+    },
+    {
+      "source_term": "single-layer network",
+      "builder_target": "mạng một tầng"
+    },
+    {
+      "source_term": "single-layer neural network",
+      "builder_target": "mạng nơ-ron một lớp"
+    },
+    {
+      "source_term": "single-layer neural networks",
+      "builder_target": "mạng nơ-ron một lớp"
+    },
+    {
+      "source_term": "Siri",
+      "builder_target": "Siri"
+    },
+    {
+      "source_term": "size",
+      "builder_target": "kích thước"
+    },
+    {
+      "source_term": "skin cancer recognition system",
+      "builder_target": "hệ thống nhận dạng ung thư da"
+    },
+    {
+      "source_term": "slice notation",
+      "builder_target": "ký hiệu lát cắt"
+    },
+    {
+      "source_term": "slicing",
+      "builder_target": "cắt lát"
+    },
+    {
+      "source_term": "slope",
+      "builder_target": "hệ số góc"
+    },
+    {
+      "source_term": "small data regime",
+      "builder_target": "chế độ dữ liệu nhỏ"
+    },
+    {
+      "source_term": "smoothness",
+      "builder_target": "độ trơn"
+    },
+    {
+      "source_term": "soft assignments",
+      "builder_target": "gán mềm"
+    },
+    {
+      "source_term": "soft-min",
+      "builder_target": "soft-min"
+    },
+    {
+      "source_term": "softmax",
+      "builder_target": "softmax"
+    },
+    {
+      "source_term": "softmax function",
+      "builder_target": "hàm softmax"
+    },
+    {
+      "source_term": "Softmax Implementation Revisited",
+      "builder_target": "xem lại cài đặt softmax"
+    },
+    {
+      "source_term": "softmax operation",
+      "builder_target": "phép toán softmax"
+    },
+    {
+      "source_term": "softmax regression",
+      "builder_target": "hồi quy softmax"
+    },
+    {
+      "source_term": "softmax regression model",
+      "builder_target": "mô hình hồi quy softmax"
+    },
+    {
+      "source_term": "sound wave",
+      "builder_target": "sóng âm"
+    },
+    {
+      "source_term": "source data",
+      "builder_target": "dữ liệu nguồn"
+    },
+    {
+      "source_term": "source distribution",
+      "builder_target": "phân phối nguồn"
+    },
+    {
+      "source_term": "source language",
+      "builder_target": "ngôn ngữ nguồn"
+    },
+    {
+      "source_term": "spam",
+      "builder_target": "thư rác"
+    },
+    {
+      "source_term": "spam filter",
+      "builder_target": "bộ lọc thư rác"
+    },
+    {
+      "source_term": "speech",
+      "builder_target": "giọng nói"
+    },
+    {
+      "source_term": "spurious patterns",
+      "builder_target": "mẫu hình nhiễu"
+    },
+    {
+      "source_term": "square footage",
+      "builder_target": "diện tích sàn"
+    },
+    {
+      "source_term": "square matrix",
+      "builder_target": "ma trận vuông"
+    },
+    {
+      "source_term": "square root",
+      "builder_target": "căn bậc hai"
+    },
+    {
+      "source_term": "squared error",
+      "builder_target": "sai số bình phương"
+    },
+    {
+      "source_term": "squared error loss",
+      "builder_target": "mất mát bình phương sai số"
+    },
+    {
+      "source_term": "squared error loss function",
+      "builder_target": "hàm mất mát sai số bình phương"
+    },
+    {
+      "source_term": "squared L_2 norm",
+      "builder_target": "chuẩn L2 bình phương"
+    },
+    {
+      "source_term": "squared loss",
+      "builder_target": "hàm mất mát bình phương"
+    },
+    {
+      "source_term": "squared loss function",
+      "builder_target": "hàm mất mát bình phương"
+    },
+    {
+      "source_term": "squared loss objective",
+      "builder_target": "mục tiêu hàm mất mát bình phương"
+    },
+    {
+      "source_term": "squared norm",
+      "builder_target": "chuẩn bình phương"
+    },
+    {
+      "source_term": "squared_loss",
+      "builder_target": "squared_loss"
+    },
+    {
+      "source_term": "standard arithmetic operators",
+      "builder_target": "toán tử số học chuẩn"
+    },
+    {
+      "source_term": "standard Gaussian distribution",
+      "builder_target": "phân phối Gauss chuẩn"
+    },
+    {
+      "source_term": "standard norm",
+      "builder_target": "chuẩn thông thường"
+    },
+    {
+      "source_term": "standard normal distribution",
+      "builder_target": "phân phối chuẩn tắc"
+    },
+    {
+      "source_term": "star rating",
+      "builder_target": "điểm đánh giá sao"
+    },
+    {
+      "source_term": "StarCraft",
+      "builder_target": "StarCraft"
+    },
+    {
+      "source_term": "state",
+      "builder_target": "trạng thái"
+    },
+    {
+      "source_term": "state of the art",
+      "builder_target": "mức hiện đại nhất"
+    },
+    {
+      "source_term": "state, action, reward",
+      "builder_target": "trạng thái, hành động, phần thưởng"
+    },
+    {
+      "source_term": "stationary environment",
+      "builder_target": "môi trường tĩnh"
+    },
+    {
+      "source_term": "statistical data",
+      "builder_target": "dữ liệu thống kê"
+    },
+    {
+      "source_term": "statistical estimation",
+      "builder_target": "ước lượng thống kê"
+    },
+    {
+      "source_term": "statistical learning theory",
+      "builder_target": "lý thuyết học thống kê"
+    },
+    {
+      "source_term": "statistical modelers",
+      "builder_target": "nhà mô hình hóa thống kê"
+    },
+    {
+      "source_term": "statistical models",
+      "builder_target": "mô hình thống kê"
+    },
+    {
+      "source_term": "statistical prediction",
+      "builder_target": "dự đoán thống kê"
+    },
+    {
+      "source_term": "statistical problems",
+      "builder_target": "bài toán thống kê"
+    },
+    {
+      "source_term": "statistical tools",
+      "builder_target": "công cụ thống kê"
+    },
+    {
+      "source_term": "statistics",
+      "builder_target": "thống kê"
+    },
+    {
+      "source_term": "stock",
+      "builder_target": "cổ phiếu"
+    },
+    {
+      "source_term": "storage",
+      "builder_target": "lưu trữ"
+    },
+    {
+      "source_term": "Stripe",
+      "builder_target": "Stripe"
+    },
+    {
+      "source_term": "structural and grammatical assumptions",
+      "builder_target": "giả định cấu trúc và ngữ pháp"
+    },
+    {
+      "source_term": "submission.csv",
+      "builder_target": "submission.csv"
+    },
+    {
+      "source_term": "sum",
+      "builder_target": "tổng"
+    },
+    {
+      "source_term": "sum of squares",
+      "builder_target": "tổng các bình phương"
+    },
+    {
+      "source_term": "sum operator",
+      "builder_target": "toán tử tổng"
+    },
+    {
+      "source_term": "sum rule",
+      "builder_target": "quy tắc tổng"
+    },
+    {
+      "source_term": "sum symbol",
+      "builder_target": "ký hiệu tổng"
+    },
+    {
+      "source_term": "super-resolution",
+      "builder_target": "siêu phân giải"
+    },
+    {
+      "source_term": "supervised learning algorithm",
+      "builder_target": "thuật toán học có giám sát"
+    },
+    {
+      "source_term": "supervised learning task",
+      "builder_target": "tác vụ học có giám sát"
+    },
+    {
+      "source_term": "supervision",
+      "builder_target": "giám sát"
+    },
+    {
+      "source_term": "surprisal",
+      "builder_target": "độ bất ngờ"
+    },
+    {
+      "source_term": "symmetric",
+      "builder_target": "đối xứng"
+    },
+    {
+      "source_term": "symmetric matrix",
+      "builder_target": "ma trận đối xứng"
+    },
+    {
+      "source_term": "symmetry",
+      "builder_target": "đối xứng"
+    },
+    {
+      "source_term": "symptom",
+      "builder_target": "triệu chứng"
+    },
+    {
+      "source_term": "symptoms",
+      "builder_target": "triệu chứng"
+    },
+    {
+      "source_term": "synapses",
+      "builder_target": "khớp thần kinh"
+    },
+    {
+      "source_term": "synaptic weights",
+      "builder_target": "trọng số khớp thần kinh"
+    },
+    {
+      "source_term": "synthetic data",
+      "builder_target": "dữ liệu tổng hợp"
+    },
+    {
+      "source_term": "synthetic dataset",
+      "builder_target": "tập dữ liệu tổng hợp"
+    },
+    {
+      "source_term": "synthetic example",
+      "builder_target": "ví dụ tổng hợp"
+    },
+    {
+      "source_term": "system researchers",
+      "builder_target": "nhà nghiên cứu hệ thống"
+    },
+    {
+      "source_term": "systolic blood pressure",
+      "builder_target": "huyết áp tâm thu"
+    },
+    {
+      "source_term": "tabular dataset",
+      "builder_target": "tập dữ liệu dạng bảng"
+    },
+    {
+      "source_term": "Tagging and Parsing",
+      "builder_target": "gán nhãn và phân tích cú pháp"
+    },
+    {
+      "source_term": "tangent line",
+      "builder_target": "đường tiếp tuyến"
+    },
+    {
+      "source_term": "Tanh",
+      "builder_target": "tanh"
+    },
+    {
+      "source_term": "tanh function",
+      "builder_target": "hàm tanh"
+    },
+    {
+      "source_term": "target",
+      "builder_target": "biến mục tiêu"
+    },
+    {
+      "source_term": "target data",
+      "builder_target": "dữ liệu đích"
+    },
+    {
+      "source_term": "target distribution",
+      "builder_target": "phân phối mục tiêu"
+    },
+    {
+      "source_term": "target quantity",
+      "builder_target": "đại lượng đích"
+    },
+    {
+      "source_term": "targets",
+      "builder_target": "nhãn mục tiêu"
+    },
+    {
+      "source_term": "TD-Gammon",
+      "builder_target": "TD-Gammon"
+    },
+    {
+      "source_term": "temporal dependencies",
+      "builder_target": "phụ thuộc theo thời gian"
+    },
+    {
+      "source_term": "Temporal difference reinforcement learning",
+      "builder_target": "học tăng cường sai khác thời gian"
+    },
+    {
+      "source_term": "temporal distances",
+      "builder_target": "khoảng cách thời gian"
+    },
+    {
+      "source_term": "tensor",
+      "builder_target": "tensor"
+    },
+    {
+      "source_term": "tensor class",
+      "builder_target": "lớp tensor"
+    },
+    {
+      "source_term": "tensor format",
+      "builder_target": "dạng tensor"
+    },
+    {
+      "source_term": "TensorFlow",
+      "builder_target": "TensorFlow"
+    },
+    {
+      "source_term": "TensorFlow graph",
+      "builder_target": "đồ thị TensorFlow"
+    },
+    {
+      "source_term": "tensors",
+      "builder_target": "tensor"
+    },
+    {
+      "source_term": "test accuracy",
+      "builder_target": "độ chính xác kiểm tra"
+    },
+    {
+      "source_term": "test data",
+      "builder_target": "dữ liệu kiểm tra"
+    },
+    {
+      "source_term": "test dataset",
+      "builder_target": "tập dữ liệu kiểm tra"
+    },
+    {
+      "source_term": "test error",
+      "builder_target": "lỗi kiểm tra"
+    },
+    {
+      "source_term": "test set accuracy",
+      "builder_target": "độ chính xác tập kiểm tra"
+    },
+    {
+      "source_term": "test time",
+      "builder_target": "thời điểm kiểm tra"
+    },
+    {
+      "source_term": "testing",
+      "builder_target": "kiểm tra"
+    },
+    {
+      "source_term": "text from the spoken speech",
+      "builder_target": "văn bản từ lời nói"
+    },
+    {
+      "source_term": "Text to Speech",
+      "builder_target": "chuyển văn bản thành tiếng nói"
+    },
+    {
+      "source_term": "textual transcript",
+      "builder_target": "bản phiên âm văn bản"
+    },
+    {
+      "source_term": "tf",
+      "builder_target": "tf"
+    },
+    {
+      "source_term": "tf.function",
+      "builder_target": "tf.function"
+    },
+    {
+      "source_term": "tf.linalg.matvec",
+      "builder_target": "tf.linalg.matvec"
+    },
+    {
+      "source_term": "The Road to Deep Learning",
+      "builder_target": "Con đường đến học sâu"
+    },
+    {
+      "source_term": "Theano",
+      "builder_target": "Theano"
+    },
+    {
+      "source_term": "theory of computation",
+      "builder_target": "lý thuyết tính toán"
+    },
+    {
+      "source_term": "Third-Order Polynomial Function Fitting",
+      "builder_target": "khớp hàm đa thức bậc ba"
+    },
+    {
+      "source_term": "three-star ratings",
+      "builder_target": "đánh giá ba sao"
+    },
+    {
+      "source_term": "threshold",
+      "builder_target": "ngưỡng"
+    },
+    {
+      "source_term": "thresholding activation",
+      "builder_target": "hàm kích hoạt ngưỡng"
+    },
+    {
+      "source_term": "thresholding unit",
+      "builder_target": "đơn vị ngưỡng"
+    },
+    {
+      "source_term": "tied parameters",
+      "builder_target": "tham số dùng chung"
+    },
+    {
+      "source_term": "Tikhonov regularization",
+      "builder_target": "chuẩn hóa Tikhonov"
+    },
+    {
+      "source_term": "time steps",
+      "builder_target": "bước thời gian"
+    },
+    {
+      "source_term": "timer",
+      "builder_target": "bộ đếm thời gian"
+    },
+    {
+      "source_term": "top-5 error rate",
+      "builder_target": "tỷ lệ lỗi top-5"
+    },
+    {
+      "source_term": "topics of Tweets",
+      "builder_target": "chủ đề của Tweets"
+    },
+    {
+      "source_term": "Torch",
+      "builder_target": "Torch"
+    },
+    {
+      "source_term": "torch.mv",
+      "builder_target": "torch.mv"
+    },
+    {
+      "source_term": "Town Musicians of Bremen",
+      "builder_target": "Town Musicians of Bremen"
+    },
+    {
+      "source_term": "traditional methods",
+      "builder_target": "phương pháp truyền thống"
+    },
+    {
+      "source_term": "Traffic camera lenses",
+      "builder_target": "ống kính camera giao thông"
+    },
+    {
+      "source_term": "train",
+      "builder_target": "huấn luyện"
+    },
+    {
+      "source_term": "train and test performance",
+      "builder_target": "hiệu năng huấn luyện và kiểm tra"
+    },
+    {
+      "source_term": "train data",
+      "builder_target": "dữ liệu huấn luyện"
+    },
+    {
+      "source_term": "train_ch3",
+      "builder_target": "train_ch3"
+    },
+    {
+      "source_term": "trained networks",
+      "builder_target": "mạng đã huấn luyện"
+    },
+    {
+      "source_term": "Trainer",
+      "builder_target": "Trainer"
+    },
+    {
+      "source_term": "trainer.step",
+      "builder_target": "trainer.step"
+    },
+    {
+      "source_term": "Training",
+      "builder_target": "huấn luyện"
+    },
+    {
+      "source_term": "training a network",
+      "builder_target": "huấn luyện mạng"
+    },
+    {
+      "source_term": "training and test data",
+      "builder_target": "dữ liệu huấn luyện và kiểm tra"
+    },
+    {
+      "source_term": "training and test distributions",
+      "builder_target": "phân phối huấn luyện và kiểm tra"
+    },
+    {
+      "source_term": "training data",
+      "builder_target": "dữ liệu huấn luyện"
+    },
+    {
+      "source_term": "training data iterator",
+      "builder_target": "bộ lặp dữ liệu huấn luyện"
+    },
+    {
+      "source_term": "training dataset",
+      "builder_target": "tập dữ liệu huấn luyện"
+    },
+    {
+      "source_term": "training epochs",
+      "builder_target": "epoch huấn luyện"
+    },
+    {
+      "source_term": "training error",
+      "builder_target": "lỗi huấn luyện"
+    },
+    {
+      "source_term": "training errors",
+      "builder_target": "lỗi huấn luyện"
+    },
+    {
+      "source_term": "training example",
+      "builder_target": "mẫu huấn luyện"
+    },
+    {
+      "source_term": "training examples",
+      "builder_target": "mẫu huấn luyện"
+    },
+    {
+      "source_term": "training features",
+      "builder_target": "đặc trưng huấn luyện"
+    },
+    {
+      "source_term": "training from scratch",
+      "builder_target": "huấn luyện từ đầu"
+    },
+    {
+      "source_term": "training function",
+      "builder_target": "hàm huấn luyện"
+    },
+    {
+      "source_term": "training input",
+      "builder_target": "đầu vào huấn luyện"
+    },
+    {
+      "source_term": "training iterations",
+      "builder_target": "số vòng huấn luyện"
+    },
+    {
+      "source_term": "training labels",
+      "builder_target": "nhãn huấn luyện"
+    },
+    {
+      "source_term": "training loop",
+      "builder_target": "vòng lặp huấn luyện"
+    },
+    {
+      "source_term": "training mode",
+      "builder_target": "chế độ huấn luyện"
+    },
+    {
+      "source_term": "training models",
+      "builder_target": "huấn luyện mô hình"
+    },
+    {
+      "source_term": "training neural networks",
+      "builder_target": "huấn luyện mạng nơ-ron"
+    },
+    {
+      "source_term": "training process",
+      "builder_target": "quá trình huấn luyện"
+    },
+    {
+      "source_term": "training samples",
+      "builder_target": "mẫu huấn luyện"
+    },
+    {
+      "source_term": "training set loss",
+      "builder_target": "hàm mất mát tập huấn luyện"
+    },
+    {
+      "source_term": "training sets",
+      "builder_target": "tập huấn luyện"
+    },
+    {
+      "source_term": "transformations",
+      "builder_target": "phép biến đổi"
+    },
+    {
+      "source_term": "transit time",
+      "builder_target": "thời gian di chuyển"
+    },
+    {
+      "source_term": "translation",
+      "builder_target": "dịch"
+    },
+    {
+      "source_term": "transmitting",
+      "builder_target": "truyền tải"
+    },
+    {
+      "source_term": "transpose",
+      "builder_target": "chuyển vị"
+    },
+    {
+      "source_term": "transposition",
+      "builder_target": "chuyển vị"
+    },
+    {
+      "source_term": "triangle inequality",
+      "builder_target": "bất đẳng thức tam giác"
+    },
+    {
+      "source_term": "true error",
+      "builder_target": "sai số thực"
+    },
+    {
+      "source_term": "true label",
+      "builder_target": "nhãn thật"
+    },
+    {
+      "source_term": "true parameters",
+      "builder_target": "tham số thực"
+    },
+    {
+      "source_term": "true probability",
+      "builder_target": "xác suất thực"
+    },
+    {
+      "source_term": "tunable parameters",
+      "builder_target": "tham số có thể điều chỉnh"
+    },
+    {
+      "source_term": "tuple",
+      "builder_target": "bộ"
+    },
+    {
+      "source_term": "Turing test",
+      "builder_target": "kiểm tra Turing"
+    },
+    {
+      "source_term": "two-dimensional layout analysis",
+      "builder_target": "phân tích bố cục hai chiều"
+    },
+    {
+      "source_term": "UCSF Medical Center",
+      "builder_target": "UCSF Medical Center"
+    },
+    {
+      "source_term": "unary operators",
+      "builder_target": "toán tử một ngôi"
+    },
+    {
+      "source_term": "unary scalar operator",
+      "builder_target": "toán tử đơn ngôi vô hướng"
+    },
+    {
+      "source_term": "uncertainty",
+      "builder_target": "độ bất định"
+    },
+    {
+      "source_term": "underfitting",
+      "builder_target": "thiếu khớp"
+    },
+    {
+      "source_term": "underflow",
+      "builder_target": "tụt số"
+    },
+    {
+      "source_term": "underlying distribution",
+      "builder_target": "phân phối nền"
+    },
+    {
+      "source_term": "underlying population",
+      "builder_target": "quần thể nền"
+    },
+    {
+      "source_term": "uniform distribution",
+      "builder_target": "phân phối đều"
+    },
+    {
+      "source_term": "unit length",
+      "builder_target": "độ dài đơn vị"
+    },
+    {
+      "source_term": "unit variance",
+      "builder_target": "phương sai đơn vị"
+    },
+    {
+      "source_term": "units",
+      "builder_target": "đơn vị"
+    },
+    {
+      "source_term": "Universal Approximators",
+      "builder_target": "bộ xấp xỉ phổ quát"
+    },
+    {
+      "source_term": "unlabeled data",
+      "builder_target": "dữ liệu chưa gán nhãn"
+    },
+    {
+      "source_term": "unlabeled examples",
+      "builder_target": "mẫu chưa gán nhãn"
+    },
+    {
+      "source_term": "unlabeled test set",
+      "builder_target": "tập kiểm tra chưa gán nhãn"
+    },
+    {
+      "source_term": "unseen data",
+      "builder_target": "dữ liệu chưa thấy"
+    },
+    {
+      "source_term": "update",
+      "builder_target": "cập nhật"
+    },
+    {
+      "source_term": "update parameters",
+      "builder_target": "cập nhật tham số"
+    },
+    {
+      "source_term": "update steps",
+      "builder_target": "bước cập nhật"
+    },
+    {
+      "source_term": "updater",
+      "builder_target": "bộ cập nhật"
+    },
+    {
+      "source_term": "US Army",
+      "builder_target": "Lục quân Hoa Kỳ"
+    },
+    {
+      "source_term": "use_svg_display",
+      "builder_target": "use_svg_display"
+    },
+    {
+      "source_term": "user",
+      "builder_target": "người dùng"
+    },
+    {
+      "source_term": "user ID",
+      "builder_target": "ID người dùng"
+    },
+    {
+      "source_term": "utility class",
+      "builder_target": "lớp tiện ích"
+    },
+    {
+      "source_term": "validation accuracy",
+      "builder_target": "độ chính xác xác thực"
+    },
+    {
+      "source_term": "validation data",
+      "builder_target": "dữ liệu xác thực"
+    },
+    {
+      "source_term": "validation dataset",
+      "builder_target": "tập dữ liệu xác thực"
+    },
+    {
+      "source_term": "validation error",
+      "builder_target": "sai số xác thực"
+    },
+    {
+      "source_term": "validation performance",
+      "builder_target": "hiệu năng kiểm định"
+    },
+    {
+      "source_term": "values attribute",
+      "builder_target": "thuộc tính values"
+    },
+    {
+      "source_term": "Vanishing and Exploding Gradients",
+      "builder_target": "độ dốc biến mất và bùng nổ"
+    },
+    {
+      "source_term": "vanishing gradient problem",
+      "builder_target": "vấn đề tiêu biến gradient"
+    },
+    {
+      "source_term": "vanishing gradients",
+      "builder_target": "hiện tượng gradient biến mất"
+    },
+    {
+      "source_term": "Vapnik and Chervonenkis",
+      "builder_target": "Vapnik và Chervonenkis"
+    },
+    {
+      "source_term": "variable",
+      "builder_target": "biến"
+    },
+    {
+      "source_term": "Variable assignments",
+      "builder_target": "phép gán biến"
+    },
+    {
+      "source_term": "variables",
+      "builder_target": "biến"
+    },
+    {
+      "source_term": "variance",
+      "builder_target": "phương sai"
+    },
+    {
+      "source_term": "varying-length data",
+      "builder_target": "dữ liệu độ dài biến thiên"
+    },
+    {
+      "source_term": "vector dot products",
+      "builder_target": "tích vô hướng của vectơ"
+    },
+    {
+      "source_term": "vector form",
+      "builder_target": "dạng vectơ"
+    },
+    {
+      "source_term": "vector norm",
+      "builder_target": "chuẩn của vector"
+    },
+    {
+      "source_term": "vector notation",
+      "builder_target": "ký hiệu véc-tơ"
+    },
+    {
+      "source_term": "vector-valued",
+      "builder_target": "dạng vectơ"
+    },
+    {
+      "source_term": "vectorizing",
+      "builder_target": "vector hóa"
+    },
+    {
+      "source_term": "Vectorizing code",
+      "builder_target": "vector hóa mã"
+    },
+    {
+      "source_term": "vectors",
+      "builder_target": "vector"
+    },
+    {
+      "source_term": "Venn Diagram",
+      "builder_target": "sơ đồ Venn"
+    },
+    {
+      "source_term": "verification error",
+      "builder_target": "sai số kiểm định"
+    },
+    {
+      "source_term": "video snippets",
+      "builder_target": "đoạn video"
+    },
+    {
+      "source_term": "Visa",
+      "builder_target": "Visa"
+    },
+    {
+      "source_term": "vital signs",
+      "builder_target": "dấu hiệu sinh tồn"
+    },
+    {
+      "source_term": "voice recognition system",
+      "builder_target": "hệ thống nhận dạng giọng nói"
+    },
+    {
+      "source_term": "W^{(1)}",
+      "builder_target": "W^{(1)}"
+    },
+    {
+      "source_term": "W^{(2)}",
+      "builder_target": "W^{(2)}"
+    },
+    {
+      "source_term": "wake word",
+      "builder_target": "từ đánh thức"
+    },
+    {
+      "source_term": "wake word problem",
+      "builder_target": "bài toán từ đánh thức"
+    },
+    {
+      "source_term": "wake word recognizer",
+      "builder_target": "bộ nhận dạng từ đánh thức"
+    },
+    {
+      "source_term": "walking time to downtown",
+      "builder_target": "thời gian đi bộ đến trung tâm"
+    },
+    {
+      "source_term": "Walter Pitts",
+      "builder_target": "Walter Pitts"
+    },
+    {
+      "source_term": "Warren McCulloch",
+      "builder_target": "Warren McCulloch"
+    },
+    {
+      "source_term": "web browser",
+      "builder_target": "trình duyệt web"
+    },
+    {
+      "source_term": "Web search engine",
+      "builder_target": "công cụ tìm kiếm Web"
+    },
+    {
+      "source_term": "webpage",
+      "builder_target": "trang web"
+    },
+    {
+      "source_term": "WeChat",
+      "builder_target": "WeChat"
+    },
+    {
+      "source_term": "weight",
+      "builder_target": "trọng số"
+    },
+    {
+      "source_term": "weight and bias parameters",
+      "builder_target": "tham số trọng số và độ lệch"
+    },
+    {
+      "source_term": "weight decay hyperparameter",
+      "builder_target": "siêu tham số suy giảm trọng số"
+    },
+    {
+      "source_term": "weight matrix",
+      "builder_target": "ma trận trọng số"
+    },
+    {
+      "source_term": "weight parameter",
+      "builder_target": "tham số trọng số"
+    },
+    {
+      "source_term": "weight parameters",
+      "builder_target": "tham số trọng số"
+    },
+    {
+      "source_term": "weight vector",
+      "builder_target": "vector trọng số"
+    },
+    {
+      "source_term": "weight.data",
+      "builder_target": "weight.data"
+    },
+    {
+      "source_term": "weighted average",
+      "builder_target": "trung bình có trọng số"
+    },
+    {
+      "source_term": "weighted empirical risk minimization",
+      "builder_target": "tối thiểu hóa rủi ro thực nghiệm có trọng số"
+    },
+    {
+      "source_term": "weighted sum",
+      "builder_target": "tổng có trọng số"
+    },
+    {
+      "source_term": "weights",
+      "builder_target": "trọng số"
+    },
+    {
+      "source_term": "weights W",
+      "builder_target": "trọng số"
+    },
+    {
+      "source_term": "well conditioned",
+      "builder_target": "điều kiện tốt"
+    },
+    {
+      "source_term": "width",
+      "builder_target": "chiều rộng"
+    },
+    {
+      "source_term": "World Wide Web",
+      "builder_target": "World Wide Web"
+    },
+    {
+      "source_term": "X += Y",
+      "builder_target": "X += Y"
+    },
+    {
+      "source_term": "X[:] = X + Y",
+      "builder_target": "X[:] = X + Y"
+    },
+    {
+      "source_term": "Xavier Initialization",
+      "builder_target": "khởi tạo Xavier"
+    },
+    {
+      "source_term": "zero",
+      "builder_target": "0"
+    },
+    {
+      "source_term": "zero mean",
+      "builder_target": "trung bình bằng không"
+    },
+    {
+      "source_term": "zero mean and unit variance",
+      "builder_target": "trung bình bằng 0 và phương sai đơn vị"
+    },
+    {
+      "source_term": "zeros",
+      "builder_target": "số 0"
+    },
+    {
+      "source_term": "zeros_like",
+      "builder_target": "zeros_like"
+    },
+    {
+      "source_term": "zip or tar file",
+      "builder_target": "tệp zip hoặc tar"
+    },
+    {
+      "source_term": "",
+      "builder_target": "w^T x + b + epsilon"
+    }
+  ]
+}

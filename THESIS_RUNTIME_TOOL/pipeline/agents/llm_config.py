@@ -23,6 +23,7 @@ class LLMConfig:
     verbosity: str | None = "low"
     max_output_tokens: int = 2048
     daily_token_cap: int = 2_400_000
+    prompt_token_cap: int | None = None
     pricing: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_PRICING))
 
     def __post_init__(self) -> None:
@@ -35,6 +36,8 @@ class LLMConfig:
             raise ValueError("max_output_tokens must be positive")
         if self.daily_token_cap <= 0:
             raise ValueError("daily_token_cap must be positive")
+        if self.prompt_token_cap is not None and self.prompt_token_cap <= 0:
+            raise ValueError("prompt_token_cap must be positive when set")
 
         missing = {"input", "cached_input", "output"} - set(self.pricing)
         if missing:
@@ -50,6 +53,11 @@ class LLMConfig:
             verbosity=data.get("verbosity", "low"),
             max_output_tokens=int(data.get("max_output_tokens", 2048)),
             daily_token_cap=int(data.get("daily_token_cap", 2_400_000)),
+            prompt_token_cap=(
+                int(data["prompt_token_cap"])
+                if data.get("prompt_token_cap") is not None
+                else None
+            ),
             pricing={
                 key: float(value)
                 for key, value in dict(data.get("pricing", DEFAULT_PRICING)).items()

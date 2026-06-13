@@ -11,8 +11,13 @@ from typing import Any
 from pipeline.ingest.document_loader import load_document
 from pipeline.memory.freeze import freeze_memory, is_memory_frozen
 from pipeline.memory.store_init import init_db
+from pipeline.prepass.db_source import load_document_from_connection
 from pipeline.prepass.schemas import is_plain_pronoun
-from pipeline.prepass.span_resolver import ResolvedSpans, resolve_spans
+from pipeline.prepass.span_resolver import (
+    ResolvedSpans,
+    resolve_spans,
+    resolve_spans_for_document,
+)
 
 
 @dataclass(frozen=True)
@@ -107,6 +112,92 @@ def build_memory(
         connection.close()
 
 
+def build_memory_from_db(
+    db_path: str | Path,
+    prepass_dir: str | Path,
+    *,
+    doc_id: str = "d2l",
+    freeze: bool = True,
+) -> BuildReport:
+    db = Path(db_path)
+    prepass_path = Path(prepass_dir)
+    connection = init_db(db)
+    try:
+        if is_memory_frozen(connection):
+            raise RuntimeError(
+                "Memory DB is already frozen; rebuild into a new DB file."
+            )
+        artifact_chapters = _artifact_chapter_ids(prepass_path)
+        document = load_document_from_connection(
+            connection,
+            doc_id,
+            artifact_chapters,
+            translate_only=True,
+        )
+        report = _build_memory_for_document(
+            connection,
+            document,
+            prepass_path,
+            freeze=freeze,
+        )
+        connection.commit()
+        return report
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def _build_memory_for_document(
+    connection: sqlite3.Connection,
+    document: dict[str, Any],
+    prepass_path: Path,
+    *,
+    freeze: bool,
+) -> BuildReport:
+    doc_id = str(document["doc_id"])
+    artifact_pairs = _load_artifacts(prepass_path, document)
+    artifact_paths = [path for path, _artifact in artifact_pairs]
+    artifacts = [artifact for _path, artifact in artifact_pairs]
+    resolved = resolve_spans_for_document(document, artifact_paths)
+
+    block_order = _block_order(connection, doc_id)
+    chapter_blocks = _chapter_blocks(document)
+
+    _delete_prepass_memory(connection, doc_id)
+    glossary_count = _persist_glossary(connection, doc_id, artifacts, resolved, block_order)
+    entities = _merge_entities(artifacts)
+    entity_count = _persist_entities(connection, doc_id, entities, resolved, block_order)
+    mention_count = _persist_mentions(connection, doc_id, resolved, set(entities))
+    relation_count = _persist_relations(
+        connection,
+        doc_id,
+        artifacts,
+        entities,
+        block_order,
+        chapter_blocks,
+    )
+    memory_item_count = _persist_memory_items(
+        connection,
+        doc_id,
+        artifacts,
+        chapter_blocks,
+    )
+
+    frozen_at = freeze_memory(connection) if freeze else None
+    return BuildReport(
+        doc_id=doc_id,
+        glossary=glossary_count,
+        entities=entity_count,
+        mentions=mention_count,
+        relations=relation_count,
+        memory_items=memory_item_count,
+        coverage=resolved.coverage,
+        frozen_at=frozen_at,
+    )
+
+
 def _load_artifacts(
     prepass_dir: Path,
     document: dict[str, Any],
@@ -131,6 +222,19 @@ def _load_artifacts(
         )
     )
     return pairs
+
+
+def _artifact_chapter_ids(prepass_dir: Path) -> list[str]:
+    chapter_ids: list[str] = []
+    for path in sorted(prepass_dir.glob("*.json")):
+        if path.name == "run_report.json":
+            continue
+        artifact = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(artifact, dict) and artifact.get("chapter_id"):
+            chapter_ids.append(str(artifact["chapter_id"]))
+    if not chapter_ids:
+        raise ValueError(f"No prepass chapter artifacts found in {prepass_dir}")
+    return chapter_ids
 
 
 def _doc_block_count(connection: sqlite3.Connection, doc_id: str) -> int:
@@ -182,6 +286,11 @@ def _persist_glossary(
     block_order: dict[str, int],
 ) -> int:
     terms: dict[str, dict[str, Any]] = {}
+    target_votes: dict[str, Counter[str]] = defaultdict(Counter)
+    first_seen_targets: dict[str, list[str]] = defaultdict(list)
+    allowed_by_key: dict[str, list[str]] = defaultdict(list)
+    forbidden_by_key: dict[str, list[str]] = defaultdict(list)
+    evidence_by_key: dict[str, list[str]] = defaultdict(list)
     for artifact in artifacts:
         for term in artifact.get("glossary_candidates") or []:
             if not isinstance(term, dict):
@@ -190,6 +299,14 @@ def _persist_glossary(
             if not source_term:
                 continue
             key = source_term.casefold()
+            target = _term_target(term, source_term)
+            if target:
+                target_votes[key][target] += 1
+                if target not in first_seen_targets[key]:
+                    first_seen_targets[key].append(target)
+            allowed_by_key[key].extend(str(item) for item in term.get("allowed_variants") or [])
+            forbidden_by_key[key].extend(str(item) for item in term.get("forbidden_variants") or [])
+            evidence_by_key[key].extend(str(item) for item in term.get("evidence_span_ids") or [])
             if key not in terms:
                 terms[key] = dict(term)
             else:
@@ -202,28 +319,50 @@ def _persist_glossary(
         occurrences_by_term[occurrence.source_term.casefold()].append(occurrence.block_id)
 
     count = 0
+    used_glossary_ids: set[str] = set()
     for key, term in sorted(terms.items()):
         source_term = str(term.get("source_term") or "").strip()
-        target_term = str(term.get("proposed_target_vi") or source_term).strip()
+        glossary_id = _unique_id(f"gl_{_slug(source_term)}", used_glossary_ids)
+        target_term = _choose_target(
+            target_votes.get(key, Counter()),
+            first_seen_targets.get(key, []),
+            fallback=_term_target(term, source_term),
+        )
         occurrence_blocks = occurrences_by_term.get(key, [])
         last_block_id = _last_block_id(occurrence_blocks, block_order)
+        allowed_variants = _clean_string_list(
+            [
+                target_term,
+                *first_seen_targets.get(key, []),
+                *allowed_by_key.get(key, []),
+            ]
+        )
+        forbidden_variants = _clean_string_list(forbidden_by_key.get(key, []))
+        evidence_span_ids = _clean_string_list(
+            [
+                *(term.get("block_ids") or []),
+                *evidence_by_key.get(key, []),
+            ]
+        )
         connection.execute(
             """
             INSERT INTO glossary_entries (
               glossary_id, doc_id, source_term, target_term, term_type,
-              do_not_translate, allowed_variants_json, confidence, status,
-              occurrences_count, last_block_id
+              do_not_translate, allowed_variants_json, forbidden_variants_json,
+              evidence_span_ids_json, confidence, status, occurrences_count, last_block_id
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?, ?)
             """,
             (
-                f"gl_{_slug(source_term)}",
+                glossary_id,
                 doc_id,
                 source_term,
                 target_term,
-                str(term.get("category") or "other"),
+                str(term.get("term_type") or term.get("category") or "other"),
                 1 if bool(term.get("do_not_translate")) else 0,
-                json.dumps([target_term], ensure_ascii=False),
+                json.dumps(allowed_variants, ensure_ascii=False),
+                json.dumps(forbidden_variants, ensure_ascii=False),
+                json.dumps(evidence_span_ids, ensure_ascii=False),
                 0.7,
                 len(occurrence_blocks),
                 last_block_id,
@@ -231,6 +370,25 @@ def _persist_glossary(
         )
         count += 1
     return count
+
+
+def _term_target(term: dict[str, Any], fallback: str) -> str:
+    return str(
+        term.get("canonical_target")
+        or term.get("proposed_target_vi")
+        or fallback
+    ).strip()
+
+
+def _choose_target(votes: Counter[str], first_seen: list[str], fallback: str) -> str:
+    if not votes:
+        return fallback
+    max_count = max(votes.values())
+    candidates = {target for target, count in votes.items() if count == max_count}
+    for target in first_seen:
+        if target in candidates:
+            return target
+    return sorted(candidates, key=lambda item: item.casefold())[0]
 
 
 def _merge_entities(artifacts: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -563,3 +721,16 @@ def _clean_string_list(values: list[Any]) -> list[str]:
 def _slug(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "_", value.casefold()).strip("_")
     return slug or "item"
+
+
+def _unique_id(base: str, used: set[str]) -> str:
+    if base not in used:
+        used.add(base)
+        return base
+    counter = 2
+    while True:
+        candidate = f"{base}_{counter:03d}"
+        if candidate not in used:
+            used.add(candidate)
+            return candidate
+        counter += 1

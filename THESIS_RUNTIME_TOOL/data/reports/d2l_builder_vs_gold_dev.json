@@ -1,0 +1,1090 @@
+{
+  "doc_id": "d2l",
+  "chapters": [
+    "d2l_deep_learning_computation"
+  ],
+  "gold_terms_present": 40,
+  "builder_terms": 263,
+  "matched_terms": 20,
+  "agreement_terms": 16,
+  "recall": 0.5,
+  "agreement": 0.8,
+  "missing_terms": [
+    {
+      "source_term": "automatic differentiation",
+      "gold_target": "tính vi phân tự động"
+    },
+    {
+      "source_term": "concatenate",
+      "gold_target": "nối"
+    },
+    {
+      "source_term": "data",
+      "gold_target": "dữ liệu"
+    },
+    {
+      "source_term": "dimension",
+      "gold_target": "chiều"
+    },
+    {
+      "source_term": "dimensionality",
+      "gold_target": "kích thước chiều"
+    },
+    {
+      "source_term": "distribution",
+      "gold_target": "phân phối"
+    },
+    {
+      "source_term": "example",
+      "gold_target": "mẫu"
+    },
+    {
+      "source_term": "fully-connected",
+      "gold_target": "kết nối đầy đủ"
+    },
+    {
+      "source_term": "implement",
+      "gold_target": "lập trình"
+    },
+    {
+      "source_term": "implementation",
+      "gold_target": "cách lập trình"
+    },
+    {
+      "source_term": "key",
+      "gold_target": "khóa"
+    },
+    {
+      "source_term": "machine learning",
+      "gold_target": "học máy"
+    },
+    {
+      "source_term": "norm",
+      "gold_target": "chuẩn"
+    },
+    {
+      "source_term": "performance",
+      "gold_target": "chất lượng"
+    },
+    {
+      "source_term": "query",
+      "gold_target": "(câu) truy vấn"
+    },
+    {
+      "source_term": "recall",
+      "gold_target": "recall"
+    },
+    {
+      "source_term": "recognition",
+      "gold_target": "nhận dạng"
+    },
+    {
+      "source_term": "scalar",
+      "gold_target": "số vô hướng"
+    },
+    {
+      "source_term": "server",
+      "gold_target": "máy chủ"
+    },
+    {
+      "source_term": "vector",
+      "gold_target": "vector"
+    }
+  ],
+  "conflicts": [
+    {
+      "source_term": "deferred initialization",
+      "builder_target": "khởi tạo trì hoãn",
+      "gold_target": "khởi tạo trễ"
+    },
+    {
+      "source_term": "dense layer",
+      "builder_target": "lớp dày đặc",
+      "gold_target": "tầng kết nối dày đặc"
+    },
+    {
+      "source_term": "framework",
+      "builder_target": "khung",
+      "gold_target": "framework"
+    },
+    {
+      "source_term": "linear",
+      "builder_target": "Linear",
+      "gold_target": "tuyến tính"
+    }
+  ],
+  "extra_terms": [
+    {
+      "source_term": "__call__",
+      "builder_target": "__call__"
+    },
+    {
+      "source_term": "__init__",
+      "builder_target": "__init__"
+    },
+    {
+      "source_term": "_children",
+      "builder_target": "_children"
+    },
+    {
+      "source_term": "_init_weight",
+      "builder_target": "_init_weight"
+    },
+    {
+      "source_term": "_modules",
+      "builder_target": "_modules"
+    },
+    {
+      "source_term": "add",
+      "builder_target": "add"
+    },
+    {
+      "source_term": "APIs",
+      "builder_target": "API"
+    },
+    {
+      "source_term": "append blocks",
+      "builder_target": "thêm các khối"
+    },
+    {
+      "source_term": "architecture",
+      "builder_target": "kiến trúc"
+    },
+    {
+      "source_term": "artificial neurons",
+      "builder_target": "nơ-ron nhân tạo"
+    },
+    {
+      "source_term": "as_in_ctx",
+      "builder_target": "as_in_ctx"
+    },
+    {
+      "source_term": "auto differentiation",
+      "builder_target": "tự động vi phân"
+    },
+    {
+      "source_term": "autograd",
+      "builder_target": "autograd"
+    },
+    {
+      "source_term": "AWS EC2",
+      "builder_target": "AWS EC2"
+    },
+    {
+      "source_term": "backpropagation function",
+      "builder_target": "hàm lan truyền ngược"
+    },
+    {
+      "source_term": "backwards",
+      "builder_target": "ngược chiều"
+    },
+    {
+      "source_term": "base layer class",
+      "builder_target": "lớp cơ sở"
+    },
+    {
+      "source_term": "basic layer class",
+      "builder_target": "lớp cơ sở của lớp"
+    },
+    {
+      "source_term": "bias",
+      "builder_target": "độ lệch"
+    },
+    {
+      "source_term": "bias parameters",
+      "builder_target": "tham số lệch"
+    },
+    {
+      "source_term": "biases",
+      "builder_target": "độ lệch"
+    },
+    {
+      "source_term": "block",
+      "builder_target": "khối"
+    },
+    {
+      "source_term": "block abstraction",
+      "builder_target": "trừu tượng khối"
+    },
+    {
+      "source_term": "block factory",
+      "builder_target": "hàm tạo khối"
+    },
+    {
+      "source_term": "blocks",
+      "builder_target": "khối"
+    },
+    {
+      "source_term": "built-in functions",
+      "builder_target": "hàm tích hợp sẵn"
+    },
+    {
+      "source_term": "call",
+      "builder_target": "call"
+    },
+    {
+      "source_term": "CenteredLayer",
+      "builder_target": "CenteredLayer"
+    },
+    {
+      "source_term": "checkpointing",
+      "builder_target": "lưu checkpoint"
+    },
+    {
+      "source_term": "class",
+      "builder_target": "lớp"
+    },
+    {
+      "source_term": "COCO",
+      "builder_target": "COCO"
+    },
+    {
+      "source_term": "compilation",
+      "builder_target": "biên dịch"
+    },
+    {
+      "source_term": "computational performance",
+      "builder_target": "hiệu năng tính toán"
+    },
+    {
+      "source_term": "Computing Devices",
+      "builder_target": "Thiết bị tính toán"
+    },
+    {
+      "source_term": "constant parameters",
+      "builder_target": "tham số hằng"
+    },
+    {
+      "source_term": "constant value",
+      "builder_target": "giá trị hằng số"
+    },
+    {
+      "source_term": "constituent layers",
+      "builder_target": "lớp thành phần"
+    },
+    {
+      "source_term": "context",
+      "builder_target": "ngữ cảnh"
+    },
+    {
+      "source_term": "control flow",
+      "builder_target": "luồng điều khiển"
+    },
+    {
+      "source_term": "convolutional neural networks",
+      "builder_target": "mạng nơ-ron tích chập"
+    },
+    {
+      "source_term": "copy operations",
+      "builder_target": "phép sao chép"
+    },
+    {
+      "source_term": "Copying",
+      "builder_target": "sao chép"
+    },
+    {
+      "source_term": "copyto",
+      "builder_target": "copyto"
+    },
+    {
+      "source_term": "CPU",
+      "builder_target": "CPU"
+    },
+    {
+      "source_term": "CUDA",
+      "builder_target": "CUDA"
+    },
+    {
+      "source_term": "custom block",
+      "builder_target": "khối tùy chỉnh"
+    },
+    {
+      "source_term": "custom initializer",
+      "builder_target": "bộ khởi tạo tùy chỉnh"
+    },
+    {
+      "source_term": "custom layer",
+      "builder_target": "lớp tùy chỉnh"
+    },
+    {
+      "source_term": "custom layers",
+      "builder_target": "lớp tùy chỉnh"
+    },
+    {
+      "source_term": "custom serialization routines",
+      "builder_target": "quy trình tuần tự hóa tùy chỉnh"
+    },
+    {
+      "source_term": "daisy-chain",
+      "builder_target": "mắc nối tiếp"
+    },
+    {
+      "source_term": "deep learning framework",
+      "builder_target": "khung học sâu"
+    },
+    {
+      "source_term": "deep learning frameworks",
+      "builder_target": "khung học sâu"
+    },
+    {
+      "source_term": "deep learning library",
+      "builder_target": "thư viện học sâu"
+    },
+    {
+      "source_term": "deep learning models",
+      "builder_target": "mô hình học sâu"
+    },
+    {
+      "source_term": "Dense",
+      "builder_target": "Dense"
+    },
+    {
+      "source_term": "device",
+      "builder_target": "thiết bị"
+    },
+    {
+      "source_term": "device scope",
+      "builder_target": "phạm vi thiết bị"
+    },
+    {
+      "source_term": "devices",
+      "builder_target": "thiết bị"
+    },
+    {
+      "source_term": "Efficiency",
+      "builder_target": "hiệu quả"
+    },
+    {
+      "source_term": "end user",
+      "builder_target": "người dùng cuối"
+    },
+    {
+      "source_term": "exception",
+      "builder_target": "ngoại lệ"
+    },
+    {
+      "source_term": "factory function",
+      "builder_target": "hàm nhà máy"
+    },
+    {
+      "source_term": "FancyMLP",
+      "builder_target": "FancyMLP"
+    },
+    {
+      "source_term": "features",
+      "builder_target": "đặc trưng"
+    },
+    {
+      "source_term": "File I/O",
+      "builder_target": "I/O tệp"
+    },
+    {
+      "source_term": "first time",
+      "builder_target": "lần đầu tiên"
+    },
+    {
+      "source_term": "FixedHiddenMLP",
+      "builder_target": "FixedHiddenMLP"
+    },
+    {
+      "source_term": "float32",
+      "builder_target": "float32"
+    },
+    {
+      "source_term": "floating point numbers",
+      "builder_target": "số dấu phẩy động"
+    },
+    {
+      "source_term": "forward",
+      "builder_target": "forward"
+    },
+    {
+      "source_term": "forward propagation",
+      "builder_target": "lan truyền xuôi"
+    },
+    {
+      "source_term": "Fourier coefficients",
+      "builder_target": "hệ số Fourier"
+    },
+    {
+      "source_term": "Frobenius norm",
+      "builder_target": "chuẩn Frobenius"
+    },
+    {
+      "source_term": "fully-connected hidden layer",
+      "builder_target": "lớp ẩn kết nối đầy đủ"
+    },
+    {
+      "source_term": "fully-connected layer",
+      "builder_target": "lớp kết nối đầy đủ"
+    },
+    {
+      "source_term": "fully-connected layers",
+      "builder_target": "các lớp kết nối đầy đủ"
+    },
+    {
+      "source_term": "fully-connected output layer",
+      "builder_target": "lớp đầu ra kết nối đầy đủ"
+    },
+    {
+      "source_term": "Gaussian random variables",
+      "builder_target": "biến ngẫu nhiên Gaussian"
+    },
+    {
+      "source_term": "Gluon",
+      "builder_target": "Gluon"
+    },
+    {
+      "source_term": "GPU",
+      "builder_target": "GPU"
+    },
+    {
+      "source_term": "GPU cores",
+      "builder_target": "nhân GPU"
+    },
+    {
+      "source_term": "GPU memory",
+      "builder_target": "bộ nhớ GPU"
+    },
+    {
+      "source_term": "GPU performance",
+      "builder_target": "hiệu năng GPU"
+    },
+    {
+      "source_term": "GPUs",
+      "builder_target": "GPU"
+    },
+    {
+      "source_term": "gradient",
+      "builder_target": "gradient"
+    },
+    {
+      "source_term": "gradients",
+      "builder_target": "gradient"
+    },
+    {
+      "source_term": "graphics card information",
+      "builder_target": "thông tin card đồ họa"
+    },
+    {
+      "source_term": "hidden layer",
+      "builder_target": "lớp ẩn"
+    },
+    {
+      "source_term": "hidden representation",
+      "builder_target": "biểu diễn ẩn"
+    },
+    {
+      "source_term": "hidden units",
+      "builder_target": "đơn vị ẩn"
+    },
+    {
+      "source_term": "high-performance deep learning library",
+      "builder_target": "thư viện học sâu hiệu năng cao"
+    },
+    {
+      "source_term": "hybridization",
+      "builder_target": "lai ghép"
+    },
+    {
+      "source_term": "hyperparameters",
+      "builder_target": "siêu tham số"
+    },
+    {
+      "source_term": "ImageNet",
+      "builder_target": "ImageNet"
+    },
+    {
+      "source_term": "in_units",
+      "builder_target": "in_units"
+    },
+    {
+      "source_term": "init module",
+      "builder_target": "module init"
+    },
+    {
+      "source_term": "initial state",
+      "builder_target": "trạng thái khởi tạo"
+    },
+    {
+      "source_term": "initialization",
+      "builder_target": "khởi tạo"
+    },
+    {
+      "source_term": "initialization module",
+      "builder_target": "mô-đun khởi tạo"
+    },
+    {
+      "source_term": "initialize",
+      "builder_target": "khởi tạo"
+    },
+    {
+      "source_term": "initializers",
+      "builder_target": "bộ khởi tạo"
+    },
+    {
+      "source_term": "input",
+      "builder_target": "đầu vào"
+    },
+    {
+      "source_term": "input dimension",
+      "builder_target": "chiều đầu vào"
+    },
+    {
+      "source_term": "input dimensionality",
+      "builder_target": "số chiều đầu vào"
+    },
+    {
+      "source_term": "input layer",
+      "builder_target": "lớp đầu vào"
+    },
+    {
+      "source_term": "inputs",
+      "builder_target": "đầu vào"
+    },
+    {
+      "source_term": "instance variables",
+      "builder_target": "biến thể hiện"
+    },
+    {
+      "source_term": "instantiate",
+      "builder_target": "khởi tạo"
+    },
+    {
+      "source_term": "Instantiating a Network",
+      "builder_target": "Khởi tạo một mạng"
+    },
+    {
+      "source_term": "Keras",
+      "builder_target": "Keras"
+    },
+    {
+      "source_term": "keras.initializers module",
+      "builder_target": "module keras.initializers"
+    },
+    {
+      "source_term": "keras.Model",
+      "builder_target": "keras.Model"
+    },
+    {
+      "source_term": "keras.models.Sequential",
+      "builder_target": "keras.models.Sequential"
+    },
+    {
+      "source_term": "L1 norm",
+      "builder_target": "chuẩn L1"
+    },
+    {
+      "source_term": "layers",
+      "builder_target": "lớp"
+    },
+    {
+      "source_term": "Layers with Parameters",
+      "builder_target": "Các lớp có tham số"
+    },
+    {
+      "source_term": "learned models",
+      "builder_target": "mô hình đã học"
+    },
+    {
+      "source_term": "library",
+      "builder_target": "thư viện"
+    },
+    {
+      "source_term": "linear models",
+      "builder_target": "mô hình tuyến tính"
+    },
+    {
+      "source_term": "linear scaling",
+      "builder_target": "tỉ lệ tuyến tính"
+    },
+    {
+      "source_term": "load",
+      "builder_target": "nạp"
+    },
+    {
+      "source_term": "local parameters",
+      "builder_target": "tham số cục bộ"
+    },
+    {
+      "source_term": "logits",
+      "builder_target": "logit"
+    },
+    {
+      "source_term": "loss",
+      "builder_target": "hàm mất mát"
+    },
+    {
+      "source_term": "machine learning concepts",
+      "builder_target": "khái niệm học máy"
+    },
+    {
+      "source_term": "main memory",
+      "builder_target": "bộ nhớ chính"
+    },
+    {
+      "source_term": "mathematical operations",
+      "builder_target": "phép toán toán học"
+    },
+    {
+      "source_term": "matrices",
+      "builder_target": "ma trận"
+    },
+    {
+      "source_term": "matrix-matrix multiplications",
+      "builder_target": "phép nhân ma trận-ma trận"
+    },
+    {
+      "source_term": "mean",
+      "builder_target": "trung bình"
+    },
+    {
+      "source_term": "memory",
+      "builder_target": "bộ nhớ"
+    },
+    {
+      "source_term": "memory limit",
+      "builder_target": "giới hạn bộ nhớ"
+    },
+    {
+      "source_term": "MLP",
+      "builder_target": "MLP"
+    },
+    {
+      "source_term": "MLPs",
+      "builder_target": "MLPs"
+    },
+    {
+      "source_term": "model architecture",
+      "builder_target": "kiến trúc mô hình"
+    },
+    {
+      "source_term": "model components",
+      "builder_target": "thành phần mô hình"
+    },
+    {
+      "source_term": "model construction",
+      "builder_target": "xây dựng mô hình"
+    },
+    {
+      "source_term": "model parameters",
+      "builder_target": "tham số mô hình"
+    },
+    {
+      "source_term": "model's parameters",
+      "builder_target": "tham số mô hình"
+    },
+    {
+      "source_term": "models",
+      "builder_target": "mô hình"
+    },
+    {
+      "source_term": "multiple GPUs",
+      "builder_target": "nhiều GPU"
+    },
+    {
+      "source_term": "multiple servers",
+      "builder_target": "nhiều máy chủ"
+    },
+    {
+      "source_term": "MXNet",
+      "builder_target": "MXNet"
+    },
+    {
+      "source_term": "MXNet tensor",
+      "builder_target": "tensor MXNet"
+    },
+    {
+      "source_term": "MyDense",
+      "builder_target": "MyDense"
+    },
+    {
+      "source_term": "MyLinear",
+      "builder_target": "MyLinear"
+    },
+    {
+      "source_term": "MySequential",
+      "builder_target": "MySequential"
+    },
+    {
+      "source_term": "natural language processing",
+      "builder_target": "xử lý ngôn ngữ tự nhiên"
+    },
+    {
+      "source_term": "nested blocks",
+      "builder_target": "khối lồng nhau"
+    },
+    {
+      "source_term": "net",
+      "builder_target": "net"
+    },
+    {
+      "source_term": "net(X)",
+      "builder_target": "net(X)"
+    },
+    {
+      "source_term": "network",
+      "builder_target": "mạng"
+    },
+    {
+      "source_term": "network architectures",
+      "builder_target": "kiến trúc mạng"
+    },
+    {
+      "source_term": "neural network block",
+      "builder_target": "khối mạng nơ-ron"
+    },
+    {
+      "source_term": "neural network layers",
+      "builder_target": "các tầng mạng nơ-ron"
+    },
+    {
+      "source_term": "neural network model",
+      "builder_target": "mô hình mạng nơ-ron"
+    },
+    {
+      "source_term": "neural networks",
+      "builder_target": "mạng nơ-ron"
+    },
+    {
+      "source_term": "Neural Networks and GPUs",
+      "builder_target": "mạng nơ-ron và GPU"
+    },
+    {
+      "source_term": "neuron",
+      "builder_target": "nơ-ron"
+    },
+    {
+      "source_term": "nn.init module",
+      "builder_target": "module nn.init"
+    },
+    {
+      "source_term": "nn.Sequential",
+      "builder_target": "nn.Sequential"
+    },
+    {
+      "source_term": "NumPy",
+      "builder_target": "NumPy"
+    },
+    {
+      "source_term": "NumPy ndarray",
+      "builder_target": "NumPy ndarray"
+    },
+    {
+      "source_term": "NVIDIA driver",
+      "builder_target": "trình điều khiển NVIDIA"
+    },
+    {
+      "source_term": "NVIDIA GPU",
+      "builder_target": "NVIDIA GPU"
+    },
+    {
+      "source_term": "nvidia-smi",
+      "builder_target": "nvidia-smi"
+    },
+    {
+      "source_term": "operation",
+      "builder_target": "phép toán"
+    },
+    {
+      "source_term": "output",
+      "builder_target": "đầu ra"
+    },
+    {
+      "source_term": "output dimension",
+      "builder_target": "số chiều đầu ra"
+    },
+    {
+      "source_term": "output layer",
+      "builder_target": "lớp đầu ra"
+    },
+    {
+      "source_term": "parallel block",
+      "builder_target": "khối song song"
+    },
+    {
+      "source_term": "parallelization",
+      "builder_target": "song song hóa"
+    },
+    {
+      "source_term": "parameter",
+      "builder_target": "tham số"
+    },
+    {
+      "source_term": "parameter access",
+      "builder_target": "truy cập tham số"
+    },
+    {
+      "source_term": "parameter class",
+      "builder_target": "lớp tham số"
+    },
+    {
+      "source_term": "parameter dictionary",
+      "builder_target": "từ điển tham số"
+    },
+    {
+      "source_term": "parameter groups",
+      "builder_target": "nhóm tham số"
+    },
+    {
+      "source_term": "parameter initialization",
+      "builder_target": "khởi tạo tham số"
+    },
+    {
+      "source_term": "parameter layer",
+      "builder_target": "lớp tham số"
+    },
+    {
+      "source_term": "parameter shapes",
+      "builder_target": "hình dạng tham số"
+    },
+    {
+      "source_term": "parameter tying",
+      "builder_target": "ràng buộc tham số"
+    },
+    {
+      "source_term": "parameter values",
+      "builder_target": "giá trị tham số"
+    },
+    {
+      "source_term": "parameters",
+      "builder_target": "tham số"
+    },
+    {
+      "source_term": "parameters initialization",
+      "builder_target": "khởi tạo tham số"
+    },
+    {
+      "source_term": "pip",
+      "builder_target": "pip"
+    },
+    {
+      "source_term": "power user",
+      "builder_target": "người dùng nâng cao"
+    },
+    {
+      "source_term": "predictions",
+      "builder_target": "dự đoán"
+    },
+    {
+      "source_term": "Python",
+      "builder_target": "Python"
+    },
+    {
+      "source_term": "Python interpreter",
+      "builder_target": "trình thông dịch Python"
+    },
+    {
+      "source_term": "PyTorch",
+      "builder_target": "PyTorch"
+    },
+    {
+      "source_term": "quantization",
+      "builder_target": "lượng tử hóa"
+    },
+    {
+      "source_term": "random data",
+      "builder_target": "dữ liệu ngẫu nhiên"
+    },
+    {
+      "source_term": "random initialization",
+      "builder_target": "khởi tạo ngẫu nhiên"
+    },
+    {
+      "source_term": "raw inputs",
+      "builder_target": "đầu vào thô"
+    },
+    {
+      "source_term": "reading and writing models",
+      "builder_target": "đọc và ghi mô hình"
+    },
+    {
+      "source_term": "ReLU",
+      "builder_target": "ReLU"
+    },
+    {
+      "source_term": "ReLU activation",
+      "builder_target": "kích hoạt ReLU"
+    },
+    {
+      "source_term": "ResNet architecture",
+      "builder_target": "kiến trúc ResNet"
+    },
+    {
+      "source_term": "ResNet-152",
+      "builder_target": "ResNet-152"
+    },
+    {
+      "source_term": "runtime engine",
+      "builder_target": "bộ máy thực thi"
+    },
+    {
+      "source_term": "runtime error",
+      "builder_target": "lỗi thời gian chạy"
+    },
+    {
+      "source_term": "same device",
+      "builder_target": "cùng thiết bị"
+    },
+    {
+      "source_term": "save",
+      "builder_target": "lưu"
+    },
+    {
+      "source_term": "scalar output",
+      "builder_target": "đầu ra vô hướng"
+    },
+    {
+      "source_term": "Sequential",
+      "builder_target": "Sequential"
+    },
+    {
+      "source_term": "sequentially",
+      "builder_target": "tuần tự"
+    },
+    {
+      "source_term": "set_data",
+      "builder_target": "set_data"
+    },
+    {
+      "source_term": "shape",
+      "builder_target": "hình dạng"
+    },
+    {
+      "source_term": "shared parameter layer",
+      "builder_target": "lớp tham số dùng chung"
+    },
+    {
+      "source_term": "sharing parameters",
+      "builder_target": "chia sẻ tham số"
+    },
+    {
+      "source_term": "signal",
+      "builder_target": "tín hiệu"
+    },
+    {
+      "source_term": "single GPUs",
+      "builder_target": "GPU đơn"
+    },
+    {
+      "source_term": "single output",
+      "builder_target": "đầu ra đơn"
+    },
+    {
+      "source_term": "softmax regression",
+      "builder_target": "hồi quy softmax"
+    },
+    {
+      "source_term": "speech",
+      "builder_target": "tiếng nói"
+    },
+    {
+      "source_term": "sub-modules",
+      "builder_target": "mô-đun con"
+    },
+    {
+      "source_term": "subclass",
+      "builder_target": "lớp con"
+    },
+    {
+      "source_term": "subsequent layer",
+      "builder_target": "lớp kế tiếp"
+    },
+    {
+      "source_term": "super().__init__()",
+      "builder_target": "super().__init__()"
+    },
+    {
+      "source_term": "tensor",
+      "builder_target": "tensor"
+    },
+    {
+      "source_term": "tensor objects",
+      "builder_target": "đối tượng tensor"
+    },
+    {
+      "source_term": "tensor reduction",
+      "builder_target": "phép rút gọn tensor"
+    },
+    {
+      "source_term": "TensorFlow",
+      "builder_target": "TensorFlow"
+    },
+    {
+      "source_term": "tensors",
+      "builder_target": "tensor"
+    },
+    {
+      "source_term": "Theano",
+      "builder_target": "Theano"
+    },
+    {
+      "source_term": "Tied Parameters",
+      "builder_target": "tham số buộc chung"
+    },
+    {
+      "source_term": "torch.device",
+      "builder_target": "torch.device"
+    },
+    {
+      "source_term": "training",
+      "builder_target": "huấn luyện"
+    },
+    {
+      "source_term": "training loop",
+      "builder_target": "vòng lặp huấn luyện"
+    },
+    {
+      "source_term": "training process",
+      "builder_target": "quá trình huấn luyện"
+    },
+    {
+      "source_term": "transferring data",
+      "builder_target": "chuyển dữ liệu"
+    },
+    {
+      "source_term": "transferring variables",
+      "builder_target": "chuyển biến"
+    },
+    {
+      "source_term": "tunable parameters",
+      "builder_target": "tham số điều chỉnh được"
+    },
+    {
+      "source_term": "uniform distribution",
+      "builder_target": "phân phối đều"
+    },
+    {
+      "source_term": "units",
+      "builder_target": "đơn vị"
+    },
+    {
+      "source_term": "vectorized arithmetic",
+      "builder_target": "số học vector hóa"
+    },
+    {
+      "source_term": "weight",
+      "builder_target": "trọng số"
+    },
+    {
+      "source_term": "weight matrix",
+      "builder_target": "ma trận trọng số"
+    },
+    {
+      "source_term": "weight vectors",
+      "builder_target": "vector trọng số"
+    },
+    {
+      "source_term": "weights",
+      "builder_target": "trọng số"
+    },
+    {
+      "source_term": "while-loop",
+      "builder_target": "vòng lặp while"
+    },
+    {
+      "source_term": "Xavier initializer",
+      "builder_target": "bộ khởi tạo Xavier"
+    }
+  ]
+}

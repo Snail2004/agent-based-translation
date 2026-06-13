@@ -1,10 +1,11 @@
 model: "gpt-5.4-mini"
 temperature: 1.0
 seed: 20260612
-reasoning_effort: "low"
+reasoning_effort: "none"
 verbosity: "low"
-max_output_tokens: 4096
+max_output_tokens: 6144
 daily_token_cap: 2400000
+prompt_token_cap: 6000
 pricing:
   input: 0.25
   cached_input: 0.025

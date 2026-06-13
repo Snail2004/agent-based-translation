@@ -5,7 +5,7 @@ import random
 import sqlite3
 import time
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Callable
@@ -44,6 +44,10 @@ class LLMResult:
 
 class DailyQuotaExceeded(RuntimeError):
     """Raised before a real transport call would exceed the daily token cap."""
+
+
+class PromptTokenCeilingExceeded(RuntimeError):
+    """Raised before a real transport call when a prompt is unexpectedly large."""
 
 
 class LLMTransportError(RuntimeError):
@@ -96,7 +100,9 @@ class LLMClient:
             if cached is not None:
                 return cached
 
-        self._raise_if_over_quota(self._estimate_tokens(messages, response_format))
+        estimated_prompt_tokens = estimate_prompt_tokens(messages, response_format)
+        self._raise_if_over_prompt_cap(estimated_prompt_tokens)
+        self._raise_if_over_quota(estimated_prompt_tokens + self.config.max_output_tokens)
 
         api_request = {
             "model": self.config.model,
@@ -137,7 +143,7 @@ class LLMClient:
         return result
 
     def get_usage_today(self) -> dict[str, int | str]:
-        today = date.today().isoformat()
+        today = _usage_date_utc()
         with self._connect() as connection:
             row = connection.execute(
                 "SELECT date, total_tokens, calls FROM usage_daily WHERE date = ?",
@@ -282,15 +288,6 @@ class LLMClient:
         )
         return round(cost, 12)
 
-    def _estimate_tokens(
-        self,
-        messages: list[dict[str, Any]],
-        response_format: dict[str, Any] | None,
-    ) -> int:
-        request = {"messages": messages, "response_format": response_format}
-        rough_chars = len(_canonical_json(request))
-        return max(1, rough_chars // 4) + self.config.max_output_tokens
-
     def _raise_if_over_quota(self, estimated_tokens: int) -> None:
         usage = self.get_usage_today()
         projected = int(usage["total_tokens"]) + estimated_tokens
@@ -300,8 +297,16 @@ class LLMClient:
                 f"{projected} > {self.config.daily_token_cap}"
             )
 
+    def _raise_if_over_prompt_cap(self, estimated_prompt_tokens: int) -> None:
+        cap = self.config.prompt_token_cap
+        if cap is not None and estimated_prompt_tokens > cap:
+            raise PromptTokenCeilingExceeded(
+                "Estimated prompt token cap would be exceeded: "
+                f"{estimated_prompt_tokens} > {cap}"
+            )
+
     def _increment_usage_today(self, tokens: int) -> None:
-        today = date.today().isoformat()
+        today = _usage_date_utc()
         with self._connect() as connection:
             connection.execute(
                 """
@@ -317,6 +322,19 @@ class LLMClient:
 
 def _canonical_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def estimate_prompt_tokens(
+    messages: list[dict[str, Any]],
+    response_format: dict[str, Any] | None = None,
+) -> int:
+    request = {"messages": messages, "response_format": response_format}
+    rough_chars = len(_canonical_json(request))
+    return max(1, rough_chars // 4)
+
+
+def _usage_date_utc() -> str:
+    return datetime.now(UTC).date().isoformat()
 
 
 def _get_value(obj: Any, key: str, default: Any = None) -> Any:

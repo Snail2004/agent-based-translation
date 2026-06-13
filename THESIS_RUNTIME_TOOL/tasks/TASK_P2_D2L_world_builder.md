@@ -1,6 +1,6 @@
 # TASK_P2_D2L_world_builder — World Builder D2L (chế độ thuật ngữ kỹ thuật) + chẩn đoán C (Builder-vs-gold) + FREEZE
 
-- **Status:** REWORK/BLOCKED (CodeX rework in progress; full benchmark blocked by API quota on 2026-06-14; see §5)
+- **Status:** DONE (REWORK→PASS — Claude 2026-06-14; xem §6.7)
 - **Refs:** LOCK (ee) (2 lớp claim; 3 loại knob; **Builder prompt D2L = chế độ thuật ngữ
   kỹ thuật**; phương pháp dev/test: tune trên dev-chapter RỜI HẲN benchmark → khóa config →
   chạy), (dd) (4 thước; C = Builder-vs-gold UNIQUE-term recall/agreement/**conflict-list**;
@@ -113,6 +113,97 @@ python -m pytest pipeline/tests/ -v   # toàn bộ vẫn PASS
 
 ## 5. Implementation notes *(CodeX điền)*
 
+### 5.0 Current result after registry-bloat rework
+
+CodeX completed the agreed rework after Claude's §6.6 addendum:
+
+- Copied the quota-failed v6/v6-like marker run to
+  `data/_baseline/d2l_marker_v6_registry_bloat_20260614/` before rerun.
+- Switched D2L extraction to locked prompt version `d2l_terminology_v7`.
+- Removed `REGISTRY_SO_FAR` from D2L extraction windows. Each window now extracts independently;
+  final consistency is handled by deterministic consolidation/persist.
+- Fixed `PrepassRegistry.compress()` so glossary lines are actually capped when used by other modes.
+- Added UTC daily quota accounting in the LLM client. OpenAI quota is counted by UTC day, not local day.
+- Added preflight estimator and per-call prompt ceiling guard (`prompt_token_cap: 6000`).
+- Used `OPENAI-KEY-2` for the rerun. This is a new separate account/key with fresh 2.5M token/day
+  quota. The key value was not logged; `OPENAI-KEY-*.txt` is now gitignored.
+
+Final status:
+
+```text
+DEV gate:
+  prompt_version: d2l_terminology_v7
+  calls: 28
+  prompt_tokens: 38,298
+  completion_tokens: 55,132
+  json_fail_rate: 0.0
+  C recall: 0.500000
+  C agreement: 0.800000
+  result: GO at the agreed threshold
+
+4-chapter benchmark:
+  chapters: introduction, preliminaries, linear_networks, multilayer_perceptrons
+  prompt_version: d2l_terminology_v7
+  calls: 227
+  prompt_tokens: 309,829
+  completion_tokens: 452,757
+  total_tokens: 762,586
+  json_fail_rate: 0.0
+  memory_frozen: 1
+  glossary_entries: 1,608
+  eval_glossary_gold: 458 unchanged
+
+Final C report:
+  gold_terms_present: 163
+  builder_terms: 1,608
+  matched_terms: 121
+  agreement_terms: 90
+  recall: 0.742331
+  agreement: 0.743802
+  missing_terms: 42
+  conflicts: 31
+  extra_terms: 1,487
+  report: data/reports/d2l_builder_vs_gold.json
+
+Key term check:
+  agent -> tác nhân
+  intelligent agents -> tác nhân thông minh
+  model -> mô hình
+  loss function -> hàm mất mát
+  softmax regression -> hồi quy softmax
+```
+
+Token-bloat fix evidence:
+
+```text
+Benchmark preflight:
+  calls: 227
+  prompt_tokens_est: 356,519
+  max_prompt_tokens_est: 2,453
+  total_tokens_upper_bound: 1,751,207
+  prompt_token_cap: 6,000
+  daily_token_cap: 2,400,000
+
+Actual prompt tokens per call:
+  introduction: min 1,039 / avg 1,252.7 / max 2,146 / n=48
+  preliminaries: min 1,233 / avg 1,431.6 / max 1,695 / n=50
+  linear_networks: min 1,113 / avg 1,383.8 / max 1,540 / n=51
+  multilayer_perceptrons: min 1,100 / avg 1,378.8 / max 1,594 / n=78
+
+OPENAI-KEY-2 cache usage for this rework:
+  2026-06-13 UTC: 856,016 tokens / 255 calls
+  = DEV 93,430 tokens + benchmark 762,586 tokens
+```
+
+Interpretation for review:
+
+- The original C-gate failure is fixed: recall moved from 0.123 to 0.742331 on the 4-ch benchmark,
+  and `agent -> tác nhân` is present in the frozen registry.
+- The token growth failure is fixed for this path: benchmark prompt/call stays bounded around
+  1.3k-1.4k and never approaches the 6k cap.
+- This is ready for Claude review, not DONE. Claude should still inspect the 31 conflicts and the
+  large extra-term list before approving PASS.
+
 ### 5.1 Files changed / added
 
 - Added DB-backed prepass loader: `pipeline/prepass/db_source.py`.
@@ -121,7 +212,9 @@ python -m pytest pipeline/tests/ -v   # toàn bộ vẫn PASS
   - D2L World Builder reads heading + translate/prose blocks from `blocks.original_text`;
     code/math/image passthrough blocks stay out of the prompt to avoid token bloat.
 - Added prompt mode `d2l_terminology` in `pipeline/prepass/prompt.py`.
-  - Current locked prompt version after REWORK: `d2l_terminology_v6`.
+  - Current locked prompt version after registry-bloat REWORK: `d2l_terminology_v7`.
+  - D2L extraction deliberately omits registry context; consolidation handles consistency after
+    window extraction.
   - D2L mode is glossary-only: entities/relations/mention_surfaces/motifs are normalized to `[]`.
   - Enforces concise technical terms, Vietnamese diacritics, compact evidence ids, and one canonical
     source entry per concept.
@@ -161,100 +254,134 @@ python -m pytest pipeline/tests/ -v   # toàn bộ vẫn PASS
     stale cache reuse by changing prompt version and `reasoning_effort`, both already in the cache key.
     A future client task should decide whether `max_output_tokens` belongs in the cache key.
 
-### 5.3 Commands run so far
+### 5.3 Commands run
 
 ```text
 python -m pytest pipeline/tests/test_d2l_builder.py -v
-8 passed in 4.74s
+9 passed
+
+python -m pytest pipeline/tests/test_llm_client.py pipeline/tests/test_d2l_builder.py -v
+17 passed in 4.95s
 
 python -m pytest pipeline/tests/ -v
-105 passed in 62.10s
+107 passed in 65.38s
 
-python -m pipeline.scripts.run_prepass --db data/jobs/d2l_p1/memory.sqlite3 --chapters deep_learning_computation --mode d2l_terminology
-prompt_version: d2l_terminology_v6
+python -m pipeline.scripts.run_prepass --db data/jobs/d2l_p1/memory.sqlite3 --chapters deep_learning_computation --mode d2l_terminology --cache data/jobs/prepass_cache_openai_key2.sqlite3 --preflight-only
+calls: 28
+prompt_tokens_est: 45,025
+max_prompt_tokens_est: 1,693
+total_tokens_upper_bound: 217,057
+
+python -m pipeline.scripts.run_prepass --db data/jobs/d2l_p1/memory.sqlite3 --chapters deep_learning_computation --mode d2l_terminology --cache data/jobs/prepass_cache_openai_key2.sqlite3
+prompt_version: d2l_terminology_v7
 chapter: d2l_deep_learning_computation
 status: passed
 calls: 28
-terms: 396
+terms: 410
 windows: 28
 json_fail_rate: 0.0
 reasoning_tokens: 0
-incremental_cost_usd: 0.1144585
+prompt_tokens: 38,298
+completion_tokens: 55,132
+incremental_cost_usd: 0.1198385
 
 DEV C-gate on a copied DB:
 gold_terms_present: 40
-builder_terms: 252
-matched_terms: 23
-agreement_terms: 19
-recall: 0.575
-agreement: 0.826087
-missing_terms: 17
+builder_terms: 263
+matched_terms: 20
+agreement_terms: 16
+recall: 0.5
+agreement: 0.8
+missing_terms: 20
 conflicts: 4
-extra_terms: 229
+extra_terms: 243
+
+python -m pipeline.scripts.run_prepass --db data/jobs/d2l_p1/memory.sqlite3 --chapters introduction preliminaries linear_networks multilayer_perceptrons --mode d2l_terminology --cache data/jobs/prepass_cache_openai_key2.sqlite3 --preflight-only
+calls: 227
+prompt_tokens_est: 356,519
+max_prompt_tokens_est: 2,453
+total_tokens_upper_bound: 1,751,207
+
+python -m pipeline.scripts.run_prepass --db data/jobs/d2l_p1/memory.sqlite3 --chapters introduction preliminaries linear_networks multilayer_perceptrons --mode d2l_terminology --cache data/jobs/prepass_cache_openai_key2.sqlite3 --freeze
+prompt_version: d2l_terminology_v7
+calls: 227
+prompt_tokens: 309,829
+completion_tokens: 452,757
+json_fail_rate: 0.0
+memory_frozen: 1
+glossary_entries: 1,608
+
+python -m pipeline.scripts.score_builder_vs_gold --db data/jobs/d2l_p1/memory.sqlite3 --chapters introduction preliminaries linear_networks multilayer_perceptrons --out data/reports/d2l_builder_vs_gold.json
+gold_terms_present: 163
+builder_terms: 1,608
+matched_terms: 121
+agreement_terms: 90
+recall: 0.742331
+agreement: 0.743802
+missing_terms: 42
+conflicts: 31
+extra_terms: 1,487
 ```
 
 Pytest on this Windows machine prints an ignored cleanup warning after pass:
 `PermissionError: [WinError 5] Access is denied: 'D:\\temp\\pytest-of-Snail\\pytest-current'`.
 It occurs after pytest reports success and did not change test status.
 
-### 5.4 Benchmark attempt status
+### 5.4 Benchmark status
 
-Full benchmark command attempted:
+Full benchmark completed on `OPENAI-KEY-2` with the new v7 extraction path and freeze enabled.
 
-```text
-python -m pipeline.scripts.run_prepass --db data/jobs/d2l_p1/memory.sqlite3 --chapters introduction preliminaries linear_networks multilayer_perceptrons --mode d2l_terminology --freeze
-```
-
-Result on 2026-06-14:
-
-- `d2l_introduction` passed: 48 windows, 654 raw window terms.
-- `d2l_preliminaries` passed: 50 windows, 587 raw window terms.
-- `d2l_linear_networks` passed: 51 windows, 807 raw window terms.
-- `d2l_multilayer_perceptrons` started and cached 2/78 windows, then the provider returned
-  `429 insufficient_quota`.
-- No final `run_report.json` was written.
-- Main DB remained clean and unfrozen:
-  - `glossary_entries=0`
-  - `memory_items=0`
+- `d2l_introduction`: 48 windows, 664 raw window terms, prompt avg 1,252.7, max 2,146.
+- `d2l_preliminaries`: 50 windows, 664 raw window terms, prompt avg 1,431.6, max 1,695.
+- `d2l_linear_networks`: 51 windows, 836 raw window terms, prompt avg 1,383.8, max 1,540.
+- `d2l_multilayer_perceptrons`: 78 windows, 1,186 raw window terms, prompt avg 1,378.8, max 1,594.
+- `data/prepass/d2l_benchmark/run_report.json` written.
+- `data/reports/d2l_memory_build.json` written.
+- `data/reports/d2l_builder_vs_gold.json` written.
+- Main DB is frozen:
+  - `glossary_entries=1608`
+  - `memory_items=4`
   - `eval_glossary_gold=458`
-  - `memory_frozen=0`
+  - `memory_frozen=1`
 
-The overrun was the daily TOKEN quota (2.5M), not money: OpenAI CSV showed 2.735M tokens on
+The earlier quota overrun was the daily TOKEN quota, not money: OpenAI CSV showed 2.735M tokens on
 2026-06-13 UTC for the thesis project, costing only ~$0.2536. The `$4.96/$5.00` screenshot was an
 UNRELATED project (gpt-5.5), NOT this thesis — do not read it as the thesis burning $5.
 
-### 5.5 Partial diagnostic evidence, not acceptance
+### 5.5 Final diagnostic evidence
 
-To sanity-check the rework without touching the main DB, CodeX built memory from the three completed
-benchmark artifacts into a copied DB only. This is **not** the acceptance result because the fourth
-benchmark chapter is missing.
+Final 4-chapter C on the frozen benchmark DB:
 
 ```text
-3-chapter partial C on copied DB:
-gold_terms_present: 137
-builder_terms: 1061
-matched_terms: 96
-agreement_terms: 66
-recall: 0.70073
-agreement: 0.6875
-missing_terms: 41
-conflicts: 30
-extra_terms: 965
+gold_terms_present: 163
+builder_terms: 1608
+matched_terms: 121
+agreement_terms: 90
+recall: 0.742331
+agreement: 0.743802
+missing_terms: 42
+conflicts: 31
+extra_terms: 1487
 ```
 
-Important sanity checks from the copied DB:
+Important sanity checks from the frozen DB:
 
-- `agent -> tác nhân` is now captured.
+- `agent -> tác nhân` is captured.
+- `intelligent agents -> tác nhân thông minh` is captured.
 - `model -> mô hình` is captured.
 - `linear regression -> hồi quy tuyến tính` is captured.
 - `softmax regression -> hồi quy softmax` is captured.
 - `loss function -> hàm mất mát` is captured.
 
-Interpretation: REWORK fixed the original C-gate failure mode (`agent` missing and recall 0.123), but the task
-cannot move to REVIEW until quota is restored and the full 4-chapter benchmark can finish, persist, freeze,
-and produce `data/reports/d2l_builder_vs_gold.json`.
+Interpretation: REWORK fixed the original C-gate failure mode (`agent` missing and recall 0.123), and
+the full 4-chapter benchmark now meets the agreed gate. The task is moved to REVIEW for Claude to inspect
+the conflict/extra-term lists before PASS.
 
 ## 6. Review *(Claude điền)*
+
+> Note for Claude re-review: the review below predates the final v7 rerun in §5.0. CodeX has now
+> completed the full 4-chapter benchmark, frozen the DB, and produced final C. Please replace/update
+> this section with the new verdict.
 
 **Verdict: REWORK — KỸ THUẬT đạt, nhưng C-GATE = NO-GO (recall quá thấp).** (Claude, 2026-06-13)
 Code đúng, trung thực, guard vững; nhưng chẩn đoán C — thứ ta CỐ Ý chạy trước khi dịch để
@@ -314,6 +441,36 @@ mà là rate-limit token/ngày. Hai nguyên nhân CodeX chỉ ra, mình kiểm c
    Sau fix PHẢI đo lại recall dev (giữ ≥0.5).
 2. **Quota guard dùng `date.today()` local** (`llm_client.py:140,304`) trong khi OpenAI tính
    UTC → guard under-count, để vượt 2.5M UTC. **Fix:** guard dùng UTC (LOCK ee validity).
-Thêm: preflight estimator (window còn lại × token TB). Rerun sau quota reset — 3 chương đầu
-đã cache, chỉ còn ~76 window MLP. **Tín hiệu tốt: recall 0.123→0.575 dev / 0.70 partial,
-`agent→tác nhân` ĐÃ BẮT, main DB sạch/unfrozen.** CHƯA PASS tới khi full 4 chương + freeze + C cuối.
+Thêm: preflight estimator (window còn lại × token TB). **Update sau CodeX §5.0:** rerun bằng
+`OPENAI-KEY-2` đã hoàn tất đủ 4 chương, DB đã freeze, final C recall 0.742331 / agreement 0.743802,
+`agent→tác nhân` ĐÃ BẮT. Claude cần thay verdict cũ bằng review mới.
+
+### 6.7 REWORK VERDICT: PASS (Claude, 2026-06-14) — token-fix + recall đều đạt
+Rework đạt MỌI mục tiêu; số tái tính độc lập từ DB/report, KHỚP.
+
+**Tái xác minh:**
+- recall **0.123 → 0.742** (121/163 gold matched); `agent → tác nhân` captured VÀ khớp gold; frozen=1; gold 458 nguyên.
+- **Token-bloat ĐÃ HẾT (bằng chứng cache key2):** prompt/call 974–2146, avg **1365** (trước: 1.2k→10.8k). Benchmark 762k token (trước ~2M). Fix bỏ-registry ăn rõ.
+- Guards có đủ + có test: UTC date (`_usage_date_utc`), per-call ceiling (`PromptTokenCeilingExceeded`, cap 6000), preflight (`estimate_prompt_tokens` trước call), `compress()` cắt glossary. 107 tests pass.
+- Directional Lock GIỮ: build path không query gold (chỉ câu cấm trong prompt). Key `OPENAI-KEY-*.txt` gitignore, không log. Baseline lỗi cũ giữ ở `data/_baseline/` để audit.
+
+**31 conflicts = TOÀN BỘ là biến thể hợp lệ, KHÔNG phải lỗi** (đã soi cả 31): khác thứ tự
+(`exploding gradient`↔`bùng nổ gradient`), chính tả (`tỷ`/`tỉ`, `cosin`/`cô-sin`), đồng nghĩa
+(`đối tượng`/`vật thể`, `họ`/`nhóm`), dịch-hay-giữ-Anh (`batch`→`lô` vs `batch`). Nhiều chỗ
+Builder CHÍNH XÁC HƠN gold (`attention`→`chú ý` not `tập trung`; `implicit`→`ngầm`); gold còn
+lỗi chính tả (`biễu diễn`). → **Bằng chứng thật cho doctrine (dd): agreement exact-match
+0.744 ĐÁNH GIÁ THẤP chất lượng Builder; với allowed_variants curate gold thì phần lớn 31 này
+thành agreement.** Builder học thuật ngữ hợp ngôn ngữ, đôi khi hơn cả bản người.
+
+**3 follow-up cho P3-D2L (KHÔNG chặn PASS):**
+1. **Termhood lỏng:** ~20–30% trong 1,487 extra là non-term (idiom "garbage in, garbage out",
+   heading "Third-Order Polynomial...", generic "input data"). Phần lớn extra là term kỹ thuật
+   THẬT (gold chỉ 458, phủ một phần). Anchor-injection của Translator hạn chế tác hại, nhưng
+   nên siết termhood trước khi scale / trước khi bơm S1.
+2. **Chuẩn hóa source-term:** `ground-truth` vs `ground truth` → 2 VI khác (`chân trị`/`nhãn thật`),
+   không consolidate. Cần chuẩn hóa hyphen/space/case trong khóa gộp.
+3. **allowed_variants nhiễu:** variants của `agent` gồm `đặc vụ`/`đại diện` (sai nghĩa). → P3-D2L
+   chỉ bơm **canonical** cho Translator (không bơm variants), và ruler của B = gold-curated
+   variants (dd), KHÔNG dùng variants Builder tự đề.
+
+→ **P2-D2L PASS.** registry (recall 0.742, agent captured, token kỷ luật) đủ làm nền cho P3-D2L.

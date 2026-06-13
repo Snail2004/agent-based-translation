@@ -7,6 +7,7 @@ __pycache__/
 
 # Secrets — KHÔNG BAO GIỜ commit
 API-KEY.txt
+OPENAI-KEY-*.txt
 GEMINI-KEY.txt
 GEMINI-BASE-URL.txt
 *.key
@@ -26,3 +27,7 @@ THESIS_RUNTIME_TOOL/data/eval/human_ratings.csv
 
 # D2L raw clone — track provenance only, not the 214MB repo
 THESIS_RUNTIME_TOOL/data/sources/d2l-vi/
+
+# D2L token-bloat baseline (audit-only, has cache copy) + intermediate prepass artifacts
+THESIS_RUNTIME_TOOL/data/_baseline/
+THESIS_RUNTIME_TOOL/data/prepass/

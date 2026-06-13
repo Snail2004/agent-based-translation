@@ -6,6 +6,7 @@ from pipeline.agents.llm_client import (
     DailyQuotaExceeded,
     LLMClient,
     LLMTransportError,
+    PromptTokenCeilingExceeded,
 )
 from pipeline.agents.llm_config import LLMConfig
 
@@ -176,6 +177,20 @@ def test_usage_and_quota(tmp_path):
     with pytest.raises(DailyQuotaExceeded):
         client.call([{"role": "user", "content": "third"}])
     assert len(transport.calls) == 2
+
+
+def test_prompt_ceiling_blocks_transport(tmp_path):
+    transport = FakeTransport([_response("should not be called")])
+    client = LLMClient(
+        _config(prompt_token_cap=1),
+        tmp_path / "cache.sqlite3",
+        transport=transport,
+    )
+
+    with pytest.raises(PromptTokenCeilingExceeded):
+        client.call([{"role": "user", "content": "this prompt is too large"}])
+
+    assert transport.calls == []
 
 
 def test_json_mode(tmp_path):

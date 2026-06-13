@@ -14,6 +14,7 @@ ROOT_FIELDS = {
     "motifs": list,
 }
 TERM_CATEGORIES = {"nautical", "cultural", "object", "place", "other"}
+TECHNICAL_TERM_TYPES = {"term", "abbreviation", "proper_noun", "code_api"}
 ENTITY_TYPES = {"person", "place", "object", "other"}
 ENTITY_ID_RE = re.compile(r"^ent_[a-z0-9_]+$")
 PLAIN_PRONOUNS = {
@@ -49,6 +50,7 @@ def validate_chapter_output(
     known_entity_ids: set[str] | None = None,
     valid_block_ids: set[str] | None = None,
     warnings: list[str] | None = None,
+    mode: str = "literary",
 ) -> list[str]:
     """Return human-readable validation errors; empty list means valid."""
 
@@ -118,6 +120,25 @@ def validate_chapter_output(
             valid_block_ids,
             errors,
         )
+        if mode == "d2l_terminology":
+            _require(term, "glossary_candidates", index, "canonical_source", str, errors)
+            _require(term, "glossary_candidates", index, "canonical_target", str, errors)
+            _require(term, "glossary_candidates", index, "termhood", str, errors)
+            _require(term, "glossary_candidates", index, "term_type", str, errors)
+            _require(term, "glossary_candidates", index, "allowed_variants", list, errors)
+            _require(term, "glossary_candidates", index, "forbidden_variants", list, errors)
+            _require(term, "glossary_candidates", index, "evidence_span_ids", list, errors)
+            if term.get("term_type") not in TECHNICAL_TERM_TYPES:
+                errors.append(f"glossary_candidates[{index}].term_type is invalid")
+            _require_str_list(term, "glossary_candidates", index, "allowed_variants", errors)
+            _require_str_list(term, "glossary_candidates", index, "forbidden_variants", errors)
+            _require_str_list(term, "glossary_candidates", index, "evidence_span_ids", errors)
+            _validate_block_ids(
+                term.get("evidence_span_ids") or [],
+                f"glossary_candidates[{index}].evidence_span_ids",
+                valid_block_ids,
+                errors,
+            )
 
     for index, relation in enumerate(obj["relations"]):
         if not isinstance(relation, dict):

@@ -50,43 +50,46 @@ class PrepassRegistry:
         if not self.glossary and not self.entities and not self.relations:
             return "(registry empty - first chapter)"
 
-        glossary_lines = ["Glossary:"]
-        for term in sorted(self.glossary.values(), key=lambda item: str(item.get("source_term", "")).casefold()):
-            glossary_lines.append(
-                f"- {term.get('source_term', '')} -> {term.get('proposed_target_vi', '')}"
-            )
+        lines: list[str] = []
 
-        relation_lines = ["Relations:"]
+        def append_capped(line: str) -> bool:
+            candidate = "\n".join([*lines, line]).strip()
+            if len(candidate) > max_chars and lines:
+                return False
+            lines.append(line)
+            return True
+
+        append_capped("Glossary:")
+        for term in sorted(self.glossary.values(), key=lambda item: str(item.get("source_term", "")).casefold()):
+            if not append_capped(f"- {term.get('source_term', '')} -> {term.get('proposed_target_vi', '')}"):
+                break
+
+        append_capped("Relations:")
         for relation in sorted(
             self.relations.values(),
             key=lambda item: (str(item.get("a", "")), str(item.get("b", ""))),
         ):
-            relation_lines.append(
+            if not append_capped(
                 "- "
                 f"{relation.get('a', '')} <-> {relation.get('b', '')}: "
                 f"{relation.get('state_label', '')}, "
                 f"{relation.get('address_a_to_b_vi', '')} / "
                 f"{relation.get('address_b_to_a_vi', '')}"
-            )
+            ):
+                break
 
-        required = "\n".join([*glossary_lines, *relation_lines]).strip()
         entity_items = sorted(
             self.entities.items(),
             key=lambda item: (-len(self.entity_chapters.get(item[0], set())), item[0]),
         )
-        entity_lines = ["Entities:"]
+        append_capped("Entities:")
         for entity_id, entity in entity_items:
             aliases = ", ".join(entity.get("aliases_source") or [])
             line = (
                 f"- {entity_id} | {entity.get('canonical_source', '')}"
                 f" ({aliases}) -> {entity.get('proposed_target_vi', '')}"
             )
-            candidate = "\n".join([required, *entity_lines, line]).strip()
-            if len(candidate) > max_chars and len(entity_lines) > 1:
-                continue
-            entity_lines.append(line)
+            if not append_capped(line):
+                break
 
-        compressed = "\n".join([required, *entity_lines]).strip()
-        if len(compressed) <= max_chars:
-            return compressed
-        return required
+        return "\n".join(lines).strip()
