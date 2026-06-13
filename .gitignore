@@ -7,6 +7,8 @@ __pycache__/
 
 # Secrets — KHÔNG BAO GIỜ commit
 API-KEY.txt
+GEMINI-KEY.txt
+GEMINI-BASE-URL.txt
 *.key
 
 # AI-LAB track — KHÔNG thuộc thesis repo (two-tracks separation)
@@ -17,6 +19,7 @@ AILAB_SOURCES_RAW/
 # Runtime/generated data
 THESIS_RUNTIME_TOOL/projects/
 **/data/jobs/
+THESIS_RUNTIME_TOOL/data/eval/human_ratings.csv
 *.sqlite3
 *.sqlite3-journal
 .chroma/

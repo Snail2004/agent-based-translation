@@ -2,3 +2,4 @@ openai
 pyyaml
 pytest
 chromadb>=1,<2
+google-genai

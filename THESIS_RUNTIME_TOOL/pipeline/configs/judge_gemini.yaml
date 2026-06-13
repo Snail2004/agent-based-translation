@@ -1,0 +1,11 @@
+model: "gemini-2.5-flash"
+temperature: 0.0
+seed: 20260612
+reasoning_effort: "none"
+verbosity: null
+max_output_tokens: 2048
+daily_token_cap: 1000000
+pricing:
+  input: 0.0
+  cached_input: 0.0
+  output: 0.0
