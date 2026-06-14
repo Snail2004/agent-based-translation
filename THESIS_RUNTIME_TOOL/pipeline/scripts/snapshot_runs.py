@@ -1,17 +1,20 @@
 """Xuất snapshot BỀN VỮNG (tracked trong git) cho một job dịch.
 
-DB `memory.sqlite3` bị .gitignore → bản dịch S0/S1, registry (thước TAR) và
-evaluation_runs CHỈ sống trên ổ đĩa. Khi nâng cấp hệ thống hoặc sửa/thêm thước đo
-(vd COMET ở EV-03, lọc block judge F1) ta cần chấm LẠI CHÍNH bản dịch cũ mà KHÔNG
-dịch lại (tốn tiền + model trôi). Snapshot gói đủ để tái-đánh-giá từ git:
-  - translations: văn bản S0/S1 mỗi block + provenance (model/seed/prompt/fingerprint)
-  - sources: EN gốc + text mỗi block (cho metric tham chiếu COMET/BLEU chạy lại)
-  - registry: glossary_entries (+ allowed/forbidden variants) + entities (thước TAR)
-  - evaluations: toàn bộ điểm đã đo (kèm metric_version)
+Lý do tồn tại: DB `memory.sqlite3` bị .gitignore → bản dịch S0/S1, registry (thước TAR),
+gold (thước B) và evaluation_runs CHỈ sống trên ổ đĩa. Khi nâng cấp hệ thống hoặc sửa/ thêm
+thước đo (vd COMET ở EV-03, lọc block judge F1) ta cần chấm LẠI CHÍNH bản dịch cũ mà KHÔNG
+dịch lại (tốn tiền + model trôi). Snapshot này gói đủ để tái-đánh-giá hoàn toàn từ git:
+
+  - translation_runs: văn bản S0/S1 mỗi block + provenance (model/seed/prompt/fingerprint)
+  - source mỗi block (EN gốc + text) để metric tham chiếu (COMET/BLEU) chạy lại được
+  - registry = thước TAR: glossary_entries (+ allowed/forbidden variants) + entities
+  - eval_glossary_gold = thước B (gold người); nguồn glossary.md gitignored nên PHẢI gói ở đây
+  - evaluation_runs: toàn bộ điểm đã đo (metric_version để biết thước nào)
   - manifest: db path, ngày, đếm dòng
 
-Chỉ SELECT (không ghi bảng memory). Tất định, 0 gọi mạng.
+KHÔNG đọc/ghi bảng memory (chỉ SELECT). Tất định, 0 gọi mạng.
 
+Dùng:
   python -m pipeline.scripts.snapshot_runs \
     --db data/jobs/treasure_island_p2/memory.sqlite3 \
     --out data/reports/treasure_island_p2_snapshot.json
@@ -44,6 +47,7 @@ def build_snapshot(db_path: str) -> dict:
         ORDER BY t.config, b.chapter_id, t.block_id
         """,
     )
+    # source mỗi block dịch (chỉ những block có trong translation_runs)
     sources = _rows(
         con,
         """
@@ -80,6 +84,14 @@ def build_snapshot(db_path: str) -> dict:
         FROM evaluation_runs ORDER BY metric_name, scope, scope_id
         """,
     )
+    # gold người (thước B). Bảng có thể vắng ở job văn học (TI) → graceful empty.
+    try:
+        gold = _rows(
+            con,
+            "SELECT * FROM eval_glossary_gold ORDER BY source_term, target_term",
+        )
+    except sqlite3.OperationalError:
+        gold = []
     metric_versions = sorted(
         {r["metric_version"] for r in evaluations if r.get("metric_version")}
     )
@@ -94,12 +106,14 @@ def build_snapshot(db_path: str) -> dict:
                 "glossary_entries": len(glossary),
                 "entities": len(entities),
                 "evaluation_runs": len(evaluations),
+                "eval_glossary_gold": len(gold),
             },
             "metric_versions_present": metric_versions,
         },
         "translations": translations,
         "sources": sources,
         "registry": {"glossary": glossary, "entities": entities},
+        "eval_glossary_gold": gold,
         "evaluations": evaluations,
     }
 
@@ -119,7 +133,7 @@ def main() -> None:
     print(
         f"  translations={c['translations']} sources={c['sources']} "
         f"glossary={c['glossary_entries']} entities={c['entities']} "
-        f"evaluations={c['evaluation_runs']}"
+        f"gold={c['eval_glossary_gold']} evaluations={c['evaluation_runs']}"
     )
     print(f"  metric_versions={snap['manifest']['metric_versions_present']}")
 
