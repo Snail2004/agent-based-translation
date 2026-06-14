@@ -9,24 +9,44 @@ from pipeline.eval.thesis_scoring import (
     score_oracle_on_same_ruler,
     score_thesis_translations,
 )
+from pipeline.eval.d2l_translate_score import score_d2l_translation_run
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Score S0 (or any config) translations vs oracle on the same ruler."
-    )
+    parser = argparse.ArgumentParser(description="Score thesis translation runs.")
     parser.add_argument("--db", required=True, help="Frozen memory SQLite DB.")
-    parser.add_argument("--experiment", required=True, help="Experiment ID.")
+    parser.add_argument("--experiment", default="d2l_p3", help="Experiment ID.")
     parser.add_argument("--config", default="S0", help="Config to score (default: S0).")
-    parser.add_argument("--prepass", required=True, help="Prepass artifacts directory.")
-    parser.add_argument("--source", required=True, help="Source document.json path.")
+    parser.add_argument("--prepass", help="Prepass artifacts directory.")
+    parser.add_argument("--source", help="Source document.json path.")
     parser.add_argument(
         "--oracle",
-        required=True,
         help="Path to AILAB oracle project (eval-only, not used in runtime).",
     )
+    parser.add_argument("--chapters", nargs="+", help="D2L chapters to score.")
+    parser.add_argument("--profile", default="technical_d2l_v1", help="Document profile.")
+    parser.add_argument("--gold-variants", help="Eval-only D2L gold variants CSV.")
     parser.add_argument("--out", required=True, help="Output report JSON path.")
     args = parser.parse_args()
+
+    if args.chapters:
+        report = score_d2l_translation_run(
+            args.db,
+            chapters=args.chapters,
+            out_path=args.out,
+            experiment_id=args.experiment,
+            profile_name=args.profile,
+            gold_variants_path=args.gold_variants,
+        )
+        _print_d2l_summary(report)
+        print(f"\nReport written: {args.out}")
+        return 0
+
+    if not args.prepass or not args.source or not args.oracle:
+        raise SystemExit(
+            "Legacy TI scoring requires --prepass, --source, and --oracle. "
+            "D2L scoring requires --chapters."
+        )
 
     # Build the common ruler from frozen DB + span_resolver (thesis's registry)
     ruler = build_ruler_from_db_and_spans(
@@ -83,6 +103,23 @@ def main() -> int:
     _print_summary("Oracle (same ruler)", oracle_report)
     print(f"\nReport written: {out_path}")
     return 0
+
+
+def _print_d2l_summary(report: dict) -> None:
+    print("\n=== D2L Translation Metrics ===")
+    print(f"Profile: {report.get('profile')}  Chapters: {report.get('chapters')}")
+    for config in ["S0", "S1"]:
+        b = report["B_tar_vs_gold"][config]["flat"]
+        br = report["B_tar_vs_gold"][config]["recurring"]
+        d = report["D_registry_consistency"][config]
+        print(
+            f"{config}: B flat={b['overall']:.4f} ({b['pairs']} pairs), "
+            f"B recurring={br['overall']:.4f} ({br['pairs']} pairs), "
+            f"D={d['overall']:.4f} ({d['terms']} terms)"
+        )
+    a = report["A_tar_vs_registry"]["S1"]
+    print(f"S1 A registry TAR={a['overall']:.4f} ({a['pairs']} pairs)")
+    print(f"Stage gate: {json.dumps(report.get('stage_gate', {}), ensure_ascii=False)}")
 
 
 def _print_summary(label: str, report: dict) -> None:

@@ -1,6 +1,6 @@
 # TASK_P3_D2L_translate_score — Dịch S0/S1 trên 4 chương D2L (profile `technical_d2l_v1`) + chấm headline B (TAR-vs-gold) + D (consistency) + A chẩn đoán + judge sample
 
-- **Status:** READY (spec hội tụ 3 bên — document_profile + base prompt D2L + scope-match; chạy **STAGED**: pilot 1 chương → full)
+- **Status:** DONE — PASS (Claude review 2026-06-14)
 - **Refs:** LOCK **(jj)** (staged pilot gate + caption→passthrough a-priori + sai-phân-loại-không-hỏng-B/D),
   **(ii)** (document_profile KHÔNG fork + base prompt D2L = ceiling per-dataset + scope chấm = scope dịch),
   (hh) (injection occ≥2 dataset-aware + `injection_role` derive code),
@@ -184,8 +184,164 @@ python -m pytest pipeline/tests/ -v   # toàn bộ vẫn PASS
 
 ## 5. Implementation notes *(CodeX điền)*
 
-—
+Implemented as staged P3-D2L, no commit/push.
 
-## 6. Review *(Claude điền)*
+### Files changed
 
-—
+- `pipeline/translate/profiles.py`: added declarative `literary_v1` and `technical_d2l_v1` profiles.
+- `pipeline/translate/prompt.py`: prompt construction now reads profile data; D2L S0 stays memory/gold-free.
+- `pipeline/translate/windower.py`: added optional block-type filter.
+- `pipeline/retrieval/context_builder.py`: profile-aware injection filter; D2L injects only canonical translate terms with `occurrences_count >= 2`.
+- `pipeline/scripts/run_translate.py`: added `--profile`, `--configs`, `--preflight-only`; key loading prefers `OPENAI-KEY-2.txt` and never logs key values.
+- `pipeline/eval/d2l_translate_score.py`: added D2L B/TAR-vs-gold, D/registry-consistency, A/TAR-vs-registry scorer.
+- `pipeline/scripts/score_run.py`: added D2L scoring path via `--chapters`; legacy TI scoring preserved.
+- `data/eval/d2l_gold_variants.csv`: eval-only variants seeded from the 31 accepted P2-D2L conflicts.
+- `pipeline/configs/llm_translate.yaml`: added `prompt_token_cap: 6000`.
+- `pipeline/tests/test_d2l_translate_score.py`: added offline D2L P3 tests.
+
+### Stage 1: offline tests + full preflight
+
+Commands:
+
+```bash
+python -m pytest pipeline/tests/test_d2l_translate_score.py -v
+python -m pytest pipeline/tests/test_translate_runner.py pipeline/tests/test_context_builder.py pipeline/tests/test_llm_client.py pipeline/tests/test_d2l_builder.py -v
+python -m pipeline.scripts.run_translate --db data/jobs/d2l_p1/memory.sqlite3 --profile technical_d2l_v1 --chapters introduction preliminaries linear_networks multilayer_perceptrons --configs S0 S1 --preflight-only
+```
+
+Output:
+
+- `test_d2l_translate_score.py`: 5/5 passed.
+- Related regression tests: 31/31 passed.
+- Full 4-ch preflight:
+  - resolved chapters: `d2l_introduction`, `d2l_preliminaries`, `d2l_linear_networks`, `d2l_multilayer_perceptrons`
+  - windows: 169
+  - blocks in windows: 1302
+  - benchmark block types: `code=500`, `heading=283`, `image=26`, `label=1`, `math_block=26`, `prose=1019`
+  - translatable block types: `heading=283`, `prose=1019`
+  - registry injection stats: `raw_registry=1608`, `translation_eligible=747`, `preserve_count=239`, `hapax_dropped=622`
+  - S0 prompt tokens min/avg/max: `533 / 1074.66 / 1783`
+  - S1 prompt tokens min/avg/max: `645 / 1370.88 / 2258`
+  - upper total all configs: `1,797,743` tokens `< daily cap 2,400,000`
+
+### Stage 2: validity pilot `preliminaries`
+
+Commands:
+
+```bash
+python -m pipeline.scripts.run_translate --db data/jobs/d2l_p1/memory.sqlite3 --profile technical_d2l_v1 --chapters preliminaries --configs S0 S1 --report data/reports/d2l_pilot_preliminaries_translate.json
+python -m pipeline.scripts.score_run --db data/jobs/d2l_p1/memory.sqlite3 --chapters preliminaries --gold-variants data/eval/d2l_gold_variants.csv --out data/reports/d2l_pilot_preliminaries.json
+```
+
+Pilot results:
+
+- Windows: 45 S0 + 45 S1.
+- Blocks translated: 348 S0 + 348 S1.
+- JSON fail rate: `0.0000` for both.
+- Actual tokens:
+  - S0: `41,691` prompt + `33,627` completion = `75,318`
+  - S1: `51,262` prompt + `33,425` completion = `84,687`
+  - pilot total: `160,005`
+- Pilot metrics:
+  - B flat: S0 `0.6913` -> S1 `0.7896`
+  - B recurring: S0 `0.6932` -> S1 `0.7983`
+  - D: S0 `0.5964` -> S1 `0.6996`
+  - A S1 registry TAR: `0.9273`
+- Mechanical gate:
+  - no passthrough translated: pass (`S0=true`, `S1=true`)
+  - scope equals translation runs: pass (`S0=true`, `S1=true`)
+  - preserve terms excluded from injection: pass
+  - eligible terms all `occurrences_count >= 2`: pass
+  - memory pack leak check: `0` packs with `code/math/image/label`
+  - 5 manual passthrough audit samples were code/TOC/code snippets.
+
+### Stage 3: full 4-ch run
+
+Commands:
+
+```bash
+python -m pipeline.scripts.run_translate --db data/jobs/d2l_p1/memory.sqlite3 --profile technical_d2l_v1 --chapters introduction preliminaries linear_networks multilayer_perceptrons --configs S0 S1 --report data/reports/d2l_translation_translate.json
+python -m pipeline.scripts.score_run --db data/jobs/d2l_p1/memory.sqlite3 --chapters introduction preliminaries linear_networks multilayer_perceptrons --gold-variants data/eval/d2l_gold_variants.csv --out data/reports/d2l_translation_metrics.json
+```
+
+Full run results:
+
+- `preliminaries` reused existing translations: 45 skipped windows per config.
+- New calls: 124 S0 + 124 S1.
+- Final translation rows: `1302` S0 + `1302` S1.
+- JSON fail rate: `0.0000` for both.
+- Full D2L cache totals (all P3 D2L calls including pilot):
+  - S0: 169 calls, prompt min/avg/max `484 / 960.51 / 1582`, total `302,284` tokens.
+  - S1: 169 calls, prompt min/avg/max `590 / 1259.33 / 2049`, total `352,970` tokens.
+  - Total UTC 2026-06-14 translate cache usage: `655,254` tokens / `338` calls.
+  - This is safely below the `2,400,000` guard and the 2.5M free daily pool.
+- Full metrics (`data/reports/d2l_translation_metrics.json`):
+  - B flat: S0 `0.7519` -> S1 `0.8172` (`2330` pairs)
+  - B recurring: S0 `0.7520` -> S1 `0.8195` (`2294` pairs)
+  - D: S0 `0.5930` -> S1 `0.7007` (`715` terms)
+  - A S1 registry TAR: `0.9343` (`8594` pairs)
+- Full scope/gate:
+  - scope blocks: `1302` (`heading=283`, `prose=1019`)
+  - passthrough blocks: `553` (`code=500`, `math_block=26`, `image=26`, `label=1`)
+  - no passthrough translated: pass
+  - scope equals translation runs: pass
+  - preserve terms excluded from injection: pass
+  - eligible terms all `occurrences_count >= 2`: pass
+  - memory pack leak check: `0`
+
+### Final verification
+
+```bash
+python -m pytest pipeline/tests/ -v
+```
+
+Output: `112 passed in 64.09s`.
+
+Note: pytest emitted a Windows cleanup warning for `D:\temp\pytest-of-Snail\pytest-current`
+permission denied after the tests completed. Test result is still pass.
+
+### Notes for Claude review
+
+- B and D both improve from S0 to S1, but neither saturates to 1.0. This matches the D2L design:
+  gold is independent from the injected registry, and D is measured over recurring registry terms.
+- A S1 is high but not 1.0 (`0.9343`), so Translator mostly follows canonical injection but still misses some
+  injected terms under the current prompt/window design. This is not a Stage 2 mechanical failure, but Claude
+  should inspect worst terms before calling the metric story final.
+- D v1 has a known limitation recorded in the report: it can only detect drift among registry canonical/allowed
+  Vietnamese forms; unseen synonyms are `undetected`.
+
+## 6. Review *(Claude điền)* — PASS (2026-06-14)
+
+**Verdict: PASS.** Claude tái kiểm độc lập TỪ SCORER + đọc toàn bộ code (`d2l_translate_score.py`, `context_builder.py`, `profiles.py`, test), tự chạy lại guard test — KHÔNG nhận số theo lời.
+
+### Validity — sạch hết
+- **scope chấm = scope dịch:** `scope_equals_translation_runs` S0/S1=true; `no_passthrough_translated` S0/S1=true; 1302 scope (heading 283 + prose 1019) ≡ translation_runs; 553 passthrough (code 500/math 26/image 26/label 1) bị loại khỏi CẢ tử lẫn mẫu B/D. Test `test_d2l_scorer_scope...`: gold trong `b_code` không vào mẫu (pairs=5).
+- **gold KHÔNG bị bơm (Directional Lock):** `context_builder._load_terms`/`_glossary_items` chỉ đọc `glossary_entries` (registry); KHÔNG bao giờ chạm `eval_glossary_gold` hay `d2l_gold_variants.csv`. Gold + variants chỉ vào scorer (`_load_gold_targets`).
+- **injection occ≥2 + role==translate + canonical-only:** test xanh — `agent → tác nhân` CÓ; biến thể `tác tử`, preserve `PyTorch`/`.shape`, hapax `exposes`(occ=1) đều KHÔNG vào prompt. Stats khớp: eligible 747, hapax_dropped 622, preserve 239 (Σ=1608).
+- **S0 trung thực no-memory:** `test_d2l_s0_purity_check` xanh; đường S0 không gọi context_builder.
+- **Test Claude TỰ chạy lại:** 5/5 guard pass (block-filter / technical-prompt / S0-purity / injection / scope-variants-B/D/A). CodeX full 112/112.
+- **Token (gg):** preflight 4ch ~1.80M < 2.4M; thực 655,254 tok / 338 call UTC 2026-06-14; max prompt S1 2258 < cap 6000. Không phình.
+
+### Headline (OCCURRENCE-WEIGHTED theo doctrine dd — KHÔNG dùng field `overall`)
+| Thước | S0 | S1 | Gap |
+|---|---|---|---|
+| B TAR-vs-gold (flat, occ-weighted) | 0.7639 | **0.8320** | +0.068 |
+| B recurring (occ-weighted) | 0.7640 | 0.8339 | +0.070 |
+| D consistency (gold-free) | 0.5930 | **0.7007** | +0.108 |
+| A TAR-vs-registry (chẩn đoán, occ-weighted) | — | 0.9436 | — |
+
+- **B KHÔNG bão hòa (0.832 < 1.0)** + gap thật → đúng ưu thế D2L so với TI (ở TI, TAR bão hòa ~1.0 vì không có gold độc lập). Đây là số headline track kỹ thuật cho hội đồng.
+- **D:** undetected 27→1, drift 264→213, consistent 424→501. B⊥D hoạt động đúng: `Regression`=hồi quy(82)+bài toán hồi quy(9)=drift; `Classification`/`AI` tương tự — đảo biến thể hợp lệ VẪN tính trôi (đúng nỗi lo GVHD "tác tử/tác nhân").
+- *Trích số:* CodeX §5 dùng B field `overall` (0.752→0.817); doctrine dd headline = occurrence-weighted (0.764→0.832). Cùng câu chuyện, gap gần bằng nhau; §6 chốt field occ-weighted.
+
+### A = 0.9343 overall / 0.9436 occ-weighted (CodeX gắn cờ) — KHÔNG phải lỗi, KHÔNG chặn PASS
+A là CHẨN ĐOÁN (Translator nghe lời registry-Builder), không phải headline. Soi worst-terms:
+- `AI` 70/80 miss — Translator giữ "AI" tiếng Anh (forms_used: AI 71, trí tuệ nhân tạo 10). Lựa chọn chính đáng, không phải lỗi.
+- `example` 60/131, `set` 57/100, `label` 50/102 — lệch canonical-Builder vs cách dịch tự nhiên của Translator.
+- Đây CHÍNH là thứ A sinh ra để lộ; injection KHÔNG hỏng (B/D tăng + 6 guard test xanh + ~35 term bơm/window). KHÔNG muốn A=1.0 — ép canonical mù quáng (vd "trí tuệ nhân tạo" mọi nơi thay vì "AI") sẽ HẠI B. A=0.93 = bám mạnh nhưng không mù → lành mạnh.
+
+### Follow-up (KHÔNG chặn PASS)
+1. **Snapshot translation_runs D2L** ra artifact bền (như TI `snapshot_runs.py`) — DB gitignored, cần để tái-chấm khi đổi thước (COMET ở EV-03).
+2. **A worst-terms** (example/set/AI) = tín hiệu cho P4+ rà lại canonical Builder vài term + cân nhắc cho phép giữ acronym.
+3. **D v1 limitation** (chỉ bắt drift trong canonical/allowed forms; synonym lạ = undetected) — đã disclose trong report; nâng ở EV-03.
+

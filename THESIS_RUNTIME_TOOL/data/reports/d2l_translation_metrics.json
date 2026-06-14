@@ -1,0 +1,1336 @@
+{
+  "scored_at": "2026-06-14T12:47:05.501150+00:00",
+  "metric_version": "d2l_translate_score_v1",
+  "experiment_id": "d2l_p3",
+  "profile": "technical_d2l_v1",
+  "doc_id": "d2l",
+  "chapters": [
+    "d2l_introduction",
+    "d2l_preliminaries",
+    "d2l_linear_networks",
+    "d2l_multilayer_perceptrons"
+  ],
+  "scope": {
+    "translated_block_types": {
+      "heading": 283,
+      "prose": 1019
+    },
+    "passthrough_block_types": {
+      "image": 26,
+      "code": 500,
+      "label": 1,
+      "math_block": 26
+    },
+    "all_block_types": {
+      "code": 500,
+      "heading": 283,
+      "image": 26,
+      "label": 1,
+      "math_block": 26,
+      "prose": 1019
+    },
+    "scope_blocks": 1302,
+    "passthrough_blocks": 553,
+    "translation_counts": {
+      "S0": 1302,
+      "S1": 1302
+    },
+    "scope_equals_translation_runs": {
+      "S0": true,
+      "S1": true
+    }
+  },
+  "B_tar_vs_gold": {
+    "S0": {
+      "flat": {
+        "overall": 0.751931,
+        "pairs": 2330,
+        "adherent_pairs": 1752,
+        "occurrence_weighted": 0.763867,
+        "occurrences": 3155,
+        "per_chapter": {
+          "d2l_introduction": 0.752044,
+          "d2l_linear_networks": 0.759768,
+          "d2l_multilayer_perceptrons": 0.770419,
+          "d2l_preliminaries": 0.691257
+        },
+        "worst_terms": [
+          {
+            "source_term": "example",
+            "misses": 117,
+            "pairs": 131
+          },
+          {
+            "source_term": "layer",
+            "misses": 44,
+            "pairs": 69
+          },
+          {
+            "source_term": "implement",
+            "misses": 34,
+            "pairs": 34
+          },
+          {
+            "source_term": "implementation",
+            "misses": 33,
+            "pairs": 33
+          },
+          {
+            "source_term": "scalar",
+            "misses": 25,
+            "pairs": 26
+          },
+          {
+            "source_term": "regularization",
+            "misses": 22,
+            "pairs": 22
+          },
+          {
+            "source_term": "key",
+            "misses": 19,
+            "pairs": 21
+          },
+          {
+            "source_term": "performance",
+            "misses": 18,
+            "pairs": 18
+          },
+          {
+            "source_term": "recall",
+            "misses": 18,
+            "pairs": 18
+          },
+          {
+            "source_term": "vector",
+            "misses": 18,
+            "pairs": 85
+          },
+          {
+            "source_term": "elementwise",
+            "misses": 17,
+            "pairs": 17
+          },
+          {
+            "source_term": "gradient descent",
+            "misses": 13,
+            "pairs": 23
+          },
+          {
+            "source_term": "penalty",
+            "misses": 13,
+            "pairs": 13
+          },
+          {
+            "source_term": "stochastic gradient descent",
+            "misses": 10,
+            "pairs": 20
+          },
+          {
+            "source_term": "scale",
+            "misses": 8,
+            "pairs": 8
+          },
+          {
+            "source_term": "validation set",
+            "misses": 8,
+            "pairs": 8
+          },
+          {
+            "source_term": "batch",
+            "misses": 7,
+            "pairs": 18
+          },
+          {
+            "source_term": "population",
+            "misses": 7,
+            "pairs": 7
+          },
+          {
+            "source_term": "agent",
+            "misses": 6,
+            "pairs": 6
+          },
+          {
+            "source_term": "batch size",
+            "misses": 6,
+            "pairs": 11
+          }
+        ]
+      },
+      "recurring": {
+        "overall": 0.751962,
+        "pairs": 2294,
+        "adherent_pairs": 1725,
+        "occurrence_weighted": 0.764027,
+        "occurrences": 3119,
+        "per_chapter": {
+          "d2l_introduction": 0.753541,
+          "d2l_linear_networks": 0.759124,
+          "d2l_multilayer_perceptrons": 0.770694,
+          "d2l_preliminaries": 0.690608
+        },
+        "worst_terms": [
+          {
+            "source_term": "example",
+            "misses": 117,
+            "pairs": 131
+          },
+          {
+            "source_term": "layer",
+            "misses": 44,
+            "pairs": 69
+          },
+          {
+            "source_term": "implement",
+            "misses": 34,
+            "pairs": 34
+          },
+          {
+            "source_term": "implementation",
+            "misses": 33,
+            "pairs": 33
+          },
+          {
+            "source_term": "scalar",
+            "misses": 25,
+            "pairs": 26
+          },
+          {
+            "source_term": "regularization",
+            "misses": 22,
+            "pairs": 22
+          },
+          {
+            "source_term": "key",
+            "misses": 19,
+            "pairs": 21
+          },
+          {
+            "source_term": "performance",
+            "misses": 18,
+            "pairs": 18
+          },
+          {
+            "source_term": "recall",
+            "misses": 18,
+            "pairs": 18
+          },
+          {
+            "source_term": "vector",
+            "misses": 18,
+            "pairs": 85
+          },
+          {
+            "source_term": "elementwise",
+            "misses": 17,
+            "pairs": 17
+          },
+          {
+            "source_term": "gradient descent",
+            "misses": 13,
+            "pairs": 23
+          },
+          {
+            "source_term": "penalty",
+            "misses": 13,
+            "pairs": 13
+          },
+          {
+            "source_term": "stochastic gradient descent",
+            "misses": 10,
+            "pairs": 20
+          },
+          {
+            "source_term": "scale",
+            "misses": 8,
+            "pairs": 8
+          },
+          {
+            "source_term": "validation set",
+            "misses": 8,
+            "pairs": 8
+          },
+          {
+            "source_term": "batch",
+            "misses": 7,
+            "pairs": 18
+          },
+          {
+            "source_term": "population",
+            "misses": 7,
+            "pairs": 7
+          },
+          {
+            "source_term": "agent",
+            "misses": 6,
+            "pairs": 6
+          },
+          {
+            "source_term": "batch size",
+            "misses": 6,
+            "pairs": 11
+          }
+        ]
+      }
+    },
+    "S1": {
+      "flat": {
+        "overall": 0.817167,
+        "pairs": 2330,
+        "adherent_pairs": 1904,
+        "occurrence_weighted": 0.832013,
+        "occurrences": 3155,
+        "per_chapter": {
+          "d2l_introduction": 0.847411,
+          "d2l_linear_networks": 0.821997,
+          "d2l_multilayer_perceptrons": 0.812362,
+          "d2l_preliminaries": 0.789617
+        },
+        "worst_terms": [
+          {
+            "source_term": "layer",
+            "misses": 64,
+            "pairs": 69
+          },
+          {
+            "source_term": "example",
+            "misses": 60,
+            "pairs": 131
+          },
+          {
+            "source_term": "implement",
+            "misses": 34,
+            "pairs": 34
+          },
+          {
+            "source_term": "implementation",
+            "misses": 33,
+            "pairs": 33
+          },
+          {
+            "source_term": "scalar",
+            "misses": 26,
+            "pairs": 26
+          },
+          {
+            "source_term": "performance",
+            "misses": 18,
+            "pairs": 18
+          },
+          {
+            "source_term": "key",
+            "misses": 18,
+            "pairs": 21
+          },
+          {
+            "source_term": "recall",
+            "misses": 18,
+            "pairs": 18
+          },
+          {
+            "source_term": "framework",
+            "misses": 16,
+            "pairs": 16
+          },
+          {
+            "source_term": "penalty",
+            "misses": 13,
+            "pairs": 13
+          },
+          {
+            "source_term": "vector",
+            "misses": 11,
+            "pairs": 85
+          },
+          {
+            "source_term": "scale",
+            "misses": 8,
+            "pairs": 8
+          },
+          {
+            "source_term": "validation set",
+            "misses": 8,
+            "pairs": 8
+          },
+          {
+            "source_term": "regularization",
+            "misses": 7,
+            "pairs": 22
+          },
+          {
+            "source_term": "population",
+            "misses": 7,
+            "pairs": 7
+          },
+          {
+            "source_term": "marginalization",
+            "misses": 6,
+            "pairs": 6
+          },
+          {
+            "source_term": "Gaussian noise",
+            "misses": 5,
+            "pairs": 5
+          },
+          {
+            "source_term": "heuristic",
+            "misses": 5,
+            "pairs": 5
+          },
+          {
+            "source_term": "switch",
+            "misses": 4,
+            "pairs": 4
+          },
+          {
+            "source_term": "end-to-end",
+            "misses": 4,
+            "pairs": 4
+          }
+        ]
+      },
+      "recurring": {
+        "overall": 0.819529,
+        "pairs": 2294,
+        "adherent_pairs": 1880,
+        "occurrence_weighted": 0.833921,
+        "occurrences": 3119,
+        "per_chapter": {
+          "d2l_introduction": 0.852691,
+          "d2l_linear_networks": 0.823358,
+          "d2l_multilayer_perceptrons": 0.814318,
+          "d2l_preliminaries": 0.792818
+        },
+        "worst_terms": [
+          {
+            "source_term": "layer",
+            "misses": 64,
+            "pairs": 69
+          },
+          {
+            "source_term": "example",
+            "misses": 60,
+            "pairs": 131
+          },
+          {
+            "source_term": "implement",
+            "misses": 34,
+            "pairs": 34
+          },
+          {
+            "source_term": "implementation",
+            "misses": 33,
+            "pairs": 33
+          },
+          {
+            "source_term": "scalar",
+            "misses": 26,
+            "pairs": 26
+          },
+          {
+            "source_term": "performance",
+            "misses": 18,
+            "pairs": 18
+          },
+          {
+            "source_term": "key",
+            "misses": 18,
+            "pairs": 21
+          },
+          {
+            "source_term": "recall",
+            "misses": 18,
+            "pairs": 18
+          },
+          {
+            "source_term": "framework",
+            "misses": 16,
+            "pairs": 16
+          },
+          {
+            "source_term": "penalty",
+            "misses": 13,
+            "pairs": 13
+          },
+          {
+            "source_term": "vector",
+            "misses": 11,
+            "pairs": 85
+          },
+          {
+            "source_term": "scale",
+            "misses": 8,
+            "pairs": 8
+          },
+          {
+            "source_term": "validation set",
+            "misses": 8,
+            "pairs": 8
+          },
+          {
+            "source_term": "regularization",
+            "misses": 7,
+            "pairs": 22
+          },
+          {
+            "source_term": "population",
+            "misses": 7,
+            "pairs": 7
+          },
+          {
+            "source_term": "marginalization",
+            "misses": 6,
+            "pairs": 6
+          },
+          {
+            "source_term": "Gaussian noise",
+            "misses": 5,
+            "pairs": 5
+          },
+          {
+            "source_term": "heuristic",
+            "misses": 5,
+            "pairs": 5
+          },
+          {
+            "source_term": "switch",
+            "misses": 4,
+            "pairs": 4
+          },
+          {
+            "source_term": "end-to-end",
+            "misses": 4,
+            "pairs": 4
+          }
+        ]
+      }
+    }
+  },
+  "D_registry_consistency": {
+    "S0": {
+      "overall": 0.593007,
+      "detected_only": 0.616279,
+      "terms": 715,
+      "consistent_terms": 424,
+      "drift_terms": 264,
+      "undetected_terms": 27,
+      "worst_terms": [
+        {
+          "source_term": "AI",
+          "target_term": "trí tuệ nhân tạo",
+          "source_blocks": 80,
+          "status": "drift",
+          "forms_used": {
+            "trí tuệ nhân tạo": 2,
+            "AI": 80
+          }
+        },
+        {
+          "source_term": "Axioms of Probability Theory",
+          "target_term": "tiên đề của lý thuyết xác suất",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "tiên đề của lý thuyết xác suất": 2,
+            "các tiên đề của lý thuyết xác suất": 2
+          }
+        },
+        {
+          "source_term": "Backward Propagation",
+          "target_term": "lan truyền ngược",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "lan truyền ngược": 4,
+            "truyền ngược": 4
+          }
+        },
+        {
+          "source_term": "Classification",
+          "target_term": "phân loại",
+          "source_blocks": 43,
+          "status": "drift",
+          "forms_used": {
+            "phân loại": 43,
+            "bài toán phân loại": 19
+          }
+        },
+        {
+          "source_term": "Dataset Size",
+          "target_term": "Kích thước tập dữ liệu",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "kích thước bộ dữ liệu": 1,
+            "Kích thước tập dữ liệu": 1
+          }
+        },
+        {
+          "source_term": "Huber's loss",
+          "target_term": "mất mát Huber",
+          "source_blocks": 3,
+          "status": "undetected",
+          "forms_used": {}
+        },
+        {
+          "source_term": "Initialization",
+          "target_term": "khởi tạo",
+          "source_blocks": 22,
+          "status": "drift",
+          "forms_used": {
+            "khởi tạo": 22,
+            "khởi tạo tham số": 8
+          }
+        },
+        {
+          "source_term": "MLP",
+          "target_term": "MLP",
+          "source_blocks": 15,
+          "status": "drift",
+          "forms_used": {
+            "MLP": 15,
+            "perceptron nhiều lớp": 1
+          }
+        },
+        {
+          "source_term": "Matrix-Vector Products",
+          "target_term": "tích ma trận-vectơ",
+          "source_blocks": 9,
+          "status": "drift",
+          "forms_used": {
+            "tích ma trận-vectơ": 5,
+            "phép nhân ma trận-vectơ": 1
+          }
+        },
+        {
+          "source_term": "Minibatch Stochastic Gradient Descent",
+          "target_term": "hạ gradient ngẫu nhiên theo minibatch",
+          "source_blocks": 15,
+          "status": "drift",
+          "forms_used": {
+            "hạ gradient ngẫu nhiên theo minibatch": 7,
+            "gradient descent ngẫu nhiên theo minibatch": 4
+          }
+        },
+        {
+          "source_term": "Operations",
+          "target_term": "phép toán",
+          "source_blocks": 26,
+          "status": "drift",
+          "forms_used": {
+            "phép toán": 23,
+            "toán tử": 5
+          }
+        },
+        {
+          "source_term": "Regression",
+          "target_term": "hồi quy",
+          "source_blocks": 83,
+          "status": "drift",
+          "forms_used": {
+            "hồi quy": 82,
+            "bài toán hồi quy": 9
+          }
+        },
+        {
+          "source_term": "absolute value",
+          "target_term": "giá trị tuyệt đối",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "giá trị tuyệt đối": 2,
+            "trị tuyệt đối": 2
+          }
+        },
+        {
+          "source_term": "accuracy",
+          "target_term": "độ chính xác",
+          "source_blocks": 23,
+          "status": "drift",
+          "forms_used": {
+            "độ chính xác": 23,
+            "chính xác": 23
+          }
+        },
+        {
+          "source_term": "actions",
+          "target_term": "hành động",
+          "source_blocks": 13,
+          "status": "drift",
+          "forms_used": {
+            "hành động": 13,
+            "các hành động": 8
+          }
+        },
+        {
+          "source_term": "activation functions",
+          "target_term": "các hàm kích hoạt",
+          "source_blocks": 10,
+          "status": "drift",
+          "forms_used": {
+            "các hàm kích hoạt": 9,
+            "hàm kích hoạt": 10
+          }
+        },
+        {
+          "source_term": "additive noise",
+          "target_term": "nhiễu cộng",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "nhiễu cộng": 2,
+            "nhiễu cộng thêm": 2
+          }
+        },
+        {
+          "source_term": "affine transformation",
+          "target_term": "biến đổi affine",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "biến đổi affine": 5,
+            "phép biến đổi affine": 3
+          }
+        },
+        {
+          "source_term": "affine transformations",
+          "target_term": "biến đổi affine",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "biến đổi affine": 2,
+            "phép biến đổi affine": 2
+          }
+        },
+        {
+          "source_term": "age",
+          "target_term": "tuổi",
+          "source_blocks": 8,
+          "status": "drift",
+          "forms_used": {
+            "tuổi": 7,
+            "độ tuổi": 1
+          }
+        },
+        {
+          "source_term": "agent",
+          "target_term": "tác nhân",
+          "source_blocks": 6,
+          "status": "undetected",
+          "forms_used": {}
+        },
+        {
+          "source_term": "architecture",
+          "target_term": "kiến trúc",
+          "source_blocks": 8,
+          "status": "drift",
+          "forms_used": {
+            "kiến trúc": 8,
+            "kiến trúc mô hình": 3
+          }
+        },
+        {
+          "source_term": "attributes",
+          "target_term": "thuộc tính",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "thuộc tính": 5,
+            "đặc trưng": 2
+          }
+        },
+        {
+          "source_term": "automated",
+          "target_term": "tự động hóa",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "tự động": 4,
+            "tự động hóa": 1
+          }
+        },
+        {
+          "source_term": "automatic differentiation",
+          "target_term": "tự động vi phân",
+          "source_blocks": 6,
+          "status": "drift",
+          "forms_used": {
+            "vi phân tự động": 4,
+            "tự động vi phân": 2
+          }
+        },
+        {
+          "source_term": "average",
+          "target_term": "trung bình",
+          "source_blocks": 13,
+          "status": "drift",
+          "forms_used": {
+            "trung bình": 12,
+            "lấy trung bình": 3
+          }
+        },
+        {
+          "source_term": "average loss",
+          "target_term": "loss trung bình",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "loss trung bình": 2,
+            "mất mát trung bình": 2
+          }
+        },
+        {
+          "source_term": "axes",
+          "target_term": "trục",
+          "source_blocks": 15,
+          "status": "drift",
+          "forms_used": {
+            "trục": 15,
+            "chiều": 6
+          }
+        },
+        {
+          "source_term": "axis",
+          "target_term": "trục",
+          "source_blocks": 19,
+          "status": "drift",
+          "forms_used": {
+            "trục": 19,
+            "chiều": 11
+          }
+        },
+        {
+          "source_term": "axon",
+          "target_term": "sợi trục",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {}
+        }
+      ]
+    },
+    "S1": {
+      "overall": 0.700699,
+      "detected_only": 0.701681,
+      "terms": 715,
+      "consistent_terms": 501,
+      "drift_terms": 213,
+      "undetected_terms": 1,
+      "worst_terms": [
+        {
+          "source_term": "AI",
+          "target_term": "trí tuệ nhân tạo",
+          "source_blocks": 80,
+          "status": "drift",
+          "forms_used": {
+            "trí tuệ nhân tạo": 10,
+            "AI": 71
+          }
+        },
+        {
+          "source_term": "Axioms of Probability Theory",
+          "target_term": "tiên đề của lý thuyết xác suất",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "tiên đề của lý thuyết xác suất": 2,
+            "các tiên đề của lý thuyết xác suất": 1
+          }
+        },
+        {
+          "source_term": "Backward Propagation",
+          "target_term": "lan truyền ngược",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "lan truyền ngược": 4,
+            "truyền ngược": 4
+          }
+        },
+        {
+          "source_term": "Classification",
+          "target_term": "phân loại",
+          "source_blocks": 43,
+          "status": "drift",
+          "forms_used": {
+            "phân loại": 43,
+            "bài toán phân loại": 17
+          }
+        },
+        {
+          "source_term": "Initialization",
+          "target_term": "khởi tạo",
+          "source_blocks": 22,
+          "status": "drift",
+          "forms_used": {
+            "khởi tạo": 22,
+            "khởi tạo tham số": 9
+          }
+        },
+        {
+          "source_term": "Operations",
+          "target_term": "phép toán",
+          "source_blocks": 26,
+          "status": "drift",
+          "forms_used": {
+            "phép toán": 26,
+            "toán tử": 5
+          }
+        },
+        {
+          "source_term": "Reduction",
+          "target_term": "phép giảm",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "phép giảm": 1,
+            "giảm": 3
+          }
+        },
+        {
+          "source_term": "Regression",
+          "target_term": "hồi quy",
+          "source_blocks": 83,
+          "status": "drift",
+          "forms_used": {
+            "hồi quy": 82,
+            "bài toán hồi quy": 9
+          }
+        },
+        {
+          "source_term": "absolute value",
+          "target_term": "giá trị tuyệt đối",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "giá trị tuyệt đối": 2,
+            "trị tuyệt đối": 2
+          }
+        },
+        {
+          "source_term": "accuracy",
+          "target_term": "độ chính xác",
+          "source_blocks": 23,
+          "status": "drift",
+          "forms_used": {
+            "độ chính xác": 23,
+            "chính xác": 23
+          }
+        },
+        {
+          "source_term": "actions",
+          "target_term": "hành động",
+          "source_blocks": 13,
+          "status": "drift",
+          "forms_used": {
+            "hành động": 13,
+            "các hành động": 7
+          }
+        },
+        {
+          "source_term": "activation functions",
+          "target_term": "các hàm kích hoạt",
+          "source_blocks": 10,
+          "status": "drift",
+          "forms_used": {
+            "các hàm kích hoạt": 10,
+            "hàm kích hoạt": 10
+          }
+        },
+        {
+          "source_term": "architecture",
+          "target_term": "kiến trúc",
+          "source_blocks": 8,
+          "status": "drift",
+          "forms_used": {
+            "kiến trúc": 8,
+            "kiến trúc mô hình": 3
+          }
+        },
+        {
+          "source_term": "attributes",
+          "target_term": "thuộc tính",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "thuộc tính": 5,
+            "đặc trưng": 2
+          }
+        },
+        {
+          "source_term": "automated",
+          "target_term": "tự động hóa",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "tự động hóa": 4,
+            "tự động": 4
+          }
+        },
+        {
+          "source_term": "average",
+          "target_term": "trung bình",
+          "source_blocks": 13,
+          "status": "drift",
+          "forms_used": {
+            "trung bình": 13,
+            "lấy trung bình": 3
+          }
+        },
+        {
+          "source_term": "axes",
+          "target_term": "trục",
+          "source_blocks": 15,
+          "status": "drift",
+          "forms_used": {
+            "trục": 15,
+            "chiều": 6
+          }
+        },
+        {
+          "source_term": "axis",
+          "target_term": "trục",
+          "source_blocks": 19,
+          "status": "drift",
+          "forms_used": {
+            "trục": 19,
+            "chiều": 11
+          }
+        },
+        {
+          "source_term": "axon",
+          "target_term": "sợi trục",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "sợi trục": 2,
+            "trục": 2
+          }
+        },
+        {
+          "source_term": "backpropagation",
+          "target_term": "lan truyền ngược",
+          "source_blocks": 22,
+          "status": "drift",
+          "forms_used": {
+            "lan truyền ngược": 22,
+            "truyền ngược": 22,
+            "quá trình lan truyền ngược": 2,
+            "backpropagation": 1
+          }
+        },
+        {
+          "source_term": "broadcasting mechanism",
+          "target_term": "cơ chế broadcasting",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "cơ chế broadcasting": 4,
+            "broadcasting": 4
+          }
+        },
+        {
+          "source_term": "calculus",
+          "target_term": "giải tích",
+          "source_blocks": 7,
+          "status": "drift",
+          "forms_used": {
+            "giải tích": 7,
+            "phép tính": 1
+          }
+        },
+        {
+          "source_term": "categories",
+          "target_term": "hạng mục",
+          "source_blocks": 19,
+          "status": "drift",
+          "forms_used": {
+            "hạng mục": 19,
+            "các hạng": 9,
+            "lớp": 6,
+            "các lớp": 3
+          }
+        },
+        {
+          "source_term": "category",
+          "target_term": "hạng mục",
+          "source_blocks": 9,
+          "status": "drift",
+          "forms_used": {
+            "hạng mục": 9,
+            "lớp": 4
+          }
+        },
+        {
+          "source_term": "channels",
+          "target_term": "kênh",
+          "source_blocks": 3,
+          "status": "drift",
+          "forms_used": {
+            "kênh": 3,
+            "số kênh": 1
+          }
+        },
+        {
+          "source_term": "class",
+          "target_term": "lớp",
+          "source_blocks": 44,
+          "status": "drift",
+          "forms_used": {
+            "lớp": 44,
+            "nhãn": 10,
+            "hạng": 6
+          }
+        },
+        {
+          "source_term": "classes",
+          "target_term": "lớp",
+          "source_blocks": 24,
+          "status": "drift",
+          "forms_used": {
+            "lớp": 24,
+            "hạng": 7
+          }
+        },
+        {
+          "source_term": "coefficients",
+          "target_term": "hệ số",
+          "source_blocks": 3,
+          "status": "drift",
+          "forms_used": {
+            "hệ số": 3,
+            "tham số": 1
+          }
+        },
+        {
+          "source_term": "components",
+          "target_term": "thành phần",
+          "source_blocks": 12,
+          "status": "drift",
+          "forms_used": {
+            "thành phần": 12,
+            "phần tử": 1
+          }
+        },
+        {
+          "source_term": "covariates",
+          "target_term": "biến đồng biến",
+          "source_blocks": 3,
+          "status": "drift",
+          "forms_used": {
+            "biến đồng biến": 3,
+            "hiệp biến": 1
+          }
+        }
+      ]
+    }
+  },
+  "A_tar_vs_registry": {
+    "S1": {
+      "overall": 0.934256,
+      "pairs": 8594,
+      "adherent_pairs": 8029,
+      "occurrence_weighted": 0.943596,
+      "occurrences": 11329,
+      "per_chapter": {
+        "d2l_introduction": 0.951538,
+        "d2l_linear_networks": 0.937346,
+        "d2l_multilayer_perceptrons": 0.928503,
+        "d2l_preliminaries": 0.927283
+      },
+      "worst_terms": [
+        {
+          "source_term": "AI",
+          "misses": 70,
+          "pairs": 80
+        },
+        {
+          "source_term": "example",
+          "misses": 60,
+          "pairs": 131
+        },
+        {
+          "source_term": "set",
+          "misses": 57,
+          "pairs": 100
+        },
+        {
+          "source_term": "label",
+          "misses": 50,
+          "pairs": 102
+        },
+        {
+          "source_term": "generalization",
+          "misses": 13,
+          "pairs": 18
+        },
+        {
+          "source_term": "target",
+          "misses": 12,
+          "pairs": 16
+        },
+        {
+          "source_term": "network",
+          "misses": 11,
+          "pairs": 58
+        },
+        {
+          "source_term": "vector",
+          "misses": 11,
+          "pairs": 85
+        },
+        {
+          "source_term": "mean",
+          "misses": 9,
+          "pairs": 38
+        },
+        {
+          "source_term": "problem",
+          "misses": 9,
+          "pairs": 81
+        },
+        {
+          "source_term": "risk",
+          "misses": 8,
+          "pairs": 26
+        },
+        {
+          "source_term": "examples",
+          "misses": 8,
+          "pairs": 87
+        },
+        {
+          "source_term": "dataset",
+          "misses": 8,
+          "pairs": 105
+        },
+        {
+          "source_term": "optimization",
+          "misses": 8,
+          "pairs": 39
+        },
+        {
+          "source_term": "loss",
+          "misses": 8,
+          "pairs": 91
+        },
+        {
+          "source_term": "bit",
+          "misses": 7,
+          "pairs": 8
+        },
+        {
+          "source_term": "minibatches",
+          "misses": 7,
+          "pairs": 10
+        },
+        {
+          "source_term": "epsilon",
+          "misses": 7,
+          "pairs": 9
+        },
+        {
+          "source_term": "framework",
+          "misses": 7,
+          "pairs": 16
+        },
+        {
+          "source_term": "regularization",
+          "misses": 7,
+          "pairs": 22
+        }
+      ]
+    }
+  },
+  "injection": {
+    "registry": {
+      "raw_registry": 1608,
+      "translation_eligible": 747,
+      "preserve_count": 239,
+      "hapax_dropped": 622
+    },
+    "packs": {
+      "windows": 169,
+      "injected_terms_min": 7,
+      "injected_terms_avg": 34.9704,
+      "injected_terms_max": 74
+    }
+  },
+  "stage_gate": {
+    "no_passthrough_translated": {
+      "S0": true,
+      "S1": true
+    },
+    "scope_equals_translation_runs": {
+      "S0": true,
+      "S1": true
+    },
+    "preserve_terms_excluded_from_injection": true,
+    "eligible_terms_have_occurrences_ge_2": true,
+    "manual_passthrough_audit_required": true
+  },
+  "samples": {
+    "translated": [
+      {
+        "block_id": "d2l_introduction_index_b001",
+        "source": "# Introduction\n:label:`chap_introduction`",
+        "S0": "# Giới thiệu :label:`chap_introduction`",
+        "S1": "# Giới thiệu :label:`chap_introduction`"
+      },
+      {
+        "block_id": "d2l_introduction_index_b002",
+        "source": "Until recently, nearly every computer program that we interact with daily\nwas coded by software developers from first principles.\nSay that we wanted to write an application to manage an e-commerce platform.\nAfter huddling around a whiteboard for a few hours to ponder the problem,\nwe would come up with the broad strokes of a working solution that might probably look something like this:\n(i) users interact with the application through an interface\nrunning in a web browser or mobile application;\n(i",
+        "S0": "Cho đến gần đây, gần như mọi chương trình máy tính mà chúng ta tương tác hằng ngày đều được các nhà phát triển phần mềm viết từ những nguyên lý đầu tiên. Giả sử rằng chúng ta muốn viết một ứng dụng để quản lý một nền tảng thương mại điện tử. Sau khi tụ tập quanh một bảng trắng trong vài giờ để suy nghĩ về vấn đề, chúng ta sẽ đưa ra những nét khái quát của một giải pháp hoạt động, có lẽ sẽ trông giống như sau: (i) người dùng tương tác với ứng dụng thông qua một giao diện chạy trong trình duyệt we",
+        "S1": "Cho đến gần đây, gần như mọi chương trình máy tính mà chúng ta tương tác hằng ngày đều được các nhà phát triển phần mềm viết từ nguyên lý cơ bản. Giả sử rằng chúng ta muốn viết một ứng dụng để quản lý một nền tảng thương mại điện tử. Sau khi tụ tập quanh một bảng trắng trong vài giờ để suy nghĩ về bài toán, chúng ta sẽ đưa ra những nét chính của một giải pháp hoạt động, có lẽ sẽ trông giống như sau: (i) người dùng tương tác với ứng dụng thông qua một giao diện chạy trong trình duyệt web hoặc ứng"
+      },
+      {
+        "block_id": "d2l_introduction_index_b003",
+        "source": "To build the brains of our application,\nwe would have to step through every possible corner case\nthat we anticipate encountering, devising appropriate rules.\nEach time a customer clicks to add an item to their shopping cart,\nwe add an entry to the shopping cart database table,\nassociating that user's ID with the requested product's ID.\nWhile few developers ever get it completely right the first time\n(it might take some test runs to work out the kinks),\nfor the most part, we could write such a pr",
+        "S0": "Để xây dựng bộ não của ứng dụng, chúng ta sẽ phải lần lượt xem xét mọi trường hợp biên có thể gặp, và đề ra các quy tắc phù hợp. Mỗi khi khách hàng nhấp để thêm một mặt hàng vào giỏ hàng của họ, chúng ta thêm một mục vào bảng cơ sở dữ liệu giỏ hàng, liên kết ID của người dùng đó với ID của sản phẩm được yêu cầu. Mặc dù rất ít nhà phát triển làm đúng hoàn toàn ngay từ lần đầu tiên (có thể cần vài lần chạy thử để khắc phục các lỗi nhỏ), phần lớn chúng ta có thể viết một chương trình như vậy từ nhữ",
+        "S1": "Để xây dựng bộ não của ứng dụng, chúng ta sẽ phải đi qua mọi trường hợp biên có thể gặp, và đề ra các luật phù hợp. Mỗi khi một khách hàng nhấp để thêm một mục vào giỏ hàng của họ, chúng ta thêm một mục vào bảng cơ sở dữ liệu giỏ hàng, liên kết ID của người dùng đó với ID của sản phẩm được yêu cầu. Mặc dù rất ít nhà phát triển làm đúng hoàn toàn ngay từ lần đầu tiên (có thể cần vài lần chạy thử để khắc phục các lỗi nhỏ), nhưng phần lớn, chúng ta có thể viết một chương trình như vậy từ nguyên lý "
+      },
+      {
+        "block_id": "d2l_introduction_index_b004",
+        "source": "Fortunately for the growing community of machine learning scientists,\nmany tasks that we would like to automate\ndo not bend so easily to human ingenuity.\nImagine huddling around the whiteboard with the smartest minds you know,\nbut this time you are tackling one of the following problems:",
+        "S0": "May mắn cho cộng đồng các nhà khoa học học máy đang ngày càng lớn mạnh, nhiều nhiệm vụ mà chúng ta muốn tự động hóa lại không dễ dàng khuất phục trước trí tuệ con người đến vậy. Hãy tưởng tượng tụ tập quanh bảng trắng với những bộ óc thông minh nhất mà bạn biết, nhưng lần này bạn đang giải quyết một trong những vấn đề sau:",
+        "S1": "May mắn cho cộng đồng các nhà khoa học học máy đang phát triển, nhiều nhiệm vụ mà chúng ta muốn tự động hóa lại không dễ dàng khuất phục trước trí tuệ con người đến vậy. Hãy tưởng tượng tụ tập quanh bảng trắng với những bộ óc thông minh nhất mà bạn biết, nhưng lần này bạn đang giải quyết một trong những bài toán sau:"
+      },
+      {
+        "block_id": "d2l_introduction_index_b005",
+        "source": "* Write a program that predicts tomorrow's weather given geographic information, satellite images, and a trailing window of past weather.\n* Write a program that takes in a question, expressed in free-form text, and  answers it correctly.\n* Write a program that given an image can identify all the people it contains,  drawing outlines around each.\n* Write a program that presents users with products that they are likely to   enjoy but unlikely, in the natural course of browsing, to encounter.",
+        "S0": "* Viết một chương trình dự đoán thời tiết ngày mai dựa trên thông tin địa lý, ảnh vệ tinh, và một cửa sổ trượt của dữ liệu thời tiết trong quá khứ. * Viết một chương trình nhận vào một câu hỏi, được diễn đạt bằng văn bản tự do, và trả lời chính xác. * Viết một chương trình, khi được đưa một hình ảnh, có thể nhận diện tất cả những người trong đó, vẽ đường viền quanh từng người. * Viết một chương trình trình bày cho người dùng những sản phẩm mà họ có khả năng thích nhưng khó có thể, trong quá trìn",
+        "S1": "* Viết một chương trình dự đoán thời tiết ngày mai dựa trên thông tin địa lý, ảnh vệ tinh, và một cửa sổ trượt của thời tiết trong quá khứ. * Viết một chương trình nhận vào một câu hỏi, được diễn đạt bằng văn bản tự do, và trả lời đúng. * Viết một chương trình, khi được cung cấp một ảnh, có thể xác định tất cả những người có trong đó, vẽ đường viền quanh từng người. * Viết một chương trình trình bày cho người dùng các sản phẩm mà họ có khả năng thích nhưng khó có thể, trong quá trình duyệt tự nh"
+      }
+    ],
+    "passthrough_audit": [
+      {
+        "block_id": "d2l_introduction_index_b010",
+        "block_type": "image",
+        "source": "![Identify a wake word.](../img/wake-word.svg)\n:label:`fig_wake_word`"
+      },
+      {
+        "block_id": "d2l_introduction_index_b017",
+        "block_type": "image",
+        "source": "![A typical training process.](../img/ml-loop.svg)\n:label:`fig_ml_loop`"
+      },
+      {
+        "block_id": "d2l_introduction_index_b047",
+        "block_type": "image",
+        "source": "![Supervised learning.](../img/supervised-learning.svg)\n:label:`fig_supervised_learning`"
+      },
+      {
+        "block_id": "d2l_introduction_index_b061",
+        "block_type": "image",
+        "source": "![Death cap---do not eat!](../img/death-cap.jpg)\n:width:`200px`\n:label:`fig_death_cap`"
+      },
+      {
+        "block_id": "d2l_introduction_index_b067",
+        "block_type": "image",
+        "source": "![A donkey, a dog, a cat, and a rooster.](../img/stackedanimals.png)\n:width:`300px`\n:label:`fig_stackedanimals`"
+      }
+    ]
+  },
+  "limitations": [
+    "D v1 detects drift only among registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
+    "Caption/image/label blocks are passthrough by P3 design and excluded from B/D denominators."
+  ]
+}

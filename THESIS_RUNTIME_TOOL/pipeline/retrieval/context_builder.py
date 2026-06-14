@@ -9,6 +9,11 @@ from itertools import combinations
 from typing import Any
 
 from pipeline.eval.thesis_scoring import normalize_apostrophe
+from pipeline.translate.profiles import (
+    get_profile,
+    injection_role_for_term,
+    term_is_injection_eligible,
+)
 
 
 @dataclass(frozen=True)
@@ -101,7 +106,12 @@ class _ContextItem:
     required: bool = False
 
 
-def plan_anchors(conn: sqlite3.Connection, window_blocks: list[dict[str, Any]]) -> Anchors:
+def plan_anchors(
+    conn: sqlite3.Connection,
+    window_blocks: list[dict[str, Any]],
+    *,
+    profile_name: str = "literary_v1",
+) -> Anchors:
     """Scan a window for glossary/entity anchors without dumping the registry."""
 
     block_ids = [str(block.get("block_id") or "") for block in window_blocks]
@@ -123,8 +133,9 @@ def plan_anchors(conn: sqlite3.Connection, window_blocks: list[dict[str, Any]]) 
             has_dialogue=has_dialogue,
         )
 
-    terms = _load_terms(conn, doc_id)
-    entities = _load_entities(conn, doc_id)
+    profile = get_profile(profile_name)
+    terms = _load_terms(conn, doc_id, profile_name=profile_name)
+    entities = _load_entities(conn, doc_id) if profile.inject_entities else []
 
     for block in window_blocks:
         block_id = str(block.get("block_id") or "")
@@ -380,16 +391,67 @@ def _missing_coverage(
     return expected - included_ids - dropped_ids
 
 
-def _load_terms(conn: sqlite3.Connection, doc_id: str) -> list[sqlite3.Row]:
-    return conn.execute(
+def registry_injection_stats(
+    conn: sqlite3.Connection,
+    doc_id: str,
+    *,
+    profile_name: str = "literary_v1",
+) -> dict[str, int]:
+    profile = get_profile(profile_name)
+    rows = conn.execute(
         """
-        SELECT glossary_id, source_term
+        SELECT glossary_id, source_term, target_term, term_type, do_not_translate,
+               occurrences_count
         FROM glossary_entries
         WHERE doc_id = ?
         ORDER BY LENGTH(source_term) DESC, source_term
         """,
         (doc_id,),
     ).fetchall()
+    raw = 0
+    eligible = 0
+    preserve = 0
+    hapax_dropped = 0
+    for row in rows:
+        raw += 1
+        item = dict(row)
+        role = injection_role_for_term(item)
+        if role == "preserve":
+            preserve += 1
+        if role == "translate" and int(item.get("occurrences_count") or 0) < profile.min_injection_occurrences:
+            hapax_dropped += 1
+        if term_is_injection_eligible(item, profile):
+            eligible += 1
+    return {
+        "raw_registry": raw,
+        "translation_eligible": eligible,
+        "preserve_count": preserve,
+        "hapax_dropped": hapax_dropped,
+    }
+
+
+def _load_terms(
+    conn: sqlite3.Connection,
+    doc_id: str,
+    *,
+    profile_name: str = "literary_v1",
+) -> list[dict[str, Any]]:
+    profile = get_profile(profile_name)
+    rows = conn.execute(
+        """
+        SELECT glossary_id, source_term, target_term, term_type, do_not_translate,
+               occurrences_count
+        FROM glossary_entries
+        WHERE doc_id = ?
+        ORDER BY LENGTH(source_term) DESC, source_term
+        """,
+        (doc_id,),
+    ).fetchall()
+    return [
+        dict(row)
+        for row in rows
+        if term_is_injection_eligible(dict(row), profile)
+    ]
 
 
 def _load_entities(conn: sqlite3.Connection, doc_id: str) -> list[sqlite3.Row]:

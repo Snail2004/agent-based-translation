@@ -1,0 +1,1293 @@
+{
+  "scored_at": "2026-06-14T12:20:11.516234+00:00",
+  "metric_version": "d2l_translate_score_v1",
+  "experiment_id": "d2l_p3",
+  "profile": "technical_d2l_v1",
+  "doc_id": "d2l",
+  "chapters": [
+    "d2l_preliminaries"
+  ],
+  "scope": {
+    "translated_block_types": {
+      "heading": 64,
+      "prose": 284
+    },
+    "passthrough_block_types": {
+      "code": 224,
+      "math_block": 3,
+      "image": 2
+    },
+    "all_block_types": {
+      "code": 224,
+      "heading": 64,
+      "image": 2,
+      "math_block": 3,
+      "prose": 284
+    },
+    "scope_blocks": 348,
+    "passthrough_blocks": 229,
+    "translation_counts": {
+      "S0": 348,
+      "S1": 348
+    },
+    "scope_equals_translation_runs": {
+      "S0": true,
+      "S1": true
+    }
+  },
+  "B_tar_vs_gold": {
+    "S0": {
+      "flat": {
+        "overall": 0.691257,
+        "pairs": 366,
+        "adherent_pairs": 253,
+        "occurrence_weighted": 0.710728,
+        "occurrences": 522,
+        "per_chapter": {
+          "d2l_preliminaries": 0.691257
+        },
+        "worst_terms": [
+          {
+            "source_term": "example",
+            "misses": 33,
+            "pairs": 35
+          },
+          {
+            "source_term": "scalar",
+            "misses": 18,
+            "pairs": 19
+          },
+          {
+            "source_term": "vector",
+            "misses": 15,
+            "pairs": 48
+          },
+          {
+            "source_term": "elementwise",
+            "misses": 13,
+            "pairs": 13
+          },
+          {
+            "source_term": "marginalization",
+            "misses": 4,
+            "pairs": 6
+          },
+          {
+            "source_term": "key",
+            "misses": 3,
+            "pairs": 3
+          },
+          {
+            "source_term": "automatic differentiation",
+            "misses": 2,
+            "pairs": 4
+          },
+          {
+            "source_term": "implementation",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "scale",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "prior",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "broadcast",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "population",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "joint distribution",
+            "misses": 2,
+            "pairs": 3
+          },
+          {
+            "source_term": "differentiable",
+            "misses": 1,
+            "pairs": 5
+          },
+          {
+            "source_term": "concatenate",
+            "misses": 1,
+            "pairs": 2
+          },
+          {
+            "source_term": "fit",
+            "misses": 1,
+            "pairs": 2
+          },
+          {
+            "source_term": "implement",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "metric",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "dimensionality",
+            "misses": 1,
+            "pairs": 4
+          },
+          {
+            "source_term": "dot product",
+            "misses": 1,
+            "pairs": 7
+          }
+        ]
+      },
+      "recurring": {
+        "overall": 0.693182,
+        "pairs": 352,
+        "adherent_pairs": 244,
+        "occurrence_weighted": 0.712598,
+        "occurrences": 508,
+        "per_chapter": {
+          "d2l_preliminaries": 0.693182
+        },
+        "worst_terms": [
+          {
+            "source_term": "example",
+            "misses": 33,
+            "pairs": 35
+          },
+          {
+            "source_term": "scalar",
+            "misses": 18,
+            "pairs": 19
+          },
+          {
+            "source_term": "vector",
+            "misses": 15,
+            "pairs": 48
+          },
+          {
+            "source_term": "elementwise",
+            "misses": 13,
+            "pairs": 13
+          },
+          {
+            "source_term": "marginalization",
+            "misses": 4,
+            "pairs": 6
+          },
+          {
+            "source_term": "key",
+            "misses": 3,
+            "pairs": 3
+          },
+          {
+            "source_term": "automatic differentiation",
+            "misses": 2,
+            "pairs": 4
+          },
+          {
+            "source_term": "implementation",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "scale",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "prior",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "broadcast",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "population",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "joint distribution",
+            "misses": 2,
+            "pairs": 3
+          },
+          {
+            "source_term": "differentiable",
+            "misses": 1,
+            "pairs": 5
+          },
+          {
+            "source_term": "concatenate",
+            "misses": 1,
+            "pairs": 2
+          },
+          {
+            "source_term": "fit",
+            "misses": 1,
+            "pairs": 2
+          },
+          {
+            "source_term": "dimensionality",
+            "misses": 1,
+            "pairs": 4
+          },
+          {
+            "source_term": "dot product",
+            "misses": 1,
+            "pairs": 7
+          },
+          {
+            "source_term": "norm",
+            "misses": 1,
+            "pairs": 15
+          },
+          {
+            "source_term": "data",
+            "misses": 1,
+            "pairs": 24
+          }
+        ]
+      }
+    },
+    "S1": {
+      "flat": {
+        "overall": 0.789617,
+        "pairs": 366,
+        "adherent_pairs": 289,
+        "occurrence_weighted": 0.821839,
+        "occurrences": 522,
+        "per_chapter": {
+          "d2l_preliminaries": 0.789617
+        },
+        "worst_terms": [
+          {
+            "source_term": "scalar",
+            "misses": 19,
+            "pairs": 19
+          },
+          {
+            "source_term": "example",
+            "misses": 18,
+            "pairs": 35
+          },
+          {
+            "source_term": "vector",
+            "misses": 8,
+            "pairs": 48
+          },
+          {
+            "source_term": "marginalization",
+            "misses": 6,
+            "pairs": 6
+          },
+          {
+            "source_term": "key",
+            "misses": 3,
+            "pairs": 3
+          },
+          {
+            "source_term": "implementation",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "scale",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "framework",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "prior",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "broadcast",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "population",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "implement",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "metric",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "elementwise",
+            "misses": 1,
+            "pairs": 13
+          },
+          {
+            "source_term": "recall",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "layer",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "norm",
+            "misses": 1,
+            "pairs": 15
+          },
+          {
+            "source_term": "query",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "data manipulation",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "end-to-end",
+            "misses": 1,
+            "pairs": 1
+          }
+        ]
+      },
+      "recurring": {
+        "overall": 0.798295,
+        "pairs": 352,
+        "adherent_pairs": 281,
+        "occurrence_weighted": 0.82874,
+        "occurrences": 508,
+        "per_chapter": {
+          "d2l_preliminaries": 0.798295
+        },
+        "worst_terms": [
+          {
+            "source_term": "scalar",
+            "misses": 19,
+            "pairs": 19
+          },
+          {
+            "source_term": "example",
+            "misses": 18,
+            "pairs": 35
+          },
+          {
+            "source_term": "vector",
+            "misses": 8,
+            "pairs": 48
+          },
+          {
+            "source_term": "marginalization",
+            "misses": 6,
+            "pairs": 6
+          },
+          {
+            "source_term": "key",
+            "misses": 3,
+            "pairs": 3
+          },
+          {
+            "source_term": "implementation",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "scale",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "framework",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "prior",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "broadcast",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "population",
+            "misses": 2,
+            "pairs": 2
+          },
+          {
+            "source_term": "elementwise",
+            "misses": 1,
+            "pairs": 13
+          },
+          {
+            "source_term": "layer",
+            "misses": 1,
+            "pairs": 1
+          },
+          {
+            "source_term": "norm",
+            "misses": 1,
+            "pairs": 15
+          },
+          {
+            "source_term": "data",
+            "misses": 1,
+            "pairs": 24
+          },
+          {
+            "source_term": "switch",
+            "misses": 1,
+            "pairs": 1
+          }
+        ]
+      }
+    }
+  },
+  "D_registry_consistency": {
+    "S0": {
+      "overall": 0.596413,
+      "detected_only": 0.615741,
+      "terms": 223,
+      "consistent_terms": 133,
+      "drift_terms": 83,
+      "undetected_terms": 7,
+      "worst_terms": [
+        {
+          "source_term": "Axioms of Probability Theory",
+          "target_term": "tiên đề của lý thuyết xác suất",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "tiên đề của lý thuyết xác suất": 2,
+            "các tiên đề của lý thuyết xác suất": 2
+          }
+        },
+        {
+          "source_term": "Matrix-Vector Products",
+          "target_term": "tích ma trận-vectơ",
+          "source_blocks": 8,
+          "status": "drift",
+          "forms_used": {
+            "tích ma trận-vectơ": 5,
+            "phép nhân ma trận-vectơ": 1
+          }
+        },
+        {
+          "source_term": "Operations",
+          "target_term": "phép toán",
+          "source_blocks": 19,
+          "status": "drift",
+          "forms_used": {
+            "phép toán": 19,
+            "toán tử": 4
+          }
+        },
+        {
+          "source_term": "absolute value",
+          "target_term": "giá trị tuyệt đối",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "giá trị tuyệt đối": 2,
+            "trị tuyệt đối": 2
+          }
+        },
+        {
+          "source_term": "automatic differentiation",
+          "target_term": "tự động vi phân",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "vi phân tự động": 2,
+            "tự động vi phân": 2
+          }
+        },
+        {
+          "source_term": "axes",
+          "target_term": "trục",
+          "source_blocks": 14,
+          "status": "drift",
+          "forms_used": {
+            "trục": 14,
+            "chiều": 5
+          }
+        },
+        {
+          "source_term": "axis",
+          "target_term": "trục",
+          "source_blocks": 17,
+          "status": "drift",
+          "forms_used": {
+            "trục": 17,
+            "chiều": 10
+          }
+        },
+        {
+          "source_term": "backpropagation",
+          "target_term": "lan truyền ngược",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "lan truyền ngược": 5,
+            "truyền ngược": 5
+          }
+        },
+        {
+          "source_term": "binary operator",
+          "target_term": "toán tử hai ngôi",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "toán tử nhị phân": 1,
+            "toán tử hai ngôi": 1
+          }
+        },
+        {
+          "source_term": "broadcasting mechanism",
+          "target_term": "cơ chế broadcasting",
+          "source_blocks": 3,
+          "status": "drift",
+          "forms_used": {
+            "cơ chế broadcasting": 3,
+            "broadcasting": 3
+          }
+        },
+        {
+          "source_term": "column dimension",
+          "target_term": "số chiều cột",
+          "source_blocks": 4,
+          "status": "undetected",
+          "forms_used": {}
+        },
+        {
+          "source_term": "column vector",
+          "target_term": "vectơ cột",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "vector cột": 1,
+            "vectơ cột": 3
+          }
+        },
+        {
+          "source_term": "components",
+          "target_term": "thành phần",
+          "source_blocks": 6,
+          "status": "drift",
+          "forms_used": {
+            "thành phần": 6,
+            "phần tử": 1
+          }
+        },
+        {
+          "source_term": "dataset",
+          "target_term": "tập dữ liệu",
+          "source_blocks": 8,
+          "status": "drift",
+          "forms_used": {
+            "bộ dữ liệu": 4,
+            "tập dữ liệu": 4
+          }
+        },
+        {
+          "source_term": "derivative",
+          "target_term": "đạo hàm",
+          "source_blocks": 11,
+          "status": "drift",
+          "forms_used": {
+            "đạo hàm": 11,
+            "vi phân": 1
+          }
+        },
+        {
+          "source_term": "derivatives",
+          "target_term": "đạo hàm",
+          "source_blocks": 13,
+          "status": "drift",
+          "forms_used": {
+            "đạo hàm": 13,
+            "vi phân": 5
+          }
+        },
+        {
+          "source_term": "differentiable",
+          "target_term": "khả vi",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "có thể vi phân": 1,
+            "khả vi": 4
+          }
+        },
+        {
+          "source_term": "differentiating",
+          "target_term": "vi phân",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {}
+        },
+        {
+          "source_term": "differentiation",
+          "target_term": "vi phân",
+          "source_blocks": 11,
+          "status": "drift",
+          "forms_used": {
+            "vi phân": 8,
+            "lấy đạo hàm": 2,
+            "phép vi phân": 1
+          }
+        },
+        {
+          "source_term": "dimension",
+          "target_term": "chiều",
+          "source_blocks": 8,
+          "status": "drift",
+          "forms_used": {
+            "chiều": 8,
+            "số chiều": 1
+          }
+        },
+        {
+          "source_term": "dimensionality",
+          "target_term": "số chiều",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "số chiều": 3,
+            "chiều": 4
+          }
+        },
+        {
+          "source_term": "disease",
+          "target_term": "bệnh",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "bệnh": 2,
+            "bệnh tật": 1
+          }
+        },
+        {
+          "source_term": "elements",
+          "target_term": "phần tử",
+          "source_blocks": 34,
+          "status": "drift",
+          "forms_used": {
+            "phần tử": 34,
+            "thành phần": 1
+          }
+        },
+        {
+          "source_term": "elementwise multiplication",
+          "target_term": "phép nhân từng phần tử",
+          "source_blocks": 3,
+          "status": "drift",
+          "forms_used": {
+            "nhân theo từng phần tử": 2,
+            "phép nhân từng phần tử": 1,
+            "nhân từng phần tử": 1
+          }
+        },
+        {
+          "source_term": "elementwise operations",
+          "target_term": "phép toán theo phần tử",
+          "source_blocks": 5,
+          "status": "undetected",
+          "forms_used": {}
+        },
+        {
+          "source_term": "entries",
+          "target_term": "phần tử",
+          "source_blocks": 7,
+          "status": "drift",
+          "forms_used": {
+            "phần tử": 4,
+            "mục": 4
+          }
+        },
+        {
+          "source_term": "event",
+          "target_term": "biến cố",
+          "source_blocks": 8,
+          "status": "drift",
+          "forms_used": {
+            "sự kiện": 2,
+            "biến cố": 6
+          }
+        },
+        {
+          "source_term": "example",
+          "target_term": "mẫu",
+          "source_blocks": 35,
+          "status": "drift",
+          "forms_used": {
+            "ví dụ": 35,
+            "mẫu": 2
+          }
+        },
+        {
+          "source_term": "examples",
+          "target_term": "mẫu",
+          "source_blocks": 12,
+          "status": "drift",
+          "forms_used": {
+            "ví dụ": 12,
+            "mẫu": 1
+          }
+        },
+        {
+          "source_term": "fit",
+          "target_term": "khớp",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "phù hợp": 1,
+            "khớp": 1
+          }
+        }
+      ]
+    },
+    "S1": {
+      "overall": 0.699552,
+      "detected_only": 0.709091,
+      "terms": 223,
+      "consistent_terms": 156,
+      "drift_terms": 64,
+      "undetected_terms": 3,
+      "worst_terms": [
+        {
+          "source_term": "Axioms of Probability Theory",
+          "target_term": "tiên đề của lý thuyết xác suất",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "tiên đề của lý thuyết xác suất": 2,
+            "các tiên đề của lý thuyết xác suất": 1
+          }
+        },
+        {
+          "source_term": "Operations",
+          "target_term": "phép toán",
+          "source_blocks": 19,
+          "status": "drift",
+          "forms_used": {
+            "phép toán": 19,
+            "toán tử": 4
+          }
+        },
+        {
+          "source_term": "Reduction",
+          "target_term": "phép giảm",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "phép giảm": 1,
+            "giảm": 2
+          }
+        },
+        {
+          "source_term": "absolute value",
+          "target_term": "giá trị tuyệt đối",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "giá trị tuyệt đối": 2,
+            "trị tuyệt đối": 2
+          }
+        },
+        {
+          "source_term": "axes",
+          "target_term": "trục",
+          "source_blocks": 14,
+          "status": "drift",
+          "forms_used": {
+            "trục": 14,
+            "chiều": 5
+          }
+        },
+        {
+          "source_term": "axis",
+          "target_term": "trục",
+          "source_blocks": 17,
+          "status": "drift",
+          "forms_used": {
+            "trục": 17,
+            "chiều": 10
+          }
+        },
+        {
+          "source_term": "backpropagation",
+          "target_term": "lan truyền ngược",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "lan truyền ngược": 5,
+            "truyền ngược": 5
+          }
+        },
+        {
+          "source_term": "broadcasting mechanism",
+          "target_term": "cơ chế broadcasting",
+          "source_blocks": 3,
+          "status": "drift",
+          "forms_used": {
+            "cơ chế broadcasting": 3,
+            "broadcasting": 3
+          }
+        },
+        {
+          "source_term": "calculus",
+          "target_term": "giải tích",
+          "source_blocks": 6,
+          "status": "drift",
+          "forms_used": {
+            "giải tích": 6,
+            "phép tính": 1
+          }
+        },
+        {
+          "source_term": "components",
+          "target_term": "thành phần",
+          "source_blocks": 6,
+          "status": "drift",
+          "forms_used": {
+            "thành phần": 6,
+            "phần tử": 1
+          }
+        },
+        {
+          "source_term": "derivative",
+          "target_term": "đạo hàm",
+          "source_blocks": 11,
+          "status": "drift",
+          "forms_used": {
+            "đạo hàm": 11,
+            "vi phân": 1
+          }
+        },
+        {
+          "source_term": "derivatives",
+          "target_term": "đạo hàm",
+          "source_blocks": 13,
+          "status": "drift",
+          "forms_used": {
+            "đạo hàm": 13,
+            "vi phân": 5
+          }
+        },
+        {
+          "source_term": "dimension",
+          "target_term": "chiều",
+          "source_blocks": 8,
+          "status": "drift",
+          "forms_used": {
+            "chiều": 8,
+            "số chiều": 5
+          }
+        },
+        {
+          "source_term": "dimensionality",
+          "target_term": "số chiều",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "số chiều": 4,
+            "chiều": 4
+          }
+        },
+        {
+          "source_term": "elements",
+          "target_term": "phần tử",
+          "source_blocks": 34,
+          "status": "drift",
+          "forms_used": {
+            "phần tử": 34,
+            "thành phần": 1
+          }
+        },
+        {
+          "source_term": "elementwise",
+          "target_term": "theo phần tử",
+          "source_blocks": 13,
+          "status": "drift",
+          "forms_used": {
+            "theo phần tử": 12,
+            "từng phần tử": 2
+          }
+        },
+        {
+          "source_term": "elementwise multiplication",
+          "target_term": "phép nhân từng phần tử",
+          "source_blocks": 3,
+          "status": "drift",
+          "forms_used": {
+            "phép nhân theo phần tử": 2,
+            "phép nhân từng phần tử": 1,
+            "nhân từng phần tử": 1
+          }
+        },
+        {
+          "source_term": "elementwise operation",
+          "target_term": "phép toán từng phần tử",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {}
+        },
+        {
+          "source_term": "entries",
+          "target_term": "phần tử",
+          "source_blocks": 7,
+          "status": "drift",
+          "forms_used": {
+            "phần tử": 7,
+            "mục": 1
+          }
+        },
+        {
+          "source_term": "example",
+          "target_term": "mẫu",
+          "source_blocks": 35,
+          "status": "drift",
+          "forms_used": {
+            "ví dụ": 23,
+            "mẫu": 17
+          }
+        },
+        {
+          "source_term": "examples",
+          "target_term": "mẫu",
+          "source_blocks": 12,
+          "status": "drift",
+          "forms_used": {
+            "mẫu": 12,
+            "ví dụ": 2
+          }
+        },
+        {
+          "source_term": "function",
+          "target_term": "hàm",
+          "source_blocks": 60,
+          "status": "drift",
+          "forms_used": {
+            "hàm": 59,
+            "ánh xạ": 4
+          }
+        },
+        {
+          "source_term": "gradient",
+          "target_term": "gradient",
+          "source_blocks": 14,
+          "status": "drift",
+          "forms_used": {
+            "gradient": 14,
+            "đạo hàm riêng": 4,
+            "đạo hàm": 6
+          }
+        },
+        {
+          "source_term": "independence",
+          "target_term": "tính độc lập",
+          "source_blocks": 4,
+          "status": "drift",
+          "forms_used": {
+            "tính độc lập": 4,
+            "độc lập": 4
+          }
+        },
+        {
+          "source_term": "index",
+          "target_term": "chỉ số",
+          "source_blocks": 5,
+          "status": "drift",
+          "forms_used": {
+            "chỉ số": 3,
+            "mục": 1
+          }
+        },
+        {
+          "source_term": "indexing",
+          "target_term": "lập chỉ mục",
+          "source_blocks": 6,
+          "status": "drift",
+          "forms_used": {
+            "lập chỉ mục": 6,
+            "chỉ mục": 6
+          }
+        },
+        {
+          "source_term": "learning",
+          "target_term": "học",
+          "source_blocks": 31,
+          "status": "drift",
+          "forms_used": {
+            "học": 31,
+            "học máy": 8
+          }
+        },
+        {
+          "source_term": "linear algebra",
+          "target_term": "đại số tuyến tính",
+          "source_blocks": 12,
+          "status": "drift",
+          "forms_used": {
+            "đại số tuyến tính": 12,
+            "toán đại số tuyến tính": 2,
+            "đại số tuyến tính cơ bản": 1
+          }
+        },
+        {
+          "source_term": "loss",
+          "target_term": "hàm mất mát",
+          "source_blocks": 3,
+          "status": "drift",
+          "forms_used": {
+            "hàm mất mát": 3,
+            "mất mát": 3
+          }
+        },
+        {
+          "source_term": "loss functions",
+          "target_term": "hàm mất mát",
+          "source_blocks": 2,
+          "status": "drift",
+          "forms_used": {
+            "hàm mất mát": 2,
+            "các hàm mất mát": 2
+          }
+        }
+      ]
+    }
+  },
+  "A_tar_vs_registry": {
+    "S1": {
+      "overall": 0.927283,
+      "pairs": 1719,
+      "adherent_pairs": 1594,
+      "occurrence_weighted": 0.940978,
+      "occurrences": 2372,
+      "per_chapter": {
+        "d2l_preliminaries": 0.927283
+      },
+      "worst_terms": [
+        {
+          "source_term": "AI",
+          "misses": 21,
+          "pairs": 21
+        },
+        {
+          "source_term": "example",
+          "misses": 18,
+          "pairs": 35
+        },
+        {
+          "source_term": "label",
+          "misses": 16,
+          "pairs": 18
+        },
+        {
+          "source_term": "vector",
+          "misses": 8,
+          "pairs": 48
+        },
+        {
+          "source_term": "optimization",
+          "misses": 4,
+          "pairs": 9
+        },
+        {
+          "source_term": "ones",
+          "misses": 4,
+          "pairs": 5
+        },
+        {
+          "source_term": "tensors",
+          "misses": 3,
+          "pairs": 34
+        },
+        {
+          "source_term": "set",
+          "misses": 3,
+          "pairs": 13
+        },
+        {
+          "source_term": "variable",
+          "misses": 3,
+          "pairs": 18
+        },
+        {
+          "source_term": "inputs",
+          "misses": 3,
+          "pairs": 5
+        },
+        {
+          "source_term": "target",
+          "misses": 2,
+          "pairs": 2
+        },
+        {
+          "source_term": "index",
+          "misses": 2,
+          "pairs": 5
+        },
+        {
+          "source_term": "mean",
+          "misses": 2,
+          "pairs": 7
+        },
+        {
+          "source_term": "state",
+          "misses": 2,
+          "pairs": 5
+        },
+        {
+          "source_term": "elementwise operation",
+          "misses": 2,
+          "pairs": 2
+        },
+        {
+          "source_term": "elementwise multiplication",
+          "misses": 2,
+          "pairs": 3
+        },
+        {
+          "source_term": "prior",
+          "misses": 2,
+          "pairs": 2
+        },
+        {
+          "source_term": "outputs",
+          "misses": 2,
+          "pairs": 3
+        },
+        {
+          "source_term": "computation",
+          "misses": 1,
+          "pairs": 9
+        },
+        {
+          "source_term": "score",
+          "misses": 1,
+          "pairs": 1
+        }
+      ]
+    }
+  },
+  "injection": {
+    "registry": {
+      "raw_registry": 1608,
+      "translation_eligible": 747,
+      "preserve_count": 239,
+      "hapax_dropped": 622
+    },
+    "packs": {
+      "windows": 45,
+      "injected_terms_min": 7,
+      "injected_terms_avg": 24.9556,
+      "injected_terms_max": 42
+    }
+  },
+  "stage_gate": {
+    "no_passthrough_translated": {
+      "S0": true,
+      "S1": true
+    },
+    "scope_equals_translation_runs": {
+      "S0": true,
+      "S1": true
+    },
+    "preserve_terms_excluded_from_injection": true,
+    "eligible_terms_have_occurrences_ge_2": true,
+    "manual_passthrough_audit_required": true
+  },
+  "samples": {
+    "translated": [
+      {
+        "block_id": "d2l_preliminaries_index_b001",
+        "source": "#  Preliminaries\n:label:`chap_preliminaries`",
+        "S0": "#  Các kiến thức sơ bộ :label:`chap_preliminaries`",
+        "S1": "#  Giới thiệu :label:`chap_preliminaries`"
+      },
+      {
+        "block_id": "d2l_preliminaries_index_b002",
+        "source": "To get started with deep learning,\nwe will need to develop a few basic skills.\nAll machine learning is concerned\nwith extracting information from data.\nSo we will begin by learning the practical skills\nfor storing, manipulating, and preprocessing data.",
+        "S0": "Để bắt đầu với học sâu, chúng ta sẽ cần phát triển một vài kỹ năng cơ bản. Mọi học máy đều liên quan đến việc trích xuất thông tin từ dữ liệu. Vì vậy, chúng ta sẽ bắt đầu bằng cách học các kỹ năng thực hành để lưu trữ, thao tác và tiền xử lý dữ liệu.",
+        "S1": "Để bắt đầu với học sâu, chúng ta sẽ cần phát triển một vài kỹ năng cơ bản. Tất cả học máy đều liên quan đến việc trích xuất thông tin từ dữ liệu. Vì vậy, chúng ta sẽ bắt đầu bằng cách học các kỹ năng thực hành để lưu trữ, xử lý và tiền xử lý dữ liệu."
+      },
+      {
+        "block_id": "d2l_preliminaries_index_b003",
+        "source": "Moreover, machine learning typically requires\nworking with large datasets, which we can think of as tables,\nwhere the rows correspond to examples\nand the columns correspond to attributes.\nLinear algebra gives us a powerful set of techniques\nfor working with tabular data.\nWe will not go too far into the weeds but rather focus on the basic\nof matrix operations and their implementation.",
+        "S0": "Hơn nữa, học máy thường đòi hỏi làm việc với các bộ dữ liệu lớn, mà ta có thể xem như các bảng, trong đó các hàng tương ứng với các ví dụ và các cột tương ứng với các thuộc tính. Đại số tuyến tính cung cấp cho chúng ta một bộ kỹ thuật mạnh mẽ để làm việc với dữ liệu dạng bảng. Chúng ta sẽ không đi quá sâu vào chi tiết mà sẽ tập trung vào những điều cơ bản của các phép toán ma trận và cách triển khai chúng.",
+        "S1": "Hơn nữa, học máy thường đòi hỏi làm việc với các bộ dữ liệu lớn, mà ta có thể xem như các bảng, trong đó các hàng tương ứng với mẫu và các cột tương ứng với thuộc tính. Đại số tuyến tính cung cấp cho chúng ta một tập hợp mạnh mẽ các kỹ thuật để làm việc với dữ liệu dạng bảng. Chúng ta sẽ không đi quá sâu vào chi tiết mà sẽ tập trung vào những cơ bản của các phép toán ma trận và cách triển khai chúng."
+      },
+      {
+        "block_id": "d2l_preliminaries_index_b004",
+        "source": "Additionally, deep learning is all about optimization.\nWe have a model with some parameters and\nwe want to find those that fit our data *the best*.\nDetermining which way to move each parameter at each step of an algorithm\nrequires a little bit of calculus, which will be briefly introduced.\nFortunately, the `autograd` package automatically computes differentiation for us,\nand we will cover it next.",
+        "S0": "Ngoài ra, học sâu chủ yếu là về tối ưu hóa. Chúng ta có một mô hình với một số tham số và muốn tìm ra những tham số phù hợp với dữ liệu của mình *nhất*. Việc xác định mỗi tham số nên dịch chuyển theo hướng nào ở mỗi bước của một thuật toán đòi hỏi một chút giải tích, sẽ được giới thiệu ngắn gọn. May mắn thay, gói `autograd` tự động tính đạo hàm cho chúng ta, và chúng ta sẽ đề cập đến nó tiếp theo.",
+        "S1": "Ngoài ra, học sâu chủ yếu là về tối ưu hóa. Chúng ta có một mô hình với một số tham số và muốn tìm những tham số khớp với dữ liệu của mình *tốt nhất*. Việc xác định mỗi tham số nên di chuyển theo hướng nào ở mỗi bước của một thuật toán đòi hỏi một chút giải tích, điều này sẽ được giới thiệu ngắn gọn. May mắn thay, gói `autograd` tự động tính vi phân cho chúng ta, và chúng ta sẽ đề cập đến nó tiếp theo."
+      },
+      {
+        "block_id": "d2l_preliminaries_index_b005",
+        "source": "Next, machine learning is concerned with making predictions:\nwhat is the likely value of some unknown attribute,\ngiven the information that we observe?\nTo reason rigorously under uncertainty\nwe will need to invoke the language of probability.",
+        "S0": "Tiếp theo, học máy liên quan đến việc đưa ra dự đoán: giá trị có khả năng xảy ra của một thuộc tính chưa biết là gì, khi đã biết thông tin mà ta quan sát được? Để suy luận chặt chẽ dưới sự không chắc chắn, chúng ta sẽ cần sử dụng ngôn ngữ của xác suất.",
+        "S1": "Tiếp theo, học máy liên quan đến việc đưa ra dự đoán: giá trị có khả năng nhất của một thuộc tính chưa biết là gì, dựa trên thông tin mà chúng ta quan sát được? Để suy luận một cách chặt chẽ dưới độ bất định, chúng ta sẽ cần sử dụng ngôn ngữ của xác suất."
+      }
+    ],
+    "passthrough_audit": [
+      {
+        "block_id": "d2l_preliminaries_index_b008",
+        "block_type": "code",
+        "source": "```toc\n:maxdepth: 2\n\nndarray\npandas\nlinear-algebra\ncalculus\nautograd\nprobability\nlookup-api\n```"
+      },
+      {
+        "block_id": "d2l_preliminaries_ndarray_b009",
+        "block_type": "code",
+        "source": "```{.python .input}\nfrom mxnet import np, npx\nnpx.set_np()\n```"
+      },
+      {
+        "block_id": "d2l_preliminaries_ndarray_b010",
+        "block_type": "code",
+        "source": "```{.python .input}\n#@tab pytorch\nimport torch\n```"
+      },
+      {
+        "block_id": "d2l_preliminaries_ndarray_b011",
+        "block_type": "code",
+        "source": "```{.python .input}\n#@tab tensorflow\nimport tensorflow as tf\n```"
+      },
+      {
+        "block_id": "d2l_preliminaries_ndarray_b016",
+        "block_type": "code",
+        "source": "```{.python .input}\nx = np.arange(12)\nx\n```"
+      }
+    ]
+  },
+  "limitations": [
+    "D v1 detects drift only among registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
+    "Caption/image/label blocks are passthrough by P3 design and excluded from B/D denominators."
+  ]
+}

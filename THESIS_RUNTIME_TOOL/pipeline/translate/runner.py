@@ -12,6 +12,7 @@ from pipeline.translate.prompt import (
     extract_translations,
     prompt_version_for_config,
 )
+from pipeline.translate.profiles import get_profile
 
 
 @dataclass(frozen=True)
@@ -76,6 +77,7 @@ def translate_windows(
     config: str = "S0",
     context_builder: Any | None = None,
     context_budget_tokens: int = 500,
+    profile_name: str = "literary_v1",
 ) -> TranslateReport:
     """Run translation over a list of Window objects.
 
@@ -94,7 +96,8 @@ def translate_windows(
         "dropped_by_budget": 0,
     }
     config = config.upper()
-    prompt_version = prompt_version_for_config(config)
+    profile = get_profile(profile_name)
+    prompt_version = prompt_version_for_config(config, profile.name)
 
     for window in windows:
         window_id = window.window_id
@@ -135,6 +138,7 @@ def translate_windows(
                 blocks_for_prompt,
                 context_builder=context_builder,
                 budget_tokens=context_budget_tokens,
+                profile_name=profile.name,
             )
             context_stats["windows_with_context"] += 1
             if bool(getattr(context_pack, "low_context", False)):
@@ -148,6 +152,7 @@ def translate_windows(
             prompt_version=prompt_version,
             config=config,
             context_pack=context_pack,
+            profile_name=profile.name,
         )
 
         # --- Call with re-ask ---
@@ -178,6 +183,7 @@ def translate_windows(
             prompt_version=prompt_version,
             context_pack=context_pack,
             blocks_for_prompt=blocks_for_prompt,
+            profile_name=profile.name,
         )
 
         if status == "translated":
@@ -240,13 +246,14 @@ def _build_context_pack_for_window(
     *,
     context_builder: Any | None,
     budget_tokens: int,
+    profile_name: str,
 ) -> Any:
     if context_builder is not None:
         return context_builder(db, window, blocks_for_prompt)
 
     from pipeline.retrieval.context_builder import build_context_pack, plan_anchors
 
-    anchors = plan_anchors(db, blocks_for_prompt)
+    anchors = plan_anchors(db, blocks_for_prompt, profile_name=profile_name)
     return build_context_pack(db, window, anchors, budget_tokens=budget_tokens)
 
 
@@ -338,6 +345,7 @@ def _persist_pack(
     prompt_version: str,
     context_pack: Any | None,
     blocks_for_prompt: list[dict[str, Any]],
+    profile_name: str,
 ) -> None:
     # Store window context in payload_json (existing column).
     # config is stored via _add_column_if_missing during migration 005.
@@ -348,6 +356,7 @@ def _persist_pack(
         "config": config,
         "zones": zones,
         "prompt_version": prompt_version,
+        "profile": profile_name,
         "anchors_count": _context_anchors_count(context_pack),
         "dropped_by_budget": _context_dropped_by_budget(context_pack),
         "low_context": bool(getattr(context_pack, "low_context", False))

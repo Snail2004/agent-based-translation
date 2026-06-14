@@ -24,6 +24,7 @@ def build_windows(
     *,
     target_tokens: int = 1100,
     max_blocks: int = 8,
+    block_types: set[str] | frozenset[str] | None = None,
 ) -> list[Window]:
     """Partition blocks of given chapters into WINDOWs following LOCK §5 rules.
 
@@ -39,7 +40,7 @@ def build_windows(
     7. Fully deterministic: sorted blocks, window_id counter increments per chapter.
     """
 
-    blocks = _fetch_blocks(conn, doc_id, chapter_ids)
+    blocks = _fetch_blocks(conn, doc_id, chapter_ids, block_types=block_types)
     phase_boundary_ids = _fetch_phase_boundaries(conn, doc_id)
 
     chapters_sorted = sorted(
@@ -140,6 +141,8 @@ def _fetch_blocks(
     conn: sqlite3.Connection,
     doc_id: str,
     chapter_ids: list[str],
+    *,
+    block_types: set[str] | frozenset[str] | None = None,
 ) -> list[dict]:
     """Fetch all blocks for given doc + chapters, sorted by order_index.
 
@@ -187,15 +190,26 @@ def _fetch_blocks(
         return []
 
     placeholders = ",".join("?" * len(matched_chapters))
+    params = [doc_id] + matched_chapters
+    block_filter_sql = ""
+    if block_types is not None:
+        block_type_values = sorted(str(item) for item in block_types)
+        if not block_type_values:
+            return []
+        type_placeholders = ",".join("?" * len(block_type_values))
+        block_filter_sql = f" AND block_type IN ({type_placeholders})"
+        params.extend(block_type_values)
+
     rows = conn.execute(
         f"""
         SELECT block_id, doc_id, chapter_id, order_index, block_type,
                text AS clean_text, original_text AS source_text
         FROM blocks
         WHERE doc_id = ? AND chapter_id IN ({placeholders})
+          {block_filter_sql}
         ORDER BY order_index
         """,
-        [doc_id] + matched_chapters,
+        params,
     ).fetchall()
     return [dict(row) for row in rows]
 

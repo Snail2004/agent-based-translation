@@ -1,0 +1,32 @@
+source_term,variant_vi,note
+attention mechanisms,cơ chế chú ý,P2-D2L conflict accepted by review
+automatic differentiation,tự động vi phân,P2-D2L conflict accepted by review
+batch,lô,P2-D2L conflict accepted by review
+batch size,kích thước lô,P2-D2L conflict accepted by review
+benchmark,chuẩn đánh giá,P2-D2L conflict accepted by review
+bias-variance tradeoff,đánh đổi chệch-phương sai,P2-D2L conflict accepted by review
+closed-form solution,lời giải đóng,P2-D2L conflict accepted by review
+cosine,cosin,P2-D2L conflict accepted by review
+data manipulation,thao tác dữ liệu,P2-D2L conflict accepted by review
+dense layer,lớp dày đặc,P2-D2L conflict accepted by review
+dimensionality,số chiều,P2-D2L conflict accepted by review
+dot product,tích vô hướng,P2-D2L conflict accepted by review
+elementwise,theo phần tử,P2-D2L conflict accepted by review
+error rate,tỷ lệ lỗi,P2-D2L conflict accepted by review
+explicit feedback,phản hồi tường minh,P2-D2L conflict accepted by review
+exploding gradient,gradient bùng nổ,P2-D2L conflict accepted by review
+forward pass,lan truyền xuôi,P2-D2L conflict accepted by review
+Gaussian distribution,phân phối Gaussian,P2-D2L conflict accepted by review
+generalization error,sai số khái quát hóa,P2-D2L conflict accepted by review
+generalization gap,khoảng cách tổng quát hóa,P2-D2L conflict accepted by review
+ground truth,nhãn thật,P2-D2L conflict accepted by review
+implicit feedback,phản hồi ngầm,P2-D2L conflict accepted by review
+iterator,bộ lặp,P2-D2L conflict accepted by review
+model family,họ mô hình,P2-D2L conflict accepted by review
+normal distribution,phân phối chuẩn,P2-D2L conflict accepted by review
+object recognition,nhận dạng đối tượng,P2-D2L conflict accepted by review
+one-hot encoding,mã hóa one-hot,P2-D2L conflict accepted by review
+recommender system,hệ gợi ý,P2-D2L conflict accepted by review
+standardize,chuẩn hóa,P2-D2L conflict accepted by review
+transcription,bản ghi phiên âm,P2-D2L conflict accepted by review
+vanishing gradient,gradient tiêu biến,P2-D2L conflict accepted by review
