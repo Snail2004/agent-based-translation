@@ -1,8 +1,8 @@
 # TASK_HYG_02_literary_builder_recall_density_preflight — Bỏ cap recall→density audit + relation label + 4 process-guard (offline, review-gated)
 
-- **Status:** READY
+- **Status:** DONE
 - **Refs:** THESIS_ARCHITECTURE_LOCK §10 (mm) [chính], (ll) artifact-review-trước-chạy + 6-mục, (kk) payload bất đối xứng, (hh) injection dataset-aware, (gg) token-discipline | PROMPT_DESIGN
-- **Branch/Commit:** (điền khi imple xong)
+- **Branch/Commit:** local CodeX changes only; no commit/push per user request.
 
 ## 1. Bối cảnh & mục tiêu *(Claude viết)*
 
@@ -68,20 +68,140 @@ python -m pytest THESIS_RUNTIME_TOOL/pipeline/tests/ -k "d2l or registry or inje
 
 ## 5. Implementation notes *(CodeX điền — BẮT BUỘC đủ 6 mục, LOCK (ll).6 + bảng preflight + cache report)*
 
-- **Representative full prompt:** (Builder v3 thật/render đầy đủ — trỏ file)
-- **Context inclusion policy:** (pack + density guard + relation label)
-- **Token budget:** (system/user/context/source/output + bảng full-set preflight)
-- **Cache plan:** (prefix byte-identical xuyên chương; sort cố định; version v3 trong cache-key)
-- **Stop condition:** (status ABORT >20k; density_anomaly → REVIEW_REQUIRED; preflight > cap)
-- **Cost-quality report:** (HYG-02 chưa chạy LLM — ghi ước lượng; gate thật ở task re-baseline)
-- (kèm) file đổi + quyết định nhỏ + lý do; output lệnh acceptance nguyên văn; gotcha.
+**Đã làm**
+- Bump Literary Builder prompt `literary_builder_context_v2` -> `literary_builder_context_v3`.
+- Bỏ câu cap di sản `"Aim for 5-20 glossary terms per substantial chapter."`; thay bằng luật recall-at-build: extract mọi term visible đạt termhood bar, không áp count cap.
+- Thêm relation label ngắn trong `LiteraryBuilderContextPack`: `A<->B [relation]: addr_a / addr_b (state_label)`. Notes chỉ append khi có flag/label `address_shift`, `conflict`, hoặc `revealed_identity`.
+- Render script HYG-02 không fallback sang DB frozen cho Builder chronology nữa. Chương N chỉ dùng artifact prepass của chương `<N`; chương đầu dùng registry rỗng.
+- Render script sinh thêm density audit và full-set Builder preflight table.
+- Thêm tests cho version v3, render chronology, cache prefix byte-identical, deterministic context render, density anomaly.
+
+**1. Representative full prompt**
+- Builder v3 full prompt: `data/reports/literary_builder_prompt_sample.txt`.
+- Translator S1 full prompt giữ để đối chiếu: `data/reports/literary_translator_s1_prompt_sample.txt`.
+- Index ngắn: `data/reports/literary_prompt_samples.txt`.
+- Audit machine-readable: `data/reports/literary_builder_context_audit.json`.
+- Full frozen registry snapshot để review, KHÔNG bơm nguyên vào prompt: `data/reports/literary_registry_snapshot.json`.
+- Density audit: `data/reports/literary_builder_density_audit.json`.
+
+**2. Context inclusion policy**
+- Builder sample cho `treasure_island_ch03` dùng registry source:
+  `prepass_artifacts_prior_chapters:[...data/prepass/treasure_island_pilot/treasure_island_ch02.json]`.
+- Pack ch03: included 15 / excluded 16 / dropped_by_budget 0.
+- Context pack token estimate: 266 / 600.
+- Relation lines giờ có label xã hội ngắn, ví dụ:
+  `ent_narrator<->ent_captain [thường xuyên ở chung nhà]: ông / cậu (wary_curiosity)`.
+- Density audit từ artifact Builder:
+  - ch02: glossary_count 15, density 5.2283 / 1k source tokens, hapax 11, status OK.
+  - ch03: glossary_count 7, density 2.4230 / 1k source tokens, hapax 5, status OK.
+  - status_counts: OK = 2.
+
+**3. Token budget**
+Builder preflight (0 API):
+
+```text
+chapter_id | source_tokens | context_pack_tokens | prompt_tokens | included/excluded/dropped | status
+-----------------------------------------------------------------------------------------------------
+treasure_island_ch02 | 2869 | 0 | 4009 | 0/0/0 | OK
+treasure_island_ch03 | 2889 | 266 | 4403 | 15/16/0 | OK
+```
+
+- Threshold mapping implemented: OK <= 8000, WARN <= 12000, SPLIT_REQUIRED <= 20000, ABORT > 20000.
+- Current max Builder prompt = 4403, well below OK threshold.
+- Translator S1 sample still estimates 895 prompt tokens.
+
+**4. Cache plan**
+- Builder prompt version v3 is embedded in messages, so it participates in replay-cache key.
+- `cache_friendliness.system_prefix_byte_identical = true` for ch02/ch03.
+- System prefix sha256: `4a9b1c84fbde7274529409db8a5235bd879d9d993ae3b1e34ea822b03623f0b3`.
+- Context pack render remains deterministic: sorted candidates, no timestamp/random.
+- Render chronology guard prevents preview cache/key confusion from future DB state.
+
+**5. Stop condition**
+- HYG-02 made no API calls and did not re-baseline.
+- Future Builder run must stop before API if:
+  - prompt status is `ABORT`;
+  - prompt status is `SPLIT_REQUIRED` while split executor is not implemented;
+  - density audit returns `REVIEW_REQUIRED`;
+  - preflight max prompt exceeds configured cap;
+  - prompt/context tokens grow unexpectedly across chapters.
+
+**6. Cost-quality report**
+- HYG-02 is offline-only, so no quality scores changed and no token quota was spent.
+- The next re-baseline task must still report S1-vs-S0 token delta and memory-pack percentage of prompt before any real run.
+- Current evidence for opening review: Builder v3 prompt is bounded; removing cap does not affect injected prompt size because injection remains precision-at-inject.
+
+**Files changed**
+- `pipeline/prepass/prompt.py`
+- `pipeline/prepass/literary_context.py`
+- `pipeline/scripts/render_literary_prompts.py`
+- `pipeline/tests/test_literary_builder_context.py`
+- `data/reports/literary_prompt_samples.txt`
+- `data/reports/literary_builder_prompt_sample.txt`
+- `data/reports/literary_translator_s1_prompt_sample.txt`
+- `data/reports/literary_builder_context_audit.json`
+- `data/reports/literary_registry_snapshot.json`
+- `data/reports/literary_builder_density_audit.json`
+
+**Commands/output**
+
+```text
+python -m pytest pipeline\tests\test_literary_builder_context.py -v
+=> 8 passed
+```
+
+```text
+python -m pytest pipeline\tests -k "chronology or render_fidelity" -v
+=> 1 passed, 119 deselected
+```
+
+```text
+python -m pytest pipeline\tests -k "cache_prefix or deterministic" -v
+=> 2 passed, 118 deselected
+```
+
+```text
+python -m pipeline.scripts.render_literary_prompts --chapters 2,3 --density-out data/reports/literary_builder_density_audit.json --preflight-table
+=> Builder prompt est tokens: 4403
+=> Translator S1 prompt est tokens: 895
+=> ch02 OK, ch03 OK
+```
+
+```text
+python -m pytest pipeline\tests -k "d2l or registry or injection" -q
+=> 30 passed, 90 deselected
+```
+
+```text
+python -m pytest pipeline\tests -q
+=> 120 passed in 75.47s
+```
+
+**Gotcha**
+- Pytest exits 0 but Windows still prints the known post-test cleanup warning:
+  `PermissionError: D:\temp\pytest-of-Snail\pytest-current`. This is not a failing assertion.
 
 ## 6. Review *(Claude điền)*
 
-- **Verdict:** (trống)
-- Findings: …
-- Follow-up: …
+- **Verdict: PASS** (Claude, 2026-06-15 — tái kiểm ĐỘC LẬP từ diff + artifact + tự chạy lại test).
+
+**Đã xác minh:**
+1. **Scope giữ đúng:** không API, CodeX KHÔNG commit (working tree dirty), không re-baseline. **D2L không đụng** — regression `d2l/registry/injection` 30/30 PASS.
+2. **Bỏ cap + bump v3:** diff `prompt.py` đổi `"Aim for 5-20 glossary terms"` → `"Extract every visible term that meets this bar; do not impose a count cap."`; `LITERARY_PROMPT_VERSION`→`v3`; test assert v3 trong prompt + "Aim for 5-20" vắng mặt. Termhood bar + negative examples giữ nguyên.
+3. **Relation label:** `_compact_relation_label` (đọc relation/relation_type/role, trunc ≤36 ký tự theo word-boundary) + notes CHỈ khi cờ `address_shift`/`conflict`/`revealed_identity` (`_include_relation_notes`). Render `ent_narrator<->ent_captain [lodger/inn-boy]` xác nhận trong test + sample.
+4. **Render-chronology guard CÓ THẬT (đóng lỗ HYG-01):** `_registry_for_builder_sample` dùng `prior_chapters = chapter_ids[:-1]`, nạp artifact chương <N, **RAISE nếu thiếu — từ chối fallback DB frozen**. Test khẳng định build ch03 thấy `admiral benbow inn` (ch02) NHƯNG KHÔNG thấy `black dog` (item của chính ch03); chương đầu → `empty_registry_first_chapter`. Đây là chỗ HYG-01 từng "đẹp giả vì thấy tương lai" — nay khóa bằng test.
+5. **Cache-friendliness:** test assert system prefix BYTE-IDENTICAL giữa 2 chương khác nhau + render deterministic (cùng input→cùng output); báo cáo `cache_friendliness` được sinh.
+6. **Density audit:** đủ field (`glossary_count`, `glossary_per_1k_source_tokens`, `hapax_count`, `category_distribution`, `sample_new_terms`, `density_anomaly`, `status`). Số thật: ch02 5.2283/1k (15 gloss), ch03 2.4230/1k (7 gloss) → đều OK (ch03 THẤP hơn, không jump). Test tổng hợp jump 2× → `REVIEW_REQUIRED`, `density_anomaly=True`, hapax đúng.
+7. **Full-set preflight:** ch02 context 0 (chương đầu, registry rỗng — đúng chronology), ch03 context 266 incl15/exc16; status OK; prompt 4009/4403 < cap 6000.
+8. **Test Claude tự chạy lại:** 8 (context) + 3 (chronology/cache/density) + 30 (regression) = PASS. `PermissionError D:\temp\pytest-current` = atexit cleanup temp Windows, exit 0, KHÔNG phải assertion fail.
+
+**Ghi chú nhỏ (KHÔNG chặn):**
+- context pack 266 tok (vs HYG-01 corrected 228) tăng do thêm nhãn relation — rẻ, hợp lý.
+- density anomaly chỉ fire từ chương ≥2 (cần `previous_density`); đúng thiết kế. Chuẩn hóa per-1k-source-token là đúng (không dùng raw count) → bền ở quy mô sách.
+- Split executor + cost-quality gate + near_miss đã đúng là OUT (không build) — kỷ luật scope tốt.
+
+**Follow-up:** GATE còn đóng. Re-baseline TI S0/S1 dưới prompt v3 = **task kế**, mở sau khi (a) user duyệt prompt v3 (artifact đã trình) + (b) task đó kèm bảng cost-quality (S1−S0 token delta + memory-pack % prompt) theo LOCK (mm).6. HYG-02 (offline hygiene + guard) HOÀN THÀNH.
 
 ---
 
-**GATE (LOCK mm/ll):** task READY. KHÔNG re-baseline/S2 cho tới khi (a) user duyệt prompt render v3, (b) Claude review, (c) có bảng cost-quality (S1−S0 token delta + memory-pack % prompt) ở task re-baseline. HYG-02 chỉ mở cổng, không chạy.
+**GATE (LOCK mm/ll):** task REVIEW. KHÔNG re-baseline/S2 cho tới khi (a) user duyệt prompt render v3, (b) Claude review, (c) có bảng cost-quality (S1−S0 token delta + memory-pack % prompt) ở task re-baseline. HYG-02 chỉ mở cổng, không chạy.

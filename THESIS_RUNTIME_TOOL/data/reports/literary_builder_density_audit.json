@@ -1,0 +1,189 @@
+{
+  "manifest": {
+    "purpose": "HYG-02 Builder output density audit; offline, no API call",
+    "doc_id": "treasure_island",
+    "chapters": [
+      "ch02",
+      "ch03"
+    ],
+    "prepass_dir": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\prepass\\treasure_island_pilot",
+    "density_threshold_multiplier": 2.5
+  },
+  "chapters": [
+    {
+      "chapter_id": "treasure_island_ch02",
+      "status": "OK",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\prepass\\treasure_island_pilot\\treasure_island_ch02.json",
+      "source_tokens_est": 2869,
+      "glossary_count": 15,
+      "glossary_per_1k_source_tokens": 5.2283,
+      "hapax_count": 11,
+      "category_distribution": {
+        "cultural": 2,
+        "object": 5,
+        "other": 4,
+        "place": 4
+      },
+      "sample_new_terms": [
+        {
+          "source_term": "Admiral Benbow Inn",
+          "proposed_target_vi": "quán trọ Admiral Benbow",
+          "category": "place",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "Treasure Island",
+          "proposed_target_vi": "Đảo Châu Báu",
+          "category": "place",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "sea-chest",
+          "proposed_target_vi": "rương biển",
+          "category": "object",
+          "occurrences_in_chapter": 2
+        },
+        {
+          "source_term": "handbarrow",
+          "proposed_target_vi": "xe cút kít tay",
+          "category": "object",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "saber cut",
+          "proposed_target_vi": "vết chém kiếm cong",
+          "category": "other",
+          "occurrences_in_chapter": 2
+        },
+        {
+          "source_term": "brass telescope",
+          "proposed_target_vi": "ống nhòm bằng đồng",
+          "category": "object",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "silver fourpenny",
+          "proposed_target_vi": "đồng bốn xu bạc",
+          "category": "object",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "weather eye",
+          "proposed_target_vi": "mắt cảnh giác",
+          "category": "other",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "seafaring man with one leg",
+          "proposed_target_vi": "người đi biển cụt một chân",
+          "category": "other",
+          "occurrences_in_chapter": 3
+        },
+        {
+          "source_term": "Dry Tortugas",
+          "proposed_target_vi": "Dry Tortugas",
+          "category": "place",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "Spanish Main",
+          "proposed_target_vi": "Spanish Main",
+          "category": "place",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "the Dead Man's Chest",
+          "proposed_target_vi": "Rương Người Chết",
+          "category": "other",
+          "occurrences_in_chapter": 3
+        },
+        {
+          "source_term": "sailor's clasp-knife",
+          "proposed_target_vi": "dao gập của thủy thủ",
+          "category": "object",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "assizes",
+          "proposed_target_vi": "phiên tòa đại hình",
+          "category": "cultural",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "magistrate",
+          "proposed_target_vi": "quan tư pháp",
+          "category": "cultural",
+          "occurrences_in_chapter": 1
+        }
+      ],
+      "density_anomaly": false,
+      "previous_density_per_1k": null,
+      "density_threshold_multiplier": 2.5
+    },
+    {
+      "chapter_id": "treasure_island_ch03",
+      "status": "OK",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\prepass\\treasure_island_pilot\\treasure_island_ch03.json",
+      "source_tokens_est": 2889,
+      "glossary_count": 7,
+      "glossary_per_1k_source_tokens": 2.423,
+      "hapax_count": 5,
+      "category_distribution": {
+        "cultural": 1,
+        "nautical": 2,
+        "object": 2,
+        "place": 2
+      },
+      "sample_new_terms": [
+        {
+          "source_term": "cutlass",
+          "proposed_target_vi": "kiếm cong",
+          "category": "nautical",
+          "occurrences_in_chapter": 3
+        },
+        {
+          "source_term": "spyglass",
+          "proposed_target_vi": "ống nhòm",
+          "category": "nautical",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "rum",
+          "proposed_target_vi": "rượu rum",
+          "category": "cultural",
+          "occurrences_in_chapter": 11
+        },
+        {
+          "source_term": "lancet",
+          "proposed_target_vi": "dao trích huyết",
+          "category": "object",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "signboard of Admiral Benbow",
+          "proposed_target_vi": "biển hiệu Admiral Benbow",
+          "category": "object",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "cove",
+          "proposed_target_vi": "vịnh nhỏ",
+          "category": "place",
+          "occurrences_in_chapter": 1
+        },
+        {
+          "source_term": "the beach",
+          "proposed_target_vi": "bãi biển",
+          "category": "place",
+          "occurrences_in_chapter": 1
+        }
+      ],
+      "density_anomaly": false,
+      "previous_density_per_1k": 5.2283,
+      "density_threshold_multiplier": 2.5
+    }
+  ],
+  "status_counts": {
+    "OK": 2
+  }
+}

@@ -1,0 +1,651 @@
+{
+  "source": "ch02 artifact -> ch03 source",
+  "pack_counts": {
+    "included": 15,
+    "excluded": 16,
+    "dropped_by_budget": 0
+  },
+  "pack_tokens": 228,
+  "glossary": [
+    {
+      "source_term": "Admiral Benbow Inn",
+      "key": "admiral benbow inn",
+      "hits": [
+        "treasure_island_ch03_b024"
+      ],
+      "expected_relevant": true,
+      "included": true
+    },
+    {
+      "source_term": "assizes",
+      "key": "assizes",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "brass telescope",
+      "key": "brass telescope",
+      "hits": [
+        "treasure_island_ch03_b004"
+      ],
+      "expected_relevant": true,
+      "included": true
+    },
+    {
+      "source_term": "Dry Tortugas",
+      "key": "dry tortugas",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "handbarrow",
+      "key": "handbarrow",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "magistrate",
+      "key": "magistrate",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "saber cut",
+      "key": "saber cut",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "sailor's clasp-knife",
+      "key": "sailor's clasp-knife",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "sea-chest",
+      "key": "sea-chest",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "seafaring man with one leg",
+      "key": "seafaring man with one leg",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "silver fourpenny",
+      "key": "silver fourpenny",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "Spanish Main",
+      "key": "spanish main",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "the Dead Man's Chest",
+      "key": "the dead man's chest",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "Treasure Island",
+      "key": "treasure island",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    },
+    {
+      "source_term": "weather eye",
+      "key": "weather eye",
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    }
+  ],
+  "entities": [
+    {
+      "entity_id": "ent_admiral_benbow_inn",
+      "surfaces": [
+        "Admiral Benbow Inn",
+        "the Admiral Benbow",
+        "our house",
+        "the old Benbow"
+      ],
+      "matched_surfaces": [
+        "Admiral Benbow Inn",
+        "the Admiral Benbow",
+        "our house"
+      ],
+      "hits": [
+        "treasure_island_ch03_b024",
+        "treasure_island_ch03_b010"
+      ],
+      "expected_relevant": true,
+      "included": true
+    },
+    {
+      "entity_id": "ent_captain",
+      "surfaces": [
+        "the captain",
+        "the captain",
+        "old fellow",
+        "the ruffian"
+      ],
+      "matched_surfaces": [
+        "the captain",
+        "the captain"
+      ],
+      "hits": [
+        "treasure_island_ch03_b003",
+        "treasure_island_ch03_b004",
+        "treasure_island_ch03_b005",
+        "treasure_island_ch03_b010",
+        "treasure_island_ch03_b011",
+        "treasure_island_ch03_b014",
+        "treasure_island_ch03_b018",
+        "treasure_island_ch03_b020",
+        "treasure_island_ch03_b022",
+        "treasure_island_ch03_b025",
+        "treasure_island_ch03_b027",
+        "treasure_island_ch03_b029",
+        "treasure_island_ch03_b031",
+        "treasure_island_ch03_b032",
+        "treasure_island_ch03_b036",
+        "treasure_island_ch03_b038",
+        "treasure_island_ch03_b041",
+        "treasure_island_ch03_b045"
+      ],
+      "expected_relevant": true,
+      "included": true
+    },
+    {
+      "entity_id": "ent_doctor_livesey",
+      "surfaces": [
+        "Doctor Livesey",
+        "Doctor Livesey",
+        "the doctor"
+      ],
+      "matched_surfaces": [
+        "Doctor Livesey",
+        "Doctor Livesey",
+        "the doctor"
+      ],
+      "hits": [
+        "treasure_island_ch03_b004",
+        "treasure_island_ch03_b038",
+        "treasure_island_ch03_b040",
+        "treasure_island_ch03_b041",
+        "treasure_island_ch03_b042",
+        "treasure_island_ch03_b045",
+        "treasure_island_ch03_b047",
+        "treasure_island_ch03_b049",
+        "treasure_island_ch03_b051"
+      ],
+      "expected_relevant": true,
+      "included": true
+    },
+    {
+      "entity_id": "ent_father",
+      "surfaces": [
+        "my father",
+        "my father",
+        "father"
+      ],
+      "matched_surfaces": [
+        "my father",
+        "my father",
+        "father"
+      ],
+      "hits": [
+        "treasure_island_ch03_b038",
+        "treasure_island_ch03_b052",
+        "treasure_island_ch03_b003",
+        "treasure_island_ch03_b005",
+        "treasure_island_ch03_b037"
+      ],
+      "expected_relevant": true,
+      "included": true
+    },
+    {
+      "entity_id": "ent_mother",
+      "surfaces": [
+        "my mother",
+        "my mother",
+        "mother"
+      ],
+      "matched_surfaces": [
+        "my mother",
+        "my mother",
+        "mother"
+      ],
+      "hits": [
+        "treasure_island_ch03_b003",
+        "treasure_island_ch03_b036",
+        "treasure_island_ch03_b037",
+        "treasure_island_ch03_b005"
+      ],
+      "expected_relevant": true,
+      "included": true
+    },
+    {
+      "entity_id": "ent_narrator",
+      "surfaces": [
+        "the narrator",
+        "the narrator"
+      ],
+      "matched_surfaces": [],
+      "hits": [],
+      "expected_relevant": true,
+      "included": true
+    },
+    {
+      "entity_id": "ent_old_taylor",
+      "surfaces": [
+        "old Taylor",
+        "old Taylor"
+      ],
+      "matched_surfaces": [],
+      "hits": [],
+      "expected_relevant": false,
+      "included": true
+    },
+    {
+      "entity_id": "ent_royal_george",
+      "surfaces": [
+        "the Royal George",
+        "the Royal George"
+      ],
+      "matched_surfaces": [],
+      "hits": [],
+      "expected_relevant": false,
+      "included": true
+    },
+    {
+      "entity_id": "ent_squire_trelawney",
+      "surfaces": [
+        "Squire Trelawney",
+        "Squire Trelawney"
+      ],
+      "matched_surfaces": [],
+      "hits": [],
+      "expected_relevant": false,
+      "included": false
+    }
+  ],
+  "relations": [
+    {
+      "pair": "('ent_captain', 'ent_doctor_livesey')",
+      "a": "ent_doctor_livesey",
+      "b": "ent_captain",
+      "state_label": "open_confrontation",
+      "included": true
+    },
+    {
+      "pair": "('ent_captain', 'ent_narrator')",
+      "a": "ent_narrator",
+      "b": "ent_captain",
+      "state_label": "wary_curiosity",
+      "included": true
+    },
+    {
+      "pair": "('ent_doctor_livesey', 'ent_narrator')",
+      "a": "ent_narrator",
+      "b": "ent_doctor_livesey",
+      "state_label": "observing_respect",
+      "included": true
+    },
+    {
+      "pair": "('ent_father', 'ent_narrator')",
+      "a": "ent_narrator",
+      "b": "ent_father",
+      "state_label": "family_bond",
+      "included": true
+    },
+    {
+      "pair": "('ent_mother', 'ent_narrator')",
+      "a": "ent_narrator",
+      "b": "ent_mother",
+      "state_label": "family_bond",
+      "included": true
+    }
+  ],
+  "included": [
+    {
+      "item_id": "('ent_captain', 'ent_doctor_livesey')",
+      "item_type": "relation",
+      "section": "ACTIVE_RELATIONS",
+      "line": "ent_doctor_livesey<->ent_captain: ông / ông (open_confrontation)",
+      "reason": "both_entities_in_pack",
+      "matched_by": [
+        "ent_doctor_livesey",
+        "ent_captain"
+      ],
+      "token_estimate": 16
+    },
+    {
+      "item_id": "ent_narrator",
+      "item_type": "entity",
+      "section": "NARRATOR_CARD",
+      "line": "ent_narrator | the narrator -> người kể chuyện (người kể chuyện)",
+      "reason": "narrator_first_person",
+      "matched_by": [
+        "first-person pronoun"
+      ],
+      "token_estimate": 16
+    },
+    {
+      "item_id": "('ent_captain', 'ent_narrator')",
+      "item_type": "relation",
+      "section": "ACTIVE_RELATIONS",
+      "line": "ent_narrator<->ent_captain: ông / cậu (wary_curiosity)",
+      "reason": "both_entities_in_pack",
+      "matched_by": [
+        "ent_narrator",
+        "ent_captain"
+      ],
+      "token_estimate": 13
+    },
+    {
+      "item_id": "('ent_doctor_livesey', 'ent_narrator')",
+      "item_type": "relation",
+      "section": "ACTIVE_RELATIONS",
+      "line": "ent_narrator<->ent_doctor_livesey: ông / cháu (observing_respect)",
+      "reason": "both_entities_in_pack",
+      "matched_by": [
+        "ent_narrator",
+        "ent_doctor_livesey"
+      ],
+      "token_estimate": 16
+    },
+    {
+      "item_id": "('ent_father', 'ent_narrator')",
+      "item_type": "relation",
+      "section": "ACTIVE_RELATIONS",
+      "line": "ent_narrator<->ent_father: cha / con (family_bond)",
+      "reason": "both_entities_in_pack",
+      "matched_by": [
+        "ent_narrator",
+        "ent_father"
+      ],
+      "token_estimate": 12
+    },
+    {
+      "item_id": "('ent_mother', 'ent_narrator')",
+      "item_type": "relation",
+      "section": "ACTIVE_RELATIONS",
+      "line": "ent_narrator<->ent_mother: mẹ / con (family_bond)",
+      "reason": "both_entities_in_pack",
+      "matched_by": [
+        "ent_narrator",
+        "ent_mother"
+      ],
+      "token_estimate": 12
+    },
+    {
+      "item_id": "ent_admiral_benbow_inn",
+      "item_type": "entity",
+      "section": "MATCHED_ENTITIES",
+      "line": "ent_admiral_benbow_inn | Admiral Benbow Inn -> quán trọ Admiral Benbow (quán trọ Admiral Benbow, nhà chúng tôi, Benbow cũ)",
+      "reason": "matched_surface",
+      "matched_by": [
+        "Admiral Benbow Inn",
+        "the Admiral Benbow",
+        "our house"
+      ],
+      "token_estimate": 30
+    },
+    {
+      "item_id": "ent_doctor_livesey",
+      "item_type": "entity",
+      "section": "MATCHED_ENTITIES",
+      "line": "ent_doctor_livesey | Doctor Livesey -> bác sĩ Livesey (bác sĩ Livesey, ông bác sĩ)",
+      "reason": "matched_surface",
+      "matched_by": [
+        "Doctor Livesey",
+        "the doctor"
+      ],
+      "token_estimate": 20
+    },
+    {
+      "item_id": "ent_father",
+      "item_type": "entity",
+      "section": "MATCHED_ENTITIES",
+      "line": "ent_father | my father -> cha tôi (cha tôi, cha)",
+      "reason": "matched_surface",
+      "matched_by": [
+        "my father",
+        "father"
+      ],
+      "token_estimate": 12
+    },
+    {
+      "item_id": "ent_mother",
+      "item_type": "entity",
+      "section": "MATCHED_ENTITIES",
+      "line": "ent_mother | my mother -> mẹ tôi (mẹ tôi, mẹ)",
+      "reason": "matched_surface",
+      "matched_by": [
+        "my mother",
+        "mother"
+      ],
+      "token_estimate": 11
+    },
+    {
+      "item_id": "ent_captain",
+      "item_type": "entity",
+      "section": "MATCHED_ENTITIES",
+      "line": "ent_captain | the captain -> thuyền trưởng (thuyền trưởng, lão già, tên côn đồ)",
+      "reason": "matched_surface",
+      "matched_by": [
+        "the captain"
+      ],
+      "token_estimate": 19
+    },
+    {
+      "item_id": "admiral benbow inn",
+      "item_type": "glossary",
+      "section": "MATCHED_GLOSSARY",
+      "line": "Admiral Benbow Inn -> quán trọ Admiral Benbow",
+      "reason": "matched_surface",
+      "matched_by": [
+        "Admiral Benbow Inn"
+      ],
+      "token_estimate": 11
+    },
+    {
+      "item_id": "brass telescope",
+      "item_type": "glossary",
+      "section": "MATCHED_GLOSSARY",
+      "line": "brass telescope -> ống nhòm bằng đồng",
+      "reason": "matched_surface",
+      "matched_by": [
+        "brass telescope"
+      ],
+      "token_estimate": 9
+    },
+    {
+      "item_id": "ent_old_taylor",
+      "item_type": "entity",
+      "section": "RECENT_CARRYOVER",
+      "line": "ent_old_taylor | old Taylor -> ông Taylor già (ông Taylor già)",
+      "reason": "recent_carryover",
+      "matched_by": [
+        "recent carryover"
+      ],
+      "token_estimate": 15
+    },
+    {
+      "item_id": "ent_royal_george",
+      "item_type": "entity",
+      "section": "RECENT_CARRYOVER",
+      "line": "ent_royal_george | the Royal George -> Royal George (Royal George)",
+      "reason": "recent_carryover",
+      "matched_by": [
+        "recent carryover"
+      ],
+      "token_estimate": 16
+    }
+  ],
+  "excluded": [
+    {
+      "item_id": "ent_old_taylor",
+      "item_type": "entity",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "old Taylor"
+      ]
+    },
+    {
+      "item_id": "ent_royal_george",
+      "item_type": "entity",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "the Royal George"
+      ]
+    },
+    {
+      "item_id": "ent_squire_trelawney",
+      "item_type": "entity",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "Squire Trelawney"
+      ]
+    },
+    {
+      "item_id": "assizes",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "assizes"
+      ]
+    },
+    {
+      "item_id": "dry tortugas",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "Dry Tortugas"
+      ]
+    },
+    {
+      "item_id": "handbarrow",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "handbarrow"
+      ]
+    },
+    {
+      "item_id": "magistrate",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "magistrate"
+      ]
+    },
+    {
+      "item_id": "saber cut",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "saber cut"
+      ]
+    },
+    {
+      "item_id": "sailor's clasp-knife",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "sailor's clasp-knife"
+      ]
+    },
+    {
+      "item_id": "sea-chest",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "sea-chest"
+      ]
+    },
+    {
+      "item_id": "seafaring man with one leg",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "seafaring man with one leg"
+      ]
+    },
+    {
+      "item_id": "silver fourpenny",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "silver fourpenny"
+      ]
+    },
+    {
+      "item_id": "spanish main",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "Spanish Main"
+      ]
+    },
+    {
+      "item_id": "the dead man's chest",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "the Dead Man's Chest"
+      ]
+    },
+    {
+      "item_id": "treasure island",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "Treasure Island"
+      ]
+    },
+    {
+      "item_id": "weather eye",
+      "item_type": "glossary",
+      "reason": "not_in_current_text",
+      "matched_by": [],
+      "surfaces_checked": [
+        "weather eye"
+      ]
+    }
+  ],
+  "dropped": []
+}

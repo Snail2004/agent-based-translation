@@ -284,12 +284,17 @@ def _relation_item(
 ) -> LiteraryBuilderContextItem:
     left = str(relation.get("a") or "")
     right = str(relation.get("b") or "")
+    relation_label = _compact_relation_label(relation)
     state = str(relation.get("state_label") or "")
     left_to_right = str(relation.get("address_a_to_b_vi") or "")
     right_to_left = str(relation.get("address_b_to_a_vi") or "")
-    line = f"{left}<->{right}: {left_to_right} / {right_to_left}"
+    label_part = f" [{relation_label}]" if relation_label else ""
+    line = f"{left}<->{right}{label_part}: {left_to_right} / {right_to_left}"
     if state:
         line += f" ({state})"
+    notes = str(relation.get("notes") or "").strip()
+    if notes and _include_relation_notes(relation):
+        line += f" -- {notes}"
     return LiteraryBuilderContextItem(
         item_id=key,
         item_type="relation",
@@ -342,6 +347,33 @@ def _count_matches(text: str, needle: str) -> int:
         return 0
     pattern = rf"(?<!\w){re.escape(normalized_needle)}(?!\w)"
     return len(re.findall(pattern, normalized_text, flags=re.UNICODE))
+
+
+def _compact_relation_label(relation: dict[str, Any]) -> str:
+    raw = str(
+        relation.get("relation")
+        or relation.get("relation_type")
+        or relation.get("role")
+        or ""
+    ).strip()
+    if not raw:
+        return ""
+    raw = re.sub(r"\s+", " ", raw)
+    raw = re.split(r"[;。.!?]", raw, maxsplit=1)[0].strip()
+    if len(raw) <= 36:
+        return raw
+    return (raw[:36].rsplit(" ", 1)[0] or raw[:36]).rstrip()
+
+
+def _include_relation_notes(relation: dict[str, Any]) -> bool:
+    flags = {"address_shift", "conflict", "revealed_identity"}
+    haystack = " ".join(
+        str(relation.get(key) or "")
+        for key in ("state_label", "relation", "relation_type", "flags")
+    ).casefold()
+    if any(flag in haystack for flag in flags):
+        return True
+    return any(bool(relation.get(flag)) for flag in flags)
 
 
 def _normalize_for_match(text: str) -> str:

@@ -46,7 +46,7 @@ Theo LOCK (ll): **không chạy vội lấy số** — trước khi re-baseline 
 - Tái dùng pattern anchoring của Translator (`retrieval/context_builder.plan_anchors` — chỉ surface-match trong window). Builder mục tiêu = **continuity** (gộp/nối entity-relation/nhận alias-motif quay lại), KHÁC Translator (dịch đúng tại chỗ) → Builder KHÔNG full-dump, KHÔNG zero.
 - Ghi audit ra `data/reports/literary_builder_context_audit.json` để user review include/exclude.
 
-**3.3 Render script** — `pipeline/scripts/render_literary_prompts.py`: in ≥1 Builder prompt thật + ≥1 Translator prompt thật (ch02/ch03 TI) ra `data/reports/literary_prompt_samples.txt`, kèm audit include/exclude. KHÔNG gọi API.
+**3.3 Render script** — `pipeline/scripts/render_literary_prompts.py`: in ≥1 Builder prompt thật + ≥1 Translator prompt thật (ch02/ch03 TI). `data/reports/literary_prompt_samples.txt` là index ngắn; full prompt nằm ở `literary_builder_prompt_sample.txt` và `literary_translator_s1_prompt_sample.txt`; audit include/exclude ở `literary_builder_context_audit.json`; full frozen registry snapshot ở `literary_registry_snapshot.json`. KHÔNG gọi API.
 
 **3.4 Preflight** — ước lượng token/call + tổng cho re-baseline S0/S1 TI 2 chương; in max prompt/call so với `prompt_token_cap` (`configs/llm_translate.yaml`); KHÔNG gọi API.
 
@@ -62,7 +62,7 @@ python -m pytest THESIS_RUNTIME_TOOL/pipeline/tests/ -k "registry or context_pac
 # 3) render prompt thật cho user review (0 API)
 python THESIS_RUNTIME_TOOL/pipeline/scripts/render_literary_prompts.py --chapters 2,3 \
   --out data/reports/literary_prompt_samples.txt
-#   → in ≥1 Builder + ≥1 Translator prompt ĐẦY ĐỦ + audit include/exclude
+#   → index + Builder prompt riêng + Translator prompt riêng + audit include/exclude + registry snapshot
 
 # 4) preflight token/cost (0 API)
 python -m THESIS_RUNTIME_TOOL.pipeline.translate.run --preflight-only \
@@ -80,13 +80,19 @@ python -m THESIS_RUNTIME_TOOL.pipeline.translate.run --preflight-only \
 - Thêm script offline `pipeline/scripts/render_literary_prompts.py`.
 - Thêm tests `pipeline/tests/test_literary_builder_context.py`; cập nhật expected prompt_version trong `test_translate_runner.py`.
 - Rendered artifacts:
-  - `data/reports/literary_prompt_samples.txt`
+  - `data/reports/literary_prompt_samples.txt` (index ngắn, không còn trộn prompt/audit)
+  - `data/reports/literary_builder_prompt_sample.txt`
+  - `data/reports/literary_translator_s1_prompt_sample.txt`
   - `data/reports/literary_builder_context_audit.json`
+  - `data/reports/literary_registry_snapshot.json`
 
 **1. Representative full prompt**
-- File đầy đủ: `data/reports/literary_prompt_samples.txt`.
-- Chứa 1 Builder prompt đầy đủ cho `treasure_island_ch03` và 1 Translator S1 prompt đầy đủ cho window `w_ch02_002`.
+- Builder prompt đầy đủ: `data/reports/literary_builder_prompt_sample.txt`.
+- Translator S1 prompt đầy đủ: `data/reports/literary_translator_s1_prompt_sample.txt`.
+- Index ngắn: `data/reports/literary_prompt_samples.txt`.
+- Builder prompt là sample cho `treasure_island_ch03`; Translator S1 prompt là sample cho window `w_ch02_002`.
 - Audit JSON máy đọc được: `data/reports/literary_builder_context_audit.json`.
+- Full registry đã Builder xây/persist trong DB: `data/reports/literary_registry_snapshot.json` (`glossary=22`, `entities=10`, `relations=10`). File này là registry đầy đủ để review, KHÔNG phải toàn bộ thứ được bơm vào prompt.
 
 **2. Context inclusion policy**
 - Builder literary không còn dùng `registry.compress()` full-ish dump khi `mode="literary"`; runner tạo `LiteraryBuilderContextPack` từ registry hiện có.
@@ -143,7 +149,12 @@ python -m pytest pipeline\tests -k "registry or context_pack or injection" -v
 ```
 
 ```text
-python -m pipeline.scripts.render_literary_prompts --chapters 2,3 --out data/reports/literary_prompt_samples.txt --audit-out data/reports/literary_builder_context_audit.json
+python -m pipeline.scripts.render_literary_prompts --chapters 2,3
+=> Prompt index written: ...\data\reports\literary_prompt_samples.txt
+=> Builder prompt written: ...\data\reports\literary_builder_prompt_sample.txt
+=> Translator prompt written: ...\data\reports\literary_translator_s1_prompt_sample.txt
+=> Audit written: ...\data\reports\literary_builder_context_audit.json
+=> Registry snapshot written: ...\data\reports\literary_registry_snapshot.json
 => Builder prompt est tokens: 4455
 => Translator S1 prompt est tokens: 895
 => Translator prompt version: s1_literary_translator_v2

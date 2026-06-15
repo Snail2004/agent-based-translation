@@ -1,0 +1,69 @@
+# HYG-01 Literary Translator S1 Prompt Sample
+
+No API call was made. This is a full prompt rendered from current code; source blocks come from DB and Builder registry context follows the chronology source in metadata.
+DB: C:\Users\nguye\OneDrive\Tài liệu\Baitap\DuAnCNTT\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME_TOOL\data\jobs\treasure_island_p2\memory.sqlite3
+Profile: literary_v1
+Chapters: ['ch02', 'ch03']
+
+## Metadata
+{
+  "window_id": "w_ch02_002",
+  "block_ids": [
+    "treasure_island_ch02_b003",
+    "treasure_island_ch02_b004",
+    "treasure_island_ch02_b005"
+  ],
+  "prompt_version": "s1_literary_translator_v2",
+  "prompt_tokens_est": 895,
+  "context_pack_tokens": 115,
+  "audit_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_builder_context_audit.json",
+  "registry_snapshot_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_registry_snapshot.json"
+}
+
+## Prompt
+### Message 1: system
+You are an autonomous literary translator operating in a structured pipeline. Your role is English-to-Vietnamese translation only — no annotation, no commentary.
+
+OUTPUT CONTRACT: Return ONLY a valid JSON object keyed by block_id. Every block_id from the user's input MUST appear as a key with its Vietnamese translation as the value. Do NOT add extra keys, explanations, or markup.
+
+Example output format:
+{"ch02_b001": "Cậu bé đứng trước cánh cửa gỗ.", "ch02_b002": "\"Xin chào,\" cậu nói."}
+
+STYLE POLICY (Newmark V approach):
+- DEFAULT: SEMANTIC translation — faithful to source meaning and narrative voice, preserve the storytelling register.
+- DIALOGUE: COMMUNICATIVE — natural, idiomatic Vietnamese; matching the speaker's social role and tone.
+- CARRY OVER: italicized English terms (ship names, exclamations, proper nouns).
+- PROHIBITED:
+  * Word-for-word / calque: translate meaning, not structure.
+  * ADDING content not present in the source (no adaptation).
+  * DROPPING content from the source without semantic justification.
+  * Translator's footnotes or parenthetical comments.
+- NAME TRANSLATION: proper names remain as-is; if a conventional Vietnamese form exists, prefer it.
+- PRONOUN / ADDRESS CHOICE: use consistent Vietnamese pronouns within this window. Pick whichever form best matches the relationship implied by the text. You see only this window — consistency beyond the window is not your concern.
+- BLOCK IDs: use the full block_id as provided (e.g. ch02_b003).
+- PROMPT VERSION: s1_literary_translator_v2
+
+
+### Message 2: user
+MANDATORY TERMINOLOGY & NAMES
+Use the exact Vietnamese target form whenever the concept/name appears; natural Vietnamese syntax around it is allowed. Terms marked [GIU NGUYEN] must remain untranslated.
+- saber cut -> vết chém kiếm cong
+- Admiral Benbow Inn -> quán trọ Admiral Benbow
+- cove -> vịnh nhỏ
+- handbarrow -> xe cút kít tay
+- rum -> rượu rum
+- sea-chest -> rương biển
+- the Dead Man's Chest -> Rương Người Chết
+- Treasure Island -> Đảo Châu Báu
+- Admiral Benbow Inn -> quán trọ Admiral Benbow (quán trọ Admiral Benbow, nhà chúng tôi, Benbow cũ)
+- Doctor Livesey -> bác sĩ Livesey (bác sĩ Livesey, ông bác sĩ)
+- my father -> cha tôi (cha tôi, cha)
+- Squire Trelawney -> quý ông Trelawney (quý ông Trelawney)
+
+SOURCE WINDOW
+[treasure_island_ch02_b003] Squire Trelawney, Doctor Livesey, and the rest of these gentlemen having asked me to write down the whole particulars about Treasure Island, from the beginning to the end, keeping nothing back but the bearings of the island, and that only because there is still treasure not yet lifted, I take up my pen in the year of grace 17﻿—, and go back to the time when my father kept the Admiral Benbow Inn, and the brown old seaman, with the saber cut, first took up his lodging under our roof.
+
+[treasure_island_ch02_b004] I remember him as if it were yesterday, as he came plodding to the inn door, his sea-chest following behind him in a handbarrow; a tall, strong, heavy, nut-brown man; his tarry pigtail falling over the shoulders of his soiled blue coat; his hands ragged and scarred, with black, broken nails, and the saber cut across one cheek, a dirty, livid white. I remember him looking round the cove and whistling to himself as he did so, and then breaking out in that old sea-song that he sang so often afterwards:
+
+[treasure_island_ch02_b005] “Fifteen men on the dead man’s chest, Yo-ho-ho and a bottle of rum!”
+

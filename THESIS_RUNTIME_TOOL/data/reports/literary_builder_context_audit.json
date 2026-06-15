@@ -1,6 +1,6 @@
 {
   "manifest": {
-    "purpose": "HYG-01 offline prompt/context review; no API call",
+    "purpose": "HYG-02 offline prompt/context review; no API call",
     "db": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\treasure_island_p2\\memory.sqlite3",
     "chapters": [
       "ch02",
@@ -10,96 +10,84 @@
   },
   "builder": {
     "chapter_id": "treasure_island_ch03",
-    "prompt_tokens_est": 4455,
+    "registry_source": "prepass_artifacts_prior_chapters:['C:\\\\Users\\\\nguye\\\\OneDrive\\\\Tài liệu\\\\Baitap\\\\DuAnCNTT\\\\odl-pdf-demo\\\\research\\\\agent-based-translation\\\\THESIS_RUNTIME_TOOL\\\\data\\\\prepass\\\\treasure_island_pilot\\\\treasure_island_ch02.json']",
+    "prompt_tokens_est": 4403,
     "context_pack": {
       "chapter_id": "treasure_island_ch03",
       "budget_tokens": 600,
-      "token_estimate": 314,
+      "token_estimate": 266,
       "first_person_detected": true,
       "included": [
-        {
-          "item_id": "('ent_black_dog', 'ent_captain')",
-          "item_type": "relation",
-          "section": "ACTIVE_RELATIONS",
-          "line": "ent_black_dog<->ent_captain: ông / ông (tense_reunion)",
-          "reason": "both_entities_in_pack",
-          "matched_by": [
-            "ent_black_dog",
-            "ent_captain"
-          ],
-          "token_estimate": 13
-        },
-        {
-          "item_id": "('ent_black_dog', 'ent_narrator')",
-          "item_type": "relation",
-          "section": "ACTIVE_RELATIONS",
-          "line": "ent_black_dog<->ent_narrator: cậu / ông (uneasy_watchfulness)",
-          "reason": "both_entities_in_pack",
-          "matched_by": [
-            "ent_black_dog",
-            "ent_narrator"
-          ],
-          "token_estimate": 15
-        },
         {
           "item_id": "('ent_captain', 'ent_doctor_livesey')",
           "item_type": "relation",
           "section": "ACTIVE_RELATIONS",
-          "line": "ent_captain<->ent_doctor_livesey: ông / ông (ill_dispute)",
+          "line": "ent_doctor_livesey<->ent_captain [đối đầu công khai về việc uống rượu]: ông / ông (open_confrontation)",
           "reason": "both_entities_in_pack",
           "matched_by": [
-            "ent_captain",
-            "ent_doctor_livesey"
+            "ent_doctor_livesey",
+            "ent_captain"
           ],
-          "token_estimate": 14
+          "token_estimate": 25
+        },
+        {
+          "item_id": "ent_narrator",
+          "item_type": "entity",
+          "section": "NARRATOR_CARD",
+          "line": "ent_narrator | the narrator -> người kể chuyện (người kể chuyện)",
+          "reason": "narrator_first_person",
+          "matched_by": [
+            "first-person pronoun"
+          ],
+          "token_estimate": 16
         },
         {
           "item_id": "('ent_captain', 'ent_narrator')",
           "item_type": "relation",
           "section": "ACTIVE_RELATIONS",
-          "line": "ent_captain<->ent_narrator: cậu / ông (tense_obedience)",
+          "line": "ent_narrator<->ent_captain [thường xuyên ở chung nhà]: ông / cậu (wary_curiosity)",
           "reason": "both_entities_in_pack",
           "matched_by": [
-            "ent_captain",
-            "ent_narrator"
+            "ent_narrator",
+            "ent_captain"
           ],
-          "token_estimate": 13
+          "token_estimate": 20
         },
         {
           "item_id": "('ent_doctor_livesey', 'ent_narrator')",
           "item_type": "relation",
           "section": "ACTIVE_RELATIONS",
-          "line": "ent_doctor_livesey<->ent_narrator: cháu / ông (awe_under_stress)",
+          "line": "ent_narrator<->ent_doctor_livesey [người kể chứng kiến bác sĩ can]: ông / cháu (observing_respect)",
           "reason": "both_entities_in_pack",
           "matched_by": [
-            "ent_doctor_livesey",
-            "ent_narrator"
+            "ent_narrator",
+            "ent_doctor_livesey"
           ],
-          "token_estimate": 16
+          "token_estimate": 24
         },
         {
           "item_id": "('ent_father', 'ent_narrator')",
           "item_type": "relation",
           "section": "ACTIVE_RELATIONS",
-          "line": "ent_father<->ent_narrator: con / cha (family_bond)",
+          "line": "ent_narrator<->ent_father [quan hệ cha con]: cha / con (family_bond)",
           "reason": "both_entities_in_pack",
           "matched_by": [
-            "ent_father",
-            "ent_narrator"
+            "ent_narrator",
+            "ent_father"
           ],
-          "token_estimate": 12
+          "token_estimate": 17
         },
         {
           "item_id": "('ent_mother', 'ent_narrator')",
           "item_type": "relation",
           "section": "ACTIVE_RELATIONS",
-          "line": "ent_mother<->ent_narrator: con / mẹ (family_bond)",
+          "line": "ent_narrator<->ent_mother [quan hệ cha con mẹ con trong gia]: mẹ / con (family_bond)",
           "reason": "both_entities_in_pack",
           "matched_by": [
-            "ent_mother",
-            "ent_narrator"
+            "ent_narrator",
+            "ent_mother"
           ],
-          "token_estimate": 12
+          "token_estimate": 21
         },
         {
           "item_id": "ent_admiral_benbow_inn",
@@ -115,32 +103,6 @@
           "token_estimate": 30
         },
         {
-          "item_id": "ent_captain",
-          "item_type": "entity",
-          "section": "MATCHED_ENTITIES",
-          "line": "ent_captain | Billy Bones -> thuyền trưởng (thuyền trưởng, lão già, tên côn đồ, ông Bill)",
-          "reason": "matched_surface",
-          "matched_by": [
-            "Master Billy Bones",
-            "Billy Bones",
-            "the captain",
-            "Mr. Bones",
-            "Bill"
-          ],
-          "token_estimate": 22
-        },
-        {
-          "item_id": "ent_black_dog",
-          "item_type": "entity",
-          "section": "MATCHED_ENTITIES",
-          "line": "ent_black_dog | Black Dog -> Black Dog (Black Dog)",
-          "reason": "matched_surface",
-          "matched_by": [
-            "Black Dog"
-          ],
-          "token_estimate": 12
-        },
-        {
           "item_id": "ent_doctor_livesey",
           "item_type": "entity",
           "section": "MATCHED_ENTITIES",
@@ -153,30 +115,6 @@
           "token_estimate": 20
         },
         {
-          "item_id": "ent_narrator",
-          "item_type": "entity",
-          "section": "MATCHED_ENTITIES",
-          "line": "ent_narrator | Jim -> Jim (người kể chuyện, nguoi ke chuyen, Jim)",
-          "reason": "matched_surface",
-          "matched_by": [
-            "Jim"
-          ],
-          "token_estimate": 16
-        },
-        {
-          "item_id": "ent_mother",
-          "item_type": "entity",
-          "section": "MATCHED_ENTITIES",
-          "line": "ent_mother | Mrs. Hawkins -> mẹ tôi (mẹ tôi, mẹ, bà Hawkins)",
-          "reason": "matched_surface",
-          "matched_by": [
-            "Mrs. Hawkins",
-            "my mother",
-            "mother"
-          ],
-          "token_estimate": 15
-        },
-        {
           "item_id": "ent_father",
           "item_type": "entity",
           "section": "MATCHED_ENTITIES",
@@ -187,6 +125,29 @@
             "father"
           ],
           "token_estimate": 12
+        },
+        {
+          "item_id": "ent_mother",
+          "item_type": "entity",
+          "section": "MATCHED_ENTITIES",
+          "line": "ent_mother | my mother -> mẹ tôi (mẹ tôi, mẹ)",
+          "reason": "matched_surface",
+          "matched_by": [
+            "my mother",
+            "mother"
+          ],
+          "token_estimate": 11
+        },
+        {
+          "item_id": "ent_captain",
+          "item_type": "entity",
+          "section": "MATCHED_ENTITIES",
+          "line": "ent_captain | the captain -> thuyền trưởng (thuyền trưởng, lão già, tên côn đồ)",
+          "reason": "matched_surface",
+          "matched_by": [
+            "the captain"
+          ],
+          "token_estimate": 19
         },
         {
           "item_id": "admiral benbow inn",
@@ -209,83 +170,6 @@
             "brass telescope"
           ],
           "token_estimate": 9
-        },
-        {
-          "item_id": "cove",
-          "item_type": "glossary",
-          "section": "MATCHED_GLOSSARY",
-          "line": "cove -> vịnh nhỏ",
-          "reason": "matched_surface",
-          "matched_by": [
-            "cove"
-          ],
-          "token_estimate": 4
-        },
-        {
-          "item_id": "cutlass",
-          "item_type": "glossary",
-          "section": "MATCHED_GLOSSARY",
-          "line": "cutlass -> kiếm cong",
-          "reason": "matched_surface",
-          "matched_by": [
-            "cutlass"
-          ],
-          "token_estimate": 5
-        },
-        {
-          "item_id": "lancet",
-          "item_type": "glossary",
-          "section": "MATCHED_GLOSSARY",
-          "line": "lancet -> dao trích huyết",
-          "reason": "matched_surface",
-          "matched_by": [
-            "lancet"
-          ],
-          "token_estimate": 6
-        },
-        {
-          "item_id": "rum",
-          "item_type": "glossary",
-          "section": "MATCHED_GLOSSARY",
-          "line": "rum -> rượu rum",
-          "reason": "matched_surface",
-          "matched_by": [
-            "rum"
-          ],
-          "token_estimate": 3
-        },
-        {
-          "item_id": "signboard of admiral benbow",
-          "item_type": "glossary",
-          "section": "MATCHED_GLOSSARY",
-          "line": "signboard of Admiral Benbow -> biển hiệu Admiral Benbow",
-          "reason": "matched_surface",
-          "matched_by": [
-            "signboard of Admiral Benbow"
-          ],
-          "token_estimate": 13
-        },
-        {
-          "item_id": "spyglass",
-          "item_type": "glossary",
-          "section": "MATCHED_GLOSSARY",
-          "line": "spyglass -> ống nhòm",
-          "reason": "matched_surface",
-          "matched_by": [
-            "spyglass"
-          ],
-          "token_estimate": 5
-        },
-        {
-          "item_id": "the beach",
-          "item_type": "glossary",
-          "section": "MATCHED_GLOSSARY",
-          "line": "the beach -> bãi biển",
-          "reason": "matched_surface",
-          "matched_by": [
-            "the beach"
-          ],
-          "token_estimate": 5
         },
         {
           "item_id": "ent_old_taylor",
@@ -459,7 +343,7 @@
       "dropped_by_budget": [],
       "warnings": [],
       "counts": {
-        "included": 25,
+        "included": 15,
         "excluded": 16,
         "dropped_by_budget": 0
       }
@@ -568,5 +452,389 @@
       "low_context": false,
       "warnings": []
     }
+  },
+  "builder_preflight": [
+    {
+      "chapter_id": "treasure_island_ch02",
+      "registry_source": "empty_registry_first_chapter",
+      "source_tokens_est": 2869,
+      "context_pack_tokens": 0,
+      "prompt_tokens_est": 4009,
+      "included": 0,
+      "excluded": 0,
+      "dropped": 0,
+      "status": "OK",
+      "system_prefix_sha256": "4a9b1c84fbde7274529409db8a5235bd879d9d993ae3b1e34ea822b03623f0b3",
+      "context_pack": {
+        "chapter_id": "treasure_island_ch02",
+        "budget_tokens": 600,
+        "token_estimate": 0,
+        "first_person_detected": true,
+        "included": [],
+        "excluded": [],
+        "dropped_by_budget": [],
+        "warnings": [],
+        "counts": {
+          "included": 0,
+          "excluded": 0,
+          "dropped_by_budget": 0
+        }
+      }
+    },
+    {
+      "chapter_id": "treasure_island_ch03",
+      "registry_source": "prepass_artifacts_prior_chapters:['C:\\\\Users\\\\nguye\\\\OneDrive\\\\Tài liệu\\\\Baitap\\\\DuAnCNTT\\\\odl-pdf-demo\\\\research\\\\agent-based-translation\\\\THESIS_RUNTIME_TOOL\\\\data\\\\prepass\\\\treasure_island_pilot\\\\treasure_island_ch02.json']",
+      "source_tokens_est": 2889,
+      "context_pack_tokens": 266,
+      "prompt_tokens_est": 4403,
+      "included": 15,
+      "excluded": 16,
+      "dropped": 0,
+      "status": "OK",
+      "system_prefix_sha256": "4a9b1c84fbde7274529409db8a5235bd879d9d993ae3b1e34ea822b03623f0b3",
+      "context_pack": {
+        "chapter_id": "treasure_island_ch03",
+        "budget_tokens": 600,
+        "token_estimate": 266,
+        "first_person_detected": true,
+        "included": [
+          {
+            "item_id": "('ent_captain', 'ent_doctor_livesey')",
+            "item_type": "relation",
+            "section": "ACTIVE_RELATIONS",
+            "line": "ent_doctor_livesey<->ent_captain [đối đầu công khai về việc uống rượu]: ông / ông (open_confrontation)",
+            "reason": "both_entities_in_pack",
+            "matched_by": [
+              "ent_doctor_livesey",
+              "ent_captain"
+            ],
+            "token_estimate": 25
+          },
+          {
+            "item_id": "ent_narrator",
+            "item_type": "entity",
+            "section": "NARRATOR_CARD",
+            "line": "ent_narrator | the narrator -> người kể chuyện (người kể chuyện)",
+            "reason": "narrator_first_person",
+            "matched_by": [
+              "first-person pronoun"
+            ],
+            "token_estimate": 16
+          },
+          {
+            "item_id": "('ent_captain', 'ent_narrator')",
+            "item_type": "relation",
+            "section": "ACTIVE_RELATIONS",
+            "line": "ent_narrator<->ent_captain [thường xuyên ở chung nhà]: ông / cậu (wary_curiosity)",
+            "reason": "both_entities_in_pack",
+            "matched_by": [
+              "ent_narrator",
+              "ent_captain"
+            ],
+            "token_estimate": 20
+          },
+          {
+            "item_id": "('ent_doctor_livesey', 'ent_narrator')",
+            "item_type": "relation",
+            "section": "ACTIVE_RELATIONS",
+            "line": "ent_narrator<->ent_doctor_livesey [người kể chứng kiến bác sĩ can]: ông / cháu (observing_respect)",
+            "reason": "both_entities_in_pack",
+            "matched_by": [
+              "ent_narrator",
+              "ent_doctor_livesey"
+            ],
+            "token_estimate": 24
+          },
+          {
+            "item_id": "('ent_father', 'ent_narrator')",
+            "item_type": "relation",
+            "section": "ACTIVE_RELATIONS",
+            "line": "ent_narrator<->ent_father [quan hệ cha con]: cha / con (family_bond)",
+            "reason": "both_entities_in_pack",
+            "matched_by": [
+              "ent_narrator",
+              "ent_father"
+            ],
+            "token_estimate": 17
+          },
+          {
+            "item_id": "('ent_mother', 'ent_narrator')",
+            "item_type": "relation",
+            "section": "ACTIVE_RELATIONS",
+            "line": "ent_narrator<->ent_mother [quan hệ cha con mẹ con trong gia]: mẹ / con (family_bond)",
+            "reason": "both_entities_in_pack",
+            "matched_by": [
+              "ent_narrator",
+              "ent_mother"
+            ],
+            "token_estimate": 21
+          },
+          {
+            "item_id": "ent_admiral_benbow_inn",
+            "item_type": "entity",
+            "section": "MATCHED_ENTITIES",
+            "line": "ent_admiral_benbow_inn | Admiral Benbow Inn -> quán trọ Admiral Benbow (quán trọ Admiral Benbow, nhà chúng tôi, Benbow cũ)",
+            "reason": "matched_surface",
+            "matched_by": [
+              "Admiral Benbow Inn",
+              "the Admiral Benbow",
+              "our house"
+            ],
+            "token_estimate": 30
+          },
+          {
+            "item_id": "ent_doctor_livesey",
+            "item_type": "entity",
+            "section": "MATCHED_ENTITIES",
+            "line": "ent_doctor_livesey | Doctor Livesey -> bác sĩ Livesey (bác sĩ Livesey, ông bác sĩ)",
+            "reason": "matched_surface",
+            "matched_by": [
+              "Doctor Livesey",
+              "the doctor"
+            ],
+            "token_estimate": 20
+          },
+          {
+            "item_id": "ent_father",
+            "item_type": "entity",
+            "section": "MATCHED_ENTITIES",
+            "line": "ent_father | my father -> cha tôi (cha tôi, cha)",
+            "reason": "matched_surface",
+            "matched_by": [
+              "my father",
+              "father"
+            ],
+            "token_estimate": 12
+          },
+          {
+            "item_id": "ent_mother",
+            "item_type": "entity",
+            "section": "MATCHED_ENTITIES",
+            "line": "ent_mother | my mother -> mẹ tôi (mẹ tôi, mẹ)",
+            "reason": "matched_surface",
+            "matched_by": [
+              "my mother",
+              "mother"
+            ],
+            "token_estimate": 11
+          },
+          {
+            "item_id": "ent_captain",
+            "item_type": "entity",
+            "section": "MATCHED_ENTITIES",
+            "line": "ent_captain | the captain -> thuyền trưởng (thuyền trưởng, lão già, tên côn đồ)",
+            "reason": "matched_surface",
+            "matched_by": [
+              "the captain"
+            ],
+            "token_estimate": 19
+          },
+          {
+            "item_id": "admiral benbow inn",
+            "item_type": "glossary",
+            "section": "MATCHED_GLOSSARY",
+            "line": "Admiral Benbow Inn -> quán trọ Admiral Benbow",
+            "reason": "matched_surface",
+            "matched_by": [
+              "Admiral Benbow Inn"
+            ],
+            "token_estimate": 11
+          },
+          {
+            "item_id": "brass telescope",
+            "item_type": "glossary",
+            "section": "MATCHED_GLOSSARY",
+            "line": "brass telescope -> ống nhòm bằng đồng",
+            "reason": "matched_surface",
+            "matched_by": [
+              "brass telescope"
+            ],
+            "token_estimate": 9
+          },
+          {
+            "item_id": "ent_old_taylor",
+            "item_type": "entity",
+            "section": "RECENT_CARRYOVER",
+            "line": "ent_old_taylor | old Taylor -> ông Taylor già (ông Taylor già)",
+            "reason": "recent_carryover",
+            "matched_by": [
+              "recent carryover"
+            ],
+            "token_estimate": 15
+          },
+          {
+            "item_id": "ent_royal_george",
+            "item_type": "entity",
+            "section": "RECENT_CARRYOVER",
+            "line": "ent_royal_george | the Royal George -> Royal George (Royal George)",
+            "reason": "recent_carryover",
+            "matched_by": [
+              "recent carryover"
+            ],
+            "token_estimate": 16
+          }
+        ],
+        "excluded": [
+          {
+            "item_id": "ent_old_taylor",
+            "item_type": "entity",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "old Taylor"
+            ]
+          },
+          {
+            "item_id": "ent_royal_george",
+            "item_type": "entity",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "the Royal George"
+            ]
+          },
+          {
+            "item_id": "ent_squire_trelawney",
+            "item_type": "entity",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "Squire Trelawney"
+            ]
+          },
+          {
+            "item_id": "assizes",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "assizes"
+            ]
+          },
+          {
+            "item_id": "dry tortugas",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "Dry Tortugas"
+            ]
+          },
+          {
+            "item_id": "handbarrow",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "handbarrow"
+            ]
+          },
+          {
+            "item_id": "magistrate",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "magistrate"
+            ]
+          },
+          {
+            "item_id": "saber cut",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "saber cut"
+            ]
+          },
+          {
+            "item_id": "sailor's clasp-knife",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "sailor's clasp-knife"
+            ]
+          },
+          {
+            "item_id": "sea-chest",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "sea-chest"
+            ]
+          },
+          {
+            "item_id": "seafaring man with one leg",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "seafaring man with one leg"
+            ]
+          },
+          {
+            "item_id": "silver fourpenny",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "silver fourpenny"
+            ]
+          },
+          {
+            "item_id": "spanish main",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "Spanish Main"
+            ]
+          },
+          {
+            "item_id": "the dead man's chest",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "the Dead Man's Chest"
+            ]
+          },
+          {
+            "item_id": "treasure island",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "Treasure Island"
+            ]
+          },
+          {
+            "item_id": "weather eye",
+            "item_type": "glossary",
+            "reason": "not_in_current_text",
+            "matched_by": [],
+            "surfaces_checked": [
+              "weather eye"
+            ]
+          }
+        ],
+        "dropped_by_budget": [],
+        "warnings": [],
+        "counts": {
+          "included": 15,
+          "excluded": 16,
+          "dropped_by_budget": 0
+        }
+      }
+    }
+  ],
+  "cache_friendliness": {
+    "system_prefix_byte_identical": true,
+    "system_prefix_sha256": "4a9b1c84fbde7274529409db8a5235bd879d9d993ae3b1e34ea822b03623f0b3",
+    "chapter_count": 2,
+    "context_pack_deterministic_sort": true,
+    "no_timestamp_or_random_in_prompt": true
   }
 }

@@ -10,7 +10,7 @@ D2L_REGISTRY_OMITTED_TEXT = (
     "in this window independently; deterministic consolidation will merge "
     "duplicates and resolve target variants after extraction."
 )
-LITERARY_PROMPT_VERSION = "literary_builder_context_v2"
+LITERARY_PROMPT_VERSION = "literary_builder_context_v3"
 
 
 def build_messages(
@@ -48,7 +48,7 @@ def build_messages(
         "nautical terms, culturally specific objects, special objects, place names, "
         "or domain-specific phrases. Do not add ordinary words or everyday household "
         "objects. Negative examples: council, chart, terms, bearing, parlor, basin, "
-        "breakfast table, stroke. Aim for 5-20 glossary terms per substantial chapter. "
+        "breakfast table, stroke. Extract every visible term that meets this bar; do not impose a count cap. "
         "Human/person entities belong in entities, not glossary.\n"
         "- If the chapter uses first-person narration, create entity_id ent_narrator. "
         "If the narrator's name is not explicitly visible in the provided chapter text, "
