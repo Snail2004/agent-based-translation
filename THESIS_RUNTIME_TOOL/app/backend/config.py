@@ -15,6 +15,7 @@ TRANSLATION_REVIEW_TEMPLATE = TEMPLATE_ROOT / "translation_review_log.csv"
 
 PROJECTS_ROOT = Path(os.environ.get("THESIS_TOOL_PROJECTS_ROOT", HANDOFF_ROOT / "projects")).resolve()
 THESIS_JOBS_ROOT = Path(os.environ.get("THESIS_JOBS_ROOT", HANDOFF_ROOT / "data" / "jobs")).resolve()
+THESIS_REPORTS_ROOT = Path(os.environ.get("THESIS_REPORTS_ROOT", HANDOFF_ROOT / "data" / "reports")).resolve()
 THESIS_APP_MODE = os.environ.get("THESIS_APP_MODE", "legacy").strip().lower()
 HOST = os.environ.get("AILAB_BACKEND_HOST", "127.0.0.1")
 PORT = int(os.environ.get("AILAB_BACKEND_PORT", "5000"))

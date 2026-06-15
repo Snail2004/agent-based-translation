@@ -10,6 +10,7 @@ from routes.projects import bp as projects_bp
 from routes.references import bp as references_bp
 from routes.thesis_dataset import bp as thesis_dataset_bp
 from routes.thesis_observability import bp as thesis_observability_bp
+from routes.thesis_scores import bp as thesis_scores_bp
 from routes.translation_preview import bp as translation_preview_bp
 from routes.validation import bp as validation_bp
 
@@ -18,6 +19,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(projects_bp, url_prefix="/api")
     app.register_blueprint(thesis_dataset_bp, url_prefix="/api")
     app.register_blueprint(thesis_observability_bp, url_prefix="/api")
+    app.register_blueprint(thesis_scores_bp, url_prefix="/api")
     app.register_blueprint(dataset_bp, url_prefix="/api")
     app.register_blueprint(validation_bp, url_prefix="/api")
     app.register_blueprint(edits_bp, url_prefix="/api")
