@@ -13,6 +13,7 @@ from pipeline.prepass.prompt import (
     build_messages,
     short_block_id,
 )
+from pipeline.prepass.literary_context import build_literary_builder_context_pack
 from pipeline.prepass.registry import PrepassRegistry
 from pipeline.prepass.schemas import validate_chapter_output
 
@@ -333,7 +334,12 @@ def _run_single_chapter(
     valid_block_ids: set[str] | None = None,
 ) -> tuple[dict[str, Any] | None, list[LLMResult], list[str]]:
     chapter_id = str(chapter["chapter_id"])
-    messages = build_messages(chapter, registry_text or registry.compress(), mode=mode)
+    if registry_text is None and mode == "literary":
+        context_pack = build_literary_builder_context_pack(chapter, registry)
+        registry_context_text = context_pack.render_context()
+    else:
+        registry_context_text = registry_text or registry.compress()
+    messages = build_messages(chapter, registry_context_text, mode=mode)
     errors: list[str] = []
     results: list[LLMResult] = []
 

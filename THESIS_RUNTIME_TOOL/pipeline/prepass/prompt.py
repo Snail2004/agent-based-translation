@@ -10,7 +10,7 @@ D2L_REGISTRY_OMITTED_TEXT = (
     "in this window independently; deterministic consolidation will merge "
     "duplicates and resolve target variants after extraction."
 )
-LITERARY_PROMPT_VERSION = "literary_v2"
+LITERARY_PROMPT_VERSION = "literary_builder_context_v2"
 
 
 def build_messages(
@@ -32,6 +32,7 @@ def build_messages(
         "the user. Extract a compact chapter registry JSON for T1 glossary, T2 "
         "entities and relations, T3 summary, and T4 motifs.\n\n"
         "Hard rules:\n"
+        f"- Prompt version: {LITERARY_PROMPT_VERSION}.\n"
         "- Return only valid JSON matching the requested contract.\n"
         "- Use entity_id values with prefix ent_ and snake_case.\n"
         "- Every glossary candidate MUST use exactly these keys: source_term, "
@@ -90,7 +91,7 @@ def build_messages(
         "}"
     )
     user = (
-        f"REGISTRY_SO_FAR\n{registry_so_far_text}\n\n"
+        f"REGISTRY_CONTEXT_PACK\n{registry_so_far_text}\n\n"
         f"CHAPTER_ID\n{chapter['chapter_id']}\n\n"
         "CHAPTER_TEXT_WITH_BLOCK_MARKERS\n"
         f"{render_chapter_blocks(chapter)}"

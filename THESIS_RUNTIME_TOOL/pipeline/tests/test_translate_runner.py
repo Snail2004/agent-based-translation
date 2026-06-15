@@ -275,7 +275,7 @@ def test_runner_persists_pack_breakdown(tmp_path):
     assert report.context_stats["windows_with_context"] == 1
     assert pack["config"] == "S1"
     assert run["config"] == "S1"
-    assert run["prompt_version"] == "s1_v1"
+    assert run["prompt_version"] == "s1_literary_translator_v2"
     assert payload["zones"]["system_tokens"] > 0
     assert payload["zones"]["hard_constraints_tokens"] > 0
     assert payload["zones"]["source_tokens"] > 0

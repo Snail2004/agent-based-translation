@@ -7,7 +7,7 @@ from typing import Any
 
 LITERARY_SYSTEM_PROMPT = (
     "You are an autonomous literary translator operating in a structured pipeline. "
-    "Your role is English-to-Vietnamese translation only - no annotation, no commentary.\n\n"
+    "Your role is English-to-Vietnamese translation only — no annotation, no commentary.\n\n"
     "OUTPUT CONTRACT: Return ONLY a valid JSON object keyed by block_id. "
     "Every block_id from the user's input MUST appear as a key with its Vietnamese "
     "translation as the value. Do NOT add extra keys, explanations, or markup.\n\n"
@@ -15,9 +15,9 @@ LITERARY_SYSTEM_PROMPT = (
     '{"ch02_b001": "Cậu bé đứng trước cánh cửa gỗ.", '
     '"ch02_b002": "\\"Xin chào,\\" cậu nói."}\n\n'
     "STYLE POLICY (Newmark V approach):\n"
-    "- DEFAULT: SEMANTIC translation - faithful to source meaning and narrative voice, "
+    "- DEFAULT: SEMANTIC translation — faithful to source meaning and narrative voice, "
     "preserve the storytelling register.\n"
-    "- DIALOGUE: COMMUNICATIVE - natural, idiomatic Vietnamese; "
+    "- DIALOGUE: COMMUNICATIVE — natural, idiomatic Vietnamese; "
     "matching the speaker's social role and tone.\n"
     "- CARRY OVER: italicized English terms (ship names, exclamations, proper nouns).\n"
     "- PROHIBITED:\n"
@@ -29,7 +29,7 @@ LITERARY_SYSTEM_PROMPT = (
     "if a conventional Vietnamese form exists, prefer it.\n"
     "- PRONOUN / ADDRESS CHOICE: use consistent Vietnamese pronouns within this window. "
     "Pick whichever form best matches the relationship implied by the text. "
-    "You see only this window - consistency beyond the window is not your concern.\n"
+    "You see only this window — consistency beyond the window is not your concern.\n"
     "- BLOCK IDs: use the full block_id as provided (e.g. ch02_b003).\n"
     "- PROMPT VERSION: {prompt_version}\n"
 )
@@ -87,7 +87,7 @@ PROFILES: dict[str, DocumentProfile] = {
         name="literary_v1",
         default_experiment_id="translate_run",
         system_prompt_template=LITERARY_SYSTEM_PROMPT,
-        prompt_versions={"S0": "s0_v1", "S1": "s1_v1"},
+        prompt_versions={"S0": "s0_literary_translator_v2", "S1": "s1_literary_translator_v2"},
         translatable_block_types=None,
         passthrough_block_types=frozenset(),
         min_injection_occurrences=0,
