@@ -23,6 +23,7 @@ function ProjectSourceScreen({
   onLoadAnnotationAgentCandidate,
   onResolveAnnotationCandidate,
   onApplyAnnotationCandidate,
+  readOnly,
 }) {
   const [file, setFile] = React.useState(null);
   const [confirmOverwrite, setConfirmOverwrite] = React.useState(false);
@@ -509,10 +510,10 @@ function ProjectSourceScreen({
               </div>
               <div className="project-form project-info-form">
                 <FormField label="project note">
-                  <textarea
+                <textarea
                     className="project-note"
                     value={projectNote}
-                    disabled={!activeDocId}
+                    disabled={!activeDocId || readOnly}
                     rows={4}
                     placeholder="Short note for task owner, source choice, known issues..."
                     onChange={e => setProjectNote(e.target.value)}
@@ -520,10 +521,10 @@ function ProjectSourceScreen({
                 </FormField>
               </div>
               <div className="project-admin-actions">
-                <button className="btn" disabled={!activeDocId} onClick={saveProjectSettings}>
+                <button className="btn" disabled={!activeDocId || readOnly} onClick={saveProjectSettings}>
                   <Ic.save size={13} />Save project info
                 </button>
-                <button className="btn danger" disabled={!activeDocId || protectedProject} onClick={() => setConfirmDelete(true)}>
+                <button className="btn danger" disabled={!activeDocId || protectedProject || readOnly} onClick={() => setConfirmDelete(true)}>
                   <Ic.trash size={13} />Delete project
                 </button>
               </div>
@@ -539,22 +540,22 @@ function ProjectSourceScreen({
           <section className="project-panel">
             <div className="panel-title"><Ic.doc size={14} />Metadata / provenance</div>
             <div className="project-form">
-              <FormField label="title"><input value={meta.title || ""} onChange={e => patchMetadata({ title: e.target.value })} /></FormField>
-              <FormField label="author"><input value={meta.author || ""} onChange={e => patchMetadata({ author: e.target.value })} /></FormField>
-              <FormField label="domain"><input value={meta.domain || ""} onChange={e => patchMetadata({ domain: e.target.value })} /></FormField>
-              <FormField label="genre"><input value={meta.genre || ""} onChange={e => patchMetadata({ genre: e.target.value })} /></FormField>
+              <FormField label="title"><input value={meta.title || ""} disabled={readOnly} onChange={e => patchMetadata({ title: e.target.value })} /></FormField>
+              <FormField label="author"><input value={meta.author || ""} disabled={readOnly} onChange={e => patchMetadata({ author: e.target.value })} /></FormField>
+              <FormField label="domain"><input value={meta.domain || ""} disabled={readOnly} onChange={e => patchMetadata({ domain: e.target.value })} /></FormField>
+              <FormField label="genre"><input value={meta.genre || ""} disabled={readOnly} onChange={e => patchMetadata({ genre: e.target.value })} /></FormField>
               <FormField label="source_format">
-                <select value={meta.source_format || "txt"} onChange={e => patchMetadata({ source_format: e.target.value })}>
+                <select value={meta.source_format || "txt"} disabled={readOnly} onChange={e => patchMetadata({ source_format: e.target.value })}>
                   <option value="txt">txt</option>
                   <option value="epub">epub</option>
                   <option value="html">html</option>
                   <option value="pdf">pdf (not extractable in MVP)</option>
                 </select>
               </FormField>
-              <FormField label="license"><input value={meta.license || ""} onChange={e => patchMetadata({ license: e.target.value })} /></FormField>
-              <FormField label="source_url"><input value={meta.source_url || ""} onChange={e => patchMetadata({ source_url: e.target.value })} /></FormField>
+              <FormField label="license"><input value={meta.license || ""} disabled={readOnly} onChange={e => patchMetadata({ license: e.target.value })} /></FormField>
+              <FormField label="source_url"><input value={meta.source_url || ""} disabled={readOnly} onChange={e => patchMetadata({ source_url: e.target.value })} /></FormField>
               <FormField label="contamination_risk">
-                <select value={meta.contamination_risk || ""} onChange={e => patchMetadata({ contamination_risk: e.target.value })}>
+                <select value={meta.contamination_risk || ""} disabled={readOnly} onChange={e => patchMetadata({ contamination_risk: e.target.value })}>
                   <option value="">not set</option>
                   <option value="low">low</option>
                   <option value="medium">medium</option>
@@ -576,12 +577,12 @@ function ProjectSourceScreen({
                 <div className="source-drop-title">TXT / EPUB source</div>
                 <div className="source-drop-sub">Backend rejects PDF/OCR/layout extraction in this MVP.</div>
               </div>
-              <input type="file" accept=".txt,.epub" onChange={e => setFile(e.target.files?.[0] || null)} />
+              <input type="file" accept=".txt,.epub" disabled={readOnly} onChange={e => setFile(e.target.files?.[0] || null)} />
             </div>
             <div className="extract-actions">
               <button className="btn" onClick={() => setFile(null)}>Clear</button>
-              <button className="btn" disabled={!file || !activeDocId} onClick={uploadSelected}><Ic.upload size={13} />Upload source</button>
-              <button className="btn primary" disabled={!activeDocId} onClick={startExtract}><Ic.play size={13} />Extract</button>
+              <button className="btn" disabled={!file || !activeDocId || readOnly} onClick={uploadSelected}><Ic.upload size={13} />Upload source</button>
+              <button className="btn primary" disabled={!activeDocId || readOnly} onClick={startExtract}><Ic.play size={13} />Extract</button>
             </div>
             <div className="extract-note">
               <Ic.alert size={12} />
@@ -589,6 +590,7 @@ function ProjectSourceScreen({
             </div>
           </section>
 
+          {!readOnly && <>
           <section className="project-panel normalizer-panel">
             <div className="panel-title"><Ic.layers size={14} />Structure normalizer</div>
             <p className="normalizer-intro">
@@ -857,7 +859,7 @@ function ProjectSourceScreen({
                 </div>
               )}
             </div>
-          </section>
+          </section></>}
         </div>
       </div>
 

@@ -5,6 +5,7 @@ const API = window.AILAB_API;
 const STORAGE_DOC = "ailab.doc_id";
 const STORAGE_USER = "ailab.user";
 const STORAGE_CENTER_MODE = "ailab.center_mode";
+const THESIS_PREFIX = "thesis:";
 const DEFAULT_USER = "U2 · Mai";
 const EDITABLE_META = new Set(["title", "author", "domain", "genre", "source_format", "license", "source_url", "contamination_risk"]);
 
@@ -82,6 +83,68 @@ function adaptDataset(dataset) {
     review: dataset.review_state || { blocks: {}, references: {}, summaries: {} },
     jobs: dataset.jobs || [],
     history: dataset.history_state || { can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] },
+  };
+}
+
+function thesisJobId(docId) {
+  const value = String(docId || "");
+  return value.startsWith(THESIS_PREFIX) ? value.slice(THESIS_PREFIX.length) : "";
+}
+
+function adaptThesisReadModel(model) {
+  const meta = model.meta || {};
+  const document = model.document || {};
+  const metadata = {
+    ...(document.metadata || {}),
+    title: document.title || document.metadata?.title || document.doc_id,
+    source_filename: document.source_filename || document.metadata?.source_filename || "",
+    source_lang: document.source_lang || "en",
+    target_lang: document.target_lang || "vi",
+    read_model_source: meta.source || "thesis_sqlite_readmodel",
+  };
+  const displayDocId = `${THESIS_PREFIX}${meta.job_id || document.job_id || document.doc_id || "job"}`;
+  const blocks = (model.blocks || []).map(block => ({
+    ...block,
+    clean_text: block.clean_text || block.text || block.original_text || "",
+    source_text: block.source_text || block.original_text || block.text || "",
+    annotations: block.annotations || {},
+    quality_flags: block.quality_flags || [],
+    read_only: true,
+  }));
+  return {
+    docInfo: {
+      doc_id: displayDocId,
+      schema_version: metadata.schema_version || "",
+      metadata,
+      provenance: {
+        ...(document.provenance || {}),
+        read_model: meta.source || "thesis_sqlite_readmodel",
+        job_id: meta.job_id,
+        db_path: meta.db_path,
+        runtime_memory: meta.provenance?.runtime_memory,
+        eval_only: meta.provenance?.eval_only,
+      },
+      thesis: {
+        job_id: meta.job_id,
+        document_doc_id: document.doc_id,
+        available_runs: meta.available_runs || [],
+        counts: meta.counts || {},
+      },
+      read_only: true,
+    },
+    chapters: model.chapters || [],
+    blocks,
+    glossary: model.runtime_memory?.glossary_entries || [],
+    entities: model.runtime_memory?.entities || [],
+    relations: model.runtime_memory?.entity_relations || [],
+    summaries: [],
+    references: [],
+    evalOnly: model.eval_only || { gold_glossary: [], references: [] },
+    translations: model.translations || {},
+    review: { blocks: {}, references: {}, summaries: {} },
+    jobs: meta.available_runs || [],
+    history: { can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] },
+    errors: [],
   };
 }
 
@@ -336,6 +399,8 @@ function App() {
   const [relations, setRelations] = useState([]);
   const [summaries, setSummaries] = useState([]);
   const [references, setReferences] = useState([]);
+  const [evalOnly, setEvalOnly] = useState({ gold_glossary: [], references: [] });
+  const [thesisTranslations, setThesisTranslations] = useState({});
   const [review, setReview] = useState({ blocks: {}, references: {}, summaries: {} });
   const [historyState, setHistoryState] = useState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
   const [errors, setErrors] = useState([]);
@@ -360,7 +425,19 @@ function App() {
   const saveTimers = useRef({});
 
   const refreshProjects = useCallback(async () => {
-    const list = await API.listProjects();
+    const [legacy, thesis] = await Promise.all([
+      API.listProjects().catch(() => []),
+      API.listThesisDatasets().catch(() => []),
+    ]);
+    const thesisRows = (thesis || []).map(row => ({
+      ...row,
+      doc_id: `${THESIS_PREFIX}${row.job_id}`,
+      display_doc_id: row.document_doc_id || row.job_id,
+      title: row.title || row.job_id,
+      source: "thesis",
+      status: row.status || "available",
+    }));
+    const list = [...(legacy || []), ...thesisRows];
     setProjects(list);
     return list;
   }, []);
@@ -378,8 +455,36 @@ function App() {
     setRelations(adapted.relations);
     setSummaries(adapted.summaries);
     setReferences(adapted.references);
+    setEvalOnly({ gold_glossary: [], references: [] });
+    setThesisTranslations({});
     setReview(adapted.review);
     setHistoryState(adapted.history);
+    setActiveDocId(adapted.docInfo.doc_id);
+    localStorage.setItem(STORAGE_DOC, adapted.docInfo.doc_id);
+    setSelectedId(prev => adapted.blocks.some(b => b.block_id === prev) ? prev : adapted.blocks[0]?.block_id || null);
+    setBootError(null);
+    setLoading(false);
+    return adapted;
+  }, []);
+
+  const loadThesisDataset = useCallback(async (jobId, opts = {}) => {
+    if (!jobId) return null;
+    if (!opts.silent) setLoading(true);
+    const dataset = await API.getThesisDataset(jobId);
+    const adapted = adaptThesisReadModel(dataset);
+    setDocInfo(adapted.docInfo);
+    setChapters(adapted.chapters);
+    setBlocks(adapted.blocks);
+    setGlossary(adapted.glossary);
+    setEntities(adapted.entities);
+    setRelations(adapted.relations);
+    setSummaries(adapted.summaries);
+    setReferences(adapted.references);
+    setEvalOnly(adapted.evalOnly);
+    setThesisTranslations(adapted.translations);
+    setReview(adapted.review);
+    setHistoryState(adapted.history);
+    setErrors(adapted.errors);
     setActiveDocId(adapted.docInfo.doc_id);
     localStorage.setItem(STORAGE_DOC, adapted.docInfo.doc_id);
     setSelectedId(prev => adapted.blocks.some(b => b.block_id === prev) ? prev : adapted.blocks[0]?.block_id || null);
@@ -404,7 +509,9 @@ function App() {
         return;
       }
       setActiveDocId(chosen.doc_id);
-      if (chosen.status === "available") {
+      if (chosen.source === "thesis") {
+        await loadThesisDataset(thesisJobId(chosen.doc_id));
+      } else if (chosen.status === "available") {
         await loadDataset(chosen.doc_id);
       } else {
         setDocInfo({ doc_id: chosen.doc_id, metadata: {}, provenance: {} });
@@ -420,6 +527,7 @@ function App() {
   useEffect(() => { boot(); }, []);
 
   const block = blocks.find(b => b.block_id === selectedId) || blocks[0] || null;
+  const readOnly = !!docInfo?.read_only || String(activeDocId || "").startsWith(THESIS_PREFIX);
 
   function setCenterMode(mode) {
     setCenterModeState(mode);
@@ -467,6 +575,10 @@ function App() {
 
   async function mutate(action, { refresh = true, success, fail } = {}) {
     if (!activeDocId) return null;
+    if (readOnly) {
+      toast("Read-only thesis view", "info", "Pipeline SQLite data is observable only in APP-A01.");
+      return null;
+    }
     touchStart();
     try {
       const result = await action();
@@ -482,6 +594,10 @@ function App() {
   }
 
   function queueSave(key, action) {
+    if (readOnly) {
+      toast("Read-only thesis view", "info", "No workspace write is available for thesis DB data.");
+      return;
+    }
     touchStart();
     clearTimeout(saveTimers.current[key]);
     saveTimers.current[key] = setTimeout(async () => {
@@ -598,9 +714,9 @@ function App() {
     return rows.length ? rows : [block];
   }, [blocks, block]);
 
-  const blockTerms = useMemo(() => block ? glossary.filter(t => (t.occurrences || []).some(o => o.block_id === block.block_id)) : [], [glossary, block]);
-  const blockEntities = useMemo(() => block ? entities.filter(e => (e.mentions || []).some(m => m.block_id === block.block_id)
-    || (block.discourse && [block.discourse.speaker_entity_id, block.discourse.addressee_entity_id].includes(e.entity_id))) : [], [entities, block]);
+  const blockTerms = useMemo(() => block ? (readOnly ? glossary : glossary.filter(t => (t.occurrences || []).some(o => o.block_id === block.block_id))) : [], [glossary, block, readOnly]);
+  const blockEntities = useMemo(() => block ? (readOnly ? entities : entities.filter(e => (e.mentions || []).some(m => m.block_id === block.block_id)
+    || (block.discourse && [block.discourse.speaker_entity_id, block.discourse.addressee_entity_id].includes(e.entity_id)))) : [], [entities, block, readOnly]);
   const summary = useMemo(() => block ? (summaries.find(s => s.chapter_id === block.chapter_id) || { doc_id: docInfo?.doc_id, chapter_id: block.chapter_id, summary_source: "", source: "" }) : null, [summaries, block, docInfo]);
 
   const filterCounts = useMemo(() => ({
@@ -678,6 +794,7 @@ function App() {
     summary: { text: summary?.summary_source ? null : "empty", tone: summary?.summary_source ? "" : "warn" },
     notes: { text: block?.annotations && (block.annotations.implicit_meaning || block.annotations.narrative_note || block.annotations.tone || (block.annotations.motifs || []).length) ? "set" : null },
     reference: { text: refForBlock?.status || null, tone: refForBlock?.status === "draft" ? "warn" : "" },
+    eval_only: { text: (evalOnly.gold_glossary?.length || evalOnly.references?.length) || null, tone: "warn" },
     validate: { text: errorCount || null, tone: errorCount ? "bad" : "" },
     progress: { text: `${stats.reviewed}/${stats.totalBlocks}` },
   };
@@ -702,7 +819,10 @@ function App() {
     const chosen = projects.find(p => p.doc_id === docId);
     setActiveDocId(docId);
     localStorage.setItem(STORAGE_DOC, docId);
-    if (chosen?.status === "available") {
+    if (chosen?.source === "thesis") {
+      await loadThesisDataset(thesisJobId(docId));
+      setView("workspace");
+    } else if (chosen?.status === "available") {
       await loadDataset(docId);
       setView("workspace");
     } else {
@@ -714,6 +834,8 @@ function App() {
       setRelations([]);
       setSummaries([]);
       setReferences([]);
+      setEvalOnly({ gold_glossary: [], references: [] });
+      setThesisTranslations({});
       setReview({ blocks: {}, references: {}, summaries: {} });
       setHistoryState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
       setErrors([]);
@@ -723,6 +845,10 @@ function App() {
   }
 
   function patchDoc(patch) {
+    if (readOnly) {
+      toast("Read-only thesis view", "info", "Metadata edits belong to a later write lane with explicit audit logs.");
+      return;
+    }
     if (patch.metadata) {
       const localMetadata = { ...(docInfo?.metadata || {}), ...patch.metadata };
       setDocInfo(d => ({ ...(d || {}), metadata: localMetadata, provenance: d?.provenance || {} }));
@@ -748,6 +874,8 @@ function App() {
       setRelations([]);
       setSummaries([]);
       setReferences([]);
+      setEvalOnly({ gold_glossary: [], references: [] });
+      setThesisTranslations({});
       setReview({ blocks: {}, references: {}, summaries: {} });
       setHistoryState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
       setErrors([]);
@@ -793,6 +921,8 @@ function App() {
         setRelations([]);
         setSummaries([]);
         setReferences([]);
+        setEvalOnly({ gold_glossary: [], references: [] });
+        setThesisTranslations({});
         setView("project");
       }
       toast("Project deleted", "good", result.doc_id);
@@ -988,6 +1118,7 @@ function App() {
   }
 
   function changeType(t, blockId = selectedId) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Block type changes are disabled for SQLite read-models.");
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -996,6 +1127,7 @@ function App() {
   }
 
   function toggleOpening(blockId = selectedId) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Chapter opening changes are disabled for SQLite read-models.");
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -1005,6 +1137,7 @@ function App() {
   }
 
   function toggleFlag(f, blockId = selectedId) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Quality flags are disabled for SQLite read-models.");
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -1020,6 +1153,7 @@ function App() {
   }
 
   function markReviewed(blockId = selectedId) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Review writes are disabled for SQLite read-models.");
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -1030,6 +1164,7 @@ function App() {
   }
 
   async function commitClean(blockId, text) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Clean text edits are disabled for SQLite read-models.");
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -1050,6 +1185,7 @@ function App() {
   }
 
   async function addGlossary(blockId, sel) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Glossary writes are disabled for SQLite read-models.");
     const target = findBlock(blockId);
     if (!target || !sel) return;
     setSelectedId(target.block_id);
@@ -1064,6 +1200,7 @@ function App() {
     if (result) toast("Set expected_target in the Glossary tab.", "info");
   }
   async function addEntity(blockId, sel) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Entity writes are disabled for SQLite read-models.");
     const target = findBlock(blockId);
     if (!target || !sel) return;
     setSelectedId(target.block_id);
@@ -1079,14 +1216,17 @@ function App() {
   }
 
   function updateTerm(termId, patch) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Runtime memory is immutable in APP-A01.");
     setGlossary(gs => gs.map(t => t.term_id === termId ? { ...t, ...patch } : t));
     queueSave(`term:${termId}:${Object.keys(patch).join(",")}`, () => API.patchGlossary(activeDocId, termId, { ...patch, user: currentUser() }));
   }
   function updateEntity(entityId, patch) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Runtime memory is immutable in APP-A01.");
     setEntities(es => es.map(e => e.entity_id === entityId ? { ...e, ...patch } : e));
     queueSave(`entity:${entityId}:${Object.keys(patch).join(",")}`, () => API.patchEntity(activeDocId, entityId, { ...patch, user: currentUser() }));
   }
   async function createRelation(payload) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Relation writes are disabled for SQLite read-models.");
     if (!activeDocId) return null;
     openRightTab("relations");
     const result = await mutate(() => API.createRelation(activeDocId, { ...payload, user: currentUser() }), {
@@ -1096,12 +1236,14 @@ function App() {
     return result;
   }
   function updateRelation(relationId, patch) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Relation writes are disabled for SQLite read-models.");
     const { relation_id, doc_id, ...apiPatch } = patch || {};
     setRelations(rs => rs.map(r => r.relation_id === relationId ? { ...r, ...apiPatch } : r));
     const fields = Object.keys(apiPatch).join(",") || "save";
     queueSave(`relation:${relationId}:${fields}`, () => API.patchRelation(activeDocId, relationId, { ...apiPatch, user: currentUser() }));
   }
   function updateSummary(chapterId, patch) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Summary writes are disabled for SQLite read-models.");
     if (!chapterId) return;
     setSummaries(ss => {
       const exists = ss.some(s => s.chapter_id === chapterId);
@@ -1111,6 +1253,7 @@ function App() {
     queueSave(`summary:${chapterId}:${Object.keys(patch).join(",")}`, () => API.patchSummary(activeDocId, chapterId, { ...patch, user: currentUser() }));
   }
   function updateBlockNotes(blockId, patch) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Block notes are disabled for SQLite read-models.");
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -1121,9 +1264,11 @@ function App() {
     queueSave(`block-notes:${blockId}:${Object.keys(patch).join(",")}`, () => API.patchBlockNotes(activeDocId, blockId, { ...patch, user: currentUser() }));
   }
   function updateReference(referenceId, patch) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Reference writes are disabled for SQLite read-models.");
     setReferences(rs => rs.map(r => r.reference_id === referenceId ? { ...r, ...patch, canonical: false } : r));
   }
   function updateDiscourse(patch) {
+    if (readOnly) return toast("Read-only thesis view", "info", "Discourse writes are disabled for SQLite read-models.");
     if (!block) return;
     const discourse = { ...(block.discourse || {}), ...patch };
     setBlocks(bs => bs.map(b => b.block_id === block.block_id ? { ...b, discourse } : b));
@@ -1238,6 +1383,7 @@ function App() {
   }
 
   async function runValidate() {
+    if (readOnly) return toast("Read-only thesis view", "info", "Validation is for AI-LAB JSONL workspaces; scoring/reporting is APP-D01.");
     openRightTab("validate");
     try {
       const report = await API.validate(activeDocId, { user: currentUser() });
@@ -1251,6 +1397,7 @@ function App() {
   }
 
   async function migrateSchema() {
+    if (readOnly) return toast("Read-only thesis view", "info", "Schema migration is disabled for SQLite read-models.");
     if (!activeDocId || schemaMigrating) return;
     openRightTab("validate");
     setSchemaMigrating(true);
@@ -1386,12 +1533,18 @@ function App() {
     }
   }
   function doExport(kind = "package") {
+    if (readOnly && kind !== "qc") {
+      return toast("Read-only thesis view", "info", "Dataset package export stays on the AI-LAB lane; use QC export for this read-model.");
+    }
     if (kind === "qc") return exportQcReport();
     if (kind === "preview") return exportPreviewRun();
     if (kind === "dataset-previews") return exportDatasetWithPreviews();
     return exportDatasetPackage();
   }
-  function doFreeze() { setModal({ kind: "freeze" }); }
+  function doFreeze() {
+    if (readOnly) return toast("Read-only thesis view", "info", "Freeze is disabled for pipeline SQLite read-models.");
+    setModal({ kind: "freeze" });
+  }
 
   async function runUndo() {
     if (!historyState.can_undo || dirty) return;
@@ -1499,6 +1652,7 @@ function App() {
           onLoadAnnotationAgentCandidate={loadAnnotationAgentCandidate}
           onResolveAnnotationCandidate={resolveAnnotationCandidate}
           onApplyAnnotationCandidate={applyAnnotationCandidate}
+          readOnly={readOnly}
         />
         <Toasts items={toasts} onDismiss={dismiss} />
       </>
@@ -1519,7 +1673,7 @@ function App() {
       <TopBar docId={docInfo.doc_id} dirty={dirty} lastSaved={lastSaved}
         onValidate={runValidate} onExportOption={doExport} onFreeze={doFreeze}
         onUndo={runUndo} onRedo={runRedo} history={historyState}
-        freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={centerMode === "preview"} canExportPreview={!!currentPreviewRun?.run} />
+        freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={centerMode === "preview" || readOnly} canExportPreview={!!currentPreviewRun?.run} />
       <div className="workspace">
         <LeftSidebar docInfo={docInfo} projects={projects} blocks={visibleBlocks} chapters={chapters} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={selectBlock}
@@ -1533,12 +1687,12 @@ function App() {
           getSpansForBlock={getSpansForBlock} linkIndex={linkIndex} onSelectBlock={selectBlock} onNextUnreviewed={nextUnreviewedBlock}
           onEdit={() => setEditing(true)} onCommitClean={commitClean} onCancelEdit={() => setEditing(false)}
           onChangeType={changeType} onToggleOpening={() => toggleOpening(selectedId)} onToggleFlag={(flag) => toggleFlag(flag, selectedId)} onMarkReviewed={markReviewed}
-          onAddGlossary={addGlossary} onAddEntity={addEntity} onPreviewRunChange={setCurrentPreviewRun} />
+          onAddGlossary={addGlossary} onAddEntity={addEntity} onPreviewRunChange={setCurrentPreviewRun} readOnly={readOnly} />
         {centerMode === "preview" ? (
           <PreviewRightPanel docInfo={docInfo} block={block} />
         ) : (
           <RightPanel openTabs={rightOpenTabs} onToggleTab={toggleRightTab} counts={rpCounts}
-            ctx={{ docInfo, terms: blockTerms, entities: blockEntities, allEntities: entities, relations, block, summary, references, errors, stats, freezeReasons,
+            ctx={{ docInfo, terms: blockTerms, entities: blockEntities, allEntities: entities, relations, block, summary, references, evalOnly, thesisTranslations, readOnly, errors, stats, freezeReasons,
               schemaMigrating, onMigrateSchema: migrateSchema,
               onDeleteTerm: deleteTerm, onDeleteEntity: deleteEntity, onUpdateTerm: updateTerm, onUpdateEntity: updateEntity, onUpdateSummary: updateSummary,
               onCreateRelation: createRelation, onUpdateRelation: updateRelation, onDeleteRelation: deleteRelation,

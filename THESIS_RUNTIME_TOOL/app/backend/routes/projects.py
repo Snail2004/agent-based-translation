@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 
+from config import THESIS_APP_MODE
 from routes.common import error, ok
 from services.extraction import extract_project, read_job
 from services.normalize_flow import (
@@ -26,9 +27,20 @@ from services.workspace import (
 bp = Blueprint("projects", __name__)
 
 
+def cockpit_quarantined(feature: str):
+    if THESIS_APP_MODE == "cockpit":
+        return error(
+            "legacy_feature_quarantined",
+            f"{feature} is quarantined in thesis cockpit mode.",
+            404,
+            feature=feature,
+        )
+    return None
+
+
 @bp.get("/health")
 def health():
-    return ok({"status": "ready"})
+    return ok({"status": "ready", "app_mode": THESIS_APP_MODE})
 
 
 @bp.get("/projects")
@@ -134,6 +146,9 @@ def extract(doc_id: str):
 
 @bp.post("/projects/<doc_id>/normalize/candidate-parts")
 def normalize_candidate_parts(doc_id: str):
+    blocked = cockpit_quarantined("structure_normalizer")
+    if blocked:
+        return blocked
     try:
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
@@ -148,6 +163,9 @@ def normalize_candidate_parts(doc_id: str):
 
 @bp.get("/projects/<doc_id>/normalize/agent-plan")
 def normalize_agent_plan(doc_id: str):
+    blocked = cockpit_quarantined("structure_normalizer")
+    if blocked:
+        return blocked
     try:
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
@@ -158,6 +176,9 @@ def normalize_agent_plan(doc_id: str):
 
 @bp.post("/projects/<doc_id>/normalize/plan")
 def normalize_plan(doc_id: str):
+    blocked = cockpit_quarantined("structure_normalizer")
+    if blocked:
+        return blocked
     payload = request.get_json(silent=True) or {}
     plan = payload.get("plan", payload)
     if not isinstance(plan, dict):
@@ -184,6 +205,9 @@ def normalize_plan(doc_id: str):
 
 @bp.post("/projects/<doc_id>/normalize/apply")
 def normalize_apply(doc_id: str):
+    blocked = cockpit_quarantined("structure_normalizer")
+    if blocked:
+        return blocked
     payload = request.get_json(silent=True) or {}
     try:
         if not has_project(doc_id):

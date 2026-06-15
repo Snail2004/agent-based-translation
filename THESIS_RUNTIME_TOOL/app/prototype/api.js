@@ -89,6 +89,12 @@
     },
     health: () => request("/health"),
     listProjects: () => request("/projects"),
+    listThesisDatasets: () => request("/thesis/datasets"),
+    getThesisDataset: (jobId, params) => {
+      const query = new URLSearchParams(params || {});
+      const suffix = query.toString() ? `?${query.toString()}` : "";
+      return request(`/thesis/datasets/${encodeURIComponent(jobId)}${suffix}`);
+    },
     createProject: (payload) => request("/projects", { method: "POST", body: payload }),
     getProject: (docId) => request(`/projects/${encodeURIComponent(docId)}`),
     patchProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "PATCH", body: payload }),

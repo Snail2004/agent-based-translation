@@ -812,6 +812,64 @@ function Empty({ icon: I, text, sub, good }) {
   );
 }
 
+function ProvenanceBanner({ ctx }) {
+  if (!ctx?.readOnly) return null;
+  const counts = ctx.docInfo?.thesis?.counts || {};
+  return (
+    <div className="provenance-banner">
+      <div className="prov-head"><Ic.lock size={13} />Thesis DatasetReadModel</div>
+      <div className="prov-line">runtime_memory = agent-built SQLite tables</div>
+      <div className="prov-line">eval_only = gold/reference evidence, never injectable</div>
+      <div className="prov-counts mono">
+        {counts.runtime_glossary || 0} terms / {counts.runtime_entities || 0} entities / {counts.translation_rows || 0} translations
+      </div>
+    </div>
+  );
+}
+
+function EvalOnlyTab({ evalOnly }) {
+  const gold = evalOnly?.gold_glossary || [];
+  const refs = evalOnly?.references || [];
+  if (!gold.length && !refs.length) {
+    return <Empty icon={Ic.lock} text="No eval-only records in this DB." sub="This is normal for Treasure Island runtime memory." />;
+  }
+  return (
+    <div className="tab-body">
+      <div className="ref-explain">
+        <Ic.lock size={12} />
+        <span><b>Eval-only.</b> These rows are readable for audit/scoring but are structurally separate from runtime memory.</span>
+      </div>
+      {!!gold.length && (
+        <div className="eval-list">
+          <div className="eval-title">Gold glossary</div>
+          {gold.slice(0, 80).map(row => (
+            <div className="eval-row" key={row.gold_id || `${row.source_term}:${row.target_term}`}>
+              <span className="mono">{row.source_term}</span>
+              <Ic.arrowRight size={11} />
+              <b>{row.target_term}</b>
+              <span className="pill pill-amber">eval-only</span>
+            </div>
+          ))}
+          {gold.length > 80 && <div className="eval-more mono">+{gold.length - 80} more rows</div>}
+        </div>
+      )}
+      {!!refs.length && (
+        <div className="eval-list">
+          <div className="eval-title">Manual references</div>
+          {refs.slice(0, 20).map(row => (
+            <div className="eval-ref" key={row.reference_id}>
+              <div className="mono">{row.block_id}</div>
+              <div>{row.reference_vi || row.target_text || ""}</div>
+              <span className="pill pill-amber">eval-only</span>
+            </div>
+          ))}
+          {refs.length > 20 && <div className="eval-more mono">+{refs.length - 20} more rows</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const TABS = [
   { id: "glossary", label: "Glossary", icon: Ic.tag },
   { id: "entities", label: "Entities", icon: Ic.users },
@@ -819,6 +877,7 @@ const TABS = [
   { id: "summary", label: "Summary", icon: Ic.doc },
   { id: "notes", label: "Notes", icon: Ic.doc },
   { id: "reference", label: "Reference", icon: Ic.book },
+  { id: "eval_only", label: "Eval-only", icon: Ic.lock },
   { id: "validate", label: "Validate", icon: Ic.checkCircle },
   { id: "progress", label: "Progress", icon: Ic.layers },
 ];
@@ -827,6 +886,7 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx }) {
   const openSet = new Set(openTabs || []);
   return (
     <div className="col col-right">
+      <ProvenanceBanner ctx={ctx} />
       <div className="rp-accordion">
         {TABS.map(t => {
           const open = openSet.has(t.id);
@@ -852,6 +912,7 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx }) {
                   {t.id === "summary" && <SummaryTab summary={ctx.summary} entities={ctx.allEntities} onUpdateSummary={ctx.onUpdateSummary} />}
                   {t.id === "notes" && <NotesTab block={ctx.block} onUpdateBlockNotes={ctx.onUpdateBlockNotes} />}
                   {t.id === "reference" && <ReferenceTab key={ctx.block.block_id} refs={ctx.references} block={ctx.block} onUpdateReference={ctx.onUpdateReference} onCreateReference={ctx.onCreateReference} onSaveDraft={ctx.onSaveDraft} onMarkReviewed={ctx.onMarkReviewedReference} onLockReference={ctx.onLockReference} />}
+                  {t.id === "eval_only" && <EvalOnlyTab evalOnly={ctx.evalOnly} />}
                   {t.id === "validate" && <ValidateTab errors={ctx.errors} docInfo={ctx.docInfo} schemaMigrating={ctx.schemaMigrating} onMigrateSchema={ctx.onMigrateSchema} onJump={ctx.onJump} />}
                   {t.id === "progress" && <ProgressTab stats={ctx.stats} freezeReasons={ctx.freezeReasons} history={ctx.history} />}
                 </div>

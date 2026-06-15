@@ -54,11 +54,11 @@ function ModeToggle({ mode, onModeChange }) {
 
 function EditorToolbar({
   block, reviewed, mode, onModeChange, streamLabel, streamCount, onNextUnreviewed,
-  onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed
+  onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed, readOnly
 }) {
   const [typeOpen, setTypeOpen] = React.useState(false);
   const [flagOpen, setFlagOpen] = React.useState(false);
-  const readOnlyPreview = mode === "preview";
+  const readOnlyPreview = mode === "preview" || readOnly;
   const qualityFlags = block.quality_flags || [];
   const flags = qualityFlags.filter(f => f !== "ok");
   return (
@@ -179,6 +179,33 @@ function SelectionPopover({ rect, onGlossary, onEntity }) {
       <button className="sel-pop-btn" onClick={onGlossary}><Ic.tag size={12} />Add glossary term</button>
       <div className="sel-pop-div" />
       <button className="sel-pop-btn" onClick={onEntity}><Ic.users size={12} />Add entity mention</button>
+    </div>
+  );
+}
+
+function TranslationCompare({ translations }) {
+  const entries = Object.entries(translations || {})
+    .filter(([, row]) => row && (row.target_text || row.output_text))
+    .sort(([a], [b]) => a.localeCompare(b));
+  if (!entries.length) return null;
+  return (
+    <div className="translation-compare">
+      <div className="tc-head">
+        <Ic.eye size={12} />
+        <span>Translation runs</span>
+        <span className="tc-sub">read-only from translation_runs</span>
+      </div>
+      <div className="tc-grid">
+        {entries.map(([key, row]) => (
+          <div key={key} className="tc-card">
+            <div className="tc-card-head">
+              <span className="tc-label mono">{key}</span>
+              <span className="tc-meta mono">{row.prompt_version || row.stage || ""}</span>
+            </div>
+            <div className="tc-text">{row.target_text || row.output_text || ""}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -310,7 +337,7 @@ function HighlightHoverCard({ hover, linkIndex }) {
 
 function CleanTextSurface({
   block, spans = [], editing, draft, onDraft, onMouseUp, cleanRef, taRef, onAddGlossary, onAddEntity, selection,
-  onHoverSpan, onLeaveSpan
+  onHoverSpan, onLeaveSpan, readOnly
 }) {
   if (editing) {
     return (
@@ -328,16 +355,16 @@ function CleanTextSurface({
               onMouseLeave={() => onLeaveSpan && onLeaveSpan()}>{seg.text}</mark>
           : <span key={i}>{seg.text}</span>
       )}
-      <SelectionPopover rect={selection?.rect}
+      {!readOnly && <SelectionPopover rect={selection?.rect}
         onGlossary={onAddGlossary}
-        onEntity={onAddEntity} />
+        onEntity={onAddEntity} />}
     </div>
   );
 }
 
 function ChapterBlockRow({
   block, spans, reviewed, active, onSelectBlock, onCommitClean,
-  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan
+  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly
 }) {
   const cleanRef = React.useRef(null);
   const taRef = React.useRef(null);
@@ -356,7 +383,7 @@ function ChapterBlockRow({
   }
 
   function handleMouseUp() {
-    if (editing) return;
+    if (editing || readOnly) return;
     const c = cleanRef.current;
     if (!c) return;
     const off = selectionOffsets(c);
@@ -399,11 +426,11 @@ function ChapterBlockRow({
           <button className="btn sm ghost" onClick={e => { e.stopPropagation(); setSourceOpen(v => !v); }}>
             <Ic.eye size={12} />{sourceOpen ? "Hide source" : "Source"}
           </button>
-          {!editing ? (
+          {!readOnly && !editing ? (
             <button className="btn sm" onClick={e => { e.stopPropagation(); clearSelection(); setEditing(true); }}>
               <Ic.pencil size={11} />Edit
             </button>
-          ) : (
+          ) : !readOnly && (
             <>
               <button className="btn sm" onClick={e => { e.stopPropagation(); setDraft(block.clean_text || ""); setEditing(false); }}>Cancel</button>
               <button className="btn sm primary" onClick={e => { e.stopPropagation(); setEditing(false); onCommitClean(block.block_id, draft); }}>
@@ -411,10 +438,10 @@ function ChapterBlockRow({
               </button>
             </>
           )}
-          <button className={"btn sm reviewed-btn" + (reviewed ? " is-on" : "")}
+          {!readOnly && <button className={"btn sm reviewed-btn" + (reviewed ? " is-on" : "")}
             onClick={e => { e.stopPropagation(); onMarkReviewed(block.block_id); }}>
             <Ic.checkCircle size={13} />{reviewed ? "Reviewed" : "Review"}
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -440,16 +467,18 @@ function ChapterBlockRow({
         onMouseUp={handleMouseUp}
         onHoverSpan={onHoverSpan}
         onLeaveSpan={onLeaveSpan}
+        readOnly={readOnly}
         onAddGlossary={() => { onAddGlossary(block.block_id, sel); clearSelection(); }}
         onAddEntity={() => { onAddEntity(block.block_id, sel); clearSelection(); }}
       />
+      <TranslationCompare translations={block.translations} />
     </article>
   );
 }
 
 function SingleBlockView({
   block, docInfo, reviewed, spans, editing, onEdit, onCommitClean, onCancelEdit,
-  onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan
+  onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly
 }) {
   const cleanRef = React.useRef(null);
   const taRef = React.useRef(null);
@@ -466,7 +495,7 @@ function SingleBlockView({
   }
 
   function handleMouseUp() {
-    if (editing) return;
+    if (editing || readOnly) return;
     const c = cleanRef.current;
     if (!c) return;
     const off = selectionOffsets(c);
@@ -507,9 +536,9 @@ function SingleBlockView({
                     <Ic.alert size={11} />{staleCount} span{staleCount > 1 ? "s" : ""} need re-tag
                   </span>
                 )}
-                {!editing
+                {!readOnly && !editing
                   ? <button className="btn sm" onClick={() => { setSel(null); onEdit(); }}><Ic.pencil size={11} />Edit</button>
-                  : <>
+                  : !readOnly && <>
                       <button className="btn sm" onClick={() => { setDraft(block.clean_text || ""); onCancelEdit(); }}>Cancel</button>
                       <button className="btn sm primary" onClick={() => onCommitClean(block.block_id, draft)}><Ic.check size={11} />Save text</button>
                     </>}
@@ -528,11 +557,13 @@ function SingleBlockView({
               onMouseUp={handleMouseUp}
               onHoverSpan={onHoverSpan}
               onLeaveSpan={onLeaveSpan}
+              readOnly={readOnly}
               onAddGlossary={() => { onAddGlossary(block.block_id, sel); clearSelection(); }}
               onAddEntity={() => { onAddEntity(block.block_id, sel); clearSelection(); }}
             />
+            <TranslationCompare translations={block.translations} />
 
-            {!editing && (
+            {!editing && !readOnly && (
               <div className="clean-hint">
                 <Ic.tag size={11} />Select text to add a glossary occurrence or entity mention.
                 <span className="hint-keys"><span className="kbd">⌘</span><span className="kbd">↵</span> mark reviewed</span>
@@ -547,7 +578,7 @@ function SingleBlockView({
 
 function ChapterStream({
   blocks = [], chapters = [], selectedId, review, getSpansForBlock, onSelectBlock, onCommitClean,
-  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan
+  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly
 }) {
   const rows = blocks || [];
   const chapterLookup = React.useMemo(() => {
@@ -1255,7 +1286,7 @@ function CenterEditor({
   review, selectedId, getSpansForBlock, linkIndex, onSelectBlock, onNextUnreviewed,
   onEdit, onCommitClean, onCancelEdit,
   onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed,
-  onAddGlossary, onAddEntity, onPreviewRunChange,
+  onAddGlossary, onAddEntity, onPreviewRunChange, readOnly,
 }) {
   const [hoverInfo, setHoverInfo] = React.useState(null);
   const chapterTitle = chapter?.title || chapter?.chapter_title || block.chapter_id;
@@ -1272,7 +1303,7 @@ function CenterEditor({
       <EditorToolbar block={block} reviewed={reviewed} mode={mode} onModeChange={onModeChange}
         streamLabel={streamLabel} streamCount={streamCount} onNextUnreviewed={onNextUnreviewed}
         onChangeType={onChangeType} onToggleOpening={onToggleOpening}
-        onToggleFlag={onToggleFlag} onMarkReviewed={() => onMarkReviewed(block.block_id)} />
+        onToggleFlag={onToggleFlag} onMarkReviewed={() => onMarkReviewed(block.block_id)} readOnly={readOnly} />
 
       {mode === "preview" ? (
         <TranslationPreviewView
@@ -1299,6 +1330,7 @@ function CenterEditor({
           onAddEntity={onAddEntity}
           onHoverSpan={handleHoverSpan}
           onLeaveSpan={handleLeaveSpan}
+          readOnly={readOnly}
         />
       ) : (
         <SingleBlockView
@@ -1314,6 +1346,7 @@ function CenterEditor({
           onAddEntity={onAddEntity}
           onHoverSpan={handleHoverSpan}
           onLeaveSpan={handleLeaveSpan}
+          readOnly={readOnly}
         />
       )}
       <HighlightHoverCard hover={hoverInfo} linkIndex={linkIndex} />
