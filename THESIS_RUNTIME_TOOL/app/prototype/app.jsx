@@ -401,6 +401,10 @@ function App() {
   const [references, setReferences] = useState([]);
   const [evalOnly, setEvalOnly] = useState({ gold_glossary: [], references: [] });
   const [thesisTranslations, setThesisTranslations] = useState({});
+  const [thesisObservability, setThesisObservability] = useState(null);
+  const [selectedCallId, setSelectedCallId] = useState(null);
+  const [selectedCallDetail, setSelectedCallDetail] = useState(null);
+  const [callDetailLoading, setCallDetailLoading] = useState(false);
   const [review, setReview] = useState({ blocks: {}, references: {}, summaries: {} });
   const [historyState, setHistoryState] = useState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
   const [errors, setErrors] = useState([]);
@@ -457,6 +461,9 @@ function App() {
     setReferences(adapted.references);
     setEvalOnly({ gold_glossary: [], references: [] });
     setThesisTranslations({});
+    setThesisObservability(null);
+    setSelectedCallId(null);
+    setSelectedCallDetail(null);
     setReview(adapted.review);
     setHistoryState(adapted.history);
     setActiveDocId(adapted.docInfo.doc_id);
@@ -470,7 +477,15 @@ function App() {
   const loadThesisDataset = useCallback(async (jobId, opts = {}) => {
     if (!jobId) return null;
     if (!opts.silent) setLoading(true);
-    const dataset = await API.getThesisDataset(jobId);
+    const [dataset, observability] = await Promise.all([
+      API.getThesisDataset(jobId),
+      API.getThesisObservability(jobId).catch(err => ({
+        meta: { source: "thesis_observability_readmodel", job_id: jobId, read_only: true, load_error: errorMessage(err) },
+        calls: [],
+        usage_daily: [],
+        totals: { overall: { calls: 0, total_quota_tokens: 0, cost_usd: 0 } },
+      })),
+    ]);
     const adapted = adaptThesisReadModel(dataset);
     setDocInfo(adapted.docInfo);
     setChapters(adapted.chapters);
@@ -482,6 +497,9 @@ function App() {
     setReferences(adapted.references);
     setEvalOnly(adapted.evalOnly);
     setThesisTranslations(adapted.translations);
+    setThesisObservability(observability);
+    setSelectedCallId(observability.calls?.[0]?.call_id || null);
+    setSelectedCallDetail(null);
     setReview(adapted.review);
     setHistoryState(adapted.history);
     setErrors(adapted.errors);
@@ -528,6 +546,34 @@ function App() {
 
   const block = blocks.find(b => b.block_id === selectedId) || blocks[0] || null;
   const readOnly = !!docInfo?.read_only || String(activeDocId || "").startsWith(THESIS_PREFIX);
+
+  useEffect(() => {
+    if (!readOnly && centerMode === "cockpit") setCenterMode("block");
+  }, [readOnly, centerMode]);
+
+  useEffect(() => {
+    const jobId = thesisJobId(activeDocId);
+    if (!readOnly || !jobId || !selectedCallId) {
+      setSelectedCallDetail(null);
+      setCallDetailLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setCallDetailLoading(true);
+    API.getThesisObservabilityCall(jobId, selectedCallId)
+      .then(detail => {
+        if (!cancelled) setSelectedCallDetail(detail);
+      })
+      .catch(err => {
+        if (!cancelled) {
+          setSelectedCallDetail({ call_id: selectedCallId, error: errorMessage(err), messages: [], memory_pack: null });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCallDetailLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeDocId, selectedCallId, readOnly]);
 
   function setCenterMode(mode) {
     setCenterModeState(mode);
@@ -836,6 +882,9 @@ function App() {
       setReferences([]);
       setEvalOnly({ gold_glossary: [], references: [] });
       setThesisTranslations({});
+      setThesisObservability(null);
+      setSelectedCallId(null);
+      setSelectedCallDetail(null);
       setReview({ blocks: {}, references: {}, summaries: {} });
       setHistoryState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
       setErrors([]);
@@ -876,6 +925,9 @@ function App() {
       setReferences([]);
       setEvalOnly({ gold_glossary: [], references: [] });
       setThesisTranslations({});
+      setThesisObservability(null);
+      setSelectedCallId(null);
+      setSelectedCallDetail(null);
       setReview({ blocks: {}, references: {}, summaries: {} });
       setHistoryState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
       setErrors([]);
@@ -923,6 +975,9 @@ function App() {
         setReferences([]);
         setEvalOnly({ gold_glossary: [], references: [] });
         setThesisTranslations({});
+        setThesisObservability(null);
+        setSelectedCallId(null);
+        setSelectedCallDetail(null);
         setView("project");
       }
       toast("Project deleted", "good", result.doc_id);
@@ -1687,7 +1742,12 @@ function App() {
           getSpansForBlock={getSpansForBlock} linkIndex={linkIndex} onSelectBlock={selectBlock} onNextUnreviewed={nextUnreviewedBlock}
           onEdit={() => setEditing(true)} onCommitClean={commitClean} onCancelEdit={() => setEditing(false)}
           onChangeType={changeType} onToggleOpening={() => toggleOpening(selectedId)} onToggleFlag={(flag) => toggleFlag(flag, selectedId)} onMarkReviewed={markReviewed}
-          onAddGlossary={addGlossary} onAddEntity={addEntity} onPreviewRunChange={setCurrentPreviewRun} readOnly={readOnly} />
+          onAddGlossary={addGlossary} onAddEntity={addEntity} onPreviewRunChange={setCurrentPreviewRun} readOnly={readOnly}
+          observability={thesisObservability}
+          selectedCallId={selectedCallId}
+          selectedCallDetail={selectedCallDetail}
+          callDetailLoading={callDetailLoading}
+          onSelectCall={setSelectedCallId} />
         {centerMode === "preview" ? (
           <PreviewRightPanel docInfo={docInfo} block={block} />
         ) : (

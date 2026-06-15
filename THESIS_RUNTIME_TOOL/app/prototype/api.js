@@ -95,6 +95,9 @@
       const suffix = query.toString() ? `?${query.toString()}` : "";
       return request(`/thesis/datasets/${encodeURIComponent(jobId)}${suffix}`);
     },
+    getThesisObservability: (jobId) => request(`/thesis/observability/${encodeURIComponent(jobId)}`),
+    listThesisObservabilityCalls: (jobId) => request(`/thesis/observability/${encodeURIComponent(jobId)}/calls`),
+    getThesisObservabilityCall: (jobId, callId) => request(`/thesis/observability/${encodeURIComponent(jobId)}/calls/${encodeURIComponent(callId)}`),
     createProject: (payload) => request("/projects", { method: "POST", body: payload }),
     getProject: (docId) => request(`/projects/${encodeURIComponent(docId)}`),
     patchProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "PATCH", body: payload }),

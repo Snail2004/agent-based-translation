@@ -30,13 +30,14 @@ function segmentize(text, spans) {
   return segs;
 }
 
-function ModeToggle({ mode, onModeChange }) {
+function ModeToggle({ mode, onModeChange, readOnly }) {
   const items = [
     { id: "block", label: "Block" },
     { id: "chapter", label: "Chapter" },
     { id: "book", label: "Book" },
     { id: "preview", label: "Preview" },
   ];
+  if (readOnly) items.push({ id: "cockpit", label: "Cockpit" });
   return (
     <div className="mode-toggle" role="group" aria-label="Center view mode">
       {items.map(item => (
@@ -64,10 +65,13 @@ function EditorToolbar({
   return (
     <div className="ed-toolbar">
       <div className="ed-tb-left">
-        <ModeToggle mode={mode} onModeChange={onModeChange} />
+        <ModeToggle mode={mode} onModeChange={onModeChange} readOnly={readOnly} />
 
         <span className="toolbar-chapter-meta">
-          {readOnlyPreview ? "Translation Preview · read-only" : mode === "block" ? block.block_id : `${streamLabel} · ${streamCount || 0} blocks`}
+          {mode === "cockpit" ? "Observability cockpit · read-only"
+            : readOnly ? "Thesis DB · read-only"
+            : mode === "preview" ? "Translation Preview · read-only"
+            : mode === "block" ? block.block_id : `${streamLabel} · ${streamCount || 0} blocks`}
         </span>
 
         {/* block_type dropdown */}
@@ -123,13 +127,13 @@ function EditorToolbar({
         </div>}
 
         {readOnlyPreview && (
-          <span className="mini-badge warn"><Ic.eye size={11} />preview only · not gold</span>
+          <span className="mini-badge warn"><Ic.eye size={11} />{mode === "cockpit" ? "observability only" : "preview only · not gold"}</span>
         )}
       </div>
 
       <div className="ed-tb-right">
         {readOnlyPreview ? (
-          <span className="preview-toolbar-note"><Ic.lock size={12} />Preview export only. No save, review, or promote actions in this view.</span>
+          <span className="preview-toolbar-note"><Ic.lock size={12} />Read-only cockpit/viewer. No save, review, or promote actions in this view.</span>
         ) : mode !== "block" && (
           <button className="btn sm" onClick={onNextUnreviewed}>
             <Ic.arrowRight size={13} />Next unreviewed
@@ -205,6 +209,213 @@ function TranslationCompare({ translations }) {
             <div className="tc-text">{row.target_text || row.output_text || ""}</div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function formatInt(value) {
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? n.toLocaleString("en-US") : "0";
+}
+
+function formatCost(value) {
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? `$${n.toFixed(n < 0.01 ? 5 : 3)}` : "$0";
+}
+
+function JsonBlock({ value, maxHeight = 220 }) {
+  return (
+    <pre className="obs-json" style={{ maxHeight }}>
+      {typeof value === "string" ? value : JSON.stringify(value ?? {}, null, 2)}
+    </pre>
+  );
+}
+
+function PromptMessage({ title, message }) {
+  return (
+    <div className="obs-message">
+      <div className="obs-message-head">
+        <span className="mono">{title}</span>
+        <span>{formatInt((message?.content || "").length)} chars</span>
+      </div>
+      <pre>{message?.content || "(empty)"}</pre>
+    </div>
+  );
+}
+
+function MemoryPackInspector({ detail }) {
+  const pack = detail?.memory_pack;
+  if (!detail) return <Empty icon={Ic.eye} text="Select a call to inspect prompt/context." sub="APP-B01 reads cached request_json and memory_packs only." />;
+  if (detail.error) return <Empty icon={Ic.alert} text="Call detail failed to load." sub={detail.error} />;
+  if (!pack) {
+    return (
+      <div className="obs-card">
+        <div className="obs-card-title"><Ic.layers size={13} />Memory pack</div>
+        <p className="muted">No linked memory_pack for this call. This is expected for Builder/Judge calls and for Translator rows without a matching translation_runs window.</p>
+      </div>
+    );
+  }
+  const debug = pack.retrieval_debug || {};
+  const audit = pack.context_audit || {};
+  return (
+    <div className="obs-card">
+      <div className="obs-card-title"><Ic.layers size={13} />Memory pack</div>
+      <div className="obs-kv-grid">
+        <span><b>pack_id</b><em className="mono">{pack.pack_id}</em></span>
+        <span><b>prompt_version</b><em className="mono">{pack.prompt_version || "-"}</em></span>
+        <span><b>estimated_tokens</b><em className="mono">{formatInt(pack.estimated_tokens)}</em></span>
+        <span><b>config</b><em className="mono">{pack.config || "-"}</em></span>
+      </div>
+      <div className="obs-pack-audit">
+        <div>
+          <span>included</span>
+          <b>{formatInt(audit.included_count)}</b>
+          <em>sent to prompt</em>
+        </div>
+        <div>
+          <span>excluded</span>
+          <b>{formatInt(audit.excluded_count)}</b>
+          <em>not relevant / filtered</em>
+        </div>
+        <div>
+          <span>dropped</span>
+          <b>{formatInt(audit.dropped_by_budget_count)}</b>
+          <em>budget pressure</em>
+        </div>
+      </div>
+      <div className="obs-audit-samples">
+        <div>
+          <div className="obs-subhead">included sample</div>
+          <JsonBlock value={audit.included_sample || []} />
+        </div>
+        <div>
+          <div className="obs-subhead">excluded sample</div>
+          <JsonBlock value={audit.excluded_sample || []} />
+        </div>
+        <div>
+          <div className="obs-subhead">dropped_by_budget sample</div>
+          <JsonBlock value={audit.dropped_by_budget_sample || []} />
+        </div>
+      </div>
+      <div className="obs-subhead">anchors_count</div>
+      <JsonBlock value={audit.anchors_count || {}} />
+      <div className="obs-debug-grid">
+        <div>
+          <div className="obs-subhead">payload_json</div>
+          <JsonBlock value={pack.payload} />
+        </div>
+        <div>
+          <div className="obs-subhead">retrieval_debug_json</div>
+          <JsonBlock value={debug} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ObservabilityCockpit({ observability, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall }) {
+  const calls = observability?.calls || [];
+  const totals = observability?.totals?.overall || {};
+  const detail = selectedCallDetail || calls.find(call => call.call_id === selectedCallId) || calls[0] || null;
+  const messages = detail?.messages || [];
+  const systemMessage = messages.find(m => m.role === "system") || null;
+  const userMessage = messages.find(m => m.role === "user") || null;
+  const breakdown = detail?.token_breakdown || {};
+
+  return (
+    <div className="obs-view">
+      <div className="obs-head">
+        <div>
+          <div className="obs-kicker">ObservabilityReadModel</div>
+          <h2>Prompt / Context / Cache Cockpit</h2>
+        </div>
+        <div className="obs-source mono">{observability?.meta?.job_id || "no job"}</div>
+      </div>
+
+      {observability?.meta?.known_gap && (
+        <div className="obs-gap">
+          <Ic.alert size={13} />
+          <span>{observability.meta.known_gap}</span>
+        </div>
+      )}
+
+      <div className="obs-metrics">
+        <div><span>calls</span><b>{formatInt(totals.calls)}</b></div>
+        <div><span>quota tokens</span><b>{formatInt(totals.total_quota_tokens)}</b></div>
+        <div><span>cached input</span><b>{formatInt(totals.cached_tokens)}</b></div>
+        <div><span>cost rows</span><b>{formatCost(totals.cost_usd)}</b></div>
+      </div>
+
+      <div className="obs-grid">
+        <section className="obs-panel obs-call-list">
+          <div className="obs-panel-head">
+            <span><Ic.list size={13} />API calls</span>
+            <em>{formatInt(calls.length)} cached result rows</em>
+          </div>
+          <div className="obs-table">
+            {calls.map(call => (
+              <button
+                key={call.call_id}
+                className={"obs-row" + (call.call_id === selectedCallId ? " on" : "")}
+                onClick={() => onSelectCall(call.call_id)}
+              >
+                <span className={"obs-agent obs-agent-" + String(call.agent || "LLM").toLowerCase()}>{call.agent}</span>
+                <span className="obs-tag mono">{call.tag}</span>
+                <span className="mono">{formatInt(call.usage?.prompt_tokens)}</span>
+                <span className="mono">{formatInt(call.usage?.cached_tokens)}</span>
+                <span className="mono">{formatInt(call.usage?.completion_tokens)}</span>
+                <span className="mono">{formatCost(call.cost_usd)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="obs-panel obs-detail">
+          <div className="obs-panel-head">
+            <span><Ic.eye size={13} />Prompt / Context Inspector</span>
+            {callDetailLoading ? <em>loading...</em> : <em className="mono">{detail?.call_id || "no call"}</em>}
+          </div>
+
+          {detail ? (
+            <>
+              <div className="obs-detail-meta">
+                <span><b>agent</b>{detail.agent}</span>
+                <span><b>tag</b><em className="mono">{detail.tag}</em></span>
+                <span><b>model</b><em className="mono">{detail.model}</em></span>
+                <span><b>prompt_version</b><em className="mono">{detail.prompt_version || detail.memory_pack?.prompt_version || "-"}</em></span>
+                <span><b>provider cached</b>{formatInt(detail.usage?.cached_tokens)}</span>
+                <span><b>quota tokens</b>{formatInt(detail.usage?.total_quota_tokens)}</span>
+              </div>
+
+              <div className="obs-breakdown">
+                <div><span>prompt</span><b>{formatInt(detail.usage?.prompt_tokens)}</b></div>
+                <div><span>completion</span><b>{formatInt(detail.usage?.completion_tokens)}</b></div>
+                <div><span>memory pack est.</span><b>{formatInt(breakdown.estimated_memory_pack_tokens)}</b></div>
+                <div><span>other prompt est.</span><b>{formatInt(breakdown.estimated_other_prompt_tokens)}</b></div>
+              </div>
+
+              <div className="obs-debug-grid">
+                <PromptMessage title="system" message={systemMessage} />
+                <PromptMessage title="user" message={userMessage} />
+              </div>
+
+              <MemoryPackInspector detail={detail} />
+
+              <div className="obs-card">
+                <div className="obs-card-title"><Ic.clock size={13} />Cache / cost semantics</div>
+                <div className="obs-kv-grid">
+                  <span><b>local replay row</b><em>{detail.cache?.local_replay?.stored_result ? "stored" : "n/a"}</em></span>
+                  <span><b>replay hit events</b><em>{detail.cache?.local_replay?.hit_events_logged ? "logged" : "not logged"}</em></span>
+                  <span><b>provider cached</b><em>{formatInt(detail.cache?.provider?.cached_tokens)}</em></span>
+                  <span><b>quota rule</b><em>input + output</em></span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <Empty icon={Ic.eye} text="No observability rows for this job." sub="The pipeline DB is readable, but no cache rows matched this job." />
+          )}
+        </section>
       </div>
     </div>
   );
@@ -1287,6 +1498,7 @@ function CenterEditor({
   onEdit, onCommitClean, onCancelEdit,
   onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed,
   onAddGlossary, onAddEntity, onPreviewRunChange, readOnly,
+  observability, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall,
 }) {
   const [hoverInfo, setHoverInfo] = React.useState(null);
   const chapterTitle = chapter?.title || chapter?.chapter_title || block.chapter_id;
@@ -1305,7 +1517,15 @@ function CenterEditor({
         onChangeType={onChangeType} onToggleOpening={onToggleOpening}
         onToggleFlag={onToggleFlag} onMarkReviewed={() => onMarkReviewed(block.block_id)} readOnly={readOnly} />
 
-      {mode === "preview" ? (
+      {mode === "cockpit" ? (
+        <ObservabilityCockpit
+          observability={observability}
+          selectedCallId={selectedCallId}
+          selectedCallDetail={selectedCallDetail}
+          callDetailLoading={callDetailLoading}
+          onSelectCall={onSelectCall}
+        />
+      ) : mode === "preview" ? (
         <TranslationPreviewView
           docInfo={docInfo}
           chapters={chapters}
