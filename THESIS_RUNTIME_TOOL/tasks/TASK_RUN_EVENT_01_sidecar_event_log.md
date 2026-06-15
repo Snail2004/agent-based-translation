@@ -20,6 +20,10 @@ LOCK (oo) chốt 3 bên: live-view giàu hơn = **hướng D = structured sideca
   - `GET /api/thesis/runs/<run_id>/events?offset=` — tail + parse JSONL (gương `read_log` của C01), trả `events[]` + `offset` mới + `running`.
   - C01 RunControl khi spawn `run_translate` truyền sẵn `--event-log data/jobs/<job>/run_events/<run_id>.jsonl` để cockpit biết đường tail.
   - UI panel live tối thiểu: window/block đang chạy · prompt/context tóm tắt · cache hit · token/cost · **preview chưa-commit có nhãn "uncommitted"**.
+- **IN — (C) GUARD bổ sung (chốt 3-bên sau review CodeX — acceptance BẮT BUỘC):**
+  - **#3 (hazard lớn nhất) — event flags KHÔNG được phá confirm-token C01.** C01 token bind với `argv_digest` chính xác (thesis_runs.py:249). `--event-log`/`--run-id` PHẢI đi qua **cùng `build_argv()`** dùng cho CẢ prompt-preview LẪN create-run ⇒ token bao trùm argv cuối (gồm event flags), và user nhìn đúng command sẽ chạy. KHÔNG để RunControl thêm flag SAU khi preview đã phát token.
+  - **#4 — KHÔNG dump full prompt vào event JSONL.** Payload event chỉ chứa **bounded summary/hash/token/context-audit** (included/excluded/dropped counts). Full request đã nằm ở `llm_call_cache`/B01 Inspector. Dump full prompt mỗi window = bloat + log nhạy cảm, trái bài học cost/context.
+  - **#7 — preflight-only KHÔNG có event.** `--preflight-only` return trước `translate_windows` (run_translate.py:106, trước cả `_ensure_api_key`/LLMClient) ⇒ UI KHÔNG kỳ vọng events cho preflight run (trừ khi định nghĩa event preflight riêng — ngoài scope).
 - **OUT:**
   - **KHÔNG đổi output/determinism.** Emit là side-effect thuần, off-by-default; bật/tắt phải cho `translation_runs` + `TranslateReport` BYTE-IDENTICAL. Không đụng seed/cache/RNG/control-flow.
   - **KHÔNG per-window DB commit** (vẫn commit cuối) — đó là B/C, task khác + cần bảng `run_attempts`.
@@ -34,14 +38,15 @@ LOCK (oo) chốt 3 bên: live-view giàu hơn = **hướng D = structured sideca
 - **Test 0-API deterministic:** `pipeline/tests/test_translate_runner.py` — `_fake_result()` (LLMResult giả, cost 0) + `_make_doc_db()`; dùng để chạy `translate_windows` 2 lần cho determinism gate.
 - C01: `run_id = run_{uuid}` + `spawn_run` (services/thesis_runs.py), `read_log` (mẫu cho `/events`); `run_translate.py:117` gọi `translate_windows`.
 - Đường file gợi ý: `data/jobs/<job>/run_events/<attempt_id>.jsonl` (jobs root = `THESIS_JOBS_ROOT`).
+- `TranslateReport.to_json_dict()` (runner.py:52) — KHÔNG có `to_dict`. `--preflight-only` return ở run_translate.py:106 TRƯỚC `translate_windows` (117) ⇒ không emit. C01 token bind argv-digest ở thesis_runs.py:249 (xem guard #3).
 
 ## 4. Acceptance *(0 API — fake client)*
 
-1. **DETERMINISM GATE (cứng):** chạy `translate_windows` 2 lần với fake client trên cùng DB fixture — lần 1 `event_sink=None`, lần 2 có sink — assert `translation_runs` rows + `TranslateReport.to_dict()` **BẰNG NHAU TUYỆT ĐỐI**. (Nếu lệch ⇒ FAIL, emit đã chạm compute.)
+1. **DETERMINISM GATE (cứng):** tạo **2 DB clone GIỐNG HỆT** (KHÔNG dùng chung 1 DB — resume/`INSERT OR REPLACE` sẽ che lỗi), chạy fake client: DB-A `event_sink=None`, DB-B có sink — assert **sorted `translation_runs`** (+ `memory_packs` nếu cần) + `report.to_json_dict()` **BẰNG NHAU TUYỆT ĐỐI**. (Lệch ⇒ FAIL, emit đã chạm compute.) [tên method: `to_json_dict()` runner.py:52]
 2. Sink ON → file `run_events/<attempt_id>.jsonl` có đúng **chuỗi event/window theo thứ tự** (window_started → … → persist_buffered) + cuối `run_committed`; `window_preview_available` có `committed:false`.
 3. **PROVENANCE GUARD:** `DatasetReadModel`/read-model KHÔNG đọc event file; `translation_runs` KHÔNG chứa preview chưa-commit; event file là artifact MỚI DUY NHẤT (không ghi thêm bảng nào).
-4. **Best-effort:** sink với path không ghi được (vd thư mục read-only) → run vẫn chạy xong, KHÔNG raise; lỗi nuốt gọn.
-5. Endpoint `GET /api/thesis/runs/<run_id>/events?offset=` tail đúng (offset tăng dần, parse JSONL) — test với event file giả.
+4. **Best-effort (inject failing sink, KHÔNG dựa read-only dir):** inject một sink mà `write` RAISE → `translate_windows` vẫn chạy xong, KHÔNG raise (lỗi nuốt gọn). (Tránh test thư mục read-only — flaky trên Windows.)
+5. Endpoint `GET /api/thesis/runs/<run_id>/events?offset=` — resolve path **TỪ run registry** (`event_log_path` lưu lúc create-run), validate nằm DƯỚI `THESIS_JOBS_ROOT/run_events`, **từ chối path client gửi / path-traversal**; tail offset tăng dần, parse JSONL — test với event file giả.
 6. `python -m pytest -p no:cacheprovider THESIS_RUNTIME_TOOL/pipeline/tests THESIS_RUNTIME_TOOL/app/backend/tests -q` — xanh, **0 API**. (atexit PermissionError Windows = vô hại, AGENTS.md §4.)
 7. Dán output thật vào §5. KHÔNG chạy run-API thật.
 
