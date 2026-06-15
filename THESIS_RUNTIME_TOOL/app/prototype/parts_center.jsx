@@ -314,7 +314,119 @@ function MemoryPackInspector({ detail }) {
   );
 }
 
-function ObservabilityCockpit({ observability, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall }) {
+function RunControlPanel({ runControl }) {
+  if (!runControl) return null;
+  const form = runControl.runForm || {};
+  const preview = runControl.promptPreview || null;
+  const runs = runControl.runs || [];
+  const selectedLog = runControl.selectedRunLog || {};
+  const rep = preview?.representative_prompt || null;
+  const previewMessages = rep?.messages || [];
+  const previewSystem = previewMessages.find(m => m.role === "system");
+  const previewUser = previewMessages.find(m => m.role === "user");
+  const tokenEstimate = preview?.token_estimate || {};
+  const selectedRun = runs.find(row => row.run_id === runControl.selectedRunId);
+
+  return (
+    <section className="obs-panel run-panel">
+      <div className="obs-panel-head">
+        <span><Ic.play size={13} />Run Control</span>
+        <em>{runControl.jobId || "no thesis job"}</em>
+      </div>
+
+      <div className="run-grid">
+        <label>
+          <span>script</span>
+          <select value={form.script || "run_translate"} onChange={e => runControl.onFormChange({ script: e.target.value })}>
+            {["run_translate", "run_prepass", "snapshot_runs", "score_run", "score_consistency", "build_memory", "build_index", "run_judge"].map(script => (
+              <option key={script} value={script}>{script}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>chapters</span>
+          <input value={form.chapters || ""} onChange={e => runControl.onFormChange({ chapters: e.target.value })} placeholder="ch02 ch03" />
+        </label>
+        <label>
+          <span>configs</span>
+          <input value={form.configs || ""} onChange={e => runControl.onFormChange({ configs: e.target.value })} placeholder="S0 S1" />
+        </label>
+        <label>
+          <span>profile</span>
+          <input value={form.profile || ""} onChange={e => runControl.onFormChange({ profile: e.target.value })} placeholder="literary_v1" />
+        </label>
+        <label>
+          <span>experiment</span>
+          <input value={form.experiment || ""} onChange={e => runControl.onFormChange({ experiment: e.target.value })} placeholder="translate_run" />
+        </label>
+        <label>
+          <span>cache</span>
+          <input value={form.cache || ""} onChange={e => runControl.onFormChange({ cache: e.target.value })} placeholder="data/jobs/translate_cache.sqlite3" />
+        </label>
+      </div>
+
+      <div className="run-actions">
+        <label className="run-check">
+          <input type="checkbox" checked={!!form.allow_api} onChange={e => runControl.onFormChange({ allow_api: e.target.checked })} />
+          <span>allow real API after preview token</span>
+        </label>
+        <button className="btn sm" disabled={runControl.busy || !runControl.jobId || form.script !== "run_translate"} onClick={runControl.onPreview}>
+          <Ic.eye size={13} />Render prompt preview
+        </button>
+        <button className="btn primary sm" disabled={runControl.busy || (!!form.allow_api && !preview?.confirm_token)} onClick={runControl.onCreateRun}>
+          <Ic.play size={13} />Launch
+        </button>
+        <button className="btn sm" disabled={runControl.busy} onClick={runControl.onRefreshRuns}>
+          <Ic.refresh size={13} />Refresh
+        </button>
+      </div>
+
+      {runControl.error && (
+        <div className="obs-gap"><Ic.alert size={13} /><span>{runControl.error}</span></div>
+      )}
+
+      {preview && (
+        <div className="run-preview">
+          <div className="run-preview-head">
+            <span>Prompt preview token issued</span>
+            <em className="mono">{preview.confirm_token?.slice(0, 10)}... · {formatInt(rep?.prompt_tokens_est)} prompt tokens</em>
+          </div>
+          <div className="obs-breakdown">
+            <div><span>windows</span><b>{formatInt(tokenEstimate.configs?.S1?.windows || tokenEstimate.configs?.S0?.windows)}</b></div>
+            <div><span>max prompt</span><b>{formatInt(tokenEstimate.configs?.S1?.prompt_tokens_max || tokenEstimate.configs?.S0?.prompt_tokens_max)}</b></div>
+            <div><span>upper total</span><b>{formatInt(tokenEstimate.upper_total_all_configs)}</b></div>
+            <div><span>daily cap</span><b>{formatInt(tokenEstimate.daily_token_cap)}</b></div>
+          </div>
+          <div className="obs-debug-grid">
+            <PromptMessage title="preview system" message={previewSystem} />
+            <PromptMessage title="preview user" message={previewUser} />
+          </div>
+        </div>
+      )}
+
+      <div className="run-live-grid">
+        <div className="run-list">
+          <div className="obs-subhead">run registry</div>
+          {runs.length ? runs.slice(0, 12).map(run => (
+            <button key={run.run_id} className={"run-row" + (run.run_id === runControl.selectedRunId ? " on" : "")} onClick={() => runControl.onSelectRun(run.run_id)}>
+              <span className={"run-status run-status-" + String(run.status || "").toLowerCase()}>{run.status}</span>
+              <span className="mono">{run.script}</span>
+              <em className="mono">{run.run_id}</em>
+            </button>
+          )) : (
+            <div className="muted">No run registry rows yet.</div>
+          )}
+        </div>
+        <div className="run-log-box">
+          <div className="obs-subhead">live log tail {selectedRun ? <span className="mono">· {selectedRun.run_id}</span> : null}</div>
+          <pre>{selectedLog.log || "Select or launch a run to tail stdout/stderr."}</pre>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ObservabilityCockpit({ observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall }) {
   const calls = observability?.calls || [];
   const totals = observability?.totals?.overall || {};
   const detail = selectedCallDetail || calls.find(call => call.call_id === selectedCallId) || calls[0] || null;
@@ -332,6 +444,8 @@ function ObservabilityCockpit({ observability, selectedCallId, selectedCallDetai
         </div>
         <div className="obs-source mono">{observability?.meta?.job_id || "no job"}</div>
       </div>
+
+      <RunControlPanel runControl={runControl} />
 
       {observability?.meta?.known_gap && (
         <div className="obs-gap">
@@ -1498,7 +1612,7 @@ function CenterEditor({
   onEdit, onCommitClean, onCancelEdit,
   onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed,
   onAddGlossary, onAddEntity, onPreviewRunChange, readOnly,
-  observability, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall,
+  observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall,
 }) {
   const [hoverInfo, setHoverInfo] = React.useState(null);
   const chapterTitle = chapter?.title || chapter?.chapter_title || block.chapter_id;
@@ -1520,6 +1634,7 @@ function CenterEditor({
       {mode === "cockpit" ? (
         <ObservabilityCockpit
           observability={observability}
+          runControl={runControl}
           selectedCallId={selectedCallId}
           selectedCallDetail={selectedCallDetail}
           callDetailLoading={callDetailLoading}

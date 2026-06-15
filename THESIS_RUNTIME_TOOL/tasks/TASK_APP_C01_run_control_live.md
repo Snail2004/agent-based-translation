@@ -1,6 +1,6 @@
 # TASK_APP_C01_run_control_live — Run control + live LOG-stream + run provenance (trigger-only)
 
-- **Status:** READY
+- **Status:** DONE / PASS
 - **Refs:** THESIS_ARCHITECTURE_LOCK §10 (nn).3 [APP_C01 = trigger script freeze + tail log, UI KHÔNG tự tính], (nn).5 [History→run provenance], (nn).8 [run agent BẤT BIẾN] + guardrail (nn) [run tạo run_id+config+model+seed+prompt_version; prompt dài preview-TRƯỚC-khi-chạy; KHÔNG live-stream trước khi viewer+report ổn] | (ll) prompt-artifact-review + cost-as-GATE | APP-A01/B01/D01 (read-model để refresh sau run)
 - **Branch/Commit:** (điền khi imple xong)
 
@@ -52,15 +52,137 @@
 4. `python -m pytest -p no:cacheprovider THESIS_RUNTIME_TOOL/app/backend/tests -q` — full regression xanh (atexit PermissionError = lỗi Windows vô hại, AGENTS.md §4).
 5. Dán output thật vào §5. **KHÔNG** spawn run-API-thật.
 
-## 5. Implementation notes *(imple điền — A01/D01-style, 0 LLM-call trong test)*
+## 5. Implementation notes *(CodeX rework, 0 API-call trong test)*
 
-*(điền: data-source/allowlist policy · contract endpoint · cost-gate & confirm-token flow · run-registry shape · separation guard · D01-hardening diff · test plan + output thật)*
+### Summary
+
+Reworked the Antigravity implementation against Claude review §6.  The old §5 notes are superseded: pipeline scripts do exist, prompt-preview is no longer a stub, and tests now include one real frozen pipeline script smoke.
+
+**Files changed:**
+- `app/backend/config.py` — added `THESIS_TOOL_ROOT` and `THESIS_PYTHON_EXE`.
+- `app/backend/services/thesis_runs.py` — rebuilt RunControl service.
+- `app/backend/routes/thesis_runs.py` — rewired Flask route to the new RunControl contract.
+- `app/backend/tests/test_thesis_runs.py` — replaced fake-only tests with real module launch + prompt-preview tests.
+- `app/prototype/api.js`, `app/prototype/app.jsx`, `app/prototype/parts_center.jsx`, `app/prototype/styles.css` — added minimal Cockpit Run Control UI.
+- `app/backend/services/thesis_scores.py`, `routes/__init__.py` — kept the D01 hardening and blueprint registration from the prior implementation.
+
+### Blocking fixes
+
+1. **Launch script thật:** `build_argv()` now builds `python -m pipeline.scripts.<script>` and `spawn_run()` runs with `cwd=THESIS_RUNTIME_TOOL`.  No generic `--job` is injected; argv is mapped per script (`run_translate`, `run_prepass`, `snapshot_runs`, etc.) to avoid invalid flags.
+2. **Cost gate thật:** `allow_api=true` now requires `job_id` + a one-time confirm-token.  The token is bound to the exact argv digest and expires after 30 minutes.  A token cannot be reused and cannot be applied to a different config/chapter/cache argv.
+3. **Prompt-preview thật:** `/api/thesis/runs/prompt-preview` renders a representative translator prompt from current pipeline code (`build_windows` + `plan_anchors` + `build_context_pack` + `build_messages`) and returns real system/user messages plus token estimates.  It does not call any provider.
+4. **Nonzero exit status:** subprocess return code `0` -> `done`; nonzero -> `failed`; internal spawn exception -> `error`.
+5. **Windows path handling:** backslash is no longer treated as shell-meta because `Popen(argv_list, shell=False)` is used.  Real shell metacharacters such as `;`, `|`, `&`, backticks, quotes, redirects remain rejected.
+6. **UI surface:** Cockpit now contains Run Control: prompt preview, API-confirm checkbox, launch, run registry, and offset-based live log tail.
+
+### Cost-gate deviation from original wording
+
+The original spec said default replay/dry can use `--cache` and still be 0-API.  Current `LLMClient` has replay cache, but no cache-only mode: a cache miss would call the provider.  To keep cost-as-GATE honest, APP-C01 is stricter:
+
+- `allow_api=false` for `run_translate`/`run_prepass` appends `--preflight-only`; it cannot create translations or call API.
+- `allow_api=false` for API-capable scripts without safe dry-run (`run_judge`, `build_index`) is rejected with `dry_run_not_supported`.
+- Full API-capable execution requires prompt-preview + confirm-token.  Cache hits are still reused by the pipeline; cache misses may call the provider only after explicit confirmation.
+
+This is a conscious safety deviation, not an accidental behavior.
+
+### Endpoint behavior
+
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/thesis/runs` | Builds per-script argv, records provenance, spawns process, tails log. |
+| `GET` | `/api/thesis/runs` | Run registry only; no dataset/observability/score payload. |
+| `GET` | `/api/thesis/runs/prompt-preview` | `run_translate` only for now; returns full representative prompt + token estimate + confirm token. |
+| `GET` | `/api/thesis/runs/<run_id>` | Full provenance snapshot including cwd/argv/status/exit/log path. |
+| `GET` | `/api/thesis/runs/<run_id>/log?offset=N` | Offset-based stdout/stderr tail. |
+
+### Verification output
+
+Targeted APP-C01 tests:
+
+```text
+$ python -m pytest -p no:cacheprovider THESIS_RUNTIME_TOOL/app/backend/tests/test_thesis_runs.py -q
+.....................                                                    [100%]
+21 passed in 9.75s
+```
+
+Full backend regression:
+
+```text
+$ python -m pytest -p no:cacheprovider THESIS_RUNTIME_TOOL/app/backend/tests -q
+........................................................................ [ 57%]
+.....................................................                    [100%]
+125 passed in 72.18s (0:01:12)
+```
+
+Python compile:
+
+```text
+$ python -m py_compile THESIS_RUNTIME_TOOL/app/backend/services/thesis_runs.py THESIS_RUNTIME_TOOL/app/backend/routes/thesis_runs.py
+# pass
+```
+
+Real frozen script smoke:
+
+```text
+$ python -m pipeline.scripts.snapshot_runs --help
+# pass; help includes --db and --out
+```
+
+Browser smoke (Chrome channel via Playwright, local backend/prototype only):
+
+```text
+Cockpit visible: true
+Run Control visible: true
+Render prompt preview button visible: true
+Prompt preview click result: token issued, preview system visible, preview user visible
+Console/page errors: []
+```
+
+Representative browser preview observed on `treasure_island_p2`:
+
+```text
+Prompt preview token issued
+895 prompt tokens
+windows: 31
+max prompt: 1,711
+upper total: 296,841
+daily cap: 2,400,000
+```
+
+The pytest atexit cleanup still emitted the known Windows `PermissionError` for `D:\temp\pytest-of-Snail\pytest-current` in one run.  Tests had already passed; this matches the existing task note about harmless Windows cleanup noise.
+
+### Known gaps
+
+1. Prompt preview currently supports `run_translate`.  `run_prepass` has preflight-only, but a full Builder prompt preview should be a separate extension if C01 must launch API Builder runs from UI.
+2. True cache-only execution is not available in `LLMClient`; APP-C01 therefore refuses to represent cache replay as guaranteed 0-API unless the script is in `--preflight-only` mode.
+3. No per-block DB live stream was added.  Live is still stdout/stderr log tail, matching LOCK (nn).3.
 
 ## 6. Review *(Claude điền)*
 
-- **Verdict:** (trống)
-- Findings: …
-- Follow-up: …
+- **Verdict:** REWORK. Implementer: Claude Opus 4.6 (Antigravity), lần 1. Bộ khung an toàn + D01-hardening ĐẠT; nhưng 3 phần CỐT LÕI (launch script thật, cost-gate, prompt-preview) bị stub/sai-wiring và §5 over-claim "complete".
+- **Đạt (đã re-verify):**
+  - Security skeleton: allowlist + reject shell-meta + KHÔNG shell=True + argv-list + validate job_id. Test thật.
+  - Lifecycle pending→running→done/error; log-tail offset-based; run-registry (JSONL) có provenance (argv/seed/config/cache).
+  - **D01 hardening (3 note) ĐÚNG & SẠCH:** scope_warning cả d2l/ti; TI drift status_source=derived_from_coverage + target_term_kind=entity_id; bỏ code chết. GIỮ NGUYÊN khi rework.
+  - Protocol: Status=REVIEW, KHÔNG commit, known-gap khai báo. 23 + 127 test xanh (re-run).
+  - §2 OUT tôn trọng: KHÔNG per-block DB-stream, KHÔNG engine change, test 0-API.
+- **PHẢI SỬA (blocking — 3 điểm):**
+  1. **Không launch được pipeline THẬT.** build_argv dựng [python, <script>.py] (file-invocation). Script thật import `from pipeline.*` tuyệt đối + có `if __name__=="__main__"` ⇒ BẮT BUỘC `python -m pipeline.scripts.<name>` với cwd=repo-root. Hiện không truyền scripts_root/cwd/-m ⇒ ImportError khi gặp script thật; chỉ chạy `python -c` giả. **Known-gap "Pipeline scripts not in repo" SAI** — script CÓ ở pipeline/scripts/ (đã liệt kê §3). Sửa: invoke -m + cwd=repo-root (+PYTHONPATH nếu cần), thêm THESIS_SCRIPTS_*/repo-root vào config.py, và 1 smoke test với script THẬT 0-API (snapshot_runs/score_consistency) chứng minh launch+exit-code thật.
+  2. **Cost-gate có lỗ + không gắn chi tiêu thật.** (a) `expected = get_confirm_token(job_id) if job_id else None`: bỏ job_id ⇒ expected=None ⇒ confirm_token bất kỳ chuỗi non-empty đều qua (bypass). (b) allow_api KHÔNG ảnh hưởng argv ⇒ gate gác một cờ no-op; chi tiêu thật do --cache + hit/miss quyết định. Cho bề-mặt-tiêu-tiền-đầu-tiên đây là gate yếu nhất có thể (trái LOCK ll cost-as-GATE). Sửa: bắt buộc job_id khi allow_api; verify token chặt (khớp token đã phát + one-time/hết-hạn); gate phải THỰC SỰ điều khiển replay-vs-API.
+  3. **Prompt-preview là STUB ("N/A").** Vi phạm luật #1 của chủ đề (surface prompt thật + token-estimate TRƯỚC khi chạy) + làm confirm-token vô nghĩa. Sửa: nối render_literary_prompts.py / B01 Inspector để trả prompt đại diện THẬT + token-estimate THẬT + cache-plan; token chỉ phát sau khi preview thật dựng được.
+- **Lưu ý phụ:** _SHELL_META_RE chặn cả dấu gạch-ngược ⇒ path Windows kiểu data\jobs\x.sqlite3 bị reject (dùng posix path, hoặc tách path khỏi shell-meta validation).
+- **Follow-up:** trả task về implementer sửa 3 điểm; GIỮ D01-hardening. Khi pass mới commit cả cụm (C01 + D01-hardening) một lượt.
+
+- **Re-review (lần 2 — CodeX rework) → PASS / ACCEPT.** Mọi blocker xử lý đúng BẢN CHẤT, đã re-verify từ code thật (không tin §5):
+  1. **Launch pipeline THẬT ✓** — `argv[:3] == [python, "-m", "pipeline.scripts.<script>"]` (service:495) + route truyền `cwd=THESIS_TOOL_ROOT` (config mới). **Smoke test script THẬT** `test_real_pipeline_module_help_smoke` chạy `-m pipeline.scripts.snapshot_runs --help` với `cwd=TOOL_ROOT` và pass trong bộ 125 → chứng minh `-m`+cwd resolve package thật, không phải assert suông.
+  2. **Cost-gate THẬT ✓** — `allow_api=true` bắt buộc `job_id` (đóng bypass), confirm_token tra store + kiểm TTL + **gắn `job/script/argv_digest`** + **one-time pop** (service:266-296). Route có test reject thiếu token / thiếu job_id.
+  3. **Prompt-preview THẬT ✓** — `_render_translate_prompt_preview` import code translate thật (`build_messages`/`build_context_pack`/`plan_anchors`/`estimate_prompt_tokens`), render system/user prompt + token-estimate, **0 API**; `preview_kind="real_translate_prompt"`. Token chỉ phát sau preview.
+  4. **Exit nonzero → `failed` ✓** (service:417), không còn ghi `done` sai.
+- **Deviation chấp nhận (và còn TỐT HƠN spec gốc của mình):** LLMClient chưa có cache-only mode → CodeX KHÔNG giả vờ "cache=0-API chắc chắn". `allow_api=false` ép `--preflight-only` (cờ THẬT, đã kiểm `run_translate.py:76`/`run_prepass.py:55`); `run_judge`/`build_index` (không có dry-flag, chưa preview) bị **từ chối an toàn** thay vì liều gọi API. Đây vá đúng lỗ trong giả định "replay=0-API" của spec mình.
+- **Observe⊥compute ✓** — Run Control UI chỉ preview/launch/tail + hiển thị `target_text/output_text`, KHÔNG tính metric.
+- **D01-hardening** giữ nguyên & vẫn đúng. Protocol ✓ (REVIEW, KHÔNG commit). Tự re-run: **21 + 125 pass**.
+- **Known-gap còn lại (khai báo thật, chấp nhận):** prompt-preview mới hỗ trợ `run_translate`; Builder/Judge/Embedding muốn chạy-API qua cockpit cần task mở rộng riêng (gắn vào `RUN-EVENT-01`/mở rộng sau). Lưu ý phụ shell-meta-chặn-backslash: CodeX dùng posix path nên không vướng; để ngỏ nếu sau cần path Windows-native.
+- **Quyết định:** ACCEPT, commit cả cụm (C01 + D01-hardening + Run Control UI). Khép App.
 
 ---
 

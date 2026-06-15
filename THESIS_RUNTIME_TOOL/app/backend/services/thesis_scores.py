@@ -154,27 +154,33 @@ def _d2l_drift(report: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _d2l_per_chapter(report: dict[str, Any]) -> dict[str, Any]:
-    """Extract per-chapter from B and D."""
+    """Extract per-chapter from B."""
     result: dict[str, Any] = {}
     b = report.get("B_tar_vs_gold") or {}
     for config in ("S0", "S1"):
         flat = (b.get(config) or {}).get("flat") or {}
         result[f"B_{config}"] = flat.get("per_chapter") or {}
-
-    d = report.get("D_registry_consistency") or {}
-    # D does not have per_chapter in current scorer
     return result
 
 
-def _d2l_scores(report: dict[str, Any], report_path: str) -> dict[str, Any]:
+def _d2l_scores(report: dict[str, Any], report_path: str, requested_job_id: str) -> dict[str, Any]:
+    meta: dict[str, Any] = {
+        "source": "thesis_score_readmodel",
+        "job_id": report.get("experiment_id"),
+        "domain": "d2l",
+        "report_paths": [report_path],
+        "read_only": True,
+    }
+    # Hardening (C01 review §6 note 1): warn when requested job ≠ report identity
+    report_identity = report.get("experiment_id") or report.get("project")
+    if report_identity and requested_job_id != report_identity:
+        meta["scope_warning"] = (
+            f"Requested job_id '{requested_job_id}' differs from report "
+            f"experiment_id/project '{report_identity}'. "
+            "Verify the correct report is mapped."
+        )
     return {
-        "meta": {
-            "source": "thesis_score_readmodel",
-            "job_id": report.get("experiment_id"),
-            "domain": "d2l",
-            "report_paths": [report_path],
-            "read_only": True,
-        },
+        "meta": meta,
         "headline": _d2l_headlines(report, report_path),
         "drift": _d2l_drift(report),
         "per_chapter": _d2l_per_chapter(report),
@@ -313,7 +319,10 @@ def _ti_drift(
                     "config": label,
                     "source_term": entity.get("entity"),
                     "target_term": entity.get("entity_id"),
+                    # Hardening (C01 review §6 note 2): label derived fields
+                    "target_term_kind": "entity_id",
                     "status": "low_coverage" if entity.get("coverage", 0) > 0 else "undetected",
+                    "status_source": "derived_from_coverage",
                     "forms_used": entity.get("forms_used") or {},
                     "source_blocks": entity.get("name_mention_blocks"),
                     "coverage": entity.get("coverage"),
@@ -332,22 +341,10 @@ def _ti_scores(
     s0 = _ti_metric_from_report(s0_report, "s0") if s0_report else None
     s1 = _ti_metric_from_report(s1_report, "s1") if s1_report else None
 
-    # oracle may have flat structure (no wrapper key)
-    oracle = None
-    if oracle_report:
-        oracle = _ti_metric_from_report(oracle_report, "oracle")
-        if not oracle or not oracle.get("tar"):
-            # flat structure: tar/fvr/ecs at top level
-            oracle = {
-                "tar": oracle_report.get("tar"),
-                "fvr": oracle_report.get("fvr"),
-                "ecs": oracle_report.get("ecs"),
-                "inspection": oracle_report.get("inspection"),
-                "project": oracle_report.get("project"),
-                "scored_at": oracle_report.get("scored_at"),
-                "source": oracle_report.get("source"),
-                "metric_version": oracle_report.get("metric_version"),
-            }
+    # oracle: try keyed first, then flat structure (top-level tar/fvr/ecs)
+    oracle = _ti_metric_from_report(oracle_report, "oracle") if oracle_report else None
+    if oracle_report and (not oracle or not oracle.get("tar")):
+        oracle = _ti_metric_from_report(oracle_report, "__flat_sentinel__")
 
     # oracle_same_ruler sections from S0/S1 reports
     oracle_s0 = s0_report.get("oracle_same_ruler") if s0_report else None
@@ -355,14 +352,27 @@ def _ti_scores(
 
     headlines = _ti_headlines(s0, s1, oracle, report_paths)
 
+    # Hardening (C01 review §6 note 1): scope_warning when job_id ≠ report project
+    meta: dict[str, Any] = {
+        "source": "thesis_score_readmodel",
+        "job_id": job_id,
+        "domain": "ti",
+        "report_paths": [p for p in report_paths if p],
+        "read_only": True,
+    }
+    report_projects = set()
+    for metrics in (s0, s1):
+        if metrics and metrics.get("project"):
+            report_projects.add(metrics["project"])
+    if report_projects and job_id not in report_projects:
+        meta["scope_warning"] = (
+            f"Requested job_id '{job_id}' differs from report "
+            f"project(s) {report_projects}. "
+            "Verify the correct reports are mapped."
+        )
+
     return {
-        "meta": {
-            "source": "thesis_score_readmodel",
-            "job_id": job_id,
-            "domain": "ti",
-            "report_paths": [p for p in report_paths if p],
-            "read_only": True,
-        },
+        "meta": meta,
         "headline": headlines,
         "drift": _ti_drift(s0, s1),
         "per_chapter": {
@@ -473,7 +483,7 @@ def load_scores(
                 f"D2L report file not found for job {safe_job}.",
                 404,
             )
-        return _d2l_scores(report, report_paths[0])
+        return _d2l_scores(report, report_paths[0], safe_job)
 
     # domain == "ti"
     s0_report = reports[0] if len(reports) > 0 else {}

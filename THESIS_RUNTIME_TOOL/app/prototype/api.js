@@ -98,6 +98,14 @@
     getThesisObservability: (jobId) => request(`/thesis/observability/${encodeURIComponent(jobId)}`),
     listThesisObservabilityCalls: (jobId) => request(`/thesis/observability/${encodeURIComponent(jobId)}/calls`),
     getThesisObservabilityCall: (jobId, callId) => request(`/thesis/observability/${encodeURIComponent(jobId)}/calls/${encodeURIComponent(callId)}`),
+    listThesisRuns: () => request("/thesis/runs"),
+    createThesisRun: (payload) => request("/thesis/runs", { method: "POST", body: payload || {} }),
+    getThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}`),
+    getThesisRunLog: (runId, offset) => request(`/thesis/runs/${encodeURIComponent(runId)}/log?offset=${encodeURIComponent(offset || 0)}`),
+    getThesisRunPromptPreview: (params) => {
+      const query = new URLSearchParams(params || {});
+      return request(`/thesis/runs/prompt-preview?${query.toString()}`);
+    },
     createProject: (payload) => request("/projects", { method: "POST", body: payload }),
     getProject: (docId) => request(`/projects/${encodeURIComponent(docId)}`),
     patchProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "PATCH", body: payload }),

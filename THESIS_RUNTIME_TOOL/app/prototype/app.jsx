@@ -26,6 +26,13 @@ function firstError(err) {
   return err?.errors?.[0] || err?.payload?.errors?.[0] || {};
 }
 
+function splitWords(value) {
+  return String(value || "")
+    .split(/[,\s]+/)
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
 function describeExternalRef(ref) {
   if (ref.block_id) return `${ref.kind || "ref"} · ${ref.block_id} · ${ref.field || ""}`;
   if (ref.chapter_id) return `${ref.kind || "ref"} · ${ref.chapter_id} · ${ref.field || ""}`;
@@ -402,6 +409,21 @@ function App() {
   const [evalOnly, setEvalOnly] = useState({ gold_glossary: [], references: [] });
   const [thesisTranslations, setThesisTranslations] = useState({});
   const [thesisObservability, setThesisObservability] = useState(null);
+  const [thesisRuns, setThesisRuns] = useState([]);
+  const [selectedRunId, setSelectedRunId] = useState(null);
+  const [selectedRunLog, setSelectedRunLog] = useState({ run_id: null, log: "", offset: 0, running: false, status: "" });
+  const [runPromptPreview, setRunPromptPreview] = useState(null);
+  const [runBusy, setRunBusy] = useState(false);
+  const [runError, setRunError] = useState("");
+  const [runForm, setRunForm] = useState({
+    script: "run_translate",
+    chapters: "ch02 ch03",
+    configs: "S0 S1",
+    profile: "literary_v1",
+    experiment: "translate_run",
+    cache: "data/jobs/translate_cache.sqlite3",
+    allow_api: false,
+  });
   const [selectedCallId, setSelectedCallId] = useState(null);
   const [selectedCallDetail, setSelectedCallDetail] = useState(null);
   const [callDetailLoading, setCallDetailLoading] = useState(false);
@@ -414,7 +436,7 @@ function App() {
   const [editing, setEditing] = useState(false);
   const [centerMode, setCenterModeState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_CENTER_MODE);
-    return ["block", "chapter", "book", "preview"].includes(saved) ? saved : "chapter";
+    return ["block", "chapter", "book", "preview", "cockpit"].includes(saved) ? saved : "chapter";
   });
   const [toasts, setToasts] = useState([]);
   const [modal, setModal] = useState(null);
@@ -427,6 +449,7 @@ function App() {
   const [activeDocId, setActiveDocId] = useState(localStorage.getItem(STORAGE_DOC) || "");
   const savedAt = useRef(Date.now());
   const saveTimers = useRef({});
+  const runLogOffsetRef = useRef(0);
 
   const refreshProjects = useCallback(async () => {
     const [legacy, thesis] = await Promise.all([
@@ -462,6 +485,11 @@ function App() {
     setEvalOnly({ gold_glossary: [], references: [] });
     setThesisTranslations({});
     setThesisObservability(null);
+    setThesisRuns([]);
+    setSelectedRunId(null);
+    setSelectedRunLog({ run_id: null, log: "", offset: 0, running: false, status: "" });
+    setRunPromptPreview(null);
+    setRunError("");
     setSelectedCallId(null);
     setSelectedCallDetail(null);
     setReview(adapted.review);
@@ -498,6 +526,9 @@ function App() {
     setEvalOnly(adapted.evalOnly);
     setThesisTranslations(adapted.translations);
     setThesisObservability(observability);
+    API.listThesisRuns()
+      .then(rows => setThesisRuns(rows || []))
+      .catch(() => setThesisRuns([]));
     setSelectedCallId(observability.calls?.[0]?.call_id || null);
     setSelectedCallDetail(null);
     setReview(adapted.review);
@@ -574,6 +605,121 @@ function App() {
       });
     return () => { cancelled = true; };
   }, [activeDocId, selectedCallId, readOnly]);
+
+  const refreshThesisRuns = useCallback(async () => {
+    if (!readOnly) return [];
+    const rows = await API.listThesisRuns();
+    setThesisRuns(rows || []);
+    return rows || [];
+  }, [readOnly]);
+
+  function runFormPayload(includeToken = false) {
+    const jobId = thesisJobId(activeDocId);
+    const payload = {
+      script: runForm.script || "run_translate",
+      job_id: jobId || undefined,
+      chapters: splitWords(runForm.chapters),
+      configs: splitWords(runForm.configs),
+      profile: runForm.profile || undefined,
+      experiment: runForm.experiment || undefined,
+      cache: runForm.cache || undefined,
+      allow_api: !!runForm.allow_api,
+    };
+    if (includeToken && runPromptPreview?.confirm_token) {
+      payload.confirm_token = runPromptPreview.confirm_token;
+    }
+    return payload;
+  }
+
+  async function previewThesisRun() {
+    const jobId = thesisJobId(activeDocId);
+    if (!jobId) return;
+    setRunBusy(true);
+    setRunError("");
+    setRunPromptPreview(null);
+    try {
+      const params = {
+        job_id: jobId,
+        script: runForm.script || "run_translate",
+        chapters: splitWords(runForm.chapters).join(" "),
+        configs: splitWords(runForm.configs).join(" "),
+        profile: runForm.profile || "",
+        experiment: runForm.experiment || "",
+        cache: runForm.cache || "",
+      };
+      const preview = await API.getThesisRunPromptPreview(params);
+      setRunPromptPreview(preview);
+      toast("Prompt preview ready", "good", `${preview.representative_prompt?.prompt_tokens_est || 0} estimated prompt tokens`);
+    } catch (err) {
+      const msg = errorMessage(err);
+      setRunError(msg);
+      toast("Prompt preview failed", "bad", msg);
+    } finally {
+      setRunBusy(false);
+    }
+  }
+
+  async function createThesisRun() {
+    setRunBusy(true);
+    setRunError("");
+    try {
+      const payload = runFormPayload(!!runForm.allow_api);
+      const created = await API.createThesisRun(payload);
+      setSelectedRunId(created.run_id);
+      runLogOffsetRef.current = 0;
+      setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
+      await refreshThesisRuns();
+      toast("Run launched", "good", created.run_id);
+    } catch (err) {
+      const msg = errorMessage(err);
+      setRunError(msg);
+      toast("Run launch failed", "bad", msg);
+    } finally {
+      setRunBusy(false);
+    }
+  }
+
+  function updateRunForm(patch) {
+    setRunPromptPreview(null);
+    setRunForm(form => ({ ...form, ...patch }));
+  }
+
+  function selectRun(runId) {
+    setSelectedRunId(runId);
+    runLogOffsetRef.current = 0;
+    setSelectedRunLog({ run_id: runId, log: "", offset: 0, running: true, status: "" });
+  }
+
+  useEffect(() => {
+    if (!selectedRunId) return undefined;
+    let cancelled = false;
+    let timer = null;
+    async function poll() {
+      try {
+        const currentOffset = runLogOffsetRef.current || 0;
+        const result = await API.getThesisRunLog(selectedRunId, currentOffset);
+        if (cancelled) return;
+        runLogOffsetRef.current = result.offset || currentOffset;
+        setSelectedRunLog(prev => ({
+          run_id: selectedRunId,
+          log: (prev.run_id === selectedRunId ? prev.log : "") + (result.log || ""),
+          offset: result.offset || currentOffset,
+          running: !!result.running,
+          status: result.status || "",
+          exit_code: result.exit_code,
+        }));
+        await refreshThesisRuns();
+        if (result.running) timer = setTimeout(poll, 1400);
+      } catch (_err) {
+        if (!cancelled) timer = setTimeout(poll, 2500);
+      }
+    }
+    poll();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [selectedRunId, refreshThesisRuns]);
 
   function setCenterMode(mode) {
     setCenterModeState(mode);
@@ -1744,6 +1890,21 @@ function App() {
           onChangeType={changeType} onToggleOpening={() => toggleOpening(selectedId)} onToggleFlag={(flag) => toggleFlag(flag, selectedId)} onMarkReviewed={markReviewed}
           onAddGlossary={addGlossary} onAddEntity={addEntity} onPreviewRunChange={setCurrentPreviewRun} readOnly={readOnly}
           observability={thesisObservability}
+          runControl={{
+            jobId: thesisJobId(activeDocId),
+            runs: thesisRuns,
+            selectedRunId,
+            selectedRunLog,
+            runForm,
+            promptPreview: runPromptPreview,
+            busy: runBusy,
+            error: runError,
+            onFormChange: updateRunForm,
+            onPreview: previewThesisRun,
+            onCreateRun: createThesisRun,
+            onSelectRun: selectRun,
+            onRefreshRuns: refreshThesisRuns,
+          }}
           selectedCallId={selectedCallId}
           selectedCallDetail={selectedCallDetail}
           callDetailLoading={callDetailLoading}
