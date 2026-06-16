@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sqlite3
+import uuid
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -19,6 +20,7 @@ from pipeline.retrieval.context_builder import (
 from pipeline.translate.prompt import build_messages, prompt_version_for_config
 from pipeline.translate.profiles import get_profile
 from pipeline.translate.runner import TranslateReport, translate_windows
+from pipeline.translate.run_events import EventSink
 from pipeline.translate.windower import Window, build_windows
 
 
@@ -77,6 +79,20 @@ def main() -> int:
         action="store_true",
         help="Render prompts and estimate tokens without calling the API.",
     )
+    parser.add_argument(
+        "--event-log",
+        help="Optional sidecar JSONL event log path for live observation.",
+    )
+    parser.add_argument(
+        "--run-id",
+        dest="attempt_id",
+        help="Run/attempt id used inside the sidecar event log.",
+    )
+    parser.add_argument(
+        "--attempt-id",
+        dest="attempt_id",
+        help="Alias for --run-id.",
+    )
     args = parser.parse_args()
 
     profile = get_profile(args.profile)
@@ -111,6 +127,10 @@ def main() -> int:
 
     _ensure_api_key()
     client = LLMClient(config=llm_config, cache_path=args.cache)
+    event_sink = None
+    if args.event_log:
+        attempt_id = args.attempt_id or f"run_{uuid.uuid4().hex[:12]}"
+        event_sink = EventSink(args.event_log, run_id=attempt_id, attempt_id=attempt_id)
     reports: dict[str, dict[str, Any]] = {}
     try:
         for config in configs:
@@ -122,6 +142,7 @@ def main() -> int:
                 config=config,
                 context_budget_tokens=args.context_budget,
                 profile_name=profile.name,
+                event_sink=event_sink,
             )
             reports[config] = report.to_json_dict()
             _print_translate_summary(report)

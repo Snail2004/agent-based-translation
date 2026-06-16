@@ -11,6 +11,7 @@ from pipeline.agents.llm_client import LLMResult, LLMUsage
 from pipeline.ingest.document_loader import load_document
 from pipeline.memory.store_init import migrate_db
 from pipeline.translate.runner import TranslateReport, translate_windows
+from pipeline.translate.run_events import EventSink
 from pipeline.translate.windower import Window
 from pipeline.translate.prompt import build_messages
 
@@ -116,6 +117,40 @@ class _Config:
     pricing = {"input": 0.25, "cached_input": 0.025, "output": 2.0}
 
 
+def _stable_translation_rows(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT run_id, experiment_id, doc_id, block_id, config, stage,
+               window_id, pack_id, output_text, model, prompt_version,
+               temperature, seed, system_fingerprint, cost, latency_ms
+        FROM translation_runs
+        ORDER BY run_id
+        """
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _stable_pack_rows(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT pack_id, doc_id, block_id, pack_hash, prompt_version,
+               estimated_tokens, payload_json, memory_refs_json,
+               retrieval_debug_json, config
+        FROM memory_packs
+        ORDER BY pack_id
+        """
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _read_events(path: Path) -> list[dict]:
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
 def test_runner_translate_one_window(tmp_path):
     """One window → one call → persists translation_runs + memory_packs."""
     conn, doc_id = _make_doc_db(tmp_path)
@@ -146,6 +181,91 @@ def test_runner_translate_one_window(tmp_path):
     for r in rows:
         assert r["config"] == "S0"
         assert r["window_id"] == "w_ch02_001"
+
+
+def test_event_sink_emits_window_sequence_and_uncommitted_preview(tmp_path):
+    conn, doc_id = _make_doc_db(tmp_path)
+    client = _FakeClient([_fake_result(_ok_response(["ch02_b001", "ch02_b002"]))])
+    client.config = _Config()
+    event_path = tmp_path / "run_events" / "run_test.jsonl"
+    sink = EventSink(event_path, run_id="run_test", attempt_id="run_test")
+    windows = [
+        Window(window_id="w_ch02_001", block_ids=["ch02_b001", "ch02_b002"], est_src_tokens=50),
+    ]
+
+    report = translate_windows(conn, windows, client, "exp_test", "S0", event_sink=sink)
+
+    assert report.windows_translated == 1
+    events = _read_events(event_path)
+    names = [event["event"] for event in events]
+    assert names == [
+        "window_started",
+        "prompt_built",
+        "request_sent",
+        "response_received",
+        "json_parsed",
+        "window_preview_available",
+        "persist_buffered",
+        "run_committed",
+    ]
+    preview = next(event for event in events if event["event"] == "window_preview_available")
+    assert preview["committed"] is False
+    assert "ch02_b001" in preview["translations"]
+    assert "preview" in preview["translations"]["ch02_b001"]
+    assert "content" not in json.dumps(next(event for event in events if event["event"] == "prompt_built"))
+
+
+def test_event_sink_best_effort_failure_does_not_crash(tmp_path):
+    class FailingSink:
+        def emit(self, event, **payload):
+            raise OSError("event sink unavailable")
+
+    conn, doc_id = _make_doc_db(tmp_path)
+    client = _FakeClient([_fake_result(_ok_response(["ch02_b001"]))])
+    client.config = _Config()
+
+    report = translate_windows(
+        conn,
+        [Window(window_id="w_ch02_001", block_ids=["ch02_b001"], est_src_tokens=50)],
+        client,
+        "exp_test",
+        "S0",
+        event_sink=FailingSink(),
+    )
+
+    assert report.windows_translated == 1
+    assert _stable_translation_rows(conn)[0]["block_id"] == "ch02_b001"
+
+
+def test_event_sink_on_off_is_compute_identical_on_cloned_dbs(tmp_path):
+    off_root = tmp_path / "off"
+    on_root = tmp_path / "on"
+    off_root.mkdir()
+    on_root.mkdir()
+    off_conn, _ = _make_doc_db(off_root)
+    on_conn, _ = _make_doc_db(on_root)
+    windows = [
+        Window(window_id="w_ch02_001", block_ids=["ch02_b001"], est_src_tokens=50),
+        Window(window_id="w_ch02_002", block_ids=["ch02_b002"], est_src_tokens=50),
+    ]
+    off_client = _FakeClient([
+        _fake_result(_ok_response(["ch02_b001"])),
+        _fake_result(_ok_response(["ch02_b002"])),
+    ])
+    on_client = _FakeClient([
+        _fake_result(_ok_response(["ch02_b001"])),
+        _fake_result(_ok_response(["ch02_b002"])),
+    ])
+    off_client.config = _Config()
+    on_client.config = _Config()
+    sink = EventSink(tmp_path / "run_events" / "run_test.jsonl", run_id="run_test")
+
+    off_report = translate_windows(off_conn, windows, off_client, "exp_test", "S0")
+    on_report = translate_windows(on_conn, windows, on_client, "exp_test", "S0", event_sink=sink)
+
+    assert off_report.to_json_dict() == on_report.to_json_dict()
+    assert _stable_translation_rows(off_conn) == _stable_translation_rows(on_conn)
+    assert _stable_pack_rows(off_conn) == _stable_pack_rows(on_conn)
 
 
 def test_runner_resume_skips_completed_windows(tmp_path):

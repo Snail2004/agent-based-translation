@@ -102,6 +102,7 @@
     createThesisRun: (payload) => request("/thesis/runs", { method: "POST", body: payload || {} }),
     getThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}`),
     getThesisRunLog: (runId, offset) => request(`/thesis/runs/${encodeURIComponent(runId)}/log?offset=${encodeURIComponent(offset || 0)}`),
+    getThesisRunEvents: (runId, offset) => request(`/thesis/runs/${encodeURIComponent(runId)}/events?offset=${encodeURIComponent(offset || 0)}`),
     getThesisRunPromptPreview: (params) => {
       const query = new URLSearchParams(params || {});
       return request(`/thesis/runs/prompt-preview?${query.toString()}`);

@@ -412,6 +412,7 @@ function App() {
   const [thesisRuns, setThesisRuns] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [selectedRunLog, setSelectedRunLog] = useState({ run_id: null, log: "", offset: 0, running: false, status: "" });
+  const [selectedRunEvents, setSelectedRunEvents] = useState({ run_id: null, events: [], offset: 0, running: false, status: "" });
   const [runPromptPreview, setRunPromptPreview] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
@@ -450,6 +451,7 @@ function App() {
   const savedAt = useRef(Date.now());
   const saveTimers = useRef({});
   const runLogOffsetRef = useRef(0);
+  const runEventOffsetRef = useRef(0);
 
   const refreshProjects = useCallback(async () => {
     const [legacy, thesis] = await Promise.all([
@@ -488,6 +490,7 @@ function App() {
     setThesisRuns([]);
     setSelectedRunId(null);
     setSelectedRunLog({ run_id: null, log: "", offset: 0, running: false, status: "" });
+    setSelectedRunEvents({ run_id: null, events: [], offset: 0, running: false, status: "" });
     setRunPromptPreview(null);
     setRunError("");
     setSelectedCallId(null);
@@ -628,6 +631,9 @@ function App() {
     if (includeToken && runPromptPreview?.confirm_token) {
       payload.confirm_token = runPromptPreview.confirm_token;
     }
+    if (includeToken && runPromptPreview?.planned_run_id) {
+      payload.planned_run_id = runPromptPreview.planned_run_id;
+    }
     return payload;
   }
 
@@ -667,7 +673,9 @@ function App() {
       const created = await API.createThesisRun(payload);
       setSelectedRunId(created.run_id);
       runLogOffsetRef.current = 0;
+      runEventOffsetRef.current = 0;
       setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
+      setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status });
       await refreshThesisRuns();
       toast("Run launched", "good", created.run_id);
     } catch (err) {
@@ -687,7 +695,9 @@ function App() {
   function selectRun(runId) {
     setSelectedRunId(runId);
     runLogOffsetRef.current = 0;
+    runEventOffsetRef.current = 0;
     setSelectedRunLog({ run_id: runId, log: "", offset: 0, running: true, status: "" });
+    setSelectedRunEvents({ run_id: runId, events: [], offset: 0, running: true, status: "" });
   }
 
   useEffect(() => {
@@ -697,9 +707,14 @@ function App() {
     async function poll() {
       try {
         const currentOffset = runLogOffsetRef.current || 0;
-        const result = await API.getThesisRunLog(selectedRunId, currentOffset);
+        const currentEventOffset = runEventOffsetRef.current || 0;
+        const [result, eventResult] = await Promise.all([
+          API.getThesisRunLog(selectedRunId, currentOffset),
+          API.getThesisRunEvents(selectedRunId, currentEventOffset).catch(() => null),
+        ]);
         if (cancelled) return;
         runLogOffsetRef.current = result.offset || currentOffset;
+        if (eventResult) runEventOffsetRef.current = eventResult.offset || currentEventOffset;
         setSelectedRunLog(prev => ({
           run_id: selectedRunId,
           log: (prev.run_id === selectedRunId ? prev.log : "") + (result.log || ""),
@@ -708,6 +723,19 @@ function App() {
           status: result.status || "",
           exit_code: result.exit_code,
         }));
+        if (eventResult) {
+          setSelectedRunEvents(prev => ({
+            run_id: selectedRunId,
+            events: [
+              ...(prev.run_id === selectedRunId ? (prev.events || []) : []),
+              ...(eventResult.events || []),
+            ].slice(-80),
+            offset: eventResult.offset || currentEventOffset,
+            running: !!eventResult.running,
+            status: eventResult.status || "",
+            exit_code: eventResult.exit_code,
+          }));
+        }
         await refreshThesisRuns();
         if (result.running) timer = setTimeout(poll, 1400);
       } catch (_err) {
@@ -1895,6 +1923,7 @@ function App() {
             runs: thesisRuns,
             selectedRunId,
             selectedRunLog,
+            selectedRunEvents,
             runForm,
             promptPreview: runPromptPreview,
             busy: runBusy,

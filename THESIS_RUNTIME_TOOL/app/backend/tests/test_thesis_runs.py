@@ -109,6 +109,26 @@ def test_build_argv_uses_real_module_invocation_and_no_job_arg(tmp_path):
     assert "--preflight-only" not in argv
 
 
+def test_run_translate_event_flags_are_part_of_argv(tmp_path):
+    from services.thesis_runs import build_argv
+
+    event_log = tmp_path / "run_events" / "run_abc.jsonl"
+    argv = build_argv(
+        script="run_translate",
+        python_exe=sys.executable,
+        db=str(tmp_path / "memory.sqlite3"),
+        chapters=["ch02"],
+        configs=["S1"],
+        allow_api=True,
+        event_log=str(event_log),
+        run_id="run_abc",
+    )
+
+    assert "--event-log" in argv
+    assert str(event_log) in argv
+    assert argv[argv.index("--run-id") + 1] == "run_abc"
+
+
 def test_run_translate_dry_run_forces_preflight_only(tmp_path):
     from services.thesis_runs import build_argv
 
@@ -282,6 +302,10 @@ def test_prompt_preview_renders_real_translate_prompt_and_token_is_one_time(tmp_
 
     assert preview["preview_kind"] == "real_translate_prompt"
     assert preview["confirm_token"]
+    assert preview["planned_run_id"].startswith("run_")
+    assert "--event-log" in preview["argv_preview"]
+    assert "--run-id" in preview["argv_preview"]
+    assert preview["event_log_path"].endswith(f"{preview['planned_run_id']}.jsonl")
     assert preview["representative_prompt"]["messages"]
     assert preview["representative_prompt"]["prompt_tokens_est"] > 0
     assert preview["token_estimate"]["configs"]["S1"]["windows"] >= 1
@@ -394,10 +418,65 @@ def test_route_allow_api_without_token_rejected(tmp_path, monkeypatch):
             "chapters": ["ch02"],
             "configs": ["S1"],
             "allow_api": True,
+            "planned_run_id": "run_missing_token",
         },
     )
     assert resp.status_code == 403
     assert resp.get_json()["errors"][0]["code"] == "confirm_token_required"
+
+
+def test_route_run_events_tails_registered_sidecar_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    event_dir = tmp_path / "run_events"
+    event_dir.mkdir()
+    event_path = event_dir / "run_evt.jsonl"
+    event_path.write_text(
+        "\n".join([
+            json.dumps({"event": "window_started", "seq": 1}),
+            json.dumps({"event": "run_committed", "seq": 2}),
+        ])
+        + "\n",
+        encoding="utf-8",
+    )
+    entry = registry.create_run(
+        script="run_translate",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_evt",
+        event_log_path=str(event_path),
+    )
+    registry.update_run(entry["run_id"], status="done", exit_code=0)
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_evt/events?offset=0")
+    assert resp.status_code == 200
+    data = resp.get_json()["data"]
+    assert [event["event"] for event in data["events"]] == ["window_started", "run_committed"]
+    assert data["running"] is False
+    assert data["offset"] > 0
+
+    outside = tmp_path / "outside.jsonl"
+    outside.write_text("{}\n", encoding="utf-8")
+    bad = registry.create_run(
+        script="run_translate",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_bad",
+        event_log_path=str(outside),
+    )
+    registry.update_run(bad["run_id"], status="done", exit_code=0)
+    resp_bad = client.get("/api/thesis/runs/run_bad/events?offset=0")
+    assert resp_bad.status_code == 500
+    assert resp_bad.get_json()["errors"][0]["code"] == "invalid_event_log_path"
 
 
 def test_route_allow_api_without_job_id_rejected(tmp_path, monkeypatch):

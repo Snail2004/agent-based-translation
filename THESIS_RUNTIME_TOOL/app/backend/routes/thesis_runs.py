@@ -12,11 +12,13 @@ from services.thesis_runs import (
     RunRegistry,
     build_argv,
     generate_prompt_preview,
+    read_events,
     read_log,
     resolve_job_db,
     spawn_run,
     validate_api_gate,
     validate_job_id,
+    validate_run_id,
     validate_script,
 )
 
@@ -52,6 +54,16 @@ def create_run():
         tool_root = _tool_root()
         jobs_root = _jobs_root()
         db = resolve_job_db(db=body.get("db"), job_id=job_id, jobs_root=jobs_root)
+        planned_run_id = validate_run_id(body.get("planned_run_id"))
+        event_log_path = None
+        if script == "run_translate" and allow_api and job_id:
+            if planned_run_id is None:
+                raise RunControlError(
+                    "planned_run_id_required",
+                    "run_translate allow_api=true requires planned_run_id from prompt-preview.",
+                    403,
+                )
+            event_log_path = jobs_root / "run_events" / f"{planned_run_id}.jsonl"
 
         argv = build_argv(
             script=script,
@@ -81,6 +93,8 @@ def create_run():
             freeze=bool(body.get("freeze", False)),
             memory_report=body.get("memory_report"),
             smoke_query=body.get("smoke_query"),
+            event_log=str(event_log_path) if event_log_path else None,
+            run_id=planned_run_id,
         )
 
         consumed_token = validate_api_gate(
@@ -111,6 +125,8 @@ def create_run():
                 if allow_api
                 else "preflight_only_for_api_scripts_where_available"
             ),
+            run_id=planned_run_id,
+            event_log_path=str(event_log_path) if event_log_path else None,
         )
         spawn_run(registry, entry["run_id"])
         return ok({"run_id": entry["run_id"], "status": entry["status"]}, status=201)
@@ -161,6 +177,17 @@ def run_log(run_id: str):
     try:
         offset = int(request.args.get("offset", "0"))
         return ok(read_log(_get_registry(), run_id, offset=offset))
+    except ValueError:
+        return error("invalid_offset", "offset must be an integer.", 400)
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+
+
+@bp.get("/thesis/runs/<run_id>/events")
+def run_events(run_id: str):
+    try:
+        offset = int(request.args.get("offset", "0"))
+        return ok(read_events(_get_registry(), run_id, offset=offset, jobs_root=_jobs_root()))
     except ValueError:
         return error("invalid_offset", "offset must be an integer.", 400)
     except RunControlError as exc:

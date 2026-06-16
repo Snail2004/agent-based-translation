@@ -314,12 +314,59 @@ function MemoryPackInspector({ detail }) {
   );
 }
 
+function RunEventSummary({ event }) {
+  if (!event) {
+    return <div className="muted">No sidecar events for this run. Preflight-only and older runs may not emit events.</div>;
+  }
+  const usage = event.usage || {};
+  const context = event.context_summary || {};
+  const translations = event.translations || {};
+  return (
+    <div className="run-event-card">
+      <div className="run-event-card-head">
+        <span className="mono">{event.event}</span>
+        <em className="mono">seq {event.seq || "-"} / {event.window_id || event.config || "-"}</em>
+      </div>
+      <div className="run-event-kv">
+        <span><b>config</b><em className="mono">{event.config || "-"}</em></span>
+        <span><b>prompt est</b><em className="mono">{formatInt(event.prompt_tokens_est)}</em></span>
+        <span><b>cache</b><em className="mono">{event.from_cache === true ? "hit" : event.from_cache === false ? "miss" : "-"}</em></span>
+        <span><b>cost</b><em className="mono">{formatCost(event.cost_usd)}</em></span>
+      </div>
+      {(usage.prompt_tokens || usage.completion_tokens || usage.cached_tokens) && (
+        <div className="run-event-line mono">
+          prompt {formatInt(usage.prompt_tokens)} / cached {formatInt(usage.cached_tokens)} / output {formatInt(usage.completion_tokens)}
+        </div>
+      )}
+      {(context.included_count || context.dropped_by_budget_count || context.anchors_count) && (
+        <div className="run-event-line mono">
+          context included {formatInt(context.included_count)} / dropped {formatInt(context.dropped_by_budget_count)}
+        </div>
+      )}
+      {Object.keys(translations).length > 0 && (
+        <div className="run-event-preview">
+          <div className="obs-subhead">uncommitted preview</div>
+          {Object.entries(translations).slice(0, 3).map(([blockId, row]) => (
+            <div key={blockId} className="run-event-preview-row">
+              <span className="mono">{blockId}</span>
+              <p>{row?.preview || ""}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RunControlPanel({ runControl }) {
   if (!runControl) return null;
   const form = runControl.runForm || {};
   const preview = runControl.promptPreview || null;
   const runs = runControl.runs || [];
   const selectedLog = runControl.selectedRunLog || {};
+  const selectedEvents = runControl.selectedRunEvents || { events: [] };
+  const eventRows = selectedEvents.events || [];
+  const latestEvent = eventRows[eventRows.length - 1] || null;
   const rep = preview?.representative_prompt || null;
   const previewMessages = rep?.messages || [];
   const previewSystem = previewMessages.find(m => m.role === "system");
@@ -389,7 +436,7 @@ function RunControlPanel({ runControl }) {
         <div className="run-preview">
           <div className="run-preview-head">
             <span>Prompt preview token issued</span>
-            <em className="mono">{preview.confirm_token?.slice(0, 10)}... · {formatInt(rep?.prompt_tokens_est)} prompt tokens</em>
+            <em className="mono">{preview.confirm_token?.slice(0, 10)}... / {preview.planned_run_id || "no-run-id"} / {formatInt(rep?.prompt_tokens_est)} prompt tokens</em>
           </div>
           <div className="obs-breakdown">
             <div><span>windows</span><b>{formatInt(tokenEstimate.configs?.S1?.windows || tokenEstimate.configs?.S0?.windows)}</b></div>
@@ -420,6 +467,26 @@ function RunControlPanel({ runControl }) {
         <div className="run-log-box">
           <div className="obs-subhead">live log tail {selectedRun ? <span className="mono">· {selectedRun.run_id}</span> : null}</div>
           <pre>{selectedLog.log || "Select or launch a run to tail stdout/stderr."}</pre>
+        </div>
+      </div>
+      <div className="run-events-box">
+        <div className="obs-subhead">
+          sidecar events
+          {selectedRun ? <span className="mono"> / {selectedRun.run_id} / {formatInt(eventRows.length)} buffered</span> : null}
+        </div>
+        <div className="run-events-grid">
+          <RunEventSummary event={latestEvent} />
+          <div className="run-events-list">
+            {eventRows.length ? eventRows.slice(-20).reverse().map((event, index) => (
+              <div key={`${event.seq || index}:${event.event}`} className="run-event-row">
+                <span className="mono">{event.seq || "-"}</span>
+                <b>{event.event}</b>
+                <em className="mono">{event.window_id || event.config || ""}</em>
+              </div>
+            )) : (
+              <div className="muted">No JSONL events tailed yet.</div>
+            )}
+          </div>
         </div>
       </div>
     </section>

@@ -96,6 +96,17 @@ class RunRegistry:
         self._registry_path = self._runs_root / "thesis_runs.jsonl"
         self._load()
 
+    @property
+    def runs_root(self) -> Path:
+        return self._runs_root
+
+    def new_run_id(self) -> str:
+        with self._lock:
+            while True:
+                run_id = f"run_{uuid.uuid4().hex[:12]}"
+                if run_id not in self._runs:
+                    return run_id
+
     def _load(self) -> None:
         if not self._registry_path.exists():
             return
@@ -131,8 +142,10 @@ class RunRegistry:
         allow_api: bool = False,
         prompt_preview_token: str | None = None,
         dry_run_policy: str | None = None,
+        run_id: str | None = None,
+        event_log_path: str | None = None,
     ) -> dict[str, Any]:
-        run_id = f"run_{uuid.uuid4().hex[:12]}"
+        run_id = validate_run_id(run_id) if run_id else self.new_run_id()
         now = _utc_now()
         log_path = str(self._log_dir / f"{run_id}.log")
         entry = {
@@ -151,6 +164,7 @@ class RunRegistry:
             "allow_api": allow_api,
             "prompt_preview_token": prompt_preview_token,
             "dry_run_policy": dry_run_policy,
+            "event_log_path": event_log_path,
             "status": "pending",
             "pid": None,
             "started_at": now,
@@ -191,6 +205,7 @@ class RunRegistry:
                     "exit_code": r["exit_code"],
                     "job_id": r.get("job_id"),
                     "allow_api": bool(r.get("allow_api")),
+                    "event_log_path": r.get("event_log_path"),
                 }
                 for r in self._runs.values()
             ]
@@ -230,6 +245,17 @@ def validate_job_id(job_id: str | None, *, required: bool = False) -> str | None
     value = str(job_id).strip()
     if not _JOB_ID_RE.match(value):
         raise RunControlError("invalid_job_id", "Invalid job_id.", 400)
+    return value
+
+
+def validate_run_id(run_id: str | None, *, required: bool = False) -> str | None:
+    if run_id is None or str(run_id).strip() == "":
+        if required:
+            raise RunControlError("run_id_required", "run_id is required.", 400)
+        return None
+    value = str(run_id).strip()
+    if not _RUN_ID_RE.match(value):
+        raise RunControlError("invalid_run_id", "Invalid run_id.", 400)
     return value
 
 
@@ -332,6 +358,8 @@ def generate_prompt_preview(
     if not chapter_list:
         raise RunControlError("chapters_required", "chapters are required for prompt preview.", 400)
 
+    planned_run_id = f"run_{uuid.uuid4().hex[:12]}"
+    event_log_path = _event_log_path(jobs, planned_run_id)
     argv = build_argv(
         script=script,
         python_exe=python_exe,
@@ -346,6 +374,8 @@ def generate_prompt_preview(
         context_budget=context_budget,
         extra_args=extra_args,
         allow_api=True,
+        event_log=str(event_log_path),
+        run_id=planned_run_id,
     )
     preview = _render_translate_prompt_preview(
         db=db_path,
@@ -375,6 +405,8 @@ def generate_prompt_preview(
         "job_id": job,
         "script": script,
         "confirm_token": token,
+        "planned_run_id": planned_run_id,
+        "event_log_path": str(event_log_path),
         "confirm_token_ttl_seconds": _CONFIRM_TOKEN_TTL_SECONDS,
         "argv_preview": _redact_argv(argv),
         "read_only": True,
@@ -460,6 +492,58 @@ def read_log(registry: RunRegistry, run_id: str, *, offset: int = 0) -> dict[str
     }
 
 
+def read_events(
+    registry: RunRegistry,
+    run_id: str,
+    *,
+    offset: int = 0,
+    jobs_root: Path | None = None,
+) -> dict[str, Any]:
+    entry = registry.get_run(run_id)
+    if entry is None:
+        raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
+
+    root = Path(jobs_root or registry.runs_root).resolve()
+    event_root = (root / "run_events").resolve()
+    raw_path = entry.get("event_log_path")
+    events: list[dict[str, Any]] = []
+    safe_offset = max(int(offset or 0), 0)
+    new_offset = safe_offset
+
+    if raw_path:
+        event_path = Path(str(raw_path)).resolve()
+        try:
+            event_path.relative_to(event_root)
+        except ValueError as exc:
+            raise RunControlError(
+                "invalid_event_log_path",
+                "Run event log path is outside THESIS_JOBS_ROOT/run_events.",
+                500,
+            ) from exc
+        if event_path.exists():
+            with open(event_path, "r", encoding="utf-8") as fh:
+                fh.seek(safe_offset)
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        events.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        events.append({"event": "parse_error", "raw": line[:500]})
+                new_offset = fh.tell()
+
+    return {
+        "run_id": run_id,
+        "events": events,
+        "offset": new_offset,
+        "running": entry["status"] == "running",
+        "status": entry["status"],
+        "exit_code": entry["exit_code"],
+        "event_log_path": raw_path,
+    }
+
+
 def build_argv(
     *,
     script: str,
@@ -489,6 +573,8 @@ def build_argv(
     freeze: bool = False,
     memory_report: str | None = None,
     smoke_query: str | None = None,
+    event_log: str | None = None,
+    run_id: str | None = None,
 ) -> list[str]:
     script = validate_script(script)
     exe = python_exe or sys.executable
@@ -525,6 +611,10 @@ def build_argv(
             argv += ["--report", str(report)]
         if context_budget is not None:
             argv += ["--context-budget", str(int(context_budget))]
+        if event_log:
+            argv += ["--event-log", str(event_log)]
+            if run_id:
+                argv += ["--run-id", str(validate_run_id(run_id, required=True))]
     elif script == "run_prepass":
         if db:
             argv += ["--db", str(db)]
@@ -808,6 +898,11 @@ def _redact_argv(argv: list[str]) -> list[str]:
         if str(item).lower() in {"--api-key", "--key", "--token"}:
             skip_next = True
     return redacted
+
+
+def _event_log_path(jobs_root: Path, run_id: str) -> Path:
+    safe_run_id = validate_run_id(run_id, required=True)
+    return Path(jobs_root).resolve() / "run_events" / f"{safe_run_id}.jsonl"
 
 
 def _ensure_tool_import_path(tool_root: Path) -> None:

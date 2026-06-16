@@ -1,6 +1,6 @@
 # TASK_RUN_EVENT_01_sidecar_event_log — Structured sidecar event log (live per-window observe, engine emit ⊥ compute)
 
-- **Status:** READY
+- **Status:** DONE / PASS
 - **Refs:** THESIS_ARCHITECTURE_LOCK §10 (oo) [thang leo A→D→B/C; D = sidecar JSONL; 3 guard; KHÔNG token-stream; KHÔNG per-window DB commit] | (nn).1 observe⊥compute, (nn).3 C01 tail-log, (nn).8 run agent BẤT BIẾN | (ll) cost-as-GATE | APP-C01 (RunControl spawn + run_id + log-tail; mẫu endpoint)
 - **Branch/Commit:** (điền khi imple xong)
 
@@ -50,15 +50,57 @@ LOCK (oo) chốt 3 bên: live-view giàu hơn = **hướng D = structured sideca
 6. `python -m pytest -p no:cacheprovider THESIS_RUNTIME_TOOL/pipeline/tests THESIS_RUNTIME_TOOL/app/backend/tests -q` — xanh, **0 API**. (atexit PermissionError Windows = vô hại, AGENTS.md §4.)
 7. Dán output thật vào §5. KHÔNG chạy run-API thật.
 
-## 5. Implementation notes *(imple điền)*
+## 5. Implementation notes *(CodeX, 2026-06-16)*
 
-*(điền: EventSink design + emit points · CLI flag wiring · file path/attempt_id policy · endpoint contract · determinism-gate cách test · provenance-guard · best-effort failure · UI tối thiểu · test output thật)*
+- Added `pipeline/translate/run_events.py` with `EventSink`, `NullEventSink`, and `emit_event()`. Event rows are JSONL with `schema=run_event_v1`, `seq`, UTC timestamp, `run_id`, and `attempt_id`. Sink errors are swallowed.
+- `translate_windows(..., event_sink=None)` is off by default. Emit points: `window_started`, `window_skipped`, `prompt_built`, `request_sent`, `response_received`, `json_parsed`, `window_preview_available`, `persist_buffered`, `run_committed`, `run_failed`. DB commit policy is unchanged: one `db.commit()` at the end of `translate_windows`.
+- Event payloads are bounded. Prompt events include hashes/token/message summaries, not full prompt text. Response events include cache key/from_cache/usage/cost. Preview events include block ids plus truncated preview text and `committed:false`.
+- CLI: `run_translate.py` accepts `--event-log`, `--run-id`, and `--attempt-id`. `--preflight-only` still returns before `translate_windows`, so preflight emits no events.
+- C01 cost gate is preserved. Prompt-preview now issues `planned_run_id` and an event log path. `build_argv()` includes `--event-log/--run-id` for both prompt-preview and create-run, so `validate_api_gate()` still checks the exact final argv digest. Real `run_translate allow_api=true` requires `planned_run_id` from prompt-preview.
+- App endpoint: `GET /api/thesis/runs/<run_id>/events?offset=` tails JSONL from the run registry's `event_log_path`, rejects paths outside `THESIS_JOBS_ROOT/run_events`, and never accepts a client-supplied path.
+- UI: Cockpit RunControl now polls `/events` alongside stdout log tail and displays latest event, cache/cost/token summary, context summary, recent event list, and uncommitted preview labels.
+- Provenance guard: no DB schema changes, no sidecar reads in read-model/report, no preview persisted into `translation_runs`. Sidecar remains live/debug-only.
 
+Test output:
+
+```text
+# from THESIS_RUNTIME_TOOL
+python -m pytest -p no:cacheprovider pipeline\tests\test_translate_runner.py -q
+11 passed in 16.07s
+
+# from repo root
+python -m pytest -p no:cacheprovider THESIS_RUNTIME_TOOL\app\backend\tests\test_thesis_runs.py -q
+23 passed in 9.54s
+
+# from THESIS_RUNTIME_TOOL
+python -m pytest -p no:cacheprovider pipeline\tests app\backend\tests -q
+250 passed in 94.77s (0:01:34)
+
+# from THESIS_RUNTIME_TOOL
+python -m py_compile pipeline\translate\run_events.py pipeline\translate\runner.py pipeline\scripts\run_translate.py app\backend\services\thesis_runs.py app\backend\routes\thesis_runs.py
+PASS
+
+# from THESIS_RUNTIME_TOOL
+python -m pipeline.scripts.run_translate --help | Select-String -Pattern "event-log|run-id|attempt-id|preflight-only"
+--preflight-only / --event-log / --run-id / --attempt-id shown
+```
+
+Note: pytest still prints the known Windows atexit cleanup `PermissionError` for `D:\temp\pytest-of-Snail\pytest-current`; exit code is 0 and tests pass. No API calls were made.
 ## 6. Review *(Claude điền)*
 
-- **Verdict:** (trống)
-- Findings: …
-- Follow-up: …
+- **Verdict:** PASS / ACCEPT. Implementer: CodeX. Mọi guard (oo) + 7 điểm CodeX-review đều implement THẬT và CÓ TEST; re-verify độc lập từ code, không tin §5.
+- **Re-verify độc lập:**
+  - **Determinism gate ✓ (cứng nhất):** `test_event_sink_on_off_is_compute_identical_on_cloned_dbs` — **2 DB clone riêng**, so `to_json_dict()` + `_stable_translation_rows` + `_stable_pack_rows` bằng nhau tuyệt đối. Mình tự chạy: pass.
+  - **Engine additive, không viết lại output-path ✓:** runner +313 = emit-calls + 4 helper bounded-payload (`_messages_hash/_messages_summary/_context_pack_summary/_bounded_translations`); danh sách helper cũ + thứ tự + `db.commit()` cuối (vẫn 1 lần) GIỮ NGUYÊN. 11 test hành vi cũ (resume/reask/partial/multi-window/packs/report) vẫn xanh.
+  - **#3 (hazard cross-task) ✓:** preview sinh `planned_run_id` → `event_log_path` → `build_argv(event_log,run_id)` → token bind `argv_digest` GỒM event flags; create-run tái dùng `planned_run_id`. `test_confirm_token_must_match_exact_argv` → mismatch; thiếu token → 403.
+  - **#4 không dump prompt ✓:** test assert `"content" not in prompt_built`; payload qua `_bounded_translations(limit=8)` + summary/hash.
+  - **#5 endpoint path-from-registry ✓:** `test_route_run_events_tails_registered_sidecar_only` — tail từ `event_log_path` trong registry; path ngoài jobs-root → `invalid_event_log_path` (chặn traversal).
+  - **#6 best-effort ✓:** `FailingSink.emit` raise → run vẫn xong, `translation_runs` ghi đủ.
+  - **Provenance guard ✓:** KHÔNG read-model nào (dataset/observability/scores) đọc `run_events`; sidecar không là nguồn scorer. `committed:false` trên preview.
+  - **Separation ✓:** `test_runs_endpoint_separate_from_readmodels`. D01-hardening tests vẫn xanh.
+  - Sink (`run_events.py`): no-op default + nuốt mọi exception + `_json_safe` bounded. Protocol: REVIEW, KHÔNG commit. Tự chạy: **34 targeted + 250 full**, 0 API.
+- **Known-gap (chấp nhận):** event chỉ cho `run_translate` (khớp prompt-preview-support); preflight-only KHÔNG có event (#7, đúng thiết kế). Ingest ("load tài liệu") chưa nằm trong allowlist RunControl — xem ghi chú flow ở câu trả lời.
+- **Quyết định:** ACCEPT, commit cả cụm (engine emit + RunControl wiring + UI event panel). Hướng D (RUN-EVENT-01) DONE; B/C vẫn chỉ làm khi cần + có `run_attempts`.
 
 ---
 
