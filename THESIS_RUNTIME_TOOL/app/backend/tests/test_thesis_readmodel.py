@@ -12,8 +12,8 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 
-def create_fixture_db(jobs_root: Path) -> Path:
-    job_dir = jobs_root / "fixture_job"
+def create_fixture_db(jobs_root: Path, job_id: str = "fixture_job") -> Path:
+    job_dir = jobs_root / job_id
     job_dir.mkdir(parents=True, exist_ok=True)
     db_path = job_dir / "memory.sqlite3"
     con = sqlite3.connect(db_path)
@@ -159,15 +159,26 @@ def create_fixture_db(jobs_root: Path) -> Path:
           subset_tag TEXT,
           created_at TEXT
         );
+        CREATE TABLE mentions (
+          mention_id TEXT PRIMARY KEY,
+          doc_id TEXT,
+          entity_id TEXT,
+          block_id TEXT,
+          surface TEXT,
+          mention_type TEXT,
+          char_start INTEGER,
+          char_end INTEGER,
+          confidence REAL
+        );
         """
     )
     con.execute(
         "INSERT INTO documents VALUES (?,?,?,?,?,?,?,?)",
-        ("doc_fixture", "fixture_job", "fixture.md", "en", "vi", "2026-06-15", "2026-06-15", '{"title":"Fixture"}'),
+        ("doc_fixture", job_id, "fixture.md", "en", "vi", "2026-06-15", "2026-06-15", '{"title":"Fixture"}'),
     )
     con.execute(
         "INSERT INTO blocks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        ("b001", "doc_fixture", 1, None, "prose", None, "ch01", None, "Agent appears.", "Agent appears.", None, None, None, None, None, "2026-06-15", "2026-06-15"),
+        ("b001", "doc_fixture", 1, None, "prose", None, "ch01", None, "Agent and Jim appear.", "Agent and Jim appear.", None, None, None, None, None, "2026-06-15", "2026-06-15"),
     )
     con.execute(
         "INSERT INTO glossary_entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -196,6 +207,10 @@ def create_fixture_db(jobs_root: Path) -> Path:
     con.execute(
         "INSERT INTO reference_eval_only VALUES (?,?,?,?,?,?,?,?)",
         ("ref-1", "doc_fixture", "b001", "Tác tử xuất hiện.", "human_gold", "eval_only", "sample", "2026-06-15"),
+    )
+    con.execute(
+        "INSERT INTO mentions VALUES (?,?,?,?,?,?,?,?,?)",
+        ("m-b001-e1-001", "doc_fixture", "e1", "b001", "Jim", "name", 10, 13, 0.9),
     )
     con.commit()
     con.close()

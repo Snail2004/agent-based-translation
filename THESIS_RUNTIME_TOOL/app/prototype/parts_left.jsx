@@ -111,6 +111,23 @@ function SidebarModeTabs({ mode, onModeChange }) {
   );
 }
 
+function RuntimeOverlayBadges({ block, compact = false }) {
+  const counts = block.overlay_counts || {};
+  const source = Number(counts.source || 0);
+  const target = Number(counts.target || 0);
+  const drift = Number(counts.drift || 0);
+  if (!source && !target && !drift) return null;
+  const cls = compact ? "previewrow-ic runtime" : "br-runtime";
+  const tip = `Runtime overlay: source ${source}, target ${target}, drift ${drift}`;
+  return (
+    <>
+      {source > 0 && <span className={cls + " tip"} data-tip={tip}><Ic.layers size={11} /></span>}
+      {target > 0 && <span className={cls + " target tip"} data-tip={tip}><Ic.eye size={11} /></span>}
+      {drift > 0 && <span className={cls + " drift tip"} data-tip={tip}><Ic.alert size={11} /></span>}
+    </>
+  );
+}
+
 function SidebarBlockRow({ block, reviewed, hasAnno, selected, onSelect }) {
   const flagged = (block.quality_flags || []).some(f => f !== "ok");
   return (
@@ -123,6 +140,7 @@ function SidebarBlockRow({ block, reviewed, hasAnno, selected, onSelect }) {
       <span className={"tag tag-" + block.block_type}>{block.block_type}</span>
       <span className="br-spacer" />
       {hasAnno && <span className="br-anno tip" data-tip="Has glossary / entity annotations"><Ic.tag size={11} /></span>}
+      <RuntimeOverlayBadges block={block} />
       {flagged && <span className="br-flag tip" data-tip={(block.quality_flags || []).join(", ")}><Ic.flag size={11} /></span>}
       {block.is_chapter_opening && <span className="br-open tip" data-tip="Chapter opening"><Ic.bolt size={11} /></span>}
     </button>
@@ -144,6 +162,7 @@ function SidebarPreviewRow({ block, reviewed, hasAnno, selected, onSelect }) {
         <span className={"tag tag-" + block.block_type}>{block.block_type}</span>
         {reviewed && <span className="previewrow-ic ok tip" data-tip="Reviewed"><Ic.checkSmall size={11} /></span>}
         {hasAnno && <span className="previewrow-ic anno tip" data-tip="Has glossary / entity annotations"><Ic.tag size={11} /></span>}
+        <RuntimeOverlayBadges block={block} compact />
         {flagged && <span className="previewrow-ic bad tip" data-tip={(block.quality_flags || []).join(", ")}><Ic.flag size={11} /></span>}
         {block.is_chapter_opening && <span className="previewrow-ic open tip" data-tip="Chapter opening"><Ic.bolt size={11} /></span>}
       </span>

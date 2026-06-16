@@ -1,6 +1,6 @@
 # TASK_APP_A02_registry_overlay — Runtime registry overlay (highlight memory agent-xây ở CẢ gốc + dịch, tô theo drift)
 
-- **Status:** READY
+- **Status:** DONE / PASS
 - **Refs:** THESIS_ARCHITECTURE_LOCK §10 (nn).6 [trục D NHÌN-ĐƯỢC] + (nn).4 [provenance cấp-query, gold KHÔNG runtime] + (nn).5 [quarantine gold-authoring] | (kk) trục D xuyên-domain | APP-A01 (DatasetReadModel) + APP-D01 (D-consistency report = nguồn status/forms_used) | bộ nhớ scoring-scope (hình == số)
 - **Branch/Commit:** (điền khi imple xong)
 
@@ -50,15 +50,53 @@ Hover-card cũ kiểu AILAB (`ANNOTATOR/ALLOWED/FORBIDDEN/CONFIDENCE/VERIFIED/Ed
 7. Backend overlay test (Python) + browser smoke viewer; full regression xanh.
 8. Dán output vào §5.
 
-## 5. Implementation notes *(imple điền)*
+## 5. Implementation notes *(CodeX, 2026-06-16)*
 
-*(điền: nơi tính occurrences (A01 vs composer) · thuật toán match source/target + normalize + longest-match/overlap · nguồn status/forms_used + cách join D01 · viewer wiring vào buildSpans + màu status + link term_id + runtime hover card + icon cột trái · test + browser smoke output)*
+- Backend overlay composer: thêm `services/thesis_overlay.py` + route `GET /api/thesis/overlay/<job_id>`.
+  - Chỉ đọc SQLite `mode=ro`, 0 API, không đổi engine/scorer/schema.
+  - Source spans tính read-time từ runtime `glossary_entries.source_term`; entity ưu tiên bảng `mentions`, fallback scan canonical/alias cho DB cũ.
+  - Target spans lấy từ `translation_runs` theo config S0/S1. Với term đã có trong score report, tập biến thể tô đúng bằng keys `forms_used`; fallback từ registry bị gắn `unscored`.
+  - Status copy từ ScoreReadModel/D-report, không tự tính lại D/TAR/ECS.
+  - Match dùng apostrophe normalization, regex case-insensitive có word-boundary khi phù hợp, chọn non-overlap theo longest/leftmost.
+- Performance rework sau smoke endpoint thật:
+  - Full eager overlay ban đầu timeout >120s; sau index hóa vẫn ~17.5s, không đạt để dùng trong viewer.
+  - Thêm scoped params `block_id` / `chapter_id`; overlay service đọc scoped blocks/translations trực tiếp từ SQLite thay vì materialize full DatasetReadModel.
+  - Frontend không gọi full overlay trong lúc load thesis dataset nữa. UI load DatasetReadModel trước, rồi fetch overlay scoped theo selected block hoặc current chapter/book view.
+  - Đo trên DB thật `d2l_p1` sau restart: block scope `0.107s`, chapter scope `2.151s`, full audit `16.939s`.
+- Frontend wiring:
+  - `applyRegistryOverlay()` merge source occurrences, target spans, status by config và block overlay counts vào viewer read-model.
+  - Reuse `buildSpans` / `<mark>` cho source, thêm render `target_spans` trong `TranslationCompare`.
+  - Thêm màu status: drift/low_coverage, undetected, consistent, unscored.
+  - Link source/target theo shared `term_id`/`entity_id`.
+  - Thêm runtime sidebar icons cho source overlay, target overlay và drift.
+  - Runtime hover card ẩn field gold-authoring cũ, hiển thị source/target, `forms_used`, status, provenance, surface.
+- Tests:
+  - `python -m pytest -p no:cacheprovider THESIS_RUNTIME_TOOL\app\backend\tests\test_thesis_overlay.py THESIS_RUNTIME_TOOL\app\backend\tests\test_thesis_readmodel.py -q` -> `6 passed`.
+  - `python -m pytest -p no:cacheprovider THESIS_RUNTIME_TOOL\app\backend\tests -q` -> `130 passed`.
+  - `git diff --check` -> no whitespace errors; chỉ có Windows LF->CRLF warnings.
+  - Pytest vẫn in known Windows temp symlink cleanup `PermissionError` ở atexit, nhưng exit code 0 và test pass.
+- Browser smoke:
+  - Backend `THESIS_APP_MODE=cockpit`, prototype `http://127.0.0.1:8765/index.html`.
+  - Page load `thesis:d2l_p1`, không có app console error; chỉ có Babel-standalone warning sẵn có.
+  - D2L translated chapter/block smoke: `marks=8378`, `sourceMarks=3763`, `targetMarks=4615`, `driftMarks=451`, `runtimeBadges=950`, `translationCards=696`.
+  - Screenshot evidence captured in Codex thread.
+  - Limitation trung thực: Browser runtime trong phiên này không có Playwright `hover()` và sandbox chặn synthetic MouseEvent, nên chưa browser-proof được hover-card. Code path đã nối qua `onMouseEnter`; đề nghị Claude/manual review hover một lần trong UI.
 
 ## 6. Review *(Claude điền)*
 
-- **Verdict:** (trống)
-- Findings: …
-- Follow-up: …
+- **Verdict:** PASS / ACCEPT. Implementer: CodeX. Re-verify độc lập từ code + DB thật, không tin §5. CodeX tự bắt lỗi perf 120s khi smoke thật rồi sửa scoped — đúng kỷ luật (lỗi này vô hình với unit test).
+- **Re-verify:**
+  - **"Hình == số" ✓ (gate cứng nhất):** `_target_forms_for_term/entity` — term đã-scored dùng `detail.forms_used.keys()` của report (`forms_source="score_report.forms_used"`, `scored=True`); term ngoài worst_terms fallback runtime + `scored=False`. status lấy từ report (`detail.status`), KHÔNG recompute. Test assert `forms_used=={"Agent":1}` + `forms_source` + `scored`.
+  - **No gold leak ✓:** overlay chỉ đọc `glossary_entries`/`entities` (runtime), KHÔNG `eval_glossary_gold`. Test assert `"eval_glossary_gold"/"reference_eval_only"/"gold-1" not in serialized`. **Hover-card (CodeX nhờ verify) — kiểm bằng CODE:** cả nhánh glossary lẫn entity gate `runtime = provenance.branch==="runtime_memory" || span.provenance`; overlay span mang `provenance:"runtime_memory"` → render "Runtime term/entity" (forms_used/scope/agent-built/surface), field gold (allowed/forbidden/annotator/confidence) CHỈ ở nhánh non-runtime (gold_demo, quarantined). Không cần hover tay.
+  - **Perf ✓ (mình đo trên d2l_p1 THẬT):** block 0.047s, chapter 1.08s. Full-audit 16.9s nhưng UI gọi scoped (block/chapter) nên không chạm. Đúng hướng per-block/on-demand.
+  - **Word-boundary ✓:** `(?<!\w)…(?!\w)` → "AI" không khớp trong "brain"; đa-từ khớp literal. **Security ✓:** `_db_path` validate JOB_ID_RE + chặn path-escape, `mode=ro`. **Determinism ✓:** sorted + non-overlap select ổn định.
+  - **0-API / engine / scorer / schema dataset KHÔNG đổi ✓** (occurrences tính read-time). Read-model tách: matching (overlay/A01) ⊥ status/forms_used (D01 qua `load_scores`). Tự chạy: **3 overlay + 130 full** pass.
+- **Notes (minor, fix-forward — KHÔNG chặn):**
+  1. `_in_scope` tính evidence/block rồi `return True` vô điều kiện → scope thực tế chỉ theo CHƯƠNG (term tô ở mọi block trong chương có surface, không giới hạn evidence-block). Chấp nhận với overlay surface-match; nên bỏ nhánh evidence chết cho đỡ gây hiểu nhầm.
+  2. NFC normalize áp lên needle nhưng KHÔNG lên text (để giữ offset) → rủi ro tiềm ẩn nếu text dịch là NFD; VI output thường NFC nên ổn. Ghi nhận.
+  3. Số trên hover (`forms_used`) là count của SCORER (chuẩn); số span highlight là tra-vị-trí hiển thị, có thể lệch count — đúng GATE "char-span = display-only", không vi phạm.
+  4. Chưa có **perf-budget test** (assert overlay scoped < ~Ns) → nên thêm để chặn regress (đúng lời khuyên mình đưa). Gộp follow-up.
+- **Quyết định:** ACCEPT, commit cả cụm (overlay service+route+tests + frontend marks/hover/sidebar). "Trục D nhìn được" đã hiện thực: registry agent-xây sáng ở cả gốc + dịch, màu theo drift, card runtime.
 
 ---
 

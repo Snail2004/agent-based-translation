@@ -155,6 +155,145 @@ function adaptThesisReadModel(model) {
   };
 }
 
+function worstOverlayStatus(statuses) {
+  const order = ["drift", "low_coverage", "undetected", "consistent", "unscored"];
+  const values = (statuses || []).filter(Boolean);
+  return order.find(status => values.includes(status)) || values[0] || "unscored";
+}
+
+function overlayStatusByConfig(groupsByConfig, itemId, bucketName) {
+  const result = {};
+  Object.entries(groupsByConfig || {}).forEach(([config, cfg]) => {
+    const bucket = cfg?.[bucketName] || {};
+    const spans = bucket[itemId]?.occurrences || bucket[itemId]?.mentions || [];
+    const statuses = spans.map(item => item.status).filter(Boolean);
+    if (statuses.length) result[config] = worstOverlayStatus(statuses);
+  });
+  return result;
+}
+
+function overlayTargetGroups(groupsByConfig, itemId, bucketName) {
+  const result = {};
+  Object.entries(groupsByConfig || {}).forEach(([config, cfg]) => {
+    const bucket = cfg?.[bucketName] || {};
+    const row = bucket[itemId];
+    if (row) result[config] = row;
+  });
+  return result;
+}
+
+function targetSpansForBlock(blockId, translations, overlay) {
+  const spansByConfig = {};
+  Object.entries(translations || {}).forEach(([config]) => {
+    const cfg = overlay?.target_by_config?.[config] || {};
+    const spans = [];
+    Object.entries(cfg.glossary_by_id || {}).forEach(([termId, row]) => {
+      (row.occurrences || []).forEach(item => {
+        if (item.block_id !== blockId) return;
+        spans.push({
+          start: item.span?.[0] || 0,
+          end: item.span?.[1] || 0,
+          kind: "glossary",
+          id: termId,
+          status: item.status || "unscored",
+          label: `${item.surface || item.matched_form || termId}`,
+          surface: item.surface,
+          matched_form: item.matched_form,
+          forms_used: item.forms_used || {},
+          forms_source: item.forms_source,
+          scored: !!item.scored,
+          provenance: item.provenance,
+          target: true,
+        });
+      });
+    });
+    Object.entries(cfg.entities_by_id || {}).forEach(([entityId, row]) => {
+      (row.mentions || []).forEach(item => {
+        if (item.block_id !== blockId) return;
+        spans.push({
+          start: item.span?.[0] || 0,
+          end: item.span?.[1] || 0,
+          kind: "entity",
+          id: entityId,
+          status: item.status || "unscored",
+          label: `${item.surface || item.matched_form || entityId}`,
+          surface: item.surface,
+          matched_form: item.matched_form,
+          forms_used: item.forms_used || {},
+          forms_source: item.forms_source,
+          scored: !!item.scored,
+          provenance: item.provenance,
+          target: true,
+        });
+      });
+    });
+    spansByConfig[config] = spans;
+  });
+  return spansByConfig;
+}
+
+function applyRegistryOverlay(adapted, overlay) {
+  if (!overlay) return adapted;
+  const sourceGlossary = overlay.source?.glossary_by_id || {};
+  const sourceEntities = overlay.source?.entities_by_id || {};
+  const targetByConfig = overlay.target_by_config || {};
+  const glossary = (adapted.glossary || []).map(term => {
+    const id = term.term_id || term.glossary_id;
+    const source = sourceGlossary[id] || {};
+    const statusByConfig = overlayStatusByConfig(targetByConfig, id, "glossary_by_id");
+    return {
+      ...term,
+      occurrences: source.occurrences || term.occurrences || [],
+      target_occurrences_by_config: overlayTargetGroups(targetByConfig, id, "glossary_by_id"),
+      overlay_status_by_config: statusByConfig,
+      overlay_status: worstOverlayStatus(Object.values(statusByConfig)),
+      overlay_provenance: overlay.meta,
+    };
+  });
+  const entities = (adapted.entities || []).map(entity => {
+    const id = entity.entity_id;
+    const source = sourceEntities[id] || {};
+    const statusByConfig = overlayStatusByConfig(targetByConfig, id, "entities_by_id");
+    return {
+      ...entity,
+      mentions: source.mentions || entity.mentions || [],
+      target_mentions_by_config: overlayTargetGroups(targetByConfig, id, "entities_by_id"),
+      overlay_status_by_config: statusByConfig,
+      overlay_status: worstOverlayStatus(Object.values(statusByConfig)),
+      overlay_provenance: overlay.meta,
+    };
+  });
+  const blocks = (adapted.blocks || []).map(block => {
+    const targetSpans = targetSpansForBlock(block.block_id, block.translations, overlay);
+    const translations = {};
+    Object.entries(block.translations || {}).forEach(([config, row]) => {
+      translations[config] = {
+        ...row,
+        target_spans: targetSpans[config] || [],
+      };
+    });
+    const allTargetSpans = Object.values(targetSpans).flat();
+    const sourceSpans = [
+      ...Object.values(sourceGlossary).flatMap(row => (row.occurrences || []).filter(item => item.block_id === block.block_id)),
+      ...Object.values(sourceEntities).flatMap(row => (row.mentions || []).filter(item => item.block_id === block.block_id)),
+    ];
+    const sourceStatuses = sourceSpans.map(item => item.status);
+    const targetStatuses = allTargetSpans.map(item => item.status);
+    const statuses = [...sourceStatuses, ...targetStatuses].filter(Boolean);
+    return {
+      ...block,
+      translations,
+      overlay_status: worstOverlayStatus(statuses),
+      overlay_counts: {
+        source: sourceSpans.length,
+        target: allTargetSpans.length,
+        drift: statuses.filter(status => status === "drift" || status === "low_coverage").length,
+      },
+    };
+  });
+  return { ...adapted, glossary, entities, blocks, registryOverlay: overlay };
+}
+
 /* build annotation spans for a block from glossary + entities, with stale detection */
 function buildSpans(block, glossary, entities) {
   if (!block) return [];
@@ -162,24 +301,32 @@ function buildSpans(block, glossary, entities) {
   glossary.forEach(t => (t.occurrences || []).forEach(o => {
     if (o.block_id !== block.block_id) return;
     const cur = block.clean_text.slice(o.span[0], o.span[1]);
+    const status = o.status || t.overlay_status || "unscored";
     spans.push({
       start: o.span[0],
       end: o.span[1],
       kind: "glossary",
       label: `${t.source_term} -> ${t.expected_target || "target needed"}`,
       id: t.term_id,
-      stale: cur !== String(t.source_term || ""),
+      status,
+      status_by_config: t.overlay_status_by_config || {},
+      provenance: t.provenance?.label || "agent-built",
+      stale: cur.toLowerCase() !== String(o.surface || t.source_term || "").toLowerCase(),
     });
   }));
   entities.forEach(e => (e.mentions || []).forEach(m => {
     if (m.block_id !== block.block_id) return;
     const cur = block.clean_text.slice(m.span[0], m.span[1]);
+    const status = m.status || e.overlay_status || "unscored";
     spans.push({
       start: m.span[0],
       end: m.span[1],
       kind: "entity",
       label: `${e.canonical_source} -> ${e.canonical_target || "target needed"}`,
       id: e.entity_id,
+      status,
+      status_by_config: e.overlay_status_by_config || {},
+      provenance: e.provenance?.label || "agent-built",
       stale: cur !== m.surface,
     });
   }));
@@ -409,6 +556,7 @@ function App() {
   const [evalOnly, setEvalOnly] = useState({ gold_glossary: [], references: [] });
   const [thesisTranslations, setThesisTranslations] = useState({});
   const [thesisObservability, setThesisObservability] = useState(null);
+  const [thesisBaseDataset, setThesisBaseDataset] = useState(null);
   const [thesisRuns, setThesisRuns] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [selectedRunLog, setSelectedRunLog] = useState({ run_id: null, log: "", offset: 0, running: false, status: "" });
@@ -487,6 +635,7 @@ function App() {
     setEvalOnly({ gold_glossary: [], references: [] });
     setThesisTranslations({});
     setThesisObservability(null);
+    setThesisBaseDataset(null);
     setThesisRuns([]);
     setSelectedRunId(null);
     setSelectedRunLog({ run_id: null, log: "", offset: 0, running: false, status: "" });
@@ -518,6 +667,7 @@ function App() {
       })),
     ]);
     const adapted = adaptThesisReadModel(dataset);
+    setThesisBaseDataset(adapted);
     setDocInfo(adapted.docInfo);
     setChapters(adapted.chapters);
     setBlocks(adapted.blocks);
@@ -933,6 +1083,29 @@ function App() {
     const rows = blocks.filter(b => b.chapter_id === block.chapter_id);
     return rows.length ? rows : [block];
   }, [blocks, block]);
+
+  useEffect(() => {
+    const jobId = thesisJobId(activeDocId);
+    if (!readOnly || !jobId || !thesisBaseDataset || !selectedId) return undefined;
+    const baseBlock = (thesisBaseDataset.blocks || []).find(row => row.block_id === selectedId) || thesisBaseDataset.blocks?.[0];
+    if (!baseBlock) return undefined;
+    const params = (centerMode === "chapter" || centerMode === "book")
+      ? { chapter_id: baseBlock.chapter_id }
+      : { block_id: baseBlock.block_id };
+    let cancelled = false;
+    API.getThesisRegistryOverlay(jobId, params)
+      .then(overlay => {
+        if (cancelled) return;
+        const adapted = applyRegistryOverlay(thesisBaseDataset, overlay);
+        setBlocks(adapted.blocks);
+        setGlossary(adapted.glossary);
+        setEntities(adapted.entities);
+      })
+      .catch(err => {
+        if (!cancelled) toast("Registry overlay unavailable", "bad", errorMessage(err));
+      });
+    return () => { cancelled = true; };
+  }, [readOnly, activeDocId, thesisBaseDataset, selectedId, centerMode]);
 
   const blockTerms = useMemo(() => block ? (readOnly ? glossary : glossary.filter(t => (t.occurrences || []).some(o => o.block_id === block.block_id))) : [], [glossary, block, readOnly]);
   const blockEntities = useMemo(() => block ? (readOnly ? entities : entities.filter(e => (e.mentions || []).some(m => m.block_id === block.block_id)

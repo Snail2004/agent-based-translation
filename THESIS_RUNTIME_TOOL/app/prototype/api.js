@@ -95,6 +95,11 @@
       const suffix = query.toString() ? `?${query.toString()}` : "";
       return request(`/thesis/datasets/${encodeURIComponent(jobId)}${suffix}`);
     },
+    getThesisRegistryOverlay: (jobId, params) => {
+      const query = new URLSearchParams(params || {});
+      const suffix = query.toString() ? `?${query.toString()}` : "";
+      return request(`/thesis/overlay/${encodeURIComponent(jobId)}${suffix}`);
+    },
     getThesisObservability: (jobId) => request(`/thesis/observability/${encodeURIComponent(jobId)}`),
     listThesisObservabilityCalls: (jobId) => request(`/thesis/observability/${encodeURIComponent(jobId)}/calls`),
     getThesisObservabilityCall: (jobId, callId) => request(`/thesis/observability/${encodeURIComponent(jobId)}/calls/${encodeURIComponent(callId)}`),

@@ -187,7 +187,28 @@ function SelectionPopover({ rect, onGlossary, onEntity }) {
   );
 }
 
-function TranslationCompare({ translations }) {
+function SpanText({ text, spans = [], block, onHoverSpan, onLeaveSpan, activeHighlightId }) {
+  return (
+    <>
+      {segmentize(text || "", spans).map((seg, i) =>
+        seg.span
+          ? <mark key={i}
+              className={
+                "hl hl-" + seg.span.kind +
+                (seg.span.stale ? " hl-stale" : "") +
+                (seg.span.status ? " hl-status-" + seg.span.status : "") +
+                (activeHighlightId && activeHighlightId === seg.span.id ? " hl-linked" : "")
+              }
+              aria-label={seg.span.label}
+              onMouseEnter={e => onHoverSpan && onHoverSpan(seg.span, block, e.currentTarget.getBoundingClientRect())}
+              onMouseLeave={() => onLeaveSpan && onLeaveSpan()}>{seg.text}</mark>
+          : <span key={i}>{seg.text}</span>
+      )}
+    </>
+  );
+}
+
+function TranslationCompare({ translations, block, onHoverSpan, onLeaveSpan, activeHighlightId }) {
   const entries = Object.entries(translations || {})
     .filter(([, row]) => row && (row.target_text || row.output_text))
     .sort(([a], [b]) => a.localeCompare(b));
@@ -206,7 +227,16 @@ function TranslationCompare({ translations }) {
               <span className="tc-label mono">{key}</span>
               <span className="tc-meta mono">{row.prompt_version || row.stage || ""}</span>
             </div>
-            <div className="tc-text">{row.target_text || row.output_text || ""}</div>
+            <div className="tc-text">
+              <SpanText
+                text={row.target_text || row.output_text || ""}
+                spans={row.target_spans || []}
+                block={block}
+                onHoverSpan={onHoverSpan}
+                onLeaveSpan={onLeaveSpan}
+                activeHighlightId={activeHighlightId}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -624,6 +654,16 @@ function confidenceText(value) {
   return Number.isFinite(n) ? n.toFixed(2) : String(value);
 }
 
+function statusLabel(span, item) {
+  return span?.status || item?.overlay_status || item?.status || "unscored";
+}
+
+function runtimeFormsLabel(span, item) {
+  if (span?.forms_used && Object.keys(span.forms_used).length) return compactList(span.forms_used);
+  const byConfig = item?.overlay_status_by_config || {};
+  return Object.keys(byConfig).length ? compactList(byConfig) : "unscored";
+}
+
 function hoverCardPosition(rect) {
   if (!rect) return { top: 0, left: 0, above: false };
   const width = 328;
@@ -648,11 +688,12 @@ function HighlightHoverCard({ hover, linkIndex }) {
     const currentMentions = data.mentionsByBlock?.[block.block_id] || [];
     const chapterLabels = (data.chapters || []).map(ch => ch.title || ch.chapter_id);
     const summaryLabels = (data.summaryChapters || []).map(ch => ch.title || ch.chapter_id);
+    const runtime = entity.provenance?.branch === "runtime_memory" || span.provenance;
     return (
       <div className={"hl-card" + (pos.above ? " above" : "")} style={{ top: pos.top, left: pos.left }}>
         <div className="hl-card-head">
-          <span className="hl-card-kind entity"><Ic.users size={12} />Entity</span>
-          <span className="hl-card-conf mono">conf {confidenceText(entity.confidence)}</span>
+          <span className="hl-card-kind entity"><Ic.users size={12} />{runtime ? "Runtime entity" : "Entity"}</span>
+          <span className={"hl-card-status status-" + statusLabel(span, entity)}>{statusLabel(span, entity)}</span>
         </div>
         <div className="hl-card-title">
           <span>{entity.canonical_source || span.id}</span>
@@ -661,10 +702,20 @@ function HighlightHoverCard({ hover, linkIndex }) {
         </div>
         <div className="hl-card-grid">
           <span>type</span><b>{compactList(entity.entity_type || entity.type)}</b>
-          <span>gender</span><b>{compactList(entity.gender)}</b>
-          <span>aliases</span><b>{compactList(entity.aliases_target)}</b>
-          <span>pronoun</span><b>{compactList(entity.pronoun_policy)}</b>
-          <span>annotator</span><b>{compactList(entity.annotated_by)}</b>
+          {runtime ? (
+            <>
+              <span>forms_used</span><b>{runtimeFormsLabel(span, entity)}</b>
+              <span>provenance</span><b>{entity.provenance?.label || span.provenance || "agent-built"}</b>
+              <span>surface</span><b>{compactList(span.surface || span.matched_form)}</b>
+            </>
+          ) : (
+            <>
+              <span>gender</span><b>{compactList(entity.gender)}</b>
+              <span>aliases</span><b>{compactList(entity.aliases_target)}</b>
+              <span>pronoun</span><b>{compactList(entity.pronoun_policy)}</b>
+              <span>annotator</span><b>{compactList(entity.annotated_by)}</b>
+            </>
+          )}
         </div>
         {span.stale && <div className="hl-card-warning"><Ic.alert size={12} />This span needs re-tag.</div>}
         <div className="hl-card-section">
@@ -690,11 +741,12 @@ function HighlightHoverCard({ hover, linkIndex }) {
     if (!term) return null;
     const currentOccurrences = data.occurrencesByBlock?.[block.block_id] || [];
     const chapterLabels = (data.chapters || []).map(ch => ch.title || ch.chapter_id);
+    const runtime = term.provenance?.branch === "runtime_memory" || span.provenance;
     return (
       <div className={"hl-card" + (pos.above ? " above" : "")} style={{ top: pos.top, left: pos.left }}>
         <div className="hl-card-head">
-          <span className="hl-card-kind glossary"><Ic.tag size={12} />Glossary</span>
-          <span className="hl-card-status">{term.status || "candidate"}</span>
+          <span className="hl-card-kind glossary"><Ic.tag size={12} />{runtime ? "Runtime term" : "Glossary"}</span>
+          <span className={"hl-card-status status-" + statusLabel(span, term)}>{statusLabel(span, term)}</span>
         </div>
         <div className="hl-card-title">
           <span>{term.source_term || span.id}</span>
@@ -702,12 +754,23 @@ function HighlightHoverCard({ hover, linkIndex }) {
           <span>{term.expected_target || "target needed"}</span>
         </div>
         <div className="hl-card-grid">
-          <span>allowed</span><b>{compactList(term.allowed_variants)}</b>
-          <span>forbidden</span><b>{compactList(term.forbidden_variants)}</b>
-          <span>domain</span><b>{compactList(term.domain)}</b>
-          <span>scope</span><b>{compactList(term.chapter_scope)}</b>
-          <span>annotator</span><b>{compactList(term.annotated_by)}</b>
-          <span>confidence</span><b>{confidenceText(term.confidence)}</b>
+          {runtime ? (
+            <>
+              <span>forms_used</span><b>{runtimeFormsLabel(span, term)}</b>
+              <span>scope</span><b>{compactList(term.chapter_scope)}</b>
+              <span>provenance</span><b>{term.provenance?.label || span.provenance || "agent-built"}</b>
+              <span>surface</span><b>{compactList(span.surface || span.matched_form)}</b>
+            </>
+          ) : (
+            <>
+              <span>allowed</span><b>{compactList(term.allowed_variants)}</b>
+              <span>forbidden</span><b>{compactList(term.forbidden_variants)}</b>
+              <span>domain</span><b>{compactList(term.domain)}</b>
+              <span>scope</span><b>{compactList(term.chapter_scope)}</b>
+              <span>annotator</span><b>{compactList(term.annotated_by)}</b>
+              <span>confidence</span><b>{confidenceText(term.confidence)}</b>
+            </>
+          )}
         </div>
         {span.stale && <div className="hl-card-warning"><Ic.alert size={12} />This span needs re-tag.</div>}
         <div className="hl-card-section">
@@ -729,7 +792,7 @@ function HighlightHoverCard({ hover, linkIndex }) {
 
 function CleanTextSurface({
   block, spans = [], editing, draft, onDraft, onMouseUp, cleanRef, taRef, onAddGlossary, onAddEntity, selection,
-  onHoverSpan, onLeaveSpan, readOnly
+  onHoverSpan, onLeaveSpan, readOnly, activeHighlightId
 }) {
   if (editing) {
     return (
@@ -739,14 +802,14 @@ function CleanTextSurface({
   }
   return (
     <div className="clean-text" ref={cleanRef} onMouseUp={onMouseUp}>
-      {segmentize(block.clean_text || "", spans).map((seg, i) =>
-        seg.span
-          ? <mark key={i} className={"hl hl-" + seg.span.kind + (seg.span.stale ? " hl-stale" : "")}
-              aria-label={seg.span.label}
-              onMouseEnter={e => onHoverSpan && onHoverSpan(seg.span, block, e.currentTarget.getBoundingClientRect())}
-              onMouseLeave={() => onLeaveSpan && onLeaveSpan()}>{seg.text}</mark>
-          : <span key={i}>{seg.text}</span>
-      )}
+      <SpanText
+        text={block.clean_text || ""}
+        spans={spans}
+        block={block}
+        onHoverSpan={onHoverSpan}
+        onLeaveSpan={onLeaveSpan}
+        activeHighlightId={activeHighlightId}
+      />
       {!readOnly && <SelectionPopover rect={selection?.rect}
         onGlossary={onAddGlossary}
         onEntity={onAddEntity} />}
@@ -756,7 +819,7 @@ function CleanTextSurface({
 
 function ChapterBlockRow({
   block, spans, reviewed, active, onSelectBlock, onCommitClean,
-  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly
+  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId
 }) {
   const cleanRef = React.useRef(null);
   const taRef = React.useRef(null);
@@ -859,18 +922,25 @@ function ChapterBlockRow({
         onMouseUp={handleMouseUp}
         onHoverSpan={onHoverSpan}
         onLeaveSpan={onLeaveSpan}
+        activeHighlightId={activeHighlightId}
         readOnly={readOnly}
         onAddGlossary={() => { onAddGlossary(block.block_id, sel); clearSelection(); }}
         onAddEntity={() => { onAddEntity(block.block_id, sel); clearSelection(); }}
       />
-      <TranslationCompare translations={block.translations} />
+      <TranslationCompare
+        translations={block.translations}
+        block={block}
+        onHoverSpan={onHoverSpan}
+        onLeaveSpan={onLeaveSpan}
+        activeHighlightId={activeHighlightId}
+      />
     </article>
   );
 }
 
 function SingleBlockView({
   block, docInfo, reviewed, spans, editing, onEdit, onCommitClean, onCancelEdit,
-  onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly
+  onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId
 }) {
   const cleanRef = React.useRef(null);
   const taRef = React.useRef(null);
@@ -949,11 +1019,18 @@ function SingleBlockView({
               onMouseUp={handleMouseUp}
               onHoverSpan={onHoverSpan}
               onLeaveSpan={onLeaveSpan}
+              activeHighlightId={activeHighlightId}
               readOnly={readOnly}
               onAddGlossary={() => { onAddGlossary(block.block_id, sel); clearSelection(); }}
               onAddEntity={() => { onAddEntity(block.block_id, sel); clearSelection(); }}
             />
-            <TranslationCompare translations={block.translations} />
+            <TranslationCompare
+              translations={block.translations}
+              block={block}
+              onHoverSpan={onHoverSpan}
+              onLeaveSpan={onLeaveSpan}
+              activeHighlightId={activeHighlightId}
+            />
 
             {!editing && !readOnly && (
               <div className="clean-hint">
@@ -970,7 +1047,7 @@ function SingleBlockView({
 
 function ChapterStream({
   blocks = [], chapters = [], selectedId, review, getSpansForBlock, onSelectBlock, onCommitClean,
-  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly
+  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId
 }) {
   const rows = blocks || [];
   const chapterLookup = React.useMemo(() => {
@@ -1021,6 +1098,8 @@ function ChapterStream({
                 onAddEntity={onAddEntity}
                 onHoverSpan={onHoverSpan}
                 onLeaveSpan={onLeaveSpan}
+                readOnly={readOnly}
+                activeHighlightId={activeHighlightId}
               />
             </React.Fragment>
           );
@@ -1682,6 +1761,7 @@ function CenterEditor({
   observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall,
 }) {
   const [hoverInfo, setHoverInfo] = React.useState(null);
+  const activeHighlightId = hoverInfo?.span?.id || null;
   const chapterTitle = chapter?.title || chapter?.chapter_title || block.chapter_id;
   const streamBlocks = mode === "book" ? (allBlocks || []) : (chapterBlocks || []);
   const streamLabel = mode === "book" ? (docInfo?.metadata?.title || docInfo?.doc_id || "Full book") : chapterTitle;
@@ -1732,6 +1812,7 @@ function CenterEditor({
           onAddEntity={onAddEntity}
           onHoverSpan={handleHoverSpan}
           onLeaveSpan={handleLeaveSpan}
+          activeHighlightId={activeHighlightId}
           readOnly={readOnly}
         />
       ) : (
@@ -1748,6 +1829,7 @@ function CenterEditor({
           onAddEntity={onAddEntity}
           onHoverSpan={handleHoverSpan}
           onLeaveSpan={handleLeaveSpan}
+          activeHighlightId={activeHighlightId}
           readOnly={readOnly}
         />
       )}
