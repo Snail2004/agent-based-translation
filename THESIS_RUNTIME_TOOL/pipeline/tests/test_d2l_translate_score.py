@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from pipeline.eval.d2l_translate_score import score_d2l_translation_run
+from pipeline.eval.d2l_translate_score import (
+    _count_non_overlapping_forms,
+    _count_source_matches,
+    score_d2l_translation_run,
+)
 from pipeline.memory.store_init import init_db
 from pipeline.retrieval.context_builder import build_context_pack, plan_anchors
 from pipeline.translate.prompt import build_messages, purity_check
@@ -238,6 +242,50 @@ def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
     assert report["B_tar_vs_gold"]["S0"]["flat"]["overall"] < 1.0
     assert report["D_registry_consistency"]["S0"]["drift_terms"] >= 1
     assert report["D_registry_consistency"]["S1"]["overall"] == 1.0
+    assert report["D_registry_consistency"]["S1"]["method"] == "block_surface_v2"
+    assert report["D_registry_consistency"]["S1"]["alignment"] is False
+    assert report["D_registry_consistency"]["S1"]["headline_ready"] is False
+    assert report["D_registry_consistency"]["S1"]["terms_all"]
+    assert any(
+        item["source_term"] == "model" and item["status"] == "consistent"
+        for item in report["D_registry_consistency"]["S1"]["terms_all"]
+    )
     assert report["A_tar_vs_registry"]["S1"]["overall"] == 1.0
     assert report["stage_gate"]["no_passthrough_translated"]["S1"] is True
     assert report["stage_gate"]["preserve_terms_excluded_from_injection"] is True
+
+
+def test_longest_match_no_nesting() -> None:
+    forms = _count_non_overlapping_forms(
+        "Độ chính xác phân loại tăng, độ chính xác tổng thể cũng tăng.",
+        ["chính xác", "độ chính xác", "độ chính xác phân loại"],
+    )
+
+    assert dict(forms) == {
+        "độ chính xác phân loại": 1,
+        "độ chính xác": 1,
+    }
+
+
+def test_url_masked_no_false_term() -> None:
+    assert _count_source_matches("See https://discuss.d2l.ai/t/39 for details.", "AI") == 0
+    assert _count_source_matches("AI systems are discussed outside the URL.", "AI") == 1
+
+
+def test_case_sensitive_acronym() -> None:
+    assert _count_source_matches("ai AI Ai", "AI", case_sensitive=True) == 1
+    assert _count_source_matches("ai AI Ai", "AI", case_sensitive=False) == 3
+
+
+def test_terms_all_present(tmp_path: Path) -> None:
+    report = score_d2l_translation_run(
+        _fixture_db(tmp_path),
+        chapters=["preliminaries"],
+        out_path=tmp_path / "report.json",
+    )
+
+    terms_all = report["D_registry_consistency"]["S1"]["terms_all"]
+    assert terms_all
+    statuses = {item["status"] for item in terms_all}
+    assert "consistent" in statuses
+    assert report["D_registry_consistency"]["S1"]["worst_terms"] == []

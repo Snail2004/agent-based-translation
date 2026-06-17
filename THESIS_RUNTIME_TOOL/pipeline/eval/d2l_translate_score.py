@@ -8,6 +8,7 @@ import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +20,17 @@ from pipeline.translate.profiles import (
 )
 
 
-METRIC_VERSION = "d2l_translate_score_v1"
+METRIC_VERSION = "d2l_translate_score_v2"
+
+_MASK_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"```.*?```", flags=re.DOTALL),
+    re.compile(r"`[^`]*`"),
+    re.compile(r":[A-Za-z0-9_-]+:`[^`]*`"),
+    re.compile(r"\$[^$\n]*\$"),
+    re.compile(r"https?://[^\s)`]+", flags=re.IGNORECASE),
+    re.compile(r"\b[\w.-]+\.(?:ai|io|com|org)(?:/[^\s)`]*)?", flags=re.IGNORECASE),
+    re.compile(r"\.\. _[^:\n]+:"),
+)
 
 
 @dataclass(frozen=True)
@@ -108,7 +119,9 @@ def score_d2l_translation_run(
             ),
             "samples": _sample_blocks(scope_blocks, passthrough_blocks, translations),
             "limitations": [
-                "D v1 detects drift only among registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
+                "D_surface_v2 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
+                "D_surface_v2 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
+                "Cross-term leakage inside allowed_variants (for example calculus vs calculations) is not fixed by EV-D2L-02 and requires term-policy cleanup.",
                 "Caption/image/label blocks are passthrough by P3 design and excluded from B/D denominators.",
             ],
         }
@@ -284,6 +297,7 @@ def _load_registry_rows(conn: sqlite3.Connection, doc_id: str) -> list[dict[str,
     rows = conn.execute(
         """
         SELECT glossary_id, source_term, target_term, term_type, do_not_translate,
+               case_sensitive,
                allowed_variants_json, forbidden_variants_json, occurrences_count
         FROM glossary_entries
         WHERE doc_id = ?
@@ -348,10 +362,11 @@ def _score_registry_consistency(
             continue
         source = str(row.get("source_term") or "")
         target = str(row.get("target_term") or "")
+        case_sensitive = _case_sensitive(row)
         source_blocks = [
             block_id
             for block_id, text in source_text_by_block.items()
-            if _count_source_matches(text, source) > 0
+            if _count_source_matches(text, source, case_sensitive=case_sensitive) > 0
         ]
         if len(source_blocks) < 2:
             continue
@@ -359,9 +374,12 @@ def _score_registry_consistency(
         forms_used: Counter[str] = Counter()
         for block_id in source_blocks:
             output = translations.get(block_id, "")
-            for candidate in candidates:
-                if _has_vi(output, candidate):
-                    forms_used[candidate] += 1
+            for candidate, count in _count_non_overlapping_forms(
+                output,
+                candidates,
+                case_sensitive=case_sensitive,
+            ).items():
+                forms_used[candidate] += count
         distinct = len(forms_used)
         if distinct == 0:
             status = "undetected"
@@ -376,6 +394,7 @@ def _score_registry_consistency(
                 "source_blocks": len(source_blocks),
                 "status": status,
                 "forms_used": dict(forms_used),
+                "case_sensitive": case_sensitive,
             }
         )
     total = len(term_reports)
@@ -384,12 +403,16 @@ def _score_registry_consistency(
     undetected = sum(1 for item in term_reports if item["status"] == "undetected")
     detected = total - undetected
     return {
+        "method": "block_surface_v2",
+        "alignment": False,
+        "headline_ready": False,
         "overall": _ratio(consistent, total),
         "detected_only": _ratio(consistent, detected),
         "terms": total,
         "consistent_terms": consistent,
         "drift_terms": drift,
         "undetected_terms": undetected,
+        "terms_all": term_reports,
         "worst_terms": [
             item for item in term_reports if item["status"] in {"drift", "undetected"}
         ][:30],
@@ -635,22 +658,91 @@ def _accepted_registry_forms(row: dict[str, Any], *, canonical_only: bool) -> li
     return result
 
 
-def _count_source_matches(text: str, source_term: str) -> int:
-    normalized_text = _normalize_source(text)
-    normalized_term = _normalize_source(source_term)
-    if not normalized_term:
-        return 0
-    pattern = rf"(?<!\w){re.escape(normalized_term)}(?!\w)"
-    return len(re.findall(pattern, normalized_text, flags=re.UNICODE))
+@lru_cache(maxsize=8192)
+def _mask_non_prose(text: str) -> str:
+    value = str(text or "")
+    if not value:
+        return ""
+    mask = [False] * len(value)
+    for pattern in _MASK_PATTERNS:
+        for match in pattern.finditer(value):
+            start, end = match.span()
+            for index in range(start, end):
+                mask[index] = True
+    return "".join(" " if is_masked else char for char, is_masked in zip(value, mask, strict=True))
 
 
-def _has_vi(text: str, needle: str) -> bool:
-    normalized_text = _normalize_vi(text)
-    normalized_needle = _normalize_vi(needle)
+def _count_source_matches(
+    text: str,
+    source_term: str,
+    *,
+    case_sensitive: bool = False,
+) -> int:
+    return len(_find_surface_matches(text, source_term, case_sensitive=case_sensitive))
+
+
+def _has_vi(text: str, needle: str, *, case_sensitive: bool = False) -> bool:
+    return bool(_find_surface_matches(text, needle, case_sensitive=case_sensitive))
+
+
+def _count_non_overlapping_forms(
+    text: str,
+    candidates: list[str],
+    *,
+    case_sensitive: bool = False,
+) -> Counter[str]:
+    normalized_text = _normalize_for_match(_mask_non_prose(text), case_sensitive=case_sensitive)
+    if not normalized_text:
+        return Counter()
+
+    prepared: list[tuple[str, str, int]] = []
+    for candidate in candidates:
+        pattern = _surface_pattern(candidate, case_sensitive=case_sensitive)
+        if not pattern:
+            continue
+        normalized_candidate = _normalize_for_match(candidate, case_sensitive=case_sensitive).strip()
+        prepared.append((candidate, pattern, len(normalized_candidate)))
+    prepared.sort(key=lambda item: item[2], reverse=True)
+
+    occupied = [False] * len(normalized_text)
+    used: Counter[str] = Counter()
+    for candidate, pattern, _length in prepared:
+        for match in re.finditer(pattern, normalized_text, flags=re.UNICODE):
+            start, end = match.span()
+            if start == end or any(occupied[start:end]):
+                continue
+            used[candidate] += 1
+            for index in range(start, end):
+                occupied[index] = True
+            # The D metric is block-level: one vote per form per source block.
+            break
+    return used
+
+
+def _find_surface_matches(
+    text: str,
+    needle: str,
+    *,
+    case_sensitive: bool = False,
+) -> list[re.Match[str]]:
+    normalized_text = _normalize_for_match(_mask_non_prose(text), case_sensitive=case_sensitive)
+    pattern = _surface_pattern(needle, case_sensitive=case_sensitive)
+    if not normalized_text or not pattern:
+        return []
+    return list(re.finditer(pattern, normalized_text, flags=re.UNICODE))
+
+
+def _surface_pattern(needle: str, *, case_sensitive: bool = False) -> str:
+    normalized_needle = _normalize_for_match(needle, case_sensitive=case_sensitive).strip()
     if not normalized_needle:
-        return False
-    pattern = rf"(?<!\w){re.escape(normalized_needle)}(?!\w)"
-    return bool(re.search(pattern, normalized_text, flags=re.UNICODE))
+        return ""
+    pieces = [piece for piece in re.split(r"\s+", normalized_needle) if piece]
+    if not pieces:
+        return ""
+    body = r"\s+".join(re.escape(piece) for piece in pieces)
+    prefix = r"(?<!\w)" if _is_word_char(normalized_needle[0]) else ""
+    suffix = r"(?!\w)" if _is_word_char(normalized_needle[-1]) else ""
+    return prefix + body + suffix
 
 
 def _normalize_source(text: str) -> str:
@@ -663,6 +755,19 @@ def _normalize_vi(text: str) -> str:
         " ",
         unicodedata.normalize("NFC", normalize_apostrophe(str(text))).casefold().strip(),
     )
+
+
+def _normalize_for_match(text: str, *, case_sensitive: bool = False) -> str:
+    normalized = unicodedata.normalize("NFC", normalize_apostrophe(str(text)))
+    return normalized if case_sensitive else normalized.casefold()
+
+
+def _is_word_char(value: str) -> bool:
+    return bool(re.match(r"\w", value, flags=re.UNICODE))
+
+
+def _case_sensitive(row: dict[str, Any]) -> bool:
+    return bool(int(row.get("case_sensitive") or 0))
 
 
 def _json_list(value: Any) -> list[Any]:

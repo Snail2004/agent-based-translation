@@ -23,11 +23,11 @@ JOB_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 _JOB_REPORT_MAP: dict[str, dict[str, Any]] = {
     "d2l_p1": {
         "domain": "d2l",
-        "files": ["d2l_translation_metrics.json"],
+        "files": ["d2l_translation_metrics_v2.json"],
     },
     "d2l_p3": {
         "domain": "d2l",
-        "files": ["d2l_translation_metrics.json"],
+        "files": ["d2l_translation_metrics_v2.json"],
     },
     "treasure_island_p2": {
         "domain": "ti",
@@ -107,12 +107,16 @@ def _d2l_headlines(report: dict[str, Any], report_path: str) -> list[dict[str, A
         if cfg:
             headlines.append({
                 "name": f"D_registry_consistency_{config}",
+                "metric_label": "D_surface_v2",
                 "value": cfg.get("overall"),
                 "detected_only": cfg.get("detected_only"),
                 "terms": cfg.get("terms"),
                 "consistent_terms": cfg.get("consistent_terms"),
                 "drift_terms": cfg.get("drift_terms"),
                 "undetected_terms": cfg.get("undetected_terms"),
+                "method": cfg.get("method"),
+                "alignment": cfg.get("alignment"),
+                "headline_ready": cfg.get("headline_ready"),
                 "domain": "d2l",
                 "provenance": {**provenance_base, "scorer_metric": "D_registry_consistency"},
             })
@@ -135,12 +139,15 @@ def _d2l_headlines(report: dict[str, Any], report_path: str) -> list[dict[str, A
 
 
 def _d2l_drift(report: dict[str, Any]) -> list[dict[str, Any]]:
-    """Extract drift items from D_registry_consistency worst_terms."""
+    """Extract D surface items from scorer report without recomputing."""
     drift: list[dict[str, Any]] = []
     d = report.get("D_registry_consistency") or {}
     for config in ("S0", "S1"):
         cfg = d.get(config) or {}
-        for term in cfg.get("worst_terms") or []:
+        terms = cfg.get("terms_all")
+        if terms is None:
+            terms = cfg.get("worst_terms") or []
+        for term in terms:
             drift.append({
                 "config": config,
                 "source_term": term.get("source_term"),
@@ -149,6 +156,9 @@ def _d2l_drift(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "forms_used": term.get("forms_used") or {},
                 "source_blocks": term.get("source_blocks"),
                 "drift_category": "glossary-term",
+                "metric_label": "D_surface_v2",
+                "method": cfg.get("method"),
+                "alignment": cfg.get("alignment"),
             })
     return drift
 

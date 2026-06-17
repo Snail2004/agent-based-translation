@@ -22,7 +22,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 D2L_REPORT = {
     "scored_at": "2026-06-14T12:47:05.501150+00:00",
-    "metric_version": "d2l_translate_score_v1",
+    "metric_version": "d2l_translate_score_v2",
     "experiment_id": "d2l_p3",
     "profile": "technical_d2l_v1",
     "doc_id": "d2l",
@@ -67,12 +67,38 @@ D2L_REPORT = {
     },
     "D_registry_consistency": {
         "S0": {
+            "method": "block_surface_v2",
+            "alignment": False,
+            "headline_ready": False,
             "overall": 0.5930,
             "detected_only": 0.6163,
             "terms": 715,
             "consistent_terms": 424,
             "drift_terms": 264,
             "undetected_terms": 27,
+            "terms_all": [
+                {
+                    "source_term": "AI",
+                    "target_term": "trÃ­ tuá»‡ nhÃ¢n táº¡o",
+                    "source_blocks": 80,
+                    "status": "drift",
+                    "forms_used": {"trÃ­ tuá»‡ nhÃ¢n táº¡o": 2, "AI": 80},
+                },
+                {
+                    "source_term": "model",
+                    "target_term": "mÃ´ hÃ¬nh",
+                    "source_blocks": 10,
+                    "status": "consistent",
+                    "forms_used": {"mÃ´ hÃ¬nh": 10},
+                },
+                {
+                    "source_term": "agent",
+                    "target_term": "tÃ¡c nhÃ¢n",
+                    "source_blocks": 6,
+                    "status": "undetected",
+                    "forms_used": {},
+                },
+            ],
             "worst_terms": [
                 {
                     "source_term": "AI",
@@ -91,12 +117,31 @@ D2L_REPORT = {
             ],
         },
         "S1": {
+            "method": "block_surface_v2",
+            "alignment": False,
+            "headline_ready": False,
             "overall": 0.7007,
             "detected_only": 0.7017,
             "terms": 715,
             "consistent_terms": 501,
             "drift_terms": 213,
             "undetected_terms": 1,
+            "terms_all": [
+                {
+                    "source_term": "AI",
+                    "target_term": "trÃ­ tuá»‡ nhÃ¢n táº¡o",
+                    "source_blocks": 80,
+                    "status": "drift",
+                    "forms_used": {"trÃ­ tuá»‡ nhÃ¢n táº¡o": 10, "AI": 71},
+                },
+                {
+                    "source_term": "model",
+                    "target_term": "mÃ´ hÃ¬nh",
+                    "source_blocks": 10,
+                    "status": "consistent",
+                    "forms_used": {"mÃ´ hÃ¬nh": 10},
+                },
+            ],
             "worst_terms": [
                 {
                     "source_term": "AI",
@@ -118,7 +163,7 @@ D2L_REPORT = {
     },
     "injection": {"registry": {"raw_registry": 1608}},
     "stage_gate": {"scope_equals_translation_runs": {"S0": True, "S1": True}},
-    "limitations": ["D v1 note"],
+    "limitations": ["D_surface_v2 note"],
 }
 
 TI_S0_REPORT = {
@@ -249,7 +294,7 @@ TI_ORACLE_REPORT = {
 
 def _create_d2l_fixture(reports_root: Path) -> None:
     reports_root.mkdir(parents=True, exist_ok=True)
-    with open(reports_root / "d2l_translation_metrics.json", "w", encoding="utf-8") as fh:
+    with open(reports_root / "d2l_translation_metrics_v2.json", "w", encoding="utf-8") as fh:
         json.dump(D2L_REPORT, fh)
 
 
@@ -291,7 +336,7 @@ def test_d2l_headline_has_provenance(tmp_path):
     b_s0 = next(h for h in headlines if h["name"] == "B_tar_vs_gold_S0")
     assert b_s0["value"] == 0.7639  # occurrence_weighted
     assert b_s0["domain"] == "d2l"
-    assert b_s0["provenance"]["metric_version"] == "d2l_translate_score_v1"
+    assert b_s0["provenance"]["metric_version"] == "d2l_translate_score_v2"
     assert b_s0["provenance"]["experiment_id"] == "d2l_p3"
 
     b_s1 = next(h for h in headlines if h["name"] == "B_tar_vs_gold_S1")
@@ -301,6 +346,10 @@ def test_d2l_headline_has_provenance(tmp_path):
     d_s1 = next(h for h in headlines if h["name"] == "D_registry_consistency_S1")
     assert d_s1["value"] == 0.7007
     assert d_s1["drift_terms"] == 213
+    assert d_s1["metric_label"] == "D_surface_v2"
+    assert d_s1["method"] == "block_surface_v2"
+    assert d_s1["alignment"] is False
+    assert d_s1["headline_ready"] is False
 
 
 def test_d2l_drift_returns_forms_used_from_report(tmp_path):
@@ -311,7 +360,7 @@ def test_d2l_drift_returns_forms_used_from_report(tmp_path):
     data = load_scores("d2l_p1", reports_root=tmp_path)
 
     drift = data["drift"]
-    assert len(drift) >= 3  # S0 has 2 worst_terms, S1 has 1
+    assert len(drift) >= 5  # terms_all includes consistent terms, not just worst_terms
 
     # Check the canonical AI drift item from S1
     ai_s1 = next(
@@ -319,9 +368,19 @@ def test_d2l_drift_returns_forms_used_from_report(tmp_path):
         if d["source_term"] == "AI" and d["config"] == "S1"
     )
     assert ai_s1["status"] == "drift"
-    assert ai_s1["forms_used"] == {"trí tuệ nhân tạo": 10, "AI": 71}
-    assert ai_s1["target_term"] == "trí tuệ nhân tạo"
+    assert ai_s1["forms_used"].get("AI") == 71
+    assert 10 in ai_s1["forms_used"].values()
+    assert ai_s1["target_term"]
     assert ai_s1["drift_category"] == "glossary-term"
+    assert ai_s1["metric_label"] == "D_surface_v2"
+    assert ai_s1["alignment"] is False
+
+    model_s1 = next(
+        d for d in drift
+        if d["source_term"] == "model" and d["config"] == "S1"
+    )
+    assert model_s1["status"] == "consistent"
+    assert model_s1["forms_used"] == {"mÃ´ hÃ¬nh": 10}
 
     # Check undetected
     agent_s0 = next(

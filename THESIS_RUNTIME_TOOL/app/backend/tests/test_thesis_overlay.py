@@ -15,7 +15,7 @@ from test_thesis_readmodel import create_fixture_db
 
 def _write_d2l_report(reports_root: Path) -> None:
     reports_root.mkdir(parents=True, exist_ok=True)
-    with open(reports_root / "d2l_translation_metrics.json", "w", encoding="utf-8") as fh:
+    with open(reports_root / "d2l_translation_metrics_v2.json", "w", encoding="utf-8") as fh:
         json.dump(
             {
                 "metric_version": "fixture",

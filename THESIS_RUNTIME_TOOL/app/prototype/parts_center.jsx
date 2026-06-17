@@ -760,6 +760,11 @@ function HighlightHoverCard({ hover, linkIndex }) {
               <span>scope</span><b>{compactList(term.chapter_scope)}</b>
               <span>provenance</span><b>{term.provenance?.label || span.provenance || "agent-built"}</b>
               <span>surface</span><b>{compactList(span.surface || span.matched_form)}</b>
+              {span.target && (
+                <>
+                  <span>match</span><b>detected target surface in this block; surface match, not alignment</b>
+                </>
+              )}
             </>
           ) : (
             <>
