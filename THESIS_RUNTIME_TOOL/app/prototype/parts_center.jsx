@@ -757,6 +757,7 @@ function HighlightHoverCard({ hover, linkIndex }) {
           {runtime ? (
             <>
               <span>forms_used</span><b>{runtimeFormsLabel(span, term)}</b>
+              <span>tier</span><b>{compactList(span.constraint_strength || term.constraint_strength)}</b>
               <span>scope</span><b>{compactList(term.chapter_scope)}</b>
               <span>provenance</span><b>{term.provenance?.label || span.provenance || "agent-built"}</b>
               <span>surface</span><b>{compactList(span.surface || span.matched_form)}</b>

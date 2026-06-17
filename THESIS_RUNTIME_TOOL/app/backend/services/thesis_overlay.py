@@ -395,6 +395,7 @@ def _target_candidate(
         "surface": surface,
         "matched_form": matched_form,
         "status": (detail or {}).get("status") or "unscored",
+        "constraint_strength": (detail or {}).get("constraint_strength"),
         "forms_used": forms_used,
         "forms_source": forms_source,
         "scored": bool(scored),

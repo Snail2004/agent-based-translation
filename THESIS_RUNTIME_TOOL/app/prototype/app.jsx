@@ -196,6 +196,7 @@ function targetSpansForBlock(blockId, translations, overlay) {
           kind: "glossary",
           id: termId,
           status: item.status || "unscored",
+          constraint_strength: item.constraint_strength,
           label: `${item.surface || item.matched_form || termId}`,
           surface: item.surface,
           matched_form: item.matched_form,

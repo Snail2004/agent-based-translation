@@ -346,7 +346,7 @@ def test_d2l_headline_has_provenance(tmp_path):
     d_s1 = next(h for h in headlines if h["name"] == "D_registry_consistency_S1")
     assert d_s1["value"] == 0.7007
     assert d_s1["drift_terms"] == 213
-    assert d_s1["metric_label"] == "D_surface_v2"
+    assert d_s1["metric_label"] == "D_surface_v2 (hard-tier)"
     assert d_s1["method"] == "block_surface_v2"
     assert d_s1["alignment"] is False
     assert d_s1["headline_ready"] is False
@@ -372,7 +372,7 @@ def test_d2l_drift_returns_forms_used_from_report(tmp_path):
     assert 10 in ai_s1["forms_used"].values()
     assert ai_s1["target_term"]
     assert ai_s1["drift_category"] == "glossary-term"
-    assert ai_s1["metric_label"] == "D_surface_v2"
+    assert ai_s1["metric_label"] == "D_surface_v2 (hard-tier)"
     assert ai_s1["alignment"] is False
 
     model_s1 = next(

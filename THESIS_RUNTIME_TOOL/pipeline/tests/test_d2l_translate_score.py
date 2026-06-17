@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import sqlite3
 from pathlib import Path
@@ -17,6 +18,29 @@ from pipeline.retrieval.context_builder import build_context_pack, plan_anchors
 from pipeline.translate.prompt import build_messages, purity_check
 from pipeline.translate.profiles import get_profile
 from pipeline.translate.windower import Window, build_windows
+
+
+def _policy_root(
+    tmp_path: Path,
+    *,
+    hard: list[str] | None = None,
+    stop: list[str] | None = None,
+    fixes: list[dict[str, str]] | None = None,
+) -> Path:
+    root = tmp_path / "eval_policy"
+    root.mkdir(exist_ok=True)
+    (root / "d2l_term_stoplist.txt").write_text("\n".join(stop or []) + "\n", encoding="utf-8")
+    (root / "d2l_term_hard_allowlist.txt").write_text("\n".join(hard or []) + "\n", encoding="utf-8")
+    (root / "d2l_term_policy_overrides.csv").write_text(
+        "source_term,constraint_strength,justification\n",
+        encoding="utf-8",
+    )
+    with (root / "d2l_glossary_fixes.csv").open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["source_term", "op", "value", "justification"])
+        writer.writeheader()
+        for row in fixes or []:
+            writer.writerow(row)
+    return root
 
 
 def _fixture_db(tmp_path: Path) -> Path:
@@ -221,6 +245,7 @@ def test_d2l_injection_policy_occ_role_and_canonical_only(tmp_path: Path) -> Non
 
 def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
     db_path = _fixture_db(tmp_path)
+    policy_root = _policy_root(tmp_path, hard=["agent", "model"])
     variants = tmp_path / "variants.csv"
     with variants.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=["source_term", "variant_vi", "note"])
@@ -232,6 +257,7 @@ def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
         chapters=["preliminaries"],
         out_path=tmp_path / "report.json",
         gold_variants_path=variants,
+        term_policy_root=policy_root,
     )
 
     assert report["scope"]["translated_block_types"] == {"heading": 1, "prose": 3}
@@ -245,9 +271,13 @@ def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
     assert report["D_registry_consistency"]["S1"]["method"] == "block_surface_v2"
     assert report["D_registry_consistency"]["S1"]["alignment"] is False
     assert report["D_registry_consistency"]["S1"]["headline_ready"] is False
+    assert report["D_registry_consistency"]["S1"]["headline_tier"] == "hard"
+    assert report["D_registry_consistency"]["S1"]["by_tier"]["hard"]["terms"] >= 1
     assert report["D_registry_consistency"]["S1"]["terms_all"]
     assert any(
-        item["source_term"] == "model" and item["status"] == "consistent"
+        item["source_term"] == "model"
+        and item["status"] == "consistent"
+        and item["constraint_strength"] == "hard"
         for item in report["D_registry_consistency"]["S1"]["terms_all"]
     )
     assert report["A_tar_vs_registry"]["S1"]["overall"] == 1.0
@@ -278,10 +308,12 @@ def test_case_sensitive_acronym() -> None:
 
 
 def test_terms_all_present(tmp_path: Path) -> None:
+    policy_root = _policy_root(tmp_path, hard=["agent", "model"])
     report = score_d2l_translation_run(
         _fixture_db(tmp_path),
         chapters=["preliminaries"],
         out_path=tmp_path / "report.json",
+        term_policy_root=policy_root,
     )
 
     terms_all = report["D_registry_consistency"]["S1"]["terms_all"]
@@ -289,3 +321,124 @@ def test_terms_all_present(tmp_path: Path) -> None:
     statuses = {item["status"] for item in terms_all}
     assert "consistent" in statuses
     assert report["D_registry_consistency"]["S1"]["worst_terms"] == []
+
+
+def test_eval_overlay_no_db_write(tmp_path: Path) -> None:
+    db_path = _fixture_db(tmp_path)
+    before = _glossary_hash(db_path)
+    policy_root = _policy_root(
+        tmp_path,
+        hard=["agent", "model"],
+        fixes=[
+            {
+                "source_term": "agent",
+                "op": "set_canonical",
+                "value": "tác nhân",
+                "justification": "linguistic",
+            }
+        ],
+    )
+
+    score_d2l_translation_run(
+        db_path,
+        chapters=["preliminaries"],
+        out_path=tmp_path / "report.json",
+        term_policy_root=policy_root,
+    )
+
+    assert _glossary_hash(db_path) == before
+
+
+def test_calculus_consistent_after_fix(tmp_path: Path) -> None:
+    db_path = _fixture_db(tmp_path)
+    conn = sqlite3.connect(db_path)
+    conn.executemany(
+        """
+        INSERT INTO blocks (
+          block_id, doc_id, order_index, chapter_id, block_type, text,
+          original_text, translation_mode
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            ("b_calc1", "d2l", 6, "d2l_preliminaries", "prose", "Calculus is basic.", "Calculus is basic.", "translate"),
+            ("b_calc2", "d2l", 7, "d2l_preliminaries", "prose", "Calculus supports calculations.", "Calculus supports calculations.", "translate"),
+        ],
+    )
+    conn.execute(
+        """
+        INSERT INTO glossary_entries (
+          glossary_id, doc_id, source_term, target_term, term_type,
+          do_not_translate, occurrences_count, allowed_variants_json, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved')
+        """,
+        (
+            "gl_calculus",
+            "d2l",
+            "calculus",
+            "giải tích",
+            "term",
+            0,
+            2,
+            json.dumps(["giải tích", "phép tính"], ensure_ascii=False),
+        ),
+    )
+    conn.executemany(
+        """
+        INSERT INTO translation_runs (
+          run_id, experiment_id, doc_id, block_id, config, stage,
+          output_text, model, prompt_version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            ("tr_s0_calc1", "d2l_p3", "d2l", "b_calc1", "S0", "draft", "Giải tích là cơ bản.", "gpt", "s0"),
+            ("tr_s0_calc2", "d2l_p3", "d2l", "b_calc2", "S0", "draft", "Phép tính này dùng giải tích.", "gpt", "s0"),
+            ("tr_s1_calc1", "d2l_p3", "d2l", "b_calc1", "S1", "draft", "Giải tích là cơ bản.", "gpt", "s1"),
+            ("tr_s1_calc2", "d2l_p3", "d2l", "b_calc2", "S1", "draft", "Phép tính này dùng giải tích.", "gpt", "s1"),
+        ],
+    )
+    conn.commit()
+    conn.close()
+
+    policy_root = _policy_root(
+        tmp_path,
+        hard=["calculus"],
+        fixes=[
+            {
+                "source_term": "calculus",
+                "op": "remove_variant",
+                "value": "phép tính",
+                "justification": "calculation is not calculus",
+            }
+        ],
+    )
+    report = score_d2l_translation_run(
+        db_path,
+        chapters=["preliminaries"],
+        out_path=tmp_path / "report.json",
+        term_policy_root=policy_root,
+    )
+
+    calculus = next(
+        item
+        for item in report["D_registry_consistency"]["S1"]["terms_all"]
+        if item["source_term"] == "calculus"
+    )
+    assert calculus["constraint_strength"] == "hard"
+    assert calculus["status"] == "consistent"
+    assert calculus["forms_used"] == {"giải tích": 2}
+
+
+def _glossary_hash(db_path: Path) -> str:
+    conn = sqlite3.connect(db_path)
+    try:
+        rows = conn.execute(
+            """
+            SELECT glossary_id, source_term, target_term, allowed_variants_json
+            FROM glossary_entries
+            ORDER BY glossary_id
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+    payload = json.dumps([tuple(row) for row in rows], ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()

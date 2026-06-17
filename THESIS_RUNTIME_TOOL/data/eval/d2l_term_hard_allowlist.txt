@@ -1,0 +1,12 @@
+# Single-word technical terms that are sufficiently domain-specific to be consistency-bearing.
+# Multi-word terms are hard by classifier default and do not need to be listed here.
+backpropagation
+calculus
+derivative
+derivatives
+differentiation
+gradient
+matrix
+softmax
+tensor
+vector

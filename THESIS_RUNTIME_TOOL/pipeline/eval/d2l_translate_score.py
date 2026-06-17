@@ -12,6 +12,12 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from pipeline.eval.term_policy import (
+    TermPolicyAssets,
+    annotate_constraint_strength,
+    apply_glossary_fixes,
+    load_term_policy_assets,
+)
 from pipeline.eval.thesis_scoring import normalize_apostrophe
 from pipeline.translate.profiles import (
     get_profile,
@@ -21,6 +27,7 @@ from pipeline.translate.profiles import (
 
 
 METRIC_VERSION = "d2l_translate_score_v2"
+DEFAULT_EVAL_ROOT = Path(__file__).resolve().parents[2] / "data" / "eval"
 
 _MASK_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"```.*?```", flags=re.DOTALL),
@@ -50,6 +57,7 @@ def score_d2l_translation_run(
     experiment_id: str = "d2l_p3",
     profile_name: str = "technical_d2l_v1",
     gold_variants_path: str | Path | None = None,
+    term_policy_root: str | Path | None = None,
     doc_id: str = "d2l",
 ) -> dict[str, Any]:
     conn = sqlite3.connect(db_path)
@@ -69,6 +77,8 @@ def score_d2l_translation_run(
             variants_path=gold_variants_path,
         )
         registry_rows = _load_registry_rows(conn, doc_id)
+        policy_assets = load_term_policy_assets(term_policy_root or DEFAULT_EVAL_ROOT)
+        eval_registry_rows = _prepare_eval_registry_rows(registry_rows, policy_assets)
         b_scores = {
             config: _score_tar_vs_gold(scope_blocks, translations[config], accepted_gold)
             for config in ["S0", "S1"]
@@ -77,7 +87,7 @@ def score_d2l_translation_run(
             config: _score_registry_consistency(
                 scope_blocks,
                 translations[config],
-                registry_rows,
+                eval_registry_rows,
                 profile_name=profile.name,
             )
             for config in ["S0", "S1"]
@@ -106,6 +116,7 @@ def score_d2l_translation_run(
             "B_tar_vs_gold": b_scores,
             "D_registry_consistency": d_scores,
             "A_tar_vs_registry": {"S1": a_score},
+            "term_policy": _term_policy_report(eval_registry_rows, policy_assets),
             "injection": {
                 "registry": _registry_stats(registry_rows, profile.name),
                 "packs": _pack_injection_stats(conn, experiment_id),
@@ -121,7 +132,8 @@ def score_d2l_translation_run(
             "limitations": [
                 "D_surface_v2 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
                 "D_surface_v2 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
-                "Cross-term leakage inside allowed_variants (for example calculus vs calculations) is not fixed by EV-D2L-02 and requires term-policy cleanup.",
+                "D_surface_v2 headline is hard-tier only; soft/preserve/entity/ignore_for_consistency tiers are reported for transparency.",
+                "Eval-overlay glossary fixes remove selected cross-term leakage without mutating frozen runtime memory.",
                 "Caption/image/label blocks are passthrough by P3 design and excluded from B/D denominators.",
             ],
         }
@@ -308,6 +320,29 @@ def _load_registry_rows(conn: sqlite3.Connection, doc_id: str) -> list[dict[str,
     return [dict(row) for row in rows]
 
 
+def _prepare_eval_registry_rows(
+    registry_rows: list[dict[str, Any]],
+    policy_assets: TermPolicyAssets,
+) -> list[dict[str, Any]]:
+    fixed = apply_glossary_fixes(registry_rows, policy_assets.fixes)
+    return annotate_constraint_strength(fixed, policy_assets)
+
+
+def _term_policy_report(
+    registry_rows: list[dict[str, Any]],
+    policy_assets: TermPolicyAssets,
+) -> dict[str, Any]:
+    counts = Counter(str(row.get("constraint_strength") or "unknown") for row in registry_rows)
+    return {
+        "source": "eval_overlay",
+        "read_only": True,
+        "paths": policy_assets.paths,
+        "counts": dict(sorted(counts.items())),
+        "glossary_fixes": len(policy_assets.fixes),
+        "overrides": len(policy_assets.overrides),
+    }
+
+
 def _score_tar_vs_gold(
     scope_blocks: list[ScopeBlock],
     translations: dict[str, str],
@@ -354,15 +389,13 @@ def _score_registry_consistency(
     *,
     profile_name: str,
 ) -> dict[str, Any]:
-    profile = get_profile(profile_name)
     term_reports: list[dict[str, Any]] = []
     source_text_by_block = {block.block_id: block.text for block in scope_blocks}
     for row in registry_rows:
-        if not term_is_injection_eligible(row, profile):
-            continue
         source = str(row.get("source_term") or "")
         target = str(row.get("target_term") or "")
         case_sensitive = _case_sensitive(row)
+        constraint_strength = str(row.get("constraint_strength") or "soft")
         source_blocks = [
             block_id
             for block_id, text in source_text_by_block.items()
@@ -395,27 +428,50 @@ def _score_registry_consistency(
                 "status": status,
                 "forms_used": dict(forms_used),
                 "case_sensitive": case_sensitive,
+                "constraint_strength": constraint_strength,
             }
         )
-    total = len(term_reports)
-    consistent = sum(1 for item in term_reports if item["status"] == "consistent")
-    drift = sum(1 for item in term_reports if item["status"] == "drift")
-    undetected = sum(1 for item in term_reports if item["status"] == "undetected")
-    detected = total - undetected
+    by_tier = {
+        tier: _term_report_summary(
+            [item for item in term_reports if item["constraint_strength"] == tier]
+        )
+        for tier in ["hard", "soft", "preserve", "entity", "ignore_for_consistency"]
+    }
+    headline = by_tier["hard"]
     return {
         "method": "block_surface_v2",
         "alignment": False,
         "headline_ready": False,
+        "headline_tier": "hard",
+        "overall": headline["overall"],
+        "detected_only": headline["detected_only"],
+        "terms": headline["terms"],
+        "consistent_terms": headline["consistent_terms"],
+        "drift_terms": headline["drift_terms"],
+        "undetected_terms": headline["undetected_terms"],
+        "all_terms": len(term_reports),
+        "by_tier": by_tier,
+        "terms_all": term_reports,
+        "worst_terms": [
+            item for item in term_reports
+            if item["constraint_strength"] == "hard" and item["status"] in {"drift", "undetected"}
+        ][:30],
+    }
+
+
+def _term_report_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
+    total = len(items)
+    consistent = sum(1 for item in items if item["status"] == "consistent")
+    drift = sum(1 for item in items if item["status"] == "drift")
+    undetected = sum(1 for item in items if item["status"] == "undetected")
+    detected = total - undetected
+    return {
         "overall": _ratio(consistent, total),
         "detected_only": _ratio(consistent, detected),
         "terms": total,
         "consistent_terms": consistent,
         "drift_terms": drift,
         "undetected_terms": undetected,
-        "terms_all": term_reports,
-        "worst_terms": [
-            item for item in term_reports if item["status"] in {"drift", "undetected"}
-        ][:30],
     }
 
 

@@ -1,0 +1,26 @@
+# Single-word common or polysemous terms that should not drive the D_surface_v2 headline.
+# A-priori criterion: the English word has broad non-terminological uses or multiple valid
+# Vietnamese renderings in a technical book.
+average
+case
+class
+domain
+example
+feature
+function
+key
+layer
+level
+model
+operation
+performance
+problem
+rule
+rules
+sample
+scale
+set
+space
+step
+value
+variable
