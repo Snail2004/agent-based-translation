@@ -655,7 +655,7 @@ function confidenceText(value) {
 }
 
 function statusLabel(span, item) {
-  return span?.status || item?.overlay_status || item?.status || "unscored";
+  return span?.display_status || span?.status || item?.overlay_status || item?.status || "unscored";
 }
 
 function runtimeFormsLabel(span, item) {

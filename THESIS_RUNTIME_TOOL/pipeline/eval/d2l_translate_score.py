@@ -10,7 +10,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from pipeline.eval.surface_match import SurfaceOwner, allocate_spans, find_spans, normalize_surface
+from pipeline.eval.surface_match import (
+    SEGMENTER_TOOL,
+    SurfaceOwner,
+    allocate_spans,
+    find_spans,
+    normalize_surface,
+    segmenter_version,
+)
 from pipeline.eval.term_policy import (
     TermPolicyAssets,
     annotate_constraint_strength,
@@ -24,7 +31,7 @@ from pipeline.translate.profiles import (
 )
 
 
-METRIC_VERSION = "d2l_translate_score_v2_1"
+METRIC_VERSION = "d2l_translate_score_v2_2"
 DEFAULT_EVAL_ROOT = Path(__file__).resolve().parents[2] / "data" / "eval"
 
 
@@ -117,11 +124,20 @@ def score_d2l_translation_run(
                 profile_name=profile.name,
             ),
             "samples": _sample_blocks(scope_blocks, passthrough_blocks, translations),
+            "surface_matching": {
+                "source_language": "en",
+                "target_language": "vi",
+                "segmentation": {
+                    "tool": SEGMENTER_TOOL,
+                    "version": segmenter_version(),
+                    "target_only": True,
+                },
+            },
             "limitations": [
-                "D_surface_v2_1 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
-                "D_surface_v2_1 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
-                "D_surface_v2_1 applies cross-term longest-span allocation; it is still surface matching, not occurrence-level alignment.",
-                "D_surface_v2_1 headline is hard-tier only; soft/preserve/entity/ignore_for_consistency tiers are reported for transparency.",
+                "D_surface_v2_2 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
+                "D_surface_v2_2 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
+                "D_surface_v2_2 applies cross-term longest-span allocation and target-side Vietnamese word segmentation; it is still surface matching, not occurrence-level alignment.",
+                "D_surface_v2_2 headline is hard-tier only; soft/preserve/entity/ignore_for_consistency tiers are reported for transparency.",
                 "Eval-overlay glossary fixes remove selected cross-term leakage without mutating frozen runtime memory.",
                 "Caption/image/label blocks are passthrough by P3 design and excluded from B/D denominators.",
             ],
@@ -391,7 +407,7 @@ def _score_registry_consistency(
             )
     source_blocks_by_key: dict[str, set[str]] = defaultdict(set)
     for block in scope_blocks:
-        allocated = allocate_spans(block.text, source_owners_by_block.get(block.block_id, []))
+        allocated = allocate_spans(block.text, source_owners_by_block.get(block.block_id, []), language="en")
         for owner_id, spans in allocated.items():
             if spans:
                 source_blocks_by_key[owner_id].add(block.block_id)
@@ -417,7 +433,7 @@ def _score_registry_consistency(
                 form_owner_id = f"{owner_id}\u241f{form}"
                 target_owners.append(SurfaceOwner(form_owner_id, form, item["case_sensitive"]))
                 owner_to_term_form[form_owner_id] = (owner_id, form)
-        allocated_target = allocate_spans(output, target_owners)
+        allocated_target = allocate_spans(output, target_owners, language="vi")
         for form_owner_id, spans in allocated_target.items():
             if not spans:
                 continue
@@ -462,7 +478,14 @@ def _score_registry_consistency(
     }
     headline = by_tier["hard"]
     return {
-        "method": "block_surface_v2_1",
+        "method": "block_surface_v2_2",
+        "source_language": "en",
+        "target_language": "vi",
+        "segmentation": {
+            "tool": SEGMENTER_TOOL,
+            "version": segmenter_version(),
+            "target_only": True,
+        },
         "alignment": False,
         "headline_ready": False,
         "headline_tier": "hard",
@@ -792,11 +815,11 @@ def _count_source_matches(
     *,
     case_sensitive: bool = False,
 ) -> int:
-    return len(find_spans(text, source_term, case_sensitive=case_sensitive))
+    return len(find_spans(text, source_term, language="en", case_sensitive=case_sensitive))
 
 
 def _has_vi(text: str, needle: str, *, case_sensitive: bool = False) -> bool:
-    return bool(find_spans(text, needle, case_sensitive=case_sensitive))
+    return bool(find_spans(text, needle, language="vi", case_sensitive=case_sensitive))
 
 
 def _count_non_overlapping_forms(
@@ -806,7 +829,7 @@ def _count_non_overlapping_forms(
     case_sensitive: bool = False,
 ) -> Counter[str]:
     owners = [SurfaceOwner(candidate, candidate, case_sensitive) for candidate in candidates]
-    allocated = allocate_spans(text, owners)
+    allocated = allocate_spans(text, owners, language="vi")
     used: Counter[str] = Counter()
     for candidate in candidates:
         if allocated.get(candidate):

@@ -3,3 +3,4 @@ pyyaml
 pytest
 chromadb>=1,<2
 google-genai
+pyvi==0.1.1

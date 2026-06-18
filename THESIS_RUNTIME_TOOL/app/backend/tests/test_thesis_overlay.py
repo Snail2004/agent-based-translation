@@ -248,11 +248,11 @@ def test_overlay_matches_scorer_forms_with_cross_term_subsumption(tmp_path):
     with (reports_root / "d2l_translation_metrics_v2.json").open("w", encoding="utf-8") as fh:
         json.dump(
             {
-                "metric_version": "d2l_translate_score_v2_1",
+                "metric_version": "d2l_translate_score_v2_2",
                 "experiment_id": "d2l_p1",
                 "D_registry_consistency": {
                     "S1": {
-                        "method": "block_surface_v2_1",
+                        "method": "block_surface_v2_2",
                         "terms_all": [
                             {
                                 "source_term": "learning",

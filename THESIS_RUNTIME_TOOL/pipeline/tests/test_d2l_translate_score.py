@@ -268,7 +268,10 @@ def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
     assert report["B_tar_vs_gold"]["S0"]["flat"]["overall"] < 1.0
     assert report["D_registry_consistency"]["S0"]["drift_terms"] >= 1
     assert report["D_registry_consistency"]["S1"]["overall"] == 1.0
-    assert report["D_registry_consistency"]["S1"]["method"] == "block_surface_v2_1"
+    assert report["metric_version"] == "d2l_translate_score_v2_2"
+    assert report["surface_matching"]["target_language"] == "vi"
+    assert report["surface_matching"]["segmentation"]["tool"] == "pyvi"
+    assert report["D_registry_consistency"]["S1"]["method"] == "block_surface_v2_2"
     assert report["D_registry_consistency"]["S1"]["alignment"] is False
     assert report["D_registry_consistency"]["S1"]["headline_ready"] is False
     assert report["D_registry_consistency"]["S1"]["headline_tier"] == "hard"

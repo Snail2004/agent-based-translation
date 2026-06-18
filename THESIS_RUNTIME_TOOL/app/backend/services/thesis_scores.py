@@ -102,12 +102,13 @@ def _d2l_headlines(report: dict[str, Any], report_path: str) -> list[dict[str, A
 
     # D (registry consistency)
     d = report.get("D_registry_consistency") or {}
+    metric_label = _d_surface_label(report)
     for config in ("S0", "S1"):
         cfg = d.get(config) or {}
         if cfg:
             headlines.append({
                 "name": f"D_registry_consistency_{config}",
-                "metric_label": "D_surface_v2.1 (hard-tier)",
+                "metric_label": metric_label,
                 "value": cfg.get("overall"),
                 "detected_only": cfg.get("detected_only"),
                 "terms": cfg.get("terms"),
@@ -145,6 +146,7 @@ def _d2l_drift(report: dict[str, Any]) -> list[dict[str, Any]]:
     """Extract D surface items from scorer report without recomputing."""
     drift: list[dict[str, Any]] = []
     d = report.get("D_registry_consistency") or {}
+    metric_label = _d_surface_label(report)
     for config in ("S0", "S1"):
         cfg = d.get(config) or {}
         terms = cfg.get("terms_all")
@@ -159,12 +161,21 @@ def _d2l_drift(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "forms_used": term.get("forms_used") or {},
                 "source_blocks": term.get("source_blocks"),
                 "drift_category": "glossary-term",
-                "metric_label": "D_surface_v2.1 (hard-tier)",
+                "metric_label": metric_label,
                 "constraint_strength": term.get("constraint_strength"),
                 "method": cfg.get("method"),
                 "alignment": cfg.get("alignment"),
             })
     return drift
+
+
+def _d_surface_label(report: dict[str, Any]) -> str:
+    metric_version = str(report.get("metric_version") or "")
+    if metric_version.endswith("v2_2"):
+        return "D_surface_v2.2 (hard-tier)"
+    if metric_version.endswith("v2_1"):
+        return "D_surface_v2.1 (hard-tier)"
+    return "D_surface (hard-tier)"
 
 
 def _d2l_per_chapter(report: dict[str, Any]) -> dict[str, Any]:

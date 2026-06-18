@@ -437,6 +437,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .hl-glossary { background: var(--hl-glossary); box-shadow: inset 0 -2px 0 var(--hl-glossary-line); }
 .hl-entity { background: var(--hl-entity); box-shadow: inset 0 -2px 0 var(--hl-entity-line); }
 .hl-status-drift, .hl-status-low_coverage { background: #ffe1dc; box-shadow: inset 0 -2px 0 #e87568; }
+.hl-status-diagnostic { background: #eef0f2; box-shadow: inset 0 -2px 0 #b8bec7; }
 .hl-status-undetected { background: #eceff3; box-shadow: inset 0 -2px 0 #99a1ad; }
 .hl-status-consistent { background: #dff4e8; box-shadow: inset 0 -2px 0 #5cbf83; }
 .hl-status-unscored { background: #eef3ff; box-shadow: inset 0 -2px 0 #8aa7e6; }
@@ -472,6 +473,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 }
 .hl-card-status.status-drift, .hl-card-status.status-low_coverage { color: var(--red); }
 .hl-card-status.status-consistent { color: var(--green); }
+.hl-card-status.status-diagnostic { color: var(--ink-3); }
 .hl-card-status.status-undetected { color: var(--ink-3); }
 .hl-card-status.status-unscored { color: var(--accent-ink); }
 .hl-card-title {

@@ -1,6 +1,6 @@
 {
-  "scored_at": "2026-06-17T20:55:34.765739+00:00",
-  "metric_version": "d2l_translate_score_v2_1",
+  "scored_at": "2026-06-18T09:03:50.780923+00:00",
+  "metric_version": "d2l_translate_score_v2_2",
   "experiment_id": "d2l_p3",
   "profile": "technical_d2l_v1",
   "doc_id": "d2l",
@@ -43,21 +43,21 @@
   "B_tar_vs_gold": {
     "S0": {
       "flat": {
-        "overall": 0.754091,
+        "overall": 0.726098,
         "pairs": 2322,
-        "adherent_pairs": 1751,
-        "occurrence_weighted": 0.766039,
+        "adherent_pairs": 1686,
+        "occurrence_weighted": 0.740504,
         "occurrences": 3133,
         "per_chapter": {
-          "d2l_introduction": 0.752044,
-          "d2l_linear_networks": 0.765306,
-          "d2l_multilayer_perceptrons": 0.769912,
-          "d2l_preliminaries": 0.69589
+          "d2l_introduction": 0.702997,
+          "d2l_linear_networks": 0.728863,
+          "d2l_multilayer_perceptrons": 0.751106,
+          "d2l_preliminaries": 0.682192
         },
         "worst_terms": [
           {
             "source_term": "example",
-            "misses": 117,
+            "misses": 119,
             "pairs": 131
           },
           {
@@ -77,7 +77,7 @@
           },
           {
             "source_term": "scalar",
-            "misses": 25,
+            "misses": 26,
             "pairs": 26
           },
           {
@@ -87,8 +87,13 @@
           },
           {
             "source_term": "key",
-            "misses": 19,
+            "misses": 20,
             "pairs": 21
+          },
+          {
+            "source_term": "gradient descent",
+            "misses": 20,
+            "pairs": 23
           },
           {
             "source_term": "performance",
@@ -111,9 +116,9 @@
             "pairs": 17
           },
           {
-            "source_term": "gradient descent",
+            "source_term": "machine learning",
             "misses": 13,
-            "pairs": 23
+            "pairs": 69
           },
           {
             "source_term": "penalty",
@@ -122,8 +127,18 @@
           },
           {
             "source_term": "stochastic gradient descent",
-            "misses": 10,
+            "misses": 12,
             "pairs": 20
+          },
+          {
+            "source_term": "model",
+            "misses": 10,
+            "pairs": 228
+          },
+          {
+            "source_term": "iteration",
+            "misses": 9,
+            "pairs": 10
           },
           {
             "source_term": "scale",
@@ -139,40 +154,25 @@
             "source_term": "batch",
             "misses": 7,
             "pairs": 18
-          },
-          {
-            "source_term": "population",
-            "misses": 7,
-            "pairs": 7
-          },
-          {
-            "source_term": "agent",
-            "misses": 6,
-            "pairs": 6
-          },
-          {
-            "source_term": "batch size",
-            "misses": 6,
-            "pairs": 11
           }
         ]
       },
       "recurring": {
-        "overall": 0.754048,
+        "overall": 0.725602,
         "pairs": 2285,
-        "adherent_pairs": 1723,
-        "occurrence_weighted": 0.76615,
+        "adherent_pairs": 1658,
+        "occurrence_weighted": 0.74031,
         "occurrences": 3096,
         "per_chapter": {
-          "d2l_introduction": 0.753541,
-          "d2l_linear_networks": 0.764706,
-          "d2l_multilayer_perceptrons": 0.770179,
-          "d2l_preliminaries": 0.694444
+          "d2l_introduction": 0.70255,
+          "d2l_linear_networks": 0.727941,
+          "d2l_multilayer_perceptrons": 0.75,
+          "d2l_preliminaries": 0.683333
         },
         "worst_terms": [
           {
             "source_term": "example",
-            "misses": 117,
+            "misses": 119,
             "pairs": 131
           },
           {
@@ -192,7 +192,7 @@
           },
           {
             "source_term": "scalar",
-            "misses": 25,
+            "misses": 26,
             "pairs": 26
           },
           {
@@ -202,8 +202,13 @@
           },
           {
             "source_term": "key",
-            "misses": 19,
+            "misses": 20,
             "pairs": 21
+          },
+          {
+            "source_term": "gradient descent",
+            "misses": 20,
+            "pairs": 23
           },
           {
             "source_term": "performance",
@@ -226,9 +231,9 @@
             "pairs": 17
           },
           {
-            "source_term": "gradient descent",
+            "source_term": "machine learning",
             "misses": 13,
-            "pairs": 23
+            "pairs": 69
           },
           {
             "source_term": "penalty",
@@ -237,8 +242,18 @@
           },
           {
             "source_term": "stochastic gradient descent",
-            "misses": 10,
+            "misses": 12,
             "pairs": 20
+          },
+          {
+            "source_term": "model",
+            "misses": 10,
+            "pairs": 228
+          },
+          {
+            "source_term": "iteration",
+            "misses": 9,
+            "pairs": 10
           },
           {
             "source_term": "scale",
@@ -254,37 +269,22 @@
             "source_term": "batch",
             "misses": 7,
             "pairs": 18
-          },
-          {
-            "source_term": "population",
-            "misses": 7,
-            "pairs": 7
-          },
-          {
-            "source_term": "agent",
-            "misses": 6,
-            "pairs": 6
-          },
-          {
-            "source_term": "batch size",
-            "misses": 6,
-            "pairs": 11
           }
         ]
       }
     },
     "S1": {
       "flat": {
-        "overall": 0.819121,
+        "overall": 0.784668,
         "pairs": 2322,
-        "adherent_pairs": 1902,
-        "occurrence_weighted": 0.834344,
+        "adherent_pairs": 1822,
+        "occurrence_weighted": 0.802426,
         "occurrences": 3133,
         "per_chapter": {
-          "d2l_introduction": 0.847411,
-          "d2l_linear_networks": 0.827988,
-          "d2l_multilayer_perceptrons": 0.811947,
-          "d2l_preliminaries": 0.791781
+          "d2l_introduction": 0.787466,
+          "d2l_linear_networks": 0.778426,
+          "d2l_multilayer_perceptrons": 0.790929,
+          "d2l_preliminaries": 0.778082
         },
         "worst_terms": [
           {
@@ -294,7 +294,7 @@
           },
           {
             "source_term": "example",
-            "misses": 60,
+            "misses": 63,
             "pairs": 131
           },
           {
@@ -313,14 +313,19 @@
             "pairs": 26
           },
           {
+            "source_term": "key",
+            "misses": 20,
+            "pairs": 21
+          },
+          {
+            "source_term": "gradient descent",
+            "misses": 19,
+            "pairs": 23
+          },
+          {
             "source_term": "performance",
             "misses": 18,
             "pairs": 18
-          },
-          {
-            "source_term": "key",
-            "misses": 18,
-            "pairs": 21
           },
           {
             "source_term": "recall",
@@ -333,6 +338,11 @@
             "pairs": 16
           },
           {
+            "source_term": "machine learning",
+            "misses": 14,
+            "pairs": 69
+          },
+          {
             "source_term": "penalty",
             "misses": 13,
             "pairs": 13
@@ -341,6 +351,11 @@
             "source_term": "vector",
             "misses": 12,
             "pairs": 85
+          },
+          {
+            "source_term": "iteration",
+            "misses": 10,
+            "pairs": 10
           },
           {
             "source_term": "scale",
@@ -363,43 +378,28 @@
             "pairs": 7
           },
           {
-            "source_term": "marginalization",
+            "source_term": "supervised learning",
             "misses": 6,
-            "pairs": 6
+            "pairs": 15
           },
           {
-            "source_term": "Gaussian noise",
-            "misses": 5,
-            "pairs": 5
-          },
-          {
-            "source_term": "heuristic",
-            "misses": 5,
-            "pairs": 5
-          },
-          {
-            "source_term": "switch",
-            "misses": 4,
-            "pairs": 4
-          },
-          {
-            "source_term": "end-to-end",
-            "misses": 4,
-            "pairs": 4
+            "source_term": "model",
+            "misses": 6,
+            "pairs": 228
           }
         ]
       },
       "recurring": {
-        "overall": 0.821444,
+        "overall": 0.786871,
         "pairs": 2285,
-        "adherent_pairs": 1877,
-        "occurrence_weighted": 0.83624,
+        "adherent_pairs": 1798,
+        "occurrence_weighted": 0.804264,
         "occurrences": 3096,
         "per_chapter": {
-          "d2l_introduction": 0.852691,
-          "d2l_linear_networks": 0.829412,
-          "d2l_multilayer_perceptrons": 0.813901,
-          "d2l_preliminaries": 0.794444
+          "d2l_introduction": 0.790368,
+          "d2l_linear_networks": 0.779412,
+          "d2l_multilayer_perceptrons": 0.792601,
+          "d2l_preliminaries": 0.783333
         },
         "worst_terms": [
           {
@@ -409,7 +409,7 @@
           },
           {
             "source_term": "example",
-            "misses": 60,
+            "misses": 63,
             "pairs": 131
           },
           {
@@ -428,14 +428,19 @@
             "pairs": 26
           },
           {
+            "source_term": "key",
+            "misses": 20,
+            "pairs": 21
+          },
+          {
+            "source_term": "gradient descent",
+            "misses": 19,
+            "pairs": 23
+          },
+          {
             "source_term": "performance",
             "misses": 18,
             "pairs": 18
-          },
-          {
-            "source_term": "key",
-            "misses": 18,
-            "pairs": 21
           },
           {
             "source_term": "recall",
@@ -448,6 +453,11 @@
             "pairs": 16
           },
           {
+            "source_term": "machine learning",
+            "misses": 14,
+            "pairs": 69
+          },
+          {
             "source_term": "penalty",
             "misses": 13,
             "pairs": 13
@@ -456,6 +466,11 @@
             "source_term": "vector",
             "misses": 12,
             "pairs": 85
+          },
+          {
+            "source_term": "iteration",
+            "misses": 10,
+            "pairs": 10
           },
           {
             "source_term": "scale",
@@ -478,29 +493,14 @@
             "pairs": 7
           },
           {
-            "source_term": "marginalization",
+            "source_term": "supervised learning",
             "misses": 6,
-            "pairs": 6
+            "pairs": 15
           },
           {
-            "source_term": "Gaussian noise",
-            "misses": 5,
-            "pairs": 5
-          },
-          {
-            "source_term": "heuristic",
-            "misses": 5,
-            "pairs": 5
-          },
-          {
-            "source_term": "switch",
-            "misses": 4,
-            "pairs": 4
-          },
-          {
-            "source_term": "end-to-end",
-            "misses": 4,
-            "pairs": 4
+            "source_term": "model",
+            "misses": 6,
+            "pairs": 228
           }
         ]
       }
@@ -508,41 +508,48 @@
   },
   "D_registry_consistency": {
     "S0": {
-      "method": "block_surface_v2_1",
+      "method": "block_surface_v2_2",
+      "source_language": "en",
+      "target_language": "vi",
+      "segmentation": {
+        "tool": "pyvi",
+        "version": "0.1.1",
+        "target_only": true
+      },
       "alignment": false,
       "headline_ready": false,
       "headline_tier": "hard",
-      "overall": 0.757576,
-      "detected_only": 0.795756,
+      "overall": 0.75,
+      "detected_only": 0.798387,
       "terms": 396,
-      "consistent_terms": 300,
-      "drift_terms": 77,
-      "undetected_terms": 19,
+      "consistent_terms": 297,
+      "drift_terms": 75,
+      "undetected_terms": 24,
       "all_terms": 753,
       "by_tier": {
         "hard": {
-          "overall": 0.757576,
-          "detected_only": 0.795756,
+          "overall": 0.75,
+          "detected_only": 0.798387,
           "terms": 396,
-          "consistent_terms": 300,
-          "drift_terms": 77,
-          "undetected_terms": 19
+          "consistent_terms": 297,
+          "drift_terms": 75,
+          "undetected_terms": 24
         },
         "soft": {
-          "overall": 0.587814,
-          "detected_only": 0.616541,
+          "overall": 0.594982,
+          "detected_only": 0.628788,
           "terms": 279,
-          "consistent_terms": 164,
-          "drift_terms": 102,
-          "undetected_terms": 13
+          "consistent_terms": 166,
+          "drift_terms": 98,
+          "undetected_terms": 15
         },
         "preserve": {
           "overall": 0.825397,
-          "detected_only": 0.896552,
+          "detected_only": 0.912281,
           "terms": 63,
           "consistent_terms": 52,
-          "drift_terms": 6,
-          "undetected_terms": 5
+          "drift_terms": 5,
+          "undetected_terms": 6
         },
         "entity": {
           "overall": 1.0,
@@ -580,7 +587,7 @@
           "status": "drift",
           "forms_used": {
             "trí tuệ nhân tạo": 1,
-            "AI": 10
+            "AI": 9
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -732,7 +739,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "Bernoulli": 2
+            "Bernoulli": 1
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -743,7 +750,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "CPU": 3
+            "CPU": 2
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -752,10 +759,8 @@
           "source_term": "CPU-based computation",
           "target_term": "tính toán dựa trên CPU",
           "source_blocks": 3,
-          "status": "consistent",
-          "forms_used": {
-            "tính toán trên CPU": 3
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -841,10 +846,9 @@
           "source_term": "Fashion-MNIST dataset",
           "target_term": "bộ dữ liệu Fashion-MNIST",
           "source_blocks": 10,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "bộ dữ liệu Fashion-MNIST": 9,
-            "tập dữ liệu Fashion-MNIST": 1
+            "bộ dữ liệu Fashion-MNIST": 8
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -877,7 +881,7 @@
           "source_blocks": 6,
           "status": "consistent",
           "forms_used": {
-            "GPU": 4
+            "GPU": 3
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -997,7 +1001,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "ID": 2
+            "ID": 1
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -1150,7 +1154,7 @@
           "source_blocks": 15,
           "status": "drift",
           "forms_used": {
-            "hạ gradient ngẫu nhiên theo minibatch": 7,
+            "hạ gradient ngẫu nhiên theo minibatch": 5,
             "gradient descent ngẫu nhiên theo minibatch": 4
           },
           "case_sensitive": false,
@@ -1173,7 +1177,7 @@
           "source_blocks": 22,
           "status": "drift",
           "forms_used": {
-            "phép toán": 17,
+            "phép toán": 19,
             "toán tử": 1
           },
           "case_sensitive": false,
@@ -1218,7 +1222,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "luồng điều khiển Python": 2
+            "luồng điều khiển Python": 1
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -1241,7 +1245,7 @@
           "source_blocks": 5,
           "status": "consistent",
           "forms_used": {
-            "hàm ReLU": 4
+            "hàm ReLU": 3
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -1318,7 +1322,7 @@
           "source_blocks": 11,
           "status": "consistent",
           "forms_used": {
-            "hàm sigmoid": 10
+            "hàm sigmoid": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -1417,7 +1421,7 @@
           "source_blocks": 4,
           "status": "consistent",
           "forms_used": {
-            "khởi tạo Xavier": 4
+            "khởi tạo Xavier": 3
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -1428,7 +1432,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "giá trị tuyệt đối": 2
+            "giá trị tuyệt đối": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -1485,7 +1489,7 @@
           "source_blocks": 10,
           "status": "consistent",
           "forms_used": {
-            "hàm kích hoạt": 10
+            "hàm kích hoạt": 9
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -1497,7 +1501,7 @@
           "status": "drift",
           "forms_used": {
             "các hàm kích hoạt": 8,
-            "hàm kích hoạt": 2
+            "hàm kích hoạt": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -1539,10 +1543,8 @@
           "source_term": "affine function",
           "target_term": "hàm affine",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "hàm affine": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -1552,8 +1554,8 @@
           "source_blocks": 5,
           "status": "drift",
           "forms_used": {
-            "biến đổi affine": 2,
-            "phép biến đổi affine": 3
+            "biến đổi affine": 4,
+            "phép biến đổi affine": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -1575,7 +1577,7 @@
           "source_blocks": 7,
           "status": "drift",
           "forms_used": {
-            "tuổi": 5,
+            "tuổi": 4,
             "độ tuổi": 1
           },
           "case_sensitive": false,
@@ -1751,7 +1753,7 @@
           "source_blocks": 4,
           "status": "drift",
           "forms_used": {
-            "tự động": 3,
+            "tự động": 4,
             "tự động hóa": 1
           },
           "case_sensitive": false,
@@ -1939,10 +1941,8 @@
           "source_term": "benchmark dataset",
           "target_term": "bộ dữ liệu chuẩn",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "bộ dữ liệu chuẩn": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -1950,10 +1950,8 @@
           "source_term": "beta_i",
           "target_term": "beta_i",
           "source_blocks": 3,
-          "status": "consistent",
-          "forms_used": {
-            "beta_i": 3
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "preserve"
         },
@@ -1965,7 +1963,7 @@
           "forms_used": {
             "thiên lệch": 1,
             "độ lệch": 10,
-            "độ chệch": 2
+            "độ chệch": 1
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -2132,8 +2130,7 @@
           "forms_used": {
             "các lớp": 4,
             "lớp": 7,
-            "hạng mục": 1,
-            "các hạng": 1
+            "hạng mục": 2
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -2310,7 +2307,7 @@
           "source_blocks": 15,
           "status": "consistent",
           "forms_used": {
-            "cột": 15
+            "cột": 14
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -2375,7 +2372,7 @@
           "source_blocks": 12,
           "status": "drift",
           "forms_used": {
-            "thành phần": 12,
+            "thành phần": 10,
             "phần tử": 1
           },
           "case_sensitive": false,
@@ -2666,7 +2663,7 @@
           "source_blocks": 152,
           "status": "consistent",
           "forms_used": {
-            "dữ liệu": 148
+            "dữ liệu": 147
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -2766,7 +2763,7 @@
           "status": "drift",
           "forms_used": {
             "tập dữ liệu": 35,
-            "bộ dữ liệu": 35
+            "bộ dữ liệu": 33
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -2800,7 +2797,7 @@
           "source_blocks": 12,
           "status": "consistent",
           "forms_used": {
-            "sâu": 12
+            "sâu": 9
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -2811,7 +2808,7 @@
           "source_blocks": 64,
           "status": "consistent",
           "forms_used": {
-            "học sâu": 63
+            "học sâu": 61
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -2911,9 +2908,8 @@
           "source_term": "degree",
           "target_term": "bậc",
           "source_blocks": 7,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "cấp": 1,
             "bậc": 6
           },
           "case_sensitive": false,
@@ -3149,7 +3145,7 @@
           "status": "drift",
           "forms_used": {
             "bệnh tật": 1,
-            "bệnh": 4
+            "bệnh": 3
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -3216,7 +3212,7 @@
           "source_blocks": 5,
           "status": "consistent",
           "forms_used": {
-            "tích vô hướng": 4
+            "tích vô hướng": 3
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -3269,9 +3265,8 @@
           "source_term": "dropout regularization",
           "target_term": "chính quy hóa dropout",
           "source_blocks": 2,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "chuẩn hóa dropout": 1,
             "regularization dropout": 1
           },
           "case_sensitive": false,
@@ -3349,10 +3344,9 @@
           "source_term": "elementwise multiplication",
           "target_term": "phép nhân từng phần tử",
           "source_blocks": 3,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "nhân theo từng phần tử": 2,
-            "phép nhân từng phần tử": 1
+            "nhân theo từng phần tử": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -3363,7 +3357,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "phép toán theo từng phần tử": 2
+            "phép toán theo từng phần tử": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -3461,8 +3455,8 @@
           "source_blocks": 9,
           "status": "drift",
           "forms_used": {
-            "số epoch": 7,
-            "epoch": 1
+            "số epoch": 6,
+            "epoch": 2
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -3528,7 +3522,7 @@
           "status": "drift",
           "forms_used": {
             "ví dụ": 117,
-            "mẫu": 4
+            "mẫu": 2
           },
           "case_sensitive": false,
           "constraint_strength": "ignore_for_consistency"
@@ -3616,10 +3610,8 @@
           "source_term": "exponentiate",
           "target_term": "lấy hàm mũ",
           "source_blocks": 3,
-          "status": "consistent",
-          "forms_used": {
-            "lấy hàm mũ": 1
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "soft"
         },
@@ -3629,7 +3621,7 @@
           "source_blocks": 3,
           "status": "drift",
           "forms_used": {
-            "lũy thừa": 2,
+            "lũy thừa": 1,
             "phép lũy thừa": 1
           },
           "case_sensitive": false,
@@ -3741,7 +3733,7 @@
           "status": "drift",
           "forms_used": {
             "đặc tính": 2,
-            "đặc trưng": 22,
+            "đặc trưng": 21,
             "các đặc trưng": 31,
             "tính năng": 1,
             "thuộc tính": 1
@@ -3891,7 +3883,7 @@
           "status": "drift",
           "forms_used": {
             "khả năng khái quát hóa": 3,
-            "khái quát hóa": 2
+            "khái quát hóa": 3
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -3948,7 +3940,7 @@
           "source_blocks": 40,
           "status": "drift",
           "forms_used": {
-            "gradient": 40,
+            "gradient": 39,
             "vector gradient": 1,
             "đạo hàm": 1
           },
@@ -4055,7 +4047,7 @@
           "source_blocks": 5,
           "status": "consistent",
           "forms_used": {
-            "khỏe mạnh": 5
+            "khỏe mạnh": 4
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -4233,7 +4225,7 @@
           "source_blocks": 26,
           "status": "drift",
           "forms_used": {
-            "ảnh": 15,
+            "ảnh": 14,
             "hình ảnh": 12
           },
           "case_sensitive": false,
@@ -4393,7 +4385,7 @@
           "source_blocks": 18,
           "status": "consistent",
           "forms_used": {
-            "thông tin": 18
+            "thông tin": 17
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -4471,10 +4463,8 @@
           "source_term": "input shape",
           "target_term": "hình dạng đầu vào",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "hình dạng đầu vào": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -4549,10 +4539,8 @@
           "source_term": "iterator",
           "target_term": "bộ lặp",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "bộ lặp": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "soft"
         },
@@ -4686,7 +4674,7 @@
           "source_blocks": 37,
           "status": "drift",
           "forms_used": {
-            "lớp": 21,
+            "lớp": 18,
             "tầng": 13
           },
           "case_sensitive": false,
@@ -4733,7 +4721,7 @@
           "source_blocks": 20,
           "status": "drift",
           "forms_used": {
-            "học": 19,
+            "học": 15,
             "quá trình học": 1
           },
           "case_sensitive": false,
@@ -4778,7 +4766,7 @@
           "source_blocks": 34,
           "status": "drift",
           "forms_used": {
-            "độ dài": 29,
+            "độ dài": 28,
             "chiều dài": 1
           },
           "case_sensitive": false,
@@ -4837,7 +4825,6 @@
           "status": "drift",
           "forms_used": {
             "đại số tuyến tính": 14,
-            "toán đại số tuyến tính": 2,
             "đại số tuyến tính cơ bản": 2
           },
           "case_sensitive": false,
@@ -4926,10 +4913,9 @@
           "source_term": "linear transformation",
           "target_term": "biến đổi tuyến tính",
           "source_blocks": 4,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "biến đổi tuyến tính": 1,
-            "phép biến đổi tuyến tính": 3
+            "biến đổi tuyến tính": 4
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -4961,9 +4947,10 @@
           "source_term": "logarithm",
           "target_term": "logarit",
           "source_blocks": 6,
-          "status": "consistent",
+          "status": "drift",
           "forms_used": {
-            "logarit": 6
+            "logarit": 6,
+            "log": 1
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -5009,7 +4996,7 @@
           "forms_used": {
             "hàm mất mát": 18,
             "tổn thất": 4,
-            "mất mát": 11
+            "mất mát": 10
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -5061,7 +5048,7 @@
           "source_blocks": 57,
           "status": "drift",
           "forms_used": {
-            "học máy": 56,
+            "học máy": 52,
             "máy học": 1,
             "machine learning": 1
           },
@@ -5307,8 +5294,8 @@
           "source_blocks": 25,
           "status": "drift",
           "forms_used": {
-            "trung bình": 5,
-            "giá trị trung bình": 5,
+            "trung bình": 6,
+            "giá trị trung bình": 4,
             "kỳ vọng": 4
           },
           "case_sensitive": false,
@@ -5362,10 +5349,9 @@
           "source_term": "memory",
           "target_term": "bộ nhớ",
           "source_blocks": 21,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "bộ nhớ máy": 1,
-            "bộ nhớ": 17
+            "bộ nhớ": 18
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -5463,7 +5449,7 @@
           "source_blocks": 152,
           "status": "drift",
           "forms_used": {
-            "mô hình": 145,
+            "mô hình": 140,
             "mô hình dự đoán": 2
           },
           "case_sensitive": false,
@@ -5475,7 +5461,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "kiến trúc mô hình": 3
+            "kiến trúc mô hình": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -5529,7 +5515,7 @@
           "status": "drift",
           "forms_used": {
             "tham số của mô hình": 4,
-            "các tham số mô hình": 21,
+            "các tham số mô hình": 20,
             "tham số mô hình": 1,
             "tham số": 1
           },
@@ -5588,7 +5574,7 @@
           "status": "drift",
           "forms_used": {
             "các mô hình": 49,
-            "mô hình": 20
+            "mô hình": 19
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -5655,7 +5641,6 @@
           "status": "drift",
           "forms_used": {
             "perceptron nhiều lớp": 2,
-            "mạng nơ-ron nhiều lớp": 2,
             "mạng perceptron nhiều lớp": 2
           },
           "case_sensitive": false,
@@ -5765,9 +5750,8 @@
           "source_term": "negative log-likelihood",
           "target_term": "log-khả năng âm",
           "source_blocks": 4,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "log-hợp lý âm": 2,
             "âm log-khả năng": 1
           },
           "case_sensitive": false,
@@ -5791,7 +5775,7 @@
           "source_blocks": 21,
           "status": "consistent",
           "forms_used": {
-            "mạng nơ-ron": 18
+            "mạng nơ-ron": 17
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -5879,10 +5863,8 @@
           "source_term": "non-negative number",
           "target_term": "số không âm",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "số không âm": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -5892,7 +5874,7 @@
           "source_blocks": 4,
           "status": "drift",
           "forms_used": {
-            "các phi tuyến": 3,
+            "các phi tuyến": 2,
             "phi tuyến": 1
           },
           "case_sensitive": false,
@@ -6074,7 +6056,7 @@
           "status": "drift",
           "forms_used": {
             "đối tượng": 13,
-            "mục": 5
+            "mục": 3
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -6186,7 +6168,7 @@
           "source_blocks": 8,
           "status": "drift",
           "forms_used": {
-            "1": 4,
+            "1": 3,
             "số 1": 3
           },
           "case_sensitive": false,
@@ -6274,9 +6256,10 @@
           "source_term": "optimization algorithms",
           "target_term": "thuật toán tối ưu hóa",
           "source_blocks": 5,
-          "status": "consistent",
+          "status": "drift",
           "forms_used": {
-            "các thuật toán tối ưu": 5
+            "thuật toán tối ưu hóa": 4,
+            "các thuật toán tối ưu": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -6287,7 +6270,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "bài toán tối ưu": 2
+            "bài toán tối ưu": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -6322,7 +6305,7 @@
           "source_blocks": 4,
           "status": "consistent",
           "forms_used": {
-            "bộ tối ưu": 4
+            "bộ tối ưu": 3
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -6494,7 +6477,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "chi phí tham số hóa": 3
+            "chi phí tham số": 3
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -6505,9 +6488,8 @@
           "source_blocks": 65,
           "status": "drift",
           "forms_used": {
-            "tham số": 22,
+            "tham số": 24,
             "các tham số": 46,
-            "số tham": 3,
             "tham số mô hình": 2,
             "siêu tham số": 1
           },
@@ -6900,7 +6882,7 @@
           "source_blocks": 67,
           "status": "consistent",
           "forms_used": {
-            "bài toán": 39
+            "bài toán": 35
           },
           "case_sensitive": false,
           "constraint_strength": "ignore_for_consistency"
@@ -7050,9 +7032,8 @@
           "source_term": "ranking",
           "target_term": "xếp hạng",
           "source_blocks": 3,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "thứ hạng": 2,
             "xếp hạng": 1
           },
           "case_sensitive": false,
@@ -7175,7 +7156,7 @@
           "source_blocks": 13,
           "status": "consistent",
           "forms_used": {
-            "học tăng cường": 13
+            "học tăng cường": 11
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -7342,7 +7323,7 @@
           "source_blocks": 15,
           "status": "drift",
           "forms_used": {
-            "mẫu": 13,
+            "mẫu": 12,
             "mẫu dữ liệu": 2
           },
           "case_sensitive": false,
@@ -7409,10 +7390,9 @@
           "source_term": "scalar",
           "target_term": "vô hướng",
           "source_blocks": 22,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "vô hướng": 21,
-            "số vô hướng": 1
+            "vô hướng": 22
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -7523,7 +7503,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "học chuỗi": 2
+            "học chuỗi": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -7534,7 +7514,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "học chuỗi sang chuỗi": 2
+            "học chuỗi sang chuỗi": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -7556,8 +7536,8 @@
           "source_blocks": 67,
           "status": "drift",
           "forms_used": {
-            "tập": 30,
-            "tập hợp": 12
+            "tập hợp": 12,
+            "tập": 27
           },
           "case_sensitive": false,
           "constraint_strength": "ignore_for_consistency"
@@ -7700,8 +7680,8 @@
           "source_blocks": 6,
           "status": "drift",
           "forms_used": {
-            "softmax": 1,
-            "hàm softmax": 5
+            "softmax": 3,
+            "hàm softmax": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -7710,9 +7690,10 @@
           "source_term": "softmax operation",
           "target_term": "phép toán softmax",
           "source_blocks": 10,
-          "status": "consistent",
+          "status": "drift",
           "forms_used": {
-            "phép toán softmax": 10
+            "phép toán softmax": 9,
+            "softmax": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -7994,7 +7975,7 @@
           "source_blocks": 34,
           "status": "drift",
           "forms_used": {
-            "tổng": 30,
+            "tổng": 17,
             "phép cộng dồn": 1
           },
           "case_sensitive": false,
@@ -8017,7 +7998,7 @@
           "source_blocks": 12,
           "status": "consistent",
           "forms_used": {
-            "học có giám sát": 12
+            "học có giám sát": 10
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -8039,7 +8020,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "độ bất ngờ": 3
+            "độ bất ngờ": 2
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -8082,9 +8063,10 @@
           "source_term": "synthetic dataset",
           "target_term": "tập dữ liệu tổng hợp",
           "source_blocks": 2,
-          "status": "consistent",
+          "status": "drift",
           "forms_used": {
-            "bộ dữ liệu tổng hợp": 2
+            "bộ dữ liệu tổng hợp": 1,
+            "dữ liệu tổng hợp": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -8106,7 +8088,7 @@
           "source_blocks": 5,
           "status": "consistent",
           "forms_used": {
-            "hàm tanh": 5
+            "hàm tanh": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -8330,7 +8312,7 @@
           "source_blocks": 29,
           "status": "drift",
           "forms_used": {
-            "dữ liệu huấn luyện": 29,
+            "dữ liệu huấn luyện": 27,
             "tập dữ liệu huấn luyện": 2,
             "tập huấn luyện": 7
           },
@@ -8410,7 +8392,7 @@
           "source_blocks": 11,
           "status": "consistent",
           "forms_used": {
-            "vòng lặp huấn luyện": 11
+            "vòng lặp huấn luyện": 8
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -8465,7 +8447,7 @@
           "source_blocks": 4,
           "status": "drift",
           "forms_used": {
-            "biến đổi": 3,
+            "biến đổi": 4,
             "phép biến đổi": 3
           },
           "case_sensitive": false,
@@ -8521,9 +8503,8 @@
           "source_term": "true parameters",
           "target_term": "tham số thực",
           "source_blocks": 2,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "tham số thực": 1,
             "tham số thật": 1
           },
           "case_sensitive": false,
@@ -8569,10 +8550,9 @@
           "source_term": "underfitting",
           "target_term": "thiếu khớp",
           "source_blocks": 7,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "thiếu khớp": 6,
-            "khớp thiếu": 1
+            "thiếu khớp": 6
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -8672,7 +8652,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "dữ liệu xác thực": 3
+            "dữ liệu xác thực": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -8847,7 +8827,7 @@
           "source_blocks": 11,
           "status": "consistent",
           "forms_used": {
-            "trọng số": 10
+            "trọng số": 9
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -8959,7 +8939,7 @@
           "status": "drift",
           "forms_used": {
             "0": 15,
-            "không": 15
+            "không": 14
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -8971,8 +8951,7 @@
           "status": "drift",
           "forms_used": {
             "trung bình bằng 0": 1,
-            "kỳ vọng bằng 0": 1,
-            "kỳ vọng bằng không": 2
+            "kỳ vọng bằng 0": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -9002,6 +8981,15 @@
         }
       ],
       "worst_terms": [
+        {
+          "source_term": "CPU-based computation",
+          "target_term": "tính toán dựa trên CPU",
+          "source_blocks": 3,
+          "status": "undetected",
+          "forms_used": {},
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
         {
           "source_term": "Dataset Size",
           "target_term": "Kích thước tập dữ liệu",
@@ -9050,7 +9038,7 @@
           "source_blocks": 15,
           "status": "drift",
           "forms_used": {
-            "hạ gradient ngẫu nhiên theo minibatch": 7,
+            "hạ gradient ngẫu nhiên theo minibatch": 5,
             "gradient descent ngẫu nhiên theo minibatch": 4
           },
           "case_sensitive": false,
@@ -9063,8 +9051,17 @@
           "status": "drift",
           "forms_used": {
             "các hàm kích hoạt": 8,
-            "hàm kích hoạt": 2
+            "hàm kích hoạt": 1
           },
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
+        {
+          "source_term": "affine function",
+          "target_term": "hàm affine",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -9074,8 +9071,8 @@
           "source_blocks": 5,
           "status": "drift",
           "forms_used": {
-            "biến đổi affine": 2,
-            "phép biến đổi affine": 3
+            "biến đổi affine": 4,
+            "phép biến đổi affine": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -9114,6 +9111,15 @@
             "quá trình lan truyền ngược": 3,
             "backpropagation": 1
           },
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
+        {
+          "source_term": "benchmark dataset",
+          "target_term": "bộ dữ liệu chuẩn",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -9246,30 +9252,6 @@
           "constraint_strength": "hard"
         },
         {
-          "source_term": "dropout regularization",
-          "target_term": "chính quy hóa dropout",
-          "source_blocks": 2,
-          "status": "drift",
-          "forms_used": {
-            "chuẩn hóa dropout": 1,
-            "regularization dropout": 1
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
-        },
-        {
-          "source_term": "elementwise multiplication",
-          "target_term": "phép nhân từng phần tử",
-          "source_blocks": 3,
-          "status": "drift",
-          "forms_used": {
-            "nhân theo từng phần tử": 2,
-            "phép nhân từng phần tử": 1
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
-        },
-        {
           "source_term": "elementwise operations",
           "target_term": "phép toán theo phần tử",
           "source_blocks": 5,
@@ -9334,58 +9316,52 @@
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
-        },
-        {
-          "source_term": "gradient",
-          "target_term": "gradient",
-          "source_blocks": 40,
-          "status": "drift",
-          "forms_used": {
-            "gradient": 40,
-            "vector gradient": 1,
-            "đạo hàm": 1
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
         }
       ]
     },
     "S1": {
-      "method": "block_surface_v2_1",
+      "method": "block_surface_v2_2",
+      "source_language": "en",
+      "target_language": "vi",
+      "segmentation": {
+        "tool": "pyvi",
+        "version": "0.1.1",
+        "target_only": true
+      },
       "alignment": false,
       "headline_ready": false,
       "headline_tier": "hard",
-      "overall": 0.906566,
-      "detected_only": 0.908861,
+      "overall": 0.886364,
+      "detected_only": 0.906977,
       "terms": 396,
-      "consistent_terms": 359,
+      "consistent_terms": 351,
       "drift_terms": 36,
-      "undetected_terms": 1,
+      "undetected_terms": 9,
       "all_terms": 753,
       "by_tier": {
         "hard": {
-          "overall": 0.906566,
-          "detected_only": 0.908861,
+          "overall": 0.886364,
+          "detected_only": 0.906977,
           "terms": 396,
-          "consistent_terms": 359,
+          "consistent_terms": 351,
           "drift_terms": 36,
-          "undetected_terms": 1
+          "undetected_terms": 9
         },
         "soft": {
           "overall": 0.749104,
-          "detected_only": 0.751799,
+          "detected_only": 0.757246,
           "terms": 279,
           "consistent_terms": 209,
-          "drift_terms": 69,
-          "undetected_terms": 1
+          "drift_terms": 67,
+          "undetected_terms": 3
         },
         "preserve": {
           "overall": 0.809524,
-          "detected_only": 0.87931,
+          "detected_only": 0.894737,
           "terms": 63,
           "consistent_terms": 51,
-          "drift_terms": 7,
-          "undetected_terms": 5
+          "drift_terms": 6,
+          "undetected_terms": 6
         },
         "entity": {
           "overall": 1.0,
@@ -9576,7 +9552,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "Bernoulli": 2
+            "Bernoulli": 1
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -9587,7 +9563,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "CPU": 3
+            "CPU": 2
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -9596,10 +9572,8 @@
           "source_term": "CPU-based computation",
           "target_term": "tính toán dựa trên CPU",
           "source_blocks": 3,
-          "status": "consistent",
-          "forms_used": {
-            "tính toán dựa trên CPU": 3
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -9675,7 +9649,7 @@
           "source_blocks": 4,
           "status": "consistent",
           "forms_used": {
-            "Fashion-MNIST": 4
+            "Fashion-MNIST": 3
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -9686,7 +9660,7 @@
           "source_blocks": 10,
           "status": "consistent",
           "forms_used": {
-            "tập dữ liệu Fashion-MNIST": 10
+            "tập dữ liệu Fashion-MNIST": 8
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -9719,7 +9693,7 @@
           "source_blocks": 6,
           "status": "consistent",
           "forms_used": {
-            "GPU": 4
+            "GPU": 3
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -9841,7 +9815,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "ID": 2
+            "ID": 1
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -9994,7 +9968,7 @@
           "source_blocks": 15,
           "status": "consistent",
           "forms_used": {
-            "hạ gradient ngẫu nhiên theo minibatch": 15
+            "hạ gradient ngẫu nhiên theo minibatch": 10
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -10016,7 +9990,7 @@
           "source_blocks": 22,
           "status": "drift",
           "forms_used": {
-            "phép toán": 20,
+            "phép toán": 22,
             "toán tử": 1
           },
           "case_sensitive": false,
@@ -10084,7 +10058,7 @@
           "source_blocks": 5,
           "status": "consistent",
           "forms_used": {
-            "hàm ReLU": 4
+            "hàm ReLU": 3
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -10104,9 +10078,8 @@
           "source_term": "Reduction",
           "target_term": "phép giảm",
           "source_blocks": 3,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "phép giảm": 1,
             "giảm": 2
           },
           "case_sensitive": false,
@@ -10162,7 +10135,7 @@
           "source_blocks": 11,
           "status": "consistent",
           "forms_used": {
-            "hàm sigmoid": 10
+            "hàm sigmoid": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -10218,7 +10191,7 @@
           "source_blocks": 76,
           "status": "consistent",
           "forms_used": {
-            "huấn luyện": 63
+            "huấn luyện": 62
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -10262,7 +10235,7 @@
           "source_blocks": 4,
           "status": "consistent",
           "forms_used": {
-            "khởi tạo Xavier": 4
+            "khởi tạo Xavier": 3
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -10273,7 +10246,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "giá trị tuyệt đối": 2
+            "giá trị tuyệt đối": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -10330,7 +10303,7 @@
           "source_blocks": 10,
           "status": "consistent",
           "forms_used": {
-            "hàm kích hoạt": 10
+            "hàm kích hoạt": 9
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -10384,10 +10357,8 @@
           "source_term": "affine function",
           "target_term": "hàm affine",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "hàm affine": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -10594,9 +10565,10 @@
           "source_term": "automated",
           "target_term": "tự động hóa",
           "source_blocks": 4,
-          "status": "consistent",
+          "status": "drift",
           "forms_used": {
-            "tự động hóa": 4
+            "tự động": 3,
+            "tự động hóa": 2
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -10785,10 +10757,8 @@
           "source_term": "benchmark dataset",
           "target_term": "bộ dữ liệu chuẩn",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "bộ dữ liệu chuẩn": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -10796,10 +10766,8 @@
           "source_term": "beta_i",
           "target_term": "beta_i",
           "source_blocks": 3,
-          "status": "consistent",
-          "forms_used": {
-            "beta_i": 3
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "preserve"
         },
@@ -10809,7 +10777,7 @@
           "source_blocks": 18,
           "status": "consistent",
           "forms_used": {
-            "độ lệch": 17
+            "độ lệch": 16
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -10831,7 +10799,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "hạng tử chệch": 3
+            "hạng tử chệch": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -10974,9 +10942,8 @@
           "source_blocks": 19,
           "status": "drift",
           "forms_used": {
-            "các hạng": 9,
+            "hạng mục": 19,
             "lớp": 4,
-            "hạng mục": 11,
             "các lớp": 3
           },
           "case_sensitive": false,
@@ -11046,7 +11013,6 @@
           "status": "drift",
           "forms_used": {
             "nhãn": 4,
-            "hạng": 1,
             "lớp": 32
           },
           "case_sensitive": false,
@@ -11157,7 +11123,7 @@
           "source_blocks": 15,
           "status": "consistent",
           "forms_used": {
-            "cột": 15
+            "cột": 14
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -11223,7 +11189,7 @@
           "source_blocks": 12,
           "status": "drift",
           "forms_used": {
-            "thành phần": 12,
+            "thành phần": 10,
             "phần tử": 1
           },
           "case_sensitive": false,
@@ -11444,7 +11410,7 @@
           "source_blocks": 8,
           "status": "drift",
           "forms_used": {
-            "entropy chéo": 8,
+            "entropy chéo": 7,
             "hàm mất mát entropy chéo": 1
           },
           "case_sensitive": false,
@@ -11478,7 +11444,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "tệp CSV": 3
+            "tệp CSV": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -11511,7 +11477,7 @@
           "source_blocks": 152,
           "status": "consistent",
           "forms_used": {
-            "dữ liệu": 149
+            "dữ liệu": 148
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -11611,8 +11577,8 @@
           "source_blocks": 71,
           "status": "drift",
           "forms_used": {
-            "tập dữ liệu": 69,
-            "bộ dữ liệu": 3
+            "tập dữ liệu": 68,
+            "bộ dữ liệu": 2
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -11646,7 +11612,7 @@
           "source_blocks": 12,
           "status": "consistent",
           "forms_used": {
-            "sâu": 12
+            "sâu": 8
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -11657,7 +11623,7 @@
           "source_blocks": 64,
           "status": "consistent",
           "forms_used": {
-            "học sâu": 63
+            "học sâu": 61
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -11724,7 +11690,7 @@
           "source_blocks": 7,
           "status": "consistent",
           "forms_used": {
-            "mạng sâu": 7
+            "mạng sâu": 6
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -11735,7 +11701,7 @@
           "source_blocks": 7,
           "status": "consistent",
           "forms_used": {
-            "mạng nơ-ron sâu": 7
+            "mạng nơ-ron sâu": 6
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -11755,9 +11721,8 @@
           "source_term": "degree",
           "target_term": "bậc",
           "source_blocks": 7,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "cấp": 1,
             "bậc": 6
           },
           "case_sensitive": false,
@@ -12059,7 +12024,7 @@
           "source_blocks": 5,
           "status": "consistent",
           "forms_used": {
-            "tích vô hướng": 4
+            "tích vô hướng": 3
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -12112,10 +12077,8 @@
           "source_term": "dropout regularization",
           "target_term": "chính quy hóa dropout",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "chính quy hóa dropout": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -12302,8 +12265,8 @@
           "source_blocks": 9,
           "status": "drift",
           "forms_used": {
-            "số epoch": 7,
-            "epoch": 1
+            "số epoch": 6,
+            "epoch": 2
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -12367,7 +12330,7 @@
           "source_blocks": 122,
           "status": "drift",
           "forms_used": {
-            "mẫu": 56,
+            "mẫu": 53,
             "ví dụ": 73
           },
           "case_sensitive": false,
@@ -12455,10 +12418,8 @@
           "source_term": "exponentiate",
           "target_term": "lấy hàm mũ",
           "source_blocks": 3,
-          "status": "consistent",
-          "forms_used": {
-            "lấy hàm mũ": 3
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "soft"
         },
@@ -12468,7 +12429,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "lũy thừa": 3
+            "lũy thừa": 2
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -12578,7 +12539,7 @@
           "source_blocks": 54,
           "status": "drift",
           "forms_used": {
-            "đặc trưng": 32,
+            "đặc trưng": 31,
             "các đặc trưng": 19,
             "tính năng": 1,
             "thuộc tính": 1
@@ -12601,10 +12562,8 @@
           "source_term": "first principles",
           "target_term": "nguyên lý cơ bản",
           "source_blocks": 3,
-          "status": "consistent",
-          "forms_used": {
-            "nguyên lý cơ bản": 3
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -12793,10 +12752,9 @@
           "source_term": "gradient descent",
           "target_term": "gradient descent",
           "source_blocks": 4,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "gradient descent": 1,
-            "hạ gradient": 3
+            "gradient descent": 1
           },
           "case_sensitive": false,
           "constraint_strength": "preserve"
@@ -12839,9 +12797,8 @@
           "source_term": "ground-truth",
           "target_term": "chân trị",
           "source_blocks": 4,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "chân trị": 3,
             "nhãn thật": 1
           },
           "case_sensitive": false,
@@ -12897,7 +12854,7 @@
           "source_blocks": 5,
           "status": "consistent",
           "forms_used": {
-            "khỏe mạnh": 5
+            "khỏe mạnh": 4
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -13107,7 +13064,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "điền khuyết": 2
+            "điền khuyết": 1
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -13231,7 +13188,7 @@
           "source_blocks": 18,
           "status": "consistent",
           "forms_used": {
-            "thông tin": 18
+            "thông tin": 17
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -13307,10 +13264,8 @@
           "source_term": "input shape",
           "target_term": "hình dạng đầu vào",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "hình dạng đầu vào": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -13384,10 +13339,8 @@
           "source_term": "iterator",
           "target_term": "bộ lặp",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "bộ lặp": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "soft"
         },
@@ -13521,7 +13474,7 @@
           "source_blocks": 37,
           "status": "consistent",
           "forms_used": {
-            "lớp": 32
+            "lớp": 28
           },
           "case_sensitive": false,
           "constraint_strength": "ignore_for_consistency"
@@ -13566,7 +13519,7 @@
           "source_blocks": 20,
           "status": "drift",
           "forms_used": {
-            "học": 18,
+            "học": 14,
             "quá trình học": 2
           },
           "case_sensitive": false,
@@ -13611,7 +13564,7 @@
           "source_blocks": 34,
           "status": "consistent",
           "forms_used": {
-            "độ dài": 33
+            "độ dài": 32
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -13667,7 +13620,6 @@
           "status": "drift",
           "forms_used": {
             "đại số tuyến tính": 14,
-            "toán đại số tuyến tính": 2,
             "đại số tuyến tính cơ bản": 2
           },
           "case_sensitive": false,
@@ -13790,9 +13742,10 @@
           "source_term": "logarithm",
           "target_term": "logarit",
           "source_blocks": 6,
-          "status": "consistent",
+          "status": "drift",
           "forms_used": {
-            "logarit": 6
+            "logarit": 6,
+            "log": 1
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -13837,7 +13790,7 @@
           "status": "drift",
           "forms_used": {
             "hàm mất mát": 32,
-            "mất mát": 2
+            "mất mát": 1
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -13894,7 +13847,7 @@
           "source_blocks": 57,
           "status": "drift",
           "forms_used": {
-            "học máy": 56,
+            "học máy": 51,
             "máy học": 1,
             "machine learning": 1
           },
@@ -14193,10 +14146,9 @@
           "source_term": "memory",
           "target_term": "bộ nhớ",
           "source_blocks": 21,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "bộ nhớ máy": 1,
-            "bộ nhớ": 19
+            "bộ nhớ": 20
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -14297,7 +14249,7 @@
           "source_blocks": 152,
           "status": "drift",
           "forms_used": {
-            "mô hình": 148,
+            "mô hình": 144,
             "mô hình dự đoán": 1
           },
           "case_sensitive": false,
@@ -14309,7 +14261,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "kiến trúc mô hình": 3
+            "kiến trúc mô hình": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -14365,7 +14317,7 @@
           "status": "drift",
           "forms_used": {
             "tham số mô hình": 15,
-            "các tham số mô hình": 11
+            "các tham số mô hình": 10
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -14421,7 +14373,7 @@
           "status": "drift",
           "forms_used": {
             "các mô hình": 48,
-            "mô hình": 22
+            "mô hình": 21
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -14620,7 +14572,7 @@
           "source_blocks": 21,
           "status": "consistent",
           "forms_used": {
-            "mạng nơ-ron": 18
+            "mạng nơ-ron": 17
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -14707,10 +14659,8 @@
           "source_term": "non-negative number",
           "target_term": "số không âm",
           "source_blocks": 2,
-          "status": "consistent",
-          "forms_used": {
-            "số không âm": 2
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -15013,7 +14963,7 @@
           "status": "drift",
           "forms_used": {
             "số 1": 4,
-            "1": 4
+            "1": 3
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -15099,10 +15049,9 @@
           "source_term": "optimization algorithms",
           "target_term": "thuật toán tối ưu hóa",
           "source_blocks": 5,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "thuật toán tối ưu hóa": 1,
-            "các thuật toán tối ưu": 4
+            "thuật toán tối ưu hóa": 5
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -15135,7 +15084,7 @@
           "source_blocks": 6,
           "status": "consistent",
           "forms_used": {
-            "bộ tối ưu hóa": 6
+            "bộ tối ưu hóa": 4
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -15313,7 +15262,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "chi phí tham số hóa": 3
+            "chi phí tham số": 3
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -15324,10 +15273,9 @@
           "source_blocks": 65,
           "status": "drift",
           "forms_used": {
-            "tham số": 28,
+            "tham số": 30,
             "các tham số": 40,
             "siêu tham số": 2,
-            "số tham": 3,
             "tham số mô hình": 3
           },
           "case_sensitive": false,
@@ -15627,7 +15575,7 @@
           "source_blocks": 14,
           "status": "drift",
           "forms_used": {
-            "giá": 13,
+            "giá": 12,
             "giá bán": 2,
             "Price": 2
           },
@@ -15719,7 +15667,7 @@
           "source_blocks": 67,
           "status": "consistent",
           "forms_used": {
-            "bài toán": 61
+            "bài toán": 58
           },
           "case_sensitive": false,
           "constraint_strength": "ignore_for_consistency"
@@ -15763,7 +15711,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "phép thử ngẫu nhiên": 2
+            "phép thử ngẫu nhiên": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -15807,7 +15755,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "số ngẫu nhiên": 3
+            "số ngẫu nhiên": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -15869,9 +15817,8 @@
           "source_term": "ranking",
           "target_term": "xếp hạng",
           "source_blocks": 3,
-          "status": "drift",
+          "status": "consistent",
           "forms_used": {
-            "thứ hạng": 1,
             "xếp hạng": 2
           },
           "case_sensitive": false,
@@ -15996,7 +15943,7 @@
           "source_blocks": 13,
           "status": "consistent",
           "forms_used": {
-            "học tăng cường": 13
+            "học tăng cường": 11
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -16163,7 +16110,7 @@
           "source_blocks": 15,
           "status": "drift",
           "forms_used": {
-            "mẫu": 13,
+            "mẫu": 12,
             "mẫu dữ liệu": 3
           },
           "case_sensitive": false,
@@ -16221,7 +16168,7 @@
           "source_blocks": 9,
           "status": "consistent",
           "forms_used": {
-            "lấy mẫu": 7
+            "lấy mẫu": 6
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -16232,7 +16179,7 @@
           "source_blocks": 22,
           "status": "consistent",
           "forms_used": {
-            "vô hướng": 21
+            "vô hướng": 22
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -16254,8 +16201,8 @@
           "source_blocks": 10,
           "status": "drift",
           "forms_used": {
-            "vô hướng": 7,
-            "giá trị vô hướng": 1
+            "giá trị vô hướng": 1,
+            "vô hướng": 5
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -16343,7 +16290,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "học chuỗi": 2
+            "học chuỗi": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -16354,7 +16301,7 @@
           "source_blocks": 2,
           "status": "consistent",
           "forms_used": {
-            "học chuỗi sang chuỗi": 2
+            "học chuỗi sang chuỗi": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -16376,8 +16323,8 @@
           "source_blocks": 67,
           "status": "drift",
           "forms_used": {
-            "tập": 12,
-            "tập hợp": 42
+            "tập hợp": 40,
+            "tập": 6
           },
           "case_sensitive": false,
           "constraint_strength": "ignore_for_consistency"
@@ -16399,7 +16346,7 @@
           "source_blocks": 35,
           "status": "drift",
           "forms_used": {
-            "hình dạng": 35,
+            "hình dạng": 34,
             "kích thước": 4
           },
           "case_sensitive": false,
@@ -16519,9 +16466,10 @@
           "source_term": "softmax function",
           "target_term": "hàm softmax",
           "source_blocks": 6,
-          "status": "consistent",
+          "status": "drift",
           "forms_used": {
-            "hàm softmax": 6
+            "hàm softmax": 2,
+            "softmax": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -16530,9 +16478,10 @@
           "source_term": "softmax operation",
           "target_term": "phép toán softmax",
           "source_blocks": 10,
-          "status": "consistent",
+          "status": "drift",
           "forms_used": {
-            "phép toán softmax": 10
+            "phép toán softmax": 9,
+            "softmax": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -16808,7 +16757,7 @@
           "source_blocks": 34,
           "status": "consistent",
           "forms_used": {
-            "tổng": 33
+            "tổng": 21
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -16830,7 +16779,7 @@
           "source_blocks": 12,
           "status": "consistent",
           "forms_used": {
-            "học có giám sát": 12
+            "học có giám sát": 9
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -16852,7 +16801,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "độ bất ngờ": 3
+            "độ bất ngờ": 2
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -16918,7 +16867,7 @@
           "source_blocks": 5,
           "status": "consistent",
           "forms_used": {
-            "hàm tanh": 5
+            "hàm tanh": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -17142,7 +17091,7 @@
           "source_blocks": 29,
           "status": "drift",
           "forms_used": {
-            "dữ liệu huấn luyện": 29,
+            "dữ liệu huấn luyện": 27,
             "tập dữ liệu huấn luyện": 2,
             "tập huấn luyện": 3
           },
@@ -17222,7 +17171,7 @@
           "source_blocks": 11,
           "status": "consistent",
           "forms_used": {
-            "vòng lặp huấn luyện": 11
+            "vòng lặp huấn luyện": 8
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -17277,7 +17226,7 @@
           "source_blocks": 4,
           "status": "drift",
           "forms_used": {
-            "biến đổi": 2,
+            "biến đổi": 3,
             "phép biến đổi": 4
           },
           "case_sensitive": false,
@@ -17480,7 +17429,7 @@
           "source_blocks": 3,
           "status": "consistent",
           "forms_used": {
-            "dữ liệu xác thực": 3
+            "dữ liệu xác thực": 2
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -17658,7 +17607,7 @@
           "source_blocks": 11,
           "status": "consistent",
           "forms_used": {
-            "trọng số": 11
+            "trọng số": 10
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -17770,7 +17719,7 @@
           "status": "drift",
           "forms_used": {
             "0": 21,
-            "không": 12
+            "không": 11
           },
           "case_sensitive": false,
           "constraint_strength": "soft"
@@ -17779,10 +17728,8 @@
           "source_term": "zero mean",
           "target_term": "trung bình bằng không",
           "source_blocks": 4,
-          "status": "consistent",
-          "forms_used": {
-            "trung bình bằng không": 4
-          },
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -17824,6 +17771,15 @@
           "constraint_strength": "hard"
         },
         {
+          "source_term": "CPU-based computation",
+          "target_term": "tính toán dựa trên CPU",
+          "source_blocks": 3,
+          "status": "undetected",
+          "forms_used": {},
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
+        {
           "source_term": "activation functions",
           "target_term": "các hàm kích hoạt",
           "source_blocks": 9,
@@ -17832,6 +17788,15 @@
             "các hàm kích hoạt": 9,
             "hàm kích hoạt": 1
           },
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
+        {
+          "source_term": "affine function",
+          "target_term": "hàm affine",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {},
           "case_sensitive": false,
           "constraint_strength": "hard"
         },
@@ -17849,12 +17814,21 @@
           "constraint_strength": "hard"
         },
         {
+          "source_term": "benchmark dataset",
+          "target_term": "bộ dữ liệu chuẩn",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {},
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
+        {
           "source_term": "cross-entropy",
           "target_term": "entropy chéo",
           "source_blocks": 8,
           "status": "drift",
           "forms_used": {
-            "entropy chéo": 8,
+            "entropy chéo": 7,
             "hàm mất mát entropy chéo": 1
           },
           "case_sensitive": false,
@@ -17909,6 +17883,15 @@
           "constraint_strength": "hard"
         },
         {
+          "source_term": "dropout regularization",
+          "target_term": "chính quy hóa dropout",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {},
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
+        {
           "source_term": "elementwise multiplication",
           "target_term": "phép nhân từng phần tử",
           "source_blocks": 3,
@@ -17924,6 +17907,15 @@
           "source_term": "elementwise operation",
           "target_term": "phép toán từng phần tử",
           "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {},
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
+        {
+          "source_term": "first principles",
+          "target_term": "nguyên lý cơ bản",
+          "source_blocks": 3,
           "status": "undetected",
           "forms_used": {},
           "case_sensitive": false,
@@ -17949,18 +17941,6 @@
           "forms_used": {
             "gradient": 40,
             "vector gradient": 1
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
-        },
-        {
-          "source_term": "ground-truth",
-          "target_term": "chân trị",
-          "source_blocks": 4,
-          "status": "drift",
-          "forms_used": {
-            "chân trị": 3,
-            "nhãn thật": 1
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -18026,13 +18006,21 @@
           "constraint_strength": "hard"
         },
         {
+          "source_term": "input shape",
+          "target_term": "hình dạng đầu vào",
+          "source_blocks": 2,
+          "status": "undetected",
+          "forms_used": {},
+          "case_sensitive": false,
+          "constraint_strength": "hard"
+        },
+        {
           "source_term": "linear algebra",
           "target_term": "đại số tuyến tính",
           "source_blocks": 15,
           "status": "drift",
           "forms_used": {
             "đại số tuyến tính": 14,
-            "toán đại số tuyến tính": 2,
             "đại số tuyến tính cơ bản": 2
           },
           "case_sensitive": false,
@@ -18080,7 +18068,7 @@
           "source_blocks": 57,
           "status": "drift",
           "forms_used": {
-            "học máy": 56,
+            "học máy": 51,
             "máy học": 1,
             "machine learning": 1
           },
@@ -18094,7 +18082,7 @@
           "status": "drift",
           "forms_used": {
             "tham số mô hình": 15,
-            "các tham số mô hình": 11
+            "các tham số mô hình": 10
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
@@ -18110,93 +18098,53 @@
           },
           "case_sensitive": false,
           "constraint_strength": "hard"
-        },
-        {
-          "source_term": "number of inputs",
-          "target_term": "số đầu vào",
-          "source_blocks": 8,
-          "status": "drift",
-          "forms_used": {
-            "số đầu vào": 7,
-            "số lượng đầu vào": 1
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
-        },
-        {
-          "source_term": "optimization algorithms",
-          "target_term": "thuật toán tối ưu hóa",
-          "source_blocks": 5,
-          "status": "drift",
-          "forms_used": {
-            "thuật toán tối ưu hóa": 1,
-            "các thuật toán tối ưu": 4
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
-        },
-        {
-          "source_term": "probability distributions",
-          "target_term": "phân phối xác suất",
-          "source_blocks": 5,
-          "status": "drift",
-          "forms_used": {
-            "phân phối xác suất": 4,
-            "phân phối": 2
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
-        },
-        {
-          "source_term": "regularization techniques",
-          "target_term": "kỹ thuật điều chuẩn",
-          "source_blocks": 3,
-          "status": "drift",
-          "forms_used": {
-            "kỹ thuật điều chuẩn": 3,
-            "kỹ thuật chuẩn hóa": 1
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
-        },
-        {
-          "source_term": "statistical models",
-          "target_term": "mô hình thống kê",
-          "source_blocks": 8,
-          "status": "drift",
-          "forms_used": {
-            "các mô hình thống kê": 5,
-            "mô hình thống kê": 3
-          },
-          "case_sensitive": false,
-          "constraint_strength": "hard"
         }
       ]
     }
   },
   "A_tar_vs_registry": {
     "S1": {
-      "overall": 0.952449,
+      "overall": 0.920669,
       "pairs": 8370,
-      "adherent_pairs": 7972,
-      "occurrence_weighted": 0.95814,
+      "adherent_pairs": 7706,
+      "occurrence_weighted": 0.929901,
       "occurrences": 11013,
       "per_chapter": {
-        "d2l_introduction": 0.954475,
-        "d2l_linear_networks": 0.959442,
-        "d2l_multilayer_perceptrons": 0.943286,
-        "d2l_preliminaries": 0.957901
+        "d2l_introduction": 0.907407,
+        "d2l_linear_networks": 0.923109,
+        "d2l_multilayer_perceptrons": 0.916232,
+        "d2l_preliminaries": 0.935937
       },
       "worst_terms": [
         {
           "source_term": "example",
-          "misses": 60,
+          "misses": 63,
           "pairs": 131
         },
         {
           "source_term": "set",
-          "misses": 57,
+          "misses": 59,
           "pairs": 100
+        },
+        {
+          "source_term": "learning",
+          "misses": 29,
+          "pairs": 198
+        },
+        {
+          "source_term": "sum",
+          "misses": 15,
+          "pairs": 44
+        },
+        {
+          "source_term": "machine learning",
+          "misses": 14,
+          "pairs": 69
+        },
+        {
+          "source_term": "network",
+          "misses": 14,
+          "pairs": 58
         },
         {
           "source_term": "generalization",
@@ -18209,29 +18157,44 @@
           "pairs": 16
         },
         {
+          "source_term": "Training",
+          "misses": 12,
+          "pairs": 157
+        },
+        {
           "source_term": "vector",
           "misses": 12,
           "pairs": 85
         },
         {
-          "source_term": "network",
-          "misses": 11,
-          "pairs": 58
+          "source_term": "problem",
+          "misses": 10,
+          "pairs": 80
+        },
+        {
+          "source_term": "Sigmoid Function",
+          "misses": 10,
+          "pairs": 11
+        },
+        {
+          "source_term": "algorithm",
+          "misses": 9,
+          "pairs": 46
+        },
+        {
+          "source_term": "dataset",
+          "misses": 9,
+          "pairs": 105
+        },
+        {
+          "source_term": "ground-truth",
+          "misses": 8,
+          "pairs": 8
         },
         {
           "source_term": "examples",
           "misses": 8,
           "pairs": 87
-        },
-        {
-          "source_term": "dataset",
-          "misses": 8,
-          "pairs": 105
-        },
-        {
-          "source_term": "problem",
-          "misses": 8,
-          "pairs": 80
         },
         {
           "source_term": "optimization",
@@ -18252,41 +18215,6 @@
           "source_term": "bit",
           "misses": 7,
           "pairs": 8
-        },
-        {
-          "source_term": "minibatches",
-          "misses": 7,
-          "pairs": 10
-        },
-        {
-          "source_term": "framework",
-          "misses": 7,
-          "pairs": 16
-        },
-        {
-          "source_term": "regularization",
-          "misses": 7,
-          "pairs": 22
-        },
-        {
-          "source_term": "hidden layers",
-          "misses": 6,
-          "pairs": 14
-        },
-        {
-          "source_term": "wake word",
-          "misses": 4,
-          "pairs": 7
-        },
-        {
-          "source_term": "risk",
-          "misses": 4,
-          "pairs": 22
-        },
-        {
-          "source_term": "prior",
-          "misses": 4,
-          "pairs": 5
         }
       ]
     }
@@ -18398,11 +18326,20 @@
       }
     ]
   },
+  "surface_matching": {
+    "source_language": "en",
+    "target_language": "vi",
+    "segmentation": {
+      "tool": "pyvi",
+      "version": "0.1.1",
+      "target_only": true
+    }
+  },
   "limitations": [
-    "D_surface_v2_1 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
-    "D_surface_v2_1 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
-    "D_surface_v2_1 applies cross-term longest-span allocation; it is still surface matching, not occurrence-level alignment.",
-    "D_surface_v2_1 headline is hard-tier only; soft/preserve/entity/ignore_for_consistency tiers are reported for transparency.",
+    "D_surface_v2_2 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
+    "D_surface_v2_2 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
+    "D_surface_v2_2 applies cross-term longest-span allocation and target-side Vietnamese word segmentation; it is still surface matching, not occurrence-level alignment.",
+    "D_surface_v2_2 headline is hard-tier only; soft/preserve/entity/ignore_for_consistency tiers are reported for transparency.",
     "Eval-overlay glossary fixes remove selected cross-term leakage without mutating frozen runtime memory.",
     "Caption/image/label blocks are passthrough by P3 design and excluded from B/D denominators."
   ]

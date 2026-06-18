@@ -197,7 +197,7 @@ def _build_source_overlay(
             )
     for block_id in block_order:
         text = block_texts.get(block_id, "")
-        allocated = allocate_spans(text, owners_by_block.get(block_id, []))
+        allocated = allocate_spans(text, owners_by_block.get(block_id, []), language="en")
         for term_id, spans in allocated.items():
             term = term_by_id.get(term_id) or {}
             source_term = str(term.get("source_term") or "").strip()
@@ -272,7 +272,7 @@ def _source_entity_mentions(
         surfaces = _entity_source_surfaces(entity)
         for surface in surfaces:
             for block_id, text in block_texts.items():
-                for start, end, matched in _find_matches(text, surface):
+                for start, end, matched in _find_matches(text, surface, language="en"):
                     candidates.append({
                         "id": entity_id,
                         "block_id": block_id,
@@ -330,7 +330,7 @@ def _build_target_overlay(
                         "forms_source": forms_source,
                         "scored": scored,
                     }
-            for owner_id, spans in allocate_spans(target_text, glossary_owners).items():
+            for owner_id, spans in allocate_spans(target_text, glossary_owners, language="vi").items():
                 owner = glossary_owner_details[owner_id]
                 for span in spans:
                     glossary_candidates.append(_target_candidate(
@@ -365,7 +365,7 @@ def _build_target_overlay(
                         "forms_source": forms_source,
                         "scored": scored,
                     }
-            for owner_id, spans in allocate_spans(target_text, entity_owners).items():
+            for owner_id, spans in allocate_spans(target_text, entity_owners, language="vi").items():
                 owner = entity_owner_details[owner_id]
                 for span in spans:
                     entity_candidates.append(_target_candidate(
@@ -421,6 +421,8 @@ def _target_candidate(
     kind: str,
 ) -> dict[str, Any]:
     forms_used = dict((detail or {}).get("forms_used") or {})
+    raw_status = (detail or {}).get("status") or "unscored"
+    constraint_strength = (detail or {}).get("constraint_strength")
     return {
         "id": item_id,
         "block_id": block_id,
@@ -428,8 +430,9 @@ def _target_candidate(
         "span": [start, end],
         "surface": surface,
         "matched_form": matched_form,
-        "status": (detail or {}).get("status") or "unscored",
-        "constraint_strength": (detail or {}).get("constraint_strength"),
+        "status": raw_status,
+        "display_status": _display_status(raw_status, constraint_strength),
+        "constraint_strength": constraint_strength,
         "forms_used": forms_used,
         "forms_source": forms_source,
         "scored": bool(scored),
@@ -587,8 +590,14 @@ def _in_scope(term: dict[str, Any], block_id: str, chapter_id: str) -> bool:
     return True
 
 
-def _find_matches(text: str, needle: str) -> list[tuple[int, int, str]]:
-    return find_spans(text, needle)
+def _find_matches(text: str, needle: str, *, language: str = "en") -> list[tuple[int, int, str]]:
+    return find_spans(text, needle, language=language)
+
+
+def _display_status(status: str, constraint_strength: str | None) -> str:
+    if status == "drift" and constraint_strength not in {None, "", "hard"}:
+        return "diagnostic"
+    return status
 
 
 def _norm_key(text: str) -> str:
