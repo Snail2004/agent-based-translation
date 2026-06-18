@@ -4,21 +4,19 @@ import csv
 import json
 import re
 import sqlite3
-import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from pipeline.eval.surface_match import SurfaceOwner, allocate_spans, find_spans, normalize_surface
 from pipeline.eval.term_policy import (
     TermPolicyAssets,
     annotate_constraint_strength,
     apply_glossary_fixes,
     load_term_policy_assets,
 )
-from pipeline.eval.thesis_scoring import normalize_apostrophe
 from pipeline.translate.profiles import (
     get_profile,
     injection_role_for_term,
@@ -26,18 +24,8 @@ from pipeline.translate.profiles import (
 )
 
 
-METRIC_VERSION = "d2l_translate_score_v2"
+METRIC_VERSION = "d2l_translate_score_v2_1"
 DEFAULT_EVAL_ROOT = Path(__file__).resolve().parents[2] / "data" / "eval"
-
-_MASK_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"```.*?```", flags=re.DOTALL),
-    re.compile(r"`[^`]*`"),
-    re.compile(r":[A-Za-z0-9_-]+:`[^`]*`"),
-    re.compile(r"\$[^$\n]*\$"),
-    re.compile(r"https?://[^\s)`]+", flags=re.IGNORECASE),
-    re.compile(r"\b[\w.-]+\.(?:ai|io|com|org)(?:/[^\s)`]*)?", flags=re.IGNORECASE),
-    re.compile(r"\.\. _[^:\n]+:"),
-)
 
 
 @dataclass(frozen=True)
@@ -130,9 +118,10 @@ def score_d2l_translation_run(
             ),
             "samples": _sample_blocks(scope_blocks, passthrough_blocks, translations),
             "limitations": [
-                "D_surface_v2 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
-                "D_surface_v2 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
-                "D_surface_v2 headline is hard-tier only; soft/preserve/entity/ignore_for_consistency tiers are reported for transparency.",
+                "D_surface_v2_1 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
+                "D_surface_v2_1 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
+                "D_surface_v2_1 applies cross-term longest-span allocation; it is still surface matching, not occurrence-level alignment.",
+                "D_surface_v2_1 headline is hard-tier only; soft/preserve/entity/ignore_for_consistency tiers are reported for transparency.",
                 "Eval-overlay glossary fixes remove selected cross-term leakage without mutating frozen runtime memory.",
                 "Caption/image/label blocks are passthrough by P3 design and excluded from B/D denominators.",
             ],
@@ -390,29 +379,63 @@ def _score_registry_consistency(
     profile_name: str,
 ) -> dict[str, Any]:
     term_reports: list[dict[str, Any]] = []
-    source_text_by_block = {block.block_id: block.text for block in scope_blocks}
-    for row in registry_rows:
+    indexed_rows = _registry_rows_for_surface_allocation(registry_rows)
+    row_by_key = {item["owner_id"]: item for item in indexed_rows}
+    block_order = [block.block_id for block in scope_blocks]
+    token_index = _source_token_index(scope_blocks)
+    source_owners_by_block: dict[str, list[SurfaceOwner]] = defaultdict(list)
+    for item in indexed_rows:
+        for block_id in _candidate_scope_block_ids(item["source_term"], block_order, token_index):
+            source_owners_by_block[block_id].append(
+                SurfaceOwner(item["owner_id"], item["source_term"], item["case_sensitive"])
+            )
+    source_blocks_by_key: dict[str, set[str]] = defaultdict(set)
+    for block in scope_blocks:
+        allocated = allocate_spans(block.text, source_owners_by_block.get(block.block_id, []))
+        for owner_id, spans in allocated.items():
+            if spans:
+                source_blocks_by_key[owner_id].add(block.block_id)
+
+    forms_used_by_key: dict[str, Counter[str]] = defaultdict(Counter)
+    for block in scope_blocks:
+        present_keys = [
+            owner_id
+            for owner_id in row_by_key
+            if block.block_id in source_blocks_by_key.get(owner_id, set())
+        ]
+        if not present_keys:
+            continue
+        output = translations.get(block.block_id, "")
+        output_tokens = set(_surface_tokens(output))
+        target_owners: list[SurfaceOwner] = []
+        owner_to_term_form: dict[str, tuple[str, str]] = {}
+        for owner_id in present_keys:
+            item = row_by_key[owner_id]
+            for form in _accepted_registry_forms(item["row"], canonical_only=False):
+                if not _surface_possible(form, output_tokens):
+                    continue
+                form_owner_id = f"{owner_id}\u241f{form}"
+                target_owners.append(SurfaceOwner(form_owner_id, form, item["case_sensitive"]))
+                owner_to_term_form[form_owner_id] = (owner_id, form)
+        allocated_target = allocate_spans(output, target_owners)
+        for form_owner_id, spans in allocated_target.items():
+            if not spans:
+                continue
+            owner_id, form = owner_to_term_form[form_owner_id]
+            # D_surface is block-level: one vote per form per source block.
+            forms_used_by_key[owner_id][form] += 1
+
+    for item in indexed_rows:
+        owner_id = item["owner_id"]
+        row = item["row"]
         source = str(row.get("source_term") or "")
         target = str(row.get("target_term") or "")
-        case_sensitive = _case_sensitive(row)
+        case_sensitive = item["case_sensitive"]
         constraint_strength = str(row.get("constraint_strength") or "soft")
-        source_blocks = [
-            block_id
-            for block_id, text in source_text_by_block.items()
-            if _count_source_matches(text, source, case_sensitive=case_sensitive) > 0
-        ]
+        source_blocks = sorted(source_blocks_by_key.get(owner_id, set()))
         if len(source_blocks) < 2:
             continue
-        candidates = _accepted_registry_forms(row, canonical_only=False)
-        forms_used: Counter[str] = Counter()
-        for block_id in source_blocks:
-            output = translations.get(block_id, "")
-            for candidate, count in _count_non_overlapping_forms(
-                output,
-                candidates,
-                case_sensitive=case_sensitive,
-            ).items():
-                forms_used[candidate] += count
+        forms_used = forms_used_by_key[owner_id]
         distinct = len(forms_used)
         if distinct == 0:
             status = "undetected"
@@ -439,7 +462,7 @@ def _score_registry_consistency(
     }
     headline = by_tier["hard"]
     return {
-        "method": "block_surface_v2",
+        "method": "block_surface_v2_1",
         "alignment": False,
         "headline_ready": False,
         "headline_tier": "hard",
@@ -457,6 +480,55 @@ def _score_registry_consistency(
             if item["constraint_strength"] == "hard" and item["status"] in {"drift", "undetected"}
         ][:30],
     }
+
+
+def _registry_rows_for_surface_allocation(registry_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for index, row in enumerate(registry_rows):
+        source = str(row.get("source_term") or "").strip()
+        if not source:
+            continue
+        result.append({
+            "owner_id": f"term:{index}:{_normalize_source(source)}",
+            "source_term": source,
+            "case_sensitive": _case_sensitive(row),
+            "row": row,
+        })
+    return result
+
+
+def _source_token_index(scope_blocks: list[ScopeBlock]) -> dict[str, set[str]]:
+    index: dict[str, set[str]] = defaultdict(set)
+    for block in scope_blocks:
+        for token in set(_surface_tokens(block.text)):
+            index[token].add(block.block_id)
+    return index
+
+
+def _candidate_scope_block_ids(
+    needle: str,
+    block_order: list[str],
+    token_index: dict[str, set[str]],
+) -> list[str]:
+    tokens = _surface_tokens(needle)
+    if not tokens:
+        return block_order
+    candidate_sets = [token_index.get(token, set()) for token in tokens]
+    if not candidate_sets or any(not items for items in candidate_sets):
+        return []
+    candidates = set.intersection(*candidate_sets)
+    return [block_id for block_id in block_order if block_id in candidates]
+
+
+def _surface_tokens(text: str) -> list[str]:
+    return re.findall(r"\w+", _normalize_source(text), flags=re.UNICODE)
+
+
+def _surface_possible(needle: str, tokens: set[str]) -> bool:
+    needle_tokens = _surface_tokens(needle)
+    if not needle_tokens:
+        return True
+    return all(token in tokens for token in needle_tokens)
 
 
 def _term_report_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
@@ -714,31 +786,17 @@ def _accepted_registry_forms(row: dict[str, Any], *, canonical_only: bool) -> li
     return result
 
 
-@lru_cache(maxsize=8192)
-def _mask_non_prose(text: str) -> str:
-    value = str(text or "")
-    if not value:
-        return ""
-    mask = [False] * len(value)
-    for pattern in _MASK_PATTERNS:
-        for match in pattern.finditer(value):
-            start, end = match.span()
-            for index in range(start, end):
-                mask[index] = True
-    return "".join(" " if is_masked else char for char, is_masked in zip(value, mask, strict=True))
-
-
 def _count_source_matches(
     text: str,
     source_term: str,
     *,
     case_sensitive: bool = False,
 ) -> int:
-    return len(_find_surface_matches(text, source_term, case_sensitive=case_sensitive))
+    return len(find_spans(text, source_term, case_sensitive=case_sensitive))
 
 
 def _has_vi(text: str, needle: str, *, case_sensitive: bool = False) -> bool:
-    return bool(_find_surface_matches(text, needle, case_sensitive=case_sensitive))
+    return bool(find_spans(text, needle, case_sensitive=case_sensitive))
 
 
 def _count_non_overlapping_forms(
@@ -747,79 +805,26 @@ def _count_non_overlapping_forms(
     *,
     case_sensitive: bool = False,
 ) -> Counter[str]:
-    normalized_text = _normalize_for_match(_mask_non_prose(text), case_sensitive=case_sensitive)
-    if not normalized_text:
-        return Counter()
-
-    prepared: list[tuple[str, str, int]] = []
-    for candidate in candidates:
-        pattern = _surface_pattern(candidate, case_sensitive=case_sensitive)
-        if not pattern:
-            continue
-        normalized_candidate = _normalize_for_match(candidate, case_sensitive=case_sensitive).strip()
-        prepared.append((candidate, pattern, len(normalized_candidate)))
-    prepared.sort(key=lambda item: item[2], reverse=True)
-
-    occupied = [False] * len(normalized_text)
+    owners = [SurfaceOwner(candidate, candidate, case_sensitive) for candidate in candidates]
+    allocated = allocate_spans(text, owners)
     used: Counter[str] = Counter()
-    for candidate, pattern, _length in prepared:
-        for match in re.finditer(pattern, normalized_text, flags=re.UNICODE):
-            start, end = match.span()
-            if start == end or any(occupied[start:end]):
-                continue
-            used[candidate] += 1
-            for index in range(start, end):
-                occupied[index] = True
+    for candidate in candidates:
+        if allocated.get(candidate):
             # The D metric is block-level: one vote per form per source block.
-            break
+            used[candidate] += 1
     return used
 
 
-def _find_surface_matches(
-    text: str,
-    needle: str,
-    *,
-    case_sensitive: bool = False,
-) -> list[re.Match[str]]:
-    normalized_text = _normalize_for_match(_mask_non_prose(text), case_sensitive=case_sensitive)
-    pattern = _surface_pattern(needle, case_sensitive=case_sensitive)
-    if not normalized_text or not pattern:
-        return []
-    return list(re.finditer(pattern, normalized_text, flags=re.UNICODE))
-
-
-def _surface_pattern(needle: str, *, case_sensitive: bool = False) -> str:
-    normalized_needle = _normalize_for_match(needle, case_sensitive=case_sensitive).strip()
-    if not normalized_needle:
-        return ""
-    pieces = [piece for piece in re.split(r"\s+", normalized_needle) if piece]
-    if not pieces:
-        return ""
-    body = r"\s+".join(re.escape(piece) for piece in pieces)
-    prefix = r"(?<!\w)" if _is_word_char(normalized_needle[0]) else ""
-    suffix = r"(?!\w)" if _is_word_char(normalized_needle[-1]) else ""
-    return prefix + body + suffix
-
-
 def _normalize_source(text: str) -> str:
-    return unicodedata.normalize("NFC", normalize_apostrophe(str(text))).casefold()
+    return normalize_surface(text).casefold()
 
 
 def _normalize_vi(text: str) -> str:
     return re.sub(
         r"\s+",
         " ",
-        unicodedata.normalize("NFC", normalize_apostrophe(str(text))).casefold().strip(),
+        normalize_surface(text).casefold().strip(),
     )
-
-
-def _normalize_for_match(text: str, *, case_sensitive: bool = False) -> str:
-    normalized = unicodedata.normalize("NFC", normalize_apostrophe(str(text)))
-    return normalized if case_sensitive else normalized.casefold()
-
-
-def _is_word_char(value: str) -> bool:
-    return bool(re.match(r"\w", value, flags=re.UNICODE))
 
 
 def _case_sensitive(row: dict[str, Any]) -> bool:

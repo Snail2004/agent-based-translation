@@ -268,7 +268,7 @@ def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
     assert report["B_tar_vs_gold"]["S0"]["flat"]["overall"] < 1.0
     assert report["D_registry_consistency"]["S0"]["drift_terms"] >= 1
     assert report["D_registry_consistency"]["S1"]["overall"] == 1.0
-    assert report["D_registry_consistency"]["S1"]["method"] == "block_surface_v2"
+    assert report["D_registry_consistency"]["S1"]["method"] == "block_surface_v2_1"
     assert report["D_registry_consistency"]["S1"]["alignment"] is False
     assert report["D_registry_consistency"]["S1"]["headline_ready"] is False
     assert report["D_registry_consistency"]["S1"]["headline_tier"] == "hard"
@@ -426,6 +426,115 @@ def test_calculus_consistent_after_fix(tmp_path: Path) -> None:
     assert calculus["constraint_strength"] == "hard"
     assert calculus["status"] == "consistent"
     assert calculus["forms_used"] == {"giải tích": 2}
+
+
+def test_learning_machine_learning_cross_term_subsumption(tmp_path: Path) -> None:
+    db_path = _fixture_db(tmp_path)
+    conn = sqlite3.connect(db_path)
+    conn.executemany(
+        """
+        INSERT INTO blocks (
+          block_id, doc_id, order_index, chapter_id, block_type, text,
+          original_text, translation_mode
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                "b_ml1",
+                "d2l",
+                6,
+                "d2l_preliminaries",
+                "prose",
+                "Machine learning supports learning.",
+                "Machine learning supports learning.",
+                "translate",
+            ),
+            (
+                "b_ml2",
+                "d2l",
+                7,
+                "d2l_preliminaries",
+                "prose",
+                "Machine learning improves learning.",
+                "Machine learning improves learning.",
+                "translate",
+            ),
+        ],
+    )
+    conn.executemany(
+        """
+        INSERT INTO glossary_entries (
+          glossary_id, doc_id, source_term, target_term, term_type,
+          do_not_translate, occurrences_count, allowed_variants_json, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved')
+        """,
+        [
+            (
+                "gl_learning",
+                "d2l",
+                "learning",
+                "h?c",
+                "term",
+                0,
+                2,
+                json.dumps(["h?c", "h?c m?y"], ensure_ascii=False),
+            ),
+            (
+                "gl_machine_learning",
+                "d2l",
+                "machine learning",
+                "h?c m?y",
+                "term",
+                0,
+                2,
+                json.dumps(["h?c m?y"], ensure_ascii=False),
+            ),
+        ],
+    )
+    conn.executemany(
+        """
+        INSERT INTO translation_runs (
+          run_id, experiment_id, doc_id, block_id, config, stage,
+          output_text, model, prompt_version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            ("tr_s0_ml1", "d2l_p3", "d2l", "b_ml1", "S0", "draft", "H?c m?y h? tr? h?c.", "gpt", "s0"),
+            ("tr_s0_ml2", "d2l_p3", "d2l", "b_ml2", "S0", "draft", "H?c m?y c?i thi?n h?c.", "gpt", "s0"),
+            ("tr_s1_ml1", "d2l_p3", "d2l", "b_ml1", "S1", "draft", "H?c m?y h? tr? h?c.", "gpt", "s1"),
+            ("tr_s1_ml2", "d2l_p3", "d2l", "b_ml2", "S1", "draft", "H?c m?y c?i thi?n h?c.", "gpt", "s1"),
+        ],
+    )
+    conn.commit()
+    conn.close()
+
+    policy_root = _policy_root(
+        tmp_path,
+        hard=["learning", "machine learning"],
+        fixes=[
+            {
+                "source_term": "learning",
+                "op": "remove_variant",
+                "value": "h?c m?y",
+                "justification": "machine learning owns h?c m?y",
+            }
+        ],
+    )
+    report = score_d2l_translation_run(
+        db_path,
+        chapters=["preliminaries"],
+        out_path=tmp_path / "report.json",
+        term_policy_root=policy_root,
+    )
+
+    terms = {
+        item["source_term"]: item
+        for item in report["D_registry_consistency"]["S1"]["terms_all"]
+        if item["source_term"] in {"learning", "machine learning"}
+    }
+
+    assert terms["learning"]["forms_used"] == {"h?c": 2}
+    assert terms["machine learning"]["forms_used"] == {"h?c m?y": 2}
 
 
 def _glossary_hash(db_path: Path) -> str:

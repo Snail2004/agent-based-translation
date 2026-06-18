@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import re
-import unicodedata
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+
+TOOL_ROOT = Path(__file__).resolve().parents[3]
+if str(TOOL_ROOT) not in sys.path:
+    sys.path.insert(0, str(TOOL_ROOT))
+
+from pipeline.eval.surface_match import SurfaceOwner, allocate_spans, find_spans, normalize_surface
 
 from config import THESIS_REPORTS_ROOT
 from services.thesis_readmodel import (
@@ -19,15 +25,6 @@ from services.thesis_readmodel import (
 )
 from services.thesis_scores import load_scores
 
-
-APOSTROPHE_TRANSLATION = str.maketrans({
-    "\u2018": "'",
-    "\u2019": "'",
-    "\u201b": "'",
-    "\u2032": "'",
-    "`": "'",
-    "\u00b4": "'",
-})
 
 
 def load_registry_overlay(
@@ -184,21 +181,32 @@ def _build_source_overlay(
     token_index = _build_token_index(block_texts)
 
     glossary_candidates: list[dict[str, Any]] = []
+    owners_by_block: dict[str, list[SurfaceOwner]] = defaultdict(list)
+    term_by_id: dict[str, dict[str, Any]] = {}
     for term in glossary:
         term_id = str(term.get("term_id") or term.get("glossary_id") or "")
         source_term = str(term.get("source_term") or "").strip()
         if not term_id or not source_term:
             continue
+        term_by_id[term_id] = term
         for block_id in _candidate_block_ids(source_term, block_order, token_index):
-            text = block_texts.get(block_id, "")
             if not _in_scope(term, block_id, block_chapters.get(block_id, "")):
                 continue
-            for start, end, surface in _find_matches(text, source_term):
+            owners_by_block[block_id].append(
+                SurfaceOwner(term_id, source_term, _case_sensitive(term))
+            )
+    for block_id in block_order:
+        text = block_texts.get(block_id, "")
+        allocated = allocate_spans(text, owners_by_block.get(block_id, []))
+        for term_id, spans in allocated.items():
+            term = term_by_id.get(term_id) or {}
+            source_term = str(term.get("source_term") or "").strip()
+            for span in spans:
                 glossary_candidates.append({
                     "id": term_id,
                     "block_id": block_id,
-                    "span": [start, end],
-                    "surface": surface,
+                    "span": [span.start, span.end],
+                    "surface": span.surface,
                     "source_term": source_term,
                     "provenance": "runtime_memory",
                 })
@@ -304,6 +312,8 @@ def _build_target_overlay(
             if not block_id or not target_text:
                 continue
 
+            glossary_owners: list[SurfaceOwner] = []
+            glossary_owner_details: dict[str, dict[str, Any]] = {}
             for term in glossary:
                 term_id = str(term.get("term_id") or term.get("glossary_id") or "")
                 if block_id not in source_glossary_blocks.get(term_id, set()):
@@ -311,21 +321,34 @@ def _build_target_overlay(
                 detail = _lookup_glossary_detail(score_index, config, term)
                 forms, forms_source, scored = _target_forms_for_term(term, detail)
                 for form in forms:
-                    for start, end, surface in _find_matches(target_text, form):
-                        glossary_candidates.append(_target_candidate(
-                            item_id=term_id,
-                            block_id=block_id,
-                            config=config,
-                            start=start,
-                            end=end,
-                            surface=surface,
-                            matched_form=form,
-                            detail=detail,
-                            forms_source=forms_source,
-                            scored=scored,
-                            kind="glossary",
-                        ))
+                    owner_id = f"glossary:{term_id}\u241f{form}"
+                    glossary_owners.append(SurfaceOwner(owner_id, form, _case_sensitive(term)))
+                    glossary_owner_details[owner_id] = {
+                        "term_id": term_id,
+                        "form": form,
+                        "detail": detail,
+                        "forms_source": forms_source,
+                        "scored": scored,
+                    }
+            for owner_id, spans in allocate_spans(target_text, glossary_owners).items():
+                owner = glossary_owner_details[owner_id]
+                for span in spans:
+                    glossary_candidates.append(_target_candidate(
+                        item_id=owner["term_id"],
+                        block_id=block_id,
+                        config=config,
+                        start=span.start,
+                        end=span.end,
+                        surface=span.surface,
+                        matched_form=owner["form"],
+                        detail=owner["detail"],
+                        forms_source=owner["forms_source"],
+                        scored=owner["scored"],
+                        kind="glossary",
+                    ))
 
+            entity_owners: list[SurfaceOwner] = []
+            entity_owner_details: dict[str, dict[str, Any]] = {}
             for entity in entities:
                 entity_id = str(entity.get("entity_id") or "")
                 if block_id not in source_entity_blocks.get(entity_id, set()):
@@ -333,20 +356,31 @@ def _build_target_overlay(
                 detail = _lookup_entity_detail(score_index, config, entity)
                 forms, forms_source, scored = _target_forms_for_entity(entity, detail)
                 for form in forms:
-                    for start, end, surface in _find_matches(target_text, form):
-                        entity_candidates.append(_target_candidate(
-                            item_id=entity_id,
-                            block_id=block_id,
-                            config=config,
-                            start=start,
-                            end=end,
-                            surface=surface,
-                            matched_form=form,
-                            detail=detail,
-                            forms_source=forms_source,
-                            scored=scored,
-                            kind="entity",
-                        ))
+                    owner_id = f"entity:{entity_id}\u241f{form}"
+                    entity_owners.append(SurfaceOwner(owner_id, form, False))
+                    entity_owner_details[owner_id] = {
+                        "entity_id": entity_id,
+                        "form": form,
+                        "detail": detail,
+                        "forms_source": forms_source,
+                        "scored": scored,
+                    }
+            for owner_id, spans in allocate_spans(target_text, entity_owners).items():
+                owner = entity_owner_details[owner_id]
+                for span in spans:
+                    entity_candidates.append(_target_candidate(
+                        item_id=owner["entity_id"],
+                        block_id=block_id,
+                        config=config,
+                        start=span.start,
+                        end=span.end,
+                        surface=span.surface,
+                        matched_form=owner["form"],
+                        detail=owner["detail"],
+                        forms_source=owner["forms_source"],
+                        scored=owner["scored"],
+                        kind="entity",
+                    ))
 
         result[config] = {
             "glossary_by_id": _group_selected_by_id(glossary_candidates),
@@ -554,33 +588,15 @@ def _in_scope(term: dict[str, Any], block_id: str, chapter_id: str) -> bool:
 
 
 def _find_matches(text: str, needle: str) -> list[tuple[int, int, str]]:
-    value = str(text or "")
-    raw_needle = str(needle or "").strip()
-    if not value or not raw_needle:
-        return []
-    normalized_text = _normalize_apostrophe(value)
-    normalized_needle = _normalize_apostrophe(unicodedata.normalize("NFC", raw_needle))
-    if not normalized_needle:
-        return []
-    prefix = r"(?<!\w)" if _is_word_char(normalized_needle[0]) else ""
-    suffix = r"(?!\w)" if _is_word_char(normalized_needle[-1]) else ""
-    pattern = prefix + re.escape(normalized_needle) + suffix
-    return [
-        (match.start(), match.end(), value[match.start():match.end()])
-        for match in re.finditer(pattern, normalized_text, flags=re.IGNORECASE | re.UNICODE)
-    ]
-
-
-def _is_word_char(value: str) -> bool:
-    return bool(re.match(r"\w", value, flags=re.UNICODE))
-
-
-def _normalize_apostrophe(text: str) -> str:
-    return str(text or "").translate(APOSTROPHE_TRANSLATION)
+    return find_spans(text, needle)
 
 
 def _norm_key(text: str) -> str:
-    return unicodedata.normalize("NFC", _normalize_apostrophe(str(text or ""))).casefold().strip()
+    return normalize_surface(text).casefold().strip()
+
+
+def _case_sensitive(row: dict[str, Any]) -> bool:
+    return bool(int(row.get("case_sensitive") or 0))
 
 
 def _dedupe_forms(values: Any) -> list[str]:

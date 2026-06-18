@@ -22,7 +22,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 D2L_REPORT = {
     "scored_at": "2026-06-14T12:47:05.501150+00:00",
-    "metric_version": "d2l_translate_score_v2",
+    "metric_version": "d2l_translate_score_v2_1",
     "experiment_id": "d2l_p3",
     "profile": "technical_d2l_v1",
     "doc_id": "d2l",
@@ -67,7 +67,7 @@ D2L_REPORT = {
     },
     "D_registry_consistency": {
         "S0": {
-            "method": "block_surface_v2",
+            "method": "block_surface_v2_1",
             "alignment": False,
             "headline_ready": False,
             "overall": 0.5930,
@@ -117,7 +117,7 @@ D2L_REPORT = {
             ],
         },
         "S1": {
-            "method": "block_surface_v2",
+            "method": "block_surface_v2_1",
             "alignment": False,
             "headline_ready": False,
             "overall": 0.7007,
@@ -163,7 +163,7 @@ D2L_REPORT = {
     },
     "injection": {"registry": {"raw_registry": 1608}},
     "stage_gate": {"scope_equals_translation_runs": {"S0": True, "S1": True}},
-    "limitations": ["D_surface_v2 note"],
+    "limitations": ["D_surface_v2_1 note"],
 }
 
 TI_S0_REPORT = {
@@ -336,7 +336,7 @@ def test_d2l_headline_has_provenance(tmp_path):
     b_s0 = next(h for h in headlines if h["name"] == "B_tar_vs_gold_S0")
     assert b_s0["value"] == 0.7639  # occurrence_weighted
     assert b_s0["domain"] == "d2l"
-    assert b_s0["provenance"]["metric_version"] == "d2l_translate_score_v2"
+    assert b_s0["provenance"]["metric_version"] == "d2l_translate_score_v2_1"
     assert b_s0["provenance"]["experiment_id"] == "d2l_p3"
 
     b_s1 = next(h for h in headlines if h["name"] == "B_tar_vs_gold_S1")
@@ -346,8 +346,8 @@ def test_d2l_headline_has_provenance(tmp_path):
     d_s1 = next(h for h in headlines if h["name"] == "D_registry_consistency_S1")
     assert d_s1["value"] == 0.7007
     assert d_s1["drift_terms"] == 213
-    assert d_s1["metric_label"] == "D_surface_v2 (hard-tier)"
-    assert d_s1["method"] == "block_surface_v2"
+    assert d_s1["metric_label"] == "D_surface_v2.1 (hard-tier)"
+    assert d_s1["method"] == "block_surface_v2_1"
     assert d_s1["alignment"] is False
     assert d_s1["headline_ready"] is False
 
@@ -372,7 +372,7 @@ def test_d2l_drift_returns_forms_used_from_report(tmp_path):
     assert 10 in ai_s1["forms_used"].values()
     assert ai_s1["target_term"]
     assert ai_s1["drift_category"] == "glossary-term"
-    assert ai_s1["metric_label"] == "D_surface_v2 (hard-tier)"
+    assert ai_s1["metric_label"] == "D_surface_v2.1 (hard-tier)"
     assert ai_s1["alignment"] is False
 
     model_s1 = next(

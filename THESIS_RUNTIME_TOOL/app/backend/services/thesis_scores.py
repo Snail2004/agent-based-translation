@@ -107,7 +107,7 @@ def _d2l_headlines(report: dict[str, Any], report_path: str) -> list[dict[str, A
         if cfg:
             headlines.append({
                 "name": f"D_registry_consistency_{config}",
-                "metric_label": "D_surface_v2 (hard-tier)",
+                "metric_label": "D_surface_v2.1 (hard-tier)",
                 "value": cfg.get("overall"),
                 "detected_only": cfg.get("detected_only"),
                 "terms": cfg.get("terms"),
@@ -159,7 +159,7 @@ def _d2l_drift(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "forms_used": term.get("forms_used") or {},
                 "source_blocks": term.get("source_blocks"),
                 "drift_category": "glossary-term",
-                "metric_label": "D_surface_v2 (hard-tier)",
+                "metric_label": "D_surface_v2.1 (hard-tier)",
                 "constraint_strength": term.get("constraint_strength"),
                 "method": cfg.get("method"),
                 "alignment": cfg.get("alignment"),

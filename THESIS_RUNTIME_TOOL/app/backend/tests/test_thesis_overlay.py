@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -9,6 +10,9 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
+TOOL_ROOT = Path(__file__).resolve().parents[3]
+if str(TOOL_ROOT) not in sys.path:
+    sys.path.insert(0, str(TOOL_ROOT))
 
 from test_thesis_readmodel import create_fixture_db
 
@@ -43,6 +47,19 @@ def _write_d2l_report(reports_root: Path) -> None:
             },
             fh,
         )
+
+
+def test_registry_overlay_masks_urls_and_inline_markup():
+    from pipeline.eval.surface_match import MASK_PATTERNS
+    from services.thesis_overlay import _find_matches
+
+    assert any("https" in item.pattern for item in MASK_PATTERNS)
+
+    text = "Visit https://discuss.d2l.ai/ for AI help and see :numref:`sec_ai`."
+
+    matches = _find_matches(text, "AI")
+
+    assert [surface for _, _, surface in matches] == ["AI"]
 
 
 def test_registry_overlay_builds_source_and_target_spans_from_runtime_only(tmp_path):
@@ -122,3 +139,154 @@ def test_registry_overlay_scopes_by_block(tmp_path):
     target_spans = overlay["target_by_config"]["S0"]["glossary_by_id"]["g-runtime"]["occurrences"]
     assert {span["block_id"] for span in source_spans} == {"b001"}
     assert {span["block_id"] for span in target_spans} == {"b001"}
+
+
+def test_overlay_matches_scorer_forms_with_cross_term_subsumption(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    db_path = tmp_path / "d2l_p1" / "memory.sqlite3"
+    with sqlite3.connect(db_path) as con:
+        con.execute(
+            "INSERT INTO blocks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "b002",
+                "doc_fixture",
+                2,
+                None,
+                "prose",
+                None,
+                "ch01",
+                None,
+                "Machine learning supports learning.",
+                "Machine learning supports learning.",
+                None,
+                None,
+                None,
+                None,
+                None,
+                "2026-06-15",
+                "2026-06-15",
+            ),
+        )
+        con.executemany(
+            "INSERT INTO glossary_entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [
+                (
+                    "g-learning",
+                    "doc_fixture",
+                    "learning",
+                    "học",
+                    "technical",
+                    "document",
+                    None,
+                    None,
+                    0,
+                    0,
+                    json.dumps(["học"], ensure_ascii=False),
+                    "[]",
+                    "[]",
+                    "[]",
+                    0.9,
+                    "candidate",
+                    2,
+                    "b002",
+                    "[]",
+                    "2026-06-15",
+                    "2026-06-15",
+                ),
+                (
+                    "g-machine-learning",
+                    "doc_fixture",
+                    "machine learning",
+                    "học máy",
+                    "technical",
+                    "document",
+                    None,
+                    None,
+                    0,
+                    0,
+                    json.dumps(["học máy"], ensure_ascii=False),
+                    "[]",
+                    "[]",
+                    "[]",
+                    0.9,
+                    "candidate",
+                    2,
+                    "b002",
+                    "[]",
+                    "2026-06-15",
+                    "2026-06-15",
+                ),
+            ],
+        )
+        con.execute(
+            "INSERT INTO translation_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "run-s1-b002",
+                "exp_fixture",
+                "doc_fixture",
+                "b002",
+                "S1",
+                "translate",
+                None,
+                None,
+                "Học máy hỗ trợ học.",
+                "gpt-test",
+                "p1",
+                0.3,
+                1,
+                "fp",
+                0.0,
+                10,
+                "2026-06-15",
+                "w1",
+            ),
+        )
+    reports_root = tmp_path / "reports"
+    reports_root.mkdir()
+    with (reports_root / "d2l_translation_metrics_v2.json").open("w", encoding="utf-8") as fh:
+        json.dump(
+            {
+                "metric_version": "d2l_translate_score_v2_1",
+                "experiment_id": "d2l_p1",
+                "D_registry_consistency": {
+                    "S1": {
+                        "method": "block_surface_v2_1",
+                        "terms_all": [
+                            {
+                                "source_term": "learning",
+                                "target_term": "học",
+                                "status": "consistent",
+                                "forms_used": {"học": 1},
+                                "constraint_strength": "hard",
+                            },
+                            {
+                                "source_term": "machine learning",
+                                "target_term": "học máy",
+                                "status": "consistent",
+                                "forms_used": {"học máy": 1},
+                                "constraint_strength": "hard",
+                            },
+                        ],
+                    }
+                },
+            },
+            fh,
+            ensure_ascii=False,
+        )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        block_id="b002",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+    )
+
+    source = overlay["source"]["glossary_by_id"]
+    assert [span["surface"] for span in source["g-machine-learning"]["occurrences"]] == ["Machine learning"]
+    assert [span["surface"] for span in source["g-learning"]["occurrences"]] == ["learning"]
+
+    target = overlay["target_by_config"]["S1"]["glossary_by_id"]
+    assert [span["surface"] for span in target["g-machine-learning"]["occurrences"]] == ["Học máy"]
+    assert [span["surface"] for span in target["g-learning"]["occurrences"]] == ["học"]

@@ -1,3 +1,4 @@
 source_term,op,value,justification
 calculus,remove_variant,phép tính,"phép tính is the natural Vietnamese rendering of calculation/calculations, not calculus as a mathematical field."
 rules,set_canonical,quy tắc,"In mathematical and technical Vietnamese, rules is normally rendered as quy tắc rather than luật."
+learning,remove_variant,học máy,"học máy is the Vietnamese rendering of machine learning, not standalone learning."

@@ -1,6 +1,6 @@
 # TASK_EV_D2L_03b_cross_term_subsumption — Shared surface-matcher v2.1 (scorer+overlay dùng CHUNG) + cross-term subsumption (longest-source/target across terms) + eval-overlay variant cleanup; 0 API, KHÔNG re-translate
 
-- **Status:** READY
+- **Status:** REVIEW
 - **Refs:** THESIS_ARCHITECTURE_LOCK §10 (rr) · (pp)/(qq) thang remediation · memory `d2l-scorer-validity-and-remediation-ladder`, `dont-tune-intervention-on-test-baseline` · EV_D2L_02 (47620f4), EV_D2L_03 (3918a8a)
 
 ## 1. Bối cảnh & mục tiêu *(Claude viết)*
@@ -77,6 +77,82 @@ python -m pipeline.scripts.score_run --db data/jobs/d2l_p1/memory.sqlite3 --expe
 python -m pytest pipeline/tests app/backend/tests -q
 ```
 
-## 5. Implementation notes *(CodeX điền)*
+## 5. Implementation notes *(CodeX, 2026-06-18)*
+
+### 5.1 Scope implemented
+
+- Added shared deterministic matcher `pipeline/eval/surface_match.py`:
+  - length-preserving `MASK_PATTERNS`, `mask_non_prose()`, `normalize_surface()`;
+  - `find_spans()` with offset-preserving regex matching and `case_sensitive`;
+  - `allocate_spans()` for longest-first, non-overlap allocation across owners.
+- Refactored `pipeline/eval/d2l_translate_score.py` D-scorer to use shared matcher:
+  - source spans are allocated jointly across registry terms per block, so `machine learning` owns the full source span and `learning` does not also claim it;
+  - target forms are allocated jointly across terms present in each source block;
+  - report version is now `d2l_translate_score_v2_1`, method `block_surface_v2_1`;
+  - limitations now explicitly say this remains surface matching, not alignment.
+- Refactored `app/backend/services/thesis_overlay.py` to use the same matcher:
+  - removed local URL/code/math mask copy and local regex matcher;
+  - source and target overlay use joint allocation, matching scorer behavior;
+  - app runtime can import `pipeline.eval.surface_match` when launched from `app/backend`.
+- Added eval-only cleanup:
+  - `data/eval/d2l_glossary_fixes.csv`: `learning,remove_variant,học máy`.
+  - Frozen runtime DB was not written.
+- Updated score readmodel label to `D_surface_v2.1 (hard-tier)`.
+
+### 5.2 Re-score output
+
+Command:
+
+```bash
+python -m pipeline.scripts.score_run --db data/jobs/d2l_p1/memory.sqlite3 --experiment d2l_p3 --chapters d2l_introduction d2l_preliminaries d2l_linear_networks d2l_multilayer_perceptrons --config S1 --gold-variants data/eval/d2l_gold_variants.csv --out data/reports/d2l_translation_metrics_v2.json
+```
+
+Output:
+
+```text
+S0: B flat=0.7541 (2322 pairs), B recurring=0.7540 (2285 pairs), D=0.7576 (396 terms)
+S1: B flat=0.8191 (2322 pairs), B recurring=0.8214 (2285 pairs), D=0.9066 (396 terms)
+S1 A registry TAR=0.9524 (8370 pairs)
+```
+
+Measured runtime after token-index prefilter: about 126s on this machine. This is 0 API and deterministic, but still slower than ideal; I am flagging it as a residual perf note rather than widening this task further.
+
+### 5.3 Spot checks from report and overlay
+
+- `metric_version`: `d2l_translate_score_v2_1`.
+- `S1 learning`: `soft`, `drift`, `forms_used={"học": 18, "quá trình học": 2}`; **no `học máy`**.
+- `S1 machine learning`: `hard`, `drift`, `forms_used={"học máy": 56, "máy học": 1, "machine learning": 1}`.
+- `S1 calculus`: `hard`, `consistent`, `forms_used={"giải tích": 6}`.
+- Real block `d2l_introduction_index_b003`:
+  - source overlay: `gl_machine_learning -> ["machine learning"]`, `gl_learning -> []`;
+  - target overlay S0/S1: `gl_machine_learning -> ["học máy"]`, `gl_learning -> []`.
+
+### 5.4 Frozen DB guard
+
+`glossary_entries` hash before and after re-score:
+
+```text
+58e7797059ec3adbf041cd528efa9a671d3af00c60cf9ac3c0485d07eb5bacdf
+```
+
+No runtime DB mutation.
+
+### 5.5 Verification
+
+```bash
+python -m pytest -p no:cacheprovider pipeline\tests\test_surface_match.py pipeline\tests\test_d2l_translate_score.py -q
+# 16 passed in 7.88s
+
+python -m pytest -p no:cacheprovider app\backend\tests\test_thesis_overlay.py -q
+# 5 passed in 1.03s
+
+python -m pytest -p no:cacheprovider app\backend\tests\test_thesis_overlay.py app\backend\tests\test_thesis_scores.py -q
+# 15 passed in 1.60s
+
+python -m pytest -p no:cacheprovider pipeline\tests app\backend\tests -q
+# 268 passed in 147.82s (0:02:27)
+```
+
+Pytest still emits the known Windows temp symlink cleanup `PermissionError` after completion; exit code is 0 and tests pass.
 
 ## 6. Review *(Claude điền)*
