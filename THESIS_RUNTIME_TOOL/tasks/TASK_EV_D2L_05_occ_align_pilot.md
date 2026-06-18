@@ -1,8 +1,8 @@
 # TASK_EV_D2L_05_occ_align_pilot — OCC_ALIGN_PILOT_01: occurrence-level alignment **PILOT** (1 chương) — 2 nhánh **NGANG HÀNG** (independent aligner ⟂ self-report+verify), **audit NGƯỜI quyết**, **post-hoc trên frozen output**, KHÔNG re-translate
 
-- **Status:** READY (Claude, 2026-06-18; tightened sau review GLM-5.2: single-annotator plan-B, cache nhánh A, shuffle-seed, cost-estimate + instrument-identity)
+- **Status:** DONE / PASS (impl) (Claude, 2026-06-19; reviewed §5 + code độc lập) — REVIEW (CodeX, 2026-06-19); READY (Claude, 2026-06-18)
 - **Refs:** memory `d2l-scorer-validity-and-remediation-ladder`, `dont-tune-intervention-on-test-baseline` · THESIS_ARCHITECTURE_LOCK §10 (uu)/(tt)/(ss) · EV_D2L_03b (shared `pipeline/eval/surface_match.py`) · RunControl cost-gate (APP-C01) · 3-bên hội tụ Claude+GLM-5.2+user 2026-06-18.
-- **Branch/Commit:** (điền khi imple xong)
+- **Branch/Commit:** local working tree only; not committed per task protocol.
 
 ## 1. Bối cảnh & mục tiêu *(Claude viết)*
 
@@ -135,8 +135,151 @@ python -m pytest pipeline/tests app/backend/tests -q
 
 ## 5. Implementation notes *(CodeX điền)*
 
-(để trống — implementer điền + đặt Status REVIEW, KHÔNG commit)
+### Files changed
+
+- Added `pipeline/eval/occ_align.py`.
+- Added scripts:
+  - `pipeline/scripts/occ_align.py`
+  - `pipeline/scripts/occ_align_sample.py`
+  - `pipeline/scripts/occ_align_audit.py`
+- Added `pipeline/tests/test_occ_align.py`.
+- Added dependency pin `simalign==0.4` to `pipeline/requirements.txt`.
+- Generated pilot artifacts:
+  - `data/eval/occ_align_gold_d2l_preliminaries.csv` (60 proposer-blind rows; gold fields empty)
+  - `data/eval/occ_align_simalign_S0.jsonl` (32 proposal rows, sample scope)
+  - `data/eval/occ_align_simalign_S1.jsonl` (28 proposal rows, sample scope)
+
+### Implemented
+
+- `build_occ_frame(...)` reuses `surface_match.allocate_spans(..., language="en")` and stable `occ_id = block_id:start:end:term_slug`.
+- Branch A `--method simalign` uses `simalign==0.4`, default `model=bert`, `method=itermax`, `seed=42`, no paid API.
+- Branch A has per-block JSONL cache under `data/cache/occ_align/` and filters cached rows by current `occ_id` sample scope.
+- Branch B `--method selfreport` has:
+  - post-hoc prompt over frozen source/target only;
+  - identical S0/S1 template;
+  - no glossary payload in S0 or S1 prompt;
+  - model identity guard against recorded `translation_runs.model`;
+  - `--preview-only` cost/token estimate and confirm-token;
+  - real run path protected by `--confirm-token` and `LLMClient` cache.
+- `occ_align_sample` now has `--max-rows` (default 60) in addition to `--cap-per-term`; without this the chapter would emit 1644 rows, which is not a human-audit pilot.
+- `occ_align_audit` supports single-annotator diagnostic gate, per-branch S0/S1 accuracy, differential, hallucination/miss rate, simple Cohen kappa when two real annotators are present, and registry blindspot count (`gold_surface` outside accepted forms).
+
+### Important deviation / finding
+
+The original task estimate for `d2l_preliminaries` was too small. Real frame from current DB:
+
+- source occurrences in chapter: **2041**
+- full self-report preview without sample: **292 calls**, **246,268 prompt tokens**, **1,196,032 max output tokens**, estimated worst-case **$2.453631** for S0 alone
+- full SimAlign S0 command timed out at 10 minutes and later produced a full 2041-row output, showing that full-chapter CPU alignment is not a small pilot operation.
+
+Therefore implementation keeps full mode available but the practical pilot path is sample-scoped:
+
+```bash
+python -m pipeline.scripts.occ_align_sample --chapter d2l_preliminaries \
+  --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json \
+  --cap-per-term 3 --max-rows 60 --seed 42 \
+  --out data/eval/occ_align_gold_d2l_preliminaries.csv
+
+python -m pipeline.scripts.occ_align --method simalign --config S0 --chapter d2l_preliminaries \
+  --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json \
+  --sample-csv data/eval/occ_align_gold_d2l_preliminaries.csv \
+  --out data/eval/occ_align_simalign_S0.jsonl
+
+python -m pipeline.scripts.occ_align --method simalign --config S1 --chapter d2l_preliminaries \
+  --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json \
+  --sample-csv data/eval/occ_align_gold_d2l_preliminaries.csv \
+  --out data/eval/occ_align_simalign_S1.jsonl
+```
+
+This is not a silent relaxation: it matches the human-audit pilot size (60 rows) and avoids spending either API money or excessive CPU on un-audited occurrences.
+
+### Commands run
+
+```bash
+python -m pip install simalign==0.4
+
+python -m pytest -p no:cacheprovider pipeline\tests\test_occ_align.py -q
+# 12 passed in 1.78s
+
+python -m pipeline.scripts.occ_align_sample --chapter d2l_preliminaries \
+  --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json \
+  --cap-per-term 3 --max-rows 60 --seed 42 \
+  --out data/eval/occ_align_gold_d2l_preliminaries.csv
+# occurrences=2041, rows=60
+
+python -m pipeline.scripts.occ_align --method selfreport --config S0 --chapter d2l_preliminaries \
+  --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json \
+  --sample-csv data/eval/occ_align_gold_d2l_preliminaries.csv \
+  --out data/eval/occ_align_selfreport_S0.jsonl --preview-only
+# calls=31, occurrences=32, estimated_prompt_tokens=18240,
+# estimated_max_output_tokens=126976, estimated_uncached_cost_usd=0.258512,
+# confirm_token=719da84846ad
+
+python -m pipeline.scripts.occ_align --method selfreport --config S1 --chapter d2l_preliminaries \
+  --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json \
+  --sample-csv data/eval/occ_align_gold_d2l_preliminaries.csv \
+  --out data/eval/occ_align_selfreport_S1.jsonl --preview-only
+# calls=26, occurrences=28, estimated_prompt_tokens=16788,
+# estimated_max_output_tokens=106496, estimated_uncached_cost_usd=0.217189,
+# confirm_token=99bdbb9acacc
+
+python -m pipeline.scripts.occ_align --method simalign --config S0 --chapter d2l_preliminaries \
+  --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json \
+  --sample-csv data/eval/occ_align_gold_d2l_preliminaries.csv \
+  --out data/eval/occ_align_simalign_S0.jsonl
+# rows=32, cache=per_block
+
+python -m pipeline.scripts.occ_align --method simalign --config S1 --chapter d2l_preliminaries \
+  --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json \
+  --sample-csv data/eval/occ_align_gold_d2l_preliminaries.csv \
+  --out data/eval/occ_align_simalign_S1.jsonl
+# rows=28, cache=per_block
+
+python -m pytest -p no:cacheprovider pipeline\tests\test_occ_align.py pipeline\tests\test_surface_match.py pipeline\tests\test_d2l_translate_score.py -q
+# 31 passed in 9.92s
+
+python -m pytest -p no:cacheprovider pipeline\tests app\backend\tests -q
+# 284 passed in 162.50s
+```
+
+Pytest on Windows still prints the known atexit `PermissionError` while cleaning `D:\temp\pytest-of-Snail\pytest-current`, but exit code was 0 and all tests passed.
+
+### Not run
+
+- Self-report real API calls were **not** run. Only preview/cost-gate was exercised.
+- `occ_align_audit` production was **not** run because `occ_align_gold_d2l_preliminaries.csv` is intentionally blank for human annotation. Unit tests cover gate behavior.
 
 ## 6. Review *(Claude điền)*
 
-(để trống — Claude tái kiểm độc lập + verdict + commit)
+**Verdict: PASS (implementation/machinery).** Tái kiểm độc lập trên repo thật (KHÔNG tin §5).
+
+**A. Frozen + tests (tự chạy):**
+- **Frozen DB UNCHANGED:** SHA256 hiện == `DA0F687894090D43B75A3AE52BA71EC1EDF85DAB3198C9F86039879365D464B8` (hash frozen EV-03b) → pilot chỉ ĐỌC, không ghi DB.
+- Tự chạy `pytest pipeline/tests/test_occ_align.py` → **12 passed**. WinError temp-symlink lúc thoát = noise đã biết, benign.
+
+**B. LOCK enforce + CÓ test (không chỉ tài liệu):**
+- L3 verify≠correspondence: `test_verify_catches_hallucination` + `test_verify_misses_misattribution` (form-glossary có thật nhưng sai occ → verify PASS, ghi rõ cần audit). ✅
+- L2 S0 mù glossary: `test_s0_prompt_has_no_glossary`. ✅
+- Branch B model=translator: script `raise SystemExit` nếu `llm_config.model != translation_model`; `test_selfreport_model_is_translator` đọc `gpt-5.4-mini`. ✅
+- L4 gate a-priori (hardcode `min(acc)>=0.90 AND differential<=0.03`, KHÔNG chỉnh-sau) + single_annotator→`diagnostic_only`: `test_single_annotator_blocks_headline` (acc=1.0 vẫn diagnostic). ✅
+- L1/R2 sampler stratified shuffle(seed=42)+cap/term+proposer-blind+provenance: `test_sampler_stratified_shuffle`. ✅
+- L5 cost-gate (preview→confirm_token) + cache byte-identical: 2 test. ✅
+
+**C. Integration THẬT (chống green-tests-che-dead-integration):**
+- Production wire `make_simalign_aligner` (SimAlign thật) vào ĐÚNG `align_independent` mà test wire FakeAligner → path production == path test.
+- Artifacts THẬT: S0 32 / S1 28 rows, nội dung hợp lý (gradients→"gradient", variable→"biến", bert/itermax). 3 S0 + 1 S1 no-align = `_missing_proposal` (SimAlign không căn được → human gold phân xử). Aligner rows == gold rows từng config. ✅
+- **Ngữ cảnh GIỮ khi sample-scoped (rủi-ro-validity #1):** `align_independent`/`render_selfreport_messages` đọc NGUYÊN block source+target; `--sample-csv` chỉ lọc occ EMIT, KHÔNG cắt input align → đã loại.
+
+**D. Sample-scoping deviation: CHẤP NHẬN + mình NHẬN lỗi spec.** Full self-report = 2041 occ → 292 calls / 246k tok / ~$2.45 (S0 riêng). **Ước lượng ~$0.05 trong spec của mình SAI** (tưởng ~60 calls tổng; thực per-block full-chapter). `--max-rows 60` + `--sample-csv` rẻ HƠN và đúng mục đích pilot hơn. Stratification đa dạng: tier {preserve16/hard17/soft14/ignore8/entity5}, status {drift16/consistent17/undetected10/unknown17} — KHÔNG lặp bias EV-03b (6 term/100% drift).
+
+**E. Follow-up (KHÔNG chặn PASS):**
+1. **Self-report localize = `find_spans[0]` (match đầu)** → rủi ro misattribution khi target-surface lặp. **Mình đo thực tế: 0/60 occ at-risk** (không occ nào có cùng src_term ≥2× trong 1 block+config) → KHÔNG ảnh hưởng pilot này, chạy as-is OK. Sửa (offset/Nth-match/context-anchor) chỉ khi scale ra sample có surface lặp.
+2. SimAlign cold-start determinism chưa tự re-run (dựa pin simalign==0.4 + cpu + seed + per-block-cache + test cache).
+3. 17/60 status "unknown" = registry-term trong source nhưng không ở `terms_all` đã chấm (occ<ngưỡng) → bình thường; gold người vẫn chấm.
+
+**F. Pilot CHƯA chạy thật — 3 bước USER trước gate decision:**
+1. Self-report thật: `occ_align --method selfreport --sample-csv … --preview-only` → confirm-token → chạy thật (gpt-5.4-mini; preview thực S0 31 calls/$0.26, S1 26 calls/$0.22 — tổng ~$0.48, KHÔNG phải $2.45).
+2. **Hand-label 60 dòng gold** (cột `gold_*`). **Solo → gate = `diagnostic_only`** dù acc cao; muốn headline cần annotator-2 NGƯỜI trên (ít nhất) subsample để có κ.
+3. `occ_align_audit` → `occ_align_pilot.json` (acc_S0/S1, differential, κ, blindspot, gate).
+
+**Headline:** chưa có — đúng thiết kế (gate chờ gold người). Machinery PASS, sẵn sàng chạy.
