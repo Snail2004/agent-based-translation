@@ -1,0 +1,1048 @@
+{
+  "n_override": 57,
+  "denominator": "terms where S0 status==consistent AND dominant(S1)!=dominant(S0)",
+  "judges_are_all_LLM": true,
+  "human_expert_anchor": "NONE (stated limitation)",
+  "judge_provenance": {
+    "2.5flash_api_swap_blind": "pipeline Gemini-2.5-flash, blind worksheet, 2-orientation swap, conservative resolve (LOW due to swap-conservatism -> many lateral; artifact-low)",
+    "3.1pro_web_aiCurated": "Gemini-3.1-Pro web, screenshots + deep analysis, USER-CURATED (NOT independent human; HIGH outlier)",
+    "3.1pro_cold_pack": "Gemini-3.1-Pro cold Antigravity session, read judge_pack_external.md only",
+    "3.5flash_cold_pack": "Gemini-3.5-flash cold Antigravity session",
+    "opus46_cold_pack": "Claude-Opus-4.6 cold Antigravity session (CROSS-FAMILY independent confirmation)"
+  },
+  "per_judge": {
+    "2.5flash_api_swap_blind": {
+      "harm": 12,
+      "improve": 17,
+      "lateral": 28,
+      "harm_pct": 21.1
+    },
+    "3.1pro_web_aiCurated": {
+      "harm": 27,
+      "improve": 21,
+      "lateral": 9,
+      "harm_pct": 47.4
+    },
+    "3.1pro_cold_pack": {
+      "harm": 21,
+      "improve": 21,
+      "lateral": 15,
+      "harm_pct": 36.8
+    },
+    "3.5flash_cold_pack": {
+      "harm": 18,
+      "improve": 15,
+      "lateral": 24,
+      "harm_pct": 31.6
+    },
+    "opus46_cold_pack": {
+      "harm": 22,
+      "improve": 17,
+      "lateral": 18,
+      "harm_pct": 38.6
+    }
+  },
+  "headline_cold_panel_majority": {
+    "judges": [
+      "3.1pro_cold_pack",
+      "3.5flash_cold_pack",
+      "opus46_cold_pack"
+    ],
+    "harm": 19,
+    "improve": 17,
+    "lateral": 21,
+    "harm_pct": 33.3,
+    "improve_pct": 29.8,
+    "interpretation": "harm ~= improve (coin-flip): overriding a consistent S0 baseline is NOT a reliable improvement; cross-family Opus (38.6%) confirms harm is not a single-model artifact"
+  },
+  "pairwise_3way_agreement_pct": {
+    "2.5flash_api_swap_blind": {
+      "2.5flash_api_swap_blind": 100.0,
+      "3.1pro_web_aiCurated": 46.0,
+      "3.1pro_cold_pack": 49.0,
+      "3.5flash_cold_pack": 53.0,
+      "opus46_cold_pack": 51.0
+    },
+    "3.1pro_web_aiCurated": {
+      "2.5flash_api_swap_blind": 46.0,
+      "3.1pro_web_aiCurated": 100.0,
+      "3.1pro_cold_pack": 63.0,
+      "3.5flash_cold_pack": 49.0,
+      "opus46_cold_pack": 60.0
+    },
+    "3.1pro_cold_pack": {
+      "2.5flash_api_swap_blind": 49.0,
+      "3.1pro_web_aiCurated": 63.0,
+      "3.1pro_cold_pack": 100.0,
+      "3.5flash_cold_pack": 70.0,
+      "opus46_cold_pack": 70.0
+    },
+    "3.5flash_cold_pack": {
+      "2.5flash_api_swap_blind": 53.0,
+      "3.1pro_web_aiCurated": 49.0,
+      "3.1pro_cold_pack": 70.0,
+      "3.5flash_cold_pack": 100.0,
+      "opus46_cold_pack": 68.0
+    },
+    "opus46_cold_pack": {
+      "2.5flash_api_swap_blind": 51.0,
+      "3.1pro_web_aiCurated": 60.0,
+      "3.1pro_cold_pack": 70.0,
+      "3.5flash_cold_pack": 68.0,
+      "opus46_cold_pack": 100.0
+    }
+  },
+  "unanimous_cold_harm": [
+    "MNIST dataset",
+    "Vanishing and Exploding Gradients",
+    "bandits",
+    "covariate shift",
+    "manipulating",
+    "regularization term",
+    "regularizing",
+    "robotics",
+    "symmetry",
+    "targets",
+    "test accuracy"
+  ],
+  "unanimous_cold_improve": [
+    "Universal Approximators",
+    "activations",
+    "additive noise",
+    "batch size",
+    "data examples",
+    "data instance",
+    "heuristics",
+    "membership",
+    "offset",
+    "random experiment",
+    "real-valued scalars",
+    "target"
+  ],
+  "instrument_artifacts_excluded_from_robust": [
+    "MNIST dataset",
+    "membership"
+  ],
+  "caveats": [
+    "ALL judges are LLM; NO human-expert anchor (author is not a domain expert for technical VI ML terminology). Stated as thesis limitation / future work.",
+    "3.1pro_web judge was AI-analyzed + user-curated (hybrid), HIGH outlier 47%; reported separately, not in headline.",
+    "2.5flash_swap is conservative (swap contradictions -> lateral), artifact-LOW 21%; reported separately.",
+    "Headline = majority vote of 3 cold model-diverse blind judges on the controlled pack.",
+    "MNIST dataset & membership are highlight/sub-string instrument artifacts (judges scored the marked span, not a real S0-vs-S1 difference); excluded from robust lists.",
+    "N=57 diagnostic; single override chapter-scope frozen output; post-hoc, no re-translate."
+  ],
+  "per_item": [
+    {
+      "item_id": "mt_fashion_mnist_dataset_b8ddab06eb",
+      "term": "Fashion-MNIST dataset",
+      "tier": "preserve",
+      "s0": "bộ dữ liệu Fashion-MNIST",
+      "s1": "tập dữ liệu Fashion-MNIST",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_mnist_dataset_923cfe4011",
+      "term": "MNIST dataset",
+      "tier": "preserve",
+      "s0": "bộ dữ liệu MNIST",
+      "s1": "MNIST",
+      "cold_majority": "harm",
+      "instrument_artifact": true,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_universal_approximators_c7cc5b991a",
+      "term": "Universal Approximators",
+      "tier": "hard",
+      "s0": "bộ xấp xỉ phổ dụng",
+      "s1": "bộ xấp xỉ phổ quát",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_vanishing_and_exploding_gradients_c51a803991",
+      "term": "Vanishing and Exploding Gradients",
+      "tier": "hard",
+      "s0": "gradient biến mất và bùng nổ",
+      "s1": "độ dốc biến mất và bùng nổ",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_activations_9afd89eb88",
+      "term": "activations",
+      "tier": "soft",
+      "s0": "các kích hoạt",
+      "s1": "giá trị kích hoạt",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_additive_noise_7a444cd8ee",
+      "term": "additive noise",
+      "tier": "hard",
+      "s0": "nhiễu cộng thêm",
+      "s1": "nhiễu cộng",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_affine_transformations_e8551c005d",
+      "term": "affine transformations",
+      "tier": "hard",
+      "s0": "phép biến đổi affine",
+      "s1": "biến đổi affine",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_annotation_2e76f54422",
+      "term": "annotation",
+      "tier": "soft",
+      "s0": "gán nhãn",
+      "s1": "chú giải",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_bandits_5d196d3aa2",
+      "term": "bandits",
+      "tier": "soft",
+      "s0": "bandit",
+      "s1": "bài toán băng-đit",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_batch_size_115bac8f95",
+      "term": "batch size",
+      "tier": "hard",
+      "s0": "kích thước minibatch",
+      "s1": "kích thước lô",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_covariate_shift_a77c8a8dfb",
+      "term": "covariate shift",
+      "tier": "hard",
+      "s0": "dịch chuyển hiệp biến",
+      "s1": "lệch hiệp biến",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_data_examples_7c5e6ddeae",
+      "term": "data examples",
+      "tier": "hard",
+      "s0": "ví dụ dữ liệu",
+      "s1": "mẫu dữ liệu",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_data_instance_cacbc74d36",
+      "term": "data instance",
+      "tier": "hard",
+      "s0": "thực thể dữ liệu",
+      "s1": "thể hiện dữ liệu",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_deferred_0db493d58e",
+      "term": "deferred",
+      "tier": "soft",
+      "s0": "hoãn lại",
+      "s1": "trì hoãn",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_deletion_013e5670c0",
+      "term": "deletion",
+      "tier": "soft",
+      "s0": "loại bỏ",
+      "s1": "xóa bỏ",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_efficiency_fff33dfb39",
+      "term": "efficiency",
+      "tier": "soft",
+      "s0": "hiệu quả",
+      "s1": "tính hiệu quả",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_elementwise_1d6feafbec",
+      "term": "elementwise",
+      "tier": "soft",
+      "s0": "từng phần tử",
+      "s1": "theo phần tử",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_elementwise_multiplication_0ebdbc19e3",
+      "term": "elementwise multiplication",
+      "tier": "hard",
+      "s0": "nhân theo từng phần tử",
+      "s1": "phép nhân theo phần tử",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_end_to_end_training_e0ecc93532",
+      "term": "end-to-end training",
+      "tier": "hard",
+      "s0": "huấn luyện đầu-cuối",
+      "s1": "huấn luyện đầu cuối",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_feature_engineering_fbcf9d9a88",
+      "term": "feature engineering",
+      "tier": "hard",
+      "s0": "thiết kế đặc trưng",
+      "s1": "kỹ thuật đặc trưng",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_feature_selection_ec5e3cb404",
+      "term": "feature selection",
+      "tier": "hard",
+      "s0": "lựa chọn đặc trưng",
+      "s1": "chọn đặc trưng",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_feature_vectors_9cfc7e31ab",
+      "term": "feature vectors",
+      "tier": "hard",
+      "s0": "vector đặc trưng",
+      "s1": "vectơ đặc trưng",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_feedback_loops_73b8202c83",
+      "term": "feedback loops",
+      "tier": "hard",
+      "s0": "vòng phản hồi",
+      "s1": "vòng lặp phản hồi",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_framework_f178867da2",
+      "term": "framework",
+      "tier": "soft",
+      "s0": "framework",
+      "s1": "khung phần mềm",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_generalization_gap_29c7c2502f",
+      "term": "generalization gap",
+      "tier": "hard",
+      "s0": "khoảng cách khái quát hóa",
+      "s1": "khoảng cách tổng quát hóa",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_heuristics_a628d3bfd9",
+      "term": "heuristics",
+      "tier": "soft",
+      "s0": "kinh nghiệm",
+      "s1": "phương pháp heuristic",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_learnable_parameters_11a624f504",
+      "term": "learnable parameters",
+      "tier": "hard",
+      "s0": "tham số có thể học",
+      "s1": "tham số học được",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_lifting_8f516a1fc1",
+      "term": "lifting",
+      "tier": "soft",
+      "s0": "nâng",
+      "s1": "nâng ánh xạ",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_manipulating_8325f6c2ab",
+      "term": "manipulating",
+      "tier": "soft",
+      "s0": "thao tác",
+      "s1": "xử lý",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_membership_99ef7e9bc5",
+      "term": "membership",
+      "tier": "soft",
+      "s0": "thuộc",
+      "s1": "quan hệ thuộc",
+      "cold_majority": "improve",
+      "instrument_artifact": true,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_model_complexity_ca64fe25a6",
+      "term": "model complexity",
+      "tier": "hard",
+      "s0": "độ phức tạp của mô hình",
+      "s1": "độ phức tạp mô hình",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_model_s_parameters_eb636b643b",
+      "term": "model's parameters",
+      "tier": "hard",
+      "s0": "tham số của mô hình",
+      "s1": "tham số mô hình",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_multivariate_functions_de4f1ded26",
+      "term": "multivariate functions",
+      "tier": "hard",
+      "s0": "hàm nhiều biến",
+      "s1": "hàm đa biến",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_negative_log_likelihood_006bbe2ce2",
+      "term": "negative log-likelihood",
+      "tier": "hard",
+      "s0": "âm log-khả năng",
+      "s1": "log-khả năng âm",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_offset_53a610e925",
+      "term": "offset",
+      "tier": "soft",
+      "s0": "độ lệch",
+      "s1": "độ dời",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_prior_4a47653d5f",
+      "term": "prior",
+      "tier": "soft",
+      "s0": "tiên nghiệm",
+      "s1": "phân phối tiên nghiệm",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_random_experiment_cc591bd83d",
+      "term": "random experiment",
+      "tier": "hard",
+      "s0": "thí nghiệm ngẫu nhiên",
+      "s1": "phép thử ngẫu nhiên",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_real_valued_scalars_e5f331e933",
+      "term": "real-valued scalars",
+      "tier": "hard",
+      "s0": "giá trị thực",
+      "s1": "vô hướng thực",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_regularization_term_b48f4963e7",
+      "term": "regularization term",
+      "tier": "hard",
+      "s0": "hạng tử chính quy hóa",
+      "s1": "hạng chuẩn hóa",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_regularizing_0228b30aa3",
+      "term": "regularizing",
+      "tier": "soft",
+      "s0": "điều chuẩn",
+      "s1": "chuẩn hóa",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_robotics_891e0758a7",
+      "term": "robotics",
+      "tier": "soft",
+      "s0": "robot học",
+      "s1": "người máy học",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_row_vectors_04aadc236a",
+      "term": "row vectors",
+      "tier": "hard",
+      "s0": "vector hàng",
+      "s1": "vectơ hàng",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_rules_caa155adf8",
+      "term": "rules",
+      "tier": "ignore_for_consistency",
+      "s0": "quy tắc",
+      "s1": "luật",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_self_driving_cars_ac724ed2e4",
+      "term": "self-driving cars",
+      "tier": "hard",
+      "s0": "xe tự lái",
+      "s1": "ô tô tự lái",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "lateral",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_smoothness_fa9d205bd5",
+      "term": "smoothness",
+      "tier": "soft",
+      "s0": "tính trơn",
+      "s1": "độ trơn",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_symmetry_18e1be4e79",
+      "term": "symmetry",
+      "tier": "soft",
+      "s0": "tính đối xứng",
+      "s1": "đối xứng",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_tangent_line_fc8da8d99b",
+      "term": "tangent line",
+      "tier": "hard",
+      "s0": "tiếp tuyến",
+      "s1": "đường tiếp tuyến",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_target_0e8a3ad980",
+      "term": "target",
+      "tier": "soft",
+      "s0": "nhãn",
+      "s1": "biến mục tiêu",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "harm",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "improve"
+      }
+    },
+    {
+      "item_id": "mt_target_distribution_e11bb1fcd8",
+      "term": "target distribution",
+      "tier": "hard",
+      "s0": "phân phối đích",
+      "s1": "phân phối mục tiêu",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_targets_4683e789c3",
+      "term": "targets",
+      "tier": "soft",
+      "s0": "mục tiêu",
+      "s1": "nhãn mục tiêu",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_tensor_format_20bcb4d8d7",
+      "term": "tensor format",
+      "tier": "hard",
+      "s0": "định dạng tensor",
+      "s1": "dạng tensor",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_test_accuracy_be3aebb55f",
+      "term": "test accuracy",
+      "tier": "hard",
+      "s0": "độ chính xác trên tập kiểm tra",
+      "s1": "độ chính xác kiểm tra",
+      "cold_majority": "harm",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "harm",
+        "3.5flash_cold_pack": "harm",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_test_set_accuracy_98a76f479d",
+      "term": "test set accuracy",
+      "tier": "hard",
+      "s0": "độ chính xác trên tập kiểm tra",
+      "s1": "độ chính xác tập kiểm tra",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "harm",
+        "3.1pro_cold_pack": "lateral",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_training_example_bdb5992a4c",
+      "term": "training example",
+      "tier": "hard",
+      "s0": "ví dụ huấn luyện",
+      "s1": "mẫu huấn luyện",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_training_examples_79bcf24974",
+      "term": "training examples",
+      "tier": "hard",
+      "s0": "ví dụ huấn luyện",
+      "s1": "mẫu huấn luyện",
+      "cold_majority": "improve",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "improve",
+        "opus46_cold_pack": "lateral"
+      }
+    },
+    {
+      "item_id": "mt_true_parameters_6636cf5533",
+      "term": "true parameters",
+      "tier": "hard",
+      "s0": "tham số thật",
+      "s1": "tham số thực",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "lateral",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "harm"
+      }
+    },
+    {
+      "item_id": "mt_true_probability_0c04e78467",
+      "term": "true probability",
+      "tier": "hard",
+      "s0": "xác suất thật",
+      "s1": "xác suất thực",
+      "cold_majority": "lateral",
+      "instrument_artifact": false,
+      "judges": {
+        "2.5flash_api_swap_blind": "improve",
+        "3.1pro_web_aiCurated": "improve",
+        "3.1pro_cold_pack": "improve",
+        "3.5flash_cold_pack": "lateral",
+        "opus46_cold_pack": "lateral"
+      }
+    }
+  ]
+}

@@ -1,0 +1,2708 @@
+{
+  "metric_version": "memory_tradeoff_judge_v1",
+  "n": 57,
+  "summary": {
+    "n": 57,
+    "counts": {
+      "improve": 21,
+      "lateral": 9,
+      "harm": 27
+    },
+    "improve_pct": 0.3684210526315789,
+    "lateral_pct": 0.15789473684210525,
+    "harm_pct": 0.47368421052631576
+  },
+  "summary_gemini_only": {
+    "n": 57,
+    "counts": {
+      "improve": 17,
+      "lateral": 28,
+      "harm": 12
+    },
+    "improve_pct": 0.2982456140350877,
+    "lateral_pct": 0.49122807017543857,
+    "harm_pct": 0.21052631578947367
+  },
+  "by_tier": {
+    "hard": {
+      "n": 34,
+      "counts": {
+        "improve": 16,
+        "harm": 14,
+        "lateral": 4
+      },
+      "improve_pct": 0.47058823529411764,
+      "lateral_pct": 0.11764705882352941,
+      "harm_pct": 0.4117647058823529
+    },
+    "ignore_for_consistency": {
+      "n": 1,
+      "counts": {
+        "harm": 1
+      },
+      "improve_pct": 0.0,
+      "lateral_pct": 0.0,
+      "harm_pct": 1.0
+    },
+    "preserve": {
+      "n": 2,
+      "counts": {
+        "lateral": 2
+      },
+      "improve_pct": 0.0,
+      "lateral_pct": 1.0,
+      "harm_pct": 0.0
+    },
+    "soft": {
+      "n": 20,
+      "counts": {
+        "improve": 5,
+        "lateral": 3,
+        "harm": 12
+      },
+      "improve_pct": 0.25,
+      "lateral_pct": 0.15,
+      "harm_pct": 0.6
+    }
+  },
+  "iaa": {
+    "human_n": 57,
+    "agreement_human_vs_gemini": 0.3684210526315789,
+    "trust_threshold": 0.8,
+    "trust_gemini_for_full_set": false,
+    "kappa": null,
+    "single_annotator": true
+  },
+  "items": [
+    {
+      "item_id": "mt_activations_9afd89eb88",
+      "term": "activations",
+      "tier": "soft",
+      "rep_block_id": "d2l_multilayer_perceptrons_mlp_b020",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "các kích hoạt",
+      "s1_surface": "giá trị kích hoạt",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Phiên bản A sử dụng thuật ngữ «giá trị kích hoạt» rõ ràng và chính xác hơn để chỉ đầu ra số học của hàm kích hoạt so với «các kích hoạt» của phiên bản B.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Phiên bản A sử dụng thuật ngữ «giá trị kích hoạt» rõ ràng và chính xác hơn để chỉ đầu ra số học của hàm kích hoạt so với «các kích hoạt» của phiên bản B."
+          },
+          "reason": "Phiên bản A sử dụng thuật ngữ «giá trị kích hoạt» rõ ràng và chính xác hơn để chỉ đầu ra số học của hàm kích hoạt so với «các kích hoạt» của phiên bản B."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh mạng nơ-ron, 'activations' thường được hiểu là 'giá trị kích hoạt' (activation values), là đầu ra số của hàm kích hoạt, nên bản B chính xác và tự nhiên hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh mạng nơ-ron, 'activations' thường được hiểu là 'giá trị kích hoạt' (activation values), là đầu ra số của hàm kích hoạt, nên bản B chính xác và tự nhiên hơn."
+          },
+          "reason": "Trong ngữ cảnh mạng nơ-ron, 'activations' thường được hiểu là 'giá trị kích hoạt' (activation values), là đầu ra số của hàm kích hoạt, nên bản B chính xác và tự nhiên hơn."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_additive_noise_7a444cd8ee",
+      "term": "additive noise",
+      "tier": "hard",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b101",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "nhiễu cộng thêm",
+      "s1_surface": "nhiễu cộng",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 1.0,
+        "reason": "«Nhiễu cộng» là thuật ngữ kỹ thuật chuẩn và ngắn gọn hơn cho \"additive noise\" trong tiếng Việt.",
+        "raw": {
+          "confidence": 1.0,
+          "label": "A_better",
+          "raw": {
+            "confidence": 1,
+            "label": "A_better",
+            "reason": "«Nhiễu cộng» là thuật ngữ kỹ thuật chuẩn và ngắn gọn hơn cho \"additive noise\" trong tiếng Việt."
+          },
+          "reason": "«Nhiễu cộng» là thuật ngữ kỹ thuật chuẩn và ngắn gọn hơn cho \"additive noise\" trong tiếng Việt."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 1.0,
+        "reason": "«Nhiễu cộng» là thuật ngữ kỹ thuật tiêu chuẩn và tự nhiên hơn trong tiếng Việt cho «additive noise».",
+        "raw": {
+          "confidence": 1.0,
+          "label": "B_better",
+          "raw": {
+            "confidence": 1,
+            "label": "B_better",
+            "reason": "«Nhiễu cộng» là thuật ngữ kỹ thuật tiêu chuẩn và tự nhiên hơn trong tiếng Việt cho «additive noise»."
+          },
+          "reason": "«Nhiễu cộng» là thuật ngữ kỹ thuật tiêu chuẩn và tự nhiên hơn trong tiếng Việt cho «additive noise»."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_affine_transformations_e8551c005d",
+      "term": "affine transformations",
+      "tier": "hard",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b043",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "phép biến đổi affine",
+      "s1_surface": "biến đổi affine",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh toán học, «phép biến đổi» là thuật ngữ chuẩn và tự nhiên hơn cho 'transformation' so với chỉ 'biến đổi'.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh toán học, «phép biến đổi» là thuật ngữ chuẩn và tự nhiên hơn cho 'transformation' so với chỉ 'biến đổi'."
+          },
+          "reason": "Trong ngữ cảnh toán học, «phép biến đổi» là thuật ngữ chuẩn và tự nhiên hơn cho 'transformation' so với chỉ 'biến đổi'."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai cách dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, sự khác biệt về sắc thái là không đáng kể.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai cách dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, sự khác biệt về sắc thái là không đáng kể."
+          },
+          "reason": "Cả hai cách dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, sự khác biệt về sắc thái là không đáng kể."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_annotation_2e76f54422",
+      "term": "annotation",
+      "tier": "soft",
+      "rep_block_id": "d2l_introduction_index_b085",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "gán nhãn",
+      "s1_surface": "chú giải",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Chú giải» là thuật ngữ bao quát hơn, phù hợp với nghĩa của 'annotation' (ghi chú, giải thích) trong ngữ cảnh xử lý ngôn ngữ tự nhiên, trong khi «gán nhãn» chỉ là một dạng cụ thể của chú giải.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Chú giải» là thuật ngữ bao quát hơn, phù hợp với nghĩa của 'annotation' (ghi chú, giải thích) trong ngữ cảnh xử lý ngôn ngữ tự nhiên, trong khi «gán nhãn» chỉ là một dạng cụ thể của chú giải."
+          },
+          "reason": "«Chú giải» là thuật ngữ bao quát hơn, phù hợp với nghĩa của 'annotation' (ghi chú, giải thích) trong ngữ cảnh xử lý ngôn ngữ tự nhiên, trong khi «gán nhãn» chỉ là một dạng cụ thể của chú giải."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh xử lý ngôn ngữ tự nhiên và các giả định ngữ pháp, «gán nhãn» (labeling) là thuật ngữ chính xác hơn cho quá trình thêm thông tin vào dữ liệu so với «chú giải» (explanatory note).",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh xử lý ngôn ngữ tự nhiên và các giả định ngữ pháp, «gán nhãn» (labeling) là thuật ngữ chính xác hơn cho quá trình thêm thông tin vào dữ liệu so với «chú giải» (explanatory note)."
+          },
+          "reason": "Trong ngữ cảnh xử lý ngôn ngữ tự nhiên và các giả định ngữ pháp, «gán nhãn» (labeling) là thuật ngữ chính xác hơn cho quá trình thêm thông tin vào dữ liệu so với «chú giải» (explanatory note)."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_bandits_5d196d3aa2",
+      "term": "bandits",
+      "tier": "soft",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b085",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "bandit",
+      "s1_surface": "bài toán băng-đit",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Bài toán băng-đit» là thuật ngữ chuẩn và tự nhiên hơn trong ngữ cảnh kỹ thuật tiếng Việt khi đề cập đến khái niệm \"bandits\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Bài toán băng-đit» là thuật ngữ chuẩn và tự nhiên hơn trong ngữ cảnh kỹ thuật tiếng Việt khi đề cập đến khái niệm \"bandits\"."
+          },
+          "reason": "«Bài toán băng-đit» là thuật ngữ chuẩn và tự nhiên hơn trong ngữ cảnh kỹ thuật tiếng Việt khi đề cập đến khái niệm \"bandits\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Phiên bản B làm rõ nghĩa kỹ thuật của thuật ngữ \"bandits\" bằng cách thêm \"bài toán\", phù hợp với cách dùng phổ biến trong lĩnh vực này.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Phiên bản B làm rõ nghĩa kỹ thuật của thuật ngữ \"bandits\" bằng cách thêm \"bài toán\", phù hợp với cách dùng phổ biến trong lĩnh vực này."
+          },
+          "reason": "Phiên bản B làm rõ nghĩa kỹ thuật của thuật ngữ \"bandits\" bằng cách thêm \"bài toán\", phù hợp với cách dùng phổ biến trong lĩnh vực này."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_batch_size_115bac8f95",
+      "term": "batch size",
+      "tier": "hard",
+      "rep_block_id": "d2l_linear_networks_linear_regression_scratch_b062",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "kích thước minibatch",
+      "s1_surface": "kích thước lô",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«kích thước lô» là bản dịch trực tiếp và phổ biến hơn cho thuật ngữ \"batch size\" trong ngữ cảnh kỹ thuật, trong khi «kích thước minibatch» thêm từ \"mini\" không có trong thuật ngữ gốc.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«kích thước lô» là bản dịch trực tiếp và phổ biến hơn cho thuật ngữ \"batch size\" trong ngữ cảnh kỹ thuật, trong khi «kích thước minibatch» thêm từ \"mini\" không có trong thuật ngữ gốc."
+          },
+          "reason": "«kích thước lô» là bản dịch trực tiếp và phổ biến hơn cho thuật ngữ \"batch size\" trong ngữ cảnh kỹ thuật, trong khi «kích thước minibatch» thêm từ \"mini\" không có trong thuật ngữ gốc."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả \"kích thước lô\" và \"kích thước minibatch\" đều là các thuật ngữ phổ biến và được chấp nhận để dịch \"batch size\" trong ngữ cảnh học máy tiếng Việt.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả \"kích thước lô\" và \"kích thước minibatch\" đều là các thuật ngữ phổ biến và được chấp nhận để dịch \"batch size\" trong ngữ cảnh học máy tiếng Việt."
+          },
+          "reason": "Cả \"kích thước lô\" và \"kích thước minibatch\" đều là các thuật ngữ phổ biến và được chấp nhận để dịch \"batch size\" trong ngữ cảnh học máy tiếng Việt."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_covariate_shift_a77c8a8dfb",
+      "term": "covariate shift",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b010",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "dịch chuyển hiệp biến",
+      "s1_surface": "lệch hiệp biến",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Dịch chuyển» (shift) diễn tả sự thay đổi phân bố chính xác hơn «lệch» (bias/deviation) trong ngữ cảnh này.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Dịch chuyển» (shift) diễn tả sự thay đổi phân bố chính xác hơn «lệch» (bias/deviation) trong ngữ cảnh này."
+          },
+          "reason": "«Dịch chuyển» (shift) diễn tả sự thay đổi phân bố chính xác hơn «lệch» (bias/deviation) trong ngữ cảnh này."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Thuật ngữ \"dịch chuyển\" (shift) phù hợp hơn \"lệch\" (bias/skew) để diễn tả sự thay đổi trong phân phối của các biến hiệp biến.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Thuật ngữ \"dịch chuyển\" (shift) phù hợp hơn \"lệch\" (bias/skew) để diễn tả sự thay đổi trong phân phối của các biến hiệp biến."
+          },
+          "reason": "Thuật ngữ \"dịch chuyển\" (shift) phù hợp hơn \"lệch\" (bias/skew) để diễn tả sự thay đổi trong phân phối của các biến hiệp biến."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_data_examples_7c5e6ddeae",
+      "term": "data examples",
+      "tier": "hard",
+      "rep_block_id": "d2l_introduction_index_b053",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "ví dụ dữ liệu",
+      "s1_surface": "mẫu dữ liệu",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«ví dụ dữ liệu» dịch sát nghĩa và tự nhiên hơn cho \"data examples\" trong ngữ cảnh này so với «mẫu dữ liệu».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«ví dụ dữ liệu» dịch sát nghĩa và tự nhiên hơn cho \"data examples\" trong ngữ cảnh này so với «mẫu dữ liệu»."
+          },
+          "reason": "«ví dụ dữ liệu» dịch sát nghĩa và tự nhiên hơn cho \"data examples\" trong ngữ cảnh này so với «mẫu dữ liệu»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.8,
+        "reason": "Trong ngữ cảnh kỹ thuật, «mẫu dữ liệu» (data sample/instance) thường được dùng để chỉ các điểm dữ liệu cụ thể được phân tích, phù hợp hơn so với «ví dụ dữ liệu» (data example) có thể mang nghĩa minh họa.",
+        "raw": {
+          "confidence": 0.8,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh kỹ thuật, «mẫu dữ liệu» (data sample/instance) thường được dùng để chỉ các điểm dữ liệu cụ thể được phân tích, phù hợp hơn so với «ví dụ dữ liệu» (data example) có thể mang nghĩa minh họa."
+          },
+          "reason": "Trong ngữ cảnh kỹ thuật, «mẫu dữ liệu» (data sample/instance) thường được dùng để chỉ các điểm dữ liệu cụ thể được phân tích, phù hợp hơn so với «ví dụ dữ liệu» (data example) có thể mang nghĩa minh họa."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_data_instance_cacbc74d36",
+      "term": "data instance",
+      "tier": "hard",
+      "rep_block_id": "d2l_introduction_index_b023",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "thực thể dữ liệu",
+      "s1_surface": "thể hiện dữ liệu",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Thuật ngữ \"thực thể dữ liệu\" (data entity) phù hợp hơn để chỉ một đơn vị dữ liệu riêng lẻ so với \"thể hiện dữ liệu\" (data representation).",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Thuật ngữ \"thực thể dữ liệu\" (data entity) phù hợp hơn để chỉ một đơn vị dữ liệu riêng lẻ so với \"thể hiện dữ liệu\" (data representation)."
+          },
+          "reason": "Thuật ngữ \"thực thể dữ liệu\" (data entity) phù hợp hơn để chỉ một đơn vị dữ liệu riêng lẻ so với \"thể hiện dữ liệu\" (data representation)."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.8,
+        "reason": "Trong ngữ cảnh này, \"thể hiện dữ liệu\" (data manifestation/instance) truyền tải ý nghĩa của một trường hợp hoặc ví dụ cụ thể của dữ liệu tốt hơn so với \"thực thể dữ liệu\" (data entity).",
+        "raw": {
+          "confidence": 0.8,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh này, \"thể hiện dữ liệu\" (data manifestation/instance) truyền tải ý nghĩa của một trường hợp hoặc ví dụ cụ thể của dữ liệu tốt hơn so với \"thực thể dữ liệu\" (data entity)."
+          },
+          "reason": "Trong ngữ cảnh này, \"thể hiện dữ liệu\" (data manifestation/instance) truyền tải ý nghĩa của một trường hợp hoặc ví dụ cụ thể của dữ liệu tốt hơn so với \"thực thể dữ liệu\" (data entity)."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_deferred_0db493d58e",
+      "term": "deferred",
+      "tier": "soft",
+      "rep_block_id": "d2l_linear_networks_linear_regression_concise_b038",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "hoãn lại",
+      "s1_surface": "trì hoãn",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Cụm từ «hoãn lại» trong phiên bản A kết hợp với \"được\" tạo thành cấu trúc bị động tự nhiên và chính xác hơn cho \"deferred\" so với \"là «trì hoãn»\" trong phiên bản B.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Cụm từ «hoãn lại» trong phiên bản A kết hợp với \"được\" tạo thành cấu trúc bị động tự nhiên và chính xác hơn cho \"deferred\" so với \"là «trì hoãn»\" trong phiên bản B."
+          },
+          "reason": "Cụm từ «hoãn lại» trong phiên bản A kết hợp với \"được\" tạo thành cấu trúc bị động tự nhiên và chính xác hơn cho \"deferred\" so với \"là «trì hoãn»\" trong phiên bản B."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.8,
+        "reason": "Cả hai thuật ngữ «trì hoãn» và «hoãn lại» đều là bản dịch tốt cho 'deferred'. Tuy nhiên, cách dùng «được hoãn lại» trong phiên bản B tự",
+        "raw": {
+          "confidence": 0.8,
+          "json_error": "Unterminated string starting at: line 4 column 13 (char 58)",
+          "label": "B_better",
+          "raw": {
+            "_parse_repaired": true,
+            "_raw_text_prefix": "{\n  \"label\": \"B_better\",\n  \"confidence\": 0.8,\n  \"reason\": \"Cả hai thuật ngữ «trì hoãn» và «hoãn lại» đều là bản dịch tốt cho 'deferred'. Tuy nhiên, cách dùng «được hoãn lại» trong phiên bản B tự"
+          },
+          "reason": "Cả hai thuật ngữ «trì hoãn» và «hoãn lại» đều là bản dịch tốt cho 'deferred'. Tuy nhiên, cách dùng «được hoãn lại» trong phiên bản B tự"
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_deletion_013e5670c0",
+      "term": "deletion",
+      "tier": "soft",
+      "rep_block_id": "d2l_preliminaries_pandas_b010",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "loại bỏ",
+      "s1_surface": "xóa bỏ",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Loại bỏ» là thuật ngữ phổ biến và phù hợp hơn để chỉ phương pháp xử lý dữ liệu thiếu bằng cách loại bỏ các quan sát hoặc biến có giá trị bị thiếu trong ngữ cảnh thống kê và khoa học dữ liệu.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Loại bỏ» là thuật ngữ phổ biến và phù hợp hơn để chỉ phương pháp xử lý dữ liệu thiếu bằng cách loại bỏ các quan sát hoặc biến có giá trị bị thiếu trong ngữ cảnh thống kê và khoa học dữ liệu."
+          },
+          "reason": "«Loại bỏ» là thuật ngữ phổ biến và phù hợp hơn để chỉ phương pháp xử lý dữ liệu thiếu bằng cách loại bỏ các quan sát hoặc biến có giá trị bị thiếu trong ngữ cảnh thống kê và khoa học dữ liệu."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả \"xóa bỏ\" và \"loại bỏ\" đều là các thuật ngữ phù hợp và tự nhiên trong tiếng Việt để diễn tả hành động loại bỏ dữ liệu thiếu trong ngữ cảnh xử lý dữ liệu.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả \"xóa bỏ\" và \"loại bỏ\" đều là các thuật ngữ phù hợp và tự nhiên trong tiếng Việt để diễn tả hành động loại bỏ dữ liệu thiếu trong ngữ cảnh xử lý dữ liệu."
+          },
+          "reason": "Cả \"xóa bỏ\" và \"loại bỏ\" đều là các thuật ngữ phù hợp và tự nhiên trong tiếng Việt để diễn tả hành động loại bỏ dữ liệu thiếu trong ngữ cảnh xử lý dữ liệu."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_efficiency_fff33dfb39",
+      "term": "efficiency",
+      "tier": "soft",
+      "rep_block_id": "d2l_linear_networks_softmax_regression_b031",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "hiệu quả",
+      "s1_surface": "tính hiệu quả",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Hiệu quả» là cách diễn đạt ngắn gọn và tự nhiên hơn khi nói về hiệu suất tính toán trong ngữ cảnh này.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Hiệu quả» là cách diễn đạt ngắn gọn và tự nhiên hơn khi nói về hiệu suất tính toán trong ngữ cảnh này."
+          },
+          "reason": "«Hiệu quả» là cách diễn đạt ngắn gọn và tự nhiên hơn khi nói về hiệu suất tính toán trong ngữ cảnh này."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh này, \"hiệu quả\" (B) tự nhiên và súc tích hơn so với \"tính hiệu quả\" (A) khi đi với động từ \"cải thiện\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh này, \"hiệu quả\" (B) tự nhiên và súc tích hơn so với \"tính hiệu quả\" (A) khi đi với động từ \"cải thiện\"."
+          },
+          "reason": "Trong ngữ cảnh này, \"hiệu quả\" (B) tự nhiên và súc tích hơn so với \"tính hiệu quả\" (A) khi đi với động từ \"cải thiện\"."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_elementwise_1d6feafbec",
+      "term": "elementwise",
+      "tier": "soft",
+      "rep_block_id": "d2l_preliminaries_ndarray_b046",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "từng phần tử",
+      "s1_surface": "theo phần tử",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Cụm từ «theo từng phần tử» diễn tả chính xác hơn ý nghĩa của 'elementwise' là thực hiện phép toán trên từng phần tử riêng lẻ.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Cụm từ «theo từng phần tử» diễn tả chính xác hơn ý nghĩa của 'elementwise' là thực hiện phép toán trên từng phần tử riêng lẻ."
+          },
+          "reason": "Cụm từ «theo từng phần tử» diễn tả chính xác hơn ý nghĩa của 'elementwise' là thực hiện phép toán trên từng phần tử riêng lẻ."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai cách dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, truyền tải đầy đủ ý nghĩa của thuật ngữ gốc.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai cách dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, truyền tải đầy đủ ý nghĩa của thuật ngữ gốc."
+          },
+          "reason": "Cả hai cách dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, truyền tải đầy đủ ý nghĩa của thuật ngữ gốc."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_elementwise_multiplication_0ebdbc19e3",
+      "term": "elementwise multiplication",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_linear_algebra_b069",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "nhân theo từng phần tử",
+      "s1_surface": "phép nhân theo phần tử",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 1.0,
+        "reason": "Bản A dịch thuật ngữ tiếng Anh dạng danh từ \"elementwise multiplication\" thành cụm danh từ \"phép nhân theo phần tử\" phù hợp hơn so với bản B dịch thành cụm động từ \"nhân theo từng phần tử\".",
+        "raw": {
+          "confidence": 1.0,
+          "label": "A_better",
+          "raw": {
+            "confidence": 1,
+            "label": "A_better",
+            "reason": "Bản A dịch thuật ngữ tiếng Anh dạng danh từ \"elementwise multiplication\" thành cụm danh từ \"phép nhân theo phần tử\" phù hợp hơn so với bản B dịch thành cụm động từ \"nhân theo từng phần tử\"."
+          },
+          "reason": "Bản A dịch thuật ngữ tiếng Anh dạng danh từ \"elementwise multiplication\" thành cụm danh từ \"phép nhân theo phần tử\" phù hợp hơn so với bản B dịch thành cụm động từ \"nhân theo từng phần tử\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.8,
+        "reason": "Cụm từ \"từng phần tử\" trong tiếng Việt nhấn mạnh tính chất \"elementwise\" (từng cái một, mỗi cái một) rõ ràng và chính xác hơn so với chỉ \"phần tử\".",
+        "raw": {
+          "confidence": 0.8,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "A_better",
+            "reason": "Cụm từ \"từng phần tử\" trong tiếng Việt nhấn mạnh tính chất \"elementwise\" (từng cái một, mỗi cái một) rõ ràng và chính xác hơn so với chỉ \"phần tử\"."
+          },
+          "reason": "Cụm từ \"từng phần tử\" trong tiếng Việt nhấn mạnh tính chất \"elementwise\" (từng cái một, mỗi cái một) rõ ràng và chính xác hơn so với chỉ \"phần tử\"."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_end_to_end_training_e0ecc93532",
+      "term": "end-to-end training",
+      "tier": "hard",
+      "rep_block_id": "d2l_introduction_index_b147",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "huấn luyện đầu-cuối",
+      "s1_surface": "huấn luyện đầu cuối",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai phiên bản đều truyền tải đầy đủ ý nghĩa của thuật ngữ \"end-to-end training\". Sự khác biệt về dấu gạch nối không làm thay đổi đáng kể sự hiểu biết về thuật ngữ này trong ngữ cảnh kỹ thuật, vì \"huấn luyện đầu cuối\" là một bản dịch được chấp nhận rộng rãi.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai phiên bản đều truyền tải đầy đủ ý nghĩa của thuật ngữ \"end-to-end training\". Sự khác biệt về dấu gạch nối không làm thay đổi đáng kể sự hiểu biết về thuật ngữ này trong ngữ cảnh kỹ thuật, vì \"huấn luyện đầu cuối\" là một bản dịch được chấp nhận rộng rãi."
+          },
+          "reason": "Cả hai phiên bản đều truyền tải đầy đủ ý nghĩa của thuật ngữ \"end-to-end training\". Sự khác biệt về dấu gạch nối không làm thay đổi đáng kể sự hiểu biết về thuật ngữ này trong ngữ cảnh kỹ thuật, vì \"huấn luyện đầu cuối\" là một bản dịch được chấp nhận rộng rãi."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Cụm từ \"đầu cuối\" thường được viết liền không dấu gạch nối trong tiếng Việt khi dịch thuật ngữ \"end-to-end\", làm cho phiên bản B tự nhiên hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Cụm từ \"đầu cuối\" thường được viết liền không dấu gạch nối trong tiếng Việt khi dịch thuật ngữ \"end-to-end\", làm cho phiên bản B tự nhiên hơn."
+          },
+          "reason": "Cụm từ \"đầu cuối\" thường được viết liền không dấu gạch nối trong tiếng Việt khi dịch thuật ngữ \"end-to-end\", làm cho phiên bản B tự nhiên hơn."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_fashion_mnist_dataset_b8ddab06eb",
+      "term": "Fashion-MNIST dataset",
+      "tier": "preserve",
+      "rep_block_id": "d2l_linear_networks_image_classification_dataset_b002",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "bộ dữ liệu Fashion-MNIST",
+      "s1_surface": "tập dữ liệu Fashion-MNIST",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 1.0,
+        "reason": "Cả \"bộ dữ liệu\" và \"tập dữ liệu\" đều là các cách dịch phổ biến và chính xác cho \"dataset\" trong tiếng Việt, đặc biệt trong ngữ cảnh khoa học dữ liệu.",
+        "raw": {
+          "confidence": 1.0,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 1,
+            "label": "equivalent",
+            "reason": "Cả \"bộ dữ liệu\" và \"tập dữ liệu\" đều là các cách dịch phổ biến và chính xác cho \"dataset\" trong tiếng Việt, đặc biệt trong ngữ cảnh khoa học dữ liệu."
+          },
+          "reason": "Cả \"bộ dữ liệu\" và \"tập dữ liệu\" đều là các cách dịch phổ biến và chính xác cho \"dataset\" trong tiếng Việt, đặc biệt trong ngữ cảnh khoa học dữ liệu."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 1.0,
+        "reason": "Cả \"tập dữ liệu\" và \"bộ dữ liệu\" đều là các cách dịch phổ biến và chính xác cho \"dataset\" trong tiếng Việt, không có sự khác biệt đáng kể về ngữ nghĩa hay tính tự nhiên trong ngữ cảnh này.",
+        "raw": {
+          "confidence": 1.0,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 1,
+            "label": "equivalent",
+            "reason": "Cả \"tập dữ liệu\" và \"bộ dữ liệu\" đều là các cách dịch phổ biến và chính xác cho \"dataset\" trong tiếng Việt, không có sự khác biệt đáng kể về ngữ nghĩa hay tính tự nhiên trong ngữ cảnh này."
+          },
+          "reason": "Cả \"tập dữ liệu\" và \"bộ dữ liệu\" đều là các cách dịch phổ biến và chính xác cho \"dataset\" trong tiếng Việt, không có sự khác biệt đáng kể về ngữ nghĩa hay tính tự nhiên trong ngữ cảnh này."
+        }
+      },
+      "gemini_resolved": "equivalent",
+      "gemini_label": "lateral",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_feature_engineering_fbcf9d9a88",
+      "term": "feature engineering",
+      "tier": "hard",
+      "rep_block_id": "d2l_introduction_index_b147",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "thiết kế đặc trưng",
+      "s1_surface": "kỹ thuật đặc trưng",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Kỹ thuật đặc trưng» là thuật ngữ chuẩn và phổ biến hơn để dịch \"feature engineering\" trong lĩnh vực học máy, trong khi «thiết kế đặc trưng» ít chính xác hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Kỹ thuật đặc trưng» là thuật ngữ chuẩn và phổ biến hơn để dịch \"feature engineering\" trong lĩnh vực học máy, trong khi «thiết kế đặc trưng» ít chính xác hơn."
+          },
+          "reason": "«Kỹ thuật đặc trưng» là thuật ngữ chuẩn và phổ biến hơn để dịch \"feature engineering\" trong lĩnh vực học máy, trong khi «thiết kế đặc trưng» ít chính xác hơn."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Thuật ngữ \"kỹ thuật\" (engineering) trong \"kỹ thuật đặc trưng\" truyền tải chính xác hơn ý nghĩa của \"engineering\" trong \"feature engineering\" so với \"thiết kế\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Thuật ngữ \"kỹ thuật\" (engineering) trong \"kỹ thuật đặc trưng\" truyền tải chính xác hơn ý nghĩa của \"engineering\" trong \"feature engineering\" so với \"thiết kế\"."
+          },
+          "reason": "Thuật ngữ \"kỹ thuật\" (engineering) trong \"kỹ thuật đặc trưng\" truyền tải chính xác hơn ý nghĩa của \"engineering\" trong \"feature engineering\" so với \"thiết kế\"."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_feature_selection_ec5e3cb404",
+      "term": "feature selection",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_weight_decay_b013",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "lựa chọn đặc trưng",
+      "s1_surface": "chọn đặc trưng",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh kỹ thuật, \"lựa chọn đặc trưng\" là thuật ngữ phổ biến và chính xác hơn để dịch \"feature selection\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh kỹ thuật, \"lựa chọn đặc trưng\" là thuật ngữ phổ biến và chính xác hơn để dịch \"feature selection\"."
+          },
+          "reason": "Trong ngữ cảnh kỹ thuật, \"lựa chọn đặc trưng\" là thuật ngữ phổ biến và chính xác hơn để dịch \"feature selection\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả \"chọn đặc trưng\" và \"lựa chọn đặc trưng\" đều là các thuật ngữ được chấp nhận và sử dụng phổ biến trong tiếng Việt để chỉ \"feature selection\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả \"chọn đặc trưng\" và \"lựa chọn đặc trưng\" đều là các thuật ngữ được chấp nhận và sử dụng phổ biến trong tiếng Việt để chỉ \"feature selection\"."
+          },
+          "reason": "Cả \"chọn đặc trưng\" và \"lựa chọn đặc trưng\" đều là các thuật ngữ được chấp nhận và sử dụng phổ biến trong tiếng Việt để chỉ \"feature selection\"."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_feature_vectors_9cfc7e31ab",
+      "term": "feature vectors",
+      "tier": "hard",
+      "rep_block_id": "d2l_introduction_index_b147",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "vector đặc trưng",
+      "s1_surface": "vectơ đặc trưng",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Từ «vectơ» trong phiên bản B là cách viết chuẩn và phổ biến hơn trong tiếng Việt kỹ thuật so với «vector» trong phiên bản A.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Từ «vectơ» trong phiên bản B là cách viết chuẩn và phổ biến hơn trong tiếng Việt kỹ thuật so với «vector» trong phiên bản A."
+          },
+          "reason": "Từ «vectơ» trong phiên bản B là cách viết chuẩn và phổ biến hơn trong tiếng Việt kỹ thuật so với «vector» trong phiên bản A."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.8,
+        "reason": "«Vectơ đặc trưng» sử dụng cách viết chuẩn tiếng Việt cho thuật ngữ này, phù hợp hơn với ngữ điệu kỹ thuật tiếng Việt.",
+        "raw": {
+          "confidence": 0.8,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "A_better",
+            "reason": "«Vectơ đặc trưng» sử dụng cách viết chuẩn tiếng Việt cho thuật ngữ này, phù hợp hơn với ngữ điệu kỹ thuật tiếng Việt."
+          },
+          "reason": "«Vectơ đặc trưng» sử dụng cách viết chuẩn tiếng Việt cho thuật ngữ này, phù hợp hơn với ngữ điệu kỹ thuật tiếng Việt."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "B_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_feedback_loops_73b8202c83",
+      "term": "feedback loops",
+      "tier": "hard",
+      "rep_block_id": "d2l_introduction_index_b079",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "vòng phản hồi",
+      "s1_surface": "vòng lặp phản hồi",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.8,
+        "reason": "«Vòng lặp phản hồi» diễn tả rõ hơn tính chất chu kỳ, lặp lại của 'loop' so với chỉ «vòng phản hồi».",
+        "raw": {
+          "confidence": 0.8,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "B_better",
+            "reason": "«Vòng lặp phản hồi» diễn tả rõ hơn tính chất chu kỳ, lặp lại của 'loop' so với chỉ «vòng phản hồi»."
+          },
+          "reason": "«Vòng lặp phản hồi» diễn tả rõ hơn tính chất chu kỳ, lặp lại của 'loop' so với chỉ «vòng phản hồi»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Thuật ngữ «vòng lặp phản hồi» (feedback loop) là cách dịch phổ biến và chính xác hơn trong tiếng Việt để chỉ một chu trình lặp lại, trong khi «vòng phản hồi» có thể mang nghĩa rộng hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Thuật ngữ «vòng lặp phản hồi» (feedback loop) là cách dịch phổ biến và chính xác hơn trong tiếng Việt để chỉ một chu trình lặp lại, trong khi «vòng phản hồi» có thể mang nghĩa rộng hơn."
+          },
+          "reason": "Thuật ngữ «vòng lặp phản hồi» (feedback loop) là cách dịch phổ biến và chính xác hơn trong tiếng Việt để chỉ một chu trình lặp lại, trong khi «vòng phản hồi» có thể mang nghĩa rộng hơn."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_framework_f178867da2",
+      "term": "framework",
+      "tier": "soft",
+      "rep_block_id": "d2l_preliminaries_ndarray_b003",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "framework",
+      "s1_surface": "khung phần mềm",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Khung phần mềm» là thuật ngữ tiếng Việt chuẩn và phổ biến cho 'framework' trong ngữ cảnh công nghệ thông tin, trong khi 'framework' là từ mượn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Khung phần mềm» là thuật ngữ tiếng Việt chuẩn và phổ biến cho 'framework' trong ngữ cảnh công nghệ thông tin, trong khi 'framework' là từ mượn."
+          },
+          "reason": "«Khung phần mềm» là thuật ngữ tiếng Việt chuẩn và phổ biến cho 'framework' trong ngữ cảnh công nghệ thông tin, trong khi 'framework' là từ mượn."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«khung phần mềm» là thuật ngữ tiếng Việt chuẩn và tự nhiên hơn cho 'framework' trong ngữ cảnh công nghệ thông tin.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«khung phần mềm» là thuật ngữ tiếng Việt chuẩn và tự nhiên hơn cho 'framework' trong ngữ cảnh công nghệ thông tin."
+          },
+          "reason": "«khung phần mềm» là thuật ngữ tiếng Việt chuẩn và tự nhiên hơn cho 'framework' trong ngữ cảnh công nghệ thông tin."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_generalization_gap_29c7c2502f",
+      "term": "generalization gap",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b022",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "khoảng cách khái quát hóa",
+      "s1_surface": "khoảng cách tổng quát hóa",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.75,
+        "reason": "«Khái quát hóa» là thuật ngữ phổ biến và phù hợp hơn cho «generalization» trong ngữ cảnh học máy so với «tổng quát hóa».",
+        "raw": {
+          "confidence": 0.75,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.75,
+            "label": "A_better",
+            "reason": "«Khái quát hóa» là thuật ngữ phổ biến và phù hợp hơn cho «generalization» trong ngữ cảnh học máy so với «tổng quát hóa»."
+          },
+          "reason": "«Khái quát hóa» là thuật ngữ phổ biến và phù hợp hơn cho «generalization» trong ngữ cảnh học máy so với «tổng quát hóa»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.8,
+        "reason": "Trong ngữ cảnh học máy, «khái quát hóa» là thuật ngữ phổ biến và phù hợp hơn để diễn đạt 'generalization' so với «tổng quát hóa».",
+        "raw": {
+          "confidence": 0.8,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh học máy, «khái quát hóa» là thuật ngữ phổ biến và phù hợp hơn để diễn đạt 'generalization' so với «tổng quát hóa»."
+          },
+          "reason": "Trong ngữ cảnh học máy, «khái quát hóa» là thuật ngữ phổ biến và phù hợp hơn để diễn đạt 'generalization' so với «tổng quát hóa»."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "B_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_heuristics_a628d3bfd9",
+      "term": "heuristics",
+      "tier": "soft",
+      "rep_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b020",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "kinh nghiệm",
+      "s1_surface": "phương pháp heuristic",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Phương pháp heuristic» là thuật ngữ kỹ thuật phổ biến và chính xác hơn để diễn tả 'heuristics' trong ngữ cảnh học sâu so với «kinh nghiệm».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Phương pháp heuristic» là thuật ngữ kỹ thuật phổ biến và chính xác hơn để diễn tả 'heuristics' trong ngữ cảnh học sâu so với «kinh nghiệm»."
+          },
+          "reason": "«Phương pháp heuristic» là thuật ngữ kỹ thuật phổ biến và chính xác hơn để diễn tả 'heuristics' trong ngữ cảnh học sâu so với «kinh nghiệm»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«Phương pháp heuristic» là cách dịch thuật ngữ kỹ thuật chính xác và tự nhiên hơn trong ngữ cảnh học sâu so với «kinh nghiệm».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«Phương pháp heuristic» là cách dịch thuật ngữ kỹ thuật chính xác và tự nhiên hơn trong ngữ cảnh học sâu so với «kinh nghiệm»."
+          },
+          "reason": "«Phương pháp heuristic» là cách dịch thuật ngữ kỹ thuật chính xác và tự nhiên hơn trong ngữ cảnh học sâu so với «kinh nghiệm»."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_learnable_parameters_11a624f504",
+      "term": "learnable parameters",
+      "tier": "hard",
+      "rep_block_id": "d2l_introduction_index_b134",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "tham số có thể học",
+      "s1_surface": "tham số học được",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai bản dịch «tham số học được» và «tham số có thể học» đều truyền tải chính xác ý nghĩa của thuật ngữ \"learnable parameters\" trong ngữ cảnh này.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai bản dịch «tham số học được» và «tham số có thể học» đều truyền tải chính xác ý nghĩa của thuật ngữ \"learnable parameters\" trong ngữ cảnh này."
+          },
+          "reason": "Cả hai bản dịch «tham số học được» và «tham số có thể học» đều truyền tải chính xác ý nghĩa của thuật ngữ \"learnable parameters\" trong ngữ cảnh này."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Cụm từ \"có thể học\" (learnable) trong phiên bản A truyền tải chính xác hơn ý nghĩa của \"learnable parameters\" so với \"học được\" trong phiên bản B, vốn có thể gây nhầm lẫn với ý nghĩa \"đã được học\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Cụm từ \"có thể học\" (learnable) trong phiên bản A truyền tải chính xác hơn ý nghĩa của \"learnable parameters\" so với \"học được\" trong phiên bản B, vốn có thể gây nhầm lẫn với ý nghĩa \"đã được học\"."
+          },
+          "reason": "Cụm từ \"có thể học\" (learnable) trong phiên bản A truyền tải chính xác hơn ý nghĩa của \"learnable parameters\" so với \"học được\" trong phiên bản B, vốn có thể gây nhầm lẫn với ý nghĩa \"đã được học\"."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_lifting_8f516a1fc1",
+      "term": "lifting",
+      "tier": "soft",
+      "rep_block_id": "d2l_preliminaries_ndarray_b047",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "nâng",
+      "s1_surface": "nâng ánh xạ",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Thuật ngữ «nâng» trong toán học thường được dịch là \"nâng\" (verb) hoặc \"phép nâng\" (noun), và cách dịch này ngắn gọn, tự nhiên hơn so với «nâng ánh xạ».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Thuật ngữ «nâng» trong toán học thường được dịch là \"nâng\" (verb) hoặc \"phép nâng\" (noun), và cách dịch này ngắn gọn, tự nhiên hơn so với «nâng ánh xạ»."
+          },
+          "reason": "Thuật ngữ «nâng» trong toán học thường được dịch là \"nâng\" (verb) hoặc \"phép nâng\" (noun), và cách dịch này ngắn gọn, tự nhiên hơn so với «nâng ánh xạ»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh toán học, «nâng» là cách dịch trực tiếp và tự nhiên hơn cho động từ \"lifting\" khi nó được theo sau bởi đối tượng \"hàm vô hướng\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh toán học, «nâng» là cách dịch trực tiếp và tự nhiên hơn cho động từ \"lifting\" khi nó được theo sau bởi đối tượng \"hàm vô hướng\"."
+          },
+          "reason": "Trong ngữ cảnh toán học, «nâng» là cách dịch trực tiếp và tự nhiên hơn cho động từ \"lifting\" khi nó được theo sau bởi đối tượng \"hàm vô hướng\"."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_manipulating_8325f6c2ab",
+      "term": "manipulating",
+      "tier": "soft",
+      "rep_block_id": "d2l_preliminaries_index_b002",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "thao tác",
+      "s1_surface": "xử lý",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Từ \"thao tác\" (manipulate) truyền tải ý nghĩa chính xác hơn về việc tương tác và thay đổi dữ liệu so với từ \"xử lý\" (process) trong ngữ cảnh này.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Từ \"thao tác\" (manipulate) truyền tải ý nghĩa chính xác hơn về việc tương tác và thay đổi dữ liệu so với từ \"xử lý\" (process) trong ngữ cảnh này."
+          },
+          "reason": "Từ \"thao tác\" (manipulate) truyền tải ý nghĩa chính xác hơn về việc tương tác và thay đổi dữ liệu so với từ \"xử lý\" (process) trong ngữ cảnh này."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.8,
+        "reason": "Trong ngữ cảnh này, «thao tác» truyền tải sắc thái của việc chủ động làm việc và thay đổi dữ liệu tốt hơn so với «xử lý», vốn có thể bao hàm nghĩa rộng hơn và trùng lặp với tiền xử lý.",
+        "raw": {
+          "confidence": 0.8,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh này, «thao tác» truyền tải sắc thái của việc chủ động làm việc và thay đổi dữ liệu tốt hơn so với «xử lý», vốn có thể bao hàm nghĩa rộng hơn và trùng lặp với tiền xử lý."
+          },
+          "reason": "Trong ngữ cảnh này, «thao tác» truyền tải sắc thái của việc chủ động làm việc và thay đổi dữ liệu tốt hơn so với «xử lý», vốn có thể bao hàm nghĩa rộng hơn và trùng lặp với tiền xử lý."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_membership_99ef7e9bc5",
+      "term": "membership",
+      "tier": "soft",
+      "rep_block_id": "d2l_preliminaries_linear_algebra_b005",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "thuộc",
+      "s1_surface": "quan hệ thuộc",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Quan hệ thuộc» là thuật ngữ chuyên ngành phổ biến và chính xác hơn cho \"membership\" trong ngữ cảnh lý thuyết tập hợp.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Quan hệ thuộc» là thuật ngữ chuyên ngành phổ biến và chính xác hơn cho \"membership\" trong ngữ cảnh lý thuyết tập hợp."
+          },
+          "reason": "«Quan hệ thuộc» là thuật ngữ chuyên ngành phổ biến và chính xác hơn cho \"membership\" trong ngữ cảnh lý thuyết tập hợp."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.8,
+        "reason": "Cả hai bản dịch đều truyền tải đúng nghĩa của thuật ngữ 'membership' trong ngữ cảnh lý thuyết tập hợp. 'Sự thuộc về' là cách dịch trực tiếp hơn cho danh từ 'membership', trong khi 'quan",
+        "raw": {
+          "confidence": 0.8,
+          "json_error": "Unterminated string starting at: line 4 column 13 (char 60)",
+          "label": "equivalent",
+          "raw": {
+            "_parse_repaired": true,
+            "_raw_text_prefix": "{\n  \"label\": \"equivalent\",\n  \"confidence\": 0.8,\n  \"reason\": \"Cả hai bản dịch đều truyền tải đúng nghĩa của thuật ngữ 'membership' trong ngữ cảnh lý thuyết tập hợp. 'Sự thuộc về' là cách dịch trực tiếp hơn cho danh từ 'membership', trong khi 'quan"
+          },
+          "reason": "Cả hai bản dịch đều truyền tải đúng nghĩa của thuật ngữ 'membership' trong ngữ cảnh lý thuyết tập hợp. 'Sự thuộc về' là cách dịch trực tiếp hơn cho danh từ 'membership', trong khi 'quan"
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_mnist_dataset_923cfe4011",
+      "term": "MNIST dataset",
+      "tier": "preserve",
+      "rep_block_id": "d2l_introduction_index_b126",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "bộ dữ liệu MNIST",
+      "s1_surface": "MNIST",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 1.0,
+        "reason": "Phiên bản B đánh dấu và dịch toàn bộ cụm từ \"MNIST dataset\" thành \"Bộ dữ liệu MNIST\", đây là cách dùng tự nhiên và chính xác trong tiếng Việt. Phiên bản A chỉ đánh dấu \"MNIST\".",
+        "raw": {
+          "confidence": 1.0,
+          "label": "B_better",
+          "raw": {
+            "confidence": 1,
+            "label": "B_better",
+            "reason": "Phiên bản B đánh dấu và dịch toàn bộ cụm từ \"MNIST dataset\" thành \"Bộ dữ liệu MNIST\", đây là cách dùng tự nhiên và chính xác trong tiếng Việt. Phiên bản A chỉ đánh dấu \"MNIST\"."
+          },
+          "reason": "Phiên bản B đánh dấu và dịch toàn bộ cụm từ \"MNIST dataset\" thành \"Bộ dữ liệu MNIST\", đây là cách dùng tự nhiên và chính xác trong tiếng Việt. Phiên bản A chỉ đánh dấu \"MNIST\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 1.0,
+        "reason": "Phiên bản A dịch và đánh dấu toàn bộ thuật ngữ 'MNIST dataset' là 'Bộ dữ liệu MNIST', trong khi phiên bản B chỉ đánh dấu 'MNIST'.",
+        "raw": {
+          "confidence": 1.0,
+          "label": "A_better",
+          "raw": {
+            "confidence": 1.0,
+            "label": "A_better",
+            "reason": "Phiên bản A dịch và đánh dấu toàn bộ thuật ngữ 'MNIST dataset' là 'Bộ dữ liệu MNIST', trong khi phiên bản B chỉ đánh dấu 'MNIST'."
+          },
+          "reason": "Phiên bản A dịch và đánh dấu toàn bộ thuật ngữ 'MNIST dataset' là 'Bộ dữ liệu MNIST', trong khi phiên bản B chỉ đánh dấu 'MNIST'."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_model_complexity_ca64fe25a6",
+      "term": "model complexity",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b021",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "độ phức tạp của mô hình",
+      "s1_surface": "độ phức tạp mô hình",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 1.0,
+        "reason": "Cả hai cách diễn đạt đều chính xác và truyền tải đầy đủ ý nghĩa của thuật ngữ tiếng Anh. Sự khác biệt là không đáng kể.",
+        "raw": {
+          "confidence": 1.0,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 1.0,
+            "label": "equivalent",
+            "reason": "Cả hai cách diễn đạt đều chính xác và truyền tải đầy đủ ý nghĩa của thuật ngữ tiếng Anh. Sự khác biệt là không đáng kể."
+          },
+          "reason": "Cả hai cách diễn đạt đều chính xác và truyền tải đầy đủ ý nghĩa của thuật ngữ tiếng Anh. Sự khác biệt là không đáng kể."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Phiên bản B sử dụng cấu trúc danh từ ghép gọn hơn, phù hợp với thuật ngữ kỹ thuật trong tiếng Việt.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Phiên bản B sử dụng cấu trúc danh từ ghép gọn hơn, phù hợp với thuật ngữ kỹ thuật trong tiếng Việt."
+          },
+          "reason": "Phiên bản B sử dụng cấu trúc danh từ ghép gọn hơn, phù hợp với thuật ngữ kỹ thuật trong tiếng Việt."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_model_s_parameters_eb636b643b",
+      "term": "model's parameters",
+      "tier": "hard",
+      "rep_block_id": "d2l_introduction_index_b021",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "tham số của mô hình",
+      "s1_surface": "tham số mô hình",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai cách diễn đạt đều chính xác và tự nhiên trong tiếng Việt kỹ thuật, với «tham số mô hình» là cách dùng phổ biến và ngắn gọn hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai cách diễn đạt đều chính xác và tự nhiên trong tiếng Việt kỹ thuật, với «tham số mô hình» là cách dùng phổ biến và ngắn gọn hơn."
+          },
+          "reason": "Cả hai cách diễn đạt đều chính xác và tự nhiên trong tiếng Việt kỹ thuật, với «tham số mô hình» là cách dùng phổ biến và ngắn gọn hơn."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh kỹ thuật, \"tham số mô hình\" là cách diễn đạt ngắn gọn và tự nhiên hơn so với \"tham số của mô hình\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh kỹ thuật, \"tham số mô hình\" là cách diễn đạt ngắn gọn và tự nhiên hơn so với \"tham số của mô hình\"."
+          },
+          "reason": "Trong ngữ cảnh kỹ thuật, \"tham số mô hình\" là cách diễn đạt ngắn gọn và tự nhiên hơn so với \"tham số của mô hình\"."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_multivariate_functions_de4f1ded26",
+      "term": "multivariate functions",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_calculus_b051",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "hàm nhiều biến",
+      "s1_surface": "hàm đa biến",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«Hàm đa biến» là thuật ngữ kỹ thuật chuẩn và phổ biến hơn trong toán học cho 'multivariate functions' so với «hàm nhiều biến».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«Hàm đa biến» là thuật ngữ kỹ thuật chuẩn và phổ biến hơn trong toán học cho 'multivariate functions' so với «hàm nhiều biến»."
+          },
+          "reason": "«Hàm đa biến» là thuật ngữ kỹ thuật chuẩn và phổ biến hơn trong toán học cho 'multivariate functions' so với «hàm nhiều biến»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Hàm đa biến» là thuật ngữ chuẩn và phổ biến hơn trong toán học tiếng Việt cho 'multivariate functions' so với «hàm nhiều biến».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Hàm đa biến» là thuật ngữ chuẩn và phổ biến hơn trong toán học tiếng Việt cho 'multivariate functions' so với «hàm nhiều biến»."
+          },
+          "reason": "«Hàm đa biến» là thuật ngữ chuẩn và phổ biến hơn trong toán học tiếng Việt cho 'multivariate functions' so với «hàm nhiều biến»."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_negative_log_likelihood_006bbe2ce2",
+      "term": "negative log-likelihood",
+      "tier": "hard",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b101",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "âm log-khả năng",
+      "s1_surface": "log-khả năng âm",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Phiên bản B \"log-khả năng âm\" tuân thủ cấu trúc ngữ pháp tiếng Việt (danh từ + tính từ) và phổ biến hơn trong thuật ngữ kỹ thuật so với \"âm log-khả năng\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Phiên bản B \"log-khả năng âm\" tuân thủ cấu trúc ngữ pháp tiếng Việt (danh từ + tính từ) và phổ biến hơn trong thuật ngữ kỹ thuật so với \"âm log-khả năng\"."
+          },
+          "reason": "Phiên bản B \"log-khả năng âm\" tuân thủ cấu trúc ngữ pháp tiếng Việt (danh từ + tính từ) và phổ biến hơn trong thuật ngữ kỹ thuật so với \"âm log-khả năng\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Cách diễn đạt «log-khả năng âm» tuân thủ cấu trúc ngữ pháp tiếng Việt hơn khi tính từ bổ nghĩa cho danh từ ghép.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Cách diễn đạt «log-khả năng âm» tuân thủ cấu trúc ngữ pháp tiếng Việt hơn khi tính từ bổ nghĩa cho danh từ ghép."
+          },
+          "reason": "Cách diễn đạt «log-khả năng âm» tuân thủ cấu trúc ngữ pháp tiếng Việt hơn khi tính từ bổ nghĩa cho danh từ ghép."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "B_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_offset_53a610e925",
+      "term": "offset",
+      "tier": "soft",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b011",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "độ lệch",
+      "s1_surface": "độ dời",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.7,
+        "reason": "Trong ngữ cảnh này, 'offset' đồng nghĩa với 'intercept' (hệ số chặn), thể hiện một sự dịch chuyển. 'Độ dời' (shift/displacement) phù hợp hơn với ý nghĩa này so với 'độ lệch' (deviation/bias).",
+        "raw": {
+          "confidence": 0.7,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.7,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh này, 'offset' đồng nghĩa với 'intercept' (hệ số chặn), thể hiện một sự dịch chuyển. 'Độ dời' (shift/displacement) phù hợp hơn với ý nghĩa này so với 'độ lệch' (deviation/bias)."
+          },
+          "reason": "Trong ngữ cảnh này, 'offset' đồng nghĩa với 'intercept' (hệ số chặn), thể hiện một sự dịch chuyển. 'Độ dời' (shift/displacement) phù hợp hơn với ý nghĩa này so với 'độ lệch' (deviation/bias)."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh thống kê/toán học, «độ lệch» là thuật ngữ phổ biến và phù hợp hơn để dịch 'offset' khi nó đồng nghĩa với 'intercept', trong khi «độ dời» thường dùng cho sự dịch chuyển vật lý.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh thống kê/toán học, «độ lệch» là thuật ngữ phổ biến và phù hợp hơn để dịch 'offset' khi nó đồng nghĩa với 'intercept', trong khi «độ dời» thường dùng cho sự dịch chuyển vật lý."
+          },
+          "reason": "Trong ngữ cảnh thống kê/toán học, «độ lệch» là thuật ngữ phổ biến và phù hợp hơn để dịch 'offset' khi nó đồng nghĩa với 'intercept', trong khi «độ dời» thường dùng cho sự dịch chuyển vật lý."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_prior_4a47653d5f",
+      "term": "prior",
+      "tier": "soft",
+      "rep_block_id": "d2l_multilayer_perceptrons_weight_decay_b065",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "tiên nghiệm",
+      "s1_surface": "phân phối tiên nghiệm",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong thống kê Bayes, \"prior\" là viết tắt của \"prior distribution\", do đó \"phân phối tiên nghiệm\" thể hiện rõ ràng và đầy đủ hơn khái niệm này so với chỉ \"tiên nghiệm\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong thống kê Bayes, \"prior\" là viết tắt của \"prior distribution\", do đó \"phân phối tiên nghiệm\" thể hiện rõ ràng và đầy đủ hơn khái niệm này so với chỉ \"tiên nghiệm\"."
+          },
+          "reason": "Trong thống kê Bayes, \"prior\" là viết tắt của \"prior distribution\", do đó \"phân phối tiên nghiệm\" thể hiện rõ ràng và đầy đủ hơn khái niệm này so với chỉ \"tiên nghiệm\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong thống kê Bayes, 'prior' thường được hiểu là 'phân phối tiên nghiệm', và việc thêm từ 'phân phối' giúp bản dịch chính xác và rõ ràng hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong thống kê Bayes, 'prior' thường được hiểu là 'phân phối tiên nghiệm', và việc thêm từ 'phân phối' giúp bản dịch chính xác và rõ ràng hơn."
+          },
+          "reason": "Trong thống kê Bayes, 'prior' thường được hiểu là 'phân phối tiên nghiệm', và việc thêm từ 'phân phối' giúp bản dịch chính xác và rõ ràng hơn."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_random_experiment_cc591bd83d",
+      "term": "random experiment",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_probability_b041",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "thí nghiệm ngẫu nhiên",
+      "s1_surface": "phép thử ngẫu nhiên",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 1.0,
+        "reason": "«Phép thử ngẫu nhiên» là thuật ngữ chuẩn trong lý thuyết xác suất cho \"random experiment\".",
+        "raw": {
+          "confidence": 1.0,
+          "label": "A_better",
+          "raw": {
+            "confidence": 1,
+            "label": "A_better",
+            "reason": "«Phép thử ngẫu nhiên» là thuật ngữ chuẩn trong lý thuyết xác suất cho \"random experiment\"."
+          },
+          "reason": "«Phép thử ngẫu nhiên» là thuật ngữ chuẩn trong lý thuyết xác suất cho \"random experiment\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh xác suất, «phép thử ngẫu nhiên» là thuật ngữ chuẩn và chính xác hơn so với «thí nghiệm ngẫu nhiên» để chỉ một hành động có kết quả không chắc chắn như gieo xúc xắc.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh xác suất, «phép thử ngẫu nhiên» là thuật ngữ chuẩn và chính xác hơn so với «thí nghiệm ngẫu nhiên» để chỉ một hành động có kết quả không chắc chắn như gieo xúc xắc."
+          },
+          "reason": "Trong ngữ cảnh xác suất, «phép thử ngẫu nhiên» là thuật ngữ chuẩn và chính xác hơn so với «thí nghiệm ngẫu nhiên» để chỉ một hành động có kết quả không chắc chắn như gieo xúc xắc."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_real_valued_scalars_e5f331e933",
+      "term": "real-valued scalars",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_linear_algebra_b023",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "giá trị thực",
+      "s1_surface": "vô hướng thực",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Phiên bản A sử dụng thuật ngữ toán học \"vô hướng thực\" ngắn gọn và phổ biến hơn so với cách diễn đạt dài dòng hơn trong phiên bản B.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Phiên bản A sử dụng thuật ngữ toán học \"vô hướng thực\" ngắn gọn và phổ biến hơn so với cách diễn đạt dài dòng hơn trong phiên bản B."
+          },
+          "reason": "Phiên bản A sử dụng thuật ngữ toán học \"vô hướng thực\" ngắn gọn và phổ biến hơn so với cách diễn đạt dài dòng hơn trong phiên bản B."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«Vô hướng thực» là thuật ngữ toán học chuẩn và ngắn gọn hơn cho \"real-valued scalars\" trong tiếng Việt so với cách diễn đạt dài dòng «vô hướng có giá trị thực».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«Vô hướng thực» là thuật ngữ toán học chuẩn và ngắn gọn hơn cho \"real-valued scalars\" trong tiếng Việt so với cách diễn đạt dài dòng «vô hướng có giá trị thực»."
+          },
+          "reason": "«Vô hướng thực» là thuật ngữ toán học chuẩn và ngắn gọn hơn cho \"real-valued scalars\" trong tiếng Việt so với cách diễn đạt dài dòng «vô hướng có giá trị thực»."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_regularization_term_b48f4963e7",
+      "term": "regularization term",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_backprop_b027",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "hạng tử chính quy hóa",
+      "s1_surface": "hạng chuẩn hóa",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 1.0,
+        "reason": "Thuật ngữ \"chính quy hóa\" là bản dịch chính xác và phổ biến cho \"regularization\" trong ngữ cảnh kỹ thuật, trong khi \"chuẩn hóa\" thường dùng cho \"normalization\".",
+        "raw": {
+          "confidence": 1.0,
+          "label": "A_better",
+          "raw": {
+            "confidence": 1,
+            "label": "A_better",
+            "reason": "Thuật ngữ \"chính quy hóa\" là bản dịch chính xác và phổ biến cho \"regularization\" trong ngữ cảnh kỹ thuật, trong khi \"chuẩn hóa\" thường dùng cho \"normalization\"."
+          },
+          "reason": "Thuật ngữ \"chính quy hóa\" là bản dịch chính xác và phổ biến cho \"regularization\" trong ngữ cảnh kỹ thuật, trong khi \"chuẩn hóa\" thường dùng cho \"normalization\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai bản dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, không có sự khác biệt đáng kể về mặt ý nghĩa hay độ tự nhiên.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai bản dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, không có sự khác biệt đáng kể về mặt ý nghĩa hay độ tự nhiên."
+          },
+          "reason": "Cả hai bản dịch đều chính xác và phổ biến trong ngữ cảnh kỹ thuật, không có sự khác biệt đáng kể về mặt ý nghĩa hay độ tự nhiên."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_regularizing_0228b30aa3",
+      "term": "regularizing",
+      "tier": "soft",
+      "rep_block_id": "d2l_multilayer_perceptrons_dropout_b002",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "điều chuẩn",
+      "s1_surface": "chuẩn hóa",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«Điều chuẩn» là thuật ngữ chuyên ngành chính xác và phổ biến hơn cho 'regularizing' trong ngữ cảnh mô hình thống kê so với «chuẩn hóa».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«Điều chuẩn» là thuật ngữ chuyên ngành chính xác và phổ biến hơn cho 'regularizing' trong ngữ cảnh mô hình thống kê so với «chuẩn hóa»."
+          },
+          "reason": "«Điều chuẩn» là thuật ngữ chuyên ngành chính xác và phổ biến hơn cho 'regularizing' trong ngữ cảnh mô hình thống kê so với «chuẩn hóa»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh mô hình thống kê và phạt chuẩn L2, «điều chuẩn» là thuật ngữ kỹ thuật chính xác và phổ biến hơn cho \"regularizing\" so với «chuẩn hóa».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh mô hình thống kê và phạt chuẩn L2, «điều chuẩn» là thuật ngữ kỹ thuật chính xác và phổ biến hơn cho \"regularizing\" so với «chuẩn hóa»."
+          },
+          "reason": "Trong ngữ cảnh mô hình thống kê và phạt chuẩn L2, «điều chuẩn» là thuật ngữ kỹ thuật chính xác và phổ biến hơn cho \"regularizing\" so với «chuẩn hóa»."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_robotics_891e0758a7",
+      "term": "robotics",
+      "tier": "soft",
+      "rep_block_id": "d2l_introduction_index_b140",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "robot học",
+      "s1_surface": "người máy học",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 1.0,
+        "reason": "«robot học» là thuật ngữ chuyên ngành phổ biến và chính xác hơn cho 'robotics' trong tiếng Việt so với «người máy học».",
+        "raw": {
+          "confidence": 1.0,
+          "label": "A_better",
+          "raw": {
+            "confidence": 1,
+            "label": "A_better",
+            "reason": "«robot học» là thuật ngữ chuyên ngành phổ biến và chính xác hơn cho 'robotics' trong tiếng Việt so với «người máy học»."
+          },
+          "reason": "«robot học» là thuật ngữ chuyên ngành phổ biến và chính xác hơn cho 'robotics' trong tiếng Việt so với «người máy học»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«Robot học» là thuật ngữ phổ biến và tự nhiên hơn để chỉ lĩnh vực robotics trong tiếng Việt so với «người máy học».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«Robot học» là thuật ngữ phổ biến và tự nhiên hơn để chỉ lĩnh vực robotics trong tiếng Việt so với «người máy học»."
+          },
+          "reason": "«Robot học» là thuật ngữ phổ biến và tự nhiên hơn để chỉ lĩnh vực robotics trong tiếng Việt so với «người máy học»."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_row_vectors_04aadc236a",
+      "term": "row vectors",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_linear_algebra_b132",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "vector hàng",
+      "s1_surface": "vectơ hàng",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 1.0,
+        "reason": "Cách viết \"vectơ\" (B) là chuẩn và phổ biến hơn trong tiếng Việt cho thuật ngữ toán học này so với \"vector\" (A).",
+        "raw": {
+          "confidence": 1.0,
+          "label": "B_better",
+          "raw": {
+            "confidence": 1,
+            "label": "B_better",
+            "reason": "Cách viết \"vectơ\" (B) là chuẩn và phổ biến hơn trong tiếng Việt cho thuật ngữ toán học này so với \"vector\" (A)."
+          },
+          "reason": "Cách viết \"vectơ\" (B) là chuẩn và phổ biến hơn trong tiếng Việt cho thuật ngữ toán học này so với \"vector\" (A)."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Vectơ» là cách viết chuẩn và phổ biến hơn cho thuật ngữ này trong tiếng Việt so với «vector».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Vectơ» là cách viết chuẩn và phổ biến hơn cho thuật ngữ này trong tiếng Việt so với «vector»."
+          },
+          "reason": "«Vectơ» là cách viết chuẩn và phổ biến hơn cho thuật ngữ này trong tiếng Việt so với «vector»."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "B_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_rules_caa155adf8",
+      "term": "rules",
+      "tier": "ignore_for_consistency",
+      "rep_block_id": "d2l_introduction_index_b003",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "quy tắc",
+      "s1_surface": "luật",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh phát triển ứng dụng và xử lý các trường hợp biên, «quy tắc» phù hợp hơn để chỉ các nguyên tắc hoặc hướng dẫn vận hành, trong khi «luật» thường mang sắc thái trang trọng hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh phát triển ứng dụng và xử lý các trường hợp biên, «quy tắc» phù hợp hơn để chỉ các nguyên tắc hoặc hướng dẫn vận hành, trong khi «luật» thường mang sắc thái trang trọng hơn."
+          },
+          "reason": "Trong ngữ cảnh phát triển ứng dụng và xử lý các trường hợp biên, «quy tắc» phù hợp hơn để chỉ các nguyên tắc hoặc hướng dẫn vận hành, trong khi «luật» thường mang sắc thái trang trọng hơn."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh này, «quy tắc» phù hợp hơn để chỉ các nguyên tắc hoặc hướng dẫn vận hành của một ứng dụng, trong khi «luật» thường mang sắc thái trang trọng hoặc pháp lý hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh này, «quy tắc» phù hợp hơn để chỉ các nguyên tắc hoặc hướng dẫn vận hành của một ứng dụng, trong khi «luật» thường mang sắc thái trang trọng hoặc pháp lý hơn."
+          },
+          "reason": "Trong ngữ cảnh này, «quy tắc» phù hợp hơn để chỉ các nguyên tắc hoặc hướng dẫn vận hành của một ứng dụng, trong khi «luật» thường mang sắc thái trang trọng hoặc pháp lý hơn."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_self_driving_cars_ac724ed2e4",
+      "term": "self-driving cars",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b029",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "xe tự lái",
+      "s1_surface": "ô tô tự lái",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 0.95,
+        "reason": "Cả hai thuật ngữ \"ô tô tự lái\" và \"xe tự lái\" đều được sử dụng phổ biến và truyền tải chính xác ý nghĩa của \"self-driving cars\" trong tiếng Việt.",
+        "raw": {
+          "confidence": 0.95,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.95,
+            "label": "equivalent",
+            "reason": "Cả hai thuật ngữ \"ô tô tự lái\" và \"xe tự lái\" đều được sử dụng phổ biến và truyền tải chính xác ý nghĩa của \"self-driving cars\" trong tiếng Việt."
+          },
+          "reason": "Cả hai thuật ngữ \"ô tô tự lái\" và \"xe tự lái\" đều được sử dụng phổ biến và truyền tải chính xác ý nghĩa của \"self-driving cars\" trong tiếng Việt."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.95,
+        "reason": "Cả hai bản dịch đều chính xác và tự nhiên trong tiếng Việt để chỉ \"xe tự lái\".",
+        "raw": {
+          "confidence": 0.95,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.95,
+            "label": "equivalent",
+            "reason": "Cả hai bản dịch đều chính xác và tự nhiên trong tiếng Việt để chỉ \"xe tự lái\"."
+          },
+          "reason": "Cả hai bản dịch đều chính xác và tự nhiên trong tiếng Việt để chỉ \"xe tự lái\"."
+        }
+      },
+      "gemini_resolved": "equivalent",
+      "gemini_label": "lateral",
+      "human_label": "equivalent",
+      "human_system_label": "equivalent",
+      "human_final_label": "lateral",
+      "final_label": "lateral",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_smoothness_fa9d205bd5",
+      "term": "smoothness",
+      "tier": "soft",
+      "rep_block_id": "d2l_multilayer_perceptrons_dropout_b010",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "tính trơn",
+      "s1_surface": "độ trơn",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.8,
+        "reason": "Trong ngữ cảnh kỹ thuật, «độ trơn» là thuật ngữ phổ biến và tự nhiên hơn để chỉ khái niệm smoothness, đặc biệt khi nói về hàm số hoặc bề mặt.",
+        "raw": {
+          "confidence": 0.8,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh kỹ thuật, «độ trơn» là thuật ngữ phổ biến và tự nhiên hơn để chỉ khái niệm smoothness, đặc biệt khi nói về hàm số hoặc bề mặt."
+          },
+          "reason": "Trong ngữ cảnh kỹ thuật, «độ trơn» là thuật ngữ phổ biến và tự nhiên hơn để chỉ khái niệm smoothness, đặc biệt khi nói về hàm số hoặc bề mặt."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.7,
+        "reason": "«Tính trơn» diễn tả tính chất hoặc đặc điểm của sự trơn tru, phù hợp hơn khi khái niệm này được dùng để định nghĩa một khía cạnh của sự đơn giản.",
+        "raw": {
+          "confidence": 0.7,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.7,
+            "label": "B_better",
+            "reason": "«Tính trơn» diễn tả tính chất hoặc đặc điểm của sự trơn tru, phù hợp hơn khi khái niệm này được dùng để định nghĩa một khía cạnh của sự đơn giản."
+          },
+          "reason": "«Tính trơn» diễn tả tính chất hoặc đặc điểm của sự trơn tru, phù hợp hơn khi khái niệm này được dùng để định nghĩa một khía cạnh của sự đơn giản."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_symmetry_18e1be4e79",
+      "term": "symmetry",
+      "tier": "soft",
+      "rep_block_id": "d2l_preliminaries_probability_b051",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "tính đối xứng",
+      "s1_surface": "đối xứng",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai cách diễn đạt đều chính xác và tự nhiên trong ngữ cảnh toán học tiếng Việt, và đều truyền tải đúng nghĩa của thuật ngữ.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai cách diễn đạt đều chính xác và tự nhiên trong ngữ cảnh toán học tiếng Việt, và đều truyền tải đúng nghĩa của thuật ngữ."
+          },
+          "reason": "Cả hai cách diễn đạt đều chính xác và tự nhiên trong ngữ cảnh toán học tiếng Việt, và đều truyền tải đúng nghĩa của thuật ngữ."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai cách diễn đạt đều chính xác và phổ biến trong ngữ cảnh toán học, sự khác biệt về từ \"tính\" không làm thay đổi ý nghĩa cốt lõi.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai cách diễn đạt đều chính xác và phổ biến trong ngữ cảnh toán học, sự khác biệt về từ \"tính\" không làm thay đổi ý nghĩa cốt lõi."
+          },
+          "reason": "Cả hai cách diễn đạt đều chính xác và phổ biến trong ngữ cảnh toán học, sự khác biệt về từ \"tính\" không làm thay đổi ý nghĩa cốt lõi."
+        }
+      },
+      "gemini_resolved": "equivalent",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_tangent_line_fc8da8d99b",
+      "term": "tangent line",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_calculus_b030",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "tiếp tuyến",
+      "s1_surface": "đường tiếp tuyến",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "«đường tiếp tuyến» là thuật ngữ chuẩn và ngắn gọn hơn cho 'tangent line' trong tiếng Việt.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "«đường tiếp tuyến» là thuật ngữ chuẩn và ngắn gọn hơn cho 'tangent line' trong tiếng Việt."
+          },
+          "reason": "«đường tiếp tuyến» là thuật ngữ chuẩn và ngắn gọn hơn cho 'tangent line' trong tiếng Việt."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 1.0,
+        "reason": "Cả hai cách diễn đạt \"đường tiếp tuyến\" và \"đường thẳng tiếp tuyến\" đều chính xác và phổ biến trong toán học tiếng Việt để chỉ \"tangent line\".",
+        "raw": {
+          "confidence": 1.0,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 1,
+            "label": "equivalent",
+            "reason": "Cả hai cách diễn đạt \"đường tiếp tuyến\" và \"đường thẳng tiếp tuyến\" đều chính xác và phổ biến trong toán học tiếng Việt để chỉ \"tangent line\"."
+          },
+          "reason": "Cả hai cách diễn đạt \"đường tiếp tuyến\" và \"đường thẳng tiếp tuyến\" đều chính xác và phổ biến trong toán học tiếng Việt để chỉ \"tangent line\"."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_target_0e8a3ad980",
+      "term": "target",
+      "tier": "soft",
+      "rep_block_id": "d2l_introduction_index_b023",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "nhãn",
+      "s1_surface": "biến mục tiêu",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.8,
+        "reason": "Trong ngữ cảnh này, 'mục tiêu' (B) là cách dịch trực tiếp và phổ biến hơn cho 'target', đặc biệt khi đi kèm với 'nhãn' (label), so với 'bi",
+        "raw": {
+          "confidence": 0.8,
+          "json_error": "Unterminated string starting at: line 4 column 13 (char 58)",
+          "label": "B_better",
+          "raw": {
+            "_parse_repaired": true,
+            "_raw_text_prefix": "{\n  \"label\": \"B_better\",\n  \"confidence\": 0.8,\n  \"reason\": \"Trong ngữ cảnh này, 'mục tiêu' (B) là cách dịch trực tiếp và phổ biến hơn cho 'target', đặc biệt khi đi kèm với 'nhãn' (label), so với 'bi"
+          },
+          "reason": "Trong ngữ cảnh này, 'mục tiêu' (B) là cách dịch trực tiếp và phổ biến hơn cho 'target', đặc biệt khi đi kèm với 'nhãn' (label), so với 'bi"
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.8,
+        "reason": "«Mục tiêu» là bản dịch trực tiếp và cô đọng của 'target', giữ được sự song song với 'label' mà không thêm từ 'biến' không có trong thuật ngữ gốc.",
+        "raw": {
+          "confidence": 0.8,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "A_better",
+            "reason": "«Mục tiêu» là bản dịch trực tiếp và cô đọng của 'target', giữ được sự song song với 'label' mà không thêm từ 'biến' không có trong thuật ngữ gốc."
+          },
+          "reason": "«Mục tiêu» là bản dịch trực tiếp và cô đọng của 'target', giữ được sự song song với 'label' mà không thêm từ 'biến' không có trong thuật ngữ gốc."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_target_distribution_e11bb1fcd8",
+      "term": "target distribution",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b059",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "phân phối đích",
+      "s1_surface": "phân phối mục tiêu",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.8,
+        "reason": "Trong ngữ cảnh kỹ thuật, \"phân phối đích\" là cách dịch phổ biến và tự nhiên hơn cho \"target distribution\" so với \"phân phối mục tiêu\".",
+        "raw": {
+          "confidence": 0.8,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh kỹ thuật, \"phân phối đích\" là cách dịch phổ biến và tự nhiên hơn cho \"target distribution\" so với \"phân phối mục tiêu\"."
+          },
+          "reason": "Trong ngữ cảnh kỹ thuật, \"phân phối đích\" là cách dịch phổ biến và tự nhiên hơn cho \"target distribution\" so với \"phân phối mục tiêu\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "«Phân phối mục tiêu» là thuật ngữ chuẩn và phổ biến hơn cho \"target distribution\" trong các lĩnh vực kỹ thuật, giúp bản dịch tự nhiên và dễ hiểu hơn.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "«Phân phối mục tiêu» là thuật ngữ chuẩn và phổ biến hơn cho \"target distribution\" trong các lĩnh vực kỹ thuật, giúp bản dịch tự nhiên và dễ hiểu hơn."
+          },
+          "reason": "«Phân phối mục tiêu» là thuật ngữ chuẩn và phổ biến hơn cho \"target distribution\" trong các lĩnh vực kỹ thuật, giúp bản dịch tự nhiên và dễ hiểu hơn."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_targets_4683e789c3",
+      "term": "targets",
+      "tier": "soft",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b049",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "mục tiêu",
+      "s1_surface": "nhãn mục tiêu",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh học máy, \"targets\" có thể là giá trị liên tục hoặc nhãn phân loại. \"Mục tiêu\" (A) là thuật ngữ chung và phù hợp hơn, trong khi \"nhãn mục tiêu\" (B) thêm từ \"nhãn\" có thể làm hẹp nghĩa của \"targets\" chỉ còn là các nhãn phân loại.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh học máy, \"targets\" có thể là giá trị liên tục hoặc nhãn phân loại. \"Mục tiêu\" (A) là thuật ngữ chung và phù hợp hơn, trong khi \"nhãn mục tiêu\" (B) thêm từ \"nhãn\" có thể làm hẹp nghĩa của \"targets\" chỉ còn là các nhãn phân loại."
+          },
+          "reason": "Trong ngữ cảnh học máy, \"targets\" có thể là giá trị liên tục hoặc nhãn phân loại. \"Mục tiêu\" (A) là thuật ngữ chung và phù hợp hơn, trong khi \"nhãn mục tiêu\" (B) thêm từ \"nhãn\" có thể làm hẹp nghĩa của \"targets\" chỉ còn là các nhãn phân loại."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh kỹ thuật này, \"nhãn mục tiêu\" là thuật ngữ phổ biến và chính xác hơn để chỉ các giá trị hoặc nhãn cần dự đoán.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh kỹ thuật này, \"nhãn mục tiêu\" là thuật ngữ phổ biến và chính xác hơn để chỉ các giá trị hoặc nhãn cần dự đoán."
+          },
+          "reason": "Trong ngữ cảnh kỹ thuật này, \"nhãn mục tiêu\" là thuật ngữ phổ biến và chính xác hơn để chỉ các giá trị hoặc nhãn cần dự đoán."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_tensor_format_20bcb4d8d7",
+      "term": "tensor format",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_pandas_b002",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "định dạng tensor",
+      "s1_surface": "dạng tensor",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh kỹ thuật về dữ liệu, \"định dạng\" là cách dịch chuẩn và phổ biến hơn cho \"format\" so với \"dạng\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh kỹ thuật về dữ liệu, \"định dạng\" là cách dịch chuẩn và phổ biến hơn cho \"format\" so với \"dạng\"."
+          },
+          "reason": "Trong ngữ cảnh kỹ thuật về dữ liệu, \"định dạng\" là cách dịch chuẩn và phổ biến hơn cho \"format\" so với \"dạng\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai cách dịch \"định dạng tensor\" và \"dạng tensor\" đều chính xác và được sử dụng phổ biến trong ngữ cảnh kỹ thuật tiếng Việt để chỉ cấu trúc dữ liệu tensor.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai cách dịch \"định dạng tensor\" và \"dạng tensor\" đều chính xác và được sử dụng phổ biến trong ngữ cảnh kỹ thuật tiếng Việt để chỉ cấu trúc dữ liệu tensor."
+          },
+          "reason": "Cả hai cách dịch \"định dạng tensor\" và \"dạng tensor\" đều chính xác và được sử dụng phổ biến trong ngữ cảnh kỹ thuật tiếng Việt để chỉ cấu trúc dữ liệu tensor."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_test_accuracy_be3aebb55f",
+      "term": "test accuracy",
+      "tier": "hard",
+      "rep_block_id": "d2l_linear_networks_softmax_regression_concise_b036",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "độ chính xác trên tập kiểm tra",
+      "s1_surface": "độ chính xác kiểm tra",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 0.8,
+        "reason": "Cả hai phiên bản đều truyền tải đúng nghĩa của thuật ngữ 'test accuracy' trong ngữ cảnh học máy. 'Độ chính xác kiểm tra' là cách dịch trực tiếp và phổ biến, trong khi 'độ",
+        "raw": {
+          "confidence": 0.8,
+          "json_error": "Unterminated string starting at: line 4 column 13 (char 60)",
+          "label": "equivalent",
+          "raw": {
+            "_parse_repaired": true,
+            "_raw_text_prefix": "{\n  \"label\": \"equivalent\",\n  \"confidence\": 0.8,\n  \"reason\": \"Cả hai phiên bản đều truyền tải đúng nghĩa của thuật ngữ 'test accuracy' trong ngữ cảnh học máy. 'Độ chính xác kiểm tra' là cách dịch trực tiếp và phổ biến, trong khi 'độ"
+          },
+          "reason": "Cả hai phiên bản đều truyền tải đúng nghĩa của thuật ngữ 'test accuracy' trong ngữ cảnh học máy. 'Độ chính xác kiểm tra' là cách dịch trực tiếp và phổ biến, trong khi 'độ"
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Phiên bản A dịch \"test accuracy\" thành \"độ chính xác trên tập kiểm tra\" rõ ràng và chính xác hơn trong ngữ cảnh học máy, nơi \"test\" thường ngụ ý \"tập kiểm tra\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Phiên bản A dịch \"test accuracy\" thành \"độ chính xác trên tập kiểm tra\" rõ ràng và chính xác hơn trong ngữ cảnh học máy, nơi \"test\" thường ngụ ý \"tập kiểm tra\"."
+          },
+          "reason": "Phiên bản A dịch \"test accuracy\" thành \"độ chính xác trên tập kiểm tra\" rõ ràng và chính xác hơn trong ngữ cảnh học máy, nơi \"test\" thường ngụ ý \"tập kiểm tra\"."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_test_set_accuracy_98a76f479d",
+      "term": "test set accuracy",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b003",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "độ chính xác trên tập kiểm tra",
+      "s1_surface": "độ chính xác tập kiểm tra",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả hai cách diễn đạt đều chính xác và phổ biến trong ngữ cảnh kỹ thuật tiếng Việt cho thuật ngữ này.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả hai cách diễn đạt đều chính xác và phổ biến trong ngữ cảnh kỹ thuật tiếng Việt cho thuật ngữ này."
+          },
+          "reason": "Cả hai cách diễn đạt đều chính xác và phổ biến trong ngữ cảnh kỹ thuật tiếng Việt cho thuật ngữ này."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Việc thêm giới từ \"trên\" làm cho cụm từ \"độ chính xác trên tập kiểm tra\" tự nhiên và chính xác hơn trong ngữ cảnh kỹ thuật tiếng Việt.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Việc thêm giới từ \"trên\" làm cho cụm từ \"độ chính xác trên tập kiểm tra\" tự nhiên và chính xác hơn trong ngữ cảnh kỹ thuật tiếng Việt."
+          },
+          "reason": "Việc thêm giới từ \"trên\" làm cho cụm từ \"độ chính xác trên tập kiểm tra\" tự nhiên và chính xác hơn trong ngữ cảnh kỹ thuật tiếng Việt."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_training_example_bdb5992a4c",
+      "term": "training example",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b073",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "ví dụ huấn luyện",
+      "s1_surface": "mẫu huấn luyện",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh học máy, «mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn để chỉ một điểm dữ liệu dùng để huấn luyện mô hình so với «ví dụ huấn luyện».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh học máy, «mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn để chỉ một điểm dữ liệu dùng để huấn luyện mô hình so với «ví dụ huấn luyện»."
+          },
+          "reason": "Trong ngữ cảnh học máy, «mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn để chỉ một điểm dữ liệu dùng để huấn luyện mô hình so với «ví dụ huấn luyện»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.8,
+        "reason": "Trong ngữ cảnh học máy, «mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn để chỉ một điểm dữ liệu dùng để huấn luyện mô hình.",
+        "raw": {
+          "confidence": 0.8,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh học máy, «mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn để chỉ một điểm dữ liệu dùng để huấn luyện mô hình."
+          },
+          "reason": "Trong ngữ cảnh học máy, «mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn để chỉ một điểm dữ liệu dùng để huấn luyện mô hình."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": true
+    },
+    {
+      "item_id": "mt_training_examples_79bcf24974",
+      "term": "training examples",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_autograd_b031",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "ví dụ huấn luyện",
+      "s1_surface": "mẫu huấn luyện",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.8,
+        "reason": "«Mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn trong ngữ cảnh học máy để chỉ các điểm dữ liệu dùng để huấn luyện mô hình.",
+        "raw": {
+          "confidence": 0.8,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.8,
+            "label": "A_better",
+            "reason": "«Mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn trong ngữ cảnh học máy để chỉ các điểm dữ liệu dùng để huấn luyện mô hình."
+          },
+          "reason": "«Mẫu huấn luyện» là thuật ngữ phổ biến và tự nhiên hơn trong ngữ cảnh học máy để chỉ các điểm dữ liệu dùng để huấn luyện mô hình."
+        }
+      },
+      "gemini_reverse": {
+        "label": "equivalent",
+        "confidence": 1.0,
+        "reason": "Cả «ví dụ huấn luyện» và «mẫu huấn luyện» đều là các thuật ngữ chuẩn và được sử dụng rộng rãi trong học máy tiếng Việt để chỉ 'training examples'.",
+        "raw": {
+          "confidence": 1.0,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 1,
+            "label": "equivalent",
+            "reason": "Cả «ví dụ huấn luyện» và «mẫu huấn luyện» đều là các thuật ngữ chuẩn và được sử dụng rộng rãi trong học máy tiếng Việt để chỉ 'training examples'."
+          },
+          "reason": "Cả «ví dụ huấn luyện» và «mẫu huấn luyện» đều là các thuật ngữ chuẩn và được sử dụng rộng rãi trong học máy tiếng Việt để chỉ 'training examples'."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_true_parameters_6636cf5533",
+      "term": "true parameters",
+      "tier": "hard",
+      "rep_block_id": "d2l_linear_networks_linear_regression_scratch_b056",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "tham số thật",
+      "s1_surface": "tham số thực",
+      "gemini_forward": {
+        "label": "equivalent",
+        "confidence": 0.9,
+        "reason": "Cả \"tham số thực\" và \"tham số thật\" đều diễn đạt chính xác ý nghĩa của \"true parameters\" trong ngữ cảnh kỹ thuật và đều được sử dụng phổ biến.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "equivalent",
+          "raw": {
+            "confidence": 0.9,
+            "label": "equivalent",
+            "reason": "Cả \"tham số thực\" và \"tham số thật\" đều diễn đạt chính xác ý nghĩa của \"true parameters\" trong ngữ cảnh kỹ thuật và đều được sử dụng phổ biến."
+          },
+          "reason": "Cả \"tham số thực\" và \"tham số thật\" đều diễn đạt chính xác ý nghĩa của \"true parameters\" trong ngữ cảnh kỹ thuật và đều được sử dụng phổ biến."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh kỹ thuật, «tham số thực» là cách diễn đạt chuẩn và phổ biến hơn cho \"true parameters\" so với «tham số thật».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh kỹ thuật, «tham số thực» là cách diễn đạt chuẩn và phổ biến hơn cho \"true parameters\" so với «tham số thật»."
+          },
+          "reason": "Trong ngữ cảnh kỹ thuật, «tham số thực» là cách diễn đạt chuẩn và phổ biến hơn cho \"true parameters\" so với «tham số thật»."
+        }
+      },
+      "gemini_resolved": "ambiguous",
+      "gemini_label": "lateral",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_true_probability_0c04e78467",
+      "term": "true probability",
+      "tier": "hard",
+      "rep_block_id": "d2l_preliminaries_probability_b025",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "xác suất thật",
+      "s1_surface": "xác suất thực",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh khoa học và toán học, \"thực\" (như trong \"giá trị thực\", \"số thực\") thường được dùng để chỉ tính chất \"true\" hoặc \"real\" của một đại lượng, phù hợp hơn \"thật\".",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh khoa học và toán học, \"thực\" (như trong \"giá trị thực\", \"số thực\") thường được dùng để chỉ tính chất \"true\" hoặc \"real\" của một đại lượng, phù hợp hơn \"thật\"."
+          },
+          "reason": "Trong ngữ cảnh khoa học và toán học, \"thực\" (như trong \"giá trị thực\", \"số thực\") thường được dùng để chỉ tính chất \"true\" hoặc \"real\" của một đại lượng, phù hợp hơn \"thật\"."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh khoa học và toán học, 'thực' là từ chuẩn và phù hợp hơn để diễn tả 'true' khi nói về 'xác suất' so với 'thật'.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh khoa học và toán học, 'thực' là từ chuẩn và phù hợp hơn để diễn tả 'true' khi nói về 'xác suất' so với 'thật'."
+          },
+          "reason": "Trong ngữ cảnh khoa học và toán học, 'thực' là từ chuẩn và phù hợp hơn để diễn tả 'true' khi nói về 'xác suất' so với 'thật'."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_universal_approximators_c7cc5b991a",
+      "term": "Universal Approximators",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_mlp_b024",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "bộ xấp xỉ phổ dụng",
+      "s1_surface": "bộ xấp xỉ phổ quát",
+      "gemini_forward": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Thuật ngữ «phổ quát» truyền tải ý nghĩa của 'universal' trong ngữ cảnh toán học và khoa học máy tính chính xác hơn «phổ dụng».",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Thuật ngữ «phổ quát» truyền tải ý nghĩa của 'universal' trong ngữ cảnh toán học và khoa học máy tính chính xác hơn «phổ dụng»."
+          },
+          "reason": "Thuật ngữ «phổ quát» truyền tải ý nghĩa của 'universal' trong ngữ cảnh toán học và khoa học máy tính chính xác hơn «phổ dụng»."
+        }
+      },
+      "gemini_reverse": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Thuật ngữ \"phổ quát\" truyền tải ý nghĩa \"universal\" (tổng quát, bao trùm mọi trường hợp) chính xác hơn trong ngữ cảnh kỹ thuật này so với \"phổ dụng\" (thông dụng, phổ biến).",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Thuật ngữ \"phổ quát\" truyền tải ý nghĩa \"universal\" (tổng quát, bao trùm mọi trường hợp) chính xác hơn trong ngữ cảnh kỹ thuật này so với \"phổ dụng\" (thông dụng, phổ biến)."
+          },
+          "reason": "Thuật ngữ \"phổ quát\" truyền tải ý nghĩa \"universal\" (tổng quát, bao trùm mọi trường hợp) chính xác hơn trong ngữ cảnh kỹ thuật này so với \"phổ dụng\" (thông dụng, phổ biến)."
+        }
+      },
+      "gemini_resolved": "S1_better",
+      "gemini_label": "improve",
+      "human_label": "A_better",
+      "human_system_label": "S1_better",
+      "human_final_label": "improve",
+      "final_label": "improve",
+      "human_suggested": false
+    },
+    {
+      "item_id": "mt_vanishing_and_exploding_gradients_c51a803991",
+      "term": "Vanishing and Exploding Gradients",
+      "tier": "hard",
+      "rep_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b042",
+      "consistency_status": "S0_consistent_to_S1_changed_form",
+      "s0_surface": "gradient biến mất và bùng nổ",
+      "s1_surface": "độ dốc biến mất và bùng nổ",
+      "gemini_forward": {
+        "label": "B_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh học sâu, thuật ngữ \"Gradient\" (nguyên bản tiếng Anh) được sử dụng phổ biến và tự nhiên hơn \"Độ dốc\" trong tiếng Việt.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "B_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "B_better",
+            "reason": "Trong ngữ cảnh học sâu, thuật ngữ \"Gradient\" (nguyên bản tiếng Anh) được sử dụng phổ biến và tự nhiên hơn \"Độ dốc\" trong tiếng Việt."
+          },
+          "reason": "Trong ngữ cảnh học sâu, thuật ngữ \"Gradient\" (nguyên bản tiếng Anh) được sử dụng phổ biến và tự nhiên hơn \"Độ dốc\" trong tiếng Việt."
+        }
+      },
+      "gemini_reverse": {
+        "label": "A_better",
+        "confidence": 0.9,
+        "reason": "Trong ngữ cảnh mạng nơ-ron sâu, 'Gradient' là thuật ngữ chuyên ngành được sử dụng phổ biến hơn 'Độ dốc'.",
+        "raw": {
+          "confidence": 0.9,
+          "label": "A_better",
+          "raw": {
+            "confidence": 0.9,
+            "label": "A_better",
+            "reason": "Trong ngữ cảnh mạng nơ-ron sâu, 'Gradient' là thuật ngữ chuyên ngành được sử dụng phổ biến hơn 'Độ dốc'."
+          },
+          "reason": "Trong ngữ cảnh mạng nơ-ron sâu, 'Gradient' là thuật ngữ chuyên ngành được sử dụng phổ biến hơn 'Độ dốc'."
+        }
+      },
+      "gemini_resolved": "S0_better",
+      "gemini_label": "harm",
+      "human_label": "B_better",
+      "human_system_label": "S0_better",
+      "human_final_label": "harm",
+      "final_label": "harm",
+      "human_suggested": false
+    }
+  ],
+  "caveats": [
+    "N=57/59-style override diagnostic; source-of-truth is rule-based drift set, not a fixed count",
+    "solo annotator -> no kappa -> occurrence-level diagnostic_only",
+    "judge inherits calibrated=false from EV-02 (no human-council calibration)",
+    "agreement threshold fixed a priori at 80%: below threshold means human should label all items",
+    "0-API consistency drift is not harm; improve/lateral/harm requires judge labels",
+    "post-hoc eval-only: frozen translation outputs are not mutated"
+  ]
+}

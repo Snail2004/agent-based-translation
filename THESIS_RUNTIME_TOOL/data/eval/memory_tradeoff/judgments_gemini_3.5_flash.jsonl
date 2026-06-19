@@ -1,0 +1,291 @@
+I will read the contents of the specified file to understand the requirements and questions inside.
+
+Viewed judge_pack_external.md:1-360
+
+[
+  {
+    "item_id": "mt_fashion_mnist_dataset_b8ddab06eb",
+    "label": "equivalent",
+    "reason": "Cả 'bộ dữ liệu' và 'tập dữ liệu' đều là các bản dịch chuẩn và rất phổ biến cho 'dataset'."
+  },
+  {
+    "item_id": "mt_mnist_dataset_923cfe4011",
+    "label": "B_better",
+    "reason": "Bản B gắn thẻ đầy đủ cụm từ 'Bộ dữ liệu MNIST', trong khi bản A chỉ gắn thẻ 'MNIST' bỏ sót từ 'dataset'."
+  },
+  {
+    "item_id": "mt_universal_approximators_c7cc5b991a",
+    "label": "A_better",
+    "reason": "'Bộ xấp xỉ phổ quát' chính xác hơn về mặt toán học vì 'universal' ở đây nghĩa là tính phổ quát (áp dụng cho mọi hàm), không phải phổ dụng (thông dụng)."
+  },
+  {
+    "item_id": "mt_vanishing_and_exploding_gradients_c51a803991",
+    "label": "B_better",
+    "reason": "'Gradient' là thuật ngữ kỹ thuật chuẩn trong DL/ML. 'Độ dốc' (slope) quá thông thường và thiếu tính chính xác toán học trong ngữ cảnh này."
+  },
+  {
+    "item_id": "mt_activations_9afd89eb88",
+    "label": "A_better",
+    "reason": "'giá trị kích hoạt' phản ánh đúng bản chất là đầu ra của hàm kích hoạt và nghe tự nhiên hơn nhiều so với việc dịch word-by-word thành 'các kích hoạt'."
+  },
+  {
+    "item_id": "mt_additive_noise_7a444cd8ee",
+    "label": "A_better",
+    "reason": "'Nhiễu cộng' là thuật ngữ chuyên ngành chuẩn trong xử lý tín hiệu và ML. 'Nhiễu cộng thêm' mang tính văn nói thông thường."
+  },
+  {
+    "item_id": "mt_affine_transformations_e8551c005d",
+    "label": "equivalent",
+    "reason": "Cả 'biến đổi affine' và 'phép biến đổi affine' đều chính xác và được dùng rộng rãi trong toán học."
+  },
+  {
+    "item_id": "mt_annotation_2e76f54422",
+    "label": "A_better",
+    "reason": "Trong ngữ cảnh xử lý ngôn ngữ tự nhiên, 'annotation' được dịch chuẩn là 'chú giải'. 'Gán nhãn' là 'labeling'."
+  },
+  {
+    "item_id": "mt_bandits_5d196d3aa2",
+    "label": "B_better",
+    "reason": "Giữ nguyên thuật ngữ 'Bandit' tự nhiên và phổ biến hơn nhiều trong các tài liệu ML hiện đại so với việc phiên âm gạch nối kiểu cũ 'băng-đit'."
+  },
+  {
+    "item_id": "mt_batch_size_115bac8f95",
+    "label": "B_better",
+    "reason": "'Batch size' dịch chuẩn là 'kích thước lô'. Bản A dịch thành 'kích thước minibatch' là sang một khái niệm khác."
+  },
+  {
+    "item_id": "mt_covariate_shift_a77c8a8dfb",
+    "label": "A_better",
+    "reason": "'Dịch chuyển hiệp biến' là thuật ngữ chuyên ngành chuẩn cho 'covariate shift'. 'Lệch hiệp biến' không chuẩn xác."
+  },
+  {
+    "item_id": "mt_data_examples_7c5e6ddeae",
+    "label": "A_better",
+    "reason": "Trong ML, các mẫu riêng lẻ được gọi là 'mẫu dữ liệu' hoặc 'điểm dữ liệu'. Dịch thành 'ví dụ dữ liệu' rất gượng gạo và không tự nhiên."
+  },
+  {
+    "item_id": "mt_data_instance_cacbc74d36",
+    "label": "A_better",
+    "reason": "'Instance' dịch chuẩn là 'thể hiện' (thể hiện dữ liệu). 'Thực thể' thường dùng cho 'entity'."
+  },
+  {
+    "item_id": "mt_deferred_0db493d58e",
+    "label": "A_better",
+    "reason": "'được hoãn lại' chia ở thể bị động tự nhiên và đúng ngữ pháp hơn so với cụm 'thực ra là trì hoãn'."
+  },
+  {
+    "item_id": "mt_deletion_013e5670c0",
+    "label": "A_better",
+    "reason": "Trong xử lý dữ liệu khuyết, việc drop/delete dữ liệu được gọi là 'loại bỏ' dòng/cột chứa giá trị khuyết. 'Xóa bỏ' nghe kém tự nhiên hơn."
+  },
+  {
+    "item_id": "mt_efficiency_fff33dfb39",
+    "label": "equivalent",
+    "reason": "Cả 'hiệu quả' và 'tính hiệu quả' đều truyền tải đúng nghĩa của 'efficiency' và tự nhiên trong ngữ cảnh."
+  },
+  {
+    "item_id": "mt_elementwise_1d6feafbec",
+    "label": "equivalent",
+    "reason": "Cả hai cách dịch 'theo từng phần tử' và 'theo phần tử' đều hoàn toàn chuẩn xác và thông dụng."
+  },
+  {
+    "item_id": "mt_elementwise_multiplication_0ebdbc19e3",
+    "label": "equivalent",
+    "reason": "Cả hai cụm từ đều dịch đúng nghĩa, một bên gắn thẻ cả cụm danh từ còn một bên chừa từ 'phép' ra ngoài nhưng không ảnh hưởng nhiều."
+  },
+  {
+    "item_id": "mt_end_to_end_training_e0ecc93532",
+    "label": "equivalent",
+    "reason": "Hai bản dịch chỉ khác nhau ở dấu gạch nối trong 'đầu-cuối' và đều được chấp nhận rộng rãi."
+  },
+  {
+    "item_id": "mt_feature_engineering_fbcf9d9a88",
+    "label": "B_better",
+    "reason": "'Thiết kế đặc trưng' hoặc 'xây dựng đặc trưng' mô tả đúng bản chất quy trình làm việc của feature engineering hơn so với dịch thô 'kỹ thuật đặc trưng'."
+  },
+  {
+    "item_id": "mt_feature_selection_ec5e3cb404",
+    "label": "equivalent",
+    "reason": "Cả 'lựa chọn đặc trưng' và 'chọn đặc trưng' đều là các cách dịch chính xác và tự nhiên."
+  },
+  {
+    "item_id": "mt_feature_vectors_9cfc7e31ab",
+    "label": "equivalent",
+    "reason": "Sự khác biệt chỉ là cách viết 'vector' và 'vectơ', cả hai đều chuẩn xác trong tiếng Việt."
+  },
+  {
+    "item_id": "mt_feedback_loops_73b8202c83",
+    "label": "A_better",
+    "reason": "'Vòng phản hồi' là thuật ngữ chuẩn trong lý thuyết hệ thống và điều khiển. Từ 'lặp' trong 'vòng lặp phản hồi' dễ gây nhầm lẫn với vòng lặp lập trình."
+  },
+  {
+    "item_id": "mt_framework_f178867da2",
+    "label": "equivalent",
+    "reason": "Dùng 'khung phần mềm' mang tính học thuật/chuẩn tiếng Việt, còn 'framework' là từ mượn phổ biến trong giới lập trình. Cả hai đều tốt."
+  },
+  {
+    "item_id": "mt_generalization_gap_29c7c2502f",
+    "label": "equivalent",
+    "reason": "Cả 'khái quát hóa' và 'tổng quát hóa' đều là các dịch thuật được chấp nhận cho 'generalization'."
+  },
+  {
+    "item_id": "mt_heuristics_a628d3bfd9",
+    "label": "A_better",
+    "reason": "Trong khoa học máy tính, 'heuristics' là các phương pháp/thuật toán heuristic. Dịch là 'kinh nghiệm' không lột tả được khía cạnh thuật toán toán học."
+  },
+  {
+    "item_id": "mt_learnable_parameters_11a624f504",
+    "label": "B_better",
+    "reason": "'learnable' nghĩa là có khả năng được học ('có thể học'). 'học được' dễ bị nhầm với 'learned parameters' (các tham số đã học xong)."
+  },
+  {
+    "item_id": "mt_lifting_8f516a1fc1",
+    "label": "A_better",
+    "reason": "Trong toán học, 'lifting' một hàm số được gọi là 'nâng' hàm số. Cụm từ 'nâng ánh xạ' bị lặp nghĩa không cần thiết."
+  },
+  {
+    "item_id": "mt_manipulating_8325f6c2ab",
+    "label": "B_better",
+    "reason": "'Manipulating data' dịch chuẩn là 'thao tác dữ liệu'. 'Xử lý' (processing) quá rộng và dễ trùng lặp với tiền xử lý (preprocessing)."
+  },
+  {
+    "item_id": "mt_membership_99ef7e9bc5",
+    "label": "A_better",
+    "reason": "'membership' (quan hệ thuộc) là một danh từ toán học biểu thị tính thuộc về tập hợp. Bản A gắn thẻ đúng cụm danh từ này, bản B chỉ gắn thẻ từ 'thuộc'."
+  },
+  {
+    "item_id": "mt_model_complexity_ca64fe25a6",
+    "label": "equivalent",
+    "reason": "Cả hai cách dịch có và không có từ 'của' đều tự nhiên và chính xác."
+  },
+  {
+    "item_id": "mt_model_s_parameters_eb636b643b",
+    "label": "equivalent",
+    "reason": "Tương tự, cả 'tham số mô hình' và 'tham số của mô hình' đều tự nhiên và chính xác."
+  },
+  {
+    "item_id": "mt_multivariate_functions_de4f1ded26",
+    "label": "equivalent",
+    "reason": "Trong toán học, cả 'hàm nhiều biến' và 'hàm đa biến' đều là các thuật ngữ chuẩn để chỉ 'multivariate functions'."
+  },
+  {
+    "item_id": "mt_negative_log_likelihood_006bbe2ce2",
+    "label": "A_better",
+    "reason": "'Negative log-likelihood' là giá trị âm của log-likelihood, dịch là 'âm log-khả năng'. Dịch là 'log-khả năng âm' dễ gây hiểu nhầm toán học vì log-likelihood bản thân nó đã luôn âm."
+  },
+  {
+    "item_id": "mt_offset_53a610e925",
+    "label": "B_better",
+    "reason": "Bản B dịch chính xác 'offset' thành 'độ dời' trong ngoặc đơn, trong khi bản A giữ nguyên từ 'offset' tiếng Anh và gắn thẻ từ khác ('độ lệch' vốn tương đương bias)."
+  },
+  {
+    "item_id": "mt_prior_4a47653d5f",
+    "label": "equivalent",
+    "reason": "Cả 'tiên nghiệm' và 'phân phối tiên nghiệm' đều được dùng phổ biến để dịch 'prior' trong ngữ cảnh Bayes."
+  },
+  {
+    "item_id": "mt_random_experiment_cc591bd83d",
+    "label": "A_better",
+    "reason": "'Phép thử ngẫu nhiên' là thuật ngữ toán học chuẩn mực trong giáo trình xác suất thống kê tiếng Việt. 'Thí nghiệm ngẫu nhiên' dịch quá thô."
+  },
+  {
+    "item_id": "mt_real_valued_scalars_e5f331e933",
+    "label": "A_better",
+    "reason": "'Vô hướng thực' dịch trọn vẹn cụm 'real-valued scalars'. Bản B gắn thẻ thiếu (chỉ gắn 'giá trị thực' chừa từ vô hướng ra ngoài)."
+  },
+  {
+    "item_id": "mt_regularization_term_b48f4963e7",
+    "label": "A_better",
+    "reason": "'Regularization' là 'chính quy hóa'. Bản B dịch thành 'chuẩn hóa' (normalization) là sai thuật ngữ chuyên ngành."
+  },
+  {
+    "item_id": "mt_regularizing_0228b30aa3",
+    "label": "B_better",
+    "reason": "'Regularizing' dịch thành 'điều chuẩn' (hoặc chính quy hóa) là đúng. Bản A dịch thành 'chuẩn hóa' (normalization) là sai thuật ngữ."
+  },
+  {
+    "item_id": "mt_robotics_891e0758a7",
+    "label": "A_better",
+    "reason": "'Robot học' là tên chuyên ngành/lĩnh vực khoa học tiêu chuẩn và hiện đại, hay hơn hẳn 'người máy học' nghe lỗi thời."
+  },
+  {
+    "item_id": "mt_row_vectors_04aadc236a",
+    "label": "equivalent",
+    "reason": "Sự khác biệt chỉ nằm ở cách viết 'vector' và 'vectơ', cả hai đều chuẩn xác và được dùng rộng rãi."
+  },
+  {
+    "item_id": "mt_rules_caa155adf8",
+    "label": "equivalent",
+    "reason": "Cả hai cách dịch 'luật' và 'quy tắc' đều đúng nghĩa và tự nhiên trong ngữ cảnh xây dựng logic ứng dụng."
+  },
+  {
+    "item_id": "mt_self_driving_cars_ac724ed2e4",
+    "label": "equivalent",
+    "reason": "Cả 'ô tô tự lái' và 'xe tự lái' đều rất phổ biến và truyền tải chính xác nghĩa của 'self-driving cars'."
+  },
+  {
+    "item_id": "mt_smoothness_fa9d205bd5",
+    "label": "equivalent",
+    "reason": "Trong giải tích toán học, cả 'tính trơn' và 'độ trơn' của hàm số đều được sử dụng và chuẩn xác."
+  },
+  {
+    "item_id": "mt_symmetry_18e1be4e79",
+    "label": "B_better",
+    "reason": "Cụm từ 'Theo tính đối xứng' tự nhiên và đúng ngữ pháp hơn so với cụm từ rút gọn 'Theo đối xứng'."
+  },
+  {
+    "item_id": "mt_tangent_line_fc8da8d99b",
+    "label": "equivalent",
+    "reason": "Trong toán học Việt Nam, 'tiếp tuyến' hoặc 'đường tiếp tuyến' đều chỉ cùng một khái niệm hình học 'tangent line' và đều tự nhiên."
+  },
+  {
+    "item_id": "mt_target_0e8a3ad980",
+    "label": "A_better",
+    "reason": "Bản A dịch đúng 'target' thành 'biến mục tiêu' và gắn thẻ chính xác. Bản B lại gắn thẻ từ 'nhãn' (label) vốn không phải là thuật ngữ 'target'."
+  },
+  {
+    "item_id": "mt_target_distribution_e11bb1fcd8",
+    "label": "equivalent",
+    "reason": "Cả 'phân phối đích' (đi đôi với phân phối nguồn) và 'phân phối mục tiêu' đều chính xác và tự nhiên."
+  },
+  {
+    "item_id": "mt_targets_4683e789c3",
+    "label": "A_better",
+    "reason": "'Targets' dịch chuẩn xác và trực tiếp là 'mục tiêu'. 'Nhãn mục tiêu' là sự pha trộn không cần thiết và không chuẩn."
+  },
+  {
+    "item_id": "mt_tensor_format_20bcb4d8d7",
+    "label": "equivalent",
+    "reason": "Cả 'dạng tensor' và 'định dạng tensor' đều dịch đúng nghĩa của 'tensor format' và tự nhiên."
+  },
+  {
+    "item_id": "mt_test_accuracy_be3aebb55f",
+    "label": "B_better",
+    "reason": "'độ chính xác trên tập kiểm tra' rõ ràng và tự nhiên hơn. 'độ chính xác kiểm tra' dịch quá sát chữ dễ gây cảm giác như kiểm tra độ chính xác."
+  },
+  {
+    "item_id": "mt_test_set_accuracy_98a76f479d",
+    "label": "equivalent",
+    "reason": "Cả hai cụm 'độ chính xác trên tập kiểm tra' và 'độ chính xác tập kiểm tra' đều diễn đạt trọn vẹn và tự nhiên ý nghĩa của 'test set accuracy'."
+  },
+  {
+    "item_id": "mt_training_example_bdb5992a4c",
+    "label": "A_better",
+    "reason": "Trong ML, các mẫu huấn luyện đơn lẻ được gọi là 'mẫu huấn luyện'. Dịch word-by-word thành 'ví dụ huấn luyện' rất gượng gạo và phi kỹ thuật."
+  },
+  {
+    "item_id": "mt_training_examples_79bcf24974",
+    "label": "A_better",
+    "reason": "Tương tự, dịch 'training examples' là 'mẫu huấn luyện' tự nhiên và đúng thuật ngữ chuyên ngành hơn nhiều so với 'ví dụ huấn luyện'."
+  },
+  {
+    "item_id": "mt_true_parameters_6636cf5533",
+    "label": "equivalent",
+    "reason": "Cả 'tham số thực' và 'tham số thật' đều được sử dụng và dễ hiểu trong ngữ cảnh thống kê toán học."
+  },
+  {
+    "item_id": "mt_true_probability_0c04e78467",
+    "label": "equivalent",
+    "reason": "Cả 'xác suất thực' và 'xác suất thật' đều truyền tải chính xác khái niệm 'true probability'."
+  }
+]

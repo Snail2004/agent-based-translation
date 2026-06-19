@@ -316,3 +316,27 @@ blind not complete: missing data\eval\memory_tradeoff\judgments_human.json
 2. `memory_tradeoff_score` → `memory_tradeoff_59_overrides.json`: agreement người↔Gemini ≥0.80 → tin Gemini cho 57 → harm%; <0.80 → chấm hết 57. Solo → `diagnostic_only` (κ cần annotator-2).
 
 **Headline harm% chưa có** — đúng thiết kế (chờ gold người mù). Machinery PASS, sẵn sàng.
+
+
+## 7. FINDING — multi-LLM panel (2026-06-20, Claude phân tích)
+
+**Bối cảnh dán nhãn (TRUNG THỰC):** KHÔNG có neo chuyên-gia-người (tác giả solo, không rành thuật ngữ ML-VI → solo human anchor bất khả thi cho nhánh kỹ thuật). **MỌI judge đều là LLM.** "judgments_human.json" thực ra là Gemini-3.1-Pro web + user-curated (hybrid) — đã ghi `PROVENANCE.md`, KHÔNG gọi là human.
+
+**Panel 5 judge (harm = S0 tốt hơn = memory làm tệ), trên 57 override:**
+
+| Judge | harm% | improve% | ghi chú |
+|---|---|---|---|
+| 2.5flash (API, swap, blind) | 21.1 | 29.8 | swap conservative → nhiều lateral → **artifact-LOW** |
+| 3.1pro web (AI+user-curated) | 47.4 | 36.8 | deep-analysis + curate → **HIGH outlier** |
+| 3.1pro cold (pack) | 36.8 | 36.8 | controlled |
+| 3.5flash cold (pack) | 31.6 | 26.3 | controlled |
+| **opus46 cold (pack)** | **38.6** | 29.8 | **khác họ — xác nhận độc lập** |
+
+**HEADLINE = majority-vote 3 judge LẠNH đa-họ (3.1pro/3.5flash/opus46):** harm **33.3%** / improve **29.8%** / lateral **36.8%**. → **harm ≈ improve (tung đồng xu): đè một base S0 nhất quán KHÔNG phải cải thiện đáng tin.** Opus (Anthropic, khác Gemini) rơi đúng cụm 38.6% → harm KHÔNG phải tật riêng Gemini. Cụm lạnh đồng thuận nội bộ ~68-70%; 2.5flash-swap (21%) và 3.1pro-web (47%) là 2 cực artifact, KHÔNG vào headline.
+
+**11 ca harm đồng thuận (memory làm tệ hơn):** Vanishing/Exploding Gradients (gradient→độ dốc), regularization term (chính quy hóa→chuẩn hóa), regularizing, bandits (chuyển tự), robotics, covariate shift, symmetry, targets, test accuracy, manipulating, [MNIST=instrument-artifact loại].
+**12 ca improve đồng thuận (memory tốt hơn):** batch size (→lô), target (→biến mục tiêu), data examples, data instance, activations, additive noise, heuristics, offset, random experiment, real-valued scalars, Universal Approximators, [membership=instrument-artifact loại].
+
+→ Memory **rõ ràng giúp ~10 term và rõ ràng hại ~10 term**, gần cân bằng. Đây là tradeoff định lượng, đa-mô-hình. **"Memory luôn tốt" bị bác.** Báo cáo: `data/reports/memory_tradeoff_panel.json`.
+
+**Limitation (ghi luận văn):** panel LLM-only, no human-expert anchor, no κ, N=57 diagnostic, 1 override-set. **Hệ quả:** đề-xuất arm `S1_better` (inject chọn-lọc a-priori) là chính đáng — override mù hiện tại lãng phí một nửa.

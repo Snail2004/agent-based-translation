@@ -1,0 +1,289 @@
+{
+  "items": [
+    {
+      "item_id": "mt_fashion_mnist_dataset_b8ddab06eb",
+      "human_label": "equivalent",
+      "note": ""
+    },
+    {
+      "item_id": "mt_mnist_dataset_923cfe4011",
+      "human_label": "equivalent",
+      "note": "highlight sai, cả 2 version đều có cùng 1 cụm \"Bộ dữ liệu MNIST\""
+    },
+    {
+      "item_id": "mt_universal_approximators_c7cc5b991a",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_vanishing_and_exploding_gradients_c51a803991",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Học sâu (Deep Learning) / Mạng nơ-ron nhân tạo (Neural Networks).\nPhân tích thuật ngữ:\n\nGradient: Trong tài liệu AI/ML, luôn ưu tiên giữ nguyên gốc tiếng Anh.\n\nTuyệt đối tránh: Dịch thành \"độ dốc\" khi nói về quá trình lan truyền ngược (backpropagation) hoặc cập nhật trọng số.\n\nVanishing and Exploding Gradients:\n\nDịch chuẩn xác là: \"Gradient biến mất và bùng nổ\".\n\nCó thể dịch mượt mà hơn tùy ngữ cảnh là: \"Vấn đề biến mất và bùng nổ gradient\" (Vanishing and exploding gradient problem).\n\nDeep networks: Mạng sâu / Các mạng sâu (có thể gọi đầy đủ là Deep neural networks - Các mạng nơ-ron sâu).\n\nKết luận cho review: Hãy lập tức sửa lại đánh giá thành B better. Phiên bản A mắc lỗi Việt hóa khiên cưỡng một thuật ngữ đã được cộng đồng AI chấp nhận dùng nguyên bản.\ntrong chuyên ngành Machine Learning và Deep Learning tại Việt Nam, \"Gradient\" đã trở thành một thuật ngữ \"bất khả xâm phạm\" và được sử dụng nguyên bản trong mọi giáo trình, tài liệu hay thảo luận. (Ví dụ kinh điển: Thuật toán Gradient Descent thường được dịch là Hạ gradient chứ không ai gọi là Hạ độ dốc)."
+    },
+    {
+      "item_id": "mt_activations_9afd89eb88",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Học sâu (Deep Learning) / Mạng nơ-ron nhân tạo (Neural Networks).\nPhân tích thuật ngữ:\n\nActivations (danh từ số nhiều): Khi dùng để chỉ kết quả/đầu ra của hàm kích hoạt, nên dịch là \"giá trị kích hoạt\" hoặc \"đầu ra kích hoạt\".\n\nLỗi cần tránh: Tuyệt đối tránh dịch là \"các kích hoạt\" vì gây tối nghĩa và sai cấu trúc ngữ pháp tiếng Việt.\n\nCác thuật ngữ liên quan:\n\nActivation function: Hàm kích hoạt (như Sigmoid, ReLU, Tanh...).\n\nActivation layer: Tầng kích hoạt / Lớp kích hoạt."
+    },
+    {
+      "item_id": "mt_additive_noise_7a444cd8ee",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_affine_transformations_e8551c005d",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Toán học / Học máy (Linear Algebra / Machine Learning).\nPhân tích thuật ngữ:\n\nAffine transformation: Dịch chuẩn xác và đầy đủ nhất là \"phép biến đổi affine\". (Có thể dùng rút gọn là \"biến đổi affine\" trong văn cảnh các từ xung quanh đã quá dài, nhưng ưu tiên có chữ \"phép\" cho các tài liệu nặng về Toán). Lưu ý: Tên riêng \"affine\" luôn giữ nguyên.\n\nQuadratic loss(es): Dịch là \"hàm mất mát bậc hai\" (hoặc tổn thất bậc hai tùy theo việc dùng \"mất mát\" hay \"tổn thất\" cho từ loss trong dự án). Tuyệt đối tránh dùng \"loss bậc hai\"."
+    },
+    {
+      "item_id": "mt_annotation_2e76f54422",
+      "human_label": "equivalent",
+      "note": "Ngữ cảnh: Trí tuệ nhân tạo (AI), Học máy (Machine Learning), Xử lý ngôn ngữ tự nhiên (NLP).Phân tích thuật ngữ:Annotation: Bắt buộc dịch là \"Gán nhãn\" hoặc \"Chú thích\" (Ưu tiên dùng \"Gán nhãn\" để đồng nhất với Labeling).Data annotation $\\rightarrow$ Gán nhãn dữ liệu.POS (Part-of-Speech) annotation $\\rightarrow$ Gán nhãn từ loại.Lỗi cấm kỵ: Không dùng \"chú giải\" vì mang sai sắc thái (nghiêng về văn học, tôn giáo, hoặc giải thích ý nghĩa thay vì gán thuộc tính cho máy học).Xử lý lỗi hệ thống (Segment Mismatch): Khi gặp trường hợp bản dịch và bản gốc là hai câu hoàn toàn khác nhau do lỗi tool, hãy đánh giá dựa trên độ chính xác của từ khóa (key term) được yêu cầu, đồng thời note lại cho Quản lý dự án (PM) biết tool đang bị lệch dòng."
+    },
+    {
+      "item_id": "mt_bandits_5d196d3aa2",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Học máy (Machine Learning) / Học tăng cường (Reinforcement Learning).\nPhân tích thuật ngữ:\n\nBandits / Multi-Armed Bandits: Bắt buộc giữ nguyên gốc tiếng Anh.\n\nCách dùng chuẩn: Khi đứng độc lập ở tiêu đề, dùng \"Bandits\". Khi nằm trong câu mô tả, nên bổ sung thành \"bài toán Bandit\" hoặc \"bài toán Multi-Armed Bandit\" để làm rõ nghĩa.\n\nLỗi cấm kỵ tuyệt đối: Cấm phiên âm thành \"băng-đít\". Cấm dịch word-by-word thành \"những tên cướp\" hay \"máy đánh bạc\" nếu không có ngữ cảnh giải thích cụ thể đi kèm."
+    },
+    {
+      "item_id": "mt_batch_size_115bac8f95",
+      "human_label": "B_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_covariate_shift_a77c8a8dfb",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Machine Learning / Data Science (Đánh giá chất lượng mô hình, Thích ứng miền - Domain Adaptation).Phân tích thuật ngữ:Shift: Khi nói về sự thay đổi của phân phối dữ liệu, hãy luôn dịch là \"dịch chuyển\".Covariate shift $\\rightarrow$ Dịch chuyển hiệp biến.Data shift / Dataset shift $\\rightarrow$ Dịch chuyển dữ liệu.Distribution shift $\\rightarrow$ Dịch chuyển phân phối.Lỗi cần tránh: Tránh dịch \"shift\" thành \"lệch\" để không bị nhầm lẫn với khái niệm Skew hoặc Bias."
+    },
+    {
+      "item_id": "mt_data_examples_7c5e6ddeae",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_data_instance_cacbc74d36",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Học máy (Machine Learning) / Khoa học Dữ liệu (Data Science) - Khi mô tả các phần tử trong một tập dữ liệu (dataset).Phân tích thuật ngữ:Trong một tập dữ liệu, mỗi dòng/bản ghi đại diện cho một đối tượng. Các tài liệu tiếng Anh thường dùng luân phiên các từ sau. Cách dịch lý tưởng để phân biệt chúng khi bị xếp cạnh nhau:Example: Dịch là \"ví dụ\" (Ví dụ: Training example $\\rightarrow$ Ví dụ huấn luyện).Data point: Dịch là \"điểm dữ liệu\".Sample: Dịch là \"mẫu\" hoặc \"mẫu dữ liệu\".Data instance: Dịch là \"thực thể dữ liệu\" (hoặc đôi khi có thể dùng \"bản ghi dữ liệu\" tùy ngữ cảnh). Hạn chế dịch là \"thể hiện dữ liệu\" vì dễ gây lúng túng về mặt từ loại trong tiếng Việt."
+    },
+    {
+      "item_id": "mt_deferred_0db493d58e",
+      "human_label": "equivalent",
+      "note": ""
+    },
+    {
+      "item_id": "mt_deletion_013e5670c0",
+      "human_label": "equivalent",
+      "note": ""
+    },
+    {
+      "item_id": "mt_efficiency_fff33dfb39",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Khoa học Máy tính (Computer Science) / Phần cứng (Hardware) / AI.\nPhân tích thuật ngữ:\n\nComputational efficiency:\n\nCách dịch phổ thông (Chấp nhận được): \"hiệu quả tính toán\".\n\nCách dịch chuyên ngành (Khuyên dùng tuyệt đối): \"hiệu suất tính toán\".\n\nLỗi cần tránh: Thêm các từ phụ trợ không cần thiết như \"tính hiệu quả\" gây lặp âm nếu đi liền với các từ bắt đầu bằng \"tính\" (tính toán, tính năng).\n\nKết luận cho review: Bạn nên đổi thành chọn A better. Câu văn của Version A trôi chảy và tự nhiên hơn hẳn nhờ việc lược bỏ được chữ \"tính\" thừa thãi so với Version B."
+    },
+    {
+      "item_id": "mt_elementwise_1d6feafbec",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Đại số tuyến tính (Linear Algebra) / Học máy (Machine Learning) / Lập trình Tensor.\nPhân tích thuật ngữ:\n\nElementwise (tính từ / trạng từ): Dịch chuẩn xác và mang tính biểu đạt cao nhất là \"theo từng phần tử\".\n\nCác cụm từ đi kèm phổ biến:\n\nElementwise operations: Các phép toán theo từng phần tử.\n\nElementwise multiplication / Hadamard product: Phép nhân theo từng phần tử (phân biệt với Matrix multiplication / Dot product - Phép nhân ma trận).\n\nElementwise addition: Phép cộng theo từng phần tử."
+    },
+    {
+      "item_id": "mt_elementwise_multiplication_0ebdbc19e3",
+      "human_label": "B_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_end_to_end_training_e0ecc93532",
+      "human_label": "equivalent",
+      "note": ""
+    },
+    {
+      "item_id": "mt_feature_engineering_fbcf9d9a88",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_feature_selection_ec5e3cb404",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Học máy (Machine Learning) / Tiền xử lý dữ liệu (Data Preprocessing).\nPhân tích thuật ngữ:\n\nFeature selection: Dịch chuẩn xác và mang tính học thuật cao nhất là \"lựa chọn đặc trưng\".\n\nCó thể gọi tắt là \"chọn đặc trưng\" trong quá trình trao đổi công việc, nhưng trên văn bản chính thức nên dùng bản đầy đủ.\n\nCác thuật ngữ liên quan để phân biệt:\n\nFeature extraction: Trích xuất đặc trưng (tạo ra đặc trưng mới từ dữ liệu cũ, khác với selection là chỉ giữ lại những cái tốt nhất).\n\nFeature engineering: Kỹ nghệ đặc trưng.\n\nDesirable (trong ngữ cảnh kỹ thuật): Nên dịch linh hoạt là \"hữu ích\", \"có lợi\", \"lý tưởng\", tuyệt đối tránh dịch thô thành \"mong muốn\" đối với các công cụ, phương pháp."
+    },
+    {
+      "item_id": "mt_feature_vectors_9cfc7e31ab",
+      "human_label": "B_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_feedback_loops_73b8202c83",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Hệ thống gợi ý (Recommender Systems) / Machine Learning / Hệ thống điều khiển.\n\nPhân tích thuật ngữ:\n\nFeedback loop: Dịch chuẩn là \"vòng phản hồi\".\n\nPositive feedback loop: Vòng phản hồi tích cực.\n\nNegative feedback loop: Vòng phản hồi tiêu cực.\n\nLỗi cần tránh: Không nên dịch thành \"vòng lặp phản hồi\" để tránh gây hiểu lầm sang khái niệm lập trình (loops) và giảm tính chuyên nghiệp của văn bản.\n\nKết luận cho review: Bạn nên đổi đánh giá thành A better. Version A dịch đúng thuật ngữ chuyên ngành, ngắn gọn và tự nhiên hơn hẳn so với sự dư thừa từ vựng của Version B."
+    },
+    {
+      "item_id": "mt_framework_f178867da2",
+      "human_label": "B_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_generalization_gap_29c7c2502f",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Machine Learning / Deep Learning (Đánh giá hiệu năng mô hình).\n\nPhân tích thuật ngữ:\n\nGeneralization: Luôn dịch là \"tổng quát hóa\".\n\nGeneralization gap: Khoảng cách tổng quát hóa (sự chênh lệch giữa sai số trên tập huấn luyện và sai số trên tập kiểm tra/dữ liệu thực tế).\n\nGeneralization error: Sai số tổng quát hóa.\n\nLỗi cần tránh: Tuyệt đối tránh dịch \"Generalization\" thành \"khái quát hóa\" trong tài liệu kỹ thuật, vì sẽ làm mất đi tính chuyên ngành và sự chuẩn xác của tài liệu.\n\nKết luận cho review: Bạn nên chuyển đánh giá sang B better. Phiên bản B sử dụng thuật ngữ \"tổng quát hóa\" chuẩn xác, giúp người đọc nắm bắt đúng khái niệm chuyên môn ngay lập tức."
+    },
+    {
+      "item_id": "mt_heuristics_a628d3bfd9",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_learnable_parameters_11a624f504",
+      "human_label": "B_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_lifting_8f516a1fc1",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_manipulating_8325f6c2ab",
+      "human_label": "B_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_membership_99ef7e9bc5",
+      "human_label": "A_better",
+      "note": "Chỗ này highlight bị sai, S1 và S0 lệch nhau ver B phải là \"sự thuộc\""
+    },
+    {
+      "item_id": "mt_model_complexity_ca64fe25a6",
+      "human_label": "equivalent",
+      "note": ""
+    },
+    {
+      "item_id": "mt_model_s_parameters_eb636b643b",
+      "human_label": "equivalent",
+      "note": ""
+    },
+    {
+      "item_id": "mt_multivariate_functions_de4f1ded26",
+      "human_label": "A_better",
+      "note": "Cả hai bản dịch đều biến thành abla... (có vẻ máy dịch nhầm \\mathbf thành \\nabla và đánh rơi chữ \"Let\").Tuy nhiên, ở lỗi sai này, Version A (abla{\\mathbf{x}}$) vẫn còn giữ lại được biến $\\mathbf{x}$, trong khi Version B (abla$) làm mất hoàn toàn tên biến."
+    },
+    {
+      "item_id": "mt_negative_log_likelihood_006bbe2ce2",
+      "human_label": "B_better",
+      "note": "Đánh giá: Chọn Version B (log-khả năng âm).\n\nLý do:\n\n• Theo ngữ pháp tiếng Việt, tính từ bổ nghĩa phải đứng sau danh từ. Do đó, tính từ \"âm\" (negative) phải đứng sau cụm danh từ \"log-khả năng\".\n\n• Version A (\"âm log-khả năng\") là lỗi dịch máy (word-by-word) gượng gạo và sai ngữ pháp.\n\nGóp ý chuyên ngành (Machine Learning/Thống kê):\n\n• Thuật ngữ \"likelihood\" nên được dịch là \"hợp lý\" thay vì \"khả năng\" để tránh nhầm với \"probability\" (xác suất).\n\n• Bản dịch chuẩn xác và hàn lâm nhất nên là: log-hợp lý âm hoặc độ log-hợp lý âm.\n"
+    },
+    {
+      "item_id": "mt_offset_53a610e925",
+      "human_label": "A_better",
+      "note": "Trường hợp: Dịch thuật ngữ liệt kê (offset/intercept)\n\n• Lựa chọn: Version A tốt hơn.\n\n• Bản dịch: \"...$b$ được gọi là độ lệch (còn gọi là offset hoặc intercept).\"\n\n• Lý do:\n\n  1. Tính nhất quán (Consistency): Khi liệt kê các tên gọi thay thế trong ngoặc đơn, cần tuân thủ nguyên tắc \"dịch tất cả hoặc giữ nguyên tất cả\". Version A giữ nguyên cả hai thuật ngữ tiếng Anh (offset và intercept), đây là cách xử lý chuẩn mực trong tài liệu kỹ thuật, giúp người đọc dễ tra cứu.\n\n  2. Lỗi của Version B: Dịch \"offset\" thành độ dời nhưng lại giữ nguyên intercept thành \"(còn gọi là độ dời hoặc intercept)\". Điều này tạo ra sự thiếu đồng bộ, \"nửa nạc nửa mỡ\", làm giảm tính chuyên nghiệp của câu văn. Mặc dù \"độ dời\" không sai về nghĩa, nhưng cách ghép từ lộn xộn khiến Version B trở thành một bản dịch lỗi về mặt hành văn.\n"
+    },
+    {
+      "item_id": "mt_prior_4a47653d5f",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_random_experiment_cc591bd83d",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Lý thuyết Xác suất (Probability Theory) / Thống kê (Statistics)\nPhân tích thuật ngữ:\n\nRandom experiment: Bắt buộc dịch là \"phép thử ngẫu nhiên\" hoặc \"phép thử\".\n\nLý do: Đây là thuật ngữ gốc (canonical term) trong sách giáo khoa Toán học Việt Nam.\n\nLỗi thường gặp: Dịch word-by-word thành \"thí nghiệm ngẫu nhiên\". Cách dịch này không sai về mặt ngữ nghĩa đen nhưng hoàn toàn sai về mặt văn phong và thuật ngữ học thuật của ngành Toán.\n\nCác thuật ngữ liên quan thường đi kèm:\n\nRandom variable: Biến ngẫu nhiên\n\nEvent: Biến cố\n\nSample space / Outcome space: Không gian mẫu\n\nKết luận cho review: Lựa chọn Version A để đảm bảo tính hàn lâm và tuân thủ đúng quy chuẩn thuật ngữ của bộ môn Xác suất Thống kê."
+    },
+    {
+      "item_id": "mt_real_valued_scalars_e5f331e933",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Toán học / Học máy (Đại số tuyến tính)Phân tích thuật ngữ:Real-valued: Dịch chuẩn xác là \"có giá trị thực\" hoặc \"nhận giá trị thực\" (thường dùng cho hàm số: real-valued function - hàm nhận giá trị thực). Việc dịch đầy đủ giúp phân biệt rõ với từ real (thực) đơn thuần.Scalar: Đại lượng vô hướng / Số vô hướng. Trong ngữ cảnh IT/Học máy hiện đại, thường được rút gọn thành danh từ \"vô hướng\".Kết hợp: \"real-valued scalars\" $\\rightarrow$ \"các vô hướng có giá trị thực\".Kết luận cho review: Lựa chọn Version B vì dịch đầy đủ, chính xác tính từ ghép \"real-valued\", đồng thời cấu trúc câu tổng thể lưu loát và gọn gàng hơn Version A."
+    },
+    {
+      "item_id": "mt_regularization_term_b48f4963e7",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Học máy / Tối ưu hóa thuật toánPhân tích thuật ngữ:Regularization: Bắt buộc dịch là \"chính quy hóa\".Lỗi cực kỳ phổ biến: Rất nhiều người mới nhầm lẫn và dịch thành \"chuẩn hóa\". Cần lưu ý tuyệt đối: Chuẩn hóa = Normalization/Standardization; Chính quy hóa = Regularization.Term (trong phương trình đại số): Dịch là \"hạng tử\". (Ví dụ: Loss term = Hạng tử mất mát, Penalty term = Hạng tử phạt).Kết hợp: \"Regularization term\" $\\rightarrow$ \"Hạng tử chính quy hóa\".Kết luận cho review: Chọn Version A vì dịch chính xác hoàn toàn cả hai thuật ngữ toán học và học máy, tránh được lỗi nhầm lẫn tai hại với khái niệm \"Normalization\" của Version B.Thậm chí, có thể nói Version B đã mắc lỗi sai thuật ngữ rất nghiêm trọng."
+    },
+    {
+      "item_id": "mt_regularizing_0228b30aa3",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Học máy / Thống kê (Đặc biệt khi đi kèm với $L_1, L_2$, Weight Decay).Phân tích thuật ngữ:Regularization / Regularizing: Có hai cách dịch chuẩn xác và được chấp nhận rộng rãi nhất:Chính quy hóa (Phổ biến nhất trong Deep Learning hiện đại).Điều chuẩn (Phổ biến trong Toán tối ưu và Thống kê truyền thống).Tuyệt đối tránh: Dịch thành \"chuẩn hóa\" (dành riêng cho Normalization/Standardization).Kết luận cho review: Chọn Version B vì sử dụng đúng thuật ngữ chuyên ngành \"điều chuẩn\", tránh được lỗi sai kiến thức cơ bản của Version A, đồng thời đảm bảo được ngữ pháp số nhiều của văn bản gốc."
+    },
+    {
+      "item_id": "mt_robotics_891e0758a7",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Khoa học Máy tính / Cơ điện tử / Trí tuệ nhân tạo\nPhân tích thuật ngữ:\n\nRobotics: Dịch chuẩn xác nhất là \"robot học\" hoặc \"kỹ thuật robot\" (tùy thuộc vào việc tài liệu thiên về nghiên cứu lý thuyết hay ứng dụng chế tạo).\n\nLỗi cần tránh tuyệt đối: Dịch thành \"người máy học\" hoặc \"khoa học người máy\". Từ \"người máy\" không đủ sức bao hàm ngành công nghiệp hiện đại và nghe rất thiếu chuyên nghiệp.\n\nLưu ý thêm: Trong nhiều trường hợp tài liệu hướng tới đối tượng kỹ sư công nghệ thực hành, việc giữ nguyên thuật ngữ tiếng Anh \"robotics\" cũng hoàn toàn được chấp nhận.\n\nKết luận cho review: Chọn Version A vì \"robot học\" là thuật ngữ tiếng Việt chuẩn hóa, hiện đại và chính xác nhất cho ngành này."
+    },
+    {
+      "item_id": "mt_row_vectors_04aadc236a",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Đại số tuyến tính (Linear Algebra) / Toán học\nPhân tích thuật ngữ & Kỹ thuật:\n\nRow vector: Dịch chuẩn xác là \"vector hàng\" hoặc \"vectơ hàng\" (Tùy thuộc vào quy chuẩn Style Guide của dự án mà chọn cách viết chữ vector cho đồng nhất toàn bộ tài liệu).\n\nColumn vector: Vector cột / Vectơ cột.\n\nLưu ý kỹ thuật đặc biệt quan trọng: Khi dịch các tài liệu Toán/IT có chứa công thức, tuyệt đối không làm thay đổi các thẻ định dạng, mã LaTeX (ví dụ: \\mathbf, \\mathbb, _, ^). Máy dịch (Machine Translation) rất hay tự động cắt xén hoặc \"dịch\" luôn cả mã code này, dẫn đến lỗi hiển thị. Biên dịch viên cần đối chiếu kỹ phần này.\n\nKết luận cho review: Chọn Version B vì giữ nguyên vẹn cấu trúc mã LaTeX của bản gốc, đồng thời sử dụng thuật ngữ toán học \"vectơ hàng\" chính xác. Lỗi làm hỏng mã định dạng của Version A là không thể chấp nhận trong tài liệu học thuật."
+    },
+    {
+      "item_id": "mt_rules_caa155adf8",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Kỹ thuật phần mềm (Software Engineering) / Logic ứng dụng.Phân tích thuật ngữ:Rules: Nên dịch là \"quy tắc\" khi nói về các điều kiện logic, quy ước xử lý (if-then) trong ứng dụng. (Ví dụ: Business rules $\\rightarrow$ Quy tắc nghiệp vụ; Validation rules $\\rightarrow$ Quy tắc xác thực).Trường hợp ngoại lệ dùng \"Luật\": Chỉ dùng \"luật\" trong các phân ngành hẹp có quy ước cố định như AI đời đầu (Rule-based systems $\\rightarrow$ Hệ thống dựa trên luật), Khai phá dữ liệu (Association rules $\\rightarrow$ Luật kết hợp).Edge cases: Trường hợp biên / Trường hợp ngoại lệ (Thuật ngữ hai bản dịch đều xử lý tốt).Kết luận cho review: Chọn Version B. Bản dịch này xuất sắc cả về việc chọn thuật ngữ \"quy tắc\" lẫn cách diễn đạt thuần Việt \"lần lượt xem xét\", bỏ xa cách dịch máy móc của Version A."
+    },
+    {
+      "item_id": "mt_self_driving_cars_ac724ed2e4",
+      "human_label": "equivalent",
+      "note": ""
+    },
+    {
+      "item_id": "mt_smoothness_fa9d205bd5",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Tối ưu hóa, Giải tích, Machine Learning (đặc tính của hàm số).\nPhân tích thuật ngữ:\n\nSmoothness: Có thể dịch là \"tính trơn\" hoặc \"độ trơn\" tùy ngữ cảnh.\n\nDùng \"tính trơn\" khi nói về thuộc tính, định lý, khái niệm chung (Ví dụ: Hàm số có tính trơn giúp gradient descent hội tụ tốt hơn).\n\nDùng \"độ trơn\" khi đi kèm với các đại lượng đo lường, tính toán (Ví dụ: Độ trơn Lipschitz - Lipschitz smoothness).\n\nSmooth function: Hàm trơn.\n\nKết luận cho review: Chọn Version A vì sự hiệp vần, đối xứng hoàn hảo trong cấu trúc ngữ pháp (tính đơn giản - tính trơn) và việc lựa chọn giới từ tự nhiên hơn ở vế sau của câu."
+    },
+    {
+      "item_id": "mt_symmetry_18e1be4e79",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Chứng minh Toán học / Xác suất thống kê / Đại số.\nPhân tích thuật ngữ:\n\nSymmetry (Noun): Khi đứng độc lập để chỉ một thuộc tính trong toán học, cần dịch là \"tính đối xứng\".\n\nBy symmetry: Cụm từ cố định trong chứng minh toán học, bắt buộc dịch là \"Theo tính đối xứng\" hoặc \"Do tính đối xứng\".\n\nLỗi thường gặp: Dịch sát nghĩa thành \"Theo đối xứng\" hoặc \"Bởi đối xứng\" khiến câu văn bị cụt và sai cấu trúc ngữ pháp tiếng Việt.\n\nKết luận cho review: Chọn Version B vì nó tuân thủ đúng cấu trúc ngữ pháp tiếng Việt (tạo cụm danh từ bằng chữ \"tính\") và sử dụng đúng văn phong chứng minh toán học truyền thống."
+    },
+    {
+      "item_id": "mt_tangent_line_fc8da8d99b",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Toán học / Giải tích (Calculus) / Hình học.\nPhân tích thuật ngữ:\n\nTangent line: Dịch chuẩn xác nhất là \"tiếp tuyến\" (Khuyên dùng trong 99% trường hợp).\n\nCó thể dùng \"đường tiếp tuyến\" nếu muốn nhấn mạnh hình thái hình học của nó trong câu văn.\n\nLỗi cần tránh: Tuyệt đối tránh dịch thành \"đường thẳng tiếp tuyến\" vì lỗi lặp nghĩa (pleonasm) do chữ \"tuyến\" đã có nghĩa là đường thẳng.\n\nCác thuật ngữ liên quan:\n\nSlope of the tangent line: Hệ số góc của tiếp tuyến.\n\nEquation of the tangent line: Phương trình tiếp tuyến.\n\nTangent plane: Tiếp diện / Mặt phẳng tiếp xúc.\n\nKết luận cho review: Chọn Version B vì cụm \"đường tiếp tuyến\" tự nhiên và ít dư thừa ngữ nghĩa hơn so với cách dịch word-by-word \"đường thẳng tiếp tuyến\" của Version A."
+    },
+    {
+      "item_id": "mt_target_0e8a3ad980",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Học máy (Machine Learning) / Khoa học Dữ liệu (Data Science).Phân tích thuật ngữ:Target (danh từ): Khi được dùng đồng nghĩa với từ \"Label\" (Nhãn) để chỉ giá trị cần dự đoán, nên dịch rõ ràng là \"biến mục tiêu\".Việc bổ sung từ \"biến\" giúp thuật ngữ tiếng Việt chuẩn xác, mang tính học thuật cao và tránh gây hiểu nhầm với từ \"mục tiêu\" (goal) thông thường.Ví dụ: Target column $\\rightarrow$ Cột mục tiêu; Target variable $\\rightarrow$ Biến mục tiêu.Lưu ý lỗi tool: Công cụ review đôi khi sẽ highlight sai vị trí từ vựng (như trong trường hợp này nó highlight nhầm chữ \"nhãn\"). Cần đọc kỹ toàn câu để đánh giá đúng ý đồ của người dịch.Kết luận cho review: Chọn Version A vì người dịch xử lý thuật ngữ rất thông minh, diễn dịch \"target\" thành \"biến mục tiêu\" vô cùng chuẩn xác với ngữ cảnh Học có giám sát."
+    },
+    {
+      "item_id": "mt_target_distribution_e11bb1fcd8",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Học máy (Đặc biệt: Học chuyển giao, Thích ứng miền, Phân phối dữ liệu).Phân tích thuật ngữ:Target (đi theo cặp với Source): Bắt buộc phải dịch là \"đích\" để tạo thành cặp \"nguồn - đích\" hoàn chỉnh.Target distribution $\\rightarrow$ Phân phối đíchTarget domain $\\rightarrow$ Miền đíchSource distribution $\\rightarrow$ Phân phối nguồnTarget (khi đứng một mình hoặc chỉ mục đích tối ưu): Dịch là \"mục tiêu\".Target variable $\\rightarrow$ Biến mục tiêuTarget function $\\rightarrow$ Hàm mục tiêuCovariate shift: Thuật ngữ chuyên ngành, nên dịch là \"dịch chuyển hiệp biến\". (Đây là hiện tượng phân phối của các biến đầu vào $\\mathbf{x}$ thay đổi, nhưng hàm xác suất có điều kiện $P(y \\mid \\mathbf{x})$ vẫn giữ nguyên)."
+    },
+    {
+      "item_id": "mt_targets_4683e789c3",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Học máy có giám sát (Supervised Learning).\nPhân tích thuật ngữ:\n\nTargets / The target: Tuyệt đối hạn chế dịch trơ trọi là \"các mục tiêu\" hoặc \"mục tiêu\" để tránh gây hiểu nhầm sang từ goal/objective.\n\nCách dịch chuẩn xác: Cần ghép thêm các danh từ phân loại dữ liệu để làm rõ nghĩa:\n\n\"Nhãn mục tiêu\" (Target labels - thường ưu tiên dùng cho bài toán phân loại - Classification).\n\n\"Biến mục tiêu\" (Target variables - thuật ngữ tổng quát, dùng được cho cả phân loại và hồi quy - Regression).\n\n\"Giá trị mục tiêu\" (Target values).\n\nKết luận cho review: Lựa chọn Version B vì người dịch đã thể hiện sự nhạy bén với ngữ cảnh chuyên ngành khi dịch thoát ý thành \"nhãn mục tiêu\", khắc phục hoàn toàn sự mơ hồ và cứng nhắc của Version A."
+    },
+    {
+      "item_id": "mt_tensor_format_20bcb4d8d7",
+      "human_label": "B_better",
+      "note": "Ngữ cảnh: Học sâu (Deep Learning) / Khoa học Dữ liệu.\nPhân tích thuật ngữ:\n\nTensor format: Dịch chuẩn xác trên văn bản là \"định dạng tensor\". (Có thể dùng linh hoạt là \"dạng tensor\" trong văn nói hoặc bình luận code, nhưng ưu tiên \"định dạng\" cho tài liệu chính thức).\n\nProblem (trong AI/Toán học): Luôn ưu tiên dịch là \"bài toán\" thay vì \"vấn đề\" khi nói về các task mà thuật toán cần giải quyết.\n\nRaw data: Dữ liệu thô (Cả hai phiên bản đều xử lý tốt cụm này).\n\nKết luận cho review: Chọn Version B. Phiên bản này dịch sát nghĩa từ \"format\" thành \"định dạng\", đồng thời có cách hành văn chuyên ngành cực kỳ mượt mà với từ \"bài toán\"."
+    },
+    {
+      "item_id": "mt_test_accuracy_be3aebb55f",
+      "human_label": "B_better",
+      "note": "Phân tích thuật ngữ:\n\nTest accuracy:\n\nDịch chuẩn nhất: \"Độ chính xác trên tập kiểm tra\".\n\nNếu muốn ngắn gọn hơn trong các bảng biểu (nhưng vẫn đủ nghĩa), có thể dùng: \"Độ chính xác kiểm tra\" (chấp nhận được nếu tài liệu đã quy ước rõ tập dữ liệu là tập kiểm tra).\n\nLỗi cần tránh: Tuyệt đối không dịch rời rạc hoặc bỏ mất chữ \"tập\" nếu câu văn đó lần đầu tiên nhắc đến chỉ số này, để tránh gây hiểu nhầm sang các loại \"kiểm tra\" khác (ví dụ: kiểm tra mã nguồn, kiểm tra hệ thống).\n\nGóc chia sẻ: Lý do \"độ chính xác kiểm tra\" (test accuracy) giảm sau một thời gian thường là do hiện tượng Overfitting (quá khớp). Khi mô hình học quá kỹ các nhiễu trên tập huấn luyện (training set), nó mất đi khả năng tổng quát hóa, khiến sai số trên tập kiểm tra (test set) tăng lên. Hình ảnh trên mô tả sự phân kỳ giữa đường cong huấn luyện và đường cong kiểm tra mà bạn có thể tham khảo thêm."
+    },
+    {
+      "item_id": "mt_test_set_accuracy_98a76f479d",
+      "human_label": "A_better",
+      "note": "Ngữ cảnh: Machine Learning / Đánh giá mô hình.\n\nPhân tích thuật ngữ:\n\nTest set accuracy: Dịch chuẩn nhất là \"Độ chính xác trên tập kiểm tra\".\n\nLưu ý: Luôn giữ cụm từ \"trên tập\" để đảm bảo tính chính xác và trang trọng cho tài liệu. Tránh việc lược bỏ làm câu văn trở nên khô khan hoặc thiếu chuyên nghiệp."
+    },
+    {
+      "item_id": "mt_training_example_bdb5992a4c",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_training_examples_79bcf24974",
+      "human_label": "A_better",
+      "note": "Lý do: training examples trong ngữ cảnh machine learning dịch tự nhiên và đúng thuật ngữ hơn là “mẫu huấn luyện”. Version B dùng “ví dụ huấn luyện” nghe hơi sát chữ và kém chuẩn hơn.\n\nNgoài ra, batch dịch là “lô” trong Version A cũng ổn hơn so với giữ nguyên “batch” như Version B."
+    },
+    {
+      "item_id": "mt_true_parameters_6636cf5533",
+      "human_label": "A_better",
+      "note": ""
+    },
+    {
+      "item_id": "mt_true_probability_0c04e78467",
+      "human_label": "A_better",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,287 @@
+[
+  {
+    "item_id": "mt_fashion_mnist_dataset_b8ddab06eb",
+    "label": "equivalent",
+    "reason": "\"Bộ dữ liệu\" và \"tập dữ liệu\" đều là cách dịch chuẩn cho \"dataset\" trong tiếng Việt ML."
+  },
+  {
+    "item_id": "mt_mnist_dataset_923cfe4011",
+    "label": "B_better",
+    "reason": "Thuật ngữ gốc là \"MNIST dataset\". B đánh dấu đúng cụm đầy đủ «Bộ dữ liệu MNIST», A chỉ đánh dấu «MNIST» — thiếu phần \"dataset\"."
+  },
+  {
+    "item_id": "mt_universal_approximators_c7cc5b991a",
+    "label": "A_better",
+    "reason": "\"Phổ quát\" là dịch chuẩn cho \"universal\" trong ngữ cảnh toán học/ML (Universal Approximation Theorem). \"Phổ dụng\" mang nghĩa \"thông dụng\" — lệch ngữ nghĩa."
+  },
+  {
+    "item_id": "mt_vanishing_and_exploding_gradients_c51a803991",
+    "label": "B_better",
+    "reason": "\"Gradient\" là thuật ngữ đã thành chuẩn trong tiếng Việt ML, được giữ nguyên dạng loanword. \"Độ dốc\" dịch sát nghĩa \"slope\" nhưng không phải thuật ngữ ML chuẩn."
+  },
+  {
+    "item_id": "mt_activations_9afd89eb88",
+    "label": "A_better",
+    "reason": "\"Giá trị kích hoạt\" chính xác hơn cho \"activations\" (đầu ra của hàm kích hoạt). \"Các kích hoạt\" dịch sát chữ nhưng kém tự nhiên trong tiếng Việt kỹ thuật."
+  },
+  {
+    "item_id": "mt_additive_noise_7a444cd8ee",
+    "label": "A_better",
+    "reason": "\"Nhiễu cộng\" là thuật ngữ chuẩn trong xử lý tín hiệu và ML cho \"additive noise\". \"Nhiễu cộng thêm\" dài dòng và không phải thuật ngữ chuyên ngành."
+  },
+  {
+    "item_id": "mt_affine_transformations_e8551c005d",
+    "label": "B_better",
+    "reason": "\"Phép biến đổi affine\" đúng ngữ pháp toán học Việt hơn — có danh từ phân loại \"phép\" cho phép toán. \"Biến đổi affine\" thiếu classifier."
+  },
+  {
+    "item_id": "mt_annotation_2e76f54422",
+    "label": "A_better",
+    "reason": "Ngữ cảnh NLP: \"annotating a text sequence with attributes\" — \"chú giải\" (annotate văn bản với thuộc tính) đúng hơn \"gán nhãn\" (labeling, chỉ là một dạng con của annotation)."
+  },
+  {
+    "item_id": "mt_bandits_5d196d3aa2",
+    "label": "B_better",
+    "reason": "Heading chỉ là \"Bandits\", không phải \"Bandit Problems\". A thêm \"Bài toán\" làm thay đổi nghĩa. \"Bandit\" giữ nguyên tiếng Anh phổ biến hơn trong ML Việt."
+  },
+  {
+    "item_id": "mt_batch_size_115bac8f95",
+    "label": "B_better",
+    "reason": "Thuật ngữ gốc là \"batch size\", A đổi thành \"kích thước minibatch\" — sai thuật ngữ (batch ≠ minibatch). B dịch \"kích thước lô\" trung thành với gốc hơn."
+  },
+  {
+    "item_id": "mt_covariate_shift_a77c8a8dfb",
+    "label": "A_better",
+    "reason": "\"Dịch chuyển\" đúng nghĩa \"shift\" (sự dời/chuyển phân phối). \"Lệch\" mang nghĩa \"bias/deviation\" — khác với \"shift\"."
+  },
+  {
+    "item_id": "mt_data_examples_7c5e6ddeae",
+    "label": "A_better",
+    "reason": "\"Mẫu dữ liệu\" tự nhiên và phổ biến hơn trong văn viết kỹ thuật ML tiếng Việt. \"Ví dụ dữ liệu\" dịch sát chữ nhưng ít dùng."
+  },
+  {
+    "item_id": "mt_data_instance_cacbc74d36",
+    "label": "A_better",
+    "reason": "\"Thể hiện dữ liệu\" dịch đúng \"instance\" (một thể hiện/instance cụ thể). \"Thực thể dữ liệu\" dịch \"entity\" — khái niệm khác."
+  },
+  {
+    "item_id": "mt_deferred_0db493d58e",
+    "label": "equivalent",
+    "reason": "\"Hoãn lại\" và \"trì hoãn\" đều dịch đúng \"deferred\", tự nhiên và thông dụng ngang nhau."
+  },
+  {
+    "item_id": "mt_deletion_013e5670c0",
+    "label": "equivalent",
+    "reason": "\"Loại bỏ\" và \"xóa bỏ\" đều chấp nhận được cho \"deletion\" trong ngữ cảnh xử lý dữ liệu thiếu."
+  },
+  {
+    "item_id": "mt_efficiency_fff33dfb39",
+    "label": "A_better",
+    "reason": "\"Hiệu quả tính toán\" tự nhiên và gọn hơn \"tính hiệu quả tính toán\". Thêm \"tính\" không cần thiết và hơi nặng nề."
+  },
+  {
+    "item_id": "mt_elementwise_1d6feafbec",
+    "label": "equivalent",
+    "reason": "\"Từng phần tử\" và \"theo phần tử\" đều là cách dịch chuẩn cho \"elementwise\", phổ biến ngang nhau."
+  },
+  {
+    "item_id": "mt_elementwise_multiplication_0ebdbc19e3",
+    "label": "A_better",
+    "reason": "\"Phép nhân theo phần tử\" có classifier \"phép\" đúng ngữ pháp toán học Việt. B chỉ dùng \"nhân\" (động từ) thiếu tính danh từ hóa."
+  },
+  {
+    "item_id": "mt_end_to_end_training_e0ecc93532",
+    "label": "equivalent",
+    "reason": "Khác biệt duy nhất là dấu gạch ngang \"đầu cuối\" vs \"đầu-cuối\" — thuần túy phong cách, không ảnh hưởng ngữ nghĩa."
+  },
+  {
+    "item_id": "mt_feature_engineering_fbcf9d9a88",
+    "label": "A_better",
+    "reason": "\"Kỹ thuật đặc trưng\" là thuật ngữ chuẩn hơn cho \"feature engineering\". \"Thiết kế đặc trưng\" (design) chỉ bao hàm một phần nghĩa của \"engineering\"."
+  },
+  {
+    "item_id": "mt_feature_selection_ec5e3cb404",
+    "label": "equivalent",
+    "reason": "\"Lựa chọn đặc trưng\" và \"chọn đặc trưng\" đều dịch đúng \"feature selection\". \"Lựa chọn\" trang trọng hơn nhưng cả hai đều chuẩn."
+  },
+  {
+    "item_id": "mt_feature_vectors_9cfc7e31ab",
+    "label": "equivalent",
+    "reason": "Khác biệt duy nhất là chính tả \"vector\" (Anh) vs \"vectơ\" (Việt hóa). Cả hai đều được chấp nhận trong văn bản ML tiếng Việt."
+  },
+  {
+    "item_id": "mt_feedback_loops_73b8202c83",
+    "label": "A_better",
+    "reason": "\"Vòng phản hồi\" gọn và tự nhiên hơn. \"Vòng lặp phản hồi\" thừa vì \"vòng\" đã ngầm chỉ sự lặp lại dạng vòng."
+  },
+  {
+    "item_id": "mt_framework_f178867da2",
+    "label": "B_better",
+    "reason": "\"Framework\" được giữ nguyên tiếng Anh là chuẩn trong cộng đồng CS/ML Việt Nam. \"Khung phần mềm\" rất ít được sử dụng và nghe thiếu tự nhiên."
+  },
+  {
+    "item_id": "mt_generalization_gap_29c7c2502f",
+    "label": "equivalent",
+    "reason": "\"Khái quát hóa\" và \"tổng quát hóa\" đều là cách dịch chuẩn cho \"generalization\" trong ML tiếng Việt, phổ biến ngang nhau."
+  },
+  {
+    "item_id": "mt_heuristics_a628d3bfd9",
+    "label": "A_better",
+    "reason": "\"Phương pháp heuristic\" giữ đúng thuật ngữ chuyên ngành. \"Kinh nghiệm\" (experience) quá phiếm chỉ, mất đi ý nghĩa kỹ thuật của \"heuristics\"."
+  },
+  {
+    "item_id": "mt_learnable_parameters_11a624f504",
+    "label": "equivalent",
+    "reason": "\"Tham số học được\" và \"tham số có thể học\" đều dịch đúng \"learnable parameters\". Trong tiếng Việt, \"-được\" cũng có thể diễn đạt khả năng."
+  },
+  {
+    "item_id": "mt_lifting_8f516a1fc1",
+    "label": "A_better",
+    "reason": "\"Nâng\" dịch trung thành \"lifting\". B thêm \"ánh xạ\" (mapping) không có trong thuật ngữ gốc, làm thay đổi nghĩa."
+  },
+  {
+    "item_id": "mt_manipulating_8325f6c2ab",
+    "label": "B_better",
+    "reason": "\"Thao tác\" đúng nghĩa \"manipulating\" (thao tác trên dữ liệu). \"Xử lý\" (processing) trùng ngữ nghĩa với \"preprocessing\" ngay sau đó trong câu."
+  },
+  {
+    "item_id": "mt_membership_99ef7e9bc5",
+    "label": "A_better",
+    "reason": "\"Quan hệ thuộc\" dịch chính xác \"membership\" như một khái niệm/quan hệ toán học. \"Thuộc\" chỉ là động từ, chưa danh từ hóa thành \"membership\"."
+  },
+  {
+    "item_id": "mt_model_complexity_ca64fe25a6",
+    "label": "equivalent",
+    "reason": "\"Độ phức tạp mô hình\" (compound noun) và \"Độ phức tạp của mô hình\" (sở hữu cách) đều tự nhiên và chính xác."
+  },
+  {
+    "item_id": "mt_model_s_parameters_eb636b643b",
+    "label": "equivalent",
+    "reason": "\"Tham số mô hình\" và \"tham số của mô hình\" đều chuẩn, chỉ khác phong cách ngữ pháp (compound vs possessive)."
+  },
+  {
+    "item_id": "mt_multivariate_functions_de4f1ded26",
+    "label": "equivalent",
+    "reason": "\"Hàm nhiều biến\" và \"hàm đa biến\" đều là thuật ngữ toán học chuẩn trong tiếng Việt, phổ biến ngang nhau."
+  },
+  {
+    "item_id": "mt_negative_log_likelihood_006bbe2ce2",
+    "label": "B_better",
+    "reason": "\"Log-khả năng âm\" đúng ngữ pháp Việt (tính từ theo sau danh từ). \"Âm log-khả năng\" theo trật tự tiếng Anh, kém tự nhiên."
+  },
+  {
+    "item_id": "mt_offset_53a610e925",
+    "label": "B_better",
+    "reason": "B đánh dấu «độ dời» — dịch đúng \"offset\" (displacement). A đánh dấu «độ lệch» — thực chất dịch \"bias\" (thuật ngữ chính), không phải \"offset\"."
+  },
+  {
+    "item_id": "mt_prior_4a47653d5f",
+    "label": "B_better",
+    "reason": "\"Phân phối tiên nghiệm\" đầy đủ và chính xác hơn cho \"prior\" trong ngữ cảnh Bayes, nhất quán với \"phân phối hậu nghiệm\" cho posterior."
+  },
+  {
+    "item_id": "mt_random_experiment_cc591bd83d",
+    "label": "A_better",
+    "reason": "\"Phép thử ngẫu nhiên\" là thuật ngữ chuẩn trong sách xác suất thống kê tiếng Việt. \"Thí nghiệm ngẫu nhiên\" dịch sát chữ nhưng không phải thuật ngữ chuẩn."
+  },
+  {
+    "item_id": "mt_real_valued_scalars_e5f331e933",
+    "label": "A_better",
+    "reason": "\"Vô hướng thực\" bao quát đúng cụm \"real-valued scalars\". B chỉ đánh dấu «giá trị thực» — thiếu thành phần \"scalars\"."
+  },
+  {
+    "item_id": "mt_regularization_term_b48f4963e7",
+    "label": "A_better",
+    "reason": "\"Hạng tử chính quy hóa\" dịch đúng \"regularization term\". \"Hạng chuẩn hóa\" dịch thành \"normalization term\" — sai thuật ngữ (regularization ≠ normalization)."
+  },
+  {
+    "item_id": "mt_regularizing_0228b30aa3",
+    "label": "B_better",
+    "reason": "\"Điều chuẩn\" là cách dịch đúng \"regularizing\". \"Chuẩn hóa\" (A) dịch thành \"normalizing\" — sai thuật ngữ (regularization ≠ normalization)."
+  },
+  {
+    "item_id": "mt_robotics_891e0758a7",
+    "label": "A_better",
+    "reason": "\"Robot học\" là thuật ngữ chuẩn cho \"robotics\". \"Người máy học\" mơ hồ, dễ nhầm thành \"người (đang) máy-học\" và không phải thuật ngữ thông dụng."
+  },
+  {
+    "item_id": "mt_row_vectors_04aadc236a",
+    "label": "equivalent",
+    "reason": "Khác biệt duy nhất là chính tả \"vector\" vs \"vectơ\", cả hai đều chấp nhận được."
+  },
+  {
+    "item_id": "mt_rules_caa155adf8",
+    "label": "B_better",
+    "reason": "\"Quy tắc\" đúng nghĩa \"rules\" (quy tắc/luật lệ trong ứng dụng). \"Luật\" thiên về \"laws\" (luật khoa học/pháp luật), nặng hơn ngữ cảnh cần thiết."
+  },
+  {
+    "item_id": "mt_self_driving_cars_ac724ed2e4",
+    "label": "B_better",
+    "reason": "\"Xe tự lái\" phổ biến và tự nhiên hơn trong tiếng Việt hiện đại. \"Ô tô tự lái\" không sai nhưng ít dùng hơn."
+  },
+  {
+    "item_id": "mt_smoothness_fa9d205bd5",
+    "label": "A_better",
+    "reason": "\"Tính trơn\" đúng cách diễn đạt thuộc tính toán học (tính chất trơn). \"Độ trơn\" (mức độ trơn) hàm ý đo lường, hơi lệch so với \"smoothness\" như một khái niệm."
+  },
+  {
+    "item_id": "mt_symmetry_18e1be4e79",
+    "label": "B_better",
+    "reason": "\"Tính đối xứng\" là danh từ chỉ tính chất, dịch đúng \"symmetry\" (danh từ). \"Đối xứng\" thiên về tính từ, kém chính xác về từ loại."
+  },
+  {
+    "item_id": "mt_tangent_line_fc8da8d99b",
+    "label": "equivalent",
+    "reason": "\"Tiếp tuyến\" và \"đường tiếp tuyến\" đều chuẩn trong toán học Việt. \"Tiếp tuyến\" đã ngầm chỉ đường thẳng."
+  },
+  {
+    "item_id": "mt_target_0e8a3ad980",
+    "label": "A_better",
+    "reason": "Thuật ngữ cần đánh giá là \"target\". A đánh dấu «biến mục tiêu» — dịch đúng \"target\". B đánh dấu «nhãn» — thực chất là dịch \"label\", không phải \"target\"."
+  },
+  {
+    "item_id": "mt_target_distribution_e11bb1fcd8",
+    "label": "equivalent",
+    "reason": "\"Phân phối đích\" và \"phân phối mục tiêu\" đều dịch đúng \"target distribution\", phổ biến ngang nhau."
+  },
+  {
+    "item_id": "mt_targets_4683e789c3",
+    "label": "A_better",
+    "reason": "\"Mục tiêu\" dịch trung thành \"targets\". B thêm \"nhãn\" thành \"nhãn mục tiêu\" (target labels) — thêm nghĩa không có trong gốc."
+  },
+  {
+    "item_id": "mt_tensor_format_20bcb4d8d7",
+    "label": "B_better",
+    "reason": "\"Định dạng tensor\" dịch đúng \"tensor format\" (\"định dạng\" = format). \"Dạng tensor\" dịch thành \"tensor form\" — hơi lệch nghĩa."
+  },
+  {
+    "item_id": "mt_test_accuracy_be3aebb55f",
+    "label": "B_better",
+    "reason": "\"Độ chính xác trên tập kiểm tra\" rõ ràng và chính xác hơn, nêu rõ accuracy đo trên test set. \"Độ chính xác kiểm tra\" hơi mơ hồ."
+  },
+  {
+    "item_id": "mt_test_set_accuracy_98a76f479d",
+    "label": "A_better",
+    "reason": "\"Độ chính xác trên tập kiểm tra\" có giới từ \"trên\" giúp câu tự nhiên hơn. \"Độ chính xác tập kiểm tra\" thiếu giới từ, đọc hơi cộc."
+  },
+  {
+    "item_id": "mt_training_example_bdb5992a4c",
+    "label": "equivalent",
+    "reason": "\"Mẫu huấn luyện\" và \"ví dụ huấn luyện\" đều là cách dịch phổ biến cho \"training example\" trong ML tiếng Việt."
+  },
+  {
+    "item_id": "mt_training_examples_79bcf24974",
+    "label": "equivalent",
+    "reason": "Tương tự item trên — \"mẫu huấn luyện\" và \"ví dụ huấn luyện\" đều chấp nhận được."
+  },
+  {
+    "item_id": "mt_true_parameters_6636cf5533",
+    "label": "B_better",
+    "reason": "\"Tham số thật\" tránh nhập nhằng với \"tham số thực\" (real-valued parameters). \"Thật\" rõ ràng hơn cho nghĩa \"true/ground-truth\"."
+  },
+  {
+    "item_id": "mt_true_probability_0c04e78467",
+    "label": "equivalent",
+    "reason": "\"Xác suất thực\" và \"xác suất thật\" đều chấp nhận được. Xác suất luôn là số thực nên nhập nhằng \"thực = real-valued\" ít xảy ra ở đây."
+  }
+]
