@@ -340,3 +340,21 @@ blind not complete: missing data\eval\memory_tradeoff\judgments_human.json
 → Memory **rõ ràng giúp ~10 term và rõ ràng hại ~10 term**, gần cân bằng. Đây là tradeoff định lượng, đa-mô-hình. **"Memory luôn tốt" bị bác.** Báo cáo: `data/reports/memory_tradeoff_panel.json`.
 
 **Limitation (ghi luận văn):** panel LLM-only, no human-expert anchor, no κ, N=57 diagnostic, 1 override-set. **Hệ quả:** đề-xuất arm `S1_better` (inject chọn-lọc a-priori) là chính đáng — override mù hiện tại lãng phí một nửa.
+
+
+### Update 2026-06-20 — panel CLOSED (GLM-5.2 = 4th family, pre-registered final judge)
+
+USER chạy GLM-5.2 (Zhipu) cold trên cùng pack. **Pre-register tôn trọng: báo as-is, GLM là judge cuối.**
+
+| Cold judge (4 họ) | harm% | improve% |
+|---|---|---|
+| Gemini-3.1pro | 37 | 37 |
+| Gemini-3.5flash | 32 | 26 |
+| Claude-Opus-4.6 | 39 | 30 |
+| **GLM-5.2** | **21** | **37** |
+
+**GLM ở đầu DỄ tính (21%, harm<improve)**, giống 2.5flash-swap; Opus/3.1pro gắt hơn (37-39%). **Thêm GLM làm headline "33%" lượt trước YẾU đi — báo trung thực, không giữ số đẹp.**
+
+**Headline 4-họ (revised, honest):** per-judge harm **21–39%** (mean **32%**), improve mean **32.5%** → **harm ≈ improve qua MỌI họ, không thắng ròng.** Majority ≥3/4: harm 21% / improve 25% / **lateral 54%** (đa số term 4 model còn cãi → vùng subjective/morphological). **4-họ-đồng-thuận: 6 hại chắc** (gradient→độ dốc, regularization→chuẩn hóa, regularizing, robotics, covariate shift, manipulating) **vs 9 giúp chắc** (batch size→lô, target→biến mục tiêu, activations, additive noise, data instance, heuristics, random experiment, real-valued scalars, Universal Approximators).
+
+**Kết luận (khiêm tốn, vững):** memory-override KHÔNG phải cải thiện đáng tin (harm-magnitude judge-dependent; mọi họ harm≈improve; 54% contested). Robust giúp ~9 / hại ~6. → biện minh arm `S1_better` (inject chọn-lọc a-priori). MỌI judge=LLM, no human-expert (limitation). Report: `data/reports/memory_tradeoff_panel.json` (panel_closed=4 families).

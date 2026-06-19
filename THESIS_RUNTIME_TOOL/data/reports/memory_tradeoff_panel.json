@@ -3,12 +3,14 @@
   "denominator": "terms where S0 status==consistent AND dominant(S1)!=dominant(S0)",
   "judges_are_all_LLM": true,
   "human_expert_anchor": "NONE (stated limitation)",
+  "panel_closed": "4 cold model-diverse families: Gemini-3.1-Pro, Gemini-3.5-Flash, Claude-Opus-4.6, GLM-5.2 (pre-registered: GLM is last judge, report as-is, no judge-shopping)",
   "judge_provenance": {
-    "2.5flash_api_swap_blind": "pipeline Gemini-2.5-flash, blind worksheet, 2-orientation swap, conservative resolve (LOW due to swap-conservatism -> many lateral; artifact-low)",
-    "3.1pro_web_aiCurated": "Gemini-3.1-Pro web, screenshots + deep analysis, USER-CURATED (NOT independent human; HIGH outlier)",
-    "3.1pro_cold_pack": "Gemini-3.1-Pro cold Antigravity session, read judge_pack_external.md only",
-    "3.5flash_cold_pack": "Gemini-3.5-flash cold Antigravity session",
-    "opus46_cold_pack": "Claude-Opus-4.6 cold Antigravity session (CROSS-FAMILY independent confirmation)"
+    "2.5flash_api_swap_blind": "pipeline Gemini-2.5-flash, blind, 2-orientation swap, conservative resolve (artifact-LOW 21%)",
+    "3.1pro_web_aiCurated": "Gemini-3.1-Pro web, AI-analyzed + USER-CURATED (NOT human; HIGH outlier 47%)",
+    "3.1pro_cold_pack": "Gemini-3.1-Pro cold session, pack only",
+    "3.5flash_cold_pack": "Gemini-3.5-flash cold session",
+    "opus46_cold_pack": "Claude-Opus-4.6 cold session (cross-family)",
+    "glm52_cold_pack": "GLM-5.2 (Zhipu) cold session (4th family; LENIENT end, harm 21%)"
   },
   "per_judge": {
     "2.5flash_api_swap_blind": {
@@ -40,20 +42,34 @@
       "improve": 17,
       "lateral": 18,
       "harm_pct": 38.6
+    },
+    "glm52_cold_pack": {
+      "harm": 12,
+      "improve": 21,
+      "lateral": 24,
+      "harm_pct": 21.1
     }
   },
-  "headline_cold_panel_majority": {
+  "headline_cold4_panel": {
     "judges": [
       "3.1pro_cold_pack",
       "3.5flash_cold_pack",
-      "opus46_cold_pack"
+      "opus46_cold_pack",
+      "glm52_cold_pack"
     ],
-    "harm": 19,
-    "improve": 17,
-    "lateral": 21,
-    "harm_pct": 33.3,
-    "improve_pct": 29.8,
-    "interpretation": "harm ~= improve (coin-flip): overriding a consistent S0 baseline is NOT a reliable improvement; cross-family Opus (38.6%) confirms harm is not a single-model artifact"
+    "per_judge_harm_pct_range": [
+      21.1,
+      38.6
+    ],
+    "mean_harm_pct": 32.0,
+    "mean_improve_pct": 32.5,
+    "majority_3of4": {
+      "harm": 12,
+      "improve": 14,
+      "lateral": 31,
+      "harm_pct": 21.1
+    },
+    "interpretation": "harm magnitude is JUDGE-DEPENDENT 21-39% (mean ~32%); every family shows harm ~= improve (no net win); requiring 3/4 agreement, 54% of terms are CONTESTED (lateral) -> many overrides are subjective/morphological. Robust: clearly helps ~9 terms, clearly hurts ~6. Memory override is NOT a reliable net improvement. GLM (lenient) and 2.5flash-swap anchor the low end; Opus/3.1pro the high end."
   },
   "pairwise_3way_agreement_pct": {
     "2.5flash_api_swap_blind": {
@@ -61,75 +77,81 @@
       "3.1pro_web_aiCurated": 46.0,
       "3.1pro_cold_pack": 49.0,
       "3.5flash_cold_pack": 53.0,
-      "opus46_cold_pack": 51.0
+      "opus46_cold_pack": 51.0,
+      "glm52_cold_pack": 54.0
     },
     "3.1pro_web_aiCurated": {
       "2.5flash_api_swap_blind": 46.0,
       "3.1pro_web_aiCurated": 100.0,
       "3.1pro_cold_pack": 63.0,
       "3.5flash_cold_pack": 49.0,
-      "opus46_cold_pack": 60.0
+      "opus46_cold_pack": 60.0,
+      "glm52_cold_pack": 53.0
     },
     "3.1pro_cold_pack": {
       "2.5flash_api_swap_blind": 49.0,
       "3.1pro_web_aiCurated": 63.0,
       "3.1pro_cold_pack": 100.0,
       "3.5flash_cold_pack": 70.0,
-      "opus46_cold_pack": 70.0
+      "opus46_cold_pack": 70.0,
+      "glm52_cold_pack": 58.0
     },
     "3.5flash_cold_pack": {
       "2.5flash_api_swap_blind": 53.0,
       "3.1pro_web_aiCurated": 49.0,
       "3.1pro_cold_pack": 70.0,
       "3.5flash_cold_pack": 100.0,
-      "opus46_cold_pack": 68.0
+      "opus46_cold_pack": 68.0,
+      "glm52_cold_pack": 58.0
     },
     "opus46_cold_pack": {
       "2.5flash_api_swap_blind": 51.0,
       "3.1pro_web_aiCurated": 60.0,
       "3.1pro_cold_pack": 70.0,
       "3.5flash_cold_pack": 68.0,
-      "opus46_cold_pack": 100.0
+      "opus46_cold_pack": 100.0,
+      "glm52_cold_pack": 56.0
+    },
+    "glm52_cold_pack": {
+      "2.5flash_api_swap_blind": 54.0,
+      "3.1pro_web_aiCurated": 53.0,
+      "3.1pro_cold_pack": 58.0,
+      "3.5flash_cold_pack": 58.0,
+      "opus46_cold_pack": 56.0,
+      "glm52_cold_pack": 100.0
     }
   },
-  "unanimous_cold_harm": [
+  "unanimous4_cold_harm": [
     "MNIST dataset",
     "Vanishing and Exploding Gradients",
-    "bandits",
     "covariate shift",
     "manipulating",
     "regularization term",
     "regularizing",
-    "robotics",
-    "symmetry",
-    "targets",
-    "test accuracy"
+    "robotics"
   ],
-  "unanimous_cold_improve": [
+  "unanimous4_cold_improve": [
     "Universal Approximators",
     "activations",
     "additive noise",
     "batch size",
-    "data examples",
     "data instance",
     "heuristics",
     "membership",
-    "offset",
     "random experiment",
     "real-valued scalars",
     "target"
   ],
-  "instrument_artifacts_excluded_from_robust": [
+  "instrument_artifacts_excluded": [
     "MNIST dataset",
     "membership"
   ],
   "caveats": [
-    "ALL judges are LLM; NO human-expert anchor (author is not a domain expert for technical VI ML terminology). Stated as thesis limitation / future work.",
-    "3.1pro_web judge was AI-analyzed + user-curated (hybrid), HIGH outlier 47%; reported separately, not in headline.",
-    "2.5flash_swap is conservative (swap contradictions -> lateral), artifact-LOW 21%; reported separately.",
-    "Headline = majority vote of 3 cold model-diverse blind judges on the controlled pack.",
-    "MNIST dataset & membership are highlight/sub-string instrument artifacts (judges scored the marked span, not a real S0-vs-S1 difference); excluded from robust lists.",
-    "N=57 diagnostic; single override chapter-scope frozen output; post-hoc, no re-translate."
+    "ALL judges are LLM; NO human-expert anchor (author not a domain expert). Diagnostic, no kappa. Stated limitation.",
+    "Adding GLM-5.2 (lenient, pre-registered as final judge) pulled the headline from the earlier 3-judge 33% toward an ambiguous 21-39% range — reported honestly, not suppressed.",
+    "majority_3of4 inflates lateral (strict consensus); also report per-judge range + mean.",
+    "MNIST dataset & membership are highlight/sub-string instrument artifacts; excluded from robust lists.",
+    "N=57 diagnostic, single override-set, post-hoc frozen, no re-translate."
   ],
   "per_item": [
     {
@@ -138,14 +160,15 @@
       "tier": "preserve",
       "s0": "bộ dữ liệu Fashion-MNIST",
       "s1": "tập dữ liệu Fashion-MNIST",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -154,14 +177,15 @@
       "tier": "preserve",
       "s0": "bộ dữ liệu MNIST",
       "s1": "MNIST",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": true,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -170,14 +194,15 @@
       "tier": "hard",
       "s0": "bộ xấp xỉ phổ dụng",
       "s1": "bộ xấp xỉ phổ quát",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -186,14 +211,15 @@
       "tier": "hard",
       "s0": "gradient biến mất và bùng nổ",
       "s1": "độ dốc biến mất và bùng nổ",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -202,14 +228,15 @@
       "tier": "soft",
       "s0": "các kích hoạt",
       "s1": "giá trị kích hoạt",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -218,14 +245,15 @@
       "tier": "hard",
       "s0": "nhiễu cộng thêm",
       "s1": "nhiễu cộng",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -234,14 +262,15 @@
       "tier": "hard",
       "s0": "phép biến đổi affine",
       "s1": "biến đổi affine",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -250,14 +279,15 @@
       "tier": "soft",
       "s0": "gán nhãn",
       "s1": "chú giải",
-      "cold_majority": "improve",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -266,14 +296,15 @@
       "tier": "soft",
       "s0": "bandit",
       "s1": "bài toán băng-đit",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -282,14 +313,15 @@
       "tier": "hard",
       "s0": "kích thước minibatch",
       "s1": "kích thước lô",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -298,14 +330,15 @@
       "tier": "hard",
       "s0": "dịch chuyển hiệp biến",
       "s1": "lệch hiệp biến",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -314,14 +347,15 @@
       "tier": "hard",
       "s0": "ví dụ dữ liệu",
       "s1": "mẫu dữ liệu",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -330,14 +364,15 @@
       "tier": "hard",
       "s0": "thực thể dữ liệu",
       "s1": "thể hiện dữ liệu",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -346,14 +381,15 @@
       "tier": "soft",
       "s0": "hoãn lại",
       "s1": "trì hoãn",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -362,14 +398,15 @@
       "tier": "soft",
       "s0": "loại bỏ",
       "s1": "xóa bỏ",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -378,14 +415,15 @@
       "tier": "soft",
       "s0": "hiệu quả",
       "s1": "tính hiệu quả",
-      "cold_majority": "harm",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -394,14 +432,15 @@
       "tier": "soft",
       "s0": "từng phần tử",
       "s1": "theo phần tử",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -410,14 +449,15 @@
       "tier": "hard",
       "s0": "nhân theo từng phần tử",
       "s1": "phép nhân theo phần tử",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -426,14 +466,15 @@
       "tier": "hard",
       "s0": "huấn luyện đầu-cuối",
       "s1": "huấn luyện đầu cuối",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -442,14 +483,15 @@
       "tier": "hard",
       "s0": "thiết kế đặc trưng",
       "s1": "kỹ thuật đặc trưng",
-      "cold_majority": "harm",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -458,14 +500,15 @@
       "tier": "hard",
       "s0": "lựa chọn đặc trưng",
       "s1": "chọn đặc trưng",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -474,14 +517,15 @@
       "tier": "hard",
       "s0": "vector đặc trưng",
       "s1": "vectơ đặc trưng",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -490,14 +534,15 @@
       "tier": "hard",
       "s0": "vòng phản hồi",
       "s1": "vòng lặp phản hồi",
-      "cold_majority": "harm",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -506,14 +551,15 @@
       "tier": "soft",
       "s0": "framework",
       "s1": "khung phần mềm",
-      "cold_majority": "harm",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -522,14 +568,15 @@
       "tier": "hard",
       "s0": "khoảng cách khái quát hóa",
       "s1": "khoảng cách tổng quát hóa",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -538,14 +585,15 @@
       "tier": "soft",
       "s0": "kinh nghiệm",
       "s1": "phương pháp heuristic",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -554,14 +602,15 @@
       "tier": "hard",
       "s0": "tham số có thể học",
       "s1": "tham số học được",
-      "cold_majority": "harm",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -570,14 +619,15 @@
       "tier": "soft",
       "s0": "nâng",
       "s1": "nâng ánh xạ",
-      "cold_majority": "harm",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -586,14 +636,15 @@
       "tier": "soft",
       "s0": "thao tác",
       "s1": "xử lý",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -602,14 +653,15 @@
       "tier": "soft",
       "s0": "thuộc",
       "s1": "quan hệ thuộc",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": true,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -618,14 +670,15 @@
       "tier": "hard",
       "s0": "độ phức tạp của mô hình",
       "s1": "độ phức tạp mô hình",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -634,14 +687,15 @@
       "tier": "hard",
       "s0": "tham số của mô hình",
       "s1": "tham số mô hình",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -650,14 +704,15 @@
       "tier": "hard",
       "s0": "hàm nhiều biến",
       "s1": "hàm đa biến",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -666,14 +721,15 @@
       "tier": "hard",
       "s0": "âm log-khả năng",
       "s1": "log-khả năng âm",
-      "cold_majority": "improve",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -682,14 +738,15 @@
       "tier": "soft",
       "s0": "độ lệch",
       "s1": "độ dời",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -698,14 +755,15 @@
       "tier": "soft",
       "s0": "tiên nghiệm",
       "s1": "phân phối tiên nghiệm",
-      "cold_majority": "improve",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -714,14 +772,15 @@
       "tier": "hard",
       "s0": "thí nghiệm ngẫu nhiên",
       "s1": "phép thử ngẫu nhiên",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -730,14 +789,15 @@
       "tier": "hard",
       "s0": "giá trị thực",
       "s1": "vô hướng thực",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -746,14 +806,15 @@
       "tier": "hard",
       "s0": "hạng tử chính quy hóa",
       "s1": "hạng chuẩn hóa",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -762,14 +823,15 @@
       "tier": "soft",
       "s0": "điều chuẩn",
       "s1": "chuẩn hóa",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -778,14 +840,15 @@
       "tier": "soft",
       "s0": "robot học",
       "s1": "người máy học",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -794,14 +857,15 @@
       "tier": "hard",
       "s0": "vector hàng",
       "s1": "vectơ hàng",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -810,14 +874,15 @@
       "tier": "ignore_for_consistency",
       "s0": "quy tắc",
       "s1": "luật",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -826,14 +891,15 @@
       "tier": "hard",
       "s0": "xe tự lái",
       "s1": "ô tô tự lái",
-      "cold_majority": "harm",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "lateral",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -842,14 +908,15 @@
       "tier": "soft",
       "s0": "tính trơn",
       "s1": "độ trơn",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -858,14 +925,15 @@
       "tier": "soft",
       "s0": "tính đối xứng",
       "s1": "đối xứng",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -874,14 +942,15 @@
       "tier": "hard",
       "s0": "tiếp tuyến",
       "s1": "đường tiếp tuyến",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -890,14 +959,15 @@
       "tier": "soft",
       "s0": "nhãn",
       "s1": "biến mục tiêu",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "harm",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "improve"
+        "opus46_cold_pack": "improve",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -906,14 +976,15 @@
       "tier": "hard",
       "s0": "phân phối đích",
       "s1": "phân phối mục tiêu",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -922,14 +993,15 @@
       "tier": "soft",
       "s0": "mục tiêu",
       "s1": "nhãn mục tiêu",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -938,14 +1010,15 @@
       "tier": "hard",
       "s0": "định dạng tensor",
       "s1": "dạng tensor",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "harm"
       }
     },
     {
@@ -954,14 +1027,15 @@
       "tier": "hard",
       "s0": "độ chính xác trên tập kiểm tra",
       "s1": "độ chính xác kiểm tra",
-      "cold_majority": "harm",
+      "cold4_majority": "harm",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "harm",
         "3.5flash_cold_pack": "harm",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -970,14 +1044,15 @@
       "tier": "hard",
       "s0": "độ chính xác trên tập kiểm tra",
       "s1": "độ chính xác tập kiểm tra",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "harm",
         "3.1pro_cold_pack": "lateral",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "lateral"
       }
     },
     {
@@ -986,14 +1061,15 @@
       "tier": "hard",
       "s0": "ví dụ huấn luyện",
       "s1": "mẫu huấn luyện",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -1002,14 +1078,15 @@
       "tier": "hard",
       "s0": "ví dụ huấn luyện",
       "s1": "mẫu huấn luyện",
-      "cold_majority": "improve",
+      "cold4_majority": "improve",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "improve",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -1018,14 +1095,15 @@
       "tier": "hard",
       "s0": "tham số thật",
       "s1": "tham số thực",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "lateral",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "harm"
+        "opus46_cold_pack": "harm",
+        "glm52_cold_pack": "improve"
       }
     },
     {
@@ -1034,14 +1112,15 @@
       "tier": "hard",
       "s0": "xác suất thật",
       "s1": "xác suất thực",
-      "cold_majority": "lateral",
+      "cold4_majority": "lateral",
       "instrument_artifact": false,
       "judges": {
         "2.5flash_api_swap_blind": "improve",
         "3.1pro_web_aiCurated": "improve",
         "3.1pro_cold_pack": "improve",
         "3.5flash_cold_pack": "lateral",
-        "opus46_cold_pack": "lateral"
+        "opus46_cold_pack": "lateral",
+        "glm52_cold_pack": "improve"
       }
     }
   ]
