@@ -1,6 +1,6 @@
 # TASK_EV_D2L_06_memory_tradeoff_judge — MEMORY_TRADEOFF_01: định lượng chi phí chất lượng của memory trên **59 term override** (S0 nhất quán → S1 đổi form), **judge MÙ** (Gemini ngây-thơ + người neo), **post-hoc trên frozen output**, KHÔNG re-translate / KHÔNG re-run Builder
 
-- **Status:** READY (Claude, 2026-06-19) — chờ CodeX điền §5 + REVIEW; KHÔNG commit.
+- **Status:** DONE / PASS (impl) (Claude, 2026-06-19; reviewed §5 + code + artifacts độc lập) — REVIEW (CodeX, 2026-06-19); READY (Claude, 2026-06-19). Pilot execution (human-judge mù + score) = bước USER.
 - **Refs:** memory `d2l-scorer-validity-and-remediation-ladder`, `dont-tune-intervention-on-test-baseline`, `scoring-scope-equals-production-scope`, `green-tests-can-hide-dead-integration` · THESIS_ARCHITECTURE_LOCK §10 (uu)/(vv)/(ww) · EV_D2L_03b (`pipeline/eval/surface_match.py`) · EV_D2L_05 (`pipeline/eval/occ_align.py` — `build_occ_frame`) · EV-02 (judge Gemini infra, pairwise A/B, proxy ShopAIKey) · RunControl cost-gate (APP-C01) · 3-bên hội tụ Claude+GLM-5.2+user 2026-06-19.
 - **Branch/Commit:** local working tree only; not committed per task protocol.
 
@@ -161,8 +161,158 @@ python -m pytest pipeline/tests app/backend/tests -q
 
 ## 5. Implementation notes *(CodeX điền)*
 
-<!-- CodeX: điền files changed / implemented / deviation / commands run / not run. KHÔNG commit. -->
+### Files changed
+
+- Added `pipeline/eval/memory_tradeoff.py`.
+- Added `pipeline/scripts/memory_tradeoff_build.py`.
+- Added `pipeline/scripts/memory_tradeoff_judge.py`.
+- Added `pipeline/scripts/memory_tradeoff_score.py`.
+- Added `pipeline/tests/test_memory_tradeoff.py`.
+- Updated judge runner to repair narrowly truncated JSON responses when `label` and `confidence` are explicitly present; repaired rows are marked with `json_error` and `_parse_repaired`.
+- Generated review artifacts under `data/eval/memory_tradeoff/`:
+  - `override_set.csv`
+  - `worksheet.jsonl`
+  - `worksheet.html`
+  - `judgments_gemini.jsonl`
+  - `KEY/worksheet_KEY.json`
+  - `KEY/README.md`
+
+### Implemented
+
+- Deterministic override-set builder from frozen `d2l_translation_metrics_v2.json`: rule is `S0.status == consistent` and dominant S1 surface differs from dominant S0 surface.
+- Read-only DB access for production build (`mode=ro`), no Builder/Translator invocation, no runtime DB writes.
+- Blind worksheet generation with separated `worksheet.jsonl`, `worksheet.html`, and `KEY/worksheet_KEY.json`; scorer refuses to read key until both `judgments_gemini.jsonl` and exact `judgments_human.json` exist.
+- Human worksheet HTML exports exact filename `judgments_human.json`.
+- Gemini judge preview/cost gate with 2 orientations per item, confirm-token, judge!=translator guard inherited through `JudgeClient`, and cache path support.
+- Conservative resolution: contradictory swapped judgments -> `ambiguous` -> final `lateral`.
+- Human subset suggestion is stratified and deterministic; generated worksheet marks 12 suggested items.
+- Final report scorer includes `calibrated=false` inheritance caveat, `single_annotator=true`, `kappa=null`, and fixed a-priori human-vs-Gemini trust threshold `0.80`.
+- Gemini judge run completed after cost-gate. A first run stopped after 28 cached responses due one truncated JSON response; implementation now repairs only explicit `label`/`confidence` fields and then resumed from cache.
+
+### Production artifact output
+
+`python -m pipeline.scripts.memory_tradeoff_build --db data/jobs/d2l_p1/memory.sqlite3 --report data/reports/d2l_translation_metrics_v2.json --seed 42 --out-dir data/eval/memory_tradeoff`
+
+Output:
+
+```json
+{
+  "override_items": 57,
+  "resolved_items": 57,
+  "unresolved_items": 0,
+  "tier_breakdown": {
+    "hard": 34,
+    "ignore_for_consistency": 1,
+    "preserve": 2,
+    "soft": 20
+  },
+  "human_suggested": 12
+}
+```
+
+`python -m pipeline.scripts.memory_tradeoff_judge --worksheet data/eval/memory_tradeoff/worksheet.jsonl --out data/eval/memory_tradeoff/judgments_gemini.jsonl --preview-only`
+
+Output:
+
+```json
+{
+  "items": 57,
+  "calls": 114,
+  "estimated_prompt_tokens": 50326,
+  "estimated_max_output_tokens": 233472,
+  "estimated_uncached_cost_usd": 0.0,
+  "judge_model": "gemini-2.5-flash",
+  "temperature": 0.0,
+  "seed": 20260612,
+  "confirm_token": "de214e2bc507"
+}
+```
+
+`python -m pipeline.scripts.memory_tradeoff_judge --worksheet data/eval/memory_tradeoff/worksheet.jsonl --out data/eval/memory_tradeoff/judgments_gemini.jsonl --confirm-token de214e2bc507`
+
+Output:
+
+```json
+{
+  "items": 57,
+  "calls": 114,
+  "rows": 114,
+  "out": "data/eval/memory_tradeoff/judgments_gemini.jsonl",
+  "cache": "data/cache/memory_tradeoff_judge.sqlite3"
+}
+```
+
+Post-run audit:
+
+```text
+judgment_rows: 114
+items: 57
+orientations: forward, reverse
+from_cache: 28
+json_error_marked / repaired: 4
+recorded usage in output rows: prompt=46,890, completion=7,711
+cache rows for memory_tradeoff: 114
+```
+
+`python -m pipeline.scripts.memory_tradeoff_score --workdir data/eval/memory_tradeoff --out data/reports/memory_tradeoff_59_overrides.json`
+
+Expected refusal before human+Gemini judgments:
+
+```text
+blind not complete: missing data\eval\memory_tradeoff\judgments_human.json
+```
+
+### Deviations / notes for review
+
+- **Override count is 57, not 59.** The rule is source of truth; current v2.2 report yields 57 `{S0 consistent -> S1 dominant changed}` terms. Breakdown is hard 34 / soft 20 / preserve 2 / ignore 1. I did not force the count to 59.
+- **Dummy example changed from `network` to `widget coefficient`.** Production build failed the dummy-not-real guard with `network`, because `network/deep networks/memory networks` appears inside real worksheet contexts for terms like `Vanishing and Exploding Gradients` and `learnable parameters`. The new dummy and its surfaces are checked against the actual worksheet.
+- **Exact Gemini `-NNN` model suffix was not introduced.** Existing config and client use `gemini-2.5-flash`; report/preview records the exact model string actually called. Caveat says Google stable ids may not expose a `-NNN` suffix. No API call was made.
+- **Cost estimate is `$0.0` because `judge_gemini.yaml` pricing is zero** from EV-02 free/proxy usage. Token/call counts and confirm-token are still surfaced; monetary estimate should be re-priced if you want ShopAIKey/official cost shown.
+- **Four Gemini responses were truncated JSON.** They contained explicit `label` and `confidence`; the runner repaired these narrowly and marks the affected judgments with `json_error` + `_parse_repaired`. Claude should inspect whether this is acceptable or should force rerun for those 4 rows.
+- Gemini calls were made and `judgments_gemini.jsonl` was generated. Final `memory_tradeoff_59_overrides.json` was not generated because human judgment is still absent.
+
+### Verification
+
+- `python -m py_compile pipeline\eval\memory_tradeoff.py pipeline\scripts\memory_tradeoff_build.py pipeline\scripts\memory_tradeoff_judge.py pipeline\scripts\memory_tradeoff_score.py pipeline\tests\test_memory_tradeoff.py` — pass.
+- `python -m pytest -p no:cacheprovider pipeline\tests\test_memory_tradeoff.py -q` — 16 passed.
+- `python -m pytest -p no:cacheprovider pipeline\tests\test_memory_tradeoff.py pipeline\tests\test_judge.py pipeline\tests\test_judge_calibration.py -q` — 27 passed.
+- `python -m pytest -p no:cacheprovider pipeline\tests\test_d2l_translate_score.py pipeline\tests\test_surface_match.py pipeline\tests\test_occ_align.py -q` — 31 passed.
+- `python -m pytest -p no:cacheprovider pipeline\tests app\backend\tests -q` — 299 passed.
+- Pytest still prints the known Windows `PermissionError` while cleaning `D:\temp\pytest-of-Snail\pytest-current`; test exit code was 0.
 
 ## 6. Review *(Claude điền)*
 
-<!-- Claude: tái kiểm độc lập (KHÔNG tin §5) — frozen hash, tự chạy test, blind thật (mở 3 file kiểm không lộ xuất xứ), judge≠translator, dummy-not-real, resolve conservative, EVAL-only no-write, cost-gate. -->
+**Verdict: PASS (implementation/machinery). 1 fix reviewer đã áp. Finding harm% CHƯA có — chờ bạn chấm mù.** Tái kiểm độc lập trên repo thật (KHÔNG tin §5).
+
+**A. Frozen + tests (tự chạy):**
+- Frozen DB SHA256 **UNCHANGED** = `DA0F687894090D43B75A3AE52BA71EC1EDF85DAB3198C9F86039879365D464B8` → post-hoc, 0 ghi DB.
+- Tự chạy `pytest pipeline/tests/test_memory_tradeoff.py` → **16 passed**. PermissionError cleanup `D:\temp` = noise đã biết, exit 0.
+
+**B. Blind THẬT (mở 3 file kiểm):**
+- `worksheet.jsonl` + `worksheet.html`: grep `S0/S1/s0_surface/glossary/provenance` = **rỗng**. Keys = {en_sentence, en_term, version_A, version_B, tier, item_id, human_suggested} — không lộ xuất xứ.
+- A/B **ngẫu nhiên thật**: (A=S0,B=S1)=24 / (A=S1,B=S0)=33 — KHÔNG luôn A=S0.
+- KEY ở folder riêng + README DO-NOT-OPEN; `test_scorer_refuses_key_before_done` + smoke: scorer raise "blind not complete" khi thiếu judgment.
+
+**C. Swap + judge:**
+- forward 57 / reverse 57 = **114 call**. `judge_model = gemini-2.5-flash` (≠ translator `gpt-5.4-mini`) — họ ngây-thơ đúng; guard judge≠translator có.
+- **4/114 JSON bị cắt** (output cap) → repair HẸP: kiểm raw `mt_deferred` reverse → response THẬT bắt đầu `{"label":"B_better","confidence":0.8,...` rồi cụt ở `reason`; **nhãn CÓ THẬT, KHÔNG bịa**; gắn cờ `json_error`+`_parse_repaired` không giấu. Chấp nhận.
+
+**D. Override rule đúng:**
+- **57/57** `status_s0=='consistent'` AND `dom(S1)≠dom(S0)`; 0 skip; `rules quy tắc→luật` (keystone) CÓ trong tập. 57 {hard34/soft20/preserve2/ignore1} — KHÔNG ép về 59 (đúng "rule = source of truth"). Lệch 2-hard so ad-hoc 59 của Claude = ad-hoc trước lỏng hơn `status=='consistent'`. Chấp nhận.
+- Dummy `widget coefficient` (memory_tradeoff.py:40-42) KHÔNG thuộc 57 → spec-public không vỡ mù (đã sửa từ `network` bị leak — GLM đúng).
+
+**E. Scorer integration THẬT (chống green-tests-che-dead-integration):**
+- Smoke **isolated** (copy temp + human tổng-hợp; folder thật KHÔNG đụng): production `memory_tradeoff_score` chạy đủ → report well-formed {summary improve/lateral/harm, iaa, caveats đủ}; tách **Gemini-resolved ⟂ human-agreement**; `trust_threshold=0.80` a-priori. **Số harm% ở smoke là RÁC (human giả "all A_better") — KHÔNG trích làm finding.**
+
+**F. FIX reviewer đã áp (blind-integrity gap):**
+- `override_set.csv` (có `s0_surface/s1_surface` = **UN-BLIND**) bị build ghi ở folder MỞ cạnh `worksheet.html` → người chấm có thể mở trước → vỡ mù (Gemini KHÔNG bị: chỉ đọc `worksheet.jsonl`). Mình **mv `override_set.csv` → `KEY/`** + cập nhật README phủ cả folder + chỉ-mở-worksheet.html. **CodeX follow-up:** sửa `memory_tradeoff_build.py:50` ghi thẳng `key_dir/override_set.csv` (kẻo `build` chạy lại tái tạo ở folder mở).
+
+**G. Minor (không chặn):**
+- `cost_usd=0.0` do `judge_gemini.yaml` pricing zero (kế thừa EV-02); token-gate đúng (preview 50.3k/233k cap; thực 46.9k prompt + 7.7k completion). Muốn $ thật cho luận văn → cập nhật pricing config (non-blocking).
+- Vài `en_sentence` dính rác markdown (`~~`, `)`) — windowing thô; judge focus «marked» nên ảnh hưởng thấp.
+
+**H. 2 bước USER trước khi có FINDING:**
+1. Mở **CHỈ** `worksheet.html` → chấm 12 item `human_suggested` (mù) → export `judgments_human.json`. **KHÔNG mở `KEY/`.**
+2. `memory_tradeoff_score` → `memory_tradeoff_59_overrides.json`: agreement người↔Gemini ≥0.80 → tin Gemini cho 57 → harm%; <0.80 → chấm hết 57. Solo → `diagnostic_only` (κ cần annotator-2).
+
+**Headline harm% chưa có** — đúng thiết kế (chờ gold người mù). Machinery PASS, sẵn sàng.

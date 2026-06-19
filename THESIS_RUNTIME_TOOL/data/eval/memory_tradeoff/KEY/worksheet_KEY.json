@@ -1,0 +1,576 @@
+{
+  "seed": 42,
+  "blind_warning": "DO NOT OPEN until judgments_human.json and judgments_gemini.jsonl are complete.",
+  "items": [
+    {
+      "item_id": "mt_fashion_mnist_dataset_b8ddab06eb",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "Fashion-MNIST dataset",
+      "tier": "preserve",
+      "s0_surface": "bộ dữ liệu Fashion-MNIST",
+      "s1_surface": "tập dữ liệu Fashion-MNIST",
+      "rep_block_id": "d2l_linear_networks_image_classification_dataset_b002"
+    },
+    {
+      "item_id": "mt_mnist_dataset_923cfe4011",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "MNIST dataset",
+      "tier": "preserve",
+      "s0_surface": "bộ dữ liệu MNIST",
+      "s1_surface": "MNIST",
+      "rep_block_id": "d2l_introduction_index_b126"
+    },
+    {
+      "item_id": "mt_universal_approximators_c7cc5b991a",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "Universal Approximators",
+      "tier": "hard",
+      "s0_surface": "bộ xấp xỉ phổ dụng",
+      "s1_surface": "bộ xấp xỉ phổ quát",
+      "rep_block_id": "d2l_multilayer_perceptrons_mlp_b024"
+    },
+    {
+      "item_id": "mt_vanishing_and_exploding_gradients_c51a803991",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "Vanishing and Exploding Gradients",
+      "tier": "hard",
+      "s0_surface": "gradient biến mất và bùng nổ",
+      "s1_surface": "độ dốc biến mất và bùng nổ",
+      "rep_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b042"
+    },
+    {
+      "item_id": "mt_activations_9afd89eb88",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "activations",
+      "tier": "soft",
+      "s0_surface": "các kích hoạt",
+      "s1_surface": "giá trị kích hoạt",
+      "rep_block_id": "d2l_multilayer_perceptrons_mlp_b020"
+    },
+    {
+      "item_id": "mt_additive_noise_7a444cd8ee",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "additive noise",
+      "tier": "hard",
+      "s0_surface": "nhiễu cộng thêm",
+      "s1_surface": "nhiễu cộng",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b101"
+    },
+    {
+      "item_id": "mt_affine_transformations_e8551c005d",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "affine transformations",
+      "tier": "hard",
+      "s0_surface": "phép biến đổi affine",
+      "s1_surface": "biến đổi affine",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b043"
+    },
+    {
+      "item_id": "mt_annotation_2e76f54422",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "annotation",
+      "tier": "soft",
+      "s0_surface": "gán nhãn",
+      "s1_surface": "chú giải",
+      "rep_block_id": "d2l_introduction_index_b085"
+    },
+    {
+      "item_id": "mt_bandits_5d196d3aa2",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "bandits",
+      "tier": "soft",
+      "s0_surface": "bandit",
+      "s1_surface": "bài toán băng-đit",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b085"
+    },
+    {
+      "item_id": "mt_batch_size_115bac8f95",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "batch size",
+      "tier": "hard",
+      "s0_surface": "kích thước minibatch",
+      "s1_surface": "kích thước lô",
+      "rep_block_id": "d2l_linear_networks_linear_regression_scratch_b062"
+    },
+    {
+      "item_id": "mt_covariate_shift_a77c8a8dfb",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "covariate shift",
+      "tier": "hard",
+      "s0_surface": "dịch chuyển hiệp biến",
+      "s1_surface": "lệch hiệp biến",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b010"
+    },
+    {
+      "item_id": "mt_data_examples_7c5e6ddeae",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "data examples",
+      "tier": "hard",
+      "s0_surface": "ví dụ dữ liệu",
+      "s1_surface": "mẫu dữ liệu",
+      "rep_block_id": "d2l_introduction_index_b053"
+    },
+    {
+      "item_id": "mt_data_instance_cacbc74d36",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "data instance",
+      "tier": "hard",
+      "s0_surface": "thực thể dữ liệu",
+      "s1_surface": "thể hiện dữ liệu",
+      "rep_block_id": "d2l_introduction_index_b023"
+    },
+    {
+      "item_id": "mt_deferred_0db493d58e",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "deferred",
+      "tier": "soft",
+      "s0_surface": "hoãn lại",
+      "s1_surface": "trì hoãn",
+      "rep_block_id": "d2l_linear_networks_linear_regression_concise_b038"
+    },
+    {
+      "item_id": "mt_deletion_013e5670c0",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "deletion",
+      "tier": "soft",
+      "s0_surface": "loại bỏ",
+      "s1_surface": "xóa bỏ",
+      "rep_block_id": "d2l_preliminaries_pandas_b010"
+    },
+    {
+      "item_id": "mt_efficiency_fff33dfb39",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "efficiency",
+      "tier": "soft",
+      "s0_surface": "hiệu quả",
+      "s1_surface": "tính hiệu quả",
+      "rep_block_id": "d2l_linear_networks_softmax_regression_b031"
+    },
+    {
+      "item_id": "mt_elementwise_1d6feafbec",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "elementwise",
+      "tier": "soft",
+      "s0_surface": "từng phần tử",
+      "s1_surface": "theo phần tử",
+      "rep_block_id": "d2l_preliminaries_ndarray_b046"
+    },
+    {
+      "item_id": "mt_elementwise_multiplication_0ebdbc19e3",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "elementwise multiplication",
+      "tier": "hard",
+      "s0_surface": "nhân theo từng phần tử",
+      "s1_surface": "phép nhân theo phần tử",
+      "rep_block_id": "d2l_preliminaries_linear_algebra_b069"
+    },
+    {
+      "item_id": "mt_end_to_end_training_e0ecc93532",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "end-to-end training",
+      "tier": "hard",
+      "s0_surface": "huấn luyện đầu-cuối",
+      "s1_surface": "huấn luyện đầu cuối",
+      "rep_block_id": "d2l_introduction_index_b147"
+    },
+    {
+      "item_id": "mt_feature_engineering_fbcf9d9a88",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "feature engineering",
+      "tier": "hard",
+      "s0_surface": "thiết kế đặc trưng",
+      "s1_surface": "kỹ thuật đặc trưng",
+      "rep_block_id": "d2l_introduction_index_b147"
+    },
+    {
+      "item_id": "mt_feature_selection_ec5e3cb404",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "feature selection",
+      "tier": "hard",
+      "s0_surface": "lựa chọn đặc trưng",
+      "s1_surface": "chọn đặc trưng",
+      "rep_block_id": "d2l_multilayer_perceptrons_weight_decay_b013"
+    },
+    {
+      "item_id": "mt_feature_vectors_9cfc7e31ab",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "feature vectors",
+      "tier": "hard",
+      "s0_surface": "vector đặc trưng",
+      "s1_surface": "vectơ đặc trưng",
+      "rep_block_id": "d2l_introduction_index_b147"
+    },
+    {
+      "item_id": "mt_feedback_loops_73b8202c83",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "feedback loops",
+      "tier": "hard",
+      "s0_surface": "vòng phản hồi",
+      "s1_surface": "vòng lặp phản hồi",
+      "rep_block_id": "d2l_introduction_index_b079"
+    },
+    {
+      "item_id": "mt_framework_f178867da2",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "framework",
+      "tier": "soft",
+      "s0_surface": "framework",
+      "s1_surface": "khung phần mềm",
+      "rep_block_id": "d2l_preliminaries_ndarray_b003"
+    },
+    {
+      "item_id": "mt_generalization_gap_29c7c2502f",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "generalization gap",
+      "tier": "hard",
+      "s0_surface": "khoảng cách khái quát hóa",
+      "s1_surface": "khoảng cách tổng quát hóa",
+      "rep_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b022"
+    },
+    {
+      "item_id": "mt_heuristics_a628d3bfd9",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "heuristics",
+      "tier": "soft",
+      "s0_surface": "kinh nghiệm",
+      "s1_surface": "phương pháp heuristic",
+      "rep_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b020"
+    },
+    {
+      "item_id": "mt_learnable_parameters_11a624f504",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "learnable parameters",
+      "tier": "hard",
+      "s0_surface": "tham số có thể học",
+      "s1_surface": "tham số học được",
+      "rep_block_id": "d2l_introduction_index_b134"
+    },
+    {
+      "item_id": "mt_lifting_8f516a1fc1",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "lifting",
+      "tier": "soft",
+      "s0_surface": "nâng",
+      "s1_surface": "nâng ánh xạ",
+      "rep_block_id": "d2l_preliminaries_ndarray_b047"
+    },
+    {
+      "item_id": "mt_manipulating_8325f6c2ab",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "manipulating",
+      "tier": "soft",
+      "s0_surface": "thao tác",
+      "s1_surface": "xử lý",
+      "rep_block_id": "d2l_preliminaries_index_b002"
+    },
+    {
+      "item_id": "mt_membership_99ef7e9bc5",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "membership",
+      "tier": "soft",
+      "s0_surface": "thuộc",
+      "s1_surface": "quan hệ thuộc",
+      "rep_block_id": "d2l_preliminaries_linear_algebra_b005"
+    },
+    {
+      "item_id": "mt_model_complexity_ca64fe25a6",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "model complexity",
+      "tier": "hard",
+      "s0_surface": "độ phức tạp của mô hình",
+      "s1_surface": "độ phức tạp mô hình",
+      "rep_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b021"
+    },
+    {
+      "item_id": "mt_model_s_parameters_eb636b643b",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "model's parameters",
+      "tier": "hard",
+      "s0_surface": "tham số của mô hình",
+      "s1_surface": "tham số mô hình",
+      "rep_block_id": "d2l_introduction_index_b021"
+    },
+    {
+      "item_id": "mt_multivariate_functions_de4f1ded26",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "multivariate functions",
+      "tier": "hard",
+      "s0_surface": "hàm nhiều biến",
+      "s1_surface": "hàm đa biến",
+      "rep_block_id": "d2l_preliminaries_calculus_b051"
+    },
+    {
+      "item_id": "mt_negative_log_likelihood_006bbe2ce2",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "negative log-likelihood",
+      "tier": "hard",
+      "s0_surface": "âm log-khả năng",
+      "s1_surface": "log-khả năng âm",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b101"
+    },
+    {
+      "item_id": "mt_offset_53a610e925",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "offset",
+      "tier": "soft",
+      "s0_surface": "độ lệch",
+      "s1_surface": "độ dời",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b011"
+    },
+    {
+      "item_id": "mt_prior_4a47653d5f",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "prior",
+      "tier": "soft",
+      "s0_surface": "tiên nghiệm",
+      "s1_surface": "phân phối tiên nghiệm",
+      "rep_block_id": "d2l_multilayer_perceptrons_weight_decay_b065"
+    },
+    {
+      "item_id": "mt_random_experiment_cc591bd83d",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "random experiment",
+      "tier": "hard",
+      "s0_surface": "thí nghiệm ngẫu nhiên",
+      "s1_surface": "phép thử ngẫu nhiên",
+      "rep_block_id": "d2l_preliminaries_probability_b041"
+    },
+    {
+      "item_id": "mt_real_valued_scalars_e5f331e933",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "real-valued scalars",
+      "tier": "hard",
+      "s0_surface": "giá trị thực",
+      "s1_surface": "vô hướng thực",
+      "rep_block_id": "d2l_preliminaries_linear_algebra_b023"
+    },
+    {
+      "item_id": "mt_regularization_term_b48f4963e7",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "regularization term",
+      "tier": "hard",
+      "s0_surface": "hạng tử chính quy hóa",
+      "s1_surface": "hạng chuẩn hóa",
+      "rep_block_id": "d2l_multilayer_perceptrons_backprop_b027"
+    },
+    {
+      "item_id": "mt_regularizing_0228b30aa3",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "regularizing",
+      "tier": "soft",
+      "s0_surface": "điều chuẩn",
+      "s1_surface": "chuẩn hóa",
+      "rep_block_id": "d2l_multilayer_perceptrons_dropout_b002"
+    },
+    {
+      "item_id": "mt_robotics_891e0758a7",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "robotics",
+      "tier": "soft",
+      "s0_surface": "robot học",
+      "s1_surface": "người máy học",
+      "rep_block_id": "d2l_introduction_index_b140"
+    },
+    {
+      "item_id": "mt_row_vectors_04aadc236a",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "row vectors",
+      "tier": "hard",
+      "s0_surface": "vector hàng",
+      "s1_surface": "vectơ hàng",
+      "rep_block_id": "d2l_preliminaries_linear_algebra_b132"
+    },
+    {
+      "item_id": "mt_rules_caa155adf8",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "rules",
+      "tier": "ignore_for_consistency",
+      "s0_surface": "quy tắc",
+      "s1_surface": "luật",
+      "rep_block_id": "d2l_introduction_index_b003"
+    },
+    {
+      "item_id": "mt_self_driving_cars_ac724ed2e4",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "self-driving cars",
+      "tier": "hard",
+      "s0_surface": "xe tự lái",
+      "s1_surface": "ô tô tự lái",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b029"
+    },
+    {
+      "item_id": "mt_smoothness_fa9d205bd5",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "smoothness",
+      "tier": "soft",
+      "s0_surface": "tính trơn",
+      "s1_surface": "độ trơn",
+      "rep_block_id": "d2l_multilayer_perceptrons_dropout_b010"
+    },
+    {
+      "item_id": "mt_symmetry_18e1be4e79",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "symmetry",
+      "tier": "soft",
+      "s0_surface": "tính đối xứng",
+      "s1_surface": "đối xứng",
+      "rep_block_id": "d2l_preliminaries_probability_b051"
+    },
+    {
+      "item_id": "mt_tangent_line_fc8da8d99b",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "tangent line",
+      "tier": "hard",
+      "s0_surface": "tiếp tuyến",
+      "s1_surface": "đường tiếp tuyến",
+      "rep_block_id": "d2l_preliminaries_calculus_b030"
+    },
+    {
+      "item_id": "mt_target_0e8a3ad980",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "target",
+      "tier": "soft",
+      "s0_surface": "nhãn",
+      "s1_surface": "biến mục tiêu",
+      "rep_block_id": "d2l_introduction_index_b023"
+    },
+    {
+      "item_id": "mt_target_distribution_e11bb1fcd8",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "target distribution",
+      "tier": "hard",
+      "s0_surface": "phân phối đích",
+      "s1_surface": "phân phối mục tiêu",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b059"
+    },
+    {
+      "item_id": "mt_targets_4683e789c3",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "targets",
+      "tier": "soft",
+      "s0_surface": "mục tiêu",
+      "s1_surface": "nhãn mục tiêu",
+      "rep_block_id": "d2l_linear_networks_linear_regression_b049"
+    },
+    {
+      "item_id": "mt_tensor_format_20bcb4d8d7",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "tensor format",
+      "tier": "hard",
+      "s0_surface": "định dạng tensor",
+      "s1_surface": "dạng tensor",
+      "rep_block_id": "d2l_preliminaries_pandas_b002"
+    },
+    {
+      "item_id": "mt_test_accuracy_be3aebb55f",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "test accuracy",
+      "tier": "hard",
+      "s0_surface": "độ chính xác trên tập kiểm tra",
+      "s1_surface": "độ chính xác kiểm tra",
+      "rep_block_id": "d2l_linear_networks_softmax_regression_concise_b036"
+    },
+    {
+      "item_id": "mt_test_set_accuracy_98a76f479d",
+      "A": "S0",
+      "B": "S1",
+      "source_term": "test set accuracy",
+      "tier": "hard",
+      "s0_surface": "độ chính xác trên tập kiểm tra",
+      "s1_surface": "độ chính xác tập kiểm tra",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b003"
+    },
+    {
+      "item_id": "mt_training_example_bdb5992a4c",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "training example",
+      "tier": "hard",
+      "s0_surface": "ví dụ huấn luyện",
+      "s1_surface": "mẫu huấn luyện",
+      "rep_block_id": "d2l_multilayer_perceptrons_environment_b073"
+    },
+    {
+      "item_id": "mt_training_examples_79bcf24974",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "training examples",
+      "tier": "hard",
+      "s0_surface": "ví dụ huấn luyện",
+      "s1_surface": "mẫu huấn luyện",
+      "rep_block_id": "d2l_preliminaries_autograd_b031"
+    },
+    {
+      "item_id": "mt_true_parameters_6636cf5533",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "true parameters",
+      "tier": "hard",
+      "s0_surface": "tham số thật",
+      "s1_surface": "tham số thực",
+      "rep_block_id": "d2l_linear_networks_linear_regression_scratch_b056"
+    },
+    {
+      "item_id": "mt_true_probability_0c04e78467",
+      "A": "S1",
+      "B": "S0",
+      "source_term": "true probability",
+      "tier": "hard",
+      "s0_surface": "xác suất thật",
+      "s1_surface": "xác suất thực",
+      "rep_block_id": "d2l_preliminaries_probability_b025"
+    }
+  ]
+}
