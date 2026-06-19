@@ -108,6 +108,17 @@ python -m pytest pipeline/tests app/backend/tests -q
 1. Sau bake-off: nếu `longest_match` đủ → dùng nó (đừng cưới SimAlign nặng/unvalidated). SimAlign chỉ nhận nếu thắng RÕ Metric A + tất định; năng-lực Metric B (out-of-registry) ghi nhận như hướng tương lai, KHÔNG nhận vào ruler này.
 2. EV-08 Builder-v2 design-doc (song song): do-no-harm signal = **DEV-split (held-out chương) + LLM self-assess**, entity-as-generality (eval Treasure Island), prompt system/user + register restructure — trình user duyệt.
 
+### Gold-construction protocol — CodeX pre-fill + human-verify (CHỐNG ANCHORING)
+
+User yêu cầu CodeX điền-sẵn gold để đỡ thời gian; user verify + sửa cuối = HUMAN final. Vì gold là CHUẨN để chấm 3 localizer → **KHÔNG được anchor vào bất kỳ localizer nào** (proposer-blind, bài học EV-05/06). Protocol BẮT BUỘC:
+
+1. CodeX chạy CẢ 3 localizer trên mọi gold row.
+2. **Row mà 3 localizer ĐỒNG THUẬN span** → auto-fill span đó (`prefilled=auto`). Không có giá trị phân biệt localizer; user spot-check 1 mẫu nhỏ.
+3. **Row mà 3 localizer LỆCH nhau** (đây mới là row quyết-định-thắng-thua) → **KHÔNG auto-pick**; hiển thị TẤT CẢ ứng viên span **proposer-blind** (`ứng viên 1: «...», 2: «...», 3: «...»` — KHÔNG ghi của localizer nào) → USER tự chọn span đúng theo NGHĨA. `prefilled=human_required`.
+4. Mỗi row track `prefilled ∈ {auto, human_required}` + `human_edited:bool`. Scorer in `% human_adjudicated`; nếu user accept 100% trên row `human_required` → cờ cảnh báo rubber-stamp.
+
+→ Tiết kiệm thời gian (chỉ adjudicate ~10–20 row lệch) NHƯNG mọi row phân-biệt-localizer đều do NGƯỜI chọn mù → **bake-off vẫn valid**. Auto-fill CHỈ ở row mà mọi localizer đã đồng thuận (không thiên vị ai). **L9 (anti-anchoring gold):** test `test_gold_disagreement_rows_not_autopicked` — row có ≥2 candidate khác nhau ⇒ gold field để trống chờ người, KHÔNG auto-fill; test `test_prefill_blind` — không cột nào ánh xạ candidate→localizer.
+
 ## 5. Implementation notes *(CodeX điền)*
 
 <!-- CodeX: files changed / implemented / deviation / commands / not run. KHÔNG commit. -->
