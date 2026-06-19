@@ -119,6 +119,19 @@ User yêu cầu CodeX điền-sẵn gold để đỡ thời gian; user verify + 
 
 → Tiết kiệm thời gian (chỉ adjudicate ~10–20 row lệch) NHƯNG mọi row phân-biệt-localizer đều do NGƯỜI chọn mù → **bake-off vẫn valid**. Auto-fill CHỈ ở row mà mọi localizer đã đồng thuận (không thiên vị ai). **L9 (anti-anchoring gold):** test `test_gold_disagreement_rows_not_autopicked` — row có ≥2 candidate khác nhau ⇒ gold field để trống chờ người, KHÔNG auto-fill; test `test_prefill_blind` — không cột nào ánh xạ candidate→localizer.
 
+### Tinh chỉnh từ user-audit toàn-57 (2026-06-20) — full-phrase gold + context_diff localizer + re-score hẹp
+
+User tự audit 57 (KHÔNG LLM) → bắt thêm partial-mark + nêu nguyên-lý: cụm quanh term thường ỔN ĐỊNH giữa S0/S1 nên VÙNG-KHÁC-BIỆT giữa 2 câu chính là term. Claude verify toàn-57 (diff prefix/suffix) → phân loại tác động:
+
+- **Wrong-location** (`membership`), **misleading-partial** (`real_valued_scalars` — sub-form «giá trị thực» làm B trông như rụng "scalar"; gold đúng = «vô hướng có giá trị thực»), **override-ảo** (`MNIST`,`target`): ~4 ca **THỰC SỰ đổi** so sánh → bắt buộc sửa + re-judge.
+- **Determiner/classifier-short** (thiếu 'các'/'phép'/'đường thẳng': `targets`,`true_parameters`,`tangent_line`,`training_examples`,`elementwise_multiplication`...): **THẤP impact** — vẫn giữ khác-biệt phân-biệt (judge so thực/thật, nhãn... như nhau). **KHÔNG đổi consistency** (D-scorer `allocate_spans` đếm form registry; determiner nằm NGOÀI form → form-count không lệch).
+- **CẢNH BÁO:** diff-middle KHÔNG phải gold đáng tin (D2L reword cả câu → vùng-giữa phình → over-flag "WRONG"). Dùng heuristic này để GỢI Ý chỗ soi, KHÔNG để auto-gold.
+
+**Chốt thêm vào spec:**
+1. **GOLD span = TOÀN BỘ cụm rendering term** (gồm determiner/classifier/modifier gắn liền), KHÔNG chỉ sub-form registry. Tiêu chí gold người: "cụm VI nhỏ nhất diễn đạt trọn term nguồn tại occ này".
+2. **Localizer ứng viên thứ 4 (tùy chọn) `context_diff`**: align 2 target S0↔S1 theo prefix/suffix chung → vùng giữa. Vào bake-off như candidate, nhưng SUY GIẢM khi reword nặng → **test, KHÔNG mặc định**; vẫn theo L4 (đơn-giản+đúng-nhất thắng).
+3. **Re-score HẸP trong scope:** sau khi áp localizer thắng + gold full-phrase → re-judge CHỈ ~4 ca thực-sự-đổi (membership, real_valued_scalars, re-select MNIST/target — user chạy tay cold panel), + spot-verify consistency D_surface trên các ca sửa. KHÔNG re-judge cả 57. Kỳ vọng kết luận harm≈improve GIỮ (loại worst-3 đã chỉ 21%→20%).
+
 ## 5. Implementation notes *(CodeX điền)*
 
 <!-- CodeX: files changed / implemented / deviation / commands / not run. KHÔNG commit. -->
