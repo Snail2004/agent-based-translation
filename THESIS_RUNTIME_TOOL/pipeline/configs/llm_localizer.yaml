@@ -1,0 +1,12 @@
+model: "gpt-5.4-mini-2026-03-17"
+temperature: 0.0
+seed: 20260621
+reasoning_effort: "none"
+verbosity: "low"
+max_output_tokens: 256
+daily_token_cap: 100000
+prompt_token_cap: 2000
+pricing:
+  input: 0.25
+  cached_input: 0.025
+  output: 2.00

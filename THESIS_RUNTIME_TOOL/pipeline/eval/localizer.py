@@ -25,12 +25,6 @@ from pipeline.eval.surface_match import SurfaceOwner, allocate_spans, find_spans
 
 
 LOCALIZER_NAMES = ("first_match", "longest_match", "simalign")
-DOCUMENTED_LIMITATION_ROWS = {
-    "mt_mnist_dataset_923cfe4011:S1": (
-        "surface localizers cannot expand the dominant surface 'MNIST' to the "
-        "human-verified noun phrase 'tập dữ liệu MNIST'"
-    )
-}
 
 
 @dataclass(frozen=True)
@@ -539,18 +533,18 @@ def score_localizer_bakeoff(
             proposal = proposals.get(name, {}).get(row["row_id"])
             if proposal is None:
                 missing += 1
-                if _is_documented_limitation_row(row):
-                    documented_limitation_fail.append(str(row["row_id"]))
-                elif _is_regression_row(row):
+                if _is_regression_row(row):
                     regression_fail.append(str(row["row_id"]))
+                else:
+                    documented_limitation_fail.append(str(row["row_id"]))
                 continue
             ok = proposal.start == int(row["gold_target_start"]) and proposal.end == int(row["gold_target_end"])
             exact += int(ok)
             if not ok:
-                if _is_documented_limitation_row(row):
-                    documented_limitation_fail.append(str(row["row_id"]))
-                elif _is_regression_row(row):
+                if _is_regression_row(row):
                     regression_fail.append(str(row["row_id"]))
+                else:
+                    documented_limitation_fail.append(str(row["row_id"]))
         scores[name] = {
             "metricA_n": len(metric_a_rows),
             "metricA_exact": exact,
@@ -1589,18 +1583,9 @@ def _sentence_key(value: str) -> str:
 
 
 def _is_regression_row(row: dict[str, Any]) -> bool:
-    if _is_documented_limitation_row(row):
-        return False
-    if row.get("edge_kind"):
-        return True
-    return str(row.get("source_term") or "") in {
-        "MNIST dataset",
-        "machine learning",
-    }
-
-
-def _is_documented_limitation_row(row: dict[str, Any]) -> bool:
-    return str(row.get("row_id") or "") in DOCUMENTED_LIMITATION_ROWS
+    # Regression gates are declared in evaluation data, not by term-specific
+    # exceptions in code. Ordinary failures remain visible as limitations.
+    return bool(row.get("edge_kind"))
 
 
 def _recommend(scores: dict[str, Any]) -> str | None:

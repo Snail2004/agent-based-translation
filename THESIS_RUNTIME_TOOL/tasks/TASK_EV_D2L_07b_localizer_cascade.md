@@ -1,6 +1,6 @@
 # TASK_EV_D2L_07b_localizer_cascade — Cascade localizer: T1 deterministic (runtime registry, unique-only, conflict-aware) → T2 LLM concept-fallback (blind, per-config) → T3 human audit; **eval/localization-only; 118 = DEV/regression (KHÔNG generalization); held-out = task EV-07c riêng**
 
-- **Status:** READY-v2 (Claude, 2026-06-21, sau REWORK theo CodeX DB-verify) — chờ CodeX §5 + REVIEW; KHÔNG commit.
+- **Status:** REVIEW (CodeX, 2026-06-21) — implemented through the bounded 8-case DEV pilot only; no whole-chapter API run; KHÔNG commit.
 - **Refs:** EV_07a (longest winner; SimAlign loại; gold 118), DB `data/jobs/d2l_p1/memory.sqlite3` table `glossary_entries`; memory `verify-on-committed-artifacts-not-reports`, `simalign-rejected-for-term-localization`, `dont-tune-intervention-on-test-baseline`, `scoring-scope-equals-production-scope`. 3-bên Claude+CodeX+GLM hội tụ.
 
 ## 1. Bối cảnh & mục tiêu *(Claude)*
@@ -74,10 +74,75 @@ python -m pipeline.scripts.localizer_cascade --preflight --dev   # 0-API: residu
 - **L10** eval/localization-only; bỏ hardcode `DOCUMENTED_LIMITATION_ROWS` → class tổng quát trong data.
 
 ## 5. Implementation notes *(CodeX — KHÔNG commit)*
-<!-- files / impl / deviation / commands / not run -->
 
-## 6. Review *(Claude)*
-<!-- tự chạy test; scope resolver dùng DB thật; unique+no-double-claim; conflict escalate; blind+per-config; cache key; preflight 0-API; 118 nhãn dev. -->
+Implemented 2026-06-21, stopped at the user-approved 8-case DEV gate.
+
+### Files / implementation
+- Added `pipeline/eval/localizer_cascade.py`:
+  - runtime-DB registry resolver with chapter-specific precedence and global fallback;
+  - T1 unique-only localization, cross-term no-double-claim, match-level allowed/forbidden conflict handling, short-known-form residuals;
+  - opaque per-config T2 prompt, position target window, strict JSON validation, unique-quote and position-quote re-anchoring;
+  - API replay cache through the existing `LLMClient` plus occurrence-level result cache with source/context/window hashes;
+  - DEV preflight, cost gate, per-config DEV metrics and T3 audit CSV/HTML.
+- Added `pipeline/scripts/localizer_cascade.py` with `--preflight --dev` and cost-token-gated `--run-dev --dev` modes.
+- Added pinned `pipeline/configs/llm_localizer.yaml`: `gpt-5.4-mini-2026-03-17`, temperature `0`, seed `20260621`, reasoning `none`, max output `256`, prompt cap `2000`, pilot daily cap `100000`.
+- Added `pipeline/tests/test_localizer_cascade.py` (11 tests).
+- Removed the term-specific `DOCUMENTED_LIMITATION_ROWS[mt_mnist:S1]` exception from `localizer.py`; regression gates are now data-declared via `edge_kind`, while ordinary misses remain visible as limitations.
+- Generated `data/reports/localizer_cascade_preflight.json`, `data/reports/localizer_cascade_dev.json`, and `data/eval/localizer_cascade/{audit_dev.csv,audit_dev.html}`. SQLite caches are local/ignored.
+
+### Explicit implementation decisions / deviations
+- The DB has 122 entries with some allowed∩forbidden overlap. The global count is reported, but an occurrence escalates as `registry_conflict` only when the **matched form** is conflicted; an unambiguous canonical match from the same entry may still resolve.
+- The requested metric reporter is kept as **DEV localization accuracy**, not labeled `D_hybrid`: eight representative spans cannot validly recompute corpus consistency, and L10 forbids changing the D headline. `D_hybrid` remains blocked pending T3/EV-07c held-out validation.
+- Adaptive expansion is estimated in preflight but not exercised in this bounded pilot: six target blocks fit the full 700-char window and both position windows contained the human gold. No second/third-stage API calls were needed or allowed.
+- Batch remains unimplemented per L9.
+- Provider returned no `system_fingerprint` (`None`); exact model/config and replay keys are still recorded. Cold-call byte determinism is not claimed.
+
+### Offline preflight
+Command: `python -m pipeline.scripts.localizer_cascade --preflight --dev`.
+- DEV gold: 118 rows; legacy longest failures: exactly 8.
+- T1 conservative DEV result: 78 resolved / 40 residual (`multiple=20`, `short_known_form=16`, `registry_conflict=3`, `none=1`). This 33.9% fallback rate is a DEV warning; it was **not** extrapolated as a whole-book result.
+- Prompt v2 estimate for 8 cases: 4,443 prompt + 2,048 max output = 6,491 token; estimated `$0.00521`; three-stage worst case 19,473 token / `$0.01562`.
+- Prompt audit: target form lists and arm labels absent; all eight computed windows contained their DEV gold spans.
+
+### Bounded GPT pilot (DEV only)
+Two prompt passes were run on the same eight DEV cases, then prompt tuning stopped to avoid further overfit:
+1. `d2l_localizer_t2_v1`: 8 cold calls, 3,438 prompt + 359 completion token, `$0.0015775`. Raw model offsets were unreliable; before code re-anchor exact was 1/8, position/unique re-anchor raised the same cached responses to 4/8 with zero new calls.
+2. `d2l_localizer_t2_v2`: one general boundary revision (all marked content words must be represented; exclude unmarked neighbors/complements), 8 cold calls, 3,894 prompt + 360 completion token, `$0.0016935`. Final result: **5/8 exact-span** (`S0 3/6`, `S1 2/2`), 8/8 returned existing target strings, no hallucinated quote.
+
+Total cold API use across both DEV prompt passes: **16 requests over the same 8 cases**, 7,332 prompt + 719 completion = 8,051 token, `$0.003271`. No chapter/full-corpus run.
+
+Final v2 failures, retained rather than tuned away:
+- `elementwise multiplication`: correct semantic head but over-extended with `of two matrices` rendering;
+- `membership`: correct semantic head but over-extended with the complement `in a set`;
+- `target`: wrong ownership — selected `nhãn`, the rendering of adjacent unmarked `label`, instead of `mục tiêu`.
+
+Conclusion: T2 is useful for off-registry localization and position re-anchoring fixes the offset layer, but **5/8 exact is not trustworthy enough for an unaudited metric**. T3 human remains mandatory; EV-07c held-out is required before any generalization claim.
+
+### Verification
+- `python -m pytest -p no:cacheprovider pipeline/tests/test_localizer_cascade.py -q` -> 11 passed.
+- `python -m pytest -p no:cacheprovider pipeline/tests/test_localizer.py pipeline/tests/test_localizer_cascade.py -q` -> 24 passed.
+- `python -m pytest -p no:cacheprovider pipeline/tests app/backend/tests -q` -> **326 passed in 110.10s**.
+- Commands exited 0; Windows emitted only the known pytest temp-cleanup `PermissionError` after completion.
+- Frozen DB SHA-256 unchanged: `DA0F687894090D43B75A3AE52BA71EC1EDF85DAB3198C9F86039879365D464B8`.
+- No commit/push.
+
+## 6. Review *(Claude)* — VERDICT: PASS (commit, no push)
+
+Tự re-derive trên artifact ĐÃ COMMIT (không tin report — [[verify-on-committed-artifacts-not-reports]]):
+- **5/8 exact-span** tự tính lại từ `localizer_gold.csv` = 5/8 (khớp report). **0/8 hallucination**: cả 8 `quote == target_text[start:end]`.
+- 3 FAIL là lỗi thật/arguable, không sai âm thầm — giữ lại không tune: `elementwise_multiplication:S0` nuốt thừa "của hai ma trận"; `membership:S0` nuốt thừa "về một tập hợp"; `target:S0` chọn nhầm "nhãn"(label) thay "mục tiêu"(target) ở vùng khác hẳn (ownership error thật).
+- **T1** tự chạy trên DB thật: 78/118 resolved, residual reasons `{multiple:20, short_known_form:16, registry_conflict:3, none:1}`; `registry_conflict_count=122`; `legacy_longest_failures=8` — tất cả khớp.
+- **DB frozen** SHA-256 first16 = `DA0F687894090D43` — KHÔNG đổi.
+- **Full suite tự chạy lại: 326 passed** (PermissionError chỉ là cleanup temp sau run, không phải test fail).
+
+Refactor `localizer.py` (gỡ hardcode `DOCUMENTED_LIMITATION_ROWS` + set `{MNIST dataset, machine learning}`) — đụng scorer EV-07a đã đóng nên verify riêng: tự chạy `score_localizer_bakeoff` trên gold đã commit → **recommendation = longest_match BẤT BIẾN**, `longest_match.regression_fail=[]`, eligible=True. Gate `edge_kind` chỉ kích trên simalign (đã loại). `short_known_form` (vd MNIST) chuyển thành quy tắc data-driven trong T1 — đúng yêu cầu "logic chứ không cấp đáp án sẵn".
+
+Ghi nhận minh bạch (không chặn PASS):
+1. Cả 8 `offset_source` là re-anchor (unique/position), KHÔNG ca nào dùng offset model trả về → model chỉ đóng góp QUOTE, code định vị offset (đúng thiết kế model=ngữ nghĩa / code=offset), nhưng nhánh model-offset chưa được pilot này kiểm chứng.
+2. Report dev commit là REPLAY (`api_cache_hits=8`, `cost_usd=0`); chi phí thật `$0.003271`/16 req ghi ở §5 + preflight — đừng đọc cost=0 là "miễn phí".
+3. `localizer_bakeoff.json` (EV-07a) KHÔNG regenerate → desync nhẹ bucket-label với code mới, nhưng recommendation bất biến nên không ảnh hưởng kết luận đã đóng.
+
+Đồng thuận §5: T2 hữu ích cho off-registry + position-reanchor sửa được tầng offset, nhưng **5/8 chưa đủ tin để tự nuôi metric** — T3 human bắt buộc, EV-07c held-out bắt buộc trước mọi tuyên bố generalization. KHÔNG tune thêm trên DEV.
 
 ---
 ## Follow-on: TASK_EV_D2L_07c_heldout (stub)
