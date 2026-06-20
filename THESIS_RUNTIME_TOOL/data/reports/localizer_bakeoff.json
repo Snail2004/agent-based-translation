@@ -1,0 +1,69 @@
+{
+  "metricA": {
+    "first_match": {
+      "metricA_n": 116,
+      "metricA_exact": 107,
+      "metricA_accuracy": 0.9224137931034483,
+      "missing": 0,
+      "regression_fail": [
+        "mt_mnist_dataset_923cfe4011:S1"
+      ],
+      "eligible_for_recommendation": false
+    },
+    "longest_match": {
+      "metricA_n": 116,
+      "metricA_exact": 107,
+      "metricA_accuracy": 0.9224137931034483,
+      "missing": 0,
+      "regression_fail": [],
+      "eligible_for_recommendation": true
+    },
+    "simalign": {
+      "metricA_n": 116,
+      "metricA_exact": 22,
+      "metricA_accuracy": 0.1896551724137931,
+      "missing": 2,
+      "regression_fail": [
+        "mt_mnist_dataset_923cfe4011:S0",
+        "mt_mnist_dataset_923cfe4011:S1"
+      ],
+      "eligible_for_recommendation": false
+    }
+  },
+  "metricB_out_of_registry": {
+    "first_match": {
+      "n": 2,
+      "exact": 0,
+      "recall": 0.0
+    },
+    "longest_match": {
+      "n": 2,
+      "exact": 0,
+      "recall": 0.0
+    },
+    "simalign": {
+      "n": 2,
+      "exact": 1,
+      "recall": 0.5
+    }
+  },
+  "recommendation": "longest_match",
+  "gold_rows": 118,
+  "human_adjudicated_pct": 1.0,
+  "rubber_stamp_warning": false,
+  "localizers": [
+    "first_match",
+    "longest_match",
+    "simalign"
+  ],
+  "gold_occ_reconciliation": {
+    "checked": 114,
+    "edge_checked": 4,
+    "failures": []
+  },
+  "simalign": {
+    "real_aligner_used": true,
+    "cache_dir": "data/eval/localizer_simalign_cache",
+    "note": "Without --with-simalign, simalign rows are reported as missing; unit tests use a fake aligner."
+  }
+}

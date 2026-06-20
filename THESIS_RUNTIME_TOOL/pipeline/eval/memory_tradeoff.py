@@ -20,7 +20,8 @@ from pipeline.eval.d2l_translate_score import (
     _resolve_chapters,
     _scope_blocks,
 )
-from pipeline.eval.surface_match import find_spans, normalize_surface
+from pipeline.eval.localizer import representative_context
+from pipeline.eval.surface_match import normalize_surface
 from pipeline.translate.profiles import get_profile
 
 
@@ -92,6 +93,7 @@ def build_override_set(
     experiment_id: str = DEFAULT_EXPERIMENT_ID,
     profile_name: str = DEFAULT_PROFILE,
     doc_id: str = DEFAULT_DOC_ID,
+    localizer_name: str = "longest_match",
 ) -> list[OverrideItem]:
     """Build the post-hoc memory tradeoff set from frozen scorer output.
 
@@ -132,6 +134,7 @@ def build_override_set(
             source_term=source_term,
             s0_surface=s0_surface,
             s1_surface=s1_surface,
+            localizer_name=localizer_name,
         )
         item_id = stable_item_id(source_term)
         items.append(
@@ -674,54 +677,33 @@ def _representative_context(
     source_term: str,
     s0_surface: str,
     s1_surface: str,
+    localizer_name: str = "longest_match",
 ) -> dict[str, Any]:
-    fallback_source = ""
-    for block in blocks:
-        source_spans = find_spans(block.text, source_term, language="en")
-        if not source_spans:
-            continue
-        fallback_source = fallback_source or _sentence_for_span(block.text, source_spans[0][0], source_spans[0][1])
-        s0_text = translations["S0"].get(block.block_id, "")
-        s1_text = translations["S1"].get(block.block_id, "")
-        s0_spans = find_spans(s0_text, s0_surface, language="vi")
-        s1_spans = find_spans(s1_text, s1_surface, language="vi")
-        if not s0_spans or not s1_spans:
-            continue
+    rep = representative_context(
+        blocks,
+        translations,
+        source_term=source_term,
+        s0_surface=s0_surface,
+        s1_surface=s1_surface,
+        localizer=localizer_name,
+    )
+    if rep.resolved:
         return {
             "resolved": True,
             "skip_reason": "",
-            "block_id": block.block_id,
-            "en_sentence": _sentence_for_span(block.text, source_spans[0][0], source_spans[0][1]),
-            "s0_window": _mark_sentence_for_span(s0_text, s0_spans[0][0], s0_spans[0][1]),
-            "s1_window": _mark_sentence_for_span(s1_text, s1_spans[0][0], s1_spans[0][1]),
+            "block_id": rep.block_id,
+            "en_sentence": rep.en_sentence,
+            "s0_window": rep.s0_window,
+            "s1_window": rep.s1_window,
         }
     return {
         "resolved": False,
-        "skip_reason": "no block contains source term plus both dominant target surfaces",
-        "block_id": None,
-        "en_sentence": fallback_source,
+        "skip_reason": rep.skip_reason,
+        "block_id": rep.block_id,
+        "en_sentence": rep.en_sentence,
         "s0_window": "",
         "s1_window": "",
     }
-
-
-def _sentence_for_span(text: str, start: int, end: int) -> str:
-    value = str(text or "")
-    left = max(value.rfind(".", 0, start), value.rfind("?", 0, start), value.rfind("!", 0, start), value.rfind("\n", 0, start))
-    right_candidates = [idx for idx in [value.find(".", end), value.find("?", end), value.find("!", end), value.find("\n", end)] if idx >= 0]
-    right = min(right_candidates) + 1 if right_candidates else len(value)
-    return re.sub(r"\s+", " ", value[left + 1:right]).strip()
-
-
-def _mark_sentence_for_span(text: str, start: int, end: int) -> str:
-    sentence = _sentence_for_span(text, start, end)
-    value = str(text or "")
-    sentence_start = value.find(sentence)
-    if sentence_start < 0 or not sentence:
-        return value[:start] + "«" + value[start:end] + "»" + value[end:]
-    local_start = max(0, start - sentence_start)
-    local_end = max(local_start, end - sentence_start)
-    return sentence[:local_start] + "«" + sentence[local_start:local_end] + "»" + sentence[local_end:]
 
 
 def _summary(items: list[dict[str, Any]], *, key: str) -> dict[str, Any]:
