@@ -1,0 +1,233 @@
+{
+  "mode": "dev_pilot",
+  "prompt_version": "d2l_localizer_t2_v3",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "preflight": {
+    "mode": "preflight_dev",
+    "dataset_role": "dev_regression_not_generalization",
+    "gold_rows": 118,
+    "legacy_longest_failure_rows": [
+      "mt_mnist_dataset_923cfe4011:S1",
+      "mt_annotation_2e76f54422:S0",
+      "mt_annotation_2e76f54422:S1",
+      "mt_elementwise_1d6feafbec:S0",
+      "mt_elementwise_multiplication_0ebdbc19e3:S0",
+      "mt_membership_99ef7e9bc5:S0",
+      "mt_tangent_line_fc8da8d99b:S0",
+      "mt_target_0e8a3ad980:S0"
+    ],
+    "pilot_cases": 8,
+    "t1": {
+      "resolved": 78,
+      "residual": 40,
+      "residual_reasons": {
+        "registry_conflict": 3,
+        "multiple": 20,
+        "short_known_form": 16,
+        "none": 1
+      },
+      "registry_entries_with_allowed_forbidden_overlap": 122
+    },
+    "model": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "temperature": 0.0,
+      "seed": 20260621,
+      "reasoning_effort": "none",
+      "verbosity": "low",
+      "max_output_tokens": 256,
+      "daily_token_cap": 100000,
+      "prompt_token_cap": 2000,
+      "pricing": {
+        "input": 0.25,
+        "cached_input": 0.025,
+        "output": 2.0
+      }
+    },
+    "prompt_version": "d2l_localizer_t2_v3",
+    "estimated_prompt_tokens": 7712,
+    "estimated_max_output_tokens": 2048,
+    "estimated_total_tokens": 9760,
+    "worst_case_three_stage_tokens": 29280,
+    "estimated_cost_usd": 0.006024,
+    "worst_case_cost_usd": 0.018072,
+    "confirm_token": "LOCALIZE-909FCB602A82"
+  },
+  "metrics": {
+    "dataset_role": "dev_regression_not_generalization",
+    "per_config": {
+      "S0": {
+        "n": 6,
+        "localized": 6,
+        "exact_span": 4,
+        "exact_span_accuracy": 0.6666666666666666,
+        "unresolved": 0
+      },
+      "S1": {
+        "n": 2,
+        "localized": 2,
+        "exact_span": 1,
+        "exact_span_accuracy": 0.5,
+        "unresolved": 0
+      }
+    },
+    "total": {
+      "n": 8,
+      "exact_span": 5,
+      "exact_span_accuracy": 0.625
+    },
+    "note": "This is DEV localization accuracy, not D consistency and not held-out generalization."
+  },
+  "decisions": [
+    {
+      "row_id": "mt_mnist_dataset_923cfe4011:S1",
+      "opaque_id": "occ_8140a5beabdea292",
+      "occurrence_id": "occ_8140a5beabdea292",
+      "status": "localized",
+      "classification": "known_forbidden",
+      "quote": "tập dữ liệu MNIST",
+      "start": 255,
+      "end": 272,
+      "offset_source": "unique_quote",
+      "reason": "validated",
+      "from_cache": false,
+      "api_cache_hit": false,
+      "prompt_tokens": 881,
+      "completion_tokens": 45,
+      "cost_usd": 0.00031025,
+      "system_fingerprint": null
+    },
+    {
+      "row_id": "mt_annotation_2e76f54422:S0",
+      "opaque_id": "occ_cb58508bbb93df42",
+      "occurrence_id": "occ_cb58508bbb93df42",
+      "status": "localized",
+      "classification": "novel",
+      "quote": "chú thích",
+      "start": 428,
+      "end": 437,
+      "offset_source": "position",
+      "reason": "validated",
+      "from_cache": false,
+      "api_cache_hit": false,
+      "prompt_tokens": 864,
+      "completion_tokens": 45,
+      "cost_usd": 0.000306,
+      "system_fingerprint": null
+    },
+    {
+      "row_id": "mt_annotation_2e76f54422:S1",
+      "opaque_id": "occ_e93735f3e5889fea",
+      "occurrence_id": "occ_e93735f3e5889fea",
+      "status": "localized",
+      "classification": "known_allowed",
+      "quote": "chú giải",
+      "start": 510,
+      "end": 518,
+      "offset_source": "left_anchor",
+      "reason": "validated",
+      "from_cache": false,
+      "api_cache_hit": false,
+      "prompt_tokens": 864,
+      "completion_tokens": 42,
+      "cost_usd": 0.0003,
+      "system_fingerprint": null
+    },
+    {
+      "row_id": "mt_elementwise_1d6feafbec:S0",
+      "opaque_id": "occ_e63c8d806c269889",
+      "occurrence_id": "occ_e63c8d806c269889",
+      "status": "localized",
+      "classification": "novel",
+      "quote": "theo từng phần tử",
+      "start": 407,
+      "end": 424,
+      "offset_source": "left_anchor",
+      "reason": "validated",
+      "from_cache": false,
+      "api_cache_hit": false,
+      "prompt_tokens": 850,
+      "completion_tokens": 45,
+      "cost_usd": 0.0003025,
+      "system_fingerprint": null
+    },
+    {
+      "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",
+      "opaque_id": "occ_71b93eb115efcb4d",
+      "occurrence_id": "occ_71b93eb115efcb4d",
+      "status": "localized",
+      "classification": "novel",
+      "quote": "phép nhân theo từng phần tử của hai ma trận",
+      "start": 11,
+      "end": 54,
+      "offset_source": "unique_quote",
+      "reason": "validated",
+      "from_cache": false,
+      "api_cache_hit": false,
+      "prompt_tokens": 853,
+      "completion_tokens": 52,
+      "cost_usd": 0.00031725,
+      "system_fingerprint": null
+    },
+    {
+      "row_id": "mt_membership_99ef7e9bc5:S0",
+      "opaque_id": "occ_fb0ac6fc4433402a",
+      "occurrence_id": "occ_fb0ac6fc4433402a",
+      "status": "localized",
+      "classification": "novel",
+      "quote": "sự thuộc về",
+      "start": 526,
+      "end": 537,
+      "offset_source": "unique_quote",
+      "reason": "validated",
+      "from_cache": false,
+      "api_cache_hit": false,
+      "prompt_tokens": 905,
+      "completion_tokens": 45,
+      "cost_usd": 0.00031625,
+      "system_fingerprint": null
+    },
+    {
+      "row_id": "mt_tangent_line_fc8da8d99b:S0",
+      "opaque_id": "occ_6557f649a115806b",
+      "occurrence_id": "occ_6557f649a115806b",
+      "status": "localized",
+      "classification": "novel",
+      "quote": "đường thẳng tiếp tuyến",
+      "start": 300,
+      "end": 322,
+      "offset_source": "unique_quote",
+      "reason": "validated",
+      "from_cache": false,
+      "api_cache_hit": false,
+      "prompt_tokens": 824,
+      "completion_tokens": 45,
+      "cost_usd": 0.000296,
+      "system_fingerprint": null
+    },
+    {
+      "row_id": "mt_target_0e8a3ad980:S0",
+      "opaque_id": "occ_a291d28419482ccc",
+      "occurrence_id": "occ_a291d28419482ccc",
+      "status": "localized",
+      "classification": "known_forbidden",
+      "quote": "mục tiêu",
+      "start": 749,
+      "end": 757,
+      "offset_source": "unique_quote",
+      "reason": "validated",
+      "from_cache": false,
+      "api_cache_hit": false,
+      "prompt_tokens": 893,
+      "completion_tokens": 47,
+      "cost_usd": 0.00031725,
+      "system_fingerprint": null
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 6934,
+    "completion_tokens": 366,
+    "cost_usd": 0.0024655,
+    "result_cache_hits": 0,
+    "api_cache_hits": 0
+  }
+}

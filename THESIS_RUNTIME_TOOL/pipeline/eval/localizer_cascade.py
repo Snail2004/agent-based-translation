@@ -16,8 +16,8 @@ from pipeline.eval.localizer import read_gold_csv, run_localizers
 from pipeline.eval.surface_match import SurfaceOwner, allocate_spans, normalize_surface
 
 
-PROMPT_VERSION = "d2l_localizer_t2_v2"
-VALIDATOR_VERSION = "position_reanchor_v2"
+PROMPT_VERSION = "d2l_localizer_t2_v3"
+VALIDATOR_VERSION = "code_anchor_v3"
 DEFAULT_WINDOW_CHARS = 700
 RESULT_SCHEMA = {
     "type": "json_schema",
@@ -34,10 +34,9 @@ RESULT_SCHEMA = {
                     "enum": ["localized", "omitted", "ambiguous", "not_found"],
                 },
                 "target_quote": {"type": "string"},
-                "start": {"type": "integer"},
-                "end": {"type": "integer"},
+                "left_context": {"type": "string"},
             },
-            "required": ["occurrence_id", "status", "target_quote", "start", "end"],
+            "required": ["occurrence_id", "status", "target_quote", "left_context"],
         },
     },
 }
@@ -329,16 +328,52 @@ def target_window(case: CascadeCase, *, max_chars: int = DEFAULT_WINDOW_CHARS) -
 def build_t2_messages(case: CascadeCase, window: TargetWindow) -> list[dict[str, str]]:
     marked = _marked_source_sentence(case)
     system = (
-        "You are a bilingual occurrence span localizer, not a translator or quality judge. "
-        "Only the English words inside TERM_START/TERM_END belong to the concept you must localize; "
-        "never return the translation of an adjacent unmarked alternative or neighbor. "
-        "Locate the smallest contiguous Vietnamese phrase that fully renders every content word inside the markers. "
-        "Do not return only an acronym or proper name when the marked source also contains a common noun. "
-        "Include grammatical or classifier words required to express the marked concept, but exclude framing, "
-        "quantifiers, modifiers, prepositions, and complements that translate words outside the markers. "
-        "Return an exact quote copied from TARGET_WINDOW. Never rewrite or normalize it. "
-        "Offsets are zero-based character offsets relative to TARGET_WINDOW. "
-        "If the rendering is omitted or cannot be uniquely identified, use omitted, ambiguous, or not_found."
+        "You are a span localizer. You do not translate, rewrite, or judge quality —\n"
+        "you only point to text that already exists in TARGET_WINDOW.\n\n"
+        "INPUT\n"
+        "- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n"
+        "  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n"
+        "  sentence — is the concept to localize.\n"
+        "- TARGET_WINDOW: the translation of the source. The rendering of the marked\n"
+        "  term is somewhere inside it.\n\n"
+        "TASK\n"
+        "Return the single contiguous substring of TARGET_WINDOW that renders exactly\n"
+        "the marked term.\n\n"
+        "PRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\n"
+        "The span you return must correspond one-to-one to the marked words — no fewer,\n"
+        "no more, and not a different word:\n"
+        "- No fewer: if the marked term is a multi-word expression, return the whole\n"
+        "  phrase that renders it, never just a fragment of it.\n"
+        "- No more: never absorb the rendering of any word that lies OUTSIDE the\n"
+        "  markers — an adjacent word, an alternative or synonym, a modifier, or the\n"
+        "  term's grammatical object or complement.\n"
+        "- Not a neighbour: when the sentence offers more than one candidate, localize\n"
+        "  the one that renders the marked term, never an unmarked alternative.\n\n"
+        "EXTENT\n"
+        "Choose the smallest contiguous span that still fully expresses the marked\n"
+        "concept.\n"
+        "- Include a grammatical or classifier word only when it is part of expressing\n"
+        "  the marked term itself — i.e. it would still be present if the marked term\n"
+        "  were translated on its own.\n"
+        "- Exclude words that belong to the surrounding sentence rather than to the\n"
+        "  term: quantity/number determiners, prepositions that link to unmarked words,\n"
+        "  and the renderings of any unmarked source words.\n\n"
+        "EXTRACTION, NOT GENERATION\n"
+        "Copy the span verbatim from TARGET_WINDOW. Never translate it yourself,\n"
+        "reorder, normalize, correct, or invent text.\n\n"
+        "LEFT CONTEXT\n"
+        "Also copy the few words of TARGET_WINDOW that appear immediately before your\n"
+        "span (verbatim, or empty if the span is at the very start). This is only used\n"
+        "by the caller to disambiguate repeated renderings; it is not part of the span.\n\n"
+        "OFFSETS\n"
+        "Do not return character offsets. The caller locates your span by exact string\n"
+        "match using the span and the left context.\n\n"
+        "WHEN NOT TO ANSWER (prefer this over guessing)\n"
+        "- omitted: the marked concept has no rendering in the window.\n"
+        "- ambiguous: a rendering exists but you cannot tell which occurrence matches\n"
+        "  this source occurrence.\n"
+        "- not_found: you cannot locate any plausible rendering.\n\n"
+        "Output must conform exactly to the JSON schema."
     )
     payload = {
         "prompt_version": PROMPT_VERSION,
@@ -401,26 +436,15 @@ def validate_t2_payload(
         return T2Decision(status=status, classification=None, quote="", start=None, end=None,
                           offset_source="none", reason="model_abstained", **base)
     quote = str(payload.get("target_quote") or "")
-    start = _int_or_none(payload.get("start"))
-    end = _int_or_none(payload.get("end"))
-    offset_source = "model"
-    valid_model_offset = (
-        start is not None and end is not None and 0 <= start < end <= len(window.text)
-        and window.text[start:end] == quote
-    )
-    if not valid_model_offset:
-        matches = [match.start() for match in re.finditer(re.escape(quote), window.text)] if quote else []
-        if len(matches) == 1:
-            start = matches[0]
-            end = start + len(quote)
-            offset_source = "unique_quote_reanchor"
-        else:
-            anchored = _position_reanchor(case, window, quote, matches)
-            if anchored is None:
-                return T2Decision(status="human_required", classification=None, quote=quote, start=None, end=None,
-                                  offset_source="none", reason="offset_invalid_or_ambiguous", **base)
-            start, end = anchored
-            offset_source = "position_quote_reanchor"
+    left_context = str(payload.get("left_context") or "")
+    located = _locate_model_quote(case, window, quote, left_context)
+    if located is None:
+        return T2Decision(status="not_found", classification=None, quote=quote, start=None, end=None,
+                          offset_source="none", reason="quote_not_found", **base)
+    start, end, offset_source = located
+    if start is None or end is None:
+        return T2Decision(status="ambiguous", classification=None, quote=quote, start=None, end=None,
+                          offset_source="none", reason=offset_source, **base)
     absolute_start = window.start + int(start)
     absolute_end = window.start + int(end)
     classification = classify_localized_quote(quote, entry)
@@ -429,6 +453,51 @@ def validate_t2_payload(
         start=absolute_start, end=absolute_end, offset_source=offset_source,
         reason="validated", **base,
     )
+
+
+def _locate_model_quote(
+    case: CascadeCase,
+    window: TargetWindow,
+    quote: str,
+    left_context: str,
+) -> tuple[int | None, int | None, str] | None:
+    if not quote:
+        return None
+    starts = [match.start() for match in re.finditer(re.escape(quote), window.text)]
+    if not starts:
+        return None
+    if len(starts) == 1:
+        start = starts[0]
+        return start, start + len(quote), "unique_quote"
+
+    anchored = _left_anchor(starts, quote, left_context, window.text)
+    if anchored is not None:
+        return anchored[0], anchored[1], "left_anchor"
+
+    positioned = _position_reanchor(case, window, quote, starts)
+    if positioned is not None:
+        return positioned[0], positioned[1], "position"
+    return None, None, "ambiguous_quote"
+
+
+def _left_anchor(
+    starts: list[int],
+    quote: str,
+    left_context: str,
+    target: str,
+) -> tuple[int, int] | None:
+    anchor = _normalize_ws(left_context)
+    if not anchor:
+        return None
+    matches: list[int] = []
+    for start in starts:
+        prefix = _normalize_ws(target[:start])
+        if prefix.endswith(anchor):
+            matches.append(start)
+    if len(matches) != 1:
+        return None
+    start = matches[0]
+    return start, start + len(quote)
 
 
 def classify_localized_quote(quote: str, entry: RegistryEntry | None) -> str:
@@ -697,6 +766,10 @@ def _json_strings(value: Any) -> list[str]:
 
 def _key(value: Any) -> str:
     return re.sub(r"\s+", " ", normalize_surface(str(value or "")).casefold().strip())
+
+
+def _normalize_ws(value: str) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
 def _opaque_id(row_id: str) -> str:

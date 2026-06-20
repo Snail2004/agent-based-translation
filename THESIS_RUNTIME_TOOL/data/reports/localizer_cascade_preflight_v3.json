@@ -1,0 +1,236 @@
+{
+  "mode": "preflight_dev",
+  "dataset_role": "dev_regression_not_generalization",
+  "gold_rows": 118,
+  "legacy_longest_failure_rows": [
+    "mt_mnist_dataset_923cfe4011:S1",
+    "mt_annotation_2e76f54422:S0",
+    "mt_annotation_2e76f54422:S1",
+    "mt_elementwise_1d6feafbec:S0",
+    "mt_elementwise_multiplication_0ebdbc19e3:S0",
+    "mt_membership_99ef7e9bc5:S0",
+    "mt_tangent_line_fc8da8d99b:S0",
+    "mt_target_0e8a3ad980:S0"
+  ],
+  "pilot_cases": 8,
+  "t1": {
+    "resolved": 78,
+    "residual": 40,
+    "residual_reasons": {
+      "registry_conflict": 3,
+      "multiple": 20,
+      "short_known_form": 16,
+      "none": 1
+    },
+    "registry_entries_with_allowed_forbidden_overlap": 122
+  },
+  "model": {
+    "model": "gpt-5.4-mini-2026-03-17",
+    "temperature": 0.0,
+    "seed": 20260621,
+    "reasoning_effort": "none",
+    "verbosity": "low",
+    "max_output_tokens": 256,
+    "daily_token_cap": 100000,
+    "prompt_token_cap": 2000,
+    "pricing": {
+      "input": 0.25,
+      "cached_input": 0.025,
+      "output": 2.0
+    }
+  },
+  "prompt_version": "d2l_localizer_t2_v3",
+  "estimated_prompt_tokens": 7712,
+  "estimated_max_output_tokens": 2048,
+  "estimated_total_tokens": 9760,
+  "worst_case_three_stage_tokens": 29280,
+  "estimated_cost_usd": 0.006024,
+  "worst_case_cost_usd": 0.018072,
+  "confirm_token": "LOCALIZE-909FCB602A82",
+  "prompts": [
+    {
+      "row_id": "mt_mnist_dataset_923cfe4011:S1",
+      "opaque_id": "occ_8140a5beabdea292",
+      "config_internal": "S1",
+      "window": {
+        "text": "trí tuệ nhân tạo có lịch sử lâu dài trong việc mang lại những kết quả mà nếu không có nó thì sẽ rất khó đạt được. Chẳng hạn, các hệ thống phân loại thư sử dụng nhận dạng ký tự quang học đã được triển khai từ những năm 1990. Rốt cuộc, đây là nguồn gốc của tập dữ liệu MNIST nổi tiếng về các chữ số viết tay. Điều tương tự cũng đúng với việc đọc séc để gửi tiền vào ngân hàng và chấm điểm khả năng tín dụng của người nộp đơn. Các giao dịch tài chính được kiểm tra gian lận tự động. Điều này tạo thành nền tảng của nhiều hệ thống thanh toán thương mại điện tử, như PayPal, Stripe, AliPay, WeChat, Apple, Visa, và MasterCard. Các chương trình máy tính chơi cờ đã có tính cạnh tranh trong nhiều thập kỷ. h",
+        "start": 0,
+        "end": 700,
+        "source_ratio": 0.31745049504950495,
+        "level": "position"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a span localizer. You do not translate, rewrite, or judge quality —\nyou only point to text that already exists in TARGET_WINDOW.\n\nINPUT\n- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n  sentence — is the concept to localize.\n- TARGET_WINDOW: the translation of the source. The rendering of the marked\n  term is somewhere inside it.\n\nTASK\nReturn the single contiguous substring of TARGET_WINDOW that renders exactly\nthe marked term.\n\nPRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\nThe span you return must correspond one-to-one to the marked words — no fewer,\nno more, and not a different word:\n- No fewer: if the marked term is a multi-word expression, return the whole\n  phrase that renders it, never just a fragment of it.\n- No more: never absorb the rendering of any word that lies OUTSIDE the\n  markers — an adjacent word, an alternative or synonym, a modifier, or the\n  term's grammatical object or complement.\n- Not a neighbour: when the sentence offers more than one candidate, localize\n  the one that renders the marked term, never an unmarked alternative.\n\nEXTENT\nChoose the smallest contiguous span that still fully expresses the marked\nconcept.\n- Include a grammatical or classifier word only when it is part of expressing\n  the marked term itself — i.e. it would still be present if the marked term\n  were translated on its own.\n- Exclude words that belong to the surrounding sentence rather than to the\n  term: quantity/number determiners, prepositions that link to unmarked words,\n  and the renderings of any unmarked source words.\n\nEXTRACTION, NOT GENERATION\nCopy the span verbatim from TARGET_WINDOW. Never translate it yourself,\nreorder, normalize, correct, or invent text.\n\nLEFT CONTEXT\nAlso copy the few words of TARGET_WINDOW that appear immediately before your\nspan (verbatim, or empty if the span is at the very start). This is only used\nby the caller to disambiguate repeated renderings; it is not part of the span.\n\nOFFSETS\nDo not return character offsets. The caller locates your span by exact string\nmatch using the span and the left context.\n\nWHEN NOT TO ANSWER (prefer this over guessing)\n- omitted: the marked concept has no rendering in the window.\n- ambiguous: a rendering exists but you cannot tell which occurrence matches\n  this source occurrence.\n- not_found: you cannot locate any plausible rendering.\n\nOutput must conform exactly to the JSON schema."
+        },
+        {
+          "role": "user",
+          "content": "{\"occurrence_id\": \"occ_8140a5beabdea292\", \"prompt_version\": \"d2l_localizer_t2_v3\", \"source_context\": \"This is, after all, the source of the famous [[TERM_START]]MNIST dataset[[TERM_END]]  of handwritten digits.\", \"target_window\": \"trí tuệ nhân tạo có lịch sử lâu dài trong việc mang lại những kết quả mà nếu không có nó thì sẽ rất khó đạt được. Chẳng hạn, các hệ thống phân loại thư sử dụng nhận dạng ký tự quang học đã được triển khai từ những năm 1990. Rốt cuộc, đây là nguồn gốc của tập dữ liệu MNIST nổi tiếng về các chữ số viết tay. Điều tương tự cũng đúng với việc đọc séc để gửi tiền vào ngân hàng và chấm điểm khả năng tín dụng của người nộp đơn. Các giao dịch tài chính được kiểm tra gian lận tự động. Điều này tạo thành nền tảng của nhiều hệ thống thanh toán thương mại điện tử, như PayPal, Stripe, AliPay, WeChat, Apple, Visa, và MasterCard. Các chương trình máy tính chơi cờ đã có tính cạnh tranh trong nhiều thập kỷ. h\"}"
+        }
+      ],
+      "estimated_prompt_tokens": 999
+    },
+    {
+      "row_id": "mt_annotation_2e76f54422:S0",
+      "opaque_id": "occ_cb58508bbb93df42",
+      "config_internal": "S0",
+      "window": {
+        "text": "**Gán nhãn và phân tích cú pháp**. Điều này liên quan đến việc chú thích một chuỗi văn bản bằng các thuộc tính. Nói cách khác, số lượng đầu vào và đầu ra về cơ bản là như nhau. Chẳng hạn, chúng ta có thể muốn biết động từ và chủ ngữ nằm ở đâu. Hoặc, chúng ta có thể muốn biết những từ nào là thực thể có tên. Nói chung, mục tiêu là phân rã và chú thích văn bản dựa trên các giả định về cấu trúc và ngữ pháp để thu được một dạng chú thích nào đó. Điều này nghe có vẻ phức tạp hơn thực tế. Dưới đây là một ví dụ rất đơn giản về việc chú thích một câu bằng các thẻ chỉ ra những từ nào đề cập đến các thực thể có tên (được gắn nhãn là \"Ent\").",
+        "start": 0,
+        "end": 638,
+        "source_ratio": 0.695364238410596,
+        "level": "full"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a span localizer. You do not translate, rewrite, or judge quality —\nyou only point to text that already exists in TARGET_WINDOW.\n\nINPUT\n- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n  sentence — is the concept to localize.\n- TARGET_WINDOW: the translation of the source. The rendering of the marked\n  term is somewhere inside it.\n\nTASK\nReturn the single contiguous substring of TARGET_WINDOW that renders exactly\nthe marked term.\n\nPRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\nThe span you return must correspond one-to-one to the marked words — no fewer,\nno more, and not a different word:\n- No fewer: if the marked term is a multi-word expression, return the whole\n  phrase that renders it, never just a fragment of it.\n- No more: never absorb the rendering of any word that lies OUTSIDE the\n  markers — an adjacent word, an alternative or synonym, a modifier, or the\n  term's grammatical object or complement.\n- Not a neighbour: when the sentence offers more than one candidate, localize\n  the one that renders the marked term, never an unmarked alternative.\n\nEXTENT\nChoose the smallest contiguous span that still fully expresses the marked\nconcept.\n- Include a grammatical or classifier word only when it is part of expressing\n  the marked term itself — i.e. it would still be present if the marked term\n  were translated on its own.\n- Exclude words that belong to the surrounding sentence rather than to the\n  term: quantity/number determiners, prepositions that link to unmarked words,\n  and the renderings of any unmarked source words.\n\nEXTRACTION, NOT GENERATION\nCopy the span verbatim from TARGET_WINDOW. Never translate it yourself,\nreorder, normalize, correct, or invent text.\n\nLEFT CONTEXT\nAlso copy the few words of TARGET_WINDOW that appear immediately before your\nspan (verbatim, or empty if the span is at the very start). This is only used\nby the caller to disambiguate repeated renderings; it is not part of the span.\n\nOFFSETS\nDo not return character offsets. The caller locates your span by exact string\nmatch using the span and the left context.\n\nWHEN NOT TO ANSWER (prefer this over guessing)\n- omitted: the marked concept has no rendering in the window.\n- ambiguous: a rendering exists but you cannot tell which occurrence matches\n  this source occurrence.\n- not_found: you cannot locate any plausible rendering.\n\nOutput must conform exactly to the JSON schema."
+        },
+        {
+          "role": "user",
+          "content": "{\"occurrence_id\": \"occ_cb58508bbb93df42\", \"prompt_version\": \"d2l_localizer_t2_v3\", \"source_context\": \"and grammatical assumptions to get some [[TERM_START]]annotation[[TERM_END]].\", \"target_window\": \"**Gán nhãn và phân tích cú pháp**. Điều này liên quan đến việc chú thích một chuỗi văn bản bằng các thuộc tính. Nói cách khác, số lượng đầu vào và đầu ra về cơ bản là như nhau. Chẳng hạn, chúng ta có thể muốn biết động từ và chủ ngữ nằm ở đâu. Hoặc, chúng ta có thể muốn biết những từ nào là thực thể có tên. Nói chung, mục tiêu là phân rã và chú thích văn bản dựa trên các giả định về cấu trúc và ngữ pháp để thu được một dạng chú thích nào đó. Điều này nghe có vẻ phức tạp hơn thực tế. Dưới đây là một ví dụ rất đơn giản về việc chú thích một câu bằng các thẻ chỉ ra những từ nào đề cập đến các thực thể có tên (được gắn nhãn là \\\"Ent\\\").\"}"
+        }
+      ],
+      "estimated_prompt_tokens": 977
+    },
+    {
+      "row_id": "mt_annotation_2e76f54422:S1",
+      "opaque_id": "occ_e93735f3e5889fea",
+      "config_internal": "S1",
+      "window": {
+        "text": "**Gắn thẻ và phân tích cú pháp**. Việc này liên quan đến chú giải một chuỗi văn bản bằng các thuộc tính. Nói cách khác, số đầu vào và đầu ra về cơ bản là như nhau. Chẳng hạn, chúng ta có thể muốn biết động từ và chủ ngữ ở đâu. Hoặc, chúng ta có thể muốn biết những từ nào là các thực thể có tên. Nói chung, mục tiêu là phân tách và chú giải văn bản dựa trên các giả định về cấu trúc và ngữ pháp để có được một chú giải nào đó. Điều này nghe có vẻ phức tạp hơn thực tế. Dưới đây là một mẫu rất đơn giản về việc chú giải một câu bằng các thẻ chỉ ra những từ nào tham chiếu đến các thực thể có tên (được gắn thẻ là \"Ent\").",
+        "start": 0,
+        "end": 619,
+        "source_ratio": 0.695364238410596,
+        "level": "full"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a span localizer. You do not translate, rewrite, or judge quality —\nyou only point to text that already exists in TARGET_WINDOW.\n\nINPUT\n- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n  sentence — is the concept to localize.\n- TARGET_WINDOW: the translation of the source. The rendering of the marked\n  term is somewhere inside it.\n\nTASK\nReturn the single contiguous substring of TARGET_WINDOW that renders exactly\nthe marked term.\n\nPRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\nThe span you return must correspond one-to-one to the marked words — no fewer,\nno more, and not a different word:\n- No fewer: if the marked term is a multi-word expression, return the whole\n  phrase that renders it, never just a fragment of it.\n- No more: never absorb the rendering of any word that lies OUTSIDE the\n  markers — an adjacent word, an alternative or synonym, a modifier, or the\n  term's grammatical object or complement.\n- Not a neighbour: when the sentence offers more than one candidate, localize\n  the one that renders the marked term, never an unmarked alternative.\n\nEXTENT\nChoose the smallest contiguous span that still fully expresses the marked\nconcept.\n- Include a grammatical or classifier word only when it is part of expressing\n  the marked term itself — i.e. it would still be present if the marked term\n  were translated on its own.\n- Exclude words that belong to the surrounding sentence rather than to the\n  term: quantity/number determiners, prepositions that link to unmarked words,\n  and the renderings of any unmarked source words.\n\nEXTRACTION, NOT GENERATION\nCopy the span verbatim from TARGET_WINDOW. Never translate it yourself,\nreorder, normalize, correct, or invent text.\n\nLEFT CONTEXT\nAlso copy the few words of TARGET_WINDOW that appear immediately before your\nspan (verbatim, or empty if the span is at the very start). This is only used\nby the caller to disambiguate repeated renderings; it is not part of the span.\n\nOFFSETS\nDo not return character offsets. The caller locates your span by exact string\nmatch using the span and the left context.\n\nWHEN NOT TO ANSWER (prefer this over guessing)\n- omitted: the marked concept has no rendering in the window.\n- ambiguous: a rendering exists but you cannot tell which occurrence matches\n  this source occurrence.\n- not_found: you cannot locate any plausible rendering.\n\nOutput must conform exactly to the JSON schema."
+        },
+        {
+          "role": "user",
+          "content": "{\"occurrence_id\": \"occ_e93735f3e5889fea\", \"prompt_version\": \"d2l_localizer_t2_v3\", \"source_context\": \"and grammatical assumptions to get some [[TERM_START]]annotation[[TERM_END]].\", \"target_window\": \"**Gắn thẻ và phân tích cú pháp**. Việc này liên quan đến chú giải một chuỗi văn bản bằng các thuộc tính. Nói cách khác, số đầu vào và đầu ra về cơ bản là như nhau. Chẳng hạn, chúng ta có thể muốn biết động từ và chủ ngữ ở đâu. Hoặc, chúng ta có thể muốn biết những từ nào là các thực thể có tên. Nói chung, mục tiêu là phân tách và chú giải văn bản dựa trên các giả định về cấu trúc và ngữ pháp để có được một chú giải nào đó. Điều này nghe có vẻ phức tạp hơn thực tế. Dưới đây là một mẫu rất đơn giản về việc chú giải một câu bằng các thẻ chỉ ra những từ nào tham chiếu đến các thực thể có tên (được gắn thẻ là \\\"Ent\\\").\"}"
+        }
+      ],
+      "estimated_prompt_tokens": 972
+    },
+    {
+      "row_id": "mt_elementwise_1d6feafbec:S0",
+      "opaque_id": "occ_e63c8d806c269889",
+      "config_internal": "S0",
+      "window": {
+        "text": "Cuốn sách này không nói về kỹ nghệ phần mềm. Mối quan tâm của chúng ta không chỉ dừng lại ở việc đọc và ghi dữ liệu từ/đến các mảng. Chúng ta muốn thực hiện các phép toán toán học trên những mảng đó. Một số phép toán đơn giản và hữu ích nhất là các phép toán *theo từng phần tử*. Chúng áp dụng một phép toán vô hướng chuẩn lên từng phần tử của một mảng. Với các hàm nhận hai mảng làm đầu vào, các phép toán theo từng phần tử áp dụng một toán tử nhị phân chuẩn lên từng cặp phần tử tương ứng từ hai mảng. Chúng ta có thể tạo một hàm theo từng phần tử từ bất kỳ hàm nào ánh xạ từ một vô hướng sang một vô hướng.",
+        "start": 0,
+        "end": 609,
+        "source_ratio": 0.41835016835016836,
+        "level": "full"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a span localizer. You do not translate, rewrite, or judge quality —\nyou only point to text that already exists in TARGET_WINDOW.\n\nINPUT\n- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n  sentence — is the concept to localize.\n- TARGET_WINDOW: the translation of the source. The rendering of the marked\n  term is somewhere inside it.\n\nTASK\nReturn the single contiguous substring of TARGET_WINDOW that renders exactly\nthe marked term.\n\nPRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\nThe span you return must correspond one-to-one to the marked words — no fewer,\nno more, and not a different word:\n- No fewer: if the marked term is a multi-word expression, return the whole\n  phrase that renders it, never just a fragment of it.\n- No more: never absorb the rendering of any word that lies OUTSIDE the\n  markers — an adjacent word, an alternative or synonym, a modifier, or the\n  term's grammatical object or complement.\n- Not a neighbour: when the sentence offers more than one candidate, localize\n  the one that renders the marked term, never an unmarked alternative.\n\nEXTENT\nChoose the smallest contiguous span that still fully expresses the marked\nconcept.\n- Include a grammatical or classifier word only when it is part of expressing\n  the marked term itself — i.e. it would still be present if the marked term\n  were translated on its own.\n- Exclude words that belong to the surrounding sentence rather than to the\n  term: quantity/number determiners, prepositions that link to unmarked words,\n  and the renderings of any unmarked source words.\n\nEXTRACTION, NOT GENERATION\nCopy the span verbatim from TARGET_WINDOW. Never translate it yourself,\nreorder, normalize, correct, or invent text.\n\nLEFT CONTEXT\nAlso copy the few words of TARGET_WINDOW that appear immediately before your\nspan (verbatim, or empty if the span is at the very start). This is only used\nby the caller to disambiguate repeated renderings; it is not part of the span.\n\nOFFSETS\nDo not return character offsets. The caller locates your span by exact string\nmatch using the span and the left context.\n\nWHEN NOT TO ANSWER (prefer this over guessing)\n- omitted: the marked concept has no rendering in the window.\n- ambiguous: a rendering exists but you cannot tell which occurrence matches\n  this source occurrence.\n- not_found: you cannot locate any plausible rendering.\n\nOutput must conform exactly to the JSON schema."
+        },
+        {
+          "role": "user",
+          "content": "{\"occurrence_id\": \"occ_e63c8d806c269889\", \"prompt_version\": \"d2l_localizer_t2_v3\", \"source_context\": \"are the *[[TERM_START]]elementwise[[TERM_END]]* operations.\", \"target_window\": \"Cuốn sách này không nói về kỹ nghệ phần mềm. Mối quan tâm của chúng ta không chỉ dừng lại ở việc đọc và ghi dữ liệu từ/đến các mảng. Chúng ta muốn thực hiện các phép toán toán học trên những mảng đó. Một số phép toán đơn giản và hữu ích nhất là các phép toán *theo từng phần tử*. Chúng áp dụng một phép toán vô hướng chuẩn lên từng phần tử của một mảng. Với các hàm nhận hai mảng làm đầu vào, các phép toán theo từng phần tử áp dụng một toán tử nhị phân chuẩn lên từng cặp phần tử tương ứng từ hai mảng. Chúng ta có thể tạo một hàm theo từng phần tử từ bất kỳ hàm nào ánh xạ từ một vô hướng sang một vô hướng.\"}"
+        }
+      ],
+      "estimated_prompt_tokens": 964
+    },
+    {
+      "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",
+      "opaque_id": "occ_71b93eb115efcb4d",
+      "config_internal": "S0",
+      "window": {
+        "text": "Cụ thể, [**phép nhân theo từng phần tử của hai ma trận được gọi là *tích Hadamard***] (ký hiệu toán học $\u0000odot$). Xét ma trận $\u001b[1mB\u001b[0m \u001b[1m\\in\\mathbb{R}^{m\\times n}\u001b[0m$ có phần tử ở hàng $i$ và cột $j$ là $b_{ij}$. Tích Hadamard của các ma trận $\u001b[1mA\u001b[0m$ (được định nghĩa trong :eqref:`eq_matrix_def`) và $\u001b[1mB\u001b[0m$",
+        "start": 0,
+        "end": 321,
+        "source_ratio": 0.09063444108761329,
+        "level": "full"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a span localizer. You do not translate, rewrite, or judge quality —\nyou only point to text that already exists in TARGET_WINDOW.\n\nINPUT\n- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n  sentence — is the concept to localize.\n- TARGET_WINDOW: the translation of the source. The rendering of the marked\n  term is somewhere inside it.\n\nTASK\nReturn the single contiguous substring of TARGET_WINDOW that renders exactly\nthe marked term.\n\nPRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\nThe span you return must correspond one-to-one to the marked words — no fewer,\nno more, and not a different word:\n- No fewer: if the marked term is a multi-word expression, return the whole\n  phrase that renders it, never just a fragment of it.\n- No more: never absorb the rendering of any word that lies OUTSIDE the\n  markers — an adjacent word, an alternative or synonym, a modifier, or the\n  term's grammatical object or complement.\n- Not a neighbour: when the sentence offers more than one candidate, localize\n  the one that renders the marked term, never an unmarked alternative.\n\nEXTENT\nChoose the smallest contiguous span that still fully expresses the marked\nconcept.\n- Include a grammatical or classifier word only when it is part of expressing\n  the marked term itself — i.e. it would still be present if the marked term\n  were translated on its own.\n- Exclude words that belong to the surrounding sentence rather than to the\n  term: quantity/number determiners, prepositions that link to unmarked words,\n  and the renderings of any unmarked source words.\n\nEXTRACTION, NOT GENERATION\nCopy the span verbatim from TARGET_WINDOW. Never translate it yourself,\nreorder, normalize, correct, or invent text.\n\nLEFT CONTEXT\nAlso copy the few words of TARGET_WINDOW that appear immediately before your\nspan (verbatim, or empty if the span is at the very start). This is only used\nby the caller to disambiguate repeated renderings; it is not part of the span.\n\nOFFSETS\nDo not return character offsets. The caller locates your span by exact string\nmatch using the span and the left context.\n\nWHEN NOT TO ANSWER (prefer this over guessing)\n- omitted: the marked concept has no rendering in the window.\n- ambiguous: a rendering exists but you cannot tell which occurrence matches\n  this source occurrence.\n- not_found: you cannot locate any plausible rendering.\n\nOutput must conform exactly to the JSON schema."
+        },
+        {
+          "role": "user",
+          "content": "{\"occurrence_id\": \"occ_71b93eb115efcb4d\", \"prompt_version\": \"d2l_localizer_t2_v3\", \"source_context\": \"[**[[TERM_START]]elementwise multiplication[[TERM_END]] of two matrices is called their *Hadamard product***]\", \"target_window\": \"Cụ thể, [**phép nhân theo từng phần tử của hai ma trận được gọi là *tích Hadamard***] (ký hiệu toán học $\\u0000odot$). Xét ma trận $\\u001b[1mB\\u001b[0m \\u001b[1m\\\\in\\\\mathbb{R}^{m\\\\times n}\\u001b[0m$ có phần tử ở hàng $i$ và cột $j$ là $b_{ij}$. Tích Hadamard của các ma trận $\\u001b[1mA\\u001b[0m$ (được định nghĩa trong :eqref:`eq_matrix_def`) và $\\u001b[1mB\\u001b[0m$\"}"
+        }
+      ],
+      "estimated_prompt_tokens": 920
+    },
+    {
+      "row_id": "mt_membership_99ef7e9bc5:S0",
+      "opaque_id": "occ_fb0ac6fc4433402a",
+      "config_internal": "S0",
+      "window": {
+        "text": "Trong cuốn sách này, chúng tôi dùng ký hiệu toán học trong đó các biến vô hướng được biểu diễn bằng các chữ cái thường (ví dụ, $x$, $y$, và $z$). Chúng tôi ký hiệu không gian của tất cả các vô hướng *có giá trị thực* (liên tục) bằng $\\mathbb{R}$. Để tiện lợi, chúng tôi sẽ tạm bỏ qua các định nghĩa chặt chẽ về chính xác *không gian* là gì, nhưng chỉ cần nhớ rằng biểu thức $x \\in \\mathbb{R}$ là một cách hình thức để nói rằng $x$ là một vô hướng có giá trị thực. Ký hiệu $\\in$ có thể được đọc là “thuộc” và đơn giản biểu thị sự thuộc về một tập hợp. Tương tự, ta có thể viết $x, y \\in \\{0, 1\\}$ để nói rằng $x$ và $y$ là các số mà giá trị của chúng chỉ có thể là $0$ hoặc $1$.",
+        "start": 0,
+        "end": 677,
+        "source_ratio": 0.7818471337579618,
+        "level": "full"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a span localizer. You do not translate, rewrite, or judge quality —\nyou only point to text that already exists in TARGET_WINDOW.\n\nINPUT\n- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n  sentence — is the concept to localize.\n- TARGET_WINDOW: the translation of the source. The rendering of the marked\n  term is somewhere inside it.\n\nTASK\nReturn the single contiguous substring of TARGET_WINDOW that renders exactly\nthe marked term.\n\nPRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\nThe span you return must correspond one-to-one to the marked words — no fewer,\nno more, and not a different word:\n- No fewer: if the marked term is a multi-word expression, return the whole\n  phrase that renders it, never just a fragment of it.\n- No more: never absorb the rendering of any word that lies OUTSIDE the\n  markers — an adjacent word, an alternative or synonym, a modifier, or the\n  term's grammatical object or complement.\n- Not a neighbour: when the sentence offers more than one candidate, localize\n  the one that renders the marked term, never an unmarked alternative.\n\nEXTENT\nChoose the smallest contiguous span that still fully expresses the marked\nconcept.\n- Include a grammatical or classifier word only when it is part of expressing\n  the marked term itself — i.e. it would still be present if the marked term\n  were translated on its own.\n- Exclude words that belong to the surrounding sentence rather than to the\n  term: quantity/number determiners, prepositions that link to unmarked words,\n  and the renderings of any unmarked source words.\n\nEXTRACTION, NOT GENERATION\nCopy the span verbatim from TARGET_WINDOW. Never translate it yourself,\nreorder, normalize, correct, or invent text.\n\nLEFT CONTEXT\nAlso copy the few words of TARGET_WINDOW that appear immediately before your\nspan (verbatim, or empty if the span is at the very start). This is only used\nby the caller to disambiguate repeated renderings; it is not part of the span.\n\nOFFSETS\nDo not return character offsets. The caller locates your span by exact string\nmatch using the span and the left context.\n\nWHEN NOT TO ANSWER (prefer this over guessing)\n- omitted: the marked concept has no rendering in the window.\n- ambiguous: a rendering exists but you cannot tell which occurrence matches\n  this source occurrence.\n- not_found: you cannot locate any plausible rendering.\n\nOutput must conform exactly to the JSON schema."
+        },
+        {
+          "role": "user",
+          "content": "{\"occurrence_id\": \"occ_fb0ac6fc4433402a\", \"prompt_version\": \"d2l_localizer_t2_v3\", \"source_context\": \"and simply denotes [[TERM_START]]membership[[TERM_END]] in a set.\", \"target_window\": \"Trong cuốn sách này, chúng tôi dùng ký hiệu toán học trong đó các biến vô hướng được biểu diễn bằng các chữ cái thường (ví dụ, $x$, $y$, và $z$). Chúng tôi ký hiệu không gian của tất cả các vô hướng *có giá trị thực* (liên tục) bằng $\\\\mathbb{R}$. Để tiện lợi, chúng tôi sẽ tạm bỏ qua các định nghĩa chặt chẽ về chính xác *không gian* là gì, nhưng chỉ cần nhớ rằng biểu thức $x \\\\in \\\\mathbb{R}$ là một cách hình thức để nói rằng $x$ là một vô hướng có giá trị thực. Ký hiệu $\\\\in$ có thể được đọc là “thuộc” và đơn giản biểu thị sự thuộc về một tập hợp. Tương tự, ta có thể viết $x, y \\\\in \\\\{0, 1\\\\}$ để nói rằng $x$ và $y$ là các số mà giá trị của chúng chỉ có thể là $0$ hoặc $1$.\"}"
+        }
+      ],
+      "estimated_prompt_tokens": 987
+    },
+    {
+      "row_id": "mt_tangent_line_fc8da8d99b:S0",
+      "opaque_id": "occ_6557f649a115806b",
+      "config_internal": "S0",
+      "window": {
+        "text": "Bây giờ chúng ta có thể áp dụng một vài quy tắc ở trên để tìm $u' = f'(x) = 3 \\frac{d}{dx} x^2-4\\frac{d}{dx}x = 6x-4$. Do đó, khi đặt $x = 1$, ta có $u' = 2$: điều này được hỗ trợ bởi thí nghiệm trước đó của chúng ta trong phần này, nơi kết quả số tiến gần đến $2$. Đạo hàm này cũng là hệ số góc của đường thẳng tiếp tuyến với đường cong $u = f(x)$ khi $x = 1$.",
+        "start": 0,
+        "end": 361,
+        "source_ratio": 0.8724637681159421,
+        "level": "full"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a span localizer. You do not translate, rewrite, or judge quality —\nyou only point to text that already exists in TARGET_WINDOW.\n\nINPUT\n- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n  sentence — is the concept to localize.\n- TARGET_WINDOW: the translation of the source. The rendering of the marked\n  term is somewhere inside it.\n\nTASK\nReturn the single contiguous substring of TARGET_WINDOW that renders exactly\nthe marked term.\n\nPRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\nThe span you return must correspond one-to-one to the marked words — no fewer,\nno more, and not a different word:\n- No fewer: if the marked term is a multi-word expression, return the whole\n  phrase that renders it, never just a fragment of it.\n- No more: never absorb the rendering of any word that lies OUTSIDE the\n  markers — an adjacent word, an alternative or synonym, a modifier, or the\n  term's grammatical object or complement.\n- Not a neighbour: when the sentence offers more than one candidate, localize\n  the one that renders the marked term, never an unmarked alternative.\n\nEXTENT\nChoose the smallest contiguous span that still fully expresses the marked\nconcept.\n- Include a grammatical or classifier word only when it is part of expressing\n  the marked term itself — i.e. it would still be present if the marked term\n  were translated on its own.\n- Exclude words that belong to the surrounding sentence rather than to the\n  term: quantity/number determiners, prepositions that link to unmarked words,\n  and the renderings of any unmarked source words.\n\nEXTRACTION, NOT GENERATION\nCopy the span verbatim from TARGET_WINDOW. Never translate it yourself,\nreorder, normalize, correct, or invent text.\n\nLEFT CONTEXT\nAlso copy the few words of TARGET_WINDOW that appear immediately before your\nspan (verbatim, or empty if the span is at the very start). This is only used\nby the caller to disambiguate repeated renderings; it is not part of the span.\n\nOFFSETS\nDo not return character offsets. The caller locates your span by exact string\nmatch using the span and the left context.\n\nWHEN NOT TO ANSWER (prefer this over guessing)\n- omitted: the marked concept has no rendering in the window.\n- ambiguous: a rendering exists but you cannot tell which occurrence matches\n  this source occurrence.\n- not_found: you cannot locate any plausible rendering.\n\nOutput must conform exactly to the JSON schema."
+        },
+        {
+          "role": "user",
+          "content": "{\"occurrence_id\": \"occ_6557f649a115806b\", \"prompt_version\": \"d2l_localizer_t2_v3\", \"source_context\": \"This derivative is also the slope of the [[TERM_START]]tangent line[[TERM_END]]\", \"target_window\": \"Bây giờ chúng ta có thể áp dụng một vài quy tắc ở trên để tìm $u' = f'(x) = 3 \\\\frac{d}{dx} x^2-4\\\\frac{d}{dx}x = 6x-4$. Do đó, khi đặt $x = 1$, ta có $u' = 2$: điều này được hỗ trợ bởi thí nghiệm trước đó của chúng ta trong phần này, nơi kết quả số tiến gần đến $2$. Đạo hàm này cũng là hệ số góc của đường thẳng tiếp tuyến với đường cong $u = f(x)$ khi $x = 1$.\"}"
+        }
+      ],
+      "estimated_prompt_tokens": 908
+    },
+    {
+      "row_id": "mt_target_0e8a3ad980:S0",
+      "opaque_id": "occ_a291d28419482ccc",
+      "config_internal": "S0",
+      "window": {
+        "text": "c dữ liệu nếu không có dữ liệu. Chúng ta có thể mất hàng trăm trang để suy ngẫm về chính xác điều gì cấu thành nên dữ liệu, nhưng hiện tại, chúng ta sẽ nghiêng về phía thực tiễn và tập trung vào những đặc tính then chốt cần quan tâm. Nói chung, chúng ta quan tâm đến một tập hợp các ví dụ. Để làm việc với dữ liệu một cách hữu ích, chúng ta thường cần đưa ra một biểu diễn số học phù hợp. Mỗi *ví dụ* (hoặc *điểm dữ liệu*, *thực thể dữ liệu*, *mẫu*) thường gồm một tập các thuộc tính gọi là *đặc trưng* (hoặc *biến đồng biến*), từ đó mô hình phải đưa ra dự đoán của mình. Trong các bài toán học có giám sát ở trên, thứ cần dự đoán là một thuộc tính đặc biệt được chỉ định là *nhãn* (hoặc *mục tiêu*).",
+        "start": 60,
+        "end": 760,
+        "source_ratio": 0.9918918918918919,
+        "level": "position"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a span localizer. You do not translate, rewrite, or judge quality —\nyou only point to text that already exists in TARGET_WINDOW.\n\nINPUT\n- SOURCE_CONTEXT: one source sentence. Exactly one term is wrapped in\n  [[TERM_START]] ... [[TERM_END]]. That marked term — and nothing else in the\n  sentence — is the concept to localize.\n- TARGET_WINDOW: the translation of the source. The rendering of the marked\n  term is somewhere inside it.\n\nTASK\nReturn the single contiguous substring of TARGET_WINDOW that renders exactly\nthe marked term.\n\nPRINCIPLE OF EXACT CORRESPONDENCE (the core rule)\nThe span you return must correspond one-to-one to the marked words — no fewer,\nno more, and not a different word:\n- No fewer: if the marked term is a multi-word expression, return the whole\n  phrase that renders it, never just a fragment of it.\n- No more: never absorb the rendering of any word that lies OUTSIDE the\n  markers — an adjacent word, an alternative or synonym, a modifier, or the\n  term's grammatical object or complement.\n- Not a neighbour: when the sentence offers more than one candidate, localize\n  the one that renders the marked term, never an unmarked alternative.\n\nEXTENT\nChoose the smallest contiguous span that still fully expresses the marked\nconcept.\n- Include a grammatical or classifier word only when it is part of expressing\n  the marked term itself — i.e. it would still be present if the marked term\n  were translated on its own.\n- Exclude words that belong to the surrounding sentence rather than to the\n  term: quantity/number determiners, prepositions that link to unmarked words,\n  and the renderings of any unmarked source words.\n\nEXTRACTION, NOT GENERATION\nCopy the span verbatim from TARGET_WINDOW. Never translate it yourself,\nreorder, normalize, correct, or invent text.\n\nLEFT CONTEXT\nAlso copy the few words of TARGET_WINDOW that appear immediately before your\nspan (verbatim, or empty if the span is at the very start). This is only used\nby the caller to disambiguate repeated renderings; it is not part of the span.\n\nOFFSETS\nDo not return character offsets. The caller locates your span by exact string\nmatch using the span and the left context.\n\nWHEN NOT TO ANSWER (prefer this over guessing)\n- omitted: the marked concept has no rendering in the window.\n- ambiguous: a rendering exists but you cannot tell which occurrence matches\n  this source occurrence.\n- not_found: you cannot locate any plausible rendering.\n\nOutput must conform exactly to the JSON schema."
+        },
+        {
+          "role": "user",
+          "content": "{\"occurrence_id\": \"occ_a291d28419482ccc\", \"prompt_version\": \"d2l_localizer_t2_v3\", \"source_context\": \"the *label* (or *[[TERM_START]]target[[TERM_END]]*).\", \"target_window\": \"c dữ liệu nếu không có dữ liệu. Chúng ta có thể mất hàng trăm trang để suy ngẫm về chính xác điều gì cấu thành nên dữ liệu, nhưng hiện tại, chúng ta sẽ nghiêng về phía thực tiễn và tập trung vào những đặc tính then chốt cần quan tâm. Nói chung, chúng ta quan tâm đến một tập hợp các ví dụ. Để làm việc với dữ liệu một cách hữu ích, chúng ta thường cần đưa ra một biểu diễn số học phù hợp. Mỗi *ví dụ* (hoặc *điểm dữ liệu*, *thực thể dữ liệu*, *mẫu*) thường gồm một tập các thuộc tính gọi là *đặc trưng* (hoặc *biến đồng biến*), từ đó mô hình phải đưa ra dự đoán của mình. Trong các bài toán học có giám sát ở trên, thứ cần dự đoán là một thuộc tính đặc biệt được chỉ định là *nhãn* (hoặc *mục tiêu*).\"}"
+        }
+      ],
+      "estimated_prompt_tokens": 985
+    }
+  ]
+}

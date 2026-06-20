@@ -1,0 +1,510 @@
+{
+  "dataset_role": "DEV diagnostic, not held-out generalization",
+  "gold": {
+    "path": "data/eval/localizer_gold.csv",
+    "rows": 118,
+    "membership_fix": {
+      "row_id": "mt_membership_99ef7e9bc5:S0",
+      "start": 526,
+      "end": 537,
+      "span": "sự thuộc về",
+      "slice": "sự thuộc về",
+      "pass": true
+    }
+  },
+  "frozen_db": {
+    "path": "data/jobs/d2l_p1/memory.sqlite3",
+    "sha256_first16": "DA0F687894090D43",
+    "sha256": "da0f687894090d43b75a3ae52ba71ec1edf85dab3198c9f86039879365d464b8"
+  },
+  "shared_gold_guard": {
+    "recommendation": "longest_match",
+    "longest_exact": 108,
+    "longest_n": 116,
+    "longest_accuracy": 0.9310344827586207,
+    "legacy_longest_failures": 8,
+    "legacy_longest_failure_rows": [
+      "mt_mnist_dataset_923cfe4011:S1",
+      "mt_annotation_2e76f54422:S0",
+      "mt_annotation_2e76f54422:S1",
+      "mt_elementwise_1d6feafbec:S0",
+      "mt_elementwise_multiplication_0ebdbc19e3:S0",
+      "mt_membership_99ef7e9bc5:S0",
+      "mt_tangent_line_fc8da8d99b:S0",
+      "mt_target_0e8a3ad980:S0"
+    ],
+    "pass": true
+  },
+  "reports": [
+    {
+      "label": "committed baseline v2",
+      "path": "data/reports/localizer_cascade_dev.json",
+      "prompt_version": "d2l_localizer_t2_v2",
+      "reasoning": "none",
+      "temp": 0.0,
+      "max_out": 256,
+      "exact_on_corrected_gold": {
+        "exact": 5,
+        "n": 8,
+        "accuracy": 0.625
+      },
+      "cost_usd": 0.0,
+      "note": "existing v2 report; re-scored on corrected gold",
+      "per_case": [
+        {
+          "row_id": "mt_mnist_dataset_923cfe4011:S1",
+          "term": "MNIST dataset",
+          "gold_span": "tập dữ liệu MNIST",
+          "quote": "tập dữ liệu MNIST",
+          "start": 255,
+          "end": 272,
+          "offset_source": "unique_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_annotation_2e76f54422:S0",
+          "term": "annotation",
+          "gold_span": "chú thích",
+          "quote": "chú thích",
+          "start": 428,
+          "end": 437,
+          "offset_source": "position_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_annotation_2e76f54422:S1",
+          "term": "annotation",
+          "gold_span": "chú giải",
+          "quote": "chú giải",
+          "start": 410,
+          "end": 418,
+          "offset_source": "position_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_elementwise_1d6feafbec:S0",
+          "term": "elementwise",
+          "gold_span": "theo từng phần tử",
+          "quote": "theo từng phần tử",
+          "start": 260,
+          "end": 277,
+          "offset_source": "position_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",
+          "term": "elementwise multiplication",
+          "gold_span": "phép nhân theo từng phần tử",
+          "quote": "phép nhân theo từng phần tử của hai ma trận",
+          "start": 11,
+          "end": 54,
+          "offset_source": "unique_quote_reanchor",
+          "correct": false
+        },
+        {
+          "row_id": "mt_membership_99ef7e9bc5:S0",
+          "term": "membership",
+          "gold_span": "sự thuộc về",
+          "quote": "sự thuộc về một tập hợp",
+          "start": 526,
+          "end": 549,
+          "offset_source": "unique_quote_reanchor",
+          "correct": false
+        },
+        {
+          "row_id": "mt_tangent_line_fc8da8d99b:S0",
+          "term": "tangent line",
+          "gold_span": "đường thẳng tiếp tuyến",
+          "quote": "đường thẳng tiếp tuyến",
+          "start": 300,
+          "end": 322,
+          "offset_source": "unique_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_target_0e8a3ad980:S0",
+          "term": "target",
+          "gold_span": "mục tiêu",
+          "quote": "nhãn",
+          "start": 736,
+          "end": 740,
+          "offset_source": "unique_quote_reanchor",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "label": "none/temp1 v2",
+      "path": "data/reports/localizer_cascade_dev_reasoning_none_temp1.json",
+      "prompt_version": "d2l_localizer_t2_v2",
+      "reasoning": "none",
+      "temp": 1.0,
+      "max_out": 256,
+      "exact_on_corrected_gold": {
+        "exact": 6,
+        "n": 8,
+        "accuracy": 0.75
+      },
+      "cost_usd": 0.0016875,
+      "note": "prior temp1 diagnostic; not reproducibility default",
+      "per_case": [
+        {
+          "row_id": "mt_mnist_dataset_923cfe4011:S1",
+          "term": "MNIST dataset",
+          "gold_span": "tập dữ liệu MNIST",
+          "quote": "tập dữ liệu MNIST",
+          "start": 255,
+          "end": 272,
+          "offset_source": "unique_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_annotation_2e76f54422:S0",
+          "term": "annotation",
+          "gold_span": "chú thích",
+          "quote": "chú thích",
+          "start": 428,
+          "end": 437,
+          "offset_source": "position_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_annotation_2e76f54422:S1",
+          "term": "annotation",
+          "gold_span": "chú giải",
+          "quote": "chú giải",
+          "start": 410,
+          "end": 418,
+          "offset_source": "position_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_elementwise_1d6feafbec:S0",
+          "term": "elementwise",
+          "gold_span": "theo từng phần tử",
+          "quote": "theo từng phần tử",
+          "start": 260,
+          "end": 277,
+          "offset_source": "position_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",
+          "term": "elementwise multiplication",
+          "gold_span": "phép nhân theo từng phần tử",
+          "quote": "phép nhân theo từng phần tử của hai ma trận",
+          "start": 11,
+          "end": 54,
+          "offset_source": "unique_quote_reanchor",
+          "correct": false
+        },
+        {
+          "row_id": "mt_membership_99ef7e9bc5:S0",
+          "term": "membership",
+          "gold_span": "sự thuộc về",
+          "quote": "sự thuộc về",
+          "start": 526,
+          "end": 537,
+          "offset_source": "unique_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_tangent_line_fc8da8d99b:S0",
+          "term": "tangent line",
+          "gold_span": "đường thẳng tiếp tuyến",
+          "quote": "đường thẳng tiếp tuyến",
+          "start": 300,
+          "end": 322,
+          "offset_source": "unique_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_target_0e8a3ad980:S0",
+          "term": "target",
+          "gold_span": "mục tiêu",
+          "quote": "nhãn",
+          "start": 736,
+          "end": 740,
+          "offset_source": "unique_quote_reanchor",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "label": "low/temp1/max4096 v2",
+      "path": "data/reports/localizer_cascade_dev_reasoning_low_temp1_max4096.json",
+      "prompt_version": "d2l_localizer_t2_v2",
+      "reasoning": "low",
+      "temp": 1.0,
+      "max_out": 4096,
+      "exact_on_corrected_gold": {
+        "exact": 4,
+        "n": 8,
+        "accuracy": 0.5
+      },
+      "cost_usd": 0.0276275,
+      "note": "prior rejected reasoning diagnostic",
+      "per_case": [
+        {
+          "row_id": "mt_mnist_dataset_923cfe4011:S1",
+          "term": "MNIST dataset",
+          "gold_span": "tập dữ liệu MNIST",
+          "quote": "tập dữ liệu MNIST",
+          "start": 255,
+          "end": 272,
+          "offset_source": "unique_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_annotation_2e76f54422:S0",
+          "term": "annotation",
+          "gold_span": "chú thích",
+          "quote": "chú thích",
+          "start": 63,
+          "end": 72,
+          "offset_source": "model",
+          "correct": false
+        },
+        {
+          "row_id": "mt_annotation_2e76f54422:S1",
+          "term": "annotation",
+          "gold_span": "chú giải",
+          "quote": "chú giải",
+          "start": 57,
+          "end": 65,
+          "offset_source": "model",
+          "correct": false
+        },
+        {
+          "row_id": "mt_elementwise_1d6feafbec:S0",
+          "term": "elementwise",
+          "gold_span": "theo từng phần tử",
+          "quote": "các phép toán theo từng phần tử",
+          "start": 393,
+          "end": 424,
+          "offset_source": "unique_quote_reanchor",
+          "correct": false
+        },
+        {
+          "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",
+          "term": "elementwise multiplication",
+          "gold_span": "phép nhân theo từng phần tử",
+          "quote": "phép nhân theo từng phần tử",
+          "start": 11,
+          "end": 38,
+          "offset_source": "model",
+          "correct": true
+        },
+        {
+          "row_id": "mt_membership_99ef7e9bc5:S0",
+          "term": "membership",
+          "gold_span": "sự thuộc về",
+          "quote": "sự thuộc về một tập hợp",
+          "start": 526,
+          "end": 549,
+          "offset_source": "unique_quote_reanchor",
+          "correct": false
+        },
+        {
+          "row_id": "mt_tangent_line_fc8da8d99b:S0",
+          "term": "tangent line",
+          "gold_span": "đường thẳng tiếp tuyến",
+          "quote": "đường thẳng tiếp tuyến",
+          "start": 300,
+          "end": 322,
+          "offset_source": "unique_quote_reanchor",
+          "correct": true
+        },
+        {
+          "row_id": "mt_target_0e8a3ad980:S0",
+          "term": "target",
+          "gold_span": "mục tiêu",
+          "quote": "mục tiêu",
+          "start": 749,
+          "end": 757,
+          "offset_source": "unique_quote_reanchor",
+          "correct": true
+        }
+      ]
+    },
+    {
+      "label": "NEW v3",
+      "path": "data/reports/localizer_cascade_dev_v3.json",
+      "prompt_version": "d2l_localizer_t2_v3",
+      "reasoning": "none",
+      "temp": 0.0,
+      "max_out": 256,
+      "exact_on_corrected_gold": {
+        "exact": 5,
+        "n": 8,
+        "accuracy": 0.625
+      },
+      "cost_usd": 0.0024655,
+      "note": "prompt v3 + code-owned offsets; DEV diagnostic only",
+      "per_case": [
+        {
+          "row_id": "mt_mnist_dataset_923cfe4011:S1",
+          "term": "MNIST dataset",
+          "gold_span": "tập dữ liệu MNIST",
+          "quote": "tập dữ liệu MNIST",
+          "start": 255,
+          "end": 272,
+          "offset_source": "unique_quote",
+          "correct": true
+        },
+        {
+          "row_id": "mt_annotation_2e76f54422:S0",
+          "term": "annotation",
+          "gold_span": "chú thích",
+          "quote": "chú thích",
+          "start": 428,
+          "end": 437,
+          "offset_source": "position",
+          "correct": true
+        },
+        {
+          "row_id": "mt_annotation_2e76f54422:S1",
+          "term": "annotation",
+          "gold_span": "chú giải",
+          "quote": "chú giải",
+          "start": 510,
+          "end": 518,
+          "offset_source": "left_anchor",
+          "correct": false
+        },
+        {
+          "row_id": "mt_elementwise_1d6feafbec:S0",
+          "term": "elementwise",
+          "gold_span": "theo từng phần tử",
+          "quote": "theo từng phần tử",
+          "start": 407,
+          "end": 424,
+          "offset_source": "left_anchor",
+          "correct": false
+        },
+        {
+          "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",
+          "term": "elementwise multiplication",
+          "gold_span": "phép nhân theo từng phần tử",
+          "quote": "phép nhân theo từng phần tử của hai ma trận",
+          "start": 11,
+          "end": 54,
+          "offset_source": "unique_quote",
+          "correct": false
+        },
+        {
+          "row_id": "mt_membership_99ef7e9bc5:S0",
+          "term": "membership",
+          "gold_span": "sự thuộc về",
+          "quote": "sự thuộc về",
+          "start": 526,
+          "end": 537,
+          "offset_source": "unique_quote",
+          "correct": true
+        },
+        {
+          "row_id": "mt_tangent_line_fc8da8d99b:S0",
+          "term": "tangent line",
+          "gold_span": "đường thẳng tiếp tuyến",
+          "quote": "đường thẳng tiếp tuyến",
+          "start": 300,
+          "end": 322,
+          "offset_source": "unique_quote",
+          "correct": true
+        },
+        {
+          "row_id": "mt_target_0e8a3ad980:S0",
+          "term": "target",
+          "gold_span": "mục tiêu",
+          "quote": "mục tiêu",
+          "start": 749,
+          "end": 757,
+          "offset_source": "unique_quote",
+          "correct": true
+        }
+      ]
+    }
+  ],
+  "per_case_diff_v3_vs_committed_baseline": [
+    {
+      "row_id": "mt_mnist_dataset_923cfe4011:S1",
+      "term": "MNIST dataset",
+      "gold_span": "tập dữ liệu MNIST",
+      "baseline_quote": "tập dữ liệu MNIST",
+      "baseline_correct": true,
+      "v3_quote": "tập dữ liệu MNIST",
+      "v3_offset_source": "unique_quote",
+      "v3_correct": true
+    },
+    {
+      "row_id": "mt_annotation_2e76f54422:S0",
+      "term": "annotation",
+      "gold_span": "chú thích",
+      "baseline_quote": "chú thích",
+      "baseline_correct": true,
+      "v3_quote": "chú thích",
+      "v3_offset_source": "position",
+      "v3_correct": true
+    },
+    {
+      "row_id": "mt_annotation_2e76f54422:S1",
+      "term": "annotation",
+      "gold_span": "chú giải",
+      "baseline_quote": "chú giải",
+      "baseline_correct": true,
+      "v3_quote": "chú giải",
+      "v3_offset_source": "left_anchor",
+      "v3_correct": false
+    },
+    {
+      "row_id": "mt_elementwise_1d6feafbec:S0",
+      "term": "elementwise",
+      "gold_span": "theo từng phần tử",
+      "baseline_quote": "theo từng phần tử",
+      "baseline_correct": true,
+      "v3_quote": "theo từng phần tử",
+      "v3_offset_source": "left_anchor",
+      "v3_correct": false
+    },
+    {
+      "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",
+      "term": "elementwise multiplication",
+      "gold_span": "phép nhân theo từng phần tử",
+      "baseline_quote": "phép nhân theo từng phần tử của hai ma trận",
+      "baseline_correct": false,
+      "v3_quote": "phép nhân theo từng phần tử của hai ma trận",
+      "v3_offset_source": "unique_quote",
+      "v3_correct": false
+    },
+    {
+      "row_id": "mt_membership_99ef7e9bc5:S0",
+      "term": "membership",
+      "gold_span": "sự thuộc về",
+      "baseline_quote": "sự thuộc về một tập hợp",
+      "baseline_correct": false,
+      "v3_quote": "sự thuộc về",
+      "v3_offset_source": "unique_quote",
+      "v3_correct": true
+    },
+    {
+      "row_id": "mt_tangent_line_fc8da8d99b:S0",
+      "term": "tangent line",
+      "gold_span": "đường thẳng tiếp tuyến",
+      "baseline_quote": "đường thẳng tiếp tuyến",
+      "baseline_correct": true,
+      "v3_quote": "đường thẳng tiếp tuyến",
+      "v3_offset_source": "unique_quote",
+      "v3_correct": true
+    },
+    {
+      "row_id": "mt_target_0e8a3ad980:S0",
+      "term": "target",
+      "gold_span": "mục tiêu",
+      "baseline_quote": "nhãn",
+      "baseline_correct": false,
+      "v3_quote": "mục tiêu",
+      "v3_offset_source": "unique_quote",
+      "v3_correct": true
+    }
+  ]
+}

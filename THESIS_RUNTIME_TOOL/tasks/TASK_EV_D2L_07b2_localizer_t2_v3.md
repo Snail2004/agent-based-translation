@@ -1,6 +1,6 @@
 # TASK EV-D2L-07b-2 — Localizer T2 v3: blind generalized prompt + offset fully in code + occurrence anchor; re-score all runs on corrected gold
 
-Status: READY (Claude wrote sec 1-4) -> CodeX fills sec 5 + set REVIEW + STOP (NO commit) -> Claude reviews sec 6 + commits.
+Status: REVIEW (Claude wrote sec 1-4; CodeX filled sec 5 and stopped, NO commit) -> Claude reviews sec 6 + commits.
 Type: ENGINEERING HARDENING + DIAGNOSTIC-on-DEV (NOT a generalization claim).
 Predecessor: EV-D2L-07b (cascade pilot, commit 8cde8be). Successor: EV-D2L-07c (held-out chapter = the only trust number).
 
@@ -116,7 +116,190 @@ Gold precondition (already applied in working tree, verify the slice): `mt_membe
 - L9: targeted tests for the new locate logic (unique / left_anchor / position / ambiguous, and a non-unique-quote case that previously could mis-select) + full suite must pass.
 
 ## 5. Implementation (CodeX)
-<!-- CodeX fills: files changed, exact locate algorithm, re-scored table, new v3 per-case, costs, test results, frozen DB hash, shared-gold guard output. Then set REVIEW and STOP. -->
 
-## 6. Review (Claude)
-<!-- Claude: re-derive v3 X/8 + comparison on corrected gold from on-disk artifacts; confirm no model-offset path; confirm prompt has no hardcoded case; confirm L5 shared-gold guard; confirm DB hash; run suite. -->
+### 5.1 Files changed
+
+- `data/eval/localizer_gold.csv`
+  - Corrected `mt_membership_99ef7e9bc5:S0` from `sự thuộc` to `sự thuộc về`.
+  - Verified slice: `target_text[526:537] == "sự thuộc về"`.
+- `pipeline/eval/localizer_cascade.py`
+  - Bumped `PROMPT_VERSION` to `d2l_localizer_t2_v3`.
+  - Bumped `VALIDATOR_VERSION` to `code_anchor_v3`.
+  - Replaced the T2 system prompt with the v3 generalized prompt.
+  - Removed `start`/`end` from the strict model schema; model now returns only `occurrence_id`, `status`, `target_quote`, and `left_context`.
+  - Reworked `validate_t2_payload` so the model never supplies offsets. Code locates the returned quote by exact match, optional left-context disambiguation, then position re-anchor.
+- `pipeline/tests/test_localizer_cascade.py`
+  - Updated tests for the new no-offset schema.
+  - Added coverage for left-anchor disambiguation.
+  - Added regression coverage that model-supplied offset-like fields are ignored even when they point to a wrong occurrence.
+- `pipeline/scripts/localizer_t2_v3_compare.py`
+  - New comparison/report script. It re-scores prior reports on the corrected gold and writes one comparison JSON/HTML.
+
+Generated artifacts:
+
+- `data/reports/localizer_cascade_preflight_v3.json`
+- `data/reports/localizer_cascade_dev_v3.json`
+- `data/eval/localizer_cascade/audit_dev_v3.csv`
+- `data/eval/localizer_cascade/audit_dev_v3.html`
+- `data/reports/localizer_t2_v3_comparison.json`
+- `data/reports/localizer_t2_v3_comparison.html`
+
+### 5.2 Offset-location algorithm
+
+For a localized model payload, the validator now does:
+
+1. Reject empty quote or quote not found in the current target window.
+2. If the quote occurs once, use that occurrence (`offset_source=unique_quote`).
+3. If the quote occurs multiple times and `left_context` is non-empty, normalize whitespace and choose the single occurrence whose preceding window text ends with that left context (`offset_source=left_anchor`).
+4. If still ambiguous, fall back to position re-anchor (`offset_source=position`).
+5. If no unique occurrence remains, return `ambiguous` instead of guessing.
+
+No code path reads `payload.get("start")` or `payload.get("end")`. Verification command:
+
+```
+rg -n --fixed-strings 'payload.get("start"' pipeline/eval/localizer_cascade.py
+rg -n --fixed-strings 'payload.get("end"' pipeline/eval/localizer_cascade.py
+```
+
+Both returned no matches. The remaining `offset_source` values are produced by code after quote location.
+
+### 5.3 API preflight and run
+
+Preflight:
+
+```
+python -m pipeline.scripts.localizer_cascade --preflight --dev `
+  --preflight-out data/reports/localizer_cascade_preflight_v3.json `
+  --out data/reports/localizer_cascade_dev_v3.json `
+  --audit-csv data/eval/localizer_cascade/audit_dev_v3.csv `
+  --audit-html data/eval/localizer_cascade/audit_dev_v3.html
+```
+
+Preflight output:
+
+- Confirm token: `LOCALIZE-909FCB602A82`
+- Prompt version: `d2l_localizer_t2_v3`
+- Estimated prompt tokens: `7712`
+- Estimated max output tokens: `2048`
+- Estimated total tokens: `9760`
+- Estimated cost: `$0.006024`
+- Worst-case three-stage tokens: `29280`
+- Worst-case cost: `$0.018072`
+
+Run:
+
+```
+python -m pipeline.scripts.localizer_cascade --run-dev --dev `
+  --confirm-token LOCALIZE-909FCB602A82 `
+  --api-cache data/eval/localizer_cascade/api_cache_v3.sqlite3 `
+  --result-cache data/eval/localizer_cascade/result_cache_v3.sqlite3 `
+  --preflight-out data/reports/localizer_cascade_preflight_v3.json `
+  --out data/reports/localizer_cascade_dev_v3.json `
+  --audit-csv data/eval/localizer_cascade/audit_dev_v3.csv `
+  --audit-html data/eval/localizer_cascade/audit_dev_v3.html
+```
+
+Actual v3 usage:
+
+- Prompt tokens: `6934`
+- Completion tokens: `366`
+- Cost: `$0.0024655`
+- API cache hits: `0`
+- Result cache hits: `0`
+
+### 5.4 Re-scored comparison on corrected gold
+
+Command:
+
+```
+python -m pipeline.scripts.localizer_t2_v3_compare `
+  --out data/reports/localizer_t2_v3_comparison.json `
+  --html data/reports/localizer_t2_v3_comparison.html
+```
+
+Comparison rows:
+
+| Label | Prompt | Config | Exact on corrected gold | Cost |
+|---|---|---|---:|---:|
+| committed baseline v2 | `d2l_localizer_t2_v2` | none/temp0/max256 | 5/8 = 0.625 | `$0.0000000` |
+| none/temp1 v2 | `d2l_localizer_t2_v2` | none/temp1/max256 | 6/8 = 0.750 | `$0.0016875` |
+| low/temp1/max4096 v2 | `d2l_localizer_t2_v2` | low/temp1/max4096 | 4/8 = 0.500 | `$0.0276275` |
+| NEW v3 | `d2l_localizer_t2_v3` | none/temp0/max256 | 5/8 = 0.625 | `$0.0024655` |
+
+This is DEV diagnostic only, not a held-out generalization metric.
+
+### 5.5 New v3 per-case notes
+
+V3 exact cases:
+
+- `mt_mnist_dataset_923cfe4011:S1` -> `tập dữ liệu MNIST`, `unique_quote`, exact.
+- `mt_annotation_2e76f54422:S0` -> `chú thích`, `left_anchor`, exact.
+- `mt_membership_99ef7e9bc5:S0` -> `sự thuộc về`, `unique_quote`, exact after corrected gold.
+- `mt_tangent_line_fc8da8d99b:S0` -> `đường thẳng tiếp tuyến`, `unique_quote`, exact.
+- `mt_target_0e8a3ad980:S0` -> `mục tiêu`, `unique_quote`, exact.
+
+V3 remaining failures:
+
+- `mt_annotation_2e76f54422:S1`: model returned the right quote string `chú giải`, but that quote occurs more than once. Left-context selected `[510,518]`; gold is `[410,418]`. This is another occurrence-disambiguation failure.
+- `mt_elementwise_1d6feafbec:S0`: model returned the right quote string `theo từng phần tử`, but that quote occurs more than once. Left-context selected the later occurrence `[407,424]`; gold is `[260,277]`. This is an occurrence-disambiguation failure, not a semantic quote failure.
+- `mt_elementwise_multiplication_0ebdbc19e3:S0`: model returned `phép nhân theo từng phần tử của hai ma trận`, over-extending beyond gold `phép nhân theo từng phần tử`.
+
+### 5.6 Shared-gold guard and DB guard
+
+Shared-gold guard from `localizer_t2_v3_comparison.json`:
+
+- Recommendation: `longest_match`
+- Longest exact: `108/116`
+- Longest accuracy: `0.9310344827586207`
+- Legacy longest failures: `8`
+- Pass: `true`
+
+Frozen DB:
+
+- Path: `data/jobs/d2l_p1/memory.sqlite3`
+- SHA-256 first16: `DA0F687894090D43`
+- Full SHA-256: `da0f687894090d43b75a3ae52ba71ec1edf85dab3198c9f86039879365d464b8`
+
+### 5.7 Tests
+
+Targeted localizer cascade tests:
+
+```
+python -m pytest pipeline/tests/test_localizer_cascade.py -q
+13 passed in 2.28s
+```
+
+Combined localizer tests:
+
+```
+python -m pytest pipeline/tests/test_localizer.py pipeline/tests/test_localizer_cascade.py -q --basetemp D:\temp\pytest-localizer-v3-verbatim
+27 passed in 2.18s
+```
+
+Full THESIS_RUNTIME_TOOL pipeline suite:
+
+```
+python -m pytest pipeline/tests -q --basetemp D:\temp\pytest-thesis-runtime-v3-verbatim
+195 passed in 72.75s (0:01:12)
+```
+
+One attempted full-suite command from the repository parent failed collection with `ModuleNotFoundError: No module named 'pipeline'`; rerunning from `THESIS_RUNTIME_TOOL` passed as above.
+
+## 6. Review (Claude) — VERDICT: PASS (faithful diagnostic; honest reporting)
+
+Re-derived on on-disk artifacts ([[verify-on-committed-artifacts-not-reports]]):
+- **V3 = 5/8** (recomputed from `localizer_cascade_dev_v3.json` vs corrected gold). Per-case OK: mnist, annotation:S0 (position), membership (unique), tangent, target (unique). BAD: annotation:S1, elementwise:S0, elementwise_multiplication:S0.
+- **L2 no hardcode**: prompt v3 is verbatim my spec, contains no case/surface/term. PASS.
+- **L4 model does NOT do offsets**: `start`/`end` removed from schema AND from `validate_t2_payload`; offsets come only from `_locate_model_quote` (string match). No code path reads a model integer offset. PASS.
+- **L5 shared-gold guard**: `legacy_longest_failures=8`; EV-07a `recommendation=longest_match`, longest `108/116=0.9310` UNCHANGED. PASS.
+- **L6**: frozen DB SHA-256 first16 = `DA0F687894090D43` unchanged. PASS.
+- **L9**: re-ran full `pipeline/tests app/backend/tests` → **328 passed** (326 + 2 new). PASS.
+
+**KEY FINDING — `left_anchor` (Claude's proposal) is net-harmful, proven by counterfactual.** In BOTH regressed cases the quote is non-unique and `left_anchor` confidently picked the WRONG occurrence, pre-empting `position` which alone is correct:
+- annotation:S1 "chú giải" (4 occ): left_anchor→[510,518] WRONG; **position-alone→[410,418]==gold**.
+- elementwise:S0 "theo từng phần tử" (3 occ): left_anchor→[407,424] WRONG; **position-alone→[260,277]==gold**.
+`position` is source-anchored and independent of model text quality; `left_anchor` depends on the model returning a discriminating context and, when it doesn't, overrides a working signal. My left_anchor idea did not pan out — I own that.
+
+The v3 PROMPT itself is a real gain (fixed membership + target via a general rule, 0 hardcode). The one genuine semantic residual is `elementwise_multiplication:S0` (unique-quote over-extension "của hai ma trận") → T3.
+
+**DECISION carried to EV-07c (a-priori, measured ONLY on held-out — NOT re-measured on these 8):** adopt v3 prompt + offsets-in-code; **DROP `left_anchor`** → `position`-reanchor primary; on non-unique-and-too-close → abstain → T3. The counterfactual above is mechanistic justification for dropping left_anchor, NOT an 8-case quality claim. This task's artifacts are kept internally consistent (v3+left_anchor = 5/8); the left_anchor removal is deferred to EV-07c so it is measured cleanly rather than retro-fitted here.
