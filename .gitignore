@@ -32,3 +32,8 @@ THESIS_RUNTIME_TOOL/data/sources/d2l-vi/
 # D2L token-bloat baseline (audit-only, has cache copy) + intermediate prepass artifacts
 THESIS_RUNTIME_TOOL/data/_baseline/
 THESIS_RUNTIME_TOOL/data/prepass/
+
+# Localizer bake-off intermediates — regenerable via `localizer_bakeoff --score`; SimAlign rejected (EV-D2L-07a)
+THESIS_RUNTIME_TOOL/data/eval/localizer_simalign_cache/
+# Blind-leak duplicate of KEY/override_set.csv written by build (build:50 follow-up) — keep only the KEY/ copy under version control
+THESIS_RUNTIME_TOOL/data/eval/memory_tradeoff/override_set.csv
