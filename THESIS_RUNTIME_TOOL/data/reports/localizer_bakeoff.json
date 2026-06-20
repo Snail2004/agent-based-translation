@@ -77,5 +77,17 @@
     "real_aligner_used": true,
     "cache_dir": "data/eval/localizer_simalign_cache",
     "note": "Without --with-simalign, simalign rows are reported as missing; unit tests use a fake aligner."
-  }
+  },
+  "simalign_diagnostic": {
+    "n": 116,
+    "exact": 22,
+    "exact_pct": 0.19,
+    "region_hit": 102,
+    "region_hit_pct": 0.88,
+    "near_miss_boundary": 46,
+    "span_balloon_minmax": 34,
+    "true_miss": 14,
+    "note": "exact-span 0.19 understates alignment: region-hit (overlap>0) = 0.88. Of non-exact: 46 boundary near-misses + 34 min-max span balloons (span-policy artifact); only 14 true misses. Recorded to avoid strawman."
+  },
+  "simalign_verdict": "REJECTED for term-localization: loses decisively on exact-span (0.19 vs longest_match 0.93) and is operationally heavy (CPU model-load). Only out-of-registry Metric B (1/2 vs surface 0/2) is a complementary strength, orthogonal to this registry-anchored ruler."
 }
