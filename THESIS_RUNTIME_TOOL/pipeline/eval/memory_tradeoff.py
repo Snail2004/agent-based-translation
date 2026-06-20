@@ -20,7 +20,7 @@ from pipeline.eval.d2l_translate_score import (
     _resolve_chapters,
     _scope_blocks,
 )
-from pipeline.eval.localizer import representative_context
+from pipeline.eval.localizer import _mark_sentence_for_span, _sentence_for_span, representative_context
 from pipeline.eval.surface_match import normalize_surface
 from pipeline.translate.profiles import get_profile
 
@@ -94,6 +94,7 @@ def build_override_set(
     profile_name: str = DEFAULT_PROFILE,
     doc_id: str = DEFAULT_DOC_ID,
     localizer_name: str = "longest_match",
+    gold_rows: Iterable[dict[str, Any]] | None = None,
 ) -> list[OverrideItem]:
     """Build the post-hoc memory tradeoff set from frozen scorer output.
 
@@ -118,6 +119,7 @@ def build_override_set(
     finally:
         conn.close()
 
+    gold_contexts = _gold_contexts_by_item(gold_rows)
     items: list[OverrideItem] = []
     for source_term in sorted(set(terms_by_config["S0"]) & set(terms_by_config["S1"])):
         s0 = terms_by_config["S0"][source_term]
@@ -137,6 +139,18 @@ def build_override_set(
             localizer_name=localizer_name,
         )
         item_id = stable_item_id(source_term)
+        gold_context = gold_contexts.get(item_id)
+        if gold_context:
+            rep = {
+                "resolved": True,
+                "skip_reason": "",
+                "block_id": gold_context["block_id"],
+                "en_sentence": gold_context["en_sentence"],
+                "s0_window": gold_context["S0"]["window"],
+                "s1_window": gold_context["S1"]["window"],
+            }
+            s0_surface = gold_context["S0"]["surface"] or s0_surface
+            s1_surface = gold_context["S1"]["surface"] or s1_surface
         items.append(
             OverrideItem(
                 item_id=item_id,
@@ -623,6 +637,56 @@ def write_gemini_jsonl(path: str | Path, rows: Iterable[dict[str, Any]]) -> None
     write_jsonl(path, rows)
 
 
+def _gold_contexts_by_item(gold_rows: Iterable[dict[str, Any]] | None) -> dict[str, dict[str, Any]]:
+    if gold_rows is None:
+        return {}
+    grouped: dict[str, dict[str, dict[str, Any]]] = {}
+    for row in gold_rows:
+        item_id = str(row.get("item_id") or "")
+        config = str(row.get("config") or "")
+        if not item_id or config not in {"S0", "S1"}:
+            continue
+        if str(row.get("registry_class") or "") != "in" or row.get("edge_kind"):
+            continue
+        target_start = _int_or_none(row.get("gold_target_start"))
+        target_end = _int_or_none(row.get("gold_target_end"))
+        source_start = _int_or_none(row.get("source_start"))
+        source_end = _int_or_none(row.get("source_end"))
+        target_text = str(row.get("target_text") or "")
+        source_text = str(row.get("source_text") or "")
+        if (
+            target_start is None
+            or target_end is None
+            or source_start is None
+            or source_end is None
+            or target_end <= target_start
+            or source_end <= source_start
+            or target_end > len(target_text)
+            or source_end > len(source_text)
+        ):
+            continue
+        grouped.setdefault(item_id, {})[config] = {
+            "block_id": str(row.get("block_id") or ""),
+            "en_sentence": _sentence_for_span(source_text, source_start, source_end),
+            "surface": str(row.get("gold_target_span") or target_text[target_start:target_end]),
+            "window": _mark_sentence_for_span(target_text, target_start, target_end),
+        }
+
+    contexts: dict[str, dict[str, Any]] = {}
+    for item_id, configs in grouped.items():
+        if "S0" not in configs or "S1" not in configs:
+            continue
+        if configs["S0"]["block_id"] != configs["S1"]["block_id"]:
+            continue
+        contexts[item_id] = {
+            "block_id": configs["S0"]["block_id"],
+            "en_sentence": configs["S0"]["en_sentence"],
+            "S0": configs["S0"],
+            "S1": configs["S1"],
+        }
+    return contexts
+
+
 def stable_item_id(source_term: str) -> str:
     digest = hashlib.sha1(_surface_key(source_term).encode("utf-8")).hexdigest()[:10]
     slug = re.sub(r"[^a-z0-9]+", "_", _surface_key(source_term)).strip("_")[:40] or "term"
@@ -760,5 +824,12 @@ def _surface_key(value: Any) -> str:
 def _float_or_none(value: Any) -> float | None:
     try:
         return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _int_or_none(value: Any) -> int | None:
+    try:
+        return int(value)
     except (TypeError, ValueError):
         return None

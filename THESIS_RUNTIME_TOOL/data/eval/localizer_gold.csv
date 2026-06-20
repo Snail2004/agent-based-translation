@@ -3,26 +3,38 @@ mt_fashion_mnist_dataset_b8ddab06eb:S0,mt_fashion_mnist_dataset_b8ddab06eb,S0,Fa
 
 (Chúng ta sẽ sử dụng bộ dữ liệu Fashion-MNIST tương tự nhưng phức tạp hơn)","{""end"": 186, ""start"": 162, ""surface"": ""bộ dữ liệu Fashion-MNIST""}","{""end"": 186, ""start"": 162, ""surface"": ""bộ dữ liệu Fashion-MNIST""}",,,"[""{\""end\"": 186, \""start\"": 162, \""surface\"": \""bộ dữ liệu Fashion-MNIST\""}"", ""{\""end\"": 186, \""start\"": 162, \""surface\"": \""bộ dữ liệu Fashion-MNIST\""}"", """", """"]",auto,,162,186,bộ dữ liệu Fashion-MNIST,,
 mt_fashion_mnist_dataset_b8ddab06eb:S1,mt_fashion_mnist_dataset_b8ddab06eb,S1,Fashion-MNIST dataset,tập dữ liệu Fashion-MNIST,d2l_linear_networks_image_classification_dataset_b002,in,"(~~The MNIST dataset is one of the widely used dataset for image classification, while it's too simple as a benchmark dataset. We will use the similar, but more complex Fashion-MNIST dataset~~)",169,190,Fashion-MNIST dataset,"(~~Tập dữ liệu MNIST là một trong những tập dữ liệu được dùng rộng rãi cho phân loại ảnh, nhưng nó quá đơn giản để làm bộ dữ liệu chuẩn. Chúng ta sẽ dùng tập dữ liệu Fashion-MNIST tương tự nhưng phức tạp hơn~~)","{""end"": 179, ""start"": 154, ""surface"": ""tập dữ liệu Fashion-MNIST""}","{""end"": 179, ""start"": 154, ""surface"": ""tập dữ liệu Fashion-MNIST""}",,,"[""{\""end\"": 179, \""start\"": 154, \""surface\"": \""tập dữ liệu Fashion-MNIST\""}"", ""{\""end\"": 179, \""start\"": 154, \""surface\"": \""tập dữ liệu Fashion-MNIST\""}"", """", """"]",auto,,154,179,tập dữ liệu Fashion-MNIST,,
-mt_mnist_dataset_923cfe4011:S0,mt_mnist_dataset_923cfe4011,S0,MNIST dataset,bộ dữ liệu MNIST,d2l_introduction_index_b126,in,"After initial rapid progress, research in neural networks
-languished from around 1995 until 2005.
-This was mainly due to two reasons.
-First, training a network is computationally very expensive.
-While random-access memory was plentiful at the end of the past century,
-computational power was scarce.
-Second, datasets were relatively small.
-In fact, Fisher's Iris dataset from 1932
-was a popular tool for testing the efficacy of algorithms.
-The MNIST dataset with its 60000 handwritten digits was considered huge.",444,457,MNIST dataset,"Sau giai đoạn tiến bộ nhanh ban đầu, nghiên cứu về mạng nơ-ron đã trì trệ từ khoảng năm 1995 đến 2005. Điều này chủ yếu do hai nguyên nhân. Thứ nhất, việc huấn luyện một mạng rất tốn kém về mặt tính toán. Trong khi bộ nhớ truy cập ngẫu nhiên rất dồi dào vào cuối thế kỷ trước, năng lực tính toán lại khan hiếm. Thứ hai, các bộ dữ liệu tương đối nhỏ. Thực tế, bộ dữ liệu Iris của Fisher từ năm 1932 là một công cụ phổ biến để kiểm tra hiệu quả của các thuật toán. Bộ dữ liệu MNIST với 60000 chữ số viết tay được xem là rất lớn.","{""end"": 479, ""start"": 463, ""surface"": ""Bộ dữ liệu MNIST""}","{""end"": 479, ""start"": 463, ""surface"": ""Bộ dữ liệu MNIST""}",,,"[""{\""end\"": 479, \""start\"": 463, \""surface\"": \""Bộ dữ liệu MNIST\""}"", ""{\""end\"": 479, \""start\"": 463, \""surface\"": \""Bộ dữ liệu MNIST\""}"", """", """"]",auto,,463,479,Bộ dữ liệu MNIST,,
-mt_mnist_dataset_923cfe4011:S1,mt_mnist_dataset_923cfe4011,S1,MNIST dataset,MNIST,d2l_introduction_index_b126,in,"After initial rapid progress, research in neural networks
-languished from around 1995 until 2005.
-This was mainly due to two reasons.
-First, training a network is computationally very expensive.
-While random-access memory was plentiful at the end of the past century,
-computational power was scarce.
-Second, datasets were relatively small.
-In fact, Fisher's Iris dataset from 1932
-was a popular tool for testing the efficacy of algorithms.
-The MNIST dataset with its 60000 handwritten digits was considered huge.",444,457,MNIST dataset,"Sau giai đoạn tiến bộ nhanh ban đầu, nghiên cứu về mạng nơ-ron đã trì trệ từ khoảng năm 1995 đến 2005. Điều này chủ yếu do hai lý do. Thứ nhất, huấn luyện một mạng rất tốn kém về mặt tính toán. Trong khi bộ nhớ truy cập ngẫu nhiên thì dồi dào vào cuối thế kỷ trước, năng lực tính toán lại khan hiếm. Thứ hai, các bộ dữ liệu tương đối nhỏ. Thực tế, bộ dữ liệu Iris của Fisher từ năm 1932 là một công cụ phổ biến để kiểm tra hiệu quả của các thuật toán. Bộ dữ liệu MNIST với 60000 chữ số viết tay được xem là rất lớn.","{""end"": 468, ""start"": 463, ""surface"": ""MNIST""}","{""end"": 468, ""start"": 452, ""surface"": ""Bộ dữ liệu MNIST""}",,,"[""{\""end\"": 468, \""start\"": 463, \""surface\"": \""MNIST\""}"", ""{\""end\"": 468, \""start\"": 452, \""surface\"": \""Bộ dữ liệu MNIST\""}"", """", """"]",human_required,true,452,468,Bộ dữ liệu MNIST,"full NP, fix sub-string bug (was ""MNIST"")",
+mt_mnist_dataset_923cfe4011:S0,mt_mnist_dataset_923cfe4011,S0,MNIST dataset,bộ dữ liệu MNIST,d2l_introduction_index_b137,in,"AI has a long history of delivering results
+that would be difficult to accomplish otherwise.
+For instance, 
+the mail sorting systems
+using optical character recognition
+have been deployed since the 1990s.
+This is, after all, the source of the famous MNIST dataset  of handwritten digits.
+The same applies to reading checks for bank deposits and scoring
+creditworthiness of applicants.
+Financial transactions are checked for fraud automatically.
+This forms the backbone of many e-commerce payment systems,
+such as PayPal, Stripe, AliPay, WeChat, Apple, Visa, and MasterCard.
+Computer programs for chess have been competitive for decades.
+Machine learning feeds search, recommendation, personalization,
+and ranking on the Internet.
+In other words, machine learning is pervasive, albeit often hidden from sight.",250,263,MNIST dataset,"AI có một lịch sử lâu dài trong việc mang lại những kết quả mà nếu không có nó thì sẽ rất khó đạt được. Chẳng hạn, các hệ thống phân loại thư sử dụng nhận dạng ký tự quang học đã được triển khai từ những năm 1990. Rốt cuộc, đây chính là nguồn gốc của bộ dữ liệu MNIST nổi tiếng về các chữ số viết tay. Điều tương tự cũng áp dụng cho việc đọc séc để gửi tiền vào ngân hàng và chấm điểm mức độ tín nhiệm của người nộp đơn. Các giao dịch tài chính được tự động kiểm tra gian lận. Điều này tạo thành xương sống của nhiều hệ thống thanh toán thương mại điện tử, như PayPal, Stripe, AliPay, WeChat, Apple, Visa, và MasterCard. Các chương trình máy tính cho cờ vua đã có tính cạnh tranh trong nhiều thập kỷ. Học máy cung cấp năng lực cho tìm kiếm, gợi ý, cá nhân hóa, và xếp hạng trên Internet. Nói cách khác, học máy hiện diện ở khắp nơi, dù thường ẩn khỏi tầm nhìn.","{""end"": 267, ""start"": 251, ""surface"": ""bộ dữ liệu MNIST""}","{""end"": 267, ""start"": 251, ""surface"": ""bộ dữ liệu MNIST""}",,,"[""{\""end\"": 267, \""start\"": 251, \""surface\"": \""bộ dữ liệu MNIST\""}"", ""{\""end\"": 267, \""start\"": 251, \""surface\"": \""bộ dữ liệu MNIST\""}"", """", """"]",human_required,true,251,267,bộ dữ liệu MNIST,human re-verified canonical occurrence after EV-D2L-07a reopen,
+mt_mnist_dataset_923cfe4011:S1,mt_mnist_dataset_923cfe4011,S1,MNIST dataset,MNIST,d2l_introduction_index_b137,in,"AI has a long history of delivering results
+that would be difficult to accomplish otherwise.
+For instance, 
+the mail sorting systems
+using optical character recognition
+have been deployed since the 1990s.
+This is, after all, the source of the famous MNIST dataset  of handwritten digits.
+The same applies to reading checks for bank deposits and scoring
+creditworthiness of applicants.
+Financial transactions are checked for fraud automatically.
+This forms the backbone of many e-commerce payment systems,
+such as PayPal, Stripe, AliPay, WeChat, Apple, Visa, and MasterCard.
+Computer programs for chess have been competitive for decades.
+Machine learning feeds search, recommendation, personalization,
+and ranking on the Internet.
+In other words, machine learning is pervasive, albeit often hidden from sight.",250,263,MNIST dataset,"trí tuệ nhân tạo có lịch sử lâu dài trong việc mang lại những kết quả mà nếu không có nó thì sẽ rất khó đạt được. Chẳng hạn, các hệ thống phân loại thư sử dụng nhận dạng ký tự quang học đã được triển khai từ những năm 1990. Rốt cuộc, đây là nguồn gốc của tập dữ liệu MNIST nổi tiếng về các chữ số viết tay. Điều tương tự cũng đúng với việc đọc séc để gửi tiền vào ngân hàng và chấm điểm khả năng tín dụng của người nộp đơn. Các giao dịch tài chính được kiểm tra gian lận tự động. Điều này tạo thành nền tảng của nhiều hệ thống thanh toán thương mại điện tử, như PayPal, Stripe, AliPay, WeChat, Apple, Visa, và MasterCard. Các chương trình máy tính chơi cờ đã có tính cạnh tranh trong nhiều thập kỷ. học máy cung cấp cho Tìm kiếm, gợi ý, cá nhân hóa, và xếp hạng trên Internet. Nói cách khác, học máy hiện diện ở khắp nơi, dù thường ẩn khỏi tầm nhìn.","{""end"": 272, ""start"": 267, ""surface"": ""MNIST""}","{""end"": 272, ""start"": 267, ""surface"": ""MNIST""}",,,"[""{\""end\"": 272, \""start\"": 267, \""surface\"": \""MNIST\""}"", ""{\""end\"": 272, \""start\"": 267, \""surface\"": \""MNIST\""}"", """", """"]",human_required,true,255,272,tập dữ liệu MNIST,human re-verified canonical occurrence after EV-D2L-07a reopen,
 mt_universal_approximators_c7cc5b991a:S0,mt_universal_approximators_c7cc5b991a,S0,Universal Approximators,bộ xấp xỉ phổ dụng,d2l_multilayer_perceptrons_mlp_b024,in,### Universal Approximators,4,27,Universal Approximators,### Bộ xấp xỉ phổ dụng,"{""end"": 22, ""start"": 4, ""surface"": ""Bộ xấp xỉ phổ dụng""}","{""end"": 22, ""start"": 4, ""surface"": ""Bộ xấp xỉ phổ dụng""}",,,"[""{\""end\"": 22, \""start\"": 4, \""surface\"": \""Bộ xấp xỉ phổ dụng\""}"", ""{\""end\"": 22, \""start\"": 4, \""surface\"": \""Bộ xấp xỉ phổ dụng\""}"", """", """"]",auto,,4,22,Bộ xấp xỉ phổ dụng,,
 mt_universal_approximators_c7cc5b991a:S1,mt_universal_approximators_c7cc5b991a,S1,Universal Approximators,bộ xấp xỉ phổ quát,d2l_multilayer_perceptrons_mlp_b024,in,### Universal Approximators,4,27,Universal Approximators,### Bộ xấp xỉ phổ quát,"{""end"": 22, ""start"": 4, ""surface"": ""Bộ xấp xỉ phổ quát""}","{""end"": 22, ""start"": 4, ""surface"": ""Bộ xấp xỉ phổ quát""}",,,"[""{\""end\"": 22, \""start\"": 4, \""surface\"": \""Bộ xấp xỉ phổ quát\""}"", ""{\""end\"": 22, \""start\"": 4, \""surface\"": \""Bộ xấp xỉ phổ quát\""}"", """", """"]",auto,,4,22,Bộ xấp xỉ phổ quát,,
 mt_vanishing_and_exploding_gradients_c51a803991:S0,mt_vanishing_and_exploding_gradients_c51a803991,S0,Vanishing and Exploding Gradients,gradient biến mất và bùng nổ,d2l_multilayer_perceptrons_numerical_stability_and_init_b042,in,"* Vanishing and exploding gradients are common issues in deep networks. Great care in parameter initialization is required to ensure that gradients and parameters remain well controlled.
@@ -843,38 +855,26 @@ mt_negative_log_likelihood_006bbe2ce2:S1,mt_negative_log_likelihood_006bbe2ce2,S
     1. Write out the negative log-likelihood of the data under the model $-\log P(\mathbf y \mid \mathbf X)$.
     1. Can you find a closed form solution?
     1. Suggest a stochastic gradient descent algorithm to solve this problem. What could possibly go wrong (hint: what happens near the stationary point as we keep on updating the parameters)? Can you fix this?",1167,1190,negative log-likelihood,"1. Giả sử rằng chúng ta có một số dữ liệu $x_1, \ldots, x_n \in \mathbb{R}$. Mục tiêu của chúng ta là tìm một hằng số $b$ sao cho $\sum_i (x_i - b)^2$ được tối thiểu hóa.     1. Tìm nghiệm giải tích cho giá trị tối ưu của $b$.     1. Bài toán này và nghiệm của nó liên hệ như thế nào với phân phối chuẩn? 1. Suy ra nghiệm giải tích cho bài toán tối ưu cho hồi quy tuyến tính với sai số bình phương. Để đơn giản, bạn có thể bỏ qua độ lệch $b$ khỏi bài toán (chúng ta có thể làm điều này một cách có cơ sở bằng cách thêm một cột vào $\mathbf X$ gồm toàn số 1).     1. Viết bài toán tối ưu bằng ký hiệu ma trận và vector (coi toàn bộ dữ liệu là một ma trận duy nhất, và tất cả các giá trị mục tiêu là một vector duy nhất).     1. Tính gradient của hàm mất mát theo $w$.     1. Tìm nghiệm giải tích bằng cách đặt gradient bằng 0 và giải phương trình ma trận.     1. Khi nào cách này có thể tốt hơn việc dùng hạ gradient ngẫu nhiên? Khi nào phương pháp này có thể thất bại? 1. Giả sử mô hình nhiễu chi phối nhiễu cộng $\epsilon$ là phân phối mũ. Tức là, $p(\epsilon) = \frac{1}{2} \exp(-|\epsilon|)$.     1. Viết log-khả năng âm của dữ liệu dưới mô hình $-\log P(\mathbf y \mid \mathbf X)$.     1. Bạn có thể tìm được nghiệm dạng đóng không?     1. Đề xuất một thuật toán hạ gradient ngẫu nhiên để giải bài toán này. Điều gì có thể xảy ra sai (gợi ý: điều gì xảy ra gần điểm dừng khi chúng ta tiếp tục cập nhật tham số)? Bạn có thể sửa điều này không?","{""end"": 1123, ""start"": 1108, ""surface"": ""log-khả năng âm""}","{""end"": 1123, ""start"": 1108, ""surface"": ""log-khả năng âm""}",,,"[""{\""end\"": 1123, \""start\"": 1108, \""surface\"": \""log-khả năng âm\""}"", ""{\""end\"": 1123, \""start\"": 1108, \""surface\"": \""log-khả năng âm\""}"", """", """"]",auto,,1108,1123,log-khả năng âm,,
-mt_offset_53a610e925:S0,mt_offset_53a610e925,S0,offset,độ lệch,d2l_linear_networks_linear_regression_b011,in,"In :eqref:`eq_price-area`, $w_{\mathrm{area}}$ and $w_{\mathrm{age}}$
-are called *weights*, and $b$ is called a *bias*
-(also called an *offset* or *intercept*).
-The weights determine the influence of each feature
-on our prediction and the bias just says
-what value the predicted price should take
-when all of the features take value 0.
-Even if we will never see any homes with zero area,
-or that are precisely zero years old,
-we still need the bias or else we will
-limit the expressivity of our model.
-Strictly speaking, :eqref:`eq_price-area` is an *affine transformation*
-of input features,
-which is characterized by
-a *linear transformation* of features via weighted sum, combined with
-a *translation* via the added bias.",136,142,offset,"Trong :eqref:`eq_price-area`, $w_{\mathrm{area}}$ và $w_{\mathrm{age}}$ được gọi là *trọng số*, và $b$ được gọi là *độ lệch* (còn gọi là *offset* hoặc *intercept*). Các trọng số quyết định mức ảnh hưởng của từng đặc trưng lên dự đoán của chúng ta, còn độ lệch chỉ cho biết giá trị mà giá dự đoán nên nhận khi tất cả các đặc trưng đều có giá trị 0. Ngay cả khi chúng ta sẽ không bao giờ thấy ngôi nhà nào có diện tích bằng 0, hoặc có tuổi chính xác bằng 0 năm, chúng ta vẫn cần độ lệch nếu không sẽ làm hạn chế khả năng biểu đạt của mô hình. Nói chính xác hơn, :eqref:`eq_price-area` là một *biến đổi affine* của các đặc trưng đầu vào, được đặc trưng bởi một *biến đổi tuyến tính* của các đặc trưng thông qua tổng có trọng số, kết hợp với một *tịnh tiến* thông qua độ lệch được thêm vào.","{""end"": 123, ""start"": 116, ""surface"": ""độ lệch""}","{""end"": 123, ""start"": 116, ""surface"": ""độ lệch""}",,,"[""{\""end\"": 123, \""start\"": 116, \""surface\"": \""độ lệch\""}"", ""{\""end\"": 123, \""start\"": 116, \""surface\"": \""độ lệch\""}"", """", """"]",auto,true,138,144,offset,kept EN untranslated,
-mt_offset_53a610e925:S1,mt_offset_53a610e925,S1,offset,độ dời,d2l_linear_networks_linear_regression_b011,in,"In :eqref:`eq_price-area`, $w_{\mathrm{area}}$ and $w_{\mathrm{age}}$
-are called *weights*, and $b$ is called a *bias*
-(also called an *offset* or *intercept*).
-The weights determine the influence of each feature
-on our prediction and the bias just says
-what value the predicted price should take
-when all of the features take value 0.
-Even if we will never see any homes with zero area,
-or that are precisely zero years old,
-we still need the bias or else we will
-limit the expressivity of our model.
-Strictly speaking, :eqref:`eq_price-area` is an *affine transformation*
-of input features,
-which is characterized by
-a *linear transformation* of features via weighted sum, combined with
-a *translation* via the added bias.",136,142,offset,"Trong :eqref:`eq_price-area`, $w_{\mathrm{area}}$ và $w_{\mathrm{age}}$ được gọi là *trọng số*, và $b$ được gọi là *độ lệch* (còn gọi là *độ dời* hoặc *intercept*). Các trọng số quyết định ảnh hưởng của từng đặc trưng lên dự đoán của chúng ta, còn độ lệch chỉ nói rằng giá dự đoán nên nhận giá trị nào khi tất cả các đặc trưng đều nhận giá trị 0. Ngay cả khi chúng ta sẽ không bao giờ thấy ngôi nhà nào có diện tích 0, hoặc chính xác là 0 tuổi, chúng ta vẫn cần độ lệch, nếu không chúng ta sẽ giới hạn khả năng biểu đạt của mô hình. Nói chặt chẽ, :eqref:`eq_price-area` là một *biến đổi affine* của đặc trưng đầu vào, được đặc trưng bởi một *biến đổi tuyến tính* của các đặc trưng thông qua tổng có trọng số, kết hợp với một *dịch* thông qua độ lệch được thêm vào.","{""end"": 144, ""start"": 138, ""surface"": ""độ dời""}","{""end"": 123, ""start"": 116, ""surface"": ""độ lệch""}",,,"[""{\""end\"": 144, \""start\"": 138, \""surface\"": \""độ dời\""}"", ""{\""end\"": 123, \""start\"": 116, \""surface\"": \""độ lệch\""}"", """", """"]",human_required,true,138,144,độ dời,"VI rendering ""do doi""",
+mt_offset_53a610e925:S0,mt_offset_53a610e925,S0,offset,độ lệch,d2l_linear_networks_linear_regression_scratch_b035,in,"Next, we must [**define our model,
+relating its inputs and parameters to its outputs.**]
+Recall that to calculate the output of the linear model,
+we simply take the matrix-vector dot product
+of the input features $\mathbf{X}$ and the model weights $\mathbf{w}$,
+and add the offset $b$ to each example.
+Note that below $\mathbf{Xw}$  is a vector and $b$ is a scalar.
+Recall the broadcasting mechanism as described in :numref:`subsec_broadcasting`.
+When we add a vector and a scalar,
+the scalar is added to each component of the vector.",274,280,offset,"Tiếp theo, chúng ta phải [**định nghĩa mô hình của mình, liên hệ các đầu vào và tham số của nó với các đầu ra.**] Hãy nhớ rằng để tính đầu ra của mô hình tuyến tính, ta chỉ cần lấy tích vô hướng giữa ma trận-véc-tơ của các đặc trưng đầu vào $\mathbf{X}$ và các trọng số mô hình $\mathbf{w}$, rồi cộng độ lệch $b$ vào mỗi ví dụ. Lưu ý rằng bên dưới $\mathbf{Xw}$ là một véc-tơ và $b$ là một vô hướng. Hãy nhớ cơ chế broadcasting như được mô tả trong :numref:`subsec_broadcasting`. Khi ta cộng một véc-tơ và một vô hướng, vô hướng đó được cộng vào từng thành phần của véc-tơ.","{""end"": 308, ""start"": 301, ""surface"": ""độ lệch""}","{""end"": 308, ""start"": 301, ""surface"": ""độ lệch""}",,,"[""{\""end\"": 308, \""start\"": 301, \""surface\"": \""độ lệch\""}"", ""{\""end\"": 308, \""start\"": 301, \""surface\"": \""độ lệch\""}"", """", """"]",human_required,true,301,308,độ lệch,human re-verified canonical occurrence after EV-D2L-07a reopen,
+mt_offset_53a610e925:S1,mt_offset_53a610e925,S1,offset,độ dời,d2l_linear_networks_linear_regression_scratch_b035,in,"Next, we must [**define our model,
+relating its inputs and parameters to its outputs.**]
+Recall that to calculate the output of the linear model,
+we simply take the matrix-vector dot product
+of the input features $\mathbf{X}$ and the model weights $\mathbf{w}$,
+and add the offset $b$ to each example.
+Note that below $\mathbf{Xw}$  is a vector and $b$ is a scalar.
+Recall the broadcasting mechanism as described in :numref:`subsec_broadcasting`.
+When we add a vector and a scalar,
+the scalar is added to each component of the vector.",274,280,offset,"Tiếp theo, chúng ta phải [**định nghĩa mô hình của mình, liên hệ đầu vào và tham số của nó với đầu ra.**] Hãy nhớ rằng để tính đầu ra của mô hình tuyến tính, ta chỉ cần lấy tích vô hướng ma trận-vector của các đặc trưng đầu vào $\mathbf{X}$ và trọng số mô hình $\mathbf{w}$, rồi cộng độ dời $b$ vào mỗi mẫu. Lưu ý rằng bên dưới $\mathbf{Xw}$ là một vector và $b$ là một vô hướng. Hãy nhớ lại cơ chế broadcasting như được mô tả trong :numref:`subsec_broadcasting`. Khi ta cộng một vector và một vô hướng, vô hướng được cộng vào từng thành phần của vector.","{""end"": 290, ""start"": 284, ""surface"": ""độ dời""}","{""end"": 290, ""start"": 284, ""surface"": ""độ dời""}",,,"[""{\""end\"": 290, \""start\"": 284, \""surface\"": \""độ dời\""}"", ""{\""end\"": 290, \""start\"": 284, \""surface\"": \""độ dời\""}"", """", """"]",human_required,true,284,290,độ dời,human re-verified canonical occurrence after EV-D2L-07a reopen,
 mt_prior_4a47653d5f:S0,mt_prior_4a47653d5f,S0,prior,tiên nghiệm,d2l_multilayer_perceptrons_weight_decay_b065,in,"1. Experiment with the value of $\lambda$ in the estimation problem in this section. Plot training and test accuracy as a function of $\lambda$. What do you observe?
 1. Use a validation set to find the optimal value of $\lambda$. Is it really the optimal value? Does this matter?
 1. What would the update equations look like if instead of $\|\mathbf{w}\|^2$ we used $\sum_i |w_i|$ as our penalty of choice ($L_1$ regularization)?

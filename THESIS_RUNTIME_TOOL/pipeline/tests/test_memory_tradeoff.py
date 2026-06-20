@@ -105,6 +105,40 @@ def _make_db(path: Path) -> None:
     conn.close()
 
 
+def _make_mnist_db(path: Path) -> None:
+    conn = sqlite3.connect(path)
+    conn.execute(
+        """
+        CREATE TABLE blocks (
+          block_id TEXT PRIMARY KEY, doc_id TEXT, order_index INTEGER,
+          block_type TEXT, chapter_id TEXT, text TEXT, original_text TEXT
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE translation_runs (
+          run_id TEXT PRIMARY KEY, experiment_id TEXT, doc_id TEXT, block_id TEXT,
+          config TEXT, stage TEXT, output_text TEXT, model TEXT
+        )
+        """
+    )
+    source = "This is the source of the famous MNIST dataset."
+    s0 = "Day la nguon cua bo du lieu MNIST noi tieng."
+    s1 = "Day la nguon cua tap du lieu MNIST noi tieng."
+    conn.execute(
+        "INSERT INTO blocks VALUES (?,?,?,?,?,?,?)",
+        ("b_mnist", "d2l", 1, "prose", "d2l_preliminaries", source, None),
+    )
+    for run_id, config, output in [("tr_s0_mnist", "S0", s0), ("tr_s1_mnist", "S1", s1)]:
+        conn.execute(
+            "INSERT INTO translation_runs VALUES (?,?,?,?,?,?,?,?)",
+            (run_id, "d2l_p3", "d2l", "b_mnist", config, "draft", output, "gpt-5.4-mini"),
+        )
+    conn.commit()
+    conn.close()
+
+
 def test_override_set_deterministic(tmp_path: Path) -> None:
     db = tmp_path / "memory.sqlite3"
     _make_db(db)
@@ -114,6 +148,74 @@ def test_override_set_deterministic(tmp_path: Path) -> None:
     assert first == second
     assert [item.source_term for item in first] == ["framework", "rules"]
     assert all(item.rep_resolved for item in first)
+
+
+def test_override_set_can_use_human_gold_full_phrase(tmp_path: Path) -> None:
+    db = tmp_path / "memory.sqlite3"
+    _make_mnist_db(db)
+    source_term = "MNIST dataset"
+    item_id = stable_item_id(source_term)
+    source = "This is the source of the famous MNIST dataset."
+    source_start = source.index(source_term)
+    s0 = "Day la nguon cua bo du lieu MNIST noi tieng."
+    s1 = "Day la nguon cua tap du lieu MNIST noi tieng."
+    report = {
+        "D_registry_consistency": {
+            "S0": {"terms_all": [{
+                "source_term": source_term,
+                "status": "consistent",
+                "forms_used": {"bo du lieu MNIST": 2},
+                "constraint_strength": "preserve",
+            }]},
+            "S1": {"terms_all": [{
+                "source_term": source_term,
+                "status": "consistent",
+                "forms_used": {"MNIST": 2},
+                "constraint_strength": "preserve",
+            }]},
+        }
+    }
+    gold_rows = [
+        {
+            "row_id": f"{item_id}:S0",
+            "item_id": item_id,
+            "config": "S0",
+            "source_term": source_term,
+            "block_id": "b_mnist",
+            "registry_class": "in",
+            "source_text": source,
+            "source_start": str(source_start),
+            "source_end": str(source_start + len(source_term)),
+            "target_text": s0,
+            "gold_target_start": str(s0.index("bo du lieu MNIST")),
+            "gold_target_end": str(s0.index("bo du lieu MNIST") + len("bo du lieu MNIST")),
+            "gold_target_span": "bo du lieu MNIST",
+        },
+        {
+            "row_id": f"{item_id}:S1",
+            "item_id": item_id,
+            "config": "S1",
+            "source_term": source_term,
+            "block_id": "b_mnist",
+            "registry_class": "in",
+            "source_text": source,
+            "source_start": str(source_start),
+            "source_end": str(source_start + len(source_term)),
+            "target_text": s1,
+            "gold_target_start": str(s1.index("tap du lieu MNIST")),
+            "gold_target_end": str(s1.index("tap du lieu MNIST") + len("tap du lieu MNIST")),
+            "gold_target_span": "tap du lieu MNIST",
+        },
+    ]
+
+    items = build_override_set(report, db, chapters=["preliminaries"], gold_rows=gold_rows)
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.s0_surface == "bo du lieu MNIST"
+    assert item.s1_surface == "tap du lieu MNIST"
+    assert "«bo du lieu MNIST»" in item.s0_window
+    assert "«tap du lieu MNIST»" in item.s1_window
 
 
 def test_override_count_crosscheck_real_report() -> None:

@@ -1,6 +1,6 @@
 # TASK_EV_D2L_07a_localizer_bakeoff — RULER-FIX: bake-off 3 localizer (find_spans[0] / allocate_spans / SimAlign) trên GOLD người + sửa rep-occ selection; vá worksheet EV-06 + re-validate panel 57; **0-API, KHÔNG re-translate / KHÔNG đụng Builder / KHÔNG đổi D-scorer headline**
 
-- **Status:** REOPENED (Claude, 2026-06-20) — §6 phát hiện report STALE + gold 2 ca SAI occurrence; chờ CodeX rebuild 2 gold rows ở canonical block + user re-verify + re-score. KHÔNG push.
+- **Status:** REVIEW (CodeX, 2026-06-20) — final score/apply artifacts are hash-consistent; frozen worksheet uses human-gold full phrases; `longest_match` is recommended for future no-gold localization with the MNIST noun-phrase expansion limitation documented. KHÔNG commit/push.
 - **Refs:** EV_D2L_06 (worksheet localizer bug), EV_D2L_05 (`occ_align.py` SimAlign `align_independent`), EV_D2L_03b (`surface_match.allocate_spans` longest-match + segmentation), memory `d2l-scorer-validity-and-remediation-ladder`, `green-tests-can-hide-dead-integration`, `dont-tune-intervention-on-test-baseline` · 3-bên Claude+GLM-5.2+user hội tụ 2026-06-20.
 - **Branch/Commit:** local working tree only; not committed per task protocol.
 
@@ -136,7 +136,44 @@ User tự audit 57 (KHÔNG LLM) → bắt thêm partial-mark + nêu nguyên-lý:
 
 ## 5. Implementation notes *(CodeX dien)*
 
-Implemented / updated, 2026-06-20. Status: REVIEW, no commit.
+Implemented / updated, 2026-06-20. Reopened after stale-report finding. Current status: WAITING_USER_REVERIFY, no commit.
+
+Reopen fix, 2026-06-20:
+- Root cause confirmed: two `human_required` gold items were built from the wrong occurrence, while `data/reports/localizer_bakeoff.json` still reported the earlier state. The report is stale and has been removed.
+- `build_localizer_gold` now derives source occurrence from `override.rep_block_id` + `override.en_sentence`, not the first source surface match in the chapter/block scope. If the override sentence cannot be found in the representative block, build fails.
+- `--score` now writes input fingerprints (`gold_sha256`, `override_sha256`) into the report.
+- `--apply` now refuses stale reports by checking report fingerprints against the current gold/override files and by recomputing L10 (`validate_gold_occ_matches_scorer_rep_occ`) from the files on disk.
+- Stale SimAlign cache was removed together with the stale report to force a clean final bakeoff after user re-verification.
+
+Gold rows requiring user re-verification now:
+- `mt_mnist_dataset_923cfe4011:S0` -> `d2l_introduction_index_b137`, source span `250:263` (`MNIST dataset`), target span cleared.
+- `mt_mnist_dataset_923cfe4011:S1` -> `d2l_introduction_index_b137`, source span `250:263` (`MNIST dataset`), target span cleared.
+- `mt_offset_53a610e925:S0` -> `d2l_linear_networks_linear_regression_scratch_b035`, source span `274:280` (`offset`), target span cleared.
+- `mt_offset_53a610e925:S1` -> `d2l_linear_networks_linear_regression_scratch_b035`, source span `274:280` (`offset`), target span cleared.
+
+Current guard state:
+- L10 standalone on current `localizer_gold.csv` + current `KEY/override_set.csv`: `checked=114`, `edge_checked=4`, `failures=[]`.
+- `--score` currently refuses to run because the 4 rows above intentionally have blank target offsets: `ValueError: localizer gold incomplete: 4 rows missing target offsets`.
+- Next required action: user opens `data/eval/localizer_gold.html`, verifies exactly those 4 target spans, exports `localizer_gold.csv`, then CodeX runs final `--score --with-simalign`, re-applies the winner, regenerates worksheet/report, and sets REVIEW.
+
+Post-user reverify run, 2026-06-20:
+- User-verified spans were filled exactly as provided:
+  - `mt_mnist_dataset_923cfe4011:S0` -> `bộ dữ liệu MNIST` (`251:267`)
+  - `mt_mnist_dataset_923cfe4011:S1` -> `tập dữ liệu MNIST` (`255:272`)
+  - `mt_offset_53a610e925:S0` -> `độ lệch` (`301:308`)
+  - `mt_offset_53a610e925:S1` -> `độ dời` (`284:290`)
+- L10 on current disk state: `checked=114`, `edge_checked=4`, `failures=[]`; no missing gold rows.
+- Test: `python -m pytest -p no:cacheprovider pipeline\tests\test_localizer.py -q` -> 13 passed (Windows pytest temp cleanup warning after exit code 0).
+- Score command: `python -m pipeline.scripts.localizer_bakeoff --score --with-simalign --gold data/eval/localizer_gold.csv --out data/reports/localizer_bakeoff.json`.
+- New report is NOT stale: `validate_report_matches_inputs(...)` passes and recomputes L10 as `failures=[]`.
+- New score:
+  - `first_match`: Metric A `108/116 = 0.9310`, regression_fail = [`mt_mnist_dataset_923cfe4011:S1`], ineligible.
+  - `longest_match`: Metric A `108/116 = 0.9310`, regression_fail = [`mt_mnist_dataset_923cfe4011:S1`], ineligible.
+  - `simalign`: Metric A `22/116 = 0.1897`, regression_fail = [`mt_mnist_dataset_923cfe4011:S0`, `mt_mnist_dataset_923cfe4011:S1`], ineligible.
+  - Metric B: `first_match 0/2`, `longest_match 0/2`, `simalign 1/2`.
+  - `recommendation = null`.
+- Root cause of the new blocker: after full-phrase human gold, `mt_mnist:S1` gold is `tập dữ liệu MNIST`, but the current override/localizer surface remains `MNIST`. Both surface localizers therefore return `MNIST` (`267:272`) instead of the full phrase (`255:272`). This is a real ruler limitation exposed by the corrected gold, not a stale-report issue.
+- Action deliberately NOT taken: `--apply --localizer longest_match` was not run because L4 requires an eligible winner; applying after `recommendation=null` would reintroduce the asymmetric MNIST mark.
 
 Files changed:
 - `pipeline/eval/localizer.py`
@@ -189,6 +226,26 @@ Verification:
 - `data/eval/localizer_simalign_cache/` contains 118 cached source-sentence/full-target SimAlign records.
 - Re-judge changed EV-06 items remains intentionally out of scope for this implementation step.
 
+Final rework after user/Claude decision, 2026-06-20:
+- The regression gate now distinguishes a regression from a documented capability limit. `mt_mnist_dataset_923cfe4011:S1` is the latter: registry/dominant surface `MNIST` cannot be expanded deterministically by a surface localizer into the occurrence-level human phrase `tập dữ liệu MNIST`. It is reported in `documented_limitation_fail` and does not disqualify otherwise eligible localizers.
+- This does **not** hide or auto-correct the failure. The frozen 57-item worksheet now takes occurrence spans directly from the completed human gold when both S0/S1 rows are available. The future/no-gold path still uses the selected automatic localizer and carries the limitation explicitly.
+- `build_override_set(..., gold_rows=...)` regenerated the two corrected items with full symmetric marks:
+  - `mt_mnist_dataset_923cfe4011`: `«bộ dữ liệu MNIST»` / `«tập dữ liệu MNIST»` at `d2l_introduction_index_b137`.
+  - `mt_offset_53a610e925`: `«độ lệch»` / `«độ dời»` at `d2l_linear_networks_linear_regression_scratch_b035`.
+- Final `--score --with-simalign` on the current on-disk gold/override:
+  - L10: `checked=114`, `edge_checked=4`, `failures=[]`.
+  - `first_match`: Metric A `108/116 = 0.9310`, eligible, documented limitation `mt_mnist:S1`.
+  - `longest_match`: Metric A `108/116 = 0.9310`, eligible, same documented limitation; selected by the a-priori L4 tie rule.
+  - `simalign`: Metric A `22/116 = 0.1897`, Metric B `1/2`, ineligible due to the real `mt_mnist:S0` regression; not discarded because of the earlier sentence-window artifact.
+  - Recommendation: `longest_match`.
+- Final `--apply --localizer longest_match`: `57/57` resolved, `0` unresolved. Apply validates that the requested localizer equals the report recommendation and refuses stale report inputs.
+- Stale guard verified after apply: `data/reports/localizer_bakeoff.json` fingerprints match the current `localizer_gold.csv` and current `KEY/override_set.csv`; recomputed L10 is identical to the report.
+- Tests:
+  - `python -m pytest -p no:cacheprovider pipeline/tests/test_localizer.py pipeline/tests/test_memory_tradeoff.py pipeline/tests/test_occ_align.py -q` -> `43 passed`.
+  - `python -m pytest -p no:cacheprovider pipeline/tests app/backend/tests -q` -> `315 passed in 122.20s`.
+  - Both commands exited `0`; Windows emitted only the known pytest temp-cleanup `PermissionError` after completion.
+- No API call, no re-translation, no frozen-DB write (`memory.sqlite3` SHA-256 remains `DA0F687894090D43B75A3AE52BA71EC1EDF85DAB3198C9F86039879365D464B8`), no commit/push. Narrow human re-judge of `{mt_mnist, mt_offset}` remains the next evaluation action; the other 55 panel items remain unchanged.
+
 ## 6. Review *(Claude điền)*
 
 **Verdict: PASS (Claude §6, 2026-06-20). Committed.**
@@ -205,3 +262,12 @@ Tái kiểm độc lập (không tin báo cáo):
 **Caveat cho phần viết luận văn (không chạy lại — L4 dừng):** một phần điểm Metric A thấp của SimAlign đến từ chính sách span min–max trên token align rải rác (deferred/manipulating/lifting → nuốt cả đoạn). Dù đổi sang policy cụm-liền-mạch, SimAlign vẫn dưới xa 0.92 (near-miss "biến đổi affine" vs "phép biến đổi affine" vẫn fail exact). Ghi 1 câu limitation để hội đồng không đọc 0.19 như thuần chất lượng align.
 
 **CORRECTION (Claude, 2026-06-20, SAU commit d3c2547/72b0192 — retract PASS ở trên):** §6 PASS đã OVER-TRUST report. Tự chạy lại `validate_gold_occ_matches_scorer_rep_occ` trên **gold + KEY override ĐÃ COMMIT** → **FAIL 4** (mt_mnist S0/S1, mt_offset S0/S1) trong khi `localizer_bakeoff.json` ghi `failures=[]`. ⇒ report **STALE**, chấm trên gold-state khác với gold đã commit; điểm 107/116 CHƯA đáng tin. Root cause: 2 gold row `human_required` ở **SAI occurrence** — mt_mnist block `b126` ("…60000 digits", **S0==S1 KHÔNG override**) thay vì canonical override `b137` ("source of the famous", S0≠S1); mt_offset `b011` thay vì `scratch_b035`. **L10 CODE ĐÚNG** (bắt được khi chạy trên artifact hiện tại) — lỗi nằm ở (a) `--build-gold` đặt 2 row sai block, (b) report sinh ra trên gold cũ. Bài học: KHÔNG tin số trong report; re-run trên artifact đã-commit. Winner `longest_match` nhiều khả năng giữ nhưng PHẢI re-score sau khi sửa.
+
+**FINAL §6 (Claude, 2026-06-20, sau khi CodeX rebuild gold + re-score) — PASS THẬT:**
+Tự chạy lại trên artifact HIỆN TẠI (không tin report):
+- `validate_gold_occ_matches_scorer_rep_occ(gold, KEY override)` → `failures=[]` (4 row đã về canonical `b137`/`scratch_b035`; L10 pass THẬT). Guard hash gold/override chặn report stale.
+- Report: recommendation=`longest_match`; first_match & longest_match đều **108/116=0.931 eligible**; simalign 22/116 ineligible (reg_fail mt_mnist:S0); MetricB simalign 1/2.
+- Worksheet mark mt_mnist/offset lấy từ **GOLD người**, đối xứng full-phrase (mnist "tập dữ liệu MNIST"/"bộ dữ liệu MNIST"; offset "độ lệch"/"độ dời"); 114 row khác không đụng. DB hash `DA0F687894090D43` không đổi. 43 test passed (tự chạy).
+- Regression-gate nới **có nguyên tắc**: `DOCUMENTED_LIMITATION_ROWS` = ĐÚNG 1 dòng `mt_mnist:S1` kèm lý do ("surface localizer không nở 'MNIST'→'tập dữ liệu MNIST'"). Không nhồi, không hack.
+
+**CAVEAT TRUNG THỰC (bắt buộc vào luận văn):** trên gold đã sửa, first_match vs longest_match khác nhau ở **0/116** dòng — **hoà tuyệt đối**. Khác biệt MNIST sub-string trước kia là artifact của occurrence sai (b126); ở occurrence đúng nó thành documented-limitation chung cho MỌI localizer. ⇒ chọn `longest_match` là **tiebreak L4 theo nguyên tắc** (policy robust, dominant-by-construction, vá failure-mode sub-string/first-match ở EV-03b/06), **KHÔNG phải "đo được longest hơn first" trên bộ này**. Đừng tuyên bố "longest thắng first bằng số". Bake-off này thật sự chứng minh: (1) bắt+vá 2 bug localization worksheet, (2) đo SimAlign CÔNG BẰNG → không đủ (0.19), (3) surface-match đủ tốt (0.93) & robust với lựa chọn policy. Không chế thêm ca để tách first/longest (= fishing). **EV-07a CLOSED.**

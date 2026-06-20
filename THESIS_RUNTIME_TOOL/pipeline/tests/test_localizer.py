@@ -8,6 +8,8 @@ import pytest
 from pipeline.eval.localizer import (
     LocalizerGoldRow,
     LocalizedSpan,
+    build_localizer_gold,
+    input_fingerprints,
     localize_first_match,
     localize_longest_match,
     rep_occ_valid,
@@ -15,6 +17,7 @@ from pipeline.eval.localizer import (
     run_localizers,
     score_localizer_bakeoff,
     validate_gold_occ_matches_scorer_rep_occ,
+    validate_report_matches_inputs,
 )
 
 
@@ -152,6 +155,42 @@ def test_metricA_metricB_separated() -> None:
     assert report["metricB_out_of_registry"]["first_match"]["exact"] == 0
 
 
+def test_documented_np_expansion_limitation_does_not_block_longest_recommendation() -> None:
+    rows = [
+        {
+            "row_id": "mt_mnist_dataset_923cfe4011:S1",
+            "item_id": "mt_mnist_dataset_923cfe4011",
+            "config": "S1",
+            "source_term": "MNIST dataset",
+            "surface": "MNIST",
+            "block_id": "b1",
+            "registry_class": "in",
+            "source_text": "This is the MNIST dataset.",
+            "source_start": "12",
+            "source_end": "25",
+            "source_surface": "MNIST dataset",
+            "target_text": "tap du lieu MNIST",
+            "gold_target_start": "0",
+            "gold_target_end": "17",
+            "gold_target_span": "tap du lieu MNIST",
+            "edge_kind": "",
+        }
+    ]
+    proposals = {
+        "first_match": {"mt_mnist_dataset_923cfe4011:S1": LocalizedSpan(12, 17, "MNIST", "first_match")},
+        "longest_match": {"mt_mnist_dataset_923cfe4011:S1": LocalizedSpan(12, 17, "MNIST", "longest_match")},
+        "simalign": {"mt_mnist_dataset_923cfe4011:S1": None},
+    }
+
+    report = score_localizer_bakeoff(rows, proposals)
+
+    assert report["recommendation"] == "longest_match"
+    assert report["metricA"]["longest_match"]["regression_fail"] == []
+    assert report["metricA"]["longest_match"]["documented_limitation_fail"] == [
+        "mt_mnist_dataset_923cfe4011:S1"
+    ]
+
+
 def test_gold_is_localization_not_adequacy() -> None:
     row = _row("i1", gold_start=0, gold_end=8)
 
@@ -287,3 +326,103 @@ def test_gold_occ_matches_scorer_rep_occ() -> None:
 
     with pytest.raises(ValueError, match="annotation"):
         validate_gold_occ_matches_scorer_rep_occ(bad_rows, override_rows)
+
+
+def test_build_gold_uses_override_rep_block_id_and_sentence() -> None:
+    override_rows = [
+        {
+            "item_id": "needle_item",
+            "source_term": "needle",
+            "rep_block_id": "b2",
+            "en_sentence": "The right needle is here.",
+            "s0_surface": "kim",
+            "s1_surface": "cay kim",
+        }
+    ]
+    blocks_by_id = {
+        "b1": "The wrong needle is here.",
+        "b2": "The right needle is here.",
+    }
+    translations = {
+        "S0": {"b2": "Cau dung co kim o day."},
+        "S1": {"b2": "Cau dung co cay kim o day."},
+    }
+
+    rows = build_localizer_gold(
+        override_rows,
+        blocks_by_id=blocks_by_id,
+        translations=translations,
+        include_edges=False,
+    )
+
+    assert {row.block_id for row in rows} == {"b2"}
+    assert {row.source_text for row in rows} == {"The right needle is here."}
+
+    bad_rows = [dict(override_rows[0], en_sentence="The wrong needle is here.")]
+    with pytest.raises(ValueError, match="en_sentence"):
+        build_localizer_gold(
+            bad_rows,
+            blocks_by_id=blocks_by_id,
+            translations=translations,
+            include_edges=False,
+        )
+
+
+def test_stale_report_rejected_by_hash_and_reconciliation(tmp_path: Path) -> None:
+    source = "The selected needle is here."
+    start = source.index("needle")
+    gold_rows = [
+        {
+            "row_id": "needle:S0",
+            "item_id": "needle_item",
+            "source_term": "needle",
+            "block_id": "b1",
+            "source_text": source,
+            "source_start": str(start),
+            "source_end": str(start + len("needle")),
+            "source_surface": "needle",
+        }
+    ]
+    override_rows = [
+        {
+            "item_id": "needle_item",
+            "rep_block_id": "b1",
+            "en_sentence": "The selected needle is here.",
+        }
+    ]
+    gold_path = tmp_path / "gold.csv"
+    override_path = tmp_path / "override.csv"
+    gold_path.write_text("row_id,item_id\nneedle:S0,needle_item\n", encoding="utf-8")
+    override_path.write_text("item_id,rep_block_id,en_sentence\nneedle_item,b1,The selected needle is here.\n", encoding="utf-8")
+    report = {
+        "input_fingerprints": input_fingerprints(gold_path=gold_path, override_path=override_path),
+        "gold_occ_reconciliation": validate_gold_occ_matches_scorer_rep_occ(gold_rows, override_rows),
+    }
+
+    assert validate_report_matches_inputs(
+        report,
+        gold_path=gold_path,
+        override_path=override_path,
+        gold_rows=gold_rows,
+        override_rows=override_rows,
+    )
+
+    stale_report = {**report, "gold_occ_reconciliation": {"checked": 0, "edge_checked": 1, "failures": []}}
+    with pytest.raises(ValueError, match="reconciliation"):
+        validate_report_matches_inputs(
+            stale_report,
+            gold_path=gold_path,
+            override_path=override_path,
+            gold_rows=gold_rows,
+            override_rows=override_rows,
+        )
+
+    gold_path.write_text("row_id,item_id\nneedle:S0,changed\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="hash mismatch"):
+        validate_report_matches_inputs(
+            report,
+            gold_path=gold_path,
+            override_path=override_path,
+            gold_rows=gold_rows,
+            override_rows=override_rows,
+        )

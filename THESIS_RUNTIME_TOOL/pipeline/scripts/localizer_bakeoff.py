@@ -20,7 +20,9 @@ from pipeline.eval.localizer import (
     render_localizer_gold_html,
     run_localizers,
     score_localizer_bakeoff,
+    input_fingerprints,
     validate_gold_occ_matches_scorer_rep_occ,
+    validate_report_matches_inputs,
     write_bakeoff_report,
     write_gold_csv,
 )
@@ -136,6 +138,10 @@ def _score(args: argparse.Namespace) -> int:
         simalign_cache_dir=args.simalign_cache_dir if args.with_simalign else None,
     )
     report = score_localizer_bakeoff(rows, proposals)
+    report["input_fingerprints"] = input_fingerprints(
+        gold_path=args.gold,
+        override_path=override_path,
+    )
     report["gold_occ_reconciliation"] = reconciliation
     report["simalign"] = {
         "real_aligner_used": bool(args.with_simalign),
@@ -154,7 +160,22 @@ def _score(args: argparse.Namespace) -> int:
 
 
 def _apply(args: argparse.Namespace) -> int:
+    bakeoff_report = json.loads(Path(args.out).read_text(encoding="utf-8"))
+    recommendation = str(bakeoff_report.get("recommendation") or "")
+    if not recommendation:
+        raise ValueError("bakeoff report has no eligible localizer recommendation; rerun/fix --score before --apply")
+    if args.localizer != recommendation:
+        raise ValueError(f"--localizer {args.localizer!r} does not match report recommendation {recommendation!r}")
     report = json.loads(Path(args.report).read_text(encoding="utf-8"))
+    override_path = _resolve_override_path(args.override)
+    gold_rows = read_gold_csv(args.gold)
+    validate_report_matches_inputs(
+        bakeoff_report,
+        gold_path=args.gold,
+        override_path=override_path,
+        gold_rows=gold_rows,
+        override_rows=_read_csv(override_path),
+    )
     items = build_override_set(
         report,
         args.db,
@@ -163,6 +184,7 @@ def _apply(args: argparse.Namespace) -> int:
         profile_name=args.profile,
         doc_id=args.doc_id,
         localizer_name=args.localizer,
+        gold_rows=gold_rows,
     )
     rows, key_rows = build_judge_worksheet(items, seed=args.seed)
     validate_dummy_not_real(rows)

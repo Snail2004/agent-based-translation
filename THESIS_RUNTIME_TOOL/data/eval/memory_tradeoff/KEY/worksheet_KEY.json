@@ -19,8 +19,8 @@
       "source_term": "MNIST dataset",
       "tier": "preserve",
       "s0_surface": "bộ dữ liệu MNIST",
-      "s1_surface": "MNIST",
-      "rep_block_id": "d2l_introduction_index_b126"
+      "s1_surface": "tập dữ liệu MNIST",
+      "rep_block_id": "d2l_introduction_index_b137"
     },
     {
       "item_id": "mt_universal_approximators_c7cc5b991a",
@@ -28,8 +28,8 @@
       "B": "S0",
       "source_term": "Universal Approximators",
       "tier": "hard",
-      "s0_surface": "bộ xấp xỉ phổ dụng",
-      "s1_surface": "bộ xấp xỉ phổ quát",
+      "s0_surface": "Bộ xấp xỉ phổ dụng",
+      "s1_surface": "Bộ xấp xỉ phổ quát",
       "rep_block_id": "d2l_multilayer_perceptrons_mlp_b024"
     },
     {
@@ -38,8 +38,8 @@
       "B": "S0",
       "source_term": "Vanishing and Exploding Gradients",
       "tier": "hard",
-      "s0_surface": "gradient biến mất và bùng nổ",
-      "s1_surface": "độ dốc biến mất và bùng nổ",
+      "s0_surface": "Gradient biến mất và bùng nổ",
+      "s1_surface": "Độ dốc biến mất và bùng nổ",
       "rep_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b042"
     },
     {
@@ -78,7 +78,7 @@
       "B": "S0",
       "source_term": "annotation",
       "tier": "soft",
-      "s0_surface": "gán nhãn",
+      "s0_surface": "chú thích",
       "s1_surface": "chú giải",
       "rep_block_id": "d2l_introduction_index_b085"
     },
@@ -88,8 +88,8 @@
       "B": "S0",
       "source_term": "bandits",
       "tier": "soft",
-      "s0_surface": "bandit",
-      "s1_surface": "bài toán băng-đit",
+      "s0_surface": "Bandit",
+      "s1_surface": "Bài toán băng-đit",
       "rep_block_id": "d2l_multilayer_perceptrons_environment_b085"
     },
     {
@@ -108,8 +108,8 @@
       "B": "S1",
       "source_term": "covariate shift",
       "tier": "hard",
-      "s0_surface": "dịch chuyển hiệp biến",
-      "s1_surface": "lệch hiệp biến",
+      "s0_surface": "Dịch chuyển hiệp biến",
+      "s1_surface": "Lệch hiệp biến",
       "rep_block_id": "d2l_multilayer_perceptrons_environment_b010"
     },
     {
@@ -168,7 +168,7 @@
       "B": "S1",
       "source_term": "elementwise",
       "tier": "soft",
-      "s0_surface": "từng phần tử",
+      "s0_surface": "theo từng phần tử",
       "s1_surface": "theo phần tử",
       "rep_block_id": "d2l_preliminaries_ndarray_b046"
     },
@@ -178,7 +178,7 @@
       "B": "S0",
       "source_term": "elementwise multiplication",
       "tier": "hard",
-      "s0_surface": "nhân theo từng phần tử",
+      "s0_surface": "phép nhân theo từng phần tử",
       "s1_surface": "phép nhân theo phần tử",
       "rep_block_id": "d2l_preliminaries_linear_algebra_b069"
     },
@@ -298,7 +298,7 @@
       "B": "S0",
       "source_term": "membership",
       "tier": "soft",
-      "s0_surface": "thuộc",
+      "s0_surface": "sự thuộc",
       "s1_surface": "quan hệ thuộc",
       "rep_block_id": "d2l_preliminaries_linear_algebra_b005"
     },
@@ -308,8 +308,8 @@
       "B": "S0",
       "source_term": "model complexity",
       "tier": "hard",
-      "s0_surface": "độ phức tạp của mô hình",
-      "s1_surface": "độ phức tạp mô hình",
+      "s0_surface": "Độ phức tạp của mô hình",
+      "s1_surface": "Độ phức tạp mô hình",
       "rep_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b021"
     },
     {
@@ -350,7 +350,7 @@
       "tier": "soft",
       "s0_surface": "độ lệch",
       "s1_surface": "độ dời",
-      "rep_block_id": "d2l_linear_networks_linear_regression_b011"
+      "rep_block_id": "d2l_linear_networks_linear_regression_scratch_b035"
     },
     {
       "item_id": "mt_prior_4a47653d5f",
@@ -438,8 +438,8 @@
       "B": "S0",
       "source_term": "self-driving cars",
       "tier": "hard",
-      "s0_surface": "xe tự lái",
-      "s1_surface": "ô tô tự lái",
+      "s0_surface": "Xe tự lái",
+      "s1_surface": "Ô tô tự lái",
       "rep_block_id": "d2l_multilayer_perceptrons_environment_b029"
     },
     {
@@ -468,7 +468,7 @@
       "B": "S1",
       "source_term": "tangent line",
       "tier": "hard",
-      "s0_surface": "tiếp tuyến",
+      "s0_surface": "đường thẳng tiếp tuyến",
       "s1_surface": "đường tiếp tuyến",
       "rep_block_id": "d2l_preliminaries_calculus_b030"
     },
@@ -478,7 +478,7 @@
       "B": "S0",
       "source_term": "target",
       "tier": "soft",
-      "s0_surface": "nhãn",
+      "s0_surface": "mục tiêu",
       "s1_surface": "biến mục tiêu",
       "rep_block_id": "d2l_introduction_index_b023"
     },

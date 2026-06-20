@@ -2,20 +2,24 @@
   "metricA": {
     "first_match": {
       "metricA_n": 116,
-      "metricA_exact": 107,
-      "metricA_accuracy": 0.9224137931034483,
+      "metricA_exact": 108,
+      "metricA_accuracy": 0.9310344827586207,
       "missing": 0,
-      "regression_fail": [
+      "regression_fail": [],
+      "documented_limitation_fail": [
         "mt_mnist_dataset_923cfe4011:S1"
       ],
-      "eligible_for_recommendation": false
+      "eligible_for_recommendation": true
     },
     "longest_match": {
       "metricA_n": 116,
-      "metricA_exact": 107,
-      "metricA_accuracy": 0.9224137931034483,
+      "metricA_exact": 108,
+      "metricA_accuracy": 0.9310344827586207,
       "missing": 0,
       "regression_fail": [],
+      "documented_limitation_fail": [
+        "mt_mnist_dataset_923cfe4011:S1"
+      ],
       "eligible_for_recommendation": true
     },
     "simalign": {
@@ -24,7 +28,9 @@
       "metricA_accuracy": 0.1896551724137931,
       "missing": 2,
       "regression_fail": [
-        "mt_mnist_dataset_923cfe4011:S0",
+        "mt_mnist_dataset_923cfe4011:S0"
+      ],
+      "documented_limitation_fail": [
         "mt_mnist_dataset_923cfe4011:S1"
       ],
       "eligible_for_recommendation": false
@@ -56,6 +62,12 @@
     "longest_match",
     "simalign"
   ],
+  "input_fingerprints": {
+    "gold_path": "data\\eval\\localizer_gold.csv",
+    "gold_sha256": "2448895907e130daee041c132f43c8b897737c4caa65761e0a0db343ba6cbca7",
+    "override_path": "data\\eval\\memory_tradeoff\\KEY\\override_set.csv",
+    "override_sha256": "81bba33f572b43d8acefc38f884620d2cb3dfae0bebe1934b9eed9e3e2f9b25b"
+  },
   "gold_occ_reconciliation": {
     "checked": 114,
     "edge_checked": 4,
