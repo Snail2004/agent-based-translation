@@ -1,6 +1,6 @@
 # TASK_EV_D2L_07a_localizer_bakeoff — RULER-FIX: bake-off 3 localizer (find_spans[0] / allocate_spans / SimAlign) trên GOLD người + sửa rep-occ selection; vá worksheet EV-06 + re-validate panel 57; **0-API, KHÔNG re-translate / KHÔNG đụng Builder / KHÔNG đổi D-scorer headline**
 
-- **Status:** DONE/PASS (Claude §6, 2026-06-20) — committed; winner=longest_match applied. KHÔNG push.
+- **Status:** REOPENED (Claude, 2026-06-20) — §6 phát hiện report STALE + gold 2 ca SAI occurrence; chờ CodeX rebuild 2 gold rows ở canonical block + user re-verify + re-score. KHÔNG push.
 - **Refs:** EV_D2L_06 (worksheet localizer bug), EV_D2L_05 (`occ_align.py` SimAlign `align_independent`), EV_D2L_03b (`surface_match.allocate_spans` longest-match + segmentation), memory `d2l-scorer-validity-and-remediation-ladder`, `green-tests-can-hide-dead-integration`, `dont-tune-intervention-on-test-baseline` · 3-bên Claude+GLM-5.2+user hội tụ 2026-06-20.
 - **Branch/Commit:** local working tree only; not committed per task protocol.
 
@@ -203,3 +203,5 @@ Tái kiểm độc lập (không tin báo cáo):
 **Số trung thực sau sửa:** simalign 22/116=0.1897 Metric A (không đủ exact-span), Metric B 0/2→1/2 (có năng lực out-of-registry). → loại theo SỐ THẬT, không vì bug.
 
 **Caveat cho phần viết luận văn (không chạy lại — L4 dừng):** một phần điểm Metric A thấp của SimAlign đến từ chính sách span min–max trên token align rải rác (deferred/manipulating/lifting → nuốt cả đoạn). Dù đổi sang policy cụm-liền-mạch, SimAlign vẫn dưới xa 0.92 (near-miss "biến đổi affine" vs "phép biến đổi affine" vẫn fail exact). Ghi 1 câu limitation để hội đồng không đọc 0.19 như thuần chất lượng align.
+
+**CORRECTION (Claude, 2026-06-20, SAU commit d3c2547/72b0192 — retract PASS ở trên):** §6 PASS đã OVER-TRUST report. Tự chạy lại `validate_gold_occ_matches_scorer_rep_occ` trên **gold + KEY override ĐÃ COMMIT** → **FAIL 4** (mt_mnist S0/S1, mt_offset S0/S1) trong khi `localizer_bakeoff.json` ghi `failures=[]`. ⇒ report **STALE**, chấm trên gold-state khác với gold đã commit; điểm 107/116 CHƯA đáng tin. Root cause: 2 gold row `human_required` ở **SAI occurrence** — mt_mnist block `b126` ("…60000 digits", **S0==S1 KHÔNG override**) thay vì canonical override `b137` ("source of the famous", S0≠S1); mt_offset `b011` thay vì `scratch_b035`. **L10 CODE ĐÚNG** (bắt được khi chạy trên artifact hiện tại) — lỗi nằm ở (a) `--build-gold` đặt 2 row sai block, (b) report sinh ra trên gold cũ. Bài học: KHÔNG tin số trong report; re-run trên artifact đã-commit. Winner `longest_match` nhiều khả năng giữ nhưng PHẢI re-score sau khi sửa.
