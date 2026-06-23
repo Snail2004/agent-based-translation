@@ -17,7 +17,7 @@ from pipeline.eval.surface_match import SurfaceOwner, allocate_spans, normalize_
 
 
 PROMPT_VERSION = "d2l_localizer_t2_v3"
-VALIDATOR_VERSION = "code_anchor_v3"
+VALIDATOR_VERSION = "code_anchor_v3_position"
 DEFAULT_WINDOW_CHARS = 700
 RESULT_SCHEMA = {
     "type": "json_schema",
@@ -459,7 +459,7 @@ def _locate_model_quote(
     case: CascadeCase,
     window: TargetWindow,
     quote: str,
-    left_context: str,
+    _left_context: str,
 ) -> tuple[int | None, int | None, str] | None:
     if not quote:
         return None
@@ -470,34 +470,10 @@ def _locate_model_quote(
         start = starts[0]
         return start, start + len(quote), "unique_quote"
 
-    anchored = _left_anchor(starts, quote, left_context, window.text)
-    if anchored is not None:
-        return anchored[0], anchored[1], "left_anchor"
-
     positioned = _position_reanchor(case, window, quote, starts)
     if positioned is not None:
         return positioned[0], positioned[1], "position"
     return None, None, "ambiguous_quote"
-
-
-def _left_anchor(
-    starts: list[int],
-    quote: str,
-    left_context: str,
-    target: str,
-) -> tuple[int, int] | None:
-    anchor = _normalize_ws(left_context)
-    if not anchor:
-        return None
-    matches: list[int] = []
-    for start in starts:
-        prefix = _normalize_ws(target[:start])
-        if prefix.endswith(anchor):
-            matches.append(start)
-    if len(matches) != 1:
-        return None
-    start = matches[0]
-    return start, start + len(quote)
 
 
 def classify_localized_quote(quote: str, entry: RegistryEntry | None) -> str:
@@ -766,10 +742,6 @@ def _json_strings(value: Any) -> list[str]:
 
 def _key(value: Any) -> str:
     return re.sub(r"\s+", " ", normalize_surface(str(value or "")).casefold().strip())
-
-
-def _normalize_ws(value: str) -> str:
-    return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
 def _opaque_id(row_id: str) -> str:

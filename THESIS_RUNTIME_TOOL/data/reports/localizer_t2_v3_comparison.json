@@ -335,11 +335,11 @@
       "temp": 0.0,
       "max_out": 256,
       "exact_on_corrected_gold": {
-        "exact": 5,
+        "exact": 7,
         "n": 8,
-        "accuracy": 0.625
+        "accuracy": 0.875
       },
-      "cost_usd": 0.0024655,
+      "cost_usd": 0.0,
       "note": "prompt v3 + code-owned offsets; DEV diagnostic only",
       "per_case": [
         {
@@ -367,20 +367,20 @@
           "term": "annotation",
           "gold_span": "chú giải",
           "quote": "chú giải",
-          "start": 510,
-          "end": 518,
-          "offset_source": "left_anchor",
-          "correct": false
+          "start": 410,
+          "end": 418,
+          "offset_source": "position",
+          "correct": true
         },
         {
           "row_id": "mt_elementwise_1d6feafbec:S0",
           "term": "elementwise",
           "gold_span": "theo từng phần tử",
           "quote": "theo từng phần tử",
-          "start": 407,
-          "end": 424,
-          "offset_source": "left_anchor",
-          "correct": false
+          "start": 260,
+          "end": 277,
+          "offset_source": "position",
+          "correct": true
         },
         {
           "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",
@@ -453,8 +453,8 @@
       "baseline_quote": "chú giải",
       "baseline_correct": true,
       "v3_quote": "chú giải",
-      "v3_offset_source": "left_anchor",
-      "v3_correct": false
+      "v3_offset_source": "position",
+      "v3_correct": true
     },
     {
       "row_id": "mt_elementwise_1d6feafbec:S0",
@@ -463,8 +463,8 @@
       "baseline_quote": "theo từng phần tử",
       "baseline_correct": true,
       "v3_quote": "theo từng phần tử",
-      "v3_offset_source": "left_anchor",
-      "v3_correct": false
+      "v3_offset_source": "position",
+      "v3_correct": true
     },
     {
       "row_id": "mt_elementwise_multiplication_0ebdbc19e3:S0",

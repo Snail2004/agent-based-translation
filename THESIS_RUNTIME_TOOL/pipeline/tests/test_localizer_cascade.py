@@ -167,22 +167,7 @@ def test_t2_output_validation_reanchors_unique_quote() -> None:
     assert decision.status == "ambiguous"
 
 
-def test_t2_left_anchor_resolves_repeated_quote() -> None:
-    case = _case(target_text="đầu sự thuộc. sau đó sự thuộc.")
-    window = TargetWindow(case.target_text, 0, len(case.target_text), 0.5, "full")
-    payload = {
-        "occurrence_id": case.opaque_id,
-        "status": "localized",
-        "target_quote": "sự thuộc",
-        "left_context": "sau đó",
-    }
-    decision = validate_t2_payload(case, window, payload, _entry())
-    assert decision.status == "localized"
-    assert decision.offset_source == "left_anchor"
-    assert decision.start == case.target_text.rfind("sự thuộc")
-
-
-def test_t2_position_reanchor_resolves_repeated_quote_with_clear_margin() -> None:
+def test_t2_position_resolves_repeated_quote() -> None:
     case = _case(
         source_text="First clause. This denotes membership in a set.",
         target_text="thuộc ở đầu. Điều này biểu thị sự thuộc trong một tập hợp.",
@@ -193,6 +178,24 @@ def test_t2_position_reanchor_resolves_repeated_quote_with_clear_margin() -> Non
         "status": "localized",
         "target_quote": "thuộc",
         "left_context": "",
+    }
+    decision = validate_t2_payload(case, window, payload, _entry())
+    assert decision.status == "localized"
+    assert decision.offset_source == "position"
+    assert decision.start == case.target_text.rfind("thuộc")
+
+
+def test_t2_misleading_left_context_does_not_mislocate() -> None:
+    case = _case(
+        source_text="First clause. This denotes membership in a set.",
+        target_text="sau đó thuộc ở đầu. Điều này biểu thị sự thuộc trong một tập hợp.",
+    )
+    window = TargetWindow(case.target_text, 0, len(case.target_text), 0.75, "full")
+    payload = {
+        "occurrence_id": case.opaque_id,
+        "status": "localized",
+        "target_quote": "thuộc",
+        "left_context": "sau đó",
     }
     decision = validate_t2_payload(case, window, payload, _entry())
     assert decision.status == "localized"
@@ -213,7 +216,7 @@ def test_t2_ignores_model_offsets_even_when_they_match_a_wrong_occurrence() -> N
     }
     decision = validate_t2_payload(case, window, payload, _entry())
     assert decision.status == "localized"
-    assert decision.offset_source == "left_anchor"
+    assert decision.offset_source == "position"
     assert decision.start == case.target_text.rfind("sự thuộc")
 
 

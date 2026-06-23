@@ -58,22 +58,22 @@
       "S0": {
         "n": 6,
         "localized": 6,
-        "exact_span": 4,
-        "exact_span_accuracy": 0.6666666666666666,
+        "exact_span": 5,
+        "exact_span_accuracy": 0.8333333333333334,
         "unresolved": 0
       },
       "S1": {
         "n": 2,
         "localized": 2,
-        "exact_span": 1,
-        "exact_span_accuracy": 0.5,
+        "exact_span": 2,
+        "exact_span_accuracy": 1.0,
         "unresolved": 0
       }
     },
     "total": {
       "n": 8,
-      "exact_span": 5,
-      "exact_span_accuracy": 0.625
+      "exact_span": 7,
+      "exact_span_accuracy": 0.875
     },
     "note": "This is DEV localization accuracy, not D consistency and not held-out generalization."
   },
@@ -90,10 +90,10 @@
       "offset_source": "unique_quote",
       "reason": "validated",
       "from_cache": false,
-      "api_cache_hit": false,
-      "prompt_tokens": 881,
-      "completion_tokens": 45,
-      "cost_usd": 0.00031025,
+      "api_cache_hit": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": 0.0,
       "system_fingerprint": null
     },
     {
@@ -108,10 +108,10 @@
       "offset_source": "position",
       "reason": "validated",
       "from_cache": false,
-      "api_cache_hit": false,
-      "prompt_tokens": 864,
-      "completion_tokens": 45,
-      "cost_usd": 0.000306,
+      "api_cache_hit": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": 0.0,
       "system_fingerprint": null
     },
     {
@@ -121,15 +121,15 @@
       "status": "localized",
       "classification": "known_allowed",
       "quote": "chú giải",
-      "start": 510,
-      "end": 518,
-      "offset_source": "left_anchor",
+      "start": 410,
+      "end": 418,
+      "offset_source": "position",
       "reason": "validated",
       "from_cache": false,
-      "api_cache_hit": false,
-      "prompt_tokens": 864,
-      "completion_tokens": 42,
-      "cost_usd": 0.0003,
+      "api_cache_hit": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": 0.0,
       "system_fingerprint": null
     },
     {
@@ -139,15 +139,15 @@
       "status": "localized",
       "classification": "novel",
       "quote": "theo từng phần tử",
-      "start": 407,
-      "end": 424,
-      "offset_source": "left_anchor",
+      "start": 260,
+      "end": 277,
+      "offset_source": "position",
       "reason": "validated",
       "from_cache": false,
-      "api_cache_hit": false,
-      "prompt_tokens": 850,
-      "completion_tokens": 45,
-      "cost_usd": 0.0003025,
+      "api_cache_hit": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": 0.0,
       "system_fingerprint": null
     },
     {
@@ -162,10 +162,10 @@
       "offset_source": "unique_quote",
       "reason": "validated",
       "from_cache": false,
-      "api_cache_hit": false,
-      "prompt_tokens": 853,
-      "completion_tokens": 52,
-      "cost_usd": 0.00031725,
+      "api_cache_hit": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": 0.0,
       "system_fingerprint": null
     },
     {
@@ -180,10 +180,10 @@
       "offset_source": "unique_quote",
       "reason": "validated",
       "from_cache": false,
-      "api_cache_hit": false,
-      "prompt_tokens": 905,
-      "completion_tokens": 45,
-      "cost_usd": 0.00031625,
+      "api_cache_hit": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": 0.0,
       "system_fingerprint": null
     },
     {
@@ -198,10 +198,10 @@
       "offset_source": "unique_quote",
       "reason": "validated",
       "from_cache": false,
-      "api_cache_hit": false,
-      "prompt_tokens": 824,
-      "completion_tokens": 45,
-      "cost_usd": 0.000296,
+      "api_cache_hit": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": 0.0,
       "system_fingerprint": null
     },
     {
@@ -216,18 +216,18 @@
       "offset_source": "unique_quote",
       "reason": "validated",
       "from_cache": false,
-      "api_cache_hit": false,
-      "prompt_tokens": 893,
-      "completion_tokens": 47,
-      "cost_usd": 0.00031725,
+      "api_cache_hit": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cost_usd": 0.0,
       "system_fingerprint": null
     }
   ],
   "usage": {
-    "prompt_tokens": 6934,
-    "completion_tokens": 366,
-    "cost_usd": 0.0024655,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cost_usd": 0.0,
     "result_cache_hits": 0,
-    "api_cache_hits": 0
+    "api_cache_hits": 8
   }
 }
