@@ -22,7 +22,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 D2L_REPORT = {
     "scored_at": "2026-06-14T12:47:05.501150+00:00",
-    "metric_version": "d2l_translate_score_v2_2",
+    "metric_version": "d2l_translate_score_v3_occurrence",
     "experiment_id": "d2l_p3",
     "profile": "technical_d2l_v1",
     "doc_id": "d2l",
@@ -63,6 +63,48 @@ D2L_REPORT = {
                 "pairs": 2294,
                 "occurrence_weighted": 0.8339,
             },
+        },
+    },
+    "B_gold_occurrence_adherence": {
+        "S0": {
+            "flat": {
+                "method": "joint_count_matched_v1",
+                "adherence_lower": 0.7000,
+                "adherence_upper": 0.7100,
+                "residual_capacity": 2,
+                "denominator": 200,
+                "per_chapter": {
+                    "d2l_introduction": {
+                        "adherence_lower": 0.6900,
+                        "adherence_upper": 0.7000,
+                    },
+                    "d2l_preliminaries": {
+                        "adherence_lower": 0.7100,
+                        "adherence_upper": 0.7200,
+                    },
+                },
+            },
+            "recurring": {"adherence_lower": 0.7050},
+        },
+        "S1": {
+            "flat": {
+                "method": "joint_count_matched_v1",
+                "adherence_lower": 0.7800,
+                "adherence_upper": 0.7850,
+                "residual_capacity": 1,
+                "denominator": 200,
+                "per_chapter": {
+                    "d2l_introduction": {
+                        "adherence_lower": 0.7700,
+                        "adherence_upper": 0.7750,
+                    },
+                    "d2l_preliminaries": {
+                        "adherence_lower": 0.7900,
+                        "adherence_upper": 0.7950,
+                    },
+                },
+            },
+            "recurring": {"adherence_lower": 0.7820},
         },
     },
     "D_registry_consistency": {
@@ -159,6 +201,15 @@ D2L_REPORT = {
             "pairs": 8594,
             "adherent_pairs": 8029,
             "occurrence_weighted": 0.9436,
+        },
+    },
+    "A_registry_occurrence_adherence": {
+        "S1": {
+            "method": "joint_count_matched_v1",
+            "adherence_lower": 0.9000,
+            "adherence_upper": 0.9100,
+            "residual_capacity": 3,
+            "denominator": 300,
         },
     },
     "injection": {"registry": {"raw_registry": 1608}},
@@ -332,15 +383,29 @@ def test_d2l_headline_has_provenance(tmp_path):
         assert "scope" in prov or "report_path" in prov or "report_paths" in prov
         assert "scored_at" in prov
 
-    # B headline uses occurrence_weighted
+    # B headline uses corrected occurrence adherence; legacy remains inspectable.
     b_s0 = next(h for h in headlines if h["name"] == "B_tar_vs_gold_S0")
-    assert b_s0["value"] == 0.7639  # occurrence_weighted
+    assert b_s0["value"] == 0.7000
+    assert b_s0["value_upper"] == 0.7100
+    assert b_s0["legacy_occurrence_weighted"] == 0.7639
+    assert b_s0["method"] == "joint_count_matched_v1"
     assert b_s0["domain"] == "d2l"
-    assert b_s0["provenance"]["metric_version"] == "d2l_translate_score_v2_2"
+    assert b_s0["provenance"]["metric_version"] == "d2l_translate_score_v3_occurrence"
+    assert b_s0["provenance"]["scorer_metric"] == "B_gold_occurrence_adherence"
     assert b_s0["provenance"]["experiment_id"] == "d2l_p3"
 
     b_s1 = next(h for h in headlines if h["name"] == "B_tar_vs_gold_S1")
-    assert b_s1["value"] == 0.8320
+    assert b_s1["value"] == 0.7800
+
+    assert data["per_chapter"]["B_S0"]["d2l_introduction"] == 0.6900
+    assert data["per_chapter"]["B_S0_upper"]["d2l_introduction"] == 0.7000
+    assert data["per_chapter"]["B_S1"]["d2l_preliminaries"] == 0.7900
+    assert data["per_chapter"]["B_S1_upper"]["d2l_preliminaries"] == 0.7950
+
+    a_s1 = next(h for h in headlines if h["name"] == "A_tar_vs_registry_S1")
+    assert a_s1["value"] == 0.9000
+    assert a_s1["legacy_occurrence_weighted"] == 0.9436
+    assert a_s1["provenance"]["scorer_metric"] == "A_registry_occurrence_adherence"
 
     # D headline
     d_s1 = next(h for h in headlines if h["name"] == "D_registry_consistency_S1")
@@ -400,7 +465,7 @@ def test_d2l_no_recompute_guard(tmp_path):
 
     # All values come directly from fixture JSON — if they match,
     # no recompute happened (adapter just reads).
-    assert data["headline"][0]["value"] == D2L_REPORT["B_tar_vs_gold"]["S0"]["flat"]["occurrence_weighted"]
+    assert data["headline"][0]["value"] == D2L_REPORT["B_gold_occurrence_adherence"]["S0"]["flat"]["adherence_lower"]
 
     # Stage gate comes from report
     assert data["stage_gate"] == D2L_REPORT["stage_gate"]

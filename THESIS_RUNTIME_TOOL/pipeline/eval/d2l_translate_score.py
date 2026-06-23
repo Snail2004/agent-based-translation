@@ -18,6 +18,11 @@ from pipeline.eval.surface_match import (
     normalize_surface,
     segmenter_version,
 )
+from pipeline.eval.occurrence_adherence import (
+    AdherenceTerm,
+    score_occurrence_adherence,
+    write_occurrence_audit,
+)
 from pipeline.eval.term_policy import (
     TermPolicyAssets,
     annotate_constraint_strength,
@@ -31,7 +36,7 @@ from pipeline.translate.profiles import (
 )
 
 
-METRIC_VERSION = "d2l_translate_score_v2_2"
+METRIC_VERSION = "d2l_translate_score_v3_occurrence"
 DEFAULT_EVAL_ROOT = Path(__file__).resolve().parents[2] / "data" / "eval"
 
 
@@ -55,6 +60,9 @@ def score_d2l_translation_run(
     term_policy_root: str | Path | None = None,
     doc_id: str = "d2l",
 ) -> dict[str, Any]:
+    output_path = Path(out_path)
+    audit_csv_path = output_path.with_name(f"{output_path.stem}_occurrence_audit.csv")
+    audit_html_path = output_path.with_name(f"{output_path.stem}_occurrence_audit.html")
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
@@ -93,6 +101,41 @@ def score_d2l_translation_run(
             registry_rows,
             profile_name=profile.name,
         )
+        gold_terms = _gold_adherence_terms(accepted_gold)
+        registry_terms = _registry_adherence_terms(registry_rows, profile.name)
+        occurrence_audit_rows: list[dict[str, Any]] = []
+        b_occurrence: dict[str, Any] = {}
+        for config in ["S0", "S1"]:
+            flat, audit_rows, source_totals = score_occurrence_adherence(
+                scope_blocks,
+                translations[config],
+                gold_terms,
+                ruler="gold",
+                config=config,
+            )
+            recurring_ids = {
+                term_id for term_id, count in source_totals.items() if count >= 2
+            }
+            recurring, _, _ = score_occurrence_adherence(
+                scope_blocks,
+                translations[config],
+                gold_terms,
+                ruler="gold_recurring",
+                config=config,
+                include_term_ids=recurring_ids,
+                emit_audit=False,
+            )
+            b_occurrence[config] = {"flat": flat, "recurring": recurring}
+            occurrence_audit_rows.extend(audit_rows)
+
+        a_occurrence, a_audit_rows, _ = score_occurrence_adherence(
+            scope_blocks,
+            translations["S1"],
+            registry_terms,
+            ruler="registry",
+            config="S1",
+        )
+        occurrence_audit_rows.extend(a_audit_rows)
         report = {
             "scored_at": datetime.now(UTC).isoformat(),
             "metric_version": METRIC_VERSION,
@@ -109,8 +152,10 @@ def score_d2l_translation_run(
                 translations,
             ),
             "B_tar_vs_gold": b_scores,
+            "B_gold_occurrence_adherence": b_occurrence,
             "D_registry_consistency": d_scores,
             "A_tar_vs_registry": {"S1": a_score},
+            "A_registry_occurrence_adherence": {"S1": a_occurrence},
             "term_policy": _term_policy_report(eval_registry_rows, policy_assets),
             "injection": {
                 "registry": _registry_stats(registry_rows, profile.name),
@@ -133,7 +178,16 @@ def score_d2l_translation_run(
                     "target_only": True,
                 },
             },
+            "occurrence_audit": {
+                "csv": str(audit_csv_path),
+                "html": str(audit_html_path),
+                "rows": len(occurrence_audit_rows),
+                "source": "same_allocation_as_occurrence_adherence",
+            },
             "limitations": [
+                "Occurrence adherence is deterministic surface counting, not semantic translation quality or positional word alignment.",
+                "The lower bound gives collision spans zero credit; the upper bound adds only capacity supported by ambiguous target spans.",
+                "Shadow owners prevent shorter accepted forms from claiming spans owned by longer ruler forms, even when the longer source term is absent.",
                 "D_surface_v2_2 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
                 "D_surface_v2_2 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
                 "D_surface_v2_2 applies cross-term longest-span allocation and target-side Vietnamese word segmentation; it is still surface matching, not occurrence-level alignment.",
@@ -145,9 +199,9 @@ def score_d2l_translation_run(
     finally:
         conn.close()
 
-    path = Path(out_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_occurrence_audit(audit_csv_path, audit_html_path, occurrence_audit_rows)
     return report
 
 
@@ -346,6 +400,55 @@ def _term_policy_report(
         "glossary_fixes": len(policy_assets.fixes),
         "overrides": len(policy_assets.overrides),
     }
+
+
+def _gold_adherence_terms(
+    accepted_gold: dict[str, dict[str, Any]],
+) -> list[AdherenceTerm]:
+    return [
+        AdherenceTerm(
+            term_id=f"gold:{key}",
+            source_term=str(item["source_term"]),
+            accepted_forms=tuple(str(value) for value in item.get("targets") or []),
+        )
+        for key, item in sorted(accepted_gold.items())
+        if item.get("source_term") and item.get("targets")
+    ]
+
+
+def _registry_adherence_terms(
+    registry_rows: list[dict[str, Any]],
+    profile_name: str,
+) -> list[AdherenceTerm]:
+    profile = get_profile(profile_name)
+    combined: dict[str, dict[str, Any]] = {}
+    for row in registry_rows:
+        if not term_is_injection_eligible(row, profile):
+            continue
+        source = str(row.get("source_term") or "").strip()
+        if not source:
+            continue
+        key = _normalize_source(source)
+        item = combined.setdefault(
+            key,
+            {
+                "source_term": source,
+                "forms": [],
+                "case_sensitive": _case_sensitive(row),
+            },
+        )
+        for form in _accepted_registry_forms(row, canonical_only=False):
+            _append_unique(item["forms"], form)
+    return [
+        AdherenceTerm(
+            term_id=f"registry:{key}",
+            source_term=str(item["source_term"]),
+            accepted_forms=tuple(str(value) for value in item["forms"]),
+            case_sensitive=bool(item["case_sensitive"]),
+        )
+        for key, item in sorted(combined.items())
+        if item["forms"]
+    ]
 
 
 def _score_tar_vs_gold(

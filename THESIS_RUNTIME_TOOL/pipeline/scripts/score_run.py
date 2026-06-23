@@ -109,16 +109,22 @@ def _print_d2l_summary(report: dict) -> None:
     print("\n=== D2L Translation Metrics ===")
     print(f"Profile: {report.get('profile')}  Chapters: {report.get('chapters')}")
     for config in ["S0", "S1"]:
-        b = report["B_tar_vs_gold"][config]["flat"]
-        br = report["B_tar_vs_gold"][config]["recurring"]
+        legacy = report["B_tar_vs_gold"][config]["flat"]
+        b = report["B_gold_occurrence_adherence"][config]["flat"]
         d = report["D_registry_consistency"][config]
         print(
-            f"{config}: B flat={b['overall']:.4f} ({b['pairs']} pairs), "
-            f"B recurring={br['overall']:.4f} ({br['pairs']} pairs), "
+            f"{config}: B occurrence={b['adherence_lower']:.4f}"
+            f"..{b['adherence_upper']:.4f} ({b['denominator']} source occ), "
+            f"legacy occurrence_weighted={legacy['occurrence_weighted']:.4f}, "
             f"D={d['overall']:.4f} ({d['terms']} terms)"
         )
-    a = report["A_tar_vs_registry"]["S1"]
-    print(f"S1 A registry TAR={a['overall']:.4f} ({a['pairs']} pairs)")
+    a = report["A_registry_occurrence_adherence"]["S1"]
+    legacy_a = report["A_tar_vs_registry"]["S1"]
+    print(
+        f"S1 A registry occurrence={a['adherence_lower']:.4f}"
+        f"..{a['adherence_upper']:.4f} ({a['denominator']} source occ), "
+        f"legacy occurrence_weighted={legacy_a['occurrence_weighted']:.4f}"
+    )
     print(f"Stage gate: {json.dumps(report.get('stage_gate', {}), ensure_ascii=False)}")
 
 

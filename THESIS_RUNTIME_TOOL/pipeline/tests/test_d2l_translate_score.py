@@ -11,13 +11,101 @@ import pytest
 from pipeline.eval.d2l_translate_score import (
     _count_non_overlapping_forms,
     _count_source_matches,
+    ScopeBlock,
     score_d2l_translation_run,
 )
+from pipeline.eval.occurrence_adherence import AdherenceTerm, score_occurrence_adherence
 from pipeline.memory.store_init import init_db
 from pipeline.retrieval.context_builder import build_context_pack, plan_anchors
 from pipeline.translate.prompt import build_messages, purity_check
 from pipeline.translate.profiles import get_profile
 from pipeline.translate.windower import Window, build_windows
+
+
+def _occurrence_score(
+    source: str,
+    target: str,
+    terms: list[AdherenceTerm],
+) -> dict:
+    block = ScopeBlock("b", "ch", 1, "prose", source)
+    report, _, _ = score_occurrence_adherence(
+        [block], {"b": target}, terms, ruler="fixture", config="S1"
+    )
+    return report
+
+
+def test_occurrence_adherence_ellipsis_and_repetition() -> None:
+    terms = [AdherenceTerm("model", "model", ("mô hình",))]
+    source = "The model is trained, and the model is evaluated."
+
+    ellipsis = _occurrence_score(source, "Mô hình được huấn luyện rồi đánh giá.", terms)
+    repeated = _occurrence_score(
+        source,
+        "Mô hình được huấn luyện, và mô hình được đánh giá.",
+        terms,
+    )
+
+    assert ellipsis["numerator_confirmed"] == 1
+    assert ellipsis["denominator"] == 2
+    assert ellipsis["adherence_lower"] == 0.5
+    assert repeated["numerator_confirmed"] == 2
+    assert repeated["denominator"] == 2
+    assert repeated["adherence_lower"] == 1.0
+
+
+def test_occurrence_adherence_segments_substrings_and_scores_drift_zero() -> None:
+    terms = [AdherenceTerm("set", "set", ("tập",))]
+
+    substring = _occurrence_score(
+        "This is a set that focuses on this.",
+        "Đây là một bộ được tập trung vào việc này.",
+        terms,
+    )
+    drift = _occurrence_score(
+        "This is a set.",
+        "Đây là một bộ.",
+        terms,
+    )
+
+    assert substring["numerator_confirmed"] == 0
+    assert substring["denominator"] == 1
+    assert drift["numerator_confirmed"] == 0
+
+
+def test_occurrence_adherence_shadow_owner_blocks_expansion() -> None:
+    terms = [
+        AdherenceTerm("set", "set", ("tập",)),
+        AdherenceTerm("dataset", "dataset", ("tập dữ liệu",)),
+    ]
+
+    report = _occurrence_score(
+        "This is a set.",
+        "Đây là một tập dữ liệu.",
+        terms,
+    )
+
+    assert report["numerator_confirmed"] == 0
+    assert report["denominator"] == 1
+    assert report["adherence_lower"] == 0.0
+
+
+def test_occurrence_adherence_collision_is_bounded_not_arbitrarily_credited() -> None:
+    terms = [
+        AdherenceTerm("sample", "sample", ("mẫu",)),
+        AdherenceTerm("pattern", "pattern", ("mẫu",)),
+    ]
+
+    report = _occurrence_score(
+        "A sample follows a pattern.",
+        "Một mẫu được sử dụng.",
+        terms,
+    )
+
+    assert report["numerator_confirmed"] == 0
+    assert report["denominator"] == 2
+    assert report["residual_capacity"] == 1
+    assert report["adherence_lower"] == 0.0
+    assert report["adherence_upper"] == 0.5
 
 
 def _policy_root(
@@ -268,7 +356,13 @@ def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
     assert report["B_tar_vs_gold"]["S0"]["flat"]["overall"] < 1.0
     assert report["D_registry_consistency"]["S0"]["drift_terms"] >= 1
     assert report["D_registry_consistency"]["S1"]["overall"] == 1.0
-    assert report["metric_version"] == "d2l_translate_score_v2_2"
+    assert report["metric_version"] == "d2l_translate_score_v3_occurrence"
+    assert report["B_gold_occurrence_adherence"]["S1"]["flat"]["adherence_lower"] == 1.0
+    assert report["B_gold_occurrence_adherence"]["S0"]["flat"]["adherence_lower"] < 1.0
+    assert report["A_registry_occurrence_adherence"]["S1"]["adherence_lower"] == 1.0
+    assert report["occurrence_audit"]["rows"] > 0
+    assert Path(report["occurrence_audit"]["csv"]).exists()
+    assert Path(report["occurrence_audit"]["html"]).exists()
     assert report["surface_matching"]["target_language"] == "vi"
     assert report["surface_matching"]["segmentation"]["tool"] == "pyvi"
     assert report["D_registry_consistency"]["S1"]["method"] == "block_surface_v2_2"

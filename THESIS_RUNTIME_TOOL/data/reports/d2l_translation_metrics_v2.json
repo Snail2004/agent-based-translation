@@ -1,6 +1,6 @@
 {
-  "scored_at": "2026-06-18T09:03:50.780923+00:00",
-  "metric_version": "d2l_translate_score_v2_2",
+  "scored_at": "2026-06-23T17:24:01.270673+00:00",
+  "metric_version": "d2l_translate_score_v3_occurrence",
   "experiment_id": "d2l_p3",
   "profile": "technical_d2l_v1",
   "doc_id": "d2l",
@@ -501,6 +501,1152 @@
             "source_term": "model",
             "misses": 6,
             "pairs": 228
+          }
+        ]
+      }
+    }
+  },
+  "B_gold_occurrence_adherence": {
+    "S0": {
+      "flat": {
+        "method": "joint_count_matched_v1",
+        "ruler": "gold",
+        "config": "S0",
+        "numerator_confirmed": 2128,
+        "denominator": 2967,
+        "adherence_lower": 0.717223,
+        "adherence_upper": 0.717223,
+        "residual_capacity": 0,
+        "collision_target_spans": 0,
+        "resolved_only": 0.717223,
+        "per_chapter": {
+          "d2l_introduction": {
+            "numerator_confirmed": 358,
+            "denominator": 509,
+            "adherence_lower": 0.70334,
+            "adherence_upper": 0.70334,
+            "residual_capacity": 0
+          },
+          "d2l_linear_networks": {
+            "numerator_confirmed": 543,
+            "denominator": 779,
+            "adherence_lower": 0.697047,
+            "adherence_upper": 0.697047,
+            "residual_capacity": 0
+          },
+          "d2l_multilayer_perceptrons": {
+            "numerator_confirmed": 896,
+            "denominator": 1182,
+            "adherence_lower": 0.758037,
+            "adherence_upper": 0.758037,
+            "residual_capacity": 0
+          },
+          "d2l_preliminaries": {
+            "numerator_confirmed": 331,
+            "denominator": 497,
+            "adherence_lower": 0.665996,
+            "adherence_upper": 0.665996,
+            "residual_capacity": 0
+          }
+        },
+        "collision_forms": [],
+        "worst_terms": [
+          {
+            "term_id": "gold:implement",
+            "source_term": "implement",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:implementation",
+            "source_term": "implementation",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:scalar",
+            "source_term": "scalar",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:elementwise",
+            "source_term": "elementwise",
+            "source_occurrences": 27,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:performance",
+            "source_term": "performance",
+            "source_occurrences": 24,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:regularization",
+            "source_term": "regularization",
+            "source_occurrences": 24,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:recall",
+            "source_term": "recall",
+            "source_occurrences": 20,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:penalty",
+            "source_term": "penalty",
+            "source_occurrences": 15,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:agent",
+            "source_term": "agent",
+            "source_occurrences": 11,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:iterator",
+            "source_term": "iterator",
+            "source_occurrences": 11,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:validation set",
+            "source_term": "validation set",
+            "source_occurrences": 9,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:population",
+            "source_term": "population",
+            "source_occurrences": 8,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:scale",
+            "source_term": "scale",
+            "source_occurrences": 8,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:gaussian noise",
+            "source_term": "Gaussian noise",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:heuristic",
+            "source_term": "heuristic",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:hidden unit",
+            "source_term": "hidden unit",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:query",
+            "source_term": "query",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:switch",
+            "source_term": "switch",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:gradient descent",
+            "source_term": "gradient descent",
+            "source_occurrences": 4,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:generalization gap",
+            "source_term": "generalization gap",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:kernel",
+            "source_term": "kernel",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:model family",
+            "source_term": "model family",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:quadratic",
+            "source_term": "quadratic",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:bandit",
+            "source_term": "bandit",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:broadcast",
+            "source_term": "broadcast",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:causality",
+            "source_term": "causality",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:closed-form solution",
+            "source_term": "closed-form solution",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:cloud computing",
+            "source_term": "cloud computing",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:flatten",
+            "source_term": "flatten",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:moment",
+            "source_term": "moment",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          }
+        ]
+      },
+      "recurring": {
+        "method": "joint_count_matched_v1",
+        "ruler": "gold_recurring",
+        "config": "S0",
+        "numerator_confirmed": 2100,
+        "denominator": 2930,
+        "adherence_lower": 0.716724,
+        "adherence_upper": 0.716724,
+        "residual_capacity": 0,
+        "collision_target_spans": 0,
+        "resolved_only": 0.716724,
+        "per_chapter": {
+          "d2l_introduction": {
+            "numerator_confirmed": 348,
+            "denominator": 495,
+            "adherence_lower": 0.70303,
+            "adherence_upper": 0.70303,
+            "residual_capacity": 0
+          },
+          "d2l_linear_networks": {
+            "numerator_confirmed": 538,
+            "denominator": 773,
+            "adherence_lower": 0.69599,
+            "adherence_upper": 0.69599,
+            "residual_capacity": 0
+          },
+          "d2l_multilayer_perceptrons": {
+            "numerator_confirmed": 886,
+            "denominator": 1170,
+            "adherence_lower": 0.757265,
+            "adherence_upper": 0.757265,
+            "residual_capacity": 0
+          },
+          "d2l_preliminaries": {
+            "numerator_confirmed": 328,
+            "denominator": 492,
+            "adherence_lower": 0.666667,
+            "adherence_upper": 0.666667,
+            "residual_capacity": 0
+          }
+        },
+        "collision_forms": [],
+        "worst_terms": [
+          {
+            "term_id": "gold:implement",
+            "source_term": "implement",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:implementation",
+            "source_term": "implementation",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:scalar",
+            "source_term": "scalar",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:elementwise",
+            "source_term": "elementwise",
+            "source_occurrences": 27,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:performance",
+            "source_term": "performance",
+            "source_occurrences": 24,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:regularization",
+            "source_term": "regularization",
+            "source_occurrences": 24,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:recall",
+            "source_term": "recall",
+            "source_occurrences": 20,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:penalty",
+            "source_term": "penalty",
+            "source_occurrences": 15,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:agent",
+            "source_term": "agent",
+            "source_occurrences": 11,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:iterator",
+            "source_term": "iterator",
+            "source_occurrences": 11,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:validation set",
+            "source_term": "validation set",
+            "source_occurrences": 9,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:population",
+            "source_term": "population",
+            "source_occurrences": 8,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:scale",
+            "source_term": "scale",
+            "source_occurrences": 8,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:gaussian noise",
+            "source_term": "Gaussian noise",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:heuristic",
+            "source_term": "heuristic",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:hidden unit",
+            "source_term": "hidden unit",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:query",
+            "source_term": "query",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:switch",
+            "source_term": "switch",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:gradient descent",
+            "source_term": "gradient descent",
+            "source_occurrences": 4,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:generalization gap",
+            "source_term": "generalization gap",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:kernel",
+            "source_term": "kernel",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:model family",
+            "source_term": "model family",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:quadratic",
+            "source_term": "quadratic",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:bandit",
+            "source_term": "bandit",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:broadcast",
+            "source_term": "broadcast",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:causality",
+            "source_term": "causality",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:closed-form solution",
+            "source_term": "closed-form solution",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:cloud computing",
+            "source_term": "cloud computing",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:flatten",
+            "source_term": "flatten",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:moment",
+            "source_term": "moment",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          }
+        ]
+      }
+    },
+    "S1": {
+      "flat": {
+        "method": "joint_count_matched_v1",
+        "ruler": "gold",
+        "config": "S1",
+        "numerator_confirmed": 2288,
+        "denominator": 2967,
+        "adherence_lower": 0.771149,
+        "adherence_upper": 0.771149,
+        "residual_capacity": 0,
+        "collision_target_spans": 0,
+        "resolved_only": 0.771149,
+        "per_chapter": {
+          "d2l_introduction": {
+            "numerator_confirmed": 402,
+            "denominator": 509,
+            "adherence_lower": 0.789784,
+            "adherence_upper": 0.789784,
+            "residual_capacity": 0
+          },
+          "d2l_linear_networks": {
+            "numerator_confirmed": 581,
+            "denominator": 779,
+            "adherence_lower": 0.745828,
+            "adherence_upper": 0.745828,
+            "residual_capacity": 0
+          },
+          "d2l_multilayer_perceptrons": {
+            "numerator_confirmed": 931,
+            "denominator": 1182,
+            "adherence_lower": 0.787648,
+            "adherence_upper": 0.787648,
+            "residual_capacity": 0
+          },
+          "d2l_preliminaries": {
+            "numerator_confirmed": 374,
+            "denominator": 497,
+            "adherence_lower": 0.752515,
+            "adherence_upper": 0.752515,
+            "residual_capacity": 0
+          }
+        },
+        "collision_forms": [],
+        "worst_terms": [
+          {
+            "term_id": "gold:implement",
+            "source_term": "implement",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:implementation",
+            "source_term": "implementation",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:scalar",
+            "source_term": "scalar",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:performance",
+            "source_term": "performance",
+            "source_occurrences": 24,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:recall",
+            "source_term": "recall",
+            "source_occurrences": 20,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:framework",
+            "source_term": "framework",
+            "source_occurrences": 17,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:penalty",
+            "source_term": "penalty",
+            "source_occurrences": 15,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:iteration",
+            "source_term": "iteration",
+            "source_occurrences": 11,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:iterator",
+            "source_term": "iterator",
+            "source_occurrences": 11,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:validation set",
+            "source_term": "validation set",
+            "source_occurrences": 9,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:population",
+            "source_term": "population",
+            "source_occurrences": 8,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:scale",
+            "source_term": "scale",
+            "source_occurrences": 8,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:marginalization",
+            "source_term": "marginalization",
+            "source_occurrences": 6,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:gaussian noise",
+            "source_term": "Gaussian noise",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:heuristic",
+            "source_term": "heuristic",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:hidden unit",
+            "source_term": "hidden unit",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:query",
+            "source_term": "query",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:switch",
+            "source_term": "switch",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:end-to-end",
+            "source_term": "end-to-end",
+            "source_occurrences": 4,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:gradient descent",
+            "source_term": "gradient descent",
+            "source_occurrences": 4,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:quadratic",
+            "source_term": "quadratic",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:bandit",
+            "source_term": "bandit",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:broadcast",
+            "source_term": "broadcast",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:cloud computing",
+            "source_term": "cloud computing",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:flatten",
+            "source_term": "flatten",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:moment",
+            "source_term": "moment",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:partition function",
+            "source_term": "partition function",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:underfit",
+            "source_term": "underfit",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:analogy",
+            "source_term": "analogy",
+            "source_occurrences": 1,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:bias-variance tradeoff",
+            "source_term": "bias-variance tradeoff",
+            "source_occurrences": 1,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          }
+        ]
+      },
+      "recurring": {
+        "method": "joint_count_matched_v1",
+        "ruler": "gold_recurring",
+        "config": "S1",
+        "numerator_confirmed": 2264,
+        "denominator": 2930,
+        "adherence_lower": 0.772696,
+        "adherence_upper": 0.772696,
+        "residual_capacity": 0,
+        "collision_target_spans": 0,
+        "resolved_only": 0.772696,
+        "per_chapter": {
+          "d2l_introduction": {
+            "numerator_confirmed": 392,
+            "denominator": 495,
+            "adherence_lower": 0.791919,
+            "adherence_upper": 0.791919,
+            "residual_capacity": 0
+          },
+          "d2l_linear_networks": {
+            "numerator_confirmed": 577,
+            "denominator": 773,
+            "adherence_lower": 0.746442,
+            "adherence_upper": 0.746442,
+            "residual_capacity": 0
+          },
+          "d2l_multilayer_perceptrons": {
+            "numerator_confirmed": 923,
+            "denominator": 1170,
+            "adherence_lower": 0.788889,
+            "adherence_upper": 0.788889,
+            "residual_capacity": 0
+          },
+          "d2l_preliminaries": {
+            "numerator_confirmed": 372,
+            "denominator": 492,
+            "adherence_lower": 0.756098,
+            "adherence_upper": 0.756098,
+            "residual_capacity": 0
+          }
+        },
+        "collision_forms": [],
+        "worst_terms": [
+          {
+            "term_id": "gold:implement",
+            "source_term": "implement",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:implementation",
+            "source_term": "implementation",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:scalar",
+            "source_term": "scalar",
+            "source_occurrences": 36,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:performance",
+            "source_term": "performance",
+            "source_occurrences": 24,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:recall",
+            "source_term": "recall",
+            "source_occurrences": 20,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:framework",
+            "source_term": "framework",
+            "source_occurrences": 17,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:penalty",
+            "source_term": "penalty",
+            "source_occurrences": 15,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:iteration",
+            "source_term": "iteration",
+            "source_occurrences": 11,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:iterator",
+            "source_term": "iterator",
+            "source_occurrences": 11,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:validation set",
+            "source_term": "validation set",
+            "source_occurrences": 9,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:population",
+            "source_term": "population",
+            "source_occurrences": 8,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:scale",
+            "source_term": "scale",
+            "source_occurrences": 8,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:marginalization",
+            "source_term": "marginalization",
+            "source_occurrences": 6,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:gaussian noise",
+            "source_term": "Gaussian noise",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:heuristic",
+            "source_term": "heuristic",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:hidden unit",
+            "source_term": "hidden unit",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:query",
+            "source_term": "query",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:switch",
+            "source_term": "switch",
+            "source_occurrences": 5,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:end-to-end",
+            "source_term": "end-to-end",
+            "source_occurrences": 4,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:gradient descent",
+            "source_term": "gradient descent",
+            "source_occurrences": 4,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:quadratic",
+            "source_term": "quadratic",
+            "source_occurrences": 3,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:bandit",
+            "source_term": "bandit",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:broadcast",
+            "source_term": "broadcast",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:cloud computing",
+            "source_term": "cloud computing",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:flatten",
+            "source_term": "flatten",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:moment",
+            "source_term": "moment",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:partition function",
+            "source_term": "partition function",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:underfit",
+            "source_term": "underfit",
+            "source_occurrences": 2,
+            "accepted_target_occurrences": 0,
+            "confirmed_credit": 0,
+            "rate": 0.0
+          },
+          {
+            "term_id": "gold:key",
+            "source_term": "key",
+            "source_occurrences": 23,
+            "accepted_target_occurrences": 1,
+            "confirmed_credit": 1,
+            "rate": 0.043478
+          },
+          {
+            "term_id": "gold:layer",
+            "source_term": "layer",
+            "source_occurrences": 130,
+            "accepted_target_occurrences": 7,
+            "confirmed_credit": 7,
+            "rate": 0.053846
           }
         ]
       }
@@ -18219,6 +19365,710 @@
       ]
     }
   },
+  "A_registry_occurrence_adherence": {
+    "S1": {
+      "method": "joint_count_matched_v1",
+      "ruler": "registry",
+      "config": "S1",
+      "numerator_confirmed": 6628,
+      "denominator": 8149,
+      "adherence_lower": 0.813351,
+      "adherence_upper": 0.918395,
+      "residual_capacity": 856,
+      "collision_target_spans": 884,
+      "resolved_only": 0.908817,
+      "per_chapter": {
+        "d2l_introduction": {
+          "numerator_confirmed": 1131,
+          "denominator": 1395,
+          "adherence_lower": 0.810753,
+          "adherence_upper": 0.924731,
+          "residual_capacity": 159
+        },
+        "d2l_linear_networks": {
+          "numerator_confirmed": 1635,
+          "denominator": 2034,
+          "adherence_lower": 0.803835,
+          "adherence_upper": 0.902163,
+          "residual_capacity": 200
+        },
+        "d2l_multilayer_perceptrons": {
+          "numerator_confirmed": 2372,
+          "denominator": 2861,
+          "adherence_lower": 0.829081,
+          "adherence_upper": 0.91821,
+          "residual_capacity": 255
+        },
+        "d2l_preliminaries": {
+          "numerator_confirmed": 1490,
+          "denominator": 1859,
+          "adherence_lower": 0.801506,
+          "adherence_upper": 0.931684,
+          "residual_capacity": 242
+        }
+      },
+      "collision_forms": [
+        {
+          "form": "lớp",
+          "target_spans": 56
+        },
+        {
+          "form": "mẫu",
+          "target_spans": 52
+        },
+        {
+          "form": "mô hình",
+          "target_spans": 41
+        },
+        {
+          "form": "ảnh",
+          "target_spans": 27
+        },
+        {
+          "form": "hàm mất mát",
+          "target_spans": 27
+        },
+        {
+          "form": "tensor",
+          "target_spans": 27
+        },
+        {
+          "form": "đầu vào",
+          "target_spans": 26
+        },
+        {
+          "form": "đầu ra",
+          "target_spans": 26
+        },
+        {
+          "form": "nhãn",
+          "target_spans": 25
+        },
+        {
+          "form": "tham số",
+          "target_spans": 23
+        },
+        {
+          "form": "dự đoán",
+          "target_spans": 22
+        },
+        {
+          "form": "trục",
+          "target_spans": 22
+        },
+        {
+          "form": "phần tử",
+          "target_spans": 21
+        },
+        {
+          "form": "ma trận",
+          "target_spans": 21
+        },
+        {
+          "form": "đặc trưng",
+          "target_spans": 20
+        },
+        {
+          "form": "xác suất",
+          "target_spans": 20
+        },
+        {
+          "form": "vector",
+          "target_spans": 17
+        },
+        {
+          "form": "mạng nơ-ron",
+          "target_spans": 15
+        },
+        {
+          "form": "dữ liệu huấn luyện",
+          "target_spans": 14
+        },
+        {
+          "form": "huấn luyện",
+          "target_spans": 13
+        },
+        {
+          "form": "biến ngẫu nhiên",
+          "target_spans": 13
+        },
+        {
+          "form": "chuẩn",
+          "target_spans": 12
+        },
+        {
+          "form": "đa thức",
+          "target_spans": 12
+        },
+        {
+          "form": "học máy",
+          "target_spans": 11
+        },
+        {
+          "form": "siêu tham số",
+          "target_spans": 10
+        },
+        {
+          "form": "ví dụ",
+          "target_spans": 10
+        },
+        {
+          "form": "thuật toán",
+          "target_spans": 10
+        },
+        {
+          "form": "cột",
+          "target_spans": 10
+        },
+        {
+          "form": "chuỗi",
+          "target_spans": 9
+        },
+        {
+          "form": "quá khớp",
+          "target_spans": 9
+        },
+        {
+          "form": "tập huấn luyện",
+          "target_spans": 8
+        },
+        {
+          "form": "minibatch",
+          "target_spans": 8
+        },
+        {
+          "form": "bộ dữ liệu",
+          "target_spans": 7
+        },
+        {
+          "form": "chiều",
+          "target_spans": 7
+        },
+        {
+          "form": "đạo hàm riêng",
+          "target_spans": 7
+        },
+        {
+          "form": "đạo hàm",
+          "target_spans": 7
+        },
+        {
+          "form": "mô hình tuyến tính",
+          "target_spans": 7
+        },
+        {
+          "form": "softmax",
+          "target_spans": 7
+        },
+        {
+          "form": "đơn vị ẩn",
+          "target_spans": 7
+        },
+        {
+          "form": "tham số mô hình",
+          "target_spans": 6
+        },
+        {
+          "form": "tập dữ liệu huấn luyện",
+          "target_spans": 6
+        },
+        {
+          "form": "hàng",
+          "target_spans": 6
+        },
+        {
+          "form": "mẫu dữ liệu",
+          "target_spans": 6
+        },
+        {
+          "form": "tích ma trận-vectơ",
+          "target_spans": 6
+        },
+        {
+          "form": "pixel",
+          "target_spans": 6
+        },
+        {
+          "form": "lớp ẩn",
+          "target_spans": 6
+        },
+        {
+          "form": "thuộc tính",
+          "target_spans": 5
+        },
+        {
+          "form": "bài toán hồi quy",
+          "target_spans": 5
+        },
+        {
+          "form": "chỉ số",
+          "target_spans": 5
+        },
+        {
+          "form": "vô hướng",
+          "target_spans": 5
+        },
+        {
+          "form": "họ mô hình",
+          "target_spans": 4
+        },
+        {
+          "form": "kích thước",
+          "target_spans": 4
+        },
+        {
+          "form": "mô hình học máy",
+          "target_spans": 4
+        },
+        {
+          "form": "nhãn thật",
+          "target_spans": 4
+        },
+        {
+          "form": "quan sát",
+          "target_spans": 4
+        },
+        {
+          "form": "hành động",
+          "target_spans": 4
+        },
+        {
+          "form": "trung bình",
+          "target_spans": 4
+        },
+        {
+          "form": "tích vô hướng",
+          "target_spans": 4
+        },
+        {
+          "form": "biến",
+          "target_spans": 4
+        },
+        {
+          "form": "phân phối",
+          "target_spans": 4
+        },
+        {
+          "form": "lấy mẫu",
+          "target_spans": 4
+        },
+        {
+          "form": "độ lệch",
+          "target_spans": 4
+        },
+        {
+          "form": "hạng mục",
+          "target_spans": 4
+        },
+        {
+          "form": "xác suất dự đoán",
+          "target_spans": 4
+        },
+        {
+          "form": "biến đổi affine",
+          "target_spans": 4
+        },
+        {
+          "form": "hàm đa thức",
+          "target_spans": 4
+        },
+        {
+          "form": "trọng số",
+          "target_spans": 4
+        },
+        {
+          "form": "tập dữ liệu kiểm tra",
+          "target_spans": 3
+        },
+        {
+          "form": "tập kiểm tra",
+          "target_spans": 3
+        },
+        {
+          "form": "gán nhãn",
+          "target_spans": 3
+        },
+        {
+          "form": "vector đặc trưng",
+          "target_spans": 3
+        },
+        {
+          "form": "kết quả",
+          "target_spans": 3
+        },
+        {
+          "form": "thành phần",
+          "target_spans": 3
+        },
+        {
+          "form": "số chiều",
+          "target_spans": 3
+        },
+        {
+          "form": "vi phân",
+          "target_spans": 3
+        },
+        {
+          "form": "lan truyền ngược",
+          "target_spans": 3
+        },
+        {
+          "form": "khởi tạo tham số",
+          "target_spans": 3
+        },
+        {
+          "form": "biến mục tiêu",
+          "target_spans": 2
+        },
+        {
+          "form": "đặc trưng đầu vào",
+          "target_spans": 2
+        },
+        {
+          "form": "vectơ hàng",
+          "target_spans": 2
+        },
+        {
+          "form": "phép nhân ma trận",
+          "target_spans": 2
+        },
+        {
+          "form": "tập dữ liệu xác thực",
+          "target_spans": 2
+        },
+        {
+          "form": "tập xác thực",
+          "target_spans": 2
+        },
+        {
+          "form": "logit",
+          "target_spans": 2
+        },
+        {
+          "form": "phân phối xác suất",
+          "target_spans": 2
+        },
+        {
+          "form": "lớp đầu ra",
+          "target_spans": 2
+        },
+        {
+          "form": "hàm kích hoạt",
+          "target_spans": 2
+        },
+        {
+          "form": "xác suất dropout",
+          "target_spans": 2
+        },
+        {
+          "form": "đối tượng",
+          "target_spans": 1
+        },
+        {
+          "form": "mục",
+          "target_spans": 1
+        },
+        {
+          "form": "lấy trung bình",
+          "target_spans": 1
+        },
+        {
+          "form": "lô nhỏ",
+          "target_spans": 1
+        },
+        {
+          "form": "ánh xạ",
+          "target_spans": 1
+        },
+        {
+          "form": "phép toán",
+          "target_spans": 1
+        },
+        {
+          "form": "toán tử",
+          "target_spans": 1
+        },
+        {
+          "form": "dữ liệu thiếu",
+          "target_spans": 1
+        },
+        {
+          "form": "tham số trọng số",
+          "target_spans": 1
+        },
+        {
+          "form": "lớp kết nối đầy đủ",
+          "target_spans": 1
+        },
+        {
+          "form": "hàm mất mát entropy chéo",
+          "target_spans": 1
+        },
+        {
+          "form": "tổng quát hóa",
+          "target_spans": 1
+        },
+        {
+          "form": "điều chuẩn",
+          "target_spans": 1
+        },
+        {
+          "form": "chuẩn hóa",
+          "target_spans": 1
+        },
+        {
+          "form": "kỳ vọng",
+          "target_spans": 1
+        },
+        {
+          "form": "hàm mục tiêu",
+          "target_spans": 1
+        }
+      ],
+      "worst_terms": [
+        {
+          "term_id": "registry:affine function",
+          "source_term": "affine function",
+          "source_occurrences": 7,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:epsilon",
+          "source_term": "epsilon",
+          "source_occurrences": 7,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:knobs",
+          "source_term": "knobs",
+          "source_occurrences": 6,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:zero mean",
+          "source_term": "zero mean",
+          "source_occurrences": 5,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:first principles",
+          "source_term": "first principles",
+          "source_occurrences": 4,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:iterator",
+          "source_term": "iterator",
+          "source_occurrences": 4,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:cpu-based computation",
+          "source_term": "CPU-based computation",
+          "source_occurrences": 3,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:elementwise operation",
+          "source_term": "elementwise operation",
+          "source_occurrences": 3,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:exponentiate",
+          "source_term": "exponentiate",
+          "source_occurrences": 3,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:test dataset",
+          "source_term": "test dataset",
+          "source_occurrences": 3,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:benchmark dataset",
+          "source_term": "benchmark dataset",
+          "source_occurrences": 2,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:cloud computing",
+          "source_term": "cloud computing",
+          "source_occurrences": 2,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:dropout regularization",
+          "source_term": "dropout regularization",
+          "source_occurrences": 2,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:ground truth",
+          "source_term": "ground truth",
+          "source_occurrences": 2,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:input shape",
+          "source_term": "input shape",
+          "source_occurrences": 2,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:non-negative number",
+          "source_term": "non-negative number",
+          "source_occurrences": 2,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:partition function",
+          "source_term": "partition function",
+          "source_occurrences": 2,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:programming languages",
+          "source_term": "programming languages",
+          "source_occurrences": 2,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:r",
+          "source_term": "R",
+          "source_occurrences": 1,
+          "accepted_target_occurrences": 0,
+          "confirmed_credit": 0,
+          "rate": 0.0
+        },
+        {
+          "term_id": "registry:sigmoid function",
+          "source_term": "Sigmoid Function",
+          "source_occurrences": 13,
+          "accepted_target_occurrences": 1,
+          "confirmed_credit": 1,
+          "rate": 0.076923
+        },
+        {
+          "term_id": "registry:tanh function",
+          "source_term": "tanh function",
+          "source_occurrences": 9,
+          "accepted_target_occurrences": 1,
+          "confirmed_credit": 1,
+          "rate": 0.111111
+        },
+        {
+          "term_id": "registry:ground-truth",
+          "source_term": "ground-truth",
+          "source_occurrences": 6,
+          "accepted_target_occurrences": 1,
+          "confirmed_credit": 1,
+          "rate": 0.166667
+        },
+        {
+          "term_id": "registry:target",
+          "source_term": "target",
+          "source_occurrences": 11,
+          "accepted_target_occurrences": 2,
+          "confirmed_credit": 2,
+          "rate": 0.181818
+        },
+        {
+          "term_id": "registry:sample",
+          "source_term": "sample",
+          "source_occurrences": 15,
+          "accepted_target_occurrences": 3,
+          "confirmed_credit": 3,
+          "rate": 0.2
+        },
+        {
+          "term_id": "registry:hidden unit",
+          "source_term": "hidden unit",
+          "source_occurrences": 5,
+          "accepted_target_occurrences": 1,
+          "confirmed_credit": 1,
+          "rate": 0.2
+        },
+        {
+          "term_id": "registry:polynomials",
+          "source_term": "polynomials",
+          "source_occurrences": 5,
+          "accepted_target_occurrences": 1,
+          "confirmed_credit": 1,
+          "rate": 0.2
+        },
+        {
+          "term_id": "registry:sequences",
+          "source_term": "sequences",
+          "source_occurrences": 5,
+          "accepted_target_occurrences": 1,
+          "confirmed_credit": 1,
+          "rate": 0.2
+        },
+        {
+          "term_id": "registry:bit",
+          "source_term": "bit",
+          "source_occurrences": 9,
+          "accepted_target_occurrences": 2,
+          "confirmed_credit": 2,
+          "rate": 0.222222
+        },
+        {
+          "term_id": "registry:regression problem",
+          "source_term": "regression problem",
+          "source_occurrences": 7,
+          "accepted_target_occurrences": 2,
+          "confirmed_credit": 2,
+          "rate": 0.285714
+        },
+        {
+          "term_id": "registry:family of models",
+          "source_term": "family of models",
+          "source_occurrences": 3,
+          "accepted_target_occurrences": 1,
+          "confirmed_credit": 1,
+          "rate": 0.333333
+        }
+      ]
+    }
+  },
   "term_policy": {
     "source": "eval_overlay",
     "read_only": true,
@@ -18335,7 +20185,16 @@
       "target_only": true
     }
   },
+  "occurrence_audit": {
+    "csv": "data\\reports\\d2l_translation_metrics_v2_occurrence_audit.csv",
+    "html": "data\\reports\\d2l_translation_metrics_v2_occurrence_audit.html",
+    "rows": 32280,
+    "source": "same_allocation_as_occurrence_adherence"
+  },
   "limitations": [
+    "Occurrence adherence is deterministic surface counting, not semantic translation quality or positional word alignment.",
+    "The lower bound gives collision spans zero credit; the upper bound adds only capacity supported by ambiguous target spans.",
+    "Shadow owners prevent shorter accepted forms from claiming spans owned by longer ruler forms, even when the longer source term is absent.",
     "D_surface_v2_2 is a deterministic block-level surface diagnostic, not word alignment and not a defended quality headline.",
     "D_surface_v2_2 detects only registry canonical/allowed Vietnamese forms; unseen synonyms are reported as undetected.",
     "D_surface_v2_2 applies cross-term longest-span allocation and target-side Vietnamese word segmentation; it is still surface matching, not occurrence-level alignment.",

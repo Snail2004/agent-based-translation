@@ -69,8 +69,8 @@ def _read_json(path: Path) -> dict[str, Any]:
 def _d2l_headlines(report: dict[str, Any], report_path: str) -> list[dict[str, Any]]:
     """Extract B / D / A headlines from d2l_translation_metrics.json.
 
-    Uses *occurrence_weighted* B as the canonical headline value
-    (consistent with LOCK: "occ-weighted headline B + D").
+    Uses the corrected joint count-matched lower bound when available. The
+    legacy block-presence-weighted value remains visible for traceability.
     """
     headlines: list[dict[str, Any]] = []
     provenance_base = {
@@ -83,21 +83,36 @@ def _d2l_headlines(report: dict[str, Any], report_path: str) -> list[dict[str, A
         "report_path": report_path,
     }
 
-    # B (TAR vs gold) — occurrence-weighted
+    # B (TAR vs gold) — corrected occurrence adherence.
     b = report.get("B_tar_vs_gold") or {}
+    b_occurrence = report.get("B_gold_occurrence_adherence") or {}
     for config in ("S0", "S1"):
         cfg = b.get(config) or {}
         flat = cfg.get("flat") or {}
         recurring = cfg.get("recurring") or {}
-        if flat or recurring:
+        corrected = ((b_occurrence.get(config) or {}).get("flat") or {})
+        corrected_recurring = ((b_occurrence.get(config) or {}).get("recurring") or {})
+        if flat or recurring or corrected:
             headlines.append({
                 "name": f"B_tar_vs_gold_{config}",
-                "value": flat.get("occurrence_weighted"),
+                "value": corrected.get("adherence_lower", flat.get("occurrence_weighted")),
+                "value_upper": corrected.get("adherence_upper"),
+                "residual_capacity": corrected.get("residual_capacity"),
+                "denominator": corrected.get("denominator"),
+                "method": corrected.get("method", "legacy_block_presence_source_weighted"),
+                "legacy_occurrence_weighted": flat.get("occurrence_weighted"),
                 "value_flat": flat.get("overall"),
-                "value_recurring_occ": recurring.get("occurrence_weighted"),
+                "value_recurring_occ": corrected_recurring.get(
+                    "adherence_lower", recurring.get("occurrence_weighted")
+                ),
                 "pairs": flat.get("pairs"),
                 "domain": "d2l",
-                "provenance": {**provenance_base, "scorer_metric": "B_tar_vs_gold"},
+                "provenance": {
+                    **provenance_base,
+                    "scorer_metric": (
+                        "B_gold_occurrence_adherence" if corrected else "B_tar_vs_gold_legacy"
+                    ),
+                },
             })
 
     # D (registry consistency)
@@ -125,18 +140,30 @@ def _d2l_headlines(report: dict[str, Any], report_path: str) -> list[dict[str, A
                 "provenance": {**provenance_base, "scorer_metric": "D_registry_consistency"},
             })
 
-    # A (TAR vs registry) — diagnostic
+    # A (TAR vs registry) — corrected occurrence adherence, diagnostic.
     a = report.get("A_tar_vs_registry") or {}
+    a_occurrence = report.get("A_registry_occurrence_adherence") or {}
     for config in ("S1",):
         cfg = a.get(config) or {}
-        if cfg:
+        corrected = a_occurrence.get(config) or {}
+        if cfg or corrected:
             headlines.append({
                 "name": f"A_tar_vs_registry_{config}",
-                "value": cfg.get("overall"),
-                "occurrence_weighted": cfg.get("occurrence_weighted"),
+                "value": corrected.get("adherence_lower", cfg.get("occurrence_weighted")),
+                "value_upper": corrected.get("adherence_upper"),
+                "residual_capacity": corrected.get("residual_capacity"),
+                "denominator": corrected.get("denominator"),
+                "method": corrected.get("method", "legacy_block_presence_source_weighted"),
+                "legacy_occurrence_weighted": cfg.get("occurrence_weighted"),
+                "legacy_overall": cfg.get("overall"),
                 "pairs": cfg.get("pairs"),
                 "domain": "d2l",
-                "provenance": {**provenance_base, "scorer_metric": "A_tar_vs_registry"},
+                "provenance": {
+                    **provenance_base,
+                    "scorer_metric": (
+                        "A_registry_occurrence_adherence" if corrected else "A_tar_vs_registry_legacy"
+                    ),
+                },
             })
 
     return headlines
@@ -170,6 +197,13 @@ def _d2l_drift(report: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _d_surface_label(report: dict[str, Any]) -> str:
+    methods = {
+        str(item.get("method") or "")
+        for item in (report.get("D_registry_consistency") or {}).values()
+        if isinstance(item, dict)
+    }
+    if "block_surface_v2_2" in methods:
+        return "D_surface_v2.2 (hard-tier)"
     metric_version = str(report.get("metric_version") or "")
     if metric_version.endswith("v2_2"):
         return "D_surface_v2.2 (hard-tier)"
@@ -182,9 +216,22 @@ def _d2l_per_chapter(report: dict[str, Any]) -> dict[str, Any]:
     """Extract per-chapter from B."""
     result: dict[str, Any] = {}
     b = report.get("B_tar_vs_gold") or {}
+    b_occurrence = report.get("B_gold_occurrence_adherence") or {}
     for config in ("S0", "S1"):
         flat = (b.get(config) or {}).get("flat") or {}
-        result[f"B_{config}"] = flat.get("per_chapter") or {}
+        corrected = ((b_occurrence.get(config) or {}).get("flat") or {})
+        corrected_chapters = corrected.get("per_chapter") or {}
+        if corrected_chapters:
+            result[f"B_{config}"] = {
+                chapter: values.get("adherence_lower")
+                for chapter, values in corrected_chapters.items()
+            }
+            result[f"B_{config}_upper"] = {
+                chapter: values.get("adherence_upper")
+                for chapter, values in corrected_chapters.items()
+            }
+        else:
+            result[f"B_{config}"] = flat.get("per_chapter") or {}
     return result
 
 
