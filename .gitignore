@@ -21,6 +21,7 @@ AILAB_SOURCES_RAW/
 THESIS_RUNTIME_TOOL/projects/
 **/data/jobs/
 THESIS_RUNTIME_TOOL/data/cache/
+THESIS_RUNTIME_TOOL/data/eval/embed_cache/
 THESIS_RUNTIME_TOOL/data/eval/human_ratings.csv
 *.sqlite3
 *.sqlite3-journal
