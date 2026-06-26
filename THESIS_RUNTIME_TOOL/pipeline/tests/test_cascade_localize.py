@@ -4,7 +4,9 @@ from pipeline.eval.cascade_localize import (
     CandidateSpan,
     CascadeOccurrence,
     _load_reusable_gold,
-    _score_t3_against_reused_gold,
+    _occurrence_index_in_source_sentence,
+    _score_locate_only_against_reused_gold,
+    _score_locate_only_by_code,
     run_t1_region,
     run_t2_rules,
 )
@@ -130,55 +132,80 @@ def test_t2_shared_variant_escalates() -> None:
     assert decision.escalate_reason == "C1_variant_shared_with_other_term"
 
 
-def test_llm_adjudicator_prompt_is_review_gated_and_validates_quote() -> None:
+def test_llm_adjudicator_prompt_is_locate_only_and_validates_quote() -> None:
     item = AdjudicationInput(
         occurrence_id="occ-1",
         source_term="user",
+        occurrence_index=1,
         source_sentence="The user clicks.",
         target_region="Người dùng nhấp.",
-        candidate_quotes=("người dùng",),
     )
     messages = build_messages(item)
-    assert "occurrence-level localization adjudicator" in messages[0]["content"]
-    assert "DIFFERENT word" in messages[0]["content"]
+    assert "occurrence-level LOCATOR" in messages[0]["content"]
+    assert "OCCURRENCE_INDEX" in messages[0]["content"]
+    assert "accepted_forms" not in messages[1]["content"]
     assert "occ-1" in messages[1]["content"]
     assert validate_payload(
         {
             "occurrence_id": "occ-1",
-            "status": "localized",
+            "found": True,
             "target_quote": "Người dùng",
+            "left_context": "",
             "confidence": "high",
-            "reason": "present",
         },
         "occ-1",
         "Người dùng nhấp.",
-    )["status"] == "localized"
+    )["found"] is True
     assert validate_payload(
         {
             "occurrence_id": "occ-1",
-            "status": "localized",
+            "found": True,
             "target_quote": "khách hàng",
+            "left_context": "",
             "confidence": "high",
-            "reason": "present",
         },
         "occ-1",
         "Người dùng nhấp.",
-    )["status"] == "not_found"
+    )["found"] is False
 
 
-def test_t3_reused_gold_scoring_accepts_rendered_and_not_rendered() -> None:
-    assert _score_t3_against_reused_gold(
-        {"status": "localized", "target_quote": "tập dữ liệu MNIST"},
+def test_locate_only_reused_gold_scoring_accepts_containment_and_not_rendered() -> None:
+    assert _score_locate_only_against_reused_gold(
+        {"found": True, "target_quote": "với tập dữ liệu MNIST này"},
         {"gold_label": "rendered", "gold_target_span": "tập dữ liệu MNIST"},
     )["correct"] is True
-    assert _score_t3_against_reused_gold(
-        {"status": "omitted", "target_quote": ""},
+    assert _score_locate_only_against_reused_gold(
+        {"found": False, "target_quote": ""},
         {"gold_label": "not_rendered", "gold_target_span": ""},
     )["correct"] is True
-    assert _score_t3_against_reused_gold(
-        {"status": "localized", "target_quote": "khách hàng"},
+    assert _score_locate_only_against_reused_gold(
+        {"found": True, "target_quote": "khách hàng"},
         {"gold_label": "not_rendered", "gold_target_span": ""},
     )["correct"] is False
+
+
+def test_locate_only_code_scores_containment_not_model_verdict() -> None:
+    scored = _score_locate_only_by_code(
+        {"found": True, "target_quote": "với hai ví dụ dữ liệu này"},
+        {"source_term": "data examples", "accepted_forms": ("ví dụ dữ liệu", "mẫu dữ liệu")},
+    )
+    assert scored["adherence_label"] == "adherent"
+    assert scored["highlight_surface"] == "ví dụ dữ liệu"
+    off = _score_locate_only_by_code(
+        {"found": True, "target_quote": "một bộ kỹ thuật"},
+        {"source_term": "set", "accepted_forms": ("tập hợp", "tập")},
+    )
+    assert off["adherence_label"] == "off_glossary"
+
+
+def test_occurrence_index_is_sentence_local() -> None:
+    decision = {
+        "source_term": "model",
+        "source_text": "The model is trained. The model and model are evaluated.",
+        "source_sentence": "The model and model are evaluated.",
+        "source_start": 38,
+    }
+    assert _occurrence_index_in_source_sentence(decision) == 2
 
 
 def test_reusable_gold_loader_converts_collision_offset_to_quote(tmp_path) -> None:

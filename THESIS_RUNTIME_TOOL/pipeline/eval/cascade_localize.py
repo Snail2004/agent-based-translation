@@ -44,7 +44,7 @@ from pipeline.eval.llm_adjudicator import (
     build_messages as build_t3_messages,
     validate_payload as validate_t3_payload,
 )
-from pipeline.eval.surface_match import normalize_surface
+from pipeline.eval.surface_match import find_spans, normalize_surface
 from pipeline.translate.profiles import get_profile
 
 
@@ -108,6 +108,7 @@ class TierDecision:
     source_surface: str
     source_sentence_idx: int
     source_sentence: str
+    source_text: str
     target_text: str
     resolved_by: str
     decision: str
@@ -117,6 +118,7 @@ class TierDecision:
     matched_form_rank: str = ""
     escalate_reason: str = ""
     masquerade_suspect: bool = False
+    accepted_forms: tuple[str, ...] = ()
     t1: dict[str, Any] | None = None
     candidates: tuple[dict[str, Any], ...] = ()
 
@@ -235,6 +237,7 @@ def run_t3_pilot(
     gold_reuse_paths: list[str | Path],
     llm_client: Any,
     limit: int,
+    locate_only: bool = False,
     profile_name: str = "technical_d2l_v1",
     doc_id: str = "d2l",
 ) -> dict[str, Any]:
@@ -275,6 +278,8 @@ def run_t3_pilot(
     records: list[dict[str, Any]] = []
     confidence_correct: dict[str, Counter[str]] = defaultdict(Counter)
     status_counts: Counter[str] = Counter()
+    adherence_counts: Counter[str] = Counter()
+    adherence_by_config: dict[str, Counter[str]] = defaultdict(Counter)
     fresh_calls = 0
     cache_hits = 0
     prompt_tokens_all = 0
@@ -296,9 +301,9 @@ def run_t3_pilot(
         item = AdjudicationInput(
             occurrence_id=str(decision["occ_id"]),
             source_term=str(decision["source_term"]),
+            occurrence_index=_occurrence_index_in_source_sentence(decision),
             source_sentence=str(decision["source_sentence"]),
             target_region=target_region,
-            candidate_quotes=candidate_quotes,
         )
         result = llm_client.call(
             build_t3_messages(item),
@@ -306,8 +311,16 @@ def run_t3_pilot(
             tag=f"EV-D2L-10:T3:{T3_PROMPT_VERSION}:{decision['occ_id']}",
         )
         validated = validate_t3_payload(result.parsed_json, item.occurrence_id, target_region)
-        scored = _score_t3_against_reused_gold(validated, reused)
-        status_counts[str(validated["status"])] += 1
+        if locate_only:
+            code_score = _score_locate_only_by_code(validated, decision)
+            scored = _score_locate_only_against_reused_gold(validated, reused)
+            status_counts["found" if validated["found"] else "not_found"] += 1
+            adherence_counts[str(code_score["adherence_label"])] += 1
+            adherence_by_config[str(decision["config"])][str(code_score["adherence_label"])] += 1
+        else:
+            code_score = {}
+            scored = _score_t3_against_reused_gold(validated, reused)
+            status_counts[str(validated.get("status") or "")] += 1
         confidence_correct[str(validated["confidence"])][str(scored["correct"]).lower()] += 1
         prompt_tokens_all += result.usage.prompt_tokens
         completion_tokens_all += result.usage.completion_tokens
@@ -336,6 +349,7 @@ def run_t3_pilot(
             "masquerade_suspect": bool(decision.get("masquerade_suspect")),
             "gold": reused,
             "llm": validated,
+            "code_score": code_score,
             "json_error": result.json_error,
             "correct": scored["correct"],
             "correct_reason": scored["reason"],
@@ -350,9 +364,9 @@ def run_t3_pilot(
     correct = sum(1 for item in records if item["correct"])
     return {
         "task": "EV-D2L-10",
-        "mode": "tier3_pilot_reused_labeled_only",
+        "mode": "tier3_locate_only_reused_labeled_only" if locate_only else "tier3_pilot_reused_labeled_only",
         "prompt_version": T3_PROMPT_VERSION,
-        "response_schema": "occurrence_adjudication",
+        "response_schema": "locate_only_v4" if locate_only else "occurrence_adjudication",
         "experiment_id": experiment_id,
         "profile": profile_name,
         "doc_id": doc_id,
@@ -370,6 +384,29 @@ def run_t3_pilot(
         "correct": correct,
         "accuracy": _ratio(correct, len(records)),
         "status_counts": dict(status_counts),
+        "adherence_counts": dict(adherence_counts),
+        "adherence_by_config": {
+            config: {
+                **dict(counts),
+                "adherence_rate": _ratio(
+                    counts["adherent"],
+                    counts["adherent"] + counts["off_glossary"] + counts["not_rendered"],
+                ),
+                "off_glossary_pct": _ratio(
+                    counts["off_glossary"],
+                    counts["adherent"] + counts["off_glossary"] + counts["not_rendered"],
+                ),
+            }
+            for config, counts in sorted(adherence_by_config.items())
+        },
+        "adherence_rate": _ratio(
+            adherence_counts["adherent"],
+            adherence_counts["adherent"] + adherence_counts["off_glossary"] + adherence_counts["not_rendered"],
+        ) if locate_only else None,
+        "off_glossary_pct": _ratio(
+            adherence_counts["off_glossary"],
+            adherence_counts["adherent"] + adherence_counts["off_glossary"] + adherence_counts["not_rendered"],
+        ) if locate_only else None,
         "confidence_x_correct": {
             key: dict(value) for key, value in sorted(confidence_correct.items())
         },
@@ -395,8 +432,9 @@ def run_t3_pilot(
         },
         "records": records,
         "scope_statement": (
-            "Part A pilot only: T3 GPT runs only on reused human-labeled residual rows "
-            "and is capped by --limit. No DB writes and no headline metric changes."
+            "Part A/R2 pilot only: T3 GPT runs only on reused human-labeled residual rows "
+            "and is capped by --limit. LLM locates only when --locate-only is set; code scores. "
+            "No DB writes and no headline metric changes."
         ),
     }
 
@@ -595,7 +633,7 @@ def run_t2_rules(
         if occurrence.term_id in span.term_ids and span.role in {"active", "collision"}
     ]
     masquerade = not same_term and bool(same_term_all_block)
-    base = _base_decision(occurrence, t1, same_term, masquerade)
+    base = _base_decision(occurrence, term, t1, same_term, masquerade)
     if t1.status.startswith("empty"):
         return _residual(base, "C0_no_t1_region")
     if not same_term:
@@ -643,10 +681,12 @@ def build_residual_gold(
     for path in report_paths:
         report = json.loads(Path(path).read_text(encoding="utf-8"))
         for decision in report.get("decisions", []):
-            if decision.get("resolved_by") == "t2_credit":
+            stratum = _gold_stratum(decision)
+            if not stratum:
                 continue
             key = _reuse_key_from_decision(decision)
             reused = reusable.get(key, {})
+            prefilled = _r2_reused_gold(reused, decision)
             rows.append({
                 "occ_id": decision["occ_id"],
                 "config": decision["config"],
@@ -654,32 +694,39 @@ def build_residual_gold(
                 "chapter_id": decision["chapter_id"],
                 "source_term": decision["source_term"],
                 "term_id": decision["term_id"],
+                "stratum": stratum,
                 "source_span": _format_span(
                     int(decision["source_start"]),
                     int(decision["source_end"]),
                     str(decision["source_surface"]),
                 ),
                 "source_sentence": decision["source_sentence"],
+                "source_text": decision.get("source_text", ""),
                 "target_text": decision.get("target_text", ""),
                 "candidates": json.dumps(decision.get("candidates") or [], ensure_ascii=False),
+                "accepted_forms": json.dumps(decision.get("accepted_forms") or [], ensure_ascii=False),
+                "credited_target_surface": decision.get("target_surface", ""),
                 "resolved_by": decision["resolved_by"],
                 "decision": decision["decision"],
                 "escalate_reason": decision.get("escalate_reason", ""),
                 "masquerade_suspect": str(bool(decision.get("masquerade_suspect"))).lower(),
-                "gold_label": reused.get("gold_label", ""),
-                "gold_target_start": reused.get("gold_target_start", ""),
-                "gold_target_end": reused.get("gold_target_end", ""),
-                "gold_target_span": reused.get("gold_target_span", ""),
-                "annotator_note": reused.get("annotator_note", "prefilled_from_reuse" if reused else ""),
+                "gold_label": prefilled.get("gold_label", ""),
+                "gold_target_start": prefilled.get("gold_target_start", ""),
+                "gold_target_end": prefilled.get("gold_target_end", ""),
+                "gold_target_span": prefilled.get("gold_quote", ""),
+                "gold_quote": prefilled.get("gold_quote", ""),
+                "registry_missing_form_flag": "",
+                "annotator_note": prefilled.get("annotator_note", "prefilled_from_reuse" if reused else ""),
             })
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     fields = [
         "occ_id", "config", "block_id", "chapter_id", "source_term", "term_id",
-        "source_span", "source_sentence", "target_text", "candidates",
+        "stratum", "source_span", "source_sentence", "source_text", "target_text", "candidates",
+        "accepted_forms", "credited_target_surface",
         "resolved_by", "decision", "escalate_reason", "masquerade_suspect",
-        "gold_label", "gold_target_start", "gold_target_end", "gold_target_span",
-        "annotator_note",
+        "gold_label", "gold_target_start", "gold_target_end", "gold_target_span", "gold_quote",
+        "registry_missing_form_flag", "annotator_note",
     ]
     with out.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -692,6 +739,7 @@ def build_residual_gold(
         "rows": len(rows),
         "prefilled": sum(bool(row["gold_label"]) for row in rows),
         "to_label": sum(not bool(row["gold_label"]) for row in rows),
+        "strata": dict(Counter(row["stratum"] for row in rows)),
     }
 
 
@@ -710,7 +758,60 @@ def score_residual_gold(gold_path: str | Path) -> dict[str, Any]:
     return {
         "gold": str(gold_path),
         "rows": len(rows),
-        "by_config": {key: dict(value) for key, value in sorted(by_config.items())},
+        "by_config": {
+            key: {
+                **dict(value),
+                "adherence_rate": _ratio(
+                    value["adherent"],
+                    value["adherent"] + value["off_glossary"] + value["not_rendered"],
+                ),
+                "off_glossary_pct": _ratio(
+                    value["off_glossary"],
+                    value["adherent"] + value["off_glossary"] + value["not_rendered"],
+                ),
+            }
+            for key, value in sorted(by_config.items())
+        },
+    }
+
+
+def _gold_stratum(decision: dict[str, Any]) -> str:
+    if decision.get("resolved_by") == "t2_credit":
+        if decision.get("escalate_reason") == "C1_variant_flagged":
+            return "control:C1_variant_flagged"
+        return ""
+    reason = str(decision.get("escalate_reason") or "")
+    if reason.startswith("C0"):
+        return "residual:C0"
+    if reason == "C1_variant_shared_with_other_term":
+        return "residual:off_glossary_candidate"
+    return f"residual:{reason or 'unknown'}"
+
+
+def _r2_reused_gold(
+    reused: dict[str, Any],
+    decision: dict[str, Any],
+) -> dict[str, Any]:
+    if not reused:
+        return {}
+    label = str(reused.get("gold_label") or "").strip()
+    quote = str(reused.get("gold_target_span") or "").strip()
+    if label in {"rendered", "localized"}:
+        code = _score_locate_only_by_code(
+            {"found": True, "target_quote": quote},
+            decision,
+        )
+        label = str(code["adherence_label"])
+    elif label in {"omitted", "not_found"}:
+        label = "not_rendered"
+    elif label == "ambiguous":
+        label = ""
+    return {
+        "gold_label": label,
+        "gold_quote": quote,
+        "gold_target_start": reused.get("gold_target_start", ""),
+        "gold_target_end": reused.get("gold_target_end", ""),
+        "annotator_note": reused.get("annotator_note", ""),
     }
 
 
@@ -765,6 +866,161 @@ def _quote_equal(left: str, right: str) -> bool:
     return " ".join(str(left).split()) == " ".join(str(right).split())
 
 
+def _occurrence_index_in_source_sentence(decision: dict[str, Any]) -> int:
+    source_sentence = str(decision.get("source_sentence") or "")
+    source_term = str(decision.get("source_term") or "")
+    source_text = str(decision.get("source_text") or "")
+    source_start = int(decision.get("source_start") or 0)
+    sentence_start = _find_sentence_start(source_text, source_sentence, source_start)
+    relative_start = max(0, source_start - sentence_start)
+    spans = find_spans(source_sentence, source_term, language="en")
+    if not spans:
+        return 1
+    before_or_at = [
+        span for span in spans
+        if span[0] <= relative_start
+    ]
+    return max(1, len(before_or_at))
+
+
+def _find_sentence_start(source_text: str, source_sentence: str, source_start: int) -> int:
+    if not source_text or not source_sentence:
+        return 0
+    cursor = 0
+    while True:
+        index = source_text.find(source_sentence, cursor)
+        if index < 0:
+            return 0
+        if index <= source_start <= index + len(source_sentence):
+            return index
+        cursor = index + 1
+
+
+def _score_locate_only_by_code(
+    validated: dict[str, Any],
+    decision: dict[str, Any],
+) -> dict[str, Any]:
+    target_region = _target_region_text(decision)
+    if not bool(validated.get("found")):
+        return {
+            "adherence_label": "not_rendered",
+            "accepted_form": "",
+            "highlight_surface": "",
+            "highlight_start_in_quote": None,
+            "highlight_end_in_quote": None,
+            "target_quote_start_in_region": None,
+            "target_quote_end_in_region": None,
+            "polysemy_suspect": _polysemy_suspect(str(decision.get("source_term") or "")),
+        }
+    quote = _clean_located_quote(str(validated.get("target_quote") or ""))
+    quote_span = _locate_quote_span_in_region(
+        target_region,
+        quote,
+        str(validated.get("left_context") or ""),
+    )
+    match = _best_accepted_form_in_quote(quote, tuple(decision.get("accepted_forms") or ()))
+    label = "adherent" if match is not None else "off_glossary"
+    return {
+        "adherence_label": label,
+        "accepted_form": "" if match is None else match["accepted_form"],
+        "highlight_surface": quote if match is None else match["surface"],
+        "highlight_start_in_quote": None if match is None else match["start"],
+        "highlight_end_in_quote": None if match is None else match["end"],
+        "target_quote_start_in_region": quote_span[0],
+        "target_quote_end_in_region": quote_span[1],
+        "target_quote_clean": quote,
+        "polysemy_suspect": _polysemy_suspect(str(decision.get("source_term") or "")),
+    }
+
+
+def _best_accepted_form_in_quote(
+    quote: str,
+    accepted_forms: tuple[str, ...],
+) -> dict[str, Any] | None:
+    matches: list[dict[str, Any]] = []
+    for form in accepted_forms:
+        for start, end, surface in find_spans(quote, form, language="vi"):
+            matches.append({
+                "accepted_form": form,
+                "start": start,
+                "end": end,
+                "surface": surface,
+            })
+    if not matches:
+        return None
+    return sorted(
+        matches,
+        key=lambda item: (-(int(item["end"]) - int(item["start"])), int(item["start"]), str(item["accepted_form"])),
+    )[0]
+
+
+def _score_locate_only_against_reused_gold(
+    validated: dict[str, Any],
+    reused: dict[str, Any],
+) -> dict[str, Any]:
+    gold_label = str(reused.get("gold_label") or "").strip()
+    gold_span = _clean_located_quote(str(reused.get("gold_target_span") or ""))
+    quote = _clean_located_quote(str(validated.get("target_quote") or ""))
+    if gold_label in {"rendered", "localized", "adherent", "off_glossary"}:
+        correct = bool(validated.get("found")) and _quote_contains_either(quote, gold_span)
+        return {
+            "correct": correct,
+            "reason": "locate_contains_gold" if correct else "locate_misses_gold",
+        }
+    if gold_label in {"not_rendered", "omitted", "not_found"}:
+        correct = not bool(validated.get("found"))
+        return {
+            "correct": correct,
+            "reason": "not_rendered_match" if correct else "not_rendered_mismatch",
+        }
+    if gold_label == "not_applicable":
+        return {"correct": True, "reason": "not_applicable_excluded"}
+    return {"correct": False, "reason": f"unsupported_gold_label:{gold_label}"}
+
+
+def _quote_contains_either(left: str, right: str) -> bool:
+    if not left or not right:
+        return False
+    return left in right or right in left
+
+
+def _clean_located_quote(value: str) -> str:
+    return " ".join(str(value or "").replace("*", "").split())
+
+
+def _locate_quote_span_in_region(
+    target_region: str,
+    quote: str,
+    left_context: str,
+) -> tuple[int | None, int | None]:
+    if not quote:
+        return None, None
+    candidates: list[tuple[int, int]] = []
+    cursor = 0
+    while True:
+        index = target_region.find(quote, cursor)
+        if index < 0:
+            break
+        candidates.append((index, index + len(quote)))
+        cursor = index + max(1, len(quote))
+    if not candidates:
+        return None, None
+    clean_left = _clean_located_quote(left_context)
+    if clean_left:
+        for start, end in candidates:
+            prefix = _clean_located_quote(target_region[max(0, start - len(left_context) - 20):start])
+            if prefix.endswith(clean_left):
+                return start, end
+    if len(candidates) == 1:
+        return candidates[0]
+    return candidates[0]
+
+
+def _polysemy_suspect(source_term: str) -> bool:
+    tokens = [item for item in normalize_surface(source_term).casefold().split() if item]
+    return len(tokens) == 1 and len(tokens[0]) <= 4
+
+
 def _target_spans(allocation: dict[str, list[Any]], owner_meta: dict[str, Any], text: str) -> list[CandidateSpan]:
     spans: list[CandidateSpan] = []
     for owner_id, allocated in allocation.items():
@@ -813,6 +1069,7 @@ def _source_sentence_info(source_text: str, start: int, end: int) -> tuple[int, 
 
 def _base_decision(
     occurrence: CascadeOccurrence,
+    term: AdherenceTerm,
     t1: T1Region,
     candidates: list[CandidateSpan],
     masquerade: bool,
@@ -829,10 +1086,12 @@ def _base_decision(
         source_surface=occurrence.source_surface,
         source_sentence_idx=occurrence.source_sentence_idx,
         source_sentence=occurrence.source_sentence,
+        source_text=occurrence.source_text,
         target_text=occurrence.target_text,
         resolved_by="t3_stub",
         decision="ambiguous",
         masquerade_suspect=masquerade,
+        accepted_forms=tuple(term.accepted_forms),
         t1=asdict(t1),
         candidates=tuple(_candidate_to_dict(span) for span in candidates),
     )
@@ -1105,22 +1364,45 @@ def _write_html(path: Path, report: dict[str, Any]) -> None:
 
 
 def _write_residual_html(path: Path, rows: list[dict[str, Any]]) -> None:
-    body = []
-    for row in rows:
-        body.append(
-            "<section>"
-            f"<h3>{html.escape(row['occ_id'])}</h3>"
-            f"<p><b>Source term:</b> {html.escape(row['source_term'])}</p>"
-            f"<p><b>Source sentence:</b> {html.escape(row['source_sentence'])}</p>"
-            f"<p><b>Reason:</b> {html.escape(row['escalate_reason'])}</p>"
-            f"<pre>{html.escape(row['target_text'])}</pre>"
-            "</section>"
-        )
+    headers = list(rows[0].keys()) if rows else []
+    payload = json.dumps({"headers": headers, "rows": rows}, ensure_ascii=False)
     path.write_text(
         "<!doctype html><meta charset='utf-8'><title>Cascade residual gold</title>"
-        "<style>body{font:14px system-ui;margin:20px}section{border:1px solid #ddd;padding:12px;margin:12px 0}"
-        "pre{white-space:pre-wrap;background:#f7f7f7;padding:10px}</style>"
+        "<style>body{font:14px system-ui;margin:20px;background:#f7f8fa;color:#17202a}"
+        ".toolbar{position:sticky;top:0;background:#fff;border:1px solid #ccd3db;padding:10px;margin-bottom:12px;z-index:5}"
+        ".card{background:#fff;border:1px solid #d9dee5;border-radius:8px;padding:12px;margin:12px 0}"
+        ".grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #e0e4ea;border-radius:6px;padding:10px;background:#fbfcfe}"
+        "pre{white-space:pre-wrap;font:14px/1.55 system-ui;margin:0}.muted{color:#637083}.pill{display:inline-block;border-radius:999px;padding:2px 8px;background:#eef2f7;margin-right:6px}"
+        "button{margin:3px;padding:5px 9px;border:1px solid #b8c2cf;background:#fff;border-radius:5px;cursor:pointer}"
+        "button.active{background:#145c9e;color:#fff;border-color:#145c9e}.quote{background:#fff2a8}.missing{background:#ffe9e9}</style>"
         "<h1>Cascade residual gold worksheet</h1>"
-        + "".join(body),
+        "<div class='toolbar'>"
+        "<b>Labels:</b> adherent / off_glossary / not_rendered / not_applicable. "
+        "Bôi đen text trong Target rồi bấm <b>Use selection</b>. "
+        "<button onclick='exportCsv()'>Export CSV</button> "
+        "<span id='stats'></span></div>"
+        "<div id='app'></div>"
+        f"<script>const PAYLOAD = {payload};\n"
+        "const rows = PAYLOAD.rows;\n"
+        "function esc(s){return String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}\n"
+        "function setLabel(i,label){rows[i].gold_label=label; rows[i].annotator_note='human_review'; render();}\n"
+        "function useSelection(i){const s=String(window.getSelection()); if(s.trim()){rows[i].gold_quote=s.trim(); rows[i].gold_target_span=s.trim(); rows[i].annotator_note='human_selected_span'; render();}}\n"
+        "function toggleMissing(i){rows[i].registry_missing_form_flag = rows[i].registry_missing_form_flag === 'true' ? '' : 'true'; render();}\n"
+        "function rowClass(r){return r.registry_missing_form_flag==='true'?'card missing':'card';}\n"
+        "function render(){document.getElementById('stats').textContent = `${rows.length} rows · labeled ${rows.filter(r=>r.gold_label).length}`;"
+        "document.getElementById('app').innerHTML = rows.map((r,i)=>`"
+        "<section class='${rowClass(r)}'>"
+        "<div><span class='pill'>${esc(r.config)}</span><span class='pill'>${esc(r.stratum)}</span><b>${esc(r.source_term)}</b> <span class='muted'>${esc(r.occ_id)}</span></div>"
+        "<div class='grid'><div class='box'><b>Source sentence</b><pre>${esc(r.source_sentence)}</pre></div>"
+        "<div class='box target'><b>Target</b><pre>${esc(r.target_text)}</pre></div></div>"
+        "<p><b>T2:</b> ${esc(r.resolved_by)} / ${esc(r.escalate_reason)} · <b>credited:</b> ${esc(r.credited_target_surface)} · <b>accepted:</b> ${esc(r.accepted_forms)}</p>"
+        "<p><b>Gold quote:</b> <span class='quote'>${esc(r.gold_quote || r.gold_target_span)}</span></p>"
+        "<div>${['adherent','off_glossary','not_rendered','not_applicable'].map(l=>`<button class='${r.gold_label===l?'active':''}' onclick='setLabel(${i},\"${l}\")'>${l}</button>`).join('')}"
+        "<button onclick='useSelection(${i})'>Use selection</button><button class='${r.registry_missing_form_flag==='true'?'active':''}' onclick='toggleMissing(${i})'>registry missing form</button></div>"
+        "<p class='muted'>${esc(r.annotator_note)}</p></section>`).join('');}\n"
+        "function csvCell(v){const s=String(v??''); return /[\",\\n]/.test(s) ? '\"'+s.replace(/\"/g,'\"\"')+'\"' : s;}\n"
+        "function exportCsv(){const headers=PAYLOAD.headers; const lines=[headers.join(',')]; for(const r of rows){lines.push(headers.map(h=>csvCell(r[h])).join(','));}"
+        "const blob=new Blob(['\\ufeff'+lines.join('\\n')],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cascade_residual_gold.csv'; a.click();}\n"
+        "render();</script>",
         encoding="utf-8",
     )

@@ -42,6 +42,7 @@ def main() -> int:
     parser.add_argument("--gold", help="Gold CSV for --score.")
     parser.add_argument("--gold-reuse", nargs="*", default=[], help="Reusable human gold CSVs for T3 pilot.")
     parser.add_argument("--only-reused-labeled", action="store_true", help="T3 pilot guard: use only rows with reused human labels.")
+    parser.add_argument("--locate-only", action="store_true", help="Use REWORK-2 locate-only T3; LLM locates and code scores.")
     parser.add_argument("--limit", type=int, default=0, help="Hard cap for T3 pilot calls.")
     parser.add_argument("--llm-config", default="pipeline/configs/llm_adjudicator.yaml")
     parser.add_argument("--llm-cache", default="data/eval/cascade_t3_llm_cache.sqlite3")
@@ -63,6 +64,8 @@ def main() -> int:
     if args.tier_max > 2:
         if args.t3_model != "gpt":
             raise SystemExit("--tier-max 3 requires --t3-model gpt")
+        if not args.locate_only:
+            raise SystemExit("--tier-max 3 now requires --locate-only (REWORK-2 locate-only schema)")
         if not args.only_reused_labeled:
             raise SystemExit("--tier-max 3 requires --only-reused-labeled")
         if args.limit <= 0:
@@ -84,6 +87,7 @@ def main() -> int:
             gold_reuse_paths=args.gold_reuse,
             llm_client=client,
             limit=args.limit,
+            locate_only=args.locate_only,
         )
         report["llm"]["api_key_source"] = key_source
         out = Path(args.out)
@@ -99,6 +103,9 @@ def main() -> int:
             "prompt_tokens_fresh": report["llm"]["prompt_tokens_fresh"],
             "completion_tokens_fresh": report["llm"]["completion_tokens_fresh"],
             "cost_usd_fresh": report["llm"]["cost_usd_fresh"],
+            "adherence_counts": report.get("adherence_counts"),
+            "adherence_by_config": report.get("adherence_by_config"),
+            "off_glossary_pct": report.get("off_glossary_pct"),
             "usage_today_after": report["llm"]["usage_today_after"],
         }, ensure_ascii=False, indent=2))
         return 0

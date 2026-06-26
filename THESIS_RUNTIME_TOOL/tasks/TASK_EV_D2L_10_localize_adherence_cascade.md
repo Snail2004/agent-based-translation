@@ -371,3 +371,199 @@ All 3 wrong rows are boundary over-extension, not hallucination or invalid quote
 
 ### 6.8.4 Commit + next
 Commit Part A: code (`cascade_localize.py`, `llm_adjudicator.py`, `run_cascade_localize.py`, test) + `cascade_t3_pilot.json` (39KB, nhỏ — giữ làm bằng chứng pilot) + task §5.6/§6.8 + LEDGER. **Next = Part B** (not_rendered gold + verify UI tương tác + chuẩn-hóa chấm); chạy nốt 83 ca rendered là phụ (thông tin cận biên).
+
+## REWORK-2 *(Claude spec → CodeX điền §5.7 + STOP, không commit)* — SIÊU QUAN TRỌNG đọc kỹ
+
+**THAY ĐỔI THIẾT KẾ (chốt với user 2026-06-27): T3 = LOCATE-ONLY, code chấm.** Lý do: (a) measurement phải NGOÀI model — KHÔNG để LLM tự phán adherent/off_glossary (user bắt lỗi); (b) model chạy `reasoning_effort: none` → bắt làm 1 việc thôi. **Prompt do Claude thiết kế + đã validate (cost $0.0062, kết quả dưới); CodeX DÙNG VERBATIM, KHÔNG sửa/“tối ưu” câu chữ.**
+
+### R2.1 Phân vai (khóa)
+- **LLM (T3): CHỈ định vị** cụm VI dịch occurrence này. KHÔNG nhãn adherence, KHÔNG `not_applicable`, KHÔNG phán đúng/sai.
+- **CODE: chấm** bằng containment vs `accepted_forms` của Builder: `found=false → not_rendered` · `accepted_form (chuẩn-hóa, strip *) là SUBSTRING của target_quote → adherent` (highlight đúng sub-span code rút) · `else → off_glossary`.
+- **Human (T4): verify SPAN** GPT khoanh (không verify điểm).
+
+### R2.2 Prompt T3 — DÙNG NGUYÊN VĂN (system message), bump `PROMPT_VERSION = "d2l_locate_only_v4"`
+```
+You are an occurrence-level LOCATOR for an English-to-Vietnamese translation evaluation. You do exactly ONE thing: find the Vietnamese text that translates ONE specific occurrence of the marked English term. You do NOT score, judge correctness, or translate anything new.
+Input fields:
+- SOURCE_SENTENCE: the English sentence.
+- TARGET_REGION: the Vietnamese text aligned to that sentence.
+- TERM: the English term to locate.
+- OCCURRENCE_INDEX: which occurrence of TERM inside SOURCE_SENTENCE to locate (1-based, left to right). Locate exactly that occurrence.
+Output:
+- found: true if a Vietnamese rendering of this occurrence exists; false if the term is kept in English, dropped, or replaced by a pronoun (then target_quote = "").
+- target_quote: the Vietnamese word(s) the translator actually used for this occurrence, copied verbatim from TARGET_REGION. Use whatever the translator wrote, even if it is not the standard term. Stay close to the rendering; include a neighboring word only if needed to copy a contiguous verbatim string. Do not include emphasis markers such as *.
+- left_context: the Vietnamese word(s) immediately before target_quote in TARGET_REGION, used to pin the exact position when the same words repeat. "" if none.
+- confidence: high, medium, or low - how sure you are of the location.
+Rules:
+1. Copy target_quote verbatim from TARGET_REGION. Never invent or translate.
+2. Honor OCCURRENCE_INDEX. If TERM repeats, do not return a different occurrence.
+3. Prefer found = false over guessing a loosely related word.
+4. Return only the JSON, no extra fields, no scoring.
+```
+User message = JSON `{occurrence_id, TERM, OCCURRENCE_INDEX, SOURCE_SENTENCE, TARGET_REGION}` (sort_keys, ensure_ascii=False). **KHÔNG cấp accepted_forms cho LLM** (từ điển ở code). Schema (strict) `{occurrence_id, found:bool, target_quote:str, left_context:str, confidence:enum[high,medium,low]}`. Bỏ status localized/omitted/ambiguous/not_found cũ.
+
+### R2.3 OCCURRENCE_INDEX (code tính)
+Số thứ tự occurrence của `source_term` TRONG câu nguồn của nó (1-based, trái→phải), suy từ `source_start` vs offset câu. Validation tạm dùng 1; bản thật phải tính đúng (ca lặp như "bit"×2 mới phân biệt được).
+
+### R2.4 Code scoring + highlight
+- `validate`: `target_quote` (nếu found) phải là substring của TARGET_REGION (chuẩn-hóa strip `*`/space) → nếu không, ép `found=false` (chống bịa).
+- `score`: dùng matcher của `surface_match`/EV-08 (segment-aware) check accepted_forms ⊂ target_quote. Highlight = sub-span accepted_form code rút (adherent) hoặc cả target_quote (off_glossary). Neo vị trí bằng `left_context`.
+- `not_applicable` KHÔNG tồn tại. Polysemy "bit"→"một chút" sẽ ra `off_glossary` (rớt-oan) — **chấp nhận bounded**; fix gốc = Builder scope-down (task khác). Giữ cột `polysemy_suspect` (heuristic: source_term ngắn/phổ thông) để human soi sau, KHÔNG cho LLM phán.
+
+### R2.5 Gold + verify UI (thay Part B cũ)
+- Residual gold strata: **C0** + **off_glossary candidates** + **credited control `C1_variant_flagged`** (664/263) + reuse 103; cột `gold_label ∈ {adherent, off_glossary, not_rendered, not_applicable}` + `gold_quote`. Bắt buộc gán; có ca not_rendered/off_glossary thật.
+- **Verify UI tương tác** (mirror `collision_assignment_gold_review.html`): hiển thị câu EN + vùng VI + **span LLM khoanh tô màu** + verdict code; nút sửa {adherent/off_glossary/not_rendered/not_applicable} + chọn span + Export CSV. Cờ "khoanh-đúng-nhưng-registry-thiếu-form" (→ vá Builder).
+- Score: `adherence_rate = adherent / (adherent+off_glossary+not_rendered)`, loại `not_applicable`; báo **%off_glossary S0 vs S1** (memory tốt → S1 nhỏ hơn) + locate-accuracy (containment) vs human.
+
+### R2.6 Validation Claude đã chạy (locate-only v4, $0.0062, KHÔNG cần CodeX chạy lại phần này)
+- 20 ca cũ: code chấm 17/20 adherent; **over-wide PASS** ("hai ví dụ dữ liệu"→rút "ví dụ dữ liệu"; "các tham số của mô hình"→adherent). 2 off_glossary do registry thiếu form (target→mục tiêu, annotation→chú thích) = vấn đề Builder. set→bộ off_glossary đúng.
+- C0: predictions→not_rendered ✓ · competition→off_glossary ✓ · dimension→not_rendered ✓ · bit→off_glossary (polysemy bounded) · learning→adherent.
+- Bỏ candidate hint → SỬA lỗi cross-term v3.
+
+### Acceptance (R2)
+```bash
+python -m pytest pipeline/tests -k "cascade_localize or llm_adjudicator" -v
+#  add: locate_only_v4 schema {found,target_quote,left_context,confidence}; verbatim PROMPT_VERSION;
+#       code containment score (accepted_form substring of quote -> adherent; else off_glossary; not found -> not_rendered);
+#       occurrence_index computed; validate forces found=false when quote not in region.
+# pilot locate-only on reused-labeled (gated như Part A, user duyệt trước):
+python -m pipeline.scripts.run_cascade_localize --tier-max 3 --t3-model gpt \
+  --only-reused-labeled --limit 20 --locate-only --configs S0,S1 \
+  --gold-reuse data/eval/collision_assignment_gold.csv data/eval/localizer_gold.csv \
+  --db data/jobs/d2l_p1/memory.sqlite3 --experiment d2l_p3 --out data/reports/cascade_t3_locate_pilot.json
+#  -> in: locate-accuracy (containment), %adherent/off_glossary/not_rendered, token/$; frozen hash; key không log.
+python -m pipeline.scripts.build_cascade_residual_gold --from ... --reuse ... --out data/eval/cascade_residual_gold.csv
+#  -> strata gồm C1_variant_flagged>0; verify UI mở được + export round-trip.
+```
+Guards: frozen DB DA0F687894090D43; metrics_v2 không đổi; embed_cache + llm_cache gitignored; full suite green. STOP, không commit.
+
+## 5.7 REWORK-2 implementation notes *(CodeX điền)*
+
+### 5.7.1 Code changes
+
+- Changed T3 to **locate-only v4** in `pipeline/eval/llm_adjudicator.py`.
+  - `PROMPT_VERSION = "d2l_locate_only_v4"`.
+  - System prompt is the R2.2 text verbatim.
+  - User payload is exactly `{occurrence_id, TERM, OCCURRENCE_INDEX, SOURCE_SENTENCE, TARGET_REGION}` with `sort_keys=True`.
+  - No `accepted_forms`, no candidate hints, no adherence labels are sent to the LLM.
+  - Output schema is strict locate-only: `{occurrence_id, found, target_quote, left_context, confidence}`.
+  - Validation forces `found=false` when the returned quote is not present in the target region.
+- Updated `pipeline/eval/cascade_localize.py`.
+  - T3 `run_t3_pilot(..., locate_only=True)` now asks the LLM only to locate.
+  - CODE computes adherence by containment:
+    - `found=false -> not_rendered`
+    - accepted Builder form contained in `target_quote -> adherent`, with code-owned highlight subspan
+    - otherwise `off_glossary`
+  - Added occurrence-index calculation inside the source sentence.
+  - Added containment-based scoring against reused human gold, so over-wide but containing quotes are not falsely failed.
+  - Added `polysemy_suspect` diagnostic only; it does not decide the label.
+- Updated `pipeline/scripts/run_cascade_localize.py`.
+  - Added `--locate-only`.
+  - `--tier-max 3` now requires the R2 gate flags: `--locate-only`, `--t3-model gpt`, `--only-reused-labeled`, `--limit`, and `--gold-reuse`.
+- Updated `pipeline/scripts/build_cascade_residual_gold.py` through the shared builder.
+  - Worksheet now includes residual strata plus credited-control stratum `control:C1_variant_flagged`.
+  - CSV fields include `stratum`, `accepted_forms`, `credited_target_surface`, `gold_quote`, and `registry_missing_form_flag`.
+  - HTML worksheet supports interactive text selection, label buttons, registry-missing-form toggle, and CSV export.
+- Updated tests in `pipeline/tests/test_cascade_localize.py`.
+  - Checks locate-only prompt/schema and verifies no accepted forms leak into the LLM prompt.
+  - Checks code containment scoring (`target_quote` wider than canonical form still credits the contained form).
+  - Checks off-glossary classification when the LLM locates a real but non-registry rendering.
+  - Checks source-sentence `OCCURRENCE_INDEX` computation.
+
+### 5.7.2 Verification commands
+
+```powershell
+python -m pytest pipeline/tests -k "cascade_localize or llm_adjudicator" -v
+python -m pipeline.scripts.run_cascade_localize --tier-max 3 --t3-model gpt --only-reused-labeled --limit 20 --locate-only --configs S0,S1 --gold-reuse data/eval/collision_assignment_gold.csv data/eval/localizer_gold.csv --db data/jobs/d2l_p1/memory.sqlite3 --experiment d2l_p3 --out data/reports/cascade_t3_locate_pilot.json
+python -m pipeline.scripts.build_cascade_residual_gold --from data/reports/cascade_localize_S0.json data/reports/cascade_localize_S1.json --reuse data/eval/collision_assignment_gold.csv data/eval/localizer_gold.csv --out data/eval/cascade_residual_gold.csv
+```
+
+Results:
+
+- Targeted tests: `9 passed, 210 deselected`.
+- Full suite: `352 passed in 118.98s`.
+- Fresh locate-only pilot was run once:
+  - `attempted=20`
+  - `correct=20`
+  - `accuracy=1.0` by containment against reused human gold
+  - `adherence_counts={"adherent":17,"off_glossary":3}`
+  - S0 pilot subset: `adherence_rate=0.85`, `off_glossary_pct=0.15`
+  - fresh usage: `prompt_tokens=11125`, `completion_tokens=1184`, `cost_usd=0.00514925`
+  - OpenAI usage after run: UTC date `2026-06-26`, `total_tokens=60130`, `calls=99`
+- Warm replay was run immediately after:
+  - current `data/reports/cascade_t3_locate_pilot.json` shows `fresh_calls=0`, `cache_hits=20`, `cost_usd_fresh=0.0`
+  - the same report keeps `prompt_tokens_all_records=11125`, `completion_tokens_all_records=1184`, and `cached_recorded_cost_usd=0.00514925`
+- Frozen DB guard in the report:
+  - `frozen_db_sha256_first16 = DA0F687894090D43`
+  - `frozen_db_matches_expected = true`
+- `git diff -- THESIS_RUNTIME_TOOL/data/reports/d2l_translation_metrics_v2.json` is empty.
+- Cache guard:
+  - embed cache is explicitly gitignored.
+  - the T3 SQLite cache path `data/eval/cascade_t3_llm_cache.sqlite3` is covered by the repo-wide `*.sqlite3` ignore rule.
+
+### 5.7.3 Residual gold worksheet
+
+Generated:
+
+- `data/eval/cascade_residual_gold.csv`
+- `data/eval/cascade_residual_gold.html`
+
+Counts:
+
+| stratum | rows |
+|---|---:|
+| residual:C0 | 1643 |
+| residual:C2plus_multiple_same_term_forms | 2067 |
+| control:C1_variant_flagged | 927 |
+| residual:cross_term_collision | 1842 |
+| residual:off_glossary_candidate | 543 |
+| **total** | **7022** |
+
+Label state:
+
+- `gold_label` prefilled: `142`
+- unlabeled: `6880`
+- prefilled labels: `139 adherent`, `3 off_glossary`
+
+HTML checks:
+
+- contains `Export CSV`
+- contains `Use selection`
+- contains `registry missing form`
+- contains all R2 labels: `adherent`, `off_glossary`, `not_rendered`, `not_applicable`
+
+### 5.7.4 Notes / caveats for Claude review
+
+- I did not commit.
+- The pilot report is currently a **warm replay artifact**, not the first fresh-call artifact. It is still useful because it proves replay/caching and preserves recorded token/cost totals from the first run.
+- The worksheet is large because R2 intentionally adds credited controls (`C1_variant_flagged`) and all residual strata. This is expected for audit, but it should not be treated as "all rows must be human-labeled now"; it is an input artifact for Part B sampling/verification policy.
+
+## 6.9 REWORK-2 review *(Claude điền)*
+
+**Verdict: PASS. Locate-only + code-score = đúng thiết kế (measurement NGOÀI model); prompt VERBATIM; số re-derived khớp. Worksheet sửa lỗ REWORK-1. Pilot vẫn chỉ kiểm localization → đo hard-set là việc kế (human label strata).**
+
+### 6.9.1 Prompt VERBATIM (yêu cầu cứng của user) — ĐẠT
+`llm_adjudicator.py:42-59` khớp **từng chữ** prompt `d2l_locate_only_v4` Claude thiết kế (system + 4 input + 3 output + 4 rule). Payload `{occurrence_id,TERM,OCCURRENCE_INDEX,SOURCE_SENTENCE,TARGET_REGION}` sort_keys; schema `{found,target_quote,left_context,confidence}`. CodeX KHÔNG sửa câu chữ. ✓
+
+### 6.9.2 Measurement NGOÀI model — ĐẠT
+`_score_locate_only_by_code` (casc:899) **deterministic**: found=false→not_rendered; `find_spans(quote, accepted_form, vi)` (matcher EV-08, segment-aware) có→**adherent** (highlight sub-span) else→**off_glossary**. **LLM không phát nhãn adherence.** `polysemy_suspect` = heuristic CODE. `validate_payload` ép `found=false` khi quote ngoài region (chống bịa). Đúng phân vai: LLM khoanh · code chấm.
+
+### 6.9.3 Số RE-DERIVED từ `cascade_t3_locate_pilot.json` (KHÔNG tin báo cáo)
+- **Locate 20/20** (containment vs gold cũ) · code **17 adherent / 3 off_glossary**.
+- 3 off_glossary: `target`→"mục tiêu", `annotation`→"chú thích" (= **registry THIẾU form**, vấn đề Builder, không phải T3), `set`→"một bộ kỹ thuật" (off-glossary thật). → LLM khoanh ĐÚNG cả 20, code phán adherence độc lập.
+- **Over-wide HẾT:** "hai ví dụ dữ liệu"/"các tham số của mô hình" → adherent qua find_spans containment.
+- cost = 11125×$0.25/M + 1184×$2/M = **$0.00515** (tự tính khớp); pilot là warm-replay (0 fresh, 20 cache hit) — token/cost của lần fresh đầu được giữ.
+
+### 6.9.4 Worksheet (sửa lỗ REWORK-1) + verify UI
+7022 rows, strata: **`control:C1_variant_flagged`=927** (= 664 S0+263 S1, đúng tầng credited mình yêu cầu) + `off_glossary_candidate`=543 + C0 1643 + C2plus 2067 + collision 1842. Verify UI có nút {adherent/off_glossary/not_rendered/**not_applicable**} + chọn span + export. Human VẪN gán được `not_applicable` (đo polysemy/đối xứng) dù LLM không phán — nhất quán.
+
+### 6.9.5 Guards (Claude tự chạy)
+9 targeted pass · frozen hash `DA0F687894090D43` (Get-FileHash) · metrics_v2 diff rỗng · llm_cache ignored qua `*.sqlite3` · key chỉ ghi `file:OPENAI-KEY-2.txt`, không lộ · CodeX full 352 pass.
+
+### 6.9.6 Chưa được tin (việc kế)
+- Pilot vẫn **localization-only** (103 reused toàn rendered) → khả năng bắt off_glossary/not_rendered trên **hard-set CHƯA đo** = phần human label strata (Part D thật).
+- 2/3 off_glossary là **registry thiếu form** → verify-UI nên cờ "khoanh-đúng-nhưng-registry-thiếu-form" để vá Builder (đã có trong spec, kiểm khi human dùng).
+- `OCCURRENCE_INDEX` ca lặp thật (bit×2) chưa exercise; confidence chưa calibrate.
+
+### 6.9.7 Commit
+Commit: code (`cascade_localize.py`, `llm_adjudicator.py`, `run_cascade_localize.py`, test) + `cascade_t3_locate_pilot.json` (46KB evidence) + task §5.7/§6.9 + LEDGER. **KHÔNG commit** worksheet CSV/HTML 8.6MB (regenerable, chờ label) + big cascade_localize_*.json.
