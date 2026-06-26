@@ -242,3 +242,132 @@ Breakdown re-derived (khớp tuyệt đối §5): S0 C1_primary 4122 / C0 1023 /
 
 ### 6.7 Commit scope
 Commit: code (`cascade_localize.py`, `llm_adjudicator.py`, 2 script, `llm_adjudicator.yaml`, test), `region_align.py` (memory-cache perf), task §6, LEDGER. **KHÔNG commit** JSON/HTML per-occurrence 19/19/41 MB + residual gold CSV/worksheet (regenerable; worksheet chờ rework) — theo tiền lệ EV-08 (audit lớn regenerable, không commit). Số giữ ở §5/§6.
+
+## REWORK-1 *(Claude spec → CodeX điền §5.6 + STOP, không commit)*
+
+### Part A — Phase C PILOT wiring (ưu tiên; đủ để chạy 20 call)
+A1. **Prompt v2** trong `llm_adjudicator.py`: nối thêm vào RULE 5 (bump `PROMPT_VERSION = "d2l_occurrence_adjudicator_v2"`):
+```
+5. Do not use registry variants as the answer unless they actually appear in
+   the target region AND correspond to THIS occurrence. If the only candidate
+   is a registry variant that actually translates a DIFFERENT word in the
+   sentence, return omitted (not localized).
+```
+A2. **Mở khoá T3 + nối GPT thật:** bỏ `raise` ở `tier_max>2`. Mỗi residual occurrence → `AdjudicationInput(source_term, source_sentence, target_region = text của T1 ranges, candidate_quotes = surface ứng viên IN-REGION)`. Gọi GPT qua `LLMClient` + `pipeline/configs/llm_adjudicator.yaml` (gpt-5.4-mini, temp0, seed, reasoning_effort none). Áp `validate_payload` (quote phải nằm trong region → nếu không, ép `not_found`). Ghi token in/out + cost mỗi call, cộng dồn.
+A3. **`--limit N` + `--only-reused-labeled`:** chạy T3 CHỈ trên residual có nhãn người tái dùng (103 món), cap `--limit`. Pilot mặc định = 20.
+A4. **Chấm vs nhãn cũ:** so `status`/`target_quote` của T3 với `gold_label`/`gold_target_span` người → T3 accuracy (localized-correct / omitted-correct / …) + bảng confidence×correct. Ghi `data/reports/cascade_t3_pilot.json`.
+A5. **Guards:** honor `daily_token_cap`; key env-first rồi `OPENAI-KEY-*.txt`, **KHÔNG log key**; frozen DB ro hash bất biến; replay cache (re-run = 0 token mới). **Halt-and-audit:** in token/call để Claude kiểm trước khi chạy 83 còn lại.
+
+**Acceptance A (STOP sau output này — user duyệt tiền trước khi chạy nốt):**
+```bash
+python -m pipeline.scripts.run_cascade_localize --tier-max 3 --t3-model gpt \
+  --only-reused-labeled --limit 20 --configs S0,S1 \
+  --gold-reuse data/eval/collision_assignment_gold.csv data/eval/localizer_gold.csv \
+  --db data/jobs/d2l_p1/memory.sqlite3 --experiment d2l_p3 \
+  --out data/reports/cascade_t3_pilot.json
+#  -> in: calls, token in/out tổng, cost USD, token/call; T3-vs-human accuracy trên 20.
+python -m pytest pipeline/tests -k "cascade_localize or llm_adjudicator" -v   # prompt v2 + validate
+```
+
+### Part B — Phase D gold + verify UI (làm SAU pilot)
+B1. `build_residual_gold`: **THÊM tầng control credited** — mẫu phân tầng `t2_credit`, **ưu tiên `C1_variant_flagged`** (664 S0/263 S1) + control `C1_primary` + control `a==s`; thêm cột `stratum`. (Sửa control-sample §2/§3; Claude own under-target.)
+B2. `score_residual_gold`: mở rộng bắt **credited-masquerade** — false_credit khi `gold_label==not_rendered` HOẶC (`rendered` nhưng `gold_target_span` ≠ span đã credit). Báo tỉ lệ đội-lốt-thật-credited (credited-false/credited) per config, tách khỏi residual-masquerade.
+B3. **Worksheet tương tác:** nâng `_write_residual_html` thành bản giống `collision_assignment_gold_review.html` (nút ứng viên, rendered/not_rendered/ambiguous, "dùng bôi đen", Export CSV). Scope = T3-escalations + mẫu control strata (KHÔNG phải cả 6095).
+
+**Acceptance B:** build → html mở được + có strata `C1_variant_flagged` (count>0) + export round-trip; score phát hiện 1 ca credited-not_rendered cấy thử = masquerade.
+
+## 5.6 REWORK-1 implementation notes *(CodeX điền)*
+
+Status: REVIEW (Part A only; STOP, no commit).
+
+### 5.6.1 Code changes
+- Updated `pipeline/eval/llm_adjudicator.py` to `PROMPT_VERSION = "d2l_occurrence_adjudicator_v2"` and appended the Rule 5 anti-masquerade sentence exactly as requested.
+- Added a separate `run_t3_pilot(...)` path in `pipeline/eval/cascade_localize.py`. It reuses the existing T1/T2 report, selects only residual occurrences with reusable human labels, caps by `--limit`, calls `LLMClient`, validates quotes with `validate_payload`, and writes a single pilot report.
+- Added CLI wiring in `pipeline/scripts/run_cascade_localize.py`:
+  - `--tier-max 3` requires `--t3-model gpt`, `--only-reused-labeled`, `--limit > 0`, and `--gold-reuse`.
+  - Key loading is env-first (`OPENAI_API_KEY`), then file fallback with priority `OPENAI-KEY-2.txt` before `OPENAI-KEY-1.txt`; the key value is never printed.
+  - Default LLM config is `pipeline/configs/llm_adjudicator.yaml`; default cache is `data/eval/cascade_t3_llm_cache.sqlite3`.
+- Fixed reusable-gold parsing for `collision_assignment_gold.csv`: that file stores `gold_target_span` as `start:end`, not as the quote. The loader now slices the quote from `target_text` before scoring T3. Without this fix, correct LLM quotes were falsely counted wrong.
+- Added tests for prompt v2, T3-vs-reused-gold scoring, and collision offset-span conversion.
+
+### 5.6.2 Commands run
+```bash
+python -m pytest pipeline/tests -k "cascade_localize or llm_adjudicator" -v
+```
+Result: `7 passed, 210 deselected`.
+
+Fresh pilot command:
+```bash
+python -m pipeline.scripts.run_cascade_localize --tier-max 3 --t3-model gpt \
+  --only-reused-labeled --limit 20 --configs S0,S1 \
+  --gold-reuse data/eval/collision_assignment_gold.csv data/eval/localizer_gold.csv \
+  --db data/jobs/d2l_p1/memory.sqlite3 --experiment d2l_p3 \
+  --out data/reports/cascade_t3_pilot.json
+```
+Fresh result before the reusable-gold offset fix showed `correct=5/20`, but inspection proved this was a scoring artifact: many gold rows were offset strings like `266:276`, not target quotes.
+
+After fixing gold reuse parsing, reran the same command from cache:
+```json
+{
+  "attempted": 20,
+  "correct": 17,
+  "accuracy": 0.85,
+  "fresh_calls": 0,
+  "cache_hits": 20,
+  "prompt_tokens_fresh": 0,
+  "completion_tokens_fresh": 0,
+  "cost_usd_fresh": 0.0
+}
+```
+
+The first fresh run consumed:
+```json
+{
+  "fresh_calls": 20,
+  "prompt_tokens_fresh": 8950,
+  "completion_tokens_fresh": 1532,
+  "cost_usd_fresh": 0.0053015,
+  "usage_today_after": {
+    "date": "2026-06-26",
+    "total_tokens": 10482,
+    "calls": 20
+  }
+}
+```
+
+The report keeps both the replay state and the recorded cached usage:
+`prompt_tokens_all_records=8950`, `completion_tokens_all_records=1532`, `cached_recorded_cost_usd=0.0053015`.
+
+### 5.6.3 Remaining pilot errors
+All 3 wrong rows are boundary over-extension, not hallucination or invalid quote:
+- `S0:d2l_introduction_index_b023:registry:target:0`: gold `mục tiêu`; LLM returned `*mục tiêu*`.
+- `S0:d2l_introduction_index_b053:registry:data examples:0`: gold `ví dụ dữ liệu`; LLM returned `với hai ví dụ dữ liệu này`.
+- `S0:d2l_preliminaries_index_b003:registry:set:0`: gold `bộ`; LLM returned `một bộ kỹ thuật`.
+
+### 5.6.4 Guards verified
+- `--tier-max 3` is still gated by `--only-reused-labeled` + positive `--limit` + `--gold-reuse`.
+- Replay cache verified: rerun produced `fresh_calls=0`, `cache_hits=20`, and no new usage_daily increments.
+- Frozen DB hash in the pilot report remains `DA0F687894090D43` and `frozen_db_matches_expected=true`.
+- No Part B implementation was done.
+
+## 6.8 REWORK-1 review *(Claude điền)*
+
+**Verdict: PASS Part A (pilot wiring). GPT competent ở localization; 0.85 là artifact chấm exact-span, không phải sai nghĩa. Part B (not_rendered gold + verify UI + chuẩn-hóa chấm) là việc kế.**
+
+### 6.8.1 Re-derived độc lập từ `cascade_t3_pilot.json` (20 record trên đĩa)
+- accuracy: đếm tay correct=true → **17/20 = 0.85** (khớp report). 3 sai = #5 target, #6 data examples, #16 set.
+- **3 sai đều LỆCH BIÊN, không sai nghĩa:** `*mục tiêu*` (kèm dấu `*` markdown) / `với hai ví dụ dữ liệu này` (rộng) / `một bộ kỹ thuật` (rộng) — GPT tìm ĐÚNG từ, chỉ trả span rộng hơn gold. **Đúng-nghĩa ~20/20.**
+- **Đội-lốt:** ca b003 `user` (customer→khách hàng cùng đoạn) → GPT chọn **“người dùng”, né “khách hàng”** ✓. Ca `annotation` C0 (code báo vắng-form) → GPT vẫn tìm ra **“chú thích”** ✓ (T3 vá được điểm mù C0 của T2).
+- cost: 8950 prompt + 1532 completion → $0.0022375+$0.003064 = **$0.0053015** (tự tính, khớp). **447 token/call** (không bloat). 103→~$0.027, 6095→~$1.6.
+
+### 6.8.2 Guards (Claude tự chạy)
+- 7 targeted tests pass · frozen hash `DA0F687894090D43` (Get-FileHash) · **không có chuỗi key thô** trong report (chỉ `api_key_source=file:OPENAI-KEY-2.txt`) · metrics_v2 diff rỗng · replay cache (rerun 0 fresh call).
+- Bug CodeX bắt+sửa: `collision_gold` lưu `gold_target_span` dạng offset `266:276` → loader cũ so nhầm; sửa cắt quote từ `target_text` + test. Records giờ hiện quote đúng → fix hợp lý.
+
+### 6.8.3 Giới hạn (phải nói rõ — chưa được tin)
+- **Pilot CHỈ kiểm localization.** Cả 103 (và 20) đều `gold_label=rendered` → GPT chỉ phải "tìm chỗ", **CHƯA kiểm khả năng nói `omitted`/`not_found`** = đúng phần phòng-đội-lốt cốt lõi. Cần **gold có not_rendered** (Part B) mới đo được.
+- **Confidence vô dụng ở đây:** GPT trả `high` cả 20 (kể cả 3 ca lệch) → cổng confidence chưa tách được đúng/sai. Calibrate phải làm trên gold có not_rendered.
+- **Chấm exact-span quá ngặt** → dưới-báo GPT. Trước khi chạy thật: chuẩn hóa (strip `*` markdown + match chứa/minimal-span) HOẶC thêm 1 câu prompt "quote span tối thiểu, bỏ ký tự nhấn mạnh".
+
+### 6.8.4 Commit + next
+Commit Part A: code (`cascade_localize.py`, `llm_adjudicator.py`, `run_cascade_localize.py`, test) + `cascade_t3_pilot.json` (39KB, nhỏ — giữ làm bằng chứng pilot) + task §5.6/§6.8 + LEDGER. **Next = Part B** (not_rendered gold + verify UI tương tác + chuẩn-hóa chấm); chạy nốt 83 ca rendered là phụ (thông tin cận biên).

@@ -1,0 +1,899 @@
+{
+  "task": "EV-D2L-10",
+  "mode": "tier3_pilot_reused_labeled_only",
+  "prompt_version": "d2l_occurrence_adjudicator_v2",
+  "response_schema": "occurrence_adjudication",
+  "experiment_id": "d2l_p3",
+  "profile": "technical_d2l_v1",
+  "doc_id": "d2l",
+  "configs": [
+    "S0",
+    "S1"
+  ],
+  "chapters": [
+    "d2l_introduction",
+    "d2l_preliminaries",
+    "d2l_linear_networks",
+    "d2l_multilayer_perceptrons"
+  ],
+  "frozen_db_sha256": "da0f687894090d43b75a3ae52ba71ec1edf85dab3198c9f86039879365d464b8",
+  "frozen_db_sha256_first16": "DA0F687894090D43",
+  "frozen_db_expected_first16": "DA0F687894090D43",
+  "frozen_db_matches_expected": true,
+  "t1_model": {
+    "alias": "bge-m3",
+    "endpoint_model": "text-embedding-bge-m3",
+    "model_version": "gpustack/bge-m3-GGUF:Q8_0",
+    "hf_repo": "gpustack/text-embedding-bge-m3",
+    "quant": "Q8_0",
+    "display_name": "Bge M3",
+    "context_length": 8192,
+    "embedding_dim": 1024,
+    "query_prefix": "",
+    "passage_prefix": "",
+    "status": "available",
+    "skipped_with_reason": null
+  },
+  "tier2_residual_total": 6095,
+  "reused_labeled_total": 103,
+  "limit": 20,
+  "attempted": 20,
+  "correct": 17,
+  "accuracy": 0.85,
+  "status_counts": {
+    "localized": 20
+  },
+  "confidence_x_correct": {
+    "high": {
+      "true": 17,
+      "false": 3
+    }
+  },
+  "llm": {
+    "model": "gpt-5.4-mini-2026-03-17",
+    "temperature": 0.0,
+    "seed": 20260612,
+    "reasoning_effort": "none",
+    "verbosity": "low",
+    "max_output_tokens": 512,
+    "daily_token_cap": 2400000,
+    "prompt_token_cap": 6000,
+    "calls": 20,
+    "fresh_calls": 0,
+    "cache_hits": 20,
+    "prompt_tokens_all_records": 8950,
+    "completion_tokens_all_records": 1532,
+    "prompt_tokens_fresh": 0,
+    "completion_tokens_fresh": 0,
+    "cost_usd_fresh": 0.0,
+    "cached_recorded_cost_usd": 0.0053015,
+    "usage_today_after": {
+      "date": "2026-06-26",
+      "total_tokens": 10482,
+      "calls": 20
+    },
+    "api_key_source": "file:OPENAI-KEY-2.txt"
+  },
+  "records": [
+    {
+      "occ_id": "S0:d2l_introduction_index_b003:registry:user:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b003",
+      "source_term": "user",
+      "source_span": "295:299:user",
+      "source_sentence": "Each time a customer clicks to add an item to their shopping cart,\nwe add an entry to the shopping cart database table,\nassociating that user's ID with the requested product's ID.",
+      "target_region": "Mỗi khi khách hàng nhấp để thêm một mặt hàng vào giỏ hàng của họ, chúng ta thêm một mục vào bảng cơ sở dữ liệu giỏ hàng, liên kết ID của người dùng đó với ID của sản phẩm được yêu cầu.",
+      "candidate_quotes": [
+        "khách hàng",
+        "người dùng"
+      ],
+      "escalate_reason": "C2plus_multiple_same_term_forms",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 266,
+        "gold_target_end": 276,
+        "gold_target_span": "người dùng",
+        "annotator_note": "[H] canonical: user->người dùng, KHÔNG phải khách hàng(customer)"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "người dùng",
+        "confidence": "high",
+        "reason": "The target region explicitly contains \"người dùng\" for the source term \"user\" in \"ID của người dùng đó\"."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "22555e65ff64d3dc9726bc02f0c22bb4a1196a8c83bb28ba6598345fa28107a4",
+      "usage": {
+        "prompt_tokens": 450,
+        "cached_tokens": 0,
+        "completion_tokens": 75,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.0002625,
+      "latency_ms": 3298
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b020:registry:example:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b020",
+      "source_term": "example",
+      "source_span": "17:24:example",
+      "source_sentence": "In our wake word example, we described a dataset\nconsisting of audio snippets and binary labels, \nand we\ngave a hand-wavy sense of how we might train\na model to approximate a mapping from snippets to classifications.",
+      "target_region": "Trong ví dụ về từ đánh thức, chúng ta đã mô tả một tập dữ liệu gồm các đoạn âm thanh và các nhãn nhị phân, và chúng ta đã phác họa một cách sơ lược việc huấn luyện một mô hình để xấp xỉ một ánh xạ từ các đoạn âm thanh sang các phân loại.",
+      "candidate_quotes": [
+        "ví dụ"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 6,
+        "gold_target_end": 11,
+        "gold_target_span": "ví dụ",
+        "annotator_note": "[H]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "ví dụ",
+        "confidence": "high",
+        "reason": "The target region contains the exact Vietnamese rendering of the marked term in the corresponding occurrence: \"ví dụ\"."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "6eb54f196965c954819fd095e6b0b27b7351414a2b7e15802e67606d765a8836",
+      "usage": {
+        "prompt_tokens": 473,
+        "cached_tokens": 0,
+        "completion_tokens": 71,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00026025,
+      "latency_ms": 2092
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b021:registry:model's parameters:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b021",
+      "source_term": "model's parameters",
+      "source_span": "196:214:model's parameters",
+      "source_sentence": "An *algorithm* to adjust the model's parameters to optimize the objective function.",
+      "target_region": "Một *hàm mục tiêu* định lượng mức độ mô hình đang hoạt động tốt (hoặc tệ) đến đâu.\n...\nMột *thuật toán* để điều chỉnh các tham số của mô hình nhằm tối ưu hóa hàm mục tiêu.",
+      "candidate_quotes": [
+        "tham số của mô hình"
+      ],
+      "escalate_reason": "C1_variant_shared_with_other_term",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": "210",
+        "gold_target_end": "229",
+        "gold_target_span": "tham số của mô hình",
+        "annotator_note": ""
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "tham số của mô hình",
+        "confidence": "high",
+        "reason": "The target region contains the exact Vietnamese rendering of the marked term in the sentence: \"các tham số của mô hình\". The candidate quote matches this occurrence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "c5c2830a22a7eb5248e109201709cb90bbb2e1c606592d5e15799984aecb18a5",
+      "usage": {
+        "prompt_tokens": 430,
+        "cached_tokens": 0,
+        "completion_tokens": 86,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.0002795,
+      "latency_ms": 1833
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b023:registry:attributes:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b023",
+      "source_term": "attributes",
+      "source_span": "508:518:attributes",
+      "source_sentence": "Each *example* (or *data point*, *data instance*, *sample*) typically consists of a set\nof attributes called *features* (or *covariates*),\nfrom which the model must make its predictions.",
+      "target_region": "Mỗi *ví dụ* (hoặc *điểm dữ liệu*, *thực thể dữ liệu*, *mẫu*) thường gồm một tập các thuộc tính gọi là *đặc trưng* (hoặc *biến đồng biến*), từ đó mô hình phải đưa ra dự đoán của mình.\n...\nTrong các bài toán học có giám sát ở trên, thứ cần dự đoán là một thuộc tính đặc biệt được chỉ định là *nhãn* (hoặc *mục tiêu*).",
+      "candidate_quotes": [
+        "thuộc tính",
+        "đặc trưng"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 698,
+        "gold_target_end": 708,
+        "gold_target_span": "thuộc tính",
+        "annotator_note": "[H]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "thuộc tính",
+        "confidence": "high",
+        "reason": "The target region contains the exact Vietnamese rendering of the source term occurrence as \"thuộc tính\" in the matching sentence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "d9b67a00dae3ffa813b781f67984380959227eed484c44501ffcba9dd5d85454",
+      "usage": {
+        "prompt_tokens": 518,
+        "cached_tokens": 0,
+        "completion_tokens": 74,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.0002775,
+      "latency_ms": 1252
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b023:registry:target:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b023",
+      "source_term": "target",
+      "source_span": "731:737:target",
+      "source_sentence": "In the supervised learning problems above,\nthe thing to predict\nis a special attribute \nthat is designated as\nthe *label* (or *target*).",
+      "target_region": "Mỗi *ví dụ* (hoặc *điểm dữ liệu*, *thực thể dữ liệu*, *mẫu*) thường gồm một tập các thuộc tính gọi là *đặc trưng* (hoặc *biến đồng biến*), từ đó mô hình phải đưa ra dự đoán của mình.\n...\nTrong các bài toán học có giám sát ở trên, thứ cần dự đoán là một thuộc tính đặc biệt được chỉ định là *nhãn* (hoặc *mục tiêu*).",
+      "candidate_quotes": [
+        "nhãn"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": "749",
+        "gold_target_end": "757",
+        "gold_target_span": "mục tiêu",
+        "annotator_note": "rep-occ form, fix override-ghost offset"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "*mục tiêu*",
+        "confidence": "high",
+        "reason": "The target region explicitly renders source term 'target' as '*mục tiêu*' in the matching sentence."
+      },
+      "json_error": null,
+      "correct": false,
+      "correct_reason": "rendered_quote_mismatch",
+      "from_cache": true,
+      "cache_key": "c78fa1548012a806a0b6181cb2c28e20095ca732498cac8e3808ccc01ef4e4bb",
+      "usage": {
+        "prompt_tokens": 499,
+        "cached_tokens": 0,
+        "completion_tokens": 74,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00027275,
+      "latency_ms": 1644
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b053:registry:data examples:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b053",
+      "source_term": "data examples",
+      "source_span": "737:750:data examples",
+      "source_sentence": "If these assumptions held true, then given these two data examples,\nyou could already identify the contractor's pricing structure:\n100 dollars per hour plus 50 dollars to show up at your house.",
+      "target_region": "Bây giờ hãy tưởng tượng rằng bạn của bạn thuê cùng nhà thầu đó trong 2 giờ và nhận được một hóa đơn 250 đô la.\n...\nNếu những giả định này là đúng, thì với hai ví dụ dữ liệu này, bạn đã có thể xác định cấu trúc định giá của nhà thầu: 100 đô la mỗi giờ cộng với 50 đô la để đến nhà bạn.",
+      "candidate_quotes": [
+        "ví dụ dữ liệu"
+      ],
+      "escalate_reason": "C1_variant_shared_with_other_term",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": "770",
+        "gold_target_end": "783",
+        "gold_target_span": "ví dụ dữ liệu",
+        "annotator_note": ""
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "với hai ví dụ dữ liệu này",
+        "confidence": "high",
+        "reason": "Exact rendering of the marked term appears in the target region and matches this occurrence."
+      },
+      "json_error": null,
+      "correct": false,
+      "correct_reason": "rendered_quote_mismatch",
+      "from_cache": true,
+      "cache_key": "7da8af8592529722808bf59cc7dddb2d1c8685b65d37e29a36c4fb53702a90c5",
+      "usage": {
+        "prompt_tokens": 482,
+        "cached_tokens": 0,
+        "completion_tokens": 71,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.0002625,
+      "latency_ms": 1509
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b062:registry:outcome:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b062",
+      "source_term": "outcome",
+      "source_span": "675:682:outcome",
+      "source_sentence": "Thus, we need to compute the expected risk that we incur as the loss function,\ni.e., we need to multiply the probability of the outcome\nwith the benefit (or harm) associated with it.",
+      "target_region": "Vì vậy, chúng ta cần tính toán rủi ro kỳ vọng mà ta gánh chịu như là hàm mất mát, tức là ta cần nhân xác suất của kết quả với lợi ích (hoặc tác hại) gắn với nó.",
+      "candidate_quotes": [
+        "kết quả"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 706,
+        "gold_target_end": 713,
+        "gold_target_span": "kết quả",
+        "annotator_note": "[H]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "kết quả",
+        "confidence": "high",
+        "reason": "The target region contains a verbatim rendering of the marked term: \"xác suất của kết quả\". It clearly corresponds to source \"outcome\" in this occurrence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "a60558c8e4797c5a8f116068c3b7ab99ab6306fc6adc01ea14053004c784f456",
+      "usage": {
+        "prompt_tokens": 452,
+        "cached_tokens": 0,
+        "completion_tokens": 86,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.000285,
+      "latency_ms": 1213
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b085:registry:annotation:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b085",
+      "source_term": "annotation",
+      "source_span": "415:425:annotation",
+      "source_sentence": "In general, the goal is to decompose and annotate text based on structural\nand grammatical assumptions to get some annotation.",
+      "target_region": "Nói chung, mục tiêu là phân rã và chú thích văn bản dựa trên các giả định về cấu trúc và ngữ pháp để thu được một dạng chú thích nào đó.",
+      "candidate_quotes": [],
+      "escalate_reason": "C0_no_accepted_form_in_t1_region",
+      "masquerade_suspect": true,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": "428",
+        "gold_target_end": "437",
+        "gold_target_span": "chú thích",
+        "annotator_note": "disambig noun-occ #3 (\"some annotation\"), NOT verb annotating"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "chú thích",
+        "confidence": "high",
+        "reason": "The target region contains a verbatim rendering of the marked term as 'chú thích', matching the source occurrence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "f9a101f4abc04467a96c82e6a9d5e7dfddb3e00e944c3185251181d3c6db954b",
+      "usage": {
+        "prompt_tokens": 415,
+        "cached_tokens": 0,
+        "completion_tokens": 73,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00024975,
+      "latency_ms": 1982
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b096:registry:data:3",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b096",
+      "source_term": "data",
+      "source_span": "1190:1194:data",
+      "source_sentence": "For instance, if we have demographic data\nabout house prices, pollution, crime, location,\neducation, and salaries, can we discover\nhow they are related simply based on empirical data?",
+      "target_region": "Chẳng hạn, nếu chúng ta có dữ liệu nhân khẩu học về giá nhà, ô nhiễm, tội phạm, vị trí, giáo dục và tiền lương, chúng ta có thể khám phá cách chúng liên hệ với nhau chỉ dựa trên dữ liệu thực nghiệm không?",
+      "candidate_quotes": [
+        "dữ liệu"
+      ],
+      "escalate_reason": "C2plus_multiple_same_term_forms",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 1225,
+        "gold_target_end": 1232,
+        "gold_target_span": "dữ liệu",
+        "annotator_note": "REVIEW: 'dữ liệu' x9, index 3 trong block lớn không chắc"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "dữ liệu",
+        "confidence": "high",
+        "reason": "The target region contains the exact Vietnamese rendering \"dữ liệu\" for the marked source term \"data\" in both occurrences; this quote matches the relevant occurrence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "54319887b0b8e6fd155059c30c065f90a23445cbcd341b809a8716a6f8f45cd7",
+      "usage": {
+        "prompt_tokens": 453,
+        "cached_tokens": 0,
+        "completion_tokens": 81,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00027525,
+      "latency_ms": 1129
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b103:registry:example:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b103",
+      "source_term": "example",
+      "source_span": "377:384:example",
+      "source_sentence": "For example, does future data always resemble the past or do the patterns change over time, either naturally or in response to our automated tools?",
+      "target_region": "Ví dụ, dữ liệu trong tương lai có luôn giống dữ liệu trong quá khứ hay các mẫu có thay đổi theo thời gian, một cách tự nhiên hoặc để đáp ứng với các công cụ tự động của chúng ta?",
+      "candidate_quotes": [
+        "Ví dụ",
+        "mẫu"
+      ],
+      "escalate_reason": "C2plus_multiple_same_term_forms",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 414,
+        "gold_target_end": 419,
+        "gold_target_span": "Ví dụ",
+        "annotator_note": "[M]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "Ví dụ",
+        "confidence": "high",
+        "reason": "The target region contains the exact Vietnamese rendering of the marked term at the sentence start, matching this occurrence of \"example\"."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "00364f56e1641eea3a8586ecadc750cfaaa54a20f89ab1e88a29f68bc3f64184",
+      "usage": {
+        "prompt_tokens": 432,
+        "cached_tokens": 0,
+        "completion_tokens": 74,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.000256,
+      "latency_ms": 1440
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b134:registry:sequence:2",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b134",
+      "source_term": "sequence",
+      "source_span": "1086:1094:sequence",
+      "source_sentence": "This allowed for significantly\n  increased accuracy for long sequences, since the model\n  no longer needed to remember the entire sequence before\n  commencing the generation of a new sequence.",
+      "target_region": "Điều này cho phép tăng đáng kể độ chính xác đối với các chuỗi dài, vì mô hình không còn cần phải ghi nhớ toàn bộ chuỗi trước khi bắt đầu sinh ra một chuỗi mới.",
+      "candidate_quotes": [
+        "chuỗi"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 1032,
+        "gold_target_end": 1037,
+        "gold_target_span": "chuỗi",
+        "annotator_note": "REVIEW: đa 'chuỗi' block lớn; guess 'entire sequence'"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "chuỗi",
+        "confidence": "high",
+        "reason": "The target region contains verbatim \"chuỗi\" matching the marked occurrence of \"sequence\"."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "11341bcc190c596a75f6080374767863a21b75f4ad6124d8ffa313c9aea19f0d",
+      "usage": {
+        "prompt_tokens": 433,
+        "cached_tokens": 0,
+        "completion_tokens": 68,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00024425,
+      "latency_ms": 1286
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b147:registry:feature vectors:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b147",
+      "source_term": "feature vectors",
+      "source_span": "1023:1038:feature vectors",
+      "source_sentence": "The Canny edge detector :cite:`Canny.1987` and Lowe's SIFT feature extractor :cite:`Lowe.2004` reigned supreme for over a decade as algorithms for mapping images into feature vectors.",
+      "target_region": "Bộ phát hiện biên Canny :cite:`Canny.1987` và bộ trích xuất đặc trưng SIFT của Lowe :cite:`Lowe.2004` đã thống trị trong hơn một thập kỷ như các thuật toán ánh xạ ảnh thành các vector đặc trưng.",
+      "candidate_quotes": [
+        "vector đặc trưng"
+      ],
+      "escalate_reason": "C1_variant_shared_with_other_term",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": "1013",
+        "gold_target_end": "1029",
+        "gold_target_span": "vector đặc trưng",
+        "annotator_note": ""
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "vector đặc trưng",
+        "confidence": "high",
+        "reason": "The target region contains a verbatim rendering matching the source term occurrence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "2f6fd21aaf1c13b93a78ada545ac09a88e7ea2afb046a778a54faa43ee542946",
+      "usage": {
+        "prompt_tokens": 468,
+        "cached_tokens": 0,
+        "completion_tokens": 66,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.000249,
+      "latency_ms": 2246
+    },
+    {
+      "occ_id": "S0:d2l_introduction_index_b147:registry:machine learning:0",
+      "config": "S0",
+      "block_id": "d2l_introduction_index_b147",
+      "source_term": "machine learning",
+      "source_span": "276:292:machine learning",
+      "source_sentence": "The problems that we have discussed so far, such as learning\nfrom the raw audio signal, \nthe raw pixel values of images,\nor mapping between sentences of arbitrary lengths and\ntheir counterparts in foreign languages,\nare those\nwhere deep learning excels and where traditional \nmachine learning\nmethods falter.",
+      "target_region": "Những vấn đề mà chúng ta đã thảo luận cho đến nay, như học từ tín hiệu âm thanh thô, các giá trị pixel thô của ảnh, hoặc ánh xạ giữa các câu có độ dài tùy ý và các câu tương ứng của chúng trong ngôn ngữ nước ngoài, là những vấn đề mà học sâu vượt trội và các phương pháp học máy truyền thống gặp khó khăn.",
+      "candidate_quotes": [
+        "học máy"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 271,
+        "gold_target_end": 278,
+        "gold_target_span": "học máy",
+        "annotator_note": "[H]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "học máy",
+        "confidence": "high",
+        "reason": "The target region contains the exact Vietnamese rendering \"học máy\" for the source term \"machine learning\" in \"các phương pháp học máy truyền thống\"."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "7b2be8c395fbfccb915861afd767c856428d44c1650ad3b31b2429f721d5fc10",
+      "usage": {
+        "prompt_tokens": 507,
+        "cached_tokens": 0,
+        "completion_tokens": 84,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00029475,
+      "latency_ms": 1490
+    },
+    {
+      "occ_id": "S0:d2l_preliminaries_index_b002:registry:machine learning:0",
+      "config": "S0",
+      "block_id": "d2l_preliminaries_index_b002",
+      "source_term": "machine learning",
+      "source_span": "83:99:machine learning",
+      "source_sentence": "All machine learning is concerned\nwith extracting information from data.",
+      "target_region": "Mọi học máy đều liên quan đến việc trích xuất thông tin từ dữ liệu.",
+      "candidate_quotes": [
+        "học máy"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": "79",
+        "gold_target_end": "86",
+        "gold_target_span": "học máy",
+        "annotator_note": ""
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "học máy",
+        "confidence": "high",
+        "reason": "The target region contains the exact span \"học máy\", which directly renders the marked source term \"machine learning\" in this occurrence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "57a932489799b344ca60ac24e48004aa29b023543617aaab5041595998a6ef0f",
+      "usage": {
+        "prompt_tokens": 389,
+        "cached_tokens": 0,
+        "completion_tokens": 79,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00025525,
+      "latency_ms": 1358
+    },
+    {
+      "occ_id": "S0:d2l_preliminaries_index_b002:registry:manipulating:0",
+      "config": "S0",
+      "block_id": "d2l_preliminaries_index_b002",
+      "source_term": "manipulating",
+      "source_span": "215:227:manipulating",
+      "source_sentence": "So we will begin by learning the practical skills\nfor storing, manipulating, and preprocessing data.",
+      "target_region": "Vì vậy, chúng ta sẽ bắt đầu bằng cách học các kỹ năng thực hành để lưu trữ, thao tác và tiền xử lý dữ liệu.",
+      "candidate_quotes": [
+        "thao tác"
+      ],
+      "escalate_reason": "C1_variant_shared_with_other_term",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": "219",
+        "gold_target_end": "227",
+        "gold_target_span": "thao tác",
+        "annotator_note": ""
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "thao tác",
+        "confidence": "high",
+        "reason": "The target region contains the exact Vietnamese rendering of the marked term in the corresponding phrase: \"lưu trữ, thao tác và tiền xử lý dữ liệu.\""
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "339ba063a5741608d160f34e599f21e8293e3374af20c404cc635e74470eadd1",
+      "usage": {
+        "prompt_tokens": 411,
+        "cached_tokens": 0,
+        "completion_tokens": 85,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00027275,
+      "latency_ms": 1276
+    },
+    {
+      "occ_id": "S0:d2l_preliminaries_index_b003:registry:set:0",
+      "config": "S0",
+      "block_id": "d2l_preliminaries_index_b003",
+      "source_term": "set",
+      "source_span": "223:226:set",
+      "source_sentence": "Linear algebra gives us a powerful set of techniques\nfor working with tabular data.",
+      "target_region": "Hơn nữa, học máy thường đòi hỏi làm việc với các bộ dữ liệu lớn, mà ta có thể xem như các bảng, trong đó các hàng tương ứng với các ví dụ và các cột tương ứng với các thuộc tính.\n...\nĐại số tuyến tính cung cấp cho chúng ta một bộ kỹ thuật mạnh mẽ để làm việc với dữ liệu dạng bảng.",
+      "candidate_quotes": [],
+      "escalate_reason": "C0_no_accepted_form_in_t1_region",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": "223",
+        "gold_target_end": "225",
+        "gold_target_span": "bộ",
+        "annotator_note": "out_of_registry Metric B (set->bo)"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "một bộ kỹ thuật",
+        "confidence": "high",
+        "reason": "The target region contains a verbatim rendering of the source occurrence as \"một bộ kỹ thuật,\" matching \"a powerful set of techniques.\""
+      },
+      "json_error": null,
+      "correct": false,
+      "correct_reason": "rendered_quote_mismatch",
+      "from_cache": true,
+      "cache_key": "78647259fd09e3995c88975f75a193dca02d29d6fae8fc06d60fede47f1f4722",
+      "usage": {
+        "prompt_tokens": 448,
+        "cached_tokens": 0,
+        "completion_tokens": 80,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.000272,
+      "latency_ms": 1204
+    },
+    {
+      "occ_id": "S0:d2l_preliminaries_ndarray_b006:registry:module:1",
+      "config": "S0",
+      "block_id": "d2l_preliminaries_ndarray_b006",
+      "source_term": "module",
+      "source_span": "185:191:module",
+      "source_sentence": "Here, the `np` module includes functions supported by NumPy,\nwhile the `npx` module contains a set of extensions\ndeveloped to empower deep learning within a NumPy-like environment.",
+      "target_region": "Ở đây, mô-đun `np` bao gồm các hàm được NumPy hỗ trợ, trong khi mô-đun `npx` chứa một bộ mở rộng được phát triển để tăng cường học sâu trong một môi trường giống NumPy.",
+      "candidate_quotes": [
+        "mô-đun"
+      ],
+      "escalate_reason": "C2plus_multiple_same_term_forms",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 174,
+        "gold_target_end": 180,
+        "gold_target_span": "mô-đun",
+        "annotator_note": "[M]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "mô-đun",
+        "confidence": "high",
+        "reason": "The target region contains the exact copied rendering \"mô-đun\" for the marked source term occurrence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "634a2518b60ce728211f90d9edbf22d248d7435bcee91644103bb5280b3272f9",
+      "usage": {
+        "prompt_tokens": 454,
+        "cached_tokens": 0,
+        "completion_tokens": 76,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.0002655,
+      "latency_ms": 1281
+    },
+    {
+      "occ_id": "S0:d2l_preliminaries_ndarray_b065:registry:element:0",
+      "config": "S0",
+      "block_id": "d2l_preliminaries_ndarray_b065",
+      "source_term": "element",
+      "source_span": "75:82:element",
+      "source_sentence": "[**Summing all the elements in the tensor**] yields a tensor with only one element.",
+      "target_region": "[**Tổng tất cả các phần tử trong tensor**] sẽ cho ra một tensor chỉ có một phần tử.",
+      "candidate_quotes": [
+        "phần tử"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 75,
+        "gold_target_end": 82,
+        "gold_target_span": "phần tử",
+        "annotator_note": "[H]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "phần tử",
+        "confidence": "high",
+        "reason": "The target region explicitly contains \"phần tử\" twice, matching the source term occurrence in both \"các phần tử\" and \"một phần tử\"."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "747246d5c2c95109fefa8d23a87eaa5d8d5f6e2349631ada702ee69cd9b70f03",
+      "usage": {
+        "prompt_tokens": 400,
+        "cached_tokens": 0,
+        "completion_tokens": 85,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00027,
+      "latency_ms": 1135
+    },
+    {
+      "occ_id": "S0:d2l_preliminaries_ndarray_b078:registry:elements:0",
+      "config": "S0",
+      "block_id": "d2l_preliminaries_ndarray_b078",
+      "source_term": "elements",
+      "source_span": "86:94:elements",
+      "source_sentence": "Thus, [**`[-1]` selects the last element and `[1:3]`\nselects the second and the third elements**] as follows:",
+      "target_region": "Do đó, [**`[-1]` chọn phần tử cuối cùng và `[1:3]` chọn phần tử thứ hai và thứ ba**] như sau:",
+      "candidate_quotes": [
+        "phần tử"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 56,
+        "gold_target_end": 63,
+        "gold_target_span": "phần tử",
+        "annotator_note": "[M]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "phần tử",
+        "confidence": "high",
+        "reason": "The target region explicitly contains the exact Vietnamese rendering of the marked term and it refers to the same occurrence in the sentence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "5f49ced2c925ef80b6f795ec6b6afaf51902ff04139320df99fed5a375283742",
+      "usage": {
+        "prompt_tokens": 427,
+        "cached_tokens": 0,
+        "completion_tokens": 76,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00025875,
+      "latency_ms": 1323
+    },
+    {
+      "occ_id": "S0:d2l_preliminaries_ndarray_b115:registry:tensors:1",
+      "config": "S0",
+      "block_id": "d2l_preliminaries_ndarray_b115",
+      "source_term": "tensors",
+      "source_span": "280:287:tensors",
+      "source_sentence": "Replace the two tensors that operate by element in the broadcasting mechanism with other shapes, e.g., 3-dimensional tensors.",
+      "target_region": "Thay hai tensor hoạt động theo từng phần tử trong cơ chế broadcasting bằng các hình dạng khác, ví dụ, tensor 3 chiều.",
+      "candidate_quotes": [
+        "tensor"
+      ],
+      "escalate_reason": "cross_term_collision",
+      "masquerade_suspect": false,
+      "gold": {
+        "gold_label": "rendered",
+        "gold_target_start": 253,
+        "gold_target_end": 259,
+        "gold_target_span": "tensor",
+        "annotator_note": "[M]"
+      },
+      "llm": {
+        "status": "localized",
+        "target_quote": "tensor",
+        "confidence": "high",
+        "reason": "The target region contains the exact copied term \"tensor\" referring to the marked source occurrence."
+      },
+      "json_error": null,
+      "correct": true,
+      "correct_reason": "rendered_quote_match",
+      "from_cache": true,
+      "cache_key": "397bfff10befd9b21d4782172ad0538d50388e49cd5d888fa345088c1366810e",
+      "usage": {
+        "prompt_tokens": 409,
+        "cached_tokens": 0,
+        "completion_tokens": 68,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0,
+      "recorded_cached_cost_usd": 0.00023825,
+      "latency_ms": 1287
+    }
+  ],
+  "scope_statement": "Part A pilot only: T3 GPT runs only on reused human-labeled residual rows and is capped by --limit. No DB writes and no headline metric changes."
+}

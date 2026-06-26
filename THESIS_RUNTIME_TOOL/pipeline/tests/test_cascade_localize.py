@@ -3,6 +3,8 @@ from __future__ import annotations
 from pipeline.eval.cascade_localize import (
     CandidateSpan,
     CascadeOccurrence,
+    _load_reusable_gold,
+    _score_t3_against_reused_gold,
     run_t1_region,
     run_t2_rules,
 )
@@ -138,6 +140,7 @@ def test_llm_adjudicator_prompt_is_review_gated_and_validates_quote() -> None:
     )
     messages = build_messages(item)
     assert "occurrence-level localization adjudicator" in messages[0]["content"]
+    assert "DIFFERENT word" in messages[0]["content"]
     assert "occ-1" in messages[1]["content"]
     assert validate_payload(
         {
@@ -161,3 +164,31 @@ def test_llm_adjudicator_prompt_is_review_gated_and_validates_quote() -> None:
         "occ-1",
         "Người dùng nhấp.",
     )["status"] == "not_found"
+
+
+def test_t3_reused_gold_scoring_accepts_rendered_and_not_rendered() -> None:
+    assert _score_t3_against_reused_gold(
+        {"status": "localized", "target_quote": "tập dữ liệu MNIST"},
+        {"gold_label": "rendered", "gold_target_span": "tập dữ liệu MNIST"},
+    )["correct"] is True
+    assert _score_t3_against_reused_gold(
+        {"status": "omitted", "target_quote": ""},
+        {"gold_label": "not_rendered", "gold_target_span": ""},
+    )["correct"] is True
+    assert _score_t3_against_reused_gold(
+        {"status": "localized", "target_quote": "khách hàng"},
+        {"gold_label": "not_rendered", "gold_target_span": ""},
+    )["correct"] is False
+
+
+def test_reusable_gold_loader_converts_collision_offset_to_quote(tmp_path) -> None:
+    path = tmp_path / "gold.csv"
+    path.write_text(
+        "config,block_id,source_span,target_text,gold_target_span,gold_label\n"
+        "S0,b,1:5:user,abc người dùng xyz,4:14,rendered\n",
+        encoding="utf-8",
+    )
+    rows = _load_reusable_gold([path])
+    assert rows[("S0", "b", 1, 5)]["gold_target_span"] == "người dùng"
+    assert rows[("S0", "b", 1, 5)]["gold_target_start"] == 4
+    assert rows[("S0", "b", 1, 5)]["gold_target_end"] == 14

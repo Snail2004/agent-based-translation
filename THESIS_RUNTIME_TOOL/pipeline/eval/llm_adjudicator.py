@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-PROMPT_VERSION = "d2l_occurrence_adjudicator_v1_review_gated"
+PROMPT_VERSION = "d2l_occurrence_adjudicator_v2"
 RESULT_SCHEMA = {
     "type": "json_schema",
     "json_schema": {
@@ -57,7 +57,9 @@ def build_messages(item: AdjudicationInput) -> list[dict[str, str]]:
         "enough to choose one.\n"
         "4. Return not_found when no plausible span can be found in the target region.\n"
         "5. Do not use registry variants as the answer unless they actually appear in "
-        "the target region and correspond to this occurrence.\n"
+        "the target region AND correspond to THIS occurrence. If the only candidate "
+        "is a registry variant that actually translates a DIFFERENT word in the "
+        "sentence, return omitted (not localized).\n"
         "6. Prefer low confidence over guessing. Confidence is audited against human gold.\n\n"
         "Output must conform exactly to the JSON schema."
     )

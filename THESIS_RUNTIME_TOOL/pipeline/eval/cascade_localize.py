@@ -37,6 +37,13 @@ from pipeline.eval.region_align import (
     top_k_target_sentences,
     union_ranges,
 )
+from pipeline.eval.llm_adjudicator import (
+    PROMPT_VERSION as T3_PROMPT_VERSION,
+    RESULT_SCHEMA as T3_RESULT_SCHEMA,
+    AdjudicationInput,
+    build_messages as build_t3_messages,
+    validate_payload as validate_t3_payload,
+)
 from pipeline.eval.surface_match import normalize_surface
 from pipeline.translate.profiles import get_profile
 
@@ -212,6 +219,185 @@ def run_cascade_localize(
         "frozen_db_matches_expected": db_hash[:16].upper() == FROZEN_DB_SHA_FIRST16,
         "model": _identity_to_dict(identity),
         "reports": reports,
+    }
+
+
+def run_t3_pilot(
+    *,
+    db_path: str | Path,
+    experiment_id: str,
+    configs: Iterable[str],
+    chapters: list[str] | None,
+    embed_endpoint: str,
+    model_config: EmbeddingModelConfig,
+    cache_dir: str | Path,
+    margin_threshold: float,
+    gold_reuse_paths: list[str | Path],
+    llm_client: Any,
+    limit: int,
+    profile_name: str = "technical_d2l_v1",
+    doc_id: str = "d2l",
+) -> dict[str, Any]:
+    """Run the review-gated T3 GPT pilot on reused human-labeled residual rows only."""
+
+    if limit <= 0:
+        raise ValueError("T3 pilot requires a positive --limit")
+    reusable = _load_reusable_gold(gold_reuse_paths)
+    tier2_report = run_cascade_localize(
+        db_path=db_path,
+        experiment_id=experiment_id,
+        configs=configs,
+        chapters=chapters,
+        embed_endpoint=embed_endpoint,
+        model_config=model_config,
+        cache_dir=cache_dir,
+        margin_threshold=margin_threshold,
+        tier_max=2,
+        profile_name=profile_name,
+        doc_id=doc_id,
+    )
+
+    selected: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    reused_labeled_total = 0
+    residual_total = 0
+    for config in tier2_report["configs"]:
+        for decision in tier2_report["reports"][config]["decisions"]:
+            if decision.get("resolved_by") == "t2_credit":
+                continue
+            residual_total += 1
+            reused = reusable.get(_reuse_key_from_decision(decision))
+            if not reused:
+                continue
+            reused_labeled_total += 1
+            if len(selected) < limit:
+                selected.append((decision, reused))
+
+    records: list[dict[str, Any]] = []
+    confidence_correct: dict[str, Counter[str]] = defaultdict(Counter)
+    status_counts: Counter[str] = Counter()
+    fresh_calls = 0
+    cache_hits = 0
+    prompt_tokens_all = 0
+    completion_tokens_all = 0
+    prompt_tokens_fresh = 0
+    completion_tokens_fresh = 0
+    cost_usd_fresh = 0.0
+    cost_usd_cached_recorded = 0.0
+
+    for decision, reused in selected:
+        target_region = _target_region_text(decision)
+        candidate_quotes = tuple(
+            dict.fromkeys(
+                str(item.get("surface") or "")
+                for item in decision.get("candidates") or []
+                if str(item.get("surface") or "")
+            )
+        )
+        item = AdjudicationInput(
+            occurrence_id=str(decision["occ_id"]),
+            source_term=str(decision["source_term"]),
+            source_sentence=str(decision["source_sentence"]),
+            target_region=target_region,
+            candidate_quotes=candidate_quotes,
+        )
+        result = llm_client.call(
+            build_t3_messages(item),
+            response_format=T3_RESULT_SCHEMA,
+            tag=f"EV-D2L-10:T3:{T3_PROMPT_VERSION}:{decision['occ_id']}",
+        )
+        validated = validate_t3_payload(result.parsed_json, item.occurrence_id, target_region)
+        scored = _score_t3_against_reused_gold(validated, reused)
+        status_counts[str(validated["status"])] += 1
+        confidence_correct[str(validated["confidence"])][str(scored["correct"]).lower()] += 1
+        prompt_tokens_all += result.usage.prompt_tokens
+        completion_tokens_all += result.usage.completion_tokens
+        cost_usd_cached_recorded += result.cost_usd
+        if result.from_cache:
+            cache_hits += 1
+        else:
+            fresh_calls += 1
+            prompt_tokens_fresh += result.usage.prompt_tokens
+            completion_tokens_fresh += result.usage.completion_tokens
+            cost_usd_fresh += result.cost_usd
+        records.append({
+            "occ_id": decision["occ_id"],
+            "config": decision["config"],
+            "block_id": decision["block_id"],
+            "source_term": decision["source_term"],
+            "source_span": _format_span(
+                int(decision["source_start"]),
+                int(decision["source_end"]),
+                str(decision["source_surface"]),
+            ),
+            "source_sentence": decision["source_sentence"],
+            "target_region": target_region,
+            "candidate_quotes": list(candidate_quotes),
+            "escalate_reason": decision.get("escalate_reason", ""),
+            "masquerade_suspect": bool(decision.get("masquerade_suspect")),
+            "gold": reused,
+            "llm": validated,
+            "json_error": result.json_error,
+            "correct": scored["correct"],
+            "correct_reason": scored["reason"],
+            "from_cache": result.from_cache,
+            "cache_key": result.cache_key,
+            "usage": asdict(result.usage),
+            "cost_usd": result.cost_usd if not result.from_cache else 0.0,
+            "recorded_cached_cost_usd": result.cost_usd if result.from_cache else 0.0,
+            "latency_ms": result.latency_ms,
+        })
+
+    correct = sum(1 for item in records if item["correct"])
+    return {
+        "task": "EV-D2L-10",
+        "mode": "tier3_pilot_reused_labeled_only",
+        "prompt_version": T3_PROMPT_VERSION,
+        "response_schema": "occurrence_adjudication",
+        "experiment_id": experiment_id,
+        "profile": profile_name,
+        "doc_id": doc_id,
+        "configs": tier2_report["configs"],
+        "chapters": tier2_report["chapters"],
+        "frozen_db_sha256": tier2_report["frozen_db_sha256"],
+        "frozen_db_sha256_first16": tier2_report["frozen_db_sha256_first16"],
+        "frozen_db_expected_first16": tier2_report["frozen_db_expected_first16"],
+        "frozen_db_matches_expected": tier2_report["frozen_db_matches_expected"],
+        "t1_model": tier2_report["model"],
+        "tier2_residual_total": residual_total,
+        "reused_labeled_total": reused_labeled_total,
+        "limit": limit,
+        "attempted": len(records),
+        "correct": correct,
+        "accuracy": _ratio(correct, len(records)),
+        "status_counts": dict(status_counts),
+        "confidence_x_correct": {
+            key: dict(value) for key, value in sorted(confidence_correct.items())
+        },
+        "llm": {
+            "model": llm_client.config.model,
+            "temperature": llm_client.config.temperature,
+            "seed": llm_client.config.seed,
+            "reasoning_effort": llm_client.config.reasoning_effort,
+            "verbosity": llm_client.config.verbosity,
+            "max_output_tokens": llm_client.config.max_output_tokens,
+            "daily_token_cap": llm_client.config.daily_token_cap,
+            "prompt_token_cap": llm_client.config.prompt_token_cap,
+            "calls": len(records),
+            "fresh_calls": fresh_calls,
+            "cache_hits": cache_hits,
+            "prompt_tokens_all_records": prompt_tokens_all,
+            "completion_tokens_all_records": completion_tokens_all,
+            "prompt_tokens_fresh": prompt_tokens_fresh,
+            "completion_tokens_fresh": completion_tokens_fresh,
+            "cost_usd_fresh": round(cost_usd_fresh, 12),
+            "cached_recorded_cost_usd": round(cost_usd_cached_recorded, 12),
+            "usage_today_after": llm_client.get_usage_today(),
+        },
+        "records": records,
+        "scope_statement": (
+            "Part A pilot only: T3 GPT runs only on reused human-labeled residual rows "
+            "and is capped by --limit. No DB writes and no headline metric changes."
+        ),
     }
 
 
@@ -528,6 +714,57 @@ def score_residual_gold(gold_path: str | Path) -> dict[str, Any]:
     }
 
 
+def _target_region_text(decision: dict[str, Any]) -> str:
+    text = str(decision.get("target_text") or "")
+    ranges = []
+    for item in (decision.get("t1") or {}).get("ranges") or []:
+        if not isinstance(item, (list, tuple)) or len(item) != 2:
+            continue
+        try:
+            start = max(0, int(item[0]))
+            end = min(len(text), int(item[1]))
+        except (TypeError, ValueError):
+            continue
+        if start < end:
+            ranges.append((start, end))
+    if not ranges:
+        return text
+    return "\n...\n".join(text[start:end] for start, end in ranges)
+
+
+def _score_t3_against_reused_gold(
+    validated: dict[str, Any],
+    reused: dict[str, Any],
+) -> dict[str, Any]:
+    gold_label = str(reused.get("gold_label") or "").strip()
+    gold_span = str(reused.get("gold_target_span") or "").strip()
+    status = str(validated.get("status") or "")
+    quote = str(validated.get("target_quote") or "")
+    if gold_label in {"rendered", "localized"}:
+        correct = status == "localized" and _quote_equal(quote, gold_span)
+        return {
+            "correct": correct,
+            "reason": "rendered_quote_match" if correct else "rendered_quote_mismatch",
+        }
+    if gold_label in {"not_rendered", "omitted", "not_found"}:
+        correct = status in {"omitted", "not_found"}
+        return {
+            "correct": correct,
+            "reason": "not_rendered_status_match" if correct else "not_rendered_status_mismatch",
+        }
+    if gold_label == "ambiguous":
+        correct = status == "ambiguous"
+        return {
+            "correct": correct,
+            "reason": "ambiguous_status_match" if correct else "ambiguous_status_mismatch",
+        }
+    return {"correct": False, "reason": f"unsupported_gold_label:{gold_label}"}
+
+
+def _quote_equal(left: str, right: str) -> bool:
+    return " ".join(str(left).split()) == " ".join(str(right).split())
+
+
 def _target_spans(allocation: dict[str, list[Any]], owner_meta: dict[str, Any], text: str) -> list[CandidateSpan]:
     spans: list[CandidateSpan] = []
     for owner_id, allocated in allocation.items():
@@ -785,14 +1022,21 @@ def _load_reusable_gold(paths: Iterable[str | Path]) -> dict[tuple[str, str, int
                 continue
             label = str(row.get("gold_label") or "").strip()
             span = str(row.get("gold_target_span") or "").strip()
+            target_start = row.get("gold_target_start", "")
+            target_end = row.get("gold_target_end", "")
+            if _looks_like_offset_span(span) and row.get("target_text"):
+                target_start, target_end = _parse_target_offset_span(span)
+                if target_start is not None and target_end is not None:
+                    target_text = str(row.get("target_text") or "")
+                    span = target_text[target_start:target_end]
             if not label and span:
                 label = "rendered"
             if not label:
                 continue
             reusable[(config, block_id, start, end)] = {
                 "gold_label": label,
-                "gold_target_start": row.get("gold_target_start", ""),
-                "gold_target_end": row.get("gold_target_end", ""),
+                "gold_target_start": target_start,
+                "gold_target_end": target_end,
                 "gold_target_span": span,
                 "annotator_note": row.get("annotator_note") or row.get("note") or "",
             }
@@ -815,6 +1059,21 @@ def _int_or_none(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _looks_like_offset_span(value: str) -> bool:
+    parts = str(value or "").split(":")
+    return len(parts) == 2 and all(part.strip().isdigit() for part in parts)
+
+
+def _parse_target_offset_span(value: str) -> tuple[int | None, int | None]:
+    parts = str(value or "").split(":")
+    if len(parts) != 2:
+        return None, None
+    try:
+        return int(parts[0]), int(parts[1])
+    except ValueError:
+        return None, None
 
 
 def _write_html(path: Path, report: dict[str, Any]) -> None:

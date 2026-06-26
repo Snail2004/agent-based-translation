@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
+from pipeline.agents.llm_client import LLMClient
+from pipeline.agents.llm_config import load_llm_config
 from pipeline.eval.cascade_localize import (
     DEFAULT_CHAPTERS,
     build_residual_gold,
     run_cascade_localize,
+    run_t3_pilot,
     score_residual_gold,
     write_reports,
 )
@@ -20,7 +24,7 @@ def main() -> int:
     )
     parser.add_argument("--configs", default="S0,S1", help="Comma-separated configs, e.g. S0,S1.")
     parser.add_argument("--tier-max", type=int, default=2, choices=[2, 3])
-    parser.add_argument("--t3-model", default="", help="Reserved. T3 is prompt-review gated.")
+    parser.add_argument("--t3-model", default="", help="Use 'gpt' only for the capped Part-A T3 pilot.")
     parser.add_argument("--k", type=int, default=3, help="Reserved max re-narrow K; report only in tier 2.")
     parser.add_argument("--db", default="data/jobs/d2l_p1/memory.sqlite3")
     parser.add_argument("--experiment", default="d2l_p3")
@@ -36,6 +40,11 @@ def main() -> int:
     parser.add_argument("--out", default="data/reports/cascade_localize")
     parser.add_argument("--score", action="store_true", help="Score a completed residual gold CSV.")
     parser.add_argument("--gold", help="Gold CSV for --score.")
+    parser.add_argument("--gold-reuse", nargs="*", default=[], help="Reusable human gold CSVs for T3 pilot.")
+    parser.add_argument("--only-reused-labeled", action="store_true", help="T3 pilot guard: use only rows with reused human labels.")
+    parser.add_argument("--limit", type=int, default=0, help="Hard cap for T3 pilot calls.")
+    parser.add_argument("--llm-config", default="pipeline/configs/llm_adjudicator.yaml")
+    parser.add_argument("--llm-cache", default="data/eval/cascade_t3_llm_cache.sqlite3")
     args = parser.parse_args()
 
     if args.score:
@@ -52,9 +61,48 @@ def main() -> int:
     if len(model_configs) != 1:
         parser.error("EV-D2L-10 production T1 accepts exactly one model; pass bge-m3 only.")
     if args.tier_max > 2:
-        raise SystemExit(
-            "Tier 3 GPT is gated by prompt review. Run tier-max 2 first; do not call GPT here."
+        if args.t3_model != "gpt":
+            raise SystemExit("--tier-max 3 requires --t3-model gpt")
+        if not args.only_reused_labeled:
+            raise SystemExit("--tier-max 3 requires --only-reused-labeled")
+        if args.limit <= 0:
+            raise SystemExit("--tier-max 3 requires a positive --limit")
+        if not args.gold_reuse:
+            raise SystemExit("--tier-max 3 requires --gold-reuse CSV paths")
+        key_source = _ensure_openai_key()
+        config = load_llm_config(args.llm_config)
+        client = LLMClient(config=config, cache_path=args.llm_cache)
+        report = run_t3_pilot(
+            db_path=args.db,
+            experiment_id=args.experiment,
+            configs=[item.strip() for item in args.configs.split(",") if item.strip()],
+            chapters=[item.strip() for item in args.chapters.split(",") if item.strip()],
+            embed_endpoint=args.embed_endpoint,
+            model_config=model_configs[0],
+            cache_dir=args.cache_dir,
+            margin_threshold=args.margin_threshold,
+            gold_reuse_paths=args.gold_reuse,
+            llm_client=client,
+            limit=args.limit,
         )
+        report["llm"]["api_key_source"] = key_source
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({
+            "out": str(out),
+            "attempted": report["attempted"],
+            "correct": report["correct"],
+            "accuracy": report["accuracy"],
+            "fresh_calls": report["llm"]["fresh_calls"],
+            "cache_hits": report["llm"]["cache_hits"],
+            "prompt_tokens_fresh": report["llm"]["prompt_tokens_fresh"],
+            "completion_tokens_fresh": report["llm"]["completion_tokens_fresh"],
+            "cost_usd_fresh": report["llm"]["cost_usd_fresh"],
+            "usage_today_after": report["llm"]["usage_today_after"],
+        }, ensure_ascii=False, indent=2))
+        return 0
+
     report = run_cascade_localize(
         db_path=args.db,
         experiment_id=args.experiment,
@@ -85,6 +133,27 @@ def main() -> int:
         "k_reserved": args.k,
     }, ensure_ascii=False, indent=2))
     return 0
+
+
+def _ensure_openai_key() -> str:
+    if os.getenv("OPENAI_API_KEY"):
+        return "env:OPENAI_API_KEY"
+    candidates = [
+        Path("OPENAI-KEY-2.txt"),
+        Path("OPENAI-KEY-1.txt"),
+        Path("../OPENAI-KEY-2.txt"),
+        Path("../OPENAI-KEY-1.txt"),
+        Path("THESIS_RUNTIME_TOOL/OPENAI-KEY-2.txt"),
+        Path("THESIS_RUNTIME_TOOL/OPENAI-KEY-1.txt"),
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        key = path.read_text(encoding="utf-8").strip()
+        if key:
+            os.environ["OPENAI_API_KEY"] = key
+            return f"file:{path.name}"
+    raise RuntimeError("OPENAI_API_KEY is not set and no OPENAI-KEY-*.txt fallback was found")
 
 
 if __name__ == "__main__":
