@@ -294,3 +294,27 @@ Reviewed REWORK-2b by reading the on-disk source (not the §5 report), then re-r
 **Minor (non-blocking, note for when real numbers run):** preflight `hf_repo` is derived from the LM Studio native key (shows e.g. `ChristianAzinn/text-embedding-labse`, not the true GGUF repo `ChristianAzinn/labse-gguf`). Cosmetic only — the authoritative version string lives in `model_version` and the per-alias key already disambiguates; clean up the label before publishing the probe table.
 
 **Status:** machinery PASS, committed. The task stays open for DATA: human labels 102 gold rows → run the probe → a follow-up review applies the §3 ORDERED decision rule (does narrowing help → is a model worth >position by ≥10pp → which model) on the real numbers. No trust number is claimed here.
+
+## 7. DATA results (human-labeled gold; DEV, NOT a trust number)
+Gold fully labeled by the user (102/102, verified: rendered span correct incl. ~10 NON-candidate spans found via select — a real candidate-coverage gap in the EV-08 allocator). Probe run with all 3 models loaded in LM Studio (labse 768, bge-m3 1024, e5 1024 w/ query:/passage:), k=3, window=0, elapsed 62.5s, frozen DB DA0F687894090D43 unchanged.
+
+### 7.1 Decision-rule outcome (hard subset = true_collision + variant_stealing)
+Assignment-precision: **position_narrow 0.765**, bge-m3 0.545 (−0.22), labse 0.52 (−0.24), e5 0.50 (−0.26). Control: all 1.0.
+- **M2 variant_stealing (25):** legacy & abstain_baseline prec 0.16 (4 correct, **21 wrong**) → confirms M2 false-positives SURVIVE EV-08's lower bound. position_narrow prec **1.0** (7 correct, 0 wrong, 18 abstain) → converts all 21 false-credits to honest abstentions.
+- **M1 true_collision (57):** abstain_baseline abstains all → position_narrow 19 correct / 8 wrong / prec 0.70 / cov 0.58 (resolves 33%, below the 50% bar).
+- **Verdict:** Step-2 FAILS for every embedding model (all lose to FREE position by 22–26 pp). **Embedding models REJECTED for the headline/scoring layer.** position_narrow adopted as the assignment layer: fixes M2 by abstaining (tightens lower bound honestly), resolves confident M1, abstains the rest into the EV-08 band. My prior "LaBSE wins multi-sentence" hypothesis was REFUTED by data — the free position baseline existed precisely to catch this.
+
+### 7.2 BUT EV-09 measures span-assignment+abstain, NOT sentence-matching
+The user's actual tier-1 goal is sentence↔sentence region-narrowing (to feed a tier-2 LLM). Re-measured **sentence-hit recall** (does the gold's VI sentence fall in the model's top-k?) on the 60 multi-sentence rows:
+- **top-1:** bge-m3 0.983, e5 0.983, labse 0.950, position 0.967. **top-3: ALL 1.000.**
+- So models are NOT bad at sentence matching (~98% top-1); the EV-09 "loss" was the k=3 union width + within-sentence disambiguation (tier-2 work) + abstain accounting. position ties the models **only because D2L preserves sentence order** (a corpus-specific crutch that will break on reordered/summarized literary text — UNMEASURED, argued).
+
+### 7.3 Handling top-1 < 100% (margin + rank analysis)
+- **Every top-1 miss had the gold at rank 2** (gold_rank=1) across all models → **top-2 catches 100% of misses** on this sample (no need for top-3). Escalate top-2, not top-3.
+- **Margin (cos#1−cos#2) as a confidence gate separates only for bge-m3:** its single fail sits below pass-q1 (0.136 vs q1 0.212) → a gate escalates ~7% to catch it. e5 margins are compressed (gate → 32% escalation); labse has a high-margin fail (0.145 > median) → margin can't flag it. → another reason **bge-m3 is the tier-1 model of choice**.
+- The single hard case is the SAME occurrence across models (`b023 attributes:0`, VI near-duplicate attributes/features sentences) — intrinsically ambiguous, gold at rank 2.
+
+### 7.4 Recommendations carried forward (NOT yet built)
+1. **Scoring/assignment layer:** adopt deterministic `position_narrow` (free) + abstain→band; do NOT add an embedding model to the SCORER. (D2L; integration = a new task.)
+2. **Tier-1 region-narrower for the tier-2 LLM:** use **bge-m3 top-1**; on low margin escalate **top-2** to the LLM. Drop position from production (helps in no regime: redundant when order-preserved, misleading when not) and drop LaBSE (weakest). Pass cases yield the EN-sentence↔VI-sentence 1:1 pair for tier-2.
+3. **Caveats (loud):** DEV not trust number; n=60 multi-sentence / n=1 bge-m3 fail = anecdote — DO NOT lock the margin threshold here. Validate on a larger held-out incl. reordered/literary text (where position should break and the model's semantic robustness can actually be demonstrated). Candidate-coverage gap (~10 non-candidate gold spans) is an allocator limitation, separate from narrowing, for future work.
