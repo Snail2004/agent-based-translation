@@ -122,6 +122,7 @@ class EmbeddingCacheClient:
         self.inputs = 0
         self.cache_hits = 0
         self.cache_misses = 0
+        self._memory_cache: dict[str, list[float]] = {}
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def embed(self, texts: Iterable[str]) -> list[list[float]]:
@@ -129,12 +130,15 @@ class EmbeddingCacheClient:
         result: dict[str, list[float]] = {}
         missing: list[str] = []
         for text in ordered:
-            cached = self._read_cache(text)
+            cached = self._memory_cache.get(text)
+            if cached is None:
+                cached = self._read_cache(text)
             if cached is None:
                 missing.append(text)
                 self.cache_misses += 1
             else:
                 result[text] = cached
+                self._memory_cache[text] = cached
                 self.cache_hits += 1
 
         for start in range(0, len(missing), self.batch_size):
@@ -155,6 +159,7 @@ class EmbeddingCacheClient:
             for text, item in zip(batch, body["data"], strict=True):
                 vector = [float(value) for value in item["embedding"]]
                 self._write_cache(text, vector)
+                self._memory_cache[text] = vector
                 result[text] = vector
 
         return [result[text] for text in ordered]
