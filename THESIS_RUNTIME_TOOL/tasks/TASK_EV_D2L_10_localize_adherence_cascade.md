@@ -567,3 +567,120 @@ HTML checks:
 
 ### 6.9.7 Commit
 Commit: code (`cascade_localize.py`, `llm_adjudicator.py`, `run_cascade_localize.py`, test) + `cascade_t3_locate_pilot.json` (46KB evidence) + task §5.7/§6.9 + LEDGER. **KHÔNG commit** worksheet CSV/HTML 8.6MB (regenerable, chờ label) + big cascade_localize_*.json.
+
+## REWORK-3 *(Claude spec → CodeX điền §5.8 + STOP, không commit)* — BUG chấm containment (ảnh hưởng headline)
+
+**Bug (Claude phát hiện khi chạy b003, đã xác minh):** `_best_accepted_form_in_quote` (cascade_localize.py:~936) dùng `find_spans(quote, form, language="vi")` (segment-aware) để hỏi "form có NẰM TRONG cụm LLM khoanh không". Segmentation tiếng Việt **phụ thuộc ngữ cảnh**: khi cụm LLM có chữ đệm bao quanh ("từ"/"các"/"những"), bộ-tách-từ cắt khác → form sạch không khớp dù là substring hiển nhiên. Bằng chứng:
+```
+find_spans('từ nguyên lý cơ bản', 'nguyên lý cơ bản', vi) -> []   # SAI: phải khớp → adherent
+find_spans('một mục', 'mục') -> [(4,7,'mục')]                      # ok
+find_spans('các luật', 'luật') -> [(4,8,'luật')]                   # ok
+```
+→ Ca LLM khoanh hơi rộng (đúng cái thiết kế CHO PHÉP) bị chấm **off_glossary OAN** → **`off_glossary_pct` (số headline luận văn) bị thổi phồng**. Pilot 17/3 cũ KHÔNG dính (3 off_glossary đó là registry-thiếu-form + set→bộ thật), nhưng bug cắn trên hard-set khi gán.
+
+### R3.1 Fix — đúng công cụ cho "chứa"
+Thay segment-aware find_spans **chỉ trong scorer adherence của T3** (`_best_accepted_form_in_quote`) bằng **boundary-aware normalized substring**:
+- chuẩn hóa cả quote và mỗi accepted_form: casefold, bỏ `*`, gộp whitespace.
+- form khớp nếu xuất hiện trong quote như **dãy âm tiết liền có ranh giới** (space hoặc đầu/cuối chuỗi) — vd regex `(?:^|\s)form(?:\s|$)` trên chuỗi đã chuẩn hóa; "nguyên lý cơ bản" ⊂ "từ nguyên lý cơ bản" khớp ✓, vẫn chặn khớp lọt giữa âm tiết.
+- nhiều form khớp → chọn form **dài nhất** (giữ tie-break cũ). Trả về char-offset của form trong quote GỐC để highlight (map lại từ vị trí chuẩn-hóa, hoặc re-find trên quote gốc).
+- **KHÔNG đụng** `find_spans` ở T2/EV-08 (chỗ đó tìm term trong văn xuôi, segment-aware là đúng). Chỉ đổi scorer containment của T3.
+
+### R3.2 Tests (bắt buộc thêm)
+- `nguyên lý cơ bản` ∈ `từ nguyên lý cơ bản` → adherent; `luật` ∈ `các luật`; `mục` ∈ `một mục`.
+- off_glossary giữ đúng: form `cuộc thi` vs quote `cạnh tranh` → off_glossary; form `bit` vs quote `một chút` → off_glossary.
+- ranh giới: form không khớp khi lọt giữa một âm tiết dài hơn (test 1 ca biên).
+- regression: pilot 20 vẫn 17 adherent / 3 off_glossary (3 ca cũ KHÔNG đổi).
+
+### R3.3 Acceptance
+```bash
+python -m pytest pipeline/tests -k "cascade_localize or llm_adjudicator" -v   # + test containment mới
+# replay locate pilot (0 token mới) -> vẫn 17/3:
+python -m pipeline.scripts.run_cascade_localize --tier-max 3 --t3-model gpt --locate-only \
+  --only-reused-labeled --limit 20 --configs S0,S1 \
+  --gold-reuse data/eval/collision_assignment_gold.csv data/eval/localizer_gold.csv \
+  --db data/jobs/d2l_p1/memory.sqlite3 --experiment d2l_p3 --out data/reports/cascade_t3_locate_pilot.json
+```
+Guards: frozen DB DA0F687894090D43; metrics_v2 không đổi; full suite green. STOP, không commit.
+
+### R3.4 Phụ (KHÔNG làm trong task này — ghi để nhớ)
+Form bẩn trong registry: vd `first principles` có accepted_form `"từ các nguyên lý đầu tiên"` (dính chữ đệm "từ các"). → việc của **Builder termhood/form-hygiene** (task khác), không sửa ở đây.
+
+## 5.8 REWORK-3 implementation notes *(CodeX điền)*
+
+### 5.8.1 Code changes
+
+- Replaced T3 locate-only containment scoring in `pipeline/eval/cascade_localize.py`.
+  - `_best_accepted_form_in_quote()` no longer calls `find_spans(..., language="vi")`.
+  - Added `_find_form_in_located_quote()` and `_normalize_containment_with_offsets()`.
+  - The new matcher normalizes quote/form by NFC/apostrophe normalization, stripping `*`, casefolding, and collapsing whitespace.
+  - It matches an accepted form only as a contiguous syllable sequence bounded by whitespace or string edges.
+  - It still returns offsets into the original located quote so `highlight_surface` remains code-owned and UI-safe.
+- Scope is intentionally narrow.
+  - T2 / EV-08 allocation still uses `find_spans` and Vietnamese segmentation.
+  - Only the T3 locate-only code-score containment check changed.
+
+### 5.8.2 Tests added
+
+Added regression coverage in `pipeline/tests/test_cascade_localize.py`:
+
+- `nguyên lý cơ bản` inside `từ nguyên lý cơ bản` -> `adherent`.
+- `luật` inside `các luật` -> `adherent`.
+- `mục` inside `một mục` -> `adherent`.
+- `cuộc thi` vs `cạnh tranh` remains `off_glossary`.
+- `bit` vs `một chút` remains `off_glossary`.
+- boundary guard: `mục` does not match inside `mụcđích`.
+
+### 5.8.3 Verification
+
+```powershell
+python -m pytest pipeline/tests -k "cascade_localize or llm_adjudicator" -v
+python -m pipeline.scripts.run_cascade_localize --tier-max 3 --t3-model gpt --locate-only --only-reused-labeled --limit 20 --configs S0,S1 --gold-reuse data/eval/collision_assignment_gold.csv data/eval/localizer_gold.csv --db data/jobs/d2l_p1/memory.sqlite3 --experiment d2l_p3 --out data/reports/cascade_t3_locate_pilot.json
+python -m pytest pipeline/tests app/backend/tests
+```
+
+Results:
+
+- Targeted tests: `10 passed, 210 deselected`.
+- Locate-only pilot replay:
+  - `attempted=20`
+  - `correct=20`
+  - `accuracy=1.0`
+  - `fresh_calls=0`
+  - `cache_hits=20`
+  - `prompt_tokens_fresh=0`
+  - `completion_tokens_fresh=0`
+  - `cost_usd_fresh=0.0`
+  - `adherence_counts={"adherent":17,"off_glossary":3}`
+  - S0 pilot subset: `adherence_rate=0.85`, `off_glossary_pct=0.15`
+- Full suite: `353 passed in 103.43s`.
+- Frozen DB hash: `DA0F687894090D43`.
+- `git diff -- THESIS_RUNTIME_TOOL/data/reports/d2l_translation_metrics_v2.json` is empty.
+
+### 5.8.4 Notes for Claude review
+
+- I did not commit.
+- The current pilot report is a cache replay artifact; it proves the scorer fix does not change the existing 20-case replay result and does not spend new tokens.
+- This task does not clean dirty registry forms such as `từ các nguyên lý đầu tiên`; that remains Builder/form-hygiene work as R3.4 states.
+
+## 6.10 REWORK-3 review *(Claude điền)*
+
+**Verdict: PASS. Bug containment đã sửa đúng, scope đúng (chỉ T3), tự verify bằng hàm + chạy lại b003: ca "từ nguyên lý cơ bản" LẬT off_glossary→adherent. find_spans T2 không đụng.**
+
+### 6.10.1 Fix đúng scope
+`_best_accepted_form_in_quote` (T3) đổi `find_spans(...,vi)` → `_find_form_in_located_quote` (normalized + boundary-substring). `find_spans` VẪN import (line 47) + dùng ở T2 source-match (line 876) — **không đụng**. ✓
+
+### 6.10.2 Tự test hàm `_find_form_in_located_quote` (0 API)
+- `"từ nguyên lý cơ bản" ⊃ "nguyên lý cơ bản"` → (3,19) surface `'nguyên lý cơ bản'` ✓ (bug đã hết, **offset đúng**, không drift).
+- boundary: `"mụcđích" ⊃ "mục"` → **None** ✓ (không nhận vơ giữa âm tiết).
+- off_glossary giữ: `"cạnh tranh" ⊅ "cuộc thi"` → None ✓.
+- over-wide: `"với hai ví dụ dữ liệu này" ⊃ "ví dụ dữ liệu"` → khớp ✓.
+
+### 6.10.3 Re-run b003 (LLM cached, code mới — 0 API)
+- S1 `first principles` occ1 `"từ nguyên lý cơ bản"` → **adherent (form 'nguyên lý cơ bản')** ✓ ĐÃ LẬT.
+- S0 `"những nguyên lý đầu tiên"` → off_glossary đúng (literal "đầu tiên" ≠ canonical "cơ bản"). → bonus: first principles S0 lệch-chuẩn / S1 canonical = thêm bằng chứng memory→canonical.
+
+### 6.10.4 Guards (Claude tự chạy)
+10 targeted pass · frozen hash `DA0F687894090D43` · metrics_v2 diff rỗng · pilot regression 17/3 (replay, CodeX) · 353 full (CodeX). Offset-map: surfaces rút ra sạch trong test → không thấy drift (low-risk, theo dõi nếu normalize_surface đổi độ dài).
+
+### 6.10.5 Commit
+Commit: `cascade_localize.py` + `test_cascade_localize.py` + task §5.8/§6.10 + LEDGER. Pilot report không đổi (replay 17/3) → không commit lại. Next = Part D (lấy mẫu strata + human label → %off_glossary S0/S1 thật).

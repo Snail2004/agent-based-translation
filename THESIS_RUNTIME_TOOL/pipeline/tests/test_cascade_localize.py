@@ -198,6 +198,33 @@ def test_locate_only_code_scores_containment_not_model_verdict() -> None:
     assert off["adherence_label"] == "off_glossary"
 
 
+def test_locate_only_containment_uses_boundary_substring_not_segmenter() -> None:
+    assert _score_locate_only_by_code(
+        {"found": True, "target_quote": "từ nguyên lý cơ bản"},
+        {"source_term": "first principles", "accepted_forms": ("nguyên lý cơ bản",)},
+    )["adherence_label"] == "adherent"
+    assert _score_locate_only_by_code(
+        {"found": True, "target_quote": "các luật"},
+        {"source_term": "rules", "accepted_forms": ("luật",)},
+    )["adherence_label"] == "adherent"
+    assert _score_locate_only_by_code(
+        {"found": True, "target_quote": "một mục"},
+        {"source_term": "item", "accepted_forms": ("mục",)},
+    )["adherence_label"] == "adherent"
+    assert _score_locate_only_by_code(
+        {"found": True, "target_quote": "cạnh tranh"},
+        {"source_term": "competition", "accepted_forms": ("cuộc thi",)},
+    )["adherence_label"] == "off_glossary"
+    assert _score_locate_only_by_code(
+        {"found": True, "target_quote": "một chút"},
+        {"source_term": "bit", "accepted_forms": ("bit",)},
+    )["adherence_label"] == "off_glossary"
+    assert _score_locate_only_by_code(
+        {"found": True, "target_quote": "mụcđích"},
+        {"source_term": "item", "accepted_forms": ("mục",)},
+    )["adherence_label"] == "off_glossary"
+
+
 def test_occurrence_index_is_sentence_local() -> None:
     decision = {
         "source_term": "model",

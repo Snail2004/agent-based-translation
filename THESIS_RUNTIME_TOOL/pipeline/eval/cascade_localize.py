@@ -939,12 +939,14 @@ def _best_accepted_form_in_quote(
 ) -> dict[str, Any] | None:
     matches: list[dict[str, Any]] = []
     for form in accepted_forms:
-        for start, end, surface in find_spans(quote, form, language="vi"):
+        span = _find_form_in_located_quote(quote, form)
+        if span is not None:
+            start, end = span
             matches.append({
                 "accepted_form": form,
                 "start": start,
                 "end": end,
-                "surface": surface,
+                "surface": quote[start:end],
             })
     if not matches:
         return None
@@ -952,6 +954,43 @@ def _best_accepted_form_in_quote(
         matches,
         key=lambda item: (-(int(item["end"]) - int(item["start"])), int(item["start"]), str(item["accepted_form"])),
     )[0]
+
+
+def _find_form_in_located_quote(quote: str, form: str) -> tuple[int, int] | None:
+    normalized_quote, quote_map = _normalize_containment_with_offsets(quote)
+    normalized_form, _ = _normalize_containment_with_offsets(form)
+    if not normalized_quote or not normalized_form:
+        return None
+    cursor = 0
+    while True:
+        start = normalized_quote.find(normalized_form, cursor)
+        if start < 0:
+            return None
+        end = start + len(normalized_form)
+        left_ok = start == 0 or normalized_quote[start - 1].isspace()
+        right_ok = end == len(normalized_quote) or normalized_quote[end].isspace()
+        if left_ok and right_ok:
+            return quote_map[start], quote_map[end - 1] + 1
+        cursor = start + 1
+
+
+def _normalize_containment_with_offsets(value: str) -> tuple[str, list[int]]:
+    normalized = normalize_surface(str(value or "")).replace("*", " ")
+    chars: list[str] = []
+    offsets: list[int] = []
+    pending_space = False
+    for index, char in enumerate(normalized):
+        if char.isspace():
+            if chars:
+                pending_space = True
+            continue
+        if pending_space and chars:
+            chars.append(" ")
+            offsets.append(index)
+        chars.append(char.casefold())
+        offsets.append(index)
+        pending_space = False
+    return "".join(chars), offsets
 
 
 def _score_locate_only_against_reused_gold(
