@@ -9,3 +9,12 @@ data/jobs/
 # Local smoke-test and browser artifacts.
 output/
 test-results/
+
+# EV-D2L-10 cascade: large regenerable report/eval artifacts (kept on disk as a
+# local cache to avoid re-running the ~90s cascade; not tracked). The small
+# committed pilot report (cascade_t3_locate_pilot.json) is intentionally NOT matched.
+data/reports/cascade_localize_*
+data/reports/cascade_gold_locate_measure.json
+data/reports/d2l_translation_metrics_v2_occurrence_audit.*
+data/eval/cascade_residual_gold.*
+data/eval/labse_alignment_compare.html
