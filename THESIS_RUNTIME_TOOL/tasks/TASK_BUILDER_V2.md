@@ -1,6 +1,6 @@
 # TASK BUILDER-V2 — Builder D2L v2: trích độc lập (recall) + sổ-tay-có-lọc (memory-pack) + code consolidation là QUYỀN CUỐI
 
-Status: REVIEW (CodeX điền §5 Stage A; STOP, không commit) → Claude review §6 + commit/quyết Phase B.
+Status: Stage B PASS (Claude §13, re-derived 2026-06-29) → Stage C chờ (priority-budget pack thay greedy-alphabet; chronological notebook thật). Stage A PASS (§6).
 Type: BUILDER redesign + method-decision. Builder **MÙ với gold D2L** (eval-only). KHÔNG đổi production `glossary_entries` tới Phase D. Pilot ghi **artifact JSON**, KHÔNG ghi DB. Frozen DB `mode=ro`.
 
 - **Refs (đã verify trên file thật session này):** prepass hiện tại — `prompt.py` `d2l_terminology_v7` (registry TẮT: `D2L_REGISTRY_OMITTED_TEXT`) · `registry.py:merge` key=`source_term.casefold()` · `persist.py:_persist_glossary` dòng 301/318 cũng casefold · `span_resolver._find_word_boundary_matches(text, source_term)` match **đúng 1 surface** (regex `\b…\b`) · `glossary_entries` **CHƯA có** `source_variants_json` · `context_builder.plan_anchors` (mẫu anchor đang dùng cho Translator) · `builder_gold.score_builder_vs_gold` (eval vs D2L gold). Memory: prompt-memory-design-is-first-class, builder-v2-memory-pack-design, dont-tune-intervention-on-test-baseline, scoring-scope-equals-production-scope, token-growth-halt-and-audit, green-tests-can-hide-dead-integration, four-tier-localize-cascade-locked.
@@ -322,3 +322,107 @@ Render **≥3 window đại diện**: (a) đầu chương ít-pack, (b) window p
 ### B.6 — Guards + ghi chú Stage C
 0 API/0 DB · prompt v8 verbatim (bump version khi đổi byte) · pack mù-với-gold (chỉ registry-so-far của Builder) · backstop L3 deterministic (single-word ∈ `d2l_term_stoplist.txt` không nhận làm `new_terms` standalone — làm ở Stage C/D, LLM không phải hàng rào duy nhất) · artifact regenerable → gitignore.
 **Stage C (ghi nhận, chưa làm):** run THẬT KHÔNG được dùng full frozen v1 registry làm notebook — phải **chronological theo Builder v2** (sổ-tay lớn dần theo thứ tự window). Stage B proxy chỉ để render/đo token.
+
+## 12. Stage B CodeX implementation notes *(CodeX; STOP, không commit)*
+
+Implemented **BUILDER-V2-B render-only** only:
+
+- `pipeline/prepass/builder_v2_render.py`
+  - Prompt `d2l_terminology_v8` copied verbatim from §11.
+  - Builds filtered `MEMORY_PACK` from `glossary_entries` only.
+  - Supports `proxy_chronological` and `proxy_full_registry`.
+  - `proxy_chronological` filters registry rows by `evidence_span_ids_json` joined to `blocks.order_index`.
+  - Pack includes only `matched_existing_terms` and `near_number_variants`.
+  - Stable JSON and deterministic sort; no LLM client.
+- `pipeline/scripts/builder_v2_render.py`
+  - CLI render harness; requires `--dry-run`.
+  - Opens SQLite with `mode=ro`.
+  - Renders representative windows and writes prompt `.txt` plus JSON reports.
+- `pipeline/tests/test_builder_v2_render.py`
+  - Covers prompt contract, audit fields, chronological future-leak guard, full-registry proxy behavior, caps, determinism, and no LLM/gold-source references.
+
+Commands run:
+
+```powershell
+cd C:\work\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME_TOOL
+python -m pytest pipeline/tests/test_builder_v2_render.py -q
+python -m py_compile pipeline\prepass\builder_v2_render.py pipeline\scripts\builder_v2_render.py
+python pipeline/scripts/builder_v2_render.py --chapter preliminaries --pack-mode proxy_chronological --dry-run --out data/reports/builder_v2_b_render
+```
+
+Additional determinism check:
+
+- Rendered twice into two temporary output directories.
+- Compared every output file byte-for-byte.
+- Result: deterministic `true`.
+- Temporary dirs `_tmp_b1/_tmp_b2` removed after path check.
+
+Stage B artifacts:
+
+- `data/reports/builder_v2_b_render/chapter_start_wb_d2l_preliminaries_001.txt`
+- `data/reports/builder_v2_b_render/max_pack_wb_d2l_preliminaries_034.txt`
+- `data/reports/builder_v2_b_render/conflict_fixture_wb_d2l_preliminaries_011.txt`
+- `data/reports/builder_v2_b_render/builder_v2_b_render_report.json`
+- `data/reports/builder_v2_b_render/builder_v2_b_pack_audit.json`
+
+Headline Stage B numbers:
+
+| Field | Value |
+|---|---:|
+| chapter | `d2l_preliminaries` |
+| pack_mode | `proxy_chronological` |
+| windows | 50 |
+| selected prompt files | 3 |
+| max_pack_tokens_est | 1500 |
+| max_prompt_tokens_est | 4266 |
+| total_prompt_tokens_est | 185201 |
+| stage_c_upper_bound_tokens_est | 245201 |
+
+Selected windows:
+
+| label | window_id | pack_tokens | prompt_tokens |
+|---|---|---:|---:|
+| chapter_start | `wb_d2l_preliminaries_001` | 1309 | 3777 |
+| max_pack | `wb_d2l_preliminaries_034` | 1500 | 4194 |
+| conflict_fixture | `wb_d2l_preliminaries_011` | 1493 | 4235 |
+
+Verification:
+
+- `test_builder_v2_render.py`: **5 passed**.
+- `py_compile`: pass.
+- Render command: pass.
+- Byte determinism: pass.
+- DB status: `data/jobs/d2l_p1/memory.sqlite3` not modified.
+- No API call path is instantiated; script has no `LLMClient` usage.
+
+CodeX interpretation:
+
+- Stage B satisfies the render-first contract: real prompt, real pack, real token estimates, **0 API / 0 DB write**.
+- Prompt remains under `PROMPT_TOKEN_CAP=6000`; pack hits the `PACK_TOKEN_CAP=1500` ceiling on the max-pack sample, so Stage C should keep this cap and monitor dropped items.
+- `proxy_chronological` is only a render proxy over frozen v1 registry. Stage C must still use chronological Builder-v2 notebook state, not the full frozen registry.
+
+## 13. §6 — Claude review Stage B *(Claude, 2026-06-29, re-derived ĐỘC LẬP trên cây NFD thật, KHÔNG tin report CodeX)*
+
+**Verdict: PASS Stage B.** Cơ chế sổ-tay + prompt v8 đã chứng minh **trên giấy** đúng hợp đồng: prompt thật, pack thật, token thật, **0 API / 0 DB write**. Mọi số CodeX báo đều tái lập chính xác trên máy mình.
+
+**Đã kiểm chứng (tự chạy lại, không trust report):**
+- **Prompt byte-exact:** trích `SYSTEM_PROMPT` trong module so **byte** với block SYSTEM khoá ở §11 → `True`. Prompt = thiết kế Claude, CodeX dùng nguyên byte (đúng giao kèo).
+- **Tests:** `pytest test_builder_v2_render.py -q` → **5 passed** (chạy lại trên cây NFD).
+- **Render tái lập:** `--chapter preliminaries --pack-mode proxy_chronological --dry-run` → 50 windows; `max_prompt=4266<6000`; `max_pack=1500` (đúng cap); `total=185201`; `stage_c_upper_bound=245201`; 3 prompt mẫu y hệt (001 chapter_start / 034 max_pack / 011 conflict_fixture). **Khớp report tới từng số.**
+- **Determinism:** render 2 lần ra 2 thư mục riêng, so **SHA256 từng file** (5/5 file: report 17066B, audit 209460B, 3 .txt) → `det=True` toàn bộ.
+- **Frozen DB bất biến:** hash trước = sau = `DA0F687894090D43`; mtime không đổi; `git status data/jobs data/reports` sạch.
+- **0 API thật:** module không import/khởi tạo `LLMClient`; estimator `estimate_prompt_tokens` re-derive source → **local, không network**. Test `test_no_llm_or_gold_source_references` chặn `LLMClient`/`glossary.md`/`eval_glossary_gold` trong source.
+- **Provenance mù-gold:** `pack_provenance="glossary_entries"`; pack chỉ đọc bảng `glossary_entries`+`blocks`, KHÔNG mở gold. Rendered `.txt` bắt đầu bằng `SYSTEM`, chứa nguyên văn `RECALL RULE (mandatory)`, `conflict_type "termhood_suspected"`, dòng đóng `reference/gold`, và USER có `MEMORY_PACK`+block markers.
+- **Chống future-leak (kiểm trên DATA THẬT, không chỉ test giả lập):** window 034 (start order **685**) — re-group độc lập từ DB: cả **27** term included đều có `first_evidence_order < 685` → **0 vi phạm**. Guard `_has_prior_evidence` dùng `<` strict (chặn cả future LẪN same-window).
+- **Audit đủ 8 trường** + `pack_source_mode` + `pack_provenance`; `excluded_no_surface_match` = {count, sample[:30]}; `dropped_by_budget` kèm `priority`+`reason`.
+
+**🔴 Phát hiện substantive (xác nhận + làm sắc CodEx's flag) — KHÔNG block Stage B, nhưng BẮT BUỘC sửa trước Stage C:**
+Window 034 chạm cap 1500 → **drop 15 term**. Soi danh sách: drop theo **alphabet-tail** (greedy sort `(priority, source_term)` rồi cắt phần cuối), nên rớt đúng các term **mang-tính-nhất-quán**: `scalar`, `shape`, `vector`, `column vectors`, `dot products`, `components`… chỉ vì xếp cuối bảng chữ — KHÔNG phải vì kém quan trọng. Đây chính là **precision-at-inject** mình đã cờ (refinement #3): pack đang chọn-bỏ bằng alphabet thay vì theo **mức nhất-quán-cần-giữ**. Bản thân Stage B render-để-đo đã làm đúng việc của nó — **phơi bày lỗi này trên giấy TRƯỚC khi tiêu API**. Sửa ở Stage C: ưu tiên pack theo `occurrences_count` / term-có-conflict-lịch-sử / multi-word-termhood (KHÔNG alphabet); và đo lại `dropped_by_budget` sau khi đổi thứ tự ưu tiên.
+
+**Ghi nhận cho Stage C (chốt lại):**
+1. Pilot THẬT **không** được dùng full frozen v1 registry làm sổ-tay — phải chronological theo Builder v2 (sổ lớn dần). `proxy_chronological` Stage B chỉ để render/đo token.
+2. Thay greedy-alphabet bằng **priority-budget** (consistency-bearing trước); re-render đối chiếu `dropped_by_budget`.
+3. Cap 1500/6000 giữ nguyên; theo dõi `dropped_by_budget` mỗi window nặng.
+4. Frozen DB `mode=ro`; pilot ghi artifact JSON, KHÔNG ghi DB; gold chỉ để CHẤM (DEV, không headline).
+
+**Guards review:** prompt v8 verbatim (bump version khi đổi byte) · pack mù-gold · backstop L3 deterministic (single-word ∈ stoplist không nhận `new_terms` standalone — làm Stage C/D, LLM không phải hàng rào duy nhất) · artifact `data/reports/builder_v2_*/` regenerable → đã gitignore (`git check-ignore` xác nhận), KHÔNG commit.
