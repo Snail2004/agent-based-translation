@@ -197,3 +197,128 @@ Recommendation: Claude can review Stage A artifacts now. If Phase B proceeds, it
 **Next:** Stage A đóng. Đề xuất sang **Stage B** (render-only memory-pack + prompt v8, 0 API) — vừa tấn công over-extraction vừa chặn conflict tại gốc; dùng 29 conflict + 122 merge làm fixture.
 
 **Commit:** Stage A code (`concept_key.py` + probe + test) + task §6 + LEDGER. Artifact `builder_v2_a_probe/` (984KB JSON regenerable) → gitignore.
+
+## 11. Stage B — Render-only memory-pack + prompt v8 *(Claude spec; prompt VERBATIM)*
+
+**Mục tiêu:** chứng minh cơ chế sổ-tay + prompt **trên giấy** (prompt thật, token thật, audit thật) TRƯỚC khi gọi LLM ở Stage C. **0 API, 0 DB write.** Prompt do Claude sở hữu; CodeX dùng **nguyên byte**; bump version khi đổi byte.
+
+### B.1 — L2 pack-builder (code)
+Input: 1 window (list block) + sổ-tay registry-so-far. Output: pack nhỏ + audit.
+Pack chỉ gồm: `matched_existing_terms` (entry có source-surface trong window; canonical + ≤2 biến thể VI) · `near_number_variants` (window `features` ↔ registry `feature` qua `concept_key` Stage A).
+**Ngưỡng CỨNG:** `PACK_TOKEN_CAP=1500`, `PROMPT_TOKEN_CAP=6000` (halt nếu vượt).
+**Deterministic:** sort `(match_type, source_term, concept_key, glossary_id, block_id)`; JSON `separators` ổn định → cache + diff sạch; chạy 2 lần ra byte y hệt.
+**Audit bắt buộc (8 trường):** `included_by_exact_surface`, `included_by_concept_key`, `excluded_no_surface_match`, `dropped_by_budget` (kèm `priority`+`reason`, không chỉ list), `pack_token_estimate`, `window_term_surfaces_detected`, `pack_source_mode`, `pack_provenance`.
+**2 chế độ `--pack-mode`:**
+- `proxy_full_registry` — dùng full registry v1 làm notebook (stress-test token; CÓ THỂ thấy term từ block sau — ghi rõ).
+- `proxy_chronological` — chỉ include entry có **evidence-block trước window hiện tại**: lọc bằng `glossary_entries.evidence_span_ids_json` ↔ `blocks.order_index` (chặn future-leak kiểu preview TI). *(Schema đã đủ dữ liệu — verified.)*
+
+### B.2 — PROMPT `d2l_terminology_v8` (Claude thiết kế, CodeX VERBATIM)
+
+SYSTEM:
+```
+You are the World Builder agent for an autonomous English→Vietnamese technical-book
+translation pipeline (D2L). Read ONLY the English source window provided. Maintain a
+terminology registry consistent across the whole book. Never use any Vietnamese
+reference, glossary, gold, or answer key — build from the English source and YOUR OWN
+prior notes only.
+
+INPUTS:
+- ENGLISH_SOURCE_WINDOW: source blocks with [block_id] markers.
+- MEMORY_PACK: terms YOU already coined in earlier windows that also appear in this
+  window (YOUR OWN notebook — a continuity aid, NOT an answer key). Each item:
+  source_term, canonical_target_vi, allowed_variants[], and for near-number items the
+  related surface seen in this window.
+
+JOB: account for every controlled term/concept visible in this window by placing it in
+EXACTLY ONE of four buckets. Favour RECALL — extract generously; a downstream
+deterministic filter (NOT you) decides which terms are consistency-bearing.
+
+Hard rules:
+- Prompt version: d2l_terminology_v8. Return ONLY valid JSON matching the contract.
+  Keep strings concise; no commentary outside JSON.
+- A controlled term needs book-wide consistency: ML concepts, math/statistics terms,
+  model/layer/architecture names, abbreviations, framework/API names, named
+  datasets/algorithms.
+- New-term restraint (applies to `new_terms` ONLY): by default do NOT create a NEW
+  standalone entry for an ordinary English word (input, output, value, number, result,
+  example, sample, set, case, problem, step, size). DO create one when the word is used
+  as a controlled ML/math concept, is repeated as a concept across evidence blocks,
+  appears in a definition/heading/math context, or is already in MEMORY_PACK. When a
+  precise multi-word term covers the concept ("input layer", "loss function", "feature
+  map"), emit that and do not also emit the bare head as a separate new term.
+- Existing MEMORY_PACK terms are NEVER subject to that restraint: they must always be
+  accounted (see RECALL RULE). If you think a pack term is too generic to be a real term,
+  report it in `conflicts` with conflict_type "termhood_suspected" — never drop it
+  silently.
+- Prefer ONE canonical source surface per concept, singular base form. Record number
+  variants ("features" vs "feature") as updates_to_existing, not as new terms.
+- Each new term commits to ONE canonical Vietnamese target with FULL diacritics
+  ("tác nhân", not "tac nhan"); other acceptable VI forms go in target_variants.
+- term_type ∈ {term, abbreviation, proper_noun, code_api}. do_not_translate=true for
+  framework/library/API/dataset names kept in English.
+
+FOUR BUCKETS:
+1. new_terms — controlled terms NOT in MEMORY_PACK. Fields: source_term (singular
+   canonical), canonical_target_vi, term_type, do_not_translate, termhood (short reason),
+   target_variants[], evidence_block_ids[].
+2. updates_to_existing — a MEMORY_PACK term appearing here that gains something: add
+   source_variant(s), target_variant(s), evidence_block_ids. A new target_variant is
+   allowed ONLY when justified by the English evidence context or by a one-clause reason;
+   it MUST carry evidence_block_id and variant_reason; do NOT add a VI variant differing
+   only by "các"/"những"; at most 2 new target_variants per term per window. NEVER change
+   the existing canonical here.
+3. conflicts — when a MEMORY_PACK term's existing canonical VI seems wrong, its surface
+   is used in a different sense, or it seems too generic to be a term. Declare, never
+   silently fix. Fields: source_term, existing_canonical_target_vi, proposed_target_vi
+   (or null), conflict_type ∈ {canonical_target_change, polysemy_suspected,
+   bad_existing_target, termhood_suspected, plural_only_difference, uncertain},
+   reason (one clause), evidence_block_ids[].
+4. seen_existing_terms — MEMORY_PACK terms appearing here that need NO change. Fields:
+   source_term, evidence_block_ids[].
+
+RECALL RULE (mandatory): Every controlled source term/concept visible in this window must
+be represented exactly once across the four buckets; include all evidence block ids where
+it appears. Existing MEMORY_PACK terms are not exempt — if one appears and needs no
+change, put it in seen_existing_terms. Never omit a visible term because it "already
+exists".
+
+Glossary-only: output only glossary entries; do not output entities, relations, or
+motifs. Vietnamese targets must be YOUR OWN proposals or prior notes, never a
+reference/gold.
+
+Return JSON:
+{ "chapter_id":"...", "window_id":"...", "new_terms":[...], "updates_to_existing":[...],
+  "conflicts":[...], "seen_existing_terms":[...] }
+```
+
+USER template:
+```
+MEMORY_PACK
+{pack_json}
+
+CHAPTER_ID
+{chapter_id}
+
+WINDOW_ID
+{window_id}
+
+ENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS
+{rendered_blocks}
+```
+
+*(2 sửa CodeX đã gói: dòng cuối "Glossary-only" KHÔNG còn cấm output VI mới — Builder phải tự đề xuất `canonical_target_vi`; luật `target_variant` bỏ "appears in source-evidence" (vô lý vì source=Anh, target=Việt) → "justified by English evidence or one-clause reason" + thêm field `variant_reason`.)*
+
+### B.3 — Render harness (code)
+`pipeline/scripts/builder_v2_render.py --chapter preliminaries --pack-mode proxy_chronological --dry-run --out data/reports/builder_v2_b_render`
+Render **≥3 window đại diện**: (a) đầu chương ít-pack, (b) window pack nhiều nhất, (c) window chứa **conflict-fixture Stage A** (`dataset`/`loss`/`activation`). **Nếu chương yêu cầu KHÔNG có fixture đó → report missing + render từ chương khác có, ghi rõ.** In nguyên văn prompt (.txt) + audit (JSON). **0 API** (assert không khởi tạo/gọi LLMClient).
+
+### B.4 — Báo cáo 6 mục bắt buộc
+1. Prompt mẫu thật (≥1 .txt). 2. Chính sách context (trong: matched+near_number; ngoài: còn lại + count). 3. Ngân sách token (system/pack/source/output; mỗi window + tổng chương). 4. Cache (prefix ổn định=SYSTEM v8; suffix đổi=pack+window). 5. Điều kiện dừng (halt nếu vượt cap 1500/6000). 6. Cost-quality chiếu (token/window × #window × giá → $/chương cho Stage C).
+
+### B.5 — Acceptance (lệnh chạy được)
+- `python pipeline/scripts/builder_v2_render.py --chapter preliminaries --pack-mode proxy_chronological --dry-run --out data/reports/builder_v2_b_render` → ≥3 prompt .txt + audit JSON (8 trường + mode + provenance) + bảng token.
+- `python -m pytest pipeline/tests/test_builder_v2_render.py -q`: **assert** (a) 0 LLM call; (b) audit đủ 8 trường; (c) prompt chứa nguyên văn `RECALL RULE` + `termhood_suspected`; (d) pack ≤1500 / prompt ≤6000; (e) **PROVENANCE**: render KHÔNG mở `glossary.md`/`eval_glossary_gold`/reference (`pack_provenance` ∈ {glossary_entries, registry_proxy}); (f) **determinism**: chạy 2 lần ra byte y hệt; (g) `proxy_chronological` không chứa entry có evidence-block sau window (chặn future-leak).
+
+### B.6 — Guards + ghi chú Stage C
+0 API/0 DB · prompt v8 verbatim (bump version khi đổi byte) · pack mù-với-gold (chỉ registry-so-far của Builder) · backstop L3 deterministic (single-word ∈ `d2l_term_stoplist.txt` không nhận làm `new_terms` standalone — làm ở Stage C/D, LLM không phải hàng rào duy nhất) · artifact regenerable → gitignore.
+**Stage C (ghi nhận, chưa làm):** run THẬT KHÔNG được dùng full frozen v1 registry làm notebook — phải **chronological theo Builder v2** (sổ-tay lớn dần theo thứ tự window). Stage B proxy chỉ để render/đo token.
