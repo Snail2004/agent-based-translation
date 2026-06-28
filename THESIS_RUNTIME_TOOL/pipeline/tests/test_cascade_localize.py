@@ -182,6 +182,17 @@ def test_locate_only_reused_gold_scoring_accepts_containment_and_not_rendered() 
         {"found": True, "target_quote": "khách hàng"},
         {"gold_label": "not_rendered", "gold_target_span": ""},
     )["correct"] is False
+    # Case-insensitive containment: located head differs from gold only by the
+    # gold's leading capital ("Phép" vs "phép"); gold contains the located span.
+    assert _score_locate_only_against_reused_gold(
+        {"found": True, "target_quote": "phép nhân ma trận"},
+        {"gold_label": "rendered", "gold_target_span": "Phép nhân ma trận-ma trận"},
+    )["correct"] is True
+    # A genuinely different surface must still miss even case-folded.
+    assert _score_locate_only_against_reused_gold(
+        {"found": True, "target_quote": "cạnh tranh"},
+        {"gold_label": "rendered", "gold_target_span": "cuộc thi"},
+    )["correct"] is False
 
 
 def test_locate_only_code_scores_containment_not_model_verdict() -> None:

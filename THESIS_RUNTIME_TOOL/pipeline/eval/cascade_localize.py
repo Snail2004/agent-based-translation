@@ -1020,7 +1020,13 @@ def _score_locate_only_against_reused_gold(
 def _quote_contains_either(left: str, right: str) -> bool:
     if not left or not right:
         return False
-    return left in right or right in left
+    # Case-insensitive containment: the located quote may differ from the gold
+    # span only by leading-capitalization (e.g. LLM "phép nhân ma trận" head of
+    # gold "Phép nhân ma trận-ma trận"). The adherence scorer already normalizes
+    # case via _find_form_in_located_quote, so this keeps gold-locate consistent.
+    left_cf = left.casefold()
+    right_cf = right.casefold()
+    return left_cf in right_cf or right_cf in left_cf
 
 
 def _clean_located_quote(value: str) -> str:
