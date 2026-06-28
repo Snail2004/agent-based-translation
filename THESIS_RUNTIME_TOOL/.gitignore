@@ -18,3 +18,4 @@ data/reports/cascade_gold_locate_measure.json
 data/reports/d2l_translation_metrics_v2_occurrence_audit.*
 data/eval/cascade_residual_gold.*
 data/eval/labse_alignment_compare.html
+data/reports/builder_v2_*/
