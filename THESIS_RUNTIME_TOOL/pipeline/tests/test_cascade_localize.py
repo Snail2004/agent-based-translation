@@ -236,6 +236,26 @@ def test_locate_only_containment_uses_boundary_substring_not_segmenter() -> None
     )["adherence_label"] == "off_glossary"
 
 
+def test_locate_only_containment_treats_punctuation_as_boundary() -> None:
+    # A form abutting punctuation (period, comma, colon, paren, hyphen, quote)
+    # is adherent; the boundary guard must accept non-alphanumeric neighbours.
+    for quote in ("đây là một hàm.", "hàm, và ánh xạ", "một hàm: ví dụ",
+                  "(hàm) ở đây", "là hàm; rồi", "“hàm” đó"):
+        assert _score_locate_only_by_code(
+            {"found": True, "target_quote": quote},
+            {"source_term": "function", "accepted_forms": ("hàm",)},
+        )["adherence_label"] == "adherent", quote
+    assert _score_locate_only_by_code(
+        {"found": True, "target_quote": "công nghệ-thông tin"},
+        {"source_term": "technology", "accepted_forms": ("công nghệ",)},
+    )["adherence_label"] == "adherent"
+    # Mid-syllable (letter neighbour) must still be rejected.
+    assert _score_locate_only_by_code(
+        {"found": True, "target_quote": "hàmlượng"},
+        {"source_term": "function", "accepted_forms": ("hàm",)},
+    )["adherence_label"] == "off_glossary"
+
+
 def test_occurrence_index_is_sentence_local() -> None:
     decision = {
         "source_term": "model",

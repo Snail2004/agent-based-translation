@@ -967,8 +967,13 @@ def _find_form_in_located_quote(quote: str, form: str) -> tuple[int, int] | None
         if start < 0:
             return None
         end = start + len(normalized_form)
-        left_ok = start == 0 or normalized_quote[start - 1].isspace()
-        right_ok = end == len(normalized_quote) or normalized_quote[end].isspace()
+        # Boundary = string edge OR an adjacent non-alphanumeric char (space or
+        # punctuation). Using isalnum (not isspace) credits forms that abut
+        # punctuation — "hàm.", "(hàm)", "công nghệ-thông tin" — which are
+        # adherent, while still rejecting mid-syllable hits ("mục" in "mụcđích",
+        # "hàm" in "hàmlượng") because the adjacent char there is a letter.
+        left_ok = start == 0 or not normalized_quote[start - 1].isalnum()
+        right_ok = end == len(normalized_quote) or not normalized_quote[end].isalnum()
         if left_ok and right_ok:
             return quote_map[start], quote_map[end - 1] + 1
         cursor = start + 1
