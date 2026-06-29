@@ -121,6 +121,8 @@ def test_pack_audit_chronological_and_concept_variant(tmp_path):
         item["source_term"] for item in pack["matched_existing_terms"]
     } | {item["source_term"] for item in pack["near_number_variants"]}
     assert "future" not in packed_terms
+    for item in [*pack["matched_existing_terms"], *pack["near_number_variants"]]:
+        assert "evidence_block_ids" not in item
     assert audit["pack_token_estimate"] <= b2.PACK_TOKEN_CAP
 
 
@@ -148,6 +150,9 @@ def test_render_window_caps_and_determinism(tmp_path):
     )
     assert first["token_estimate"]["prompt"] <= b2.PROMPT_TOKEN_CAP
     assert first["audit"]["pack_token_estimate"] <= b2.PACK_TOKEN_CAP
+    prompt = b2.prompt_text(first["messages"])
+    assert '"matched_existing_terms":[' in prompt
+    assert "\n  \"matched_existing_terms\"" not in prompt
 
 
 def test_no_llm_or_gold_source_references():

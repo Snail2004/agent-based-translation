@@ -1,6 +1,6 @@
 # TASK BUILDER-V2 — Builder D2L v2: trích độc lập (recall) + sổ-tay-có-lọc (memory-pack) + code consolidation là QUYỀN CUỐI
 
-Status: Stage A+B PASS (Claude §6/§13) → **Stage C1 spec READY (§14, Claude — gồm góp ý CodeX + 3 refinement R1/R2/R3)** chờ CodeX implement §5 (0 API). C tách C1(0-API cơ chế)→C2(API pilot, cost-gate).
+Status: Stage A+B+C1 PASS (Claude §6/§13/§16, re-derived) → **Stage C2 chờ** (pilot gọi LLM thật, notebook chronological v2, cost-gate). C đã tách C1(0-API cơ chế, DONE)→C2(API pilot).
 Type: BUILDER redesign + method-decision. Builder **MÙ với gold D2L** (eval-only). KHÔNG đổi production `glossary_entries` tới Phase D. Pilot ghi **artifact JSON**, KHÔNG ghi DB. Frozen DB `mode=ro`.
 
 - **Refs (đã verify trên file thật session này):** prepass hiện tại — `prompt.py` `d2l_terminology_v7` (registry TẮT: `D2L_REGISTRY_OMITTED_TEXT`) · `registry.py:merge` key=`source_term.casefold()` · `persist.py:_persist_glossary` dòng 301/318 cũng casefold · `span_resolver._find_word_boundary_matches(text, source_term)` match **đúng 1 surface** (regex `\b…\b`) · `glossary_entries` **CHƯA có** `source_variants_json` · `context_builder.plan_anchors` (mẫu anchor đang dùng cho Translator) · `builder_gold.score_builder_vs_gold` (eval vs D2L gold). Memory: prompt-memory-design-is-first-class, builder-v2-memory-pack-design, dont-tune-intervention-on-test-baseline, scoring-scope-equals-production-scope, token-growth-halt-and-audit, green-tests-can-hide-dead-integration, four-tier-localize-cascade-locked.
@@ -475,3 +475,82 @@ Unit từng luật (created/merged/rejected/update-variant/conflict/seen) · gua
 **Guards:** 0 API / 0 DB write (frozen hash `DA0F687894090D43` ro) · KHÔNG đụng production `glossary_entries` (chỉ artifact JSON) · mù-gold · prompt v8 KHÔNG đổi (C1 không gọi LLM) · decision-log = audit đầy đủ · artifact gitignore.
 **Acceptance (lệnh chạy được):** `python pipeline/scripts/builder_v2_consolidate_sim.py --doc-id d2l --out data/reports/builder_v2_c1_sim` → report 0-API + `pytest pipeline/tests/test_builder_v2_consolidate.py -q` pass + render lại pack slim (`builder_v2_render.py`) cho thấy `dropped_by_budget` giảm + token/term giảm vs §13.
 **C2 (ghi nhận, CHƯA làm):** pilot 1 chương gọi LLM thật qua cơ chế C1 online → artifact registry v2 (KHÔNG ghi DB) → đo entry vs v1 / recall-vs-gold (DEV) / conflict-rate / token-window / occurrence-bảo-toàn; cost-gate $/chương user duyệt TRƯỚC.
+
+## 15. §5 — CodeX implementation notes Stage C1 *(CodeX, 2026-06-29; STOP, no commit/push)*
+
+**Scope implemented:** C1 only. No API, no LLM pilot, no migration, no writes to production `glossary_entries`.
+
+Files changed:
+- `pipeline/prepass/builder_v2_consolidate.py` — new online consolidation engine with rich notebook model, four-bucket handlers, deterministic stoplist predicate, target divergence classification, conflict ledger, and decision log.
+- `pipeline/prepass/builder_v2_render.py` — pack-slim projection: compact JSON in prompt, no `evidence_block_ids` in pack payload, priority budget sort (`conflict_pending` → occurrences desc → multiword → name), conflict status passthrough when present.
+- `pipeline/scripts/builder_v2_consolidate_sim.py` — new read-only `glossary_entries` replay simulation.
+- `pipeline/tests/test_builder_v2_consolidate.py` — unit/integration coverage for created/merged/rejected/update/conflict/seen, `loss` polysemy, plural-only, stoplist, determinism, offline sim conservation.
+- `pipeline/tests/test_builder_v2_render.py` — updated Stage B/C1 pack-slim expectations.
+
+Implementation details:
+- Notebook is rich (`source_variants` carry evidence/occurrence/window); pack remains lean (`source_term`, `canonical_target_vi`, `allowed_variants[:2]`, `term_type`, `do_not_translate`, optional `status`). This preserves R1.
+- Offline sim replays only `glossary_entries` in chronological first-evidence order. It does not claim to simulate real C2 four-bucket LLM output; report records this R2 caveat.
+- Stoplist uses the hard R3 predicate only: single-token stoplist terms are rejected only when not allowlisted, not already in notebook, evidence block count <2, and no evidence block type is in `{heading, definition, math, math_block}`.
+- Occurrence conservation is checked against `occurrence_input_effective`. Historical rows with `occurrences_count<=0` use `max(1, evidence_count)` in the replay; raw DB total is reported separately as `occurrence_input_raw_db`.
+
+Commands run:
+
+```powershell
+cd C:\work\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME_TOOL
+python -m py_compile pipeline\prepass\builder_v2_consolidate.py pipeline\prepass\builder_v2_render.py pipeline\scripts\builder_v2_consolidate_sim.py pipeline\scripts\builder_v2_render.py
+python -m pytest pipeline\tests\test_builder_v2_consolidate.py pipeline\tests\test_builder_v2_render.py -q --basetemp D:\temp\pytest-builder-v2-c1
+python pipeline\scripts\builder_v2_consolidate_sim.py --doc-id d2l --out data\reports\builder_v2_c1_sim
+python pipeline\scripts\builder_v2_render.py --chapter preliminaries --pack-mode proxy_chronological --dry-run --out data\reports\builder_v2_c1_render
+```
+
+Verification:
+- `py_compile`: pass.
+- Targeted tests: **12 passed**.
+- DB hash before/after acceptance: `DA0F687894090D43B75A3AE52BA71EC1EDF85DAB3198C9F86039879365D464B8`; `git status -- data/jobs/d2l_p1/memory.sqlite3` empty.
+- No API call path used; scripts use local token estimator / SQLite read-only only.
+
+Stage C1 simulation artifact:
+- Output dir: `data/reports/builder_v2_c1_sim/`
+- `raw_entries`: **1608**
+- `notebook_entries`: **1484**
+- `after_notebook_plus_rejected`: **1486**
+- `delta_notebook`: **-124**
+- `rejected_stoplist`: **2** (`set`, `problem` under the hard predicate)
+- `merged_by_concept_key`: **122**
+- `conflicts`: **8** (`plural_only_difference`: 5, `polysemy_suspected`: 3)
+- `occurrence_conserved`: **true** (`effective input=13371`, notebook=13127, rejected=244)
+- `evidence_conserved`: **true** (`input=4371`, notebook=4369, rejected=2)
+
+Pack-slim re-render on `preliminaries`:
+
+| Metric | Stage B (§13) | Stage C1 slim |
+|---|---:|---:|
+| windows | 50 | 50 |
+| max_pack_tokens_est | 1500 | 1495 |
+| max_prompt_tokens_est | 4266 | 3579 |
+| total_prompt_tokens_est | 185201 | 141317 |
+| dropped_by_budget total | 133 | 16 |
+
+Interpretation:
+- C1 fixes the Stage B alphabet-tail failure mode substantially: dropped pack items in preliminaries fell from **133 → 16**, and total prompt estimate fell by **43,884 tokens** for the chapter.
+- Max pack still reaches near cap (**1495/1500**), so C2 should keep `dropped_by_budget` as a hard audit field and not raise budget blindly.
+- C1 simulation is intentionally conservative: it validates consolidation mechanics over historical `glossary_entries`; it is not evidence that the real LLM will fill `updates_to_existing/conflicts/seen_existing_terms` correctly in C2.
+
+## 16. §6 — Claude review Stage C1 *(Claude, 2026-06-29, re-derived ĐỘC LẬP trên cây NFD, KHÔNG tin report CodeX)*
+
+**Verdict: PASS Stage C1.** Máy-dọn-rác (L3 consolidation online) + pack-slim đã dựng đúng spec §14, deterministic, **0 API / 0 DB write**. Mọi số CodeX báo đều tái lập, và cú "occurrence_conserved" mình soi kỹ → **trung thực, không phải định nghĩa lại cho xanh**.
+
+**Đã kiểm chứng (tự chạy lại + re-derive ĐỘC LẬP từ DB):**
+- **Tests 12/12** (7 `test_builder_v2_consolidate` + 5 `test_builder_v2_render`) — và **không nông**: test polysemy `loss`/`losses` → `conflict_pending` + `target_variants` RỖNG (không trộn mù), stoplist `set` prose→reject / heading→giữ (R3), canonical bất biến khi update, occurrence conserved, determinism, integration sim trên DB thật.
+- **Sim tái lập:** 1608 → **1484** notebook, 2 rejected, **122 merged_by_concept_key**, 8 conflicts (5 plural_only + 3 polysemy).
+- **Re-derive ĐỘC LẬP từ DB (không qua sim):** `concept_key` gom 1608 → 1486 nhóm = **−122** (khớp Stage A chính xác); 1608 − 122 − 2 = **1484** ✓.
+- **🔬 Soi "occurrence conserved" (nghi fudge):** raw v7 = 13252; có **71 entry `occurrences_count=0` NHƯNG có evidence block** (anomaly v7, 4.4%). Engine bump `0→max(1,evidence)` → effective = **13371** (+119, mình tự tính khớp). Conservation check đúng dạng `effective_input == notebook + rejected` = `13371 = 13127 + 244` ✓. Đây là cách hiểu ĐÚNG (entry có evidence ⇒ đã xuất hiện ≥1 lần, count=0 là lỗi dữ liệu), và report **giữ cả raw lẫn effective + note minh bạch** → KHÔNG che giấu mất mát. Evidence conserved cũng đúng.
+- **Pack-slim (sửa lỗi §13):** total prompt **185201 → 141317** (−43.884), `dropped_by_budget` **133 → 16**. **R1 đạt:** pack KHÔNG còn `evidence_block_ids`, JSON **nén** (item không xuống dòng) → record giàu chỉ ở notebook. **Cắt-theo-ưu-tiên thật** (`_candidate_priority_sort`): `conflict_pending → occurrences desc → multiword → exact`, bảng-chữ tụt xuống tiebreak cuối — đúng §14.3, không phải chỉ nhờ slim mà giảm drop.
+- **Determinism:** notebook JSON byte y hệt 2 lần chạy. **Frozen hash `DA0F687894090D43` trước=sau**, `data/jobs`+`data/reports` git sạch (0 DB write), artifact gitignore.
+
+**🟡 Trung thực về phạm vi (BẮT BUỘC nhớ khi đọc "1608→1484"):**
+- Giảm bloat ở C1 **gần như TOÀN BỘ là number-merge (122)**, KHÔNG phải lọc-từ-phổ-thông (chỉ **2**: `set`, `problem`). Vì replay entry đã giàu occurrence/evidence nên hầu hết qua được ngưỡng <2-evidence, và guard "concept_key đã có trong notebook" khiến bản trùng bị *merge* chứ không *reject*. → **Giá trị thật của stoplist CHƯA được chứng minh tới C2** (đúng caveat R2). Đừng bán "1608→1484 = đã dọn rác phổ thông"; nó là dọn **số-ít/số-nhiều**.
+- Stoplist code = đúng 12 từ trong new-term-restraint của prompt (input/output/value…), KHÔNG gồm feature/function/model/layer → backstop hẹp; phần rộng dựa vào PROMPT ở C2.
+- `_looks_polysemous` là heuristic hẹp (hardcode "hàm"/"giá trị" + disjoint-token). Ổn cho cơ chế **chỉ-gắn-cờ-để-review** (không tự sửa phá hoại), nhưng sẽ sót polysemy tinh vi → ghi nhận cho C2/Phase D.
+
+**Ghi nhận cho C2 (gọi LLM thật):** dùng notebook **chronological v2** (KHÔNG bê v1); occurrence/priority lấy từ notebook v2 đang lớn dần (không phải v1); giữ `dropped_by_budget` làm audit cứng, chỉ nâng cap 1500→2500 nếu rớt term THẬT; cost-gate $/chương duyệt TRƯỚC; đo entry vs v1 + recall-vs-gold (DEV) + conflict-rate + occurrence-bảo-toàn. **C2 mới là nơi đo được stoplist + 4-rổ thật.**

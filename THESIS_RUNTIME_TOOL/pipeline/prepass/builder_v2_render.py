@@ -18,7 +18,7 @@ from pipeline.prepass.span_resolver import _find_word_boundary_matches
 PROMPT_VERSION = "d2l_terminology_v8"
 PACK_TOKEN_CAP = 1500
 PROMPT_TOKEN_CAP = 6000
-PACK_VERSION = "builder_v2_memory_pack_stage_b"
+PACK_VERSION = "builder_v2_memory_pack_stage_c1_slim"
 PACK_PROVENANCE = "glossary_entries"
 RESPONSE_FORMAT = {"type": "json_object"}
 OUTPUT_TOKEN_CAP_ESTIMATE = 1200
@@ -191,15 +191,7 @@ def build_memory_pack(
             continue
         excluded_no_surface.append(entry.source_term)
 
-    candidates.sort(
-        key=lambda item: (
-            0 if item["match_type"] == "exact_surface" else 1,
-            str(item["source_term"]).casefold(),
-            str(item["concept_key"]),
-            str(item["glossary_id"]),
-            ",".join(item["evidence_block_ids"]),
-        )
-    )
+    candidates.sort(key=_candidate_priority_sort)
 
     matched_existing_terms: list[dict[str, Any]] = []
     near_number_variants: list[dict[str, Any]] = []
@@ -259,7 +251,7 @@ def build_builder_v2_messages(
 ) -> list[dict[str, str]]:
     user = (
         "MEMORY_PACK\n"
-        f"{_stable_json(pack, indent=2)}\n\n"
+        f"{pack_json_text(pack)}\n\n"
         "CHAPTER_ID\n"
         f"{chapter_id}\n\n"
         "WINDOW_ID\n"
@@ -475,7 +467,9 @@ def _candidate(
         "match_type": match_type,
         "related_surface_seen": surface_seen if match_type == "concept_key" else None,
         "evidence_block_ids": sorted(set(evidence_block_ids)),
-        "priority": 0 if match_type == "exact_surface" else 1,
+        "status": getattr(entry, "status", None),
+        "occurrences_total": int(entry.occurrences_count or 0),
+        "priority": None,
     }
 
 
@@ -486,12 +480,30 @@ def _pack_item(candidate: dict[str, Any]) -> dict[str, Any]:
         "allowed_variants": candidate["allowed_variants"][:2],
         "term_type": candidate["term_type"],
         "do_not_translate": candidate["do_not_translate"],
-        "evidence_block_ids": candidate["evidence_block_ids"],
     }
+    if candidate.get("status") == "conflict_pending":
+        item["status"] = "conflict_pending"
     if candidate["match_type"] == "concept_key":
         item["related_surface_seen"] = candidate["related_surface_seen"]
         item["concept_key"] = candidate["concept_key"]
     return item
+
+
+def pack_json_text(pack: dict[str, Any]) -> str:
+    return _stable_json(pack)
+
+
+def _candidate_priority_sort(item: dict[str, Any]) -> tuple[Any, ...]:
+    source_term = str(item["source_term"])
+    return (
+        0 if item.get("status") == "conflict_pending" else 1,
+        -int(item.get("occurrences_total") or 0),
+        0 if " " in source_term.strip() else 1,
+        0 if item["match_type"] == "exact_surface" else 1,
+        source_term.casefold(),
+        str(item["concept_key"]),
+        str(item["glossary_id"]),
+    )
 
 
 def _find_entry_hits(source_term: str, text_by_block: dict[str, str]) -> list[str]:
