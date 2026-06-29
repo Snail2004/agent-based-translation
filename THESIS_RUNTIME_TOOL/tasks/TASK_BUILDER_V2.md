@@ -1,6 +1,6 @@
 # TASK BUILDER-V2 — Builder D2L v2: trích độc lập (recall) + sổ-tay-có-lọc (memory-pack) + code consolidation là QUYỀN CUỐI
 
-Status: Stage A+B+C1 PASS (Claude §6/§13/§16) → **Stage C2 spec READY (§17, Claude)** chờ CodeX review/implement §5: driver online + pack-từ-notebook-v2 + cache + cost-gate (`--estimate-only` rồi STOP, KHÔNG gọi API). C tách C1(DONE)→C2(API pilot, user duyệt $ TRƯỚC).
+Status: Stage A+B+C1 PASS (Claude §6/§13/§16) → **Stage C2 spec READY + SIẾT theo CodeX (§17 + §17.8, 6 điểm đã verify)** chờ CodeX implement §5: driver online + pack-từ-notebook-v2-mọi-surface + cache-DB-riêng + config-v7-verbatim + cost-gate (`--estimate-only` rồi STOP, KHÔNG gọi API). C tách C1(DONE)→C2(API pilot, user duyệt $ TRƯỚC).
 Type: BUILDER redesign + method-decision. Builder **MÙ với gold D2L** (eval-only). KHÔNG đổi production `glossary_entries` tới Phase D. Pilot ghi **artifact JSON**, KHÔNG ghi DB. Frozen DB `mode=ro`.
 
 - **Refs (đã verify trên file thật session này):** prepass hiện tại — `prompt.py` `d2l_terminology_v7` (registry TẮT: `D2L_REGISTRY_OMITTED_TEXT`) · `registry.py:merge` key=`source_term.casefold()` · `persist.py:_persist_glossary` dòng 301/318 cũng casefold · `span_resolver._find_word_boundary_matches(text, source_term)` match **đúng 1 surface** (regex `\b…\b`) · `glossary_entries` **CHƯA có** `source_variants_json` · `context_builder.plan_anchors` (mẫu anchor đang dùng cho Translator) · `builder_gold.score_builder_vs_gold` (eval vs D2L gold). Memory: prompt-memory-design-is-first-class, builder-v2-memory-pack-design, dont-tune-intervention-on-test-baseline, scoring-scope-equals-production-scope, token-growth-halt-and-audit, green-tests-can-hide-dead-integration, four-tier-localize-cascade-locked.
@@ -575,21 +575,27 @@ for window in build_d2l_prepass_windows(chapter):   # đã có
 emit: notebook.json + decision_log.json + cost_log.json + per_window_audit.json
 ```
 **Tự nhiên chống future-leak:** pack dựng TRƯỚC khi cập nhật notebook → sổ chỉ chứa window trước → KHÔNG cần proxy_chronological nữa (đúng "chronological thật").
-**JSON contract guard:** mỗi resp phải parse được + đủ 4 khoá; lỗi parse → log `parse_failure`, đếm, **bỏ qua window đó** (không crash), KHÔNG bịa rỗng.
+**JSON contract guard + DEGRADED (sửa theo CodeX #6):** mỗi resp phải parse được + đủ 4 khoá; lỗi parse → log `parse_failure`, **re-ask 1 lần** (`bypass_cache=True` đã có trong client) trước khi bỏ qua; vẫn lỗi → bỏ qua window (không crash, KHÔNG bịa rỗng). **Đếm `parse_failure_count`; nếu >0 → run `status=degraded`.** Acceptance: run `degraded` **CHỈ để debug, KHÔNG được rút kết luận chất lượng** (skip 1 window = sổ thiếu term cho các window sau).
 
 ### 17.2 Pack đọc từ notebook v2 SỐNG (sửa, không proxy v1)
-Adapter biến `NotebookEntry` → cấu trúc `build_memory_pack` đang dùng (source_term, canonical_target_vi, allowed_variants≤2, occurrences_total, status, source surfaces). Tái dùng nguyên: surface-match (exact + number_variant), cắt-ưu-tiên (`conflict_pending→occ desc→multiword→exact`), slim (bỏ evidence, nén JSON), cap 1500/6000. **occurrence/priority = số v2 THẬT** (không phải v1). Surface để quét window lấy từ `source_variants[].surface`.
+Adapter biến `NotebookEntry` → cấu trúc `build_memory_pack` đang dùng (source_term, canonical_target_vi, allowed_variants≤2, occurrences_total, status). **occurrence/priority = số v2 THẬT** (không phải v1).
+**Match MỌI surface (sửa theo CodeX #5):** `build_memory_pack` cũ chỉ quét `entry.source_term` + number-variant SINH RA từ canonical → sẽ MISS surface thật đã lưu. C2 phải quét **toàn bộ `entry.source_variants[].surface`** (vì notebook gộp `feature/features` về 1 entry — nếu chỉ đưa canonical thì pack có thể bỏ sót `features` trong window sau). Tức adapter expose hết surface đã biết; pack-match dùng tập đó, không chỉ canonical.
+Tái dùng nguyên: cắt-ưu-tiên (`conflict_pending→occ desc→multiword→exact`), slim (bỏ evidence, nén JSON), cap 1500/6000.
 
-### 17.3 Model + tham số *(đề xuất — user/CodeX chốt)*
-- **Đề xuất: DÙNG ĐÚNG model mà builder v7 đã dùng** (để so v1↔v2 công bằng — cô lập thay đổi prompt+cơ chế, không lẫn thay đổi model). Xác nhận id thật từ `pipeline.agents.llm_client` config.
-- `temperature=0`, `response_format={"type":"json_object"}`, `reasoning=none` (memory: reasoning ăn output budget), `max_output_tokens≈1500` (output 4-rổ ước ~1200).
-- *(Nếu user muốn thử model mạnh hơn → tách arm riêng, KHÔNG trộn vào so sánh chính.)*
+### 17.3 Model + tham số *(CHỐT sau verify config v7 + góp ý CodeX #3)*
+- **DÙNG NGUYÊN config v7 verbatim** (`pipeline/configs/llm_prepass.yaml` — Claude đã verify): `model=gpt-5.4-mini`, `temperature=1.0`, `seed=20260612`, `reasoning_effort=none`, `verbosity=low`, `max_output_tokens=6144`, `response_format={"type":"json_object"}`. **KHÔNG đổi temp/max_output** (bỏ đề xuất temp=0 cũ).
+- **Lý do (sửa theo CodeX #3 + phát hiện seed):** giữ nguyên decoding ⇒ decoding KHÔNG còn là biến gây nhiễu khi so v1↔v2; tái lập KHÔNG cần temp=0 vì (a) v7 đã có `seed` cố định, (b) **cache (17.4) mới là cơ chế tái lập thật** (lần 2 = cache-hit = byte y hệt, bất kể temp).
+- **Trung thực:** C2 vẫn là so **cấp-hệ-thống** (prompt v8 + cơ chế online-notebook GỘP CHUNG) vs v1 — decoding hết là confound, nhưng prompt và cơ chế đổi cùng lúc ⇒ KHÔNG quy được nhân-quả cho riêng prompt. Đủ cho pilot (hỏi "thiết kế v2 tổng thể có tốt hơn không"), không claim ablation đơn-yếu-tố.
 
-### 17.4 Cache + cost-gate + halt
-- **Cache:** dùng `llm_call_cache` (key=hash(model,params,messages)); chạy lại → cache-hit, 0 API, consolidation tái lập. *(prompt LƯU ở `request_json` — token-growth-halt-and-audit.)*
-- **Cost-gate 2 bước:** (a) `--estimate-only` in **token + $ ước tính** rồi THOÁT (không gọi API); (b) chỉ chạy thật khi có `--confirm-usd <ceiling>`; nếu ước tính > ceiling → halt.
-- **Ngân sách đo thật (C1):** prompt **141.317 tok/chương** + output ~50×1200 = **~60.000 tok** → ~**201k tok/chương**. Quy $ theo model (ví dụ class 4o ~$2.5/$10 per 1M → input ~$0.35 + output ~$0.60 ≈ **$1/chương**; class mini ~$0.15/$0.60 → ≈ **$0.06/chương**; prompt-cache giảm thêm). **1 chương = rất rẻ; gate là kỷ luật, không phải vì đắt.**
-- **Halt:** per-window assert pack≤1500/prompt≤6000 (đã có); running token total log; nếu vượt ceiling giữa chừng → dừng + audit (không chạy nốt mù).
+### 17.4 Cache + cost-gate + halt *(sửa theo CodeX #1, #2, #4)*
+- **Cache DB RIÊNG (CodeX #1 — guard violation đã sửa):** TUYỆT ĐỐI không ghi `llm_call_cache` vào frozen `data/jobs/d2l_p1/memory.sqlite3` (đang `mode=ro`, hash bất biến). Trỏ `LLMClient` cache sang artifact riêng **`data/reports/builder_v2_c2_pilot/llm_cache.sqlite3`** (cache-write hợp lệ vì là artifact, không phải production DB; đã gitignore).
+- **Cache key — guard (CodeX #2, Claude verify sâu hơn):** Claude đọc `llm_client.py`: key thật = `hash(messages, temperature, seed, reasoning_effort, response_format)` — **THIẾU cả `model`, `max_output_tokens`, `verbosity`** (CodeX nói có `model` là nhầm; thực ra cũng thiếu). **Cách xử lý C2 (blast-radius = 0):** dùng **cache DB MỚI TINH + 1 config CỐ ĐỊNH** cho cả run ⇒ mọi key do chính C2 ghi dưới đúng 1 config ⇒ stale-hit BẤT KHẢ, các field thiếu thành vô hại. Ghi **full config vào artifact + `tag`** để kiểm. *(Sửa cache-key chung trong `LLMClient` là việc RIÊNG, có hệ luỵ: đổi key ⇒ vô hiệu TOÀN BỘ cache production hiện có → KHÔNG gộp vào C2; ghi follow-up.)*
+- **Cost-gate 2 bước:** (a) `--estimate-only` in token+$ **upper-bound bảo thủ** rồi THOÁT (0 API); (b) chỉ chạy khi `--confirm-usd <ceiling>`; ước tính > ceiling → halt.
+- **Ước tính BẢO THỦ (CodeX #4 — KHÔNG dùng notebook rỗng):** lấy nền từ C1 đo thật, KHÔNG chạy online giả với sổ rỗng (pack rỗng → rẻ giả). Pricing THẬT (config v7): input $0.25/1M, cached_input $0.025/1M, output $2.00/1M.
+  - Thực tế: prompt **141.317** × $0.25/1M = **$0.035** + output ~60.000 × $2/1M = **$0.12** → **≈$0.155/chương**.
+  - Upper-bound (output chạm cap 6144×50=307k): $0.035 + $0.61 = **≈$0.65/chương**.
+  - **1 chương rất rẻ; gate là kỷ luật.** (Daily cap config = 2.4M tok ≫ ~201k/chương.)
+- **Halt:** per-window assert pack≤1500/prompt≤6000 (đã có); running token total log; vượt ceiling giữa chừng → dừng + audit.
 
 ### 17.5 Metrics (deliverable — so v2 vs v1, **scope khớp**)
 1. **Entry count:** v2 (chương này) vs **v1 ĐÚNG chương này** (scope-match, KHÔNG so với 1608 toàn sách — scoring-scope-equals-production-scope).
@@ -606,5 +612,17 @@ Adapter biến `NotebookEntry` → cấu trúc `build_memory_pack` đang dùng (
 - `python pipeline/scripts/builder_v2_pilot.py --chapter preliminaries --estimate-only` → in token+$ ước tính, **0 API**, thoát.
 - `python pipeline/scripts/builder_v2_pilot.py --chapter preliminaries --confirm-usd <ceiling> --out data/reports/builder_v2_c2_pilot` → chạy thật, artifact notebook+decision+cost+audit; frozen hash bất biến; metrics §17.5 in ra.
 - `pytest pipeline/tests/test_builder_v2_pilot.py -q`: mock LLM (KHÔNG gọi API thật trong test) → assert (a) loop online dựng pack từ notebook sống + future-leak=0; (b) cache-hit lần 2 = 0 API; (c) parse_failure không crash; (d) cost-gate chặn khi >ceiling; (e) metrics scope-match v1 đúng chương; (f) 0 DB write.
+
+### 17.8 Vòng siết theo góp ý CodeX *(Claude: NHẬN cả 6, đã VERIFY trên file thật)*
+| # | CodeX nêu | Verdict + xử lý |
+|---|---|---|
+| 1 | Cache không được ghi frozen DB | **NHẬN (guard violation).** Cache → DB artifact riêng `data/reports/builder_v2_c2_pilot/llm_cache.sqlite3`, frozen `memory.sqlite3` giữ ro. → 17.4 |
+| 2 | Cache key thiếu `max_output_tokens`/`verbosity` | **NHẬN + verify sâu hơn:** đọc `llm_client.py` → key = `hash(messages,temp,seed,reasoning,response_format)`, **thiếu cả `model`** (CodeX nói có model là nhầm). Xử lý C2: cache MỚI + 1 config CỐ ĐỊNH ⇒ stale-hit bất khả, field thiếu vô hại; sửa key chung = follow-up riêng (đổi key vô hiệu cache production). → 17.4 |
+| 3 | "Same model v7" chưa đủ nếu đổi decoding | **NHẬN, sửa MẠNH hơn:** verify `llm_prepass.yaml` = gpt-5.4-mini/temp1.0/**seed20260612**/reasoning-none/verbosity-low/max6144. → **dùng NGUYÊN config v7** (bỏ temp=0), decoding hết là confound; tái lập = seed + CACHE. C2 = so cấp-hệ-thống, không claim ablation. → 17.3 |
+| 4 | Estimate-only không được dùng notebook rỗng | **NHẬN.** Estimate = upper-bound bảo thủ từ C1 (141k prompt + output cap) × pricing thật → $0.155 thực / $0.65 trần. → 17.4 |
+| 5 | Adapter phải match mọi `source_variants[].surface` | **NHẬN.** Pack quét toàn bộ surface đã lưu, không chỉ canonical+number-variant. → 17.2 |
+| 6 | Parse failure không được "skip coi như xong" | **NHẬN.** re-ask 1 lần → `parse_failure_count` → `status=degraded` nếu >0 → run degraded chỉ debug, không rút kết luận chất lượng. → 17.1 |
+
+**Acceptance bổ sung:** test cache-hit chạy trên **cache DB riêng** (xác nhận KHÔNG đụng frozen); test `--estimate-only` ra số > 0 dù notebook rỗng (dùng upper-bound); test `degraded` set khi mock 1 parse-fail.
 
 **Quy trình:** CodeX điền §5 implementation + chạy `--estimate-only` ghi số → **STOP, KHÔNG gọi API thật, KHÔNG commit**. Claude review §6 + **trình $ cho user duyệt** → user OK mới chạy `--confirm-usd`.
