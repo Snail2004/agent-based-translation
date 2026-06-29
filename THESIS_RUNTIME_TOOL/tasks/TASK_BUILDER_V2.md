@@ -811,34 +811,36 @@ Thử **mini trước** (rẻ). Nếu mini thẩm định kém (bỏ term thật
 
 **Quy trình:** Claude chốt byte prompt `d2l_term_audit_v1` (bản kế) → CodeX phản biện → CodeX điền §5 (driver auditor + code áp nhãn + `--estimate-only`) → STOP, KHÔNG gọi API tới khi user duyệt $ → Claude review §6 (tái tính metrics + đọc audit trail).
 
-## 23. Stage C3 - KHOA: card schema + BYTE PROMPT `d2l_term_audit_v1` + wiring *(Claude, 2026-06-29; SUPERSEDE de cuong 22.2/22.3)*
+## 23. Stage C3 - KHOA: card schema + BYTE PROMPT `d2l_term_audit_v1` + wiring *(Claude, 2026-06-29; SUPERSEDE de cuong 22.2/22.3; rev.2 sau CodeX round-2)*
 
-> Chot sau 1 vong thiet ke voi user + CodeX. Cac quyet dinh duoi day **ghi de** 22.2 (de cuong) va 22.3 (von ghi "generic_word_drop -> bo khoi glossary" - MAU THUAN voi tagger-not-deleter, huy).
+> Chot sau 2 vong thiet ke voi user + CodeX. Cac quyet dinh duoi day **ghi de** 22.2 (de cuong) va 22.3 (von ghi "generic_word_drop -> bo khoi glossary" - MAU THUAN voi tagger-not-deleter, huy).
 
-### 23.0 Quyet dinh da chot (khac de cuong 22)
-1. **Auditor = DAN NHAN + XEP HANG, KHONG XOA.** Khong entry nao bi xoa khoi registry. "Rac" -> ha tier; precision dat khi **nhoi pack** (term tier thap tu rung duoi budget). => **recall bao toan theo cau truc**, doan sai van cuu duoc. (Nguyen tac da khoa: recall-at-build, precision-at-inject.)
-2. **Pilot = SOFT-ONLY, 0 hard-drop.** Pilot chi ha tier, khong loai cung khoi pack. Chi sau khi do **false-drop** (tier nao ~0 gold lot vao) moi bat hard-drop o production. *(CodeX #5.)*
-3. **San recall do tren PACK INJECTED duoi budget thuc, KHONG o registry** (registry trivially dat). 3 muc do: (a) gold co trong registry? (b) gold co lot pack o window chua no? (c) neu truot - vi budget hay vi auditor ha tier? *(CodeX #1.)*
-4. **Map theo `entry_id` = `concept_key`**, KHONG map lai bang string (tranh loi feature/features, casing, variant). Auditor chi tra label/action theo `entry_id`, KHONG de glossary moi. *(CodeX #3.)*
-5. **Evidence adaptive 1-2 cau, CHI `block_type='prose'`** (bo heading/label/code/math_block - fix ro `## Norms :label:`), chon theo thu tu: cau conflict -> cau cua source_variant tan suat cao nhat -> fallback. Cau cat cua so +-~45 tu quanh tu. *(CodeX #4 evidence order + fix co hoc Claude.)*
-6. **Mu gold o muc code:** renderer CHI doc `blocks.text`; **TUYET DOI khong cham** `eval_glossary_gold`/`reference_eval_only` trong cung DB.
-7. Taxonomy doi ten cho khoi mau thuan "khong xoa": `generic_word_drop`->`generic_low_value`; `phrase_too_descriptive`->`descriptive_phrase`; `needs_human_review`->`uncertain_low_conf` (= tier review, **KHONG cong nguoi luc chay** - app end-to-end 0 nguoi; nguoi chi xuat hien OFFLINE khi minh validate false-drop cho luan van).
+### 23.0 Quyet dinh da chot
+1. **Auditor = DAN NHAN + XEP HANG, KHONG XOA.** Khong entry nao bi xoa khoi registry. "Rac" -> ha tier; precision dat khi **nhoi pack** (term tier thap tu rung duoi budget). => recall bao toan theo cau truc. (recall-at-build, precision-at-inject.)
+2. **Pilot = SOFT-ONLY, 0 hard-drop.** Chi ha tier; chi sau khi do **false-drop** moi bat hard-drop o production. *(CodeX r1 #5.)*
+3. **San recall do tren PACK INJECTED duoi budget thuc**, KHONG o registry. 3 muc: gold in registry? gold lot pack o window chua no? truot vi budget hay vi auditor ha tier? *(CodeX r1 #1.)*
+4. **Map theo `entry_id`**; uu tien stable notebook entry id NEU co. Notebook hien KHONG co id rieng => PILOT dung `concept_key` TAM THOI + signal `overmerge_suspected`. **KHONG coi `concept_key` la production ID lau dai**; Phase D phai them id on dinh. *(CodeX r2 #3.)*
+5. **Evidence adaptive 1-2 cau, CHI `block_type='prose'`** (bo heading/label/code/math_block). Term KHONG co prose -> `evidence:[]` + `evidence_missing_reason`, Auditor dua vao signals (`code_or_symbol_like`). *(CodeX r1 #4 + r2 #5.)*
+6. **Mu gold o muc code:** renderer CHI doc `blocks.text`; TUYET DOI khong cham `eval_glossary_gold`/`reference_eval_only`.
+7. Taxonomy: `generic_low_value`/`descriptive_phrase`/`uncertain_low_conf` (= tier review, **KHONG cong nguoi luc chay**; nguoi chi xuat hien OFFLINE khi validate false-drop cho luan van).
+8. **Prompt KHONG neu vi du tu cu the in-domain** (`example/one/area`...). Vi du token co the la term gold (vd D2L co the co `example`) => neu lay lam vi du "generic" se ep Auditor ha nham term that VA la nhiem benchmark vao prompt (tuning-on-test). Chi viet NGUYEN TAC. *(CodeX r2 #1; Claude CO Y khong mo gold de kiem - mo gold de sua prompt cung la tuning-on-test.)*
+9. **`polysemy_or_context_dependent` la HIGH-VALUE, KHONG phai rac.** Map -> `priority_tier=medium`, `injection_action=context_sensitive_translate` (action MOI), va prompt ghi ro: **khong bao gio xep duoi `generic_low_value`**; term polysemy van phai lot pack (kem variants), gan co context-sensitive. *(CodeX r2 #2.)*
 
 ### 23.1 LOCKED card schema (code dung, 0 phan doan ngon ngu; caps cung)
-Moi candidate -> 1 card:
 ```
-entry_id            = concept_key (on dinh)
+entry_id            = concept_key (PILOT key tam; Phase D can stable id)
 source_term         = canonical_source_term
 surface_variants    = [surface...]  (cap <= 8)
 builder_proposed_vi = canonical_target_vi          # MODEL note, NOT gold
 builder_target_variants = [text...] (cap <= 2)     # MODEL note, NOT gold
 _note               = "builder_proposed_vi/variants are MODEL-GENERATED notes, NOT gold/reference"
 signals = { occurrences_total, chapter_spread, is_multiword, do_not_translate,
-            has_conflict, n_target_variants, surface_flags[] }   # co hoc, la HINT
-evidence            = [<=2 prose snippets, <=~45 words each]      # adaptive: 2 neu has_conflict|n_target_variants>1, else 1
+            has_conflict, n_target_variants, surface_flags[], overmerge_suspected }  # co hoc, HINT
+evidence            = [<=2 prose snippets, <=~45 words each]   # adaptive: 2 neu has_conflict|n_target_variants>1, else 1
+evidence_missing_reason = "no prose occurrence"    # CHI khi evidence == []
 evidence_truncated  = bool
 ```
-Caps: <=2 evidence; <=~45 tu/snippet; <=8 surface; <=2 target variant; vuot -> `evidence_truncated:true`. *(CodeX #5 cap cung.)*
+`overmerge_suspected` (co hoc): bat khi 1 surface_variant chua `=`/`$` HOAC math/code-ish ma KHONG chua tu goc (vd "one" gop "H = 0"); surface mo ta van chua tu goc ("shape (2, 3, 4)") KHONG bi flag.
 
 ### 23.2 BYTE PROMPT `d2l_term_audit_v1` *(Claude thiet ke - CodeX VERBATIM; bump version khi doi byte)*
 ```
@@ -854,9 +856,9 @@ Termhood principle (apply it; do NOT use any fixed word list):
 - A CONTROLLED TERM names a domain concept (method, object, quantity, model, structure)
   whose inconsistent translation across the book would harm meaning or confuse the reader.
   It deserves a glossary entry.
-- A GENERIC WORD is ordinary vocabulary that a competent translator renders correctly from
-  context without a glossary, even inside a technical sentence (e.g. "example", "one",
-  "area").
+- A GENERIC WORD is ordinary vocabulary (everyday nouns, verbs, connectives) that a
+  competent translator renders correctly from context without a glossary, even inside a
+  technical sentence. Judge by the role the word plays in the evidence, not by a fixed list.
 - Decide from the evidence sentences and your domain knowledge - not from frequency alone.
 
 Recall-safety (this matters): the memory's value is translation CONSISTENCY, so dropping a
@@ -871,34 +873,41 @@ Reading the fields:
   shows the proposed translation is context-dependent or incorrect, that itself is a signal
   (often polysemy_or_context_dependent).
 - signals (occurrences_total, chapter_spread, has_conflict, do_not_translate,
-  n_target_variants, surface_flags) are mechanical HINTS, not verdicts. Many conflicting
-  renderings + divergent evidence -> suspect polysemy; surface_flags "code_or_symbol_like"
-  or do_not_translate true -> suspect preserve_token.
+  n_target_variants, surface_flags, overmerge_suspected) are mechanical HINTS, not verdicts.
+  Many conflicting renderings + divergent evidence -> suspect polysemy; surface_flags
+  "code_or_symbol_like" or do_not_translate true -> suspect preserve_token;
+  overmerge_suspected true means the surface set may mix more than one concept - judge the
+  head term, do not let merged fragments mislead you.
 
 Choose exactly one audit_label per entry:
 - keep_as_translate_term - a genuine domain term to translate consistently.
 - preserve_token - keep verbatim in English / as a symbol (code identifiers, library
   functions, file formats, proper nouns, math symbols).
 - generic_low_value - ordinary vocabulary, not worth controlling.
-- descriptive_phrase - a compositional/explanatory phrase, not a lexical term (e.g. "shape
-  becomes a square", "same shape").
+- descriptive_phrase - a compositional/explanatory phrase (several words describing
+  something), not a single lexical term to control.
 - polysemy_or_context_dependent - two or more valid renderings depending on context;
   forcing one canonical would mislead. Do NOT pick a translation; flag it.
 - uncertain_low_conf - genuinely uncertain after weighing the evidence.
 
 Also set for each entry:
 - priority_tier: high | medium | low | review
-- injection_action: translate | preserve | deprioritize | review_only
+- injection_action: translate | preserve | context_sensitive_translate | deprioritize | review_only
 - confidence: high | medium | low
 - reason: one short clause (<= 20 words) naming the deciding evidence or signal.
 
 Default label -> tier -> action (you MAY deviate, but say why in reason):
 keep_as_translate_term         -> high   / translate
 preserve_token                 -> high   / preserve
-polysemy_or_context_dependent  -> review / review_only
+polysemy_or_context_dependent  -> medium / context_sensitive_translate
 generic_low_value              -> low    / deprioritize
 descriptive_phrase             -> low    / deprioritize
 uncertain_low_conf             -> review / review_only
+
+IMPORTANT: polysemy_or_context_dependent terms are HIGH-VALUE - they are exactly where
+consistent, context-aware translation matters most. Never rank them below generic_low_value
+or treat them as noise; they must still reach the translator (with their variants), flagged
+for context-sensitive handling.
 
 Output: a single JSON array, EXACTLY one object per input entry, keyed by entry_id, in the
 same order, no extra entries, no commentary:
@@ -911,8 +920,17 @@ Audit the following candidate term cards. Return the JSON array as specified.
 <CARDS_JSON_ARRAY>
 ```
 
-### 23.3 Card that da render (read-only DB, prose-only fix ap dung) - mau de CodeX soi
-Polysemy (dung ca kho nhat - Auditor phai ra `polysemy_or_context_dependent`):
+### 23.3 Card that - render bang LENH (reproducible trong repo, 0 API, read-only DB)
+Script committed: `THESIS_RUNTIME_TOOL/pipeline/scripts/builder_v2_c3_sample_cards.py` (review-only reproducer; production card-builder van la 5 cua CodeX). Lenh:
+```
+python THESIS_RUNTIME_TOOL/pipeline/scripts/builder_v2_c3_sample_cards.py \
+  --notebook THESIS_RUNTIME_TOOL/data/reports/builder_v2_c2_pilot/notebook.json \
+  --db       THESIS_RUNTIME_TOOL/data/jobs/d2l_p1/memory.sqlite3 \
+  --terms norm shape gradient one example arange linalg.norm circle
+```
+(Output JSON la artifact regenerable - gitignore data/reports; tai lap bang lenh tren.)
+
+Polysemy (ca kho nhat - Auditor phai ra `polysemy_or_context_dependent`, tier medium):
 ```json
 {
  "entry_id": "shape",
@@ -938,7 +956,8 @@ Polysemy (dung ca kho nhat - Auditor phai ra `polysemy_or_context_dependent`):
   "do_not_translate": false,
   "has_conflict": true,
   "n_target_variants": 1,
-  "surface_flags": []
+  "surface_flags": [],
+  "overmerge_suspected": false
  },
  "evidence": [
   "Reshaping by manually specifying every dimension is unnecessary. If our target shape is a matrix with shape (height, width), then after we know the width, the height is given implicitly. Why should we have to perform the division ourselves? In the example above, to get …",
@@ -968,7 +987,8 @@ Preserve (Auditor phai ra `preserve_token`):
   "n_target_variants": 0,
   "surface_flags": [
    "code_or_symbol_like"
-  ]
+  ],
+  "overmerge_suspected": false
  },
  "evidence": [
   ":begin_tab:`mxnet` MXNet provides a variety of functions for creating new tensors prepopulated with values. For example, by invoking `arange(n)`, we can create a vector of evenly spaced values, starting at 0 (included) and ending at `n` (not included). By default, the interval size is $1$. …"
@@ -976,13 +996,20 @@ Preserve (Auditor phai ra `preserve_token`):
  "evidence_truncated": true
 }
 ```
-8 card mau day du (norm/shape/gradient/one/example/arange/linalg.norm/circle): `scratchpad/sample_cards_v1.json`. Phat hien phu: card `one` lo luon loi **over-merge** ben Builder (gop manh cong thuc "H = 0","D_1 = 1" vao "one") - giu trong surface_variants lam signal cho Auditor.
+Phat hien phu: card `one` -> `overmerge_suspected:true` (Builder gop manh cong thuc "H = 0" vao "one"). Loi nay thuoc tang Builder, NGOAI pham vi C3; ghi nhan xu ly rieng.
 
-### 23.4 Wiring (CodeX implement 5) - phai tac dong THAT vao injection, khong chi report
+### 23.4 Wiring (CodeX implement 5) - phai tac dong THAT vao injection
 - **Luu ket qua**: moi entry them `{audit_label, priority_tier, injection_action, confidence, reason}` (keyed `entry_id`) -> notebook da-audit + `audit_trail.json`.
-- **`preserve_token`** -> set `do_not_translate=true` de pack nhoi dang "giu nguyen".
-- **Injection (PILOT = SIMULATE, KHONG dung frozen DB):** dung pack mo phong **guong dung** logic `context_builder._glossary_items()` da verify: sort `sort_key=(-count, source.casefold(), id)` (context_builder.py:266) + cua skip `occurrences < min_injection_occurrences` (context_builder.py:421). Auditor tier chen vao sort: `sort_key=(tier_rank, -count, source)`; pilot **KHONG** them skip cung (soft-only). Do recall-on-injected-pack o budget thuc.
-- **Phase D (sau, khong trong pilot):** wiring THAT vao `context_builder` + migration glossary (frozen DB RO => audit song o artifact, consumer doc tier). Pilot phai mo phong dung de so chuyen duoc sang Phase D.
+- **`preserve_token`** -> set `do_not_translate=true`.
+- **`context_sensitive_translate`** (polysemy) -> nhoi pack KEM variants + co context-sensitive; **tier medium, KHONG xep duoi generic**.
+- **Injection (PILOT = SIMULATE, KHONG dung frozen DB):** guong dung `context_builder._glossary_items()`: sort `(-count, source.casefold(), id)` (context_builder.py:266) + skip `occurrences < min_injection_occurrences` (context_builder.py:421). Auditor tier chen vao sort: `(tier_rank, -count, source)`; pilot KHONG them skip cung. Do recall-on-injected-pack o budget thuc.
+- **Phase D:** wiring THAT vao `context_builder` + migration glossary + stable entry id (frozen DB RO => audit song o artifact). Pilot mo phong dung de so chuyen duoc.
 
-### 23.5 Quy trinh (giu nguyen 22.812)
-Claude da khoa byte prompt (23.2) + card schema (23.1) + 2 card that (23.3) -> **CodeX phan bien prompt + xin xem render that** -> CodeX dien 5 (driver auditor + code dung card + ap nhan + `--estimate-only`) -> STOP, KHONG goi API toi khi user duyet $ -> Claude review 6 (do tren injected pack + doc audit trail).
+### 23.5 Metrics + Pass (carry 22.4/22.6, sua san recall ve injected-pack)
+entries 340->? · **recall-on-injected-pack KHONG duoi SAN** (de xuat >= v1 0.6316) · false-drop rate (tier thap chua bao nhieu gold) · noise-removed · agreement (any-match + canonical-only) co hoi khong · cost/audited-candidate · audit trail day du. **PASS:** precision/agreement TANG RO **VA** recall khong duoi san **VA** moi quyet dinh co audit trail. Recall duoi san -> REWORK prompt, khong ep. La GIA THUYET, fail cung la ket qua hop le. Model mo (mini truoc; kem -> model manh hon CHI o buoc auditor, tren held-out).
+
+### 23.6 CodeX round-2 fixes (Claude NHAN ca 5)
+1 bo vi du in-domain khoi prompt (anti-tuning-on-test) · 2 polysemy -> medium/context_sensitive_translate, khong duoi generic · 3 concept_key chi PILOT id + overmerge_suspected · 4 card render bang LENH committed (khong vien dan file ngoai repo) · 5 no-prose -> evidence:[] + evidence_missing_reason.
+
+### 23.7 Quy trinh
+Claude da khoa byte prompt (23.2 rev.2) + schema (23.1) + script render (23.3) -> **CodeX phan bien lai** -> CodeX dien 5 (driver auditor + code dung card dung schema 23.1, prose-only, mu 2 bang gold + ap nhan + `--estimate-only`) -> STOP, KHONG goi API toi khi user duyet $ -> Claude review 6.
