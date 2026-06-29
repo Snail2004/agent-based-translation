@@ -1,6 +1,6 @@
 # TASK BUILDER-V2 — Builder D2L v2: trích độc lập (recall) + sổ-tay-có-lọc (memory-pack) + code consolidation là QUYỀN CUỐI
 
-Status: Stage A+B+C1 PASS; **Stage C2 real-run PASS (Claude §21, re-derived)** — v2 THẮNG cấu trúc (recall 0.632→0.667, entries 381→340, number-dup 29→0, cost $0.131, 0 parse-fail, frozen ro). "Agreement tụt 0.806→0.605" = ~0.08 thiên-lệch-thước (v1 variant-bloat 4.36 vs 1.71) + ~0.12 thật nhưng ca lệch hầu hết ĐỒNG NGHĨA hợp lệ → **chất lượng dịch CHƯA kết luận, cần judge mù**. Next: judge mù ~15 ca lệch; soi 3 miss; (Phase D migration).
+Status: Stage A+B+C1 PASS; **Stage C2 real-run PASS (Claude §21, re-derived)** — v2 THẮNG cấu trúc (recall 0.632→0.667, entries 381→340, number-dup 29→0, cost $0.131, 0 parse-fail, frozen ro). "Agreement tụt 0.806→0.605" = ~0.08 thiên-lệch-thước (v1 variant-bloat 4.36 vs 1.71) + ~0.12 thật nhưng ca lệch hầu hết ĐỒNG NGHĨA hợp lệ → **chất lượng dịch CHƯA kết luận, cần judge mù**. Next: judge mù ~15 ca lệch; soi 3 miss; (Phase D migration). **Stage C3 spec READY (§22, Claude)** — Term-Auditor tầng 2 LLM lọc trích-dư (340 còn ~46% xuất-hiện-1-lần); kiến trúc 2 tác nhân (Builder recall + Auditor precision) + code chỉ cơ học (gỡ stoplist hardcode); là GIẢ-THUYẾT cần đo (pass = precision↑ & recall không dưới sàn ≥0.632). Model auditor = biến mở (chưa CM mini đủ thẩm định).
 Type: BUILDER redesign + method-decision. Builder **MÙ với gold D2L** (eval-only). KHÔNG đổi production `glossary_entries` tới Phase D. Pilot ghi **artifact JSON**, KHÔNG ghi DB. Frozen DB `mode=ro`.
 
 - **Refs (đã verify trên file thật session này):** prepass hiện tại — `prompt.py` `d2l_terminology_v7` (registry TẮT: `D2L_REGISTRY_OMITTED_TEXT`) · `registry.py:merge` key=`source_term.casefold()` · `persist.py:_persist_glossary` dòng 301/318 cũng casefold · `span_resolver._find_word_boundary_matches(text, source_term)` match **đúng 1 surface** (regex `\b…\b`) · `glossary_entries` **CHƯA có** `source_variants_json` · `context_builder.plan_anchors` (mẫu anchor đang dùng cho Translator) · `builder_gold.score_builder_vs_gold` (eval vs D2L gold). Memory: prompt-memory-design-is-first-class, builder-v2-memory-pack-design, dont-tune-intervention-on-test-baseline, scoring-scope-equals-production-scope, token-growth-halt-and-audit, green-tests-can-hide-dead-integration, four-tier-localize-cascade-locked.
@@ -774,3 +774,39 @@ Interpretation guard:
 **Kết luận trung thực (validity):** agreement gold-any-match **KHÔNG phải head-to-head công bằng về chất lượng** — nó thưởng cho variant-bloat (đúng thứ v2 diệt) và gold D2L chỉ liệt 1 dạng trong nhiều dạng hợp lệ (đã ghi nhận gold không hẳn đủ/đúng). v2 không hề dịch SAI; nó cam kết 1 bản dịch hợp lệ khác dạng gold = **chi phí precision của tính nhất quán** (memory `memory-injection-precision-cost`, `occurrence-weighted-block-anymatch-inflation`). **v2 thắng cấu trúc; chất lượng dịch = CHƯA kết luận được, cần judge mù reference-aware trên ~15 ca v2-lệch.**
 
 **Khuyến nghị bước sau:** (1) **KHÔNG** tuyên bố v2 tốt/tệ hơn về dịch dựa trên agreement; báo cáo cả any-match + canonical-only + nhãn "gold-incomplete-biased". (2) Judge mù (EV-06 kiểu) trên ~15 ca v2-lệch để biết "khác" hay "tệ". (3) Soi 3 miss (`agent`/`data`/`layer`): có thật thuộc preliminaries không hay spillover v1. (4) Nhớ: DEV, 1 chương, temp=1 = **1 mẫu** — đừng tổng quát. (5) 38 conflict = v2 tự gắn cờ nghi ngờ (theo thiết kế, không tự sửa) — input tốt cho review thủ công/Phase D.
+
+## 22. Stage C3 — Term-Auditor (tầng 2 precision), PILOT/GIẢ-THUYẾT cần đo *(Claude spec; CodeX góp ý đã gộp; CodeX implement §5)*
+
+**Bối cảnh:** C2 cho thấy v2 thắng cấu trúc nhưng cuốn 340 còn **trích dư** (~46% mục xuất hiện 1 lần; từ vu vơ `angle`/`circle`/`help`). User chốt nguyên tắc: **code KHÔNG làm việc ngôn ngữ; termhood phải do PROMPT/LLM**. Tham khảo (Claude+CodeX verify): ATE = bài toán tạo *candidate* rồi lọc (survey [arXiv 2301.06767]); critic LLM tầng 2 hạ false-positive, +F1 0.04–0.25 nhưng paper là *qualitative coding* → **analog, không phải bằng chứng tuyệt đối** [arXiv 2601.09905]; weirdness/termhood = tần suất domain vs general corpus [TermSuite P16-4003]; glossary-for-MT [arXiv 2410.15690]. → **C3 là PILOT để ĐO, không thay Builder v2 ngay.**
+
+### 22.0 Phân vai (chốt theo nguyên tắc user + nuance CodeX)
+- **Builder tầng 1 (C2, KHÔNG đổi):** trích rộng, giữ recall.
+- **Term-Auditor tầng 2 (MỚI, LLM):** phán đoán từng candidate là thuật-ngữ-cần-khóa hay từ vu vơ. **MỌI phán đoán ngôn ngữ ở đây.**
+- **Code:** CHỈ (a) gộp mặt chữ số-ít/nhiều (`concept_key`), (b) **tính tín hiệu CƠ HỌC** (đếm token, occurrence, regex code/number) đưa cho auditor, (c) **áp nhãn** auditor trả về. Code KHÔNG quyết "phổ thông/generic".
+- **GỠ stoplist 12-từ trong consolidation** (đó là *danh sách ngôn ngữ hardcode* — sai nguyên tắc). Giữ lại CHỈ tín hiệu cơ học (single-token? occ<N? match code/number pattern?) làm *hint*, không xoá cứng. *(Điểm này user chốt; CodeX muốn giữ guard cơ học — gộp: cơ học=hint OK, danh-sách-từ=bỏ.)*
+
+### 22.1 Input cho Auditor (code dựng, 0 phán đoán ngôn ngữ)
+Mỗi candidate từ notebook v2: `source_term`, `canonical_target_vi`, `occurrences_total`, `is_single_token`(cơ học), `is_multiword`(cơ học), `matches_code_or_number_pattern`(regex), `term_type`/`do_not_translate` (builder đề xuất), `status` (conflict_pending), **+ 1 đoạn evidence ngắn (câu chứa từ)** để auditor thấy NGỮ CẢNH (cần cho termhood/polysemy). Tín hiệu = *bằng chứng*, KHÔNG phải luật.
+
+### 22.2 PROMPT Auditor `d2l_term_audit_v1` *(Claude thiết kế, CodeX VERBATIM)* — đề cương
+SYSTEM (đề cương, byte sẽ chốt ở bản kế):
+- Vai: thẩm định viên thuật ngữ cho dịch sách kỹ thuật EN→VI. Với mỗi candidate, quyết nó có cần KHÓA bản dịch nhất quán cả cuốn không.
+- **Tiêu chí nguyên-tắc (KHÔNG liệt kê từ, tổng quát mọi sách):** "Thuật ngữ cần-khóa = tên một khái niệm/phương pháp/đối tượng/đại lượng chuyên ngành, mà nếu các phần sách dịch khác nhau sẽ gây rối/sai nghĩa. Từ vu vơ = từ vựng phổ thông mà mọi dịch giả giỏi tự dịch đúng, dù xuất hiện trong câu kỹ thuật." Phép thử: *"dịch lệch từ này giữa các chương có gây hại không?"* + *"từ này đặc-thù-chuyên-ngành hay phổ thông?"* (đây là trực giác *weirdness* — LLM tự biết).
+- **An toàn recall (luật đủ-căn-cứ, theo paper):** khi KHÔNG chắc → `needs_human_review`, **không** `generic_word_drop`. Ưu tiên precision nhưng không giết nhầm.
+- Output mỗi candidate (taxonomy CodeX): `keep_as_translate_term` · `preserve_token` (giữ Anh: API/lib/dataset/ký hiệu) · `generic_word_drop` · `phrase_too_descriptive` · `polysemy_or_context_dependent` · `needs_human_review` — kèm `reason` 1 mệnh đề (audit trail).
+- Tín hiệu (occurrence/single-token…) là *hint*, quyết định là của bạn. **Mù gold** (không tham chiếu đáp án D2L).
+- Batch nhỏ (20–30 candidate/call) để kiểm soát context + cost.
+
+### 22.3 Code consolidation (cơ học, áp nhãn)
+`generic_word_drop`/`phrase_too_descriptive` → bỏ khỏi glossary production, **lưu vào `audited_out` (audit trail, không mất dấu)**. `preserve_token` → `do_not_translate=true`. `polysemy…`/`needs_human_review` → giữ + flag status. `keep_as_translate_term` → giữ. Code KHÔNG tự quyết; chỉ **thực thi** nhãn.
+
+### 22.4 Metrics (preliminaries = DEV; thiết kế A-PRIORI, KHÔNG tune theo gold chương này)
+entries 340→? · **recall-vs-gold KHÔNG được tụt dưới SÀN** (đề xuất sàn = **≥ v1 0.6316**; lý tưởng ≥ v2 0.667 − biên) · agreement (any-match + canonical-only) có HỒI không · auditor drop theo nhãn (bao nhiêu nhiễu `angle/circle/help` bị bắt đúng) · cost/audited-candidate · audit trail đầy đủ. **Lý tưởng: validate trên 1 chương HELD-OUT** (tránh học tủ).
+
+### 22.5 Model (mở — CodeX đúng: chưa chứng minh mini đủ để THẨM ĐỊNH)
+Thử **mini trước** (rẻ). Nếu mini thẩm định kém (bỏ term thật / giữ nhiễu) → thử **model mạnh hơn CHỈ ở bước auditor**, trên held-out (memory `reasoning-effort-consumes-output-budget`: thử model mạnh trên held-out, không phải reasoning trên dev). **Không mặc định mini đủ.**
+
+### 22.6 Guards + Pass conditions
+0 DB write (artifact JSON) · frozen ro · mù-gold · prompt verbatim (bump version khi đổi byte) · key env-first không-log · cost-gate `--estimate-only`→`--confirm-usd` · cache DB riêng. **PASS khi:** precision/agreement TĂNG RÕ **VÀ** recall không dưới sàn **VÀ** mọi quyết định auditor có audit trail. **Nếu recall tụt dưới sàn → REWORK prompt, không ép.** Đây là **giả thuyết**, fail cũng là kết quả hợp lệ (ghi nhận).
+
+**Quy trình:** Claude chốt byte prompt `d2l_term_audit_v1` (bản kế) → CodeX phản biện → CodeX điền §5 (driver auditor + code áp nhãn + `--estimate-only`) → STOP, KHÔNG gọi API tới khi user duyệt $ → Claude review §6 (tái tính metrics + đọc audit trail).
