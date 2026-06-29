@@ -1,6 +1,6 @@
 # TASK BUILDER-V2 — Builder D2L v2: trích độc lập (recall) + sổ-tay-có-lọc (memory-pack) + code consolidation là QUYỀN CUỐI
 
-Status: Stage B PASS (Claude §13, re-derived 2026-06-29) → Stage C chờ (priority-budget pack thay greedy-alphabet; chronological notebook thật). Stage A PASS (§6).
+Status: Stage A+B PASS (Claude §6/§13) → **Stage C1 spec READY (§14, Claude — gồm góp ý CodeX + 3 refinement R1/R2/R3)** chờ CodeX implement §5 (0 API). C tách C1(0-API cơ chế)→C2(API pilot, cost-gate).
 Type: BUILDER redesign + method-decision. Builder **MÙ với gold D2L** (eval-only). KHÔNG đổi production `glossary_entries` tới Phase D. Pilot ghi **artifact JSON**, KHÔNG ghi DB. Frozen DB `mode=ro`.
 
 - **Refs (đã verify trên file thật session này):** prepass hiện tại — `prompt.py` `d2l_terminology_v7` (registry TẮT: `D2L_REGISTRY_OMITTED_TEXT`) · `registry.py:merge` key=`source_term.casefold()` · `persist.py:_persist_glossary` dòng 301/318 cũng casefold · `span_resolver._find_word_boundary_matches(text, source_term)` match **đúng 1 surface** (regex `\b…\b`) · `glossary_entries` **CHƯA có** `source_variants_json` · `context_builder.plan_anchors` (mẫu anchor đang dùng cho Translator) · `builder_gold.score_builder_vs_gold` (eval vs D2L gold). Memory: prompt-memory-design-is-first-class, builder-v2-memory-pack-design, dont-tune-intervention-on-test-baseline, scoring-scope-equals-production-scope, token-growth-halt-and-audit, green-tests-can-hide-dead-integration, four-tier-localize-cascade-locked.
@@ -426,3 +426,52 @@ Window 034 chạm cap 1500 → **drop 15 term**. Soi danh sách: drop theo **alp
 4. Frozen DB `mode=ro`; pilot ghi artifact JSON, KHÔNG ghi DB; gold chỉ để CHẤM (DEV, không headline).
 
 **Guards review:** prompt v8 verbatim (bump version khi đổi byte) · pack mù-gold · backstop L3 deterministic (single-word ∈ stoplist không nhận `new_terms` standalone — làm Stage C/D, LLM không phải hàng rào duy nhất) · artifact `data/reports/builder_v2_*/` regenerable → đã gitignore (`git check-ignore` xác nhận), KHÔNG commit.
+
+## 14. Stage C1 — Consolidation engine online + pack-slim + offline sim (0 API) *(Claude spec; CodeX implement §5)*
+
+**Mục tiêu:** dựng & CHỨNG MINH "máy dọn rác" (L3 consolidation) với **0 API** TRƯỚC khi C2 tiêu tiền LLM. Tách Stage C: **C1 = cơ chế (0 API, deterministic, test được)** → nghiệm thu → **C2 = pilot gọi LLM thật (cost-gate)**. Lý do tách (user+CodeX đồng ý): lọc/gộp phải chạy **online sau MỖI window** (cuốn sổ-tay dùng cho window kế phải sạch ở mọi bước); lọc-cuối-chương chỉ làm đẹp report, vô dụng cho lúc chạy.
+
+### 14.0 Verdict góp ý CodeX *(Claude: nhận 3 điểm chính + sub-points, THÊM 3 refinement)*
+**Nhận (đúng, đưa vào spec):** QĐ-1 → "**first valid canonical wins provisionally**" (provisional tới freeze cuối phase; window sau KHÔNG ghi đè, chỉ conflict-log) · QĐ-2 → **source-side luôn gộp; target-side KHÔNG ghi đè canonical; phân loại divergence** · QĐ-3 → `source_variants` là **record có cấu trúc** (không phải list string) · offline simulation trên data thật · stoplist predicate hợp thành (không phải "in list thì bỏ") · decision-log mọi quyết định · pack flag `conflict_pending`.
+
+**Claude refinement (advisor, BẮT BUỘC trong spec):**
+- **R1 (QUAN TRỌNG NHẤT — gỡ mâu thuẫn): tách NOTEBOOK (giàu) vs PACK (gầy).** QĐ-3 muốn `source_variants` mang `evidence_block_ids`/`occurrence`/`first_seen_window`; nhưng ở §13 ta đã chốt **bỏ `evidence_block_ids` khỏi pack** để tiết kiệm token. KHÔNG mâu thuẫn nếu để đúng chỗ: **record giàu sống trong NOTEBOOK/artifact (để audit/consolidate); PACK chỉ là hình chiếu GẦY** (surface trần + canonical + ≤2 variant string + status). Nếu CodeX nhét record giàu vào pack → **phình lại**. Phải tách rõ trong spec.
+- **R2 (trung thực phạm vi offline sim): KHÔNG có bảng `glossary_candidates` thô** (Claude đã probe DB: chỉ `glossary_entries` n=1608 đã qua casefold-merge của v7). Nên offline sim **replay `glossary_entries`** → đo **hiệu lực TĂNG THÊM của `concept_key`+stoplist so với casefold** (1608→~1486 + số rác bị reject), KHÔNG phải "raw candidates → sạch". Và vì v7 chạy registry-OFF nên output chỉ có ứng viên thô → sim **chỉ tập** create/merge/stoplist/number, **KHÔNG** chạm update/conflict/seen (mấy rổ đó cần LLM thật ở C2). Ghi rõ giới hạn này, không over-claim C1 = C2 dry-run.
+- **R3 (stoplist phải DETERMINISTIC): "strong termhood reason" = predicate đo được**, không phải code "đọc cảm tính" free-text của LLM. Cụ thể: termhood mạnh = (≥2 evidence block) **HOẶC** block_type ∈ {heading, definition, math} **HOẶC** concept_key đã có trong notebook.
+
+### 14.1 Data model — NOTEBOOK (artifact JSON, GIÀU) *(R1)*
+Mỗi entry: `concept_key` · `canonical_target_vi` (provisional) · `term_type` · `do_not_translate` · `status` ∈ {`ok`, `conflict_pending`} · `occurrences_total` · `first_seen_window` · `source_variants[]` (mỗi: `surface`, `match_type`∈{exact,number_variant}, `evidence_block_ids[]`, `occurrence_count`, `first_seen_window`) · `target_variants[]` (mỗi: `text`, `evidence_block_id`, `variant_reason`) · `conflict_ledger[]` (mỗi: `type`, `proposed_target`, `reason`, `window`, `evidence_block_ids[]`) · `decision_log[]` (xem 14.2).
+
+### 14.2 Consolidation ONLINE — mỗi window, NGAY sau khi LLM trả *(L3 = quyền cuối)*
+Vòng: `[notebook sạch tới i-1] → code dựng PACK (14.3) → LLM đề xuất 4 rổ → CODE gộp/lọc vào notebook NGAY → [notebook sạch tới i]`. Xử lý từng rổ:
+- **`new_terms`:** (a) `concept_key`. (b) **stoplist predicate (R3, deterministic):** reject standalone iff `single-token` ∧ `∈stoplist` ∧ `∉allowlist` ∧ `occurrence/evidence<2` ∧ `không có block_type∈{heading,definition,math}` ∧ `concept_key chưa trong notebook` → log `rejected_stoplist`. (c) nếu `concept_key` đã có → route sang update (log `merged_by_concept_key`). (d) còn lại → tạo entry, `canonical = LLM canonical_target_vi` nếu valid (non-empty), `first_seen_window=i` (log `created`).
+- **`updates_to_existing`:** union `source_variants` (thêm record surface) + `target_variants` (≤2/window, bỏ biến thể chỉ khác `các/những`, **bắt buộc** evidence+reason), cộng occurrence/evidence. **KHÔNG đổi canonical.** (log `updated_source_variant`/`updated_target_variant`).
+- **`conflicts`:** append `conflict_ledger`; nếu type ∈ {`canonical_target_change`,`polysemy_suspected`,`bad_existing_target`} → set `status=conflict_pending`. **KHÔNG mutate canonical.** (log `conflict_logged`).
+- **`seen_existing_terms`:** chỉ cộng occurrence/evidence (log `seen_existing`).
+
+**Phân loại divergence target (code-side, QĐ-2 — khi 1 update/new đề xuất target ≠ canonical cùng `concept_key`):**
+1. normalize `các/những` → bằng nhau ⇒ `plural_only_difference` (bỏ/hạ nhẹ, **không** conflict lớn).
+2. khác nhẹ kiểu đồng nghĩa/văn phong ⇒ `synonym_or_style_variant` ⇒ thêm vào `target_variants` (**phải có evidence**), `status` giữ `ok`.
+3. còn lại (đổi nghĩa/sai) ⇒ `polysemy_suspected`/`bad_existing_target` ⇒ `conflict_ledger` + `status=conflict_pending`; **KHÔNG** thêm vào accepted `target_variants`. *(Ví dụ nguy hiểm `loss` "hàm mất mát" vs "giá trị mất mát": giữ canonical, ghi conflict, KHÔNG trộn mù; hướng sửa = prompt sau ưu tiên term cụ thể `loss function`/`loss value`.)*
+
+`decision_log` enum (bắt buộc mỗi term mỗi window): `created` · `merged_by_concept_key` · `updated_source_variant` · `updated_target_variant` · `rejected_stoplist` · `conflict_logged` · `seen_existing`.
+
+### 14.3 Pack-slim — sửa `builder_v2_render.py` *(R1 + §13 carry-over)*
+- **Pack item = hình chiếu GẦY:** `source_term`, `canonical_target_vi`, `allowed_variants[:2]` (string), `term_type`, `do_not_translate`; **NẾU** `status=conflict_pending` → thêm `"status":"conflict_pending"`. **BỎ `evidence_block_ids` khỏi pack** (record giàu ở notebook).
+- **Nén JSON pack trong prompt** (bỏ indent) + **sửa lỗi §13**: ước tính token đo ĐÚNG bytes được nhét (kết thúc lệch compact-vs-indent).
+- **Cắt khi quá ngân sách theo ƯU TIÊN, không theo bảng chữ:** sort key = (`conflict_pending` trước → `occurrences_total` desc → multiword trước → tên). Giữ term mang-tính-nhất-quán cao nhất.
+- Cap giữ 1500/6000; **đo lại `dropped_by_budget`** sau slim+lean; chỉ nâng `1500→2500` nếu vẫn rớt term THẬT ở window đặc (đúng ưu tiên user: thiếu-term > token).
+
+### 14.4 Offline simulation — script mới, 0 API *(CodeX + R2)*
+- Đọc `glossary_entries` (frozen DB `mode=ro`). Coi mỗi entry như 1 đề xuất `new_terms` **"đến" ở window theo `first_evidence_order`** (chronological; entry nhiều evidence → lấy block sớm nhất).
+- Chạy consolidation 14.2 **theo thứ tự window**.
+- Report: entry trước/sau · `rejected_stoplist` (count+sample) · `merged_by_concept_key` (count) · conflicts (count+types) · **occurrence bảo toàn** (before==after) · evidence bảo toàn.
+- **Caveat ghi rõ (R2):** chỉ exercise create/merge/stoplist/number; update/conflict/seen cần LLM thật (C2). Đây KHÔNG phải C2 dry-run.
+
+### 14.5 Tests
+Unit từng luật (created/merged/rejected/update-variant/conflict/seen) · guard polysemy (`loss` value vs function → `conflict_pending`, KHÔNG trộn target) · `plural_only` normalize · stoplist predicate (`set` trong heading → giữ; `set` trần → reject) · decision-log đầy đủ · determinism (2 lần giống byte). Offline sim như integration: assert occurrence bảo toàn + entry giảm + đủ trường report.
+
+### 14.6 Guards + Acceptance
+**Guards:** 0 API / 0 DB write (frozen hash `DA0F687894090D43` ro) · KHÔNG đụng production `glossary_entries` (chỉ artifact JSON) · mù-gold · prompt v8 KHÔNG đổi (C1 không gọi LLM) · decision-log = audit đầy đủ · artifact gitignore.
+**Acceptance (lệnh chạy được):** `python pipeline/scripts/builder_v2_consolidate_sim.py --doc-id d2l --out data/reports/builder_v2_c1_sim` → report 0-API + `pytest pipeline/tests/test_builder_v2_consolidate.py -q` pass + render lại pack slim (`builder_v2_render.py`) cho thấy `dropped_by_budget` giảm + token/term giảm vs §13.
+**C2 (ghi nhận, CHƯA làm):** pilot 1 chương gọi LLM thật qua cơ chế C1 online → artifact registry v2 (KHÔNG ghi DB) → đo entry vs v1 / recall-vs-gold (DEV) / conflict-rate / token-window / occurrence-bảo-toàn; cost-gate $/chương user duyệt TRƯỚC.
