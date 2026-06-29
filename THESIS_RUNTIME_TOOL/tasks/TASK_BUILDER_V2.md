@@ -1,6 +1,6 @@
 # TASK BUILDER-V2 — Builder D2L v2: trích độc lập (recall) + sổ-tay-có-lọc (memory-pack) + code consolidation là QUYỀN CUỐI
 
-Status: Stage A+B+C1 PASS (Claude §6/§13/§16) → **C2 estimate-only PASS (Claude §19, re-derived)** = driver online + 6 guard verified, $0.155 thực/$0.65 trần, 0 API/0 side-effect. **CHỜ user duyệt $ → CodeX chạy `--confirm-usd` + metrics §17.5.**
+Status: Stage A+B+C1 PASS; **Stage C2 real-run PASS (Claude §21, re-derived)** — v2 THẮNG cấu trúc (recall 0.632→0.667, entries 381→340, number-dup 29→0, cost $0.131, 0 parse-fail, frozen ro). "Agreement tụt 0.806→0.605" = ~0.08 thiên-lệch-thước (v1 variant-bloat 4.36 vs 1.71) + ~0.12 thật nhưng ca lệch hầu hết ĐỒNG NGHĨA hợp lệ → **chất lượng dịch CHƯA kết luận, cần judge mù**. Next: judge mù ~15 ca lệch; soi 3 miss; (Phase D migration).
 Type: BUILDER redesign + method-decision. Builder **MÙ với gold D2L** (eval-only). KHÔNG đổi production `glossary_entries` tới Phase D. Pilot ghi **artifact JSON**, KHÔNG ghi DB. Frozen DB `mode=ro`.
 
 - **Refs (đã verify trên file thật session này):** prepass hiện tại — `prompt.py` `d2l_terminology_v7` (registry TẮT: `D2L_REGISTRY_OMITTED_TEXT`) · `registry.py:merge` key=`source_term.casefold()` · `persist.py:_persist_glossary` dòng 301/318 cũng casefold · `span_resolver._find_word_boundary_matches(text, source_term)` match **đúng 1 surface** (regex `\b…\b`) · `glossary_entries` **CHƯA có** `source_variants_json` · `context_builder.plan_anchors` (mẫu anchor đang dùng cho Translator) · `builder_gold.score_builder_vs_gold` (eval vs D2L gold). Memory: prompt-memory-design-is-first-class, builder-v2-memory-pack-design, dont-tune-intervention-on-test-baseline, scoring-scope-equals-production-scope, token-growth-halt-and-audit, green-tests-can-hide-dead-integration, four-tier-localize-cascade-locked.
@@ -684,3 +684,93 @@ Frozen DB:
 - **`--c1-render-report` mặc định trỏ `data/reports/builder_v2_c1_render/...` (gitignore).** Nếu file vắng → fallback `50×6000=300k` prompt (ước CAO hơn → vẫn an toàn). Run thật nên regenerate report C1 trước để ước sát.
 
 **Cost trình user duyệt:** **~$0.16 thực tế / trần $0.65** cho 1 chương `preliminaries`. Rẻ. Sau khi user OK ceiling → CodeX chạy `--confirm-usd <ceiling>` (đề xuất ceiling $0.70 để ôm trần) + bước metrics §17.5.
+## 20. §5 — CodeX implementation notes Stage C2 real-run + metrics *(CodeX, 2026-06-29; STOP, no commit/push)*
+
+**Scope implemented:** C2 real pilot for `preliminaries` after user approved cost; metrics §17.5 implemented and run. No production DB writes, no migration, no commit/push.
+
+Additional files/changes after estimate-only review:
+- `pipeline/scripts/builder_v2_pilot.py`
+  - Archives full prompt for every window under `data/reports/builder_v2_c2_pilot/prompts/*.txt` before the API call. Each file contains full `SYSTEM` + `USER` message sent to the model.
+  - `per_window_audit.json` includes `prompt_file` for lookup.
+  - `raw_outputs.json` stores parsed four-bucket output per applied window for later audit/metrics.
+  - `cost_log.json` records every attempt, including re-ask attempts if parse fails.
+  - Key lookup fixed for running from `THESIS_RUNTIME_TOOL`: env first, then local/parent `OPENAI-KEY-*.txt`; key contents are never printed/logged.
+- `pipeline/scripts/builder_v2_metrics.py`
+  - Offline metric script; reads artifact + frozen DB `mode=ro`; writes `builder_v2_c2_metrics.json`; does not write DB.
+  - Scope-matches v1 to the same chapter by evidence block ids.
+  - Scores v2 notebook against eval-only gold by all source variants while counting actual notebook entries separately.
+  - Distinguishes v1 separate-entry number splits from v2 merged source-variant groups (merged variants are desired, not duplicate entries).
+
+Run notes:
+- First real attempt auto-selected `OPENAI-KEY-1.txt` and failed on the first call with `insufficient_quota`; no model output was written.
+- Real run was re-executed with `OPENAI-KEY-2.txt` set via environment variable for this process only; key contents were not printed/logged.
+
+Real pilot command:
+- `python pipeline\scripts\builder_v2_pilot.py --chapter preliminaries --confirm-usd 0.70 --out data\reports\builder_v2_c2_pilot`
+
+Pilot result:
+- status: **passed**
+- windows: **50**
+- applied_windows: **50**
+- skipped_windows: **0**
+- parse_failure_count: **0**
+- cache_hits/cache_misses: **0 / 50**
+- notebook_entries: **340**
+- rejected_stoplist: **3**
+- conflicts: **38**
+- actual_cost_usd: **0.13093375**
+- prompt archive files: **50**
+- artifacts: `notebook.json`, `decision_log.json`, `cost_log.json`, `per_window_audit.json`, `raw_outputs.json`, `builder_v2_c2_pilot_report.json`, `prompts/`, `llm_cache.sqlite3`
+
+Metrics command:
+- `python pipeline\scripts\builder_v2_metrics.py --chapter preliminaries --artifact-dir data\reports\builder_v2_c2_pilot`
+
+Metrics result (`builder_v2_c2_metrics.json`):
+- entry_counts_scope_matched:
+  - v1_chapter_terms: **381**
+  - v2_notebook_entries: **340**
+  - v2_rejected_stoplist: **3**
+- recall-vs-gold DEV (gold_terms_present **57**):
+  - v1: matched **36**, recall **0.631579**, agreement **0.805556**
+  - v2: matched **38**, recall **0.666667**, agreement **0.605263**
+- number-variant handling:
+  - v1_separate_entry_groups: **29**
+  - v2_duplicate_entry_groups: **0**
+  - v2_merged_source_variant_groups: **67**
+- conflicts by type:
+  - bad_existing_target: **13**
+  - canonical_target_change: **7**
+  - plural_only_difference: **1**
+  - polysemy_suspected: **7**
+  - termhood_suspected: **8**
+  - uncertain: **2**
+- occurrence_conserved: **true**
+
+Verification:
+- `python -m pytest pipeline\tests\test_builder_v2_consolidate.py pipeline\tests\test_builder_v2_render.py pipeline\tests\test_builder_v2_pilot.py -q --basetemp D:\temp\pytest-builder-v2-all` → **17 passed**
+- `python -m py_compile pipeline\scripts\builder_v2_pilot.py pipeline\scripts\builder_v2_metrics.py` → pass
+- Frozen DB `data/jobs/d2l_p1/memory.sqlite3` SHA256 remains `DA0F687894090D43B75A3AE52BA71EC1EDF85DAB3198C9F86039879365D464B8`.
+
+Interpretation guard:
+- Run quality is **mixed**. C2 reduces same-chapter entry count (381→340), eliminates duplicate concept-key entries for number variants (29→0), and increases DEV recall slightly (36→38 / 57). However DEV agreement drops (0.805556→0.605263) and conflicts are non-trivial (38). Do **not** claim Builder v2 is better until Claude re-derives metrics and inspects conflict/missing samples.
+
+**STOP condition honored:** real API pilot completed, metrics completed, no production DB write, no commit, no push.
+
+## 21. §6 — Claude review Stage C2 real-run + metrics *(Claude, 2026-06-29, re-derived ĐỘC LẬP trên artifact thật)*
+
+**Verdict: PASS — cơ chế chạy đúng & số tái lập; nhưng KHÔNG được kết luận "v2 dịch tốt/tệ hơn v1" từ agreement. v2 THẮNG RÕ về cấu trúc (recall, phình, trùng số ít/nhiều, cost); "agreement tụt" một PHẦN là thiên lệch thước (any-match thưởng cho variant-bloat của v1), một PHẦN là chi phí thật của single-canonical — nhưng các ca lệch hầu hết là ĐỒNG NGHĨA hợp lệ, không phải dịch sai.** Cần judge mù để chốt chất lượng.
+
+**Tái lập (tự tính trên artifact, không tin report):**
+- Run: 50/50 windows, parse_fail=0, status=passed; cost **$0.13093375** (sum cost_log, 50/50 cache-miss = call thật); notebook **340** entries, rejected **3**, conflicts **38** (bad_existing_target 13, polysemy 7, canonical_change 7, termhood 8, uncertain 2, plural 1); occurrence conserved=true; frozen hash `DA0F687894090D43` bất biến; metrics script re-run khớp committed; 17 tests pass.
+- **Recall (thước CÔNG BẰNG — cùng mẫu gold 57):** V1 36/57=**0.6316** → V2 38/57=**0.6667**. **v2 bắt được NHIỀU hơn.** ✓
+- Entries 381→**340**; number-variant dup groups 29→**0**; v2 merged-source-variant groups **67** (gộp số-ít/nhiều hoạt động). ✓
+
+**🔬 Mổ "agreement 0.806→0.605" (điểm phải soi):**
+- agreement = (của các term BẮT được, bao nhiêu có target ∩ gold). Mẫu số KHÁC nhau (v1 matched 36, v2 38) và là **any-match** với TẬP target của builder.
+- **Số biến thể chấp nhận TB/term: V1=4.36, V2=1.71** (V1 36/36 entry có >1 biến thể; V2 chỉ 24/38). → v1 (builder phình cũ) ôm một *túi* ~4 bản dịch/term nên "trúng" gold dễ; v2 cam kết 1 canonical (đúng thiết kế).
+- **Thước CÔNG BẰNG canonical-vs-canonical (mỗi bên 1 target):** V1 26/36=**0.7222**, V2 23/38=**0.6053**. → khoảng cách any-match (0.806 vs 0.605 = 0.20) co còn (0.722 vs 0.605 = **0.12**) khi bỏ variant-bloat. Tức ~0.08 là **thiên lệch thước**, ~0.12 là **thật**.
+- **8 ca v1-đúng / v2-không** soi tay: **5 sai-target nhưng là ĐỒNG NGHĨA/CHÍNH TẢ hợp lệ** — `vectơ` vs gold `vector` (cùng từ), `vô hướng` vs `số vô hướng` (gần trùng), `phân phối kết hợp` vs `đồng thời` (đồng nghĩa), `suy biên` vs `lấy biên`, `minibatch` dịch-vs-giữ-Anh; **3 MISS hẳn** (`agent`/`data`/`layer` — nhiều khả năng spillover liên-chương trong evidence v1, không phải khái niệm preliminaries; recall tổng vẫn nghiêng v2).
+
+**Kết luận trung thực (validity):** agreement gold-any-match **KHÔNG phải head-to-head công bằng về chất lượng** — nó thưởng cho variant-bloat (đúng thứ v2 diệt) và gold D2L chỉ liệt 1 dạng trong nhiều dạng hợp lệ (đã ghi nhận gold không hẳn đủ/đúng). v2 không hề dịch SAI; nó cam kết 1 bản dịch hợp lệ khác dạng gold = **chi phí precision của tính nhất quán** (memory `memory-injection-precision-cost`, `occurrence-weighted-block-anymatch-inflation`). **v2 thắng cấu trúc; chất lượng dịch = CHƯA kết luận được, cần judge mù reference-aware trên ~15 ca v2-lệch.**
+
+**Khuyến nghị bước sau:** (1) **KHÔNG** tuyên bố v2 tốt/tệ hơn về dịch dựa trên agreement; báo cáo cả any-match + canonical-only + nhãn "gold-incomplete-biased". (2) Judge mù (EV-06 kiểu) trên ~15 ca v2-lệch để biết "khác" hay "tệ". (3) Soi 3 miss (`agent`/`data`/`layer`): có thật thuộc preliminaries không hay spillover v1. (4) Nhớ: DEV, 1 chương, temp=1 = **1 mẫu** — đừng tổng quát. (5) 38 conflict = v2 tự gắn cờ nghi ngờ (theo thiết kế, không tự sửa) — input tốt cho review thủ công/Phase D.

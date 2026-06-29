@@ -215,6 +215,11 @@ def test_run_online_pilot_uses_separate_cache_and_second_run_is_cache_hit(tmp_pa
     )
 
     assert cache_path.exists()
+    prompt_files = sorted((tmp_path / "first" / "prompts").glob("*.txt"))
+    assert len(prompt_files) == 2
+    assert "SYSTEM" in prompt_files[0].read_text(encoding="utf-8")
+    audit = json.loads((tmp_path / "first" / "per_window_audit.json").read_text(encoding="utf-8"))
+    assert audit[0]["prompt_file"].startswith("prompts/")
     assert len(transport.calls) == 2
     assert first["summary"]["cache_misses"] == 2
     assert second["summary"]["cache_hits"] == 2

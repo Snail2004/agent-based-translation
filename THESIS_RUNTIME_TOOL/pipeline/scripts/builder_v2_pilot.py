@@ -34,6 +34,7 @@ from pipeline.prepass.builder_v2_render import (
     _pack_item,
     build_builder_v2_messages,
     pack_json_text,
+    prompt_text,
 )
 from pipeline.prepass.concept_key import concept_key
 from pipeline.prepass.db_source import load_document_from_connection
@@ -201,12 +202,15 @@ def run_online_pilot(
     out_dir.mkdir(parents=True, exist_ok=True)
     before_hash = _sha256(db_path)
     notebook = Notebook()
+    prompts_dir = out_dir / "prompts"
+    prompts_dir.mkdir(parents=True, exist_ok=True)
     block_types = {
         str(block["block_id"]): str(block.get("block_type") or "")
         for block in chapter.get("blocks", [])
     }
     per_window: list[dict[str, Any]] = []
     cost_log: list[dict[str, Any]] = []
+    raw_outputs: list[dict[str, Any]] = []
     parse_failure_count = 0
     skipped_windows = 0
 
@@ -218,6 +222,7 @@ def run_online_pilot(
             window_id=window.window_id,
             blocks=window.blocks,
         )
+        prompt_file = _write_prompt_archive(prompts_dir, window.window_id, messages)
         prompt_tokens = estimate_prompt_tokens(messages, RESPONSE_FORMAT)
         if pack_audit["pack_token_estimate"] > PACK_TOKEN_CAP:
             raise RuntimeError(
@@ -237,6 +242,13 @@ def run_online_pilot(
             skipped_windows += 1
             status = "skipped_parse_failure"
         else:
+            raw_outputs.append(
+                {
+                    "window_id": window.window_id,
+                    "block_ids": [str(block["block_id"]) for block in window.blocks],
+                    "parsed_output": parsed,
+                }
+            )
             apply_builder_output(
                 notebook,
                 parsed,
@@ -249,6 +261,7 @@ def run_online_pilot(
                 "window_id": window.window_id,
                 "block_ids": [str(block["block_id"]) for block in window.blocks],
                 "status": status,
+                "prompt_file": prompt_file.relative_to(out_dir).as_posix(),
                 "pack_audit": pack_audit,
                 "prompt_tokens_est": prompt_tokens,
                 "cache_key": result.cache_key if result is not None else None,
@@ -304,6 +317,8 @@ def run_online_pilot(
         },
         "per_window_audit_file": "per_window_audit.json",
         "cost_log_file": "cost_log.json",
+        "raw_outputs_file": "raw_outputs.json",
+        "prompts_dir": "prompts",
         "notebook_file": "notebook.json",
         "decision_log_file": "decision_log.json",
     }
@@ -328,6 +343,10 @@ def run_online_pilot(
     )
     (out_dir / "cost_log.json").write_text(
         json.dumps(cost_log, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "raw_outputs.json").write_text(
+        json.dumps(raw_outputs, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     (out_dir / "builder_v2_c2_pilot_report.json").write_text(
@@ -471,6 +490,16 @@ def config_to_dict(config: LLMConfig) -> dict[str, Any]:
     }
 
 
+def _write_prompt_archive(
+    prompts_dir: Path,
+    window_id: str,
+    messages: list[dict[str, Any]],
+) -> Path:
+    path = prompts_dir / f"{_safe_filename(window_id)}.txt"
+    path.write_text(prompt_text(messages) + "\n", encoding="utf-8")
+    return path
+
+
 def _connect_ro(db_path: Path) -> sqlite3.Connection:
     resolved = db_path.resolve()
     return sqlite3.connect(f"file:{resolved.as_posix()}?mode=ro", uri=True)
@@ -605,6 +634,8 @@ def _ensure_openai_key_available() -> None:
         Path("OPENAI-KEY-1.txt"),
         Path("OPENAI-KEY-2.txt"),
         Path("../OPENAI_API_KEY.txt"),
+        Path("../OPENAI-KEY-1.txt"),
+        Path("../OPENAI-KEY-2.txt"),
     ]
     for path in key_paths:
         if path.exists():
@@ -613,6 +644,11 @@ def _ensure_openai_key_available() -> None:
                 os.environ["OPENAI_API_KEY"] = value
                 return
     raise RuntimeError("OPENAI_API_KEY is required for real C2 pilot runs.")
+
+
+def _safe_filename(value: str) -> str:
+    safe = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in value)
+    return safe.strip("_") or "window"
 
 
 if __name__ == "__main__":
