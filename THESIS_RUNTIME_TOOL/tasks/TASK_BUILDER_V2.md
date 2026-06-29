@@ -1,6 +1,6 @@
 # TASK BUILDER-V2 — Builder D2L v2: trích độc lập (recall) + sổ-tay-có-lọc (memory-pack) + code consolidation là QUYỀN CUỐI
 
-Status: Stage A+B+C1 PASS (Claude §6/§13/§16, re-derived) → **Stage C2 chờ** (pilot gọi LLM thật, notebook chronological v2, cost-gate). C đã tách C1(0-API cơ chế, DONE)→C2(API pilot).
+Status: Stage A+B+C1 PASS (Claude §6/§13/§16) → **Stage C2 spec READY (§17, Claude)** chờ CodeX review/implement §5: driver online + pack-từ-notebook-v2 + cache + cost-gate (`--estimate-only` rồi STOP, KHÔNG gọi API). C tách C1(DONE)→C2(API pilot, user duyệt $ TRƯỚC).
 Type: BUILDER redesign + method-decision. Builder **MÙ với gold D2L** (eval-only). KHÔNG đổi production `glossary_entries` tới Phase D. Pilot ghi **artifact JSON**, KHÔNG ghi DB. Frozen DB `mode=ro`.
 
 - **Refs (đã verify trên file thật session này):** prepass hiện tại — `prompt.py` `d2l_terminology_v7` (registry TẮT: `D2L_REGISTRY_OMITTED_TEXT`) · `registry.py:merge` key=`source_term.casefold()` · `persist.py:_persist_glossary` dòng 301/318 cũng casefold · `span_resolver._find_word_boundary_matches(text, source_term)` match **đúng 1 surface** (regex `\b…\b`) · `glossary_entries` **CHƯA có** `source_variants_json` · `context_builder.plan_anchors` (mẫu anchor đang dùng cho Translator) · `builder_gold.score_builder_vs_gold` (eval vs D2L gold). Memory: prompt-memory-design-is-first-class, builder-v2-memory-pack-design, dont-tune-intervention-on-test-baseline, scoring-scope-equals-production-scope, token-growth-halt-and-audit, green-tests-can-hide-dead-integration, four-tier-localize-cascade-locked.
@@ -554,3 +554,57 @@ Interpretation:
 - `_looks_polysemous` là heuristic hẹp (hardcode "hàm"/"giá trị" + disjoint-token). Ổn cho cơ chế **chỉ-gắn-cờ-để-review** (không tự sửa phá hoại), nhưng sẽ sót polysemy tinh vi → ghi nhận cho C2/Phase D.
 
 **Ghi nhận cho C2 (gọi LLM thật):** dùng notebook **chronological v2** (KHÔNG bê v1); occurrence/priority lấy từ notebook v2 đang lớn dần (không phải v1); giữ `dropped_by_budget` làm audit cứng, chỉ nâng cap 1500→2500 nếu rớt term THẬT; cost-gate $/chương duyệt TRƯỚC; đo entry vs v1 + recall-vs-gold (DEV) + conflict-rate + occurrence-bảo-toàn. **C2 mới là nơi đo được stoplist + 4-rổ thật.**
+
+## 17. Stage C2 — Pilot 1 chương gọi LLM thật (online loop) *(Claude spec; CodeX implement §5)*
+
+**Mục tiêu:** chạy Builder v2 THẬT trên 1 chương (`preliminaries`, 50 window) qua vòng online `pack→LLM(v8)→4 rổ→engine C1→window kế`, ghi **artifact JSON (KHÔNG ghi DB)**, rồi ĐO v2 vs v1 (DEV). Đây là nơi đầu tiên 4 rổ + stoplist + 3 QĐ được kiểm trên hành vi LLM thật. **Có API → cost-gate user duyệt TRƯỚC.**
+
+### 17.0 Carried-locked (từ A/B/C1, KHÔNG mở lại)
+Prompt `d2l_terminology_v8` verbatim · engine C1 = quyền cuối (`apply_builder_output`) · pack-slim + cắt-ưu-tiên · 3 QĐ (first-valid-canonical-provisional / source-merge-không-overwrite-target / source_variants giàu) · mù-gold · frozen DB `mode=ro` · artifact JSON only.
+
+### 17.1 Driver online (CODE MỚI — `pipeline/scripts/builder_v2_pilot.py`)
+Sổ-tay khởi tạo **RỖNG**, lớn dần theo thứ tự window:
+```
+notebook = Notebook()
+for window in build_d2l_prepass_windows(chapter):   # đã có
+    pack = build_pack_from_notebook(notebook, window)        # 17.2 (mới)
+    messages = build_builder_v2_messages(pack, ...window)    # đã có (prompt v8)
+    resp = llm_call_cached(messages, model, params)          # 17.3/17.4 (API + cache)
+    parsed = parse_4buckets(resp)                            # validate JSON contract
+    apply_builder_output(notebook, parsed, window_id, block_types)  # engine C1
+emit: notebook.json + decision_log.json + cost_log.json + per_window_audit.json
+```
+**Tự nhiên chống future-leak:** pack dựng TRƯỚC khi cập nhật notebook → sổ chỉ chứa window trước → KHÔNG cần proxy_chronological nữa (đúng "chronological thật").
+**JSON contract guard:** mỗi resp phải parse được + đủ 4 khoá; lỗi parse → log `parse_failure`, đếm, **bỏ qua window đó** (không crash), KHÔNG bịa rỗng.
+
+### 17.2 Pack đọc từ notebook v2 SỐNG (sửa, không proxy v1)
+Adapter biến `NotebookEntry` → cấu trúc `build_memory_pack` đang dùng (source_term, canonical_target_vi, allowed_variants≤2, occurrences_total, status, source surfaces). Tái dùng nguyên: surface-match (exact + number_variant), cắt-ưu-tiên (`conflict_pending→occ desc→multiword→exact`), slim (bỏ evidence, nén JSON), cap 1500/6000. **occurrence/priority = số v2 THẬT** (không phải v1). Surface để quét window lấy từ `source_variants[].surface`.
+
+### 17.3 Model + tham số *(đề xuất — user/CodeX chốt)*
+- **Đề xuất: DÙNG ĐÚNG model mà builder v7 đã dùng** (để so v1↔v2 công bằng — cô lập thay đổi prompt+cơ chế, không lẫn thay đổi model). Xác nhận id thật từ `pipeline.agents.llm_client` config.
+- `temperature=0`, `response_format={"type":"json_object"}`, `reasoning=none` (memory: reasoning ăn output budget), `max_output_tokens≈1500` (output 4-rổ ước ~1200).
+- *(Nếu user muốn thử model mạnh hơn → tách arm riêng, KHÔNG trộn vào so sánh chính.)*
+
+### 17.4 Cache + cost-gate + halt
+- **Cache:** dùng `llm_call_cache` (key=hash(model,params,messages)); chạy lại → cache-hit, 0 API, consolidation tái lập. *(prompt LƯU ở `request_json` — token-growth-halt-and-audit.)*
+- **Cost-gate 2 bước:** (a) `--estimate-only` in **token + $ ước tính** rồi THOÁT (không gọi API); (b) chỉ chạy thật khi có `--confirm-usd <ceiling>`; nếu ước tính > ceiling → halt.
+- **Ngân sách đo thật (C1):** prompt **141.317 tok/chương** + output ~50×1200 = **~60.000 tok** → ~**201k tok/chương**. Quy $ theo model (ví dụ class 4o ~$2.5/$10 per 1M → input ~$0.35 + output ~$0.60 ≈ **$1/chương**; class mini ~$0.15/$0.60 → ≈ **$0.06/chương**; prompt-cache giảm thêm). **1 chương = rất rẻ; gate là kỷ luật, không phải vì đắt.**
+- **Halt:** per-window assert pack≤1500/prompt≤6000 (đã có); running token total log; nếu vượt ceiling giữa chừng → dừng + audit (không chạy nốt mù).
+
+### 17.5 Metrics (deliverable — so v2 vs v1, **scope khớp**)
+1. **Entry count:** v2 (chương này) vs **v1 ĐÚNG chương này** (scope-match, KHÔNG so với 1608 toàn sách — scoring-scope-equals-production-scope).
+2. **Recall-vs-gold (DEV):** tái dùng `builder_gold.score_builder_vs_gold`; bao nhiêu gold-term của chương này v2 bắt được, so v1. **Gold CHỈ để chấm sau, KHÔNG bơm vào builder.**
+3. **Stoplist value THẬT:** đếm bao nhiêu từ-phổ-thông LLM đề xuất bị code reject (vá lỗ R2 — C1 chỉ thấy 2).
+4. **Số-ít/số-nhiều:** v2 còn tách đôi không (kỳ vọng ~0 nhờ concept_key).
+5. **Conflict** (count+types) · **occurrence bảo toàn** trong run v2 · **token/window thật vs ước** · phân bố `decision_log`.
+6. **Chống tuning-on-test:** chương pilot = **DEV**, recall-vs-gold KHÔNG phải headline; KHÔNG chỉnh prompt/stoplist theo gold chương này (dont-tune-intervention-on-test-baseline).
+
+### 17.6 Guards
+0 DB write (artifact JSON only) · frozen DB `mode=ro` (chỉ đọc source blocks) · mù-gold (gold chỉ ở bước chấm, sau) · prompt v8 verbatim · key env-first→`OPENAI-KEY-*.txt`, **KHÔNG log** · per-window audit + decision/cost log đầy đủ · artifact `data/reports/builder_v2_c2_*` gitignore.
+
+### 17.7 Acceptance (lệnh chạy được)
+- `python pipeline/scripts/builder_v2_pilot.py --chapter preliminaries --estimate-only` → in token+$ ước tính, **0 API**, thoát.
+- `python pipeline/scripts/builder_v2_pilot.py --chapter preliminaries --confirm-usd <ceiling> --out data/reports/builder_v2_c2_pilot` → chạy thật, artifact notebook+decision+cost+audit; frozen hash bất biến; metrics §17.5 in ra.
+- `pytest pipeline/tests/test_builder_v2_pilot.py -q`: mock LLM (KHÔNG gọi API thật trong test) → assert (a) loop online dựng pack từ notebook sống + future-leak=0; (b) cache-hit lần 2 = 0 API; (c) parse_failure không crash; (d) cost-gate chặn khi >ceiling; (e) metrics scope-match v1 đúng chương; (f) 0 DB write.
+
+**Quy trình:** CodeX điền §5 implementation + chạy `--estimate-only` ghi số → **STOP, KHÔNG gọi API thật, KHÔNG commit**. Claude review §6 + **trình $ cho user duyệt** → user OK mới chạy `--confirm-usd`.
