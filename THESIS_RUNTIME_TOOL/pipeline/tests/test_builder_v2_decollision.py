@@ -235,6 +235,51 @@ def test_gate_applies_only_hard_ledger_candidates_and_holds_variant_proposals(tm
     assert updated["decollision_prompt_version"] == decollide.PROMPT_VERSION_V2
 
 
+def test_no_new_collision_guard_converts_applied_resolve_to_polysemy(tmp_path: Path):
+    notebook = _notebook()
+    notebook["entries"].append(_entry("derivative", "đạo hàm", "b_part"))
+    groups = decollide.build_collision_groups(notebook, _db(tmp_path))
+    rows = []
+    for group in groups:
+        for member in group["members"]:
+            if member["entry_id"] == "gradient":
+                rows.append(
+                    {
+                        "entry_id": "gradient",
+                        "decision": "resolve_distinct",
+                        "chosen_canonical": "đạo hàm",
+                        "confidence": "high",
+                        "reason": "ledger flags bad shared name",
+                    }
+                )
+            else:
+                rows.append(
+                    {
+                        "entry_id": member["entry_id"],
+                        "decision": "keep_shared",
+                        "chosen_canonical": group["shared_canonical"],
+                        "confidence": "high",
+                        "reason": "keeps the shared owner name",
+                    }
+                )
+
+    validated = decollide.validate_decollision_results(rows, groups)
+    guarded = decollide.gate_decollision_rows(validated, gated=True, notebook=notebook)
+    gradient = next(row for row in guarded if row["entry_id"] == "gradient")
+
+    assert gradient["decision"] == "mark_polysemy"
+    assert gradient["chosen_canonical"] is None
+    assert gradient["applied_status"] == "converted_to_polysemy"
+    assert gradient["blocked_chosen_canonical"] == "đạo hàm"
+    assert gradient["blocked_collision_entry_ids"] == ["derivative"]
+
+    updated = decollide.apply_decollision_to_notebook(notebook, guarded)
+    entries = {entry["concept_key"]: entry for entry in updated["entries"]}
+    assert entries["gradient"]["canonical_target_vi"] != "đạo hàm"
+    assert entries["gradient"]["inject_as_hard_canonical"] is False
+    assert entries["gradient"]["audit"]["audit_label"] == "polysemy_or_context_dependent"
+
+
 def test_prompt_v2_owner_rule_rejects_resolve_without_owner(tmp_path: Path):
     groups = decollide.build_collision_groups(
         _notebook(),

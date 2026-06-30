@@ -20,6 +20,7 @@ from pipeline.prepass.builder_v2_decollision import (
     apply_decollision_to_notebook,
     build_collision_groups,
     chunk_groups,
+    gate_decollision_rows,
     load_notebook,
     prompt_text,
     validate_decollision_results,
@@ -172,6 +173,7 @@ def run_c35(
     applied_notebook: dict[str, Any] | None = None
     post_metrics: dict[str, Any] | None = None
     if decollision_rows is not None:
+        decollision_rows = gate_decollision_rows(decollision_rows, gated=True, notebook=notebook)
         applied_notebook = apply_decollision_to_notebook(notebook, decollision_rows)
         (out_dir / "decollision_trail.json").write_text(
             json.dumps(decollision_rows, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

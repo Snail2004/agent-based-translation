@@ -377,7 +377,12 @@ def validate_decollision_results(
     return rows
 
 
-def gate_decollision_rows(rows: list[dict[str, Any]], *, gated: bool) -> list[dict[str, Any]]:
+def gate_decollision_rows(
+    rows: list[dict[str, Any]],
+    *,
+    gated: bool,
+    notebook: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     gated_rows: list[dict[str, Any]] = []
     for row in rows:
         updated = dict(row)
@@ -389,6 +394,8 @@ def gate_decollision_rows(rows: list[dict[str, Any]], *, gated: bool) -> list[di
         else:
             updated["applied_status"] = "applied"
         gated_rows.append(updated)
+    if notebook is not None:
+        gated_rows = _guard_no_new_collisions(notebook, gated_rows)
     return gated_rows
 
 
@@ -455,6 +462,62 @@ def apply_decollision_to_notebook(
     result["decollision_prompt_version"] = prompt_version
     result["decollision_trail"] = rows
     return result
+
+
+def _guard_no_new_collisions(notebook: dict[str, Any], rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows_by_id = {str(row.get("entry_id") or ""): row for row in rows}
+    final_canonical_by_entry: dict[str, str] = {}
+    for entry in notebook.get("entries") or []:
+        if not isinstance(entry, dict):
+            continue
+        entry_id = _entry_id(entry)
+        if _audit_label(entry) not in KEEP_LABELS:
+            continue
+        row = rows_by_id.get(entry_id)
+        if row is not None:
+            if row.get("applied_status", "applied") == "held_proposal":
+                canonical = _clean_text(entry.get("canonical_target_vi"))
+            elif row["decision"] == "resolve_distinct":
+                canonical = _clean_text(row.get("chosen_canonical"))
+            elif row["decision"] in {"mark_polysemy", "uncertain"}:
+                continue
+            else:
+                canonical = _clean_text(entry.get("canonical_target_vi"))
+        else:
+            canonical = _clean_text(entry.get("canonical_target_vi"))
+        if canonical:
+            final_canonical_by_entry[entry_id] = canonical
+
+    entries_by_canonical: dict[str, list[str]] = {}
+    for entry_id, canonical in final_canonical_by_entry.items():
+        entries_by_canonical.setdefault(normalize_target_key(canonical), []).append(entry_id)
+
+    guarded: list[dict[str, Any]] = []
+    for row in rows:
+        updated = dict(row)
+        if row["decision"] == "resolve_distinct" and row.get("applied_status", "applied") == "applied":
+            chosen = _clean_text(row.get("chosen_canonical"))
+            collision_entries = [
+                entry_id
+                for entry_id in entries_by_canonical.get(normalize_target_key(chosen), [])
+                if entry_id != row["entry_id"]
+            ]
+            if collision_entries:
+                updated.update(
+                    {
+                        "decision": "mark_polysemy",
+                        "chosen_canonical": None,
+                        "applied_status": "converted_to_polysemy",
+                        "blocked_by_no_new_collision": True,
+                        "blocked_chosen_canonical": chosen,
+                        "blocked_candidate_source": row.get("chosen_candidate_source"),
+                        "blocked_candidate_type": row.get("chosen_candidate_type"),
+                        "blocked_collision_entry_ids": collision_entries,
+                        "reason": "blocked new collision with existing canonical",
+                    }
+                )
+        guarded.append(updated)
+    return guarded
 
 
 def normalize_target_key(value: str) -> str:
