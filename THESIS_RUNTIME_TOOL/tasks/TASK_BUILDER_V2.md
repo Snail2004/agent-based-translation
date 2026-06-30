@@ -1346,3 +1346,161 @@ Resolve the following collision groups. Return the JSON array as specified.
 - **C3.5 = de-collision pass, KHONG phai full ledger-repair.** No CHI bat cac entry **dung canonical cheo-entry**. Entry co `bad_existing_target` ma **khong dung** voi entry khac -> C3.5 **KHONG** bat (vd se can pass khac). Tren chuong `preliminaries` hien tai cac ca ledger con lai (one/shape/tensor) deu tu lanh (bi bo / da polysemy / ignore lai dung), nen khong co bug ledger co hai bi sot - nhung **dung over-claim** "da sua consolidation phot lo ledger toan he thong".
 - **Follow-up rieng (khong nhet vao C3.5):** consolidation rule "single clear `bad_existing_target` proposal -> deterministic apply; multiple competing -> route polysemy/LLM". Lam sau neu Claude duyet.
 - KHONG re-run luot Auditor chinh, KHONG bump prompt chinh, KHONG them "translation-quality judge" from-scratch (ca "dich sai am tham khong co + khong dung do" la hiem -> de tang do luong loi ra).
+
+### 27.7 Implementation notes - CodeX (2026-07-01, REVIEW, STOP)
+
+**Implemented:** `pipeline/prepass/builder_v2_decollision.py`, `pipeline/scripts/builder_v2_c35_decollision.py`, `pipeline/tests/test_builder_v2_decollision.py`.
+
+**Commands run:**
+- `python -m pytest pipeline\tests\test_builder_v2_decollision.py pipeline\tests\test_builder_v2_audit.py -q --basetemp D:\temp\pytest-builder-v2-c35` -> 9 passed.
+- `python pipeline\scripts\builder_v2_c35_decollision.py --estimate-only --out data\reports\builder_v2_c35_decollision` -> 7 groups / 14 members / 1 call / prompt 3629 tok / cap cost $0.01319525 / 0 API.
+- `python pipeline\scripts\builder_v2_c35_decollision.py --confirm-usd 0.02 --out data\reports\builder_v2_c35_decollision` -> completed, 1 API call, actual cost $0.00175725, parse_failure=0, DB hash unchanged.
+- `python -m pytest pipeline\tests\test_builder_v2_decollision.py pipeline\tests\test_builder_v2_audit.py pipeline\tests\test_d2l_translate_score.py -q --basetemp D:\temp\pytest-builder-v2-c35-final` -> 25 passed.
+
+**Artifacts:** `data/reports/builder_v2_c35_decollision/` contains `collision_groups.json`, `prompts/decollision_001.txt` (full prompt), `raw_outputs.json`, `cost_log.json`, `decollision_trail.json`, `notebook_decollided.json`, `builder_v2_c35_metrics.json`, `builder_v2_c35_decollision_report.json`.
+
+**Result summary:**
+- Decisions: `keep_shared=4`, `resolve_distinct=10`, no `mark_polysemy`, no `uncertain`.
+- Recall invariants PASS: gold denominator, matched source terms, Metric A recall, Metric B recall, and entry counts unchanged.
+- Cost was tiny, but this is still a real paid API run.
+
+**Important quality warning (must review before promotion):**
+- De-collision improved the two intended collision classes mechanically, but it also over-split several groups. DEV agreement decreased:
+  - Metric A agreement: 0.605263 -> 0.578947.
+  - Metric B agreement: 0.647059 -> 0.617647.
+- Main suspicious decisions:
+  - `backpropagation` changed from shared `lan truyen nguoc` to candidate `truy vet nguoc`, which introduces a new gold disagreement.
+  - `derivative` changed from `dao ham` to `vi phan` with low confidence; this is likely too aggressive.
+- Therefore `notebook_decollided.json` should be treated as REVIEW artifact, not accepted production memory, until Claude/user reviews `decollision_trail.json`. A safer follow-up may need either (a) apply only ledger-backed `bad_existing_target/canonical_target_change` decisions, or (b) keep target-variant-only splits as proposals instead of automatic canonical changes.
+
+**Potential hole found during implementation:**
+- C3.5 fixes cross-entry canonical collisions only. It cannot fix single-entry stale canonical problems unless they collide with another entry. This matches 27.6 but remains a real limitation.
+- Some collision members have no alternative candidates, so the model can only `keep_shared`, `mark_polysemy`, or `uncertain`. This is correct under the no-invention rule, but limits repair coverage.
+
+**STOP condition honored:** no commit, no push.
+
+## 28. Stage C3.5 ABLATION: gate (run-1) + prompt v2 pin-owner (run-2) *(Claude, 2026-07-01)*
+
+> Muc tieu: do **dong gop tung buoc**. Them gate -> chay lai (run-1) -> so. Roi them prompt v2 -> chay lai (run-2, kem gate) -> so. CodeX implement; byte prompt `d2l_decollision_v2` (28.5) do Claude thiet ke, VERBATIM. STOP khong commit; Claude review + commit.
+> Boi canh: run v1 hien tai (xem 27.7) chay dung co che nhung **over-split** (agreement A 0.605->0.579, B 0.647->0.618); moi quyet dinh hai deu **variant-only**, quyet dinh ledger-cung duy nhat (gradient) la dung. Nguyen nhan goc = prompt v1 doi xung, khong co "chu so huu", khong dung tin hieu tan suat.
+
+### 28.0 Bat bien (giu nguyen 27.1)
+Mu gold; LLM chi chon trong candidates khong bia; soft-only khong xoa; frozen DB ro; key khong log; STOP khong commit.
+
+### 28.1 Arms + giao thuc so sanh
+| arm | prompt | gate | nguon |
+|---|---|---|---|
+| **baseline** (truoc de-collision) | - | - | A=0.605263, B=0.647059 (SAN, khong duoc tut duoi day) |
+| **Arm0** (hien tai) | v1 | KHONG | A=0.578947, B=0.617647 (da co, 27.7) |
+| **Run-1** | v1 | CO | can chay |
+| **Run-2u** (ungated) | v2 | KHONG | can chay (do RIENG tac dong prompt) |
+| **Run-2** | v2 | CO | can chay |
+
+Moi run report:
+- **agreement A/B** (vs gold, eval-only) - **CA gated va ungated** voi v2 (vi gate chi ap ledger-backed nen agreement gated cua Run-1 va Run-2 co the bang nhau; tac dong prompt chi lo ra o **Run-2u ungated**).
+- **Recall invariants** (gold denominator, matched source, recall A/B, entry counts) - **PHAI khong doi** moi run.
+- **Bang per-group before/after** (canonical cu -> moi, decision, applied/held).
+- Xuat trail day du cho **Claude review dem tay**: so quyet dinh HAI (doi nham chu) va so quyet dinh DUNG - vi agreement gold **danh gia thap** muc hai (vd `derivative` occ=18 khong nam trong gold subset nen hong ma metric khong thay).
+
+**Ket luan ablation can tra loi:** (1) gate cuu duoc bao nhieu (Run-1 vs Arm0); (2) prompt v2 tu no sua goc bao nhieu (Run-2u vs Arm0, ly tuong ~= baseline = khong regress du KHONG gate); (3) ca hai (Run-2).
+
+### 28.2 RUN-1: gate only (0 API - re-apply trail v1 co san)
+Them buoc **gate o apply** (`apply_decollision_to_notebook` hoac pre-filter rows):
+- `resolve_distinct` -> **CHI ap (doi `canonical_target_vi`) neu `chosen_canonical` co provenance type in {bad_existing_target, canonical_target_change}** (tra theo candidate objects da co {text, source, type}).
+- `resolve_distinct` **variant-only** (provenance = target_variant, hoac type=polysemy_suspected) -> **decision hieu luc = `held_proposal`**: ghi vao trail (giu de review) nhung **KHONG doi canonical**.
+- `keep_shared`/`mark_polysemy`/`uncertain` -> giu nguyen logic 27.5.
+- Artifacts: `notebook_decollided_run1.json`, `metrics_run1.json`, trail co cot `applied|held_proposal`.
+- Ky vong: agreement **>= baseline** (revert backpropagation/derivative, giu gradient).
+
+### 28.3 RUN-2: prompt v2 (pin-owner) + gate (API that, nho ~1 call cho 7 nhom)
+- Them card fields (28.4), goi `d2l_decollision_v2` (28.5), validate (28.6), roi **ap CUNG gate 28.2**.
+- Report **ungated (Run-2u)** truoc khi gate va **gated (Run-2)** sau gate. Artifacts: `notebook_decollided_run2.json`, `metrics_run2.json`, `decollision_trail_v2.json`, prompt luu o prompts/.
+- Cache RIENG, khong dung lai cache v1 (prompt khac).
+
+### 28.4 Card them (code, may moc - HINT, khong phai phan quyet)
+Moi member them:
+- `rejects_shared` (bool) = entry co conflict_ledger entry type `bad_existing_target` (no tu bao "ten dang dung la sai voi toi").
+Moi group them:
+- `owner_hint` (entry_id) = trong cac member co `rejects_shared=false`, lay member co `occurrences_total` LON NHAT (tie-break: entry_id casefold). Neu TAT CA reject -> `owner_hint=null` (LLM tu quyet).
+> Kiem chung tay: gradient(rejects)->non-owner, partial derivative->owner; backpropagation(occ5)>backward(occ1)->owner=backpropagation (giu "lan truyen nguoc", SUA loi v1); derivative(occ18)->owner (giu "dao ham", SUA loi v1); multiplication rule(occ3)>product rule(occ2)->owner. Owner-hint co hoc ra dung chu o moi nhom.
+
+### 28.5 BYTE PROMPT `d2l_decollision_v2` *(Claude thiet ke - CodeX VERBATIM)*
+```
+[SYSTEM]
+You resolve naming COLLISIONS in an English-to-Vietnamese translation memory for the
+deep-learning textbook "Dive into Deep Learning" (D2L). Code detected GROUPS: distinct English
+source terms that were assigned the SAME Vietnamese canonical. Your job: decide whether a group
+is truly ONE concept, or DIFFERENT concepts wrongly sharing a name; and if different, KEEP the
+name for its rightful OWNER and give the others a distinct name. You do NOT translate from
+scratch and you do NOT invent new Vietnamese wordings - you only choose among the candidates you
+are given, or flag.
+
+Work per GROUP, in this protocol:
+
+STEP 1 - same concept or different?
+- If the members are the same concept or genuine synonyms (e.g. mean / average; a noun and its
+  adjective form), set ALL members to keep_shared. Do NOT split synonyms.
+- If you are not clearly convinced they are different concepts, treat them as the same and
+  keep_shared. A harmless shared name is better than a wrong split.
+
+STEP 2 - if different concepts, find the OWNER.
+- The OWNER is the member that standardly carries shared_canonical. Use owner_hint (a mechanical
+  suggestion = the most frequent member that does not reject the shared name) together with the
+  evidence. A member whose signals say rejects_shared=true (upstream flagged shared_canonical as
+  WRONG for it) is NOT the owner.
+- The OWNER keeps the shared name: set it keep_shared. NEVER move the owner off shared_canonical.
+
+STEP 3 - the OTHER members (non-owners).
+- For each non-owner, pick from ITS candidates a canonical that differs from shared_canonical and
+  from the owner -> decision resolve_distinct.
+- If a non-owner has no suitable distinct candidate, or it genuinely has several context-dependent
+  renderings, set mark_polysemy (chosen_canonical=null). Do NOT invent a wording.
+
+Hard rules:
+- Choose canonicals ONLY from each member's candidates (use "text"). Never invent.
+- In a different-concept group, exactly the owner keeps shared_canonical; every resolve_distinct
+  must differ from shared_canonical AND from the owner's canonical AND from each other.
+- Never drop or delete a term.
+- No reference/gold is given; judge from evidence + domain knowledge.
+- Recall-safety: prefer keep_shared (unsure about distinctness) or mark_polysemy (unsure about the
+  rendering) over a forced guess. If your confidence for a resolve_distinct would be low, use
+  mark_polysemy instead.
+
+Reading each member:
+- source_term, shared_canonical.
+- candidates: the ONLY wordings you may choose from; each has "text" + mechanical provenance
+  ("source"/"type"). A conflict_ledger candidate of type "bad_existing_target" or
+  "canonical_target_change" is the upstream's OWN correction - a strong hint, but confirm from
+  evidence.
+- evidence: 1-2 source sentences (use to tell concepts apart).
+- signals: occurrences; rejects_shared (whether upstream flagged shared_canonical as wrong for
+  this term).
+Per group you also get owner_hint: the mechanically suggested owner entry_id (confirm or override
+with evidence).
+
+Choose exactly one decision per member: keep_shared | resolve_distinct | mark_polysemy | uncertain.
+Set: chosen_canonical (keep_shared -> shared_canonical; resolve_distinct -> a candidate "text"
+that differs from shared_canonical; mark_polysemy / uncertain -> null), confidence
+(high|medium|low), reason (<= 20 words).
+
+Output: a single JSON array, EXACTLY one object per input member, keyed by entry_id, in the same
+order, no commentary:
+[{"entry_id":"...","decision":"...","chosen_canonical":"... or null","confidence":"...","reason":"..."}]
+
+Judge only from what you are given. Output nothing except the JSON array.
+
+[USER]
+Resolve the following collision groups (each has owner_hint + members). Return the JSON array as
+specified.
+<GROUPS_JSON>
+```
+
+### 28.6 Validator (mo rong tu 27.4)
+- Giu nguyen 27.4 (decision hop le; resolve_distinct.chosen in candidates & != shared & != keep_shared sibling & khong trung nhau trong nhom).
+- Them: trong group co >=1 `resolve_distinct`, **phai co dung 1 member giu shared** (owner: `keep_shared` voi chosen==shared) HOAC moi non-owner deu `mark_polysemy/uncertain` (truong hop khong ai giu ten - hop le). KHONG duoc co group ma owner bi `resolve_distinct` lam mat shared cho moi nguoi (tru khi tat ca thanh polysemy).
+- `owner_hint` adherence = **WARNING log, khong fail** (LLM duoc override co ly do).
+
+### 28.7 Khong lam / ky luat
+- Gate **co dinh = ledger-backed** xuyen suot Run-1 va Run-2 (de so sanh sach). Tac dong prompt do qua **Run-2u ungated**, khong noi long gate giua 2 run.
+- Prompt v2 la **nguyen tac tong quat a-priori** (chu giu ten / conf thap -> polysemy / dong-nghia khong tach). **KHONG duoc van cau chu cho dung 7 nhom nay** (hoc tu). Ket luan "v2 tot hon" chi vung khi do **held-out** o buoc sau - C3.5 nay van la DEV probe.
+- product rule -> "quy tac tich" la dung nhung variant-only -> gate van giu proposal; chap nhan (khong regress), xu rieng sau.
