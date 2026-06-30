@@ -12,7 +12,10 @@ from pipeline.agents.llm_client import estimate_prompt_tokens
 
 
 PROMPT_VERSION = "d2l_decollision_v1"
-SYSTEM_PROMPT = """You resolve naming COLLISIONS in an English-to-Vietnamese translation memory for the
+PROMPT_VERSION_V1 = "d2l_decollision_v1"
+PROMPT_VERSION_V2 = "d2l_decollision_v2"
+HARD_LEDGER_TYPES = {"bad_existing_target", "canonical_target_change"}
+SYSTEM_PROMPT_V1 = """You resolve naming COLLISIONS in an English-to-Vietnamese translation memory for the
 deep-learning textbook "Dive into Deep Learning" (D2L). Upstream code has detected GROUPS:
 each group is a set of DISTINCT English source terms that were assigned the SAME Vietnamese
 canonical translation. For each member you decide whether that shared translation is correct,
@@ -68,7 +71,72 @@ same order, no commentary:
 [{"entry_id":"...","decision":"...","chosen_canonical":"... or null","confidence":"...","reason":"..."}]
 
 Judge only from what you are given. Output nothing except the JSON array."""
-USER_PROMPT_PREFIX = "Resolve the following collision groups. Return the JSON array as specified."
+SYSTEM_PROMPT_V2 = """You resolve naming COLLISIONS in an English-to-Vietnamese translation memory for the
+deep-learning textbook "Dive into Deep Learning" (D2L). Code detected GROUPS: distinct English
+source terms that were assigned the SAME Vietnamese canonical. Your job: decide whether a group
+is truly ONE concept, or DIFFERENT concepts wrongly sharing a name; and if different, KEEP the
+name for its rightful OWNER and give the others a distinct name. You do NOT translate from
+scratch and you do NOT invent new Vietnamese wordings - you only choose among the candidates you
+are given, or flag.
+
+Work per GROUP, in this protocol:
+
+STEP 1 - same concept or different?
+- If the members are the same concept or genuine synonyms (e.g. mean / average; a noun and its
+  adjective form), set ALL members to keep_shared. Do NOT split synonyms.
+- If you are not clearly convinced they are different concepts, treat them as the same and
+  keep_shared. A harmless shared name is better than a wrong split.
+
+STEP 2 - if different concepts, find the OWNER.
+- The OWNER is the member that standardly carries shared_canonical. Use owner_hint (a mechanical
+  suggestion = the most frequent member that does not reject the shared name) together with the
+  evidence. A member whose signals say rejects_shared=true (upstream flagged shared_canonical as
+  WRONG for it) is NOT the owner.
+- The OWNER keeps the shared name: set it keep_shared. NEVER move the owner off shared_canonical.
+
+STEP 3 - the OTHER members (non-owners).
+- For each non-owner, pick from ITS candidates a canonical that differs from shared_canonical and
+  from the owner -> decision resolve_distinct.
+- If a non-owner has no suitable distinct candidate, or it genuinely has several context-dependent
+  renderings, set mark_polysemy (chosen_canonical=null). Do NOT invent a wording.
+
+Hard rules:
+- Choose canonicals ONLY from each member's candidates (use "text"). Never invent.
+- In a different-concept group, exactly the owner keeps shared_canonical; every resolve_distinct
+  must differ from shared_canonical AND from the owner's canonical AND from each other.
+- Never drop or delete a term.
+- No reference/gold is given; judge from evidence + domain knowledge.
+- Recall-safety: prefer keep_shared (unsure about distinctness) or mark_polysemy (unsure about the
+  rendering) over a forced guess. If your confidence for a resolve_distinct would be low, use
+  mark_polysemy instead.
+
+Reading each member:
+- source_term, shared_canonical.
+- candidates: the ONLY wordings you may choose from; each has "text" + mechanical provenance
+  ("source"/"type"). A conflict_ledger candidate of type "bad_existing_target" or
+  "canonical_target_change" is the upstream's OWN correction - a strong hint, but confirm from
+  evidence.
+- evidence: 1-2 source sentences (use to tell concepts apart).
+- signals: occurrences; rejects_shared (whether upstream flagged shared_canonical as wrong for
+  this term).
+Per group you also get owner_hint: the mechanically suggested owner entry_id (confirm or override
+with evidence).
+
+Choose exactly one decision per member: keep_shared | resolve_distinct | mark_polysemy | uncertain.
+Set: chosen_canonical (keep_shared -> shared_canonical; resolve_distinct -> a candidate "text"
+that differs from shared_canonical; mark_polysemy / uncertain -> null), confidence
+(high|medium|low), reason (<= 20 words).
+
+Output: a single JSON array, EXACTLY one object per input member, keyed by entry_id, in the same
+order, no commentary:
+[{"entry_id":"...","decision":"...","chosen_canonical":"... or null","confidence":"...","reason":"..."}]
+
+Judge only from what you are given. Output nothing except the JSON array."""
+USER_PROMPT_PREFIX_V1 = "Resolve the following collision groups. Return the JSON array as specified."
+USER_PROMPT_PREFIX_V2 = (
+    "Resolve the following collision groups (each has owner_hint + members). "
+    "Return the JSON array as specified."
+)
 
 KEEP_LABELS = {
     "keep_as_translate_term",
@@ -104,7 +172,12 @@ def load_notebook(notebook_path: Path) -> dict[str, Any]:
     return raw
 
 
-def build_collision_groups(notebook: dict[str, Any], db_path: Path) -> list[dict[str, Any]]:
+def build_collision_groups(
+    notebook: dict[str, Any],
+    db_path: Path,
+    *,
+    prompt_version: str = PROMPT_VERSION_V1,
+) -> list[dict[str, Any]]:
     entries = [entry for entry in notebook.get("entries") or [] if isinstance(entry, dict)]
     buckets: dict[str, list[dict[str, Any]]] = {}
     for entry in entries:
@@ -124,14 +197,19 @@ def build_collision_groups(notebook: dict[str, Any], db_path: Path) -> list[dict
             if len(source_keys) < 2:
                 continue
             shared = _clean_text(members[0].get("canonical_target_vi"))
-            groups.append(
-                {
-                    "group_id": f"collision_{len(groups) + 1:03d}",
-                    "shared_canonical": shared,
-                    "normalized_shared_canonical": key,
-                    "members": [_build_member_card(cur, member, shared) for member in members],
-                }
-            )
+            member_cards = [
+                _build_member_card(cur, member, shared, include_v2_signals=prompt_version == PROMPT_VERSION_V2)
+                for member in members
+            ]
+            group: dict[str, Any] = {
+                "group_id": f"collision_{len(groups) + 1:03d}",
+                "shared_canonical": shared,
+                "normalized_shared_canonical": key,
+                "members": member_cards,
+            }
+            if prompt_version == PROMPT_VERSION_V2:
+                group["owner_hint"] = _owner_hint(member_cards)
+            groups.append(group)
         return groups
     finally:
         conn.close()
@@ -142,6 +220,7 @@ def chunk_groups(
     *,
     max_groups: int = 8,
     prompt_token_cap: int | None = None,
+    prompt_version: str = PROMPT_VERSION_V1,
 ) -> list[DecollisionChunk]:
     if max_groups <= 0:
         raise ValueError("max_groups must be positive")
@@ -152,7 +231,7 @@ def chunk_groups(
         too_many = len(trial) > max_groups
         too_large = (
             prompt_token_cap is not None
-            and estimate_prompt_tokens(build_decollision_messages(trial), None) > prompt_token_cap
+            and estimate_prompt_tokens(build_decollision_messages(trial, prompt_version=prompt_version), None) > prompt_token_cap
         )
         if current and (too_many or too_large):
             subsets.append(current)
@@ -161,16 +240,31 @@ def chunk_groups(
             current = trial
     if current:
         subsets.append(current)
-    return [_make_chunk(index, subset) for index, subset in enumerate(subsets, start=1)]
-
-
-def build_decollision_messages(groups: list[dict[str, Any]]) -> list[dict[str, str]]:
-    payload = {"groups": groups}
     return [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        _make_chunk(index, subset, prompt_version=prompt_version)
+        for index, subset in enumerate(subsets, start=1)
+    ]
+
+
+def build_decollision_messages(
+    groups: list[dict[str, Any]],
+    *,
+    prompt_version: str = PROMPT_VERSION_V1,
+) -> list[dict[str, str]]:
+    payload = {"groups": groups}
+    if prompt_version == PROMPT_VERSION_V2:
+        system_prompt = SYSTEM_PROMPT_V2
+        prefix = USER_PROMPT_PREFIX_V2
+    elif prompt_version == PROMPT_VERSION_V1:
+        system_prompt = SYSTEM_PROMPT_V1
+        prefix = USER_PROMPT_PREFIX_V1
+    else:
+        raise ValueError(f"Unknown decollision prompt_version: {prompt_version}")
+    return [
+        {"role": "system", "content": system_prompt},
         {
             "role": "user",
-            "content": f"{USER_PROMPT_PREFIX}\n{json.dumps(payload, ensure_ascii=False, separators=(',', ':'))}",
+            "content": f"{prefix}\n{json.dumps(payload, ensure_ascii=False, separators=(',', ':'))}",
         },
     ]
 
@@ -185,6 +279,8 @@ def prompt_text(messages: list[dict[str, str]]) -> str:
 def validate_decollision_results(
     results: list[dict[str, Any]],
     groups: list[dict[str, Any]],
+    *,
+    require_owner: bool = False,
 ) -> list[dict[str, Any]]:
     expected_members = _flatten_members(groups)
     if len(results) != len(expected_members):
@@ -212,6 +308,7 @@ def validate_decollision_results(
         chosen = _clean_text(chosen_raw) if chosen_raw is not None else None
         shared = expected["shared_canonical"]
         candidate_texts = set(expected["candidate_texts"])
+        candidate_lookup = expected["candidate_lookup"]
         if decision == "keep_shared":
             if chosen != shared:
                 raise ValueError(f"Decollision row {index} keep_shared must choose shared_canonical")
@@ -222,9 +319,17 @@ def validate_decollision_results(
                 raise ValueError(f"Decollision row {index} resolve_distinct chose shared canonical")
             if chosen not in candidate_texts:
                 raise ValueError(f"Decollision row {index} chosen canonical is not in candidates: {chosen!r}")
+            chosen_candidate = candidate_lookup[normalize_target_key(chosen)]
+            chosen_source = chosen_candidate["source"]
+            chosen_type = chosen_candidate["type"]
         else:
             if chosen is not None:
                 raise ValueError(f"Decollision row {index} {decision} must use chosen_canonical=null")
+            chosen_source = None
+            chosen_type = None
+        if decision != "resolve_distinct":
+            chosen_source = None
+            chosen_type = None
         rows.append(
             {
                 "group_id": expected["group_id"],
@@ -235,6 +340,9 @@ def validate_decollision_results(
                 "reason": reason,
                 "shared_canonical": shared,
                 "candidate_texts": sorted(candidate_texts, key=str.casefold),
+                "chosen_candidate_source": chosen_source,
+                "chosen_candidate_type": chosen_type,
+                "applied_status": "applied",
             }
         )
 
@@ -248,6 +356,13 @@ def validate_decollision_results(
             if row["decision"] == "keep_shared"
         }
         resolved: set[str] = set()
+        has_resolve = any(row["decision"] == "resolve_distinct" for row in group_rows)
+        has_keep_shared = any(row["decision"] == "keep_shared" for row in group_rows)
+        if require_owner:
+            if has_resolve and not has_keep_shared:
+                raise ValueError(f"Group {group_id} has resolve_distinct but no keep_shared owner")
+            if not has_keep_shared and any(row["decision"] not in {"mark_polysemy", "uncertain"} for row in group_rows):
+                raise ValueError(f"Group {group_id} has no keep_shared owner but is not all unresolved")
         for row in group_rows:
             if row["decision"] != "resolve_distinct":
                 continue
@@ -262,9 +377,26 @@ def validate_decollision_results(
     return rows
 
 
+def gate_decollision_rows(rows: list[dict[str, Any]], *, gated: bool) -> list[dict[str, Any]]:
+    gated_rows: list[dict[str, Any]] = []
+    for row in rows:
+        updated = dict(row)
+        if gated and row["decision"] == "resolve_distinct":
+            if row.get("chosen_candidate_source") == "conflict_ledger" and row.get("chosen_candidate_type") in HARD_LEDGER_TYPES:
+                updated["applied_status"] = "applied"
+            else:
+                updated["applied_status"] = "held_proposal"
+        else:
+            updated["applied_status"] = "applied"
+        gated_rows.append(updated)
+    return gated_rows
+
+
 def apply_decollision_to_notebook(
     notebook: dict[str, Any],
     rows: list[dict[str, Any]],
+    *,
+    prompt_version: str = PROMPT_VERSION_V1,
 ) -> dict[str, Any]:
     by_id = {row["entry_id"]: row for row in rows}
     entries: list[dict[str, Any]] = []
@@ -277,7 +409,7 @@ def apply_decollision_to_notebook(
         if row is not None:
             decision = row["decision"]
             updated["decollision"] = {
-                "prompt_version": PROMPT_VERSION,
+                "prompt_version": prompt_version,
                 "group_id": row["group_id"],
                 "decision": decision,
                 "previous_canonical_target_vi": str(entry.get("canonical_target_vi") or ""),
@@ -285,8 +417,13 @@ def apply_decollision_to_notebook(
                 "confidence": row["confidence"],
                 "reason": row["reason"],
                 "candidate_texts": row["candidate_texts"],
+                "chosen_candidate_source": row.get("chosen_candidate_source"),
+                "chosen_candidate_type": row.get("chosen_candidate_type"),
+                "applied_status": row.get("applied_status", "applied"),
             }
-            if decision == "resolve_distinct":
+            if row.get("applied_status", "applied") == "held_proposal":
+                pass
+            elif decision == "resolve_distinct":
                 updated["canonical_target_vi"] = row["chosen_canonical"]
             elif decision == "mark_polysemy":
                 audit = dict(updated.get("audit") or {})
@@ -315,7 +452,7 @@ def apply_decollision_to_notebook(
         entries.append(updated)
     result = dict(notebook)
     result["entries"] = entries
-    result["decollision_prompt_version"] = PROMPT_VERSION
+    result["decollision_prompt_version"] = prompt_version
     result["decollision_trail"] = rows
     return result
 
@@ -326,9 +463,9 @@ def normalize_target_key(value: str) -> str:
     return value.casefold()
 
 
-def _make_chunk(index: int, groups: list[dict[str, Any]]) -> DecollisionChunk:
+def _make_chunk(index: int, groups: list[dict[str, Any]], prompt_version: str = PROMPT_VERSION_V1) -> DecollisionChunk:
     chunk_id = f"decollision_{index:03d}"
-    messages = build_decollision_messages(groups)
+    messages = build_decollision_messages(groups, prompt_version=prompt_version)
     members = _flatten_members(groups)
     return DecollisionChunk(
         chunk_id=chunk_id,
@@ -340,7 +477,13 @@ def _make_chunk(index: int, groups: list[dict[str, Any]]) -> DecollisionChunk:
     )
 
 
-def _build_member_card(cur: sqlite3.Cursor, entry: dict[str, Any], shared: str) -> dict[str, Any]:
+def _build_member_card(
+    cur: sqlite3.Cursor,
+    entry: dict[str, Any],
+    shared: str,
+    *,
+    include_v2_signals: bool = False,
+) -> dict[str, Any]:
     evidence_ids = _all_evidence_block_ids(entry)
     candidates = _candidate_objects(entry, shared)
     surfaces = _source_surfaces(entry)
@@ -352,16 +495,19 @@ def _build_member_card(cur: sqlite3.Cursor, entry: dict[str, Any], shared: str) 
         evidence.append(_snippet(text, surfaces))
         if len(evidence) >= 2:
             break
+    signals = {
+        "occurrences_total": int(entry.get("occurrences_total") or 0),
+        "builder_conflict_note": bool(entry.get("conflict_ledger") or []),
+    }
+    if include_v2_signals:
+        signals["rejects_shared"] = _rejects_shared(entry)
     return {
         "entry_id": _entry_id(entry),
         "source_term": _source_term(entry),
         "shared_canonical": shared,
         "candidates": candidates[:6],
         "evidence": evidence,
-        "signals": {
-            "occurrences_total": int(entry.get("occurrences_total") or 0),
-            "builder_conflict_note": bool(entry.get("conflict_ledger") or []),
-        },
+        "signals": signals,
     }
 
 
@@ -418,6 +564,14 @@ def _flatten_members(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for group in groups:
         for member in group.get("members") or []:
+            candidate_lookup = {
+                normalize_target_key(str(candidate.get("text") or "")): {
+                    "source": candidate.get("source"),
+                    "type": candidate.get("type"),
+                }
+                for candidate in member.get("candidates") or []
+                if str(candidate.get("text") or "").strip()
+            }
             rows.append(
                 {
                     "group_id": str(group["group_id"]),
@@ -428,9 +582,35 @@ def _flatten_members(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
                         for candidate in member.get("candidates") or []
                         if str(candidate.get("text") or "").strip()
                     ],
+                    "candidate_lookup": candidate_lookup,
                 }
             )
     return rows
+
+
+def _owner_hint(member_cards: list[dict[str, Any]]) -> str | None:
+    eligible = [
+        member
+        for member in member_cards
+        if not bool((member.get("signals") or {}).get("rejects_shared"))
+    ]
+    if not eligible:
+        return None
+    winner = sorted(
+        eligible,
+        key=lambda member: (
+            -int((member.get("signals") or {}).get("occurrences_total") or 0),
+            str(member.get("entry_id") or "").casefold(),
+        ),
+    )[0]
+    return str(winner.get("entry_id") or "")
+
+
+def _rejects_shared(entry: dict[str, Any]) -> bool:
+    for conflict in entry.get("conflict_ledger") or []:
+        if isinstance(conflict, dict) and str(conflict.get("type") or "") in HARD_LEDGER_TYPES:
+            return True
+    return False
 
 
 def _audit_label(entry: dict[str, Any]) -> str:

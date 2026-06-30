@@ -1509,3 +1509,48 @@ specified.
 - Gate **co dinh = ledger-backed** xuyen suot Run-1 va Run-2 (de so sanh sach). Tac dong prompt do qua **Run-2u ungated**, khong noi long gate giua 2 run.
 - Prompt v2 la **nguyen tac tong quat a-priori** (chu giu ten / conf thap -> polysemy / dong-nghia khong tach). **KHONG duoc van cau chu cho dung 7 nhom nay** (hoc tu). Ket luan "v2 tot hon" chi vung khi do **held-out** o buoc sau - C3.5 nay van la DEV probe.
 - product rule -> "quy tac tich" la dung nhung variant-only -> gate van giu proposal; chap nhan (khong regress), xu rieng sau.
+
+### 28.8 Implementation notes *(CodeX, 2026-07-01; status REVIEW)*
+
+Changed code:
+- `pipeline/prepass/builder_v2_decollision.py`: add prompt v1/v2 switch, v2 `rejects_shared` + `owner_hint`, candidate provenance preservation, `require_owner` validator, ledger-backed `gate_decollision_rows`, and `applied_status` trail. `apply_decollision_to_notebook` now records the actual prompt version so v2 artifacts are not mislabeled as v1.
+- `pipeline/scripts/builder_v2_c35_ablation.py`: new ablation driver. Run-1 replays existing v1 trail with gate (0 API). Run-2 renders prompt v2, estimates cost, then real-runs only under `--confirm-usd`. Full prompts saved under `data/reports/builder_v2_c35_ablation/run2_prompt_v2/prompts/`.
+- `pipeline/tests/test_builder_v2_decollision.py`: add guards for v2 owner hint, `rejects_shared`, gate apply/hold behavior, and owner-rule validator.
+
+Commands run:
+```powershell
+python -m py_compile pipeline\prepass\builder_v2_decollision.py pipeline\scripts\builder_v2_c35_ablation.py pipeline\scripts\builder_v2_c35_decollision.py
+python -m pytest pipeline\tests\test_builder_v2_decollision.py -q --basetemp D:\temp\pytest-builder-v2-c35-ablation
+python -m pytest pipeline\tests\test_builder_v2_decollision.py pipeline\tests\test_builder_v2_audit.py pipeline\tests\test_d2l_translate_score.py -q --basetemp D:\temp\pytest-builder-v2-c35-ablation-final
+python pipeline\scripts\builder_v2_c35_ablation.py --estimate-only --out data\reports\builder_v2_c35_ablation
+python pipeline\scripts\builder_v2_c35_ablation.py --confirm-usd 0.02 --out data\reports\builder_v2_c35_ablation
+```
+
+Verification:
+- Tests: `7 passed`; broader related suite: `28 passed`.
+- Frozen DB SHA unchanged: `DA0F687894090D43B75A3AE52BA71EC1EDF85DAB3198C9F86039879365D464B8`.
+- Estimate: 1 prompt-v2 call, 3,809 estimated prompt tokens, cap `$0.01324025`.
+- Real run: 1 API call via `OPENAI-KEY-2.txt`, 3,491 prompt tokens, 482 completion tokens, cost `$0.00183675`, parse failures `0`, cache hits `0`, cache misses `1`.
+
+Metric comparison:
+
+| arm | prompt | gate | A agreement | B agreement | A recall | B recall |
+|---|---|---|---:|---:|---:|---:|
+| baseline | - | - | 0.605263 | 0.647059 | 0.666667 | 0.596491 |
+| Arm0 | v1 | no | 0.578947 | 0.617647 | 0.666667 | 0.596491 |
+| Run-1 | v1 | yes | 0.605263 | 0.647059 | 0.666667 | 0.596491 |
+| Run-2u | v2 | no | 0.605263 | 0.647059 | 0.666667 | 0.596491 |
+| Run-2 | v2 | yes | 0.605263 | 0.647059 | 0.666667 | 0.596491 |
+
+Interpretation for review:
+- Gate alone fully removes the observed Arm0 regression: v1 decisions remain in the trail, but only ledger-hard candidates are applied; variant-only splits become `held_proposal`.
+- Prompt v2 is conservative in this run: all 14 members are `keep_shared`. That avoids v1 over-split regressions without needing gate, but also means v2 did not actively apply potentially useful splits such as `gradient -> đạo hàm`.
+- Recall invariants are unchanged across arms, as expected; agreement returns to baseline, not above it.
+- This remains a DEV probe. Do not promote `run2` output directly into production memory without Claude review/manual harm count, because metric agreement under-covers some non-gold affected occurrences.
+
+Artifacts:
+- `data/reports/builder_v2_c35_ablation/ablation_report.json`
+- `data/reports/builder_v2_c35_ablation/run1_gate/`
+- `data/reports/builder_v2_c35_ablation/run2_prompt_v2/`
+- `data/reports/builder_v2_c35_ablation/run2u_prompt_v2_ungated/`
+- `data/reports/builder_v2_c35_ablation/run2_prompt_v2_gated/`

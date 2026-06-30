@@ -134,6 +134,20 @@ def test_group_builder_keeps_diacritics_and_candidate_provenance(tmp_path: Path)
     assert {"text": "đạo hàm theo hướng", "source": "target_variant", "type": None} in gradient["candidates"]
 
 
+def test_prompt_v2_adds_owner_hint_and_rejects_shared_signal(tmp_path: Path):
+    groups = decollide.build_collision_groups(
+        _notebook(),
+        _db(tmp_path),
+        prompt_version=decollide.PROMPT_VERSION_V2,
+    )
+    derivative_group = next(group for group in groups if group["shared_canonical"] == "đạo hàm riêng")
+    by_id = {member["entry_id"]: member for member in derivative_group["members"]}
+
+    assert derivative_group["owner_hint"] == "partial derivative"
+    assert by_id["gradient"]["signals"]["rejects_shared"] is True
+    assert by_id["partial derivative"]["signals"]["rejects_shared"] is False
+
+
 def test_validator_rejects_shared_or_sibling_canonical(tmp_path: Path):
     groups = decollide.build_collision_groups(_notebook(), _db(tmp_path))
     expected_count = sum(len(group["members"]) for group in groups)
@@ -159,6 +173,94 @@ def test_validator_rejects_shared_or_sibling_canonical(tmp_path: Path):
     }
     with pytest.raises(ValueError, match="shared canonical"):
         decollide.validate_decollision_results(rows, groups)
+
+
+def test_gate_applies_only_hard_ledger_candidates_and_holds_variant_proposals(tmp_path: Path):
+    notebook = _notebook()
+    groups = decollide.build_collision_groups(notebook, _db(tmp_path))
+    rows = []
+    for group in groups:
+        for member in group["members"]:
+            if member["entry_id"] == "gradient":
+                rows.append(
+                    {
+                        "entry_id": "gradient",
+                        "decision": "resolve_distinct",
+                        "chosen_canonical": "đạo hàm",
+                        "confidence": "high",
+                        "reason": "ledger flags bad shared name",
+                    }
+                )
+            elif member["entry_id"] == "product rule":
+                rows.append(
+                    {
+                        "entry_id": "product rule",
+                        "decision": "resolve_distinct",
+                        "chosen_canonical": "quy tắc tích",
+                        "confidence": "high",
+                        "reason": "variant suggests a narrower rule name",
+                    }
+                )
+            else:
+                rows.append(
+                    {
+                        "entry_id": member["entry_id"],
+                        "decision": "keep_shared",
+                        "chosen_canonical": group["shared_canonical"],
+                        "confidence": "high",
+                        "reason": "keeps the shared owner name",
+                    }
+                )
+
+    validated = decollide.validate_decollision_results(rows, groups)
+    gated = decollide.gate_decollision_rows(validated, gated=True)
+    by_id = {row["entry_id"]: row for row in gated}
+
+    assert by_id["gradient"]["applied_status"] == "applied"
+    assert by_id["gradient"]["chosen_candidate_source"] == "conflict_ledger"
+    assert by_id["gradient"]["chosen_candidate_type"] == "canonical_target_change"
+    assert by_id["product rule"]["applied_status"] == "held_proposal"
+    assert by_id["product rule"]["chosen_candidate_source"] == "target_variant"
+    assert by_id["product rule"]["chosen_candidate_type"] is None
+
+    updated = decollide.apply_decollision_to_notebook(
+        notebook,
+        gated,
+        prompt_version=decollide.PROMPT_VERSION_V2,
+    )
+    entries = {entry["concept_key"]: entry for entry in updated["entries"]}
+    assert entries["gradient"]["canonical_target_vi"] == "đạo hàm"
+    assert entries["product rule"]["canonical_target_vi"] == "quy tắc nhân"
+    assert entries["product rule"]["decollision"]["applied_status"] == "held_proposal"
+    assert updated["decollision_prompt_version"] == decollide.PROMPT_VERSION_V2
+
+
+def test_prompt_v2_owner_rule_rejects_resolve_without_owner(tmp_path: Path):
+    groups = decollide.build_collision_groups(
+        _notebook(),
+        _db(tmp_path),
+        prompt_version=decollide.PROMPT_VERSION_V2,
+    )
+    rule_group = next(group for group in groups if group["shared_canonical"] == "quy tắc nhân")
+    rows = [
+        {
+            "entry_id": "product rule",
+            "decision": "resolve_distinct",
+            "chosen_canonical": "quy tắc tích",
+            "confidence": "high",
+            "reason": "wrongly moves one likely owner",
+        },
+        {
+            "entry_id": "multiplication rule",
+            "decision": "resolve_distinct",
+            "chosen_canonical": "quy tắc phép nhân",
+            "confidence": "medium",
+            "reason": "wrongly moves the other likely owner",
+        },
+    ]
+
+    with pytest.raises(ValueError, match="no keep_shared owner"):
+        decollide.validate_decollision_results(rows, [rule_group], require_owner=True)
 
 
 def test_apply_polysemy_and_uncertain_do_not_remain_hard_canonical():
