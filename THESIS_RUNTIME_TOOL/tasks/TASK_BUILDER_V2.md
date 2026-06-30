@@ -1554,3 +1554,21 @@ Artifacts:
 - `data/reports/builder_v2_c35_ablation/run2_prompt_v2/`
 - `data/reports/builder_v2_c35_ablation/run2u_prompt_v2_ungated/`
 - `data/reports/builder_v2_c35_ablation/run2_prompt_v2_gated/`
+
+
+### 28.9 CHOT C3.5 *(Claude + user, 2026-07-01)*
+
+**Quyet dinh: LAY GATE, BO prompt v2.**
+- **Gate (ledger-grounded auto-apply) = co che chinh thuc cua tang xu ly collision.** Da chung minh: revert sach moi over-split variant-only, chi auto-ap quyet dinh co `chosen_candidate_type in {bad_existing_target, canonical_target_change}`. **Tong quat, khong hardcode term nao** (verify: grep term = rong; logic chay tren ledger-type + occurrences + string-equality).
+- **Prompt v2 (pin-owner) BI BO:** ablation cho thay no over-shoot sang **tro** (keep_shared ca 14, khong sua ca gradient). Prompt-tuning dao dong 2 cuc (v1 hung hang -> v2 tro), **khong thang duoc gate**. Ket qua negative trung thuc - giu lai cho luan van (control thuoc ve code-gate, khong phai prompt).
+
+**Guard cuoi (CodeX implement - buoc co hoc cuoi, 0 API) de notebook SACH:**
+- Trong `gate_decollision_rows`: sau khi mot `resolve_distinct` duoc xet `applied` (ledger-backed), kiem tra `normalize_target_key(chosen_canonical)` co **trung canonical cua mot entry GIU khac** khong (tao **dung do MOI**). Neu CO -> **khong ap; doi sang `mark_polysemy`** (`audit_label=polysemy_or_context_dependent`, `inject_as_hard_canonical=false`, `canonical_unresolved=<canonical cu>`).
+- Day la **luat chung** ("de-collision khong duoc tao dung do moi"), tinh co bat dung `gradient` (->"dao ham" se dung `derivative`/`differentiation` -> chuyen polysemy). KHONG hardcode gradient.
+- Chay lai gate 0-API -> `notebook_decollided` sau guard = **memory production C3.5**.
+
+**Do phu (noi that, khong over-claim):**
+- Auto-fix: CHI collision co ledger cung. Collision khong-ledger (vd product rule) -> giu `held_proposal`, soi offline. Canonical sai khong-dung-do (gap §27.6) -> ngoai pham vi.
+- **DEV-validated tren 1 chuong (preliminaries).** Len sach/chuong moi PHAI re-validate (khong phai sua code - chi dung khang dinh "du cho moi case").
+
+**Trang thai: C3.5 CHOT** cho chuong nay sau khi guard chay xong. Tang collision = gate (tong quat, an toan) + guard no-new-collision.
