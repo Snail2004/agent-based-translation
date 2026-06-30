@@ -1379,7 +1379,7 @@ Resolve the following collision groups. Return the JSON array as specified.
 
 **STOP condition honored:** no commit, no push.
 
-## 28. Stage C3.5 ABLATION: gate (run-1) + prompt v2 pin-owner (run-2) *(Claude, 2026-07-01)*
+## 28. Stage C3.5 ABLATION: gate (run-1) + prompt v2 pin-owner (run-2) *(Claude, 2026-07-01; rev.2 ap CodeX 3-diem)*
 
 > Muc tieu: do **dong gop tung buoc**. Them gate -> chay lai (run-1) -> so. Roi them prompt v2 -> chay lai (run-2, kem gate) -> so. CodeX implement; byte prompt `d2l_decollision_v2` (28.5) do Claude thiet ke, VERBATIM. STOP khong commit; Claude review + commit.
 > Boi canh: run v1 hien tai (xem 27.7) chay dung co che nhung **over-split** (agreement A 0.605->0.579, B 0.647->0.618); moi quyet dinh hai deu **variant-only**, quyet dinh ledger-cung duy nhat (gradient) la dung. Nguyen nhan goc = prompt v1 doi xung, khong co "chu so huu", khong dung tin hieu tan suat.
@@ -1409,7 +1409,8 @@ Them buoc **gate o apply** (`apply_decollision_to_notebook` hoac pre-filter rows
 - `resolve_distinct` -> **CHI ap (doi `canonical_target_vi`) neu `chosen_canonical` co provenance type in {bad_existing_target, canonical_target_change}** (tra theo candidate objects da co {text, source, type}).
 - `resolve_distinct` **variant-only** (provenance = target_variant, hoac type=polysemy_suspected) -> **decision hieu luc = `held_proposal`**: ghi vao trail (giu de review) nhung **KHONG doi canonical**.
 - `keep_shared`/`mark_polysemy`/`uncertain` -> giu nguyen logic 27.5.
-- Artifacts: `notebook_decollided_run1.json`, `metrics_run1.json`, trail co cot `applied|held_proposal`.
+- **Trail ghi provenance da chon (CodeX #2):** moi row them `chosen_candidate_source`, `chosen_candidate_type`, `applied_status in {applied, held_proposal}`. Gate quyet dinh theo `chosen_candidate_type` truc tiep - **KHONG lookup nguoc text** (tranh mo ho khi cung mot text co o ca target_variant lan conflict_ledger).
+- Artifacts: `notebook_decollided_run1.json`, `metrics_run1.json`, trail co cot tren.
 - Ky vong: agreement **>= baseline** (revert backpropagation/derivative, giu gradient).
 
 ### 28.3 RUN-2: prompt v2 (pin-owner) + gate (API that, nho ~1 call cho 7 nhom)
@@ -1419,7 +1420,8 @@ Them buoc **gate o apply** (`apply_decollision_to_notebook` hoac pre-filter rows
 
 ### 28.4 Card them (code, may moc - HINT, khong phai phan quyet)
 Moi member them:
-- `rejects_shared` (bool) = entry co conflict_ledger entry type `bad_existing_target` (no tu bao "ten dang dung la sai voi toi").
+- `rejects_shared` (bool) = entry co conflict_ledger entry type in {`bad_existing_target`, `canonical_target_change`} (no tu bao ten dang dung NEN DOI -> **khong duoc lam owner**). *(CodeX #1: nhat quan voi gate 28.2 von coi ca 2 type la bang chung cung.)*
+- **Dedup candidate uu tien ledger (CodeX #2):** khi cung mot `text` xuat hien o ca `target_variant` lan `conflict_ledger` -> GIU provenance ledger (manh hon), khong de bi ghi de thanh `target_variant`.
 Moi group them:
 - `owner_hint` (entry_id) = trong cac member co `rejects_shared=false`, lay member co `occurrences_total` LON NHAT (tie-break: entry_id casefold). Neu TAT CA reject -> `owner_hint=null` (LLM tu quyet).
 > Kiem chung tay: gradient(rejects)->non-owner, partial derivative->owner; backpropagation(occ5)>backward(occ1)->owner=backpropagation (giu "lan truyen nguoc", SUA loi v1); derivative(occ18)->owner (giu "dao ham", SUA loi v1); multiplication rule(occ3)>product rule(occ2)->owner. Owner-hint co hoc ra dung chu o moi nhom.
@@ -1497,7 +1499,10 @@ specified.
 
 ### 28.6 Validator (mo rong tu 27.4)
 - Giu nguyen 27.4 (decision hop le; resolve_distinct.chosen in candidates & != shared & != keep_shared sibling & khong trung nhau trong nhom).
-- Them: trong group co >=1 `resolve_distinct`, **phai co dung 1 member giu shared** (owner: `keep_shared` voi chosen==shared) HOAC moi non-owner deu `mark_polysemy/uncertain` (truong hop khong ai giu ten - hop le). KHONG duoc co group ma owner bi `resolve_distinct` lam mat shared cho moi nguoi (tru khi tat ca thanh polysemy).
+- **Them (CodeX #3, lam ro case "khong ai giu shared"; Claude tinh chinh dung-1 -> >=1):**
+  - Neu group co BAT KY `resolve_distinct` -> **phai co >=1 `keep_shared`** (owner; chosen==shared). (`>=1` chu khong phai `dung 1`: cho phep cum dong-nghia cung keep_shared + mot member khac resolve, vd element/entry cung "phan tu" + member thu ba doi.)
+  - Neu group **khong co `keep_shared` nao** -> **moi member phai la `mark_polysemy` hoac `uncertain`**, KHONG duoc co `resolve_distinct`.
+  - => khong bao gio xay ra group bi doi het ten ma khong con ai so huu shared canonical.
 - `owner_hint` adherence = **WARNING log, khong fail** (LLM duoc override co ly do).
 
 ### 28.7 Khong lam / ky luat
