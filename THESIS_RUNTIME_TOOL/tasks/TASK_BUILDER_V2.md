@@ -1572,3 +1572,106 @@ Artifacts:
 - **DEV-validated tren 1 chuong (preliminaries).** Len sach/chuong moi PHAI re-validate (khong phai sua code - chi dung khang dinh "du cho moi case").
 
 **Trang thai: C3.5 CHOT** cho chuong nay sau khi guard chay xong. Tang collision = gate (tong quat, an toan) + guard no-new-collision.
+
+### 28.10 Guard no-new-collision implementation *(CodeX, 2026-07-01; status REVIEW)*
+
+Implemented the final 0-API guard from §28.9.
+
+Code changes:
+- `pipeline/prepass/builder_v2_decollision.py`
+  - `gate_decollision_rows(..., notebook=...)` now optionally runs `_guard_no_new_collisions`.
+  - Guard computes the effective post-gate canonical map. Any `resolve_distinct` that would create a new canonical collision with another kept entry is converted to `mark_polysemy`.
+  - Trail records `blocked_by_no_new_collision`, `blocked_chosen_canonical`, `blocked_candidate_source`, `blocked_candidate_type`, and `blocked_collision_entry_ids`.
+- `pipeline/scripts/builder_v2_c35_decollision.py`
+  - Applies `gate_decollision_rows(..., gated=True, notebook=notebook)` before writing `notebook_decollided.json`.
+- `pipeline/tests/test_builder_v2_decollision.py`
+  - Adds regression test that a ledger-backed `gradient -> đạo hàm` proposal is converted to polysemy when `derivative` already owns `đạo hàm`.
+
+Commands run:
+```powershell
+python -m py_compile pipeline\prepass\builder_v2_decollision.py pipeline\scripts\builder_v2_c35_decollision.py pipeline\scripts\builder_v2_c35_ablation.py
+python -m pytest pipeline\tests\test_builder_v2_decollision.py -q --basetemp D:\temp\pytest-builder-v2-c35-guard
+python pipeline\scripts\builder_v2_c35_decollision.py --decollision-json data\reports\builder_v2_c35_decollision\decollision_trail.json --out data\reports\builder_v2_c35_decollision
+python -m pytest pipeline\tests\test_builder_v2_decollision.py pipeline\tests\test_builder_v2_audit.py pipeline\tests\test_d2l_translate_score.py -q --basetemp D:\temp\pytest-builder-v2-c35-guard-final
+```
+
+Verification:
+- Tests: target `8 passed`; related suite `29 passed`.
+- Re-run status: `applied_existing_decollision_json`; `zero_api=true`; frozen DB hash unchanged.
+- Decision counts after guard: `keep_shared=4`, `resolve_distinct=9`, `mark_polysemy=1`.
+- `gradient` row:
+  - old chosen candidate `đạo hàm` (`conflict_ledger/canonical_target_change`) was blocked.
+  - `blocked_collision_entry_ids=["derivative","differentiation"]`.
+  - final decision `mark_polysemy`, `applied_status=converted_to_polysemy`.
+  - notebook keeps previous `canonical_target_vi="đạo hàm riêng"` but sets `audit_label=polysemy_or_context_dependent`, `injection_action=context_sensitive_translate`, `inject_as_hard_canonical=false`.
+- Metric invariants still pass: entry counts, gold terms present, matched source terms, recall A/B unchanged. Agreement remains baseline (`A=0.605263`, `B=0.647059`).
+
+Artifacts refreshed:
+- `data/reports/builder_v2_c35_decollision/decollision_trail.json`
+- `data/reports/builder_v2_c35_decollision/notebook_decollided.json`
+- `data/reports/builder_v2_c35_decollision/builder_v2_c35_metrics.json`
+- `data/reports/builder_v2_c35_decollision/builder_v2_c35_decollision_report.json`
+
+Remaining caveat:
+- Guard prevents new canonical collisions; it does not decide the best canonical for a polysemous term. `gradient` is now safe/context-sensitive, not "fixed to a better single Vietnamese term." That is intentional for recall-safety.
+
+## 29. Stage C4: WEIGHTED LEDGER PROMOTION (canonical correction / belief revision) *(Claude thiet ke, 2026-07-01; ap CodeX 4-diem review)*
+
+> Muc tieu: sua loi "first-write-wins dong bang canonical sai tu window dau" mot cach **TONG QUAT** (KHONG va rieng gradient). Code XAC DINH, 0-API, blind-gold, chay SAU Auditor. LLM da viet conflict_ledger; code chi **DEM + GATE** (ton trong code-never-does-language-work). Day la analog DON-ENTRY cua C3.5 (von xu collision CHEO).
+
+### 29.0 Bat bien (giu nguyen 27.1 / 28.0)
+Mu gold; KHONG bia canonical moi (chi chon tu ledger proposals / source surface); soft (khong xoa entry); frozen DB ro (mode=ro); key khong log; CodeX STOP khong commit; Claude review + commit.
+
+### 29.1 Boi canh (da verify tren notebook C2 + notebook_audited)
+- first-write-wins: canonical chot o window dau; window sau CHI ghi conflict_ledger, KHONG doi canonical. Loi gradient sinh o `wb_d2l_preliminaries_008` (canonical "đạo hàm riêng" = SAI khai niem: gradient != partial derivative), bi phan doi o 031/035/036, nhung van bi giu.
+- Sua KHONG bang last-write-wins (cung le thuoc thu tu window, cung tuy tien nhu first-write-wins). Sua bang: **trong pass chi ghi ledger -> CUOI pass phan xu XAC DINH tren TOAN BO ledger** (it le thuoc thu tu nhat).
+- §29 THAY endpoint C3.5 cho gradient: gradient -> "gradient" (sach, khong collision) thay vi -> polysemy (an toan nhung kem sach).
+
+### 29.2 NGUYEN TAC (general, KHONG hardcode term)
+Logic chay tren **SIGNAL** (audit_label, ledger-type, candidate provenance, huong keep-source/translation, collision), KHONG tren chuoi term cu the. 4 entry o 29.6 la **TEST FIXTURE**, moi cai kich 1 gate khac nhau; module promotion **KHONG duoc chua ten term nao** (test grep gradient/tensor/shape/one = rong).
+
+### 29.3 Co che (thu tu gate CO DINH)
+
+**Trigger (candidate set):** entry co conflict_ledger chua >=1 dong type in {`bad_existing_target`, `canonical_target_change`} de xuat target != canonical hien tai (so bang `normalize_target_key`, KEEP dau, NFC+casefold). `polysemy_suspected`/`termhood_suspected` DON LE KHONG kich hard-promote (chi la tin hieu context).
+
+**GATE A — audit-label (termhood). Chay TRUOC moi thu.**
+- Chi tiep tuc neu `audit_label in {keep_as_translate_term, preserve_token}`.
+- `generic_low_value` / `descriptive_phrase` / `uncertain_low_conf` -> **KHONG promote** (khong sua canonical cua phi-term). [Loai khoi pack = §30 RIENG, khong phai viec cua §29.]
+- `polysemy_or_context_dependent` -> da context-sensitive san; **KHONG hard-promote** (giu nguyen Auditor da dat).
+> Bat `one` (generic_low_value, du ledger co 6 window -> "một") va `shape` (polysemy) NGAY TAI DAY, truoc khi dem phieu.
+
+**SELECTION (xac dinh, tu ledger) — chi chon HUONG AN TOAN (keep-source):**
+- Trong cac hard-ledger proposal cua entry, NEU co proposal `normalize_target_key(prop) == normalize_target_key(source surface)` (= keep-source / giu nguyen tu nguon) -> **elect keep-source lam canonical** (safe-fallback).
+- NEU KHONG co proposal keep-source (tat ca proposal la BAN DICH moi) -> **KHONG auto**; -> `context_sensitive_translate` + `held_for_review`, defer policy/nguoi.
+> KHONG dem phieu / tie-break giua cac ban dich (gradient von 1-1-1 theo window doc lap, khong co da so). Chi auto khi huong la keep-source. => khong bao gio TU CHON 1 ban dich.
+
+**GATE B — collision (no-new-collision). Sau SELECTION.**
+- Neu `normalize_target_key(winner)` da thuoc canonical cua mot entry GIU khac -> **reject** -> `context_sensitive_translate`. (Keep-source it dung do nhung VAN check.)
+
+**Corroboration (anti-hallucination, phu):** keep-source winner phai duoc 1 dong hard-ledger that su de xuat; KHONG tu che keep-source neu ledger khong de xuat no.
+
+### 29.4 Apply
+- **auto-promote** (qua het): `canonical_target_vi = winner` (keep-source); ghi `canonical_corrected_from=<old>`; day old vao `target_variants`; `inject_as_hard_canonical=true`.
+- **held / context_sensitive**: KHONG doi `canonical_target_vi` text; `injection_action -> context_sensitive_translate`; `inject_as_hard_canonical=false`; `canonical_unresolved=<old>`; danh `held_for_review` (tensor). shape/one giu nguyen nhan Auditor.
+
+### 29.5 Trung thuc / pham vi (loi van theo CodeX 4-diem)
+- keep-source auto-promote = **safe fallback canonical**, KHONG phai "dap an tuyet doi". Giu nguyen tieng Anh la mot **LUA CHON STYLE** tinh co it rui ro hon mot ban dich khong kiem chung duoc — chi hop le **SAU** khi qua gate audit + collision. (#1: khong claim "keep-source LUON dung"; mot tu pho thong giu tieng Anh van co the xau, nhung da qua audit-label = term ky thuat nen chap nhan duoc.)
+- (#2) gradient -> gradient **ban than cung la style decision**; trong D2L/ML giu "gradient" rat pho bien nen safe, nhung spec goi no la safe fallback chu khong tuyet doi.
+- Auto-fix CHI lop HEP: term that + hard-ledger dispute + winner keep-source + khong collision. Con lai -> context_sensitive / held (KHONG pha).
+- DEV-validated tren 1 chuong (preliminaries). Sach/chuong moi PHAI re-validate.
+- 0-API, deterministic. LLM da viet ledger; code chi dem + gate.
+
+### 29.6 TEST BAT BUOC (chung minh DO PHU + KHONG overfit; moi case 1 gate khac nhau)
+| entry | audit_label | ledger winner | ket qua MONG DOI | gate quyet dinh |
+|---|---|---|---|---|
+| gradient | keep_as_translate_term | gradient (keep-source) | canonical -> "gradient" (AUTO-PROMOTE) | qua het (SELECTION keep-source) |
+| tensor | keep_as_translate_term | tenxơ (ban dich) | GIU "tensor" (held_for_review) | SELECTION: khong co proposal keep-source |
+| shape | polysemy_or_context_dependent | kích thước | context_sensitive, canonical KHONG -> "kích thước" | GATE A (polysemy) [+ GATE B: size dang giu "kích thước"] |
+| one | generic_low_value | một | KHONG promote (canonical giu nguyen trong §29) | GATE A (generic_low_value) |
+
+- Assert them: module promotion **KHONG chua literal ten term nao** (grep gradient/tensor/shape/one trong source = rong).
+- Assert them: tong so canonical bi doi tren CHUONG NAY = **dung 1** (gradient). Cac entry khac KHONG bi mutate canonical.
+- Moi case ghi ro GATE NAO chan no -> chung minh ca 3 gate deu CAN (bo bat ky gate nao se sai 1 case: bo A -> one bi sua; bo SELECTION/keep-source -> tensor bi Viet hoa; bo B -> shape dung do voi size).
+
+### 29.7 §30 (TBD) — pack-exclusion policy (de SAU, can ban lam ro them)
+`generic_low_value` / `descriptive_phrase` + confidence cao -> **loai khoi Translator pack** (wiring THAT vao pack/context builder, KHONG chi report dep), VAN giu trong notebook + audit report. Phan biet ro **"loai khoi pack" != "xoa khoi notebook"**. Day la ly do `one` van xuat hien trong injection_preview o pilot (soft-only). Spec rieng sau.
