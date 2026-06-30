@@ -1013,3 +1013,208 @@ entries 340->? · **recall-on-injected-pack KHONG duoi SAN** (de xuat >= v1 0.63
 
 ### 23.7 Quy trinh
 Claude da khoa byte prompt (23.2 rev.2) + schema (23.1) + script render (23.3) -> **CodeX phan bien lai** -> CodeX dien 5 (driver auditor + code dung card dung schema 23.1, prose-only, mu 2 bang gold + ap nhan + `--estimate-only`) -> STOP, KHONG goi API toi khi user duyet $ -> Claude review 6.
+
+## 24. §5 — CodeX implementation notes Stage C3 estimate-only *(CodeX, 2026-06-30; STOP, no commit/push)*
+
+**Scope implemented:** C3 Term-Auditor card builder + prompt archive + cost estimate + audit-label apply/simulated-injection helper. **No real API was called.**
+
+Files changed:
+- `pipeline/prepass/builder_v2_audit.py`
+  - Shared implementation for locked `d2l_term_audit_v1` prompt, card schema, prose-only evidence extraction, no-prose handling, `overmerge_suspected`, chunking, prompt rendering, audit-output validation, audit-label application, and simulated injection ordering.
+  - Does not read `eval_glossary_gold` or `reference_eval_only`; card evidence is fetched only from `blocks.text` in frozen DB opened `mode=ro`.
+- `pipeline/scripts/builder_v2_c3_sample_cards.py`
+  - Thin 0-API reproducer now uses the shared production card builder instead of a duplicate preview implementation.
+- `pipeline/scripts/builder_v2_c3_audit.py`
+  - `--estimate-only` builds all 340 cards, chunks them, archives full prompts under `data/reports/builder_v2_c3_audit_estimate/prompts/*.txt`, writes `cards.json`, `chunks.json`, and `builder_v2_c3_audit_estimate.json`, then exits before any `LLMClient`/API-key path.
+  - Chunking is token-budget aware: max card count is 40, but chunks split earlier at a **90% safety budget** (`prompt_token_budget=5400` under `prompt_token_cap=6000`; observed max **5394**).
+  - `--audit-json` validates a pre-existing JSON-array audit result, applies labels into artifact-only `notebook_audited.json`, and writes `injection_preview.json`; this is for replay/apply only, not API.
+- `pipeline/tests/test_builder_v2_audit.py`
+  - Mock/offline tests for card evidence, no-prose guard, overmerge signal, audit validation, preserve-token application, tier-aware simulated injection sort, and estimate-only prompt archival without API/key.
+
+Important implementation note:
+- `d2l_term_audit_v1` output is a **JSON array**. C3 estimate-only archives the prompt exactly; the later real-call step must either parse raw JSON array output or choose an API response-format strategy that does not silently require a top-level JSON object. No real-call path was enabled in this §5.
+
+Commands run:
+- `python -m pytest pipeline\tests\test_builder_v2_audit.py -q --basetemp D:\temp\pytest-builder-v2-c3` → **4 passed**
+- `python pipeline\scripts\builder_v2_c3_sample_cards.py --notebook data\reports\builder_v2_c2_pilot\notebook.json --db data\jobs\d2l_p1\memory.sqlite3 --out data\reports\builder_v2_c3_audit_estimate\sample_cards_v1.json` → wrote **8** sample cards
+- `python pipeline\scripts\builder_v2_c3_audit.py --estimate-only --out data\reports\builder_v2_c3_audit_estimate` → **0 API**, output:
+  - cards: **340**
+  - calls/chunks: **17**
+  - prompt_tokens_total: **87812**
+  - prompt_tokens_max: **5394** (under safety budget 5400 / cap 6000)
+  - estimated_output_tokens_nominal: **32640**
+  - estimated_output_tokens_cap: **104448**
+  - estimated_cost_usd_nominal: **0.087233**
+  - estimated_cost_usd_cap: **0.230849**
+  - db_hash_unchanged: **true**
+- `python -m pytest pipeline\tests\test_builder_v2_consolidate.py pipeline\tests\test_builder_v2_render.py pipeline\tests\test_builder_v2_pilot.py pipeline\tests\test_builder_v2_audit.py -q --basetemp D:\temp\pytest-builder-v2-c123` → **21 passed**
+
+Artifacts (gitignored under `data/reports/builder_v2_*`):
+- `data/reports/builder_v2_c3_audit_estimate/cards.json`
+- `data/reports/builder_v2_c3_audit_estimate/chunks.json`
+- `data/reports/builder_v2_c3_audit_estimate/prompts/chunk_001.txt` … `chunk_009.txt`
+- `data/reports/builder_v2_c3_audit_estimate/builder_v2_c3_audit_estimate.json`
+- `data/reports/builder_v2_c3_audit_estimate/sample_cards_v1.json`
+
+**STOP condition honored:** estimate-only only; no API, no commit, no push.
+
+## 25. §5 — CodeX implementation notes Stage C3 real-run + injected-pack metric *(CodeX, 2026-06-30; STOP, no commit/push)*
+
+**Scope implemented:** opened the C3 real API path after user cost approval, ran all 340 Auditor cards, wrote artifact-only audited notebook, and added an eval-only recall-on-injected-pack metric that mirrors the production injection path more closely than the earlier preview. **No production DB write.**
+
+Files changed since §24:
+- `pipeline/scripts/builder_v2_c3_audit.py`
+  - Added guarded real-run mode: `--confirm-usd <amount>` is required unless `--estimate-only` or `--audit-json` is used.
+  - Gate reruns the same estimate first and refuses if the cap estimate exceeds the confirmation amount.
+  - Uses a separate cache DB (`<out>/llm_cache.sqlite3`) and does not touch frozen `memory.sqlite3`.
+  - Key loader is env-first, then KEY-2 before KEY-1; report only records key source label, never the key.
+  - Parses the locked prompt's raw JSON-array output directly. If parsing/schema validation fails, it re-asks once; repeated failure marks the run `degraded`.
+  - Writes `cost_log.json`, `raw_outputs.json`, `audit_trail.json`, `notebook_audited.json`, `injection_preview.json`, and `builder_v2_c3_injected_pack_metrics.json`.
+  - Injected-pack metric is eval-only: Auditor/card path remains blind to gold; metric reads `eval_glossary_gold` only after audit.
+  - Hardening: `simulate_injection_order` now receives `min_injection_occurrences` from `PROFILES["technical_d2l_v1"]` when not explicitly overridden; no hardcoded CLI default.
+- `pipeline/tests/test_builder_v2_audit.py`
+  - Added fake-transport real-run helper test for invalid JSON -> one re-ask -> valid JSON, with cost/raw-output logs and zero API.
+
+Metric mirror implemented:
+- Builds translation windows with `build_windows(..., block_types=PROFILES["technical_d2l_v1"].translatable_block_types)`.
+- Creates eligible rows from `notebook_audited.json`, then applies `term_is_injection_eligible()` / `injection_role_for_term()` from `pipeline.translate.profiles`.
+- Matches anchors by all source surfaces against each window.
+- Sorts by Auditor tier first, then in-window count, total occurrence count, source, id.
+- Cuts by the real S1 context budget (`--context-budget`, default 500) using the same rough token estimator family as the prompt tooling.
+- This is still a simulation over artifact notebook, not a production `glossary_entries` migration; Phase D must wire the same fields into `context_builder` before production use.
+
+Commands run:
+- `python -m pytest pipeline\tests\test_builder_v2_audit.py -q --basetemp D:\temp\pytest-builder-v2-c3-audit` -> **5 passed**
+- `python -m pytest pipeline\tests\test_builder_v2_consolidate.py pipeline\tests\test_builder_v2_render.py pipeline\tests\test_builder_v2_pilot.py pipeline\tests\test_builder_v2_audit.py -q --basetemp D:\temp\pytest-builder-v2-c3-suite` -> **22 passed**
+- `python pipeline\scripts\builder_v2_c3_audit.py --estimate-only --out data\reports\builder_v2_c3_audit_real` -> estimate gate:
+  - cards: **340**
+  - calls/chunks: **17**
+  - prompt_tokens_total: **87812**
+  - estimated_output_tokens_nominal: **32640**
+  - estimated_output_tokens_cap: **104448**
+  - estimated_cost_usd_nominal: **0.087233**
+  - estimated_cost_usd_cap: **0.230849**
+  - db_hash_unchanged: **true**
+- `python pipeline\scripts\builder_v2_c3_audit.py --confirm-usd 0.231 --out data\reports\builder_v2_c3_audit_real`:
+  - First real run populated the separate cache, then the new metric failed on a schema assumption (`blocks.block_index` absent in frozen DB; actual column is `order_index`). Fixed metric fetch and reran the same command; second run replayed the 17 cached Auditor responses and completed. No extra API calls on the rerun.
+  - final status: **completed**
+  - parse_failure_count: **0**
+  - API key source: **file:OPENAI-KEY-2.txt**
+  - actual Auditor cost recorded: **$0.0468833**
+  - final rerun cost log: **17 cache hits / 0 cache misses** (because the first real run had already cached responses)
+  - prompt_tokens billed/recorded in cache: **78730**
+  - completion_tokens: **14090**
+  - frozen DB hash unchanged: **DA0F687894090D43B75A3AE52BA71EC1EDF85DAB3198C9F86039879365D464B8**
+
+Auditor label distribution (`audit_trail.json`, 340 cards):
+- `keep_as_translate_term`: **201**
+- `polysemy_or_context_dependent`: **32**
+- `preserve_token`: **26**
+- `generic_low_value`: **47**
+- `descriptive_phrase`: **31**
+- `uncertain_low_conf`: **3**
+
+Injected-pack metric result (`builder_v2_c3_injected_pack_metrics.json`):
+- entry_counts:
+  - registry entries before audit: **340**
+  - production eligible after profile rules: **167**
+  - unique entries that actually enter at least one simulated window pack: **149**
+- recall-vs-gold DEV:
+  - gold_terms_present: **57**
+  - registry_before_budget: matched **38/57**, recall **0.666667**, agreement **0.605263**
+  - injected_pack: matched **29/57**, recall **0.508772**, agreement **0.655172**
+  - floor_v1: **0.6316**
+  - pass_floor: **false**
+- false-drop gold hits among low-value labels: **4**
+  - `concatenate` -> `generic_low_value` ("standard verb, context determines rendering")
+  - `data manipulation` -> `generic_low_value` ("compositional phrase, not fixed term")
+  - `example` -> `generic_low_value` ("ordinary discourse marker and illustration")
+  - `framework` -> `generic_low_value` ("generic software platform word")
+
+Interpretation for reviewer:
+- C3 real-run mechanics PASS: full 340 audited, no parse failures, cost below cap, cache separate, frozen DB unchanged, artifacts complete.
+- C3 quality hypothesis **does not pass as configured**: recall-on-injected-pack is **0.508772**, below floor **0.6316**, and the smoke concern around `example` is confirmed as a real false-drop.
+- The main recall loss is not only Auditor tiering; production eligibility (`min_injection_occurrences=2`, preserve exclusion) and per-window budget also remove gold terms. This is the requested production-path mirror, but it means the earlier registry-level floor is not an apples-to-apples injected-pack floor.
+- Do **not** claim C3 improves production memory yet. Claude should review whether to (a) change evidence selection / prompt for false-drop terms, (b) adjust injection policy for low-frequency gold terms, or (c) redefine the floor for production-injected pack vs registry-level recall.
+
+Artifacts (gitignored under `data/reports/builder_v2_*`):
+- `data/reports/builder_v2_c3_audit_real/cards.json`
+- `data/reports/builder_v2_c3_audit_real/chunks.json`
+- `data/reports/builder_v2_c3_audit_real/prompts/chunk_001.txt` ... `chunk_017.txt`
+- `data/reports/builder_v2_c3_audit_real/llm_cache.sqlite3`
+- `data/reports/builder_v2_c3_audit_real/cost_log.json`
+- `data/reports/builder_v2_c3_audit_real/raw_outputs.json`
+- `data/reports/builder_v2_c3_audit_real/audit_trail.json`
+- `data/reports/builder_v2_c3_audit_real/notebook_audited.json`
+- `data/reports/builder_v2_c3_audit_real/injection_preview.json`
+- `data/reports/builder_v2_c3_audit_real/builder_v2_c3_audit_estimate.json`
+- `data/reports/builder_v2_c3_audit_real/builder_v2_c3_injected_pack_metrics.json`
+
+**STOP condition honored:** real-run complete, §5 filled, no commit, no push.
+
+## 26. §5 — CodeX implementation notes Stage C3 metric fix *(CodeX, 2026-06-30; STOP, no commit/push)*
+
+**Scope implemented:** fixed the C3 Auditor metric to measure the Auditor's own recall cost on the dictionary, not a Translator injected-pack budget KPI. No prompt/card-builder bytes changed. No API calls. Existing `audit_trail.json` was replayed.
+
+Files changed since §25:
+- `pipeline/scripts/builder_v2_c3_audit.py`
+  - Added eval-only `builder_v2_c3_auditor_metrics.json`.
+  - Metric A = Builder registry recall vs gold for the chapter, with no Translator budget and no occurrence filter.
+  - Metric B = same registry after applying Auditor labels as a dictionary filter: drop `generic_low_value` + `descriptive_phrase`; keep `keep_as_translate_term`, `preserve_token`, `polysemy_or_context_dependent`, `uncertain_low_conf`.
+  - `delta = A - B` is the true Auditor recall cost.
+  - False-drop attribution now counts only gold terms present in Metric A and removed in Metric B by Auditor drop labels.
+  - Exports `keep_as_translate_term_terms` (201 rows) and `terms_by_label` for Claude's manual false-keep review. Code does not claim precision/noise success.
+- `pipeline/prepass/builder_v2_audit.py`
+  - `simulate_injection_order()` default `min_injection_occurrences` changed **2 -> 0** so helper defaults no longer preserve the old crude occurrence filter. Tests that need the old scenario pass it explicitly.
+- `pipeline/translate/profiles.py`
+  - `technical_d2l_v1.min_injection_occurrences` changed **2 -> 0**. This is an intentional design change: Auditor labels become the semantic precision gate; the old occurrence threshold killed low-frequency gold terms. This changes S1 injection behavior and requires Claude review before production translation.
+- `pipeline/tests/test_d2l_translate_score.py`
+  - Updated expectations for the new no-occurrence-filter behavior: fixture term `exposes` (`occurrences_count=1`) now enters registry injection/adherence denominators and scores 0 in the fixture because its target is absent.
+
+Commands run:
+- `python pipeline\scripts\builder_v2_c3_audit.py --audit-json data\reports\builder_v2_c3_audit_real\audit_trail.json --out data\reports\builder_v2_c3_audit_real` -> replayed existing audit trail, **0 API**, output summary:
+  - status: **applied_existing_audit**
+  - zero_api: **true**
+  - frozen DB hash unchanged: **true**
+  - Metric A registry recall: **38/57 = 0.666667**
+  - Metric B post-Auditor recall: **34/57 = 0.596491**
+  - Auditor recall delta: **0.070176** (4 gold terms)
+- `python -m pytest pipeline\tests\test_builder_v2_audit.py pipeline\tests\test_d2l_translate_score.py -q --basetemp D:\temp\pytest-builder-v2-c3-metric-fix` -> **21 passed**
+
+Auditor label distribution (`audit_trail.json`, 340 cards):
+- `keep_as_translate_term`: **201**
+- `polysemy_or_context_dependent`: **32**
+- `preserve_token`: **26**
+- `generic_low_value`: **47**
+- `descriptive_phrase`: **31**
+- `uncertain_low_conf`: **3**
+
+Metric result (`builder_v2_c3_auditor_metrics.json`):
+- Gold denominator: **57** source terms present in the preliminaries source text.
+- Entry counts:
+  - registry entries: **340**
+  - post-Auditor kept entries: **262**
+  - post-Auditor dropped entries: **78**
+- Metric A, dictionary before Auditor filtering:
+  - matched **38/57**, recall **0.666667**, agreement **0.605263**
+- Metric B, dictionary after Auditor filtering:
+  - matched **34/57**, recall **0.596491**, agreement **0.647059**
+- Delta:
+  - **0.070176** recall cost, exactly 4 gold terms.
+
+False-drop list (correct attribution: matched in A, removed by Auditor label):
+| source_term | occ | label | reason | gold_target |
+|---|---:|---|---|---|
+| `concatenate` | 2 | `generic_low_value` | standard verb, context determines rendering | nối |
+| `data manipulation` | 1 | `generic_low_value` | compositional phrase, not fixed term | thao tác với dữ liệu |
+| `example` | 30 | `generic_low_value` | ordinary discourse marker and illustration | mẫu |
+| `framework` | 2 | `generic_low_value` | generic software platform word | framework |
+
+Precision/noise note:
+- CodeX does **not** auto-score precision/noise removal. Artifact now contains the full `keep_as_translate_term_terms` list (**201 rows**) plus all terms grouped by label/reason for Claude to inspect false-keeps manually.
+
+Artifact note:
+- New authoritative metric file: `data/reports/builder_v2_c3_audit_real/builder_v2_c3_auditor_metrics.json`.
+- Older `builder_v2_c3_injected_pack_metrics.json` remains a superseded generated KPI artifact only. It must not be used as C3 Auditor pass/fail.
+
+**STOP condition honored:** metric fix replay complete, 0 API, no commit, no push.

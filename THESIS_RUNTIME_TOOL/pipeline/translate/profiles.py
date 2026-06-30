@@ -101,7 +101,7 @@ PROFILES: dict[str, DocumentProfile] = {
         prompt_versions={"S0": "s0_d2l_v1", "S1": "s1_d2l_v1"},
         translatable_block_types=frozenset({"heading", "prose"}),
         passthrough_block_types=frozenset({"code", "math_block", "image", "label"}),
-        min_injection_occurrences=2,
+        min_injection_occurrences=0,
         inject_preserve_terms=False,
         inject_entities=False,
     ),

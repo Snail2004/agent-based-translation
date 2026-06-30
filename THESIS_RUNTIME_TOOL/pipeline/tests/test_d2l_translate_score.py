@@ -302,7 +302,7 @@ def test_d2l_s0_purity_check(tmp_path: Path) -> None:
     assert violations == []
 
 
-def test_d2l_injection_policy_occ_role_and_canonical_only(tmp_path: Path) -> None:
+def test_d2l_injection_policy_role_and_canonical_only(tmp_path: Path) -> None:
     db_path = _fixture_db(tmp_path)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -325,10 +325,10 @@ def test_d2l_injection_policy_occ_role_and_canonical_only(tmp_path: Path) -> Non
 
     assert "agent -> tác nhân" in rendered
     assert "model -> mô hình" in rendered
+    assert "exposes -> phơi bày" in rendered
     assert "tác tử" not in rendered
     assert "PyTorch" not in rendered
     assert ".shape" not in rendered
-    assert "exposes" not in rendered
 
 
 def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
@@ -359,7 +359,12 @@ def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
     assert report["metric_version"] == "d2l_translate_score_v3_occurrence"
     assert report["B_gold_occurrence_adherence"]["S1"]["flat"]["adherence_lower"] == 1.0
     assert report["B_gold_occurrence_adherence"]["S0"]["flat"]["adherence_lower"] < 1.0
-    assert report["A_registry_occurrence_adherence"]["S1"]["adherence_lower"] == 1.0
+    assert report["A_registry_occurrence_adherence"]["S1"]["denominator"] == 6
+    assert report["A_registry_occurrence_adherence"]["S1"]["adherence_lower"] == 0.833333
+    assert any(
+        item["source_term"] == "exposes" and item["confirmed_credit"] == 0
+        for item in report["A_registry_occurrence_adherence"]["S1"]["worst_terms"]
+    )
     assert report["occurrence_audit"]["rows"] > 0
     assert Path(report["occurrence_audit"]["csv"]).exists()
     assert Path(report["occurrence_audit"]["html"]).exists()
@@ -377,7 +382,11 @@ def test_d2l_scorer_scope_gold_variants_b_d_a(tmp_path: Path) -> None:
         and item["constraint_strength"] == "hard"
         for item in report["D_registry_consistency"]["S1"]["terms_all"]
     )
-    assert report["A_tar_vs_registry"]["S1"]["overall"] == 1.0
+    assert report["A_tar_vs_registry"]["S1"]["pairs"] == 6
+    assert report["A_tar_vs_registry"]["S1"]["overall"] == 0.833333
+    assert report["A_tar_vs_registry"]["S1"]["worst_terms"] == [
+        {"source_term": "exposes", "pairs": 1, "misses": 1}
+    ]
     assert report["stage_gate"]["no_passthrough_translated"]["S1"] is True
     assert report["stage_gate"]["preserve_terms_excluded_from_injection"] is True
 
