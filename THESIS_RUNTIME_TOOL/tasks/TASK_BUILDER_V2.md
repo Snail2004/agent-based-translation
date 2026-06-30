@@ -1219,9 +1219,11 @@ Artifact note:
 
 **STOP condition honored:** metric fix replay complete, 0 API, no commit, no push.
 
-## 27. Stage C3.5 - De-collision pass: sua canonical dung do (recall-safe, mu gold) *(Claude, 2026-06-30)*
+## 27. Stage C3.5 - De-collision pass: sua canonical dung do (recall-safe, mu gold) *(Claude, 2026-06-30; rev.2 ap CodeX 6-diem review)*
 
-> Truy nguon da xong (xem memory `consolidation-ignores-bad-existing-target`). Byte prompt `d2l_decollision_v1` (27.3) do Claude thiet ke - CodeX implement VERBATIM. CodeX lam code/wiring, dien 5, STOP khong commit; Claude review + commit.
+> Truy nguon da xong (memory `consolidation-ignores-bad-existing-target`). Byte prompt `d2l_decollision_v1` (27.3) do Claude thiet ke - CodeX implement VERBATIM. CodeX lam code/wiring, dien 5, STOP khong commit; Claude review + commit. **rev.2 = ap 6 diem siet cua CodeX (validator distinct, candidate provenance, normalize giu dau, metric recall-vs-agreement, polysemy khong ro ri canonical cu, scope-honesty).**
+>
+> **SYNC:** §27 da nam trong HEAD `e991c95`. Neu workspace ai do ket thuc o §26 -> sync ve commit nay truoc khi chay.
 
 ### 27.0 Boi canh (da truy nguon, dung lam lai)
 - Loi `gradient -> "dao ham rieng"` **KHONG phai Builder dich sai** - Builder da gan co `bad_existing_target` 4 lan kem de xuat dung; **consolidation bo quen ledger** (giu canonical cu sai khi co nhieu de xuat choi nhau).
@@ -1237,21 +1239,25 @@ Artifact note:
 - **STOP sau khi dien 5, KHONG commit, KHONG push.**
 
 ### 27.2 Pipeline (luot 2, sau luot Auditor chinh)
-**Buoc 1 - Bo do dung do (code, may moc):** tren cac entry DUOC GIU (`audit_label in {keep_as_translate_term, preserve_token, polysemy_or_context_dependent, uncertain_low_conf}`), nhom cac entry co `canonical_target_vi` trung nhau (so chuoi, casefold) ma `source_term` khac nhau -> moi nhom >=2 thanh vien. Khong phan nghia - chi gom theo chuoi (nhom dong-nghia-lanh-tinh cung gom, de LLM xu).
+**Buoc 1 - Bo do dung do (code, may moc).** Tren cac entry DUOC GIU (`audit_label in {keep_as_translate_term, preserve_token, polysemy_or_context_dependent, uncertain_low_conf}`), nhom cac entry co `canonical_target_vi` **chuan hoa trung nhau** ma `source_term` khac nhau -> moi nhom >=2 thanh vien.
+- **Chuan hoa (CodeX #4):** `NFC` + `strip` + collapse whitespace (`\s+`->1) + `casefold`. **GIU DAU tieng Viet va "d/d"** - tuyet doi **KHONG dung `_normalize_vi`** (da verify: no bo dau thanh + d->d => gop nham "bien"/"bien"). Dung mot helper rieng giu-dau.
+- Khong phan nghia - chi gom theo chuoi da chuan hoa (nhom dong-nghia-lanh-tinh cung gom, de LLM xu).
 
-**Buoc 2 - Card "nhom dung do" (code, mu gold):** moi nhom -> 1 object; moi thanh vien:
+**Buoc 2 - Card "nhom dung do" (code, mu gold).** Moi nhom -> 1 object; moi thanh vien:
 ```
 entry_id          = concept_key
 source_term       = canonical_source_term
 shared_canonical  = canonical_target_vi (cai dang trung)
-candidates        = unique( target_variants[].text  UNION  conflict_ledger[].proposed_target )
-                    tru trung lap; cap <= 6 ; (THUC DON duy nhat de chon)
+candidates        = [ {text, source, type} ... ]   # CodeX #3: provenance co hoc, cap <= 6, dedup theo text
+                    # source in {target_variant, conflict_ledger}
+                    # type    = ledger type neu tu ledger (bad_existing_target/canonical_target_change/polysemy_suspected), else null
+                    # gop tu target_variants[].text  va  conflict_ledger[].proposed_target
 evidence          = [<=2 prose snippet, ~45 tu, CHI block_type='prose'], uu tien cau chua term
 signals           = { occurrences_total, builder_conflict_note: bool(conflict_ledger non-empty) }
 ```
-> `candidates` gop ca `proposed_target` tu ledger -> gradient se co {gradient, dao ham theo huong, dao ham, do doc} tren thuc don.
+> Vi du gradient: candidates = [{gradient, conflict_ledger, bad_existing_target}, {dao ham, conflict_ledger, canonical_target_change}, {do doc, conflict_ledger, polysemy_suspected}, {dao ham theo huong, target_variant, null}].
 
-### 27.3 BYTE PROMPT `d2l_decollision_v1` *(Claude thiet ke - CodeX VERBATIM; bump version khi doi byte)*
+### 27.3 BYTE PROMPT `d2l_decollision_v1` *(Claude thiet ke - CodeX VERBATIM; chua tung chay nen rev pre-implementation, khong can bump)*
 ```
 [SYSTEM]
 You resolve naming COLLISIONS in an English-to-Vietnamese translation memory for the
@@ -1263,12 +1269,14 @@ whether a term is context-dependent. You do NOT translate from scratch and you d
 new Vietnamese wordings - you only choose among the candidates you are given, or flag.
 
 Hard rules:
-- Choose a canonical ONLY from the "candidates" list provided for that term. If none fits, do
-  NOT invent one - use mark_polysemy or uncertain.
+- Choose a canonical ONLY from the "candidates" list provided for that term (use its "text").
+  If none fits, do NOT invent one - use mark_polysemy or uncertain.
+- For resolve_distinct, the chosen canonical MUST differ from shared_canonical, AND must differ
+  from any sibling you leave at keep_shared - otherwise the collision is NOT removed.
 - You are given no reference or gold translation; do not assume one exists. Judge from the
   evidence sentences and your own domain knowledge.
 - Within one group, two members you both resolve as distinct must NOT end up with the same
-  canonical - the whole point is to remove the collision.
+  canonical.
 - Never drop or delete a term; you only relabel or re-pick its canonical.
 
 Recall-safety: a wrong forced translation is worse than an honest "context-dependent" flag.
@@ -1279,7 +1287,11 @@ different concepts.
 Reading each member:
 - source_term: the English term.
 - shared_canonical: the Vietnamese translation currently shared with the other members.
-- candidates: the ONLY Vietnamese wordings you may choose from (generated upstream for this term).
+- candidates: the ONLY Vietnamese wordings you may choose from. Each has a "text" plus a
+  mechanical provenance ("source"/"type"): a candidate from "conflict_ledger" with type
+  "bad_existing_target" or "canonical_target_change" is the upstream extractor's OWN flag that
+  the shared name is wrong for this term - weigh it as a strong hint, but still confirm from the
+  evidence. A "target_variant" candidate is merely another rendering seen for this term.
 - evidence: 1-2 source sentences showing how the term is used (use these to tell concepts apart).
 - signals: occurrences and an optional upstream note that the translation was flagged
   inconsistent - a hint, not a verdict.
@@ -1294,8 +1306,8 @@ Choose exactly one decision per member:
 - uncertain: genuinely unsure after weighing the evidence (set chosen_canonical to null).
 
 Also set:
-- chosen_canonical: keep_shared -> the shared_canonical; resolve_distinct -> one value from
-  candidates; mark_polysemy / uncertain -> null.
+- chosen_canonical: keep_shared -> the shared_canonical; resolve_distinct -> the "text" of one
+  candidate (must differ from shared_canonical); mark_polysemy / uncertain -> null.
 - confidence: high | medium | low
 - reason: one short clause (<= 20 words) naming the deciding evidence.
 
@@ -1313,20 +1325,24 @@ Resolve the following collision groups. Return the JSON array as specified.
 ### 27.4 Validator (code, nhu `validate_audit_results`)
 - Dung so object = tong so thanh vien, dung thu tu, dung `entry_id`.
 - `decision in {keep_shared, resolve_distinct, mark_polysemy, uncertain}`.
-- `resolve_distinct` -> `chosen_canonical` **phai in candidates** cua entry do.
+- `resolve_distinct` -> `chosen_canonical` **in {c.text}** cua entry do; **VA `chosen_canonical != shared_canonical`** (CodeX #2); **VA != canonical cua bat ky member `keep_shared` nao cung nhom** (CodeX #2).
 - `keep_shared` -> `chosen_canonical == shared_canonical`.
 - `mark_polysemy/uncertain` -> `chosen_canonical == null`.
-- **Rang buoc nhom:** trong cung nhom, khong co 2 `resolve_distinct` trung `chosen_canonical`. Vi pham -> 1 lan re-ask, roi fail nhom do (giu nguyen), log.
+- **Rang buoc nhom:** khong co 2 `resolve_distinct` trung `chosen_canonical`. Vi pham bat ky rule -> 1 lan re-ask, roi fail nhom do (giu nguyen), log.
 - `reason` <= 20 tu.
 
-### 27.5 Ap ket qua (soft-only) + verify (CodeX dien)
+### 27.5 Ap ket qua (soft-only) + verify
 - `resolve_distinct` -> `canonical_target_vi = chosen_canonical`.
-- `mark_polysemy` -> `audit_label = polysemy_or_context_dependent`, `injection_action = context_sensitive_translate`, **khong ep canonical cung**.
+- `mark_polysemy` -> `audit_label = polysemy_or_context_dependent`, `injection_action = context_sensitive_translate`. **CodeX #5 (quan trong):** entry polysemy/uncertain **KHONG duoc ro ri canonical cu nhu hard mapping** xuong pack. Cu the:
+  - danh dau ro: them `inject_as_hard_canonical = false` (hoac chuyen canonical cu vao field cach ly `canonical_unresolved`, de **khong code nao doc nham** canonical cu la an toan);
+  - bo do/injection sim **KHONG** duoc phat `source -> canonical` cung cho cac entry nay (CodeX verify trong sim hien tai);
+  - ghi chu: Phase D `context_builder` phai ton trong `context_sensitive_translate` (render mem, dung variant theo ngu canh). Neu chua wire production, **toi thieu artifact C3.5 phai danh dau ro** de khong ai hieu nham canonical cu da an toan.
 - `keep_shared` -> giu nguyen.
-- Ghi notebook + `decollision_trail.json` (entry: decision/chosen/confidence/reason). **Khong xoa gi.**
-- **Verify:** chay lai metric A/B (§26) -> **A va B phai KHONG doi** (de-collision chi sua canonical/relabel, khong bo entry; recall theo source-term khong doi) - neu doi la loi wiring. Report: so nhom + bang resolve, DB hash unchanged, gold-blind=true, cost. Xuat toan bo `decollision_trail.json` cho Claude soi.
+- Ghi notebook + `decollision_trail.json` (entry: decision/chosen/confidence/reason/provenance-da-chon). **Khong xoa gi.**
+- **Verify (CodeX #1 - sua cach phat bieu):** chay lai metric §26. **PHAI bat bien:** gold denominator, matched source terms, **recall A/B**, so entry giu/bo. **KHONG ep bat bien:** VI-agreement/quality - de-collision doi `canonical_target_vi` nen agreement CO THE doi (mong la cai thien) -> **report rieng, khong dung lam pass/fail**. Bat toan bo metric JSON bat bien se fail oan mot fix dung.
+- Report: so nhom + bang resolve (truoc/sau canonical), DB hash unchanged, gold-blind=true, cost. Xuat `decollision_trail.json` cho Claude soi (dac biet 2 nhom gradient / product rule).
 
-### 27.6 Khong lam (de sau, do truoc)
-- KHONG re-run luot Auditor chinh, KHONG bump prompt chinh.
-- KHONG them "translation-quality judge" from-scratch (tin hieu da co trong ledger; ca "dich sai am tham khong co co + khong dung do" la hiem -> de tang do luong loi ra).
-- Code "consolidation honor single-proposal bad_existing_target" = **tuy chon**, lam rieng sau neu Claude duyet - khong nhet vao task nay.
+### 27.6 Scope - noi that (CodeX #6)
+- **C3.5 = de-collision pass, KHONG phai full ledger-repair.** No CHI bat cac entry **dung canonical cheo-entry**. Entry co `bad_existing_target` ma **khong dung** voi entry khac -> C3.5 **KHONG** bat (vd se can pass khac). Tren chuong `preliminaries` hien tai cac ca ledger con lai (one/shape/tensor) deu tu lanh (bi bo / da polysemy / ignore lai dung), nen khong co bug ledger co hai bi sot - nhung **dung over-claim** "da sua consolidation phot lo ledger toan he thong".
+- **Follow-up rieng (khong nhet vao C3.5):** consolidation rule "single clear `bad_existing_target` proposal -> deterministic apply; multiple competing -> route polysemy/LLM". Lam sau neu Claude duyet.
+- KHONG re-run luot Auditor chinh, KHONG bump prompt chinh, KHONG them "translation-quality judge" from-scratch (ca "dich sai am tham khong co + khong dung do" la hiem -> de tang do luong loi ra).
