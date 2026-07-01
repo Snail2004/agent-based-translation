@@ -1892,3 +1892,44 @@ Potential issue for Claude review:
   - Vi sao khong bat: (a) LLM decollision tra rac -> validator chan; (b) **KHONG co conflict_ledger backing** nen §29 khong dung duoc; (c) keep_shared fallback giu nguyen cum gop. => lo hong: **collision Builder gan cung canonical SAI ma KHONG flag ledger -> khong tang nao bat.**
 - **DE XUAT FIX (deterministic, 0 gold, 0 LLM):** khi keep_shared ap cho collision cua cac SOURCE TERM KHAC NHAU (khong phai bien the hinh thai/hyphen), KHONG duoc hard-inject shared canonical cho TAT CA — chi 1 owner giu hard, cac member con lai -> context_sensitive (soft), giong xu ly polysemy cua §30. Tranh ep map sai. (Chua lam — de user quyet.)
 - **DUYET B4** (§30 pack preflight, 0-API) — se dinh luong: regularization/standardize xuat hien trong MANDATORY voi canonical sai. B4 chan doan, khong chan.
+
+## 32. Stage C5: TWO DETERMINISTIC GUARDS — over-merge ownership (Fix ①) + collision soft-fallback (Fix ②) *(Claude thiet ke, 2026-07-01; ap CodeX review)*
+
+> Boi canh: re-validation MLP (§31.7, §31.8) lo ra 2 bug C2 THAT + TAI LAP. Fix ① don root over-merge (`model` nuot `neural network`...); Fix ② chan hai collision nhoi-cung-sai (`regularization`->`chuẩn hóa` vs gold "điều chuẩn"). **Ca 2: deterministic, 0 API, 0 gold, KHONG hardcode term** (test grep = rong). CodeX review da siet: dung concept_key (khong exact string), occ=0 quarantine (khong drop mu), collision KHONG chon owner theo occ (soft ca nhom).
+
+### 32.0 Bat bien
+- Frozen DB `mode=ro`, hash 64D989...B555C715 khong doi. Blind-gold (fix khong doc gold). Notebook giu du entry (Fix ① detach surface, KHONG xoa entry; Fix ② doi injection_action, khong xoa). CodeX STOP khong commit; Claude review + commit.
+
+### 32.1 Fix ① — SURFACE OWNERSHIP guard (truoc Auditor)
+**Van de:** LLM C2 gan surface cua khai niem KHAC vao 1 entry (vd `model` chua `neural network`, `deep neural networks`, `network`, `initial matrix`; nhieu surface `occurrence_count=0`). Auditor thay bucket lon xon -> `generic_low_value` -> mat gold `model`.
+
+**Rule (CodeX #1 — concept_key, KHONG exact string):**
+- Voi moi surface_variant `s` cua entry A: neu ton tai entry B (B != A) ma `concept_key(s) == concept_key(B.canonical_source_term)` -> **DETACH `s` khoi A** (no thuoc ve B; B da co entry rieng nen khong mat khai niem). Dung `concept_key` de bat bien the so it/nhieu, hyphen (`deep neural networks` <-> `deep neural network`).
+- **occ=0 surfaces (CodeX #2 — quarantine, KHONG drop mu):** surface co `occurrence_count==0` -> chuyen vao artifact `surface_quarantine.json` (nhan "LLM-proposed, never matched"), TACH khoi variant active nhung GHI LAI. KHONG xoa vinh vien (co the la bien the hop le matcher chua bat) -> **do** ty le phantom vs legit sau.
+
+**Vi tri:** buoc consolidation Builder (concept grouping). Chay **TRUOC Auditor** (C2 -> Fix① cleanup 0-API -> C3). De validate tren MLP: ap cleanup len `builder_v2_mlp_c2/notebook.json` (0-API) -> `model` het bi nuot; **re-audit (~$0.08) de xac nhan `model` chuyen sang keep** (tuy chon, CodeX quyet do sau).
+
+### 32.2 Fix ② — CANONICAL COLLISION soft-fallback (o pack build, §30)
+**Van de:** >=2 entry `keep`/`translate` khac nhau CUNG `canonical_target_vi` (vd `regularization`, `standardize`, `normalization` -> "chuẩn hóa"; `regularization`->"chuẩn hóa" SAI vs gold "điều chuẩn"), khong ledger, khong resolve -> nhoi CUNG canonical sai vao S1.
+
+**Rule (CodeX — KHONG chon owner theo occ; bao thu):**
+- Khi build pack: nhom cac entry `injection_action==translate` theo `normalize_target_key(canonical_target_vi)`. Voi nhom co >=2 entry ma **chua resolve dang tin**:
+  - **Ha CA NHOM xuong `context_sensitive_translate` (soft).** TUYET DOI khong chon 1 owner theo occurrence (occ cao nhat o day chinh la `regularization` = mapping sai nhat).
+- **Giu HARD chi khi** nhom la bien the CO HOC ro rang: cac member `concept_key` bang nhau, HOAC chi khac hyphen/whitespace/so-it-nhieu; HOAC co ledger/decollision decision hop le gan canonical rieng. (=> `non-linearity/nonlinearity`, `fully connected/fully-connected` van hard; `regularization/standardize` -> soft.)
+
+**Vi tri:** pack/context builder (`context_builder.py`, sau cong injection_action §30). Chi doi cach RENDER/inject, khong sua canonical trong notebook.
+
+### 32.3 PHEP DO tac dong (Claude bo sung — BAT BUOC)
+Rule bao thu se ha soft ca mot so synonym DUNG (vd `backpropagation`/`backward propagation`->"lan truyền ngược" neu concept_key khong gop). Chap nhan duoc (soft van duoc nhoi nhu goi y), NHUNG phai DO:
+- Bao so entry bi `keep->soft` do Fix ② tren **CA preliminaries LAN MLP**; so surface bi quarantine do Fix ① tren ca 2.
+- Neu `keep->soft` LON bat thuong (mem hoa qua nhieu -> hard glossary rong di) -> canh bao, can noi tieu chi "co hoc" cho chinh xac (vd nhan synonym cung token goc) NHUNG CAN THAN khong thanh viec-ngon-ngu.
+- Xac nhan **preliminaries KHONG regress** (pack cu 259 khong bi mem hoa sai; 261 test van pass).
+
+### 32.4 TEST BAT BUOC
+- **Fix ①:** tren MLP c2 notebook, `model` bi detach `neural network`/`deep neural networks` (concept_key trung entry rieng); surface `occ=0` nam trong `surface_quarantine.json` (KHONG mat); ap len preliminaries KHONG detach nham surface hop le. (Optional: re-audit MLP -> `model` chuyen keep.)
+- **Fix ②:** tren MLP decollided, `regularization` + `standardize` KHONG con `translate` "chuẩn hóa" (thanh `context_sensitive`); nhom co-hoc (`non-linearity/nonlinearity`, `fully connected/fully-connected`) VAN `translate`; in so `keep->soft` cho ca 2 chuong.
+- **Chung:** module KHONG chua literal ten term (grep model/gradient/regularization/chuẩn hóa/neural = rong); DB hash 64D989 khong doi; preliminaries pack khong regress.
+
+### 32.5 Ngoai pham vi (noi that)
+- Fix ② la **damage-control**: no NGAN ep sai, KHONG cho `regularization` ban dich DUNG "điều chuẩn" (can LLM dich lai = phan doan ngon ngu, ma LLM decollision da chung minh khong dang tin). Dung tinh than: guard deterministic chan hai; dich dung la viec LLM va von khong hoan hao.
+- Khong dong bo lai toan bo C2 (Fix ① chay nhu pre-Auditor pass tren artifact co san hoac tich hop online sau).
