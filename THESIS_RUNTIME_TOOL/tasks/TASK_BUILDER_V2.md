@@ -1684,3 +1684,60 @@ Logic chay tren **SIGNAL** (audit_label, ledger-type, candidate provenance, huon
 - Verified trail: `gradient -> promoted_keep_source`; `one -> blocked_audit_label`; `shape -> blocked_audit_label`; `tensor -> held_translation_proposal` with canonical/injection unchanged.
 - Targeted tests: `python -m pytest pipeline/tests/test_builder_v2_decollision.py -q` -> `11 passed`.
 - STOP: no commit, no push. Claude should review `ledger_promotion_trail.json`, `notebook_promoted.json`, and targeted tests before commit.
+
+## 30. Stage C4.5: PACK-EXCLUSION POLICY (Translator injection gate + 3-mode renderer) *(Claude thiet ke, 2026-07-01; ap CodeX 4-diem)*
+
+> Muc tieu: quyet dinh entry nao — va RENDER THE NAO — di vao Translator pack, dua tren nhan Auditor. Notebook GIU du 340; pack la tap con. Sua loi pilot soft-only (`one` van hien trong injection_preview vi Auditor chi HA HANG chu khong loai khoi pack). §30 = wiring THAT vao pack/context builder + renderer 3 che do.
+
+### 30.0 Bat bien
+- Notebook + audit report GIU DU 340 entry (KHONG xoa). Chi tap PACK (thu that su di vao prompt Translator) bi loc.
+- Blind-gold van giu (policy KHONG doc gold). Frozen DB ro (mode=ro). CodeX STOP khong commit; Claude review + commit.
+- Chay tren notebook SAU §29 promotion + C3.5 decollision (= ban da sua canonical), khong phai notebook tho.
+
+### 30.1 Gate = `injection_action` (KHONG phai `priority_tier`)
+- `injection_action` la coarsening **1:1** cua `audit_label` (verify: moi label -> dung 1 action; generic+descriptive deu -> deprioritize). Day la truong "nhoi vao Translator the nao" => DUNG lam cong loc.
+- `priority_tier` CHI de **SAP THU TU** trong tap da-chon (khi co token budget: high truoc, medium sau, cat phan du). TUYET DOI khong dung tier lam dieu kien in/out — mot `context_sensitive` tier=medium VAN phai nam trong pack. (Ở preliminaries low+review==81==tap loai chi la TRUNG HOP, dung dua vao.)
+
+### 30.2 Policy 3 che do (so lieu THAT tren preliminaries, 340 entry)
+| injection_action | che do | vao pack? | render |
+|---|---|---|---|
+| translate (201) | **HARD glossary** | CO | `source -> target`, rang buoc nhat quan |
+| preserve (26) | **PRESERVE** | CO | giu nguyen token/API/code |
+| context_sensitive_translate (32) | **SOFT hint** | CO, **KHONG cung** | section rieng "context-sensitive, do NOT force" |
+| deprioritize (78 = generic 47 + descriptive 31) | **AUTO-EXCLUDE** | KHONG | chi report/UI |
+| review_only (3 = uncertain) | **QUARANTINE/REPAIR** | KHONG (mac dinh) | repair-queue artifact, KHONG goi la rac |
+- Pack = 227 hard + 32 soft = **259**. Ngoai pack = 78 exclude + 3 quarantine = **81**. (DEV preliminaries; sach/chuong khac se khac — assert theo LABEL, khong hardcode con so.)
+
+### 30.3 Renderer: 3 SECTION TACH BIET (CodeX #3 — load-bearing)
+Pack Translator render **3 muc RIENG**, KHONG tron:
+1. **MANDATORY TERMINOLOGY** (hard): `translate` (+ `preserve` co the gop nhung phai danh dau do-not-translate). `source -> target`, yeu cau dung nhat quan.
+2. **PRESERVE / DO-NOT-TRANSLATE**: `preserve` token (API/code/acronym).
+3. **CONTEXT-SENSITIVE TERMS (do NOT force a single translation)**: `context_sensitive`. Render dang canh bao ngu canh, vi du:
+   `shape: context-sensitive; "kích thước" for tensor dimensions, keep "shape" for .shape/API, "hình dạng" for abstract shape — do NOT hard-map to one.`
+- **CAM**: nhet `context_sensitive` vao muc MANDATORY (pha muc tieu: da nghia ma ep cung). Test PHAI bat cho nay.
+- Luu §29: `gradient` da duoc promote sang HARD "gradient" -> da ROI khoi tap context_sensitive; 32 con lai la da-nghia that (vd `shape`).
+
+### 30.4 `review_only` = QUARANTINE, khong phai noise (CodeX #2)
+- 3 entry uncertain KHONG vao pack mac dinh, nhung di vao **repair-queue artifact** (vd `pack_repair_queue.json`), danh dau "possible real term, surface unreliable".
+- Verify tay 3 cai (2026-07-01): `continuou random variable` (=continuou**s**, term that), `calculu` (=calculu**s**, that), `multiple random variable` (thieu bang chung termhood). **2/3 la term that bi HONG SURFACE** (loi extraction), khong phai rac -> drop im lang se mat term.
+- Production end-to-end: co the them 1 pass sua surface sau (`calculu->calculus`, `continuou->continuous`) roi tai xet — KHONG bat buoc nguoi. Truoc mat quarantine artifact la du (khong drop im lang, khong tinh la noise).
+
+### 30.5 Recall accounting (CodeX #4 — DEV, KHONG over-claim)
+- Loai 78 `deprioritize` = dung `AUDITOR_DROP_LABELS` (generic+descriptive). Chi phi recall gold DA DO tren preliminaries: **delta Metric A−B = 4 gold false-drop** (A=38/57, B=34/57). **DAY LA KET QUA DEV TREN 1 CHUONG, khong suy rong toan sach.**
+- Loai 3 `review_only`: chua nam trong Metric B (khong o AUDITOR_DROP_LABELS). Rui ro recall nho (2/3 term that surface hong) **giam nhe bang quarantine** (khong drop han) -> khong tinh la mat vinh vien.
+
+### 30.6 Wiring THAT (khong chi report) (CodeX #1)
+- Cho loc + render 3 section phai nam o **pack/context builder that su nap term vao prompt Translator** — trO `pipeline/translate/prompt.py` va/hoac `pipeline/retrieval/context_builder.py` (CodeX xac nhan diem nap chinh xac), KHONG chi o report/preview.
+- Ly do `one` con hien o pilot: Auditor moi ha hang, pack builder van nap ca low-tier. §30 phai loai THAT: entry co `injection_action in {deprioritize, review_only}` KHONG duoc xuat hien trong prompt Translator gui di.
+
+### 30.7 TEST BAT BUOC
+- pack CHI chua `injection_action in {translate, preserve, context_sensitive_translate}`; KHONG chua `deprioritize`/`review_only`.
+- `one` (generic_low_value/deprioritize) KHONG co trong prompt Translator; mot term `translate` bat ky CO.
+- `context_sensitive` term render trong SECTION RIENG, KHONG nam trong MANDATORY glossary block (assert theo section/marker).
+- notebook van du 340 (khong xoa); `review_only` xuat hien trong repair-queue artifact.
+- Assert theo LABEL/ACTION, KHONG hardcode con so 259/81 (de khong overfit sach khac).
+
+### 30.8 Ngoai pham vi
+- KHONG sua Builder extraction (surface hong `calculu` la viec cua pass repair sau, khong phai §30).
+- priority_tier-based **budget truncation** (khi pack vuot token budget) la buoc RIENG; §30 chi lam GATE + RENDER, chua lam budget-cut.
+- §30 chinh la THAM SO dau vao cua thi nghiem S0-vs-S1 (no quyet dinh cai gi duoc nhoi trong S1).
