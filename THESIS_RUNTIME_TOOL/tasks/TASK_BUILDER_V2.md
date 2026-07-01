@@ -1955,3 +1955,25 @@ CodeX da implement §32 (chua commit) + chay B4. Claude verify DOC LAP (0-API, t
 **Follow-up (khong chan):** (a) CLI `run_translate --preflight-only` return 0 ngay sau `_print_preflight` (dong 131) -> KHONG tu ghi artifact JSON; B4 hien dung tay bang `_preflight()`. Nen them nhanh ghi report cho preflight de artifact-hoa tu dong. (b) Muon xac nhan `model` chuyen dropped->keep can re-audit API tren notebook_surface_guarded (chua chay, ~$0.08). (c) latent risk run_translate non-preflight (real S1) van migrate_db(write) — xu ly o moc S0-vs-S1.
 
 Commit: (dien sau).
+
+### 32.7 Re-audit MLP — Fix (1) end-to-end CONFIRMED (Claude ran API, 2026-07-02)
+
+Chay lai C3 Auditor tren MLP QUA guard (`--confirm-usd 0.40`, KEY-2, out `builder_v2_mlp_c3_reaudit/` = gitignored). Cost THUC $0.0825; 28 calls; **DB hash 64D989 khong doi**; auditor blind_to_gold=True.
+
+**Ket qua chinh — `model` DUOC CUU (dropped -> kept):**
+| | audit_label | injection_action | occ | variants |
+|---|---|---|---|---|
+| TRUOC (xo ban, §31.7) | generic_low_value | deprioritize = BO khoi pack | 84 | 24 |
+| SAU (da guard) | polysemy_or_context_dependent | context_sensitive_translate = VAO pack (soft) | 68 | 10 |
+
+Nhan qua truc tiep cua Fix (1): xo sach 24->10 variant -> Auditor doc ra `model` la khai niem context-dependent that (khong con la rac generic) -> khong drop nua. **`model` khong con nam trong false-drop.**
+
+**Nhung noi that (khong to hong):**
+- `model` ve dang **SOFT (context_sensitive)**, KHONG phai hard glossary. Hop ly (model von generic/da nghia), va no DA vao pack = tinh la recovered cho recall. Nhung khong bat buoc.
+- **Recall tong gan nhu PHANG:** Metric A=0.6296 (68/108), Metric B=0.6111 (66/108), delta=2/108. So voi pre-guard (~0.630) khong tang dang ke — DUNG ky vong: Fix (1) la fix DIEM (chan 1 over-merge false-drop), khong phai nang recall dien rong.
+- **false-drop 3->2 NHUNG khong phai subset sach:** con lai {`category` occ5, `data` occ30}, ca hai generic_low_value. `data` (occ30) gio bi drop — la lan audit MOI, stochastic. `parse_failure_count=2` (2/28 chunk khong parse duoc) = nhieu run-to-run. Nen so sanh THANH PHAN false-drop giua 2 lan la co nhieu; claim SACH duy nhat = `model` cu the da lat dropped->kept.
+- Fix (1) KHONG don sach 100% xo `model`: `network`(occ1), `initial matrix`(occ1) van con vi khong co entry doi thu de detach (can phan doan ngon ngu = viec Auditor). Auditor du van xu ly OK (gan polysemy).
+
+**Ket luan:** Fix (1) chay end-to-end dung muc tieu — cuu duoc gold term bi over-merge lam mat, 0 hai DB, blind-gold. Fix diem, khong phai don bay recall. Guard tu day nam SAN trong run_c3 (0-API, truoc Auditor) nen chuong moi khong ton them lan goi nao; $0.0825 nay chi la audit bu 1 lan cho MLP (da audit truoc §32).
+
+Artifacts reaudit gitignored (regenerable). Task-file note commit-only.
