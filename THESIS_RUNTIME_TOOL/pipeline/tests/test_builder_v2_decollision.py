@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import inspect
 import json
+import re
 import sqlite3
 from pathlib import Path
 
@@ -280,6 +282,94 @@ def test_no_new_collision_guard_converts_applied_resolve_to_polysemy(tmp_path: P
     assert entries["gradient"]["audit"]["audit_label"] == "polysemy_or_context_dependent"
 
 
+def test_ledger_promotion_uses_three_gates_without_demoting_held_style_proposals():
+    notebook = {
+        "entries": [
+            _entry(
+                "gradient",
+                "dao ham rieng",
+                "b_grad",
+                conflicts=[
+                    {"type": "bad_existing_target", "proposed_target": "gradient", "evidence_block_ids": ["b_grad"]},
+                    {"type": "canonical_target_change", "proposed_target": "dao ham", "evidence_block_ids": ["b_grad"]},
+                ],
+            ),
+            _entry(
+                "tensor",
+                "tensor",
+                "b_grad",
+                conflicts=[
+                    {"type": "bad_existing_target", "proposed_target": "tenxo", "evidence_block_ids": ["b_grad"]}
+                ],
+            ),
+            _entry(
+                "shape",
+                "hinh dang",
+                "b_grad",
+                conflicts=[
+                    {"type": "bad_existing_target", "proposed_target": "kich thuoc", "evidence_block_ids": ["b_grad"]}
+                ],
+                label="polysemy_or_context_dependent",
+            ),
+            _entry("size", "kich thuoc", "b_grad"),
+            _entry(
+                "one",
+                "so 1",
+                "b_grad",
+                conflicts=[
+                    {"type": "bad_existing_target", "proposed_target": "mot", "evidence_block_ids": ["b_grad"]}
+                ],
+                label="generic_low_value",
+            ),
+        ]
+    }
+
+    promoted, trail = decollide.promote_ledger_canonical_candidates(notebook)
+    entries = {entry["concept_key"]: entry for entry in promoted["entries"]}
+    trail_by_id = {row["entry_id"]: row for row in trail}
+
+    assert promoted["ledger_promotion_summary"]["canonical_changed_count"] == 1
+    assert entries["gradient"]["canonical_target_vi"] == "gradient"
+    assert entries["gradient"]["canonical_corrected_from"] == "dao ham rieng"
+    assert entries["gradient"]["inject_as_hard_canonical"] is True
+    assert trail_by_id["gradient"]["status"] == "promoted_keep_source"
+
+    assert entries["tensor"]["canonical_target_vi"] == "tensor"
+    assert entries["tensor"]["audit"]["injection_action"] == "translate"
+    assert entries["tensor"].get("inject_as_hard_canonical") is None
+    assert trail_by_id["tensor"]["status"] == "held_translation_proposal"
+
+    assert entries["shape"]["canonical_target_vi"] == "hinh dang"
+    assert entries["shape"]["audit"]["audit_label"] == "polysemy_or_context_dependent"
+    assert trail_by_id["shape"]["status"] == "blocked_audit_label"
+
+    assert entries["one"]["canonical_target_vi"] == "so 1"
+    assert entries["one"]["audit"]["audit_label"] == "generic_low_value"
+    assert trail_by_id["one"]["status"] == "blocked_audit_label"
+
+
+def test_ledger_promotion_matches_any_source_variant_surface():
+    entry = _entry(
+        "feature",
+        "dac trung sai",
+        "b_grad",
+        conflicts=[
+            {"type": "bad_existing_target", "proposed_target": "features", "evidence_block_ids": ["b_grad"]}
+        ],
+    )
+    entry["source_variants"].append({"surface": "features", "evidence_block_ids": ["b_grad"], "occurrence_count": 1})
+    promoted, trail = decollide.promote_ledger_canonical_candidates({"entries": [entry]})
+
+    assert promoted["entries"][0]["canonical_target_vi"] == "features"
+    assert trail[0]["status"] == "promoted_keep_source"
+
+
+def test_ledger_promotion_production_function_has_no_fixture_term_literals():
+    source = inspect.getsource(decollide.promote_ledger_canonical_candidates)
+    for term in ("gradient", "tensor", "shape", "one"):
+        assert re.search(rf"\b{re.escape(term)}\b", source) is None
+
+
 def test_prompt_v2_owner_rule_rejects_resolve_without_owner(tmp_path: Path):
     groups = decollide.build_collision_groups(
         _notebook(),
@@ -358,7 +448,10 @@ def test_estimate_only_archives_full_prompts(tmp_path: Path):
     )
 
     assert report["zero_api"] is True
-    assert report["groups"] == 2
+    assert report["ledger_promotion_summary"]["canonical_changed_count"] == 1
+    assert report["groups"] == 1
+    assert (out / "ledger_promotion_trail.json").exists()
+    assert (out / "notebook_promoted.json").exists()
     assert (out / "collision_groups.json").exists()
     prompts = sorted((out / "prompts").glob("*.txt"))
     assert len(prompts) == 1

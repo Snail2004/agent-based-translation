@@ -144,6 +144,7 @@ KEEP_LABELS = {
     "polysemy_or_context_dependent",
     "uncertain_low_conf",
 }
+PROMOTION_ELIGIBLE_LABELS = {"keep_as_translate_term", "preserve_token"}
 ALLOWED_DECISIONS = {"keep_shared", "resolve_distinct", "mark_polysemy", "uncertain"}
 ALLOWED_CONFIDENCE = {"high", "medium", "low"}
 CANDIDATE_SOURCE_PRIORITY = {"conflict_ledger": 0, "target_variant": 1}
@@ -464,6 +465,108 @@ def apply_decollision_to_notebook(
     return result
 
 
+def promote_ledger_canonical_candidates(notebook: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Promote only ledger-backed keep-source canonical corrections.
+
+    This is the C4 pre-pass before C3.5. It never chooses between translated
+    Vietnamese proposals; it only accepts a hard-ledger proposal that says the
+    safest canonical is to keep a source surface verbatim.
+    """
+
+    entries = [entry for entry in notebook.get("entries") or [] if isinstance(entry, dict)]
+    final_canonical_by_entry: dict[str, str] = {}
+    for entry in entries:
+        if _audit_label(entry) not in KEEP_LABELS:
+            continue
+        canonical = _clean_text(entry.get("canonical_target_vi"))
+        if canonical:
+            final_canonical_by_entry[_entry_id(entry)] = canonical
+
+    updated_entries: list[dict[str, Any]] = []
+    trail: list[dict[str, Any]] = []
+    changed_count = 0
+    for entry in entries:
+        updated = dict(entry)
+        entry_id = _entry_id(entry)
+        current = _clean_text(entry.get("canonical_target_vi"))
+        hard_proposals = _hard_ledger_proposals(entry, current)
+        if not hard_proposals:
+            updated_entries.append(updated)
+            continue
+
+        audit_label = _audit_label(entry)
+        source_keys = {normalize_target_key(surface) for surface in _source_surfaces(entry) if surface.strip()}
+        source_proposals = [
+            proposal
+            for proposal in hard_proposals
+            if normalize_target_key(proposal["proposed_target"]) in source_keys
+        ]
+        row: dict[str, Any] = {
+            "entry_id": entry_id,
+            "audit_label": audit_label,
+            "previous_canonical_target_vi": current,
+            "hard_proposals": hard_proposals,
+            "source_surfaces": _source_surfaces(entry),
+            "status": "not_applied",
+        }
+
+        if audit_label not in PROMOTION_ELIGIBLE_LABELS:
+            row["status"] = "blocked_audit_label"
+            _attach_promotion_metadata(updated, row)
+            trail.append(row)
+            updated_entries.append(updated)
+            continue
+
+        if not source_proposals:
+            row["status"] = "held_translation_proposal"
+            _attach_promotion_metadata(updated, row)
+            trail.append(row)
+            updated_entries.append(updated)
+            continue
+
+        winner = source_proposals[0]["proposed_target"]
+        collision_entries = [
+            other_entry_id
+            for other_entry_id, canonical in final_canonical_by_entry.items()
+            if other_entry_id != entry_id and normalize_target_key(canonical) == normalize_target_key(winner)
+        ]
+        row["winner"] = winner
+        row["winner_ledger_type"] = source_proposals[0]["type"]
+        if collision_entries:
+            row["status"] = "blocked_collision"
+            row["blocked_collision_entry_ids"] = collision_entries
+            audit = dict(updated.get("audit") or {})
+            audit.update(
+                {
+                    "audit_label": "polysemy_or_context_dependent",
+                    "priority_tier": "medium",
+                    "injection_action": "context_sensitive_translate",
+                }
+            )
+            updated["audit"] = audit
+            updated["inject_as_hard_canonical"] = False
+            updated["canonical_unresolved"] = current
+        else:
+            row["status"] = "promoted_keep_source"
+            updated["canonical_target_vi"] = winner
+            updated["canonical_corrected_from"] = current
+            updated["inject_as_hard_canonical"] = True
+            if current and normalize_target_key(current) != normalize_target_key(winner):
+                _append_target_variant(updated, current, "canonical_corrected_from")
+            final_canonical_by_entry[entry_id] = winner
+            changed_count += 1
+        _attach_promotion_metadata(updated, row)
+        trail.append(row)
+        updated_entries.append(updated)
+
+    result = dict(notebook)
+    result["entries"] = updated_entries
+    result["ledger_promotion_version"] = "c4_keep_source_v1"
+    result["ledger_promotion_trail"] = trail
+    result["ledger_promotion_summary"] = _promotion_summary(trail, changed_count)
+    return result, trail
+
+
 def _guard_no_new_collisions(notebook: dict[str, Any], rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows_by_id = {str(row.get("entry_id") or ""): row for row in rows}
     final_canonical_by_entry: dict[str, str] = {}
@@ -674,6 +777,72 @@ def _rejects_shared(entry: dict[str, Any]) -> bool:
         if isinstance(conflict, dict) and str(conflict.get("type") or "") in HARD_LEDGER_TYPES:
             return True
     return False
+
+
+def _hard_ledger_proposals(entry: dict[str, Any], current: str) -> list[dict[str, Any]]:
+    proposals: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for conflict in entry.get("conflict_ledger") or []:
+        if not isinstance(conflict, dict):
+            continue
+        ctype = str(conflict.get("type") or "")
+        if ctype not in HARD_LEDGER_TYPES:
+            continue
+        proposed = _clean_text(conflict.get("proposed_target"))
+        if not proposed or normalize_target_key(proposed) == normalize_target_key(current):
+            continue
+        key = normalize_target_key(proposed)
+        if key in seen:
+            continue
+        seen.add(key)
+        proposals.append(
+            {
+                "proposed_target": proposed,
+                "type": ctype,
+                "evidence_block_ids": [
+                    str(block_id)
+                    for block_id in conflict.get("evidence_block_ids") or []
+                    if str(block_id).strip()
+                ],
+            }
+        )
+    return proposals
+
+
+def _attach_promotion_metadata(entry: dict[str, Any], row: dict[str, Any]) -> None:
+    entry["ledger_promotion"] = {
+        "version": "c4_keep_source_v1",
+        "status": row["status"],
+        "previous_canonical_target_vi": row.get("previous_canonical_target_vi"),
+        "winner": row.get("winner"),
+        "winner_ledger_type": row.get("winner_ledger_type"),
+        "blocked_collision_entry_ids": row.get("blocked_collision_entry_ids", []),
+        "hard_proposals": row.get("hard_proposals", []),
+    }
+
+
+def _append_target_variant(entry: dict[str, Any], text: str, reason: str) -> None:
+    variants = [
+        dict(variant)
+        for variant in entry.get("target_variants") or []
+        if isinstance(variant, dict)
+    ]
+    key = normalize_target_key(text)
+    if not any(normalize_target_key(str(variant.get("text") or "")) == key for variant in variants):
+        variants.append({"text": text, "variant_reason": reason})
+    entry["target_variants"] = variants
+
+
+def _promotion_summary(trail: list[dict[str, Any]], changed_count: int) -> dict[str, Any]:
+    counts: dict[str, int] = {}
+    for row in trail:
+        status = str(row.get("status") or "missing")
+        counts[status] = counts.get(status, 0) + 1
+    return {
+        "triggered_entries": len(trail),
+        "canonical_changed_count": changed_count,
+        "status_counts": dict(sorted(counts.items())),
+    }
 
 
 def _audit_label(entry: dict[str, Any]) -> str:

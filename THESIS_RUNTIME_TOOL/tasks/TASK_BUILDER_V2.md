@@ -1641,8 +1641,8 @@ Logic chay tren **SIGNAL** (audit_label, ledger-type, candidate provenance, huon
 > Bat `one` (generic_low_value, du ledger co 6 window -> "một") va `shape` (polysemy) NGAY TAI DAY, truoc khi dem phieu.
 
 **SELECTION (xac dinh, tu ledger) — chi chon HUONG AN TOAN (keep-source):**
-- Trong cac hard-ledger proposal cua entry, NEU co proposal `normalize_target_key(prop) == normalize_target_key(source surface)` (= keep-source / giu nguyen tu nguon) -> **elect keep-source lam canonical** (safe-fallback).
-- NEU KHONG co proposal keep-source (tat ca proposal la BAN DICH moi) -> **KHONG auto**; -> `context_sensitive_translate` + `held_for_review`, defer policy/nguoi.
+- `source surface` = `canonical_source_term` + moi `source_variants[].surface` (normalize cung `normalize_target_key`; NFC+trim+casefold). Trong cac hard-ledger proposal cua entry, NEU co proposal `normalize_target_key(prop)` trung 1 source surface (= keep-source / giu nguyen tu nguon) -> **elect keep-source lam canonical** (safe-fallback).
+- NEU KHONG co proposal keep-source (tat ca proposal la BAN DICH moi) -> **KHONG auto-promote**; chi ghi `promotion_status=held_translation_proposal`, giu nguyen canonical + audit/injection hien tai, defer policy/nguoi. KHONG bien mot canonical dang on (vd keep-English style) thanh context-sensitive chi vi co proposal ban dich moi.
 > KHONG dem phieu / tie-break giua cac ban dich (gradient von 1-1-1 theo window doc lap, khong co da so). Chi auto khi huong la keep-source. => khong bao gio TU CHON 1 ban dich.
 
 **GATE B — collision (no-new-collision). Sau SELECTION.**
@@ -1652,12 +1652,13 @@ Logic chay tren **SIGNAL** (audit_label, ledger-type, candidate provenance, huon
 
 ### 29.4 Apply
 - **auto-promote** (qua het): `canonical_target_vi = winner` (keep-source); ghi `canonical_corrected_from=<old>`; day old vao `target_variants`; `inject_as_hard_canonical=true`.
-- **held / context_sensitive**: KHONG doi `canonical_target_vi` text; `injection_action -> context_sensitive_translate`; `inject_as_hard_canonical=false`; `canonical_unresolved=<old>`; danh `held_for_review` (tensor). shape/one giu nguyen nhan Auditor.
+- **held_translation_proposal** (khong co keep-source winner): KHONG doi `canonical_target_vi`, KHONG doi `audit_label`, KHONG doi `injection_action`, KHONG doi `inject_as_hard_canonical`; chi ghi metadata `promotion_status=held_translation_proposal` + proposal bi giu. Day la case style/policy (vd tensor -> tenxo), khong phai evidence de ha hard canonical hien tai.
+- **blocked/context_sensitive** (winner keep-source bi collision, hoac entry da polysemy tu Auditor): KHONG doi `canonical_target_vi` text; `injection_action -> context_sensitive_translate`; `inject_as_hard_canonical=false`; `canonical_unresolved=<old>`; danh `held_for_review`. shape/one giu nguyen nhan Auditor.
 
 ### 29.5 Trung thuc / pham vi (loi van theo CodeX 4-diem)
 - keep-source auto-promote = **safe fallback canonical**, KHONG phai "dap an tuyet doi". Giu nguyen tieng Anh la mot **LUA CHON STYLE** tinh co it rui ro hon mot ban dich khong kiem chung duoc — chi hop le **SAU** khi qua gate audit + collision. (#1: khong claim "keep-source LUON dung"; mot tu pho thong giu tieng Anh van co the xau, nhung da qua audit-label = term ky thuat nen chap nhan duoc.)
 - (#2) gradient -> gradient **ban than cung la style decision**; trong D2L/ML giu "gradient" rat pho bien nen safe, nhung spec goi no la safe fallback chu khong tuyet doi.
-- Auto-fix CHI lop HEP: term that + hard-ledger dispute + winner keep-source + khong collision. Con lai -> context_sensitive / held (KHONG pha).
+- Auto-fix CHI lop HEP: term that + hard-ledger dispute + winner keep-source + khong collision. Con lai -> held metadata hoac context_sensitive neu co collision/polysemy (KHONG pha canonical dang on).
 - DEV-validated tren 1 chuong (preliminaries). Sach/chuong moi PHAI re-validate.
 - 0-API, deterministic. LLM da viet ledger; code chi dem + gate.
 
@@ -1665,13 +1666,21 @@ Logic chay tren **SIGNAL** (audit_label, ledger-type, candidate provenance, huon
 | entry | audit_label | ledger winner | ket qua MONG DOI | gate quyet dinh |
 |---|---|---|---|---|
 | gradient | keep_as_translate_term | gradient (keep-source) | canonical -> "gradient" (AUTO-PROMOTE) | qua het (SELECTION keep-source) |
-| tensor | keep_as_translate_term | tenxơ (ban dich) | GIU "tensor" (held_for_review) | SELECTION: khong co proposal keep-source |
+| tensor | keep_as_translate_term | tenxơ (ban dich) | GIU "tensor"; hard canonical/injection KHONG doi; chi `held_translation_proposal` | SELECTION: khong co proposal keep-source |
 | shape | polysemy_or_context_dependent | kích thước | context_sensitive, canonical KHONG -> "kích thước" | GATE A (polysemy) [+ GATE B: size dang giu "kích thước"] |
 | one | generic_low_value | một | KHONG promote (canonical giu nguyen trong §29) | GATE A (generic_low_value) |
 
-- Assert them: module promotion **KHONG chua literal ten term nao** (grep gradient/tensor/shape/one trong source = rong).
+- Assert them: production promotion module **KHONG chua literal ten term nao** (grep gradient/tensor/shape/one trong production source = rong). Test fixture duoc phep chua cac term nay de chung minh gate.
 - Assert them: tong so canonical bi doi tren CHUONG NAY = **dung 1** (gradient). Cac entry khac KHONG bi mutate canonical.
 - Moi case ghi ro GATE NAO chan no -> chung minh ca 3 gate deu CAN (bo bat ky gate nao se sai 1 case: bo A -> one bi sua; bo SELECTION/keep-source -> tensor bi Viet hoa; bo B -> shape dung do voi size).
 
 ### 29.7 §30 (TBD) — pack-exclusion policy (de SAU, can ban lam ro them)
 `generic_low_value` / `descriptive_phrase` + confidence cao -> **loai khoi Translator pack** (wiring THAT vao pack/context builder, KHONG chi report dep), VAN giu trong notebook + audit report. Phan biet ro **"loai khoi pack" != "xoa khoi notebook"**. Day la ly do `one` van xuat hien trong injection_preview o pilot (soft-only). Spec rieng sau.
+
+### 29.8 CodeX implementation notes *(2026-07-01, REVIEW)*
+- Implemented `promote_ledger_canonical_candidates()` in `pipeline/prepass/builder_v2_decollision.py`.
+- Wired the pass into `pipeline/scripts/builder_v2_c35_decollision.py` before `build_collision_groups()`. New artifacts: `ledger_promotion_trail.json`, `notebook_promoted.json`.
+- Real `--estimate-only` run on current preliminaries artifact: `zero_api=true`, `db_hash_unchanged=true`, `canonical_changed_count=1`, status counts = `{promoted_keep_source:1, blocked_audit_label:2, held_translation_proposal:1}`.
+- Verified trail: `gradient -> promoted_keep_source`; `one -> blocked_audit_label`; `shape -> blocked_audit_label`; `tensor -> held_translation_proposal` with canonical/injection unchanged.
+- Targeted tests: `python -m pytest pipeline/tests/test_builder_v2_decollision.py -q` -> `11 passed`.
+- STOP: no commit, no push. Claude should review `ledger_promotion_trail.json`, `notebook_promoted.json`, and targeted tests before commit.

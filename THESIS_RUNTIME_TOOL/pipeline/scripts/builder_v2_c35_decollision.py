@@ -23,6 +23,7 @@ from pipeline.prepass.builder_v2_decollision import (
     gate_decollision_rows,
     load_notebook,
     prompt_text,
+    promote_ledger_canonical_candidates,
     validate_decollision_results,
 )
 from pipeline.scripts.builder_v2_c3_audit import _build_auditor_recall_metrics
@@ -96,7 +97,24 @@ def run_c35(
     config = load_llm_config(config_path)
     effective_prompt_budget = prompt_token_budget or int(int(config.prompt_token_cap) * 0.9)
     db_hash_before = _sha256(db_path)
-    notebook = load_notebook(notebook_path)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    raw_notebook = load_notebook(notebook_path)
+    pre_promotion_metrics = _safe_auditor_recall_metrics(
+        db_path=db_path,
+        doc_id=doc_id,
+        chapter_id=chapter_id,
+        notebook=raw_notebook,
+        profile_name=profile_name,
+    )
+    notebook, promotion_trail = promote_ledger_canonical_candidates(raw_notebook)
+    (out_dir / "ledger_promotion_trail.json").write_text(
+        json.dumps(promotion_trail, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "notebook_promoted.json").write_text(
+        json.dumps(notebook, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     baseline_metrics = _safe_auditor_recall_metrics(
         db_path=db_path,
         doc_id=doc_id,
@@ -111,7 +129,6 @@ def run_c35(
         prompt_token_cap=effective_prompt_budget,
     )
 
-    out_dir.mkdir(parents=True, exist_ok=True)
     prompts_dir = out_dir / "prompts"
     prompts_dir.mkdir(parents=True, exist_ok=True)
     for chunk in chunks:
@@ -222,6 +239,8 @@ def run_c35(
         "phase": "BUILDER-V2-C3.5-DECOLLISION",
         "status": status,
         "prompt_version": PROMPT_VERSION,
+        "ledger_promotion_version": notebook.get("ledger_promotion_version"),
+        "ledger_promotion_summary": notebook.get("ledger_promotion_summary"),
         "zero_api": llm_run is None,
         "zero_db_write": True,
         "blind_to_gold": True,
@@ -242,12 +261,15 @@ def run_c35(
         "actual_cost_usd": (llm_run or {}).get("actual_cost_usd"),
         "parse_failure_count": (llm_run or {}).get("parse_failure_count"),
         "decision_counts": label,
+        "promotion_metric_invariants": _metric_invariants(pre_promotion_metrics, baseline_metrics) if baseline_metrics else None,
         "metric_invariants": _metric_invariants(baseline_metrics, post_metrics) if post_metrics else None,
         "metrics_available": baseline_metrics is not None,
         "llm_run": llm_run,
         "artifacts": {
             "collision_groups": "collision_groups.json",
             "chunks": "chunks.json",
+            "ledger_promotion_trail": "ledger_promotion_trail.json",
+            "notebook_promoted": "notebook_promoted.json",
             "prompts_dir": "prompts",
             "report": "builder_v2_c35_decollision_report.json",
             "decollision_trail": "decollision_trail.json" if decollision_rows is not None else None,
@@ -265,6 +287,8 @@ def run_c35(
             "estimated_cost_usd_cap": _cost(config, prompt_total, output_cap),
             "actual_cost_usd": (llm_run or {}).get("actual_cost_usd"),
             "decision_counts": label,
+            "ledger_promotion_summary": notebook.get("ledger_promotion_summary"),
+            "promotion_metric_invariants": _metric_invariants(pre_promotion_metrics, baseline_metrics) if baseline_metrics else None,
             "metric_invariants": _metric_invariants(baseline_metrics, post_metrics) if post_metrics else None,
             "metrics_available": baseline_metrics is not None,
             "zero_api": llm_run is None,
