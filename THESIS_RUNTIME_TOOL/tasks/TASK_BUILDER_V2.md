@@ -1870,3 +1870,8 @@ Potential issue for Claude review:
 - **Fix da duyet:** (1) run_translate preflight mo `mode=ro` (khong migrate); (2) pilot uu tien OPENAI-KEY-2 truoc KEY-1. Da verify MOI path §31 (pilot/c3_audit/c35/preflight) deu `mode=ro`.
 - **Rui ro latent (KHONG thuoc §31):** nhanh run_translate NON-preflight (S1 that) VAN goi migrate_db(write). Xu ly o milestone S1 (output DB rieng hoac ro), khong chan §31.
 - **B1 chap nhan:** 546 entries, cost $0.243 (< estimate). `gradient -> gradient` (DUNG NGAY tren chuong nay, khac preliminaries bi "đạo hàm riêng"), `backpropagation -> lan truyền ngược` (khop gold). -> **DUYET chay B2 Auditor.**
+
+### 31.6 CORRECTION: chuong moi CO gold -> DO duoc recall *(Claude, 2026-07-01)*
+- Claude noi sai o §31 dau ("khong co gold, bo Metric A/B"). Thuc te `eval_glossary_gold` = 458 term phang (subset_tag='d2l_glossary', KHONG chia theo chuong), va `builder_v2_c3_audit.py` **tu tinh gold subset theo chuong** (`_present_gold_terms(conn, doc_id, chapter_source_text)`, scope = "gold source terms present in chapter source text").
+- => B2 chay `--chapter multilayer_perceptrons` se **tu tao Metric A/B** cho MLP. Blind-gold KHONG vi pham (Auditor mu; chi buoc metric doc gold = plane do luong, duoc phep).
+- **Yeu cau B2 bao them:** Metric A (registry-vs-gold), Metric B (auditor-filtered), delta = so false-drop, va |gold present in MLP|. Day la bang chung RECALL tren chuong moi -> re-validation tu "chay trơn" thanh "do do chinh xac", manh hon nhieu cho luan van.
