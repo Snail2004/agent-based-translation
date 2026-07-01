@@ -1766,3 +1766,64 @@ Pack Translator render **3 muc RIENG**, KHONG tron:
     - policy counts = `notebook_total=340`, `hard_translate=201`, `preserve=26`, `context_sensitive=32`, `report_only=78`, `repair_queue=3`, `pack_total=259`.
     - S1 prompt tokens total est = 55,808; max prompt = 1,886; injected terms avg/max = 18.53/30.
   - Note: `data/reports/builder_v2_c35_decollision/notebook_decollided.json` is still the older pre-§29 endpoint in this checkout (200 hard / 33 context-sensitive). Use `notebook_promoted.json` for §30 verification until the final C3.5 rerun emits a refreshed decollided notebook.
+
+## 31. RE-VALIDATION RUN: full Builder pipeline on a NEW LARGE chapter *(Claude giao CodeX, 2026-07-01)*
+
+> Muc tieu: chay TRON quy trinh C2 -> C3 -> C3.5(+§29) -> §30 tren MOT CHUONG MOI LON (fresh, registry doc lap) de kiem quy trinh co **tong quat** ngoai preliminaries khong. **Day la test CO CHE, KHONG phai test recall-vs-gold** (chuong moi KHONG co gold — eval_glossary_gold chi phu preliminaries 57 term; nen bo qua Metric A/B cho lan nay).
+
+**Chuong: `multilayer_perceptrons`** (641 blocks, 78 windows). Ly do: lon, ky thuat, **chia se gradient/backprop** voi preliminaries -> stress-test §29 tren data moi. (C2 estimate: ~$0.30 nominal / $1.08 cap.)
+
+### 31.0 Guardrails (BAT BUOC)
+- **Frozen DB mode=ro, KHONG doi.** Ghi lai sha256 cua `data/jobs/d2l_p1/memory.sqlite3` TRUOC va SAU toan bo run; phai bang nhau (= DA0F...D464B8). Pilot da mo ro (dong 505) nhung van verify.
+- **Blind-gold:** Builder + Auditor KHONG doc `eval_glossary_gold` / `reference_eval_only`. (Chuong nay khong co gold nen khong co gi de doc, nhung giu ky luat.)
+- **Keys:** env `OPENAI_API_KEY` truoc, roi `OPENAI-KEY-2.txt` (KEY-1 = 429 chet). **KHONG log key.**
+- **Out dirs RIENG** (khong de len artifact preliminaries): `data/reports/builder_v2_mlp_c2/`, `..._c3/`, `..._c35/`. (data/reports/builder_v2_* da gitignore.)
+- **Cost gate tung buoc:** MOI buoc API chay `--estimate-only` truoc, in cap, roi moi `--confirm-usd <cap+bien>`. **STOP + bao cao sau moi buoc, KHONG chay tran.** KHONG commit (Claude review).
+
+### 31.1 Cac buoc (lenh cu the, chay tu THESIS_RUNTIME_TOOL/)
+```
+# B0 hash truoc
+sha256sum data/jobs/d2l_p1/memory.sqlite3
+
+# B1 C2 Builder (API). Estimate roi confirm.
+python pipeline/scripts/builder_v2_pilot.py --chapter multilayer_perceptrons --estimate-only
+python pipeline/scripts/builder_v2_pilot.py --chapter multilayer_perceptrons \
+    --out data/reports/builder_v2_mlp_c2 --confirm-usd 1.20
+# -> data/reports/builder_v2_mlp_c2/notebook.json   [bao: so entry, vai term mau]
+
+# B2 C3 Auditor (API). Estimate roi confirm.
+python pipeline/scripts/builder_v2_c3_audit.py --chapter multilayer_perceptrons \
+    --notebook data/reports/builder_v2_mlp_c2/notebook.json \
+    --out data/reports/builder_v2_mlp_c3 --estimate-only
+python pipeline/scripts/builder_v2_c3_audit.py --chapter multilayer_perceptrons \
+    --notebook data/reports/builder_v2_mlp_c2/notebook.json \
+    --out data/reports/builder_v2_mlp_c3 --confirm-usd <cap>
+# -> notebook_audited.json  [bao: phan bo audit_label + injection_action]
+
+# B3 C3.5 decollision + §29 promotion (API nho hoac 0-API). Estimate truoc.
+python pipeline/scripts/builder_v2_c35_decollision.py --chapter multilayer_perceptrons \
+    --notebook data/reports/builder_v2_mlp_c3/notebook_audited.json \
+    --out data/reports/builder_v2_mlp_c35 --estimate-only
+#   -> neu muon 0-API: chay lai voi --decollision-json <mark tat ca keep_shared> HOAC confirm-usd nho
+# -> ledger_promotion_trail.json, notebook_promoted.json  [bao: canonical_changed_count, cac promoted_keep_source]
+
+# B4 §30 pack preflight (0-API)
+python pipeline/scripts/run_translate.py --chapter multilayer_perceptrons \
+    --memory-notebook data/reports/builder_v2_mlp_c35/notebook_promoted.json --preflight-only
+# -> bao: pack_policy_counts (hard/preserve/soft/report/repair), pack_total
+
+# B5 hash sau (phai == B0)
+sha256sum data/jobs/d2l_p1/memory.sqlite3
+```
+
+### 31.2 CodeX bao cao (de Claude verify doc lap)
+- Cost THUC te tung buoc (nominal, khong log key).
+- C2: so entry notebook.
+- C3: bang audit_label + injection_action (giong dang §30.2).
+- C3.5/§29: `canonical_changed_count`, danh sach `promoted_keep_source` / `held_translation_proposal` / `blocked_*` (dac biet: gradient/backprop xu ly ra sao tren chuong nay?).
+- §30: pack_total + 3-mode split.
+- **db_hash before == after == DA0F...D464B8.**
+- Bat ky bat thuong (window rong, entry hong surface, over-merge cong thuc...).
+
+### 31.3 Claude se kiem lai
+Chay lai cac buoc 0-API tren artifact CodeX xuat: dem entry, §29 trail, §30 pack split; doc tay vai entry moi; xac nhan hash frozen. So sanh HANH VI voi preliminaries (co over-extraction giong? §29 co promote sai gi? §30 loc hop ly?) -> ket luan quy trinh co tong quat.
