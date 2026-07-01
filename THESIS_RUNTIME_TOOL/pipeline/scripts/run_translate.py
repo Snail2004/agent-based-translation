@@ -14,6 +14,9 @@ from pipeline.agents.llm_config import LLMConfig, load_llm_config
 from pipeline.memory.store_init import migrate_db
 from pipeline.retrieval.context_builder import (
     build_context_pack,
+    load_notebook_terms,
+    pack_policy_counts,
+    pack_repair_queue,
     plan_anchors,
     registry_injection_stats,
 )
@@ -75,6 +78,10 @@ def main() -> int:
         help="S1 hard-constraints context budget in rough tokens.",
     )
     parser.add_argument(
+        "--memory-notebook",
+        help="Builder-v2 audited notebook JSON to drive S1 term injection.",
+    )
+    parser.add_argument(
         "--preflight-only",
         action="store_true",
         help="Render prompts and estimate tokens without calling the API.",
@@ -108,6 +115,7 @@ def main() -> int:
             args.chapters,
             block_types=profile.translatable_block_types,
         )
+        notebook_terms = load_notebook_terms(args.memory_notebook) if args.memory_notebook else None
         preflight = _preflight(
             db,
             doc_id,
@@ -116,6 +124,7 @@ def main() -> int:
             llm_config,
             profile_name=profile.name,
             context_budget_tokens=args.context_budget,
+            notebook_terms=notebook_terms,
         )
         _print_preflight(args, experiment, doc_id, profile.name, preflight)
         _raise_if_preflight_unsafe(preflight, llm_config)
@@ -134,12 +143,22 @@ def main() -> int:
     reports: dict[str, dict[str, Any]] = {}
     try:
         for config in configs:
+            context_builder = (
+                _notebook_context_builder(
+                    notebook_terms,
+                    profile_name=profile.name,
+                    context_budget_tokens=args.context_budget,
+                )
+                if config.upper() == "S1" and notebook_terms is not None
+                else None
+            )
             report = translate_windows(
                 db,
                 windows,
                 client,
                 experiment_id=experiment,
                 config=config,
+                context_builder=context_builder,
                 context_budget_tokens=args.context_budget,
                 profile_name=profile.name,
                 event_sink=event_sink,
@@ -158,6 +177,7 @@ def main() -> int:
                     "experiment_id": experiment,
                     "profile": profile.name,
                     "chapters": args.chapters,
+                    "memory_notebook": _memory_notebook_report(args.memory_notebook, notebook_terms),
                     "configs": reports,
                 },
                 ensure_ascii=False,
@@ -195,6 +215,7 @@ def _preflight(
     *,
     profile_name: str,
     context_budget_tokens: int,
+    notebook_terms: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     resolved_chapters = _window_chapter_ids(db, windows)
     result: dict[str, Any] = {
@@ -204,6 +225,12 @@ def _preflight(
         "block_type_counts": _block_type_counts(db, doc_id, resolved_chapters),
         "translatable_block_type_counts": _window_block_type_counts(db, windows),
         "registry": registry_injection_stats(db, doc_id, profile_name=profile_name),
+        "memory_notebook": {
+            "pack_policy_counts": pack_policy_counts(notebook_terms),
+            "repair_queue_count": len(pack_repair_queue(notebook_terms)),
+        }
+        if notebook_terms is not None
+        else None,
         "configs": {},
     }
     for config in configs:
@@ -213,11 +240,20 @@ def _preflight(
             blocks = _fetch_window_blocks(db, window)
             context_pack = None
             if config.upper() == "S1":
-                anchors = plan_anchors(db, blocks, profile_name=profile_name)
-                context_pack = build_context_pack(
-                    db, window, anchors, budget_tokens=context_budget_tokens
+                anchors = plan_anchors(
+                    db,
+                    blocks,
+                    profile_name=profile_name,
+                    term_rows=notebook_terms,
                 )
-                context_terms.append(len(getattr(context_pack, "glossary_lines", []) or []))
+                context_pack = build_context_pack(
+                    db,
+                    window,
+                    anchors,
+                    budget_tokens=context_budget_tokens,
+                    term_rows=notebook_terms,
+                )
+                context_terms.append(_context_term_count(context_pack))
             messages = build_messages(
                 blocks,
                 prompt_version=prompt_version_for_config(config, profile_name),
@@ -245,6 +281,53 @@ def _preflight(
         item["upper_total_with_max_output"] for item in result["configs"].values()
     )
     return result
+
+
+def _notebook_context_builder(
+    notebook_terms: list[dict[str, Any]],
+    *,
+    profile_name: str,
+    context_budget_tokens: int,
+):
+    def build(db: sqlite3.Connection, window: Window, blocks_for_prompt: list[dict[str, Any]]):
+        anchors = plan_anchors(
+            db,
+            blocks_for_prompt,
+            profile_name=profile_name,
+            term_rows=notebook_terms,
+        )
+        return build_context_pack(
+            db,
+            window,
+            anchors,
+            budget_tokens=context_budget_tokens,
+            term_rows=notebook_terms,
+        )
+
+    return build
+
+
+def _context_term_count(context_pack: Any | None) -> int:
+    if context_pack is None:
+        return 0
+    return (
+        len(getattr(context_pack, "glossary_lines", []) or [])
+        + len(getattr(context_pack, "preserve_lines", []) or [])
+        + len(getattr(context_pack, "context_sensitive_lines", []) or [])
+    )
+
+
+def _memory_notebook_report(
+    notebook_path: str | None,
+    notebook_terms: list[dict[str, Any]] | None,
+) -> dict[str, Any] | None:
+    if notebook_path is None or notebook_terms is None:
+        return None
+    return {
+        "path": notebook_path,
+        "pack_policy_counts": pack_policy_counts(notebook_terms),
+        "repair_queue": pack_repair_queue(notebook_terms),
+    }
 
 
 def _window_chapter_ids(db: sqlite3.Connection, windows: list[Window]) -> list[str]:
@@ -339,6 +422,10 @@ def _print_preflight(
     print(f"All block types: {preflight['block_type_counts']}")
     print(f"Translatable block types: {preflight['translatable_block_type_counts']}")
     print(f"Registry injection stats: {preflight['registry']}")
+    if preflight.get("memory_notebook"):
+        notebook = preflight["memory_notebook"]
+        print(f"Memory notebook policy: {notebook['pack_policy_counts']}")
+        print(f"Memory notebook repair queue: {notebook['repair_queue_count']}")
     for config, item in preflight["configs"].items():
         print(f"\n[{config}]")
         print(

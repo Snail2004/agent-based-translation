@@ -683,6 +683,8 @@ def _context_pack_summary(context_pack: Any | None) -> dict[str, Any]:
     dropped = _context_dropped_by_budget(context_pack)
     included_count = (
         len(getattr(context_pack, "glossary_lines", []) or [])
+        + len(getattr(context_pack, "preserve_lines", []) or [])
+        + len(getattr(context_pack, "context_sensitive_lines", []) or [])
         + len(getattr(context_pack, "entity_lines", []) or [])
         + len(getattr(context_pack, "address_lines", []) or [])
     )

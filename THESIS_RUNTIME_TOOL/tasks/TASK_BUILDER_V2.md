@@ -1741,3 +1741,28 @@ Pack Translator render **3 muc RIENG**, KHONG tron:
 - KHONG sua Builder extraction (surface hong `calculu` la viec cua pass repair sau, khong phai §30).
 - priority_tier-based **budget truncation** (khi pack vuot token budget) la buoc RIENG; §30 chi lam GATE + RENDER, chua lam budget-cut.
 - §30 chinh la THAM SO dau vao cua thi nghiem S0-vs-S1 (no quyet dinh cai gi duoc nhoi trong S1).
+
+### 30.9 §5 implementation notes (CodeX, 2026-07-01)
+- Implemented pack-exclusion in `pipeline/retrieval/context_builder.py` as an opt-in Builder-v2 notebook path, not a DB migration:
+  - `load_notebook_terms()` / `notebook_entries_to_term_rows()` normalize audited notebook entries into term rows.
+  - Gate uses `audit.injection_action` only: `translate`, `preserve`, `context_sensitive_translate` enter pack; `deprioritize` and `review_only` do not.
+  - `priority_tier` is not used as an in/out gate.
+  - `review_only` rows are emitted to `repair_queue` metadata, not prompt text.
+- Renderer now has separate sections:
+  - `MANDATORY TERMINOLOGY & NAMES` for hard `translate` terms/entities.
+  - `PRESERVE / DO-NOT-TRANSLATE` for `preserve`.
+  - `CONTEXT-SENSITIVE TERMINOLOGY HINTS` for `context_sensitive_translate`; this section explicitly says not to force the rendering as mandatory.
+- `plan_anchors()` now matches notebook entries by all `source_surfaces`, preserving singular/plural/source-variant coverage.
+- `pipeline/scripts/run_translate.py` accepts `--memory-notebook` and uses it in both `--preflight-only` and real S1 runs through the same context-builder path. Existing DB-backed runs remain unchanged when the flag is absent.
+- Report payload records `memory_notebook.pack_policy_counts` and `repair_queue`.
+- Tests added:
+  - `test_audited_notebook_pack_exclusion_and_sections` verifies translate/preserve/context-sensitive sections, `deprioritize` exclusion (`one`), and `review_only` quarantine (`calculu`).
+  - Updated coverage monkeypatch for the new keyword argument.
+- Verification:
+  - `python -m pytest pipeline/tests/test_context_builder.py -q` -> 7 passed.
+  - `python -m pytest pipeline/tests/test_translate_runner.py -q` -> 11 passed.
+  - `python -m pipeline.scripts.run_translate --help` confirms `--memory-notebook` is available.
+  - 0-API preflight with `data/reports/builder_v2_c35_decollision/notebook_promoted.json` + preliminaries:
+    - policy counts = `notebook_total=340`, `hard_translate=201`, `preserve=26`, `context_sensitive=32`, `report_only=78`, `repair_queue=3`, `pack_total=259`.
+    - S1 prompt tokens total est = 55,808; max prompt = 1,886; injected terms avg/max = 18.53/30.
+  - Note: `data/reports/builder_v2_c35_decollision/notebook_decollided.json` is still the older pre-§29 endpoint in this checkout (200 hard / 33 context-sensitive). Use `notebook_promoted.json` for §30 verification until the final C3.5 rerun emits a refreshed decollided notebook.

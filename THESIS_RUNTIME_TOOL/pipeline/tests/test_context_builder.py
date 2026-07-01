@@ -216,8 +216,8 @@ def test_coverage_checker_flags(tmp_path, monkeypatch):
     anchors = plan_anchors(conn, _blocks(conn, ["b1"]))
     original = cb._build_context_pack_once
 
-    def broken_once(conn_arg, window_arg, anchors_arg, budget_arg):
-        pack, included = original(conn_arg, window_arg, anchors_arg, budget_arg)
+    def broken_once(conn_arg, window_arg, anchors_arg, budget_arg, **kwargs):
+        pack, included = original(conn_arg, window_arg, anchors_arg, budget_arg, **kwargs)
         included.discard("term:gl_rum")
         return pack, included
 
@@ -245,3 +245,109 @@ def test_prompt_s1_contains_constraints_s0_unchanged(tmp_path):
     assert "ADDRESS POLICY" in s1_user
     assert "rum -> rượu rum" in s1_user
     assert "SOURCE WINDOW" in s1_user
+
+
+def test_audited_notebook_pack_exclusion_and_sections(tmp_path):
+    conn = _fixture_db(tmp_path)
+    conn.execute(
+        """
+        INSERT INTO blocks (block_id, doc_id, order_index, chapter_id, block_type, text)
+        VALUES ('b4', 'doc1', 4, 'ch01', 'paragraph',
+                'gradient shape .shape one calculu all appear in this source window')
+        """
+    )
+    conn.commit()
+    entries = [
+        {
+            "entry_id": "gradient",
+            "source_term": "gradient",
+            "canonical_target_vi": "gradient",
+            "occurrences_total": 4,
+            "audit": {
+                "audit_label": "keep_as_translate_term",
+                "injection_action": "translate",
+                "priority_tier": "high",
+                "reason": "technical term",
+            },
+        },
+        {
+            "entry_id": "shape",
+            "source_term": "shape",
+            "canonical_target_vi": "hinh dang",
+            "target_variants": ["kich thuoc"],
+            "occurrences_total": 3,
+            "audit": {
+                "audit_label": "polysemy_or_context_dependent",
+                "injection_action": "context_sensitive_translate",
+                "priority_tier": "medium",
+                "reason": "context dependent",
+            },
+        },
+        {
+            "entry_id": "shape_api",
+            "source_term": ".shape",
+            "canonical_target_vi": ".shape",
+            "occurrences_total": 2,
+            "audit": {
+                "audit_label": "preserve_token",
+                "injection_action": "preserve",
+                "priority_tier": "high",
+                "reason": "API token",
+            },
+        },
+        {
+            "entry_id": "one",
+            "source_term": "one",
+            "canonical_target_vi": "mot",
+            "occurrences_total": 6,
+            "audit": {
+                "audit_label": "generic_low_value",
+                "injection_action": "deprioritize",
+                "priority_tier": "low",
+                "reason": "generic number",
+            },
+        },
+        {
+            "entry_id": "calculu",
+            "source_term": "calculu",
+            "canonical_target_vi": "giai tich",
+            "occurrences_total": 1,
+            "audit": {
+                "audit_label": "uncertain_low_conf",
+                "injection_action": "review_only",
+                "priority_tier": "review",
+                "reason": "truncated surface",
+            },
+        },
+    ]
+    term_rows = cb.notebook_entries_to_term_rows(entries)
+    blocks = _blocks(conn, ["b4"])
+    window = Window("w_ch01_004", ["b4"], 10)
+
+    anchors = plan_anchors(
+        conn,
+        blocks,
+        profile_name="technical_d2l_v1",
+        term_rows=term_rows,
+    )
+    pack = build_context_pack(conn, window, anchors, term_rows=term_rows)
+    rendered = pack.render_hard_constraints()
+
+    mandatory = rendered.split("PRESERVE / DO-NOT-TRANSLATE")[0]
+    assert "gradient -> gradient" in mandatory
+    assert "shape -> hinh dang" not in mandatory
+    assert "one" not in rendered
+    assert "calculu" not in rendered
+    assert "PRESERVE / DO-NOT-TRANSLATE" in rendered
+    assert "- .shape (keep unchanged)" in rendered
+    assert "CONTEXT-SENSITIVE TERMINOLOGY HINTS" in rendered
+    assert "shape -> hinh dang (context-sensitive" in rendered
+    assert pack.repair_queue == [
+        {
+            "glossary_id": "calculu",
+            "source_term": "calculu",
+            "target_term": "giai tich",
+            "audit_label": "uncertain_low_conf",
+            "reason": "truncated surface",
+        }
+    ]
