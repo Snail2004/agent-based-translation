@@ -1827,3 +1827,46 @@ sha256sum data/jobs/d2l_p1/memory.sqlite3
 
 ### 31.3 Claude se kiem lai
 Chay lai cac buoc 0-API tren artifact CodeX xuat: dem entry, §29 trail, §30 pack split; doc tay vai entry moi; xac nhan hash frozen. So sanh HANH VI voi preliminaries (co over-extraction giong? §29 co promote sai gi? §30 loc hop ly?) -> ket luan quy trinh co tong quat.
+
+### 31.4 §5 progress notes (CodeX, 2026-07-01)
+**B0/B1 complete; STOP before B2 per §31.0 cost-gate.**
+
+Guard findings before API:
+- Current checkout DB hash is `64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715`, not the older expected `DA0F6878...D464B8`. Same hash in both OneDrive and `C:\work` checkouts. DB integrity check passes and counts are `documents=1`, `blocks=8803`, `glossary_entries=1608`, `translation_runs=2604`, `memory_packs=338`.
+- Serious guard fix applied before running API:
+  - `pipeline/scripts/run_translate.py`: `--preflight-only` now opens DB `mode=ro` instead of `migrate_db()` to avoid mutating frozen DB during B4.
+  - `pipeline/scripts/builder_v2_pilot.py`: key search now prefers `OPENAI-KEY-2.txt` before `OPENAI-KEY-1.txt`.
+- Targeted tests after guard fix: `python -m pytest pipeline/tests/test_translate_runner.py pipeline/tests/test_builder_v2_pilot.py -q` -> 16 passed.
+
+B1 C2 Builder:
+- Estimate: 78 calls, 468,000 prompt tokens, nominal `$0.304200`, cap `$1.075464` (< confirm `$1.20`).
+- Real run command: `python -m pipeline.scripts.builder_v2_pilot --chapter multilayer_perceptrons --out data/reports/builder_v2_mlp_c2 --confirm-usd 1.20`
+- Result summary:
+  - `status=passed`
+  - `windows=78`, `applied_windows=78`, `skipped_windows=0`
+  - `cache_hits=0`, `cache_misses=78`
+  - `parse_failure_count=0`
+  - `notebook_entries=546`
+  - `rejected_stoplist=6`
+  - `conflicts=92`
+  - `total_cost_usd=$0.24313575`
+- Output artifacts: `data/reports/builder_v2_mlp_c2/notebook.json`, `decision_log.json`, `per_window_audit.json`, `cost_log.json`, `raw_outputs.json`, `prompts/`, `llm_cache.sqlite3`.
+- DB hash after B1 remains `64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715`.
+
+Sample entries from C2 notebook:
+- `gradient -> gradient`, occ 30, `status=conflict_pending`
+- `backpropagation -> lan truyền ngược`, occ 10
+- `multilayer perceptron -> perceptron đa tầng`, occ 15
+- `activation function -> hàm kích hoạt`, occ 21
+- `hidden layer -> tầng ẩn`, occ 32
+
+Potential issue for Claude review:
+- Since the current DB hash no longer matches `DA0F...`, strict §31 hash expectation cannot be satisfied in this checkout. B1 itself preserved the current hash; Claude should decide whether to accept current-hash before/after equality or restore a DA0F snapshot before continuing.
+
+### 31.5 Claude review: frozen-DB hash incident + re-baseline *(2026-07-01)*
+- **Su co:** frozen DB hash DA0F...D464B8 -> 64D989...B555C715. Nguyen nhan (CodeX chi ra, Claude xac nhan): `run_translate.py --preflight-only` TRUOC day goi `migrate_db()` (mo WRITE) trong luc lam §30 -> checkpoint/them cot -> doi file bytes.
+- **Dieu tra (Claude, verify tren DB):** DATA CON NGUYEN. blocks=8803; `gradient` occ=90 va `updated_at=2026-06-13` (KHONG bi ghi lai row); gold `backpropagation`="lan truyền ngược"; migration 003-006 chi ADD COLUMN (KHONG co INSERT/UPDATE/DELETE). => hash doi la file-level artifact, KHONG phai mutate data. **Moi artifact DA0F cu van hop le.**
+- **Quyet dinh: RE-BASELINE frozen hash = `64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715`.** Guard tu day = before==after bang hash nay.
+- **Fix da duyet:** (1) run_translate preflight mo `mode=ro` (khong migrate); (2) pilot uu tien OPENAI-KEY-2 truoc KEY-1. Da verify MOI path §31 (pilot/c3_audit/c35/preflight) deu `mode=ro`.
+- **Rui ro latent (KHONG thuoc §31):** nhanh run_translate NON-preflight (S1 that) VAN goi migrate_db(write). Xu ly o milestone S1 (output DB rieng hoac ro), khong chan §31.
+- **B1 chap nhan:** 546 entries, cost $0.243 (< estimate). `gradient -> gradient` (DUNG NGAY tren chuong nay, khac preliminaries bi "đạo hàm riêng"), `backpropagation -> lan truyền ngược` (khop gold). -> **DUYET chay B2 Auditor.**

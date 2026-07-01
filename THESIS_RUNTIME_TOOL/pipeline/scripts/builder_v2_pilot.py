@@ -631,11 +631,11 @@ def _ensure_openai_key_available() -> None:
         return
     key_paths = [
         Path("OPENAI_API_KEY.txt"),
-        Path("OPENAI-KEY-1.txt"),
         Path("OPENAI-KEY-2.txt"),
+        Path("OPENAI-KEY-1.txt"),
         Path("../OPENAI_API_KEY.txt"),
-        Path("../OPENAI-KEY-1.txt"),
         Path("../OPENAI-KEY-2.txt"),
+        Path("../OPENAI-KEY-1.txt"),
     ]
     for path in key_paths:
         if path.exists():

@@ -106,7 +106,7 @@ def main() -> int:
     configs = _configs_from_args(args)
     experiment = args.experiment or profile.default_experiment_id
     llm_config = load_llm_config(args.config_file)
-    db = migrate_db(args.db)
+    db = _open_db(args.db, read_only=args.preflight_only)
     try:
         doc_id = _single_doc_id(db)
         windows = build_windows(
@@ -197,6 +197,16 @@ def _configs_from_args(args: argparse.Namespace) -> list[str]:
     if args.config:
         return [str(args.config).upper()]
     return ["S0"]
+
+
+def _open_db(path: str, *, read_only: bool) -> sqlite3.Connection:
+    if read_only:
+        db_path = Path(path).resolve()
+        conn = sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
+    return migrate_db(path)
 
 
 def _single_doc_id(db: sqlite3.Connection) -> str:
