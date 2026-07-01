@@ -24,11 +24,11 @@ from pipeline.prepass.builder_v2_audit import (
     apply_audit_to_notebook,
     build_term_cards,
     chunk_cards,
-    load_notebook_entries,
     prompt_text,
     simulate_injection_order,
     validate_audit_results,
 )
+from pipeline.prepass.builder_v2_guards import apply_surface_ownership_guard
 from pipeline.prepass.db_source import load_document_from_connection
 from pipeline.prepass.span_resolver import _find_word_boundary_matches
 from pipeline.scripts.builder_v2_metrics import _load_v2_notebook_terms, _score_terms_vs_gold
@@ -124,7 +124,8 @@ def run_c3(
     )
     db_hash_before = _sha256(db_path)
     notebook = json.loads(notebook_path.read_text(encoding="utf-8"))
-    entries = load_notebook_entries(notebook_path)
+    guarded_notebook, surface_guard_report = apply_surface_ownership_guard(notebook)
+    entries = guarded_notebook["entries"]
     cards = build_term_cards(entries, db_path)
     effective_prompt_budget = prompt_token_budget or int(int(config.prompt_token_cap) * 0.9)
     chunks = chunk_cards(cards, chunk_size, prompt_token_cap=effective_prompt_budget)
@@ -141,6 +142,18 @@ def run_c3(
     cards_path = out_dir / "cards.json"
     cards_path.write_text(
         json.dumps(cards, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "notebook_surface_guarded.json").write_text(
+        json.dumps(guarded_notebook, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "surface_ownership_report.json").write_text(
+        json.dumps(surface_guard_report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "surface_quarantine.json").write_text(
+        json.dumps(surface_guard_report["surface_quarantine"], ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     chunk_audit = [
@@ -191,7 +204,7 @@ def run_c3(
         audit_rows = llm_run.get("audit_rows") if llm_run.get("status") != "degraded" else None
 
     if audit_rows is not None:
-        audited_notebook = apply_audit_to_notebook(notebook, audit_rows)
+        audited_notebook = apply_audit_to_notebook(guarded_notebook, audit_rows)
         injection_preview = simulate_injection_order(
             audited_notebook["entries"],
             min_injection_occurrences=min_occ,
@@ -267,6 +280,9 @@ def run_c3(
             "cards": "cards.json",
             "chunks": "chunks.json",
             "prompts_dir": "prompts",
+            "notebook_surface_guarded": "notebook_surface_guarded.json",
+            "surface_ownership_report": "surface_ownership_report.json",
+            "surface_quarantine": "surface_quarantine.json",
             "estimate_report": "builder_v2_c3_audit_estimate.json",
             "audit_trail": "audit_trail.json" if audit_rows is not None else None,
             "notebook_audited": "notebook_audited.json" if audit_rows is not None else None,
@@ -289,6 +305,8 @@ def run_c3(
             "estimated_cost_usd_cap": _cost(config, prompt_total, output_cap),
             "actual_cost_usd": (llm_run or {}).get("actual_cost_usd"),
             "parse_failure_count": (llm_run or {}).get("parse_failure_count"),
+            "surface_detached_count": surface_guard_report["detached_count"],
+            "surface_quarantined_count": surface_guard_report["quarantined_count"],
             "metric_a_registry_recall": metric_summary.get("metric_a_registry_recall"),
             "metric_b_post_auditor_recall": metric_summary.get("metric_b_post_auditor_recall"),
             "auditor_recall_delta": metric_summary.get("auditor_recall_delta"),

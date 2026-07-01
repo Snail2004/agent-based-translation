@@ -1,0 +1,62 @@
+{
+  "phase": "BUILDER-V2-MLP-B4-PACK-PREFLIGHT",
+  "zero_api": true,
+  "zero_db_write": true,
+  "db": "data/jobs/d2l_p1/memory.sqlite3",
+  "chapters": [
+    "multilayer_perceptrons"
+  ],
+  "profile": "technical_d2l_v1",
+  "memory_notebook": "data/reports/builder_v2_mlp_c35/notebook_decollided.json",
+  "llm_config": "pipeline/configs/llm_translate.yaml",
+  "preflight": {
+    "resolved_chapters": [
+      "d2l_multilayer_perceptrons"
+    ],
+    "windows": 60,
+    "blocks": 475,
+    "block_type_counts": {
+      "code": 141,
+      "heading": 120,
+      "image": 10,
+      "math_block": 15,
+      "prose": 355
+    },
+    "translatable_block_type_counts": {
+      "heading": 120,
+      "prose": 355
+    },
+    "registry": {
+      "raw_registry": 1608,
+      "translation_eligible": 1369,
+      "preserve_count": 239,
+      "hapax_dropped": 0
+    },
+    "memory_notebook": {
+      "pack_policy_counts": {
+        "notebook_total": 546,
+        "hard_translate": 336,
+        "preserve": 46,
+        "context_sensitive": 44,
+        "report_only": 120,
+        "repair_queue": 0,
+        "pack_total": 426
+      },
+      "repair_queue_count": 0
+    },
+    "configs": {
+      "S1": {
+        "windows": 60,
+        "prompt_tokens_min": 898,
+        "prompt_tokens_avg": 1434.23,
+        "prompt_tokens_max": 1951,
+        "prompt_tokens_total_est": 86054,
+        "upper_total_with_max_output": 331814,
+        "injected_terms_min": 8,
+        "injected_terms_avg": 24.82,
+        "injected_terms_max": 44
+      }
+    },
+    "upper_total_all_configs": 331814
+  }
+}

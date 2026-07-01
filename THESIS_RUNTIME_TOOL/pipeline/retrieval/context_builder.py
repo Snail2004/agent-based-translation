@@ -15,6 +15,7 @@ from pipeline.translate.profiles import (
     injection_role_for_term,
     term_is_injection_eligible,
 )
+from pipeline.prepass.builder_v2_guards import apply_canonical_collision_soft_fallback_to_rows
 
 
 @dataclass(frozen=True)
@@ -173,7 +174,8 @@ def notebook_entries_to_term_rows(entries: list[dict[str, Any]]) -> list[dict[st
                 "target_variants": _entry_target_variants(entry, target),
             }
         )
-    return rows
+    guarded_rows, _ = apply_canonical_collision_soft_fallback_to_rows(rows)
+    return guarded_rows
 
 
 def pack_policy_counts(term_rows: list[dict[str, Any]]) -> dict[str, int]:

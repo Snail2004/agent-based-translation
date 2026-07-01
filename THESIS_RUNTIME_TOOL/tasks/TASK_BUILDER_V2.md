@@ -1933,3 +1933,25 @@ Rule bao thu se ha soft ca mot so synonym DUNG (vd `backpropagation`/`backward p
 ### 32.5 Ngoai pham vi (noi that)
 - Fix ② la **damage-control**: no NGAN ep sai, KHONG cho `regularization` ban dich DUNG "điều chuẩn" (can LLM dich lai = phan doan ngon ngu, ma LLM decollision da chung minh khong dang tin). Dung tinh than: guard deterministic chan hai; dich dung la viec LLM va von khong hoan hao.
 - Khong dong bo lai toan bo C2 (Fix ① chay nhu pre-Auditor pass tren artifact co san hoac tich hop online sau).
+
+### 32.6 CodeX impl + Claude review (2026-07-02, VERIFIED)
+
+CodeX da implement §32 (chua commit) + chay B4. Claude verify DOC LAP (0-API, tu tai lap so, khong tin bao cao):
+
+**Code (new `pipeline/prepass/builder_v2_guards.py`):**
+- Fix (1) `apply_surface_ownership_guard`: owner_by_key = concept_key(headword) -> entry_id (first wins); detach surface khi concept_key(surface)==headword cua entry KHAC; occ==0 -> `surface_quarantine` (khong xoa). Wire TRUOC Auditor trong `run_c3` (guarded_notebook dung cho CA build_term_cards LAN apply_audit -> nhat quan). `load_notebook_entries` chi la json-load thuan -> thay bang guarded["entries"] KHONG mat normalize nao.
+- Fix (2) `apply_canonical_collision_soft_fallback_to_rows`: nhom injection_action==translate theo normalize target; nhom >=2 KHONG co-hoc -> ha CA nhom xuong context_sensitive_translate; co-hoc (concept_key bang HOAC shape-key [0-9a-z] bang) -> giu hard. Chi sua field audit, KHONG dong canonical. Wire tai `notebook_entries_to_term_rows` (pack build that).
+
+**So Claude tu tai lap (khop CodeX):**
+- DB hash = 64D989...B555C715 (frozen, khong doi). grep term-cung (model|gradient|regulari|chuan|neural|network|standardize|backprop) trong guard module = RONG.
+- Surface guard: MLP-c2 detached=58 quarantined=72; PRELIM-c2 detached=19 quarantined=38. Vi du detach dung ngu nghia: `axis 0`<-axis, `column dimension`<-column, `deep learning models`<-deep learning, `differential calculus`<-calculus (dung pattern over-merge head-noun §31.7).
+- Pack collision fallback: MLP(notebook_decollided) hard=336 soft=44 preserve=46 report=120 pack_total=426; softened 4 nhom [backpropagation, generalization, regularization+standardize, validation data], giu hard co-hoc [fully-connected, non-linearity]. PRELIM(notebook_decollided) hard=196 soft=37 total=259 (khop §30 cu 259); softened 2 nhom [conditional independence, multiplication/product rule]. (Luu y: notebook_promoted ra 197/36 — chenh 1 vs decollided 196/37; artifact dung la notebook_decollided.)
+- Tests: `test_builder_v2_guards.py` (Fix1: detach plural qua concept_key + quarantine occ=0 + giu model/models) + `test_context_builder.py` (Fix2: assert tren RENDER that — regularization/standardize NGOAI mandatory + TRONG context-sensitive; non-linearity/fully-connected TRONG mandatory). Full pipeline sweep = **263 passed** (baseline 261 -> +2, khong vo cho khac).
+
+**B4 (§30 pack preflight MLP, artifact `data/reports/builder_v2_mlp_b4_pack_preflight.json`):** 0-API/0-DB-write; pack_total=426 (hard 336 / preserve 46 / soft 44), report_only 120, repair 0; S1 prompt tokens min/avg/max 898/1434/1951, total 86054, upper 331814; injected/window avg 24.82. Noi dung khop repro Claude. Sensitive placement dung: regularization/standardize -> soft (het hard mandatory), `regularization constant`->`hang so chuan hoa` van hard (entry khac, hop ly), fully-connected/non-linearity van hard.
+
+**Ket luan:** §32 dat muc tieu. Fix (1) don over-merge don goc (pre-Auditor); Fix (2) chan collision nhoi-cung-sai (`regularization`->`chuan hoa`) o pack. Deterministic, 0 gold, khong hardcode. Tradeoff bao thu (softening backpropagation/backward-propagation dung synonym) da disclose + do duoc, chap nhan (soft van vao pack).
+
+**Follow-up (khong chan):** (a) CLI `run_translate --preflight-only` return 0 ngay sau `_print_preflight` (dong 131) -> KHONG tu ghi artifact JSON; B4 hien dung tay bang `_preflight()`. Nen them nhanh ghi report cho preflight de artifact-hoa tu dong. (b) Muon xac nhan `model` chuyen dropped->keep can re-audit API tren notebook_surface_guarded (chua chay, ~$0.08). (c) latent risk run_translate non-preflight (real S1) van migrate_db(write) — xu ly o moc S0-vs-S1.
+
+Commit: (dien sau).

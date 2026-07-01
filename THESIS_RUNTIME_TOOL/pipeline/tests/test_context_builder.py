@@ -351,3 +351,92 @@ def test_audited_notebook_pack_exclusion_and_sections(tmp_path):
             "reason": "truncated surface",
         }
     ]
+
+
+def test_canonical_collision_soft_fallback_keeps_mechanical_groups_hard(tmp_path):
+    conn = _fixture_db(tmp_path)
+    conn.execute(
+        """
+        INSERT INTO blocks (block_id, doc_id, order_index, chapter_id, block_type, text)
+        VALUES ('b5', 'doc1', 5, 'ch01', 'paragraph',
+                'regularization standardize non-linearity nonlinearity fully connected layer fully-connected layer')
+        """
+    )
+    conn.commit()
+    base_audit = {
+        "audit_label": "keep_as_translate_term",
+        "injection_action": "translate",
+        "priority_tier": "high",
+        "reason": "technical term",
+    }
+    entries = [
+        {
+            "entry_id": "regularization",
+            "source_term": "regularization",
+            "canonical_target_vi": "chuan hoa",
+            "occurrences_total": 5,
+            "audit": dict(base_audit),
+        },
+        {
+            "entry_id": "standardize",
+            "source_term": "standardize",
+            "canonical_target_vi": "chuan hoa",
+            "occurrences_total": 3,
+            "audit": dict(base_audit),
+        },
+        {
+            "entry_id": "non-linearity",
+            "source_term": "non-linearity",
+            "canonical_target_vi": "phi tuyen",
+            "occurrences_total": 1,
+            "audit": dict(base_audit),
+        },
+        {
+            "entry_id": "nonlinearity",
+            "source_term": "nonlinearity",
+            "canonical_target_vi": "phi tuyen",
+            "occurrences_total": 1,
+            "audit": dict(base_audit),
+        },
+        {
+            "entry_id": "fully connected layer",
+            "source_term": "fully connected layer",
+            "canonical_target_vi": "lop ket noi day du",
+            "occurrences_total": 1,
+            "audit": dict(base_audit),
+        },
+        {
+            "entry_id": "fully-connected layer",
+            "source_term": "fully-connected layer",
+            "canonical_target_vi": "lop ket noi day du",
+            "occurrences_total": 1,
+            "audit": dict(base_audit),
+        },
+    ]
+
+    term_rows = cb.notebook_entries_to_term_rows(entries)
+    by_source = {row["source_term"]: row for row in term_rows}
+
+    assert by_source["regularization"]["audit"]["injection_action"] == "context_sensitive_translate"
+    assert by_source["standardize"]["audit"]["injection_action"] == "context_sensitive_translate"
+    assert by_source["non-linearity"]["audit"]["injection_action"] == "translate"
+    assert by_source["nonlinearity"]["audit"]["injection_action"] == "translate"
+    assert by_source["fully connected layer"]["audit"]["injection_action"] == "translate"
+    assert by_source["fully-connected layer"]["audit"]["injection_action"] == "translate"
+
+    blocks = _blocks(conn, ["b5"])
+    window = Window("w_ch01_005", ["b5"], 10)
+    anchors = plan_anchors(conn, blocks, profile_name="technical_d2l_v1", term_rows=term_rows)
+    pack = build_context_pack(conn, window, anchors, budget_tokens=500, term_rows=term_rows)
+    rendered = pack.render_hard_constraints()
+
+    mandatory = rendered.split("CONTEXT-SENSITIVE TERMINOLOGY HINTS")[0]
+    soft = rendered.split("CONTEXT-SENSITIVE TERMINOLOGY HINTS")[1]
+    assert "regularization -> chuan hoa" not in mandatory
+    assert "standardize -> chuan hoa" not in mandatory
+    assert "regularization -> chuan hoa (context-sensitive" in soft
+    assert "standardize -> chuan hoa (context-sensitive" in soft
+    assert "non-linearity -> phi tuyen" in mandatory
+    assert "nonlinearity -> phi tuyen" in mandatory
+    assert "fully connected layer -> lop ket noi day du" in mandatory
+    assert "fully-connected layer -> lop ket noi day du" in mandatory
