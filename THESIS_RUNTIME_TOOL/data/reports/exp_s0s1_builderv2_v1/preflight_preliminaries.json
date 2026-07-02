@@ -1,0 +1,132 @@
+{
+  "phase": "run_translate_preflight",
+  "zero_api": true,
+  "run": {
+    "experiment_id": "exp_s0s1_builderv2_v1",
+    "profile": "technical_d2l_v1",
+    "db": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\d2l_p1\\memory.sqlite3",
+    "frozen_db_sha256_before": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "frozen_db_sha256_after": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "workdb_path": null,
+    "workdb_sha256_after": null,
+    "memory_notebook": "data\\reports\\builder_v2_c35_decollision\\notebook_decollided.json",
+    "context_budget": 1500,
+    "max_windows": 0,
+    "llm_config": "pipeline/configs/llm_translate.yaml",
+    "zero_api": true
+  },
+  "preflight": {
+    "resolved_chapters": [
+      "d2l_preliminaries"
+    ],
+    "windows_original": 45,
+    "windows_truncated_to": null,
+    "window_ids": [
+      "w_d2l_preliminaries_001",
+      "w_d2l_preliminaries_002",
+      "w_d2l_preliminaries_003",
+      "w_d2l_preliminaries_004",
+      "w_d2l_preliminaries_005",
+      "w_d2l_preliminaries_006",
+      "w_d2l_preliminaries_007",
+      "w_d2l_preliminaries_008",
+      "w_d2l_preliminaries_009",
+      "w_d2l_preliminaries_010",
+      "w_d2l_preliminaries_011",
+      "w_d2l_preliminaries_012",
+      "w_d2l_preliminaries_013",
+      "w_d2l_preliminaries_014",
+      "w_d2l_preliminaries_015",
+      "w_d2l_preliminaries_016",
+      "w_d2l_preliminaries_017",
+      "w_d2l_preliminaries_018",
+      "w_d2l_preliminaries_019",
+      "w_d2l_preliminaries_020",
+      "w_d2l_preliminaries_021",
+      "w_d2l_preliminaries_022",
+      "w_d2l_preliminaries_023",
+      "w_d2l_preliminaries_024",
+      "w_d2l_preliminaries_025",
+      "w_d2l_preliminaries_026",
+      "w_d2l_preliminaries_027",
+      "w_d2l_preliminaries_028",
+      "w_d2l_preliminaries_029",
+      "w_d2l_preliminaries_030",
+      "w_d2l_preliminaries_031",
+      "w_d2l_preliminaries_032",
+      "w_d2l_preliminaries_033",
+      "w_d2l_preliminaries_034",
+      "w_d2l_preliminaries_035",
+      "w_d2l_preliminaries_036",
+      "w_d2l_preliminaries_037",
+      "w_d2l_preliminaries_038",
+      "w_d2l_preliminaries_039",
+      "w_d2l_preliminaries_040",
+      "w_d2l_preliminaries_041",
+      "w_d2l_preliminaries_042",
+      "w_d2l_preliminaries_043",
+      "w_d2l_preliminaries_044",
+      "w_d2l_preliminaries_045"
+    ],
+    "windows": 45,
+    "blocks": 348,
+    "block_type_counts": {
+      "code": 224,
+      "heading": 64,
+      "image": 2,
+      "math_block": 3,
+      "prose": 284
+    },
+    "translatable_block_type_counts": {
+      "heading": 64,
+      "prose": 284
+    },
+    "registry": {
+      "raw_registry": 1608,
+      "translation_eligible": 1369,
+      "preserve_count": 239,
+      "hapax_dropped": 0
+    },
+    "memory_notebook": {
+      "pack_policy_counts": {
+        "notebook_total": 340,
+        "hard_translate": 196,
+        "preserve": 26,
+        "context_sensitive": 37,
+        "report_only": 78,
+        "repair_queue": 3,
+        "pack_total": 259
+      },
+      "repair_queue_count": 3
+    },
+    "configs": {
+      "S0": {
+        "windows": 45,
+        "prompt_tokens_min": 533,
+        "prompt_tokens_avg": 978,
+        "prompt_tokens_max": 1503,
+        "prompt_tokens_total_est": 44010,
+        "upper_total_with_max_output": 228330,
+        "injected_terms_min": 0,
+        "injected_terms_avg": 0,
+        "injected_terms_max": 0,
+        "dropped_by_budget": [],
+        "dropped_by_budget_count": 0
+      },
+      "S1": {
+        "windows": 45,
+        "prompt_tokens_min": 693,
+        "prompt_tokens_avg": 1244.27,
+        "prompt_tokens_max": 1886,
+        "prompt_tokens_total_est": 55992,
+        "upper_total_with_max_output": 240312,
+        "injected_terms_min": 7,
+        "injected_terms_avg": 18.53,
+        "injected_terms_max": 30,
+        "dropped_by_budget": [],
+        "dropped_by_budget_count": 0
+      }
+    },
+    "upper_total_all_configs": 468642
+  }
+}

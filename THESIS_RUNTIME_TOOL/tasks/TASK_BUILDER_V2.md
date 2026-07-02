@@ -2160,3 +2160,21 @@ Known edge case (accepted, not a blocker): if the hygiene reask itself returns i
 Caveat carried from CodeX (agreed): flagged-script set is exactly the §35 spec set; extending (Arabic/Hebrew/Devanagari) = separate task, not mid-experiment.
 
 Next: STOP-2 — preflight both chapters (0-API), report cost cap, wait for user confirm.
+
+
+<!-- S35_STOP3_MLP_REVIEW -->
+## 35.7 — STOP-3 review, MLP pair (Claude, 2026-07-02): VERIFIED on workdb, ACCEPTED
+
+Scope note: user narrowed this run to the MLP chapter only (cost caution, decided BEFORE seeing results — allowed under 35.0). Preliminaries S0/S1 remain committed as part of exp_s0s1_builderv2_v1, to run after this review.
+
+Independently verified on data/jobs/exp_s0s1_full/memory.sqlite3 (ro) + data/jobs/translate_cache.sqlite3 (ro):
+- translation_runs: S0 475/60w + S1 475/60w, single experiment_id, 0 failed/skipped; frozen DB hash recomputed 64D989... unchanged.
+- S0 purity: all 60 S0 packs anchors_count.terms == 0, no constraint content. S1 packs terms min/avg/max = 8/24.8/44 (matches B4 preflight).
+- §32 verified on the NEWEST cached request for w_001 (2026-07-02 09:11): three sections MANDATORY / PRESERVE / CONTEXT-SENSITIVE HINTS present; `regularization -> chuẩn hóa (context-sensitive; do not force)` in HINTS, absent from MANDATORY. Pitfall logged: cache holds a STALE 2026-06-14 pre-§32 entry for the same tag where regularization WAS mandatory (điều chuẩn) — any future prompt audit must select by created_at, not tag alone.
+- Cache-hit anatomy (explains S0 60/63 hits): a full pre-§32 MLP run existed in translate_cache from 2026-06-14. S0 prompts were untouched by §32 (S1-only change), so all 60 S0 windows replayed free; 3 of those cached S0 responses contained Cyrillic (либо) and D1 correctly flagged+reasked them fresh (3/3 fixed) — D1 works on cached content too. S1: only the 10 post-§32 smoke windows hit; 2 hygiene reasks; still_bad 0 both arms.
+- Hygiene ground truth: re-ran detect_hygiene_issues over all 950 persisted outputs -> 0 foreign-script issues; qa_issues table 0 rows. Report hygiene fields match (S0 3/3/3/0, S1 2/2/2/0).
+- Cost: incremental S0 $0.00721 + S1 $0.10433 = $0.11154, far under cap.
+
+Observation for scoring (NOT a knob to touch now): S1 soft hint proposes "chuẩn hóa" for regularization (collision-era canonical; gold says "điều chuẩn"), and sampled S1 output follows the hint while S0 chose "chính quy hóa". §32 soft fallback prevented a mandatory error but the hint still steers — this is the [[memory-injection-precision-cost]] pattern; measure in scoring, tune only in a future experiment id.
+
+Next: prelim S0/S1 run (same workdb/experiment), then 0-API scoring per 35.3.
