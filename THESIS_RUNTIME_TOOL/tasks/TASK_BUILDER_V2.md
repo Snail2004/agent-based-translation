@@ -2383,3 +2383,11 @@ For watchlisted entries only, elect canonical from {current canonical} ∪ {targ
 
 ### 36.5 Sequencing
 1) Finish exp_s0s1_builderv2_v1 (cascade STOP-B -> overlay -> prelim pair §35.9 -> prelim scoring). 2) Then implement §36.2+36.3 as a Builder-pipeline step + §36.4 watchlist in report/UI. 3) Re-run dictionary build for MLP as the §36 validation case: success = regularization->điều chuẩn and population->tổng thể elected mechanically with logs, zero regressions on the other 424 pack terms.
+
+
+<!-- S37_POINTER -->
+## 37 — Scoring framework SPUN OFF + Builder-V2 closing conditions
+
+The thesis scoring framework (TC/TA/SF-BT/SF-QE/PJ + gates, hardware notes, literary roadmap) is specced in **tasks/TASK_EVAL_SCORING_V1.md** — eval work no longer appends here.
+
+BUILDER-V2 CLOSES when all of: (1) §35.10 cascade STOP-B verified + overlay smoke on real marks; (2) §35.9 prelim S0/S1 run + 0-API scored; (3) §36 canonical re-election implemented + validated on the MLP dictionary. Then a final closing section summarizes outcomes and the file goes read-only.
