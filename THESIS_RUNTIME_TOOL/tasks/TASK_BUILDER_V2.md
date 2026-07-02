@@ -2003,3 +2003,62 @@ Test: `test_builder_v2_metrics.py` (perceptron/vector covered; fit/batch-size ab
 
 ### 33.4 Cach dung khi bao cao (de khong tu lua)
 Noi voi GVHD: "Recall exact-match vs gold style-guide = 0.63; phan tang co hoc cho thay 20% la lech do hat (khai niem co o muc cum), sot tuyet doi 17% (MLP), trong do cum ky thuat that ~4%. Gold la thuoc TUONG DOI cho S0-vs-S1 (cung mau so hai tay), khong phai chan ly tuyet doi; metric dinh cua luan van la CONSISTENCY khong can gold." KHONG bao gio thay 0.833 vao vi tri cua 0.63.
+
+## 34. C6: Translator hardening + UI cascade layer + SMOKE TRIAL S0/S1 tren MLP *(Claude thiet ke sau khi review Translator + scorer, 2026-07-02 — GIAO CODEX)*
+
+> Boi canh: Claude da audit Translator (prompt/profiles/context_builder/run_translate) va scorer cascade (§ rieng: T1 bge-m3 / T2 code / T3 LLM locate-only). Ket luan: thiet ke DU de chay thu S0-vs-S1, NHUNG phai vao 4 viec sau truoc. Trong luot nay CodeX lam A (0-API) + B (0-API) + C (smoke trial, CO API, cost-gate). Da FIX truoc do boi Claude: stale hash DA0F->64D989 trong cascade_localize + ambiguous_assignment (commit babf7a9).
+
+### 34.0 Bat bien (nhu moi luot)
+- **Frozen DB `data/jobs/d2l_p1/memory.sqlite3` TUYET DOI khong mo write.** Hash 64D989...B555C715 truoc==sau moi buoc. DB nay gitignored — khong co backup git, ky luat ro la lop bao ve DUY NHAT.
+- Blind-gold cho moi thanh phan chay truoc scoring. Keys: env -> OPENAI-KEY-2.txt (KEY-1 chet 429). KHONG log key.
+- Moi buoc API: estimate/preflight -> BAO CAO -> cho confirm. STOP sau moi phase. KHONG commit (Claude review + commit).
+- Artifact moi vao data/reports/ (gitignored neu regenerable). Test: khong hardcode term.
+
+### 34.1 [A1 — 0-API] WORKDB guard: run that KHONG duoc dung frozen DB
+**Van de:** `translate_windows` ghi `translation_runs` + `memory_packs` vao CHINH conn duoc truyen; nhanh non-preflight cua run_translate con goi `migrate_db()` (write). Chay that tren frozen DB = doi hash + tron output vao nguon.
+**Yeu cau:**
+- Them flag `--workdb PATH` cho run_translate. Khi chay non-preflight: BAT BUOC co --workdb; script tu copy frozen DB -> PATH neu chua ton tai (giu nguyen neu da co, in canh bao resume); mo WORKDB read-write (migrate_db tren workdb OK), frozen path sau khi copy KHONG duoc dung nua trong run.
+- Neu user lo chay non-preflight ma khong co --workdb VA --db tro vao data/jobs/d2l_p1/ -> **RAISE ngay** (thong bao ro "frozen DB is read-only; pass --workdb").
+- Report ghi: frozen_db_sha256 (truoc/sau, phai bang nhau), workdb_path, workdb_sha256_after.
+
+### 34.2 [A2 — 0-API] Budget 500->1500 + CAU CHI NO TO
+**Boi canh do that (Claude, 105 window / 2 chuong):** trần 500 hien KHONG cat gi (max pack 384 MLP / 239 prelim), so term/window do ANCHORING quyet dinh. Nhung window nang nhat da 77% tran, va hanh vi khi vuot la CAT LANG LE (`dropped_by_budget` ghi vao pack nhung run van tiep) — trai triet ly "tran la cau chi chong bug, khong phai diet".
+**Yeu cau:**
+- Nang default `--context-budget` 500 -> **1500** (run_translate arg) VA `translate_windows(context_budget_tokens=...)` default (runner.py) — ca 2 cho, tranh lech.
+- **Fuse:** trong ca preflight LAN run that, neu BAT KY window nao co `pack.dropped_by_budget` khong rong -> **RAISE** (liet ke window_id + term bi rot). Khong duoc cat lang le. (Preflight hien co _raise_if_preflight_unsafe — noi them check nay; run that check trong translate_windows truoc khi goi LLM cho window do.)
+- Test: fixture ep budget nho -> raise dung thong bao; budget du -> chay binh thuong.
+
+### 34.3 [A3 — 0-API] preflight --report phai ghi file
+`run_translate --preflight-only --report X` hien in console roi `return 0` (dong ~131) khong ghi file (phat hien o B4). Sua: preflight-only + --report -> ghi JSON preflight (dung noi dung da in) roi return. Test.
+
+### 34.4 [B — 0-API] UI overlay: them LOP MARK tu cascade (display-only)
+**Boi canh:** overlay (app/backend/services/thesis_overlay.py) mark VI bang allocate_spans (surface, cung lib voi scorer — tot), status tu d2l_translation_metrics_v2.json. NHUNG app KHONG doc quyet dinh cascade -> occurrence dich LECH chuan (T3 dinh vi duoc "dich gia thuc su viet gi") khong co mark VI: EN co mark, VI trong — sai muc tieu "mark 1:1".
+**Yeu cau:**
+- Overlay nhan them (optional) duong dan cascade report JSON (output run_cascade_localize / T3). Voi moi decision co target_start/target_end (t2_credit) hoac target_quote da validate (T3 found): phat mark VI lop thu 2, phan biet ro: `mark_source: "surface_form"` (hien tai) vs `"cascade_t2"` vs `"cascade_t3_llm"`.
+- **Display-only:** khong doi metric, khong doi score report. Khong co cascade report -> overlay giu nguyen hanh vi cu (khong loi).
+- T3 quote -> span: dung logic dinh vi trung lap voi `_locate_quote_span_in_region` (import tu cascade_localize, KHONG copy-paste).
+- Test backend: fixture cascade report nho -> overlay tra mark 2 lop dung vi tri; khong co report -> nhu cu.
+
+### 34.5 [C — CO API, cost-gate] SMOKE TRIAL S0 + S1 tren chuong Builder moi (MLP)
+**Muc tieu:** chay thu DAU-CUOI tren mau nho de kiem day chuyen (khong phai thi nghiem chinh; khong ket luan metric tu mau nay).
+**Thiet ke:**
+- Them flag `--max-windows N` cho run_translate (cat danh sach windows SAU build_windows, theo thu tu; ghi vao report `windows_truncated_to: N`).
+- Chay: chapter `multilayer_perceptrons`, **--max-windows 10**, ca S0 va S1; S1 voi `--memory-notebook data/reports/builder_v2_mlp_c35/notebook_decollided.json`; `--context-budget 1500`; `--workdb data/jobs/trial_s0s1_mlp/memory.sqlite3`; out/report `data/reports/trial_s0s1_mlp/`.
+- **Trinh tu bat buoc:** (1) preflight-only + report -> BAO CAO cost cap -> CHO USER CONFIRM; (2) chay S0; (3) chay S1; (4) bao cao. Uoc luong tham khao: ~10 window x 2 config, prompt ~1.2-1.5k/window -> cap du kien duoi $1; so THAT lay tu preflight.
+**Acceptance checks (CodeX tu kiem + bao cao, Claude se verify lai):**
+1. Frozen DB hash truoc==sau==64D989 (workdb rieng).
+2. Prompt S0 (log/memory_packs) KHONG chua section terminology nao (S0 purity).
+3. Prompt S1 chua 3 section §30 (MANDATORY / PRESERVE / CONTEXT-SENSITIVE) voi term dung anchoring.
+4. **§32 song trong prompt that:** `regularization`/`standardize` KHONG nam trong MANDATORY cua bat ky window nao; neu xuat hien thi phai o CONTEXT-SENSITIVE. `fully connected layer`/`non-linearity` neu xuat hien phai o MANDATORY.
+5. Moi block co ban dich (JSON contract du key); parse failure/retry bao cao ro.
+6. Khong window nao co dropped_by_budget (fuse 34.2 im lang).
+7. Cost log day du (nominal + cap), khong log key.
+**Bao cao them de nguoi doc mat:** in 3 cap (block EN / S0 VI / S1 VI) co cung 1 term memory-sensitive de user doc doi chieu nhanh.
+
+### 34.6 Thu tu + STOP
+A1 -> A2 -> A3 -> B (0-API, tests xanh het, bao cao) -> **STOP cho confirm** -> C preflight -> **STOP cho confirm cost** -> C run -> bao cao cuoi. KHONG commit.
+
+### 34.7 GHI SO (KHONG lam trong luot nay)
+- **Builder prompt v9 candidate (tu review §33.x cua Claude):** them 1 cau vao updates_to_existing: "chi danh cho bien the cua CUNG khai niem; khai niem khac du chua headword phai vao new_terms" — ung vien sua goc over-merge (§32 Fix (1) dang chan ha nguon roi; chi lam khi co ke hoach re-run + do recall).
+- **Phrase-covered la chu dich thiet ke:** prompt v8 bao emit cum chinh xac thay vi tu don -> 22/40 miss la phu-cum (§33). Dua vao chuong phuong phap luan van nhu mot quyet dinh granularity co van ban + co do, khong phai bug.
+- S0-vs-S1 THI NGHIEM CHINH: thiet ke a-priori o § tiep theo sau khi smoke trial sach.
