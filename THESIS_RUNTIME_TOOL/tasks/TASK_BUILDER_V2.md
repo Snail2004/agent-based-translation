@@ -2178,3 +2178,25 @@ Independently verified on data/jobs/exp_s0s1_full/memory.sqlite3 (ro) + data/job
 Observation for scoring (NOT a knob to touch now): S1 soft hint proposes "chuẩn hóa" for regularization (collision-era canonical; gold says "điều chuẩn"), and sampled S1 output follows the hint while S0 chose "chính quy hóa". §32 soft fallback prevented a mandatory error but the hint still steers — this is the [[memory-injection-precision-cost]] pattern; measure in scoring, tune only in a future experiment id.
 
 Next: prelim S0/S1 run (same workdb/experiment), then 0-API scoring per 35.3.
+
+
+<!-- S35_MLP_SCORING -->
+## 35.8 — MLP scoring results (Claude, 0-API, 2026-07-02): pre-registered predictions checked
+
+Erratum first (honesty ledger): in the STOP-2 discussion I claimed "P3 never translated MLP" — WRONG. P3 (2026-06-14) translated all 4 chapters incl. MLP 475+475; my GROUP BY probe only showed the first 15 alphabetical groups (all intro). The user's instinct ("S0 dịch rồi đâu cần dịch lại") was correct; in practice S0 replayed from P3 cache for $0.007, so no waste occurred. Lesson: never eyeball a LIMITed GROUP BY.
+
+Command: score_run --db workdb exp_s0s1_full --experiment exp_s0s1_builderv2_v1 --chapters d2l_multilayer_perceptrons --gold-variants data/eval/d2l_gold_variants.csv. Stage gates all pass; denominator identical both arms (1182 gold source occ; scope==translation scope).
+
+Headline (locked in 35.3):
+- B gold occurrence adherence (flat): S0 0.7580 -> S1 0.7657 (+0.008). Prediction "S1 > S0" HOLDS, margin small.
+- D registry consistency: S0 0.7590 -> S1 0.8253 (+0.066, 166 terms). Thesis-headline metric (needs no gold) shows the real effect.
+- Hygiene: 0 foreign-script in all 950 outputs (§35.7).
+
+Why B moved so little — conditional decomposition (diagnostic, run on locked tooling, no knob changed). Gold terms split by whether the injected pack canonical is among gold accepted forms:
+- pack==gold (39 terms, 549 occ): S0 0.860 -> S1 0.965. Injection works (+10.5pt).
+- pack!=gold (20 terms, 116 occ): S0 0.440 -> S1 0.026. S1 obeys its pack ~97% — scored as "wrong" by gold because Builder is BLIND to gold by design (mày học vs học máy, lô nhỏ vs minibatch, quy tắc chuỗi vs quy tắc dây chuyền, tập xác thực vs tập kiểm định, đơn vị ẩn vs nút ẩn...). These are valid-Vietnamese style divergences, not mistranslations.
+- not in pack (399 terms, 517 occ): 0.721 vs 0.720 — no injection, no effect. Clean internal control; also confirms the mechanism has zero side-effect outside its pack.
+
+Interpretation locked to 35.3 discipline: aggregate strict B stays the reported headline; the decomposition is a diagnostic footnote. Mechanism compliance ~0.96-0.97 in BOTH directions (matches smoke prior 0.974). The 20 disagree-canonicals are a canonical-QUALITY question (future arm: gold-informed canonical review or T4 human pass under a NEW experiment id), not a mid-experiment fix. A_registry (vs old 1608-row glossary_entries) is reported but ruler-misaligned with the actual notebook pack — treat as legacy diagnostic only.
+
+Artifacts: data/reports/exp_s0s1_builderv2_v1/metrics_mlp.json (+occurrence audit csv/html). Next per 35.4: prelim S0/S1 run, then same scoring; D2L UI overlay can now point at the workdb runs.
