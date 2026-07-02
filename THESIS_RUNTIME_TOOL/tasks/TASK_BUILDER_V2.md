@@ -2222,6 +2222,63 @@ Pre-registered expectations (logged before results, per 35.3): D_consistency S1 
 
 
 <!-- S35_CASCADE_MLP_TASK -->
+<!-- S35_CASCADE_MLP_CODEX_STOP_A -->
+
+### 35.10 §5 — CodeX implementation notes / STOP-A (2026-07-02)
+
+Implementation:
+- Added thin experiment-scoped CLI `pipeline/scripts/run_experiment_cascade.py`; no prompt/cascade/overlay logic was changed.
+- CLI opens the experiment workdb with SQLite `mode=ro`, uses frozen DB only for hash guard, and writes only JSON reports + embedding cache/T3 cache.
+- Preflight path runs T1 bge-m3 through local LM Studio, T2 code rules, and estimates T3 locate-only calls/cost using locked `d2l_locate_only_v4` prompt + `pipeline/configs/llm_adjudicator.yaml`. It does **not** call GPT.
+- Run path is implemented but guarded by `--confirm-usd`; not executed in STOP-A because the estimate exceeds the §35.10 >500-call stop rule.
+- Added tests in `pipeline/tests/test_experiment_cascade.py`; targeted suite: `13 passed`.
+
+STOP-A command:
+`python -m pipeline.scripts.run_experiment_cascade --preflight-only --db data\jobs\exp_s0s1_full\memory.sqlite3 --frozen-db data\jobs\d2l_p1\memory.sqlite3 --experiment exp_s0s1_builderv2_v1 --chapter multilayer_perceptrons --configs S0,S1 --embed-endpoint http://127.0.0.1:1234/v1/embeddings --models bge-m3=text-embedding-bge-m3@gpustack/bge-m3-GGUF:Q8_0 --cache-dir data\eval\embed_cache\cascade_exp_mlp --out-dir data\reports\exp_s0s1_builderv2_v1 --llm-config pipeline\configs\llm_adjudicator.yaml --llm-cache data\reports\exp_s0s1_builderv2_v1\cascade_t3_cache.sqlite3`
+
+Artifact:
+- `data/reports/exp_s0s1_builderv2_v1/cascade_mlp_preflight.json`
+
+STOP-A results:
+- Embedding endpoint: available (`bge-m3` / `text-embedding-bge-m3`).
+- Workdb unchanged: true. Frozen hash before/after: `64d98965f8859869...` / `64d98965f8859869...`.
+- S0 denominator 2885; T2 resolved 1763 (61.1%); T3 residual estimate 1122 (38.9%).
+- S1 denominator 2885; T2 resolved 1751 (60.7%); T3 residual estimate 1134 (39.3%).
+- T3 total estimate: **2256 calls**, prompt tokens ~1,499,770, output cap 1,155,072, cost cap **$2.6851**.
+- Hard stop triggered: `t3_estimate_over_500_calls=true`. No T3/GPT call was made.
+
+Notes / caveats:
+- The high residual count is not an API failure; it comes from running the occurrence cascade across the full MLP registry occurrence set (2885 occurrences per arm). The expensive subset is all T2-residual occurrence assignments (C0/multiple/collision/shared-variant), not a tiny sample.
+- Because §35.10 explicitly says `>500` estimated T3 calls must stop for review, CodeX did not produce `cascade_mlp_S0.json` / `cascade_mlp_S1.json` with T3 marks yet. A narrower T3 policy or explicit approval is needed before STOP-B.
+
+### 35.10 §5.1 — STOP-A rerun with corrected notebook+gold scope (2026-07-02)
+
+Change:
+- Default cascade term scope changed from legacy frozen registry to `notebook_plus_gold`.
+- Notebook terms are loaded from `data/reports/builder_v2_mlp_c35/notebook_decollided.json` through `notebook_entries_to_term_rows`, filtered to `injection_action in {translate, preserve, context_sensitive_translate}`.
+- Source variants are expanded into source surfaces. Gold targets are loaded from `eval_glossary_gold` plus `data/eval/d2l_gold_variants.csv`. Terms are deduped by normalized source surface with accepted-form union.
+- Existing T1/T2/T3 logic and prompt remain unchanged.
+
+Rerun command: same as STOP-A, with explicit `--notebook data\reports\builder_v2_mlp_c35\notebook_decollided.json --gold-variants data\eval\d2l_gold_variants.csv --term-scope notebook_plus_gold`.
+
+Artifact:
+- `data/reports/exp_s0s1_builderv2_v1/cascade_mlp_preflight.json` (overwritten with corrected-scope preflight)
+
+Corrected-scope results:
+- Term scope: notebook 546 entries -> 546 rows; notebook source surfaces considered 656; gold sources considered 458; terms after source dedupe 992.
+- S0 denominator 2487; T2 resolved 1167 (46.9%); T3 residual estimate 1320 (53.1%).
+- S1 denominator 2487; T2 resolved 1334 (53.6%); T3 residual estimate 1153 (46.4%).
+- T3 total estimate: **2473 calls**, prompt tokens ~1,637,888, output cap 1,266,176, cost cap **$2.9418**.
+- Hashes still unchanged; bge-m3 endpoint still available; no GPT call was made.
+
+Before/after vs legacy-registry preflight:
+- Legacy registry: denominator 2885/arm, T3 calls 2256 total, cap $2.6851.
+- Notebook+gold: denominator 2487/arm, T3 calls 2473 total, cap $2.9418.
+- Interpretation: scope correction removed old-registry-only occurrences, but did **not** shrink the T3 workload. The remaining large residual is dominated by notebook+gold terms whose accepted forms are not uniquely present in the aligned T1 region (C0/multiple/collision/shared-variant). This is now a real cost/coverage question for the experiment scope, not just a stale-registry artifact.
+
+STOP state:
+- `t3_estimate_over_500_calls=true` remains. CodeX again stopped before T3. No `cascade_mlp_S0.json` / `cascade_mlp_S1.json` with T3 marks has been produced.
+
 ## 35.10 — TASK for CodeX: full measurement cascade (T1→T2→T3) on MLP exp runs, for UI 1:1 marks
 
 User request: run the WHOLE localization cascade on exp_s0s1_builderv2_v1 MLP (both arms), so the overlay can mark EN↔VI terms 1:1 including the LLM tier. §35.9 (prelim run) stays queued behind this.
@@ -2238,3 +2295,31 @@ Sequence with 2 STOPs:
 Claude then verifies STOP-B on artifacts (re-run validate on quotes, spot-check marks against workdb text, overlay smoke with cascade_report pointed at the new files).
 
 Pre-registered expectations: tier profile near EV-D2L-10 (T2 resolves most of residual; T3 small; locate-acc prior 99.1%); S0 and S1 residual sizes differ (S1 followed pack forms, surface layer should already mark more of S1's gold/pack terms; S0 free renderings lean harder on T2/T3). If T3 volume estimate is large (>500 calls), STOP-A must flag it — do not assume approval.
+
+
+<!-- S35_LOCAL_T3_CALIB -->
+## 35.11 — TASK for CodeX: calibrate LOCAL models as T3 locator (same 103-item gold as the 98.1% GPT baseline)
+
+Goal: decide whether a local LM Studio model can replace gpt-5.4-mini for the §35.10 DISPLAY-layer T3 run (and future full-book cascade passes, ~$10+/pass at API prices). Decision by measurement, not vibes.
+
+Test set & fairness (do NOT improvise):
+- Items: exactly the 103 T3 residual records embedded in data/reports/cascade_gold_locate_measure.json (t3_records) — the same set where gpt-5.4-mini scored 101/103 = 0.9806. Same prompt builder d2l_locate_only_v4, same validate_payload, same correctness criterion as that measure script. Reuse its code path; only the LLM client endpoint changes.
+- Baseline: GPT numbers come from the existing cache/report — 0 paid API calls in this whole task.
+
+Candidates (all via LM Studio OpenAI-compatible endpoint http://127.0.0.1:1234/v1):
+1. openai/gpt-oss-20b — reasoning effort LOW (user measured ~40 tok/s)
+2. qwen/qwen3.5-9b — thinking OFF (~48 tok/s)
+3. google/gemma-4-12b — thinking OFF (~15 tok/s; include for accuracy, flag speed)
+
+ONE shared decoding profile, set PER-REQUEST via API params (overrides UI sliders; document in report):
+- temperature 0, top_p 1.0, top_k disabled, min_p disabled, seed fixed 20260612
+- repeat_penalty OFF (=1.0) — MANDATORY: the task is verbatim copying; repeat penalty actively corrupts quotes. If a model's server ignores the override, report it.
+- max_tokens 512; response_format json_schema if LM Studio accepts it for that model, else json_object (validator is the real gate either way)
+- reasoning/thinking = off/low as listed; do NOT test higher effort (see reasoning-effort lesson: it eats output budget and buys nothing for extraction)
+- Load-side: context 8192 is enough (~800-token prompts); note GPU offload config used.
+
+Report per model: locate-acc /103 vs gold, validator-rejection count, JSON-parse failures, median latency & tok/s, projected wall-clock for the §35.10 workload (1,724 calls plan A). Plus 3 sample failures with the wrong quote shown.
+
+Acceptance to adopt for display-T3: acc >= 0.95 (>=98/103) AND rejections+parse-fails < 5%. If several pass, pick the fastest. gpt-5.4-mini stays as fallback tier for items the winner fails validation on (cost-ascending cascade, same philosophy as T1->T2->T3).
+
+STOP after the comparison table. No commit. Frozen DB untouched (this task reads only the report JSON + local endpoints).
