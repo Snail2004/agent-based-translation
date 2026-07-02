@@ -2101,3 +2101,46 @@ Claude verify DOC LAP (khong tin bao cao):
 - **Glitch output "либо" (ky tu Nga):** REAL — S0 blocks mlp_b006 + mlp_b049, VA CA S1 block mlp_b049 (CodeX bao thieu ve S1). La artifact model gpt-5.4-mini code-switching, xuat hien CA HAI arm -> khong lien quan glossary. GHI SO cho thi nghiem chinh: them output-hygiene check deterministic (flag ky tu Cyrillic/CJK trong ban dich VI) vao acceptance — re, 0-API, bat duoc loi model.
 
 Tests sau fix + test moi: 21 targeted + 4 run_translate script = xanh. Commit ca reports trial (28K, la record smoke).
+
+## 35. THI NGHIEM CHINH S0-vs-S1 FULL-CHAPTER — thiet ke A-PRIORI (khoa truoc khi nhin ket qua) *(Claude, 2026-07-02 — GIAO CODEX)*
+
+> Smoke trial §34.10 PASS -> day la phat sung chinh cua luan van: do memory (S1) co lam ban dich NHAT QUAN + BAM CANON hon S0 khong, tren ca chuong that. Thiet ke nay KHOA TRUOC: chuong, arm, metric headline, policy, hygiene. Sau khi nhin ket qua KHONG duoc chinh knob roi chay lai tren cung benchmark (bai hoc dont-tune-intervention-on-test).
+
+### 35.0 Bat bien
+- Frozen DB mode=ro, hash 64D989 truoc==sau moi buoc. Workdb rieng, experiment_id MOI. Blind-gold cho translate; metric step DUOC doc gold. Keys env->KEY-2. Cost gate: preflight -> STOP bao cap -> confirm -> chay. CodeX STOP theo phase, KHONG commit.
+- **INPUT DONG BANG (pin theo commit hien tai):** notebook MLP = `data/reports/builder_v2_mlp_c35/notebook_decollided.json`; notebook prelim = `data/reports/builder_v2_c35_decollision/notebook_decollided.json`; §30/§32 pack policy nhu da commit; budget 1500; prompt s0_d2l_v1/s1_d2l_v1; model gpt-5.4-mini temp/seed nhu llm_translate.yaml. Nhin ket qua xong muon doi BAT KY thu gi trong danh sach nay = thi nghiem MOI (v2), khong ghi de.
+
+### 35.1 [D1 — 0-API + reask] OUTPUT-HYGIENE layer (lam TRUOC khi chay)
+Phat hien smoke: code-switching Cyrillic (`либо` = "either") 3/160 block, CA HAI arm (S0 b006+b049, S1 b049) — loi output cua LLM da ngu, khong phai loi pipeline.
+- **DETECT (code, co hoc):** voi moi block output, tinh tap Unicode-script cua OUTPUT tru tap script cua SOURCE block; giao voi {Cyrillic, CJK, Hangul, Thai} khac rong -> flag. (Khong cam Greek — cong thuc toan dung σ/α/β; luat tru-source tu mien nhiem ten rieng nuoc ngoai.) KHONG phan doan ngon ngu trong code.
+- **REASK (LLM, toi da 1 lan/block-window):** dich lai window kem note tinh "previous output contained non-Vietnamese-script characters; retranslate" (note doi cache-key -> temp=0 khong tra lai ban loi cu). Phan doan sua thuoc LLM.
+- **Con dinh sau reask -> ghi `qa_issues` + dem vao report theo arm.** Khong loop.
+- Report field moi: `hygiene: {flagged_blocks, reasked, fixed, still_bad, by_config}`. Test: fixture output co Cyrillic -> flag+reask; source co san Cyrillic -> KHONG flag; Greek trong toan -> KHONG flag.
+
+### 35.2 Arms & scope
+- **2 arm:** S0 (khong memory, purity nhu §34) vs S1 (pack tu notebook_decollided qua §30+§32). Khac nhau DUY NHAT hard-constraint block (da co code-doc "S0 PURITY").
+- **2 chuong, 2 invocation, CUNG experiment_id `exp_s0s1_builderv2_v1`, CUNG workdb `data/jobs/exp_s0s1_full/memory.sqlite3` (sach, purge tu dong):**
+  1) multilayer_perceptrons (60 windows, pack 426) — notebook MLP.
+  2) preliminaries (45 windows, pack 259) — notebook prelim.
+- Ly do 2 chuong: tranh ket luan 1-chuong; prelim con cho phep doi chieu voi cac artifact §30 cu.
+- Cost du kien: S0 phan lon cache-hit tu P3 (smoke da thay); S1 fresh ~105 window — ngoai suy smoke ($0.019/10w) ~ $0.20 nominal; cap bao thu < $1.5. SO THAT lay tu preflight, STOP bao truoc khi chay.
+
+### 35.3 METRIC HEADLINE (khoa truoc)
+1. **B — occurrence-weighted registry adherence** (pipeline hien co, ban JOINT-allocation da sua; scope cham == scope dich {heading,prose}). Bao theo chuong va gop.
+2. **D — consistency** (cung term -> cung rendering giua cac block; D_surface_v1 nhu da relabel). Bao S0 vs S1.
+3. **Hygiene counts** (35.1) theo arm — truc chat luong phu, KHONG phai headline.
+4. **Gold agreement** (vs eval_glossary_gold, denominator = gold-present-in-chapter; §33 tiering DI KEM lam chu thich, KHONG thay headline).
+- Cascade T1+T2 (0 LLM) chay nhu DIAGNOSTIC neu embed endpoint san sang; T3 GPT van prompt-review-gated, quyet dinh RIENG sau khi xem residual. EV-02 judge (Gemini pairwise) = quyet dinh RIENG sau khi co ban dich — khong thuoc scope §35.
+- **Du doan dang ky truoc (de khong tu lua):** ky vong S1 > S0 ro ret o B (smoke preview MANDATORY-subset: 0.974 vs 0.833 — metric khac, chi la prior); S1 >= S0 o D; hygiene tuong duong 2 arm (~2% block, loi model khong lien quan memory). Neu S1 KHONG thang B -> nghi van day chuyen inject, dieu tra truoc khi tin.
+
+### 35.4 Trinh tu + STOP (CodeX)
+1. Implement 35.1 (detector+reask+tests) -> chay full test suite -> **STOP-1 bao cao** (Claude review).
+2. Preflight ca 2 chuong (0-API, --report) -> **STOP-2 bao cost cap** -> user confirm.
+3. Chay MLP S0 -> S1; roi prelim S0 -> S1 (workdb sach 1 lan dau, cac invocation sau resume CUNG experiment la dung y do — bao ro windows_skipped tung lan).
+4. Bao cao chay: acceptance nhu §34.10 (purity 0 pack S0; §32 line-level exact tren pack S1; dropped_by_budget=0; hash frozen nguyen; JSON fail; hygiene report; 3 cap doc mat moi chuong; cost that). **STOP-3.**
+5. Claude verify doc lap tren workdb -> roi moi chay scoring 0-API (B/D/gold + cascade diagnostic neu co endpoint) -> §35.x ket qua.
+
+### 35.5 Acceptance bo sung so voi smoke
+- windows_skipped: lan dau moi chuong = 0; neu re-invoke resume thi giai trinh ro rang tung con so.
+- Hygiene layer hoat dong: co it nhat log flag/reask neu glitch xuat hien (smoke bao truoc ~2%); khong reask lap vo han.
+- Report per-chapter TACH BACH (khong tron 2 chuong vao 1 so).
