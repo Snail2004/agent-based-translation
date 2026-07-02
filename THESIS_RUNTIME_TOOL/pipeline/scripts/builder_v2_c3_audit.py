@@ -31,7 +31,11 @@ from pipeline.prepass.builder_v2_audit import (
 from pipeline.prepass.builder_v2_guards import apply_surface_ownership_guard
 from pipeline.prepass.db_source import load_document_from_connection
 from pipeline.prepass.span_resolver import _find_word_boundary_matches
-from pipeline.scripts.builder_v2_metrics import _load_v2_notebook_terms, _score_terms_vs_gold
+from pipeline.scripts.builder_v2_metrics import (
+    _load_v2_notebook_terms,
+    _score_terms_vs_gold,
+    _tier_gold_misses,
+)
 from pipeline.translate.profiles import PROFILES, injection_role_for_term, term_is_injection_eligible
 from pipeline.translate.windower import build_windows
 
@@ -504,6 +508,9 @@ def _build_auditor_recall_metrics(
             "metric_a_registry": metric_a,
             "metric_b_post_auditor": metric_b,
             "auditor_recall_delta": delta,
+            "missing_tiered_metric_a": _tier_gold_misses(
+                metric_a, notebook.get("entries") or []
+            ),
             "v1_registry_reference": {
                 "recall": 0.6316,
                 "note": "Reference only; not a pass/fail floor for C3 Auditor.",

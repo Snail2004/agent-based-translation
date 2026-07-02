@@ -4,6 +4,7 @@ import argparse
 import json
 import re
 import sqlite3
+import unicodedata
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -311,6 +312,72 @@ def _score_terms_vs_gold(
         "agreement": round(agreed / matched, 6) if matched else 0.0,
         "missing_terms": missing,
         "conflicts": conflicts,
+    }
+
+
+def _term_tokens(value: str) -> tuple[str, ...]:
+    normalized = unicodedata.normalize("NFC", value).casefold()
+    return tuple(token for token in re.split(r"[^0-9a-z]+", normalized) if token)
+
+
+def _contains_token_seq(haystack: tuple[str, ...], needle: tuple[str, ...]) -> bool:
+    size = len(needle)
+    if size == 0 or size >= len(haystack):
+        return False
+    return any(haystack[i : i + size] == needle for i in range(len(haystack) - size + 1))
+
+
+def _tier_gold_misses(metric: dict[str, Any], entries: list[dict[str, Any]]) -> dict[str, Any]:
+    """Mechanically tier the gold misses of a recall metric (diagnostic only).
+
+    phrase_covered = the gold term's whole-token sequence occurs inside a LONGER
+    registry surface (word-boundary; `fit` inside `overfit` does NOT count).
+    absent = no token-level trace anywhere in the registry.
+    This never changes the strict recall; ordinary-vs-technical judgment on the
+    absent bucket is a human annotation, never code.
+    """
+
+    registry: dict[tuple[str, ...], str] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        strings = [str(entry.get("canonical_source_term") or "")]
+        for variant in entry.get("source_variants") or []:
+            if isinstance(variant, dict):
+                strings.append(str(variant.get("surface") or ""))
+        for text in strings:
+            tokens = _term_tokens(text)
+            if tokens and tokens not in registry:
+                registry[tokens] = text
+    covered: list[dict[str, Any]] = []
+    absent: list[str] = []
+    for item in metric.get("missing_terms") or []:
+        term = str(item.get("source_term") or "")
+        needle = _term_tokens(term)
+        examples = [
+            display
+            for tokens, display in registry.items()
+            if _contains_token_seq(tokens, needle)
+        ]
+        if examples:
+            covered.append({"source_term": term, "covered_by": sorted(examples, key=len)[:3]})
+        else:
+            absent.append(term)
+    matched = int(metric.get("matched_terms") or 0)
+    gold_count = matched + len(metric.get("missing_terms") or [])
+    return {
+        "method": (
+            "mechanical word-boundary token containment over registry surfaces; "
+            "diagnostic tiers only, strict recall unchanged"
+        ),
+        "phrase_covered_count": len(covered),
+        "absent_count": len(absent),
+        "recall_strict": metric.get("recall"),
+        "recall_with_phrase_covered": (
+            round((matched + len(covered)) / gold_count, 6) if gold_count else 0.0
+        ),
+        "phrase_covered": covered,
+        "absent_terms": absent,
     }
 
 

@@ -1977,3 +1977,29 @@ Nhan qua truc tiep cua Fix (1): xo sach 24->10 variant -> Auditor doc ra `model`
 **Ket luan:** Fix (1) chay end-to-end dung muc tieu — cuu duoc gold term bi over-merge lam mat, 0 hai DB, blind-gold. Fix diem, khong phai don bay recall. Guard tu day nam SAN trong run_c3 (0-API, truoc Auditor) nen chuong moi khong ton them lan goi nao; $0.0825 nay chi la audit bu 1 lan cho MLP (da audit truoc §32).
 
 Artifacts reaudit gitignored (regenerable). Task-file note commit-only.
+
+## 33. Tiered gold-miss diagnostic — recall 0.63 khong phai "Builder mu 37%" *(Claude lam truc tiep, 2026-07-02)*
+
+> Cau hoi cua user: recall 0.63 la tot hay xau? 546->426 term co phai Builder do / bo loc thieu / gold khong phu? Tra loi bang DU LIEU + them 1 lop chan doan CO HOC, **KHONG doi thuoc chinh** (recall strict giu nguyen lam headline — khong duoc sua thuoc de diem dep).
+
+### 33.1 Gold provenance (kiem tu DB, mode=ro)
+`eval_glossary_gold` = 458 dong tu `glossary.md` cua du an d2l-vn, dong bang o commit c775d6b4998e..., nhieu term co `discussion_url` (github git.io) — tuc **NGUOI lam, co tranh luan cong dong truoc khi chot**. Ban chat: SO TAY VAN PHONG cho ca cuon sach (~23 term/chuong) de nhieu dich gia nguoi thong nhat — ke ca tu thuong (fit/key/value/switch). Khac muc dich voi Builder (memory day dac theo chuong) -> "426 vs 108" khong so truc tiep duoc; va Translator moi window chi nhan ~25 term (B4: min/avg/max 8/24.8/44), KHONG an 426 cung luc.
+
+### 33.2 Co che (impl trong `builder_v2_metrics.py::_tier_gold_misses`, wire vao `recall_vs_gold_dev.missing_tiered_metric_a`)
+Phan tang CO HOC (khong phan doan ngon ngu, khong hardcode):
+- **phrase_covered**: chuoi token cua gold term xuat hien NGUYEN-TOKEN trong 1 surface DAI HON cua registry (word-boundary: `perceptron` trong `multilayer perceptron` = covered; `fit` trong `overfit` = KHONG — day la ly do so nay dang tin hon substring tho).
+- **absent**: khong co dau vet token nao trong registry.
+- Nhan "tu thuong vs ky thuat" tren nhom absent = chu thich TAY cua nguoi (code-never-does-language-work).
+Test: `test_builder_v2_metrics.py` (perceptron/vector covered; fit/batch-size absent). Full sweep **264 passed**.
+
+### 33.3 So chinh thuc (tren artifact da co, 0-API)
+| Chuong | gold present | recall strict (headline) | phrase_covered | ABSENT | recall kem phu-cum (chan doan) |
+|---|---|---|---|---|---|
+| MLP | 108 | **0.630** | 22 | **18** (16.7%) | 0.833 |
+| Preliminaries | 57 | **0.667** | 3 | **16** (28.1%) | 0.719 |
+
+- MLP absent 18 = {analogy, batch size, causality, computer vision, constrain, dimension, dimensionality, fit, implement, module, normalize, orthogonal, pattern recognition, quadratic, recall, scalar, supervised learning, switch}. Chu thich TAY: ~4 cum ky thuat that (batch size, computer vision, pattern recognition, supervised learning — deu la term nhac-qua, khong phai loi cua chuong); con lai la tu don kieu so-tay-van-phong.
+- Preliminaries absent 16 = {agent, category, coefficient, end-to-end, fit, implement, implementation, key, layer, metric, population, prior, query, recall, scale, switch} — pattern khac MLP: it phu-cum hon (3), absent nhieu tu don generic hon. Tiering KHONG phai lam dep dong deu — no lo ra prelim yeu hon MLP o phan absent, do la thong tin that.
+
+### 33.4 Cach dung khi bao cao (de khong tu lua)
+Noi voi GVHD: "Recall exact-match vs gold style-guide = 0.63; phan tang co hoc cho thay 20% la lech do hat (khai niem co o muc cum), sot tuyet doi 17% (MLP), trong do cum ky thuat that ~4%. Gold la thuoc TUONG DOI cho S0-vs-S1 (cung mau so hai tay), khong phai chan ly tuyet doi; metric dinh cua luan van la CONSISTENCY khong can gold." KHONG bao gio thay 0.833 vao vi tri cua 0.63.
