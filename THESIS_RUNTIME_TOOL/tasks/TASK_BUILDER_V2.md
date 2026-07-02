@@ -2219,3 +2219,22 @@ Do:
 Do NOT score. Claude will verify on the workdb and run the 0-API scorer (same command as §35.8, chapters d2l_preliminaries), so measurement stays with the reviewer.
 
 Pre-registered expectations (logged before results, per 35.3): D_consistency S1 > S0 (MLP prior +0.066); B small positive move with the same pack-vs-gold dilution pattern; hygiene still_bad 0; ~0 windows skipped. If S1 does NOT beat S0 on D, that is a red flag for the prelim pack — report, do not "fix".
+
+
+<!-- S35_CASCADE_MLP_TASK -->
+## 35.10 — TASK for CodeX: full measurement cascade (T1→T2→T3) on MLP exp runs, for UI 1:1 marks
+
+User request: run the WHOLE localization cascade on exp_s0s1_builderv2_v1 MLP (both arms), so the overlay can mark EN↔VI terms 1:1 including the LLM tier. §35.9 (prelim run) stays queued behind this.
+
+Ground rules (unchanged):
+- This is MEASUREMENT/DISPLAY — read-only on workdb data/jobs/exp_s0s1_full/memory.sqlite3; zero writes to any DB except T3 api-cache file; frozen hash must stay 64D989... B/D scores in §35.8 are final for this experiment — the cascade adds localization info, it must NOT recompute or alter scoring.
+- Scope per §34-B layering: primary marks come from surface_form (allocate_spans, 0-API, already available). The cascade runs on the RESIDUAL occurrences that surface matching could not credit/mark — tiered: T1 bge-m3 region narrowing (LOCAL endpoint http://127.0.0.1:1234/v1/embeddings, $0; preflight_embedding_model must pass, else STOP and report unavailable), T2 code rules ($0), T3 LLM locate-only ONLY for what T2 can't cleanly resolve (prompt d2l_locate_only_v4 UNCHANGED, temp 0, validate quote-in-region, prefer found=false; api-cache on; OPENAI key discipline as always).
+- Existing CLI (localizer_cascade --run-dev) is gold-CSV/DEV-scoped. Add a minimal experiment-scoped entry (new flag or thin script) that: pulls scope blocks + translations for exp_s0s1_builderv2_v1 / d2l_multilayer_perceptrons / config in {S0,S1}, builds the residual occurrence set, runs the cascade, and emits per-config reports data/reports/exp_s0s1_builderv2_v1/cascade_mlp_S0.json and cascade_mlp_S1.json in the EXACT schema app/backend/services/thesis_overlay._merge_cascade_marks consumes (mark_source cascade_t2 / cascade_t3_llm, uncertain decisions skipped). No changes to cascade internals, prompts, or overlay logic.
+
+Sequence with 2 STOPs:
+1. STOP-A preflight (0 paid API): residual occurrence counts per config, predicted tier split, T3 call estimate + cost cap (report BEFORE any T3 call), embedding endpoint identity check result, list of any code you had to add + tests for it.
+2. After user cost confirm: run S0 then S1. STOP-B: tier shares (%surface-resolved / %T2 / %T3-found / %unresolved), T3 validation-rejection count, 5 sample marks per arm (EN occurrence -> VI quote), cost actual vs cap, frozen hash, confirmation of zero workdb writes. No commit.
+
+Claude then verifies STOP-B on artifacts (re-run validate on quotes, spot-check marks against workdb text, overlay smoke with cascade_report pointed at the new files).
+
+Pre-registered expectations: tier profile near EV-D2L-10 (T2 resolves most of residual; T3 small; locate-acc prior 99.1%); S0 and S1 residual sizes differ (S1 followed pack forms, surface layer should already mark more of S1's gold/pack terms; S0 free renderings lean harder on T2/T3). If T3 volume estimate is large (>500 calls), STOP-A must flag it — do not assume approval.
