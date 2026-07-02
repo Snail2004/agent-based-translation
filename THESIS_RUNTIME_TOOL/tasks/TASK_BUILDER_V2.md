@@ -2062,3 +2062,17 @@ A1 -> A2 -> A3 -> B (0-API, tests xanh het, bao cao) -> **STOP cho confirm** -> 
 - **Builder prompt v9 candidate (tu review §33.x cua Claude):** them 1 cau vao updates_to_existing: "chi danh cho bien the cua CUNG khai niem; khai niem khac du chua headword phai vao new_terms" — ung vien sua goc over-merge (§32 Fix (1) dang chan ha nguon roi; chi lam khi co ke hoach re-run + do recall).
 - **Phrase-covered la chu dich thiet ke:** prompt v8 bao emit cum chinh xac thay vi tu don -> 22/40 miss la phu-cum (§33). Dua vao chuong phuong phap luan van nhu mot quyet dinh granularity co van ban + co do, khong phai bug.
 - S0-vs-S1 THI NGHIEM CHINH: thiet ke a-priori o § tiep theo sau khi smoke trial sach.
+
+### 34.8 CodeX review — 7 siet, Claude CHAP NHAN het (2026-07-02, verify tren code that)
+
+CodeX duyet §34 + de 7 siet. Claude kiem tung diem tren file that truoc khi ghi nhan — **chap nhan ca 7**, trong do:
+
+1. **--workdb**: resolve absolute; REFUSE neu workdb==db hoac workdb nam trong data/jobs/d2l_p1/; resume phai in "resume existing workdb". **Smoke trial BAT BUOC workdb SACH + experiment_id MOI** — Claude verify: runner co resume-skip that (`resume_all_blocks_present`, runner.py ~121-130) -> workdb cu se lang le tra ban dich cu nhu moi ("resume lam dich gia"). Acceptance them: report `windows_skipped` PHAI = 0 trong smoke.
+2. **Budget default o 3 CHO khong phai 2** — Claude verify: `build_context_pack(budget_tokens: int = 500)` (context_builder.py:296) la cho thu 3 THAT. Sua ca 3 -> 1500. Ly do doi default lib: budget la cau chi khong phai diet, default rong hon an toan cho MOI caller/profile.
+3. **Fuse truoc API call trong real run**: HOI TU — spec §34.2 da dat guard trong translate_windows truoc khi goi LLM; CodeX xac nhan anchor dung la cho context_pack co san truoc `_call_with_reask`. Giu nguyen.
+4. **Overlay chi emit mark khi span CHAC**: t2_credit co target_start/end, hoac T3 found + quote validate + dinh vi duoc; failed/not_rendered/ambiguous -> BO QUA, khong doan. (Nhat quan ky luat bao thu cua ca he.)
+5. **Acceptance #4 phai check LINE-LEVEL + source-term EXACT, khong substring** — bat chuan: `regularization constant -> hang so chuan hoa` la entry KHAC, hop le nam MANDATORY, contains-tho se false alarm (Claude da gap dung ca nay o B4). Test parse tung dong "- <source> -> <target>", so source EXACT (casefold), khong substring.
+6. **--max-windows ghi vao CA preflight report LAN translation report**: tong windows goc, sau truncate, danh sach window_id — tranh nham smoke 10-window voi full chapter khi doc report sau nay.
+7. **Preflight report them field audit**: frozen_db_sha256_before/after, workdb_path, memory_notebook, context_budget, max_windows, llm_config, zero_api=true.
+
+Thu tu giu nguyen §34.6: A1->A2->A3->B (0-API + tests, bao cao) -> STOP -> C preflight -> STOP cost -> C run -> bao cao. KHONG commit.
