@@ -1,0 +1,244 @@
+{
+  "task": "BUILDER-V2 §35.11",
+  "status": "DEV calibration only; not a thesis-final metric",
+  "endpoint": "http://127.0.0.1:1234",
+  "out": "data\\reports\\local_t3_locator_calibration_smoke.json",
+  "items": 2,
+  "baseline_gpt": {
+    "attempted": 103,
+    "correct": 101,
+    "accuracy": 0.9806,
+    "by_config": {
+      "S0": {
+        "attempted": 64,
+        "correct": 63
+      },
+      "S1": {
+        "attempted": 39,
+        "correct": 38
+      }
+    },
+    "adherence_counts": {
+      "adherent": 98,
+      "off_glossary": 3,
+      "not_rendered": 2
+    },
+    "adherence_by_config": {
+      "S0": {
+        "adherent": 60,
+        "off_glossary": 3,
+        "not_rendered": 1
+      },
+      "S1": {
+        "adherent": 38,
+        "not_rendered": 1
+      }
+    },
+    "fresh_calls": 0,
+    "cost_usd_fresh": 0.0,
+    "api_key_source": "file:OPENAI-KEY-2.txt",
+    "usage_today_after": {
+      "date": "2026-06-28",
+      "total_tokens": 0,
+      "calls": 0
+    },
+    "source": "data\\reports\\cascade_gold_locate_measure.json"
+  },
+  "request_profile_common": {
+    "temperature": 0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "seed": 20260612,
+    "repeat_penalty": 1.0,
+    "max_tokens": 512,
+    "response_format": "json_schema",
+    "context_length_requested": 4096
+  },
+  "models": {
+    "qwen/qwen3.5-9b": {
+      "model": "qwen/qwen3.5-9b",
+      "reasoning_effort": "none",
+      "request_params": {
+        "temperature": 0,
+        "top_p": 1.0,
+        "top_k": 0,
+        "min_p": 0.0,
+        "seed": 20260612,
+        "repeat_penalty": 1.0,
+        "max_tokens": 512,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "occurrence_location",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "occurrence_id": {
+                  "type": "string"
+                },
+                "found": {
+                  "type": "boolean"
+                },
+                "target_quote": {
+                  "type": "string"
+                },
+                "left_context": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "string",
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ]
+                }
+              },
+              "required": [
+                "occurrence_id",
+                "found",
+                "target_quote",
+                "left_context",
+                "confidence"
+              ]
+            }
+          }
+        },
+        "reasoning_effort": "none"
+      },
+      "attempted": 2,
+      "correct": 2,
+      "accuracy": 1.0,
+      "correct_count": 2,
+      "valid_but_wrong": 0,
+      "not_found_wrong": 0,
+      "quote_validation_fail": 0,
+      "json_parse_fail": 0,
+      "confidence_low": 0,
+      "reject_or_parse_rate": 0.0,
+      "median_latency_sec": 2.1771,
+      "median_tokens_per_sec": 268.555,
+      "elapsed_sec": 4.3544,
+      "projected_wall_time_for_1724_calls_sec": 3753.28,
+      "failure_samples": [],
+      "records": [
+        {
+          "index": 1,
+          "occ_id": "S0:d2l_introduction_index_b003:registry:user:0",
+          "config": "S0",
+          "source_term": "user",
+          "gold_label": "rendered",
+          "gold_span": "người dùng",
+          "target_quote": "người dùng",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\n  \"occurrence_id\": \"S0:d2l_introduction_index_b003:registry:user:0\",\n  \"found\": true,\n  \"target_quote\": \"người dùng\",\n  \"left_context\": \"ID của\",\n  \"confidence\": \"high\"\n}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "qwen/qwen3.5-9b",
+          "usage": {
+            "prompt_tokens": 507,
+            "completion_tokens": 65,
+            "total_tokens": 572,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1972
+        },
+        {
+          "index": 2,
+          "occ_id": "S0:d2l_introduction_index_b020:registry:example:0",
+          "config": "S0",
+          "source_term": "example",
+          "gold_label": "rendered",
+          "gold_span": "ví dụ",
+          "target_quote": "ví dụ",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\n  \"occurrence_id\": \"S0:d2l_introduction_index_b020:registry:example:0\",\n  \"found\": true,\n  \"target_quote\": \"ví dụ\",\n  \"left_context\": \"Trong\",\n  \"confidence\": \"high\"\n}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "qwen/qwen3.5-9b",
+          "usage": {
+            "prompt_tokens": 532,
+            "completion_tokens": 65,
+            "total_tokens": 597,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.157
+        }
+      ],
+      "loaded_model_info": {
+        "key": "qwen/qwen3.5-9b",
+        "display_name": "Qwen3.5 9B",
+        "selected_variant": "qwen/qwen3.5-9b@q8_0",
+        "quantization": {
+          "name": "Q8_0",
+          "bits_per_weight": 8
+        },
+        "params_string": "9B",
+        "loaded_instances": [
+          {
+            "id": "qwen/qwen3.5-9b",
+            "config": {
+              "context_length": 4096,
+              "eval_batch_size": 2048,
+              "physical_batch_size": 512,
+              "parallel": 4,
+              "flash_attention": true,
+              "speculative_draft_mtp": false,
+              "speculative_draft_simple": false,
+              "speculative_draft_model": "",
+              "speculative_draft_max_tokens": 16,
+              "speculative_draft_min_tokens": 0,
+              "speculative_draft_min_continue_probability": 0.75,
+              "offload_kv_cache_to_gpu": true
+            }
+          }
+        ],
+        "max_context_length": 262144,
+        "capabilities": {
+          "vision": true,
+          "trained_for_tool_use": true,
+          "reasoning": {
+            "allowed_options": [
+              "off",
+              "on"
+            ],
+            "default": "on"
+          }
+        }
+      }
+    }
+  },
+  "decision": {
+    "model_statuses": [
+      {
+        "model": "qwen/qwen3.5-9b",
+        "status": "debug_limit_only",
+        "correct": 2,
+        "accuracy": 1.0,
+        "median_tokens_per_sec": 268.555,
+        "projected_wall_time_for_1724_calls_sec": 3753.28
+      }
+    ],
+    "recommended_primary": null
+  }
+}

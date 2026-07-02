@@ -1,0 +1,119 @@
+{
+  "out": "data/reports/exp_s0s1_builderv2_v1",
+  "mode": "run",
+  "embedding_status": "available",
+  "t3_backend": "local-lmstudio",
+  "local_t3": {
+    "endpoint": "http://127.0.0.1:1234",
+    "model": "google/gemma-4-12b",
+    "concurrency": 3,
+    "timeout_sec": 300,
+    "request_profile": {
+      "temperature": 0,
+      "top_p": 1.0,
+      "top_k": 0,
+      "min_p": 0.0,
+      "seed": 20260612,
+      "repeat_penalty": 1.0,
+      "max_tokens": 512,
+      "stream": false,
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "occurrence_location",
+          "strict": true,
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "occurrence_id": {
+                "type": "string"
+              },
+              "found": {
+                "type": "boolean"
+              },
+              "target_quote": {
+                "type": "string"
+              },
+              "left_context": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              }
+            },
+            "required": [
+              "occurrence_id",
+              "found",
+              "target_quote",
+              "left_context",
+              "confidence"
+            ]
+          }
+        }
+      },
+      "reasoning_effort": "none"
+    },
+    "gpt_fallback_on_validation_error": true
+  },
+  "t3_estimate_total": {
+    "calls": 2473,
+    "prompt_tokens_estimate": 1637888,
+    "output_tokens_cap": 1266176,
+    "cost_cap_usd": 2.941824,
+    "input_cost_estimate_usd": 0.409472,
+    "output_cost_cap_usd": 2.532352,
+    "prompt_tokens_max_single_call": 837
+  },
+  "t3_estimate_by_config": {
+    "S0": {
+      "calls": 1320,
+      "prompt_tokens_estimate": 873767,
+      "prompt_tokens_max_single_call": 837,
+      "output_tokens_cap": 675840,
+      "cost_cap_usd": 1.57012175,
+      "input_cost_estimate_usd": 0.21844175,
+      "output_cost_cap_usd": 1.35168
+    },
+    "S1": {
+      "calls": 1153,
+      "prompt_tokens_estimate": 764121,
+      "prompt_tokens_max_single_call": 803,
+      "output_tokens_cap": 590336,
+      "cost_cap_usd": 1.37170225,
+      "input_cost_estimate_usd": 0.19103025,
+      "output_cost_cap_usd": 1.180672
+    }
+  },
+  "t3_run_total": {
+    "calls": 2473,
+    "fresh_calls": 2473,
+    "cache_hits": 0,
+    "prompt_tokens_fresh": 1305209,
+    "completion_tokens_fresh": 169717,
+    "local_calls": 2473,
+    "local_fresh_calls": 2473,
+    "local_cache_hits": 0,
+    "gpt_fallback_calls": 31,
+    "gpt_fallback_fresh_calls": 31,
+    "gpt_fallback_cache_hits": 0,
+    "gpt_fallback_prompt_tokens_fresh": 16811,
+    "gpt_fallback_completion_tokens_fresh": 1941,
+    "cost_usd_fresh": 0.00808475,
+    "gpt_fallback_cost_usd_fresh": 0.00808475,
+    "validation_errors": {},
+    "local_validation_errors": {
+      "invalid_payload": 25,
+      "quote_not_in_target_region": 6
+    },
+    "gpt_fallback_validation_errors": {}
+  },
+  "over_500_calls": true,
+  "workdb_unchanged": true,
+  "frozen_db_matches_expected": true
+}

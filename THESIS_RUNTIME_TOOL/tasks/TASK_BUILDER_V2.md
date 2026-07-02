@@ -2391,3 +2391,25 @@ For watchlisted entries only, elect canonical from {current canonical} ∪ {targ
 The thesis scoring framework (TC/TA/SF-BT/SF-QE/PJ + gates, hardware notes, literary roadmap) is specced in **tasks/TASK_EVAL_SCORING_V1.md** — eval work no longer appends here.
 
 BUILDER-V2 CLOSES when all of: (1) §35.10 cascade STOP-B verified + overlay smoke on real marks; (2) §35.9 prelim S0/S1 run + 0-API scored; (3) §36 canonical re-election implemented + validated on the MLP dictionary. Then a final closing section summarizes outcomes and the file goes read-only.
+
+
+## §35.13 STOP-B verified — MLP cascade production run ACCEPTED (Claude, 2026-07-03)
+
+Independent verification on artifacts (NOT the report), full sweep no sampling:
+
+- Hashes self-computed: frozen `64D989...` unchanged, workdb `968CD4...` unchanged → scorer inputs untouched; locked §35.8 B/D numbers CANNOT have moved.
+- Full cross-check of ALL 2x2,487 decisions vs workdb `translation_runs.output_text`: 0 mismatches (supersedes CodeX's 40-sample audit).
+- Quote-in-region validated for all T3 quotes: 0 real failures. 4 apparent misses (2/arm, all `mlp_b047` "Hàm *sigmoid*") are markdown-asterisk cases correctly matched via `target_quote_clean`; consequence is `target_quote_start_in_region=null` → UI must fall back to clean-text highlight for those (4/4,946 = 0.08%). Not a defect; note for overlay implementer.
+- Every headline number recounted from decisions matches CodeX's report exactly (tier splits, adherence labels, backend split 1302+18 / 1140+13, escalation buckets, confidence all-high as predicted non-informative).
+- T3 cache: exactly 2,473 `google/gemma-4-12b` rows, created 20:40-22:31 UTC = the run window. Paid fallback $0.008.
+- Script skim: `run_experiment_cascade.py` opens DBs `mode=ro`, key precedence env -> KEY-2 -> KEY-1, no key logging.
+
+New measured facts the block-level scorer could not see (display-layer lens, NOT thesis metrics):
+
+- **Cascade-lens accepted-form rate** (per-occurrence, union scope 2,487): S0 0.7543 vs S1 0.8737, gap +0.119 — same direction as D (0.759->0.825), larger gap because per-occurrence localization removes block any-match generosity. Convergent evidence, report as audit of B/D, never as replacement (would be a post-hoc metric).
+- **True masquerade suspects measured** (EV-D2L-10 goal): S0 42 / S1 47 of 2,487 (~1.7-1.9%) → stray-credit inflation in B/D is bounded tiny; the locked numbers stand validated.
+- Behavioral memory signature: S1 needed fewer T3 calls (1,153 vs 1,320), higher T2 share (53.6% vs 46.9%), C0 nearly halved (425 vs 713) — memory makes output land on accepted forms more often, visible even in the plumbing.
+
+Committed: cascade script + tests + audit40 + run logs. Large regenerable artifacts (2x8MB decisions, 18MB summary, 11MB T3 cache) left untracked per metrics-csv precedent; regenerable at $0 from cache/workdb.
+
+Remaining for closure (§37): overlay smoke on real marks -> §35.9 prelim pair -> §36.

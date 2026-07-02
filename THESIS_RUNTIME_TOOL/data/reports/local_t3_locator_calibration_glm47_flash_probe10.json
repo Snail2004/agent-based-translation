@@ -1,0 +1,487 @@
+{
+  "task": "BUILDER-V2 §35.11",
+  "status": "DEV calibration only; not a thesis-final metric",
+  "endpoint": "http://127.0.0.1:1234",
+  "out": "data\\reports\\local_t3_locator_calibration_glm47_flash_probe10.json",
+  "items": 10,
+  "baseline_gpt": {
+    "attempted": 103,
+    "correct": 101,
+    "accuracy": 0.9806,
+    "by_config": {
+      "S0": {
+        "attempted": 64,
+        "correct": 63
+      },
+      "S1": {
+        "attempted": 39,
+        "correct": 38
+      }
+    },
+    "adherence_counts": {
+      "adherent": 98,
+      "off_glossary": 3,
+      "not_rendered": 2
+    },
+    "adherence_by_config": {
+      "S0": {
+        "adherent": 60,
+        "off_glossary": 3,
+        "not_rendered": 1
+      },
+      "S1": {
+        "adherent": 38,
+        "not_rendered": 1
+      }
+    },
+    "fresh_calls": 0,
+    "cost_usd_fresh": 0.0,
+    "api_key_source": "file:OPENAI-KEY-2.txt",
+    "usage_today_after": {
+      "date": "2026-06-28",
+      "total_tokens": 0,
+      "calls": 0
+    },
+    "source": "data\\reports\\cascade_gold_locate_measure.json"
+  },
+  "request_profile_common": {
+    "temperature": 0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "seed": 20260612,
+    "repeat_penalty": 1.0,
+    "max_tokens": 512,
+    "response_format": "json_schema",
+    "context_length_requested": 4096
+  },
+  "models": {
+    "zai-org/glm-4.7-flash": {
+      "model": "zai-org/glm-4.7-flash",
+      "reasoning_effort": "none",
+      "request_params": {
+        "temperature": 0,
+        "top_p": 1.0,
+        "top_k": 0,
+        "min_p": 0.0,
+        "seed": 20260612,
+        "repeat_penalty": 1.0,
+        "max_tokens": 512,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "occurrence_location",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "occurrence_id": {
+                  "type": "string"
+                },
+                "found": {
+                  "type": "boolean"
+                },
+                "target_quote": {
+                  "type": "string"
+                },
+                "left_context": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "string",
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ]
+                }
+              },
+              "required": [
+                "occurrence_id",
+                "found",
+                "target_quote",
+                "left_context",
+                "confidence"
+              ]
+            }
+          }
+        },
+        "reasoning_effort": "none"
+      },
+      "attempted": 10,
+      "correct": 9,
+      "accuracy": 0.9,
+      "correct_count": 9,
+      "valid_but_wrong": 0,
+      "not_found_wrong": 1,
+      "quote_validation_fail": 0,
+      "json_parse_fail": 0,
+      "confidence_low": 0,
+      "reject_or_parse_rate": 0.0,
+      "median_latency_sec": 4.7966,
+      "median_tokens_per_sec": 114.6496,
+      "elapsed_sec": 49.2126,
+      "projected_wall_time_for_1724_calls_sec": 8269.32,
+      "failure_samples": [
+        {
+          "occ_id": "S0:d2l_introduction_index_b021:registry:model's parameters:0",
+          "source_term": "model's parameters",
+          "gold_span": "tham số của mô hình",
+          "target_quote": "",
+          "outcome": "not_found_wrong",
+          "reason": "locate_misses_gold",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b021:registry:model's parameters:0\", \"found\": false, \"target_quote\": \"\", \"left_context\": \"\" , \"confidence\": \"high\"}"
+        }
+      ],
+      "records": [
+        {
+          "index": 1,
+          "occ_id": "S0:d2l_introduction_index_b003:registry:user:0",
+          "config": "S0",
+          "source_term": "user",
+          "gold_label": "rendered",
+          "gold_span": "người dùng",
+          "target_quote": "người dùng",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b003:registry:user:0\", \"found\": true, \"target_quote\": \"người dùng\", \"left_context\": \"của\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 52,
+            "total_tokens": 537,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 6.2318
+        },
+        {
+          "index": 2,
+          "occ_id": "S0:d2l_introduction_index_b020:registry:example:0",
+          "config": "S0",
+          "source_term": "example",
+          "gold_label": "rendered",
+          "gold_span": "ví dụ",
+          "target_quote": "ví dụ",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b020:registry:example:0\", \"found\": true, \"target_quote\": \"ví dụ\", \"left_context\": \"về\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 517,
+            "completion_tokens": 52,
+            "total_tokens": 569,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.83
+        },
+        {
+          "index": 3,
+          "occ_id": "S0:d2l_introduction_index_b021:registry:model's parameters:0",
+          "config": "S0",
+          "source_term": "model's parameters",
+          "gold_label": "rendered",
+          "gold_span": "tham số của mô hình",
+          "target_quote": "",
+          "found": false,
+          "confidence": "high",
+          "correct": false,
+          "outcome": "not_found_wrong",
+          "correct_reason": "locate_misses_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b021:registry:model's parameters:0\", \"found\": false, \"target_quote\": \"\", \"left_context\": \"\" , \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 471,
+            "completion_tokens": 48,
+            "total_tokens": 519,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.5505
+        },
+        {
+          "index": 4,
+          "occ_id": "S0:d2l_introduction_index_b023:registry:attributes:0",
+          "config": "S0",
+          "source_term": "attributes",
+          "gold_label": "rendered",
+          "gold_span": "thuộc tính",
+          "target_quote": "thuộc tính",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b023:registry:attributes:0\", \"found\": true, \"target_quote\": \"thuộc tính\", \"left_context\": \"tập các\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 551,
+            "completion_tokens": 55,
+            "total_tokens": 606,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.9505
+        },
+        {
+          "index": 5,
+          "occ_id": "S0:d2l_introduction_index_b023:registry:target:0",
+          "config": "S0",
+          "source_term": "target",
+          "gold_label": "rendered",
+          "gold_span": "mục tiêu",
+          "target_quote": "mục tiêu",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b023:registry:target:0\", \"found\": true, \"target_quote\": \"mục tiêu\", \"left_context\": \"là\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 538,
+            "completion_tokens": 52,
+            "total_tokens": 590,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.7909
+        },
+        {
+          "index": 6,
+          "occ_id": "S0:d2l_introduction_index_b053:registry:data examples:0",
+          "config": "S0",
+          "source_term": "data examples",
+          "gold_label": "rendered",
+          "gold_span": "ví dụ dữ liệu",
+          "target_quote": "hai ví dụ dữ liệu này",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b053:registry:data examples:0\", \"found\": true, \"target_quote\": \"hai ví dụ dữ liệu này\", \"left_context\": \"với\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 521,
+            "completion_tokens": 56,
+            "total_tokens": 577,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.9417
+        },
+        {
+          "index": 7,
+          "occ_id": "S0:d2l_introduction_index_b062:registry:outcome:0",
+          "config": "S0",
+          "source_term": "outcome",
+          "gold_label": "rendered",
+          "gold_span": "kết quả",
+          "target_quote": "kết quả",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b062:registry:outcome:0\", \"found\": true, \"target_quote\": \"kết quả\", \"left_context\": \"của\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 489,
+            "completion_tokens": 53,
+            "total_tokens": 542,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.703
+        },
+        {
+          "index": 8,
+          "occ_id": "S0:d2l_introduction_index_b085:registry:annotation:0",
+          "config": "S0",
+          "source_term": "annotation",
+          "gold_label": "rendered",
+          "gold_span": "chú thích",
+          "target_quote": "chú thích",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b085:registry:annotation:0\", \"found\": true, \"target_quote\": \"chú thích\", \"left_context\": \"một dạng\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 459,
+            "completion_tokens": 54,
+            "total_tokens": 513,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.8023
+        },
+        {
+          "index": 9,
+          "occ_id": "S0:d2l_introduction_index_b096:registry:data:3",
+          "config": "S0",
+          "source_term": "data",
+          "gold_label": "rendered",
+          "gold_span": "dữ liệu",
+          "target_quote": "dữ liệu",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b096:registry:data:3\", \"found\": true, \"target_quote\": \"dữ liệu\", \"left_context\": \"về\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 493,
+            "completion_tokens": 52,
+            "total_tokens": 545,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.7896
+        },
+        {
+          "index": 10,
+          "occ_id": "S0:d2l_introduction_index_b103:registry:example:0",
+          "config": "S0",
+          "source_term": "example",
+          "gold_label": "rendered",
+          "gold_span": "Ví dụ",
+          "target_quote": "Ví dụ",
+          "found": true,
+          "confidence": "high",
+          "correct": true,
+          "outcome": "correct",
+          "correct_reason": "locate_contains_gold",
+          "parse_error": "",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b103:registry:example:0\", \"found\": true, \"target_quote\": \"Ví dụ\", \"left_context\": \"\", \"confidence\": \"high\"}",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "stop",
+          "model_echo": "zai-org/glm-4.7-flash",
+          "usage": {
+            "prompt_tokens": 470,
+            "completion_tokens": 49,
+            "total_tokens": 519,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.621
+        }
+      ],
+      "loaded_model_info": {
+        "key": "zai-org/glm-4.7-flash",
+        "display_name": "Glm 4.7 Flash",
+        "selected_variant": "zai-org/glm-4.7-flash@q4_k_m",
+        "quantization": {
+          "name": "Q4_K_M",
+          "bits_per_weight": 4
+        },
+        "params_string": "30B",
+        "loaded_instances": [
+          {
+            "id": "zai-org/glm-4.7-flash",
+            "config": {
+              "context_length": 2048,
+              "eval_batch_size": 2048,
+              "physical_batch_size": 512,
+              "parallel": 1,
+              "flash_attention": true,
+              "speculative_draft_mtp": false,
+              "speculative_draft_simple": false,
+              "speculative_draft_model": "",
+              "speculative_draft_max_tokens": 16,
+              "speculative_draft_min_tokens": 0,
+              "speculative_draft_min_continue_probability": 0.75,
+              "num_experts": 4,
+              "offload_kv_cache_to_gpu": true
+            }
+          }
+        ],
+        "max_context_length": 202752,
+        "capabilities": {
+          "vision": false,
+          "trained_for_tool_use": true,
+          "reasoning": {
+            "allowed_options": [
+              "off",
+              "on"
+            ],
+            "default": "on"
+          }
+        }
+      }
+    }
+  },
+  "decision": {
+    "model_statuses": [
+      {
+        "model": "zai-org/glm-4.7-flash",
+        "status": "debug_limit_only",
+        "correct": 9,
+        "accuracy": 0.9,
+        "median_tokens_per_sec": 114.6496,
+        "projected_wall_time_for_1724_calls_sec": 8269.32
+      }
+    ],
+    "recommended_primary": null
+  }
+}

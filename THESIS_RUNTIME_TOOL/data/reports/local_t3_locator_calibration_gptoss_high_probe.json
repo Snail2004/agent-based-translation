@@ -1,0 +1,227 @@
+{
+  "task": "BUILDER-V2 §35.11",
+  "status": "DEV calibration only; not a thesis-final metric",
+  "endpoint": "http://127.0.0.1:1234",
+  "out": "data\\reports\\local_t3_locator_calibration_gptoss_high_probe.json",
+  "items": 1,
+  "baseline_gpt": {
+    "attempted": 103,
+    "correct": 101,
+    "accuracy": 0.9806,
+    "by_config": {
+      "S0": {
+        "attempted": 64,
+        "correct": 63
+      },
+      "S1": {
+        "attempted": 39,
+        "correct": 38
+      }
+    },
+    "adherence_counts": {
+      "adherent": 98,
+      "off_glossary": 3,
+      "not_rendered": 2
+    },
+    "adherence_by_config": {
+      "S0": {
+        "adherent": 60,
+        "off_glossary": 3,
+        "not_rendered": 1
+      },
+      "S1": {
+        "adherent": 38,
+        "not_rendered": 1
+      }
+    },
+    "fresh_calls": 0,
+    "cost_usd_fresh": 0.0,
+    "api_key_source": "file:OPENAI-KEY-2.txt",
+    "usage_today_after": {
+      "date": "2026-06-28",
+      "total_tokens": 0,
+      "calls": 0
+    },
+    "source": "data\\reports\\cascade_gold_locate_measure.json"
+  },
+  "request_profile_common": {
+    "temperature": 0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "seed": 20260612,
+    "repeat_penalty": 1.0,
+    "max_tokens": 512,
+    "response_format": "json_schema",
+    "context_length_requested": 4096
+  },
+  "models": {
+    "openai/gpt-oss-20b": {
+      "model": "openai/gpt-oss-20b",
+      "reasoning_effort": "high",
+      "request_params": {
+        "temperature": 0,
+        "top_p": 1.0,
+        "top_k": 0,
+        "min_p": 0.0,
+        "seed": 20260612,
+        "repeat_penalty": 1.0,
+        "max_tokens": 512,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "occurrence_location",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "occurrence_id": {
+                  "type": "string"
+                },
+                "found": {
+                  "type": "boolean"
+                },
+                "target_quote": {
+                  "type": "string"
+                },
+                "left_context": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "string",
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ]
+                }
+              },
+              "required": [
+                "occurrence_id",
+                "found",
+                "target_quote",
+                "left_context",
+                "confidence"
+              ]
+            }
+          }
+        },
+        "reasoning_effort": "high"
+      },
+      "attempted": 1,
+      "correct": 0,
+      "accuracy": 0.0,
+      "correct_count": 0,
+      "valid_but_wrong": 0,
+      "not_found_wrong": 0,
+      "quote_validation_fail": 0,
+      "json_parse_fail": 2,
+      "confidence_low": 1,
+      "reject_or_parse_rate": 2.0,
+      "median_latency_sec": 13.4122,
+      "median_tokens_per_sec": 79.331,
+      "elapsed_sec": 13.4123,
+      "projected_wall_time_for_1724_calls_sec": 23122.55,
+      "failure_samples": [
+        {
+          "occ_id": "S0:d2l_introduction_index_b003:registry:user:0",
+          "source_term": "user",
+          "gold_span": "người dùng",
+          "target_quote": "",
+          "outcome": "json_parse_fail",
+          "reason": "locate_misses_gold",
+          "raw_content_prefix": "{\"occurrence_id\":\"S0..????..??..??..??..??..??..??..??..??..??..??..??..??..?\",\"found\":false, \"target_quote\":\"..??..??..??..??..w?..??....??..??..??..??..??................??..??..w..??........??..??..??..??..??..........??........??..??..??..??..??..........??....t.................................."
+        }
+      ],
+      "records": [
+        {
+          "index": 1,
+          "occ_id": "S0:d2l_introduction_index_b003:registry:user:0",
+          "config": "S0",
+          "source_term": "user",
+          "gold_label": "rendered",
+          "gold_span": "người dùng",
+          "target_quote": "",
+          "found": false,
+          "confidence": "low",
+          "correct": false,
+          "outcome": "json_parse_fail",
+          "correct_reason": "locate_misses_gold",
+          "parse_error": "json_decode_error:Unterminated string starting at",
+          "validation_error": "",
+          "raw_content_prefix": "{\"occurrence_id\":\"S0..????..??..??..??..??..??..??..??..??..??..??..??..??..?\",\"found\":false, \"target_quote\":\"..??..??..??..??..w?..??....??..??..??..??..??................??..??..w..??........??..??..??..??..??..........??........??..??..??..??..??..........??....t..................................",
+          "raw_reasoning_prefix": "",
+          "finish_reason": "length",
+          "model_echo": "openai/gpt-oss-20b",
+          "usage": {
+            "prompt_tokens": 552,
+            "completion_tokens": 512,
+            "total_tokens": 1064,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.4122
+        }
+      ],
+      "loaded_model_info": {
+        "key": "openai/gpt-oss-20b",
+        "display_name": "GPT-OSS 20B",
+        "selected_variant": "openai/gpt-oss-20b@mxfp4",
+        "quantization": {
+          "name": "MXFP4",
+          "bits_per_weight": 4
+        },
+        "params_string": "20B",
+        "loaded_instances": [
+          {
+            "id": "openai/gpt-oss-20b",
+            "config": {
+              "context_length": 4096,
+              "eval_batch_size": 2048,
+              "physical_batch_size": 512,
+              "parallel": 4,
+              "flash_attention": true,
+              "speculative_draft_mtp": false,
+              "speculative_draft_simple": false,
+              "speculative_draft_model": "",
+              "speculative_draft_max_tokens": 16,
+              "speculative_draft_min_tokens": 0,
+              "speculative_draft_min_continue_probability": 0.75,
+              "num_experts": 4,
+              "offload_kv_cache_to_gpu": true
+            }
+          }
+        ],
+        "max_context_length": 131072,
+        "capabilities": {
+          "vision": false,
+          "trained_for_tool_use": true,
+          "reasoning": {
+            "allowed_options": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "default": "low"
+          }
+        }
+      }
+    }
+  },
+  "decision": {
+    "model_statuses": [
+      {
+        "model": "openai/gpt-oss-20b",
+        "status": "debug_limit_only",
+        "correct": 0,
+        "accuracy": 0.0,
+        "median_tokens_per_sec": 79.331,
+        "projected_wall_time_for_1724_calls_sec": 23122.55
+      }
+    ],
+    "recommended_primary": null
+  }
+}
