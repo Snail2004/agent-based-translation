@@ -7,6 +7,11 @@ from hashlib import sha256
 from typing import Any
 
 from pipeline.agents.llm_client import LLMResult, estimate_prompt_tokens
+from pipeline.translate.hygiene import (
+    HygieneIssue,
+    detect_hygiene_issues,
+    hygiene_reask_note,
+)
 from pipeline.translate.prompt import (
     build_messages,
     extract_translations,
@@ -45,6 +50,7 @@ class TranslateReport:
     json_fail_rate: float
     total_usage: dict[str, int | float]
     context_stats: dict[str, int]
+    hygiene: dict[str, Any]
     model: str
     seed: int
     system_fingerprint: str | None
@@ -63,6 +69,7 @@ class TranslateReport:
             "json_fail_rate": self.json_fail_rate,
             "total_usage": self.total_usage,
             "context_stats": self.context_stats,
+            "hygiene": self.hygiene,
             "model": self.model,
             "seed": self.seed,
             "system_fingerprint": self.system_fingerprint,
@@ -99,6 +106,7 @@ def translate_windows(
     }
     sink = event_sink or NullEventSink()
     config = config.upper()
+    hygiene_stats = _empty_hygiene_stats(config)
     profile = get_profile(profile_name)
     prompt_version = prompt_version_for_config(config, profile.name)
 
@@ -198,10 +206,17 @@ def translate_windows(
             )
 
             # --- Call with re-ask ---
-            result, status, errors = _call_with_reask(
-                client, messages, window_id, block_ids, config, event_sink=sink
+            result, status, errors, hygiene_issues, call_results, hygiene_summary = _call_with_reask(
+                client,
+                messages,
+                window_id,
+                block_ids,
+                config,
+                blocks_for_prompt=blocks_for_prompt,
+                event_sink=sink,
             )
-            all_results.append(result)
+            all_results.extend(call_results)
+            _merge_hygiene_stats(hygiene_stats, config, hygiene_summary)
 
             translations, parse_errors = extract_translations(result.parsed_json, block_ids)
             emit_event(
@@ -261,6 +276,12 @@ def translate_windows(
                         window_id, pack_id, translation,
                         model_name, prompt_version, temperature, seed, result,
                     )
+                    _persist_hygiene_issues(
+                        db,
+                        run_id,
+                        block_id,
+                        [issue for issue in hygiene_issues if issue.block_id == block_id],
+                    )
                     persisted_blocks.append(block_id)
 
             emit_event(
@@ -279,15 +300,17 @@ def translate_windows(
                 WindowRunReport(
                     window_id=window_id,
                     status=status,
-                    calls=1,
+                    calls=len(call_results),
                     block_count=len(block_ids),
-                    prompt_tokens=result.usage.prompt_tokens,
-                    completion_tokens=result.usage.completion_tokens,
-                    reasoning_tokens=result.usage.reasoning_tokens,
-                    cost_usd=result.cost_usd,
-                    incremental_cost_usd=result.cost_usd if not result.from_cache else 0.0,
-                    from_cache=result.from_cache,
-                    system_fingerprint=result.system_fingerprint,
+                    prompt_tokens=sum(r.usage.prompt_tokens for r in call_results),
+                    completion_tokens=sum(r.usage.completion_tokens for r in call_results),
+                    reasoning_tokens=sum(r.usage.reasoning_tokens for r in call_results),
+                    cost_usd=round(sum(r.cost_usd for r in call_results), 12),
+                    incremental_cost_usd=round(
+                        sum(r.cost_usd for r in call_results if not r.from_cache), 12
+                    ),
+                    from_cache=all(r.from_cache for r in call_results),
+                    system_fingerprint=_last_fingerprint(call_results),
                     errors=errors,
                 )
             )
@@ -308,6 +331,7 @@ def translate_windows(
             json_fail_rate=failed / total_windows if total_windows else 0.0,
             total_usage=_total_usage(all_results),
             context_stats=context_stats,
+            hygiene=hygiene_stats,
             model=model_name,
             seed=seed,
             system_fingerprint=_last_fingerprint(all_results),
@@ -379,9 +403,15 @@ def _call_with_reask(
     block_ids: list[str],
     config: str,
     *,
+    blocks_for_prompt: list[dict[str, Any]],
     event_sink: Any | None = None,
-) -> tuple[LLMResult, str, list[str]]:
-    """Call LLM; re-ask once on validation failure."""
+) -> tuple[LLMResult, str, list[str], list[HygieneIssue], list[LLMResult], dict[str, Any]]:
+    """Call LLM; re-ask once on JSON or hygiene validation failure."""
+    call_results: list[LLMResult] = []
+    hygiene_flagged_blocks: set[str] = set()
+    hygiene_reasked_blocks: set[str] = set()
+    final_hygiene_issues: list[HygieneIssue] = []
+    errors: list[str] = []
     for attempt in range(2):
         emit_event(
             event_sink,
@@ -402,6 +432,7 @@ def _call_with_reask(
             response_format={"type": "json_object"},
             tag=f"{config}_{window_id}",
         )
+        call_results.append(result)
         emit_event(
             event_sink,
             "response_received",
@@ -427,7 +458,75 @@ def _call_with_reask(
         translations, parse_errors = extract_translations(result.parsed_json, block_ids)
 
         if not parse_errors and len(translations) == len(block_ids):
-            return result, "translated", []
+            issues = detect_hygiene_issues(blocks_for_prompt, translations)
+            if not issues:
+                fixed_blocks = sorted(hygiene_reasked_blocks)
+                return (
+                    result,
+                    "translated",
+                    [],
+                    [],
+                    call_results,
+                    _hygiene_call_summary(
+                        hygiene_flagged_blocks,
+                        hygiene_reasked_blocks,
+                        fixed_blocks,
+                        [],
+                    ),
+                )
+
+            issue_blocks = {issue.block_id for issue in issues}
+            hygiene_flagged_blocks.update(issue_blocks)
+            if attempt == 0:
+                hygiene_reasked_blocks.update(issue_blocks)
+                emit_event(
+                    event_sink,
+                    "hygiene_flagged",
+                    config=config,
+                    window_id=window_id,
+                    block_ids=block_ids,
+                    flagged_blocks=sorted(issue_blocks),
+                    issues=[issue.to_dict() for issue in issues],
+                    reask=True,
+                    committed=False,
+                )
+                messages = [
+                    *messages,
+                    {"role": "assistant", "content": result.text},
+                    {"role": "user", "content": hygiene_reask_note(issues)},
+                ]
+                continue
+
+            final_hygiene_issues = issues
+            final_blocks = {issue.block_id for issue in final_hygiene_issues}
+            fixed_blocks = sorted(hygiene_reasked_blocks - final_blocks)
+            errors = [
+                f"hygiene:{issue.block_id}:{issue.script}:{issue.surface}"
+                for issue in final_hygiene_issues
+            ]
+            emit_event(
+                event_sink,
+                "hygiene_still_bad",
+                config=config,
+                window_id=window_id,
+                block_ids=block_ids,
+                flagged_blocks=sorted(final_blocks),
+                issues=[issue.to_dict() for issue in final_hygiene_issues],
+                committed=False,
+            )
+            return (
+                result,
+                "translated",
+                errors,
+                final_hygiene_issues,
+                call_results,
+                _hygiene_call_summary(
+                    hygiene_flagged_blocks,
+                    hygiene_reasked_blocks,
+                    fixed_blocks,
+                    final_hygiene_issues,
+                ),
+            )
 
         errors = list(parse_errors)
 
@@ -446,7 +545,14 @@ def _call_with_reask(
                 },
             ]
 
-    return result, "failed", errors
+    return (
+        result,
+        "failed",
+        errors,
+        final_hygiene_issues,
+        call_results,
+        _hygiene_call_summary(hygiene_flagged_blocks, hygiene_reasked_blocks, [], []),
+    )
 
 
 def _blocks_already_run(
@@ -597,6 +703,89 @@ def _persist_run(
             result.system_fingerprint, result.cost_usd, result.latency_ms,
         ),
     )
+
+
+def _persist_hygiene_issues(
+    db: sqlite3.Connection,
+    run_id: str,
+    block_id: str,
+    issues: list[HygieneIssue],
+) -> None:
+    if not issues:
+        return
+    row = db.execute(
+        "SELECT doc_id FROM blocks WHERE block_id = ?", (block_id,)
+    ).fetchone()
+    doc_id = str(row["doc_id"]) if row else ""
+    for issue in issues:
+        digest = sha256(
+            f"{run_id}:{issue.script}:{issue.start}:{issue.end}:{issue.surface}".encode(
+                "utf-8"
+            )
+        ).hexdigest()[:12]
+        issue_id = f"qa_hygiene_{digest}"
+        db.execute(
+            """
+            INSERT OR REPLACE INTO qa_issues (
+              issue_id, doc_id, run_id, block_id, tier, rule_or_subtype,
+              severity, evidence_source, evidence_target, suggestion,
+              fixed, retry_count
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                issue_id,
+                doc_id,
+                run_id,
+                block_id,
+                "tier1",
+                f"hygiene_foreign_script:{issue.script}",
+                "major",
+                issue.evidence_source,
+                issue.evidence_target,
+                "Retranslate the marked non-source-script span into Vietnamese.",
+                0,
+                1,
+            ),
+        )
+
+
+def _empty_hygiene_stats(config: str) -> dict[str, Any]:
+    empty = {"flagged_blocks": 0, "reasked": 0, "fixed": 0, "still_bad": 0}
+    return {**empty, "by_config": {config.upper(): dict(empty)}}
+
+
+def _merge_hygiene_stats(
+    stats: dict[str, Any],
+    config: str,
+    summary: dict[str, int],
+) -> None:
+    config = config.upper()
+    if config not in stats["by_config"]:
+        stats["by_config"][config] = {
+            "flagged_blocks": 0,
+            "reasked": 0,
+            "fixed": 0,
+            "still_bad": 0,
+        }
+    for key in ("flagged_blocks", "reasked", "fixed", "still_bad"):
+        value = int(summary.get(key, 0))
+        stats[key] = int(stats.get(key, 0)) + value
+        stats["by_config"][config][key] = int(stats["by_config"][config].get(key, 0)) + value
+
+
+def _hygiene_call_summary(
+    flagged_blocks: set[str],
+    reasked_blocks: set[str],
+    fixed_blocks: list[str],
+    still_bad_issues: list[HygieneIssue],
+) -> dict[str, int]:
+    return {
+        "flagged_blocks": len(flagged_blocks),
+        "reasked": len(reasked_blocks),
+        "fixed": len(set(fixed_blocks)),
+        "still_bad": len({issue.block_id for issue in still_bad_issues}),
+    }
 
 
 def _total_usage(results: list[LLMResult]) -> dict[str, int | float]:

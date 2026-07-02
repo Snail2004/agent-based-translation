@@ -343,6 +343,110 @@ def test_runner_partial_block_mismatch(tmp_path):
     assert len(client.calls) == 2
 
 
+def test_runner_hygiene_reasks_foreign_script_and_persists_clean_result(tmp_path):
+    conn, doc_id = _make_doc_db(tmp_path)
+    client = _FakeClient([
+        _fake_result({"ch02_b001": "Bản dịch còn chữ либо không hợp lệ."}),
+        _fake_result({"ch02_b001": "Bản dịch đã sạch."}),
+    ])
+    client.config = _Config()
+
+    report = translate_windows(
+        conn,
+        [Window(window_id="w_ch02_001", block_ids=["ch02_b001"], est_src_tokens=50)],
+        client,
+        "exp_test",
+        "S0",
+    )
+
+    row = conn.execute(
+        "SELECT output_text FROM translation_runs WHERE block_id = 'ch02_b001'"
+    ).fetchone()
+    qa_count = conn.execute("SELECT COUNT(*) FROM qa_issues").fetchone()[0]
+
+    assert report.windows_translated == 1
+    assert len(client.calls) == 2
+    assert "non-Vietnamese-script" in client.calls[1]["messages"][-1]["content"]
+    assert row["output_text"] == "Bản dịch đã sạch."
+    assert qa_count == 0
+    assert report.hygiene["flagged_blocks"] == 1
+    assert report.hygiene["reasked"] == 1
+    assert report.hygiene["fixed"] == 1
+    assert report.hygiene["still_bad"] == 0
+    assert report.total_usage["calls"] == 2
+
+
+def test_runner_hygiene_persists_qa_issue_after_reask_still_bad(tmp_path):
+    conn, doc_id = _make_doc_db(tmp_path)
+    client = _FakeClient([
+        _fake_result({"ch02_b001": "Bản dịch còn либо."}),
+        _fake_result({"ch02_b001": "Vẫn còn либо."}),
+    ])
+    client.config = _Config()
+
+    report = translate_windows(
+        conn,
+        [Window(window_id="w_ch02_001", block_ids=["ch02_b001"], est_src_tokens=50)],
+        client,
+        "exp_test",
+        "S0",
+    )
+
+    issue = conn.execute(
+        """
+        SELECT run_id, block_id, rule_or_subtype, severity, evidence_target,
+               retry_count, fixed
+        FROM qa_issues
+        """
+    ).fetchone()
+
+    assert report.windows_translated == 1
+    assert len(client.calls) == 2
+    assert report.hygiene["flagged_blocks"] == 1
+    assert report.hygiene["reasked"] == 1
+    assert report.hygiene["fixed"] == 0
+    assert report.hygiene["still_bad"] == 1
+    assert report.reports[0].errors == ["hygiene:ch02_b001:Cyrillic:либо"]
+    assert issue["run_id"] == "tr_S0_ch02_b001"
+    assert issue["block_id"] == "ch02_b001"
+    assert issue["rule_or_subtype"] == "hygiene_foreign_script:Cyrillic"
+    assert issue["severity"] == "major"
+    assert "либо" in issue["evidence_target"]
+    assert issue["retry_count"] == 1
+    assert issue["fixed"] == 0
+
+
+def test_runner_hygiene_allows_script_present_in_source(tmp_path):
+    conn, doc_id = _make_doc_db(tmp_path)
+    conn.execute(
+        """
+        UPDATE blocks
+        SET text = 'The source token либо should be preserved.',
+            original_text = 'The source token либо should be preserved.'
+        WHERE block_id = 'ch02_b001'
+        """
+    )
+    conn.commit()
+    client = _FakeClient([
+        _fake_result({"ch02_b001": "Giữ nguyên token nguồn либо trong bản dịch."}),
+    ])
+    client.config = _Config()
+
+    report = translate_windows(
+        conn,
+        [Window(window_id="w_ch02_001", block_ids=["ch02_b001"], est_src_tokens=50)],
+        client,
+        "exp_test",
+        "S0",
+    )
+
+    qa_count = conn.execute("SELECT COUNT(*) FROM qa_issues").fetchone()[0]
+    assert report.windows_translated == 1
+    assert len(client.calls) == 1
+    assert qa_count == 0
+    assert report.hygiene["flagged_blocks"] == 0
+
+
 def test_runner_memory_packs_persisted(tmp_path):
     """memory_packs row written for each translated window."""
     conn, doc_id = _make_doc_db(tmp_path)

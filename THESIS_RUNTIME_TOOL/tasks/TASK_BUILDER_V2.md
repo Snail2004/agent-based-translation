@@ -2144,3 +2144,19 @@ Phat hien smoke: code-switching Cyrillic (`либо` = "either") 3/160 block, CA
 - windows_skipped: lan dau moi chuong = 0; neu re-invoke resume thi giai trinh ro rang tung con so.
 - Hygiene layer hoat dong: co it nhat log flag/reask neu glitch xuat hien (smoke bao truoc ~2%); khong reask lap vo han.
 - Report per-chapter TACH BACH (khong tron 2 chuong vao 1 so).
+
+
+<!-- S35_STOP1_REVIEW -->
+## 35.6 — STOP-1 review (Claude, 2026-07-02): D1 hygiene layer VERIFIED, APPROVED
+
+Independent verification (not trusting the report):
+- `pipeline/translate/hygiene.py` read line-by-line: mechanical script-diff only (unicodedata.name prefix -> {Cyrillic, CJK incl. kana, Hangul, Thai}); Greek/math and Latin never flagged; source-subtraction key check passed (runner query aliases `text AS clean_text, original_text AS source_text`, detector falls back correctly).
+- Reask flow: max 1 hygiene reask, note is static + mechanical (no term/gold leakage, S0/S1 symmetric), appended assistant+user turns change the cache key. Still-bad -> translation IS persisted + `qa_issues` row (`hygiene_foreign_script:<script>`, tier1/major, retry_count=1). Verified `run_id` in scope at persist site.
+- Usage accounting fix confirmed: WindowRunReport now sums ALL attempts (calls/tokens/cost), `from_cache = all(...)`; this also retro-fixes the old JSON-reask undercount.
+- Tests: 3 new hygiene tests assert DB state not just return values. Ran full suites myself: pipeline 272 passed, backend 134 passed. Frozen DB hash unchanged 64D989...B555C715.
+
+Known edge case (accepted, not a blocker): if the hygiene reask itself returns invalid JSON, the window ends `failed` and the attempt-0 valid-but-dirty translation is not persisted. Visible in the report, window re-runnable; a fallback-to-dirty would need new code in a locked experiment — defer unless it actually fires.
+
+Caveat carried from CodeX (agreed): flagged-script set is exactly the §35 spec set; extending (Arabic/Hebrew/Devanagari) = separate task, not mid-experiment.
+
+Next: STOP-2 — preflight both chapters (0-API), report cost cap, wait for user confirm.
