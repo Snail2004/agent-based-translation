@@ -14,6 +14,7 @@ from pipeline.translate.runner import TranslateReport, translate_windows
 from pipeline.translate.run_events import EventSink
 from pipeline.translate.windower import Window
 from pipeline.translate.prompt import build_messages
+from pipeline.retrieval.context_builder import Anchors, ContextPack, DroppedItem
 
 
 def _fake_result(
@@ -403,6 +404,49 @@ def test_runner_persists_pack_breakdown(tmp_path):
     assert payload["low_context"] is False
     assert payload["dropped_by_budget"] == []
     assert "MANDATORY TERMINOLOGY & NAMES" in user_prompt
+
+
+def test_runner_raises_before_api_when_context_drops_by_budget(tmp_path):
+    conn, doc_id = _make_doc_db(tmp_path)
+    client = _FakeClient([_fake_result(_ok_response(["ch02_b001"]))])
+    client.config = _Config()
+    windows = [
+        Window(window_id="w_ch02_001", block_ids=["ch02_b001"], est_src_tokens=50),
+    ]
+
+    def context_builder(db, window, blocks_for_prompt):
+        return ContextPack(
+            glossary_lines=[],
+            preserve_lines=[],
+            context_sensitive_lines=[],
+            entity_lines=[],
+            address_lines=[],
+            token_estimate=0,
+            anchors=Anchors(
+                doc_id="ti",
+                block_ids=["ch02_b001"],
+                term_block_ids={},
+                term_counts={},
+                entity_block_ids={},
+                entity_counts={},
+                has_dialogue=False,
+            ),
+            dropped_by_budget=[
+                DroppedItem("g-too-large", "term", "large term -> thuật ngữ", "budget")
+            ],
+        )
+
+    with pytest.raises(RuntimeError, match="Context budget fuse tripped"):
+        translate_windows(
+            conn,
+            windows,
+            client,
+            "exp_test",
+            "S1",
+            context_builder=context_builder,
+        )
+
+    assert client.calls == []
 
 
 def test_runner_multiple_windows(tmp_path):

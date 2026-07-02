@@ -3,8 +3,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import sqlite3
 import uuid
+from hashlib import sha256
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -32,6 +34,13 @@ def main() -> int:
         description="Run S0/S1 translation over specified chapters."
     )
     parser.add_argument("--db", required=True, help="Path to the frozen memory SQLite DB.")
+    parser.add_argument(
+        "--workdb",
+        help=(
+            "Required for non-preflight runs. The frozen --db is copied here and "
+            "all write-mode translation state is written to this working DB."
+        ),
+    )
     parser.add_argument(
         "--chapters",
         nargs="+",
@@ -74,8 +83,14 @@ def main() -> int:
     parser.add_argument(
         "--context-budget",
         type=int,
-        default=500,
+        default=1500,
         help="S1 hard-constraints context budget in rough tokens.",
+    )
+    parser.add_argument(
+        "--max-windows",
+        type=int,
+        default=0,
+        help="Truncate planned windows after build_windows for smoke trials.",
     )
     parser.add_argument(
         "--memory-notebook",
@@ -106,15 +121,22 @@ def main() -> int:
     configs = _configs_from_args(args)
     experiment = args.experiment or profile.default_experiment_id
     llm_config = load_llm_config(args.config_file)
-    db = _open_db(args.db, read_only=args.preflight_only)
+    frozen_db_path = Path(args.db).resolve()
+    frozen_hash_before = _file_sha256(frozen_db_path)
+    workdb_path: Path | None = None
+    if not args.preflight_only:
+        workdb_path = _prepare_workdb(frozen_db_path, args.workdb)
+    db_path_for_run = workdb_path if workdb_path is not None else frozen_db_path
+    db = _open_db(str(db_path_for_run), read_only=args.preflight_only)
     try:
         doc_id = _single_doc_id(db)
-        windows = build_windows(
+        all_windows = build_windows(
             db,
             doc_id,
             args.chapters,
             block_types=profile.translatable_block_types,
         )
+        windows = _truncate_windows(all_windows, args.max_windows)
         notebook_terms = load_notebook_terms(args.memory_notebook) if args.memory_notebook else None
         preflight = _preflight(
             db,
@@ -125,10 +147,24 @@ def main() -> int:
             profile_name=profile.name,
             context_budget_tokens=args.context_budget,
             notebook_terms=notebook_terms,
+            original_windows=all_windows,
+            max_windows=args.max_windows,
+        )
+        preflight_meta = _run_metadata(
+            args,
+            experiment=experiment,
+            profile_name=profile.name,
+            frozen_db_path=frozen_db_path,
+            frozen_hash_before=frozen_hash_before,
+            workdb_path=workdb_path,
+            llm_config_path=args.config_file,
+            zero_api=True,
         )
         _print_preflight(args, experiment, doc_id, profile.name, preflight)
         _raise_if_preflight_unsafe(preflight, llm_config)
         if args.preflight_only:
+            preflight_meta["frozen_db_sha256_after"] = _file_sha256(frozen_db_path)
+            _write_preflight_report(args.report, preflight_meta, preflight)
             return 0
     finally:
         if args.preflight_only:
@@ -171,12 +207,27 @@ def main() -> int:
     if args.report:
         out_path = Path(args.report)
         out_path.parent.mkdir(parents=True, exist_ok=True)
+        frozen_hash_after = _file_sha256(frozen_db_path)
+        report_meta = _run_metadata(
+            args,
+            experiment=experiment,
+            profile_name=profile.name,
+            frozen_db_path=frozen_db_path,
+            frozen_hash_before=frozen_hash_before,
+            workdb_path=workdb_path,
+            llm_config_path=args.config_file,
+            zero_api=False,
+        )
+        report_meta["frozen_db_sha256_after"] = frozen_hash_after
+        report_meta["workdb_sha256_after"] = _file_sha256(workdb_path) if workdb_path else None
         out_path.write_text(
             json.dumps(
                 {
                     "experiment_id": experiment,
                     "profile": profile.name,
                     "chapters": args.chapters,
+                    "run": report_meta,
+                    "preflight": preflight,
                     "memory_notebook": _memory_notebook_report(args.memory_notebook, notebook_terms),
                     "configs": reports,
                 },
@@ -209,6 +260,107 @@ def _open_db(path: str, *, read_only: bool) -> sqlite3.Connection:
     return migrate_db(path)
 
 
+def _prepare_workdb(frozen_db_path: Path, workdb_arg: str | None) -> Path:
+    if not workdb_arg:
+        raise SystemExit("Non-preflight translation requires --workdb; frozen DB is read-only.")
+    workdb_path = Path(workdb_arg).resolve()
+    if workdb_path == frozen_db_path:
+        raise SystemExit("Refusing --workdb equal to --db; frozen DB is read-only.")
+    if _is_relative_to(workdb_path, frozen_db_path.parent):
+        raise SystemExit(
+            f"Refusing --workdb inside frozen DB directory: {workdb_path}. "
+            "Use a separate working directory."
+        )
+    if not frozen_db_path.exists():
+        raise SystemExit(f"Frozen DB not found: {frozen_db_path}")
+    workdb_path.parent.mkdir(parents=True, exist_ok=True)
+    if workdb_path.exists() and workdb_path.is_dir():
+        raise SystemExit(f"Refusing --workdb directory path: {workdb_path}")
+    if workdb_path.exists():
+        print(f"WARNING: resume existing workdb: {workdb_path}")
+    else:
+        shutil.copy2(frozen_db_path, workdb_path)
+        print(f"Copied frozen DB to workdb: {workdb_path}")
+    return workdb_path
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def _file_sha256(path: Path | None) -> str | None:
+    if path is None or not path.exists():
+        return None
+    h = sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest().upper()
+
+
+def _truncate_windows(windows: list[Window], max_windows: int | None) -> list[Window]:
+    if not max_windows or max_windows <= 0:
+        return windows
+    return windows[:max_windows]
+
+
+def _run_metadata(
+    args: argparse.Namespace,
+    *,
+    experiment: str,
+    profile_name: str,
+    frozen_db_path: Path,
+    frozen_hash_before: str | None,
+    workdb_path: Path | None,
+    llm_config_path: str,
+    zero_api: bool,
+) -> dict[str, Any]:
+    return {
+        "experiment_id": experiment,
+        "profile": profile_name,
+        "db": str(frozen_db_path),
+        "frozen_db_sha256_before": frozen_hash_before,
+        "frozen_db_sha256_after": None,
+        "workdb_path": str(workdb_path) if workdb_path else None,
+        "workdb_sha256_after": None,
+        "memory_notebook": args.memory_notebook,
+        "context_budget": int(args.context_budget),
+        "max_windows": int(args.max_windows or 0),
+        "llm_config": llm_config_path,
+        "zero_api": bool(zero_api),
+    }
+
+
+def _write_preflight_report(
+    report_path: str | None,
+    meta: dict[str, Any],
+    preflight: dict[str, Any],
+) -> None:
+    if not report_path:
+        return
+    out_path = Path(report_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(
+        json.dumps(
+            {
+                "phase": "run_translate_preflight",
+                "zero_api": True,
+                "run": meta,
+                "preflight": preflight,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    print(f"\nPreflight report written: {out_path}")
+
+
 def _single_doc_id(db: sqlite3.Connection) -> str:
     row = db.execute("SELECT doc_id FROM documents ORDER BY doc_id LIMIT 1").fetchone()
     if not row:
@@ -226,10 +378,16 @@ def _preflight(
     profile_name: str,
     context_budget_tokens: int,
     notebook_terms: list[dict[str, Any]] | None = None,
+    original_windows: list[Window] | None = None,
+    max_windows: int = 0,
 ) -> dict[str, Any]:
     resolved_chapters = _window_chapter_ids(db, windows)
+    original_windows = original_windows if original_windows is not None else windows
     result: dict[str, Any] = {
         "resolved_chapters": resolved_chapters,
+        "windows_original": len(original_windows),
+        "windows_truncated_to": int(max_windows or 0) if max_windows else None,
+        "window_ids": [str(window.window_id) for window in windows],
         "windows": len(windows),
         "blocks": sum(len(window.block_ids) for window in windows),
         "block_type_counts": _block_type_counts(db, doc_id, resolved_chapters),
@@ -246,6 +404,7 @@ def _preflight(
     for config in configs:
         estimates: list[int] = []
         context_terms: list[int] = []
+        dropped_by_budget: list[dict[str, Any]] = []
         for window in windows:
             blocks = _fetch_window_blocks(db, window)
             context_pack = None
@@ -264,6 +423,12 @@ def _preflight(
                     term_rows=notebook_terms,
                 )
                 context_terms.append(_context_term_count(context_pack))
+                dropped = [
+                    item.to_dict() if hasattr(item, "to_dict") else dict(item)
+                    for item in (getattr(context_pack, "dropped_by_budget", []) or [])
+                ]
+                for item in dropped:
+                    dropped_by_budget.append({"window_id": str(window.window_id), **item})
             messages = build_messages(
                 blocks,
                 prompt_version=prompt_version_for_config(config, profile_name),
@@ -286,6 +451,8 @@ def _preflight(
             "injected_terms_min": min(context_terms) if context_terms else 0,
             "injected_terms_avg": round(mean(context_terms), 2) if context_terms else 0,
             "injected_terms_max": max(context_terms) if context_terms else 0,
+            "dropped_by_budget": dropped_by_budget,
+            "dropped_by_budget_count": len(dropped_by_budget),
         }
     result["upper_total_all_configs"] = sum(
         item["upper_total_with_max_output"] for item in result["configs"].values()
@@ -427,6 +594,11 @@ def _print_preflight(
     )
     print("\n=== Preflight ===")
     print(f"Resolved chapters: {preflight['resolved_chapters']}")
+    if preflight.get("windows_original") != preflight.get("windows"):
+        print(
+            "Windows original/truncated: "
+            f"{preflight.get('windows_original')} -> {preflight.get('windows')}"
+        )
     print(f"Windows planned: {preflight['windows']}")
     print(f"Blocks in windows: {preflight['blocks']}")
     print(f"All block types: {preflight['block_type_counts']}")
@@ -466,6 +638,18 @@ def _raise_if_preflight_unsafe(preflight: dict[str, Any], llm_config: LLMConfig)
             "Preflight abort: upper token estimate "
             f"{preflight['upper_total_all_configs']} > daily cap {llm_config.daily_token_cap}"
         )
+    for config, item in preflight["configs"].items():
+        dropped = item.get("dropped_by_budget") or []
+        if dropped:
+            sample = "; ".join(
+                f"{row.get('window_id')}:{row.get('item_id')}:{row.get('line')}"[:180]
+                for row in dropped[:8]
+            )
+            extra = "" if len(dropped) <= 8 else f"; +{len(dropped) - 8} more"
+            raise SystemExit(
+                f"Preflight abort: {config} has {len(dropped)} dropped_by_budget "
+                f"item(s): {sample}{extra}"
+            )
 
 
 def _print_translate_summary(report: TranslateReport) -> None:

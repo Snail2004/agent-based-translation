@@ -141,6 +141,51 @@ def test_registry_overlay_scopes_by_block(tmp_path):
     assert {span["block_id"] for span in target_spans} == {"b001"}
 
 
+def test_registry_overlay_adds_display_only_cascade_marks(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    reports_root = tmp_path / "reports"
+    _write_d2l_report(reports_root)
+    cascade_report = tmp_path / "cascade.json"
+    cascade_report.write_text(
+        json.dumps(
+            {
+                "decisions": [
+                    {
+                        "occ_id": "S0:b001:registry:agent:0",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "agent",
+                        "resolved_by": "t2_credit",
+                        "decision": "rendered",
+                        "target_start": 6,
+                        "target_end": 15,
+                        "target_surface": "xuất hiện",
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+        cascade_report=cascade_report,
+    )
+
+    spans = overlay["target_by_config"]["S0"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    cascade_spans = [span for span in spans if span.get("mark_source") == "cascade_t2"]
+    assert cascade_spans
+    assert cascade_spans[0]["span"] == [6, 15]
+    assert cascade_spans[0]["surface"] == "xuất hiện"
+    assert cascade_spans[0]["provenance"] == "cascade_report"
+    assert overlay["meta"]["cascade_status"].startswith("loaded:1")
+
+
 def test_overlay_matches_scorer_forms_with_cross_term_subsumption(tmp_path):
     from services.thesis_overlay import load_registry_overlay
 

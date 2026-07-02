@@ -2076,3 +2076,15 @@ CodeX duyet §34 + de 7 siet. Claude kiem tung diem tren file that truoc khi ghi
 7. **Preflight report them field audit**: frozen_db_sha256_before/after, workdb_path, memory_notebook, context_budget, max_windows, llm_config, zero_api=true.
 
 Thu tu giu nguyen §34.6: A1->A2->A3->B (0-API + tests, bao cao) -> STOP -> C preflight -> STOP cost -> C run -> bao cao. KHONG commit.
+
+### 34.9 Claude review STOP-1 — A1/A2/A3 + B PASS, cho phep C preflight (2026-07-02)
+
+Claude verify DOC LAP (khong tin bao cao):
+- **A1 workdb** (doc diff): non-preflight bat buoc --workdb (SystemExit neu thieu); refuse workdb==db VA workdb nam trong thu muc frozen; copy2 khi chua co, WARNING resume khi da co; preflight van mo frozen mode=ro; report ghi frozen sha before/after + workdb sha. Dung ca 7 siet §34.8 lien quan.
+- **A2 budget+fuse**: 1500 o CA 3 CHO (grep "500 default" = CLEAN); fuse `_raise_if_context_dropped_by_budget` dat SAU build pack, TRUOC build_messages/API; test `test_runner_raises_before_api_when_context_drops_by_budget` assert **client.calls == []** — dung assertion cot tu (API chua bi goi khi fuse no).
+- **A3**: preflight-only + --report ghi file that (test_preflight_only_writes_report_and_truncation_metadata), kem truncation metadata (--max-windows).
+- **B overlay cascade**: import `_locate_quote_span_in_region` tu cascade_localize (REUSE khong copy); merge display-only voi mark_source surface_form/cascade_t2/cascade_t3_llm; khong co report -> "not_requested" hanh vi cu; report hong -> "unavailable:*" khong crash; decision thieu manh -> skip khong doan.
+- **Tests Claude tu chay**: pipeline **268 passed** (263 -> +5), app backend **134 passed**. Frozen DB hash 64D989 nguyen.
+- Khoang ho nho (non-blocking, ghi nhan): chua co test rieng cho refuse workdb-nam-trong-thu-muc-frozen (co test workdb==db cung ho); overlay T3 bo qua report thieu span (dung nguyen tac, CodeX da khai).
+
+**KET LUAN: STOP-1 PASS. Cho phep CodeX chay C preflight** (0-API): chapter multilayer_perceptrons, --max-windows 10, S0+S1, notebook_decollided, budget 1500, workdb SACH `data/jobs/trial_s0s1_mlp/memory.sqlite3` + experiment_id MOI (vd `trial_s0s1_mlp_v1`), --report ra data/reports/trial_s0s1_mlp/preflight.json. Bao cost cap -> STOP cho user confirm truoc khi goi API.

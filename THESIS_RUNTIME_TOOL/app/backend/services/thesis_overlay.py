@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import sys
+import json
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,7 @@ if str(TOOL_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOL_ROOT))
 
 from pipeline.eval.surface_match import SurfaceOwner, allocate_spans, find_spans, normalize_surface
+from pipeline.eval.cascade_localize import _locate_quote_span_in_region
 
 from config import THESIS_REPORTS_ROOT
 from services.thesis_readmodel import (
@@ -34,6 +36,7 @@ def load_registry_overlay(
     stage: str | None = None,
     block_id: str | None = None,
     chapter_id: str | None = None,
+    cascade_report: str | Path | None = None,
     jobs_root: Path | None = None,
     reports_root: Path | None = None,
 ) -> dict[str, Any]:
@@ -61,6 +64,14 @@ def load_registry_overlay(
     source = _build_source_overlay(job_id, blocks, glossary, entities, jobs_root=jobs_root)
     score_index = _score_index(scores.get("drift") or [])
     target = _build_target_overlay(blocks, glossary, entities, score_index, source)
+    cascade_status = "not_requested"
+    if cascade_report:
+        cascade_status = _merge_cascade_marks(
+            target,
+            blocks,
+            glossary,
+            cascade_report,
+        )
 
     return {
         "meta": {
@@ -68,11 +79,13 @@ def load_registry_overlay(
             "job_id": job_id,
             "read_only": True,
             "score_status": score_status,
+            "cascade_status": cascade_status,
             "selected": {
                 "experiment_id": experiment_id,
                 "stage": stage,
                 "block_id": block_id,
                 "chapter_id": chapter_id,
+                "cascade_report": str(cascade_report) if cascade_report else None,
             },
             "note": (
                 "Char spans are display-only. Status/forms_used are read from "
@@ -437,8 +450,148 @@ def _target_candidate(
         "forms_source": forms_source,
         "scored": bool(scored),
         "kind": kind,
+        "mark_source": "surface_form",
         "provenance": "translation_runs+score_report" if scored else "translation_runs+runtime_memory",
     }
+
+
+def _merge_cascade_marks(
+    target_by_config: dict[str, Any],
+    blocks: list[dict[str, Any]],
+    glossary: list[dict[str, Any]],
+    cascade_report: str | Path,
+) -> str:
+    path = Path(cascade_report)
+    if not path.exists():
+        return "unavailable:not_found"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return f"unavailable:invalid_json:{type(exc).__name__}"
+
+    block_targets = _translated_text_by_config_block(blocks)
+    glossary_lookup = _glossary_lookup_by_source(glossary)
+    added = 0
+    skipped = 0
+    for decision in _cascade_decisions(payload):
+        mark = _cascade_mark_from_decision(decision, block_targets, glossary_lookup)
+        if mark is None:
+            skipped += 1
+            continue
+        config = str(mark.get("config") or "")
+        term_id = str(mark.get("id") or "")
+        if not config or not term_id:
+            skipped += 1
+            continue
+        config_bucket = target_by_config.setdefault(config, {"glossary_by_id": {}, "entities_by_id": {}})
+        glossary_bucket = config_bucket.setdefault("glossary_by_id", {})
+        row = glossary_bucket.setdefault(term_id, {"occurrences": [], "source": "cascade_overlay"})
+        row.setdefault("occurrences", []).append(mark)
+        row["occurrences"] = sorted(
+            row["occurrences"],
+            key=lambda item: (str(item.get("block_id") or ""), int((item.get("span") or [0, 0])[0]), int((item.get("span") or [0, 0])[1])),
+        )
+        added += 1
+    return f"loaded:{added}:skipped:{skipped}"
+
+
+def _cascade_decisions(payload: Any) -> list[dict[str, Any]]:
+    if isinstance(payload, dict):
+        if isinstance(payload.get("decisions"), list):
+            return [item for item in payload["decisions"] if isinstance(item, dict)]
+        result: list[dict[str, Any]] = []
+        for value in payload.values():
+            if isinstance(value, dict):
+                result.extend(_cascade_decisions(value))
+            elif isinstance(value, list) and value and all(isinstance(item, dict) for item in value):
+                if any("occ_id" in item or "block_id" in item for item in value):
+                    result.extend(value)
+        return result
+    return []
+
+
+def _cascade_mark_from_decision(
+    decision: dict[str, Any],
+    block_targets: dict[tuple[str, str], str],
+    glossary_lookup: dict[str, dict[str, Any]],
+) -> dict[str, Any] | None:
+    config = str(decision.get("config") or "")
+    block_id = str(decision.get("block_id") or "")
+    source_term = str(decision.get("source_term") or "")
+    if not config or not block_id or not source_term:
+        return None
+    target_text = block_targets.get((config, block_id), "")
+    if not target_text:
+        return None
+
+    span: tuple[int, int] | None = None
+    mark_source = ""
+    if _has_int_span(decision.get("target_start"), decision.get("target_end")):
+        start = int(decision["target_start"])
+        end = int(decision["target_end"])
+        if 0 <= start < end <= len(target_text):
+            span = (start, end)
+            mark_source = "cascade_t2"
+    elif str(decision.get("resolved_by") or "").startswith("t3") or decision.get("target_quote"):
+        quote = str(decision.get("target_quote_clean") or decision.get("target_quote") or "").strip()
+        left_context = str(decision.get("left_context") or "")
+        if quote:
+            located = _locate_quote_span_in_region(target_text, quote, left_context)
+            if located[0] is not None and located[1] is not None:
+                span = (int(located[0]), int(located[1]))
+                mark_source = "cascade_t3_llm"
+    if span is None or not mark_source:
+        return None
+
+    term = glossary_lookup.get(_norm_key(source_term)) or {}
+    term_id = str(term.get("term_id") or term.get("glossary_id") or decision.get("term_id") or source_term)
+    surface = target_text[span[0]:span[1]]
+    return {
+        "id": term_id,
+        "block_id": block_id,
+        "config": config,
+        "span": [span[0], span[1]],
+        "surface": surface,
+        "matched_form": str(decision.get("matched_form_rank") or decision.get("accepted_form") or ""),
+        "status": str(decision.get("decision") or "localized"),
+        "display_status": "cascade",
+        "constraint_strength": None,
+        "forms_used": {},
+        "forms_source": "cascade_report",
+        "scored": False,
+        "kind": "glossary",
+        "mark_source": mark_source,
+        "provenance": "cascade_report",
+        "source_term": source_term,
+        "occ_id": decision.get("occ_id"),
+    }
+
+
+def _has_int_span(start: Any, end: Any) -> bool:
+    try:
+        return start is not None and end is not None and int(end) > int(start)
+    except (TypeError, ValueError):
+        return False
+
+
+def _translated_text_by_config_block(blocks: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
+    result: dict[tuple[str, str], str] = {}
+    for block in blocks:
+        block_id = str(block.get("block_id") or "")
+        for config, row in (block.get("translations") or {}).items():
+            target_text = str((row or {}).get("target_text") or (row or {}).get("output_text") or "")
+            if block_id and target_text:
+                result[(str(config), block_id)] = target_text
+    return result
+
+
+def _glossary_lookup_by_source(glossary: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    result: dict[str, dict[str, Any]] = {}
+    for term in glossary:
+        source = _norm_key(term.get("source_term") or "")
+        if source and source not in result:
+            result[source] = term
+    return result
 
 
 def _score_index(drift: list[dict[str, Any]]) -> dict[str, Any]:

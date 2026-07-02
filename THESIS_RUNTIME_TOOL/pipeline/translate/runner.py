@@ -77,7 +77,7 @@ def translate_windows(
     experiment_id: str,
     config: str = "S0",
     context_builder: Any | None = None,
-    context_budget_tokens: int = 500,
+    context_budget_tokens: int = 1500,
     profile_name: str = "literary_v1",
     event_sink: Any | None = None,
 ) -> TranslateReport:
@@ -170,6 +170,7 @@ def translate_windows(
                 context_stats["dropped_by_budget"] += len(
                     getattr(context_pack, "dropped_by_budget", []) or []
                 )
+                _raise_if_context_dropped_by_budget(window_id, context_pack)
 
             messages = build_messages(
                 blocks_for_prompt,
@@ -354,6 +355,21 @@ def _build_context_pack_for_window(
 
     anchors = plan_anchors(db, blocks_for_prompt, profile_name=profile_name)
     return build_context_pack(db, window, anchors, budget_tokens=budget_tokens)
+
+
+def _raise_if_context_dropped_by_budget(window_id: str, context_pack: Any | None) -> None:
+    dropped = _context_dropped_by_budget(context_pack)
+    if not dropped:
+        return
+    sample = ", ".join(
+        f"{item.get('item_id') or '?'}:{item.get('line') or ''}"[:160]
+        for item in dropped[:8]
+    )
+    extra = "" if len(dropped) <= 8 else f"; +{len(dropped) - 8} more"
+    raise RuntimeError(
+        f"Context budget fuse tripped for window {window_id}: "
+        f"{len(dropped)} dropped_by_budget item(s): {sample}{extra}"
+    )
 
 
 def _call_with_reask(

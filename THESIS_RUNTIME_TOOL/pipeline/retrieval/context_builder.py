@@ -293,7 +293,7 @@ def build_context_pack(
     conn: sqlite3.Connection,
     window: Any,
     anchors: Anchors,
-    budget_tokens: int = 500,
+    budget_tokens: int = 1500,
     *,
     term_rows: list[dict[str, Any]] | None = None,
 ) -> ContextPack:
