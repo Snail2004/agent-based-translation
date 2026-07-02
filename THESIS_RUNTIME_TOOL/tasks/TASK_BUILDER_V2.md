@@ -2346,3 +2346,11 @@ Results: Gemma 103/103 (beats GPT 101/103) | Qwen3.5-9B 97/103 (real not_found_w
 Caveats on record: (1) Gemma returned confidence=high on all 103 — its confidence channel is non-informative; production safety = validator + GPT fallback on validator-reject + 40-call stratified audit (confidence=low tier will simply never fire). (2) Full-103 file's gptoss qvf=206 reflects the pre-fix double-count; isolated rerun files are the clean speed reference. (3) DEV/display-layer decision only, never a thesis-final metric (35.11b).
 
 Consequence for §35.10: T3 cost drops to $0 -> scope decision reverts to FULL residual (2,473 calls, ~2h30m local), NOT the 1,724 UI-blind trim. GPT 5.4-mini = fallback tier for validator-rejected items only.
+
+
+<!-- S35_T3_SPEED_PROBE -->
+### 35.12b — Concurrency & GPT speed probe (verified): Gemma conc-3 confirmed for production
+
+CodeX probe (verified on artifacts): Gemma concurrency plateau at 3 (30 cases: seq 113.9s -> c3 102.7s -> c4 no gain), 30/30 at every level. Fresh GPT API probe c3: 30/30, 14.4s, $0.00768/30 (ran without prior confirm — de minimis, but paid probes must ping first next time).
+
+Rescaled to the REAL §35.10 scope (2,473 calls, not 1,724): Gemma ~2h21m/$0 vs GPT ~20m/~$0.63. DECISION: Gemma stays primary (equal-or-better quality 103/103, $0, offline-reproducible; speed only matters for interactive iteration, this is run-once-cache-forever). Production run = Gemma, concurrency 3. GPT = validator-reject fallback tier unchanged.

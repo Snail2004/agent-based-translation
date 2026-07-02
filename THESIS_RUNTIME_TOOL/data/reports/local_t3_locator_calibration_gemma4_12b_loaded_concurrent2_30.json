@@ -1,0 +1,921 @@
+{
+  "task": "BUILDER-V2 ?35.11 concurrent probe",
+  "status": "DEV calibration only; local LM Studio concurrency=2; model preloaded; no load/unload",
+  "endpoint": "http://127.0.0.1:1234",
+  "model": "google/gemma-4-12b",
+  "items": 30,
+  "concurrency": 2,
+  "baseline_gpt": {
+    "attempted": 103,
+    "correct": 101,
+    "accuracy": 0.9806,
+    "by_config": {
+      "S0": {
+        "attempted": 64,
+        "correct": 63
+      },
+      "S1": {
+        "attempted": 39,
+        "correct": 38
+      }
+    },
+    "adherence_counts": {
+      "adherent": 98,
+      "off_glossary": 3,
+      "not_rendered": 2
+    },
+    "adherence_by_config": {
+      "S0": {
+        "adherent": 60,
+        "off_glossary": 3,
+        "not_rendered": 1
+      },
+      "S1": {
+        "adherent": 38,
+        "not_rendered": 1
+      }
+    },
+    "fresh_calls": 0,
+    "cost_usd_fresh": 0.0,
+    "api_key_source": "file:OPENAI-KEY-2.txt",
+    "usage_today_after": {
+      "date": "2026-06-28",
+      "total_tokens": 0,
+      "calls": 0
+    },
+    "source": "data\\reports\\cascade_gold_locate_measure.json"
+  },
+  "request_params": {
+    "temperature": 0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0,
+    "seed": 20260612,
+    "repeat_penalty": 1.0,
+    "max_tokens": 512,
+    "stream": false,
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "occurrence_location",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "occurrence_id": {
+              "type": "string"
+            },
+            "found": {
+              "type": "boolean"
+            },
+            "target_quote": {
+              "type": "string"
+            },
+            "left_context": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ]
+            }
+          },
+          "required": [
+            "occurrence_id",
+            "found",
+            "target_quote",
+            "left_context",
+            "confidence"
+          ]
+        }
+      }
+    },
+    "reasoning_effort": "none"
+  },
+  "attempted": 30,
+  "correct": 30,
+  "accuracy": 1.0,
+  "outcome_counts": {
+    "correct": 30
+  },
+  "median_latency_sec": 7.1981,
+  "median_tokens_per_sec": 86.5565,
+  "wall_sec": 107.1628,
+  "projected_wall_time_for_1724_calls_sec": 6158.29,
+  "records": [
+    {
+      "index": 1,
+      "occ_id": "S0:d2l_introduction_index_b003:registry:user:0",
+      "source_term": "user",
+      "gold_span": "người dùng",
+      "target_quote": "người dùng",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b003:registry:user:0\", \"found\": true, \"target_quote\": \"người dùng\", \"left_context\": \"ID của\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 530,
+        "completion_tokens": 61,
+        "total_tokens": 591,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.6986,
+      "tokens_per_sec": 88.22771217299172
+    },
+    {
+      "index": 2,
+      "occ_id": "S0:d2l_introduction_index_b020:registry:example:0",
+      "source_term": "example",
+      "gold_span": "ví dụ",
+      "target_quote": "ví dụ",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b020:registry:example:0\", \"found\": true, \"target_quote\": \"ví dụ\", \"left_context\": \"Trong\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 554,
+        "completion_tokens": 59,
+        "total_tokens": 613,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.6197,
+      "tokens_per_sec": 92.60295314647058
+    },
+    {
+      "index": 3,
+      "occ_id": "S0:d2l_introduction_index_b021:registry:model's parameters:0",
+      "source_term": "model's parameters",
+      "gold_span": "tham số của mô hình",
+      "target_quote": "các tham số của mô hình",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b021:registry:model's parameters:0\", \"found\": true, \"target_quote\": \"các tham số của mô hình\", \"left_context\": \"điều chỉnh\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 512,
+        "completion_tokens": 68,
+        "total_tokens": 580,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 9.6267,
+      "tokens_per_sec": 60.24908258799324
+    },
+    {
+      "index": 4,
+      "occ_id": "S0:d2l_introduction_index_b023:registry:attributes:0",
+      "source_term": "attributes",
+      "gold_span": "thuộc tính",
+      "target_quote": "thuộc tính",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b023:registry:attributes:0\", \"found\": true, \"target_quote\": \"thuộc tính\", \"left_context\": \"tập các\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 589,
+        "completion_tokens": 62,
+        "total_tokens": 651,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.4583,
+      "tokens_per_sec": 87.28545844423763
+    },
+    {
+      "index": 5,
+      "occ_id": "S0:d2l_introduction_index_b023:registry:target:0",
+      "source_term": "target",
+      "gold_span": "mục tiêu",
+      "target_quote": "mục tiêu",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b023:registry:target:0\", \"found\": true, \"target_quote\": \"mục tiêu\", \"left_context\": \"hoặc\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 578,
+        "completion_tokens": 61,
+        "total_tokens": 639,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.3771,
+      "tokens_per_sec": 86.61947021609329
+    },
+    {
+      "index": 6,
+      "occ_id": "S0:d2l_introduction_index_b053:registry:data examples:0",
+      "source_term": "data examples",
+      "gold_span": "ví dụ dữ liệu",
+      "target_quote": "ví dụ dữ liệu",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b053:registry:data examples:0\", \"found\": true, \"target_quote\": \"ví dụ dữ liệu\", \"left_context\": \"với hai\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 572,
+        "completion_tokens": 64,
+        "total_tokens": 636,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.2166,
+      "tokens_per_sec": 88.12956187471977
+    },
+    {
+      "index": 7,
+      "occ_id": "S0:d2l_introduction_index_b062:registry:outcome:0",
+      "source_term": "outcome",
+      "gold_span": "kết quả",
+      "target_quote": "kết quả",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b062:registry:outcome:0\", \"found\": true, \"target_quote\": \"kết quả\", \"left_context\": \"xác suất của\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 528,
+        "completion_tokens": 63,
+        "total_tokens": 591,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.5774,
+      "tokens_per_sec": 89.85335613081135
+    },
+    {
+      "index": 8,
+      "occ_id": "S0:d2l_introduction_index_b085:registry:annotation:0",
+      "source_term": "annotation",
+      "gold_span": "chú thích",
+      "target_quote": "chú thích",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b085:registry:annotation:0\", \"found\": true, \"target_quote\": \"chú thích\", \"left_context\": \"một dạng\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 498,
+        "completion_tokens": 61,
+        "total_tokens": 559,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.3155,
+      "tokens_per_sec": 88.51221075814607
+    },
+    {
+      "index": 9,
+      "occ_id": "S0:d2l_introduction_index_b096:registry:data:3",
+      "source_term": "data",
+      "gold_span": "dữ liệu",
+      "target_quote": "dữ liệu",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b096:registry:data:3\", \"found\": true, \"target_quote\": \"dữ liệu\", \"left_context\": \"trên\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 533,
+        "completion_tokens": 61,
+        "total_tokens": 594,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 8.0662,
+      "tokens_per_sec": 73.64053071698666
+    },
+    {
+      "index": 10,
+      "occ_id": "S0:d2l_introduction_index_b103:registry:example:0",
+      "source_term": "example",
+      "gold_span": "Ví dụ",
+      "target_quote": "Ví dụ",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b103:registry:example:0\", \"found\": true, \"target_quote\": \"Ví dụ\", \"left_context\": \"\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 511,
+        "completion_tokens": 57,
+        "total_tokens": 568,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 4.8792,
+      "tokens_per_sec": 116.41354065756182
+    },
+    {
+      "index": 11,
+      "occ_id": "S0:d2l_introduction_index_b134:registry:sequence:2",
+      "source_term": "sequence",
+      "gold_span": "chuỗi",
+      "target_quote": "chuỗi",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b134:registry:sequence:2\", \"found\": true, \"target_quote\": \"chuỗi\", \"left_context\": \"một\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 519,
+        "completion_tokens": 59,
+        "total_tokens": 578,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.3714,
+      "tokens_per_sec": 78.41087687435807
+    },
+    {
+      "index": 12,
+      "occ_id": "S0:d2l_introduction_index_b147:registry:feature vectors:0",
+      "source_term": "feature vectors",
+      "gold_span": "vector đặc trưng",
+      "target_quote": "vector đặc trưng",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b147:registry:feature vectors:0\", \"found\": true, \"target_quote\": \"vector đặc trưng\", \"left_context\": \"các\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 550,
+        "completion_tokens": 61,
+        "total_tokens": 611,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 8.3841,
+      "tokens_per_sec": 72.87589835619035
+    },
+    {
+      "index": 13,
+      "occ_id": "S0:d2l_introduction_index_b147:registry:machine learning:0",
+      "source_term": "machine learning",
+      "gold_span": "học máy",
+      "target_quote": "học máy",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_introduction_index_b147:registry:machine learning:0\", \"found\": true, \"target_quote\": \"học máy\", \"left_context\": \"phương pháp\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 584,
+        "completion_tokens": 62,
+        "total_tokens": 646,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.4688,
+      "tokens_per_sec": 86.49345633419435
+    },
+    {
+      "index": 14,
+      "occ_id": "S0:d2l_preliminaries_index_b002:registry:machine learning:0",
+      "source_term": "machine learning",
+      "gold_span": "học máy",
+      "target_quote": "học máy",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_index_b002:registry:machine learning:0\", \"found\": true, \"target_quote\": \"học máy\", \"left_context\": \"Mọi \", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 474,
+        "completion_tokens": 64,
+        "total_tokens": 538,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.7151,
+      "tokens_per_sec": 80.11785127470063
+    },
+    {
+      "index": 15,
+      "occ_id": "S0:d2l_preliminaries_index_b002:registry:manipulating:0",
+      "source_term": "manipulating",
+      "gold_span": "thao tác",
+      "target_quote": "thao tác",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_index_b002:registry:manipulating:0\", \"found\": true, \"target_quote\": \"thao tác\", \"left_context\": \"lưu trữ, \", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 67,
+        "total_tokens": 559,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.8355,
+      "tokens_per_sec": 81.7788273035505
+    },
+    {
+      "index": 16,
+      "occ_id": "S0:d2l_preliminaries_index_b003:registry:set:0",
+      "source_term": "set",
+      "gold_span": "bộ",
+      "target_quote": "bộ",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_index_b003:registry:set:0\", \"found\": true, \"target_quote\": \"bộ\", \"left_context\": \"một\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 533,
+        "completion_tokens": 62,
+        "total_tokens": 595,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 5.1054,
+      "tokens_per_sec": 116.54225894809211
+    },
+    {
+      "index": 17,
+      "occ_id": "S0:d2l_preliminaries_ndarray_b006:registry:module:1",
+      "source_term": "module",
+      "gold_span": "mô-đun",
+      "target_quote": "mô-đun",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_ndarray_b006:registry:module:1\", \"found\": true, \"target_quote\": \"mô-đun\", \"left_context\": \"trong khi\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 530,
+        "completion_tokens": 66,
+        "total_tokens": 596,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 8.7067,
+      "tokens_per_sec": 68.45302020417864
+    },
+    {
+      "index": 18,
+      "occ_id": "S0:d2l_preliminaries_ndarray_b065:registry:element:0",
+      "source_term": "element",
+      "gold_span": "phần tử",
+      "target_quote": "phần tử",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_ndarray_b065:registry:element:0\", \"found\": true, \"target_quote\": \"phần tử\", \"left_context\": \"các\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 482,
+        "completion_tokens": 63,
+        "total_tokens": 545,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.882,
+      "tokens_per_sec": 79.1923703421901
+    },
+    {
+      "index": 19,
+      "occ_id": "S0:d2l_preliminaries_ndarray_b078:registry:elements:0",
+      "source_term": "elements",
+      "gold_span": "phần tử",
+      "target_quote": "phần tử",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_ndarray_b078:registry:elements:0\", \"found\": true, \"target_quote\": \"phần tử\", \"left_context\": \"chọn\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 509,
+        "completion_tokens": 64,
+        "total_tokens": 573,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.5409,
+      "tokens_per_sec": 87.60222706095797
+    },
+    {
+      "index": 20,
+      "occ_id": "S0:d2l_preliminaries_ndarray_b115:registry:tensors:1",
+      "source_term": "tensors",
+      "gold_span": "tensor",
+      "target_quote": "tensor",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_ndarray_b115:registry:tensors:1\", \"found\": true, \"target_quote\": \"tensor\", \"left_context\": \"ví dụ,\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 496,
+        "completion_tokens": 63,
+        "total_tokens": 559,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 4.9146,
+      "tokens_per_sec": 113.743533482071
+    },
+    {
+      "index": 21,
+      "occ_id": "S0:d2l_preliminaries_pandas_b010:registry:deletion:0",
+      "source_term": "deletion",
+      "gold_span": "loại bỏ",
+      "target_quote": "loại bỏ",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_pandas_b010:registry:deletion:0\", \"found\": true, \"target_quote\": \"loại bỏ\", \"left_context\": \"và\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 532,
+        "completion_tokens": 63,
+        "total_tokens": 595,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 6.674,
+      "tokens_per_sec": 89.15146934990979
+    },
+    {
+      "index": 22,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b005:registry:membership:0",
+      "source_term": "membership",
+      "gold_span": "sự thuộc về",
+      "target_quote": "sự thuộc về",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b005:registry:membership:0\", \"found\": true, \"target_quote\": \"sự thuộc về\", \"left_context\": \"biểu thị\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 68,
+        "total_tokens": 560,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 8.6269,
+      "tokens_per_sec": 64.91350588322717
+    },
+    {
+      "index": 23,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b006:registry:scalar:0",
+      "source_term": "scalar",
+      "gold_span": "vô hướng",
+      "target_quote": "vô hướng",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b006:registry:scalar:0\", \"found\": true, \"target_quote\": \"vô hướng\", \"left_context\": \"hai\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 547,
+        "completion_tokens": 65,
+        "total_tokens": 612,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.349,
+      "tokens_per_sec": 83.27717340252983
+    },
+    {
+      "index": 24,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b006:registry:scalars:0",
+      "source_term": "scalars",
+      "gold_span": "vô hướng",
+      "target_quote": "vô hướng",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b006:registry:scalars:0\", \"found\": true, \"target_quote\": \"vô hướng\", \"left_context\": \"hai\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 547,
+        "completion_tokens": 65,
+        "total_tokens": 612,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.7484,
+      "tokens_per_sec": 78.98407686153357
+    },
+    {
+      "index": 25,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b023:registry:real-valued scalars:0",
+      "source_term": "real-valued scalars",
+      "gold_span": "giá trị thực",
+      "target_quote": "vô hướng có giá trị thực",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b023:registry:real-valued scalars:0\", \"found\": true, \"target_quote\": \"vô hướng có giá trị thực\", \"left_context\": \"gồm $n$\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 578,
+        "completion_tokens": 75,
+        "total_tokens": 653,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 10.1191,
+      "tokens_per_sec": 64.53142874758889
+    },
+    {
+      "index": 26,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b032:registry:dimensionality:0",
+      "source_term": "dimensionality",
+      "gold_span": "chiều",
+      "target_quote": "tính chiều",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b032:registry:dimensionality:0\", \"found\": true, \"target_quote\": \"tính chiều\", \"left_context\": \"dùng\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 545,
+        "completion_tokens": 66,
+        "total_tokens": 611,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 5.6407,
+      "tokens_per_sec": 108.31911356762468
+    },
+    {
+      "index": 27,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b057:registry:data examples:2",
+      "source_term": "data examples",
+      "gold_span": "ví dụ dữ liệu",
+      "target_quote": "các ví dụ dữ liệu",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b057:registry:data examples:2\", \"found\": true, \"target_quote\": \"các ví dụ dữ liệu\", \"left_context\": \"hoặc chỉ\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 525,
+        "completion_tokens": 70,
+        "total_tokens": 595,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.1795,
+      "tokens_per_sec": 82.87465346574292
+    },
+    {
+      "index": 28,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b132:registry:row vectors:0",
+      "source_term": "row vectors",
+      "gold_span": "vector hàng",
+      "target_quote": "vector hàng",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b132:registry:row vectors:0\", \"found\": true, \"target_quote\": \"vector hàng\", \"left_context\": \"các\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 525,
+        "completion_tokens": 65,
+        "total_tokens": 590,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 5.2144,
+      "tokens_per_sec": 113.14846319244884
+    },
+    {
+      "index": 29,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b140:registry:dimension:0",
+      "source_term": "dimension",
+      "gold_span": "chiều",
+      "target_quote": "chiều",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b140:registry:dimension:0\", \"found\": true, \"target_quote\": \"chiều\", \"left_context\": \"với \", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 514,
+        "completion_tokens": 65,
+        "total_tokens": 579,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.7951,
+      "tokens_per_sec": 74.27726394112815
+    },
+    {
+      "index": 30,
+      "occ_id": "S0:d2l_preliminaries_linear_algebra_b191:registry:linear algebra:0",
+      "source_term": "linear algebra",
+      "gold_span": "đại số tuyến tính",
+      "target_quote": "đại số tuyến tính",
+      "found": true,
+      "confidence": "high",
+      "correct": true,
+      "outcome": "correct",
+      "correct_reason": "locate_contains_gold",
+      "parse_error": "",
+      "validation_error": "",
+      "raw_content_prefix": "{\"occurrence_id\": \"S0:d2l_preliminaries_linear_algebra_b191:registry:linear algebra:0\", \"found\": true, \"target_quote\": \"đại số tuyến tính\", \"left_context\": \"về\", \"confidence\": \"high\"}",
+      "finish_reason": "stop",
+      "model_echo": "google/gemma-4-12b",
+      "usage": {
+        "prompt_tokens": 652,
+        "completion_tokens": 69,
+        "total_tokens": 721,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "latency_sec": 7.9986,
+      "tokens_per_sec": 90.14071490717966
+    }
+  ]
+}
