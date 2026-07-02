@@ -2323,3 +2323,14 @@ Report per model: locate-acc /103 vs gold, validator-rejection count, JSON-parse
 Acceptance to adopt for display-T3: acc >= 0.95 (>=98/103) AND rejections+parse-fails < 5%. If several pass, pick the fastest. gpt-5.4-mini stays as fallback tier for items the winner fails validation on (cost-ascending cascade, same philosophy as T1->T2->T3).
 
 STOP after the comparison table. No commit. Frozen DB untouched (this task reads only the report JSON + local endpoints).
+
+
+<!-- S35_LOCAL_T3_CALIB_B -->
+### 35.11b — Amendments after CodeX review (accepted 1,2,3,4,5; rejected early-stop)
+
+- Status of this test: DEV/calibration decision tool for the DISPLAY layer only — never cite as a thesis-final metric.
+- Report per model MUST split: correct / valid_but_wrong (validator passed, span != gold) / not_found_wrong / quote_validation_fail / json_parse_fail (separate, to expose think-tag or prose pollution).
+- Production plan when a local model is adopted: GPT fallback for validator-reject AND confidence=low (kept even at pass-tot); plus stratified audit of 30-50 of the 1,724 production calls against workdb text.
+- Param safety: log the exact request params sent AND the model id echoed in responses; ALSO set repeat_penalty=1.0 in the LM Studio load/UI config as second belt (API may silently ignore overrides). Load context 4096 (not 8192): prompts ~800 tok + 512 output; smaller KV reservation frees VRAM for more GPU layers.
+- Decision thresholds (CodeX proposal accepted): >=101/103 & reject<5% -> local as primary; 98-100 -> local + GPT fallback + sample audit; <98 or flaky JSON -> GPT plan A.
+- Rejected: prioritized order with early stop. 103 items = 5-10 min/model; run ALL THREE for the full comparison table (thesis methodology material).
