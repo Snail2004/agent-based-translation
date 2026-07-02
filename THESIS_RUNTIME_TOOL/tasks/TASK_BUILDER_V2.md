@@ -2200,3 +2200,22 @@ Why B moved so little — conditional decomposition (diagnostic, run on locked t
 Interpretation locked to 35.3 discipline: aggregate strict B stays the reported headline; the decomposition is a diagnostic footnote. Mechanism compliance ~0.96-0.97 in BOTH directions (matches smoke prior 0.974). The 20 disagree-canonicals are a canonical-QUALITY question (future arm: gold-informed canonical review or T4 human pass under a NEW experiment id), not a mid-experiment fix. A_registry (vs old 1608-row glossary_entries) is reported but ruler-misaligned with the actual notebook pack — treat as legacy diagnostic only.
 
 Artifacts: data/reports/exp_s0s1_builderv2_v1/metrics_mlp.json (+occurrence audit csv/html). Next per 35.4: prelim S0/S1 run, then same scoring; D2L UI overlay can now point at the workdb runs.
+
+
+<!-- S35_PRELIM_TASK -->
+## 35.9 — TASK for CodeX: run the preliminaries S0/S1 pair (completes §35.2 scope)
+
+User confirmed. This is execution of the already-locked design — NO knob changes, NO new flags, NO prompt edits.
+
+Do:
+1. Run d2l_preliminaries S0 then S1, exactly as preflighted (preflight_preliminaries.json):
+   - experiment_id exp_s0s1_builderv2_v1
+   - workdb data/jobs/exp_s0s1_full/memory.sqlite3 — ALREADY EXISTS with the MLP runs. Do NOT recreate/purge it; the resume path must warn-and-continue. Prelim pack_ids (pk_*_w_d2l_preliminaries_*) are new, so no stale-pack reuse is possible; state this check in the report.
+   - notebook: (as used in preflight_preliminaries.json)
+   - context budget 1500, --report data/reports/exp_s0s1_builderv2_v1/run_preliminaries.json
+2. Expected cost: S0 mostly replays from P3 cache (P3 covered preliminaries on 2026-06-14); S1 fresh except 0 smoke windows. Nominal ~$0.10-0.15, cap $0.762 (preflight). Abort and STOP if incremental cost passes $0.40 mid-run.
+3. STOP after runs (no commit). Report: per-arm windows/blocks/failed/skipped, calls & cache hits & incremental cost, hygiene stats, frozen-DB hash before/after (must stay 64D989...), workdb hash after, 2-3 sample S0-vs-S1 term renderings.
+
+Do NOT score. Claude will verify on the workdb and run the 0-API scorer (same command as §35.8, chapters d2l_preliminaries), so measurement stays with the reviewer.
+
+Pre-registered expectations (logged before results, per 35.3): D_consistency S1 > S0 (MLP prior +0.066); B small positive move with the same pack-vs-gold dilution pattern; hygiene still_bad 0; ~0 windows skipped. If S1 does NOT beat S0 on D, that is a red flag for the prelim pack — report, do not "fix".
