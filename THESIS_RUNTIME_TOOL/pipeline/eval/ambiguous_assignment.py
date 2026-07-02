@@ -44,7 +44,7 @@ DEFAULT_CHAPTERS = [
     "d2l_linear_networks",
     "d2l_multilayer_perceptrons",
 ]
-FROZEN_DB_SHA_FIRST16 = "DA0F687894090D43"
+FROZEN_DB_SHA_FIRST16 = "64D98965F8859869"
 SAMPLE_SEED = 42
 
 
