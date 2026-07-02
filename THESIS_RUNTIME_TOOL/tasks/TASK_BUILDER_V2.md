@@ -2354,3 +2354,32 @@ Consequence for §35.10: T3 cost drops to $0 -> scope decision reverts to FULL r
 CodeX probe (verified on artifacts): Gemma concurrency plateau at 3 (30 cases: seq 113.9s -> c3 102.7s -> c4 no gain), 30/30 at every level. Fresh GPT API probe c3: 30/30, 14.4s, $0.00768/30 (ran without prior confirm — de minimis, but paid probes must ping first next time).
 
 Rescaled to the REAL §35.10 scope (2,473 calls, not 1,724): Gemma ~2h21m/$0 vs GPT ~20m/~$0.63. DECISION: Gemma stays primary (equal-or-better quality 103/103, $0, offline-reproducible; speed only matters for interactive iteration, this is run-once-cache-forever). Production run = Gemma, concurrency 3. GPT = validator-reject fallback tier unchanged.
+
+
+<!-- S36_CANONICAL_REELECTION -->
+## 36 — DESIGN (v2, do NOT implement during exp_s0s1_builderv2_v1): blind canonical re-election + no-gold harm detection
+
+Status: DESIGN LOCKED by user + Claude discussion 2026-07-03. Implementation queued AFTER the current experiment completes (prelim pair + cascade + overlay). Nothing here touches the locked experiment.
+
+### 36.1 Forensic evidence (from notebook_decollided.json, MLP)
+The two genuinely-harmful canonicals found by the §35.8 gold-decomposition were both SELECTION failures, not knowledge failures — the correct answer was already inside each entry:
+- `population` -> canonical "quần thể"; target_variants already contained "tổng thể" (correct stats term) from the FIRST evidence block. Auditor saw it exactly (label polysemy_or_context_dependent, reason "Statistical population vs ordinary people/domain") -> its label soft-gated the term. Auditor was neither blind nor powerless; it lacks (by design) the right to re-elect canonicals.
+- `regularization` -> canonical "chuẩn hóa"; target_variants already contained "điều chuẩn" from window 001. Auditor MISSED this one (keep_as_translate_term/high). The §32 code collision guard caught it (chuẩn hóa colliding with normalization/standardization) and soft-gated it.
+Two independent nets, each caught exactly one case. Root cause both times: first-write-wins canonical at entry creation; later/parallel better candidates parked as variants with no re-election round.
+
+### 36.2 No-gold detection signature (pure internal data, $0)
+Watchlist an entry iff: (target_variants contain a candidate != canonical) AND (collision flag from §32 OR audit_label == polysemy_or_context_dependent). Both harmful cases match; signature needs no gold. (canonical∉variants ALONE is too broad — 144 entries, known red herring.)
+
+### 36.3 Blind re-election round (new dictionary-lifecycle step, post-Auditor pre-pack)
+For watchlisted entries only, elect canonical from {current canonical} ∪ {target_variants} by evidence; LLM generates evidence, CODE decides by mechanical rule:
+- (a) Back-translation election (local Gemma, $0, blind — no hint of which candidate is incumbent): back-translate each VI candidate -> EN; a candidate whose back-translation string-matches the source term (casefold/lemma-loose) beats one that maps to a DIFFERENT English concept. Resolves collision-type errors (chuẩn hóa -> normalization ≠ regularization; điều chuẩn -> regularization ✓).
+- (b) Context majority vote (for polysemy-type where back-translation ties, e.g. population): for each real occurrence sentence in the book, ask blind "VI rendering of TERM in THIS sentence" (local, $0), majority wins (tổng thể expected on stats-context sentences).
+- Safety gates, §29 style, all mandatory: (1) only signature-matched entries; (2) winner must not create a NEW target collision; (3) full decision log (candidates, back-translations, votes, evidence blocks). Election result propagates via the normal dictionary mechanics (per-window cache invalidation only where the term appears; registry-so-far carries to later chapters).
+
+### 36.4 Product frame (one-button, per Thầy's requirement)
+[DỊCH] -> translate -> score -> report contains: B/D/hygiene/tier-shares + auto WATCHLIST (context_sensitive + validator-rejects + masquerade suspects + re-election log) each with 3-5 EN-VI evidence sentence pairs from cascade marks. Human review = OFF-by-default toggle; when ON, pause at watchlist before finalizing. Rationale recorded: reviewers (incl. the user) cannot judge abstract term quality, but CAN judge bilingual evidence in context; and self-reported LLM "reasons" are post-hoc confabulation — behavior is measured by the cascade instead (no reason channel in Translator; its output contract stays translation-only).
+- Residual risk stated honestly: a lone wrong canonical (no competing variant, no collision, no polysemy label) evades all nets; consistency makes it a 1-line fix whenever any reader finds it. Human gold errs too (heuristic->thực nghiệm).
+- Open v2 measurement question (logged, not assumed): on collision terms, does a soft hint HELP or HURT vs no hint at all (§30 excluded mode)? Evidence so far: S1 followed the bad "chuẩn hóa" hint while free S0 sometimes chose gold "điều chuẩn". Measure with cascade, decide with data.
+
+### 36.5 Sequencing
+1) Finish exp_s0s1_builderv2_v1 (cascade STOP-B -> overlay -> prelim pair §35.9 -> prelim scoring). 2) Then implement §36.2+36.3 as a Builder-pipeline step + §36.4 watchlist in report/UI. 3) Re-run dictionary build for MLP as the §36 validation case: success = regularization->điều chuẩn and population->tổng thể elected mechanically with logs, zero regressions on the other 424 pack terms.
