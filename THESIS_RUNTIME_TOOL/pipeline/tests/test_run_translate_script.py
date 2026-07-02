@@ -75,3 +75,29 @@ def test_workdb_cannot_equal_frozen_db(tmp_path):
 
     with pytest.raises(SystemExit, match="equal to --db"):
         run_translate._prepare_workdb(db_path, str(db_path))
+
+
+def test_purge_runtime_state_clears_run_tables_keeps_static(tmp_path):
+    import sqlite3
+
+    from pipeline.scripts.run_translate import _purge_runtime_state
+
+    db_path = tmp_path / "work.sqlite3"
+    conn = sqlite3.connect(db_path)
+    conn.execute("CREATE TABLE blocks (block_id TEXT PRIMARY KEY, text TEXT)")
+    conn.execute("CREATE TABLE translation_runs (run_id TEXT, experiment_id TEXT)")
+    conn.execute("CREATE TABLE memory_packs (pack_id TEXT)")
+    conn.execute("INSERT INTO blocks VALUES ('b1', 'source text')")
+    conn.execute("INSERT INTO translation_runs VALUES ('r1', 'old_exp')")
+    conn.execute("INSERT INTO memory_packs VALUES ('pk_old')")
+    conn.commit()
+    conn.close()
+
+    # evaluation_runs/qa_issues absent on purpose: purge must skip missing tables.
+    _purge_runtime_state(db_path)
+
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM translation_runs").fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM memory_packs").fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM blocks").fetchone()[0] == 1
+    conn.close()

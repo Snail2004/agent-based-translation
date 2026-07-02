@@ -2088,3 +2088,16 @@ Claude verify DOC LAP (khong tin bao cao):
 - Khoang ho nho (non-blocking, ghi nhan): chua co test rieng cho refuse workdb-nam-trong-thu-muc-frozen (co test workdb==db cung ho); overlay T3 bo qua report thieu span (dung nguyen tac, CodeX da khai).
 
 **KET LUAN: STOP-1 PASS. Cho phep CodeX chay C preflight** (0-API): chapter multilayer_perceptrons, --max-windows 10, S0+S1, notebook_decollided, budget 1500, workdb SACH `data/jobs/trial_s0s1_mlp/memory.sqlite3` + experiment_id MOI (vd `trial_s0s1_mlp_v1`), --report ra data/reports/trial_s0s1_mlp/preflight.json. Bao cost cap -> STOP cho user confirm truoc khi goi API.
+
+### 34.10 SMOKE TRIAL S0/S1 PASS + workdb-inheritance bug fixed (2026-07-02, Claude verified)
+
+**Su co giua chung (CodeX phat hien + tu sua, Claude xac nhan root cause TREN CODE):** workdb copy tu frozen DB mang theo translation_runs/memory_packs cu (P3). runner.py co `SELECT pack_id FROM memory_packs WHERE pack_id=? -> if existing: return` ma pack_id KHONG chua experiment_id -> workdb "moi" se GIU PACK CU va bo qua ghi pack moi. Fix: `_purge_runtime_state` xoa 4 bang runtime (evaluation_runs, qa_issues, translation_runs, memory_packs) CHI tren nhanh copy-moi (khong dung resume), co guard ton-tai-bang. Claude them unit test purge (runtime sach + bang static giu nguyen; bang thieu khong loi). Da xoa workdb ban va rerun sach.
+
+**Ket qua smoke (Claude tu doc workdb, khong nhan so qua loi ke):**
+- frozen 64D989 nguyen; workdb E4D8DF00... ; translation_runs = 80 S0 + 80 S1 DUNG experiment trial_s0s1_mlp_v1, khong con row la; memory_packs 10+10; windows_skipped=0; JSON fail 0; dropped_by_budget 0.
+- **S0 purity: 0/10 pack S0 chua section terminology.**
+- **§32 SONG trong prompt API that (line-level exact):** khong dong MANDATORY nao la regularization/standardize; window 001 co `regularization -> chuẩn hóa (context-sensitive; do not force)`; nonlinearity/non-linearity nam MANDATORY. -> Chuoi Builder->Auditor->§29/30/32->pack->prompt xac nhan DAU-CUOI lan dau tien.
+- Cost that: S1 fresh 10 calls $0.018927, S0 cache-hit (thua huong replay cache P3 cung prompt+model); rerun sach $0. Duoi cap $0.17.
+- **Glitch output "либо" (ky tu Nga):** REAL — S0 blocks mlp_b006 + mlp_b049, VA CA S1 block mlp_b049 (CodeX bao thieu ve S1). La artifact model gpt-5.4-mini code-switching, xuat hien CA HAI arm -> khong lien quan glossary. GHI SO cho thi nghiem chinh: them output-hygiene check deterministic (flag ky tu Cyrillic/CJK trong ban dich VI) vao acceptance — re, 0-API, bat duoc loi model.
+
+Tests sau fix + test moi: 21 targeted + 4 run_translate script = xanh. Commit ca reports trial (28K, la record smoke).

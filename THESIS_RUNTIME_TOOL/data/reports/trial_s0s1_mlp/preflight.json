@@ -1,0 +1,97 @@
+{
+  "phase": "run_translate_preflight",
+  "zero_api": true,
+  "run": {
+    "experiment_id": "trial_s0s1_mlp_v1",
+    "profile": "technical_d2l_v1",
+    "db": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\d2l_p1\\memory.sqlite3",
+    "frozen_db_sha256_before": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "frozen_db_sha256_after": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "workdb_path": null,
+    "workdb_sha256_after": null,
+    "memory_notebook": "data/reports/builder_v2_mlp_c35/notebook_decollided.json",
+    "context_budget": 1500,
+    "max_windows": 10,
+    "llm_config": "pipeline/configs/llm_translate.yaml",
+    "zero_api": true
+  },
+  "preflight": {
+    "resolved_chapters": [
+      "d2l_multilayer_perceptrons"
+    ],
+    "windows_original": 60,
+    "windows_truncated_to": 10,
+    "window_ids": [
+      "w_d2l_multilayer_perceptrons_001",
+      "w_d2l_multilayer_perceptrons_002",
+      "w_d2l_multilayer_perceptrons_003",
+      "w_d2l_multilayer_perceptrons_004",
+      "w_d2l_multilayer_perceptrons_005",
+      "w_d2l_multilayer_perceptrons_006",
+      "w_d2l_multilayer_perceptrons_007",
+      "w_d2l_multilayer_perceptrons_008",
+      "w_d2l_multilayer_perceptrons_009",
+      "w_d2l_multilayer_perceptrons_010"
+    ],
+    "windows": 10,
+    "blocks": 80,
+    "block_type_counts": {
+      "code": 141,
+      "heading": 120,
+      "image": 10,
+      "math_block": 15,
+      "prose": 355
+    },
+    "translatable_block_type_counts": {
+      "heading": 22,
+      "prose": 58
+    },
+    "registry": {
+      "raw_registry": 1608,
+      "translation_eligible": 1369,
+      "preserve_count": 239,
+      "hapax_dropped": 0
+    },
+    "memory_notebook": {
+      "pack_policy_counts": {
+        "notebook_total": 546,
+        "hard_translate": 336,
+        "preserve": 46,
+        "context_sensitive": 44,
+        "report_only": 120,
+        "repair_queue": 0,
+        "pack_total": 426
+      },
+      "repair_queue_count": 0
+    },
+    "configs": {
+      "S0": {
+        "windows": 10,
+        "prompt_tokens_min": 740,
+        "prompt_tokens_avg": 1027.7,
+        "prompt_tokens_max": 1481,
+        "prompt_tokens_total_est": 10277,
+        "upper_total_with_max_output": 51237,
+        "injected_terms_min": 0,
+        "injected_terms_avg": 0,
+        "injected_terms_max": 0,
+        "dropped_by_budget": [],
+        "dropped_by_budget_count": 0
+      },
+      "S1": {
+        "windows": 10,
+        "prompt_tokens_min": 898,
+        "prompt_tokens_avg": 1353.9,
+        "prompt_tokens_max": 1929,
+        "prompt_tokens_total_est": 13539,
+        "upper_total_with_max_output": 54499,
+        "injected_terms_min": 8,
+        "injected_terms_avg": 23.3,
+        "injected_terms_max": 44,
+        "dropped_by_budget": [],
+        "dropped_by_budget_count": 0
+      }
+    },
+    "upper_total_all_configs": 105736
+  }
+}

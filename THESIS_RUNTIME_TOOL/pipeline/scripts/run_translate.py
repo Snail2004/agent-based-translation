@@ -280,8 +280,26 @@ def _prepare_workdb(frozen_db_path: Path, workdb_arg: str | None) -> Path:
         print(f"WARNING: resume existing workdb: {workdb_path}")
     else:
         shutil.copy2(frozen_db_path, workdb_path)
+        _purge_runtime_state(workdb_path)
         print(f"Copied frozen DB to workdb: {workdb_path}")
     return workdb_path
+
+
+def _purge_runtime_state(workdb_path: Path) -> None:
+    conn = sqlite3.connect(workdb_path)
+    try:
+        existing = {
+            str(row[0])
+            for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        # Child tables first, then parent runtime tables. Static source/gold tables
+        # remain intact; only prior run artifacts are removed from the working copy.
+        for table in ["evaluation_runs", "qa_issues", "translation_runs", "memory_packs"]:
+            if table in existing:
+                conn.execute(f"DELETE FROM {table}")
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def _is_relative_to(path: Path, parent: Path) -> bool:

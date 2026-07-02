@@ -1,0 +1,272 @@
+{
+  "experiment_id": "trial_s0s1_mlp_v1",
+  "profile": "technical_d2l_v1",
+  "chapters": [
+    "multilayer_perceptrons"
+  ],
+  "run": {
+    "experiment_id": "trial_s0s1_mlp_v1",
+    "profile": "technical_d2l_v1",
+    "db": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\d2l_p1\\memory.sqlite3",
+    "frozen_db_sha256_before": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "frozen_db_sha256_after": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "workdb_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\trial_s0s1_mlp\\memory.sqlite3",
+    "workdb_sha256_after": "E4D8DF0069359E626BC31FF4A2928DCD5A8724675FF7BF3E1E3F6BE276DD078B",
+    "memory_notebook": "data/reports/builder_v2_mlp_c35/notebook_decollided.json",
+    "context_budget": 1500,
+    "max_windows": 10,
+    "llm_config": "pipeline/configs/llm_translate.yaml",
+    "zero_api": false
+  },
+  "preflight": {
+    "resolved_chapters": [
+      "d2l_multilayer_perceptrons"
+    ],
+    "windows_original": 60,
+    "windows_truncated_to": 10,
+    "window_ids": [
+      "w_d2l_multilayer_perceptrons_001",
+      "w_d2l_multilayer_perceptrons_002",
+      "w_d2l_multilayer_perceptrons_003",
+      "w_d2l_multilayer_perceptrons_004",
+      "w_d2l_multilayer_perceptrons_005",
+      "w_d2l_multilayer_perceptrons_006",
+      "w_d2l_multilayer_perceptrons_007",
+      "w_d2l_multilayer_perceptrons_008",
+      "w_d2l_multilayer_perceptrons_009",
+      "w_d2l_multilayer_perceptrons_010"
+    ],
+    "windows": 10,
+    "blocks": 80,
+    "block_type_counts": {
+      "code": 141,
+      "heading": 120,
+      "image": 10,
+      "math_block": 15,
+      "prose": 355
+    },
+    "translatable_block_type_counts": {
+      "heading": 22,
+      "prose": 58
+    },
+    "registry": {
+      "raw_registry": 1608,
+      "translation_eligible": 1369,
+      "preserve_count": 239,
+      "hapax_dropped": 0
+    },
+    "memory_notebook": {
+      "pack_policy_counts": {
+        "notebook_total": 546,
+        "hard_translate": 336,
+        "preserve": 46,
+        "context_sensitive": 44,
+        "report_only": 120,
+        "repair_queue": 0,
+        "pack_total": 426
+      },
+      "repair_queue_count": 0
+    },
+    "configs": {
+      "S1": {
+        "windows": 10,
+        "prompt_tokens_min": 898,
+        "prompt_tokens_avg": 1353.9,
+        "prompt_tokens_max": 1929,
+        "prompt_tokens_total_est": 13539,
+        "upper_total_with_max_output": 54499,
+        "injected_terms_min": 8,
+        "injected_terms_avg": 23.3,
+        "injected_terms_max": 44,
+        "dropped_by_budget": [],
+        "dropped_by_budget_count": 0
+      }
+    },
+    "upper_total_all_configs": 54499
+  },
+  "memory_notebook": {
+    "path": "data/reports/builder_v2_mlp_c35/notebook_decollided.json",
+    "pack_policy_counts": {
+      "notebook_total": 546,
+      "hard_translate": 336,
+      "preserve": 46,
+      "context_sensitive": 44,
+      "report_only": 120,
+      "repair_queue": 0,
+      "pack_total": 426
+    },
+    "repair_queue": []
+  },
+  "configs": {
+    "S1": {
+      "experiment_id": "trial_s0s1_mlp_v1",
+      "config": "S1",
+      "windows_total": 10,
+      "windows_translated": 10,
+      "windows_failed": 0,
+      "windows_skipped": 0,
+      "blocks_translated": 80,
+      "blocks_failed": 0,
+      "json_fail_rate": 0.0,
+      "total_usage": {
+        "prompt_tokens": 12500,
+        "completion_tokens": 7901,
+        "reasoning_tokens": 0,
+        "cost_usd": 0.018927,
+        "incremental_cost_usd": 0,
+        "calls": 10,
+        "cache_hits": 10
+      },
+      "context_stats": {
+        "windows_with_context": 10,
+        "windows_low_context": 0,
+        "dropped_by_budget": 0
+      },
+      "model": "gpt-5.4-mini",
+      "seed": 20260612,
+      "system_fingerprint": null,
+      "reports": [
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_001",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1685,
+          "completion_tokens": 1149,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00271925,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_002",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1780,
+          "completion_tokens": 1434,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.003313,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_003",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1555,
+          "completion_tokens": 1192,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00277275,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_004",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1120,
+          "completion_tokens": 703,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.001686,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_005",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1189,
+          "completion_tokens": 701,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00169925,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_006",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 861,
+          "completion_tokens": 447,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00110925,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_007",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1130,
+          "completion_tokens": 622,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.0015265,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_008",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1136,
+          "completion_tokens": 575,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.001434,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_009",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1045,
+          "completion_tokens": 497,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00125525,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_multilayer_perceptrons_010",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 999,
+          "completion_tokens": 581,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00141175,
+          "incremental_cost_usd": 0.0,
+          "from_cache": true,
+          "system_fingerprint": null,
+          "errors": []
+        }
+      ]
+    }
+  }
+}
