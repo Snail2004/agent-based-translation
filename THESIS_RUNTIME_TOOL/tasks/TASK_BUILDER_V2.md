@@ -2501,3 +2501,14 @@ Two real user-hit symptoms on 2026-07-03, same root cause (frontend `experiment_
 2. After setting the param once, it leaks into ALL thesis jobs → `d2l_p1` (experiment d2l_p3) filtered by exp_s0s1_builderv2_v1 → 0 translations → S0/S1 panels and runtime marks vanish from a previously-working view.
 
 Fix (small): backend datasets list returns each job's `experiment_id` (or manifest presence); frontend passes it automatically per job; localStorage keyed per job_id if kept at all; URL param demoted to a debug override. One-button product rule: users never supply routing params by hand.
+
+
+### §35.15-F2 — follow-up (bundle with F1): mark COLOR encodes consistency verdict only, never provenance
+
+User-hit confusion 2026-07-03: source-panel `softmax regression` renders GREEN (hl-status-consistent from score report) while its cascade target mark `hồi quy softmax` renders YELLOW — because cascade marks carry pipeline-stage statuses (`rendered` for t2, `localized` for t3) that have NO CSS rule and fall through to the default highlight color. Two taxonomies (consistency verdict vs localization stage) are sharing one color channel. Measured mix in overlay_mlp.json: surface_form carries real verdicts (1,437 consistent / 879 drift / 449 unscored) while all 4,967 cascade marks carry only stage labels.
+
+Locked design:
+1. Color channel = consistency verdict ONLY: green consistent / red drift / gray-blue unscored — applied to cascade marks too, using the term's per-config verdict already present in the overlay data (tooltip FORMS_USED / overlay_status_by_config). Provenance NEVER changes fill color; it lives in LOCATED BY + flags (already shipped).
+2. Cascade marks on scope-only terms with no registry verdict (the §8b undetected group): neutral "localized-only" color of its own. Long-term: TC-Occ (EVAL §8) becomes the verdict source for these — cascade localizes, TC-Occ judges, color displays.
+3. Add a small on-screen color legend. The system author had to ask what the colors mean; end users have no chance.
+4. Regenerate materialized overlays after the change (status field per mark) — one script run.
