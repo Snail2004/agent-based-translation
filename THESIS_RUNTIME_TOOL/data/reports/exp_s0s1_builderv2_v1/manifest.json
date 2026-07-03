@@ -6,6 +6,11 @@
   "chapter_id": "d2l_multilayer_perceptrons",
   "reports": {
     "score": "metrics_mlp.json",
-    "cascade": "cascade_mlp_summary.json"
+    "cascade": "cascade_mlp_summary.json",
+    "overlay": "overlay_mlp.json",
+    "overlay_by_config": {
+      "S0": "overlay_mlp_S0.json",
+      "S1": "overlay_mlp_S1.json"
+    }
   }
 }

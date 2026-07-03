@@ -39,12 +39,22 @@ def load_registry_overlay(
     cascade_report: str | Path | None = None,
     jobs_root: Path | None = None,
     reports_root: Path | None = None,
+    prefer_materialized: bool = True,
 ) -> dict[str, Any]:
     """Build runtime registry overlay spans.
 
     This is a read-only composer over A01 DatasetReadModel and D01 ScoreReadModel.
     It never recomputes metrics; score status/forms are copied from reports only.
     """
+
+    if prefer_materialized and experiment_id:
+        overlay_report = resolve_experiment_artifact_path(
+            experiment_id,
+            "overlay",
+            reports_root=reports_root or THESIS_REPORTS_ROOT,
+        )
+        if overlay_report:
+            return _load_materialized_overlay(overlay_report)
 
     blocks, glossary, entities = _load_overlay_inputs(
         job_id,
@@ -109,6 +119,34 @@ def load_registry_overlay(
         "source": source,
         "target_by_config": target,
     }
+
+
+def _load_materialized_overlay(path: str | Path) -> dict[str, Any]:
+    overlay_path = Path(path)
+    if not overlay_path.exists():
+        raise ThesisReadModelError(
+            "materialized_overlay_missing",
+            f"Materialized overlay does not exist: {overlay_path}",
+            404,
+        )
+    try:
+        payload = json.loads(overlay_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise ThesisReadModelError(
+            "materialized_overlay_invalid_json",
+            f"Could not read materialized overlay JSON: {type(exc).__name__}",
+            500,
+        ) from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("target_by_config"), dict):
+        raise ThesisReadModelError(
+            "materialized_overlay_invalid",
+            "Materialized overlay is missing target_by_config.",
+            500,
+        )
+    meta = payload.setdefault("meta", {})
+    if isinstance(meta, dict):
+        meta["materialized_loaded_from"] = str(overlay_path)
+    return payload
 
 
 def _load_overlay_inputs(

@@ -2473,3 +2473,22 @@ Browser visual smoke deliberately deferred to STOP-C2 acceptance (Claude runs it
 - Audit stats block inside each file: counts per located_by, deduped-surface_form count, cross-term overlap count (flagged, kept), clean_text_fallback count (expect 2/arm), not_rendered count (5 S0 / 2 S1), gpt_fallback count (18 S0 / 13 S1).
 - UI loads the materialized artifact only; no runtime re-compose, no runtime quote re-locate.
 - Acceptance (= §37 overlay smoke): total marks per arm = 2,487 − not_rendered; stats reconcile with §35.13 numbers; Claude spot-checks rendered marks (incl. one b047 clean-text case and one gpt_fallback case) in the real UI. STOP — Claude verifies then commits.
+
+
+### STOP-C2 ACCEPTED — overlay smoke §37-① COMPLETE (Claude verified, 2026-07-03)
+
+Backend verification (independent):
+- Materialized `overlay_mlp.json` recounted from the file itself: audit identical to STOP-C1 compose; per-arm marks S0 1167/1315/1376, S1 1334/1151/1389; flags carried (masquerade 42/47, clean_text 2/2, gpt marks 16/13); dedupe invariant scan on the FILE: 0 violations.
+- Deep set-compare: fresh compose (`prefer_materialized=False`) vs materialized file = 7,593 mark tuples IDENTICAL both directions (0 diff). Verified artifact == displayed artifact.
+- Live HTTP route (restarted backend): returns `materialized_loaded_from=overlay_mlp.json`, same audit. (Stale pre-C1 backend was still running on port 5000 — the earlier UI screenshot came from OLD code; killed PID and restarted. Reminder: after CodeX changes backend code, Flask must be restarted — no auto-reload.)
+
+Browser visual smoke (Claude, real UI via preview: Flask :5000 + prototype :8765, thesis:exp_s0s1_full, MLP chapter):
+- 9,640 highlight elements render from the materialized overlay across S0/S1 panels.
+- b047 clean-text case: mark `**Hàm *sigmoid*` renders; hover card shows `located by: AI locate (Gemma)` + flags `clean_text_fallback, cross_term_overlap`. ✓
+- GPT-fallback case (dropout_b017 `chuẩn hóa dropout tiêu chuẩn`): hover card shows `located by: AI locate (GPT fallback)` + flags `gpt_fallback, cross_term_overlap`, CASCADE badge on card. ✓
+
+Committed: materialize script + overlay service/tests + manifest. Overlay artifacts (8.6M + 2×4.8M) left untracked per large-regenerable precedent (one command re-emits from cascade JSONs).
+
+Known nit (non-blocking, logged): 139 fully-duplicate legacy `surface_form` mark tuples pre-exist within the block-detect layer (7,732 list entries vs 7,593 unique) — cosmetic, cascade marks unaffected (reconcile exactly); candidate cleanup in a later UI pass.
+
+§37 closing conditions status: ① cascade STOP-B + overlay smoke ✅ DONE | ② prelim pair (§35.9) — next | ③ §36 re-election — queued.

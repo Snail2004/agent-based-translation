@@ -355,6 +355,77 @@ def test_registry_overlay_resolves_cascade_report_from_manifest(tmp_path):
     assert overlay["meta"]["cascade_status"].startswith("loaded:1")
 
 
+def test_registry_overlay_prefers_materialized_overlay_from_manifest(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="fixture_job")
+    reports_root = tmp_path / "reports"
+    reports_root.mkdir(parents=True)
+    exp_root = reports_root / "exp_fixture"
+    exp_root.mkdir()
+    (exp_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "thesis_report_manifest_v1",
+                "experiment_id": "exp_fixture",
+                "job_id": "fixture_job",
+                "domain": "d2l",
+                "reports": {
+                    "overlay": "overlay.json",
+                    "cascade": "missing-cascade.json",
+                    "score": "missing-score.json",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (exp_root / "overlay.json").write_text(
+        json.dumps(
+            {
+                "meta": {
+                    "source": "materialized_fixture",
+                    "materialized_overlay": {"schema_version": "thesis_materialized_overlay_v1"},
+                },
+                "source": {"glossary_by_id": {}, "entities_by_id": {}},
+                "target_by_config": {
+                    "S0": {
+                        "glossary_by_id": {
+                            "g-runtime": {
+                                "occurrences": [
+                                    {
+                                        "term_id": "g-runtime",
+                                        "block_id": "b001",
+                                        "config": "S0",
+                                        "span": [0, 5],
+                                        "surface": "Agent",
+                                        "mark_source": "cascade_t2",
+                                        "located_by": "code_exact",
+                                    }
+                                ]
+                            }
+                        },
+                        "entities_by_id": {},
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "fixture_job",
+        experiment_id="exp_fixture",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+        cascade_report=exp_root / "missing-cascade.json",
+    )
+
+    assert overlay["meta"]["source"] == "materialized_fixture"
+    assert overlay["meta"]["materialized_loaded_from"].endswith("overlay.json")
+    spans = overlay["target_by_config"]["S0"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert spans[0]["located_by"] == "code_exact"
+
+
 def test_overlay_matches_scorer_forms_with_cross_term_subsumption(tmp_path):
     from services.thesis_overlay import load_registry_overlay
 
