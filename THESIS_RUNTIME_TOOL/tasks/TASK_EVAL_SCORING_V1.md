@@ -58,6 +58,12 @@ Honest limits (state in thesis): round-trip can mask fluent-but-wrong VI (the ba
 (b) Agreement analysis (thesis section, not an afterthought): correlations/rank-agreement among SF-BT, SF-QE, PJ, and TA/TC deltas. Triangulation IS the answer to the advisor's challenge ("how can code score a sentence?"): no proxy is trusted alone; each has a named blind spot covered by another.
 (c) One-button report layout (per advisor's requirement): scores TC/TA/SF-BT/SF-QE + gates + auto-watchlist (§36) with EN–VI evidence pairs from cascade marks; human review remains an OFF-default toggle.
 
+### 5d. Report modes (gold-dependence of the table)
+
+- **Benchmark mode** (gold available, e.g. D2L; 2 arms optional): full table — TC-Occ/TA-Occ lead (post-prelim validation), block-level TC/TA as the $0 deterministic audit twin (labeled "measured conservative lower bound"), SF-BT/SF-QE, PJ if 2 arms, gates + watchlist.
+- **Production mode** (arbitrary book, one-button, NO gold): TA-vs-gold columns DO NOT EXIST. Table = TC-Occ/TC (no external standard needed) + TA-Occ against the book's OWN notebook (label honestly: "tuân thủ từ điển tự xây" — discipline, not external correctness) + SF-BT/SF-QE (both reference-free — the reason CometKiwi was chosen over COMET-22) + HG/SG + §36 watchlist (the only net for consistent-but-wrong when no gold exists).
+- Optional plug-in: user supplies an external glossary/gold file → TA-vs-gold columns light up. Design the report schema with this slot from day one.
+
 ## 6. Literary roadmap (appendix — NOT current scope)
 
 When the pipeline moves to novels (original project root: Treasure Island infra — entities, speaker_turns already in DB), extend rather than replace:
