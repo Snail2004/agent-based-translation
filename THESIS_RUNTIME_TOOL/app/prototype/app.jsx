@@ -5,9 +5,6 @@ const API = window.AILAB_API;
 const STORAGE_DOC = "ailab.doc_id";
 const STORAGE_USER = "ailab.user";
 const STORAGE_CENTER_MODE = "ailab.center_mode";
-const STORAGE_THESIS_EXPERIMENT = "ailab.thesis.experiment_id";
-const STORAGE_THESIS_STAGE = "ailab.thesis.stage";
-const STORAGE_THESIS_CASCADE_REPORT = "ailab.thesis.cascade_report";
 const THESIS_PREFIX = "thesis:";
 const DEFAULT_USER = "U2 · Mai";
 const EDITABLE_META = new Set(["title", "author", "domain", "genre", "source_format", "license", "source_url", "contamination_risk"]);
@@ -38,8 +35,10 @@ function urlParam(names) {
   return "";
 }
 
-function thesisStoredParam(names, storageKey) {
+function thesisScopedStoredParam(jobId, names, suffix) {
   const value = urlParam(names);
+  if (!jobId) return "";
+  const storageKey = `ailab.thesis.${jobId}.${suffix}`;
   if (value) {
     localStorage.setItem(storageKey, value);
     return value;
@@ -47,15 +46,21 @@ function thesisStoredParam(names, storageKey) {
   return localStorage.getItem(storageKey) || "";
 }
 
-function thesisRuntimeParams({ includeCascade = false } = {}) {
+function thesisRuntimeParams(jobId, { includeCascade = false, project = null } = {}) {
   const result = {};
-  const experimentId = thesisStoredParam(["experiment_id", "thesis_experiment_id"], STORAGE_THESIS_EXPERIMENT);
-  const stage = thesisStoredParam(["stage", "thesis_stage"], STORAGE_THESIS_STAGE);
-  const cascadeReport = thesisStoredParam(["cascade_report", "thesis_cascade_report"], STORAGE_THESIS_CASCADE_REPORT);
+  const experimentId = thesisScopedStoredParam(jobId, ["experiment_id", "thesis_experiment_id"], "experiment_id") || project?.experiment_id || "";
+  const stage = thesisScopedStoredParam(jobId, ["stage", "thesis_stage"], "stage");
+  const cascadeReport = thesisScopedStoredParam(jobId, ["cascade_report", "thesis_cascade_report"], "cascade_report");
   if (experimentId) result.experiment_id = experimentId;
   if (stage) result.stage = stage;
   if (includeCascade && cascadeReport) result.cascade_report = cascadeReport;
   return result;
+}
+
+function cssAttrEscape(value) {
+  const raw = String(value || "");
+  if (window.CSS?.escape) return window.CSS.escape(raw);
+  return raw.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
 }
 
 function splitWords(value) {
@@ -198,7 +203,9 @@ function overlayStatusByConfig(groupsByConfig, itemId, bucketName) {
   Object.entries(groupsByConfig || {}).forEach(([config, cfg]) => {
     const bucket = cfg?.[bucketName] || {};
     const spans = bucket[itemId]?.occurrences || bucket[itemId]?.mentions || [];
-    const statuses = spans.map(item => item.status).filter(Boolean);
+    const cascadeSpans = spans.filter(item => String(item.mark_source || "").startsWith("cascade_"));
+    const statusSource = cascadeSpans.length ? cascadeSpans : spans;
+    const statuses = statusSource.map(item => item.status).filter(Boolean);
     if (statuses.length) result[config] = worstOverlayStatus(statuses);
   });
   return result;
@@ -229,6 +236,7 @@ function targetSpansForBlock(blockId, translations, overlay) {
           id: termId,
           status: item.status || "unscored",
           display_status: item.display_status,
+          localization_status: item.localization_status,
           constraint_strength: item.constraint_strength,
           label: `${item.surface || item.matched_form || termId}`,
           surface: item.surface,
@@ -258,6 +266,7 @@ function targetSpansForBlock(blockId, translations, overlay) {
           id: entityId,
           status: item.status || "unscored",
           display_status: item.display_status,
+          localization_status: item.localization_status,
           label: `${item.surface || item.matched_form || entityId}`,
           surface: item.surface,
           matched_form: item.matched_form,
@@ -645,6 +654,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState(null);
   const [activeDocId, setActiveDocId] = useState(localStorage.getItem(STORAGE_DOC) || "");
+  const [focusedTermId, setFocusedTermId] = useState(null);
+  const [focusedTermIndex, setFocusedTermIndex] = useState(0);
+  const [focusedTermCount, setFocusedTermCount] = useState(0);
+  const [focusedTermSurface, setFocusedTermSurface] = useState("");
   const savedAt = useRef(Date.now());
   const saveTimers = useRef({});
   const runLogOffsetRef = useRef(0);
@@ -703,10 +716,16 @@ function App() {
     return adapted;
   }, []);
 
+  const thesisProjectForJob = useCallback((jobId) => {
+    const docId = `${THESIS_PREFIX}${jobId}`;
+    return (projects || []).find(row => row.job_id === jobId || row.doc_id === docId) || null;
+  }, [projects]);
+
   const loadThesisDataset = useCallback(async (jobId, opts = {}) => {
     if (!jobId) return null;
     if (!opts.silent) setLoading(true);
-    const thesisParams = thesisRuntimeParams();
+    const project = opts.project || thesisProjectForJob(jobId);
+    const thesisParams = thesisRuntimeParams(jobId, { project });
     const [dataset, observability] = await Promise.all([
       API.getThesisDataset(jobId, thesisParams),
       API.getThesisObservability(jobId).catch(err => ({
@@ -743,7 +762,7 @@ function App() {
     setBootError(null);
     setLoading(false);
     return adapted;
-  }, []);
+  }, [thesisProjectForJob]);
 
   async function boot() {
     setLoading(true);
@@ -762,7 +781,7 @@ function App() {
       }
       setActiveDocId(chosen.doc_id);
       if (chosen.source === "thesis") {
-        await loadThesisDataset(thesisJobId(chosen.doc_id));
+        await loadThesisDataset(thesisJobId(chosen.doc_id), { project: chosen });
       } else if (chosen.status === "available") {
         await loadDataset(chosen.doc_id);
       } else {
@@ -1142,7 +1161,7 @@ function App() {
     const params = (centerMode === "chapter" || centerMode === "book")
       ? { chapter_id: baseBlock.chapter_id }
       : { block_id: baseBlock.block_id };
-    Object.assign(params, thesisRuntimeParams({ includeCascade: true }));
+    Object.assign(params, thesisRuntimeParams(jobId, { includeCascade: true, project: thesisProjectForJob(jobId) }));
     let cancelled = false;
     API.getThesisRegistryOverlay(jobId, params)
       .then(overlay => {
@@ -1156,7 +1175,7 @@ function App() {
         if (!cancelled) toast("Registry overlay unavailable", "bad", errorMessage(err));
       });
     return () => { cancelled = true; };
-  }, [readOnly, activeDocId, thesisBaseDataset, selectedId, centerMode]);
+  }, [readOnly, activeDocId, thesisBaseDataset, selectedId, centerMode, thesisProjectForJob]);
 
   const blockTerms = useMemo(() => block ? (readOnly ? glossary : glossary.filter(t => (t.occurrences || []).some(o => o.block_id === block.block_id))) : [], [glossary, block, readOnly]);
   const blockEntities = useMemo(() => block ? (readOnly ? entities : entities.filter(e => (e.mentions || []).some(m => m.block_id === block.block_id)
@@ -1264,7 +1283,7 @@ function App() {
     setActiveDocId(docId);
     localStorage.setItem(STORAGE_DOC, docId);
     if (chosen?.source === "thesis") {
-      await loadThesisDataset(thesisJobId(docId));
+      await loadThesisDataset(thesisJobId(docId), { project: chosen });
       setView("workspace");
     } else if (chosen?.status === "available") {
       await loadDataset(docId);
@@ -1873,6 +1892,80 @@ function App() {
   }
 
   function jumpTo(e) { if (e.block_id) { selectBlock(e.block_id); toast(`Jumped to ${e.block_id}`, "info"); } }
+
+  const focusedTermMeta = useMemo(() => {
+    if (!focusedTermId) return null;
+    const term = glossary.find(t => t.term_id === focusedTermId || t.glossary_id === focusedTermId);
+    if (!term) return { id: focusedTermId, source: focusedTermId, target: focusedTermSurface || "", count: focusedTermCount };
+    return {
+      id: focusedTermId,
+      source: term.source_term || focusedTermId,
+      target: focusedTermSurface || term.expected_target || "",
+      count: focusedTermCount,
+    };
+  }, [focusedTermId, glossary, focusedTermCount, focusedTermSurface]);
+
+  const syncFocusedTermDom = useCallback((id = focusedTermId) => {
+    if (!id) {
+      setFocusedTermCount(0);
+      setFocusedTermIndex(0);
+      return [];
+    }
+    const rows = Array.from(document.querySelectorAll(`[data-focus-id="${cssAttrEscape(id)}"]`));
+    setFocusedTermCount(rows.length);
+    if (rows.length && focusedTermIndex >= rows.length) setFocusedTermIndex(0);
+    return rows;
+  }, [focusedTermId, focusedTermIndex]);
+
+  const clearFocusedTerm = useCallback(() => {
+    setFocusedTermId(null);
+    setFocusedTermIndex(0);
+    setFocusedTermCount(0);
+    setFocusedTermSurface("");
+  }, []);
+
+  const focusTermById = useCallback((termId, element = null, { toggle = true } = {}) => {
+    const id = String(termId || "");
+    if (!id) return;
+    if (toggle && focusedTermId === id) {
+      clearFocusedTerm();
+      return;
+    }
+    setFocusedTermId(id);
+    window.requestAnimationFrame(() => {
+      const rows = Array.from(document.querySelectorAll(`[data-focus-id="${cssAttrEscape(id)}"]`));
+      const index = element ? Math.max(0, rows.indexOf(element)) : 0;
+      const targetRow = rows.find(row => row.dataset.focusTarget === "1");
+      const clickedSurface = element?.dataset?.focusTarget === "1" ? element.dataset.focusSurface : "";
+      const displaySurface = clickedSurface || targetRow?.dataset?.focusSurface || "";
+      setFocusedTermCount(rows.length);
+      setFocusedTermIndex(index);
+      setFocusedTermSurface(displaySurface);
+      const target = rows[index] || rows[0];
+      if (target) target.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  }, [clearFocusedTerm, focusedTermId]);
+
+  const focusSpan = useCallback((span, element) => {
+    const id = span?.id || span?.term_id || span?.glossary_id;
+    if (id) focusTermById(id, element);
+  }, [focusTermById]);
+
+  const jumpFocusedTerm = useCallback((delta) => {
+    if (!focusedTermId) return;
+    const rows = syncFocusedTermDom(focusedTermId);
+    if (!rows.length) return;
+    const next = (focusedTermIndex + delta + rows.length) % rows.length;
+    setFocusedTermIndex(next);
+    rows[next].scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [focusedTermId, focusedTermIndex, syncFocusedTermDom]);
+
+  useEffect(() => {
+    if (!focusedTermId) return undefined;
+    const handle = window.setTimeout(() => syncFocusedTermDom(focusedTermId), 0);
+    return () => window.clearTimeout(handle);
+  }, [focusedTermId, blocks, centerMode, selectedId, syncFocusedTermDom]);
+
   function buildQcExport() {
     return {
       kind: "qc_report",
@@ -2062,6 +2155,7 @@ function App() {
         }
       }
       if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter" && !editing) { ev.preventDefault(); markReviewed(); }
+      if (ev.key === "Escape" && focusedTermId) { ev.preventDefault(); clearFocusedTerm(); }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -2161,7 +2255,13 @@ function App() {
           selectedCallId={selectedCallId}
           selectedCallDetail={selectedCallDetail}
           callDetailLoading={callDetailLoading}
-          onSelectCall={setSelectedCallId} />
+          onSelectCall={setSelectedCallId}
+          focusTerm={focusedTermMeta}
+          focusedTermId={focusedTermId}
+          focusedTermIndex={focusedTermIndex}
+          onFocusSpan={focusSpan}
+          onClearFocus={clearFocusedTerm}
+          onFocusJump={jumpFocusedTerm} />
         {centerMode === "preview" ? (
           <PreviewRightPanel docInfo={docInfo} block={block} />
         ) : (
@@ -2172,7 +2272,7 @@ function App() {
               onCreateRelation: createRelation, onUpdateRelation: updateRelation, onDeleteRelation: deleteRelation,
               onUpdateBlockNotes: updateBlockNotes,
               onUpdateReference: updateReference, onCreateReference: createReferenceDraft, onSaveDraft: saveDraft, onMarkReviewedReference: markReviewedReference,
-              onLockReference: lockReference, onUpdateDiscourse: updateDiscourse, onJump: jumpTo, history: historyState }} />
+              onLockReference: lockReference, onUpdateDiscourse: updateDiscourse, onJump: jumpTo, onFocusTerm: focusTermById, history: historyState }} />
         )}
       </div>
 

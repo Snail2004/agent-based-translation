@@ -25,7 +25,7 @@ from services.thesis_readmodel import (
     _rows,
     _translation_to_readmodel,
 )
-from services.thesis_scores import load_scores, resolve_experiment_artifact_path
+from services.thesis_scores import load_scores, resolve_experiment_artifact_path, resolve_experiment_id_for_job
 
 
 
@@ -47,9 +47,14 @@ def load_registry_overlay(
     It never recomputes metrics; score status/forms are copied from reports only.
     """
 
-    if prefer_materialized and experiment_id:
+    effective_experiment_id = experiment_id or resolve_experiment_id_for_job(
+        job_id,
+        reports_root=reports_root or THESIS_REPORTS_ROOT,
+    )
+
+    if prefer_materialized and effective_experiment_id:
         overlay_report = resolve_experiment_artifact_path(
-            experiment_id,
+            effective_experiment_id,
             "overlay",
             reports_root=reports_root or THESIS_REPORTS_ROOT,
         )
@@ -58,7 +63,7 @@ def load_registry_overlay(
 
     blocks, glossary, entities = _load_overlay_inputs(
         job_id,
-        experiment_id=experiment_id,
+        experiment_id=effective_experiment_id,
         stage=stage,
         block_id=block_id,
         chapter_id=chapter_id,
@@ -68,7 +73,7 @@ def load_registry_overlay(
     try:
         scores = load_scores(
             job_id,
-            experiment_id=experiment_id,
+            experiment_id=effective_experiment_id,
             reports_root=reports_root or THESIS_REPORTS_ROOT,
         )
     except ThesisReadModelError as exc:
@@ -80,9 +85,9 @@ def load_registry_overlay(
     target = _build_target_overlay(blocks, glossary, entities, score_index, source)
     cascade_status = "not_requested"
     cascade_audit: dict[str, Any] = {}
-    if not cascade_report and experiment_id:
+    if not cascade_report and effective_experiment_id:
         cascade_report = resolve_experiment_artifact_path(
-            experiment_id,
+            effective_experiment_id,
             "cascade",
             reports_root=reports_root or THESIS_REPORTS_ROOT,
         )
@@ -105,7 +110,7 @@ def load_registry_overlay(
             "cascade_status": cascade_status,
             "cascade_audit": cascade_audit,
             "selected": {
-                "experiment_id": experiment_id,
+                "experiment_id": effective_experiment_id,
                 "stage": stage,
                 "block_id": block_id,
                 "chapter_id": chapter_id,

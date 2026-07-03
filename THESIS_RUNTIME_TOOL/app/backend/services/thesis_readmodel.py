@@ -7,7 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from config import THESIS_JOBS_ROOT
+from config import THESIS_JOBS_ROOT, THESIS_REPORTS_ROOT
 
 
 JOB_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -250,6 +250,23 @@ def _available_runs(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(result, key=lambda r: (str(r.get("experiment_id") or ""), str(r.get("config") or ""), str(r.get("stage") or "")))
 
 
+def _experiment_manifest_for_job(job_id: str, reports_root: Path | None = None) -> tuple[str | None, dict[str, Any]]:
+    root = (reports_root or THESIS_REPORTS_ROOT).resolve()
+    if not root.exists():
+        return None, {}
+    matches: list[tuple[str, dict[str, Any]]] = []
+    for path in sorted(root.glob("*/manifest.json")):
+        try:
+            manifest = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(manifest.get("job_id") or "") == job_id:
+            matches.append((path.parent.name, manifest))
+    if len(matches) != 1:
+        return None, {}
+    return matches[0]
+
+
 def list_thesis_datasets(jobs_root: Path | None = None) -> list[dict[str, Any]]:
     root = (jobs_root or THESIS_JOBS_ROOT).resolve()
     if not root.exists():
@@ -266,6 +283,12 @@ def list_thesis_datasets(jobs_root: Path | None = None) -> list[dict[str, Any]]:
             "source": "thesis",
             "db_path": str(db_path),
         }
+        experiment_id, experiment_manifest = _experiment_manifest_for_job(job_id, reports_root=THESIS_REPORTS_ROOT)
+        if experiment_id:
+            reports = experiment_manifest.get("reports") or {}
+            item["experiment_id"] = experiment_id
+            item["has_score_manifest"] = bool(reports.get("score"))
+            item["has_overlay_manifest"] = bool(reports.get("overlay"))
         try:
             with _connect_readonly(db_path) as con:
                 doc_rows = _rows(con, "documents")

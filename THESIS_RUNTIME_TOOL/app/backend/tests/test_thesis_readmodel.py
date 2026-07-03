@@ -240,6 +240,37 @@ def test_readmodel_keeps_runtime_memory_and_gold_eval_only_separate(tmp_path):
     assert gold_terms[0]["target_term"] not in {term["target_term"] for term in runtime_terms}
 
 
+def test_list_thesis_datasets_attaches_experiment_manifest_metadata(tmp_path, monkeypatch):
+    import json
+
+    import services.thesis_readmodel as readmodel
+
+    create_fixture_db(tmp_path)
+    reports_root = tmp_path / "reports"
+    report_dir = reports_root / "exp_fixture_v2"
+    report_dir.mkdir(parents=True)
+    (report_dir / "manifest.json").write_text(
+        json.dumps({
+            "schema_version": "thesis_report_manifest_v1",
+            "experiment_id": "exp_fixture_v2",
+            "job_id": "fixture_job",
+            "reports": {
+                "score": "metrics.json",
+                "overlay": "overlay.json",
+            },
+        }),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(readmodel, "THESIS_REPORTS_ROOT", reports_root)
+
+    rows = readmodel.list_thesis_datasets(jobs_root=tmp_path)
+    fixture = next(row for row in rows if row["job_id"] == "fixture_job")
+
+    assert fixture["experiment_id"] == "exp_fixture_v2"
+    assert fixture["has_score_manifest"] is True
+    assert fixture["has_overlay_manifest"] is True
+
+
 def test_readmodel_translations_are_keyed_by_config_and_attached_to_blocks(tmp_path):
     from services.thesis_readmodel import load_thesis_dataset
 

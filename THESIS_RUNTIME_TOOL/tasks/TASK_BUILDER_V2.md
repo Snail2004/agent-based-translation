@@ -2529,3 +2529,17 @@ Behavior (frontend-only, read-only, no backend change — marks already carry `i
 5. Tooltip stays functional in focus mode; clicking a DIFFERENT term switches focus to it.
 
 Acceptance: focus `softmax regression` in MLP -> 9 occurrences ringed across panels, others dimmed; NEXT cycles through all 9 in order (S0/S1 scroll in sync to the block); Esc restores normal view; verdict colors unchanged under emphasis.
+
+
+### F1+F2-R+F3 ACCEPTED (Claude verified, 2026-07-03 evening)
+
+Round 1 of F2 was REJECTED on arithmetic evidence: cross-tab showed 100% t2->consistent / 100% t3->localized_only (pure tier rename), zero drift cascade marks; counter-examples gl_bias S0 (bias/độ chệch/độ lệch yet 6/10 green) and gl_backpropagation (11/16 green). CodeX rebuilt per F2-R spec.
+
+Final verification (independent, artifacts + live UI):
+- **F2-R**: cross-tab no longer tier-degenerate (t2: 1754 cons/438 drift/309 loc-only; t3: 1180/1110/176); per-(term,arm) verdict uniformity: 0 violations; canaries all correct — bias S0 DRIFT, backpropagation S0 DRIFT, activation functions S0 CONSISTENT (plural collapsed), activation function S0 DRIFT (bare `hàm` NOT collapsed upward), mlp S1 CONSISTENT (`(mlp)` gloss collapsed). CodeX improved on the spec: containment-collapse is DIRECTIONAL — only longer-superset forms collapse into the majority form; short fragments never collapse upward (fragment-trap §8b honored). Verdict rules: <2 localized occ -> localized_only; ≥2 occ: 1 collapsed form -> consistent, else drift. Labeled TC-Occ-display (display layer only, never a thesis number).
+- Source-panel marks now prefer cascade verdict when the term has cascade coverage (worst-of across arms when arms disagree, e.g. mlp S0 drift + S1 consistent -> source shows drift); legacy fallback otherwise.
+- **F1**: fresh browser session with NO url param: datasets carries experiment_id only for exp_s0s1_full; frontend auto-attaches it to overlay calls (network log verified); other jobs unaffected.
+- **F3**: source-side click now yields chip 1/16 (manual DOM query 16 focus elements); dimming 9,624 marks; Esc clears; chip falls back to glossary canonical when clicked from source side.
+- Tests: 27 passed (re-run by Claude). Overlay regenerated; audit counts unchanged (4,967/7).
+
+Ops reminder recorded twice now: CodeX verify runs leave EXTRA backend processes on :5000 (two rounds: 2 PIDs, then 1 stale) — stale code serves silently. Always `netstat :5000` + kill before browser verification.

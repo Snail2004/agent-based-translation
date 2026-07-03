@@ -426,6 +426,49 @@ def test_registry_overlay_prefers_materialized_overlay_from_manifest(tmp_path):
     assert spans[0]["located_by"] == "code_exact"
 
 
+def test_registry_overlay_auto_resolves_experiment_manifest_by_job_id(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="fixture_job")
+    reports_root = tmp_path / "reports"
+    reports_root.mkdir(parents=True)
+    exp_root = reports_root / "exp_fixture"
+    exp_root.mkdir()
+    (exp_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "thesis_report_manifest_v1",
+                "experiment_id": "exp_fixture",
+                "job_id": "fixture_job",
+                "domain": "d2l",
+                "reports": {
+                    "overlay": "overlay.json",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (exp_root / "overlay.json").write_text(
+        json.dumps(
+            {
+                "meta": {"source": "auto_materialized_fixture"},
+                "source": {"glossary_by_id": {}, "entities_by_id": {}},
+                "target_by_config": {"S0": {"glossary_by_id": {}, "entities_by_id": {}}},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "fixture_job",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+    )
+
+    assert overlay["meta"]["source"] == "auto_materialized_fixture"
+    assert overlay["meta"]["materialized_loaded_from"].endswith("overlay.json")
+
+
 def test_overlay_matches_scorer_forms_with_cross_term_subsumption(tmp_path):
     from services.thesis_overlay import load_registry_overlay
 

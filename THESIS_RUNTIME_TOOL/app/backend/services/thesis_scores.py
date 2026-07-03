@@ -113,6 +113,26 @@ def _load_experiment_manifest(
     return _read_json(path), path
 
 
+def resolve_experiment_id_for_job(
+    job_id: str,
+    *,
+    reports_root: Path | None = None,
+) -> str | None:
+    safe_job = _safe_job_id(job_id)
+    root = (reports_root or THESIS_REPORTS_ROOT).resolve()
+    if not root.exists():
+        return None
+    matches: list[str] = []
+    for path in sorted(root.glob("*/manifest.json")):
+        try:
+            manifest = _read_json(path)
+        except Exception:
+            continue
+        if str(manifest.get("job_id") or "") == safe_job:
+            matches.append(path.parent.name)
+    return matches[0] if len(matches) == 1 else None
+
+
 def _manifest_score_spec(
     experiment_id: str | None,
     *,
@@ -645,7 +665,8 @@ def load_scores(
     safe_job = _safe_job_id(job_id)
     root = (reports_root or THESIS_REPORTS_ROOT).resolve()
 
-    spec = _manifest_score_spec(experiment_id, reports_root=root) if experiment_id else None
+    effective_experiment_id = experiment_id or resolve_experiment_id_for_job(safe_job, reports_root=root)
+    spec = _manifest_score_spec(effective_experiment_id, reports_root=root) if effective_experiment_id else None
     spec = spec or _JOB_REPORT_MAP.get(safe_job)
     if spec is None:
         raise ThesisReadModelError(

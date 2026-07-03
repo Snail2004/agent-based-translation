@@ -448,6 +448,16 @@ def test_d2l_scores_load_from_experiment_manifest(tmp_path):
     assert b_s0["provenance"]["experiment_id"] == "exp_fixture"
 
 
+def test_d2l_scores_auto_resolve_experiment_manifest_by_job_id(tmp_path):
+    from services.thesis_scores import load_scores
+
+    _create_d2l_manifest_fixture(tmp_path, "exp_fixture")
+    data = load_scores("fixture_job", reports_root=tmp_path)
+
+    assert data["meta"]["domain"] == "d2l"
+    assert data["meta"]["report_paths"] == [str(tmp_path / "exp_fixture" / "metrics.json")]
+
+
 def test_d2l_drift_returns_forms_used_from_report(tmp_path):
     """Drift items come FROM report — no recompute."""
     from services.thesis_scores import load_scores

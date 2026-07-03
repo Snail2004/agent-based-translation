@@ -55,7 +55,7 @@ function confidenceValue(value) {
 }
 
 /* ---------- GLOSSARY ---------- */
-function GlossaryTab({ terms, onDeleteTerm, onUpdateTerm }) {
+function GlossaryTab({ terms, onDeleteTerm, onUpdateTerm, onFocusTerm }) {
   const [expanded, setExpanded] = React.useState(terms[0]?.term_id);
   React.useEffect(() => {
     if (terms.length && !terms.some(t => t.term_id === expanded)) setExpanded(terms[0].term_id);
@@ -71,7 +71,10 @@ function GlossaryTab({ terms, onDeleteTerm, onUpdateTerm }) {
         const open = expanded === t.term_id;
         return (
           <div key={t.term_id} className={"card" + (open ? " open" : "")}>
-            <button className="card-head" onClick={() => setExpanded(open ? null : t.term_id)}>
+            <button className="card-head" onClick={() => {
+              setExpanded(open ? null : t.term_id);
+              if (onFocusTerm) onFocusTerm(t.term_id, null, { toggle: false });
+            }}>
               <Ic.chevRight size={11} className="card-caret" style={{ transform: open ? "rotate(90deg)" : "none" }} />
               <span className="card-title mono">{t.source_term || "(new term)"}</span>
               <span className="card-arrow"><Ic.arrowRight size={11} /></span>
@@ -905,7 +908,7 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx }) {
               </button>
               {open && (
                 <div className="rp-content">
-                  {t.id === "glossary" && <GlossaryTab terms={ctx.terms} onDeleteTerm={ctx.onDeleteTerm} onUpdateTerm={ctx.onUpdateTerm} />}
+                  {t.id === "glossary" && <GlossaryTab terms={ctx.terms} onDeleteTerm={ctx.onDeleteTerm} onUpdateTerm={ctx.onUpdateTerm} onFocusTerm={ctx.onFocusTerm} />}
                   {t.id === "entities" && <EntitiesTab entities={ctx.entities} allEntities={ctx.allEntities} block={ctx.block} onUpdateEntity={ctx.onUpdateEntity} onUpdateDiscourse={ctx.onUpdateDiscourse} onDeleteEntity={ctx.onDeleteEntity} />}
                   {t.id === "relations" && <RelationsTab relations={ctx.relations} entities={ctx.allEntities} block={ctx.block}
                     onCreateRelation={ctx.onCreateRelation} onUpdateRelation={ctx.onUpdateRelation} onDeleteRelation={ctx.onDeleteRelation} />}

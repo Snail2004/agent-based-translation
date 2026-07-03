@@ -187,28 +187,51 @@ function SelectionPopover({ rect, onGlossary, onEntity }) {
   );
 }
 
-function SpanText({ text, spans = [], block, onHoverSpan, onLeaveSpan, activeHighlightId }) {
+function spanFocusId(span) {
+  return String(span?.id || span?.term_id || span?.glossary_id || span?.source_term || "");
+}
+
+function SpanText({
+  text, spans = [], block, onHoverSpan, onLeaveSpan, activeHighlightId,
+  focusedTermId, onFocusSpan,
+}) {
   return (
     <>
-      {segmentize(text || "", spans).map((seg, i) =>
-        seg.span
+      {segmentize(text || "", spans).map((seg, i) => {
+        const focusId = seg.span ? spanFocusId(seg.span) : "";
+        const focused = !!focusedTermId && focusId === focusedTermId;
+        const dimmed = !!focusedTermId && !!focusId && focusId !== focusedTermId;
+        return seg.span
           ? <mark key={i}
               className={
                 "hl hl-" + seg.span.kind +
                 (seg.span.stale ? " hl-stale" : "") +
                 (seg.span.status ? " hl-status-" + seg.span.status : "") +
-                (activeHighlightId && activeHighlightId === seg.span.id ? " hl-linked" : "")
+                (activeHighlightId && activeHighlightId === seg.span.id ? " hl-linked" : "") +
+                (focused ? " hl-focus-match" : "") +
+                (dimmed ? " hl-focus-dim" : "")
               }
               aria-label={seg.span.label}
+              data-focus-id={focusId || undefined}
+              data-focus-target={seg.span.target ? "1" : undefined}
+              data-focus-surface={seg.span.surface || seg.text || undefined}
               onMouseEnter={e => onHoverSpan && onHoverSpan(seg.span, block, e.currentTarget.getBoundingClientRect())}
-              onMouseLeave={() => onLeaveSpan && onLeaveSpan()}>{seg.text}</mark>
-          : <span key={i}>{seg.text}</span>
-      )}
+              onMouseLeave={() => onLeaveSpan && onLeaveSpan()}
+              onClick={e => {
+                if (!onFocusSpan) return;
+                e.stopPropagation();
+                onFocusSpan(seg.span, e.currentTarget);
+              }}>{seg.text}</mark>
+          : <span key={i}>{seg.text}</span>;
+      })}
     </>
   );
 }
 
-function TranslationCompare({ translations, block, onHoverSpan, onLeaveSpan, activeHighlightId }) {
+function TranslationCompare({
+  translations, block, onHoverSpan, onLeaveSpan, activeHighlightId,
+  focusedTermId, onFocusSpan,
+}) {
   const entries = Object.entries(translations || {})
     .filter(([, row]) => row && (row.target_text || row.output_text))
     .sort(([a], [b]) => a.localeCompare(b));
@@ -235,6 +258,8 @@ function TranslationCompare({ translations, block, onHoverSpan, onLeaveSpan, act
                 onHoverSpan={onHoverSpan}
                 onLeaveSpan={onLeaveSpan}
                 activeHighlightId={activeHighlightId}
+                focusedTermId={focusedTermId}
+                onFocusSpan={onFocusSpan}
               />
             </div>
           </div>
@@ -820,7 +845,7 @@ function HighlightHoverCard({ hover, linkIndex }) {
 
 function CleanTextSurface({
   block, spans = [], editing, draft, onDraft, onMouseUp, cleanRef, taRef, onAddGlossary, onAddEntity, selection,
-  onHoverSpan, onLeaveSpan, readOnly, activeHighlightId
+  onHoverSpan, onLeaveSpan, readOnly, activeHighlightId, focusedTermId, onFocusSpan
 }) {
   if (editing) {
     return (
@@ -837,6 +862,8 @@ function CleanTextSurface({
         onHoverSpan={onHoverSpan}
         onLeaveSpan={onLeaveSpan}
         activeHighlightId={activeHighlightId}
+        focusedTermId={focusedTermId}
+        onFocusSpan={onFocusSpan}
       />
       {!readOnly && <SelectionPopover rect={selection?.rect}
         onGlossary={onAddGlossary}
@@ -847,7 +874,8 @@ function CleanTextSurface({
 
 function ChapterBlockRow({
   block, spans, reviewed, active, onSelectBlock, onCommitClean,
-  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId
+  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId,
+  focusedTermId, onFocusSpan
 }) {
   const cleanRef = React.useRef(null);
   const taRef = React.useRef(null);
@@ -951,6 +979,8 @@ function ChapterBlockRow({
         onHoverSpan={onHoverSpan}
         onLeaveSpan={onLeaveSpan}
         activeHighlightId={activeHighlightId}
+        focusedTermId={focusedTermId}
+        onFocusSpan={onFocusSpan}
         readOnly={readOnly}
         onAddGlossary={() => { onAddGlossary(block.block_id, sel); clearSelection(); }}
         onAddEntity={() => { onAddEntity(block.block_id, sel); clearSelection(); }}
@@ -961,6 +991,8 @@ function ChapterBlockRow({
         onHoverSpan={onHoverSpan}
         onLeaveSpan={onLeaveSpan}
         activeHighlightId={activeHighlightId}
+        focusedTermId={focusedTermId}
+        onFocusSpan={onFocusSpan}
       />
     </article>
   );
@@ -968,7 +1000,8 @@ function ChapterBlockRow({
 
 function SingleBlockView({
   block, docInfo, reviewed, spans, editing, onEdit, onCommitClean, onCancelEdit,
-  onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId
+  onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId,
+  focusedTermId, onFocusSpan
 }) {
   const cleanRef = React.useRef(null);
   const taRef = React.useRef(null);
@@ -1048,6 +1081,8 @@ function SingleBlockView({
               onHoverSpan={onHoverSpan}
               onLeaveSpan={onLeaveSpan}
               activeHighlightId={activeHighlightId}
+              focusedTermId={focusedTermId}
+              onFocusSpan={onFocusSpan}
               readOnly={readOnly}
               onAddGlossary={() => { onAddGlossary(block.block_id, sel); clearSelection(); }}
               onAddEntity={() => { onAddEntity(block.block_id, sel); clearSelection(); }}
@@ -1058,6 +1093,8 @@ function SingleBlockView({
               onHoverSpan={onHoverSpan}
               onLeaveSpan={onLeaveSpan}
               activeHighlightId={activeHighlightId}
+              focusedTermId={focusedTermId}
+              onFocusSpan={onFocusSpan}
             />
 
             {!editing && !readOnly && (
@@ -1075,7 +1112,8 @@ function SingleBlockView({
 
 function ChapterStream({
   blocks = [], chapters = [], selectedId, review, getSpansForBlock, onSelectBlock, onCommitClean,
-  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId
+  onMarkReviewed, onAddGlossary, onAddEntity, onHoverSpan, onLeaveSpan, readOnly, activeHighlightId,
+  focusedTermId, onFocusSpan
 }) {
   const rows = blocks || [];
   const chapterLookup = React.useMemo(() => {
@@ -1128,6 +1166,8 @@ function ChapterStream({
                 onLeaveSpan={onLeaveSpan}
                 readOnly={readOnly}
                 activeHighlightId={activeHighlightId}
+                focusedTermId={focusedTermId}
+                onFocusSpan={onFocusSpan}
               />
             </React.Fragment>
           );
@@ -1154,6 +1194,35 @@ function contextChip(id, linkIndex) {
   if (chapter) return { kind: "chapter", label: chapter.title || chapter.chapter_title || value, title: value };
   if (value.toLowerCase().startsWith("rel")) return { kind: "relation", label: value, title: value };
   return { kind: "unknown", label: value, title: value };
+}
+
+function FocusTermChip({ term, index = 0, onJump, onClear }) {
+  if (!term?.id) return null;
+  const count = Number(term.count || 0);
+  return (
+    <div className="focus-chip" role="status">
+      <span className="focus-chip-title">
+        <Ic.tag size={12} />
+        <b>{term.source || term.id}</b>
+        {term.target && <><span className="focus-chip-arrow">-></span><span>{term.target}</span></>}
+      </span>
+      <span className="focus-chip-count">{count ? `${Math.min(index + 1, count)}/${count}` : "0/0"}</span>
+      <button className="btn icon-only sm" onClick={() => onJump && onJump(-1)} disabled={!count} aria-label="Previous occurrence">‹</button>
+      <button className="btn icon-only sm" onClick={() => onJump && onJump(1)} disabled={!count} aria-label="Next occurrence"><Ic.chevRight size={12} /></button>
+      <button className="btn icon-only sm" onClick={onClear} aria-label="Clear focus"><Ic.x size={12} /></button>
+    </div>
+  );
+}
+
+function OverlayLegend() {
+  return (
+    <div className="overlay-legend" aria-label="Runtime mark legend">
+      <span><i className="legend-swatch consistent" />consistent</span>
+      <span><i className="legend-swatch drift" />drift</span>
+      <span><i className="legend-swatch localized" />localized only</span>
+      <span><i className="legend-swatch unscored" />unscored</span>
+    </div>
+  );
 }
 
 function addressSummary(address) {
@@ -1787,6 +1856,7 @@ function CenterEditor({
   onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed,
   onAddGlossary, onAddEntity, onPreviewRunChange, readOnly,
   observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall,
+  focusTerm, focusedTermId, focusedTermIndex, onFocusSpan, onClearFocus, onFocusJump,
 }) {
   const [hoverInfo, setHoverInfo] = React.useState(null);
   const activeHighlightId = hoverInfo?.span?.id || null;
@@ -1805,6 +1875,8 @@ function CenterEditor({
         streamLabel={streamLabel} streamCount={streamCount} onNextUnreviewed={onNextUnreviewed}
         onChangeType={onChangeType} onToggleOpening={onToggleOpening}
         onToggleFlag={onToggleFlag} onMarkReviewed={() => onMarkReviewed(block.block_id)} readOnly={readOnly} />
+      <FocusTermChip term={focusTerm} index={focusedTermIndex} onJump={onFocusJump} onClear={onClearFocus} />
+      {readOnly && <OverlayLegend />}
 
       {mode === "cockpit" ? (
         <ObservabilityCockpit
@@ -1841,6 +1913,8 @@ function CenterEditor({
           onHoverSpan={handleHoverSpan}
           onLeaveSpan={handleLeaveSpan}
           activeHighlightId={activeHighlightId}
+          focusedTermId={focusedTermId}
+          onFocusSpan={onFocusSpan}
           readOnly={readOnly}
         />
       ) : (
@@ -1858,6 +1932,8 @@ function CenterEditor({
           onHoverSpan={handleHoverSpan}
           onLeaveSpan={handleLeaveSpan}
           activeHighlightId={activeHighlightId}
+          focusedTermId={focusedTermId}
+          onFocusSpan={onFocusSpan}
           readOnly={readOnly}
         />
       )}

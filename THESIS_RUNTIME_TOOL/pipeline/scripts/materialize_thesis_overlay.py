@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -68,6 +69,63 @@ def _target_rows_for_config(overlay: dict[str, Any], config: str) -> list[dict[s
                 span.setdefault("located_by", "block_detect")
                 rows.append(span)
     return rows
+
+
+def _normalized_surface(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").casefold()).strip()
+
+
+def _contains_as_token_span(container: str, needle: str) -> bool:
+    if not container or not needle or len(needle) > len(container):
+        return False
+    if container == needle:
+        return True
+    if len(needle.split()) < 2:
+        return False
+    pattern = re.compile(rf"(?<!\w){re.escape(needle)}(?!\w)", flags=re.UNICODE)
+    return bool(pattern.search(container))
+
+
+def _collapse_surface_forms(forms: list[str]) -> list[str]:
+    """Collapse plural/annotated variants when one form contains another at token boundaries."""
+
+    reps: list[str] = []
+    for form in sorted({_normalized_surface(item) for item in forms if _normalized_surface(item)}, key=len):
+        if any(_contains_as_token_span(form, rep) or _contains_as_token_span(rep, form) for rep in reps):
+            continue
+        reps.append(form)
+    return reps
+
+
+def _display_verdict_for_cascade_group(spans: list[dict[str, Any]]) -> str:
+    if len(spans) < 2:
+        return "localized_only"
+    forms = _collapse_surface_forms([str(span.get("surface") or "") for span in spans])
+    if len(forms) == 1:
+        return "consistent"
+    return "drift"
+
+
+def _apply_display_statuses(overlay: dict[str, Any]) -> None:
+    for cfg in (overlay.get("target_by_config") or {}).values():
+        for row in (cfg.get("glossary_by_id") or {}).values():
+            groups: dict[str, list[dict[str, Any]]] = {}
+            for span in row.get("occurrences") or []:
+                if not isinstance(span, dict):
+                    continue
+                mark_source = str(span.get("mark_source") or "")
+                if not mark_source.startswith("cascade_"):
+                    continue
+                term_id = str(span.get("term_id") or span.get("id") or row.get("id") or "")
+                if not term_id:
+                    continue
+                groups.setdefault(term_id, []).append(span)
+            for spans in groups.values():
+                verdict = _display_verdict_for_cascade_group(spans)
+                for span in spans:
+                    span["localization_status"] = str(span.get("status") or "")
+                    span["status"] = verdict
+                    span["display_status"] = verdict
 
 
 def _stats_for_config(
@@ -150,6 +208,7 @@ def main() -> int:
         reports_root=args.reports_root,
         prefer_materialized=False,
     )
+    _apply_display_statuses(overlay)
     decisions_by_config = _cascade_decisions_by_config(cascade_report)
     t3_stats = _t3_stats_by_config(cascade_report)
     stats_by_config = {
