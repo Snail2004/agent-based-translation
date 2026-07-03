@@ -2492,3 +2492,12 @@ Committed: materialize script + overlay service/tests + manifest. Overlay artifa
 Known nit (non-blocking, logged): 139 fully-duplicate legacy `surface_form` mark tuples pre-exist within the block-detect layer (7,732 list entries vs 7,593 unique) — cosmetic, cascade marks unaffected (reconcile exactly); candidate cleanup in a later UI pass.
 
 §37 closing conditions status: ① cascade STOP-B + overlay smoke ✅ DONE | ② prelim pair (§35.9) — next | ③ §36 re-election — queued.
+
+
+### §35.15-F1 — follow-up (bundle with prelim overlay pass): experiment binding per job, not global param
+
+Two real user-hit symptoms on 2026-07-03, same root cause (frontend `experiment_id` is a manual URL param persisted GLOBALLY in localStorage):
+1. Opening `exp_s0s1_full` WITHOUT the param → no manifest resolution → score_status job_not_found, cascade not_requested → everything unscored, zero cascade marks (user assumed the feature was broken).
+2. After setting the param once, it leaks into ALL thesis jobs → `d2l_p1` (experiment d2l_p3) filtered by exp_s0s1_builderv2_v1 → 0 translations → S0/S1 panels and runtime marks vanish from a previously-working view.
+
+Fix (small): backend datasets list returns each job's `experiment_id` (or manifest presence); frontend passes it automatically per job; localStorage keyed per job_id if kept at all; URL param demoted to a debug override. One-button product rule: users never supply routing params by hand.
