@@ -2592,3 +2592,32 @@ GO-2 (thay the notebook path cua GO-1, moi thu khac giu nguyen): CodeX chay S35.
 **Ghi chu CodeX "tensor bậc k cao":** dong that o autograd_b030 (S1): "Với `y` và `x` bậc cao hơn và nhiều chiều hơn..." — van doc duoc, xep vao ro PJ/fluency cham sau, khong lien quan B/D.
 
 **Next:** cascade localize prelim (T1 bge-m3 + T2 code + T3 gemma local $0, GPT fallback validator-reject-only ~vai call) -> TC-Occ/TA-Occ CHINH DANH lan dau (predictions P1-P3 EVAL S8) + materialize overlay prelim cho UI (F1 binding da san).
+
+<!-- S35_16_CASCADE_PRELIM_TASK -->
+## 35.16 — TASK for CodeX: cascade localize preliminaries (S0+S1) + materialize overlay prelim
+
+User approved 2026-07-04. Muc dich: (1) marks EN<->VI 1:1 cho prelim tren UI nhu MLP; (2) cung cap decisions de Claude tinh TC-Occ/TA-Occ CHINH DANH lan dau (predictions P1-P3 da dang ky truoc trong TASK_EVAL_SCORING_V1 §8 — CodeX KHONG cham, KHONG doc lai predictions truoc khi chay; chi chay may).
+
+May moc DA PROVEN o §35.10-35.13 — KHONG doi logic cascade/prompt/threshold nao. Chi doi tham so chuong.
+
+### Buoc 1 — Preflight (0 API, 0 local LLM)
+Nhu lenh §35.10 STOP-A nhung:
+- `--chapter preliminaries`
+- `--cache-dir data\eval\embed_cache\cascade_exp_prelim` (MOI — khong dung chung voi mlp)
+- `--notebook data/reports/builder_v2_c35_decollision/notebook_promoted.json` (**GO-2 notebook — BAT BUOC**, khong phai notebook_decollided)
+- `--gold-variants` va cac flag khac y het MLP; `--out-dir dataeports\exp_s0s1_builderv2_v1`; `--llm-cache` dung chung sqlite (key moi theo occ, khong dung do MLP).
+Bao cao: denominator per arm (union pack∪gold — se KHAC 2,487 cua MLP, la con so cua prelim), t2/t3 split, breakdown C0/C1/C2+, embed cache stats. Neu denominator per arm > 3,500 hoac t3_residual > 2,500: STOP hoi lai (sanity — prelim nho hon MLP, khong the lon hon nhieu).
+
+### Buoc 2 — Run that
+- T3 = **local Gemma** nhu §35.12b: `--t3-backend local-lmstudio`, gemma-4-12b, concurrency 3, temp 0, repeat_penalty 1.0, seed 20260612, json_schema. LM Studio phai load san bge-m3 + gemma-4-12b truoc khi chay.
+- GPT fallback CHI khi validator-reject (`--gpt-fallback-on-validation-error`), key thu tu env -> KEY-2 -> KEY-1, cap fallback $0.10 (MLP thuc te ~$0.005), bao ro TUNG call fallback (occ_id + ly do).
+- Uoc thoi gian: MLP 2,473 call ~ 2h21m; prelim residual nho hon -> du kien duoi 1h30. Chay tuan tu S0 roi S1.
+- **Guard bat bien:** workdb + frozen DB mo mode=ro; hash workdb TRUOC == SAU cascade (cascade khong duoc ghi gi vao DB); frozen 64D989 nguyen; workdb hash se KHAC 968CD4EB thoi MLP (da them prelim rows o §35.9 — do la expected, ghi hash moi vao report). Khong log key. Khong hien thi Gemma confidence (non-informative, da chot §35.12).
+
+### Buoc 3 — Materialize overlay prelim
+- `python -m pipeline.scripts.materialize_thesis_overlay --job-id exp_s0s1_full --experiment-id exp_s0s1_builderv2_v1 --chapter-id d2l_preliminaries ...` -> `overlay_preliminaries.json` + per-arm, cung out-dir.
+- Update `manifest.json`: them entry prelim (cascade reports + overlay) ben canh MLP. KHONG dung den entry MLP.
+- Overlay statuses phai qua duong F2-R verdict (TC-Occ-display directional collapse) nhu MLP — khong duoc quay ve tier-rename.
+
+### Buoc 4 — STOP
+Khong score, khong commit, khong doc P1-P3. Bao cao: per-arm denominator/resolved_by/masquerade/validation_error/fallback calls/elapsed; duong dan artifacts; audit merge (loaded/skipped_by_reason/deduped/cross_term) cua overlay prelim; xac nhan manifest. Claude se: full-sweep verify decisions-vs-workdb (nhu verify_stop_b), recount headline, tinh TC-Occ/TA-Occ chinh danh + doi chieu P1-P3 (co fragment filter theo EVAL §8), browser smoke UI prelim, roi moi commit.
