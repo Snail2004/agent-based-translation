@@ -2557,3 +2557,17 @@ User question resolved before GO: "co can chay lai Builder cho preliminaries kho
 - preflight_preliminaries.json: experiment_id/notebook/budget 1500/45 windows/348 blocks khop task; zero_api=true; frozen hash before==after.
 
 GO: CodeX thuc thi S35.9 dung nguyen van (S0 replay-cache truoc, S1 sau; nominal ~$0.10-0.15, cap $0.762, abort neu incremental > $0.40). STOP sau run, KHONG score, KHONG commit. Claude cham 0-API (S35.8 command, chapters d2l_preliminaries) + doi chieu pre-registered expectations trong S35.9. Day cung la lan DAU TC-Occ/TA-Occ chay chinh danh (EVAL S8) — nhung chi SAU khi headline B/D v3 duoc cham va ghi nhan truoc.
+
+<!-- S35_9_GO2 -->
+### 35.9-GO-2 — ERRATUM: notebook prelim phai la notebook_promoted.json (CodeX catch, Claude verified, 2026-07-03)
+
+CodeX phat hien TRUOC khi chay prelim (chua co output nao duoc nhin): GO-1 pin `builder_v2_c35_decollision/notebook_decollided.json` — day la artifact TRUOC S29. Claude verify doc lap tren file:
+- prelim decollided: KHONG co `ledger_promotion_version`; MLP decollided: CO `c4_keep_source_v1` (S29 inline) -> hai chuong lech pipeline stage neu chay theo GO-1. CONFIRMED.
+- `notebook_promoted.json` sha256 557fb83eced6b2a2... (khop so CodeX). Diff vs decollided = 17 entries nhung CHI 1 doi canonical: `gradient` "đạo hàm riêng" -> "gradient" (audit polysemy->keep, injection context_sensitive->translate, inject_as_hard_canonical=true). 16 entry con lai = metadata (don `decollision` ve null; ghi `ledger_promotion` blocked/held cho one/shape/tensor — dung 3-gate S29: promote 1 / block 2 / hold 1). CodeX noi "khac dung 1 entry" — dung ve NGU NGHIA, thuc te 17 entry cham metadata.
+- He qua pack (CodeX chua neu): gradient len hard -> pack 197 hard + 26 preserve + 36 soft = 259 (tong khong doi).
+
+Phan xu ve freeze S35.2: day la WIRING BUG trong chinh ban pin (pin mau thuan voi pipeline policy da khoa C2->C3->C3.5+S29->S30; MLP da chay voi S29). Sua truoc khi chay chuong bi anh huong, chua nhin ket qua prelim nao -> KHONG phai tuning-on-test; giu nguyen pre-registered expectations. Chay theo GO-1 moi la sai (nhoi loi gradient da biet vao S1 prelim, hai chuong khac policy).
+
+Preflight v2 (Claude chay, 0-API): `preflight_preliminaries_v2.json` — notebook_promoted, 45 windows / 348 blocks, pack 197/26/36, S1 prompt est 55,904 tok (cu 55,992 — chenh khong dang ke), frozen hash before==after 64D989, zero_api=true.
+
+GO-2 (thay the notebook path cua GO-1, moi thu khac giu nguyen): CodeX chay S35.9 voi `--memory-notebook data/reports/builder_v2_c35_decollision/notebook_promoted.json`, doi chieu preflight_preliminaries_v2.json. Cost/cap/abort/STOP rules y nguyen GO-1.
