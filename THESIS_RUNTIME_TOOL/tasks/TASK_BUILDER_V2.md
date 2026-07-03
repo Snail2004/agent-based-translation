@@ -2571,3 +2571,24 @@ Phan xu ve freeze S35.2: day la WIRING BUG trong chinh ban pin (pin mau thuan vo
 Preflight v2 (Claude chay, 0-API): `preflight_preliminaries_v2.json` — notebook_promoted, 45 windows / 348 blocks, pack 197/26/36, S1 prompt est 55,904 tok (cu 55,992 — chenh khong dang ke), frozen hash before==after 64D989, zero_api=true.
 
 GO-2 (thay the notebook path cua GO-1, moi thu khac giu nguyen): CodeX chay S35.9 voi `--memory-notebook data/reports/builder_v2_c35_decollision/notebook_promoted.json`, doi chieu preflight_preliminaries_v2.json. Cost/cap/abort/STOP rules y nguyen GO-1.
+
+<!-- S35_9_RESULTS -->
+### 35.9-RESULTS — prelim pair verified + scored 0-API (Claude, 2026-07-04)
+
+**Verify run (doc lap tren workdb, truoc khi cham):** frozen DB 64D98965 nguyen ven; workdb = 823 rows/arm (348 prelim moi + 475 MLP cu, digest MLP outputs 6afc26b5 — khong bi dung); 0 output rong; hygiene still_bad=0 (1 flagged/1 reask/1 fixed moi arm); calls 46 = 45 window + 1 reask; cost incremental ~$0.0856 << cap $0.762. Report CodeX khop workdb 100%.
+
+**Diem (metric v3 khoa, lenh S35.8, metrics_preliminaries.json):**
+| | S0 | S1 | delta |
+|---|---|---|---|
+| B/TA (gold, 497 occ) | 0.6660 (331/497) | 0.6036 (300/497) | **-0.0624** |
+| D/TC (95 hard terms) | 0.8000 | 0.8526 | **+0.0526** |
+
+**Doi chieu pre-registered (S35.9):** D: S1>S0 — **PASS** (+0.0526, cung huong MLP +0.066). Hygiene still_bad 0 — PASS. Windows skipped 0 — PASS. B "small positive move" — **FAIL** (-0.062). Ghi trung thuc, KHONG sua metric, KHONG doi headline.
+
+**Chan doan B (diagnostic, tu occurrence_audit — khong phai patch):** cu roi do MOT term chi phoi: `vector` (80 occ = 16.1% toan mau so). Gold style-guide d2l-vn: vector -> "vector" (giu nguyen). Notebook Builder: vector -> "vectơ" (chinh ta VN, hard/high). S0 tron lan vector 74 / vectơ 35 -> duoc 53/80 credit; S1 vang loi tu dien vectơ 107 / vector 2 -> 2/80. Loai rieng vector: S0 278/417=0.6667, S1 298/417=**0.7146** (+0.048 — dung pattern MLP). Guong doi xung cung ton tai: `elementwise` notebook TRUNG gold -> S0 0/22 vs S1 19/22 (+19). Co che: B do muc DONG THUAN notebook-vs-gold xuyen qua su vang loi cua S1; tren prelim mot bat dong chinh ta tan suat cao lam lech ca headline. Day la truong hop "gold = style guide" (S33) co dong tai 1 term, va la dung input cho S36 re-election + cap TA-Occ-vs-own-notebook (EVAL S8, production mode "tuan thu tu dien tu xay").
+
+**Gate `scope_equals_translation_runs=false` (ca 2 arm):** BENIGN — verified code (d2l_translate_score.py ~776): gate so scope_ids (348 block prelim) voi TOAN BO outputs cua experiment (823 gom ca MLP). Tu khi workdb chua 2 chuong, moi lan cham per-chapter deu false; hai arm cung scope nen so sanh van cong bang. Khong sua gate giua experiment; ghi nhan de bao cao.
+
+**Ghi chu CodeX "tensor bậc k cao":** dong that o autograd_b030 (S1): "Với `y` và `x` bậc cao hơn và nhiều chiều hơn..." — van doc duoc, xep vao ro PJ/fluency cham sau, khong lien quan B/D.
+
+**Next:** cascade localize prelim (T1 bge-m3 + T2 code + T3 gemma local $0, GPT fallback validator-reject-only ~vai call) -> TC-Occ/TA-Occ CHINH DANH lan dau (predictions P1-P3 EVAL S8) + materialize overlay prelim cho UI (F1 binding da san).
