@@ -664,6 +664,24 @@ function runtimeFormsLabel(span, item) {
   return Object.keys(byConfig).length ? compactList(byConfig) : "unscored";
 }
 
+function locatedByLabel(span) {
+  const value = span?.located_by || "";
+  if (value === "code_exact") return "code exact";
+  if (value === "ai_locate_local") return "AI locate (Gemma)";
+  if (value === "ai_locate_fallback") return "AI locate (GPT fallback)";
+  if (value === "block_detect") return "block-level detect";
+  return compactList(value);
+}
+
+function markFlagLabel(span) {
+  const flags = [];
+  if (span?.masquerade_suspect) flags.push("masquerade_suspect");
+  if (span?.clean_text_fallback) flags.push("clean_text_fallback");
+  if (span?.gpt_fallback) flags.push("gpt_fallback");
+  if (span?.cross_term_overlap) flags.push("cross_term_overlap");
+  return flags.join(", ");
+}
+
 function hoverCardPosition(rect) {
   if (!rect) return { top: 0, left: 0, above: false };
   const width = 328;
@@ -705,6 +723,8 @@ function HighlightHoverCard({ hover, linkIndex }) {
           {runtime ? (
             <>
               <span>forms_used</span><b>{runtimeFormsLabel(span, entity)}</b>
+              {span.located_by && <><span>located by</span><b>{locatedByLabel(span)}</b></>}
+              {markFlagLabel(span) && <><span>flags</span><b>{markFlagLabel(span)}</b></>}
               <span>provenance</span><b>{entity.provenance?.label || span.provenance || "agent-built"}</b>
               <span>surface</span><b>{compactList(span.surface || span.matched_form)}</b>
             </>
@@ -757,6 +777,8 @@ function HighlightHoverCard({ hover, linkIndex }) {
           {runtime ? (
             <>
               <span>forms_used</span><b>{runtimeFormsLabel(span, term)}</b>
+              {span.located_by && <><span>located by</span><b>{locatedByLabel(span)}</b></>}
+              {markFlagLabel(span) && <><span>flags</span><b>{markFlagLabel(span)}</b></>}
               <span>tier</span><b>{compactList(span.constraint_strength || term.constraint_strength)}</b>
               <span>scope</span><b>{compactList(term.chapter_scope)}</b>
               <span>provenance</span><b>{term.provenance?.label || span.provenance || "agent-built"}</b>

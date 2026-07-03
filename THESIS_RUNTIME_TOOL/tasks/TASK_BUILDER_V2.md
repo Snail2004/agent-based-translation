@@ -2458,6 +2458,16 @@ LOCKED design decisions (do not re-litigate in implementation):
 - Frontend passes `cascade_report` + `experiment_id` for the exp job; backend applies dedupe rule (1); manifest mechanism (3) replaces `_JOB_REPORT_MAP`.
 - Acceptance: UI shows cascade marks for MLP on BOTH arms; per-`mark_source` counts reported and reconciled against cascade decisions (S0: t2 1167 / t3 1315; S1: t2 1334 / t3 1151); zero t2/t3 same-occ collisions (assert ran); scorer layer loads metrics_mlp.json via manifest. STOP — report counts to Claude, no commit.
 
+### STOP-C1 ACCEPTED (Claude verified, 2026-07-03)
+
+Round 1 caught one real bug: heuristic `_cascade_decisions` walker scooped `/t3_run_stats/*/sample_marks` (10 display-sample records, occ_ids duplicating real decisions) → opaque skipped:17 that didn't reconcile (4,967+17 ≠ 4,974). Harmless today only because samples lack `config` — a future format tweak would have made silent duplicate marks with no collision alarm. CodeX fixed: strict schema-only extractor (top-level `decisions` | `reports/<config>/decisions`), `skipped_by_reason`, sample_marks regression test, real-overlap dedupe test, gpt_fallback marks-vs-calls audit note.
+
+Claude verification (independent, real artifacts): re-ran pytest (20 passed); composed the real overlay via `load_registry_overlay` directly → audit identical to CodeX's (loaded 4,967 / skipped 7 = not_rendered only; t2 2,501; t3 2,466; located_by local 2,437 + fallback 29 = 31 calls − 2 not_rendered; masquerade 42/47; clean_text 2/arm). Dedupe now REAL: 2,925 legacy same-term overlapping spans replaced (was 0 — legacy occurrences carried no `id`; fixed via bucket term-id); post-merge invariant checked by independent scan: 0 same-term surface_form spans overlapping cascade spans; survivors S0 1,376 / S1 1,389 = legacy-only coverage, per design. Cross-term overlaps 95 kept + flagged.
+
+Numbers with two truths (documented): gpt_fallback = 18/13 CALLS (§35.13) vs 16/13 MARKS (2 S0 fallback calls concluded not_rendered — nothing to draw).
+
+Browser visual smoke deliberately deferred to STOP-C2 acceptance (Claude runs it on the materialized artifact).
+
 ### STOP-C2 — materialize UI-ready overlay
 - Emit `overlay_mlp_S0.json` / `overlay_mlp_S1.json` (UI-ready): spans merged + deduped + priority applied; the 4 clean-text-fallback offsets resolved ONCE offline (verified artifact == displayed artifact, byte-for-byte); every mark carries `located_by`, flags, `occ_id`, `term_id`.
 - Audit stats block inside each file: counts per located_by, deduped-surface_form count, cross-term overlap count (flagged, kept), clean_text_fallback count (expect 2/arm), not_rendered count (5 S0 / 2 S1), gpt_fallback count (18 S0 / 13 S1).

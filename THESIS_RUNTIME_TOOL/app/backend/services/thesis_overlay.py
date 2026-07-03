@@ -25,7 +25,7 @@ from services.thesis_readmodel import (
     _rows,
     _translation_to_readmodel,
 )
-from services.thesis_scores import load_scores
+from services.thesis_scores import load_scores, resolve_experiment_artifact_path
 
 
 
@@ -56,7 +56,11 @@ def load_registry_overlay(
     )
     score_status = "loaded"
     try:
-        scores = load_scores(job_id, reports_root=reports_root or THESIS_REPORTS_ROOT)
+        scores = load_scores(
+            job_id,
+            experiment_id=experiment_id,
+            reports_root=reports_root or THESIS_REPORTS_ROOT,
+        )
     except ThesisReadModelError as exc:
         scores = {"drift": []}
         score_status = f"unavailable:{exc.code}"
@@ -65,13 +69,22 @@ def load_registry_overlay(
     score_index = _score_index(scores.get("drift") or [])
     target = _build_target_overlay(blocks, glossary, entities, score_index, source)
     cascade_status = "not_requested"
+    cascade_audit: dict[str, Any] = {}
+    if not cascade_report and experiment_id:
+        cascade_report = resolve_experiment_artifact_path(
+            experiment_id,
+            "cascade",
+            reports_root=reports_root or THESIS_REPORTS_ROOT,
+        )
     if cascade_report:
-        cascade_status = _merge_cascade_marks(
+        cascade_result = _merge_cascade_marks(
             target,
             blocks,
             glossary,
             cascade_report,
         )
+        cascade_status = str(cascade_result.get("status") or "unknown")
+        cascade_audit = dict(cascade_result.get("audit") or {})
 
     return {
         "meta": {
@@ -80,6 +93,7 @@ def load_registry_overlay(
             "read_only": True,
             "score_status": score_status,
             "cascade_status": cascade_status,
+            "cascade_audit": cascade_audit,
             "selected": {
                 "experiment_id": experiment_id,
                 "stage": stage,
@@ -451,6 +465,7 @@ def _target_candidate(
         "scored": bool(scored),
         "kind": kind,
         "mark_source": "surface_form",
+        "located_by": "block_detect",
         "provenance": "translation_runs+score_report" if scored else "translation_runs+runtime_memory",
     }
 
@@ -460,52 +475,166 @@ def _merge_cascade_marks(
     blocks: list[dict[str, Any]],
     glossary: list[dict[str, Any]],
     cascade_report: str | Path,
-) -> str:
+) -> dict[str, Any]:
     path = Path(cascade_report)
     if not path.exists():
-        return "unavailable:not_found"
+        return {"status": "unavailable:not_found", "audit": {}}
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:
-        return f"unavailable:invalid_json:{type(exc).__name__}"
+        return {"status": f"unavailable:invalid_json:{type(exc).__name__}", "audit": {}}
 
     block_targets = _translated_text_by_config_block(blocks)
     glossary_lookup = _glossary_lookup_by_source(glossary)
-    added = 0
-    skipped = 0
+    cascade_marks: list[dict[str, Any]] = []
+    occ_sources: dict[str, str] = {}
+    audit = {
+        "loaded": 0,
+        "skipped": 0,
+        "skipped_by_reason": {},
+        "deduped_surface_form": 0,
+        "cross_term_overlaps": 0,
+        "by_mark_source": {},
+        "by_located_by": {},
+        "notes": {
+            "gpt_fallback": "Counts rendered overlay marks only; fallback calls that concluded not_rendered have no span to display.",
+        },
+    }
+
     for decision in _cascade_decisions(payload):
         mark = _cascade_mark_from_decision(decision, block_targets, glossary_lookup)
         if mark is None:
-            skipped += 1
+            _increment_cascade_skip(audit, str(decision.get("_cascade_skip_reason") or "unlocatable"))
             continue
+        occ_id = str(mark.get("occ_id") or "")
+        mark_source = str(mark.get("mark_source") or "")
+        if occ_id:
+            previous = occ_sources.get(occ_id)
+            if previous and previous != mark_source:
+                raise ThesisReadModelError(
+                    "cascade_tier_collision",
+                    f"Cascade report contains conflicting tiers for occurrence {occ_id}.",
+                    500,
+                )
+            occ_sources[occ_id] = mark_source
+        cascade_marks.append(mark)
+        audit["loaded"] += 1
+        audit["by_mark_source"][mark_source] = audit["by_mark_source"].get(mark_source, 0) + 1
+        located_by = str(mark.get("located_by") or "")
+        audit["by_located_by"][located_by] = audit["by_located_by"].get(located_by, 0) + 1
+
+    _flag_cross_term_cascade_overlaps(cascade_marks, audit)
+
+    added = 0
+    for mark in cascade_marks:
         config = str(mark.get("config") or "")
         term_id = str(mark.get("id") or "")
         if not config or not term_id:
-            skipped += 1
+            _increment_cascade_skip(audit, "missing_mark_key")
             continue
         config_bucket = target_by_config.setdefault(config, {"glossary_by_id": {}, "entities_by_id": {}})
         glossary_bucket = config_bucket.setdefault("glossary_by_id", {})
         row = glossary_bucket.setdefault(term_id, {"occurrences": [], "source": "cascade_overlay"})
-        row.setdefault("occurrences", []).append(mark)
+        occurrences = list(row.setdefault("occurrences", []))
+        kept: list[dict[str, Any]] = []
+        for existing in occurrences:
+            if _cascade_replaces_surface_form(existing, mark, term_id):
+                audit["deduped_surface_form"] += 1
+                continue
+            kept.append(existing)
+        kept.append(mark)
+        row["occurrences"] = kept
         row["occurrences"] = sorted(
             row["occurrences"],
             key=lambda item: (str(item.get("block_id") or ""), int((item.get("span") or [0, 0])[0]), int((item.get("span") or [0, 0])[1])),
         )
         added += 1
-    return f"loaded:{added}:skipped:{skipped}"
+    return {"status": f"loaded:{added}:skipped:{audit['skipped']}", "audit": audit}
+
+
+def _increment_cascade_skip(audit: dict[str, Any], reason: str) -> None:
+    reason = reason or "unknown"
+    audit["skipped"] += 1
+    skipped_by_reason = audit.setdefault("skipped_by_reason", {})
+    skipped_by_reason[reason] = skipped_by_reason.get(reason, 0) + 1
+
+
+def _cascade_replaces_surface_form(existing: dict[str, Any], mark: dict[str, Any], bucket_term_id: str) -> bool:
+    if existing.get("mark_source") != "surface_form":
+        return False
+    existing_id = str(existing.get("id") or bucket_term_id or "")
+    if existing_id != str(mark.get("id") or ""):
+        return False
+    if str(existing.get("block_id") or "") != str(mark.get("block_id") or ""):
+        return False
+    if str(existing.get("config") or "") != str(mark.get("config") or ""):
+        return False
+    return _spans_overlap(existing.get("span"), mark.get("span"))
+
+
+def _spans_overlap(left: Any, right: Any) -> bool:
+    try:
+        a0, a1 = int(left[0]), int(left[1])
+        b0, b1 = int(right[0]), int(right[1])
+    except Exception:
+        return False
+    return a0 < b1 and b0 < a1
+
+
+def _locate_markdown_clean_quote(target_text: str, quote: str) -> tuple[int, int] | None:
+    if not target_text or not quote:
+        return None
+    clean_chars: list[str] = []
+    index_map: list[int] = []
+    for idx, char in enumerate(target_text):
+        if char in {"*", "_", "`"}:
+            continue
+        clean_chars.append(char)
+        index_map.append(idx)
+    clean_text = "".join(clean_chars)
+    start = clean_text.find(quote)
+    if start < 0:
+        return None
+    end = start + len(quote)
+    if end <= start or end > len(index_map):
+        return None
+    raw_start = index_map[start]
+    raw_end = index_map[end - 1] + 1
+    while raw_start > 0 and target_text[raw_start - 1] in {"*", "_", "`"}:
+        raw_start -= 1
+    while raw_end < len(target_text) and target_text[raw_end] in {"*", "_", "`"}:
+        raw_end += 1
+    return raw_start, raw_end
+
+
+def _flag_cross_term_cascade_overlaps(marks: list[dict[str, Any]], audit: dict[str, Any]) -> None:
+    by_block: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for mark in marks:
+        by_block[(str(mark.get("config") or ""), str(mark.get("block_id") or ""))].append(mark)
+    for rows in by_block.values():
+        rows = sorted(rows, key=lambda item: (int((item.get("span") or [0, 0])[0]), int((item.get("span") or [0, 0])[1])))
+        for idx, left in enumerate(rows):
+            for right in rows[idx + 1:]:
+                if int((right.get("span") or [0, 0])[0]) >= int((left.get("span") or [0, 0])[1]):
+                    break
+                if str(left.get("id") or "") == str(right.get("id") or ""):
+                    continue
+                if _spans_overlap(left.get("span"), right.get("span")):
+                    left["cross_term_overlap"] = True
+                    right["cross_term_overlap"] = True
+                    audit["cross_term_overlaps"] += 1
 
 
 def _cascade_decisions(payload: Any) -> list[dict[str, Any]]:
     if isinstance(payload, dict):
-        if isinstance(payload.get("decisions"), list):
-            return [item for item in payload["decisions"] if isinstance(item, dict)]
         result: list[dict[str, Any]] = []
-        for value in payload.values():
-            if isinstance(value, dict):
-                result.extend(_cascade_decisions(value))
-            elif isinstance(value, list) and value and all(isinstance(item, dict) for item in value):
-                if any("occ_id" in item or "block_id" in item for item in value):
-                    result.extend(value)
+        if isinstance(payload.get("decisions"), list):
+            result.extend(item for item in payload["decisions"] if isinstance(item, dict))
+        reports = payload.get("reports")
+        if isinstance(reports, dict):
+            for report in reports.values():
+                if isinstance(report, dict) and isinstance(report.get("decisions"), list):
+                    result.extend(item for item in report["decisions"] if isinstance(item, dict))
         return result
     return []
 
@@ -519,29 +648,48 @@ def _cascade_mark_from_decision(
     block_id = str(decision.get("block_id") or "")
     source_term = str(decision.get("source_term") or "")
     if not config or not block_id or not source_term:
-        return None
+        return _skip_cascade_decision(decision, "missing_required_field")
     target_text = block_targets.get((config, block_id), "")
     if not target_text:
-        return None
+        return _skip_cascade_decision(decision, "missing_target_text")
 
     span: tuple[int, int] | None = None
     mark_source = ""
-    if _has_int_span(decision.get("target_start"), decision.get("target_end")):
+    located_by = ""
+    resolved_by = str(decision.get("resolved_by") or "")
+    is_t3 = resolved_by.startswith("t3") or bool(decision.get("target_quote"))
+    is_fallback = bool(decision.get("t3_fallback_cache_key") or decision.get("t3_fallback_usage"))
+    if is_t3:
+        if _has_int_span(decision.get("target_start"), decision.get("target_end")):
+            start = int(decision["target_start"])
+            end = int(decision["target_end"])
+            if 0 <= start < end <= len(target_text):
+                span = (start, end)
+        else:
+            quote = str(decision.get("target_quote_clean") or decision.get("target_quote") or "").strip()
+            left_context = str(decision.get("left_context") or "")
+            if quote:
+                located = _locate_quote_span_in_region(target_text, quote, left_context)
+                if located[0] is not None and located[1] is not None:
+                    span = (int(located[0]), int(located[1]))
+                else:
+                    fallback = _locate_markdown_clean_quote(target_text, quote)
+                    if fallback is not None:
+                        span = fallback
+                        decision["clean_text_fallback"] = True
+        if span is not None:
+            mark_source = "cascade_t3_llm"
+            located_by = "ai_locate_fallback" if is_fallback else "ai_locate_local"
+    elif _has_int_span(decision.get("target_start"), decision.get("target_end")):
         start = int(decision["target_start"])
         end = int(decision["target_end"])
         if 0 <= start < end <= len(target_text):
             span = (start, end)
             mark_source = "cascade_t2"
-    elif str(decision.get("resolved_by") or "").startswith("t3") or decision.get("target_quote"):
-        quote = str(decision.get("target_quote_clean") or decision.get("target_quote") or "").strip()
-        left_context = str(decision.get("left_context") or "")
-        if quote:
-            located = _locate_quote_span_in_region(target_text, quote, left_context)
-            if located[0] is not None and located[1] is not None:
-                span = (int(located[0]), int(located[1]))
-                mark_source = "cascade_t3_llm"
+            located_by = "code_exact"
     if span is None or not mark_source:
-        return None
+        reason = "not_rendered" if str(decision.get("decision") or "") == "not_rendered" else "unlocatable"
+        return _skip_cascade_decision(decision, reason)
 
     term = glossary_lookup.get(_norm_key(source_term)) or {}
     term_id = str(term.get("term_id") or term.get("glossary_id") or decision.get("term_id") or source_term)
@@ -561,10 +709,19 @@ def _cascade_mark_from_decision(
         "scored": False,
         "kind": "glossary",
         "mark_source": mark_source,
+        "located_by": located_by,
         "provenance": "cascade_report",
         "source_term": source_term,
         "occ_id": decision.get("occ_id"),
+        "masquerade_suspect": bool(decision.get("masquerade_suspect")),
+        "clean_text_fallback": bool(decision.get("clean_text_fallback")),
+        "gpt_fallback": bool(decision.get("t3_fallback_cache_key") or decision.get("t3_fallback_usage")),
     }
+
+
+def _skip_cascade_decision(decision: dict[str, Any], reason: str) -> None:
+    decision["_cascade_skip_reason"] = reason
+    return None
 
 
 def _has_int_span(start: Any, end: Any) -> bool:

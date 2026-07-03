@@ -349,6 +349,24 @@ def _create_d2l_fixture(reports_root: Path) -> None:
         json.dump(D2L_REPORT, fh)
 
 
+def _create_d2l_manifest_fixture(reports_root: Path, experiment_id: str = "exp_fixture") -> None:
+    exp_root = reports_root / experiment_id
+    exp_root.mkdir(parents=True, exist_ok=True)
+    with open(exp_root / "metrics.json", "w", encoding="utf-8") as fh:
+        json.dump({**D2L_REPORT, "experiment_id": experiment_id}, fh)
+    with open(exp_root / "manifest.json", "w", encoding="utf-8") as fh:
+        json.dump(
+            {
+                "schema_version": "thesis_report_manifest_v1",
+                "experiment_id": experiment_id,
+                "job_id": "fixture_job",
+                "domain": "d2l",
+                "reports": {"score": "metrics.json"},
+            },
+            fh,
+        )
+
+
 def _create_ti_fixture(reports_root: Path) -> None:
     reports_root.mkdir(parents=True, exist_ok=True)
     with open(reports_root / "s0_pilot_consistency.json", "w", encoding="utf-8") as fh:
@@ -415,6 +433,19 @@ def test_d2l_headline_has_provenance(tmp_path):
     assert d_s1["method"] == "block_surface_v2_2"
     assert d_s1["alignment"] is False
     assert d_s1["headline_ready"] is False
+
+
+def test_d2l_scores_load_from_experiment_manifest(tmp_path):
+    from services.thesis_scores import load_scores
+
+    _create_d2l_manifest_fixture(tmp_path, "exp_fixture")
+    data = load_scores("fixture_job", experiment_id="exp_fixture", reports_root=tmp_path)
+
+    assert data["meta"]["read_only"] is True
+    assert data["meta"]["domain"] == "d2l"
+    assert data["meta"]["report_paths"] == [str(tmp_path / "exp_fixture" / "metrics.json")]
+    b_s0 = next(h for h in data["headline"] if h["name"] == "B_tar_vs_gold_S0")
+    assert b_s0["provenance"]["experiment_id"] == "exp_fixture"
 
 
 def test_d2l_drift_returns_forms_used_from_report(tmp_path):

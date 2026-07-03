@@ -183,6 +183,175 @@ def test_registry_overlay_adds_display_only_cascade_marks(tmp_path):
     assert cascade_spans[0]["span"] == [6, 15]
     assert cascade_spans[0]["surface"] == "xuất hiện"
     assert cascade_spans[0]["provenance"] == "cascade_report"
+    assert cascade_spans[0]["located_by"] == "code_exact"
+    assert overlay["meta"]["cascade_status"].startswith("loaded:1")
+    assert overlay["meta"]["cascade_audit"]["by_mark_source"] == {"cascade_t2": 1}
+
+
+def test_registry_overlay_ignores_summary_sample_marks_and_counts_skip_reasons(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    reports_root = tmp_path / "reports"
+    _write_d2l_report(reports_root)
+    cascade_report = tmp_path / "cascade-summary.json"
+    cascade_report.write_text(
+        json.dumps(
+            {
+                "reports": {
+                    "S0": {
+                        "decisions": [
+                            {
+                                "occ_id": "S0:b001:registry:agent:0",
+                                "config": "S0",
+                                "block_id": "b001",
+                                "source_term": "agent",
+                                "resolved_by": "t2_credit",
+                                "decision": "rendered",
+                                "target_start": 6,
+                                "target_end": 15,
+                            },
+                            {
+                                "occ_id": "S0:b001:registry:agent:1",
+                                "config": "S0",
+                                "block_id": "b001",
+                                "source_term": "agent",
+                                "decision": "not_rendered",
+                            },
+                        ]
+                    }
+                },
+                "t3_run_stats": {
+                    "S0": {
+                        "sample_marks": [
+                            {
+                                "occ_id": "S0:b001:registry:agent:sample",
+                                "config": "S0",
+                                "block_id": "b001",
+                                "source_term": "agent",
+                                "resolved_by": "t3_llm",
+                                "target_start": 0,
+                                "target_end": 5,
+                            }
+                        ]
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+        cascade_report=cascade_report,
+    )
+
+    audit = overlay["meta"]["cascade_audit"]
+    assert overlay["meta"]["cascade_status"] == "loaded:1:skipped:1"
+    assert audit["skipped_by_reason"] == {"not_rendered": 1}
+    assert audit["by_mark_source"] == {"cascade_t2": 1}
+    spans = overlay["target_by_config"]["S0"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert not [span for span in spans if span.get("occ_id") == "S0:b001:registry:agent:sample"]
+
+
+def test_registry_overlay_dedupes_overlapping_surface_form_when_cascade_covers_occurrence(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    reports_root = tmp_path / "reports"
+    _write_d2l_report(reports_root)
+    cascade_report = tmp_path / "cascade.json"
+    cascade_report.write_text(
+        json.dumps(
+            {
+                "decisions": [
+                    {
+                        "occ_id": "S0:b001:registry:agent:0",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "agent",
+                        "resolved_by": "t2_credit",
+                        "decision": "rendered",
+                        "target_start": 0,
+                        "target_end": 5,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+        cascade_report=cascade_report,
+    )
+
+    spans = overlay["target_by_config"]["S0"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert overlay["meta"]["cascade_audit"]["deduped_surface_form"] == 1
+    assert [span.get("mark_source") for span in spans] == ["cascade_t2"]
+    assert spans[0]["span"] == [0, 5]
+
+
+def test_registry_overlay_resolves_cascade_report_from_manifest(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="fixture_job")
+    reports_root = tmp_path / "reports"
+    reports_root.mkdir(parents=True)
+    _write_d2l_report(reports_root)
+    exp_root = reports_root / "exp_fixture"
+    exp_root.mkdir()
+    (exp_root / "metrics.json").write_text(
+        json.dumps({"metric_version": "fixture", "experiment_id": "exp_fixture", "D_registry_consistency": {}}),
+        encoding="utf-8",
+    )
+    (exp_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "thesis_report_manifest_v1",
+                "experiment_id": "exp_fixture",
+                "job_id": "fixture_job",
+                "domain": "d2l",
+                "reports": {
+                    "score": "metrics.json",
+                    "cascade": "cascade.json",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (exp_root / "cascade.json").write_text(
+        json.dumps(
+            {
+                "decisions": [
+                    {
+                        "occ_id": "S0:b001:registry:agent:0",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "agent",
+                        "resolved_by": "t2_credit",
+                        "decision": "rendered",
+                        "target_start": 6,
+                        "target_end": 15,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "fixture_job",
+        experiment_id="exp_fixture",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+    )
+
+    assert overlay["meta"]["selected"]["cascade_report"].endswith("cascade.json")
     assert overlay["meta"]["cascade_status"].startswith("loaded:1")
 
 

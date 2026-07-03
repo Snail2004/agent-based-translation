@@ -5,6 +5,9 @@ const API = window.AILAB_API;
 const STORAGE_DOC = "ailab.doc_id";
 const STORAGE_USER = "ailab.user";
 const STORAGE_CENTER_MODE = "ailab.center_mode";
+const STORAGE_THESIS_EXPERIMENT = "ailab.thesis.experiment_id";
+const STORAGE_THESIS_STAGE = "ailab.thesis.stage";
+const STORAGE_THESIS_CASCADE_REPORT = "ailab.thesis.cascade_report";
 const THESIS_PREFIX = "thesis:";
 const DEFAULT_USER = "U2 · Mai";
 const EDITABLE_META = new Set(["title", "author", "domain", "genre", "source_format", "license", "source_url", "contamination_risk"]);
@@ -24,6 +27,35 @@ function errorMessage(err) {
 
 function firstError(err) {
   return err?.errors?.[0] || err?.payload?.errors?.[0] || {};
+}
+
+function urlParam(names) {
+  const params = new URLSearchParams(window.location.search || "");
+  for (const name of names) {
+    const value = params.get(name);
+    if (value) return value;
+  }
+  return "";
+}
+
+function thesisStoredParam(names, storageKey) {
+  const value = urlParam(names);
+  if (value) {
+    localStorage.setItem(storageKey, value);
+    return value;
+  }
+  return localStorage.getItem(storageKey) || "";
+}
+
+function thesisRuntimeParams({ includeCascade = false } = {}) {
+  const result = {};
+  const experimentId = thesisStoredParam(["experiment_id", "thesis_experiment_id"], STORAGE_THESIS_EXPERIMENT);
+  const stage = thesisStoredParam(["stage", "thesis_stage"], STORAGE_THESIS_STAGE);
+  const cascadeReport = thesisStoredParam(["cascade_report", "thesis_cascade_report"], STORAGE_THESIS_CASCADE_REPORT);
+  if (experimentId) result.experiment_id = experimentId;
+  if (stage) result.stage = stage;
+  if (includeCascade && cascadeReport) result.cascade_report = cascadeReport;
+  return result;
 }
 
 function splitWords(value) {
@@ -196,6 +228,7 @@ function targetSpansForBlock(blockId, translations, overlay) {
           kind: "glossary",
           id: termId,
           status: item.status || "unscored",
+          display_status: item.display_status,
           constraint_strength: item.constraint_strength,
           label: `${item.surface || item.matched_form || termId}`,
           surface: item.surface,
@@ -204,6 +237,13 @@ function targetSpansForBlock(blockId, translations, overlay) {
           forms_source: item.forms_source,
           scored: !!item.scored,
           provenance: item.provenance,
+          mark_source: item.mark_source,
+          located_by: item.located_by,
+          occ_id: item.occ_id,
+          masquerade_suspect: !!item.masquerade_suspect,
+          clean_text_fallback: !!item.clean_text_fallback,
+          gpt_fallback: !!item.gpt_fallback,
+          cross_term_overlap: !!item.cross_term_overlap,
           target: true,
         });
       });
@@ -217,6 +257,7 @@ function targetSpansForBlock(blockId, translations, overlay) {
           kind: "entity",
           id: entityId,
           status: item.status || "unscored",
+          display_status: item.display_status,
           label: `${item.surface || item.matched_form || entityId}`,
           surface: item.surface,
           matched_form: item.matched_form,
@@ -224,6 +265,13 @@ function targetSpansForBlock(blockId, translations, overlay) {
           forms_source: item.forms_source,
           scored: !!item.scored,
           provenance: item.provenance,
+          mark_source: item.mark_source,
+          located_by: item.located_by,
+          occ_id: item.occ_id,
+          masquerade_suspect: !!item.masquerade_suspect,
+          clean_text_fallback: !!item.clean_text_fallback,
+          gpt_fallback: !!item.gpt_fallback,
+          cross_term_overlap: !!item.cross_term_overlap,
           target: true,
         });
       });
@@ -658,8 +706,9 @@ function App() {
   const loadThesisDataset = useCallback(async (jobId, opts = {}) => {
     if (!jobId) return null;
     if (!opts.silent) setLoading(true);
+    const thesisParams = thesisRuntimeParams();
     const [dataset, observability] = await Promise.all([
-      API.getThesisDataset(jobId),
+      API.getThesisDataset(jobId, thesisParams),
       API.getThesisObservability(jobId).catch(err => ({
         meta: { source: "thesis_observability_readmodel", job_id: jobId, read_only: true, load_error: errorMessage(err) },
         calls: [],
@@ -1093,6 +1142,7 @@ function App() {
     const params = (centerMode === "chapter" || centerMode === "book")
       ? { chapter_id: baseBlock.chapter_id }
       : { block_id: baseBlock.block_id };
+    Object.assign(params, thesisRuntimeParams({ includeCascade: true }));
     let cancelled = false;
     API.getThesisRegistryOverlay(jobId, params)
       .then(overlay => {

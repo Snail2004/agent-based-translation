@@ -1,0 +1,11 @@
+{
+  "schema_version": "thesis_report_manifest_v1",
+  "experiment_id": "exp_s0s1_builderv2_v1",
+  "job_id": "exp_s0s1_full",
+  "domain": "d2l",
+  "chapter_id": "d2l_multilayer_perceptrons",
+  "reports": {
+    "score": "metrics_mlp.json",
+    "cascade": "cascade_mlp_summary.json"
+  }
+}

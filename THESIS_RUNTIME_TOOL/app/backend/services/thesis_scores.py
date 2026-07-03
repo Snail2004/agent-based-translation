@@ -63,6 +63,117 @@ def _read_json(path: Path) -> dict[str, Any]:
         return json.load(fh)
 
 
+def _safe_experiment_id(experiment_id: str | None) -> str | None:
+    if not experiment_id:
+        return None
+    return _safe_job_id(experiment_id)
+
+
+def _safe_child_path(base: Path, value: str) -> Path:
+    raw = Path(str(value or "").strip())
+    if not str(raw):
+        raise ThesisReadModelError("invalid_report_path", "Empty report path in manifest.", 400)
+    if raw.is_absolute():
+        candidate = raw.resolve()
+    else:
+        candidate = (base / raw).resolve()
+    try:
+        candidate.relative_to(base.resolve())
+    except ValueError as exc:
+        raise ThesisReadModelError(
+            "invalid_report_path",
+            "Report manifest path escapes the reports directory.",
+            400,
+        ) from exc
+    return candidate
+
+
+def _as_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item or "").strip()]
+    return []
+
+
+def _load_experiment_manifest(
+    experiment_id: str | None,
+    *,
+    reports_root: Path | None = None,
+) -> tuple[dict[str, Any], Path] | tuple[None, None]:
+    safe_experiment = _safe_experiment_id(experiment_id)
+    if not safe_experiment:
+        return None, None
+    root = (reports_root or THESIS_REPORTS_ROOT).resolve()
+    path = root / safe_experiment / "manifest.json"
+    if not path.exists():
+        return None, None
+    return _read_json(path), path
+
+
+def _manifest_score_spec(
+    experiment_id: str | None,
+    *,
+    reports_root: Path | None = None,
+) -> dict[str, Any] | None:
+    manifest, manifest_path = _load_experiment_manifest(experiment_id, reports_root=reports_root)
+    if not manifest or not manifest_path:
+        return None
+    reports = manifest.get("reports") or {}
+    score_files = (
+        _as_list(reports.get("score_reports"))
+        or _as_list(reports.get("scores"))
+        or _as_list(reports.get("score"))
+        or _as_list(manifest.get("score_reports"))
+        or _as_list(manifest.get("score_report"))
+    )
+    if not score_files:
+        return None
+    base = manifest_path.parent
+    return {
+        "domain": str(manifest.get("domain") or "d2l"),
+        "paths": [_safe_child_path(base, item) for item in score_files],
+        "manifest_path": manifest_path,
+    }
+
+
+def resolve_experiment_artifact_path(
+    experiment_id: str | None,
+    key: str,
+    *,
+    reports_root: Path | None = None,
+) -> Path | None:
+    """Resolve an experiment artifact path from data/reports/<experiment>/manifest.json."""
+
+    manifest, manifest_path = _load_experiment_manifest(experiment_id, reports_root=reports_root)
+    if not manifest or not manifest_path:
+        return None
+    reports = manifest.get("reports") or {}
+    aliases = {
+        key,
+        f"{key}_report",
+        f"{key}_reports",
+    }
+    if key == "cascade":
+        aliases.update({"cascade_report", "cascade_summary"})
+    if key == "score":
+        aliases.update({"scores", "score_report", "score_reports"})
+    value = None
+    for alias in aliases:
+        if alias in reports:
+            value = reports[alias]
+            break
+        if alias in manifest:
+            value = manifest[alias]
+            break
+    values = _as_list(value)
+    if not values:
+        return None
+    return _safe_child_path(manifest_path.parent, values[0])
+
+
 # ═══════════════════ D2L domain ═══════════════════
 
 
@@ -477,6 +588,7 @@ def _ti_scores(
 def export_report_bundle(
     job_id: str,
     *,
+    experiment_id: str | None = None,
     reports_root: Path | None = None,
     jobs_root: Path | None = None,
 ) -> dict[str, Any]:
@@ -484,7 +596,7 @@ def export_report_bundle(
 
     Low-priority — minimal implementation per spec §2.
     """
-    scores = load_scores(job_id, reports_root=reports_root, jobs_root=jobs_root)
+    scores = load_scores(job_id, experiment_id=experiment_id, reports_root=reports_root, jobs_root=jobs_root)
     return {
         "job_id": job_id,
         "domain": scores["meta"]["domain"],
@@ -514,6 +626,7 @@ def _group_by(items: list[dict[str, Any]], key: str) -> dict[str, int]:
 def load_scores(
     job_id: str,
     *,
+    experiment_id: str | None = None,
     reports_root: Path | None = None,
     jobs_root: Path | None = None,
 ) -> dict[str, Any]:
@@ -532,7 +645,8 @@ def load_scores(
     safe_job = _safe_job_id(job_id)
     root = (reports_root or THESIS_REPORTS_ROOT).resolve()
 
-    spec = _JOB_REPORT_MAP.get(safe_job)
+    spec = _manifest_score_spec(experiment_id, reports_root=root) if experiment_id else None
+    spec = spec or _JOB_REPORT_MAP.get(safe_job)
     if spec is None:
         raise ThesisReadModelError(
             "job_not_found",
@@ -543,8 +657,9 @@ def load_scores(
     domain = spec["domain"]
     report_paths: list[str] = []
     reports: list[dict[str, Any]] = []
-    for filename in spec["files"]:
-        path = root / filename
+    paths = spec.get("paths") or [root / filename for filename in spec.get("files", [])]
+    for path in paths:
+        path = Path(path)
         report_paths.append(str(path))
         reports.append(_read_json(path))
 

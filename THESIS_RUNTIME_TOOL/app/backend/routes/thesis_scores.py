@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, request
 
 from routes.common import error, ok
 from services.thesis_readmodel import ThesisReadModelError
@@ -11,7 +11,10 @@ bp = Blueprint("thesis_scores", __name__)
 @bp.get("/thesis/scores/<job_id>")
 def thesis_scores(job_id: str):
     try:
-        return ok(load_scores(job_id))
+        return ok(load_scores(
+            job_id,
+            experiment_id=request.args.get("experiment_id") or None,
+        ))
     except ThesisReadModelError as exc:
         return error(exc.code, exc.message, exc.status)
 
@@ -19,6 +22,9 @@ def thesis_scores(job_id: str):
 @bp.get("/thesis/scores/<job_id>/export")
 def thesis_scores_export(job_id: str):
     try:
-        return ok(export_report_bundle(job_id))
+        return ok(export_report_bundle(
+            job_id,
+            experiment_id=request.args.get("experiment_id") or None,
+        ))
     except ThesisReadModelError as exc:
         return error(exc.code, exc.message, exc.status)
