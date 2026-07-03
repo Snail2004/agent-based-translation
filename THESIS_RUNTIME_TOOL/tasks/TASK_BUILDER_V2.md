@@ -2543,3 +2543,17 @@ Final verification (independent, artifacts + live UI):
 - Tests: 27 passed (re-run by Claude). Overlay regenerated; audit counts unchanged (4,967/7).
 
 Ops reminder recorded twice now: CodeX verify runs leave EXTRA backend processes on :5000 (two rounds: 2 PIDs, then 1 stale) — stale code serves silently. Always `netstat :5000` + kill before browser verification.
+
+<!-- S35_9_GO -->
+### 35.9-GO — user approved, frozen inputs verified (Claude, 2026-07-03)
+
+User question resolved before GO: "co can chay lai Builder cho preliminaries khong?" -> KHONG. Notebook prelim la san pham Builder that (DEV chapter, C2->C3->C3.5->S29->S30), da pin trong S35.2. Git log verified: khong co commit nao dung Builder/Auditor/Translator code tu sau khi cap MLP chay (moi commit pipeline/ sau do la eval/cascade/overlay/materialize: e5a66a6, a91e67c, dd84e6d). Re-build "cho chac" = re-roll non-determinism + pham S35.2 freeze + mo coi hoa ket qua MLP da duyet -> REJECTED. Nhu cau "chay lai Builder xem co tai lap khong" da co cho dung: S36 validation case (dieu kien (3) cua S37).
+
+0-API verify (chay truoc GO, khong sua gi):
+- notebook prelim data/reports/builder_v2_c35_decollision/notebook_decollided.json: sha256[:16] 308B6C6C28A9E562, 340 entries; pack policy trong preflight khop S30: 196 hard + 26 preserve + 37 context_sensitive = pack 259, report_only 78, repair_queue 3.
+- notebook MLP (doi chieu, khong dung o buoc nay): E6EFCBA7B0993FFC, 546 entries.
+- frozen DB d2l_p1: 64D98965F8859869 — dung baseline.
+- workdb exp_s0s1_full: translation_runs S0=475/S1=475 (MLP-only), 0 dong prelim, 0 pack pk_*_prelim* -> resume path sach, khong co stale-pack de reuse.
+- preflight_preliminaries.json: experiment_id/notebook/budget 1500/45 windows/348 blocks khop task; zero_api=true; frozen hash before==after.
+
+GO: CodeX thuc thi S35.9 dung nguyen van (S0 replay-cache truoc, S1 sau; nominal ~$0.10-0.15, cap $0.762, abort neu incremental > $0.40). STOP sau run, KHONG score, KHONG commit. Claude cham 0-API (S35.8 command, chapters d2l_preliminaries) + doi chieu pre-registered expectations trong S35.9. Day cung la lan DAU TC-Occ/TA-Occ chay chinh danh (EVAL S8) — nhung chi SAU khi headline B/D v3 duoc cham va ghi nhan truoc.
