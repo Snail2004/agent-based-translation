@@ -2512,3 +2512,20 @@ Locked design:
 2. Cascade marks on scope-only terms with no registry verdict (the §8b undetected group): neutral "localized-only" color of its own. Long-term: TC-Occ (EVAL §8) becomes the verdict source for these — cascade localizes, TC-Occ judges, color displays.
 3. Add a small on-screen color legend. The system author had to ask what the colors mean; end users have no chance.
 4. Regenerate materialized overlays after the change (status field per mark) — one script run.
+
+
+### §35.15-F3 — term focus mode (user request, bundle with F1/F2)
+
+Goal: click a term -> that term stays visually prominent across ALL blocks/panels while scrolling, so the user can audit one term through the whole chapter.
+
+Behavior (frontend-only, read-only, no backend change — marks already carry `id` + `occ_id`):
+1. Click any mark (or a glossary panel row) -> FOCUS MODE on that term:
+   - all occurrences of the term get a strong emphasis ring/outline + subtle glow, in source panel AND both S0/S1 panels;
+   - all OTHER marks dim (reduced opacity), block text stays readable;
+   - focus persists across scrolling and block navigation within the chapter.
+2. Floating focus chip (sticky, e.g. top of center pane): term EN -> VI, occurrence count, and PREV/NEXT buttons that scroll-jump to the previous/next occurrence (wrap around; count position "3/9"). Esc, clicking the chip's ✕, or re-clicking the focused term exits focus mode.
+3. Identity: group by mark `id` (cascade marks already share glossary ids via C1 lookup); fallback grouping by normalized `source_term` for scope-only ids so cascade + legacy layers focus together.
+4. MUST NOT fight F2 color semantics: emphasis = ring/outline/glow + dimming others; never change the verdict fill color of the focused marks.
+5. Tooltip stays functional in focus mode; clicking a DIFFERENT term switches focus to it.
+
+Acceptance: focus `softmax regression` in MLP -> 9 occurrences ringed across panels, others dimmed; NEXT cycles through all 9 in order (S0/S1 scroll in sync to the block); Esc restores normal view; verdict colors unchanged under emphasis.
