@@ -2436,3 +2436,30 @@ Design conclusions (locked):
 Reproducibility check bundled with this probe: re-ran `python -m pipeline.scripts.score_run --db data/jobs/exp_s0s1_full/memory.sqlite3 --experiment exp_s0s1_builderv2_v1 --chapters d2l_multilayer_perceptrons --profile technical_d2l_v1 --gold-variants data/eval/d2l_gold_variants.csv` → B 0.7580/0.7657, D 0.7590/0.8253 — identical to the locked §35.8 report to 4 decimals. One command, $0, fully automatic (feeds the one-button report).
 
 Per-occurrence pair TC-Occ/TA-Occ pre-registered for preliminaries in TASK_EVAL_SCORING_V1 §8 (MLP numbers retrospective-only).
+
+
+## §35.15 UI overlay wiring + materialize (CodeX task, 2 STOPs — closes the §37 "overlay smoke" condition)
+
+Context: STOP-B artifacts verified (§35.13). Backend already accepts `cascade_report` and merges marks (`mark_source=cascade_t2/cascade_t3_llm`, `scored=false`); frontend doesn't pass it yet; `_JOB_REPORT_MAP` is hardcoded; overlay is re-composed (incl. T3 quote re-locate) on every chapter load. CodeX's status survey accepted; plan amended by Claude as below.
+
+LOCKED design decisions (do not re-litigate in implementation):
+1. **Dedupe rule (one line):** an occurrence with a cascade decision → the cascade mark REPLACES any overlapping legacy `surface_form` span. `surface_form` survives only where cascade has no coverage (terms outside union scope). A same-occurrence collision between `cascade_t2` and `cascade_t3_llm` is IMPOSSIBLE by construction (`resolved_by` is exclusive) — if detected, FAIL LOUD (assert + report), never silently dedupe. Cross-term physical overlaps between cascade marks: keep both, flag in audit (masquerade/watchlist material — deleting them destroys evidence).
+2. **No mid-term overlay cache.** Materialize is the only mechanism (cache-by-mtime solves the same problem with a second state machine; rejected).
+3. **`_JOB_REPORT_MAP` hardcode replaced** by convention/manifest: report paths derive from `experiment_id` + a manifest file sitting next to the artifacts (e.g. `data/reports/<experiment_id>/manifest.json`). No per-experiment code edits.
+4. **Display/score boundary preserved:** all cascade-derived marks stay `scored=false`, `forms_source="cascade_report"`. Overlay work NEVER re-scores B/D and NEVER calls any LLM (Gemma/GPT) — every quote/position comes from the frozen cascade JSONs. $0 task.
+5. **Mark provenance is a UI feature (user request):** every mark carries `located_by` shown in the tooltip as a "LOCATED BY" row + small badge, values:
+   - `code_exact` (cascade_t2) — "định vị bằng code, khớp chính xác"
+   - `ai_locate_local` (cascade_t3 via google/gemma-4-12b) — "AI định vị (Gemma, cục bộ)"
+   - `ai_locate_fallback` (t3 gpt_fallback) — "AI định vị (GPT dự phòng)"
+   - `block_detect` (legacy surface_form) — "phát hiện mức block (không có vị trí chính xác)"
+   Plus optional flags rendered as badges when true: `masquerade_suspect`, `clean_text_fallback` (the 4 b047 markdown cases), `not_rendered` (term absent — render as gutter note, not a span). Do NOT display Gemma's confidence field (measured non-informative, §35.12 — always "high").
+
+### STOP-C1 — wire-through (small)
+- Frontend passes `cascade_report` + `experiment_id` for the exp job; backend applies dedupe rule (1); manifest mechanism (3) replaces `_JOB_REPORT_MAP`.
+- Acceptance: UI shows cascade marks for MLP on BOTH arms; per-`mark_source` counts reported and reconciled against cascade decisions (S0: t2 1167 / t3 1315; S1: t2 1334 / t3 1151); zero t2/t3 same-occ collisions (assert ran); scorer layer loads metrics_mlp.json via manifest. STOP — report counts to Claude, no commit.
+
+### STOP-C2 — materialize UI-ready overlay
+- Emit `overlay_mlp_S0.json` / `overlay_mlp_S1.json` (UI-ready): spans merged + deduped + priority applied; the 4 clean-text-fallback offsets resolved ONCE offline (verified artifact == displayed artifact, byte-for-byte); every mark carries `located_by`, flags, `occ_id`, `term_id`.
+- Audit stats block inside each file: counts per located_by, deduped-surface_form count, cross-term overlap count (flagged, kept), clean_text_fallback count (expect 2/arm), not_rendered count (5 S0 / 2 S1), gpt_fallback count (18 S0 / 13 S1).
+- UI loads the materialized artifact only; no runtime re-compose, no runtime quote re-locate.
+- Acceptance (= §37 overlay smoke): total marks per arm = 2,487 − not_rendered; stats reconcile with §35.13 numbers; Claude spot-checks rendered marks (incl. one b047 clean-text case and one gpt_fallback case) in the real UI. STOP — Claude verifies then commits.
