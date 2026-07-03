@@ -112,3 +112,15 @@ Audited D's fail buckets for S1-MLP against cascade localization (which sees eve
 3. TA (B) is sounder (occurrence-weighted, JOINT, gold ruler both arms blind) — its residual blind spot (min() counting, masquerade) is measured small (~1.8% suspects).
 
 Verdict recorded: instrument fidelity ranking TA-Occ/TC-Occ > TA > TC. exp_s0s1 headline stays B/D v3 per pre-registration (comparability; bias is anti-S1 so conservative); the per-occurrence pair (§8) is the designated successor — after prelim P1–P3 + fragment filter, one-button report leads with TC-Occ/TA-Occ and keeps B/D as the deterministic $0 audit twin. Do NOT patch D's ruler mid-experiment (no new metric versions inside exp_s0s1).
+<!-- S9_CONVENTION_VS_MEANING -->
+## 9. B/TA = do khop QUY UOC ngoai, khong phai do dung — chot thao luan vecto (user + Claude, 2026-07-04)
+
+Boi canh: prelim §35.9 B S1 0.6036 < S0 0.6660, ~toan bo do `vector` (80 occ = 16.1% mau so): notebook chon "vectơ" (chinh ta SGK VN hop le), gold d2l-vn chon "vector" (co discussion URL — quy uoc cong dong). Ca hai DUNG tieng Viet; day la bat dong PHONG CACH (nhu radio/ra-đi-ô), khong phai loi dich.
+
+CHOT 4 diem:
+1. **Dinh danh lai B/TA trong moi bao cao:** "do khop voi quy uoc ben ngoai (gold style guide)", KHONG dien dat la "do dung/chat luong". Headline giu nguyen so xau (ky luat cu — khong doi thuoc giua thi nghiem).
+2. **Miss cua B phai phan loai 2 ro khi bao cao:** (a) LOI NGHIA (vd gradient->đạo hàm riêng — chinh B da giup bat ca nay, khong duoc vut B) vs (b) LECH QUY UOC (vecto — nghia nguyen ven). Phan loai la viec cua human/judge annotate (tinh than §33 tiering), KHONG hardcode danh sach vao code.
+3. **Style = INPUT khai bao TRUOC cua user, khong phai thu Builder phai doan:** san pham mot-nut them tham so a-priori (giu-thuat-ngu-Anh / Viet-hoa / nop style-guide file rieng = external glossary adapter §5d). Thi hanh qua prompt Builder. **CAM sua prompt vi diem benchmark da nhin** (tuning-on-test tra hinh — "uu tien giu tieng Anh" sau khi thay B thap chinh la hoc thuoc gold). Trong exp_s0s1_builderv2_v1: khong doi gi.
+4. **Luan diem chuong ket qua (case study trung tam):** S0 duoc 53/80 diem vector NHO tron lan 74 vector/35 vectơ — voi nguoi doc, van ban tron 2 cach viet TE hon S1 thong nhat 107/109. Tuc B dang THUONG cho su thieu nhat quan cua S0 o term tan suat cao = artifact cua thuoc, khong phai uu diem baseline. He thong memory bien chat luong tu may-rui-tung-cau thanh MOT quyet dinh tu dien: chon dung -> dung ca chuong; chon "sai" quy uoc -> sua 1 dong la lanh ca chuong; S0 sai thi khong co cho nao de sua.
+
+Lien ket: §36 re-election KHONG bat duoc loai (b) khi khong co gold (back-translation cua "vectơ" van ra "vector" — khong co tin hieu bat dong); luoi duy nhat cho loai (b) o production = style-guide adapter do user cung cap.
