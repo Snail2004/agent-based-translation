@@ -2413,3 +2413,26 @@ New measured facts the block-level scorer could not see (display-layer lens, NOT
 Committed: cascade script + tests + audit40 + run logs. Large regenerable artifacts (2x8MB decisions, 18MB summary, 11MB T3 cache) left untracked per metrics-csv precedent; regenerable at $0 from cache/workdb.
 
 Remaining for closure (§37): overlay smoke on real marks -> §35.9 prelim pair -> §36.
+
+
+## §35.14 Soft-tier anchor probe — does deviation freedom hurt TC? (Claude + user, 2026-07-03)
+
+User question: if low-tier terms get deviation rights (soft hints, no hard forcing) and the Translator cannot write back to the dictionary, does window-N's improvisation create inconsistency that window-N+1 can't know about — hurting TC? And does the pack show the Translator multiple variants or one representative form?
+
+Evidence pulled from the REAL S1 prompts (llm_call_cache, created_at 2026-07-02, all 62 MLP windows):
+- Pack = 3 compartments: MANDATORY (exact form required) / PRESERVE (keep source token) / CONTEXT-SENSITIVE ("do not force" = deviation rights). **Every term carries exactly ONE representative VI form; 0/62 prompts contain any multi-variant line; hints are byte-stable across all 62 windows.** The variant inventory exists only in the notebook (Builder) and the scoring ruler — the Translator never sees it.
+- The user's mental model is CORRECT: windows are stateless; the frozen pack is the only cross-window channel; no write-back channel exists.
+
+Measured TC impact (D per-term forms_used from metrics_mlp.json, majority-share occurrence-weighted, 42 soft-hint terms):
+- soft-hint terms: S0 0.8927 (289 occ) -> S1 0.9658 (292 occ) — the FREE tier is the most consistent group in the system, beating even S1's other terms (0.9195).
+- S1 drift on soft terms (7 terms) is benign morphology (sample: mẫu/mẫu dữ liệu; objective: mục tiêu/hàm mục tiêu).
+
+Design conclusions (locked):
+1. **Consistency comes from the shared anchor, not from coordination.** 62 independent windows pulled toward one stable suggestion ≈ high TC even at ~95% compliance. Scattered defections don't kill TC; a missing or mid-run-changing anchor would.
+2. **No mid-run write-back stays locked**: with conc-3 it would be first-write-wins at the translate layer (the same disease §36 cures at the Builder layer), plus non-reproducibility and cache invalidation. A Translator improvement is not lost — it lives in the output, the cascade localizes it, and the legitimate promotion channel is between-run re-election (§36).
+3. **Never advertise variants in the prompt**: listing 3 accepted forms invites variant churn (TA-happy, TC-poor scenario B). One representative form + soft deviation rights is measured-best on both axes.
+4. population AND regularization sat in the soft tier (§30 gate worked as designed — the bad canonical was not hard-forced).
+
+Reproducibility check bundled with this probe: re-ran `python -m pipeline.scripts.score_run --db data/jobs/exp_s0s1_full/memory.sqlite3 --experiment exp_s0s1_builderv2_v1 --chapters d2l_multilayer_perceptrons --profile technical_d2l_v1 --gold-variants data/eval/d2l_gold_variants.csv` → B 0.7580/0.7657, D 0.7590/0.8253 — identical to the locked §35.8 report to 4 decimals. One command, $0, fully automatic (feeds the one-button report).
+
+Per-occurrence pair TC-Occ/TA-Occ pre-registered for preliminaries in TASK_EVAL_SCORING_V1 §8 (MLP numbers retrospective-only).

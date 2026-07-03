@@ -72,3 +72,26 @@ When the pipeline moves to novels (original project root: Treasure Island infra 
 ## 7. Governance note
 
 TASK_BUILDER_V2.md CLOSES when: cascade STOP-B verified + overlay smoke on real marks + prelim S0/S1 run & scored (§35.9) + §36 re-election implemented and validated on the MLP dictionary. A final closing section will summarize outcomes and point here. All scoring/eval work from now on lives in THIS file; literary-phase work will get its own file when it starts.
+
+
+## 8. TC-Occ / TA-Occ — per-occurrence pair (PRE-REGISTERED 2026-07-03, before preliminaries runs)
+
+The cascade localization layer (T1 bge-m3 + T2 code + T3 local Gemma, §35.10-§35.13 of TASK_BUILDER_V2) enables per-occurrence versions of the TC/TA pair. Locked BEFORE the preliminaries chapter cascade runs; for MLP these are RETROSPECTIVE illustrations (computed after seeing data) and are labeled as such wherever cited — never headline.
+
+Definitions (occurrence-weighted, both arms scored on the identical frozen ruler — verified 537 terms, 0 accepted_forms differences between arms):
+- **TC-Occ** (consistency): per term, share of localized occurrences using the term's majority rendering; renderings taken from cascade marks (T2 target_surface / T3 target_quote_clean, casefolded); not_rendered occurrences excluded. Answers "did the system keep ONE form", ignoring the dictionary.
+- **TA-Occ** (adherence): share of occurrences whose localized rendering hits ANY accepted form. Answers "did each occurrence land on an approved form", ignoring switching. Ruler = notebook ∪ gold variants.
+- The pair is orthogonal by construction (the 4-quadrant diagnosis: consistent+adherent ideal / consistent+off = the regularization→chuẩn hóa failure / switching+adherent = variant churn / both low = chaos).
+
+Ruler hygiene (required before TA-Occ becomes official): **fragment filter** — drop any accepted form that is (a) a strict substring of another accepted form of the same term AND (b) shared as an accepted form with ≥1 other in-scope term (measured case: bare `hàm` credited sigmoid/loss/tanh function). Dropped forms logged + listed in the report for audit. TC-Occ needs no filter (dictionary-free).
+
+MLP retrospective values (union scope 2,487 occ/arm):
+
+| Lens | TC S0 | TC S1 | TA S0 | TA S1 |
+|---|---|---|---|---|
+| Block-level (LOCKED headline) | 0.7590 | 0.8253 | 0.7580 | 0.7657 (gold-only ruler, 1,182 occ) |
+| Per-occurrence (retrospective, pre-filter) | 0.8646 | 0.9243 | 0.7543 | 0.8737 (union ruler) |
+
+Note the two TA columns use DIFFERENT rulers (external gold-only vs pack∪gold) — never present them as the same scale at two resolutions; TA block-level vs TA-Occ answer "correct vs external standard" vs "landed on an approved form".
+
+Pre-registered predictions for preliminaries (locked now): P1 TC-Occ(S1) > TC-Occ(S0); P2 TA-Occ gap (S1−S0) ≥ block-level TA gap; P3 all four cells agree in direction with block-level. Any violation = investigate harness before interpretation.
