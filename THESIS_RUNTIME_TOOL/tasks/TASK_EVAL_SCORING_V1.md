@@ -95,3 +95,14 @@ MLP retrospective values (union scope 2,487 occ/arm):
 Note the two TA columns use DIFFERENT rulers (external gold-only vs pack∪gold) — never present them as the same scale at two resolutions; TA block-level vs TA-Occ answer "correct vs external standard" vs "landed on an approved form".
 
 Pre-registered predictions for preliminaries (locked now): P1 TC-Occ(S1) > TC-Occ(S0); P2 TA-Occ gap (S1−S0) ≥ block-level TA gap; P3 all four cells agree in direction with block-level. Any violation = investigate harness before interpretation.
+
+
+### 8b. Measured failure modes of the block-level pair (2026-07-03, evidence for the TC-Occ/TA-Occ upgrade)
+
+Audited D's fail buckets for S1-MLP against cascade localization (which sees every rendering):
+
+1. **Undetected black hole, PROVEN mis-fail:** of S1's 15 undetected hard terms, cascade shows 7 rendered with PERFECT 1.00 consistency (bias term→hạng thiên lệch, missing values→giá trị khuyết, regularization term→số hạng chuẩn hóa, Gaussian distribution, deep learning framework, output layers, vanishing gradient problem) and 3 more at 0.67–0.83 — incl. multilayer perceptrons→perceptron đa tầng which MATCHES GOLD yet D fails it. Root cause: D's ruler = OLD 1,608-entry registry; S1 follows the NEW notebook; notebook forms ∉ old ruler ⇒ invisible. This bias runs AGAINST S1 (S1 undetected 15 vs S0 7) ⇒ the +0.066 headline gap is a conservative LOWER bound on the memory effect.
+2. **Binary drift over-punishment:** 6 S1 hard terms failed with majority share ≥0.80 (training data 21:3:1=0.84, gradient 15:1:1=0.88, activation functions 8:2 …). Several "drifts" are Vietnamese plural morphology only (các hàm kích hoạt vs hàm kích hoạt) — not terminology inconsistency.
+3. TA (B) is sounder (occurrence-weighted, JOINT, gold ruler both arms blind) — its residual blind spot (min() counting, masquerade) is measured small (~1.8% suspects).
+
+Verdict recorded: instrument fidelity ranking TA-Occ/TC-Occ > TA > TC. exp_s0s1 headline stays B/D v3 per pre-registration (comparability; bias is anti-S1 so conservative); the per-occurrence pair (§8) is the designated successor — after prelim P1–P3 + fragment filter, one-button report leads with TC-Occ/TA-Occ and keeps B/D as the deterministic $0 audit twin. Do NOT patch D's ruler mid-experiment (no new metric versions inside exp_s0s1).
