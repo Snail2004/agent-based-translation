@@ -47,10 +47,10 @@ Honest limits (state in thesis): round-trip can mask fluent-but-wrong VI (the ba
 
 ## 4. PJ — blind paired judge (S0 vs S1)
 
-- Units: ALL differing block pairs (MLP measured: 339/475 differ; identical pairs auto-tie at $0). Judge sees EN source + two VI candidates labeled X/Y, order randomized per item, blind to arm identity.
-- Both-order control: each pair judged twice with order swapped; verdict counted only if consistent, else tie (position-bias control). Verdict ∈ {X, Y, tie} + one reason tag from fixed taxonomy: {term_choice, word_order, omission, addition, grammar, style}.
-- Judges: primary gpt-5.4-mini (~$0.2 for 2×339); secondary local Gemma at $0 — reported ONLY as agreement analysis (Gemma is uncalibrated for judgment; its verdicts never count toward the headline).
-- Pre-registered predictions (locked before any PJ run): ① ties ≥ 50%; ② S1-vs-S0 wins roughly balanced; ③ any S1 losses concentrate in hard-term blocks with tag term_choice; ④ ALARM: S1 loss-rate exceeding S0's by >10 points on grammar/style tags ⇒ memory is damaging prose — investigate before publishing anything.
+- Units: ALL differing block pairs (MLP measured: 339/475 differ; identical pairs auto-tie at $0). Judge sees EN source + two VI candidates labeled X/Y, ~~order randomized per item~~ [SUPERSEDED 2026-07-05 §4a: order deterministic theo seed, LUON chay ca 2 chieu nen randomize thua], blind to arm identity.
+- Both-order control: each pair judged twice with order swapped; verdict counted only if consistent, else tie (position-bias control). Verdict ∈ {X, Y, tie} + ~~one reason tag from fixed taxonomy: {term_choice, word_order, omission, addition, grammar, style}~~ [SUPERSEDED 2026-07-05 §4a: 1-3 tag tu taxonomy 7-tag moi].
+- Judges: ~~primary gpt-5.4-mini (~$0.2 for 2×339)~~ [SUPERSEDED 2026-07-05 §4a: primary = gemini-2.5-flash config §2e — dong nay viet 2026-07-03 TRUOC khi §2e loai gpt-5.4-mini vi cung ho Translator; probe PJ rieng van BAT BUOC]; secondary local Gemma at $0 — reported ONLY as agreement analysis (Gemma is uncalibrated for judgment; its verdicts never count toward the headline).
+- Pre-registered predictions (locked before any PJ run): ① ties ≥ 50%; ② S1-vs-S0 wins roughly balanced; ③ any S1 losses concentrate in hard-term blocks with tag ~~term_choice~~ terminology (doi ten theo §4a); ④ ALARM: S1 loss-rate exceeding S0's by >10 points on grammar/style tags ⇒ memory is damaging prose — investigate before publishing anything.
 
 ## 5. Execution & sequencing
 
@@ -418,3 +418,35 @@ Without-flag (n=292): cos -0.0013, llm -0.94 — cung ket luan.
 **Go nho ghi nhan:** 3 item parse-fail chua luu raw output (CodeX tu bao) — khong blocking (loai bao thu, 3/100, co ghi danh); yeu cau moi script sau: luon luu raw_content_prefix ke ca khi parse fail. Khong can rerun.
 
 **Trang thai thang do:** SF-BT MLP xong + judge da duoc kiem chung cheo. Con: PJ (thang 7/7), Stage 2 prelim (optional, ~40 phut), agreement analysis tong.
+
+### 4a. PJ — thiet ke CHOT sau phan bien CodeX (Claude adjudicate, 2026-07-05). SUPERSEDES cac dong da gach trong §4.
+
+**Ten goi chinh xac (CodeX diem 1 — GHI NHAN):** PJ = **source-aware paired preference** (judge thay EN goc + 2 ban VI), KHONG duoc goi la "fluency thuan" trong bao cao/thesis. Headline style-alarm chi tinh tren tag-group style = {grammar, naturalness, word_choice}; terminology/meaning KHONG vao alarm (da co TC/TA/SF-BT do).
+
+**Judge model (SUPERSEDE dong §4):** primary = **gemini-2.5-flash**, config §2e nguyen xi (temp 0, thinking_budget=0 BAT BUOC, response_mime_type json, max_output 512, c8). Ly do doi tu gpt-5.4-mini: (1) §4 goc viet 2026-07-03, TRUOC khi §2e (04/07) loai chinh gpt-5.4-mini khoi vai judge vi cung ho Translator — voi PJ ca 2 ung vien deu la GPT nen bias ho doi xung MOT PHAN, nhung khong co ly do giu judge chua kiem chung khi da co judge duoc kiem chung cheo ho (§2h Pearson 0.966/0.887, 0 ca dao phan doan); (2) JSON stability Gemini 0/1900; (3) giu 3-ho tach GPT-dich / Gemini-cham / Gemma-kiem-toan. **CodeX diem 2 — GHI NHAN: bang chung SF-BT KHONG tu chuyen sang PJ (task khac); probe PJ rieng la BAT BUOC, khong duoc vien dan §2e/§2h de bo probe.** Gemma = secondary agreement-only nhu §4 goc, khong bao gio vao headline.
+
+**Output JSON moi call (CodeX diem 1 — GHI NHAN co dieu kien probe):** `{overall_verdict: X|Y|TIE, style_verdict: X|Y|TIE, tags: [1-3], note}` — style_verdict = "bo qua khac biet thuat ngu va nghia, ban nao doc tu nhien hon (hoac ngang nhau)". Rui ro 2-verdict lam JSON phuc tap -> P-TERM trong probe la bai test truc tiep. **Fallback ghi truoc:** neu style_verdict truot nguong probe -> rut ve 1 overall_verdict + tags, style-alarm tinh tu tag-group (thiet ke goc cua Claude), KHONG duoc tune tiep sau khi thay data that.
+
+**Tag taxonomy CHOT (SUPERSEDE danh sach §4; doi TRUOC khi co bat ky data PJ nao — hop le, khong pham luat metric-mid-experiment):** {grammar, naturalness, word_choice, terminology, meaning, omission_addition, formatting}. Mapping tu §4 cu: word_order+style -> naturalness (hap thu); term_choice -> terminology; omission/addition -> omission_addition (dinh nghia: thieu/thua noi dung so voi EN goc). Moi verdict kem 1-3 tag.
+
+**Auto-tie normalization (CodeX diem 4 — GHI NHAN, chon ban bao thu):** identical := bang nhau sau NFC + CRLF->LF + strip trailing whitespace cuoi dong. KHONG collapse whitespace giua chu, KHONG strip markdown/dau cau (formatting la tag danh gia that). Do thuc te tren MLP: 136/475 identical theo CA raw-exact LAN whitespace-collapse -> dinh nghia khong doi so nao tren MLP, khoa lam luat chung cho prelim/cac chuong sau.
+
+**Pham vi & don vi (CodeX chot 3 — GHI NHAN):** Stage 1 = MLP 475 cap (136 auto-tie $0; 339 gui judge; 59/339 short_block giu flag, bao cao kep co/khong nhu SF-BT). Prelim = Stage 2 — CAN cho ket luan thesis chinh thuc (replication), khong phai optional ve mat khoa hoc, chi la thu tu (tien le §2f-A). Label X/Y; hoan vi thu tu deterministic theo seed; LUON chay ca 2 chieu.
+
+**Pre-registered predictions:** giu nguyen 4 du doan §4 (ties >=50%; wins can bang; S1-loss don vao block term kho tag terminology; ALARM = S1 loss-rate tag-group style vuot S0 qua 10 diem %, mau so = toan bo 475 cap, identical = tie). BO SUNG dang ky truoc: cum 28 block regularization->"chuan hoa" cua S1 se hien thanh S1-thua tag terminology/meaning; neu dung, PJ = dung cu doc lap THU TU do cung 1 entry canonical sai.
+
+**Nguong probe KHOA TRUOC (CodeX diem 3 — GHI NHAN; dung so nguyen tren n nho, khong dung % de khoi dien giai mem):** probe = 20 cap thiet ke (CodeX tu tay soan, tu block MLP that), moi cap 2 chieu = 40 call:
+- P-IDENT (5 cap giong het): overall TIE 10/10 chieu.
+- P-GRAM (5 cap cay loi ngu phap/cau cut vao 1 ban): winner dung o CA 2 chieu >= 4/5 cap; tag grammar xuat hien >= 4 trong cac cap bat dung.
+- P-MEAN (5 cap muot-nhung-sai-nghia): ban dung nghia thang overall >= 4/5; tag meaning >= 4.
+- P-TERM (5 cap chi khac thuat ngu, vd dieu chuan<->chuan hoa): tag terminology >= 4/5 VA style_verdict = TIE >= 4/5 (bai test 2-verdict; truot -> kich hoat fallback 1-verdict o tren).
+- Order-inconsistent tren P-GRAM+P-MEAN: <= 1/10 cap. Parse-fail sau retry: <= 1/40 call (Gemini da 0/1900 nen day la nguong long). Raw output LUON duoc luu ke ca khi parse fail (luat §2h).
+Truot BAT KY dong nao -> STOP, sua prompt/schema, probe lai tu dau. Khong co dien giai mem sau probe.
+
+**Pilot 50 cap that (systematic tu 339, cong thuc idx nhu SF-BT):** bao cao ty le tie, phan bo tag, order-inconsistent (> 25% -> STOP sua prompt — so cua CodeX), chi phi thuc te + ngoai suy full. GO/NO-GO truoc full 339.
+
+**Gemma audit (khuon §2h, sau full run):** Gemma-local recham 50 cap systematic + TOAN BO cap S1-thua; thuoc do = ty le DAO PHAN (Gemma phan nguoc winner; tie-vs-win khong tinh la dao) <= 10% moi nhom; Gemma parse-fail loai bao thu + luu raw. Chi la agreement analysis, khong vao headline.
+
+**Cost gate & ky thuat:** uoc ~820 call Gemini (probe 40 + pilot 100 + full 678) ~= $0.4-0.6 theo don gia thuc SF-BT; **STOP neu vuot $3.** Cache key du thanh phan nhu SF-BT (provider+model+prompt_version+prompt_sha+input_sha+order+temp+max_tokens+thinking_budget+mime), khong cache loi, log model_version moi call, workdb mode=ro + doi chieu hash 92229381...E8C13F42 truoc/sau moi stage.
+
+**Quy trinh giao CodeX:** (1) soan prompt pj_judge_v1 (kem sha256) + danh sach 20 cap planted -> STOP, Claude review prompt + planted set TRUOC khi chay probe (prompt la first-class); (2) probe 40 call -> STOP, Claude verify tren artifact; (3) pilot 50 -> STOP verify; (4) full 339 + Gemma audit. Moi buoc khong commit, khong tu y chay buoc sau.
