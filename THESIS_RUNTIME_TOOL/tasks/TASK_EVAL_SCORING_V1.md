@@ -450,3 +450,75 @@ Truot BAT KY dong nao -> STOP, sua prompt/schema, probe lai tu dau. Khong co die
 **Cost gate & ky thuat:** uoc ~820 call Gemini (probe 40 + pilot 100 + full 678) ~= $0.4-0.6 theo don gia thuc SF-BT; **STOP neu vuot $3.** Cache key du thanh phan nhu SF-BT (provider+model+prompt_version+prompt_sha+input_sha+order+temp+max_tokens+thinking_budget+mime), khong cache loi, log model_version moi call, workdb mode=ro + doi chieu hash 92229381...E8C13F42 truoc/sau moi stage.
 
 **Quy trinh giao CodeX:** (1) soan prompt pj_judge_v1 (kem sha256) + danh sach 20 cap planted -> STOP, Claude review prompt + planted set TRUOC khi chay probe (prompt la first-class); (2) probe 40 call -> STOP, Claude verify tren artifact; (3) pilot 50 -> STOP verify; (4) full 339 + Gemma audit. Moi buoc khong commit, khong tu y chay buoc sau.
+
+### 4b. pj_judge_v1 — PROMPT VERBATIM (Claude viet, user chi dinh Claude la nguoi viet prompt, 2026-07-05)
+
+**sha256(template UTF-8) = `d47dbb171a30133f921063f0dad8f724256dc21d528d18724556b1d6d4f82bc2`** — sha tinh tren template voi newline LF — file nay la CRLF nen khi trich tu day PHAI chuyen 
+ -> 
+ truoc khi hash; CodeX phai nhung NGUYEN VAN va assert sha khop luc runtime; moi sua doi = prompt_version moi + probe lai.
+
+**Luat thay the placeholder:** template chua dau ngoac nhon JSON -> BAT BUOC dung `.replace("{source}", ...)` / `.replace("{candidate_x}", ...)` / `.replace("{candidate_y}", ...)`, CAM dung `str.format` (se crash tren `{"overall_verdict"...}`).
+
+```text
+You are a strict, impartial evaluator of Vietnamese translations of English technical text (a machine learning textbook).
+
+You are given one English source segment and two candidate Vietnamese translations, labeled X and Y. The labels and their order are arbitrary and carry no information about which candidate is better.
+
+Compare the two candidates and output ONLY a JSON object with exactly these keys:
+
+{"overall_verdict": "X" | "Y" | "TIE", "style_verdict": "X" | "Y" | "TIE", "tags": [...], "note": "..."}
+
+Definitions:
+
+1. overall_verdict — which candidate is the better Vietnamese translation of the source OVERALL, considering accuracy of meaning, completeness, technical terminology, grammar, and naturalness together. If the candidates are equally good, or the differences are too trivial to justify a preference, use "TIE".
+
+2. style_verdict — which candidate reads better as Vietnamese PROSE, judged ONLY on grammar, fluency, naturalness, and choice of ordinary (non-technical) words. For this verdict you MUST ignore differences in technical term choices and differences in meaning relative to the source. If the only differences between X and Y are technical terms or meaning, style_verdict MUST be "TIE".
+
+3. tags — 1 to 3 items, most important first, naming the kinds of difference that drove your verdicts, chosen ONLY from this list:
+- "grammar": grammatical errors, broken or incomplete sentences.
+- "naturalness": stiff, word-by-word, or un-Vietnamese phrasing.
+- "word_choice": weaker choice of ordinary (non-technical) words.
+- "terminology": difference in how technical terms are rendered.
+- "meaning": the candidates differ in meaning relative to the English source.
+- "omission_addition": content missing from or added to one candidate relative to the source.
+- "formatting": markdown, code, math, numbers, or URLs damaged in one candidate.
+If both verdicts are "TIE", tags may be an empty list [].
+
+4. note — at most 25 words, in English, pointing to the decisive difference, or "no meaningful difference".
+
+Rules:
+- Judge as a knowledgeable Vietnamese reader of machine-learning texts.
+- Do not reward a candidate for staying closer to English wording; good Vietnamese matters, literal similarity does not.
+- Code, LaTeX math, URLs, and numbers must be preserved exactly; damage there counts against a candidate (tag "formatting").
+- The segment may be a heading, list item, or code caption; judge it as such, and prefer "TIE" when it is too short to show a real quality difference.
+- Use "TIE" whenever you cannot confidently prefer one candidate; never invent a preference.
+- Output the JSON object only. No other text.
+
+English source:
+<<<SRC
+{source}
+SRC>>>
+
+Candidate X:
+<<<X
+{candidate_x}
+X>>>
+
+Candidate Y:
+<<<Y
+{candidate_y}
+Y>>>
+```
+
+**Validator (code, mechanical):** overall_verdict/style_verdict thuoc {X,Y,TIE}; tags la list con cua taxonomy 7-tag, do dai 0-3; tags RONG chi hop le khi CA HAI verdict = TIE; note la string. Vi pham -> validation_error, KHONG cache, retry 1 lan, van fail -> loai + luu raw (luat §2h).
+
+**Self-review cua Claude (failure mode -> phong thu trong prompt):**
+- Position bias -> dong "labels and order are arbitrary" + harness van chay ca 2 chieu (phong thu kep, khong thay the both-order).
+- style_verdict bi nhiem terminology/meaning -> dinh nghia MUST-ignore + menh de "chi khac term/nghia thi style PHAI TIE" (day la dinh nghia a-priori, khong phai tune theo probe; P-TERM do viec model TUAN THU dinh nghia).
+- Bao hoa/ngai phan xu -> pairwise + TIE hop phap hoa tuong minh ("never invent a preference") de tranh ep thang thua gia.
+- Block ngan (59/339) -> dong heading/caption + prefer TIE khi qua ngan; short_block flag van bao cao kep nhu SF-BT.
+- Judge thuong ban dich bam sat EN -> dong "do not reward literal similarity" (chong thien vi dich word-by-word von DOC ta muon phat).
+- JSON verbose/truncate (bai hoc §2e: 512 token cap) -> note <=25 tu tieng Anh, "JSON only, no other text", response_mime_type json + thinking_budget=0 nhu config §2e.
+- Tag bia -> closed list trong prompt + validator tu choi tag ngoai taxonomy.
+
+**Phan con lai giao CodeX (bước 1 sua lai):** CodeX KHONG viet prompt nua; chi (1) soan 20 cap planted P-IDENT/P-GRAM/P-MEAN/P-TERM tu block MLP that kem expected label; (2) xay probe_pj.py quanh prompt nay (cache key du + order, khong cache loi, model_version, raw luon luu, workdb ro + hash). STOP cho Claude review planted set truoc khi chay.
