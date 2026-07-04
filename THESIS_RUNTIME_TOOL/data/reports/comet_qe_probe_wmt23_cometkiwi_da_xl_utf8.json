@@ -1,0 +1,164 @@
+{
+  "model": "Unbabel/wmt23-cometkiwi-da-xl",
+  "device": "cpu",
+  "torch": {
+    "version": "2.12.1+cpu",
+    "cuda_available": false
+  },
+  "download_elapsed_sec": 611.4448731000302,
+  "load_elapsed_sec": 122.3400215000147,
+  "checkpoint": "D:\\AI_Cache\\hub\\models--Unbabel--wmt23-cometkiwi-da-xl\\snapshots\\33858b2239a139d497d9c74952c88b89a8c06213\\checkpoints\\model.ckpt",
+  "unique_cases": 12,
+  "unique_elapsed_sec": 7.375255099963397,
+  "unique_items_per_sec": 1.6270623642644653,
+  "throughput_items": 60,
+  "throughput_elapsed_sec": 30.92540409998037,
+  "throughput_items_per_sec": 1.9401524974749833,
+  "score_summary": {
+    "min": 0.026720432564616203,
+    "max": 0.7578690052032471,
+    "mean": 0.5062322490848601
+  },
+  "pairwise_expected_order_ok": 4,
+  "pairwise_expected_order_total": 5,
+  "pair_results": [
+    {
+      "good": "good_regularization",
+      "bad": "bad_regularization_as_normalization",
+      "good_score": 0.3025454580783844,
+      "bad_score": 0.3461418151855469,
+      "ok": false,
+      "margin": -0.043596357107162476
+    },
+    {
+      "good": "good_accuracy",
+      "bad": "opposite_accuracy",
+      "good_score": 0.6272636651992798,
+      "bad_score": 0.38397449254989624,
+      "ok": true,
+      "margin": 0.24328917264938354
+    },
+    {
+      "good": "good_dropout",
+      "bad": "omission_dropout",
+      "good_score": 0.7211664319038391,
+      "bad_score": 0.20837709307670593,
+      "ok": true,
+      "margin": 0.5127893388271332
+    },
+    {
+      "good": "good_batch_size",
+      "bad": "addition_hallucination",
+      "good_score": 0.7573086619377136,
+      "bad_score": 0.6219596862792969,
+      "ok": true,
+      "margin": 0.13534897565841675
+    },
+    {
+      "good": "good_activation",
+      "bad": "untranslated_mostly",
+      "good_score": 0.7578690052032471,
+      "bad_score": 0.026720432564616203,
+      "ok": true,
+      "margin": 0.7311485726386309
+    }
+  ],
+  "cases": [
+    {
+      "id": "good_gradient",
+      "src": "The gradient is computed during backpropagation to update the model parameters.",
+      "mt": "Gradient được tính trong quá trình lan truyền ngược để cập nhật các tham số của mô hình.",
+      "expected": "good",
+      "note": "meaning and key technical terms preserved",
+      "score": 0.7398850917816162
+    },
+    {
+      "id": "bad_regularization_as_normalization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Chuẩn hóa làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "expected": "bad_term",
+      "note": "regularization mistranslated as normalization",
+      "score": 0.3461418151855469
+    },
+    {
+      "id": "good_regularization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Điều chuẩn làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "expected": "good",
+      "note": "technical term preserved as glossary target",
+      "score": 0.3025454580783844
+    },
+    {
+      "id": "opposite_accuracy",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực giảm sau khi điều chỉnh tốc độ học.",
+      "expected": "bad_semantic",
+      "note": "increases translated as decreases",
+      "score": 0.38397449254989624
+    },
+    {
+      "id": "good_accuracy",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực tăng sau khi điều chỉnh tốc độ học.",
+      "expected": "good",
+      "note": "meaning preserved",
+      "score": 0.6272636651992798
+    },
+    {
+      "id": "omission_dropout",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Trong quá trình huấn luyện, mô hình thay đổi các tầng ẩn.",
+      "expected": "bad_omission",
+      "note": "dropout/random masking omitted",
+      "score": 0.20837709307670593
+    },
+    {
+      "id": "good_dropout",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Dropout che ngẫu nhiên các đơn vị ẩn trong quá trình huấn luyện.",
+      "expected": "good",
+      "note": "meaning preserved",
+      "score": 0.7211664319038391
+    },
+    {
+      "id": "addition_hallucination",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc và đảm bảo mô hình luôn hội tụ.",
+      "expected": "medium_bad_addition",
+      "note": "adds unsupported guarantee",
+      "score": 0.6219596862792969
+    },
+    {
+      "id": "good_batch_size",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc.",
+      "expected": "good",
+      "note": "meaning preserved",
+      "score": 0.7573086619377136
+    },
+    {
+      "id": "untranslated_mostly",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "The activation function introduces nonlinearity into the neural network.",
+      "expected": "bad_untranslated",
+      "note": "not translated to Vietnamese",
+      "score": 0.026720432564616203
+    },
+    {
+      "id": "good_activation",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "Hàm kích hoạt đưa tính phi tuyến vào mạng nơ-ron.",
+      "expected": "good",
+      "note": "meaning preserved",
+      "score": 0.7578690052032471
+    },
+    {
+      "id": "wrong_subject",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật dữ liệu huấn luyện, không phải các trọng số.",
+      "expected": "bad_semantic",
+      "note": "object relation reversed",
+      "score": 0.5815751552581787
+    }
+  ]
+}

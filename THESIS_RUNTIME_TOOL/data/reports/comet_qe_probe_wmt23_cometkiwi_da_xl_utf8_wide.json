@@ -1,0 +1,517 @@
+{
+  "model": "Unbabel/wmt23-cometkiwi-da-xl",
+  "probe_set": "wide",
+  "device": "cpu",
+  "torch": {
+    "version": "2.12.1+cpu",
+    "cuda_available": false
+  },
+  "download_elapsed_sec": 0.3439600000856444,
+  "load_elapsed_sec": 196.66779909993056,
+  "checkpoint": "D:\\AI_Cache\\hub\\models--Unbabel--wmt23-cometkiwi-da-xl\\snapshots\\33858b2239a139d497d9c74952c88b89a8c06213\\checkpoints\\model.ckpt",
+  "unique_cases": 41,
+  "unique_elapsed_sec": 21.15044500003569,
+  "unique_items_per_sec": 1.9384934926868356,
+  "throughput_items": 60,
+  "throughput_elapsed_sec": 28.664976899977773,
+  "throughput_items_per_sec": 2.093146637074266,
+  "score_summary": {
+    "min": 0.02672041580080986,
+    "max": 0.824616551399231,
+    "mean": 0.5434140514854978
+  },
+  "pairwise_expected_order_ok": 17,
+  "pairwise_expected_order_total": 20,
+  "pair_results": [
+    {
+      "good": "good_regularization",
+      "bad": "bad_regularization",
+      "good_score": 0.3025454580783844,
+      "bad_score": 0.3461419343948364,
+      "ok": false,
+      "margin": -0.043596476316452026
+    },
+    {
+      "good": "good_accuracy_direction",
+      "bad": "bad_accuracy_direction",
+      "good_score": 0.6272636651992798,
+      "bad_score": 0.38397449254989624,
+      "ok": true,
+      "margin": 0.24328917264938354
+    },
+    {
+      "good": "good_dropout_omission",
+      "bad": "bad_dropout_omission",
+      "good_score": 0.7211664319038391,
+      "bad_score": 0.20837709307670593,
+      "ok": true,
+      "margin": 0.5127893388271332
+    },
+    {
+      "good": "good_hallucination",
+      "bad": "bad_hallucination",
+      "good_score": 0.7573086619377136,
+      "bad_score": 0.6219596862792969,
+      "ok": true,
+      "margin": 0.13534897565841675
+    },
+    {
+      "good": "good_untranslated",
+      "bad": "bad_untranslated",
+      "good_score": 0.7578690052032471,
+      "bad_score": 0.02672041580080986,
+      "ok": true,
+      "margin": 0.7311485894024372
+    },
+    {
+      "good": "good_subject_object",
+      "bad": "bad_subject_object",
+      "good_score": 0.730035662651062,
+      "bad_score": 0.5815751552581787,
+      "ok": true,
+      "margin": 0.1484605073928833
+    },
+    {
+      "good": "good_negation_elementwise",
+      "bad": "bad_negation_elementwise",
+      "good_score": 0.8217321634292603,
+      "bad_score": 0.5321797728538513,
+      "ok": true,
+      "margin": 0.28955239057540894
+    },
+    {
+      "good": "good_loss_direction",
+      "bad": "bad_loss_direction",
+      "good_score": 0.4203304648399353,
+      "bad_score": 0.3290727436542511,
+      "ok": true,
+      "margin": 0.0912577211856842
+    },
+    {
+      "good": "good_dataset_split",
+      "bad": "bad_dataset_split",
+      "good_score": 0.824616551399231,
+      "bad_score": 0.7737109661102295,
+      "ok": true,
+      "margin": 0.050905585289001465
+    },
+    {
+      "good": "good_learning_rate_number",
+      "bad": "bad_learning_rate_number",
+      "good_score": 0.6084773540496826,
+      "bad_score": 0.35197916626930237,
+      "ok": true,
+      "margin": 0.25649818778038025
+    },
+    {
+      "good": "good_variance_std",
+      "bad": "bad_variance_std",
+      "good_score": 0.5624896883964539,
+      "bad_score": 0.6709317564964294,
+      "ok": false,
+      "margin": -0.10844206809997559
+    },
+    {
+      "good": "good_underfit_overfit",
+      "bad": "bad_underfit_overfit",
+      "good_score": 0.6393351554870605,
+      "bad_score": 0.5191158056259155,
+      "ok": true,
+      "margin": 0.12021934986114502
+    },
+    {
+      "good": "good_softmax_sum",
+      "bad": "bad_softmax_sum",
+      "good_score": 0.6263259649276733,
+      "bad_score": 0.22520825266838074,
+      "ok": true,
+      "margin": 0.4011177122592926
+    },
+    {
+      "good": "good_eigenvalue",
+      "bad": "bad_eigenvalue",
+      "good_score": 0.603401243686676,
+      "bad_score": 0.3604056239128113,
+      "ok": true,
+      "margin": 0.24299561977386475
+    },
+    {
+      "good": "good_convolution_kernel",
+      "bad": "bad_convolution_kernel",
+      "good_score": 0.40799516439437866,
+      "bad_score": 0.6985743641853333,
+      "ok": false,
+      "margin": -0.2905791997909546
+    },
+    {
+      "good": "good_batch_epoch",
+      "bad": "bad_batch_epoch",
+      "good_score": 0.5786061882972717,
+      "bad_score": 0.5666939616203308,
+      "ok": true,
+      "margin": 0.011912226676940918
+    },
+    {
+      "good": "good_dimensionality_reduction",
+      "bad": "bad_dimensionality_reduction",
+      "good_score": 0.4856613278388977,
+      "bad_score": 0.13755348324775696,
+      "ok": true,
+      "margin": 0.34810784459114075
+    },
+    {
+      "good": "good_probability_range",
+      "bad": "bad_probability_range",
+      "good_score": 0.7894838452339172,
+      "bad_score": 0.6803712844848633,
+      "ok": true,
+      "margin": 0.10911256074905396
+    },
+    {
+      "good": "good_bias_weight",
+      "bad": "bad_bias_weight",
+      "good_score": 0.4526151716709137,
+      "bad_score": 0.42705345153808594,
+      "ok": true,
+      "margin": 0.02556172013282776
+    },
+    {
+      "good": "good_distribution",
+      "bad": "bad_distribution",
+      "good_score": 0.7792809009552002,
+      "bad_score": 0.601951539516449,
+      "ok": true,
+      "margin": 0.17732936143875122
+    }
+  ],
+  "cases": [
+    {
+      "id": "good_gradient",
+      "src": "The gradient is computed during backpropagation to update the model parameters.",
+      "mt": "Gradient được tính trong quá trình lan truyền ngược để cập nhật các tham số của mô hình.",
+      "expected": "good",
+      "note": "standalone good technical translation",
+      "score": 0.7398850917816162
+    },
+    {
+      "id": "good_regularization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Điều chuẩn làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "expected": "good",
+      "note": "good: regularization mistranslated as normalization",
+      "score": 0.3025454580783844
+    },
+    {
+      "id": "bad_regularization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Chuẩn hóa làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "expected": "bad_term",
+      "note": "bad: regularization mistranslated as normalization",
+      "score": 0.3461419343948364
+    },
+    {
+      "id": "good_accuracy_direction",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực tăng sau khi điều chỉnh tốc độ học.",
+      "expected": "good",
+      "note": "good: increase/decrease polarity",
+      "score": 0.6272636651992798
+    },
+    {
+      "id": "bad_accuracy_direction",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực giảm sau khi điều chỉnh tốc độ học.",
+      "expected": "bad_semantic",
+      "note": "bad: increase/decrease polarity",
+      "score": 0.38397449254989624
+    },
+    {
+      "id": "good_dropout_omission",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Dropout che ngẫu nhiên các đơn vị ẩn trong quá trình huấn luyện.",
+      "expected": "good",
+      "note": "good: dropout and random masking omitted",
+      "score": 0.7211664319038391
+    },
+    {
+      "id": "bad_dropout_omission",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Trong quá trình huấn luyện, mô hình thay đổi các tầng ẩn.",
+      "expected": "bad_omission",
+      "note": "bad: dropout and random masking omitted",
+      "score": 0.20837709307670593
+    },
+    {
+      "id": "good_hallucination",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc.",
+      "expected": "good",
+      "note": "good: unsupported guarantee added",
+      "score": 0.7573086619377136
+    },
+    {
+      "id": "bad_hallucination",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc và đảm bảo mô hình luôn hội tụ.",
+      "expected": "medium_bad_addition",
+      "note": "bad: unsupported guarantee added",
+      "score": 0.6219596862792969
+    },
+    {
+      "id": "good_untranslated",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "Hàm kích hoạt đưa tính phi tuyến vào mạng nơ-ron.",
+      "expected": "good",
+      "note": "good: English copied instead of translated",
+      "score": 0.7578690052032471
+    },
+    {
+      "id": "bad_untranslated",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "The activation function introduces nonlinearity into the neural network.",
+      "expected": "bad_untranslated",
+      "note": "bad: English copied instead of translated",
+      "score": 0.02672041580080986
+    },
+    {
+      "id": "good_subject_object",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật các trọng số, không phải dữ liệu huấn luyện.",
+      "expected": "good",
+      "note": "good: object relation reversed",
+      "score": 0.730035662651062
+    },
+    {
+      "id": "bad_subject_object",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật dữ liệu huấn luyện, không phải các trọng số.",
+      "expected": "bad_semantic",
+      "note": "bad: object relation reversed",
+      "score": 0.5815751552581787
+    },
+    {
+      "id": "good_negation_elementwise",
+      "src": "Matrix multiplication is not the same as elementwise multiplication.",
+      "mt": "Phép nhân ma trận không giống với phép nhân theo từng phần tử.",
+      "expected": "good",
+      "note": "good: negation dropped",
+      "score": 0.8217321634292603
+    },
+    {
+      "id": "bad_negation_elementwise",
+      "src": "Matrix multiplication is not the same as elementwise multiplication.",
+      "mt": "Phép nhân ma trận giống với phép nhân theo từng phần tử.",
+      "expected": "bad_negation",
+      "note": "bad: negation dropped",
+      "score": 0.5321797728538513
+    },
+    {
+      "id": "good_loss_direction",
+      "src": "Gradient descent minimizes the loss function.",
+      "mt": "Hạ gradient tối thiểu hóa hàm mất mát.",
+      "expected": "good",
+      "note": "good: minimize vs maximize",
+      "score": 0.4203304648399353
+    },
+    {
+      "id": "bad_loss_direction",
+      "src": "Gradient descent minimizes the loss function.",
+      "mt": "Hạ gradient tối đa hóa hàm mất mát.",
+      "expected": "bad_semantic",
+      "note": "bad: minimize vs maximize",
+      "score": 0.3290727436542511
+    },
+    {
+      "id": "good_dataset_split",
+      "src": "We tune hyperparameters on the validation set, not on the test set.",
+      "mt": "Chúng ta điều chỉnh siêu tham số trên tập xác thực, không phải trên tập kiểm tra.",
+      "expected": "good",
+      "note": "good: validation/test set swapped",
+      "score": 0.824616551399231
+    },
+    {
+      "id": "bad_dataset_split",
+      "src": "We tune hyperparameters on the validation set, not on the test set.",
+      "mt": "Chúng ta điều chỉnh siêu tham số trên tập kiểm tra, không phải trên tập xác thực.",
+      "expected": "bad_semantic",
+      "note": "bad: validation/test set swapped",
+      "score": 0.7737109661102295
+    },
+    {
+      "id": "good_learning_rate_number",
+      "src": "The learning rate is reduced from 0.1 to 0.01.",
+      "mt": "Tốc độ học được giảm từ 0,1 xuống 0,01.",
+      "expected": "good",
+      "note": "good: number and direction reversed",
+      "score": 0.6084773540496826
+    },
+    {
+      "id": "bad_learning_rate_number",
+      "src": "The learning rate is reduced from 0.1 to 0.01.",
+      "mt": "Tốc độ học được tăng từ 0,01 lên 0,1.",
+      "expected": "bad_numeric",
+      "note": "bad: number and direction reversed",
+      "score": 0.35197916626930237
+    },
+    {
+      "id": "good_variance_std",
+      "src": "The variance is the square of the standard deviation.",
+      "mt": "Phương sai là bình phương của độ lệch chuẩn.",
+      "expected": "good",
+      "note": "good: variance/std relation reversed",
+      "score": 0.5624896883964539
+    },
+    {
+      "id": "bad_variance_std",
+      "src": "The variance is the square of the standard deviation.",
+      "mt": "Độ lệch chuẩn là bình phương của phương sai.",
+      "expected": "bad_semantic",
+      "note": "bad: variance/std relation reversed",
+      "score": 0.6709317564964294
+    },
+    {
+      "id": "good_underfit_overfit",
+      "src": "A model that underfits has high training error and high validation error.",
+      "mt": "Một mô hình bị thiếu khớp có lỗi huấn luyện cao và lỗi xác thực cao.",
+      "expected": "good",
+      "note": "good: underfitting changed to overfitting",
+      "score": 0.6393351554870605
+    },
+    {
+      "id": "bad_underfit_overfit",
+      "src": "A model that underfits has high training error and high validation error.",
+      "mt": "Một mô hình bị quá khớp có lỗi huấn luyện thấp và lỗi xác thực cao.",
+      "expected": "bad_term",
+      "note": "bad: underfitting changed to overfitting",
+      "score": 0.5191158056259155
+    },
+    {
+      "id": "good_softmax_sum",
+      "src": "The softmax outputs probabilities that sum to one.",
+      "mt": "Softmax xuất ra các xác suất có tổng bằng một.",
+      "expected": "good",
+      "note": "good: negation inserted",
+      "score": 0.6263259649276733
+    },
+    {
+      "id": "bad_softmax_sum",
+      "src": "The softmax outputs probabilities that sum to one.",
+      "mt": "Softmax xuất ra các xác suất không có tổng bằng một.",
+      "expected": "bad_negation",
+      "note": "bad: negation inserted",
+      "score": 0.22520825266838074
+    },
+    {
+      "id": "good_eigenvalue",
+      "src": "An eigenvalue tells how much an eigenvector is scaled.",
+      "mt": "Một trị riêng cho biết một vectơ riêng được co giãn bao nhiêu.",
+      "expected": "good",
+      "note": "good: eigenvalue/eigenvector mistranslated",
+      "score": 0.603401243686676
+    },
+    {
+      "id": "bad_eigenvalue",
+      "src": "An eigenvalue tells how much an eigenvector is scaled.",
+      "mt": "Một giá trị ví dụ cho biết một vectơ được sắp xếp như thế nào.",
+      "expected": "bad_term",
+      "note": "bad: eigenvalue/eigenvector mistranslated",
+      "score": 0.3604056239128113
+    },
+    {
+      "id": "good_convolution_kernel",
+      "src": "A convolution kernel slides across the image to detect local patterns.",
+      "mt": "Một kernel tích chập trượt trên ảnh để phát hiện các mẫu cục bộ.",
+      "expected": "good",
+      "note": "good: convolution kernel mistranslated",
+      "score": 0.40799516439437866
+    },
+    {
+      "id": "bad_convolution_kernel",
+      "src": "A convolution kernel slides across the image to detect local patterns.",
+      "mt": "Một hạt nhân hội tụ trượt trên ảnh để phát hiện các mẫu cục bộ.",
+      "expected": "bad_term",
+      "note": "bad: convolution kernel mistranslated",
+      "score": 0.6985743641853333
+    },
+    {
+      "id": "good_batch_epoch",
+      "src": "An epoch is complete after the model has seen every training example once.",
+      "mt": "Một epoch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.",
+      "expected": "good",
+      "note": "good: epoch changed to batch",
+      "score": 0.5786061882972717
+    },
+    {
+      "id": "bad_batch_epoch",
+      "src": "An epoch is complete after the model has seen every training example once.",
+      "mt": "Một batch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.",
+      "expected": "bad_term",
+      "note": "bad: epoch changed to batch",
+      "score": 0.5666939616203308
+    },
+    {
+      "id": "good_dimensionality_reduction",
+      "src": "Dimensionality reduction projects high-dimensional data into a lower-dimensional space.",
+      "mt": "Giảm chiều chiếu dữ liệu chiều cao vào một không gian chiều thấp hơn.",
+      "expected": "good",
+      "note": "good: dimensionality reduction mistranslated",
+      "score": 0.4856613278388977
+    },
+    {
+      "id": "bad_dimensionality_reduction",
+      "src": "Dimensionality reduction projects high-dimensional data into a lower-dimensional space.",
+      "mt": "Chuẩn hóa dữ liệu chiều cao vào một không gian lớn hơn.",
+      "expected": "bad_term",
+      "note": "bad: dimensionality reduction mistranslated",
+      "score": 0.13755348324775696
+    },
+    {
+      "id": "good_probability_range",
+      "src": "A probability must lie between 0 and 1.",
+      "mt": "Một xác suất phải nằm giữa 0 và 1.",
+      "expected": "good",
+      "note": "good: probability range violated",
+      "score": 0.7894838452339172
+    },
+    {
+      "id": "bad_probability_range",
+      "src": "A probability must lie between 0 and 1.",
+      "mt": "Một xác suất phải lớn hơn 1.",
+      "expected": "bad_numeric",
+      "note": "bad: probability range violated",
+      "score": 0.6803712844848633
+    },
+    {
+      "id": "good_bias_weight",
+      "src": "The bias term shifts the activation before applying the nonlinearity.",
+      "mt": "Hạng bias dịch chuyển kích hoạt trước khi áp dụng phi tuyến.",
+      "expected": "good",
+      "note": "good: bias/weight and before/after changed",
+      "score": 0.4526151716709137
+    },
+    {
+      "id": "bad_bias_weight",
+      "src": "The bias term shifts the activation before applying the nonlinearity.",
+      "mt": "Trọng số dịch chuyển kích hoạt sau khi áp dụng phi tuyến.",
+      "expected": "bad_semantic",
+      "note": "bad: bias/weight and before/after changed",
+      "score": 0.42705345153808594
+    },
+    {
+      "id": "good_distribution",
+      "src": "A Gaussian distribution is fully specified by its mean and variance.",
+      "mt": "Một phân phối Gaussian được xác định đầy đủ bởi trung bình và phương sai.",
+      "expected": "good",
+      "note": "good: distribution and statistics changed",
+      "score": 0.7792809009552002
+    },
+    {
+      "id": "bad_distribution",
+      "src": "A Gaussian distribution is fully specified by its mean and variance.",
+      "mt": "Một phân phối đều được xác định đầy đủ bởi trung vị và độ lệch chuẩn.",
+      "expected": "bad_term",
+      "note": "bad: distribution and statistics changed",
+      "score": 0.601951539516449
+    }
+  ]
+}

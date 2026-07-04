@@ -1,0 +1,541 @@
+{
+  "model": "google/gemma-4-12b",
+  "endpoint": "http://127.0.0.1:1234/v1/chat/completions",
+  "max_tokens": 2048,
+  "source_probe": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\comet_qe_probe_wmt22_cometkiwi_da_utf8_wide.json",
+  "prompt_system": "You are a strict evaluator for English-to-Vietnamese technical translation. Given a source sentence and two Vietnamese translations, choose the translation that better preserves the source meaning. Penalize wrong technical terms, swapped subjects/objects, negation errors, numeric errors, omissions, and unsupported additions. If both are equally good or equally bad, choose tie. Return only valid JSON in message content with keys: winner, severity, reason. winner must be A, B, or tie. severity must be clear, small, or tie. reason must be short. Do not include markdown.",
+  "pair_count": 20,
+  "correct": 19,
+  "accuracy": 0.95,
+  "elapsed_sec": 229.82852720003575,
+  "avg_sec_per_pair": 11.491426360001787,
+  "failures": [
+    {
+      "index": 1,
+      "good_id": "good_regularization",
+      "bad_id": "bad_regularization",
+      "a_id": "bad_regularization",
+      "b_id": "good_regularization",
+      "expected_winner": "B",
+      "winner": "A",
+      "ok": false,
+      "elapsed_sec": 43.52263130003121,
+      "severity": "small",
+      "reason": "'Chuẩn hóa' is often used for 'Normalization', but it is a common (though technically imprecise) term in some contexts, whereas 'Điều chuẩn' is an unnatural and incorrect translation of 'Regularization'.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"small\",\"reason\":\"'Chuẩn hóa' is often used for 'Normalization', but it is a common (though technically imprecise) term in some contexts, whereas 'Điều chuẩn' is an unnatural and incorrect translation of 'Regularization'.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"Regularization reduces overfitting by penalizing large weights.\"\n    *   Translation A: \"Chuẩn hóa làm giảm quá khớp bằng cách phạt các trọng số lớn.\"\n    *   Translation B: \"Điều chuẩn làm giảm quá khớp bằng cách phạt các trọng số lớn.\"\n\n    *   \"Regularization\": In machine learning/statistics, this is a specific technique.\n        *   Common Vietnamese translations: \"Chỉnh quy\" (most accurate for regularization), \"Chuẩn hóa\" (often used for normalization, but sometimes confused with regularization), \"Điều chuẩn\" (less common, literal).\n    *   \"reduces\": làm giảm.\n    *   \"overfitting\": quá khớp (standard term in ML).\n    *   \"by penalizing\": bằng cách phạt.\n    *   \"large weights\": các trọng số lớn.\n\n    *   Translation A uses \"Chuẩn hóa\". In Vietnamese technical contexts, \"Chuẩn hóa\" usually refers to *Normalization* (e.g., Min-Max Scaling, Z-score Normalization). While some might use it for regularization, it's technically imprecise compared to \"Chỉnh quy\".\n    *   Translation B uses \"Điều chuẩn\". This is a very literal and non-standard translation of \"Regularization\". It is rarely used in Vietnamese technical literature.\n\n    *   Both translations are sl",
+      "usage": {
+        "prompt_tokens": 214,
+        "completion_tokens": 1192,
+        "total_tokens": 1406,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1133
+        }
+      }
+    }
+  ],
+  "results": [
+    {
+      "index": 1,
+      "good_id": "good_regularization",
+      "bad_id": "bad_regularization",
+      "a_id": "bad_regularization",
+      "b_id": "good_regularization",
+      "expected_winner": "B",
+      "winner": "A",
+      "ok": false,
+      "elapsed_sec": 43.52263130003121,
+      "severity": "small",
+      "reason": "'Chuẩn hóa' is often used for 'Normalization', but it is a common (though technically imprecise) term in some contexts, whereas 'Điều chuẩn' is an unnatural and incorrect translation of 'Regularization'.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"small\",\"reason\":\"'Chuẩn hóa' is often used for 'Normalization', but it is a common (though technically imprecise) term in some contexts, whereas 'Điều chuẩn' is an unnatural and incorrect translation of 'Regularization'.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"Regularization reduces overfitting by penalizing large weights.\"\n    *   Translation A: \"Chuẩn hóa làm giảm quá khớp bằng cách phạt các trọng số lớn.\"\n    *   Translation B: \"Điều chuẩn làm giảm quá khớp bằng cách phạt các trọng số lớn.\"\n\n    *   \"Regularization\": In machine learning/statistics, this is a specific technique.\n        *   Common Vietnamese translations: \"Chỉnh quy\" (most accurate for regularization), \"Chuẩn hóa\" (often used for normalization, but sometimes confused with regularization), \"Điều chuẩn\" (less common, literal).\n    *   \"reduces\": làm giảm.\n    *   \"overfitting\": quá khớp (standard term in ML).\n    *   \"by penalizing\": bằng cách phạt.\n    *   \"large weights\": các trọng số lớn.\n\n    *   Translation A uses \"Chuẩn hóa\". In Vietnamese technical contexts, \"Chuẩn hóa\" usually refers to *Normalization* (e.g., Min-Max Scaling, Z-score Normalization). While some might use it for regularization, it's technically imprecise compared to \"Chỉnh quy\".\n    *   Translation B uses \"Điều chuẩn\". This is a very literal and non-standard translation of \"Regularization\". It is rarely used in Vietnamese technical literature.\n\n    *   Both translations are sl",
+      "usage": {
+        "prompt_tokens": 214,
+        "completion_tokens": 1192,
+        "total_tokens": 1406,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1133
+        }
+      }
+    },
+    {
+      "index": 2,
+      "good_id": "good_accuracy_direction",
+      "bad_id": "bad_accuracy_direction",
+      "a_id": "bad_accuracy_direction",
+      "b_id": "good_accuracy_direction",
+      "expected_winner": "B",
+      "winner": "B",
+      "ok": true,
+      "elapsed_sec": 9.044834200059995,
+      "severity": "clear",
+      "reason": "Translation A uses 'giảm' (decreases) instead of 'tăng' (increases).",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"B\",\"severity\":\"clear\",\"reason\":\"Translation A uses 'giảm' (decreases) instead of 'tăng' (increases).\"}",
+      "reasoning_excerpt": "\n*   Source English: \"The validation accuracy increases after tuning the learning rate.\"\n    *   Translation A: \"Độ chính xác trên tập xác thực giảm sau khi điều chỉnh tốc độ học.\" (Validation accuracy *decreases*...)\n    *   Translation B: \"Độ chính xác trên tập xác thực tăng sau khi điều chỉnh tốc độ học.\" (Validation accuracy *increases*...)\n\n    *   \"validation accuracy\": Độ chính xác trên tập xác thực.\n    *   \"increases\": tăng.\n    *   \"after tuning\": sau khi điều chỉnh.\n    *   \"the learning rate\": tốc độ học.\n\n    *   Translation A uses \"giảm\" (decreases) instead of \"tăng\" (increases). This is a negation/opposite meaning error.\n    *   Translation B uses \"tăng\" (increases), which matches the source perfectly.\n\n    *   Winner: B.\n    *   Severity: clear (since A has an opposite meaning).\n    *   Reason: Translation A incorrectly translates \"increases\" as \"giảm\" (decreases).",
+      "usage": {
+        "prompt_tokens": 219,
+        "completion_tokens": 267,
+        "total_tokens": 486,
+        "completion_tokens_details": {
+          "reasoning_tokens": 231
+        }
+      }
+    },
+    {
+      "index": 3,
+      "good_id": "good_dropout_omission",
+      "bad_id": "bad_dropout_omission",
+      "a_id": "good_dropout_omission",
+      "b_id": "bad_dropout_omission",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 13.303862200002186,
+      "severity": "clear",
+      "reason": "Translation A is accurate; Translation B incorrectly replaces 'masks' with 'changes' and 'hidden units' with 'hidden layers'.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation A is accurate; Translation B incorrectly replaces 'masks' with 'changes' and 'hidden units' with 'hidden layers'.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"Dropout randomly masks hidden units during training.\"\n    *   Translation A: \"Dropout che ngẫu nhiên các đơn vị ẩn trong quá trình huấn luyện.\"\n    *   Translation B: \"Trong quá trình huấn luyện, mô hình thay đổi các tầng ẩn.\"\n\n    *   \"Dropout\": Technical term in machine learning.\n    *   \"randomly masks\": The action performed (hiding/deactivating units randomly).\n    *   \"hidden units\": Specific technical component of a neural network.\n    *   \"during training\": Timeframe.\n\n    *   Translation A: \"Dropout che ngẫu nhiên các đơn vị ẩn trong quá trình huấn luyện.\"\n        *   \"Dropout\" -> Dropout (kept as is, standard).\n        *   \"che ngẫu nhiên\" -> randomly masks (accurate).\n        *   \"các đơn vị ẩn\" -> hidden units (accurate technical term).\n        *   \"trong quá trình huấn luyện\" -> during training (accurate).\n\n    *   Translation B: \"Trong quá trình huấn luyện, mô hình thay đổi các tầng ẩn.\"\n        *   \"mô hình\" -> model (not in source).\n        *   \"thay đổi\" -> changes (incorrect for \"masks\").\n        *   \"các tầng ẩn\" -> hidden layers (incorrect for \"hidden units\").\n\n    *   Translation A is a faithful and accurate translation of the technical con",
+      "usage": {
+        "prompt_tokens": 212,
+        "completion_tokens": 428,
+        "total_tokens": 640,
+        "completion_tokens_details": {
+          "reasoning_tokens": 386
+        }
+      }
+    },
+    {
+      "index": 4,
+      "good_id": "good_hallucination",
+      "bad_id": "bad_hallucination",
+      "a_id": "good_hallucination",
+      "b_id": "bad_hallucination",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 9.401743399910629,
+      "severity": "clear",
+      "reason": "Translation B contains an unsupported addition that is not present in the source text.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B contains an unsupported addition that is not present in the source text.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"The batch size controls how many examples are processed at once.\"\n    *   Translation A: \"Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc.\"\n    *   Translation B: \"Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc và đảm bảo mô hình luôn hội tụ.\"\n\n    *   \"The batch size\": Kích thước batch (Correct)\n    *   \"controls\": kiểm soát (Correct)\n    *   \"how many examples\": số ví dụ (Correct)\n    *   \"are processed at once\": được xử lý cùng lúc (Correct)\n\n    *   Translation A: Matches the source perfectly.\n    *   Translation B: Adds \"và đảm bảo mô hình luôn hội tụ\" (and ensures the model always converges). This is an unsupported addition and technically incorrect as a general rule (batch size affects convergence, but doesn't *ensure* it always happens regardless of other hyperparameters).\n\n    *   Winner: A\n    *   Severity: clear (because B adds significant extra information not present in the source).\n    *   Reason: Translation B includes an unsupported addition (\"và đảm bảo mô hình luôn hội tụ\").",
+      "usage": {
+        "prompt_tokens": 225,
+        "completion_tokens": 285,
+        "total_tokens": 510,
+        "completion_tokens_details": {
+          "reasoning_tokens": 254
+        }
+      }
+    },
+    {
+      "index": 5,
+      "good_id": "good_untranslated",
+      "bad_id": "bad_untranslated",
+      "a_id": "good_untranslated",
+      "b_id": "bad_untranslated",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 8.991432100068778,
+      "severity": "clear",
+      "reason": "Translation B is an exact copy of the source text and not a translation into Vietnamese.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B is an exact copy of the source text and not a translation into Vietnamese.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"The activation function introduces nonlinearity into the neural network.\"\n    *   Translation A: \"Hàm kích hoạt đưa tính phi tuyến vào mạng nơ-ron.\"\n    *   Translation B: \"The activation function introduces nonlinearity into the neural network.\"\n\n    *   A is a Vietnamese translation.\n    *   B is an exact copy of the English source (not a translation).\n\n    *   \"Hàm kích hoạt\" = The activation function (Correct)\n    *   \"đưa... vào\" = introduces ... into (Correct)\n    *   \"tính phi tuyến\" = nonlinearity (Correct technical term)\n    *   \"mạng nơ-ron\" = neural network (Correct technical term)\n\n    *   Translation B is not a translation; it's the source text. In an English-to-Vietnamese task, providing the source text as the \"translation\" is a failure to translate.\n\n    *   Winner: A\n    *   Severity: clear\n    *   Reason: Translation B is just a copy of the source text in English, not a Vietnamese translation.",
+      "usage": {
+        "prompt_tokens": 210,
+        "completion_tokens": 271,
+        "total_tokens": 481,
+        "completion_tokens_details": {
+          "reasoning_tokens": 238
+        }
+      }
+    },
+    {
+      "index": 6,
+      "good_id": "good_subject_object",
+      "bad_id": "bad_subject_object",
+      "a_id": "bad_subject_object",
+      "b_id": "good_subject_object",
+      "expected_winner": "B",
+      "winner": "B",
+      "ok": true,
+      "elapsed_sec": 9.417732200003229,
+      "severity": "clear",
+      "reason": "Translation A swaps the objects, incorrectly stating that the optimizer updates the training data instead of the weights.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"B\",\"severity\":\"clear\",\"reason\":\"Translation A swaps the objects, incorrectly stating that the optimizer updates the training data instead of the weights.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"The optimizer updates the weights, not the training data.\"\n    *   Translation A: \"Bộ tối ưu cập nhật dữ liệu huấn luyện, không phải các trọng số.\" (Optimizer updates training data, not weights.)\n    *   Translation B: \"Bộ tối ưu cập nhật các trọng số, không phải dữ liệu huấn luyện.\" (Optimizer updates weights, not training data.)\n\n    *   Subject: The optimizer (Bộ tối ưu)\n    *   Action: updates (cập nhật)\n    *   Object 1: the weights (các trọng số)\n    *   Negation/Contrast: not the training data (không phải dữ liệu huấn luyện)\n\n    *   Translation A swaps the objects. It says it updates \"training data\" and NOT \"weights\". This is a direct contradiction of the source meaning.\n    *   Translation B correctly identifies that it updates \"weights\" and NOT \"training data\".\n\n    *   Winner: B\n    *   Severity: clear (because Translation A swapped the core technical components).\n    *   Reason: Translation A swaps the objects (updates training data instead of weights), while Translation B is accurate.",
+      "usage": {
+        "prompt_tokens": 218,
+        "completion_tokens": 283,
+        "total_tokens": 501,
+        "completion_tokens_details": {
+          "reasoning_tokens": 247
+        }
+      }
+    },
+    {
+      "index": 7,
+      "good_id": "good_negation_elementwise",
+      "bad_id": "bad_negation_elementwise",
+      "a_id": "good_negation_elementwise",
+      "b_id": "bad_negation_elementwise",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 6.708054299931973,
+      "severity": "clear",
+      "reason": "Translation B omits the negation 'not', reversing the meaning.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B omits the negation 'not', reversing the meaning.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"Matrix multiplication is not the same as elementwise multiplication.\"\n    *   Translation A: \"Phép nhân ma trận không giống với phép nhân theo từng phần tử.\" (Matrix multiplication is not like/the same as elementwise multiplication.)\n    *   Translation B: \"Phép nhân ma trận giống với phép nhân theo từng phần tử.\" (Matrix multiplication is like/the same as elementwise multiplication.)\n\n    *   Source has a negation (\"not the same\").\n    *   A includes the negation (\"không giống\").\n    *   B omits the negation (\"giống\").\n\n    *   Translation A correctly preserves the meaning.\n    *   Translation B is a direct contradiction of the source.\n\n    *   Winner: A\n    *   Severity: clear (negation error in B)\n    *   Reason: Translation B misses the negation \"not\".",
+      "usage": {
+        "prompt_tokens": 215,
+        "completion_tokens": 217,
+        "total_tokens": 432,
+        "completion_tokens_details": {
+          "reasoning_tokens": 188
+        }
+      }
+    },
+    {
+      "index": 8,
+      "good_id": "good_loss_direction",
+      "bad_id": "bad_loss_direction",
+      "a_id": "bad_loss_direction",
+      "b_id": "good_loss_direction",
+      "expected_winner": "B",
+      "winner": "B",
+      "ok": true,
+      "elapsed_sec": 8.560456000035629,
+      "severity": "clear",
+      "reason": "Translation A incorrectly uses 'tối đa hóa' (maximizes) instead of 'tối thiểu hóa' (minimizes).",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"B\",\"severity\":\"clear\",\"reason\":\"Translation A incorrectly uses 'tối đa hóa' (maximizes) instead of 'tối thiểu hóa' (minimizes).\"}",
+      "reasoning_excerpt": "\n*   Source English: \"Gradient descent minimizes the loss function.\"\n    *   Translation A: \"Hạ gradient tối đa hóa hàm mất mát.\" (Gradient descent maximizes the loss function.)\n    *   Translation B: \"Hạ gradient tối thiểu hóa hàm mất mát.\" (Gradient descent minimizes the loss function.)\n\n    *   \"Gradient descent\": Hạ gradient / Cực tiểu hóa độ dốc (usually \"Gradient descent\" is kept or translated as \"Thuật toán hạ gradient\").\n    *   \"minimizes\": tối thiểu hóa.\n    *   \"loss function\": hàm mất mát.\n\n    *   Translation A uses \"tối đa hóa\" (maximizes), which is the opposite of \"minimizes\". This is a major semantic error.\n    *   Translation B uses \"tối thiểu hóa\" (minimizes), which correctly matches the source.\n\n    *   Winner: B\n    *   Severity: clear (because A has a direct negation/opposite meaning).\n    *   Reason: Translation A incorrectly translates \"minimizes\" as \"tối đa hóa\" (maximizes).",
+      "usage": {
+        "prompt_tokens": 202,
+        "completion_tokens": 274,
+        "total_tokens": 476,
+        "completion_tokens_details": {
+          "reasoning_tokens": 232
+        }
+      }
+    },
+    {
+      "index": 9,
+      "good_id": "good_dataset_split",
+      "bad_id": "bad_dataset_split",
+      "a_id": "good_dataset_split",
+      "b_id": "bad_dataset_split",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 7.889060600078665,
+      "severity": "clear",
+      "reason": "Translation B swaps the validation set and the test set, reversing the meaning of the source sentence.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B swaps the validation set and the test set, reversing the meaning of the source sentence.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"We tune hyperparameters on the validation set, not on the test set.\"\n    *   Translation A: \"Chúng ta điều chỉnh siêu tham số trên tập xác thực, không phải trên tập kiểm tra.\" (Validation set = tập xác thực; Test set = tập kiểm tra).\n    *   Translation B: \"Chúng ta điều chỉnh siêu tham số trên tập kiểm tra, không phải trên tập xác thực.\" (Test set = tập kiểm tra; Validation set = tập xác thực).\n\n    *   Source says: Tune on validation, NOT test.\n    *   A says: Điều chỉnh trên tập xác thực, KHÔNG PHẢI trên tập kiểm tra. (Correct)\n    *   B says: Điều chỉnh trên tập kiểm tra, KHÔNG PHẢI trên tập xác thực. (Incorrect - swapped).\n\n    *   Winner: A\n    *   Severity: clear (The meaning is completely reversed in B).\n    *   Reason: Translation B swaps the validation set and the test set.",
+      "usage": {
+        "prompt_tokens": 227,
+        "completion_tokens": 250,
+        "total_tokens": 477,
+        "completion_tokens_details": {
+          "reasoning_tokens": 215
+        }
+      }
+    },
+    {
+      "index": 10,
+      "good_id": "good_learning_rate_number",
+      "bad_id": "bad_learning_rate_number",
+      "a_id": "bad_learning_rate_number",
+      "b_id": "good_learning_rate_number",
+      "expected_winner": "B",
+      "winner": "B",
+      "ok": true,
+      "elapsed_sec": 9.059544299961999,
+      "severity": "clear",
+      "reason": "Translation A reverses both the direction of change (increased instead of reduced) and the numeric order.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"B\",\"severity\":\"clear\",\"reason\":\"Translation A reverses both the direction of change (increased instead of reduced) and the numeric order.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"The learning rate is reduced from 0.1 to 0.01.\"\n    *   Translation A: \"Tốc độ học được tăng từ 0,01 lên 0,1.\" (Learning rate was increased from 0.01 to 0.1.)\n    *   Translation B: \"Tốc độ học được giảm từ 0,1 xuống 0,01.\" (Learning rate was reduced from 0.1 to 0.01.)\n\n    *   Source says \"reduced\" (giảm). Translation A says \"tăng\" (increased).\n    *   Source says \"from 0.1 to 0.01\". Translation A says \"từ 0,01 lên 0,1\".\n    *   Translation B correctly identifies \"reduced\" as \"giảm\" and the numbers in the correct order.\n\n    *   Winner: B\n    *   Severity: clear (The meaning is completely reversed in A).\n    *   Reason: Translation A reverses both the action (increased vs reduced) and the numerical values.",
+      "usage": {
+        "prompt_tokens": 228,
+        "completion_tokens": 273,
+        "total_tokens": 501,
+        "completion_tokens_details": {
+          "reasoning_tokens": 238
+        }
+      }
+    },
+    {
+      "index": 11,
+      "good_id": "good_variance_std",
+      "bad_id": "bad_variance_std",
+      "a_id": "good_variance_std",
+      "b_id": "bad_variance_std",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 8.851766099920496,
+      "severity": "clear",
+      "reason": "Translation B swaps the subject and object, reversing the mathematical definition.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B swaps the subject and object, reversing the mathematical definition.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"The variance is the square of the standard deviation.\"\n    *   Translation A: \"Phương sai là bình phương của độ lệch chuẩn.\" (Variance is the square of the standard deviation.)\n    *   Translation B: \"Độ lệch chuẩn là bình phương của phương sai.\" (Standard deviation is the square of the variance.)\n\n    *   \"The variance\" = Phương sai.\n    *   \"is\" = là.\n    *   \"the square of\" = bình phương của.\n    *   \"the standard deviation\" = độ lệch chuẩn.\n\n    *   Translation A: \"Phương sai (Variance) là (is) bình phương của (square of) độ lệch chuẩn (standard deviation).\" -> Correct.\n    *   Translation B: \"Độ lệch chuẩn (Standard deviation) là (is) bình phương của (square of) phương sai (variance).\" -> Incorrect (swapped subject and object).\n\n    *   Winner: A.\n    *   Severity: clear (The meaning is completely reversed in B).\n    *   Reason: Translation B swaps the subject and the object, reversing the mathematical relationship.",
+      "usage": {
+        "prompt_tokens": 206,
+        "completion_tokens": 272,
+        "total_tokens": 478,
+        "completion_tokens_details": {
+          "reasoning_tokens": 243
+        }
+      }
+    },
+    {
+      "index": 12,
+      "good_id": "good_underfit_overfit",
+      "bad_id": "bad_underfit_overfit",
+      "a_id": "bad_underfit_overfit",
+      "b_id": "good_underfit_overfit",
+      "expected_winner": "B",
+      "winner": "B",
+      "ok": true,
+      "elapsed_sec": 10.776428600074723,
+      "severity": "clear",
+      "reason": "Translation A incorrectly translates 'underfits' as 'quá khớp' (overfitting) and 'high training error' as 'lỗi huấn luyện thấp' (low training error). Translation B is correct.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"B\",\"severity\":\"clear\",\"reason\":\"Translation A incorrectly translates 'underfits' as 'quá khớp' (overfitting) and 'high training error' as 'lỗi huấn luyện thấp' (low training error). Translation B is correct.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"A model that underfits has high training error and high validation error.\"\n    *   Key terms/concepts:\n        *   \"underfits\": thiếu khớp (correct) vs. quá khớp (incorrect, this is overfitting).\n        *   \"high training error\": lỗi huấn luyện cao.\n        *   \"high validation error\": lỗi xác thực cao.\n\n    *   Translation A: \"Một mô hình bị **quá khớp** có lỗi huấn luyện **thấp** và lỗi xác thực cao.\"\n        *   Error 1: \"quá khớp\" means *overfitting*, not underfitting.\n        *   Error 2: \"lỗi huấn luyện thấp\" (low training error) contradicts the source (\"high training error\").\n\n    *   Translation B: \"Một mô hình bị **thiếu khớp** có lỗi huấn luyện **cao** và lỗi xác thực **cao**.\"\n        *   Term check: \"thiếu khớp\" is the standard translation for *underfitting*.\n        *   Accuracy check: \"lỗi huấn luyện cao\" (high training error) matches source. \"lỗi xác thực cao\" (high validation error) matches source.\n\n    *   Translation A has two major errors (wrong term and wrong numeric/qualitative value).\n    *   Translation B is accurate in both terminology and meaning.",
+      "usage": {
+        "prompt_tokens": 223,
+        "completion_tokens": 346,
+        "total_tokens": 569,
+        "completion_tokens_details": {
+          "reasoning_tokens": 288
+        }
+      }
+    },
+    {
+      "index": 13,
+      "good_id": "good_softmax_sum",
+      "bad_id": "bad_softmax_sum",
+      "a_id": "good_softmax_sum",
+      "b_id": "bad_softmax_sum",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 6.345122800092213,
+      "severity": "clear",
+      "reason": "Translation B incorrectly includes a negation ('không') that is not present in the source.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B incorrectly includes a negation ('không') that is not present in the source.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"The softmax outputs probabilities that sum to one.\"\n    *   Translation A: \"Softmax xuất ra các xác suất có tổng bằng một.\" (Softmax outputs probabilities with a total equal to one.)\n    *   Translation B: \"Softmax xuất ra các xác suất không có tổng bằng một.\" (Softmax outputs probabilities *not* having a total equal to one.)\n\n    *   Source says \"sum to one\" (positive assertion).\n    *   A says \"có tổng bằng một\" (correctly reflects the positive assertion).\n    *   B says \"không có tổng bằng một\" (incorrectly adds negation \"không\").\n\n    *   Translation B contains a negation error.\n    *   Winner: A.\n    *   Severity: clear.",
+      "usage": {
+        "prompt_tokens": 209,
+        "completion_tokens": 200,
+        "total_tokens": 409,
+        "completion_tokens_details": {
+          "reasoning_tokens": 167
+        }
+      }
+    },
+    {
+      "index": 14,
+      "good_id": "good_eigenvalue",
+      "bad_id": "bad_eigenvalue",
+      "a_id": "good_eigenvalue",
+      "b_id": "bad_eigenvalue",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 11.915552100050263,
+      "severity": "clear",
+      "reason": "Translation A correctly uses the technical terms 'trị riêng' and 'vectơ riêng', whereas Translation B provides incorrect translations for both.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation A correctly uses the technical terms 'trị riêng' and 'vectơ riêng', whereas Translation B provides incorrect translations for both.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"An eigenvalue tells how much an eigenvector is scaled.\"\n    *   Key terms:\n        *   \"eigenvalue\": trị riêng (standard linear algebra term).\n        *   \"eigenvector\": vectơ riêng (standard linear algebra term).\n        *   \"scaled\": được co giãn / thay đổi kích thước / tỉ lệ.\n\n    *   Translation A: \"Một trị riêng cho biết một vectơ riêng được co giãn bao nhiêu.\"\n        *   \"Trị riêng\" = eigenvalue (Correct).\n        *   \"vectơ riêng\" = eigenvector (Correct).\n        *   \"co giãn\" = scaled (Acceptable, though \"thay đổi kích thước\" or \"nhân với hệ số\" might be more formal, \"co giãn\" captures the scaling aspect well in a general sense).\n\n    *   Translation B: \"Một giá trị ví dụ cho biết một vectơ được sắp xếp như thế nào.\"\n        *   \"giá trị ví dụ\" = example value (Incorrect for eigenvalue).\n        *   \"vectơ\" = vector (Missing \"eigen\").\n        *   \"được sắp xếp như thế nào\" = how it is arranged/sorted (Incorrect for scaled).\n\n    *   Translation A correctly identifies the technical terms and the meaning.\n    *   Translation B fails on almost every technical term.\n\n    *   Winner: A\n    *   Severity: clear\n    *   Reason: Translation A uses correct tech",
+      "usage": {
+        "prompt_tokens": 215,
+        "completion_tokens": 377,
+        "total_tokens": 592,
+        "completion_tokens_details": {
+          "reasoning_tokens": 334
+        }
+      }
+    },
+    {
+      "index": 15,
+      "good_id": "good_convolution_kernel",
+      "bad_id": "bad_convolution_kernel",
+      "a_id": "good_convolution_kernel",
+      "b_id": "bad_convolution_kernel",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 12.550140500068665,
+      "severity": "clear",
+      "reason": "Translation B incorrectly translates 'convolution' as 'hội tụ' (convergence) instead of 'tích chập'.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B incorrectly translates 'convolution' as 'hội tụ' (convergence) instead of 'tích chập'.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"A convolution kernel slides across the image to detect local patterns.\"\n    *   Translation A: \"Một kernel tích chập trượt trên ảnh để phát hiện các mẫu cục bộ.\"\n    *   Translation B: \"Một hạt nhân hội tụ trượt trên ảnh để phát hiện các mẫu cục bộ.\"\n\n    *   \"convolution\": In deep learning/image processing, this is standardly translated as \"tích chập\".\n    *   \"kernel\": This can be left as \"kernel\" (common in technical contexts) or translated as \"hạt nhân\". However, \"hạt nhân tích chập\" is the formal term.\n    *   \"slides across\": \"trượt trên\" is correct.\n    *   \"image\": \"ảnh\" is correct.\n    *   \"detect local patterns\": \"phát hiện các mẫu cục bộ\" is correct.\n\n    *   Translation A uses \"kernel tích chập\". This is very common in Vietnamese technical literature for computer vision/deep learning. It keeps the term \"kernel\" which is standard.\n    *   Translation B uses \"hạt nhân hội tụ\". \"Hội tụ\" means \"convergence\", not \"convolution\". \"Convolution\" is \"tích chập\".\n\n    *   Translation B has a major technical error: \"hội tụ\" (convergence) instead of \"tích chập\" (convolution).\n    *   Translation A is accurate.\n\n    *   Winner: A\n    *   Severity: clear\n    *   ",
+      "usage": {
+        "prompt_tokens": 221,
+        "completion_tokens": 389,
+        "total_tokens": 610,
+        "completion_tokens_details": {
+          "reasoning_tokens": 349
+        }
+      }
+    },
+    {
+      "index": 16,
+      "good_id": "good_batch_epoch",
+      "bad_id": "bad_batch_epoch",
+      "a_id": "bad_batch_epoch",
+      "b_id": "good_batch_epoch",
+      "expected_winner": "B",
+      "winner": "B",
+      "ok": true,
+      "elapsed_sec": 8.916602000012062,
+      "severity": "clear",
+      "reason": "Translation A uses the incorrect technical term 'batch' instead of 'epoch'.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"B\",\"severity\":\"clear\",\"reason\":\"Translation A uses the incorrect technical term 'batch' instead of 'epoch'.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"An epoch is complete after the model has seen every training example once.\"\n    *   Translation A: \"Một batch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.\"\n    *   Translation B: \"Một epoch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.\"\n\n    *   \"epoch\": A full pass through the entire dataset.\n    *   \"batch\": A subset of the training data used in one iteration.\n    *   \"complete\": finished/concluded.\n    *   \"model has seen every training example once\": The definition of an epoch.\n\n    *   Translation A uses \"Một batch\". This is a technical error because \"epoch\" and \"batch\" are distinct concepts in machine learning. An epoch is the whole set; a batch is a part.\n    *   Translation B uses \"Một epoch\". This correctly preserves the source term.\n\n    *   Winner: B\n    *   Severity: clear (Technical term mismatch)\n    *   Reason: Translation A incorrectly translates \"epoch\" as \"batch\", which is a different technical concept in machine learning.",
+      "usage": {
+        "prompt_tokens": 225,
+        "completion_tokens": 276,
+        "total_tokens": 501,
+        "completion_tokens_details": {
+          "reasoning_tokens": 245
+        }
+      }
+    },
+    {
+      "index": 17,
+      "good_id": "good_dimensionality_reduction",
+      "bad_id": "bad_dimensionality_reduction",
+      "a_id": "bad_dimensionality_reduction",
+      "b_id": "good_dimensionality_reduction",
+      "expected_winner": "B",
+      "winner": "B",
+      "ok": true,
+      "elapsed_sec": 15.264391800039448,
+      "severity": "clear",
+      "reason": "Translation A incorrectly translates 'Dimensionality reduction' as 'Chuẩn hóa' (Normalization) and 'lower-dimensional' as 'lớn hơn' (larger). Translation B correctly captures the technical meaning.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"B\",\"severity\":\"clear\",\"reason\":\"Translation A incorrectly translates 'Dimensionality reduction' as 'Chuẩn hóa' (Normalization) and 'lower-dimensional' as 'lớn hơn' (larger). Translation B correctly captures the technical meaning.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"Dimensionality reduction projects high-dimensional data into a lower-dimensional space.\"\n    *   Key terms/concepts:\n        *   \"Dimensionality reduction\": The process of reducing the number of variables.\n        *   \"projects\": Maps or transforms (in linear algebra/ML context).\n        *   \"high-dimensional data\": Data with many features/dimensions.\n        *   \"lower-dimensional space\": A space with fewer dimensions.\n\n    *   Translation A: \"Chuẩn hóa dữ liệu chiều cao vào một không gian lớn hơn.\"\n        *   \"Chuẩn hóa\": Normalization (Incorrect for Dimensionality reduction).\n        *   \"dữ liệu chiều cao\": High-dimension data? (Awkward phrasing, usually \"dữ liệu đa chiều\").\n        *   \"không gian lớn hơn\": Larger space (Opposite of \"lower-dimensional space\").\n    *   Translation B: \"Giảm chiều chiếu dữ liệu chiều cao vào một không gian chiều thấp hơn.\"\n        *   \"Giảm chiều\": Dimensionality reduction.\n        *   \"chiếu\": projects (Correct).\n        *   \"dữ liệu chiều cao\": High-dimension data (A bit awkward, but understandable in context).\n        *   \"không gian chiều thấp hơn\": Lower-dimensional space (Correct).\n\n    *   Translation A is completely",
+      "usage": {
+        "prompt_tokens": 220,
+        "completion_tokens": 478,
+        "total_tokens": 698,
+        "completion_tokens_details": {
+          "reasoning_tokens": 420
+        }
+      }
+    },
+    {
+      "index": 18,
+      "good_id": "good_probability_range",
+      "bad_id": "bad_probability_range",
+      "a_id": "good_probability_range",
+      "b_id": "bad_probability_range",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 6.502862200024538,
+      "severity": "clear",
+      "reason": "Translation B completely changes the meaning by stating 'greater than 1' instead of 'between 0 and 1'.",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B completely changes the meaning by stating 'greater than 1' instead of 'between 0 and 1'.\"}",
+      "reasoning_excerpt": "\n*   Source English: \"A probability must lie between 0 and 1.\"\n    *   Translation A: \"Một xác suất phải nằm giữa 0 và 1.\" (Correct translation of \"lie between 0 and 1\").\n    *   Translation B: \"Một xác suất phải lớn hơn 1.\" (Incorrect; means \"must be greater than 1\").\n\n    *   A is accurate.\n    *   B has a major meaning error (negation/logic error).\n\n    *   Winner: A\n    *   Severity: clear\n    *   Reason: Translation B incorrectly states the probability must be greater than 1, while A correctly translates \"between 0 and 1\".",
+      "usage": {
+        "prompt_tokens": 207,
+        "completion_tokens": 190,
+        "total_tokens": 397,
+        "completion_tokens_details": {
+          "reasoning_tokens": 150
+        }
+      }
+    },
+    {
+      "index": 19,
+      "good_id": "good_bias_weight",
+      "bad_id": "bad_bias_weight",
+      "a_id": "good_bias_weight",
+      "b_id": "bad_bias_weight",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 12.145818199962378,
+      "severity": "clear",
+      "reason": "Translation B incorrectly translates 'bias term' as 'trọng số' (weight) and 'before' as 'sau khi' (after).",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B incorrectly translates 'bias term' as 'trọng số' (weight) and 'before' as 'sau khi' (after).\"}",
+      "reasoning_excerpt": "\n*   Source English: \"The bias term shifts the activation before applying the nonlinearity.\"\n    *   Translation A: \"Hạng bias dịch chuyển kích hoạt trước khi áp dụng phi tuyến.\"\n    *   Translation B: \"Trọng số dịch chuyển kích hoạt sau khi áp dụng phi tuyến.\"\n\n    *   \"bias term\": In machine learning/neural networks, this is usually translated as \"thành phần bias\", \"số hạng bias\", or sometimes just \"bias\". Translation A uses \"Hạng bias\" (a bit literal but acceptable). Translation B uses \"Trọng số\" which means \"weight\" (incorrect for \"bias\").\n    *   \"shifts\": dịch chuyển.\n    *   \"the activation\": kích hoạt / giá trị kích hoạt.\n    *   \"before\": trước khi.\n    *   \"applying the nonlinearity\": áp dụng phi tuyến / hàm phi tuyến.\n\n    *   Translation A: \"Hạng bias (bias term) dịch chuyển (shifts) kích hoạt (activation) trước khi (before) áp dụng (applying) phi tuyến (nonlinearity).\" -> Correct logic and terminology.\n    *   Translation B: \"Trọng số (weight - WRONG) dịch chuyển (shifts) kích hoạt (activation) sau khi (after - WRONG) áp dụng (applying) phi tuyến (nonlinearity).\"\n\n    *   A is correct in both the term (\"bias\" vs \"trọng số\") and the temporal logic (\"before\" vs \"sau khi\"",
+      "usage": {
+        "prompt_tokens": 214,
+        "completion_tokens": 385,
+        "total_tokens": 599,
+        "completion_tokens_details": {
+          "reasoning_tokens": 340
+        }
+      }
+    },
+    {
+      "index": 20,
+      "good_id": "good_distribution",
+      "bad_id": "bad_distribution",
+      "a_id": "good_distribution",
+      "b_id": "bad_distribution",
+      "expected_winner": "A",
+      "winner": "A",
+      "ok": true,
+      "elapsed_sec": 10.657202700036578,
+      "severity": "clear",
+      "reason": "Translation B incorrectly translates 'Gaussian' as 'đều' (Uniform), 'mean' as 'trung vị' (Median), and 'variance' as 'độ lệch chuẩn' (Standard Deviation).",
+      "error": null,
+      "error_body": null,
+      "raw": "{\"winner\":\"A\",\"severity\":\"clear\",\"reason\":\"Translation B incorrectly translates 'Gaussian' as 'đều' (Uniform), 'mean' as 'trung vị' (Median), and 'variance' as 'độ lệch chuẩn' (Standard Deviation).\"}",
+      "reasoning_excerpt": "\n*   Source English: \"A Gaussian distribution is fully specified by its mean and variance.\"\n    *   Key terms:\n        *   \"Gaussian distribution\": Phân phối Gaussian (or phân phối chuẩn).\n        *   \"fully specified\": được xác định đầy đủ.\n        *   \"mean\": trung bình (expected value/average).\n        *   \"variance\": phương sai.\n\n    *   Translation A: \"Một phân phối Gaussian được xác định đầy đủ bởi trung bình và phương sai.\"\n        *   Gaussian distribution -> phân phối Gaussian (Correct)\n        *   fully specified -> được xác định đầy đủ (Correct)\n        *   mean -> trung bình (Correct)\n        *   variance -> phương sai (Correct)\n\n    *   Translation B: \"Một phân phối đều được xác định đầy đủ bởi trung vị và độ lệch chuẩn.\"\n        *   Gaussian distribution -> phân phối đều (Incorrect. \"Phân phối đều\" is Uniform distribution).\n        *   mean -> trung vị (Incorrect. \"Trung vị\" is Median).\n        *   variance -> độ lệch chuẩn (Incorrect. \"Độ lệch chuẩn\" is Standard Deviation).\n\n    *   Translation A is accurate in all technical terms.\n    *   Translation B has three major technical errors: distribution type, mean vs median, and variance vs standard deviation.",
+      "usage": {
+        "prompt_tokens": 220,
+        "completion_tokens": 341,
+        "total_tokens": 561,
+        "completion_tokens_details": {
+          "reasoning_tokens": 283
+        }
+      }
+    }
+  ]
+}

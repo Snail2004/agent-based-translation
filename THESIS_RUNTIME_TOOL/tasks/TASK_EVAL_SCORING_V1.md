@@ -142,3 +142,17 @@ Fragment filter: 9 term-form drops logged in tc_ta_occ_preliminaries.json (truc/
 **P3 investigation (required by §8 before interpretation) — harness CLEAN, cause structural:** the two TA cells use different rulers BY DESIGN (block B = gold-only; TA-Occ = notebook∪gold). Under the union ruler `scope:vector` scores 52/52 in BOTH arms (both "vector" and "vectơ" accepted) — the §9 orthography disagreement vanishes, so the single term that drove block-B negative (16% of gold denominator) has zero differential effect here. Positive TA-Occ gap driven by real adherence gains: shape +22 (4/26->26/26), vectors +17 (6/25->23/25), elementwise +9, mean/tangent line/differentiation +5 each. Full-sweep DB cross-check 0 mismatch. Conclusion: P3's TA disagreement is the §9 convention-vs-meaning split showing up exactly where predicted — external-standard agreement (B) and approved-form landing (TA-Occ) are DIFFERENT questions; report both, never conflate.
 
 Cross-chapter replication now on record: TC-Occ +0.0319 (prelim, official) vs +0.0597 (MLP, retrospective); TA-Occ +0.0839 vs +0.1194. Direction reproduces on held-out chapter with pre-registered predictions.
+<!-- S3B_SFQE_PROBE -->
+### 3b. SF-QE model probe ACCEPTED + production-run task (2026-07-04)
+
+**Probe verified tren artifact (Claude recount khop 100%):** wmt20-comet-qe-da 1/5 -> LOAI. wmt22-cometkiwi-da: basic 4/5, wide 17/20, ~15 items/s CPU. wmt23-cometkiwi-da-xl: 17/20 nhung cham ~8x -> LOAI (khong tang accuracy). Gemma-4-12b judge: 19/20 nhung ~11.5s/pair -> de danh cho PJ/audit, khong scale-score. **CHOT model SF-QE: Unbabel/wmt22-cometkiwi-da** (dung model da khoa o §3).
+
+**Phan cong lao dong DO DUOC (bang chung triangulation cho thesis):** ca 3 he (wmt22/xl/Gemma) deu fail dung cum TERMINOLOGY (regularization margin -0.0004 ~ hoa; convolution_kernel -0.13; Gemma fail regularization vi prior "chuẩn hóa quen hon" — cung prior voi vu §36 population). => SF-QE bat quality-drift chung, KHONG phan xu thuat ngu — do la viec cua TC/TA; van phong la viec cua PJ. Caveat zero-shot vi da co tu §3 nay co so do thuc nghiem.
+
+**Gioi han probe (ghi de khong tu lua):** 20 cap synthetic do implementer viet — du cho quyet dinh chon model (ordering tren loi cay san), KHONG du de calibrate nguong tuyet doi. => Readout production = SO SANH PHAN PHOI paired S0-vs-S1, khong dat nguong diem tuyet doi.
+
+**TASK for CodeX — SF-QE production run (0 API, CPU, ~vai phut):**
+1. Script `pipeline/scripts/score_sf_qe.py`: doc workdb exp_s0s1_full (mode=ro) translation_runs exp_s0s1_builderv2_v1, CA 2 chuong x S0/S1 (823 block/arm). Segment = block: (src EN block text, output VI). Model wmt22-cometkiwi-da CPU, batch deterministic.
+2. Report JSON: pin unbabel-comet version + checkpoint sha (Pitfalls-of-COMET); per chapter x arm: mean/median/p25/p75/min; PAIRED delta per block S1-S0: mean, median, %block S1>S0, %block |delta|<0.01; bottom-10 block moi arm (block_id + score) de audit; so block bi TRUNCATE boi gioi han 512 token XLM-R (log, khong sua text); markdown giu nguyen as-is (doi xung 2 arm — ghi quyet dinh nay vao report).
+3. KHONG ghi DB, khong sua text, khong interpretation. STOP sau run — Claude doc report, tu recount vai so, viet readout chinh thuc vao file nay.
+Du bao truoc (ghi de doi chieu, khong phai tieu chi cung): ky vong delta S1-S0 ~ 0 hoac duong nhe (memory pack khong duoc lam tut QE; neu S1 < S0 ro ret o duoi block-level -> dieu tra truoc khi ket luan).
