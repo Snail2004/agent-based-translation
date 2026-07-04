@@ -363,3 +363,12 @@ User chot chay full 1 chuong truoc. Cach thi hanh KHONG dong cua replication:
 - **Stage 1 (chay ngay): d2l_multilayer_perceptrons** — chuong chinh cua exp, 475 block x 2 arm = 950 items, tru ~50 da cache => ~3h. Script/cache/prompt giu nguyen §2f, them filter chapter. Report per-chapter (schema san co).
 - **Stage 2 (de danh, OPTIONAL, toi may ranh): d2l_preliminaries** 696 items ~2.2h. Cache lam Stage 2 hoan toan doc lap ve chi phi — quyet dinh hom nay la THU TU, khong phai tu bo; SF-BT cross-chapter replication postponed chu khong huy, ghi nhan trung thuc trong thesis neu cuoi cung chi co 1 chuong.
 - Readout chinh thuc §2g viet theo chuong da co; khong doi ky vong pre-declared.
+
+<!-- S2F_B_DESIGN_QA -->
+### 2f-B. Design Q&A chot voi user (2026-07-05) — tu lieu bao ve, khong doi thiet ke
+
+**Q1 BT mu co "mu quang" qua khong?** Tra loi da chot: mu la danh doi CO CHU DICH, bang chung do duoc o ca 2 phia: (a) gia cua mu = Ca1 Scalars/Non-directional (oan block ngan, cost RE — flag short_block bat + dual report giai oan 30 giay); (b) gia cua cho-ngu-canh = probe bad_regularization: Gemma CHI voi ngu canh cau da "sua ho" thuat ngu SAI thanh dung -> them domain hint se sua ho nhieu hon -> instrument im lang dung cho can keu (cost DAT, vo hinh). Nguyen tac: false-alarm re, missed-error dat -> chon mu. Mu doi xung -> khong thien vi arm nao; paired design triet tieu oan chung. `bt_prompt_v2` (1 dong domain hint) = bien the hop le TUONG LAI, phai probe lai nhu dung cu moi + ap ca run; KHONG doi giua chung.
+
+**Q2 SF-BT cho van hoc?** Phan bien Gemini (idiom rains-cats-and-dogs chet diem) SAI o gia dinh judge so chuoi — judge cua ta la LLM cham NGHIA, ignore style/word-choice -> "mua nhu trut nuoc" khong tu dong truot. Nhung dung o tang sau: van hoc thi giu-nghia la CAN chu xa moi DU — SF-BT khong thay giong van/xung ho/an y. Ket luan chot: SF-BT khong "sup do" ma "tra loi cau hoi qua nho"; sang van hoc no XUONG VAI luoi bat loi tho (bo sot/nguoc nghia/sai so), ganh chinh la PJ don-ngu ban dich + BWS vs ban dich nguoi + TC-Ent (xung ho theo cap nhan vat tu entity memory — dat dien cua he thong tri nho). Da co san §6 roadmap.
+
+**Pilot arm-level (tra loi user):** S0 cos 0.978 / llm 99.75; S1 cos 0.970 / llm 97.25 (keo boi 3 ca da giai phau §2f). Bo flagged: S0 0.973/99.61, S1 **0.977**/98.39 — S1 nhinh hon cot cos khi loai nhieu dung cu. Phan bo llm: S0 49x100+1x87.5; S1 46x100+2x87.5+1x75+1x12.5.
