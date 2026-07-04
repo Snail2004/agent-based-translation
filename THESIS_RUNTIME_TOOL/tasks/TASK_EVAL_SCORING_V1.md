@@ -201,3 +201,55 @@ CodeX bat 4 diem truoc khi chay probe — phan xu:
 5. **Nhanh ha cap Gemma (bo sung dung):** neu trigger luat ha cap (Pearson<0.6 hoac |diff|>10): headline full = `SF-BT-cos` (du 1,646) + GPT-sample lam audit phu; muon `SF-BT-llm` full bang GPT thi la quyet dinh chi phi RIENG trinh user (uoc ~$0.3-0.6, cost-gate nhu moi khi). GPT-sample 100 block KHONG bao gio duoc trinh bay nhu headline full.
 
 Spec het mau thuan. GO Phase-1 probe theo §2b.
+<!-- S2C_SFBT_PROMPTS -->
+### 2c. SF-BT prompt design (FIRST-CLASS, review truoc khi chay — Claude self-review round, 2026-07-04)
+
+**5 bo sung tu luot soi cua Claude (khong ai bat truoc do):**
+- R1 `short_block` flag (nguong ky tu, co hoc): heading vai chu -> cosine/judge bat on; aggregate bao CA HAI ban co/khong nhom short. Khong loai, chi tach.
+- R2 "run twice averaged" (AMT) chet voi temp 0 -> thay bang 2 CHIEU thu tu (A-B, B-A) lay trung binh; probe DO do nhay thu tu (41 case x 2 chieu) -> neu lech khong dang ke, full run 1 chieu; neu lech, chay 2 chieu (~3,300 call).
+- R3 judge ctx 8192; cap EN qua dai -> flag `too_long`, loai khoi llm-score CO GHI DANH, khong cat lang le.
+- R4 prompt version stamp (`bt_prompt_v1`, `bt_judge_v1`) trong cache key + report — doi mot chu prompt = doi dung cu do.
+- R5 preamble ("Here is the translation:"): KHONG tu cat; probe checklist kiem, thay moi ban cach xu.
+
+**P1 `bt_prompt_v1`** (Gemma BT, output text tho; temp 0, repeat_penalty 1.0, seed 20260612; MU — khong EN goc/tu dien/context):
+```
+You are a professional Vietnamese-to-English translator.
+Translate the text below into English.
+- Preserve Markdown structure, inline code, and LaTeX math ($...$, $$...$$) exactly as they appear.
+- Do not add explanations, notes, headers, or anything besides the translation itself.
+- Do not summarize, shorten, or expand the content.
+
+TEXT:
+<<<
+{vi_block}
+>>>
+```
+
+**P2 `bt_judge_v1`** (json_schema {score:0-100, flags:[enum], note:str}; hoan vi A/B deterministic theo hash block, ghi chieu da dung; flags CHI mo ta):
+```
+You compare two English passages, A and B, and judge how close they are IN MEANING.
+Ignore differences in style, word choice, sentence order, formatting, and phrasing
+when the meaning is unchanged. Judge only: facts, claims, numbers, logical relations,
+negations, and coverage (does one passage clearly state more or less than the other?).
+
+Score bands:
+100 = same meaning; differences are purely stylistic
+ 75 = minor drift; one small detail differs or became vague
+ 50 = noticeable drift; a fact, number, or relation differs
+ 25 = substantial mismatch; key claims differ or a chunk of content is absent in one passage
+  0 = different or contradictory content
+
+Flags (all that apply, else empty):
+semantic_mismatch | numeric_mismatch | negation_mismatch | coverage_mismatch |
+untranslated_residue | format_only
+
+Return JSON only: {"score": <0-100>, "flags": [...], "note": "<one short sentence>"}
+
+PASSAGE A:
+{first}
+
+PASSAGE B:
+{second}
+```
+
+**Probe checklist bo sung (cong vao §2b task):** (a) do order-sensitivity cua judge; (b) kiem preamble behavior cua P1; (c) bao phan bo score bands (neu 90% diem don vao 1 band -> rubric can chinh TRUOC full run).
