@@ -541,3 +541,15 @@ Y>>>
 - Moi cap chi duoc thay doi DUNG MOT truc chat luong: P-GRAM = cung nghia + cung term, chi pha ngu phap; P-MEAN = van muot, cung register, chi doi nghia; P-TERM = giong het tru cach dich term; P-IDENT = giong het tuyet doi.
 - Expected label moi cap ghi TRUOC: expected winner (arm), expected tag chinh, expected style_final (P-GRAM: winner; P-MEAN: TIE hoac winner-khong-che; P-TERM: TIE; P-IDENT: TIE).
 - Cap nao vi pham mot-truc-mot-loi -> Claude tra ve soan lai, khong chay probe voi cap ban.
+
+### 4d. PJ probe #1 VERIFIED — 3 nhom PASS, P-GRAM FAIL dung luat -> sua fixture, probe lai (Claude recount doc lap, 2026-07-05)
+
+**So lieu recount khop CodeX 100%:** 40 call, 0/40 parse/transport fail, 40/40 model_version, cost recompute $0.0338, db unchanged, request profile dung §2e (temp 0, thinking 0, json, 512, c8). P-IDENT 10/10 call TIE PASS; P-MEAN 5/5 overall + 5/5 tag meaning PASS; P-TERM 5/5 style-TIE + 5/5 tag terminology PASS (2-verdict song sot bai test truc tiep — khong can fallback 1-verdict); order-inconsistent P-GRAM+P-MEAN 0/10 PASS. **P-GRAM: overall 4/5 dat, grammar-tag 3/5 < 4/5 -> FAIL.** Theo §4c: STOP, sua, probe lai. **KHONG doi nguong, KHONG tinh word_choice thanh grammar sau khi thay data — dien giai mem bi cam.**
+
+**Chan doan tren raw (loi fixture, khong phai loi he thong):**
+- PGRAM_01 (chen "la mo ta"): judge TIE ca 2 chieu, note "No meaningful difference" — loi cay qua nhe. GHI NHAN lam GIOI HAN DO: PJ khong thay loi vi te co chen-mot-tu; PJ la luoi tho cho van phong, khong do vi-sai (nhat quan voi vai luoi-bat-loi-tho da ghi o §2f-B cho SF-BT).
+- PGRAM_05 (Vi->Nhung): judge bat DUNG winner ca 2 chieu, note dung ban chat lien tu, nhung xep word_choice — dung du bao ranh gioi grammar/meaning/word_choice Claude ghi TRUOC khi chay. Judge khong sai; fixture chon loai loi vat qua bien taxonomy.
+
+**Bonus findings (ghi ho so):** PTERM_01/02 overall TIE => judge KHONG phan xu quy uoc term (dung phan vai: truc term thuoc TC/TA, PJ khong cham lai); PTERM_03 judge thich "Mang no-ron nhieu lop" hon "Perceptron da tang" order-consistent 2 chieu (quan sat phu, khong gate); 2 co che order-inconsistent da no dung thiet ke (style o PMEAN_01, overall o PTERM_02) va deu bi ha ve TIE.
+
+**Lenh sua (planted v2, script GIU NGUYEN):** tao pj_planted_set_v2.json — thay DUNG 2 cap PGRAM_01 va PGRAM_05 bang 2 loi HINH THAI - CU PHAP khong the nham sang word_choice/meaning (vi du: lap nguyen cum tu, cau cut giua chung, vo cau truc chu-vi ro rang), prose tu block MLP that, mot-truc-mot-loi, expected ghi truoc; 18 cap khac giu nguyen tung ky tu de an cache (36/40 call hit, ~4 call moi ~$0.005). Claude diff-review 2 cap moi -> re-probe day du 20 cap -> cham lai bang DUNG bang nguong §4c.

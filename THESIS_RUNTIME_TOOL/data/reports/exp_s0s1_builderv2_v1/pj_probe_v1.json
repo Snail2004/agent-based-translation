@@ -1,0 +1,2242 @@
+{
+  "metric": "PJ",
+  "phase": "planted_probe",
+  "status": "probe_complete_stop_for_review",
+  "db": "data\\jobs\\exp_s0s1_full\\memory.sqlite3",
+  "db_sha256_before": "92229381172fe30c2a10e2c467232ab992b7ea8ecb40415a1652ab7de8c13f42",
+  "planted_path": "data\\reports\\exp_s0s1_builderv2_v1\\pj_planted_set_v1.json",
+  "model": "gemini-2.5-flash",
+  "prompt_version": "pj_judge_v1",
+  "prompt_sha256": "d47dbb171a30133f921063f0dad8f724256dc21d528d18724556b1d6d4f82bc2",
+  "request_profile": {
+    "temperature": 0,
+    "thinking_budget": 0,
+    "response_mime_type": "application/json",
+    "max_output_tokens": 512,
+    "concurrency": 8
+  },
+  "cases": [
+    {
+      "id": "PIDENT_01_multilayer_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_index_b001",
+      "block_type": "heading",
+      "source": "# Multilayer Perceptrons\n:label:`chap_perceptrons`",
+      "candidate_a": "# Perceptron đa tầng :label:`chap_perceptrons`",
+      "candidate_b": "# Perceptron đa tầng :label:`chap_perceptrons`",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical heading; must be TIE in each direction.",
+      "calls": {
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 679,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 3.971869900007732,
+          "from_cache": false,
+          "cost_usd": 0.00074688,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 3.971869900007732,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 679,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "da17eaf5577c262a3277888bde6adf28653ebbec12ab8a7f2961212868bf69b6"
+        },
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 679,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 4.041131500038318,
+          "from_cache": false,
+          "cost_usd": 0.00074688,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 4.041131500038318,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 679,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "da9a5b674475f4959ba02c2084e85d754b034d8a0a8157e252530b9b2eb1e4c4"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PIDENT_02_hidden_layers_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b003",
+      "block_type": "heading",
+      "source": "## Hidden Layers",
+      "candidate_a": "## Các tầng ẩn",
+      "candidate_b": "## Các tầng ẩn",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical heading; short block should not force a fake preference.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 646,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 4.15933070005849,
+          "from_cache": false,
+          "cost_usd": 0.00072312,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 4.15933070005849,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 646,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "1fb1051c90fccef05af9fccee96a29c9c05281b728470f6633d4e3889a3bc41f"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 646,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 4.3387638999847695,
+          "from_cache": false,
+          "cost_usd": 0.00072312,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 4.3387638999847695,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 646,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "8d8151b2680a4271375f6f271eaac7af7fc1203d76669c1ea36d7f8d08099475"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PIDENT_03_incorporating_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b010",
+      "block_type": "heading",
+      "source": "### Incorporating Hidden Layers",
+      "candidate_a": "### Kết hợp các tầng ẩn",
+      "candidate_b": "### Kết hợp các tầng ẩn",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical markdown heading.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 652,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 3.9618606000440195,
+          "from_cache": false,
+          "cost_usd": 0.00072744,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 3.9618606000440195,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 652,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "cc487b51a9d7d21ec23afa047ea7b9e294f9e20503634de0aa9a780f2c6b7fc4"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 652,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 4.173607699922286,
+          "from_cache": false,
+          "cost_usd": 0.00072744,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 4.173607699922286,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 652,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "179b434a30be25acc79eede4ee9b05269f8c57cdb468d4c5d3a4cf5b3478c7c2"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PIDENT_04_weight_decay_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b001",
+      "block_type": "heading",
+      "source": "# Weight Decay\n:label:`sec_weight_decay`",
+      "candidate_a": "# Suy giảm trọng số :label:`sec_weight_decay`",
+      "candidate_b": "# Suy giảm trọng số :label:`sec_weight_decay`",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical heading with label.",
+      "calls": {
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 676,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 3.9220826000673696,
+          "from_cache": false,
+          "cost_usd": 0.00074472,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 3.9220826000673696,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 676,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "690d9a1b82a4e69339a0f2e6b851770fc0948f830d1aa81fc4fe520fb58fb2cd"
+        },
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 676,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 4.024398399982601,
+          "from_cache": false,
+          "cost_usd": 0.00074472,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 4.024398399982601,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 676,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "ceb62052616e98e7b271a62e89f6b6d4931196781caf4e5660086851ab5b0c47"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PIDENT_05_dropout_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b001",
+      "block_type": "heading",
+      "source": "# Dropout\n:label:`sec_dropout`",
+      "candidate_a": "# Dropout :label:`sec_dropout`",
+      "candidate_b": "# Dropout :label:`sec_dropout`",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical technical heading; no preference should be invented.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 663,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.647207299945876,
+          "from_cache": false,
+          "cost_usd": 0.00073536,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.647207299945876,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 663,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "333892e529da3241ad60cea68a84f66b6d542962300712d484c1c1ab2f371ec4"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 663,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 2.0558693000348285,
+          "from_cache": false,
+          "cost_usd": 0.00073536,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 2.0558693000348285,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 663,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "f3cc318bd2ee56c308c050e95389419ea4ed9c398ac05120f19ca7d812e4aea6"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PGRAM_01_pixel_question",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b008",
+      "block_type": "prose",
+      "source": "But what about classifying images of cats and dogs? Should increasing the intensity of the pixel at location (13, 17) always increase (or always decrease) the likelihood that the image depicts a dog?",
+      "candidate_a": "Nhưng còn việc phân loại ảnh mèo và chó thì sao? Việc tăng cường độ của pixel tại vị trí (13, 17) có nên luôn làm tăng (hoặc luôn làm giảm) khả năng ảnh đó mô tả một con chó không?",
+      "candidate_b": "Nhưng còn việc phân loại ảnh mèo và chó thì sao? Việc tăng cường độ của pixel tại vị trí (13, 17) có nên luôn làm tăng (hoặc luôn làm giảm) khả năng ảnh đó là mô tả một con chó không?",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B preserves meaning and terms but injects the ungrammatical phrase 'là mô tả'.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 785,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.5287169999210164,
+          "from_cache": false,
+          "cost_usd": 0.0008232,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.5287169999210164,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 785,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "f44572936438ab42e8321cb3da16eae1507210b1ff39b7b070e398e5a8ebcd53"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [],
+          "note": "No meaningful difference.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [],\n  \"note\": \"No meaningful difference.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 785,
+            "completion_tokens": 43,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.7748008000198752,
+          "from_cache": false,
+          "cost_usd": 0.0008232,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.7748008000198752,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 785,
+                "completion_tokens": 43,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "25b010b272543a329aa2e2aefd10860604cf919f77231cf3e11dcfc4f1bff075"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [],
+        "expected_overall_match": false,
+        "expected_style_match": false,
+        "expected_primary_tag_match": false
+      }
+    },
+    {
+      "id": "PGRAM_02_linearity_preprocess",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b006",
+      "block_type": "prose",
+      "source": "One way to handle this might be to preprocess our data such that linearity becomes more plausible, say, by using the logarithm of income as our feature.",
+      "candidate_a": "Một cách để xử lý điều này là tiền xử lý dữ liệu của chúng ta sao cho tính tuyến tính trở nên hợp lý hơn, chẳng hạn bằng cách dùng logarit của thu nhập làm đặc trưng.",
+      "candidate_b": "Một cách để xử lý điều này là dữ liệu của chúng ta tiền xử lý sao cho tính tuyến tính trở nên hợp lý hơn, chẳng hạn bằng cách dùng logarit của thu nhập làm đặc trưng.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B keeps meaning but breaks Vietnamese word order around 'dữ liệu ... tiền xử lý'.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "Y",
+          "tags": [
+            "word_choice"
+          ],
+          "note": "Y has a more natural word order for \"tiền xử lý dữ liệu của chúng ta\".",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"word_choice\"\n  ],\n  \"note\": \"Y has a more natural word order for \\\"tiền xử lý dữ liệu của chúng ta\\\".\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"word_choice\"\n  ],\n  \"note\": \"Y has a more natural word order for \\\"tiền xử lý dữ liệu của chúng ta\\\".\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 747,
+            "completion_tokens": 67,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.5189096999820322,
+          "from_cache": false,
+          "cost_usd": 0.00093984,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.5189096999820322,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 747,
+                "completion_tokens": 67,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "3936dd903ef02f63083c145f474a9e0fc0920fa8e30c4926ec2e9ff04c048887"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "X",
+          "tags": [
+            "grammar"
+          ],
+          "note": "Candidate Y has a grammatical error in word order.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"X\",\n  \"tags\": [\n    \"grammar\"\n  ],\n  \"note\": \"Candidate Y has a grammatical error in word order.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"X\",\n  \"tags\": [\n    \"grammar\"\n  ],\n  \"note\": \"Candidate Y has a grammatical error in word order.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 747,
+            "completion_tokens": 55,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.8897273000329733,
+          "from_cache": false,
+          "cost_usd": 0.00086784,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.8897273000329733,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 747,
+                "completion_tokens": 55,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "22093008b702411ef7c94b5ee53e1e44f8f754d0ea7f527f5a6c475d35b34c37"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "A",
+        "tags_final": [
+          "grammar",
+          "word_choice"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PGRAM_03_by_hand_clause",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b013",
+      "block_type": "prose",
+      "source": "Since the input layer does not involve any calculations, producing outputs with this network requires implementing the computations for both the hidden and output layers.",
+      "candidate_a": "Vì tầng đầu vào không liên quan đến bất kỳ phép tính nào, việc tạo đầu ra với mạng này đòi hỏi phải triển khai các phép tính cho cả tầng ẩn và tầng đầu ra.",
+      "candidate_b": "Vì tầng đầu vào không liên quan đến bất kỳ phép tính nào, việc tạo đầu ra với mạng này đòi hỏi phải các phép tính cho cả tầng ẩn và tầng đầu ra.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B deletes the main verb 'triển khai', leaving an ungrammatical verb phrase.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "Y",
+          "tags": [
+            "word_choice"
+          ],
+          "note": "Candidate Y uses 'triển khai' (implement), which is more accurate.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"word_choice\"\n  ],\n  \"note\": \"Candidate Y uses 'triển khai' (implement), which is more accurate.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"word_choice\"\n  ],\n  \"note\": \"Candidate Y uses 'triển khai' (implement), which is more accurate.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 736,
+            "completion_tokens": 63,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.5639289000537246,
+          "from_cache": false,
+          "cost_usd": 0.00090792,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.5639289000537246,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 736,
+                "completion_tokens": 63,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "dfca6a718e54b848acd89f57a420088071dbf24cddd7425eba4251162cda956d"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "X",
+          "tags": [
+            "grammar"
+          ],
+          "note": "Candidate Y is missing the verb \"triển khai\" (implement) before \"các phép tính\" (computations).",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"X\",\n  \"tags\": [\n    \"grammar\"\n  ],\n  \"note\": \"Candidate Y is missing the verb \\\"triển khai\\\" (implement) before \\\"các phép tính\\\" (computations).\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"X\",\n  \"tags\": [\n    \"grammar\"\n  ],\n  \"note\": \"Candidate Y is missing the verb \\\"triển khai\\\" (implement) before \\\"các phép tính\\\" (computations).\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 736,
+            "completion_tokens": 69,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.8030029999790713,
+          "from_cache": false,
+          "cost_usd": 0.00094392,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.8030029999790713,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 736,
+                "completion_tokens": 69,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "1e2dcacff154cbf7ea96c36abf39bfcf8a4af83e373916b1f954f96dcb9986f7"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "A",
+        "tags_final": [
+          "grammar",
+          "word_choice"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PGRAM_04_regularizing_models_sentence",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b002",
+      "block_type": "prose",
+      "source": "Now that we have characterized the problem of overfitting, we can introduce some standard techniques for regularizing models.",
+      "candidate_a": "Bây giờ khi đã đặc trưng hóa vấn đề quá khớp, chúng ta có thể giới thiệu một số kỹ thuật chuẩn để điều chuẩn mô hình.",
+      "candidate_b": "Bây giờ khi đã đặc trưng hóa vấn đề quá khớp, chúng ta có thể giới thiệu một số kỹ thuật chuẩn để điều chuẩn mô hình là.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B only adds a dangling ending; term choice remains identical.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "Y",
+          "tags": [
+            "grammar"
+          ],
+          "note": "Candidate X ends with an unnecessary 'là', making it ungrammatical.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"grammar\"\n  ],\n  \"note\": \"Candidate X ends with an unnecessary 'là', making it ungrammatical.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"grammar\"\n  ],\n  \"note\": \"Candidate X ends with an unnecessary 'là', making it ungrammatical.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 717,
+            "completion_tokens": 60,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.6121989000821486,
+          "from_cache": false,
+          "cost_usd": 0.00087624,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.6121989000821486,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 717,
+                "completion_tokens": 60,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "00a7c101e46400de5ab98e2d0f0a7bbe87f5e8ab303c56e17f3da2ad03199872"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "X",
+          "tags": [
+            "grammar"
+          ],
+          "note": "Candidate Y ends with an unnecessary 'là', making it grammatically incorrect.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"X\",\n  \"tags\": [\n    \"grammar\"\n  ],\n  \"note\": \"Candidate Y ends with an unnecessary 'là', making it grammatically incorrect.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"X\",\n  \"tags\": [\n    \"grammar\"\n  ],\n  \"note\": \"Candidate Y ends with an unnecessary 'là', making it grammatically incorrect.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 717,
+            "completion_tokens": 60,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.7708609000546858,
+          "from_cache": false,
+          "cost_usd": 0.00087624,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.7708609000546858,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 717,
+                "completion_tokens": 60,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "bc7904e8f210a6b383bb1b65ad53aae5d9a5d6d9de363a97df94a0d01ced6109"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "A",
+        "tags_final": [
+          "grammar"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PGRAM_05_high_dimensional_heading",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b043",
+      "block_type": "prose",
+      "source": "Since this is just a linear regression problem, we can use the squared error as our loss function.",
+      "candidate_a": "Vì đây chỉ là một bài toán hồi quy tuyến tính, chúng ta có thể dùng sai số bình phương làm hàm mất mát.",
+      "candidate_b": "Nhưng đây chỉ là một bài toán hồi quy tuyến tính, chúng ta có thể dùng sai số bình phương làm hàm mất mát.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B replaces the causal connector 'Vì' with the incoherent contrast connector 'Nhưng'.",
+      "calls": {
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "X",
+          "tags": [
+            "word_choice"
+          ],
+          "note": "Candidate X uses a more appropriate conjunction for the context.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"X\",\n  \"tags\": [\n    \"word_choice\"\n  ],\n  \"note\": \"Candidate X uses a more appropriate conjunction for the context.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"X\",\n  \"tags\": [\n    \"word_choice\"\n  ],\n  \"note\": \"Candidate X uses a more appropriate conjunction for the context.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 708,
+            "completion_tokens": 58,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.7958389999112114,
+          "from_cache": false,
+          "cost_usd": 0.00085776,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.7958389999112114,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 708,
+                "completion_tokens": 58,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "1e0d4f4eac908c09e3900c3f6cf63f9824ec9565fcc1d1f29b7f5d520ac0123c"
+        },
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "Y",
+          "tags": [
+            "word_choice"
+          ],
+          "note": "Y uses 'Vì' (Since) which is more appropriate than X's 'Nhưng' (But) for the context.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"word_choice\"\n  ],\n  \"note\": \"Y uses 'Vì' (Since) which is more appropriate than X's 'Nhưng' (But) for the context.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"word_choice\"\n  ],\n  \"note\": \"Y uses 'Vì' (Since) which is more appropriate than X's 'Nhưng' (But) for the context.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 708,
+            "completion_tokens": 74,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.9233008000301197,
+          "from_cache": false,
+          "cost_usd": 0.00095376,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.9233008000301197,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 708,
+                "completion_tokens": 74,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "2000338acce6f24e97bc2116135cee04281badd6764df681ca8f40ff3a42bfa2"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "A",
+        "tags_final": [
+          "word_choice"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": false
+      }
+    },
+    {
+      "id": "PMEAN_01_less_obvious",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b009",
+      "block_type": "prose",
+      "source": "It is less obvious that we could address the problem with a simple preprocessing fix.",
+      "candidate_a": "Không hiển nhiên rằng ta có thể giải quyết vấn đề bằng một chỉnh sửa tiền xử lý đơn giản.",
+      "candidate_b": "Rõ ràng là ta có thể giải quyết vấn đề bằng một chỉnh sửa tiền xử lý đơn giản.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is fluent but reverses the uncertainty of 'less obvious'.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "Y",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Candidate Y correctly translates \"less obvious\" as \"không hiển nhiên\".",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y correctly translates \\\"less obvious\\\" as \\\"không hiển nhiên\\\".\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"Y\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y correctly translates \\\"less obvious\\\" as \\\"không hiển nhiên\\\".\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 693,
+            "completion_tokens": 60,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.833981000003405,
+          "from_cache": false,
+          "cost_usd": 0.00085896,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.833981000003405,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 693,
+                "completion_tokens": 60,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "fd5dd0d5ac7eaeafe617be4c0b748835fd04448e91def7f492d000a12b6e9587"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "TIE",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Candidate Y reverses the meaning of the source text.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y reverses the meaning of the source text.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y reverses the meaning of the source text.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 693,
+            "completion_tokens": 56,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.8668041999917477,
+          "from_cache": false,
+          "cost_usd": 0.00083496,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.8668041999917477,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 693,
+                "completion_tokens": 56,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "5c27bd225762ac49ab090de4642635b5ae606c935509a7ba14c200d529e41a92"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "tags_final": [
+          "meaning"
+        ],
+        "flags": [
+          "style_order_inconsistent"
+        ],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PMEAN_02_dog_vs_cat",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b008",
+      "block_type": "prose",
+      "source": "Should increasing the intensity of the pixel at location (13, 17) always increase (or always decrease) the likelihood that the image depicts a dog?",
+      "candidate_a": "Việc tăng cường độ của pixel tại vị trí (13, 17) có nên luôn làm tăng (hoặc luôn làm giảm) khả năng ảnh đó mô tả một con chó không?",
+      "candidate_b": "Việc tăng cường độ của pixel tại vị trí (13, 17) có nên luôn làm tăng (hoặc luôn làm giảm) khả năng ảnh đó mô tả một con mèo không?",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is grammatical but changes dog to cat.",
+      "calls": {
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "TIE",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Candidate Y changes 'dog' to 'cat', altering the meaning of the source.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y changes 'dog' to 'cat', altering the meaning of the source.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y changes 'dog' to 'cat', altering the meaning of the source.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 750,
+            "completion_tokens": 63,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.5804154999786988,
+          "from_cache": false,
+          "cost_usd": 0.000918,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.5804154999786988,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 750,
+                "completion_tokens": 63,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "4e10e3059c5aa10d14c594350da32e5b105a0009aa86627dd85e982f3572b616"
+        },
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "TIE",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Candidate Y correctly translates 'dog', while X translates it as 'cat'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y correctly translates 'dog', while X translates it as 'cat'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y correctly translates 'dog', while X translates it as 'cat'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 750,
+            "completion_tokens": 61,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.780216999934055,
+          "from_cache": false,
+          "cost_usd": 0.000906,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.780216999934055,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 750,
+                "completion_tokens": 61,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "eff9e3ba64e7fe77f925dc0a33e3d0eff00720c0889bbe478868cc1eea467c0d"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "tags_final": [
+          "meaning"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PMEAN_03_high_dimensional",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b018",
+      "block_type": "heading",
+      "source": "## High-Dimensional Linear Regression",
+      "candidate_a": "## Hồi quy tuyến tính nhiều chiều",
+      "candidate_b": "## Hồi quy tuyến tính chiều cao",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is fluent Vietnamese but maps high-dimensional to physical height.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "TIE",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Y correctly translates 'High-Dimensional' as 'nhiều chiều', while X translates it as 'chiều cao'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Y correctly translates 'High-Dimensional' as 'nhiều chiều', while X translates it as 'chiều cao'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Y correctly translates 'High-Dimensional' as 'nhiều chiều', while X translates it as 'chiều cao'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 657,
+            "completion_tokens": 71,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.7631056000245735,
+          "from_cache": false,
+          "cost_usd": 0.00089904,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.7631056000245735,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 657,
+                "completion_tokens": 71,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "d9c74ff030f2b350f4d56b604a83c9974fcbec3dd1889cfcc920378d7925ebf7"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "Y uses incorrect terminology for \"High-Dimensional\".",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Y uses incorrect terminology for \\\"High-Dimensional\\\".\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Y uses incorrect terminology for \\\"High-Dimensional\\\".\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 657,
+            "completion_tokens": 57,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.9689877000637352,
+          "from_cache": false,
+          "cost_usd": 0.00081504,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.9689877000637352,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 657,
+                "completion_tokens": 57,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "a2981f9535a4084a68c7380193840cd61a0a42ffa6062a96d2a9d548cac33c8a"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "tags_final": [
+          "terminology",
+          "meaning"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PMEAN_04_income_repay_relation",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b006",
+      "block_type": "prose",
+      "source": "An applicant with a higher income would always be more likely to repay than one with a lower income.",
+      "candidate_a": "Một người nộp đơn có thu nhập cao hơn sẽ luôn có khả năng hoàn trả cao hơn một người có thu nhập thấp hơn.",
+      "candidate_b": "Một người nộp đơn có thu nhập cao hơn sẽ luôn có khả năng hoàn trả thấp hơn một người có thu nhập thấp hơn.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is fluent but reverses the more-likely relation.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "TIE",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Candidate X reverses the meaning of \"more likely to repay\" to \"thấp hơn\" (less likely).",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate X reverses the meaning of \\\"more likely to repay\\\" to \\\"thấp hơn\\\" (less likely).\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate X reverses the meaning of \\\"more likely to repay\\\" to \\\"thấp hơn\\\" (less likely).\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 709,
+            "completion_tokens": 68,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.6082403999753296,
+          "from_cache": false,
+          "cost_usd": 0.00091848,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.6082403999753296,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 709,
+                "completion_tokens": 68,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "4b5a9283f26f944b56bcdccbf7e36f5b4a3dd2b4b87ff22e3f48959657b62cb7"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "TIE",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Candidate Y incorrectly states 'thấp hơn' (lower) instead of 'cao hơn' (higher).",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y incorrectly states 'thấp hơn' (lower) instead of 'cao hơn' (higher).\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y incorrectly states 'thấp hơn' (lower) instead of 'cao hơn' (higher).\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 709,
+            "completion_tokens": 67,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 2.425899100024253,
+          "from_cache": false,
+          "cost_usd": 0.00091248,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 2.425899100024253,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 709,
+                "completion_tokens": 67,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "741fb27e9ed30992cc056005fb7f3d32f26231c83a857223b59375a61cc0466a"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "tags_final": [
+          "meaning"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PMEAN_05_temperature_risk_relation",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b007",
+      "block_type": "prose",
+      "source": "For individuals with a body temperature above 37°C (98.6°F), higher temperatures indicate greater risk.",
+      "candidate_a": "Với những người có nhiệt độ cơ thể trên 37°C (98,6°F), nhiệt độ cao hơn cho thấy rủi ro lớn hơn.",
+      "candidate_b": "Với những người có nhiệt độ cơ thể trên 37°C (98,6°F), nhiệt độ cao hơn cho thấy rủi ro thấp hơn.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is fluent but reverses the risk relation.",
+      "calls": {
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "TIE",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Candidate Y incorrectly states 'lower risk' instead of 'greater risk'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y incorrectly states 'lower risk' instead of 'greater risk'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y incorrectly states 'lower risk' instead of 'greater risk'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 729,
+            "completion_tokens": 60,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.9231320000253618,
+          "from_cache": false,
+          "cost_usd": 0.00088488,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.9231320000253618,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 729,
+                "completion_tokens": 60,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "480a2f801eafd64f1f53e911d333ebb0ee618706c5f59fbd6815a4a7180c459a"
+        },
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "TIE",
+          "tags": [
+            "meaning"
+          ],
+          "note": "Candidate Y correctly translates 'greater risk', while X translates it as 'lower risk'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y correctly translates 'greater risk', while X translates it as 'lower risk'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"meaning\"\n  ],\n  \"note\": \"Candidate Y correctly translates 'greater risk', while X translates it as 'lower risk'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 729,
+            "completion_tokens": 63,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.8768442999571562,
+          "from_cache": false,
+          "cost_usd": 0.00090288,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.8768442999571562,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 729,
+                "completion_tokens": 63,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "bf5dac290f2889e8a75439b15b6ec2f8caa222f8a7a99e811b8b80602dc8ae64"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "tags_final": [
+          "meaning"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PTERM_01_regularizing_models",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b002",
+      "block_type": "prose",
+      "source": "Now that we have characterized the problem of overfitting, we can introduce some standard techniques for regularizing models.",
+      "candidate_a": "Bây giờ khi đã đặc trưng hóa vấn đề quá khớp, chúng ta có thể giới thiệu một số kỹ thuật chuẩn để điều chuẩn mô hình.",
+      "candidate_b": "Bây giờ khi đã đặc trưng hóa vấn đề quá khớp, chúng ta có thể giới thiệu một số kỹ thuật chuẩn để chuẩn hóa mô hình.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only regularizing is changed: điều chuẩn vs chuẩn hóa.",
+      "calls": {
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "The only difference is the translation of 'regularizing models'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"The only difference is the translation of 'regularizing models'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"The only difference is the translation of 'regularizing models'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 716,
+            "completion_tokens": 59,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.5230994999874383,
+          "from_cache": false,
+          "cost_usd": 0.00086952,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.5230994999874383,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 716,
+                "completion_tokens": 59,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "ed3b296468430c33dc3e4e62fafb8f8c12051a92606d1a31fb05aaf739882854"
+        },
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "The only difference is the translation of 'regularizing models'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"The only difference is the translation of 'regularizing models'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"The only difference is the translation of 'regularizing models'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 716,
+            "completion_tokens": 59,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.5366211000364274,
+          "from_cache": false,
+          "cost_usd": 0.00086952,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.5366211000364274,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 716,
+                "completion_tokens": 59,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "7f95359d91439bd1ecbc602b8e01f5d16c679c57987a01b5a2072208e8609dc0"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [
+          "terminology"
+        ],
+        "flags": [],
+        "expected_overall_match": false,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PTERM_02_regularization_term",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b043",
+      "block_type": "prose",
+      "source": "Computing the regularization term during forward propagation depends on the current values of model parameters.",
+      "candidate_a": "Việc tính số hạng điều chuẩn trong lan truyền xuôi phụ thuộc vào các giá trị hiện tại của các tham số mô hình.",
+      "candidate_b": "Việc tính số hạng chuẩn hóa trong lan truyền xuôi phụ thuộc vào các giá trị hiện tại của các tham số mô hình.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only regularization term is changed: điều chuẩn vs chuẩn hóa.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "The only difference is the choice of technical term for 'regularization'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"The only difference is the choice of technical term for 'regularization'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"The only difference is the choice of technical term for 'regularization'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 705,
+            "completion_tokens": 61,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.7053673000773415,
+          "from_cache": false,
+          "cost_usd": 0.0008736,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.7053673000773415,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 705,
+                "completion_tokens": 61,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "ac66f13c7600dd6da9f6de7322cb3c86a54bb7f025d2a8aad80fc323cf6a21a4"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "X uses the correct technical term \"điều chuẩn\" for regularization.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"X uses the correct technical term \\\"điều chuẩn\\\" for regularization.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"X uses the correct technical term \\\"điều chuẩn\\\" for regularization.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 705,
+            "completion_tokens": 60,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.8537008999846876,
+          "from_cache": false,
+          "cost_usd": 0.0008676,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.8537008999846876,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 705,
+                "completion_tokens": 60,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "97ca8c0eac4311d5935ffea4d5c2c940b5a1d45375540c8c3b62c21a4776f370"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [
+          "terminology"
+        ],
+        "flags": [
+          "overall_order_inconsistent"
+        ],
+        "expected_overall_match": false,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PTERM_03_multilayer_perceptrons",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_index_b001",
+      "block_type": "heading",
+      "source": "# Multilayer Perceptrons\n:label:`chap_perceptrons`",
+      "candidate_a": "# Perceptron đa tầng :label:`chap_perceptrons`",
+      "candidate_b": "# Mạng nơ-ron nhiều lớp :label:`chap_perceptrons`",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only the technical rendering of multilayer perceptrons differs; both are plausible.",
+      "calls": {
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "X uses a more common and accurate translation for 'Multilayer Perceptrons'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"X uses a more common and accurate translation for 'Multilayer Perceptrons'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"X uses a more common and accurate translation for 'Multilayer Perceptrons'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 683,
+            "completion_tokens": 62,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.7640550000360236,
+          "from_cache": false,
+          "cost_usd": 0.00086376,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.7640550000360236,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 683,
+                "completion_tokens": 62,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "5ca145aebbed93e14f3a2ded170b41cccf88a0d41b15e60b88a9ab920201334f"
+        },
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "Y uses a more common and accurate Vietnamese term for 'Multilayer Perceptrons'.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Y uses a more common and accurate Vietnamese term for 'Multilayer Perceptrons'.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Y uses a more common and accurate Vietnamese term for 'Multilayer Perceptrons'.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 683,
+            "completion_tokens": 63,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 2.097704900079407,
+          "from_cache": false,
+          "cost_usd": 0.00086976,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 2.097704900079407,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 683,
+                "completion_tokens": 63,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "d89641f280f048ed01ea4e50771c4ce0a38a03d86ef5de5c46d062f41f24c2c2"
+        }
+      },
+      "final": {
+        "overall_final": "B",
+        "style_final": "TIE",
+        "tags_final": [
+          "terminology"
+        ],
+        "flags": [],
+        "expected_overall_match": false,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PTERM_04_hidden_layers",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b010",
+      "block_type": "heading",
+      "source": "### Incorporating Hidden Layers",
+      "candidate_a": "### Kết hợp các tầng ẩn",
+      "candidate_b": "### Kết hợp các lớp ẩn",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only hidden layer term style differs: tầng ẩn vs lớp ẩn.",
+      "calls": {
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "Both candidates are equally good, differing only in technical term choice.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Both candidates are equally good, differing only in technical term choice.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Both candidates are equally good, differing only in technical term choice.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 652,
+            "completion_tokens": 60,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.6032186000375077,
+          "from_cache": false,
+          "cost_usd": 0.00082944,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.6032186000375077,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 652,
+                "completion_tokens": 60,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "1eeb1d707007a6602678b30652fc9fb71032d98f945e72f39d41e77856a09dcf"
+        },
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "TIE",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "Both candidates are equally good, differing only in technical term choice.",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Both candidates are equally good, differing only in technical term choice.\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"TIE\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Both candidates are equally good, differing only in technical term choice.\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 652,
+            "completion_tokens": 60,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.8194373999722302,
+          "from_cache": false,
+          "cost_usd": 0.00082944,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.8194373999722302,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 652,
+                "completion_tokens": 60,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "fd9cac4210f7cd2296b8e8e4ad891732e04750f93687704439a070e98d42ec6e"
+        }
+      },
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [
+          "terminology"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    },
+    {
+      "id": "PTERM_05_activation_function",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b020",
+      "block_type": "prose",
+      "source": "We need one more key ingredient: a nonlinear activation function to be applied to each hidden unit.",
+      "candidate_a": "Chúng ta cần thêm một thành phần then chốt nữa: một hàm kích hoạt phi tuyến được áp dụng cho từng đơn vị ẩn.",
+      "candidate_b": "Chúng ta cần thêm một thành phần then chốt nữa: một chức năng kích hoạt phi tuyến được áp dụng cho từng đơn vị ẩn.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only activation function term differs: hàm kích hoạt vs chức năng kích hoạt.",
+      "calls": {
+        "ab": {
+          "direction": "ab",
+          "order_note": "A_as_X",
+          "overall_verdict": "X",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "X uses the standard term \"hàm kích hoạt\" for \"activation function\" while Y uses \"chức năng kích hoạt\".",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"X uses the standard term \\\"hàm kích hoạt\\\" for \\\"activation function\\\" while Y uses \\\"chức năng kích hoạt\\\".\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"X\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"X uses the standard term \\\"hàm kích hoạt\\\" for \\\"activation function\\\" while Y uses \\\"chức năng kích hoạt\\\".\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 709,
+            "completion_tokens": 73,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 1.6760919000953436,
+          "from_cache": false,
+          "cost_usd": 0.00094848,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 1.6760919000953436,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 709,
+                "completion_tokens": 73,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "7b2af64bb721375a89c596b63c99810e7fa0582e37e688c291368c6fcd44325c"
+        },
+        "ba": {
+          "direction": "ba",
+          "order_note": "B_as_X",
+          "overall_verdict": "Y",
+          "style_verdict": "TIE",
+          "tags": [
+            "terminology"
+          ],
+          "note": "Y uses the more common technical term \"hàm kích hoạt\" for \"activation function\".",
+          "validation_error": "",
+          "transport_error": "",
+          "raw_content": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Y uses the more common technical term \\\"hàm kích hoạt\\\" for \\\"activation function\\\".\"\n}",
+          "raw_content_prefix": "{\n  \"overall_verdict\": \"Y\",\n  \"style_verdict\": \"TIE\",\n  \"tags\": [\n    \"terminology\"\n  ],\n  \"note\": \"Y uses the more common technical term \\\"hàm kích hoạt\\\" for \\\"activation function\\\".\"\n}",
+          "finish_reason": "FinishReason.STOP",
+          "model_echo": "gemini-2.5-flash",
+          "model_version": "gemini-2.5-flash",
+          "usage": {
+            "prompt_tokens": 709,
+            "completion_tokens": 65,
+            "thoughts_tokens": 0
+          },
+          "latency_sec": 2.7218365999870002,
+          "from_cache": false,
+          "cost_usd": 0.00090048,
+          "attempt": 1,
+          "attempts": [
+            {
+              "attempt": 1,
+              "latency_sec": 2.7218365999870002,
+              "validation_error": "",
+              "transport_error": "",
+              "finish_reason": "FinishReason.STOP",
+              "usage": {
+                "prompt_tokens": 709,
+                "completion_tokens": 65,
+                "thoughts_tokens": 0
+              }
+            }
+          ],
+          "cache_key": "629eff689a3d473c75913d768f2aa095affd9c9988bd87436204ec388667ec68"
+        }
+      },
+      "final": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "tags_final": [
+          "terminology"
+        ],
+        "flags": [],
+        "expected_overall_match": true,
+        "expected_style_match": true,
+        "expected_primary_tag_match": true
+      }
+    }
+  ],
+  "db_sha256_after": "92229381172fe30c2a10e2c467232ab992b7ea8ecb40415a1652ab7de8c13f42",
+  "db_unchanged": true,
+  "cache": {
+    "path": "data\\reports\\exp_s0s1_builderv2_v1\\pj_probe_cache.sqlite3",
+    "entries": 40,
+    "hits": 0,
+    "misses": 40,
+    "writes": 40
+  },
+  "elapsed_sec": 12.721113999956287,
+  "aggregates": {
+    "counts_by_category": {
+      "P-GRAM": 5,
+      "P-IDENT": 5,
+      "P-MEAN": 5,
+      "P-TERM": 5
+    },
+    "parse_or_transport_fail_calls": 0,
+    "P-IDENT": {
+      "overall_tie_calls": 10,
+      "pass": true
+    },
+    "P-GRAM": {
+      "overall_correct_pairs": 4,
+      "grammar_tag_pairs": 3,
+      "pass": false
+    },
+    "P-MEAN": {
+      "overall_correct_pairs": 5,
+      "meaning_tag_pairs": 5,
+      "pass": true
+    },
+    "P-TERM": {
+      "style_tie_pairs": 5,
+      "terminology_tag_pairs": 5,
+      "pass": true
+    },
+    "order_inconsistent_P_GRAM_P_MEAN": 0,
+    "thresholds": {
+      "P_IDENT_overall_TIE_call_level": "10/10",
+      "P_GRAM_overall_correct_pairs": ">=4/5",
+      "P_GRAM_grammar_tag_pairs": ">=4/5",
+      "P_MEAN_overall_correct_pairs": ">=4/5",
+      "P_MEAN_meaning_tag_pairs": ">=4/5",
+      "P_TERM_style_TIE_pairs": ">=4/5",
+      "P_TERM_terminology_tag_pairs": ">=4/5",
+      "P_GRAM_P_MEAN_overall_order_inconsistent": "<=1/10",
+      "parse_fail_after_retry": "<=1/40 calls"
+    }
+  },
+  "cost_usd": 0.03379728
+}

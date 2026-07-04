@@ -1,0 +1,308 @@
+{
+  "schema_version": "pj_planted_set_v1",
+  "created_for": "EVAL §4a-§4c PJ planted probe",
+  "source_scope": "MLP blocks from exp_s0s1_builderv2_v1 workdb; candidates are controlled edits for one-axis-one-error probing.",
+  "review_required_before_api": true,
+  "cases": [
+    {
+      "id": "PIDENT_01_multilayer_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_index_b001",
+      "block_type": "heading",
+      "source": "# Multilayer Perceptrons\n:label:`chap_perceptrons`",
+      "candidate_a": "# Perceptron đa tầng :label:`chap_perceptrons`",
+      "candidate_b": "# Perceptron đa tầng :label:`chap_perceptrons`",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical heading; must be TIE in each direction."
+    },
+    {
+      "id": "PIDENT_02_hidden_layers_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b003",
+      "block_type": "heading",
+      "source": "## Hidden Layers",
+      "candidate_a": "## Các tầng ẩn",
+      "candidate_b": "## Các tầng ẩn",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical heading; short block should not force a fake preference."
+    },
+    {
+      "id": "PIDENT_03_incorporating_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b010",
+      "block_type": "heading",
+      "source": "### Incorporating Hidden Layers",
+      "candidate_a": "### Kết hợp các tầng ẩn",
+      "candidate_b": "### Kết hợp các tầng ẩn",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical markdown heading."
+    },
+    {
+      "id": "PIDENT_04_weight_decay_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b001",
+      "block_type": "heading",
+      "source": "# Weight Decay\n:label:`sec_weight_decay`",
+      "candidate_a": "# Suy giảm trọng số :label:`sec_weight_decay`",
+      "candidate_b": "# Suy giảm trọng số :label:`sec_weight_decay`",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical heading with label."
+    },
+    {
+      "id": "PIDENT_05_dropout_heading",
+      "category": "P-IDENT",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b001",
+      "block_type": "heading",
+      "source": "# Dropout\n:label:`sec_dropout`",
+      "candidate_a": "# Dropout :label:`sec_dropout`",
+      "candidate_b": "# Dropout :label:`sec_dropout`",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": null
+      },
+      "edit_note": "Identical technical heading; no preference should be invented."
+    },
+    {
+      "id": "PGRAM_01_pixel_question",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b008",
+      "block_type": "prose",
+      "source": "But what about classifying images of cats and dogs? Should increasing the intensity of the pixel at location (13, 17) always increase (or always decrease) the likelihood that the image depicts a dog?",
+      "candidate_a": "Nhưng còn việc phân loại ảnh mèo và chó thì sao? Việc tăng cường độ của pixel tại vị trí (13, 17) có nên luôn làm tăng (hoặc luôn làm giảm) khả năng ảnh đó mô tả một con chó không?",
+      "candidate_b": "Nhưng còn việc phân loại ảnh mèo và chó thì sao? Việc tăng cường độ của pixel tại vị trí (13, 17) có nên luôn làm tăng (hoặc luôn làm giảm) khả năng ảnh đó là mô tả một con chó không?",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B preserves meaning and terms but injects the ungrammatical phrase 'là mô tả'."
+    },
+    {
+      "id": "PGRAM_02_linearity_preprocess",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b006",
+      "block_type": "prose",
+      "source": "One way to handle this might be to preprocess our data such that linearity becomes more plausible, say, by using the logarithm of income as our feature.",
+      "candidate_a": "Một cách để xử lý điều này là tiền xử lý dữ liệu của chúng ta sao cho tính tuyến tính trở nên hợp lý hơn, chẳng hạn bằng cách dùng logarit của thu nhập làm đặc trưng.",
+      "candidate_b": "Một cách để xử lý điều này là dữ liệu của chúng ta tiền xử lý sao cho tính tuyến tính trở nên hợp lý hơn, chẳng hạn bằng cách dùng logarit của thu nhập làm đặc trưng.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B keeps meaning but breaks Vietnamese word order around 'dữ liệu ... tiền xử lý'."
+    },
+    {
+      "id": "PGRAM_03_by_hand_clause",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b013",
+      "block_type": "prose",
+      "source": "Since the input layer does not involve any calculations, producing outputs with this network requires implementing the computations for both the hidden and output layers.",
+      "candidate_a": "Vì tầng đầu vào không liên quan đến bất kỳ phép tính nào, việc tạo đầu ra với mạng này đòi hỏi phải triển khai các phép tính cho cả tầng ẩn và tầng đầu ra.",
+      "candidate_b": "Vì tầng đầu vào không liên quan đến bất kỳ phép tính nào, việc tạo đầu ra với mạng này đòi hỏi phải các phép tính cho cả tầng ẩn và tầng đầu ra.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B deletes the main verb 'triển khai', leaving an ungrammatical verb phrase."
+    },
+    {
+      "id": "PGRAM_04_regularizing_models_sentence",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b002",
+      "block_type": "prose",
+      "source": "Now that we have characterized the problem of overfitting, we can introduce some standard techniques for regularizing models.",
+      "candidate_a": "Bây giờ khi đã đặc trưng hóa vấn đề quá khớp, chúng ta có thể giới thiệu một số kỹ thuật chuẩn để điều chuẩn mô hình.",
+      "candidate_b": "Bây giờ khi đã đặc trưng hóa vấn đề quá khớp, chúng ta có thể giới thiệu một số kỹ thuật chuẩn để điều chuẩn mô hình là.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B only adds a dangling ending; term choice remains identical."
+    },
+    {
+      "id": "PGRAM_05_high_dimensional_heading",
+      "category": "P-GRAM",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b043",
+      "block_type": "prose",
+      "source": "Since this is just a linear regression problem, we can use the squared error as our loss function.",
+      "candidate_a": "Vì đây chỉ là một bài toán hồi quy tuyến tính, chúng ta có thể dùng sai số bình phương làm hàm mất mát.",
+      "candidate_b": "Nhưng đây chỉ là một bài toán hồi quy tuyến tính, chúng ta có thể dùng sai số bình phương làm hàm mất mát.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "A",
+        "primary_tag": "grammar"
+      },
+      "edit_note": "Candidate B replaces the causal connector 'Vì' with the incoherent contrast connector 'Nhưng'."
+    },
+    {
+      "id": "PMEAN_01_less_obvious",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b009",
+      "block_type": "prose",
+      "source": "It is less obvious that we could address the problem with a simple preprocessing fix.",
+      "candidate_a": "Không hiển nhiên rằng ta có thể giải quyết vấn đề bằng một chỉnh sửa tiền xử lý đơn giản.",
+      "candidate_b": "Rõ ràng là ta có thể giải quyết vấn đề bằng một chỉnh sửa tiền xử lý đơn giản.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is fluent but reverses the uncertainty of 'less obvious'."
+    },
+    {
+      "id": "PMEAN_02_dog_vs_cat",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b008",
+      "block_type": "prose",
+      "source": "Should increasing the intensity of the pixel at location (13, 17) always increase (or always decrease) the likelihood that the image depicts a dog?",
+      "candidate_a": "Việc tăng cường độ của pixel tại vị trí (13, 17) có nên luôn làm tăng (hoặc luôn làm giảm) khả năng ảnh đó mô tả một con chó không?",
+      "candidate_b": "Việc tăng cường độ của pixel tại vị trí (13, 17) có nên luôn làm tăng (hoặc luôn làm giảm) khả năng ảnh đó mô tả một con mèo không?",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is grammatical but changes dog to cat."
+    },
+    {
+      "id": "PMEAN_03_high_dimensional",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b018",
+      "block_type": "heading",
+      "source": "## High-Dimensional Linear Regression",
+      "candidate_a": "## Hồi quy tuyến tính nhiều chiều",
+      "candidate_b": "## Hồi quy tuyến tính chiều cao",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is fluent Vietnamese but maps high-dimensional to physical height."
+    },
+    {
+      "id": "PMEAN_04_income_repay_relation",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b006",
+      "block_type": "prose",
+      "source": "An applicant with a higher income would always be more likely to repay than one with a lower income.",
+      "candidate_a": "Một người nộp đơn có thu nhập cao hơn sẽ luôn có khả năng hoàn trả cao hơn một người có thu nhập thấp hơn.",
+      "candidate_b": "Một người nộp đơn có thu nhập cao hơn sẽ luôn có khả năng hoàn trả thấp hơn một người có thu nhập thấp hơn.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is fluent but reverses the more-likely relation."
+    },
+    {
+      "id": "PMEAN_05_temperature_risk_relation",
+      "category": "P-MEAN",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b007",
+      "block_type": "prose",
+      "source": "For individuals with a body temperature above 37°C (98.6°F), higher temperatures indicate greater risk.",
+      "candidate_a": "Với những người có nhiệt độ cơ thể trên 37°C (98,6°F), nhiệt độ cao hơn cho thấy rủi ro lớn hơn.",
+      "candidate_b": "Với những người có nhiệt độ cơ thể trên 37°C (98,6°F), nhiệt độ cao hơn cho thấy rủi ro thấp hơn.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "meaning"
+      },
+      "edit_note": "Candidate B is fluent but reverses the risk relation."
+    },
+    {
+      "id": "PTERM_01_regularizing_models",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b002",
+      "block_type": "prose",
+      "source": "Now that we have characterized the problem of overfitting, we can introduce some standard techniques for regularizing models.",
+      "candidate_a": "Bây giờ khi đã đặc trưng hóa vấn đề quá khớp, chúng ta có thể giới thiệu một số kỹ thuật chuẩn để điều chuẩn mô hình.",
+      "candidate_b": "Bây giờ khi đã đặc trưng hóa vấn đề quá khớp, chúng ta có thể giới thiệu một số kỹ thuật chuẩn để chuẩn hóa mô hình.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only regularizing is changed: điều chuẩn vs chuẩn hóa."
+    },
+    {
+      "id": "PTERM_02_regularization_term",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b043",
+      "block_type": "prose",
+      "source": "Computing the regularization term during forward propagation depends on the current values of model parameters.",
+      "candidate_a": "Việc tính số hạng điều chuẩn trong lan truyền xuôi phụ thuộc vào các giá trị hiện tại của các tham số mô hình.",
+      "candidate_b": "Việc tính số hạng chuẩn hóa trong lan truyền xuôi phụ thuộc vào các giá trị hiện tại của các tham số mô hình.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only regularization term is changed: điều chuẩn vs chuẩn hóa."
+    },
+    {
+      "id": "PTERM_03_multilayer_perceptrons",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_index_b001",
+      "block_type": "heading",
+      "source": "# Multilayer Perceptrons\n:label:`chap_perceptrons`",
+      "candidate_a": "# Perceptron đa tầng :label:`chap_perceptrons`",
+      "candidate_b": "# Mạng nơ-ron nhiều lớp :label:`chap_perceptrons`",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only the technical rendering of multilayer perceptrons differs; both are plausible."
+    },
+    {
+      "id": "PTERM_04_hidden_layers",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b010",
+      "block_type": "heading",
+      "source": "### Incorporating Hidden Layers",
+      "candidate_a": "### Kết hợp các tầng ẩn",
+      "candidate_b": "### Kết hợp các lớp ẩn",
+      "expected": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only hidden layer term style differs: tầng ẩn vs lớp ẩn."
+    },
+    {
+      "id": "PTERM_05_activation_function",
+      "category": "P-TERM",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b020",
+      "block_type": "prose",
+      "source": "We need one more key ingredient: a nonlinear activation function to be applied to each hidden unit.",
+      "candidate_a": "Chúng ta cần thêm một thành phần then chốt nữa: một hàm kích hoạt phi tuyến được áp dụng cho từng đơn vị ẩn.",
+      "candidate_b": "Chúng ta cần thêm một thành phần then chốt nữa: một chức năng kích hoạt phi tuyến được áp dụng cho từng đơn vị ẩn.",
+      "expected": {
+        "overall_final": "A",
+        "style_final": "TIE",
+        "primary_tag": "terminology"
+      },
+      "edit_note": "Only activation function term differs: hàm kích hoạt vs chức năng kích hoạt."
+    }
+  ]
+}
