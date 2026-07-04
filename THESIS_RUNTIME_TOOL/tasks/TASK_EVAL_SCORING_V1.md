@@ -291,3 +291,16 @@ PASSAGE B:
 6. Xong: STOP, khong commit. Sau do moi den GPT-mini 100-block audit (cost-gate rieng) + luat ha cap §2b.
 
 Artifacts commit kem muc nay: `probe_sf_bt.py`, `sf_bt_phase1_probe.json`. Cache/debug/console de untracked (regenerable).
+
+<!-- S2D_A_PILOT -->
+### 2d-A. AMENDMENT (user 2026-07-04): full run chia 2 buoc — PILOT 100 truoc, quyet scope sau
+
+User chot: khong lao vao 8-14h ngay; chay thu de do toc do/loi that roi quyet. Tan thanh — dung ky luat probe-first, va nho cache thi pilot KHONG phi mot call nao (full run sau do nhan lai tu cache).
+
+**Stage A — PILOT (CodeX, ~40-60 phut, $0):**
+1. Chon **50 block_id co dinh, deterministic, KHONG cherry-pick**: moi chuong 25 block_id, systematic sampling theo order_index (buoc k = floor(N/25), lay block thu k, 2k, 3k...; ghi cong thuc + danh sach id vao report). Cham CA 2 arm cho cung 50 block_id => 100 luot cham, co luon paired delta S1-S0 mau.
+2. Script = `score_sf_bt.py` ban that (khong phai script probe): 2 chieu judge, guard None-bug, report schema §2d muc 3, flags/with-without day du. Pilot chinh la lan smoke-test script nay.
+3. Report them: latency phan vi (p50/p90/max) rieng BT va judge theo do dai block; count too_long_for_llm / bt_truncated / input_matches_source tren mau; **ETA ngoai suy cho 1,646** tu latency thuc te; moi loi bat ky (transport, parse, timeout) ghi ro.
+4. STOP -> Claude verify -> quyet scope voi user bang so that: (a) full 1,646 mot dem, (b) tung chuong moi dem mot chuong, (c) thu hep 1 chuong (chi khi ETA that su xau; ghi ro cai gia = mat replication xuyen chuong cua SF-BT).
+
+**Ghi chu model (chot voi user):** Gemini/GPT KHONG thay Gemma o vi tri BT/judge chinh — probe §2d da tham dinh thuoc tren Gemma, doi model = doi thuoc = probe lai tu dau; key reseller khong pin duoc model version (rui ro tai lap) + data qua trung gian. Gemini duoc phep ung cu vai AUDIT 100-block (thay GPT-mini, cost-gate nhu cu) — quyet khi den buoc do. Token local mien phi; chi phi duy nhat la thoi gian may chay.
