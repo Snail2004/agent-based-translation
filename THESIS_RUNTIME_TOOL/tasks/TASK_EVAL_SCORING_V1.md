@@ -174,3 +174,19 @@ Du bao truoc (ghi de doi chieu, khong phai tieu chi cung): ky vong delta S1-S0 ~
 **Caveats giu nguyen ky luat:** zero-shot vi -> convergent signal, khong bao gio la judge duy nhat; 38/1,646 block vuot 512 token bi cat (da log; KHONG trung voi nhom S1-thua-dam); diem segment-level nhieu — bottom-10 va cac block delta am dam (kaggle_house_price_b042 -0.34, environment_b085 -0.30, autograd_b035 -0.21, deu KHONG truncated) la INPUT AUDIT cho PJ, khong phai phan quyet.
 
 **Trang thai bo cham: 5/7 thang xong** (TC, TA, TC-Occ, TA-Occ, SF-QE). Con: SF-BT ($0 local — ke tiep), PJ (paid, cost-gate), roi agreement analysis + SG.
+<!-- S2B_SFBT_DESIGN -->
+### 2b. SF-BT — thiet ke chot sau phan bien 2 chieu (Claude x CodeX, 2026-07-04) + TASK probe
+
+**AMENDMENT §2:** cong thuc "0.5*cos + 0.5*LLM" go khoi trang thai locked — CodeX dung: Eq.1 (AMT) chi la y tuong BT-similarity; trong so composite la thiet ke moi chua kiem. Sua TRUOC lan chay dau, co bien ban — hop le (khac voi doi thuoc giua thi nghiem). Dong thoi BAC de xuat "nghieng 0.4/0.6" cua CodeX (cung loi: chua co data da chon trong so; calibrate tren 20 cap synthetic = fit mau ti hon). CHOT: bao cao HAI COT dong-chinh (SF-BT-cos, SF-BT-llm); composite (neu can) = trung binh 2 thanh phan chuan hoa theo HANG percentile trong run — zero tham so fit; quyet dinh composite SAU probe bang data.
+
+**Kien truc (block-level, ghep exact theo block_id — khong sentence-align, bai hoc EV-09):**
+workdb ro -> Gemma BT (VI->EN, MU: khong EN goc/khong tu dien/khong context, temp 0, seed, text tho khong ep JSON) -> 3 tin hieu: bt_bge_cosine (EN goc <-> EN BT), bt_llm_score (EN<->EN, rubric 0-100, dao thu tu theo seed, JSON {score, error_flags[omission|addition|negation|numeric|term_shift|untranslated|format_only]} — flags CHI mo ta, khong vao diem), direct_bge_en_vi (cot phu diagnostic, khong headline) -> aggregate y het SF-QE (per chuong x arm + paired delta + bottom-10 + hygiene/truncation audit).
+
+**Hygiene BT (CodeX dong gop, check thuan co hoc):** flag rieng — output rong / ty le ky tu VN con lai cao / mat-lech so token $math$/`code` / ty le do dai bat thuong. Khong de loi co hoc gia dang diem thap.
+
+**Gemma-tu-cham caveat + luat ha cap DANG KY TRUOC:** GPT-mini audit ~100 block (chon deterministic theo seed, phu deu 2 chuong x 2 arm; vai cent, cost-gate). Neu Pearson(Gemma,GPT) < 0.6 HOAC |mean diff| > 10/100 -> bt_llm_score(Gemma) xuong diagnostic, headline = cosine + GPT-sample.
+
+**TASK for CodeX — PHASE 1 PROBE (~15-20 phut, $0 tru GPT audit chua chay):**
+1. Tai dung nguyen bo wide-probe 41 case cua SF-QE + them case that (BT-pair tu workdb: negation, numeric, untranslated, omission) + cac case THUAT NGU (vector/vecto, regularization) dan nhan `expected_blind` — KHONG tinh vao pass/fail (SF-BT mu thuat ngu by design; dua vao de ghi bang chung mu).
+2. Chay tron chuoi BT->cosine->LLM-score tren bo probe. Tieu chi: paired ranking good>bad tren cac cap KHONG-expected_blind, bao ket qua tung thanh phan RIENG (cos va llm doc lap) — de quyet composite.
+3. Bao: bang pairwise per component, cac expected_blind co mu that khong, hygiene flags co bat dung case untranslated khong, toc do/call. STOP — Claude verify roi moi GO full run 1,646 block.
