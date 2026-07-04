@@ -1,0 +1,5186 @@
+{
+  "metric": "SF-BT",
+  "phase": "phase1_probe",
+  "status": "probe_only_not_full_metric",
+  "created_at_unix": 1783173482,
+  "db": "data\\jobs\\exp_s0s1_full\\memory.sqlite3",
+  "db_sha256_before": "92229381172fe30c2a10e2c467232ab992b7ea8ecb40415a1652ab7de8c13f42",
+  "experiment": "exp_s0s1_builderv2_v1",
+  "models": {
+    "bt_model": "google/gemma-4-12b",
+    "judge_model": "google/gemma-4-12b",
+    "embed_model": "text-embedding-bge-m3",
+    "endpoint": "http://127.0.0.1:1234",
+    "embed_endpoint": "http://127.0.0.1:1234/v1/embeddings"
+  },
+  "prompt_versions": {
+    "bt": "bt_prompt_v1",
+    "judge": "bt_judge_v1",
+    "bt_prompt_sha256": "0fb3e38feab2c2454ae5a64f67407fd8740616175741ef49f065f715c7969fe7",
+    "judge_prompt_sha256": "8532d13ae1b501cd3b11935a49f13e7b0597c3469a54d92b95aa0533c11611c0"
+  },
+  "request_profile": {
+    "temperature": 0,
+    "top_p": 1,
+    "seed": 20260612,
+    "repeat_penalty": 1.0,
+    "reasoning_effort": "none"
+  },
+  "input_counts": {
+    "comet_wide_cases": 41,
+    "comet_wide_pairs": 20,
+    "real_diagnostic_cases": 5,
+    "total_cases": 46
+  },
+  "cases": [
+    {
+      "id": "good_gradient",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "standalone good technical translation",
+      "src": "The gradient is computed during backpropagation to update the model parameters.",
+      "mt": "Gradient được tính trong quá trình lan truyền ngược để cập nhật các tham số của mô hình.",
+      "bt": {
+        "text": "The gradient is calculated during the backpropagation process to update the model parameters.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 114,
+          "completion_tokens": 16,
+          "total_tokens": 130,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.181109800003469,
+        "from_cache": true,
+        "content_prefix": "The gradient is calculated during the backpropagation process to update the model parameters."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0568181818181819,
+        "src_char_count": 79,
+        "src_token_count": 11,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.33532934131736525
+      },
+      "bt_bge_cosine": {
+        "score": 0.9837075201721965,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0011233999393880367
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8381697724461556,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0010352000826969743
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 39,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.04305940004997,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only a minor synonym change between 'calculated' and 'computed'.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only a minor synonym change between 'calculated' and 'computed'.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 45,
+            "total_tokens": 318,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.302834299975075,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_regularization",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: regularization mistranslated as normalization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Điều chuẩn làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "bt": {
+        "text": "Regularization reduces overfitting by penalizing large weights.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 109,
+          "completion_tokens": 11,
+          "total_tokens": 120,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9366639999207109,
+        "from_cache": true,
+        "content_prefix": "Regularization reduces overfitting by penalizing large weights."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0327868852459017,
+        "src_char_count": 63,
+        "src_token_count": 7,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.24193548387096775
+      },
+      "bt_bge_cosine": {
+        "score": 1.0000000000000002,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008429998997598886
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7886070902627892,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007368000224232674
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.398251299979165,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 0.9881343999877572,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": true,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_regularization",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: regularization mistranslated as normalization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Chuẩn hóa làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "bt": {
+        "text": "Regularization reduces overfitting by penalizing large weights.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 110,
+          "completion_tokens": 11,
+          "total_tokens": 121,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8935396999586374,
+        "from_cache": true,
+        "content_prefix": "Regularization reduces overfitting by penalizing large weights."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.05,
+        "src_char_count": 63,
+        "src_token_count": 7,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.24390243902439024
+      },
+      "bt_bge_cosine": {
+        "score": 1.0000000000000002,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007979999063536525
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8075663376794029,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007343000033870339
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.398251299979165,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 0.9881343999877572,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": true,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_accuracy_direction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: increase/decrease polarity",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực tăng sau khi điều chỉnh tốc độ học.",
+      "bt": {
+        "text": "Accuracy on the validation set increased after adjusting the learning rate.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 112,
+          "completion_tokens": 13,
+          "total_tokens": 125,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 12.94852350000292,
+        "from_cache": true,
+        "content_prefix": "Accuracy on the validation set increased after adjusting the learning rate."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1363636363636365,
+        "src_char_count": 65,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.16793893129770993
+      },
+      "bt_bge_cosine": {
+        "score": 0.9346839754953402,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007732000667601824
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8679706198056171,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007084000390022993
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same fact with no difference in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same fact with no difference in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 37,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.232039300026372,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same meaning with no difference in facts or logic.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same meaning with no difference in facts or logic.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 39,
+            "total_tokens": 306,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0940638999454677,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_accuracy_direction",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: increase/decrease polarity",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực giảm sau khi điều chỉnh tốc độ học.",
+      "bt": {
+        "text": "Accuracy on the validation set decreased after adjusting the learning rate.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 112,
+          "completion_tokens": 13,
+          "total_tokens": 125,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.025717500015162,
+        "from_cache": true,
+        "content_prefix": "Accuracy on the validation set decreased after adjusting the learning rate."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1363636363636365,
+        "src_char_count": 65,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.1984732824427481
+      },
+      "bt_bge_cosine": {
+        "score": 0.8297135497471643,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008222999749705195
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7612651240900244,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007215000223368406
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages contradict each other regarding the direction of the accuracy change (increase vs. decrease).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages contradict each other regarding the direction of the accuracy change (increase vs. decrease).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 45,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.61375739995856,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A states accuracy decreased, while Passage B states it increased.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A states accuracy decreased, while Passage B states it increased.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 41,
+            "total_tokens": 308,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1387839999515563,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_dropout_omission",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: dropout and random masking omitted",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Dropout che ngẫu nhiên các đơn vị ẩn trong quá trình huấn luyện.",
+      "bt": {
+        "text": "Dropout randomly masks hidden units during the training process.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 110,
+          "completion_tokens": 11,
+          "total_tokens": 121,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8773427000269294,
+        "from_cache": true,
+        "content_prefix": "Dropout randomly masks hidden units during the training process."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0,
+        "src_char_count": 52,
+        "src_token_count": 7,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.43103448275862066
+      },
+      "bt_bge_cosine": {
+        "score": 0.980306448025704,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007690000347793102
+      },
+      "direct_bge_en_vi": {
+        "score": 0.9007989683152913,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0009339000098407269
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 31,
+            "total_tokens": 294,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.299557900056243,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 31,
+            "total_tokens": 294,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.7886771999765188,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": true,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_dropout_omission",
+      "source": "comet_wide",
+      "expected": "bad_omission",
+      "note": "bad: dropout and random masking omitted",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Trong quá trình huấn luyện, mô hình thay đổi các tầng ẩn.",
+      "bt": {
+        "text": "During the training process, the model modifies the hidden layers.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 109,
+          "completion_tokens": 13,
+          "total_tokens": 122,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.067132500000298,
+        "from_cache": true,
+        "content_prefix": "During the training process, the model modifies the hidden layers."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1578947368421053,
+        "src_char_count": 52,
+        "src_token_count": 7,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.22018348623853212
+      },
+      "bt_bge_cosine": {
+        "score": 0.7090473380121897,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007591999601572752
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7198882690225791,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007331999950110912
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A specifies the mechanism (randomly masking units), while Passage B uses the vague term 'modifies'.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A specifies the mechanism (randomly masking units), while Passage B uses the vague term 'modifies'.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 50,
+            "total_tokens": 315,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.235651000053622,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A describes a general modification of hidden layers, while Passage B specifies a specific technique (dropout) and its mechanism (masking units).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 25, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A describes a general modification of hidden layers, while Passage B specifies a specific technique (dropout) and its mechanism (masking units).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 56,
+            "total_tokens": 321,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.5322039000457153,
+          "from_cache": true
+        },
+        "score_mean": 37.5,
+        "score_delta_abs": 25.0
+      },
+      "short_block": true,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_hallucination",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: unsupported guarantee added",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc.",
+      "bt": {
+        "text": "The batch size controls the number of examples processed at the same time.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 110,
+          "completion_tokens": 15,
+          "total_tokens": 125,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.0351375000318512,
+        "from_cache": true,
+        "content_prefix": "The batch size controls the number of examples processed at the same time."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.3214285714285714,
+        "src_char_count": 64,
+        "src_token_count": 11,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.26666666666666666
+      },
+      "bt_bge_cosine": {
+        "score": 0.9858056355595329,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007932999869808555
+      },
+      "direct_bge_en_vi": {
+        "score": 0.801682857749301,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007441999623551965
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are semantically identical.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are semantically identical.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 271,
+            "completion_tokens": 31,
+            "total_tokens": 302,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.73839960002806,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same meaning with no difference in facts or scope.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same meaning with no difference in facts or scope.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 271,
+            "completion_tokens": 39,
+            "total_tokens": 310,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9935893999645486,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_hallucination",
+      "source": "comet_wide",
+      "expected": "medium_bad_addition",
+      "note": "bad: unsupported guarantee added",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc và đảm bảo mô hình luôn hội tụ.",
+      "bt": {
+        "text": "The batch size controls the number of examples processed at once and ensures that the model always converges.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 118,
+          "completion_tokens": 20,
+          "total_tokens": 138,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.119399999966845,
+        "from_cache": true,
+        "content_prefix": "The batch size controls the number of examples processed at once and ensures that the model always converges."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.2528735632183907,
+        "src_char_count": 64,
+        "src_token_count": 11,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.2781456953642384
+      },
+      "bt_bge_cosine": {
+        "score": 0.9003429030091284,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0011623000027611852
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7569952279906154,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008199000731110573
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage B adds a claim about ensuring model convergence that is not present in Passage A.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage B adds a claim about ensuring model convergence that is not present in Passage A.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 276,
+            "completion_tokens": 45,
+            "total_tokens": 321,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.1236377999885,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A includes a claim about ensuring model convergence that is missing in Passage B.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A includes a claim about ensuring model convergence that is missing in Passage B.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 276,
+            "completion_tokens": 44,
+            "total_tokens": 320,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.2328696000622585,
+          "from_cache": true
+        },
+        "score_mean": 50.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_untranslated",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: English copied instead of translated",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "Hàm kích hoạt đưa tính phi tuyến vào mạng nơ-ron.",
+      "bt": {
+        "text": "Activation functions introduce nonlinearity into neural networks.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 110,
+          "completion_tokens": 9,
+          "total_tokens": 119,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9460966000333428,
+        "from_cache": true,
+        "content_prefix": "Activation functions introduce nonlinearity into neural networks."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.3265306122448979,
+        "src_char_count": 72,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.1322314049586777
+      },
+      "bt_bge_cosine": {
+        "score": 0.9613683046765066,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008234999841079116
+      },
+      "direct_bge_en_vi": {
+        "score": 0.6433083628915348,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007541000377386808
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with the only difference being the grammatical number (singular vs. plural).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with the only difference being the grammatical number (singular vs. plural).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 44,
+            "total_tokens": 307,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.655984799959697,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the exact same technical concept with only minor grammatical variations.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages convey the exact same technical concept with only minor grammatical variations.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 37,
+            "total_tokens": 300,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9916827999986708,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_untranslated",
+      "source": "comet_wide",
+      "expected": "bad_untranslated",
+      "note": "bad: English copied instead of translated",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "The activation function introduces nonlinearity into the neural network.",
+      "bt": {
+        "text": "The activation function introduces nonlinearity into the neural network.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 105,
+          "completion_tokens": 11,
+          "total_tokens": 116,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8834540999960154,
+        "from_cache": true,
+        "content_prefix": "The activation function introduces nonlinearity into the neural network."
+      },
+      "hygiene": {
+        "flags": [
+          "input_matches_source"
+        ],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0,
+        "src_char_count": 72,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 1.0
+      },
+      "bt_bge_cosine": {
+        "score": 1.0000000000000002,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.000852599972859025
+      },
+      "direct_bge_en_vi": {
+        "score": 1.0000000000000002,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007342000026255846
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9192949999123812,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.0305696000577882,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_subject_object",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: object relation reversed",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật các trọng số, không phải dữ liệu huấn luyện.",
+      "bt": {
+        "text": "The optimizer updates the weights, not the training data.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 111,
+          "completion_tokens": 12,
+          "total_tokens": 123,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9863948000129312,
+        "from_cache": true,
+        "content_prefix": "The optimizer updates the weights, not the training data."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9047619047619048,
+        "src_char_count": 57,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.25
+      },
+      "bt_bge_cosine": {
+        "score": 0.9999999999999998,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007525000255554914
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8664405103285983,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.000726899947039783
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 30,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.278510100091808,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 30,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 0.9873961999546736,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_subject_object",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: object relation reversed",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật dữ liệu huấn luyện, không phải các trọng số.",
+      "bt": {
+        "text": "The optimizer updates the training data, not the weights.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 111,
+          "completion_tokens": 12,
+          "total_tokens": 123,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8748004999943078,
+        "from_cache": true,
+        "content_prefix": "The optimizer updates the training data, not the weights."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9047619047619048,
+        "src_char_count": 57,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3
+      },
+      "bt_bge_cosine": {
+        "score": 0.9916171330217143,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007516000187024474
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8663893095989734,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008704999927431345
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite of each other regarding what the optimizer updates.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"The passages state the exact opposite of each other regarding what the optimizer updates.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 48,
+            "total_tokens": 315,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.900633299956098,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite of each other regarding what the optimizer updates.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state the exact opposite of each other regarding what the optimizer updates.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 42,
+            "total_tokens": 309,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.4255255999742076,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_negation_elementwise",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: negation dropped",
+      "src": "Matrix multiplication is not the same as elementwise multiplication.",
+      "mt": "Phép nhân ma trận không giống với phép nhân theo từng phần tử.",
+      "bt": {
+        "text": "Matrix multiplication is not the same as element-wise multiplication.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 110,
+          "completion_tokens": 13,
+          "total_tokens": 123,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9136943999910727,
+        "from_cache": true,
+        "content_prefix": "Matrix multiplication is not the same as element-wise multiplication."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1129032258064515,
+        "src_char_count": 68,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.27692307692307694
+      },
+      "bt_bge_cosine": {
+        "score": 0.9770412392626487,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008671000832691789
+      },
+      "direct_bge_en_vi": {
+        "score": 0.6546509815520785,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0010816999711096287
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; the only difference is a hyphen in 'element-wise'.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; the only difference is a hyphen in 'element-wise'.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 268,
+            "completion_tokens": 42,
+            "total_tokens": 310,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.086638499982655,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; 'element-wise' and 'elementwise' are synonymous.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; 'element-wise' and 'elementwise' are synonymous.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 268,
+            "completion_tokens": 43,
+            "total_tokens": 311,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.150421200087294,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_negation_elementwise",
+      "source": "comet_wide",
+      "expected": "bad_negation",
+      "note": "bad: negation dropped",
+      "src": "Matrix multiplication is not the same as elementwise multiplication.",
+      "mt": "Phép nhân ma trận giống với phép nhân theo từng phần tử.",
+      "bt": {
+        "text": "Matrix multiplication is similar to element-wise multiplication.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 109,
+          "completion_tokens": 11,
+          "total_tokens": 120,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8300848000217229,
+        "from_cache": true,
+        "content_prefix": "Matrix multiplication is similar to element-wise multiplication."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1428571428571428,
+        "src_char_count": 68,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.2903225806451613
+      },
+      "bt_bge_cosine": {
+        "score": 0.8390715112367315,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008937999373301864
+      },
+      "direct_bge_en_vi": {
+        "score": 0.5397705442828574,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007218999089673162
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A states they are not the same, while Passage B states they are similar.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A states they are not the same, while Passage B states they are similar.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 266,
+            "completion_tokens": 45,
+            "total_tokens": 311,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.28210890002083,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A claims they are similar, while Passage B explicitly states they are not the same.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A claims they are similar, while Passage B explicitly states they are not the same.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 266,
+            "completion_tokens": 46,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.2878614000510424,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_loss_direction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: minimize vs maximize",
+      "src": "Gradient descent minimizes the loss function.",
+      "mt": "Hạ gradient tối thiểu hóa hàm mất mát.",
+      "bt": {
+        "text": "Lower the gradient to minimize the loss function.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 105,
+          "completion_tokens": 10,
+          "total_tokens": 115,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8460135000059381,
+        "from_cache": true,
+        "content_prefix": "Lower the gradient to minimize the loss function."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.2894736842105263,
+        "src_char_count": 45,
+        "src_token_count": 6,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3373493975903614
+      },
+      "bt_bge_cosine": {
+        "score": 0.8539752631371661,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008275000145658851
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7944880700579651,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007311999797821045
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage A describes the purpose of gradient descent, while Passage B incorrectly suggests lowering the gradient itself as the method.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage A describes the purpose of gradient descent, while Passage B incorrectly suggests lowering the gradient itself as the method.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 261,
+            "completion_tokens": 50,
+            "total_tokens": 311,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.910068500088528,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same fundamental relationship between gradient descent and loss function minimization.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same fundamental relationship between gradient descent and loss function minimization.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 261,
+            "completion_tokens": 38,
+            "total_tokens": 299,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.088585100020282,
+          "from_cache": true
+        },
+        "score_mean": 75.0,
+        "score_delta_abs": 50.0
+      },
+      "short_block": true,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_loss_direction",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: minimize vs maximize",
+      "src": "Gradient descent minimizes the loss function.",
+      "mt": "Hạ gradient tối đa hóa hàm mất mát.",
+      "bt": {
+        "text": "Lower the gradient to maximize the loss function.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 105,
+          "completion_tokens": 10,
+          "total_tokens": 115,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9657946999650449,
+        "from_cache": true,
+        "content_prefix": "Lower the gradient to maximize the loss function."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.4,
+        "src_char_count": 45,
+        "src_token_count": 6,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.35
+      },
+      "bt_bge_cosine": {
+        "score": 0.8185067811905862,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0010025999508798122
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7646578360839388,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0011477000080049038
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "Passage B claims to maximize the loss function, which is the opposite of minimizing it.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"Passage B claims to maximize the loss function, which is the opposite of minimizing it.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 261,
+            "completion_tokens": 51,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.937983799958602,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A describes maximizing the loss function, while Passage B describes minimizing it.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A describes maximizing the loss function, while Passage B describes minimizing it.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 261,
+            "completion_tokens": 43,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.2348437000764534,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": true,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_dataset_split",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: validation/test set swapped",
+      "src": "We tune hyperparameters on the validation set, not on the test set.",
+      "mt": "Chúng ta điều chỉnh siêu tham số trên tập xác thực, không phải trên tập kiểm tra.",
+      "bt": {
+        "text": "We adjust the hyperparameters on the validation set, not on the test set.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 114,
+          "completion_tokens": 16,
+          "total_tokens": 130,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.104469999903813,
+        "from_cache": true,
+        "content_prefix": "We adjust the hyperparameters on the validation set, not on the test set."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9012345679012346,
+        "src_char_count": 67,
+        "src_token_count": 12,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.32432432432432434
+      },
+      "bt_bge_cosine": {
+        "score": 0.9742136665621475,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0012849000049754977
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8092620429210263,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008463000413030386
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; 'tune' and 'adjust' are synonyms in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; 'tune' and 'adjust' are synonyms in this context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 43,
+            "total_tokens": 317,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.465628399979323,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The words 'adjust' and 'tune' are synonymous in the context of hyperparameters.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The words 'adjust' and 'tune' are synonymous in the context of hyperparameters.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 40,
+            "total_tokens": 314,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.099578099907376,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_dataset_split",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: validation/test set swapped",
+      "src": "We tune hyperparameters on the validation set, not on the test set.",
+      "mt": "Chúng ta điều chỉnh siêu tham số trên tập kiểm tra, không phải trên tập xác thực.",
+      "bt": {
+        "text": "We adjust the hyperparameters on the test set, not on the validation set.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 114,
+          "completion_tokens": 16,
+          "total_tokens": 130,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.0739973000017926,
+        "from_cache": true,
+        "content_prefix": "We adjust the hyperparameters on the test set, not on the validation set."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9012345679012346,
+        "src_char_count": 67,
+        "src_token_count": 12,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.33783783783783783
+      },
+      "bt_bge_cosine": {
+        "score": 0.9743360988883073,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0009009999921545386
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8159009277145597,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007831000257283449
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite regarding which set is used for hyperparameter tuning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state the exact opposite regarding which set is used for hyperparameter tuning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 43,
+            "total_tokens": 317,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 29.965496200020425,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite regarding which set is used for hyperparameter adjustment.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state the exact opposite regarding which set is used for hyperparameter adjustment.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 43,
+            "total_tokens": 317,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1970043999608606,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_learning_rate_number",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: number and direction reversed",
+      "src": "The learning rate is reduced from 0.1 to 0.01.",
+      "mt": "Tốc độ học được giảm từ 0,1 xuống 0,01.",
+      "bt": {
+        "text": "The learning rate was reduced from 0.1 to 0.01.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 113,
+          "completion_tokens": 18,
+          "total_tokens": 131,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.061238499940373,
+        "from_cache": true,
+        "content_prefix": "The learning rate was reduced from 0.1 to 0.01."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.205128205128205,
+        "src_char_count": 46,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.25882352941176473
+      },
+      "bt_bge_cosine": {
+        "score": 0.9810109447292453,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0012052999809384346
+      },
+      "direct_bge_en_vi": {
+        "score": 0.9145933618329111,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008580000139772892
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the exact same fact with only a minor tense difference.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages convey the exact same fact with only a minor tense difference.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 279,
+            "completion_tokens": 37,
+            "total_tokens": 316,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.897414200007915,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The change in tense does not affect the factual meaning of the learning rate adjustment.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The change in tense does not affect the factual meaning of the learning rate adjustment.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 279,
+            "completion_tokens": 39,
+            "total_tokens": 318,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0508034999947995,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_learning_rate_number",
+      "source": "comet_wide",
+      "expected": "bad_numeric",
+      "note": "bad: number and direction reversed",
+      "src": "The learning rate is reduced from 0.1 to 0.01.",
+      "mt": "Tốc độ học được tăng từ 0,01 lên 0,1.",
+      "bt": {
+        "text": "The learning rate was increased from 0.01 to 0.1.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 113,
+          "completion_tokens": 18,
+          "total_tokens": 131,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.0506364000029862,
+        "from_cache": true,
+        "content_prefix": "The learning rate was increased from 0.01 to 0.1."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.3243243243243243,
+        "src_char_count": 46,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3614457831325301
+      },
+      "bt_bge_cosine": {
+        "score": 0.906205828417441,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007890999549999833
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8658482602793889,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0009616999886929989
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state opposite directions of change for the learning rate.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state opposite directions of change for the learning rate.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 279,
+            "completion_tokens": 39,
+            "total_tokens": 318,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.627447700011544,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state opposite directions of change for the learning rate.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state opposite directions of change for the learning rate.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 279,
+            "completion_tokens": 39,
+            "total_tokens": 318,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0812650999287143,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_variance_std",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: variance/std relation reversed",
+      "src": "The variance is the square of the standard deviation.",
+      "mt": "Phương sai là bình phương của độ lệch chuẩn.",
+      "bt": {
+        "text": "Variance is the square of the standard deviation.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 105,
+          "completion_tokens": 10,
+          "total_tokens": 115,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8276665000012144,
+        "from_cache": true,
+        "content_prefix": "Variance is the square of the standard deviation."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1136363636363635,
+        "src_char_count": 53,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.14432989690721648
+      },
+      "bt_bge_cosine": {
+        "score": 0.9644230484031808,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008080999832600355
+      },
+      "direct_bge_en_vi": {
+        "score": 0.6818810318492368,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008908000309020281
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; the only difference is the presence of a definite article.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; the only difference is the presence of a definite article.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 41,
+            "total_tokens": 305,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.35173490003217,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 31,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.763732000021264,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_variance_std",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: variance/std relation reversed",
+      "src": "The variance is the square of the standard deviation.",
+      "mt": "Độ lệch chuẩn là bình phương của phương sai.",
+      "bt": {
+        "text": "Standard deviation is the square of the variance.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 106,
+          "completion_tokens": 10,
+          "total_tokens": 116,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8729004000779241,
+        "from_cache": true,
+        "content_prefix": "Standard deviation is the square of the variance."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1136363636363635,
+        "src_char_count": 53,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.18556701030927836
+      },
+      "bt_bge_cosine": {
+        "score": 0.9483027793430605,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008116000099107623
+      },
+      "direct_bge_en_vi": {
+        "score": 0.6974719348382015,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007371999090537429
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages state the inverse mathematical relationship between variance and standard deviation.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages state the inverse mathematical relationship between variance and standard deviation.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 39,
+            "total_tokens": 303,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.497808500076644,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages state the inverse mathematical relationship between standard deviation and variance.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages state the inverse mathematical relationship between standard deviation and variance.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 39,
+            "total_tokens": 303,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0080422000028193,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_underfit_overfit",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: underfitting changed to overfitting",
+      "src": "A model that underfits has high training error and high validation error.",
+      "mt": "Một mô hình bị thiếu khớp có lỗi huấn luyện cao và lỗi xác thực cao.",
+      "bt": {
+        "text": "An underfitted model has high training error and high validation error.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 112,
+          "completion_tokens": 14,
+          "total_tokens": 126,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.3228294999571517,
+        "from_cache": true,
+        "content_prefix": "An underfitted model has high training error and high validation error."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0441176470588236,
+        "src_char_count": 73,
+        "src_token_count": 12,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.24113475177304963
+      },
+      "bt_bge_cosine": {
+        "score": 0.9796718440059538,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007791999960318208
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7865138774342542,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.000758300069719553
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same meaning with no differences in facts or relations.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same meaning with no differences in facts or relations.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 272,
+            "completion_tokens": 39,
+            "total_tokens": 311,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.922676100046374,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same definition of an underfitted model.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same definition of an underfitted model.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 272,
+            "completion_tokens": 37,
+            "total_tokens": 309,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0099786000791937,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_underfit_overfit",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: underfitting changed to overfitting",
+      "src": "A model that underfits has high training error and high validation error.",
+      "mt": "Một mô hình bị quá khớp có lỗi huấn luyện thấp và lỗi xác thực cao.",
+      "bt": {
+        "text": "An overfitted model has a low training error and a high validation error.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 112,
+          "completion_tokens": 16,
+          "total_tokens": 128,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9908852999797091,
+        "from_cache": true,
+        "content_prefix": "An overfitted model has a low training error and a high validation error."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0895522388059702,
+        "src_char_count": 73,
+        "src_token_count": 12,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.2
+      },
+      "bt_bge_cosine": {
+        "score": 0.9104068888477923,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.001332900021225214
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7869893116987797,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007889000698924065
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two different types of model errors (underfitting vs. overfitting) with different training error characteristics.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two different types of model errors (underfitting vs. overfitting) with different training error characteristics.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 48,
+            "total_tokens": 322,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.662475499906577,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two different types of model performance (overfitting vs. underfitting) with different error profiles.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two different types of model performance (overfitting vs. underfitting) with different error profiles.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 48,
+            "total_tokens": 322,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.313146600034088,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_softmax_sum",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: negation inserted",
+      "src": "The softmax outputs probabilities that sum to one.",
+      "mt": "Softmax xuất ra các xác suất có tổng bằng một.",
+      "bt": {
+        "text": "Softmax outputs probabilities that sum to one.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 107,
+          "completion_tokens": 10,
+          "total_tokens": 117,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.861061800038442,
+        "from_cache": true,
+        "content_prefix": "Softmax outputs probabilities that sum to one."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0,
+        "src_char_count": 50,
+        "src_token_count": 8,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.4583333333333333
+      },
+      "bt_bge_cosine": {
+        "score": 0.9896174138914172,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007611999753862619
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8961489366782349,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007295999675989151
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same meaning with no difference in facts or logic.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same meaning with no difference in facts or logic.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 39,
+            "total_tokens": 302,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.44051570002921,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; the addition of 'The' is a stylistic difference.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; the addition of 'The' is a stylistic difference.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 41,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0953401000006124,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_softmax_sum",
+      "source": "comet_wide",
+      "expected": "bad_negation",
+      "note": "bad: negation inserted",
+      "src": "The softmax outputs probabilities that sum to one.",
+      "mt": "Softmax xuất ra các xác suất không có tổng bằng một.",
+      "bt": {
+        "text": "Softmax outputs probabilities that do not sum to one.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 108,
+          "completion_tokens": 12,
+          "total_tokens": 120,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.232676099985838,
+        "from_cache": true,
+        "content_prefix": "Softmax outputs probabilities that do not sum to one."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0192307692307692,
+        "src_char_count": 50,
+        "src_token_count": 8,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.43137254901960786
+      },
+      "bt_bge_cosine": {
+        "score": 0.8820742460091847,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007735999533906579
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8203695001673299,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007218999089673162
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages provide directly contradictory information regarding the sum of the probabilities.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages provide directly contradictory information regarding the sum of the probabilities.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 40,
+            "total_tokens": 305,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 22.017537700012326,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages directly contradict each other regarding whether the probabilities sum to one.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages directly contradict each other regarding whether the probabilities sum to one.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 41,
+            "total_tokens": 306,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1462892000563443,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_eigenvalue",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: eigenvalue/eigenvector mistranslated",
+      "src": "An eigenvalue tells how much an eigenvector is scaled.",
+      "mt": "Một trị riêng cho biết một vectơ riêng được co giãn bao nhiêu.",
+      "bt": {
+        "text": "An eigenvalue indicates how much an eigenvector is stretched.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 109,
+          "completion_tokens": 11,
+          "total_tokens": 120,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8456875999690965,
+        "from_cache": true,
+        "content_prefix": "An eigenvalue indicates how much an eigenvector is stretched."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9838709677419355,
+        "src_char_count": 54,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3103448275862069
+      },
+      "bt_bge_cosine": {
+        "score": 0.87124567698163,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0009189000120386481
+      },
+      "direct_bge_en_vi": {
+        "score": 0.6115547499540026,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008312000427395105
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The terms 'scaled' and 'stretched' are synonymous in this mathematical context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The terms 'scaled' and 'stretched' are synonymous in this mathematical context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 39,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 11.994780999957584,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The terms 'stretched' and 'scaled' are synonymous in this mathematical context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The terms 'stretched' and 'scaled' are synonymous in this mathematical context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 39,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9292809000471607,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_eigenvalue",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: eigenvalue/eigenvector mistranslated",
+      "src": "An eigenvalue tells how much an eigenvector is scaled.",
+      "mt": "Một giá trị ví dụ cho biết một vectơ được sắp xếp như thế nào.",
+      "bt": {
+        "text": "An example value indicates how a vector is sorted.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 111,
+          "completion_tokens": 11,
+          "total_tokens": 122,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8185780999483541,
+        "from_cache": true,
+        "content_prefix": "An example value indicates how a vector is sorted."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.8064516129032258,
+        "src_char_count": 54,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3103448275862069
+      },
+      "bt_bge_cosine": {
+        "score": 0.6305996379433314,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007918999763205647
+      },
+      "direct_bge_en_vi": {
+        "score": 0.6143472948974825,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0009537000441923738
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe completely different mathematical concepts (eigenvalues/eigenvectors vs. sorting values).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe completely different mathematical concepts (eigenvalues/eigenvectors vs. sorting values).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 44,
+            "total_tokens": 309,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.287828300031833,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two completely different mathematical concepts (vector sorting vs. eigenvalue scaling).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two completely different mathematical concepts (vector sorting vs. eigenvalue scaling).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 42,
+            "total_tokens": 307,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.176401500008069,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_convolution_kernel",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: convolution kernel mistranslated",
+      "src": "A convolution kernel slides across the image to detect local patterns.",
+      "mt": "Một kernel tích chập trượt trên ảnh để phát hiện các mẫu cục bộ.",
+      "bt": {
+        "text": "A convolution kernel slides over an image to detect local patterns.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 112,
+          "completion_tokens": 13,
+          "total_tokens": 125,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9626195000018924,
+        "from_cache": true,
+        "content_prefix": "A convolution kernel slides over an image to detect local patterns."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.046875,
+        "src_char_count": 70,
+        "src_token_count": 11,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.31343283582089554
+      },
+      "bt_bge_cosine": {
+        "score": 0.9944528686677049,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.000879499944858253
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7847048162722701,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007472999859601259
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; 'across' and 'over' are synonymous in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; 'across' and 'over' are synonymous in this context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 269,
+            "completion_tokens": 43,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.794123100000434,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; 'over' and 'across' are synonymous in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; 'over' and 'across' are synonymous in this context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 269,
+            "completion_tokens": 43,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1747087000403553,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_convolution_kernel",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: convolution kernel mistranslated",
+      "src": "A convolution kernel slides across the image to detect local patterns.",
+      "mt": "Một hạt nhân hội tụ trượt trên ảnh để phát hiện các mẫu cục bộ.",
+      "bt": {
+        "text": "A sliding convolutional kernel on an image to detect local patterns.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 112,
+          "completion_tokens": 13,
+          "total_tokens": 125,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.939259700011462,
+        "from_cache": true,
+        "content_prefix": "A sliding convolutional kernel on an image to detect local patterns."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0793650793650793,
+        "src_char_count": 70,
+        "src_token_count": 11,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.09022556390977443
+      },
+      "bt_bge_cosine": {
+        "score": 0.9245070103493539,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008563000010326505
+      },
+      "direct_bge_en_vi": {
+        "score": 0.6762705308418435,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007392000406980515
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages convey the exact same technical process and purpose.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages convey the exact same technical process and purpose.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 269,
+            "completion_tokens": 34,
+            "total_tokens": 303,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.935100200003944,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same technical process with no difference in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same technical process with no difference in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 269,
+            "completion_tokens": 38,
+            "total_tokens": 307,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9479396000970155,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_batch_epoch",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: epoch changed to batch",
+      "src": "An epoch is complete after the model has seen every training example once.",
+      "mt": "Một epoch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.",
+      "bt": {
+        "text": "An epoch is completed after the model has seen each training example once.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 113,
+          "completion_tokens": 15,
+          "total_tokens": 128,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9575096999760717,
+        "from_cache": true,
+        "content_prefix": "An epoch is completed after the model has seen each training example once."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0277777777777777,
+        "src_char_count": 74,
+        "src_token_count": 13,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3561643835616438
+      },
+      "bt_bge_cosine": {
+        "score": 0.987658645290167,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0011826000409200788
+      },
+      "direct_bge_en_vi": {
+        "score": 0.9452896473603226,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007476999890059233
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are semantically identical.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are semantically identical.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 31,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.43154759996105,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are semantically identical.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are semantically identical.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 31,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.8454583999700844,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_batch_epoch",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: epoch changed to batch",
+      "src": "An epoch is complete after the model has seen every training example once.",
+      "mt": "Một batch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.",
+      "bt": {
+        "text": "A batch is completed after the model has seen each training example once.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 113,
+          "completion_tokens": 15,
+          "total_tokens": 128,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.0187934999121353,
+        "from_cache": true,
+        "content_prefix": "A batch is completed after the model has seen each training example once."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0138888888888888,
+        "src_char_count": 74,
+        "src_token_count": 13,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3150684931506849
+      },
+      "bt_bge_cosine": {
+        "score": 0.9088254447586651,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008147000335156918
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8757816730289637,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008421000093221664
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "The passages describe different units of training (epoch vs. batch) which have distinct meanings in machine learning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 25, \"flags\": [\"coverage_mismatch\"], \"note\": \"The passages describe different units of training (epoch vs. batch) which have distinct meanings in machine learning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 48,
+            "total_tokens": 321,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.568146400037222,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The terms 'batch' and 'epoch' are used interchangeably in this context to describe the completion of a full pass over the training data.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The terms 'batch' and 'epoch' are used interchangeably in this context to describe the completion of a full pass over the training data.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 51,
+            "total_tokens": 324,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.398464799975045,
+          "from_cache": true
+        },
+        "score_mean": 62.5,
+        "score_delta_abs": 75.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_dimensionality_reduction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: dimensionality reduction mistranslated",
+      "src": "Dimensionality reduction projects high-dimensional data into a lower-dimensional space.",
+      "mt": "Giảm chiều chiếu dữ liệu chiều cao vào một không gian chiều thấp hơn.",
+      "bt": {
+        "text": "Reduce the dimension of height data into a lower-dimensional space.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 111,
+          "completion_tokens": 14,
+          "total_tokens": 125,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9500239000190049,
+        "from_cache": true,
+        "content_prefix": "Reduce the dimension of height data into a lower-dimensional space."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9710144927536232,
+        "src_char_count": 87,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.16666666666666666
+      },
+      "bt_bge_cosine": {
+        "score": 0.8148296355203769,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007565000560134649
+      },
+      "direct_bge_en_vi": {
+        "score": 0.789387356833327,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007314999820664525
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage B narrows the scope from general 'high-dimensional data' to specific 'height data'.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage B narrows the scope from general 'high-dimensional data' to specific 'height data'.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 47,
+            "total_tokens": 320,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 17.542155800038017,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same process of dimensionality reduction applied to data.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same process of dimensionality reduction applied to data.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 36,
+            "total_tokens": 309,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.007329300045967,
+          "from_cache": true
+        },
+        "score_mean": 75.0,
+        "score_delta_abs": 50.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_dimensionality_reduction",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: dimensionality reduction mistranslated",
+      "src": "Dimensionality reduction projects high-dimensional data into a lower-dimensional space.",
+      "mt": "Chuẩn hóa dữ liệu chiều cao vào một không gian lớn hơn.",
+      "bt": {
+        "text": "Normalize height data into a larger space.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 109,
+          "completion_tokens": 9,
+          "total_tokens": 118,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 1.1188890000339597,
+        "from_cache": true,
+        "content_prefix": "Normalize height data into a larger space."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.7636363636363637,
+        "src_char_count": 87,
+        "src_token_count": 9,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.16901408450704225
+      },
+      "bt_bge_cosine": {
+        "score": 0.6638539280198656,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007723000599071383
+      },
+      "direct_bge_en_vi": {
+        "score": 0.6635011554641852,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.000745000084862113
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe completely different operations (dimensionality reduction vs. normalization) and different data types.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe completely different operations (dimensionality reduction vs. normalization) and different data types.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 268,
+            "completion_tokens": 44,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 23.841423899983056,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch",
+            "coverage_mismatch"
+          ],
+          "note": "Passage A describes normalization (scaling), while Passage B describes dimensionality reduction (projection/compression).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 25, \"flags\": [\"semantic_mismatch\", \"coverage_mismatch\"], \"note\": \"Passage A describes normalization (scaling), while Passage B describes dimensionality reduction (projection/compression).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 268,
+            "completion_tokens": 52,
+            "total_tokens": 320,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.7509908999782056,
+          "from_cache": true
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_probability_range",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: probability range violated",
+      "src": "A probability must lie between 0 and 1.",
+      "mt": "Một xác suất phải nằm giữa 0 và 1.",
+      "bt": {
+        "text": "A probability must lie between 0 and 1.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 107,
+          "completion_tokens": 12,
+          "total_tokens": 119,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8711157999932766,
+        "from_cache": true,
+        "content_prefix": "A probability must lie between 0 and 1."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1470588235294117,
+        "src_char_count": 39,
+        "src_token_count": 8,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.2465753424657534
+      },
+      "bt_bge_cosine": {
+        "score": 1.0,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007585000712424517
+      },
+      "direct_bge_en_vi": {
+        "score": 0.9139474451729639,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0014111000346019864
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 30,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.863311199937016,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 30,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 0.9718400000128895,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": true,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_probability_range",
+      "source": "comet_wide",
+      "expected": "bad_numeric",
+      "note": "bad: probability range violated",
+      "src": "A probability must lie between 0 and 1.",
+      "mt": "Một xác suất phải lớn hơn 1.",
+      "bt": {
+        "text": "A probability must be greater than 1.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 104,
+          "completion_tokens": 10,
+          "total_tokens": 114,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.7912861999357119,
+        "from_cache": true,
+        "content_prefix": "A probability must be greater than 1."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.3214285714285714,
+        "src_char_count": 39,
+        "src_token_count": 8,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3283582089552239
+      },
+      "bt_bge_cosine": {
+        "score": 0.8406008033390328,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008090999908745289
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7918691163112881,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007152999751269817
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages provide contradictory mathematical constraints for a probability.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages provide contradictory mathematical constraints for a probability.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 37,
+            "total_tokens": 302,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 23.83362859999761,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A claims a probability must be greater than 1, while Passage B states it must be between 0 and 1.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A claims a probability must be greater than 1, while Passage B states it must be between 0 and 1.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 54,
+            "total_tokens": 319,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.4636474000290036,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": true,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_bias_weight",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: bias/weight and before/after changed",
+      "src": "The bias term shifts the activation before applying the nonlinearity.",
+      "mt": "Hạng bias dịch chuyển kích hoạt trước khi áp dụng phi tuyến.",
+      "bt": {
+        "text": "The bias shift activates before applying nonlinearity.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 109,
+          "completion_tokens": 9,
+          "total_tokens": 118,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.7989072999916971,
+        "from_cache": true,
+        "content_prefix": "The bias shift activates before applying nonlinearity."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9,
+        "src_char_count": 69,
+        "src_token_count": 10,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.31007751937984496
+      },
+      "bt_bge_cosine": {
+        "score": 0.9297688558859588,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0015486000338569283
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7414530976553538,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0014144000597298145
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same functional sequence of operations.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same functional sequence of operations.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 33,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.512827700003982,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same sequence of operations in a neural network.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same sequence of operations in a neural network.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 36,
+            "total_tokens": 300,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.8981967000290751,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_bias_weight",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: bias/weight and before/after changed",
+      "src": "The bias term shifts the activation before applying the nonlinearity.",
+      "mt": "Trọng số dịch chuyển kích hoạt sau khi áp dụng phi tuyến.",
+      "bt": {
+        "text": "The displacement weight is activated after applying nonlinearity.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 109,
+          "completion_tokens": 10,
+          "total_tokens": 119,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.8602290000999346,
+        "from_cache": true,
+        "content_prefix": "The displacement weight is activated after applying nonlinearity."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1403508771929824,
+        "src_char_count": 69,
+        "src_token_count": 10,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.1746031746031746
+      },
+      "bt_bge_cosine": {
+        "score": 0.7253842279156638,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.000822200090624392
+      },
+      "direct_bge_en_vi": {
+        "score": 0.544770480778701,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0007389000384137034
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages contradict each other regarding the order of operations (before vs. after nonlinearity).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"The passages contradict each other regarding the order of operations (before vs. after nonlinearity).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 50,
+            "total_tokens": 315,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.366910899989307,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch",
+            "coverage_mismatch"
+          ],
+          "note": "The passages describe different operations (displacement weight vs. bias term) occurring at different stages of the process (after vs. before nonlinearity).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 25, \"flags\": [\"semantic_mismatch\", \"coverage_mismatch\"], \"note\": \"The passages describe different operations (displacement weight vs. bias term) occurring at different stages of the process (after vs. before nonlinearity).",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 60,
+            "total_tokens": 325,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.6533632000209764,
+          "from_cache": true
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "good_distribution",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: distribution and statistics changed",
+      "src": "A Gaussian distribution is fully specified by its mean and variance.",
+      "mt": "Một phân phối Gaussian được xác định đầy đủ bởi trung bình và phương sai.",
+      "bt": {
+        "text": "A Gaussian distribution is fully defined by the mean and the variance.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 111,
+          "completion_tokens": 14,
+          "total_tokens": 125,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9219095000298694,
+        "from_cache": true,
+        "content_prefix": "A Gaussian distribution is fully defined by the mean and the variance."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.958904109589041,
+        "src_char_count": 68,
+        "src_token_count": 11,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.2978723404255319
+      },
+      "bt_bge_cosine": {
+        "score": 0.973684134945198,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.001178200007416308
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8367871087121161,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0011044999118894339
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same mathematical fact with no difference in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same mathematical fact with no difference in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 270,
+            "completion_tokens": 38,
+            "total_tokens": 308,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.654084100038745,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same mathematical fact using synonymous phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same mathematical fact using synonymous phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 270,
+            "completion_tokens": 36,
+            "total_tokens": 306,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.920182100031525,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "bad_distribution",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: distribution and statistics changed",
+      "src": "A Gaussian distribution is fully specified by its mean and variance.",
+      "mt": "Một phân phối đều được xác định đầy đủ bởi trung vị và độ lệch chuẩn.",
+      "bt": {
+        "text": "A uniform distribution is fully determined by the median and the standard deviation.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 112,
+          "completion_tokens": 15,
+          "total_tokens": 127,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 0.9881153999594972,
+        "from_cache": true,
+        "content_prefix": "A uniform distribution is fully determined by the median and the standard deviation."
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.2173913043478262,
+        "src_char_count": 68,
+        "src_token_count": 11,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.17518248175182483
+      },
+      "bt_bge_cosine": {
+        "score": 0.7809005309357033,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008065999718382955
+      },
+      "direct_bge_en_vi": {
+        "score": 0.743985388039055,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008023999398574233
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two different types of probability distributions (Gaussian vs. uniform) and different parameters (mean/variance vs. median/standard deviation).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two different types of probability distributions (Gaussian vs. uniform) and different parameters (mean/variance vs. median/standard deviation).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 271,
+            "completion_tokens": 55,
+            "total_tokens": 326,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.07276989996899,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages refer to different types of distributions (Uniform vs. Gaussian) and different parameters (Median/SD vs. Mean/Variance).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages refer to different types of distributions (Uniform vs. Gaussian) and different parameters (Median/SD vs. Mean/Variance).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 271,
+            "completion_tokens": 53,
+            "total_tokens": 324,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.5141306000296026,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "real_vector_s0_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: vector/vecto",
+      "src": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch,\nwith some abuse of notation, we define the nonlinearity\n$\\sigma$ to apply to its inputs in a rowwise fashion,\ni.e., one example at a time.\nNote that we used the notation for softmax\nin the same way to denote a rowwise operation in :numref:`subsec_softmax_vectorization`.\nOften, as in this section, the activation functions\nthat we apply to hidden layers are not merely rowwise,\nbut elementwise.\nThat means that after computing the linear portion of the layer,\nwe can calculate each activation\nwithout looking at the values taken by the other hidden units.\nThis is true for most activation functions.",
+      "mt": "Vì mỗi hàng trong $\\mathbf{X}$ tương ứng với một ví dụ trong minibatch, với một chút lạm dụng ký hiệu, ta định nghĩa phi tuyến $\\sigma$ áp dụng cho đầu vào của nó theo từng hàng, tức là mỗi lần một ví dụ. Lưu ý rằng chúng ta đã dùng ký hiệu cho softmax theo cùng cách để chỉ một phép toán theo hàng trong :numref:`subsec_softmax_vectorization`. Thông thường, như trong phần này, các hàm kích hoạt mà ta áp dụng cho các tầng ẩn không chỉ theo hàng mà còn theo từng phần tử. Điều đó có nghĩa là sau khi tính phần tuyến tính của tầng, ta có thể tính mỗi kích hoạt mà không cần nhìn vào các giá trị mà các đơn vị ẩn khác nhận được. Điều này đúng với hầu hết các hàm kích hoạt.",
+      "bt": {
+        "text": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch, with a slight abuse of notation, we define the nonlinearity $\\sigma$ applied to its input row-wise, i.e., one example at a time. Note that we have used the notation for softmax in the same way to denote a row-wise operation in :numref:`subsec_softmax_vectorization`. Typically, as in this section, the activation functions that we apply to the hidden layers are not only row-wise but also element-wise. This means that after computing the linear part of the layer, we can compute each activation without looking at the values that other hidden units receive. This holds true for most activation functions.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 263,
+          "completion_tokens": 148,
+          "total_tokens": 411,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 5.40172999992501,
+        "from_cache": true,
+        "content_prefix": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch, with a slight abuse of notation, we define the nonlinearity $\\sigma$ applied to its i"
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0119047619047619,
+        "src_char_count": 674,
+        "src_token_count": 110,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.12332838038632987
+      },
+      "bt_bge_cosine": {
+        "score": 0.9884341241963118,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008957000682130456
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8121512459091138,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.00080289994366467
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 549,
+            "completion_tokens": 39,
+            "total_tokens": 588,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.573516300064512,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 549,
+            "completion_tokens": 39,
+            "total_tokens": 588,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 3.0388701000483707,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "real_vector_s1_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: vector/vecto",
+      "src": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch,\nwith some abuse of notation, we define the nonlinearity\n$\\sigma$ to apply to its inputs in a rowwise fashion,\ni.e., one example at a time.\nNote that we used the notation for softmax\nin the same way to denote a rowwise operation in :numref:`subsec_softmax_vectorization`.\nOften, as in this section, the activation functions\nthat we apply to hidden layers are not merely rowwise,\nbut elementwise.\nThat means that after computing the linear portion of the layer,\nwe can calculate each activation\nwithout looking at the values taken by the other hidden units.\nThis is true for most activation functions.",
+      "mt": "Vì mỗi hàng trong $\\mathbf{X}$ tương ứng với một ví dụ trong lô nhỏ, với một chút lạm dụng ký hiệu, ta định nghĩa phi tuyến $\\sigma$ sao cho nó áp dụng lên đầu vào theo từng hàng, tức là một ví dụ tại một thời điểm. Lưu ý rằng chúng ta đã dùng ký hiệu cho softmax theo cùng cách để chỉ một phép toán theo hàng trong :numref:`subsec_softmax_vectorization`. Thông thường, như trong mục này, các hàm kích hoạt mà ta áp dụng cho các tầng ẩn không chỉ theo hàng, mà còn theo phần tử. Điều đó có nghĩa là sau khi tính phần tuyến tính của tầng, ta có thể tính từng kích hoạt mà không cần nhìn vào các giá trị mà các đơn vị ẩn khác nhận được. Điều này đúng với hầu hết các hàm kích hoạt.",
+      "bt": {
+        "text": "Since each row in $\\mathbf{X}$ corresponds to an example in a mini-batch, with a slight abuse of notation, we define the nonlinearity $\\sigma$ such that it applies to the input row-wise, i.e., one example at a time. Note that we have used the notation for softmax in the same way to denote a row-wise operation in :numref:`subsec_softmax_vectorization`. Typically, as in this section, the activation functions we apply to the hidden layers are not only row-wise, but also element-wise. This means that after computing the linear part of the layer, we can compute each activation without looking at the values that other hidden units receive. This holds true for most activation functions.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 266,
+          "completion_tokens": 152,
+          "total_tokens": 418,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 5.622468299930915,
+        "from_cache": true,
+        "content_prefix": "Since each row in $\\mathbf{X}$ corresponds to an example in a mini-batch, with a slight abuse of notation, we define the nonlinearity $\\sigma$ such that it appl"
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.0132547864506627,
+        "src_char_count": 674,
+        "src_token_count": 110,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.11677753141167775
+      },
+      "bt_bge_cosine": {
+        "score": 0.9816410620951442,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0009162999922409654
+      },
+      "direct_bge_en_vi": {
+        "score": 0.7902649774466233,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.001114599988795817
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 553,
+            "completion_tokens": 39,
+            "total_tokens": 592,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.532161900075153,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 553,
+            "completion_tokens": 39,
+            "total_tokens": 592,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.88505299994722,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "real_regularization_s1_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: regularization",
+      "src": "In this chapter, we will introduce your first truly *deep* network.\nThe simplest deep networks are called multilayer perceptrons,\nand they consist of multiple layers of neurons\neach fully connected to those in the layer below\n(from which they receive input)\nand those above (which they, in turn, influence).\nWhen we train high-capacity models we run the risk of overfitting.\nThus, we will need to provide your first rigorous introduction\nto the notions of overfitting, underfitting, and model selection.\nTo help you combat these problems,\nwe will introduce regularization techniques such as weight decay and dropout.\nWe will also discuss issues relating to numerical stability and parameter initialization\nthat are key to successfully training deep networks.\nThroughout, we aim to give you a firm grasp not just of the concepts\nbut also of the practice of using deep networks.\nAt the end of this chapter,\nwe apply what we have introduced so far to a real case: house price prediction.\nWe punt matters relating to the computational performance,\nscalability, and efficiency of our models to subsequent chapters.",
+      "mt": "Trong chương này, chúng ta sẽ giới thiệu mạng thực sự *sâu* đầu tiên của bạn. Những mạng sâu đơn giản nhất được gọi là perceptron đa tầng, và chúng gồm nhiều tầng nơ-ron, mỗi tầng đều kết nối đầy đủ với các nơ-ron ở tầng bên dưới (từ đó chúng nhận đầu vào) và các nơ-ron ở tầng bên trên (mà chúng, đến lượt mình, ảnh hưởng). Khi huấn luyện các mô hình có năng lực cao, chúng ta đối mặt với nguy cơ quá khớp. Vì vậy, chúng ta sẽ cần đưa ra phần giới thiệu chặt chẽ đầu tiên về các khái niệm quá khớp, thiếu khớp, và chọn mô hình. Để giúp bạn đối phó với những vấn đề này, chúng ta sẽ giới thiệu các kỹ thuật chuẩn hóa như suy giảm trọng số và dropout. Chúng ta cũng sẽ thảo luận các vấn đề liên quan đến ổn định số và khởi tạo tham số, vốn là những yếu tố then chốt để huấn luyện thành công các mạng nơ-ron sâu. Xuyên suốt, chúng tôi hướng tới việc giúp bạn nắm vững không chỉ các khái niệm mà còn cả thực hành sử dụng các mạng sâu. Ở cuối chương này, chúng ta áp dụng những gì đã giới thiệu cho đến nay vào một trường hợp thực tế: dự đoán giá nhà. Chúng ta sẽ gác lại các vấn đề liên quan đến hiệu năng tính toán, khả năng mở rộng, và hiệu quả của các mô hình sang các chương sau.",
+      "bt": {
+        "text": "In this chapter, we will introduce your first truly *deep* network. The simplest deep networks are called multi-layer perceptrons, and they consist of multiple layers of neurons, where each layer is fully connected to the neurons in the layer below (from which they receive input) and the neurons in the layer above (which they, in turn, influence). When training high-capacity models, we face the risk of overfitting. Therefore, we will need to provide the first rigorous introduction to the concepts of overfitting, underfitting, and model selection. To help you deal with these issues, we will introduce regularization techniques such as weight decay and dropout. We will also discuss issues related to numerical stability and parameter initialization, which are key factors for successfully training deep neural networks. Throughout, we aim to help you master not only the concepts but also the practice of using deep networks. At the end of this chapter, we apply what we have introduced so far to a real-world case: house price prediction. We will set aside issues related to computational performance, scalability, and model efficiency for later chapters.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 404,
+          "completion_tokens": 221,
+          "total_tokens": 625,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 8.213070800062269,
+        "from_cache": true,
+        "content_prefix": "In this chapter, we will introduce your first truly *deep* network. The simplest deep networks are called multi-layer perceptrons, and they consist of multiple "
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9847457627118644,
+        "src_char_count": 1109,
+        "src_token_count": 177,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.01834862385321101
+      },
+      "bt_bge_cosine": {
+        "score": 0.9898694734602079,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0010347000788897276
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8563612197918099,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008811999578028917
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 692,
+            "completion_tokens": 39,
+            "total_tokens": 731,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.782571199932136,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 692,
+            "completion_tokens": 39,
+            "total_tokens": 731,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.631458200048655,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "real_negation_s0",
+      "source": "workdb_diagnostic",
+      "expected": "diagnostic_real",
+      "note": "real negation candidate",
+      "src": "In this chapter, we will introduce your first truly *deep* network.\nThe simplest deep networks are called multilayer perceptrons,\nand they consist of multiple layers of neurons\neach fully connected to those in the layer below\n(from which they receive input)\nand those above (which they, in turn, influence).\nWhen we train high-capacity models we run the risk of overfitting.\nThus, we will need to provide your first rigorous introduction\nto the notions of overfitting, underfitting, and model selection.\nTo help you combat these problems,\nwe will introduce regularization techniques such as weight decay and dropout.\nWe will also discuss issues relating to numerical stability and parameter initialization\nthat are key to successfully training deep networks.\nThroughout, we aim to give you a firm grasp not just of the concepts\nbut also of the practice of using deep networks.\nAt the end of this chapter,\nwe apply what we have introduced so far to a real case: house price prediction.\nWe punt matters relating to the computational performance,\nscalability, and efficiency of our models to subsequent chapters.",
+      "mt": "Trong chương này, chúng ta sẽ giới thiệu mạng *sâu* thực sự đầu tiên của bạn. Những mạng sâu đơn giản nhất được gọi là perceptron nhiều lớp, và chúng gồm nhiều lớp nơ-ron, mỗi lớp được kết nối đầy đủ với các nơ-ron ở lớp bên dưới (từ đó chúng nhận đầu vào) và các nơ-ron ở lớp bên trên (mà đến lượt mình, chúng ảnh hưởng). Khi huấn luyện các mô hình có năng lực cao, chúng ta có nguy cơ bị quá khớp. Vì vậy, chúng ta sẽ cần giới thiệu một cách chặt chẽ những khái niệm về quá khớp, thiếu khớp và lựa chọn mô hình. Để giúp bạn đối phó với những vấn đề này, chúng ta sẽ giới thiệu các kỹ thuật chính quy hóa như suy giảm trọng số và dropout. Chúng ta cũng sẽ thảo luận các vấn đề liên quan đến độ ổn định số và khởi tạo tham số, vốn là những yếu tố then chốt để huấn luyện thành công các mạng sâu. Xuyên suốt, chúng tôi hướng tới việc giúp bạn nắm vững không chỉ các khái niệm mà còn cả thực hành sử dụng mạng sâu. Ở cuối chương này, chúng ta áp dụng những gì đã giới thiệu cho đến nay vào một trường hợp thực tế: dự đoán giá nhà. Chúng ta sẽ gác lại các vấn đề liên quan đến hiệu năng tính toán, khả năng mở rộng và hiệu quả của các mô hình sang các chương sau.",
+      "bt": {
+        "text": "In this chapter, we will introduce your first true *deep* network. The simplest deep networks are called multi-layer perceptrons, and they consist of multiple layers of neurons, each layer being fully connected to the neurons in the layer below (from which they receive input) and the neurons in the layer above (which, in turn, they influence). When training high-capacity models, we run the risk of overfitting. Therefore, we will need to rigorously introduce the concepts of overfitting, underfitting, and model selection. To help you deal with these issues, we will introduce regularization techniques such as weight decay and dropout. We will also discuss issues related to numerical stability and parameter initialization, which are key factors for successfully training deep networks. Throughout, we aim to help you master not only the concepts but also the practice of using deep networks. At the end of this chapter, we apply what we have introduced so far to a real-world case: house price prediction. We will set aside issues related to computational performance, scalability, and model efficiency for later chapters.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 395,
+          "completion_tokens": 215,
+          "total_tokens": 610,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 8.13228490005713,
+        "from_cache": true,
+        "content_prefix": "In this chapter, we will introduce your first true *deep* network. The simplest deep networks are called multi-layer perceptrons, and they consist of multiple l"
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 0.9724137931034482,
+        "src_char_count": 1109,
+        "src_token_count": 177,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.02908770383428823
+      },
+      "bt_bge_cosine": {
+        "score": 0.9911074232930124,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0009238999336957932
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8560464476572174,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0008281000191345811
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 686,
+            "completion_tokens": 39,
+            "total_tokens": 725,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.103652799967676,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 686,
+            "completion_tokens": 39,
+            "total_tokens": 725,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 3.0548858999973163,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    },
+    {
+      "id": "real_numeric_s1",
+      "source": "workdb_diagnostic",
+      "expected": "diagnostic_real",
+      "note": "real numeric/math candidate",
+      "src": "Fortunately, [**the training loop for MLPs\nis exactly the same as for softmax regression.**]\nLeveraging the `d2l` package again,\nwe call the `train_ch3` function\n(see :numref:`sec_softmax_scratch`),\nsetting the number of epochs to 10\nand the learning rate to 0.1.",
+      "mt": "May mắn thay, [**vòng lặp huấn luyện cho MLPs hoàn toàn giống như cho hồi quy softmax.**] Tận dụng lại gói `d2l`, chúng ta gọi hàm `train_ch3` (xem :numref:`sec_softmax_scratch`), đặt số epoch là 10 và tốc độ học là 0.1.",
+      "bt": {
+        "text": "Fortunately, [**the training loop for MLPs is exactly the same as for softmax regression.**] Leveraging the `d2l` package, we call the `train_ch3` function (see :numref:`sec_softmax_scratch`), setting the number of epochs to 10 and the learning rate to 0.1.",
+        "finish_reason": "stop",
+        "model_echo": "google/gemma-4-12b",
+        "usage": {
+          "prompt_tokens": 170,
+          "completion_tokens": 71,
+          "total_tokens": 241,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "latency_sec": 2.850312300026417,
+        "from_cache": true,
+        "content_prefix": "Fortunately, [**the training loop for MLPs is exactly the same as for softmax regression.**] Leveraging the `d2l` package, we call the `train_ch3` function (see"
+      },
+      "hygiene": {
+        "flags": [],
+        "vietnamese_diacritic_chars": 0,
+        "length_ratio_bt_over_vi": 1.1681818181818182,
+        "src_char_count": 263,
+        "src_token_count": 39,
+        "preamble_detected": false,
+        "input_source_copy_ratio": 0.3188405797101449
+      },
+      "bt_bge_cosine": {
+        "score": 0.9983656541963258,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.0014924999559298158
+      },
+      "direct_bge_en_vi": {
+        "score": 0.8897683743071352,
+        "model": "text-embedding-bge-m3",
+        "left_from_cache": true,
+        "right_from_cache": true,
+        "latency_sec": 0.001306000049225986
+      },
+      "bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content, facts, and parameters.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content, facts, and parameters.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 393,
+            "completion_tokens": 35,
+            "total_tokens": 428,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.51204850000795,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with differences being purely related to line breaks and formatting.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with differences being purely related to line breaks and formatting.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 393,
+            "completion_tokens": 41,
+            "total_tokens": 434,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.4406590999569744,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "short_block": false,
+      "too_long_for_llm": false
+    }
+  ],
+  "lmstudio_models": {
+    "data": [
+      {
+        "id": "google/gemma-4-12b",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "zai-org/glm-4.7-flash",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "text-embedding-multilingual-e5-large-instruct",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "text-embedding-paraphrase-multilingual-mpnet-base-v2.gguf",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "text-embedding-bge-m3",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "text-embedding-labse",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "openai/gpt-oss-20b",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "google/gemma-4-31b-qat",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "google/gemma-4-31b",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "qwen/qwen3.6-27b",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "google/gemma-4-26b-a4b",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "allenai/olmocr-2-7b",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "qwen/qwen3.5-9b",
+        "object": "model",
+        "owned_by": "organization_owner"
+      },
+      {
+        "id": "text-embedding-nomic-embed-text-v1.5",
+        "object": "model",
+        "owned_by": "organization_owner"
+      }
+    ],
+    "object": "list"
+  },
+  "pairwise": {
+    "bt_bge_cosine": {
+      "ok": 17,
+      "total": 20,
+      "accuracy": 0.85,
+      "failures": [
+        {
+          "good": "good_regularization",
+          "bad": "bad_regularization",
+          "good_score": 1.0000000000000002,
+          "bad_score": 1.0000000000000002,
+          "ok": false,
+          "margin": 0.0
+        },
+        {
+          "good": "good_untranslated",
+          "bad": "bad_untranslated",
+          "good_score": 0.9613683046765066,
+          "bad_score": 1.0000000000000002,
+          "ok": false,
+          "margin": -0.03863169532349364
+        },
+        {
+          "good": "good_dataset_split",
+          "bad": "bad_dataset_split",
+          "good_score": 0.9742136665621475,
+          "bad_score": 0.9743360988883073,
+          "ok": false,
+          "margin": -0.00012243232615982702
+        }
+      ]
+    },
+    "bt_llm_score": {
+      "ok": 17,
+      "total": 20,
+      "accuracy": 0.85,
+      "failures": [
+        {
+          "good": "good_regularization",
+          "bad": "bad_regularization",
+          "good_score": 100.0,
+          "bad_score": 100.0,
+          "ok": false,
+          "margin": 0.0
+        },
+        {
+          "good": "good_untranslated",
+          "bad": "bad_untranslated",
+          "good_score": 100.0,
+          "bad_score": 100.0,
+          "ok": false,
+          "margin": 0.0
+        },
+        {
+          "good": "good_convolution_kernel",
+          "bad": "bad_convolution_kernel",
+          "good_score": 100.0,
+          "bad_score": 100.0,
+          "ok": false,
+          "margin": 0.0
+        }
+      ]
+    },
+    "direct_bge_en_vi": {
+      "ok": 14,
+      "total": 20,
+      "accuracy": 0.7,
+      "failures": [
+        {
+          "good": "good_regularization",
+          "bad": "bad_regularization",
+          "good_score": 0.7886070902627892,
+          "bad_score": 0.8075663376794029,
+          "ok": false,
+          "margin": -0.0189592474166137
+        },
+        {
+          "good": "good_untranslated",
+          "bad": "bad_untranslated",
+          "good_score": 0.6433083628915348,
+          "bad_score": 1.0000000000000002,
+          "ok": false,
+          "margin": -0.3566916371084654
+        },
+        {
+          "good": "good_dataset_split",
+          "bad": "bad_dataset_split",
+          "good_score": 0.8092620429210263,
+          "bad_score": 0.8159009277145597,
+          "ok": false,
+          "margin": -0.006638884793533362
+        },
+        {
+          "good": "good_variance_std",
+          "bad": "bad_variance_std",
+          "good_score": 0.6818810318492368,
+          "bad_score": 0.6974719348382015,
+          "ok": false,
+          "margin": -0.015590902988964706
+        },
+        {
+          "good": "good_underfit_overfit",
+          "bad": "bad_underfit_overfit",
+          "good_score": 0.7865138774342542,
+          "bad_score": 0.7869893116987797,
+          "ok": false,
+          "margin": -0.0004754342645255649
+        },
+        {
+          "good": "good_eigenvalue",
+          "bad": "bad_eigenvalue",
+          "good_score": 0.6115547499540026,
+          "bad_score": 0.6143472948974825,
+          "ok": false,
+          "margin": -0.0027925449434799132
+        }
+      ]
+    },
+    "pairs": [
+      {
+        "good": "good_regularization",
+        "bad": "bad_regularization",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 1.0000000000000002,
+            "bad_score": 1.0000000000000002,
+            "ok": false,
+            "margin": 0.0
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 100.0,
+            "ok": false,
+            "margin": 0.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.7886070902627892,
+            "bad_score": 0.8075663376794029,
+            "ok": false,
+            "margin": -0.0189592474166137
+          }
+        }
+      },
+      {
+        "good": "good_accuracy_direction",
+        "bad": "bad_accuracy_direction",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9346839754953402,
+            "bad_score": 0.8297135497471643,
+            "ok": true,
+            "margin": 0.10497042574817594
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.8679706198056171,
+            "bad_score": 0.7612651240900244,
+            "ok": true,
+            "margin": 0.10670549571559262
+          }
+        }
+      },
+      {
+        "good": "good_dropout_omission",
+        "bad": "bad_dropout_omission",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.980306448025704,
+            "bad_score": 0.7090473380121897,
+            "ok": true,
+            "margin": 0.2712591100135143
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 37.5,
+            "ok": true,
+            "margin": 62.5
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.9007989683152913,
+            "bad_score": 0.7198882690225791,
+            "ok": true,
+            "margin": 0.1809106992927122
+          }
+        }
+      },
+      {
+        "good": "good_hallucination",
+        "bad": "bad_hallucination",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9858056355595329,
+            "bad_score": 0.9003429030091284,
+            "ok": true,
+            "margin": 0.08546273255040449
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 50.0,
+            "ok": true,
+            "margin": 50.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.801682857749301,
+            "bad_score": 0.7569952279906154,
+            "ok": true,
+            "margin": 0.044687629758685676
+          }
+        }
+      },
+      {
+        "good": "good_untranslated",
+        "bad": "bad_untranslated",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9613683046765066,
+            "bad_score": 1.0000000000000002,
+            "ok": false,
+            "margin": -0.03863169532349364
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 100.0,
+            "ok": false,
+            "margin": 0.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.6433083628915348,
+            "bad_score": 1.0000000000000002,
+            "ok": false,
+            "margin": -0.3566916371084654
+          }
+        }
+      },
+      {
+        "good": "good_subject_object",
+        "bad": "bad_subject_object",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9999999999999998,
+            "bad_score": 0.9916171330217143,
+            "ok": true,
+            "margin": 0.008382866978285497
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.8664405103285983,
+            "bad_score": 0.8663893095989734,
+            "ok": true,
+            "margin": 5.120072962483402e-05
+          }
+        }
+      },
+      {
+        "good": "good_negation_elementwise",
+        "bad": "bad_negation_elementwise",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9770412392626487,
+            "bad_score": 0.8390715112367315,
+            "ok": true,
+            "margin": 0.13796972802591723
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.6546509815520785,
+            "bad_score": 0.5397705442828574,
+            "ok": true,
+            "margin": 0.11488043726922104
+          }
+        }
+      },
+      {
+        "good": "good_loss_direction",
+        "bad": "bad_loss_direction",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.8539752631371661,
+            "bad_score": 0.8185067811905862,
+            "ok": true,
+            "margin": 0.03546848194657992
+          },
+          "bt_llm_score": {
+            "good_score": 75.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 75.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.7944880700579651,
+            "bad_score": 0.7646578360839388,
+            "ok": true,
+            "margin": 0.029830233974026288
+          }
+        }
+      },
+      {
+        "good": "good_dataset_split",
+        "bad": "bad_dataset_split",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9742136665621475,
+            "bad_score": 0.9743360988883073,
+            "ok": false,
+            "margin": -0.00012243232615982702
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.8092620429210263,
+            "bad_score": 0.8159009277145597,
+            "ok": false,
+            "margin": -0.006638884793533362
+          }
+        }
+      },
+      {
+        "good": "good_learning_rate_number",
+        "bad": "bad_learning_rate_number",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9810109447292453,
+            "bad_score": 0.906205828417441,
+            "ok": true,
+            "margin": 0.07480511631180431
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.9145933618329111,
+            "bad_score": 0.8658482602793889,
+            "ok": true,
+            "margin": 0.048745101553522185
+          }
+        }
+      },
+      {
+        "good": "good_variance_std",
+        "bad": "bad_variance_std",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9644230484031808,
+            "bad_score": 0.9483027793430605,
+            "ok": true,
+            "margin": 0.016120269060120318
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.6818810318492368,
+            "bad_score": 0.6974719348382015,
+            "ok": false,
+            "margin": -0.015590902988964706
+          }
+        }
+      },
+      {
+        "good": "good_underfit_overfit",
+        "bad": "bad_underfit_overfit",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9796718440059538,
+            "bad_score": 0.9104068888477923,
+            "ok": true,
+            "margin": 0.06926495515816145
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.7865138774342542,
+            "bad_score": 0.7869893116987797,
+            "ok": false,
+            "margin": -0.0004754342645255649
+          }
+        }
+      },
+      {
+        "good": "good_softmax_sum",
+        "bad": "bad_softmax_sum",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9896174138914172,
+            "bad_score": 0.8820742460091847,
+            "ok": true,
+            "margin": 0.1075431678822325
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.8961489366782349,
+            "bad_score": 0.8203695001673299,
+            "ok": true,
+            "margin": 0.07577943651090502
+          }
+        }
+      },
+      {
+        "good": "good_eigenvalue",
+        "bad": "bad_eigenvalue",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.87124567698163,
+            "bad_score": 0.6305996379433314,
+            "ok": true,
+            "margin": 0.24064603903829862
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.6115547499540026,
+            "bad_score": 0.6143472948974825,
+            "ok": false,
+            "margin": -0.0027925449434799132
+          }
+        }
+      },
+      {
+        "good": "good_convolution_kernel",
+        "bad": "bad_convolution_kernel",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9944528686677049,
+            "bad_score": 0.9245070103493539,
+            "ok": true,
+            "margin": 0.06994585831835098
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 100.0,
+            "ok": false,
+            "margin": 0.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.7847048162722701,
+            "bad_score": 0.6762705308418435,
+            "ok": true,
+            "margin": 0.10843428543042655
+          }
+        }
+      },
+      {
+        "good": "good_batch_epoch",
+        "bad": "bad_batch_epoch",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.987658645290167,
+            "bad_score": 0.9088254447586651,
+            "ok": true,
+            "margin": 0.07883320053150189
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 62.5,
+            "ok": true,
+            "margin": 37.5
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.9452896473603226,
+            "bad_score": 0.8757816730289637,
+            "ok": true,
+            "margin": 0.06950797433135891
+          }
+        }
+      },
+      {
+        "good": "good_dimensionality_reduction",
+        "bad": "bad_dimensionality_reduction",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.8148296355203769,
+            "bad_score": 0.6638539280198656,
+            "ok": true,
+            "margin": 0.15097570750051126
+          },
+          "bt_llm_score": {
+            "good_score": 75.0,
+            "bad_score": 12.5,
+            "ok": true,
+            "margin": 62.5
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.789387356833327,
+            "bad_score": 0.6635011554641852,
+            "ok": true,
+            "margin": 0.12588620136914175
+          }
+        }
+      },
+      {
+        "good": "good_probability_range",
+        "bad": "bad_probability_range",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 1.0,
+            "bad_score": 0.8406008033390328,
+            "ok": true,
+            "margin": 0.15939919666096725
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.9139474451729639,
+            "bad_score": 0.7918691163112881,
+            "ok": true,
+            "margin": 0.1220783288616758
+          }
+        }
+      },
+      {
+        "good": "good_bias_weight",
+        "bad": "bad_bias_weight",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.9297688558859588,
+            "bad_score": 0.7253842279156638,
+            "ok": true,
+            "margin": 0.204384627970295
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 12.5,
+            "ok": true,
+            "margin": 87.5
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.7414530976553538,
+            "bad_score": 0.544770480778701,
+            "ok": true,
+            "margin": 0.19668261687665278
+          }
+        }
+      },
+      {
+        "good": "good_distribution",
+        "bad": "bad_distribution",
+        "components": {
+          "bt_bge_cosine": {
+            "good_score": 0.973684134945198,
+            "bad_score": 0.7809005309357033,
+            "ok": true,
+            "margin": 0.19278360400949468
+          },
+          "bt_llm_score": {
+            "good_score": 100.0,
+            "bad_score": 0.0,
+            "ok": true,
+            "margin": 100.0
+          },
+          "direct_bge_en_vi": {
+            "good_score": 0.8367871087121161,
+            "bad_score": 0.743985388039055,
+            "ok": true,
+            "margin": 0.09280172067306114
+          }
+        }
+      }
+    ]
+  },
+  "order_sensitivity": {
+    "evaluated_cases": 43,
+    "mean_abs": 5.813953488372093,
+    "max_abs": 75.0,
+    "full_run_policy": "two_direction",
+    "threshold": {
+      "mean_abs_max": 3,
+      "max_abs_max": 10
+    },
+    "top_deltas": [
+      {
+        "id": "bad_batch_epoch",
+        "ab": 25.0,
+        "ba": 100.0,
+        "abs_delta": 75.0
+      },
+      {
+        "id": "good_loss_direction",
+        "ab": 50.0,
+        "ba": 100.0,
+        "abs_delta": 50.0
+      },
+      {
+        "id": "good_dimensionality_reduction",
+        "ab": 50.0,
+        "ba": 100.0,
+        "abs_delta": 50.0
+      },
+      {
+        "id": "bad_dropout_omission",
+        "ab": 50.0,
+        "ba": 25.0,
+        "abs_delta": 25.0
+      },
+      {
+        "id": "bad_dimensionality_reduction",
+        "ab": 0.0,
+        "ba": 25.0,
+        "abs_delta": 25.0
+      },
+      {
+        "id": "bad_bias_weight",
+        "ab": 0.0,
+        "ba": 25.0,
+        "abs_delta": 25.0
+      },
+      {
+        "id": "good_gradient",
+        "ab": 100.0,
+        "ba": 100.0,
+        "abs_delta": 0.0
+      },
+      {
+        "id": "good_regularization",
+        "ab": 100.0,
+        "ba": 100.0,
+        "abs_delta": 0.0
+      },
+      {
+        "id": "bad_regularization",
+        "ab": 100.0,
+        "ba": 100.0,
+        "abs_delta": 0.0
+      },
+      {
+        "id": "good_accuracy_direction",
+        "ab": 100.0,
+        "ba": 100.0,
+        "abs_delta": 0.0
+      }
+    ]
+  },
+  "hygiene_summary": {
+    "flag_counts": {
+      "input_matches_source": 1
+    },
+    "cases_with_flags": [
+      {
+        "id": "bad_untranslated",
+        "flags": [
+          "input_matches_source"
+        ]
+      }
+    ]
+  },
+  "score_band_distribution": {
+    "0": 12,
+    "1_39": 3,
+    "40_69": 2,
+    "70_89": 2,
+    "90_100": 27
+  },
+  "preamble_summary": {
+    "count": 0,
+    "cases": []
+  },
+  "runtime_summary": {
+    "bt_calls": 46,
+    "judge_calls": 92,
+    "bt_latency_sum_sec": 81.79205289972015,
+    "judge_latency_sum_sec": 820.8293691006256,
+    "bt_latency_median_sec": 0.9642070999834687,
+    "judge_latency_median_sec": 3.843172050022986,
+    "bt_tokens_total": 7343,
+    "judge_tokens_total": 31446,
+    "bt_finish_reason_counts": {
+      "stop": 46
+    }
+  },
+  "cache": {
+    "path": "data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_phase1_cache.sqlite3",
+    "entries": 246,
+    "hits": 322,
+    "misses": 0,
+    "writes": 0
+  },
+  "elapsed_sec": 1.072226999909617,
+  "db_sha256_after": "92229381172fe30c2a10e2c467232ab992b7ea8ecb40415a1652ab7de8c13f42"
+}

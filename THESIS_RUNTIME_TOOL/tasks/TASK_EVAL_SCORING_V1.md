@@ -257,3 +257,37 @@ PASSAGE B:
 ### 2c-fix — khoa nguong theo review CodeX vong 3 (2026-07-04)
 
 5 diem CodeX — GHI NHAN CA 5, da va TAN DONG trong §2c: (1) short_block nguong co dinh <40 char OR <8 token; (2) too_long_for_llm = est P2 prompt > 7000 tok, chi loai khoi llm, cos van cham, count rieng; (3) tieu chi 1-chieu/2-chieu khoa truoc: mean_abs<=3 VA max_abs<=10 (tren case khong-expected_blind); (4) cache key them SHA256 prompt text that + input hash, chong sua-quen-bump-version; (5) P1 log finish_reason, truncated -> `bt_truncated` = loi dung cu, loai co ghi danh. Chu de chung: MOI nguong chua khoa = cua sau tuning — dong het truoc khi cham data. Spec Phase-1 probe DU SACH DE CHAY.
+
+<!-- S2D_PROBE_VERIFIED -->
+### 2d. Phase-1 probe VERIFIED (Claude doc lap tren file) + GO FULL RUN (2026-07-04)
+
+**Verify doc lap (khong tin bao cao):** doc het `pipeline/scripts/probe_sf_bt.py` (854 dong) + recount tu `sf_bt_phase1_probe.json`.
+- Prompts khop nguyen van §2c, sha256 pinned trong report (bt `0fb3e38f...`, judge `8532d13a...`); profile temp=0/top_p=1/seed=20260612/repeat_penalty=1.0/reasoning=none dung khoa.
+- workdb mo `mode=ro`, hash before==after `92229381...` — khong dong vao DB.
+- Cache key du 5 thanh phan khoa (§2c R4): model + decoding params + prompt_version + SHA256(prompt text) + input (messages). Rerun tu cache ~1s da chung minh resume.
+- Cac nguong khoa deu hien dien dung: short_block <40c/<8tok, too_long est>7000tok (chi loai llm), order-sensitivity LOAI case expected_blind truoc khi tinh (dung spec).
+
+**Recount theo NHAN loi (diem nay bao cao CodeX chua tach — con so gop 17/20 lam yeu probe di):**
+| component | semantic/negation/numeric/omission/addition (phai bat) | bad_term (mu-theo-thiet-ke) | untranslated (viec cua hygiene) |
+|---|---|---|---|
+| SF-BT-cos | **11/12** (miss duy nhat: dataset_split word-swap, margin -0.0001 ~ tie) | 6/7 (wrong term thuong SONG SOT round-trip nen van bat duoc; chi regularization bi Gemma BT "sua ho") | 0/1 |
+| SF-BT-llm | **12/12** (bat ca dataset_split 0-vs-100 ma cos truot) | 5/7 | 0/1 |
+
+- **Complementarity DO DUOC bang so:** dataset_split (hoan doi validation/test — tui-tu giong het) cos mu / llm bat; convolution_kernel llm mu / cos bat. Day la bang chung thuc nghiem cho quyet dinh §2b GIU 2 COT DONG-CHINH, KHONG gop composite (gop trung binh se triet tieu tin hieu bo sung nhau). Quyet dinh composite post-probe: **KHONG composite; SF-BT-rank-composite tiep tuc nam tren ke, chi lay ra neu nguoi doc yeu cau 1 con so.**
+- expected_blind verified: bad_regularization 100/100 o CA 2 cot (mu thuat ngu dung phan cong — TC/TA lo truc nay); 3 case that tu workdb (vector S0/S1, regularization S1) cos 0.98-0.99, llm 100, hygiene 0 false-flag tren block markdown/math that.
+
+**Order-sensitivity: mean_abs 5.81 / max_abs 75 (bad_batch_epoch ab=25 ba=100) — VUOT nguong khoa (3/10) => FULL RUN 2 CHIEU judge. Khong co quyen ban lai (tieu chi khoa truoc §2c R2).** Trung binh 2 chieu van tach duoc case loi (62.5 vs 100).
+
+**Hygiene patch cua CodeX — CHAP NHAN:** `input_matches_source` = SequenceMatcher(src, vi) >= 0.95 & len>=40, thuan co hoc. Ly do can: BT cua EN-nguyen-si tra ve chinh EN => cos=1.0/llm=100 gia tao, DIEM khong the bat untranslated, PHAI la flag. Xu ly full run KHOA TRUOC: flag mo ta + aggregate bao **with/without** (nhu short_block), KHONG loai — vi block code/cong-thuc giong nhau hop phap se fire flag nay.
+
+**Cac quan sat con lai:** preamble 0/46; finish_reason 46/46 stop; bands khong suy bien (59% o 90_100, co mat 5 band; diem judge luong tu hoa dung 5 moc rubric — by design, du dung cho phan phoi + delta). **1 bug tiem an PHAI sua trong script full run:** `score_delta_abs = abs(ab - ba)` crash neu 1 chieu validation-fail tra score=None (probe khong trigger: 92/92 parse OK) — full run phai guard None.
+
+**GO FULL RUN — `score_sf_bt.py` (CodeX):**
+1. Scope: **1,646 block = 823 x 2 arm, TRUNG scope SF-QE** (scoring-scope == production-scope). Prompts + profile giu nguyen sha256 nhu probe.
+2. 2 chieu judge (~3,292 call) + 1,646 BT + embeddings; tat ca local $0. Thu tu goi `ab, ba` lien tiep cung block de an KV-cache LM Studio (probe: ab ~15s, ba ~3s).
+3. Report schema nhu SF-QE §3c: phan phoi per chapter x arm cho CA 2 cot (cos, llm) + paired delta S1-S0 per block + %S1>S0 + bottom-10 moi cot lam PJ-audit input; aggregate with/without `short_block` VA with/without `input_matches_source`; count `too_long_for_llm`, `bt_truncated`, bge-truncated, flags judge (mo ta).
+4. Van hanh: per-case progress print + partial JSON write + cache sqlite resume (nhu probe). **ETA THAT tu 5 block that: BT ~3-8s + judge ~15+3s => ~8-14h, chay qua dem.** Khong duoc uoc ETA tu cau ngan (bai hoc SF-QE).
+5. Guard bug None o (tren); moi validation_error/json_parse_fail => retry 1 lan roi ghi nhan loi dung cu, KHONG cache ket qua loi.
+6. Xong: STOP, khong commit. Sau do moi den GPT-mini 100-block audit (cost-gate rieng) + luat ha cap §2b.
+
+Artifacts commit kem muc nay: `probe_sf_bt.py`, `sf_bt_phase1_probe.json`. Cache/debug/console de untracked (regenerable).
