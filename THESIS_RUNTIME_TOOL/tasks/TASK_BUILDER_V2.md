@@ -2711,3 +2711,19 @@ STOP-B-R2 bao cao: (1) population/regularization/gradient; (2) diff notebook ful
 **Phan quyet ky thuat:** DUNG vong lap iterate tai day — moi round tiep theo nham lam population doi mau la answer-chasing gold (vi pham ky luat do luong). notebook_reelected KHONG promote (trong flip co layer nguoc gold; ap dung that phai qua human watchlist review theo §36.4). Artifact + log giu nguyen lam bang chung thesis.
 
 **Cau hoi chot cho user (criterion §36.5-3 dat TRUOC ket qua yeu cau population->tổng thể):** ket qua do duoc = criterion goc KHONG dat 2/2 canary bang may. De xuat cua Claude: chap nhan validation o muc "co che lam dung va an toan viec no co the lam" — (1) collision-type: sua bang may co log (regularization, canary chinh vi khong co luoi nao khac sua duoc no); (2) polysemy-type: khong sua bay, khong flip sai, day len watchlist kem bang chung song ngu (population — cai nay la HANH VI DUNG cua he thong khi thieu bang chung); (3) an toan: 0 out-of-watchlist ca 2 vong, moi flip deu co evidence log. Neu user dong y: ghi ro trong closing la criterion duoc DIEU CHINH SAU ket qua + ly do; population thanh finding "gioi han re-election $0 local" trong thesis. Neu user khong dong y: ③ chua dong, ban phuong an khac (doi voter model = mat $0 + answer-chasing; hoac de mo).
+<!-- S36_6_CLOSE -->
+### 36.6-CLOSE — user chot phuong an A (2026-07-04)
+
+Validation §36 duoc chap nhan o muc "co che lam dung va an toan viec no co the lam", voi criterion DIEU CHINH SAU KET QUA (ghi ro de khong tu lua): criterion goc doi 2/2 canary doi bang may; thuc do: collision-type sua bang may co log (regularization -> điều chuẩn), polysemy-type khong du bang chung thi giu ghe + day watchlist (population: Gemma vote quần thể 3/4 TRONG ngu canh thong ke, n=4 cau) — hanh vi dung thiet ke, khong answer-chase them. Trang thai trien khai: §36 la PROBE STANDALONE — chua cam vao pipeline san xuat; notebook_reelected KHONG promote; moi flip chi duoc ap sau human review (§36.4). Viec cam vao flow mot-nut + man watchlist = giai doan sau, ngoai file nay.
+
+<!-- S38_CLOSING -->
+## 38 — CLOSING: BUILDER-V2 DONG SO (2026-07-04). File nay tu day READ-ONLY (chi sua khi phat hien loi ghi chep).
+
+§37 ba dieu kien — ket cuc:
+① Cascade + overlay: DONE. 4-tier localize (bge-m3 / code / Gemma local $0 / GPT fallback) chay tron 2 chuong x 2 arm (MLP 2,487 + prelim 1,848 occ/arm), full-sweep verify 0 mismatch; UI overlay materialized voi verdict F2-R, experiment binding F1, term focus F3.
+② Cap S0/S1 2 chuong + cham: DONE. Headline khoa (B/D v3): MLP B 0.7580->0.7657, D 0.7590->0.8253; prelim B 0.6660->0.6036 (artifact 1-term vectơ-vs-vector, 16% mau so; ex-vector +0.048 — EVAL §9), D 0.8000->0.8526. Cap per-occurrence chinh danh (prelim, pre-registered): TC-Occ 0.9148->0.9467, TA-Occ 0.7911->0.8750; P1 P2 PASS, P3 TA-cell = ruler divergence da dieu tra (EVAL §8c). Hieu ung nhat quan TAI LAP tren chuong held-out.
+③ §36 re-election: DONE theo phuong an A (36.6-CLOSE) — collision-type sua duoc bang may, polysemy-type an toan + surface, 0 flip ngoai watchlist ca 2 vong, 5 flip/63 nghi van cho human review.
+
+Bai hoc loi (da co memory/record rieng): first-write-wins can vong bau lai co gate; do luong nam ngoai model; gold = style guide khong phai chan ly (vectơ); metric phai khai bao thuoc do (§9); moi lop sua chi an toan khi ledger/evidence-grounded; probe truoc — promote sau — human review cuoi.
+
+Viec MO (ngoai file nay): TASK_EVAL_SCORING_V1 (SF-BT, SF-QE CometKiwi [user can HF login], PJ, agreement); §36.4 watchlist UI + cam re-election vao flow; style-guide adapter (EVAL §5d/§9); scale-up full-book (tu dien xuyen chuong); nits UI (sidebar 1608, 139 dup marks, chip label).
