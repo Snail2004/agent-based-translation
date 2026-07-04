@@ -156,3 +156,21 @@ Cross-chapter replication now on record: TC-Occ +0.0319 (prelim, official) vs +0
 2. Report JSON: pin unbabel-comet version + checkpoint sha (Pitfalls-of-COMET); per chapter x arm: mean/median/p25/p75/min; PAIRED delta per block S1-S0: mean, median, %block S1>S0, %block |delta|<0.01; bottom-10 block moi arm (block_id + score) de audit; so block bi TRUNCATE boi gioi han 512 token XLM-R (log, khong sua text); markdown giu nguyen as-is (doi xung 2 arm — ghi quyet dinh nay vao report).
 3. KHONG ghi DB, khong sua text, khong interpretation. STOP sau run — Claude doc report, tu recount vai so, viet readout chinh thuc vao file nay.
 Du bao truoc (ghi de doi chieu, khong phai tieu chi cung): ky vong delta S1-S0 ~ 0 hoac duong nhe (memory pack khong duoc lam tut QE; neu S1 < S0 ro ret o duoi block-level -> dieu tra truoc khi ket luan).
+<!-- S3C_SFQE_OFFICIAL -->
+### 3c. SF-QE OFFICIAL READOUT (Claude verified & recounted, 2026-07-04)
+
+**Run:** wmt22-cometkiwi-da CPU (py3.11 — numpy<2 nen 3.13 khong cai duoc; ops note), unbabel-comet 2.2.7, checkpoint sha256 4f357aa38b0737dc..., batch 8, 1,646/1,646 segment, 1.25 items/s, ~22 phut. Workdb/frozen hash bat bien; mode=ro; ORDER BY deterministic. Recount doc lap khop 100% moi con so.
+
+| Paired delta (S1-S0, per block) | Gia tri |
+|---|---|
+| Overall mean (n=823) | **+0.00283** |
+| Median | 0.0000 |
+| MLP mean / prelim mean | +0.00065 / +0.00581 |
+| % S1>S0 strict / % S0>S1 strict | 40.10% / 39.98% (doi xung) |
+| % \|delta\| < 0.01 | 73.88% |
+
+**Ket luan doi chieu du bao S3b (dat truoc):** PASS — phan phoi hai arm GAN NHU TRUNG NHAU, mean duong nhe. Bang chung SF-QE: **bom tu dien vao prompt KHONG lam tut chat luong cau theo QE**; dang chu y prelim (+0.0058) chinh la chuong S1 vang loi tu dien nang nhat (ke ca vecto) ma QE khong thay hai — nhat quan voi S9: bat dong quy uoc khong phai suy giam chat luong.
+
+**Caveats giu nguyen ky luat:** zero-shot vi -> convergent signal, khong bao gio la judge duy nhat; 38/1,646 block vuot 512 token bi cat (da log; KHONG trung voi nhom S1-thua-dam); diem segment-level nhieu — bottom-10 va cac block delta am dam (kaggle_house_price_b042 -0.34, environment_b085 -0.30, autograd_b035 -0.21, deu KHONG truncated) la INPUT AUDIT cho PJ, khong phai phan quyet.
+
+**Trang thai bo cham: 5/7 thang xong** (TC, TA, TC-Occ, TA-Occ, SF-QE). Con: SF-BT ($0 local — ke tiep), PJ (paid, cost-gate), roi agreement analysis + SG.
