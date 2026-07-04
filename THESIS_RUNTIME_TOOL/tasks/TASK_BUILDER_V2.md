@@ -2671,3 +2671,19 @@ Verify doc lap: recount signature §36.2 voi co §32 tinh SONG qua notebook_entr
 - Code: khong hardcode term (canary la CLI param --expect-watchlist); zero_api=true; frozen DB ro, hash nguyen. 4+1+8 test pass (Claude re-run).
 
 GO STOP-B: implement + chay election mode (back-translation blind -> tie -> context vote, 3 gates, log day du) tren MLP roi prelim, dung §36.6 Buoc 2+3. STOP sau khi co ket qua + diff notebook; khong commit.
+<!-- S36_6_STOP_B_R1 -->
+### 36.6-STOP-B ROUND-1 — mechanism CHAY DUOC, ket qua KHONG PASS validation; chan doan 3 loi co che (Claude verified, 2026-07-04)
+
+**Verify doc lap:** diff toan notebook ca 2 bo: 0 flip ngoai watchlist (dung gate). Flip counts khop bao cao (MLP 8, prelim 7). Frozen DB 64D989 nguyen. 13 test pass (re-run). $0, khong OpenAI.
+
+**Ket qua canary:** regularization -> "điều chuẩn" PASS (context vote; dang chu y: trong 24 phieu chi 2 phieu match candidate, ca 2 = điều chuẩn, va Gemma KHONG BAO GIO bo phieu "chuẩn hóa" trong ngu canh regularization — tin hieu dung huong nhung mong). population FAIL — giu "quần thể".
+
+**Chan doan (tu log, tung ca mot):** population fail + cac flip rac (row->rows, class->class, feature->biến đặc trưng) deu quy ve 3 loi CO CHE, khong phai loi thiet ke §36.3:
+1. **ROUTING lech design:** implementation cho MOI entry qua back-translation (a) truoc, chi tie moi sang (b). §36.3(b) nguyen van giao polysemy-type cho context vote (population la vi du duoc nêu ten). Hau qua do duoc: 9 entry MLP + 6 prelim co reason=audit_polysemy bi QUYET dinh boi cong cu mu ngu canh — dung cong cu sai cho dung loai loi. population: "quần thể"->"population" match (nghia sinh hoc) -> incumbent thang, context vote khong bao gio chay.
+2. **Match rule qua long (containment):** feature: "biến đặc trưng"->EN "feature variable" duoc tinh matched_source vi CHUA chuoi "feature" -> candidate te nhat thang. Phai exact casefold/lemma, cam containment.
+3. **Identity-candidate bias:** candidate giu-nguyen-tieng-Anh back-translate ra chinh no (class->class, rows->rows) -> auto-match, auto-thang (a); trong khi candidate VI da nghia thua vi Gemma mu ngu canh dich sang nghia khac (hàng->goods, lớp->layer). (a) thien vi he thong cho source-echo tren term polysemy.
+Phu: 2 flip context-vote thang bang 1 phieu match duy nhat (support, pattern) — bau bang 1 tieng noi.
+
+**Flip review (liet ke du 15, doi chieu gold khi co):** DUONG: training ''->huấn luyện (dien cho trong — gia tri thuc), regularization (gold). RUI RO/NGUOC GOLD: layer tầng->lớp (gold tầng; 30/30 phieu Gemma — prior model nguoc style guide, dung lop §9 convention, khong phai loi co che), feature (bug #2), row/class (bug #3), support/pattern (1-phieu). CHURN style: batch/error/estimate/proportion/independence/conditional-independence/product-rule.
+
+**Phan quyet:** dong y CodeX — round-1 la KET QUA PROBE hop le (co che + gate + log van hanh dung), notebook_reelected KHONG promote. Validation §36 CHUA dat. Fix đề xuat (cho user chot truoc khi round-2): F1 polysemy->route thang (b); F2 exact-match; F3 identity candidate khong duoc thang bang (a), chi duoc bau qua (b); F4 nguong toi thieu context-vote: challenger can >=2 phieu match VA > phieu cua incumbent, khong dat -> unresolved_tie giu incumbent (support/pattern het flip 1-phieu; regularization 2-0 van PASS). F1-F3 la sua ve dung design text + tien le §29 keep-source-gate; F4 la nguong moi (thua nhan: chon sau khi thay data — ghi ro trong record nay de khong tu lua).
