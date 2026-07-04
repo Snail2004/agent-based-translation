@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from pipeline.scripts.builder_v2_reelection import build_watchlist, estimate_calls
+from collections import Counter
+
+from pipeline.scripts.builder_v2_reelection import (
+    _english_matches_source,
+    _target_string_equals_source,
+    _winning_challenger,
+    build_watchlist,
+    estimate_calls,
+)
 
 
 def test_polysemy_with_competing_variant_enters_watchlist() -> None:
@@ -98,3 +106,23 @@ def test_call_estimate_counts_backtranslations_and_context_vote_cap() -> None:
         "context_vote_calls_cap": 34,
         "total_cap": 39,
     }
+
+
+def test_round2_english_match_is_exact_or_plural_only_without_containment() -> None:
+    assert _english_matches_source("populations", "population")
+    assert _english_matches_source("classes", "class")
+    assert not _english_matches_source("regularization term", "regularization")
+    assert not _english_matches_source("feature variable", "feature")
+
+
+def test_round2_source_string_candidate_cannot_win_backtranslation() -> None:
+    assert _target_string_equals_source("class", "class")
+    assert not _target_string_equals_source("rows", "row")
+    assert not _target_string_equals_source("lớp", "class")
+
+
+def test_round2_challenger_needs_two_votes_and_more_than_incumbent() -> None:
+    assert _winning_challenger(Counter({"điều chuẩn": 2, "chuẩn hóa": 1}), "chuẩn hóa") == "điều chuẩn"
+    assert _winning_challenger(Counter({"điều chuẩn": 1, "chuẩn hóa": 0}), "chuẩn hóa") == ""
+    assert _winning_challenger(Counter({"điều chuẩn": 2, "chuẩn hóa": 2}), "chuẩn hóa") == ""
+    assert _winning_challenger(Counter({"điều chuẩn": 2, "chỉnh quy": 2, "chuẩn hóa": 0}), "chuẩn hóa") == ""

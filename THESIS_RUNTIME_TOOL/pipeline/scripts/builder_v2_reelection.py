@@ -18,6 +18,7 @@ from pipeline.retrieval.context_builder import notebook_entries_to_term_rows
 
 WATCHLIST_VERSION = "builder_v2_reelection_watchlist_v1"
 ELECTION_VERSION = "builder_v2_reelection_election_v1"
+ELECTION_POLICY_VERSION = "round2_polysemy_context_exact_match_challenger_threshold_v1"
 DEFAULT_LMSTUDIO_ENDPOINT = "http://127.0.0.1:1234"
 DEFAULT_LMSTUDIO_MODEL = "google/gemma-4-12b"
 
@@ -278,6 +279,8 @@ def run_election(
     outside_watchlist_changed = sorted(entry_id for entry_id in changed_ids if entry_id not in watchlist_ids)
     summary = {
         "version": ELECTION_VERSION,
+        "policy_version": ELECTION_POLICY_VERSION,
+        "round2_threshold_note": "challenger_threshold_was_set_after_reviewing_round1_data",
         "status": "stop_b",
         "notebook_entries": len(entries),
         "watchlist_size": len(watchlist),
@@ -288,7 +291,15 @@ def run_election(
         "gate_counts": dict(Counter(str(item.get("gate_status") or "") for item in log_entries)),
         "lmstudio": client.stats(),
     }
-    return {"entries": updated_entries, "log": {"version": ELECTION_VERSION, "entries": log_entries}, "summary": summary}
+    return {
+        "entries": updated_entries,
+        "log": {
+            "version": ELECTION_VERSION,
+            "policy_version": ELECTION_POLICY_VERSION,
+            "entries": log_entries,
+        },
+        "summary": summary,
+    }
 
 
 def _elect_entry(
@@ -302,36 +313,49 @@ def _elect_entry(
     candidates = [str(candidate.get("text") or "").strip() for candidate in item.get("candidates") or []]
     candidates = _unique_nonempty(candidates)
     backtranslations: list[dict[str, Any]] = []
-    matched: list[str] = []
+    backtranslation_vote_counts: Counter[str] = Counter()
     errors: list[str] = []
-    for candidate in candidates:
-        response = _call_json_with_retry(
-            client,
-            _backtranslation_messages(candidate),
-            response_format=BACKTRANSLATION_SCHEMA,
-        )
-        english = str((response.get("parsed_json") or {}).get("english") or "").strip()
-        is_match = _english_matches_source(english, source_term)
-        if is_match:
-            matched.append(candidate)
-        if response.get("json_error"):
-            errors.append(str(response["json_error"]))
-        backtranslations.append(
-            {
-                "candidate": candidate,
-                "english": english,
-                "matched_source": is_match,
-                "json_error": response.get("json_error") or "",
-                "attempts": response.get("attempts") or 1,
-                "from_cache": bool(response.get("from_cache")),
-            }
-        )
-    if len(matched) == 1:
+    incumbent = str(item.get("canonical_target_vi") or "").strip()
+    is_polysemy = "audit_polysemy" in set(item.get("watchlist_reasons") or [])
+    if is_polysemy:
+        backtranslation_status = "backtranslation_bypassed_polysemy"
+    else:
+        for candidate in candidates:
+            response = _call_json_with_retry(
+                client,
+                _backtranslation_messages(candidate),
+                response_format=BACKTRANSLATION_SCHEMA,
+            )
+            english = str((response.get("parsed_json") or {}).get("english") or "").strip()
+            is_source_string = _target_string_equals_source(candidate, source_term)
+            is_match = _english_matches_source(english, source_term) and not is_source_string
+            if is_match:
+                backtranslation_vote_counts[candidate] += 1
+            if response.get("json_error"):
+                errors.append(str(response["json_error"]))
+            backtranslations.append(
+                {
+                    "candidate": candidate,
+                    "english": english,
+                    "matched_source": is_match,
+                    "blocked_source_string_candidate": bool(is_source_string),
+                    "json_error": response.get("json_error") or "",
+                    "attempts": response.get("attempts") or 1,
+                    "from_cache": bool(response.get("from_cache")),
+                }
+            )
+        backtranslation_status = "backtranslation_completed"
+    if _only_incumbent_has_votes(backtranslation_vote_counts, incumbent):
         return {
-            "status": "elected_backtranslation",
-            "winner": matched[0],
+            "status": "confirmed_backtranslation",
+            "winner": incumbent,
+            "policy_version": ELECTION_POLICY_VERSION,
+            "backtranslation_status": backtranslation_status,
             "backtranslations": backtranslations,
             "context_votes": [],
+            "vote_counts": dict(backtranslation_vote_counts),
+            "backtranslation_vote_counts": dict(backtranslation_vote_counts),
+            "context_vote_counts": {},
             "errors": errors,
         }
     context_result = _context_vote(
@@ -341,13 +365,19 @@ def _elect_entry(
         db_path=db_path,
         client=client,
         cap=context_vote_cap,
+        incumbent=incumbent,
+        prior_vote_counts=backtranslation_vote_counts,
     )
     return {
         "status": context_result["status"],
         "winner": context_result["winner"],
+        "policy_version": ELECTION_POLICY_VERSION,
+        "backtranslation_status": backtranslation_status,
         "backtranslations": backtranslations,
         "context_votes": context_result["votes"],
         "vote_counts": context_result["vote_counts"],
+        "backtranslation_vote_counts": dict(backtranslation_vote_counts),
+        "context_vote_counts": context_result["context_vote_counts"],
         "errors": errors + context_result["errors"],
     }
 
@@ -360,10 +390,13 @@ def _context_vote(
     db_path: Path,
     client: "LocalLMStudioClient",
     cap: int,
+    incumbent: str,
+    prior_vote_counts: Counter[str] | None = None,
 ) -> dict[str, Any]:
     contexts = _load_context_blocks(db_path, item, cap=cap)
     votes: list[dict[str, Any]] = []
-    vote_counts: Counter[str] = Counter()
+    vote_counts: Counter[str] = Counter(prior_vote_counts or {})
+    context_vote_counts: Counter[str] = Counter()
     errors: list[str] = []
     for context in contexts:
         response = _call_json_with_retry(
@@ -375,6 +408,7 @@ def _context_vote(
         matched_candidate = _match_vietnamese_candidate(vietnamese, candidates)
         if matched_candidate:
             vote_counts[matched_candidate] += 1
+            context_vote_counts[matched_candidate] += 1
         if response.get("json_error"):
             errors.append(str(response["json_error"]))
         votes.append(
@@ -395,23 +429,25 @@ def _context_vote(
             "winner": str(item.get("canonical_target_vi") or ""),
             "votes": votes,
             "vote_counts": dict(vote_counts),
+            "context_vote_counts": dict(context_vote_counts),
             "errors": errors + ["no_context_blocks"],
         }
-    if vote_counts:
-        top = vote_counts.most_common()
-        if len(top) == 1 or top[0][1] > top[1][1]:
-            return {
-                "status": "elected_context_vote",
-                "winner": top[0][0],
-                "votes": votes,
-                "vote_counts": dict(vote_counts),
-                "errors": errors,
-            }
+    winner = _winning_challenger(vote_counts, incumbent)
+    if winner:
+        return {
+            "status": "elected_context_vote",
+            "winner": winner,
+            "votes": votes,
+            "vote_counts": dict(vote_counts),
+            "context_vote_counts": dict(context_vote_counts),
+            "errors": errors,
+        }
     return {
         "status": "unresolved_tie",
         "winner": str(item.get("canonical_target_vi") or ""),
         "votes": votes,
         "vote_counts": dict(vote_counts),
+        "context_vote_counts": dict(context_vote_counts),
         "errors": errors,
     }
 
@@ -566,9 +602,7 @@ def _english_matches_source(english: str, source_term: str) -> bool:
         return True
     english_singular = _singularize_phrase(english_key)
     source_singular = _singularize_phrase(source_key)
-    if english_singular == source_singular:
-        return True
-    return _phrase_contains(english_singular, source_singular) or _phrase_contains(source_singular, english_singular)
+    return english_singular == source_singular
 
 
 def _loose_english_key(text: str) -> str:
@@ -581,19 +615,52 @@ def _singularize_phrase(text: str) -> str:
 
 
 def _singularize_english_token(token: str) -> str:
-    if len(token) > 4 and token.endswith("ies"):
-        return token[:-3] + "y"
-    if len(token) > 4 and token.endswith("es") and token[-3:-2] in {"s", "x", "z"}:
+    if len(token) > 4 and (
+        token.endswith("ses")
+        or token.endswith("xes")
+        or token.endswith("zes")
+        or token.endswith("ches")
+        or token.endswith("shes")
+    ):
         return token[:-2]
     if len(token) > 3 and token.endswith("s") and not token.endswith("ss"):
         return token[:-1]
     return token
 
 
-def _phrase_contains(haystack: str, needle: str) -> bool:
-    if not haystack or not needle:
+def _target_string_equals_source(candidate: str, source_term: str) -> bool:
+    return _loose_english_key(candidate) == _loose_english_key(source_term)
+
+
+def _only_incumbent_has_votes(vote_counts: Counter[str], incumbent: str) -> bool:
+    if not vote_counts:
         return False
-    return f" {needle} " in f" {haystack} "
+    incumbent_key = normalize_target_key(incumbent)
+    for candidate, count in vote_counts.items():
+        if count and normalize_target_key(candidate) != incumbent_key:
+            return False
+    return bool(vote_counts.get(incumbent))
+
+
+def _winning_challenger(vote_counts: Counter[str], incumbent: str) -> str:
+    incumbent_key = normalize_target_key(incumbent)
+    incumbent_votes = sum(
+        count for candidate, count in vote_counts.items()
+        if normalize_target_key(candidate) == incumbent_key
+    )
+    challengers = [
+        (candidate, count)
+        for candidate, count in vote_counts.items()
+        if normalize_target_key(candidate) != incumbent_key
+    ]
+    if not challengers:
+        return ""
+    challengers.sort(key=lambda item: (-item[1], normalize_target_key(item[0])))
+    top_candidate, top_count = challengers[0]
+    second_count = challengers[1][1] if len(challengers) > 1 else -1
+    if top_count >= 2 and top_count > incumbent_votes and top_count > second_count:
+        return top_candidate
+    return ""
 
 
 def _match_vietnamese_candidate(vietnamese: str, candidates: list[str]) -> str:
