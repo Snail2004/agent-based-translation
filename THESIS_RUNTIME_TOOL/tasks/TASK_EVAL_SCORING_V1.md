@@ -397,3 +397,24 @@ Without-flag (n=292): cos -0.0013, llm -0.94 — cung ket luan.
 **Ops:** BT p50 that 2.19s (pilot 13.39s bi thoi phong boi model-load/thrashing — da fix 3-phase); ETA Stage 2 prelim thuc te se ~30-45 phut chu khong phai 2.2h. Cache dung chung, judge cache hit 140/1900.
 
 **Next:** (1) OPTIONAL Stage 2 preliminaries (~40 phut, ~$0.7) — quyet dinh cua user; (2) Gemma-local recham 100 block audit $0 (§2e muc 6); (3) PJ. SF-BT MLP = thang thu 6/7 co so chinh thuc.
+
+<!-- S2H_JUDGE_AUDIT -->
+### 2h. Judge audit OFFICIAL — Gemini CONFIRMED boi Gemma khac ho (Claude verify, 2026-07-05)
+
+**Setup:** Gemma local recham (bt_judge_v1 sha khop, 2 chieu) tren (a) 100 item systematic tu 950 MLP items (cong thuc centered, id ghi trong artifact) + (b) 56 item cua 28 cap llm-am. Khong goi Gemini moi, khong dung workdb. $0, ~24 phut.
+
+**Recount doc lap khop CodeX 100%:**
+| nhom | n valid | Pearson | Gemma-Gemini | bat dong >=25 |
+|---|---|---|---|---|
+| systematic 100 | 97 (3 loai vi Gemma parse-fail, loai dung cach — khong zero-fill) | **0.966** | +0.90 | 0 |
+| 28 cap llm-am (adversarial) | 56 | **0.887** | +3.79 | 7 |
+
+**Adjudication vs nguong dang ky truoc (§2e: Pearson>=0.6 VA |mean diff|<=10):** CA HAI nhom PASS ro rang => **SF-BT-llm (Gemini) duoc xac nhan convergent-valid; cot llm dung vung lam dong-tru.** Khong co nhanh ha cap nao kich hoat.
+
+**Soi tay 7 ca bat dong:** tat ca la lech MUC PHAT trong cung phan doan (2 ben deu thay loi/khong loi, cai nhau band): Gemma nhe tay 3 ca (tha pluralization Vanishing Gradient(s) 100-vs-75; bo qua 1 chi tiet backward-pass ma Gemini bat duoc), nang tay 3 ca (shift/skewness 0-vs-50), 1 ca cung phat khac muc (chuan hoa b044 50-vs-25 — CA HAI deu xac nhan loi regularization/normalization, cung co §2g cluster). Khong co ca nao dao chieu ket luan.
+
+**Huong lech +3.8 tren nhom kho = dung huong du bao §2e** (Gemma cham BT cua chinh minh -> ne nhe): co that nhung nho, va audit lam no THANH SO DO DUOC thay vi rui ro ngam. Gemma 6/200 call parse-fail vs Gemini 0/1900 — xac nhan nguoc quyet dinh §2e chon Gemini lam primary (do on dinh, khong phai do catch).
+
+**Go nho ghi nhan:** 3 item parse-fail chua luu raw output (CodeX tu bao) — khong blocking (loai bao thu, 3/100, co ghi danh); yeu cau moi script sau: luon luu raw_content_prefix ke ca khi parse fail. Khong can rerun.
+
+**Trang thai thang do:** SF-BT MLP xong + judge da duoc kiem chung cheo. Con: PJ (thang 7/7), Stage 2 prelim (optional, ~40 phut), agreement analysis tong.
