@@ -2661,3 +2661,13 @@ User approved 2026-07-04. Day la dieu kien ③ cuoi cung cua §37. Thiet ke da L
 **STOP-A** sau Buoc 1 + estimate so call Gemma cho Buoc 2 (watchlist x candidates + context votes; du kien vai tram call, ~phut). **STOP-B** sau Buoc 2+3: bao ket qua + log + diff; KHONG commit. Claude verify (doc lai log, tu diff notebook, recount watchlist) roi moi commit. Out dirs: `data/reports/builder_v2_reelection_mlp/`, `..._prelim/`.
 
 **Ngoai scope (de sau, khong lam trong task nay):** §36.4 watchlist-report/UI wiring; ap dung reelected notebook vao run dich moi; open question soft-hint-vs-no-hint.
+<!-- S36_6_STOP_A -->
+### 36.6-STOP-A — watchlist ACCEPTED, GO election (Claude verified, 2026-07-04)
+
+Verify doc lap: recount signature §36.2 voi co §32 tinh SONG qua notebook_entries_to_term_rows (bai hoc: co collision KHONG luu tinh trong notebook, phai goi module that — lan recount dau cua Claude doc tinh nen thieu 8 entry, cach CodeX dung):
+- MLP 37/37, prelim 26/26, diff NONE. Reasons: MLP 29 polysemy + 8 collision; prelim 22 + 4.
+- Canary §36.1 du: population (quần thể vs tổng thể, audit_polysemy), regularization (chuẩn hóa vs điều chuẩn, collision_soft_fallback "unresolved shared canonical").
+- Estimate khop phep cong tu watchlist.json: MLP 109 bt + 411 ctx cap = 520; prelim 57 + 154 = 211. $0 local, ~10-20 phut moi notebook.
+- Code: khong hardcode term (canary la CLI param --expect-watchlist); zero_api=true; frozen DB ro, hash nguyen. 4+1+8 test pass (Claude re-run).
+
+GO STOP-B: implement + chay election mode (back-translation blind -> tie -> context vote, 3 gates, log day du) tren MLP roi prelim, dung §36.6 Buoc 2+3. STOP sau khi co ket qua + diff notebook; khong commit.
