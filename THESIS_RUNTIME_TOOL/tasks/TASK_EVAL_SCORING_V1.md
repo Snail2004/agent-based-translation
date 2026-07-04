@@ -339,3 +339,19 @@ User chot: khong lao vao 8-14h ngay; chay thu de do toc do/loi that roi quyet. T
 7. **Cost-gate:** probe do $0.045/92 call (case ngan); block that dai hon ~2.5x -> uoc full 3,292 call ~$3-7. PILOT §2d-A chay truoc voi judge moi, do chi phi thuc + ngoai suy; **neu ngoai suy > $10 thi STOP hoi user**. ETA moi: BT local ~2-4h + judge ~25-35m -> MOT BUOI TOI, khong can qua dem.
 
 Artifacts commit: 6 probe json + concurrency benchmark. Cache sqlite de untracked.
+
+<!-- S2F_PILOT_VERIFIED -->
+### 2f. PILOT 100 VERIFIED + GO FULL RUN (Claude, 2026-07-05)
+
+**Verify doc lap:** recount toan bo tu `sf_bt_pilot_100.json` — moi con so cua CodeX khop 100% (deltas 3 cot ALL/without-flag, flags 30/14/0, finish 100+200 STOP, model_version `gemini-2.5-flash` du 200/200 call, cost $0.106, val_err 0). Hash workdb before==after==baseline. Doc code `score_sf_bt.py` cac diem §2e: khong-cache-loi (503-504), guard None (517), cache key du provider+thinking_budget+mime+sha, retry 2 lan — DAT CA 4. Sampling formula centered-systematic tren eligible blocks, deterministic.
+
+**Cham tay 3 cap llm S0>S1 (nguon goc mean -2.5) — KHONG cap nao la tri nho lam hong ban dich:**
+1. `linear_algebra_b003` (100->12.5, gap 87.5 = ~70% cua tong mean am): heading 2 chu `## Scalars`. S1 dich "Vo huong" (DUNG, chuan hon "Cac vo huong" cua S0); BT mu khong co ngu canh doc "vo huong" thanh "Non-directional". **Artifact dung cu tren block ngan** — va flag `short_block` DA bat dung ca nay theo thiet ke (bi loai khoi aggregate without-flag). Day la vi du giao khoa cho viec bao cao with/without.
+2. `kaggle_house_price_b034` (100->75): S1 dich standardize->"chuan hoa", BT mu tra ve "normalize", judge tru 25 diem nuance. **Tieng vong quy uoc qua round-trip, lop vecto-class**; noi thang vao phat hien §36 (chuan hoa la thuat ngu qua tai — ly do regularization phai bau lai thanh dieu chuan). Case study cho thesis, khong phai loi dung cu.
+3. `probability_b066` (100->87.5): 1 chieu judge 75 voi note lac de, chieu kia 100 — nhieu thu tu, trung binh 2 chieu lam mem dung nhu thiet ke. Toan bo math LaTeX 22 dau `$` giu nguyen ca 2 arm.
+
+**BT Gemma tren block dai — DAT:** 10 block dai nhat (675-1286c): cos 0.969-0.994, llm 100 (tru 2 ca da chan doan), length-ratio 0.93-1.06, `$` 22->22, backtick 4->4, so lieu/LaTeX nguyen van, finish 100/100 stop. Lo ngai "cau dai gay BT" cua user: kiem tra truc tiep, khong xay ra.
+
+**Ve nhan xet "llm bao hoa" cua CodeX:** 94% delta ~0 la HANH VI DUNG cua guardrail metric — ca 2 arm deu dich tot cung nguon thi diem bang nhau (SF-QE cung 74% trong ±0.01). Probe §2d da chung minh rubric tach loi that sac (0-vs-100). KHONG chinh rubric sau khi thay data (= tuning). Ky vong pre-declared cho full run (guong SF-QE §3c): ca 2 cot paired delta ~0, khong cluster S1-harm; bottom-10 lam input PJ.
+
+**GO FULL RUN:** cung script, cung cache DB (pilot 100 items tai su dung mien phi), scope 1,646 block-arm; ETA ~5.1h con lai (bottleneck BT local; 3-phase load model da fix het thrashing); judge full ~$1.75 << gate $10; per-item progress + partial JSON; STOP khong commit khi xong. Sau do: doc ket qua chinh thuc §2g + Gemma-local recham 100 block audit ($0, §2e muc 6).
