@@ -439,7 +439,7 @@ Without-flag (n=292): cos -0.0013, llm -0.94 — cung ket luan.
 - P-IDENT (5 cap giong het): overall TIE 10/10 chieu.
 - P-GRAM (5 cap cay loi ngu phap/cau cut vao 1 ban): winner dung o CA 2 chieu >= 4/5 cap; tag grammar xuat hien >= 4 trong cac cap bat dung.
 - P-MEAN (5 cap muot-nhung-sai-nghia): ban dung nghia thang overall >= 4/5; tag meaning >= 4.
-- P-TERM (5 cap chi khac thuat ngu, vd dieu chuan<->chuan hoa): tag terminology >= 4/5 VA style_verdict = TIE >= 4/5 (bai test 2-verdict; truot -> kich hoat fallback 1-verdict o tren).
+- P-TERM (5 cap chi khac thuat ngu, vd dieu chuan<->chuan hoa): tag terminology >= 4/5 VA style_verdict = TIE >= 4/5 (bai test 2-verdict; truot -> kich hoat fallback 1-verdict o tren). [LAM RO §4c: tat ca nguong probe tinh o PAIR-LEVEL SAU KHI GOP 2 chieu; tags = union 2 chieu]
 - Order-inconsistent tren P-GRAM+P-MEAN: <= 1/10 cap. Parse-fail sau retry: <= 1/40 call (Gemini da 0/1900 nen day la nguong long). Raw output LUON duoc luu ke ca khi parse fail (luat §2h).
 Truot BAT KY dong nao -> STOP, sua prompt/schema, probe lai tu dau. Khong co dien giai mem sau probe.
 
@@ -510,7 +510,7 @@ Candidate Y:
 Y>>>
 ```
 
-**Validator (code, mechanical):** overall_verdict/style_verdict thuoc {X,Y,TIE}; tags la list con cua taxonomy 7-tag, do dai 0-3; tags RONG chi hop le khi CA HAI verdict = TIE; note la string. Vi pham -> validation_error, KHONG cache, retry 1 lan, van fail -> loai + luu raw (luat §2h).
+**Validator (code, mechanical):** overall_verdict/style_verdict thuoc {X,Y,TIE}; tags la list con cua taxonomy 7-tag, do dai 0-3; tags RONG chi hop le khi CA HAI verdict = TIE; note la string. Vi pham -> validation_error, KHONG cache, retry 1 lan, van fail -> loai + luu raw (luat §2h). [BO SUNG §4c: quan he style_verdict<->tag KHONG xu ly o validator ma o buoc gop — style thieu tag chong lung bi ha bac ve TIE + co]
 
 **Self-review cua Claude (failure mode -> phong thu trong prompt):**
 - Position bias -> dong "labels and order are arbitrary" + harness van chay ca 2 chieu (phong thu kep, khong thay the both-order).
@@ -522,3 +522,22 @@ Y>>>
 - Tag bia -> closed list trong prompt + validator tu choi tag ngoai taxonomy.
 
 **Phan con lai giao CodeX (bước 1 sua lai):** CodeX KHONG viet prompt nua; chi (1) soan 20 cap planted P-IDENT/P-GRAM/P-MEAN/P-TERM tu block MLP that kem expected label; (2) xay probe_pj.py quanh prompt nay (cache key du + order, khong cache loi, model_version, raw luon luu, workdb ro + hash). STOP cho Claude review planted set truoc khi chay.
+
+### 4c. Aggregation 2-verdict + style-tag guard + luat soan planted set (Claude adjudicate vong 2 phan bien CodeX, 2026-07-05)
+
+**CodeX diem 1 — GHI NHAN: gop both-order RIENG cho tung verdict-type.**
+- overall_final(pair) = overall neu 2 chieu cung phan (sau khi doi nhan X/Y ve arm), nguoc lai TIE + co `overall_order_inconsistent`.
+- style_final(pair) = tuong tu, DOC LAP voi overall: overall nhat quan + style mau thuan -> chi style = TIE (+`style_order_inconsistent`), overall GIU NGUYEN; va nguoc lai.
+- tags_final(pair) = UNION tag cua 2 chieu (per-call tags van luu day du trong artifact).
+- Report BAT BUOC 2 bang rieng: `overall_{win,tie,loss}` va `style_{win,tie,loss}` theo arm; style-ALARM tinh tu style_final; order-inconsistent bao cao rieng tung loai.
+
+**CodeX diem 2 — GHI NHAN: nguong probe = PAIR-LEVEL sau gop.** P-TERM pass khi >=4/5 pair co style_final = TIE VA >=4/5 pair co terminology trong tags_final. P-GRAM/P-MEAN: winner dung = overall_final dung (da ham y ca-2-chieu); tag dem tren tags_final. P-IDENT giu call-level 10/10 (giong het thi tung chieu phai TIE, khong co ly do le thuoc gop).
+
+**CodeX diem 3 — GHI NHAN CO SUA: guard style<->tag la luat GOP, khong phai validation_error.** Ly do sua: temp=0 nen reject+retry tra lai dung JSON cu -> item chet oan; va ep model them tag/lat verdict qua retry la meo do. Luat co hoc thay the: neu style_final != TIE ma tags_final khong chua tag nao thuoc style-group {grammar, naturalness, word_choice} -> HA BAC style_final ve TIE + co `style_unsupported_by_tags` (bao thu, cung triet ly voi order-inconsistent->TIE). formatting KHONG duoc quyen quyet style (prompt dinh nghia style = prose; dong y CodeX). Nguong dung cu: pilot co ty le style_unsupported > 20% so pair non-tie-style -> STOP, coi nhu style_verdict truot, kich hoat fallback 1-verdict cua §4a.
+
+**CodeX diem 4 — GHI NHAN: tags = ly do cho BAT KY verdict non-tie nao** (khong rieng style); khong sua prompt de giu hash d47dbb17; v2 tach overall_tags/style_tags CHI sau probe neu can va se la prompt_version moi.
+
+**CodeX diem 5 — GHI NHAN: luat soan planted set (CodeX phai tuan thu, Claude review tung cap):**
+- Moi cap chi duoc thay doi DUNG MOT truc chat luong: P-GRAM = cung nghia + cung term, chi pha ngu phap; P-MEAN = van muot, cung register, chi doi nghia; P-TERM = giong het tru cach dich term; P-IDENT = giong het tuyet doi.
+- Expected label moi cap ghi TRUOC: expected winner (arm), expected tag chinh, expected style_final (P-GRAM: winner; P-MEAN: TIE hoac winner-khong-che; P-TERM: TIE; P-IDENT: TIE).
+- Cap nao vi pham mot-truc-mot-loi -> Claude tra ve soan lai, khong chay probe voi cap ban.
