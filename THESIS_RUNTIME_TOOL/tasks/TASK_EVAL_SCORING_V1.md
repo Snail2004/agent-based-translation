@@ -12,7 +12,7 @@ Provenance of this design: (a) AMT paper (Duong et al., advisor's own work — r
 |---|---|---|---|---|
 | **TC** | Term Consistency (Nhất quán thuật ngữ) | same term → same rendering throughout? | deterministic code; = existing metric `D_registry_consistency` | $0 |
 | **TA** | Term Adherence (Tuân thủ thuật ngữ) | terms match an external standard (gold/dictionary)? | deterministic code, occurrence-weighted JOINT; = existing metric `B_gold_occurrence_adherence` | $0 |
-| **SF-BT** | Semantic Fidelity — back-translation | meaning preserved through a round trip? | AMT Eq.1: Sim = 0.5·cosine + 0.5·LLM-score, with 3 upgrades (§2) | ~$0 local |
+| **SF-BT** | Semantic Fidelity — back-translation | meaning preserved through a round trip? | AMT Eq.1 idea (BT similarity); components SF-BT-cos + SF-BT-llm reported separately, composite decided post-probe — see §2b (0.5/0.5 RETIRED) | ~$0 local |
 | **SF-QE** | Semantic Fidelity — neural QE | meaning preserved, per a neutral learned judge? | Unbabel/wmt22-cometkiwi-da, local CPU (§3) | $0 |
 | **PJ** | Paired Judgment (Phân xử cặp mù) | is S1 better/worse than S0, and why? | blind paired LLM judge, both-order (§4) | ~$0.2 |
 | HG | Hygiene Gate | no foreign-script leakage | shipped (§35 D1) | $0 |
@@ -27,7 +27,7 @@ Defense mapping to AMT's human criteria: terminology consistency→TC, adequacy�
 ## 2. SF-BT — back-translation dual signal (extends advisor's AMT Eq.1)
 
 Round trip: EN source → (system VI output) → back-translate VI→EN → compare EN-vs-EN.
-`SF_BT(block) = 0.5 · cos(bge-m3(EN_orig), bge-m3(EN_back)) + 0.5 · LLM_score(EN_orig, EN_back)`; chapter score = mean over scope blocks. LLM_score: 0→1 semantic similarity, run twice, averaged (per AMT).
+~~`SF_BT(block) = 0.5 · cos + 0.5 · LLM_score`~~ **RETIRED before first run (see §2b, 2026-07-04):** two co-primary columns `SF-BT-cos` = cos(bge-m3(EN_orig), bge-m3(EN_back)) and `SF-BT-llm` = LLM_score(EN_orig, EN_back); any composite is decided post-probe and named `SF-BT-rank-composite` (run-relative, NOT an absolute semantic score).
 
 Three declared upgrades over AMT (each is a methods contribution, cite politely):
 1. **Independent back-translator**: local Gemma-4-12B (different family from the GPT translator). AMT used the same TranslationAgent both ways → self-agreement bias. Same deterministic profile as §35.11b (temp 0, repeat_penalty 1.0).
@@ -190,3 +190,14 @@ workdb ro -> Gemma BT (VI->EN, MU: khong EN goc/khong tu dien/khong context, tem
 1. Tai dung nguyen bo wide-probe 41 case cua SF-QE + them case that (BT-pair tu workdb: negation, numeric, untranslated, omission) + cac case THUAT NGU (vector/vecto, regularization) dan nhan `expected_blind` — KHONG tinh vao pass/fail (SF-BT mu thuat ngu by design; dua vao de ghi bang chung mu).
 2. Chay tron chuoi BT->cosine->LLM-score tren bo probe. Tieu chi: paired ranking good>bad tren cac cap KHONG-expected_blind, bao ket qua tung thanh phan RIENG (cos va llm doc lap) — de quyet composite.
 3. Bao: bang pairwise per component, cac expected_blind co mu that khong, hygiene flags co bat dung case untranslated khong, toc do/call. STOP — Claude verify roi moi GO full run 1,646 block.
+<!-- S2B_FIX -->
+### 2b-fix — va spec truoc Phase-1 probe (Claude verify + chot, 2026-07-04)
+
+CodeX bat 4 diem truoc khi chay probe — phan xu:
+1. **Stale formula (DUNG):** dong 15 (bang tong quan) + dong 30 (§2) van ghi 0.5/0.5 -> DA SUA TAI CHO (strikethrough + tro ve §2b). Bai hoc: amendment phai va NGAY cho cu, khong chi append cuoi file.
+2. **Ten composite (DUNG):** percentile-rank composite la thuoc do TUONG DOI trong run, khong so duoc giua sach/run khac -> neu dung phai ten `SF-BT-rank-composite`; headline luon la 2 cot cos/llm.
+3. **Mau thuan mu-thu-tu vs flags dinh huong (DUNG):** CHOT phuong an (a) — giu MU thu tu (equivalence la quan he doi xung, blindness quy hon nhan chieu), flags doi sang KHONG dinh huong: `semantic_mismatch`, `numeric_mismatch`, `negation_mismatch`, `coverage_mismatch` (mot ben noi nhieu/it hon ro ret), `untranslated_residue`, `format_only`. Phan tich CHIEU (omission vs addition) thuoc ve human audit bottom-10 — chuoi BT von khong quy trach nhiem duoc loi nam o luot dich hay luot dich nguoc, gan nhan chieu tu dong la gia chinh xac.
+4. **Encoding probe (file SACH — canh bao la console artifact):** Claude verify bytes: 41 case, 0 mojibake, 40/41 co dau VN chuan, 100% NFC (case con lai = untranslated co y). Quy tac ops ghi vao day: doc probe bang Python utf-8, KHONG tin render cua terminal PowerShell.
+5. **Nhanh ha cap Gemma (bo sung dung):** neu trigger luat ha cap (Pearson<0.6 hoac |diff|>10): headline full = `SF-BT-cos` (du 1,646) + GPT-sample lam audit phu; muon `SF-BT-llm` full bang GPT thi la quyet dinh chi phi RIENG trinh user (uoc ~$0.3-0.6, cost-gate nhu moi khi). GPT-sample 100 block KHONG bao gio duoc trinh bay nhu headline full.
+
+Spec het mau thuan. GO Phase-1 probe theo §2b.
