@@ -2636,3 +2636,28 @@ Khong score, khong commit, khong doc P1-P3. Bao cao: per-arm denominator/resolve
 **Diem chinh danh TC-Occ/TA-Occ ghi o TASK_EVAL_SCORING_V1 §8c** (P1 PASS / P2 PASS / P3 vi pham o o TA — dieu tra xong: ruler divergence, khong phai harness bug). tc_ta_occ_preliminaries.json committed.
 
 **§37 status: ① DONE | ② DONE (§35.9 run + scored + §35.16 cascade/overlay/TC-Occ-TA-Occ chinh danh) | ③ §36 — NEXT.**
+<!-- S36_6_IMPL_TASK -->
+### 36.6 — TASK for CodeX: implement blind canonical re-election (§36.2+36.3) + validation on MLP dictionary
+
+User approved 2026-07-04. Day la dieu kien ③ cuoi cung cua §37. Thiet ke da LOCK o §36.1-36.5 — implement dung nguyen van, khong sang tao them signature/rule moi. Toan bo LLM = local Gemma ($0); KHONG can GPT trong step nay.
+
+**Kien truc:** script moi `pipeline/scripts/builder_v2_reelection.py` — dictionary-lifecycle step doc lap, post-Auditor pre-pack. INPUT: notebook JSON (audited/decollided/promoted). OUTPUT: `notebook_reelected.json` + `reelection_log.json` vao out-dir rieng. KHONG ghi DB (frozen mode=ro chi de doc occurrence sentences); KHONG dung den artifact exp_s0s1 nao — notebook reelected la artifact MOI cho run tuong lai, khong ghi de notebook cua experiment da dong.
+
+**Buoc 1 — Watchlist (§36.2, thuan code, 0 LLM):**
+- Signature dung nguyen van: (target_variants chua >=1 candidate != canonical) AND (co collision flag tu §32 detector OR audit_label == polysemy_or_context_dependent). Assert theo LABEL/flag co san trong notebook + §32 module — TUYET DOI khong hardcode ten term (code-never-does-language-work).
+- Chay tren CA HAI notebook dong bang: MLP `builder_v2_mlp_c35/notebook_decollided.json` va prelim `builder_v2_c35_decollision/notebook_promoted.json`. Bao: watchlist size tung notebook, danh sach entry_id + ly do match (variant-competitor + collision/polysemy). Ky vong forensic §36.1: MLP watchlist PHAI chua `population` va `regularization` (neu khong -> signature sai, STOP).
+
+**Buoc 2 — Election (§36.3):**
+- (a) Back-translation, BLIND: moi VI candidate ({canonical} ∪ variants, dedup casefold) gui rieng cho Gemma "dich cum nay sang EN" — prompt KHONG chua source term, KHONG noi candidate nao la incumbent. Code so ket qua voi source term: match casefold/lemma-loose (singular/plural don gian, mechanical). Candidate match > candidate khong match. Nhieu candidate cung match hoac 0 match -> tie -> (b).
+- (b) Context vote: lay cac cau nguon that chua term (tu frozen DB, mode=ro; cap 30 cau, thu tu block_id deterministic), hoi Gemma blind "trong cau nay TERM nen dich la gi" (khong dua danh sach candidate de tranh anchor — doi chieu output voi candidate set bang casefold-containment sau). Majority wins; hoa -> giu incumbent + log unresolved_tie.
+- Gemma profile bat buoc (memory da chot): temp 0, repeat_penalty 1.0, seed 20260612, json_schema, local endpoint. Parse fail -> retry 1 lan -> van fail thi entry do log `election_error`, GIU incumbent (khong bao gio doi canonical vi loi ky thuat).
+- 3 gate §36.3 deu bat buoc: chi entry trong watchlist; winner khong tao collision MOI (re-run §32 detector tren notebook sau khi ap winner — vi pham thi revert entry do + log blocked_new_collision); log day du per entry (candidates, back-translations, votes + evidence block_ids, gate outcomes, winner, changed yes/no).
+- Winner == incumbent -> log `confirmed`, khong doi gi.
+
+**Buoc 3 — Validation case (§36.5-3, tren MLP notebook):**
+- PASS khi: `regularization` -> canonical "điều chuẩn" VA `population` -> canonical "tổng thể" duoc bau BANG MAY voi log day du; VA moi entry ngoai watchlist canonical bat bien (assert bang diff toan notebook); VA moi thay doi khac trong watchlist (neu co) duoc liet ke rieng cho Claude review — khong tu ket luan tot/xau.
+- Chay them tren prelim notebook_promoted (sanity): ky vong `gradient` giu "gradient" (da sua §29), khong co doi loan.
+
+**STOP-A** sau Buoc 1 + estimate so call Gemma cho Buoc 2 (watchlist x candidates + context votes; du kien vai tram call, ~phut). **STOP-B** sau Buoc 2+3: bao ket qua + log + diff; KHONG commit. Claude verify (doc lai log, tu diff notebook, recount watchlist) roi moi commit. Out dirs: `data/reports/builder_v2_reelection_mlp/`, `..._prelim/`.
+
+**Ngoai scope (de sau, khong lam trong task nay):** §36.4 watchlist-report/UI wiring; ap dung reelected notebook vao run dich moi; open question soft-hint-vs-no-hint.
