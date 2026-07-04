@@ -372,3 +372,28 @@ User chot chay full 1 chuong truoc. Cach thi hanh KHONG dong cua replication:
 **Q2 SF-BT cho van hoc?** Phan bien Gemini (idiom rains-cats-and-dogs chet diem) SAI o gia dinh judge so chuoi — judge cua ta la LLM cham NGHIA, ignore style/word-choice -> "mua nhu trut nuoc" khong tu dong truot. Nhung dung o tang sau: van hoc thi giu-nghia la CAN chu xa moi DU — SF-BT khong thay giong van/xung ho/an y. Ket luan chot: SF-BT khong "sup do" ma "tra loi cau hoi qua nho"; sang van hoc no XUONG VAI luoi bat loi tho (bo sot/nguoc nghia/sai so), ganh chinh la PJ don-ngu ban dich + BWS vs ban dich nguoi + TC-Ent (xung ho theo cap nhan vat tu entity memory — dat dien cua he thong tri nho). Da co san §6 roadmap.
 
 **Pilot arm-level (tra loi user):** S0 cos 0.978 / llm 99.75; S1 cos 0.970 / llm 97.25 (keo boi 3 ca da giai phau §2f). Bo flagged: S0 0.973/99.61, S1 **0.977**/98.39 — S1 nhinh hon cot cos khi loai nhieu dung cu. Phan bo llm: S0 49x100+1x87.5; S1 46x100+2x87.5+1x75+1x12.5.
+
+<!-- S2G_MLP_READOUT -->
+### 2g. SF-BT OFFICIAL READOUT — Stage 1 MLP (Claude verify doc lap, 2026-07-05)
+
+**Integrity (recount tu artifact, khop bao cao CodeX 100%):** 475 block x 2 arm = 950 items, chapter dung; workdb hash before==after==baseline 92229381...; prompt sha bt/judge khop §2c; BT 950/950 stop; judge 1900/1900 STOP, model_version `gemini-2.5-flash` 1900/1900, 0 error; cost that **$0.9965** (recompute tu usage per-call khop den cent, ~du bao $1); wall 44.4 phut. Label `status/phase` con chu "pilot_*" = loi dat ten cosmetic, scope data da verify dung full MLP; Stage 2 (neu chay) phai sua label.
+
+**Headline (paired, S1-S0):**
+| cot | S0 | S1 | delta mean | delta median | S1>S0 / S0>S1 | gan hoa |
+|---|---|---|---|---|---|---|
+| SF-BT-cos | 0.9719 | 0.9710 | **-0.0009** | 0.0 | 31.4% / 29.9% | 80% |
+| SF-BT-llm | 98.11 | 97.11 | **-1.00** | 0.0 | 2.9% / 5.9% | 91.2% |
+| direct EN-VI (diagnostic) | 0.8511 | 0.8477 | -0.0034 | 0.0 | 36.2% / 35.2% | 66% |
+Without-flag (n=292): cos -0.0013, llm -0.94 — cung ket luan.
+
+**Adjudication vs ky vong pre-declared (§2f: ca 2 cot ~0, khong cluster S1-harm):**
+- **SF-BT-cos: PASS sach** (-0.0009 ~ 0, doi xung 31/30).
+- **SF-BT-llm: PASS voi 1 cluster CO TEN:** mo 28 cap am (tong gap 725 diem): **6 cap = regularization->"chuan hoa" chiem 200/725 = 28% tong gap am** — S1 render 28/29 block regularization bang "chuan hoa" (vang loi canonical SAI §35.8 dang nam trong notebook production). Day KHONG phai "memory lam hai nghia" tong quat — la "MOT entry tu dien sai gay hai tai moi occurrence", dung storyline §30/§35.8/§36, nay duoc DUNG CU DOC LAP THU BA do luong (sau gold-recall B va forensics §36). §36 standalone probe DA bau lai regularization->dieu chuan (2-0) — neu deploy, 6 block nay hoi phuc. Con lai: 15 cap -12.5 = nhieu 1-chieu; heading ngan (Beyond->Mo rong->"Expansion", flagged short_block); convention echo (hop ly->"rational").
+- **1 loi dich THAT cua S1 bat duoc:** mlp_b009 dao nghia "less obvious"->"ro rang hon" — llm cham 50/50 ca 2 chieu, **cos mu hoan toan** (0.967 vs 0.966, tui-tu giong het). Bang chung song complementarity §2d tren du lieu that.
+- **Doi xung — S0 cung co loi that bi bat** (14 cap S1>S0): weight_decay_b018 S0 dich "High-Dimensional"->"chieu cao" (height!) llm 37.5; mlp_b003 S0 "lop an"->BT "Hidden classes" (lop da nghia) trong khi S1 dung "tang" khong mo ho -> 100 — tu dien S1 lam nghia RO hon. Instrument bat loi ca 2 chieu, khong thien vi.
+
+**Y nghia thesis:** tri nho KHONG lam hong nghia o quy mo toan chuong (91% hoa, cos ~0); tac hai duy nhat co he thong = 1 entry sai, do duoc, da co co che sua offline. Bottom-N ca 2 cot -> input PJ audit (hop nhat voi bottom SF-QE §3c).
+
+**Ops:** BT p50 that 2.19s (pilot 13.39s bi thoi phong boi model-load/thrashing — da fix 3-phase); ETA Stage 2 prelim thuc te se ~30-45 phut chu khong phai 2.2h. Cache dung chung, judge cache hit 140/1900.
+
+**Next:** (1) OPTIONAL Stage 2 preliminaries (~40 phut, ~$0.7) — quyet dinh cua user; (2) Gemma-local recham 100 block audit $0 (§2e muc 6); (3) PJ. SF-BT MLP = thang thu 6/7 co so chinh thuc.
