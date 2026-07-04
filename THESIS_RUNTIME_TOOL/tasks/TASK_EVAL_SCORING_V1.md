@@ -355,3 +355,11 @@ Artifacts commit: 6 probe json + concurrency benchmark. Cache sqlite de untracke
 **Ve nhan xet "llm bao hoa" cua CodeX:** 94% delta ~0 la HANH VI DUNG cua guardrail metric — ca 2 arm deu dich tot cung nguon thi diem bang nhau (SF-QE cung 74% trong ±0.01). Probe §2d da chung minh rubric tach loi that sac (0-vs-100). KHONG chinh rubric sau khi thay data (= tuning). Ky vong pre-declared cho full run (guong SF-QE §3c): ca 2 cot paired delta ~0, khong cluster S1-harm; bottom-10 lam input PJ.
 
 **GO FULL RUN:** cung script, cung cache DB (pilot 100 items tai su dung mien phi), scope 1,646 block-arm; ETA ~5.1h con lai (bottleneck BT local; 3-phase load model da fix het thrashing); judge full ~$1.75 << gate $10; per-item progress + partial JSON; STOP khong commit khi xong. Sau do: doc ket qua chinh thuc §2g + Gemma-local recham 100 block audit ($0, §2e muc 6).
+
+<!-- S2F_A_ONE_CHAPTER -->
+### 2f-A. AMENDMENT (user 2026-07-05): full run chia theo CHUONG, MLP truoc
+
+User chot chay full 1 chuong truoc. Cach thi hanh KHONG dong cua replication:
+- **Stage 1 (chay ngay): d2l_multilayer_perceptrons** — chuong chinh cua exp, 475 block x 2 arm = 950 items, tru ~50 da cache => ~3h. Script/cache/prompt giu nguyen §2f, them filter chapter. Report per-chapter (schema san co).
+- **Stage 2 (de danh, OPTIONAL, toi may ranh): d2l_preliminaries** 696 items ~2.2h. Cache lam Stage 2 hoan toan doc lap ve chi phi — quyet dinh hom nay la THU TU, khong phai tu bo; SF-BT cross-chapter replication postponed chu khong huy, ghi nhan trung thuc trong thesis neu cuoi cung chi co 1 chuong.
+- Readout chinh thuc §2g viet theo chuong da co; khong doi ky vong pre-declared.
