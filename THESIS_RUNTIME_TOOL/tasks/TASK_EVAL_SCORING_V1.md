@@ -205,13 +205,13 @@ Spec het mau thuan. GO Phase-1 probe theo §2b.
 ### 2c. SF-BT prompt design (FIRST-CLASS, review truoc khi chay — Claude self-review round, 2026-07-04)
 
 **5 bo sung tu luot soi cua Claude (khong ai bat truoc do):**
-- R1 `short_block` flag (nguong ky tu, co hoc): heading vai chu -> cosine/judge bat on; aggregate bao CA HAI ban co/khong nhom short. Khong loai, chi tach.
-- R2 "run twice averaged" (AMT) chet voi temp 0 -> thay bang 2 CHIEU thu tu (A-B, B-A) lay trung binh; probe DO do nhay thu tu (41 case x 2 chieu) -> neu lech khong dang ke, full run 1 chieu; neu lech, chay 2 chieu (~3,300 call).
-- R3 judge ctx 8192; cap EN qua dai -> flag `too_long`, loai khoi llm-score CO GHI DANH, khong cat lang le.
-- R4 prompt version stamp (`bt_prompt_v1`, `bt_judge_v1`) trong cache key + report — doi mot chu prompt = doi dung cu do.
+- R1 `short_block` flag, NGUONG KHOA TRUOC: `source_char_count < 40 OR source_token_count < 8` (co hoc). Van score binh thuong; aggregate bao CA HAI ban `with_short`/`without_short`. Khong loai, chi tach.
+- R2 "run twice averaged" (AMT) chet voi temp 0 -> thay bang 2 CHIEU thu tu (A-B, B-A) lay trung binh; probe DO do nhay thu tu (cac case KHONG-expected_blind x 2 chieu), TIEU CHI KHOA TRUOC: `mean_abs(A_B - B_A) <= 3/100 VA max_abs <= 10/100` -> full run 1 chieu; vuot mot trong hai -> full run 2 chieu (~3,300 call).
+- R3 judge ctx 8192; `too_long_for_llm = estimated_P2_prompt_tokens > 7000` (tinh tren TONG prompt P2, khoa truoc) -> loai CHI khoi SF-BT-llm co ghi danh + count rieng trong report; SF-BT-cos van cham (bge-m3 ctx 8192, block vuot nguong bge tu truncate -> log so block bge-truncated rieng, doi xung 2 arm).
+- R4 cache key = model_id + decoding params + prompt_version + SHA256(PROMPT TEXT THAT) + SHA256(input) — version stamp de doc report, hash that de chong 'sua mot chu quen bump version'; report ghi ca version lan prompt hash.
 - R5 preamble ("Here is the translation:"): KHONG tu cat; probe checklist kiem, thay moi ban cach xu.
 
-**P1 `bt_prompt_v1`** (Gemma BT, output text tho; temp 0, repeat_penalty 1.0, seed 20260612; MU — khong EN goc/tu dien/context):
+**P1 `bt_prompt_v1`** (Gemma BT, output text tho; temp 0, repeat_penalty 1.0, seed 20260612; MU — khong EN goc/tu dien/context; LOG `finish_reason` moi call — `length`/truncated -> hygiene flag `bt_truncated`, la LOI DUNG CU khong phai loi dich, loai khoi cham co ghi danh):
 ```
 You are a professional Vietnamese-to-English translator.
 Translate the text below into English.
@@ -253,3 +253,7 @@ PASSAGE B:
 ```
 
 **Probe checklist bo sung (cong vao §2b task):** (a) do order-sensitivity cua judge; (b) kiem preamble behavior cua P1; (c) bao phan bo score bands (neu 90% diem don vao 1 band -> rubric can chinh TRUOC full run).
+<!-- S2C_FIX -->
+### 2c-fix — khoa nguong theo review CodeX vong 3 (2026-07-04)
+
+5 diem CodeX — GHI NHAN CA 5, da va TAN DONG trong §2c: (1) short_block nguong co dinh <40 char OR <8 token; (2) too_long_for_llm = est P2 prompt > 7000 tok, chi loai khoi llm, cos van cham, count rieng; (3) tieu chi 1-chieu/2-chieu khoa truoc: mean_abs<=3 VA max_abs<=10 (tren case khong-expected_blind); (4) cache key them SHA256 prompt text that + input hash, chong sua-quen-bump-version; (5) P1 log finish_reason, truncated -> `bt_truncated` = loi dung cu, loai co ghi danh. Chu de chung: MOI nguong chua khoa = cua sau tuning — dong het truoc khi cham data. Spec Phase-1 probe DU SACH DE CHAY.
