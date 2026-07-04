@@ -1,0 +1,2519 @@
+{
+  "status": "probe_only_paid_judge_candidate",
+  "model": "gemini-3.1-flash-lite",
+  "source_report": "data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_phase1_probe.json",
+  "cache_path": "data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_gemini31_flash_lite_judge_probe_cache.sqlite3",
+  "case_count": 46,
+  "judge_call_count": 92,
+  "cases": [
+    {
+      "id": "good_gradient",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "standalone good technical translation",
+      "src": "The gradient is computed during backpropagation to update the model parameters.",
+      "mt": "Gradient được tính trong quá trình lan truyền ngược để cập nhật các tham số của mô hình.",
+      "bt_text": "The gradient is calculated during the backpropagation process to update the model parameters.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the exact same meaning, with only stylistic differences in verb choice.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages convey the exact same meaning, with only stylistic differences in verb choice.\"}",
+          "latency_sec": 2.549,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 515,
+            "cached_tokens": 0,
+            "completion_tokens": 33,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004278,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "a147437975372b3dcb786313c7225b3be3c0c9a259bf87287f339453b5de736f"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, using synonyms 'calculated' and 'computed' to express the same technical process.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, using synonyms 'calculated' and 'computed' to express the same technical process.\"}",
+          "latency_sec": 2.13,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 515,
+            "cached_tokens": 0,
+            "completion_tokens": 40,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000453,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "bbbda09c772b1a36eae6f1c5381fb9f30dce9d7335a839f16f96a0afebf942de"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_regularization",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: regularization mistranslated as normalization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Điều chuẩn làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "bt_text": "Regularization reduces overfitting by penalizing large weights.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}",
+          "latency_sec": 2.678,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003978,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "73fe1d6aba37299288b0eb68452ecc39646d83419f3b07272ed87b651a9111de"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}",
+          "latency_sec": 2.678,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003978,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "73fe1d6aba37299288b0eb68452ecc39646d83419f3b07272ed87b651a9111de"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_regularization",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: regularization mistranslated as normalization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Chuẩn hóa làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "bt_text": "Regularization reduces overfitting by penalizing large weights.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}",
+          "latency_sec": 2.678,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003978,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "73fe1d6aba37299288b0eb68452ecc39646d83419f3b07272ed87b651a9111de"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}",
+          "latency_sec": 2.678,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003978,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "73fe1d6aba37299288b0eb68452ecc39646d83419f3b07272ed87b651a9111de"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_accuracy_direction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: increase/decrease polarity",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực tăng sau khi điều chỉnh tốc độ học.",
+      "bt_text": "Accuracy on the validation set increased after adjusting the learning rate.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages convey the exact same fact regarding the impact of learning rate tuning on validation accuracy.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"Both passages convey the exact same fact regarding the impact of learning rate tuning on validation accuracy.\"}",
+          "latency_sec": 1.742,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 35,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004314,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "0caf21ab73b58ff0ea46e6f663f85760dd8091841a222674ba0d42d49bc83fb2"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the identical meaning regarding the causal relationship between learning rate adjustment and validation accuracy improvement.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages convey the identical meaning regarding the causal relationship between learning rate adjustment and validation accuracy improvement.\"}",
+          "latency_sec": 1.426,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000435,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "09a0de13f3768fbe223738dee8215ada28c53503ceb495ffd2ffdf34a3c4210e"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_accuracy_direction",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: increase/decrease polarity",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực giảm sau khi điều chỉnh tốc độ học.",
+      "bt_text": "Accuracy on the validation set decreased after adjusting the learning rate.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages report opposite outcomes regarding the validation accuracy following the learning rate adjustment.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages report opposite outcomes regarding the validation accuracy following the learning rate adjustment.\"}",
+          "latency_sec": 2.321,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000435,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "a75954c01c866c663fcf0c89e5bce7e65aaadb93a1d4d83b2b829db1f8392655"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages report opposite outcomes regarding the validation accuracy following the learning rate adjustment.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages report opposite outcomes regarding the validation accuracy following the learning rate adjustment.\"}",
+          "latency_sec": 1.834,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000435,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "20efb62b47bb2c957848b0bacd1555626f4086f40618ef99d2c673cd17898abd"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_dropout_omission",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: dropout and random masking omitted",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Dropout che ngẫu nhiên các đơn vị ẩn trong quá trình huấn luyện.",
+      "bt_text": "Dropout randomly masks hidden units during the training process.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, with only minor stylistic variation in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, with only minor stylistic variation in phrasing.\"}",
+          "latency_sec": 1.598,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 505,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004182,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "3838c9a71d438283106bb4149afed08c9cdb073aa00851caeec656ddeabc34a7"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey identical information with only minor stylistic variation in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey identical information with only minor stylistic variation in phrasing.\"}",
+          "latency_sec": 1.507,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 505,
+            "cached_tokens": 0,
+            "completion_tokens": 31,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004146,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "31b2a5cd4086f4f901c435149e4e5b65b65d87cf8940ad1871179bacdfb8514f"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_dropout_omission",
+      "source": "comet_wide",
+      "expected": "bad_omission",
+      "note": "bad: dropout and random masking omitted",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Trong quá trình huấn luyện, mô hình thay đổi các tầng ẩn.",
+      "bt_text": "During the training process, the model modifies the hidden layers.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch",
+            "coverage_mismatch"
+          ],
+          "note": "Passage B describes modification of hidden layers, which is significantly broader and less accurate than the specific mechanism of random masking described in Passage A.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\", \"coverage_mismatch\"], \"note\": \"Passage B describes modification of hidden layers, which is significantly broader and less accurate than the specific mechanism of random masking described in Passa",
+          "latency_sec": 1.43,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 55,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0005022,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "c5e87369493e2f9de42912a14cdae52f4a10dbffaba1fd002024f00a81287c0b"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A describes a general training effect, while Passage B specifies a particular technique (dropout) not mentioned in A.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 25, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A describes a general training effect, while Passage B specifies a particular technique (dropout) not mentioned in A.\"}",
+          "latency_sec": 1.331,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 45,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004662,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "bf534dda9c96f0f1ceef8268e89f5f856a3519c709355059c095630d5f71a50d"
+        },
+        "score_mean": 37.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_hallucination",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: unsupported guarantee added",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc.",
+      "bt_text": "The batch size controls the number of examples processed at the same time.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, as 'at once' and 'at the same time' convey the same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, as 'at once' and 'at the same time' convey the same meaning.\"}",
+          "latency_sec": 1.356,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 513,
+            "cached_tokens": 0,
+            "completion_tokens": 41,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004554,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "78b3143a28bc58b7b34a52a5b4e59530e0c1242d7938d9e6ff998bea686f6f59"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are synonymous, with only minor differences in wording that do not change the meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages are synonymous, with only minor differences in wording that do not change the meaning.\"}",
+          "latency_sec": 1.618,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 513,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004374,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "41e02cd7db931df839213e1170a3a0caca61287bc9e7b4257ad0e43642c8fb3e"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_hallucination",
+      "source": "comet_wide",
+      "expected": "medium_bad_addition",
+      "note": "bad: unsupported guarantee added",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc và đảm bảo mô hình luôn hội tụ.",
+      "bt_text": "The batch size controls the number of examples processed at once and ensures that the model always converges.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage B introduces an additional claim about model convergence not present in Passage A.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage B introduces an additional claim about model convergence not present in Passage A.\"}",
+          "latency_sec": 1.332,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 518,
+            "cached_tokens": 0,
+            "completion_tokens": 37,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000444,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "f43eaf00622e3d0cce12e1ad341cccbdb1c2a482a0c5412d7413b02003140243"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 75.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A includes an additional claim about model convergence that is absent in Passage B.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 75, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A includes an additional claim about model convergence that is absent in Passage B.\"}",
+          "latency_sec": 1.605,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 518,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004476,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "5080565b75f206d4924f75c5edc5354bfeaa744fb358c646cf7def8587ba12be"
+        },
+        "score_mean": 62.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_untranslated",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: English copied instead of translated",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "Hàm kích hoạt đưa tính phi tuyến vào mạng nơ-ron.",
+      "bt_text": "Activation functions introduce nonlinearity into neural networks.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, differing only in grammatical number.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, differing only in grammatical number.\"}",
+          "latency_sec": 1.767,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 505,
+            "cached_tokens": 0,
+            "completion_tokens": 30,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000411,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "00b3c255b446f556e06d8f16dbdcbba05cc424475df165d8fd02b54db1455295"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, differing only in number/article usage.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, differing only in number/article usage.\"}",
+          "latency_sec": 1.499,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 505,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004182,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "dc7006ac2a0ed02b77a5f053d625e0f27a766de8e7087d50e86bfc563d266534"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_untranslated",
+      "source": "comet_wide",
+      "expected": "bad_untranslated",
+      "note": "bad: English copied instead of translated",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "The activation function introduces nonlinearity into the neural network.",
+      "bt_text": "The activation function introduces nonlinearity into the neural network.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning.\"}",
+          "latency_sec": 1.441,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 25,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003942,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "529161b7a01c5e7e476464ccbd732bd438fe00ab4e849fd7ea08470e30345866"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning.\"}",
+          "latency_sec": 1.441,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 25,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003942,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "529161b7a01c5e7e476464ccbd732bd438fe00ab4e849fd7ea08470e30345866"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_subject_object",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: object relation reversed",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật các trọng số, không phải dữ liệu huấn luyện.",
+      "bt_text": "The optimizer updates the weights, not the training data.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}",
+          "latency_sec": 1.479,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000399,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "f6a0d56c6459d54405a59a0bfe84955574fc2502bcba1f402ff23ea25e6a4ec0"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}",
+          "latency_sec": 1.479,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000399,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "f6a0d56c6459d54405a59a0bfe84955574fc2502bcba1f402ff23ea25e6a4ec0"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_subject_object",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: object relation reversed",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật dữ liệu huấn luyện, không phải các trọng số.",
+      "bt_text": "The optimizer updates the training data, not the weights.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The two passages make contradictory claims regarding what the optimizer updates.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The two passages make contradictory claims regarding what the optimizer updates.\"}",
+          "latency_sec": 1.795,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004206,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "4bfc11150bd2f8e348124086958566c321214c8444aa71d6b6cbd6cb77af60b8"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages make contradictory claims regarding what the optimizer updates.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"The passages make contradictory claims regarding what the optimizer updates.\"}",
+          "latency_sec": 1.884,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004422,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "c52e54fb1440acb2b1e76a60a76473fd0a020b39574553760b7bd32127dc8795"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_negation_elementwise",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: negation dropped",
+      "src": "Matrix multiplication is not the same as elementwise multiplication.",
+      "mt": "Phép nhân ma trận không giống với phép nhân theo từng phần tử.",
+      "bt_text": "Matrix multiplication is not the same as element-wise multiplication.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with only a minor spelling variation that does not affect the definition of the mathematical operations.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with only a minor spelling variation that does not affect the definition of the mathematical operations.\"}",
+          "latency_sec": 1.756,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 510,
+            "cached_tokens": 0,
+            "completion_tokens": 41,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004536,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "505224ac44e0e67f3b26948f979d718a5276916da0ad79533b47a4ee5b94bae4"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with only a minor spelling difference in 'element-wise' versus 'elementwise'.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with only a minor spelling difference in 'element-wise' versus 'elementwise'.\"}",
+          "latency_sec": 1.414,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 510,
+            "cached_tokens": 0,
+            "completion_tokens": 41,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004536,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "edaf7a34746bcc79282fb06460b33abe4ed0eaa4ff4660176fa696c00c279cfe"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_negation_elementwise",
+      "source": "comet_wide",
+      "expected": "bad_negation",
+      "note": "bad: negation dropped",
+      "src": "Matrix multiplication is not the same as elementwise multiplication.",
+      "mt": "Phép nhân ma trận giống với phép nhân theo từng phần tử.",
+      "bt_text": "Matrix multiplication is similar to element-wise multiplication.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "Passage A states the operations are different, while Passage B incorrectly claims they are similar.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"Passage A states the operations are different, while Passage B incorrectly claims they are similar.\"}",
+          "latency_sec": 1.604,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 508,
+            "cached_tokens": 0,
+            "completion_tokens": 45,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004668,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "d6982bdb74599dbc4b893e1dc64b2b5a31cb7f77662a0da9763d8f7e70a13548"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages make contradictory claims about the relationship between matrix multiplication and element-wise multiplication.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages make contradictory claims about the relationship between matrix multiplication and element-wise multiplication.\"}",
+          "latency_sec": 1.575,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 508,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004416,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "f33f4257f8d7c2ccfd95f529271e02ecfbada7936d1858150f4ce7342d6a1725"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_loss_direction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: minimize vs maximize",
+      "src": "Gradient descent minimizes the loss function.",
+      "mt": "Hạ gradient tối thiểu hóa hàm mất mát.",
+      "bt_text": "Lower the gradient to minimize the loss function.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage B incorrectly identifies the goal as lowering the gradient rather than using the gradient to lower the loss.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage B incorrectly identifies the goal as lowering the gradient rather than using the gradient to lower the loss.\"}",
+          "latency_sec": 1.188,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 503,
+            "cached_tokens": 0,
+            "completion_tokens": 42,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000453,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "fd25c8ba28020d868245ca6ada00ae5148bc422207d3fe7d09645468a4d44a4c"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 75.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A is an instruction, whereas Passage B states a fact about the algorithm's outcome.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 75, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A is an instruction, whereas Passage B states a fact about the algorithm's outcome.\"}",
+          "latency_sec": 1.525,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 503,
+            "cached_tokens": 0,
+            "completion_tokens": 41,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004494,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "a516d6fbf5390dfcfd521d0ef10ec55b30028b2df74bb83a3610c2c57c219966"
+        },
+        "score_mean": 62.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "bad_loss_direction",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: minimize vs maximize",
+      "src": "Gradient descent minimizes the loss function.",
+      "mt": "Hạ gradient tối đa hóa hàm mất mát.",
+      "bt_text": "Lower the gradient to maximize the loss function.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages describe opposite mathematical goals (minimizing vs maximizing the loss function).",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"The passages describe opposite mathematical goals (minimizing vs maximizing the loss function).\"}",
+          "latency_sec": 1.587,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 503,
+            "cached_tokens": 0,
+            "completion_tokens": 42,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000453,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "b6e9c3531dd10ba50c796c9f171be9274ed4533a72748a22738ede4249871fc6"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage A describes gradient ascent to maximize a function, while Passage B describes gradient descent to minimize one.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage A describes gradient ascent to maximize a function, while Passage B describes gradient descent to minimize one.\"}",
+          "latency_sec": 2.06,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 503,
+            "cached_tokens": 0,
+            "completion_tokens": 42,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000453,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "e510c2d378dc1764a8e9acd04ec205b4c3cafd107188971f48daf827f47c6b2e"
+        },
+        "score_mean": 25.0,
+        "score_delta_abs": 50.0
+      }
+    },
+    {
+      "id": "good_dataset_split",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: validation/test set swapped",
+      "src": "We tune hyperparameters on the validation set, not on the test set.",
+      "mt": "Chúng ta điều chỉnh siêu tham số trên tập xác thực, không phải trên tập kiểm tra.",
+      "bt_text": "We adjust the hyperparameters on the validation set, not on the test set.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, with 'tune' and 'adjust' functioning as synonyms in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, with 'tune' and 'adjust' functioning as synonyms in this context.\"}",
+          "latency_sec": 1.737,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 516,
+            "cached_tokens": 0,
+            "completion_tokens": 39,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00045,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "64f300644c72b5be71e6aa4007638a3b82c1c138d17dc7876dbf2ca7864a7f2d"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, as tuning and adjusting hyperparameters are synonymous in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, as tuning and adjusting hyperparameters are synonymous in this context.\"}",
+          "latency_sec": 1.921,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 516,
+            "cached_tokens": 0,
+            "completion_tokens": 35,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004356,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "fd959e6cc814092ff1813f56dbc56a340277eadd0e54a04296d3d9d8744c30d3"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_dataset_split",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: validation/test set swapped",
+      "src": "We tune hyperparameters on the validation set, not on the test set.",
+      "mt": "Chúng ta điều chỉnh siêu tham số trên tập kiểm tra, không phải trên tập xác thực.",
+      "bt_text": "We adjust the hyperparameters on the test set, not on the validation set.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite regarding which set is used for hyperparameter tuning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"The passages state the exact opposite regarding which set is used for hyperparameter tuning.\"}",
+          "latency_sec": 2.058,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 516,
+            "cached_tokens": 0,
+            "completion_tokens": 43,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004644,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "91a581bda16f10ad480ce28cc8bf1cfc4890fd171686f299c970e6345243e396"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages make contradictory claims regarding which dataset is used for hyperparameter tuning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"The passages make contradictory claims regarding which dataset is used for hyperparameter tuning.\"}",
+          "latency_sec": 1.855,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 516,
+            "cached_tokens": 0,
+            "completion_tokens": 42,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004608,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "642180541a086df7b94f57aaabf2d3ba7f19c95330fe4bfad7cedf6e7bac24a7"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_learning_rate_number",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: number and direction reversed",
+      "src": "The learning rate is reduced from 0.1 to 0.01.",
+      "mt": "Tốc độ học được giảm từ 0,1 xuống 0,01.",
+      "bt_text": "The learning rate was reduced from 0.1 to 0.01.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, with only a change in grammatical tense.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, with only a change in grammatical tense.\"}",
+          "latency_sec": 1.286,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 521,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004278,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "9a762d739237336d704520ca0105b46cf7a8b75d8c226b25efa22f3bbf3b98ad"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The change in verb tense (was/is) does not alter the factual meaning of the statement.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The change in verb tense (was/is) does not alter the factual meaning of the statement.\"}",
+          "latency_sec": 1.384,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 521,
+            "cached_tokens": 0,
+            "completion_tokens": 37,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004458,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "01b4b1efcaaa1fbdb8b9fea1e0e99931e7f9ad9589730537420f628b127e36a5"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_learning_rate_number",
+      "source": "comet_wide",
+      "expected": "bad_numeric",
+      "note": "bad: number and direction reversed",
+      "src": "The learning rate is reduced from 0.1 to 0.01.",
+      "mt": "Tốc độ học được tăng từ 0,01 lên 0,1.",
+      "bt_text": "The learning rate was increased from 0.01 to 0.1.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "numeric_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The direction of the change is reversed, representing a contradiction.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"numeric_mismatch\", \"negation_mismatch\"], \"note\": \"The direction of the change is reversed, representing a contradiction.\"}",
+          "latency_sec": 1.513,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 521,
+            "cached_tokens": 0,
+            "completion_tokens": 39,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000453,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "7a5fbf3930ca9fd75f16b76155a87c556ae530b5988c4c405c8be0f60d602a77"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "numeric_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages describe opposite mathematical operations for the learning rate change.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"numeric_mismatch\", \"negation_mismatch\"], \"note\": \"The passages describe opposite mathematical operations for the learning rate change.\"}",
+          "latency_sec": 1.571,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 521,
+            "cached_tokens": 0,
+            "completion_tokens": 39,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000453,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "349a0b5c62afc0556f72bb3889d25cb719ea33b737e1f676c6a0262df92d91bf"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_variance_std",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: variance/std relation reversed",
+      "src": "The variance is the square of the standard deviation.",
+      "mt": "Phương sai là bình phương của độ lệch chuẩn.",
+      "bt_text": "Variance is the square of the standard deviation.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with only a minor stylistic difference in the inclusion of the article 'The'.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with only a minor stylistic difference in the inclusion of the article 'The'.\"}",
+          "latency_sec": 1.884,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 506,
+            "cached_tokens": 0,
+            "completion_tokens": 39,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000444,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "b9c21916a08e1425f147c9b2c63db7ee271b749e2f5072aa1a982093ac3b5fd2"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with only a minor stylistic difference in article usage.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with only a minor stylistic difference in article usage.\"}",
+          "latency_sec": 1.303,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 506,
+            "cached_tokens": 0,
+            "completion_tokens": 34,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000426,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "65f016a54d3355378092ff1381910ae50ead8c781389935a4b10674add2b5284"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_variance_std",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: variance/std relation reversed",
+      "src": "The variance is the square of the standard deviation.",
+      "mt": "Độ lệch chuẩn là bình phương của phương sai.",
+      "bt_text": "Standard deviation is the square of the variance.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages state inverse mathematical relationships that are factually contradictory.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages state inverse mathematical relationships that are factually contradictory.\"}",
+          "latency_sec": 1.473,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 506,
+            "cached_tokens": 0,
+            "completion_tokens": 33,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004224,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "bb869448f74621bfe4a7f24b66380c129ce4993c84a80390f45faef37eae5c6c"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The relationship between standard deviation and variance is inverted in the two passages.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"The relationship between standard deviation and variance is inverted in the two passages.\"}",
+          "latency_sec": 1.522,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 506,
+            "cached_tokens": 0,
+            "completion_tokens": 35,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004296,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "d85363255ddf303841a50eedcffeb450c3ee1b667b0fa9cfcb6009004e1a0038"
+        },
+        "score_mean": 50.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_underfit_overfit",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: underfitting changed to overfitting",
+      "src": "A model that underfits has high training error and high validation error.",
+      "mt": "Một mô hình bị thiếu khớp có lỗi huấn luyện cao và lỗi xác thực cao.",
+      "bt_text": "An underfitted model has high training error and high validation error.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, describing the same phenomenon with slight syntactic variation.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, describing the same phenomenon with slight syntactic variation.\"}",
+          "latency_sec": 1.295,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 514,
+            "cached_tokens": 0,
+            "completion_tokens": 33,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004272,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "7811b1dde5ff7003e72c0515d8858ae0c62984588fc76c4260f256788d962d94"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey identical meaning using slightly different syntactic structures.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey identical meaning using slightly different syntactic structures.\"}",
+          "latency_sec": 1.369,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 514,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004128,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "d832bb00c97e654c2be3a64a7ec407773289e42f3e72bd4d3ab85cae2a576229"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_underfit_overfit",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: underfitting changed to overfitting",
+      "src": "A model that underfits has high training error and high validation error.",
+      "mt": "Một mô hình bị quá khớp có lỗi huấn luyện thấp và lỗi xác thực cao.",
+      "bt_text": "An overfitted model has a low training error and a high validation error.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two opposite concepts: underfitting and overfitting, making their factual claims contradictory.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two opposite concepts: underfitting and overfitting, making their factual claims contradictory.\"}",
+          "latency_sec": 1.516,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 516,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004464,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "bc281d6fb62fbf33723804eab11b53e36cbffacf1d8ca59cb4fce672a35a7943"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage A describes an overfitted model, whereas Passage B describes an underfitted model.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 25, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage A describes an overfitted model, whereas Passage B describes an underfitted model.\"}",
+          "latency_sec": 2.374,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 516,
+            "cached_tokens": 0,
+            "completion_tokens": 39,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00045,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "02b79d16e7ca5b9d3d4ebba91f271c4e8279665435a8dc3aa5170878ade282e0"
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_softmax_sum",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: negation inserted",
+      "src": "The softmax outputs probabilities that sum to one.",
+      "mt": "Softmax xuất ra các xác suất có tổng bằng một.",
+      "bt_text": "Softmax outputs probabilities that sum to one.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, differing only by the inclusion of the definite article 'The'.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, differing only by the inclusion of the definite article 'The'.\"}",
+          "latency_sec": 1.53,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 505,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004326,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "d1e600d4ae90e7329473789ba761b11038a4245a9758d270cf666d8dfbd97f50"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages have identical meaning; the addition of the definite article does not alter the information.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages have identical meaning; the addition of the definite article does not alter the information.\"}",
+          "latency_sec": 1.412,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 505,
+            "cached_tokens": 0,
+            "completion_tokens": 35,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000429,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "c2e550d4f9a6c1253f0f60d97f8dfdd53dd9d6f1b9f676e2bd99ebbd0bc8f459"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_softmax_sum",
+      "source": "comet_wide",
+      "expected": "bad_negation",
+      "note": "bad: negation inserted",
+      "src": "The softmax outputs probabilities that sum to one.",
+      "mt": "Softmax xuất ra các xác suất không có tổng bằng một.",
+      "bt_text": "Softmax outputs probabilities that do not sum to one.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages make contradictory claims regarding whether softmax outputs sum to one.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages make contradictory claims regarding whether softmax outputs sum to one.\"}",
+          "latency_sec": 1.589,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 34,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004266,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "4d196d1d24ebe99a69c0849697fa9dc813899c9cf14cc6ea7a397ecb592d6bb9"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The two passages make contradictory claims regarding whether the softmax outputs sum to one.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The two passages make contradictory claims regarding whether the softmax outputs sum to one.\"}",
+          "latency_sec": 1.378,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004338,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "3cff44f4d666c18c4f7b15f095d87170272726eced743ab8b606cd6a733e1755"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_eigenvalue",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: eigenvalue/eigenvector mistranslated",
+      "src": "An eigenvalue tells how much an eigenvector is scaled.",
+      "mt": "Một trị riêng cho biết một vectơ riêng được co giãn bao nhiêu.",
+      "bt_text": "An eigenvalue indicates how much an eigenvector is stretched.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Stretching and scaling in this context refer to the same mathematical operation.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"Stretching and scaling in this context refer to the same mathematical operation.\"}",
+          "latency_sec": 1.72,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 31,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004158,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "ae7e23bb74a9de642618c28f6346049f8a04a90d2bf3e399c19a0673b9445a1b"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Stretched and scaled are synonyms in the context of linear algebra transformations.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"Stretched and scaled are synonyms in the context of linear algebra transformations.\"}",
+          "latency_sec": 1.965,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 31,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004158,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "5d6b841eb471b22cbf34744cd3461cddbc392d9cbf606e6bb8eaaa8381e20c31"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_eigenvalue",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: eigenvalue/eigenvector mistranslated",
+      "src": "An eigenvalue tells how much an eigenvector is scaled.",
+      "mt": "Một giá trị ví dụ cho biết một vectơ được sắp xếp như thế nào.",
+      "bt_text": "An example value indicates how a vector is sorted.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage B describes sorting vectors, whereas Passage A describes the scaling factor of eigenvectors.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage B describes sorting vectors, whereas Passage A describes the scaling factor of eigenvectors.\"}",
+          "latency_sec": 1.852,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 37,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004374,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "b66e188372a7b9d13896660286942e9c5e9cb6f8882e48258216e3d29219ef54"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two entirely different mathematical concepts (vector sorting versus eigenvalue scaling).",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two entirely different mathematical concepts (vector sorting versus eigenvalue scaling).\"}",
+          "latency_sec": 2.52,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 35,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004302,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "8709f7ed34b7eed67d0d118cfd997e4c700f1aeee234b0202217688a5ccb7acd"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_convolution_kernel",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: convolution kernel mistranslated",
+      "src": "A convolution kernel slides across the image to detect local patterns.",
+      "mt": "Một kernel tích chập trượt trên ảnh để phát hiện các mẫu cục bộ.",
+      "bt_text": "A convolution kernel slides over an image to detect local patterns.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, differing only by the preposition 'across' versus 'over'.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, differing only by the preposition 'across' versus 'over'.\"}",
+          "latency_sec": 1.327,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 511,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004362,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "339580a587545caa66a2c7025bca540bf4703a1dbad370749ddc1ca26f2a4a3c"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, differing only in the preposition 'over' versus 'across'.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, differing only in the preposition 'over' versus 'across'.\"}",
+          "latency_sec": 1.548,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 511,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004362,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "435c29254dcd2603e5ec0122b5fd45b9c2282aeb2a853e5940095d8b30afcc24"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_convolution_kernel",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: convolution kernel mistranslated",
+      "src": "A convolution kernel slides across the image to detect local patterns.",
+      "mt": "Một hạt nhân hội tụ trượt trên ảnh để phát hiện các mẫu cục bộ.",
+      "bt_text": "A sliding convolutional kernel on an image to detect local patterns.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the exact same operation and purpose without any change in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the exact same operation and purpose without any change in meaning.\"}",
+          "latency_sec": 2.07,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 511,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004218,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "b4fe546aaf16a83fcd84e05449e29124bba0674b2e1ba52f2b53538cd0e222be"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey identical technical information with only minor grammatical variation.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages convey identical technical information with only minor grammatical variation.\"}",
+          "latency_sec": 1.75,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 511,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000411,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "21b33ff59de02f470e743ea5a48648d0a2fb00778b0248259ae9d3ffb1326477"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_batch_epoch",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: epoch changed to batch",
+      "src": "An epoch is complete after the model has seen every training example once.",
+      "mt": "Một epoch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.",
+      "bt_text": "An epoch is completed after the model has seen each training example once.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages convey identical meaning with only minor lexical variation.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"Both passages convey identical meaning with only minor lexical variation.\"}",
+          "latency_sec": 1.501,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 515,
+            "cached_tokens": 0,
+            "completion_tokens": 28,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004098,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "568d10597ad23318b5f9cd935542a64f193e9a4497adca596d3b6ce99451c13d"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, with only minor lexical variation.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, with only minor lexical variation.\"}",
+          "latency_sec": 1.477,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 515,
+            "cached_tokens": 0,
+            "completion_tokens": 30,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000417,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "39c967d1ee330e9d42a4245e62d4e96a8ac922330f998a5e2a680650bd14e8dd"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_batch_epoch",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: epoch changed to batch",
+      "src": "An epoch is complete after the model has seen every training example once.",
+      "mt": "Một batch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.",
+      "bt_text": "A batch is completed after the model has seen each training example once.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages define the completion condition for different concepts (epoch vs. batch), which is a core semantic error.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages define the completion condition for different concepts (epoch vs. batch), which is a core semantic error.\"}",
+          "latency_sec": 1.698,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 515,
+            "cached_tokens": 0,
+            "completion_tokens": 43,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004638,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "8ae5c1d1691c3e8e4a29f59f7cf1a6539f67ced785dfd6c875c7de5abde9fe3d"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages use different terminology ('batch' vs 'epoch') to define the same concept, resulting in a factual error in the definition of a batch.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages use different terminology ('batch' vs 'epoch') to define the same concept, resulting in a factual error in the definition of a batch.\"}",
+          "latency_sec": 1.425,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 515,
+            "cached_tokens": 0,
+            "completion_tokens": 51,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004926,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "5143fab76f3cd8e29ad32aece0a48bddd6dfd5ed7dd235f3776a1c1e7e35019b"
+        },
+        "score_mean": 50.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_dimensionality_reduction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: dimensionality reduction mistranslated",
+      "src": "Dimensionality reduction projects high-dimensional data into a lower-dimensional space.",
+      "mt": "Giảm chiều chiếu dữ liệu chiều cao vào một không gian chiều thấp hơn.",
+      "bt_text": "Reduce the dimension of height data into a lower-dimensional space.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage B incorrectly substitutes 'high-dimensional data' with 'height data', changing the technical meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage B incorrectly substitutes 'high-dimensional data' with 'height data', changing the technical meaning.\"}",
+          "latency_sec": 1.753,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 515,
+            "cached_tokens": 0,
+            "completion_tokens": 42,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004602,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "a89d866cf7730ff1ba5947181194f30e06e4eb46cf018f3603244cc3b2a160b7"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 75.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A specifies height data, while Passage B generalizes to high-dimensional data, representing a difference in scope.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 75, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A specifies height data, while Passage B generalizes to high-dimensional data, representing a difference in scope.\"}",
+          "latency_sec": 1.367,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 515,
+            "cached_tokens": 0,
+            "completion_tokens": 44,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004674,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "1689b82196c4e66bf182e91a67a7f6de6a70a8cfea04cda2fe150f0f406dfd49"
+        },
+        "score_mean": 62.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "bad_dimensionality_reduction",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: dimensionality reduction mistranslated",
+      "src": "Dimensionality reduction projects high-dimensional data into a lower-dimensional space.",
+      "mt": "Chuẩn hóa dữ liệu chiều cao vào một không gian lớn hơn.",
+      "bt_text": "Normalize height data into a larger space.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage B describes normalization and increasing dimensionality, which contradicts the core concept of dimensionality reduction.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 25, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage B describes normalization and increasing dimensionality, which contradicts the core concept of dimensionality reduction.\"}",
+          "latency_sec": 1.435,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 510,
+            "cached_tokens": 0,
+            "completion_tokens": 39,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004464,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "03ff23005df2cbced54621b106745771a1640378b9ad980b8fbc1b6990518766"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch",
+            "coverage_mismatch"
+          ],
+          "note": "Passage A describes an expansion of space, while Passage B describes a reduction, representing opposite mathematical operations.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 25, \"flags\": [\"semantic_mismatch\", \"coverage_mismatch\"], \"note\": \"Passage A describes an expansion of space, while Passage B describes a reduction, representing opposite mathematical operations.\"}",
+          "latency_sec": 1.592,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 510,
+            "cached_tokens": 0,
+            "completion_tokens": 48,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004788,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "b1e9201c9253122444b2bfedff3373959b2368b6410771a2548a9a0afc3bb285"
+        },
+        "score_mean": 25.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_probability_range",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: probability range violated",
+      "src": "A probability must lie between 0 and 1.",
+      "mt": "Một xác suất phải nằm giữa 0 và 1.",
+      "bt_text": "A probability must lie between 0 and 1.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning.\"}",
+          "latency_sec": 1.365,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003918,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "125eed26b76d99611a39917a5aa8baf71212df65cb342e7852594fce56f85de1"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning.\"}",
+          "latency_sec": 1.365,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 509,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003918,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "125eed26b76d99611a39917a5aa8baf71212df65cb342e7852594fce56f85de1"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_probability_range",
+      "source": "comet_wide",
+      "expected": "bad_numeric",
+      "note": "bad: probability range violated",
+      "src": "A probability must lie between 0 and 1.",
+      "mt": "Một xác suất phải lớn hơn 1.",
+      "bt_text": "A probability must be greater than 1.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch",
+            "semantic_mismatch"
+          ],
+          "note": "The passages present contradictory claims regarding the allowed range of a probability.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"negation_mismatch\", \"semantic_mismatch\"], \"note\": \"The passages present contradictory claims regarding the allowed range of a probability.\"}",
+          "latency_sec": 1.687,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 40,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004482,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "310e8fca4292f8f927499970f83a57b9ed3f130e7836a069c37c971f06701039"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "numeric_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages provide contradictory mathematical definitions for the valid range of a probability.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"numeric_mismatch\", \"negation_mismatch\"], \"note\": \"The passages provide contradictory mathematical definitions for the valid range of a probability.\"}",
+          "latency_sec": 1.486,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 47,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004734,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "ff5b74e4c023b4c80b6ad4dc650ae11163cc931e19ea57b8ba28f34c710d43b2"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_bias_weight",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: bias/weight and before/after changed",
+      "src": "The bias term shifts the activation before applying the nonlinearity.",
+      "mt": "Hạng bias dịch chuyển kích hoạt trước khi áp dụng phi tuyến.",
+      "bt_text": "The bias shift activates before applying nonlinearity.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage B incorrectly identifies the bias shift itself as the action that activates, rather than shifting the activation value.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage B incorrectly identifies the bias shift itself as the action that activates, rather than shifting the activation value.\"}",
+          "latency_sec": 1.476,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 506,
+            "cached_tokens": 0,
+            "completion_tokens": 43,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004584,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "3d16335e79487c5d667956ad931c19f0bd80c8933c4db6ea8ace5e92bc6a2219"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same computational operation sequence.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same computational operation sequence.\"}",
+          "latency_sec": 1.842,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 506,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0003972,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "8e603fa1e84ea37c3cff7efe6cf669aea0084326fd4833e6c84ef20b65ed3c85"
+        },
+        "score_mean": 75.0,
+        "score_delta_abs": 50.0
+      }
+    },
+    {
+      "id": "bad_bias_weight",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: bias/weight and before/after changed",
+      "src": "The bias term shifts the activation before applying the nonlinearity.",
+      "mt": "Trọng số dịch chuyển kích hoạt sau khi áp dụng phi tuyến.",
+      "bt_text": "The displacement weight is activated after applying nonlinearity.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe the bias operation occurring at completely different stages relative to the nonlinearity.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 25, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe the bias operation occurring at completely different stages relative to the nonlinearity.\"}",
+          "latency_sec": 1.527,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 37,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004374,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "15a7c3c3339ba6a97a1175b6c97b0d03cf7fe87e8e736cc1c529081d21e90a51"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe different operations (displacement weight vs. bias) applied at different stages relative to the nonlinearity.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe different operations (displacement weight vs. bias) applied at different stages relative to the nonlinearity.\"}",
+          "latency_sec": 1.338,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 507,
+            "cached_tokens": 0,
+            "completion_tokens": 42,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004554,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "c83c216b8c221df6fab59e357fd183718daf69481d560f1a073185b915192d09"
+        },
+        "score_mean": 37.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_distribution",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: distribution and statistics changed",
+      "src": "A Gaussian distribution is fully specified by its mean and variance.",
+      "mt": "Một phân phối Gaussian được xác định đầy đủ bởi trung bình và phương sai.",
+      "bt_text": "A Gaussian distribution is fully defined by the mean and the variance.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are synonymous; 'fully specified' and 'fully defined' convey the same meaning in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages are synonymous; 'fully specified' and 'fully defined' convey the same meaning in this context.\"}",
+          "latency_sec": 1.339,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 512,
+            "cached_tokens": 0,
+            "completion_tokens": 40,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004512,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "52f5ce84b3b4604d9ba747e9127c958c61f43d8028e541be747bd9c2c0aa47c7"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are semantically identical, using synonyms to express the same mathematical fact.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages are semantically identical, using synonyms to express the same mathematical fact.\"}",
+          "latency_sec": 1.159,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 512,
+            "cached_tokens": 0,
+            "completion_tokens": 34,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004296,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "50d75fcfe6204a4bde122055df40ad83a8c8920045f7300404026f636cf32894"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_distribution",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: distribution and statistics changed",
+      "src": "A Gaussian distribution is fully specified by its mean and variance.",
+      "mt": "Một phân phối đều được xác định đầy đủ bởi trung vị và độ lệch chuẩn.",
+      "bt_text": "A uniform distribution is fully determined by the median and the standard deviation.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "numeric_mismatch"
+          ],
+          "note": "The passages describe two fundamentally different probability distributions using incorrect parameters for each.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"numeric_mismatch\"], \"note\": \"The passages describe two fundamentally different probability distributions using incorrect parameters for each.\"}",
+          "latency_sec": 1.371,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 513,
+            "cached_tokens": 0,
+            "completion_tokens": 40,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004518,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "3935fa2a4d5b6f4b224b8cc7500b6811b273bbe7016a2ebbe3752e38d741fbbc"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two completely different types of statistical distributions with different governing parameters.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 25, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two completely different types of statistical distributions with different governing parameters.\"}",
+          "latency_sec": 1.368,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 513,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004374,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "e2a2ccfc336fb95cc4e6270b363ecdf67818d888b00fb1b2a194baf69f983e20"
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "real_vector_s0_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: vector/vecto",
+      "src": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch,\nwith some abuse of notation, we define the nonlinearity\n$\\sigma$ to apply to its inputs in a rowwise fashion,\ni.e., one example at a time.\nNote that we used the notation for softmax\nin the same way to denote a rowwise operation in :numref:`subsec_softmax_vectorization`.\nOften, as in this section, the activation functions\nthat we apply to hidden layers are not merely rowwise,\nbut elementwise.\nThat means that after computing the linear portion of the layer,\nwe can calculate each activation\nwithout looking at the values taken by the other hidden units.\nThis is true for most activation functions.",
+      "mt": "Vì mỗi hàng trong $\\mathbf{X}$ tương ứng với một ví dụ trong minibatch, với một chút lạm dụng ký hiệu, ta định nghĩa phi tuyến $\\sigma$ áp dụng cho đầu vào của nó theo từng hàng, tức là mỗi lần một ví dụ. Lưu ý rằng chúng ta đã dùng ký hiệu cho softmax theo cùng cách để chỉ một phép toán theo hàng trong :numref:`subsec_softmax_vectorization`. Thông thường, như trong phần này, các hàm kích hoạt mà ta áp dụng cho các tầng ẩn không chỉ theo hàng mà còn theo từng phần tử. Điều đó có nghĩa là sau khi tính phần tuyến tính của tầng, ta có thể tính mỗi kích hoạt mà không cần nhìn vào các giá trị mà các đơn vị ẩn khác nhận được. Điều này đúng với hầu hết các hàm kích hoạt.",
+      "bt_text": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch, with a slight abuse of notation, we define the nonlinearity $\\sigma$ applied to its input row-wise, i.e., one example at a time. Note that we have used the notation for softmax in the same way to denote a row-wise operation in :numref:`subsec_softmax_vectorization`. Typically, as in this section, the activation functions that we apply to the hidden layers are not only row-wise but also element-wise. This means that after computing the linear part of the layer, we can compute each activation without looking at the values that other hidden units receive. This holds true for most activation functions.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey identical information and logical relationships using effectively synonymous phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey identical information and logical relationships using effectively synonymous phrasing.\"}",
+          "latency_sec": 1.834,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 791,
+            "cached_tokens": 0,
+            "completion_tokens": 31,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0005862,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "e72dd54207c0ba14cb42fc95e632fcbd85b6429ba19745f479168d98c84e449b"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, with only minor phrasing and formatting differences that do not alter the technical content.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, with only minor phrasing and formatting differences that do not alter the technical content.\"}",
+          "latency_sec": 1.478,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 791,
+            "cached_tokens": 0,
+            "completion_tokens": 39,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000615,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "0ccdfb5971524e97e0da736187765e2d4ad0786a9ab9120699b606f8e3668c95"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "real_vector_s1_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: vector/vecto",
+      "src": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch,\nwith some abuse of notation, we define the nonlinearity\n$\\sigma$ to apply to its inputs in a rowwise fashion,\ni.e., one example at a time.\nNote that we used the notation for softmax\nin the same way to denote a rowwise operation in :numref:`subsec_softmax_vectorization`.\nOften, as in this section, the activation functions\nthat we apply to hidden layers are not merely rowwise,\nbut elementwise.\nThat means that after computing the linear portion of the layer,\nwe can calculate each activation\nwithout looking at the values taken by the other hidden units.\nThis is true for most activation functions.",
+      "mt": "Vì mỗi hàng trong $\\mathbf{X}$ tương ứng với một ví dụ trong lô nhỏ, với một chút lạm dụng ký hiệu, ta định nghĩa phi tuyến $\\sigma$ sao cho nó áp dụng lên đầu vào theo từng hàng, tức là một ví dụ tại một thời điểm. Lưu ý rằng chúng ta đã dùng ký hiệu cho softmax theo cùng cách để chỉ một phép toán theo hàng trong :numref:`subsec_softmax_vectorization`. Thông thường, như trong mục này, các hàm kích hoạt mà ta áp dụng cho các tầng ẩn không chỉ theo hàng, mà còn theo phần tử. Điều đó có nghĩa là sau khi tính phần tuyến tính của tầng, ta có thể tính từng kích hoạt mà không cần nhìn vào các giá trị mà các đơn vị ẩn khác nhận được. Điều này đúng với hầu hết các hàm kích hoạt.",
+      "bt_text": "Since each row in $\\mathbf{X}$ corresponds to an example in a mini-batch, with a slight abuse of notation, we define the nonlinearity $\\sigma$ such that it applies to the input row-wise, i.e., one example at a time. Note that we have used the notation for softmax in the same way to denote a row-wise operation in :numref:`subsec_softmax_vectorization`. Typically, as in this section, the activation functions we apply to the hidden layers are not only row-wise, but also element-wise. This means that after computing the linear part of the layer, we can compute each activation without looking at the values that other hidden units receive. This holds true for most activation functions.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, with only minor stylistic variations in phrasing.\"}",
+          "latency_sec": 1.42,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 795,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0005922,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "cd189cf84e4da8ac87e40a2c19a90a88ca318aaa0be72c2dc4c42c5c7fd543f1"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are semantically identical, expressing the same technical definitions and operational logic.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, expressing the same technical definitions and operational logic.\"}",
+          "latency_sec": 1.327,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 795,
+            "cached_tokens": 0,
+            "completion_tokens": 33,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0005958,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "6673e3f153960edeb5454f751914ebef54fe79f3212358d2bea3cf521884899e"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "real_regularization_s1_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: regularization",
+      "src": "In this chapter, we will introduce your first truly *deep* network.\nThe simplest deep networks are called multilayer perceptrons,\nand they consist of multiple layers of neurons\neach fully connected to those in the layer below\n(from which they receive input)\nand those above (which they, in turn, influence).\nWhen we train high-capacity models we run the risk of overfitting.\nThus, we will need to provide your first rigorous introduction\nto the notions of overfitting, underfitting, and model selection.\nTo help you combat these problems,\nwe will introduce regularization techniques such as weight decay and dropout.\nWe will also discuss issues relating to numerical stability and parameter initialization\nthat are key to successfully training deep networks.\nThroughout, we aim to give you a firm grasp not just of the concepts\nbut also of the practice of using deep networks.\nAt the end of this chapter,\nwe apply what we have introduced so far to a real case: house price prediction.\nWe punt matters relating to the computational performance,\nscalability, and efficiency of our models to subsequent chapters.",
+      "mt": "Trong chương này, chúng ta sẽ giới thiệu mạng thực sự *sâu* đầu tiên của bạn. Những mạng sâu đơn giản nhất được gọi là perceptron đa tầng, và chúng gồm nhiều tầng nơ-ron, mỗi tầng đều kết nối đầy đủ với các nơ-ron ở tầng bên dưới (từ đó chúng nhận đầu vào) và các nơ-ron ở tầng bên trên (mà chúng, đến lượt mình, ảnh hưởng). Khi huấn luyện các mô hình có năng lực cao, chúng ta đối mặt với nguy cơ quá khớp. Vì vậy, chúng ta sẽ cần đưa ra phần giới thiệu chặt chẽ đầu tiên về các khái niệm quá khớp, thiếu khớp, và chọn mô hình. Để giúp bạn đối phó với những vấn đề này, chúng ta sẽ giới thiệu các kỹ thuật chuẩn hóa như suy giảm trọng số và dropout. Chúng ta cũng sẽ thảo luận các vấn đề liên quan đến ổn định số và khởi tạo tham số, vốn là những yếu tố then chốt để huấn luyện thành công các mạng nơ-ron sâu. Xuyên suốt, chúng tôi hướng tới việc giúp bạn nắm vững không chỉ các khái niệm mà còn cả thực hành sử dụng các mạng sâu. Ở cuối chương này, chúng ta áp dụng những gì đã giới thiệu cho đến nay vào một trường hợp thực tế: dự đoán giá nhà. Chúng ta sẽ gác lại các vấn đề liên quan đến hiệu năng tính toán, khả năng mở rộng, và hiệu quả của các mô hình sang các chương sau.",
+      "bt_text": "In this chapter, we will introduce your first truly *deep* network. The simplest deep networks are called multi-layer perceptrons, and they consist of multiple layers of neurons, where each layer is fully connected to the neurons in the layer below (from which they receive input) and the neurons in the layer above (which they, in turn, influence). When training high-capacity models, we face the risk of overfitting. Therefore, we will need to provide the first rigorous introduction to the concepts of overfitting, underfitting, and model selection. To help you deal with these issues, we will introduce regularization techniques such as weight decay and dropout. We will also discuss issues related to numerical stability and parameter initialization, which are key factors for successfully training deep neural networks. Throughout, we aim to help you master not only the concepts but also the practice of using deep networks. At the end of this chapter, we apply what we have introduced so far to a real-world case: house price prediction. We will set aside issues related to computational performance, scalability, and model efficiency for later chapters.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with only minor stylistic and phrasing variations.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with only minor stylistic and phrasing variations.\"}",
+          "latency_sec": 1.436,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 934,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0006756,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "e1a7cf238af623f0a3c471d0e3f0bd087e5fe59fb46e36b55820f6e7b8c412d6"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with only minor stylistic and formatting differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with only minor stylistic and formatting differences.\"}",
+          "latency_sec": 2.125,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 934,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0006756,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "380117593046591e911abfbf81180b3b4e2ebb37f6ed08ad2af965b90d071268"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "real_negation_s0",
+      "source": "workdb_diagnostic",
+      "expected": "diagnostic_real",
+      "note": "real negation candidate",
+      "src": "In this chapter, we will introduce your first truly *deep* network.\nThe simplest deep networks are called multilayer perceptrons,\nand they consist of multiple layers of neurons\neach fully connected to those in the layer below\n(from which they receive input)\nand those above (which they, in turn, influence).\nWhen we train high-capacity models we run the risk of overfitting.\nThus, we will need to provide your first rigorous introduction\nto the notions of overfitting, underfitting, and model selection.\nTo help you combat these problems,\nwe will introduce regularization techniques such as weight decay and dropout.\nWe will also discuss issues relating to numerical stability and parameter initialization\nthat are key to successfully training deep networks.\nThroughout, we aim to give you a firm grasp not just of the concepts\nbut also of the practice of using deep networks.\nAt the end of this chapter,\nwe apply what we have introduced so far to a real case: house price prediction.\nWe punt matters relating to the computational performance,\nscalability, and efficiency of our models to subsequent chapters.",
+      "mt": "Trong chương này, chúng ta sẽ giới thiệu mạng *sâu* thực sự đầu tiên của bạn. Những mạng sâu đơn giản nhất được gọi là perceptron nhiều lớp, và chúng gồm nhiều lớp nơ-ron, mỗi lớp được kết nối đầy đủ với các nơ-ron ở lớp bên dưới (từ đó chúng nhận đầu vào) và các nơ-ron ở lớp bên trên (mà đến lượt mình, chúng ảnh hưởng). Khi huấn luyện các mô hình có năng lực cao, chúng ta có nguy cơ bị quá khớp. Vì vậy, chúng ta sẽ cần giới thiệu một cách chặt chẽ những khái niệm về quá khớp, thiếu khớp và lựa chọn mô hình. Để giúp bạn đối phó với những vấn đề này, chúng ta sẽ giới thiệu các kỹ thuật chính quy hóa như suy giảm trọng số và dropout. Chúng ta cũng sẽ thảo luận các vấn đề liên quan đến độ ổn định số và khởi tạo tham số, vốn là những yếu tố then chốt để huấn luyện thành công các mạng sâu. Xuyên suốt, chúng tôi hướng tới việc giúp bạn nắm vững không chỉ các khái niệm mà còn cả thực hành sử dụng mạng sâu. Ở cuối chương này, chúng ta áp dụng những gì đã giới thiệu cho đến nay vào một trường hợp thực tế: dự đoán giá nhà. Chúng ta sẽ gác lại các vấn đề liên quan đến hiệu năng tính toán, khả năng mở rộng và hiệu quả của các mô hình sang các chương sau.",
+      "bt_text": "In this chapter, we will introduce your first true *deep* network. The simplest deep networks are called multi-layer perceptrons, and they consist of multiple layers of neurons, each layer being fully connected to the neurons in the layer below (from which they receive input) and the neurons in the layer above (which, in turn, they influence). When training high-capacity models, we run the risk of overfitting. Therefore, we will need to rigorously introduce the concepts of overfitting, underfitting, and model selection. To help you deal with these issues, we will introduce regularization techniques such as weight decay and dropout. We will also discuss issues related to numerical stability and parameter initialization, which are key factors for successfully training deep networks. Throughout, we aim to help you master not only the concepts but also the practice of using deep networks. At the end of this chapter, we apply what we have introduced so far to a real-world case: house price prediction. We will set aside issues related to computational performance, scalability, and model efficiency for later chapters.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey identical information and meaning, differing only in stylistic phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey identical information and meaning, differing only in stylistic phrasing.\"}",
+          "latency_sec": 1.283,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 928,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000672,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "15917a7bd30b734c808c3180e38e2ecbf82f0bffd156d2afb38a9fd88beadd0d"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey identical information and logical structure, with only minor stylistic variations in vocabulary.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages convey identical information and logical structure, with only minor stylistic variations in vocabulary.\"}",
+          "latency_sec": 1.785,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 928,
+            "cached_tokens": 0,
+            "completion_tokens": 34,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0006792,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "5182129eddef39d16a250894f440b83a4c5f56b032b69478842701db4fe9bb1d"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "real_numeric_s1",
+      "source": "workdb_diagnostic",
+      "expected": "diagnostic_real",
+      "note": "real numeric/math candidate",
+      "src": "Fortunately, [**the training loop for MLPs\nis exactly the same as for softmax regression.**]\nLeveraging the `d2l` package again,\nwe call the `train_ch3` function\n(see :numref:`sec_softmax_scratch`),\nsetting the number of epochs to 10\nand the learning rate to 0.1.",
+      "mt": "May mắn thay, [**vòng lặp huấn luyện cho MLPs hoàn toàn giống như cho hồi quy softmax.**] Tận dụng lại gói `d2l`, chúng ta gọi hàm `train_ch3` (xem :numref:`sec_softmax_scratch`), đặt số epoch là 10 và tốc độ học là 0.1.",
+      "bt_text": "Fortunately, [**the training loop for MLPs is exactly the same as for softmax regression.**] Leveraging the `d2l` package, we call the `train_ch3` function (see :numref:`sec_softmax_scratch`), setting the number of epochs to 10 and the learning rate to 0.1.",
+      "judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}",
+          "latency_sec": 2.134,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 635,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004746,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "1a3c3cf01f24f141b7ab6ce3efe95ead0b85d078ee56a00ea627db032c642702"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with only formatting and line breaks differing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with only formatting and line breaks differing.\"}",
+          "latency_sec": 1.333,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 635,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0004962,
+          "model_echo": "gemini-3.1-flash-lite",
+          "cache_key": "f349ca949960ca4c9f4775c4d8c5c18210253db6a6635b7dbe9286c07c571c79"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    }
+  ],
+  "pairwise": {
+    "ok": 17,
+    "total": 20,
+    "accuracy": 0.85,
+    "failures": [
+      {
+        "good": "good_regularization",
+        "bad": "bad_regularization",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "ok": false,
+        "margin": 0.0
+      },
+      {
+        "good": "good_untranslated",
+        "bad": "bad_untranslated",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "ok": false,
+        "margin": 0.0
+      },
+      {
+        "good": "good_convolution_kernel",
+        "bad": "bad_convolution_kernel",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "ok": false,
+        "margin": 0.0
+      }
+    ]
+  },
+  "order_sensitivity": {
+    "mean_abs": 6.395348837209302,
+    "max_abs": 50.0,
+    "policy_by_locked_threshold": "two_direction",
+    "count_non_expected_blind": 43
+  },
+  "validation": {
+    "json_error_count": 0,
+    "json_errors": [],
+    "flag_counts": {
+      "negation_mismatch": 14,
+      "semantic_mismatch": 27,
+      "coverage_mismatch": 7,
+      "numeric_mismatch": 4
+    }
+  },
+  "runtime": {
+    "elapsed_sec": 132.3326356000034,
+    "calls_api_vs_cache": {
+      "cache": 11,
+      "api": 81
+    },
+    "latency_median_sec_all": 1.5259999999999998,
+    "latency_p90_sec_all": 2.1328,
+    "latency_median_sec_api_only": 1.522,
+    "latency_p90_sec_api_only": 2.0393999999999997,
+    "usage_total_value_including_cached": {
+      "prompt_tokens": 50000,
+      "cached_tokens": 0,
+      "completion_tokens": 3276,
+      "reasoning_tokens": 0
+    },
+    "usage_incremental_api_only": {
+      "prompt_tokens": 44399,
+      "cached_tokens": 0,
+      "completion_tokens": 2953,
+      "reasoning_tokens": 0
+    },
+    "cost_value_including_cached_usd": 0.0417936,
+    "incremental_cost_api_only_usd": 0.0372702
+  }
+}

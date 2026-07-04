@@ -1,0 +1,1826 @@
+{
+  "status": "parallel_probe_real_api",
+  "model": "gemini-2.5-flash",
+  "concurrency": 8,
+  "source_report": "data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_phase1_probe.json",
+  "case_count": 46,
+  "judge_call_count": 92,
+  "cases": [
+    {
+      "id": "good_gradient",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_gradient",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning with only minor stylistic variations in word choice.",
+          "validation_error": "",
+          "latency_sec": 6.237781999981962,
+          "prompt_tokens": 261,
+          "completion_tokens": 51,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning with only minor stylistic variations in word choice.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_gradient",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning, with only minor stylistic variations in verb choice and phrasing.",
+          "validation_error": "",
+          "latency_sec": 6.239869900047779,
+          "prompt_tokens": 261,
+          "completion_tokens": 54,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning, with only minor stylistic variations in verb choice and phrasing.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_regularization",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_regularization",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and wording.",
+          "validation_error": "",
+          "latency_sec": 5.687340300064534,
+          "prompt_tokens": 253,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and wording.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_regularization",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and wording.",
+          "validation_error": "",
+          "latency_sec": 6.2984478999860585,
+          "prompt_tokens": 253,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and wording.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_regularization",
+      "expected": "bad_term",
+      "judge": {
+        "ab": {
+          "case_id": "bad_regularization",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and wording.",
+          "validation_error": "",
+          "latency_sec": 5.591529100085609,
+          "prompt_tokens": 253,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and wording.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_regularization",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and wording.",
+          "validation_error": "",
+          "latency_sec": 6.222563000046648,
+          "prompt_tokens": 253,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and wording.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_accuracy_direction",
+      "expected": "good",
+      "judge": {
+        "ba": {
+          "case_id": "good_accuracy_direction",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning, with only minor stylistic differences in word choice and tense.",
+          "validation_error": "",
+          "latency_sec": 7.179139800020494,
+          "prompt_tokens": 255,
+          "completion_tokens": 54,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning, with only minor stylistic differences in word choice and tense.\"\n}"
+        },
+        "ab": {
+          "case_id": "good_accuracy_direction",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the exact same meaning, with only stylistic differences in phrasing and verb tense.",
+          "validation_error": "",
+          "latency_sec": 7.207516599912196,
+          "prompt_tokens": 255,
+          "completion_tokens": 43,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages convey the exact same meaning, with only stylistic differences in phrasing and verb tense.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_accuracy_direction",
+      "expected": "bad_semantic",
+      "judge": {
+        "ab": {
+          "case_id": "bad_accuracy_direction",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "Passage A states an increase in accuracy, while Passage B states a decrease, making them contradictory.",
+          "validation_error": "",
+          "latency_sec": 3.370648599928245,
+          "prompt_tokens": 255,
+          "completion_tokens": 63,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"Passage A states an increase in accuracy, while Passage B states a decrease, making them contradictory.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_accuracy_direction",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.371591900009662,
+          "prompt_tokens": 255,
+          "completion_tokens": 11,
+          "text_prefix": "{\n  \"score\": 0,\n  "
+        }
+      }
+    },
+    {
+      "id": "good_dropout_omission",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_dropout_omission",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning; the difference is only in phrasing.",
+          "validation_error": "",
+          "latency_sec": 2.6274091999512166,
+          "prompt_tokens": 251,
+          "completion_tokens": 50,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning; the difference is only in phrasing.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_dropout_omission",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The difference between 'the training process' and 'training' is purely stylistic and does not alter the meaning.",
+          "validation_error": "",
+          "latency_sec": 3.012273499974981,
+          "prompt_tokens": 251,
+          "completion_tokens": 57,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The difference between 'the training process' and 'training' is purely stylistic and does not alter the meaning.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_dropout_omission",
+      "expected": "bad_omission",
+      "judge": {
+        "ab": {
+          "case_id": "bad_dropout_omission",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.785792300011963,
+          "prompt_tokens": 253,
+          "completion_tokens": 8,
+          "text_prefix": "{\n  \"score\": 2"
+        },
+        "ba": {
+          "case_id": "bad_dropout_omission",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.995310099911876,
+          "prompt_tokens": 253,
+          "completion_tokens": 8,
+          "text_prefix": "{\n  \"score\": 5"
+        }
+      }
+    },
+    {
+      "id": "good_hallucination",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_hallucination",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning with only minor phrasing variations.",
+          "validation_error": "",
+          "latency_sec": 3.1236779000610113,
+          "prompt_tokens": 259,
+          "completion_tokens": 48,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning with only minor phrasing variations.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_hallucination",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey identical meaning with only stylistic variations in phrasing.",
+          "validation_error": "",
+          "latency_sec": 3.7443749000085518,
+          "prompt_tokens": 259,
+          "completion_tokens": 47,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey identical meaning with only stylistic variations in phrasing.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_hallucination",
+      "expected": "medium_bad_addition",
+      "judge": {
+        "ba": {
+          "case_id": "bad_hallucination",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.2761567999841645,
+          "prompt_tokens": 264,
+          "completion_tokens": 29,
+          "text_prefix": "{\n  \"score\": 50,\n  \"flags\": [\n    \"coverage_mismatch\"\n  ],\n  "
+        },
+        "ab": {
+          "case_id": "bad_hallucination",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.750271599972621,
+          "prompt_tokens": 264,
+          "completion_tokens": 6,
+          "text_prefix": "{\n  \"score\":"
+        }
+      }
+    },
+    {
+      "id": "good_untranslated",
+      "expected": "good",
+      "judge": {
+        "ba": {
+          "case_id": "good_untranslated",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the identical meaning, with only minor grammatical variations in number and articles.",
+          "validation_error": "",
+          "latency_sec": 3.3351018999237567,
+          "prompt_tokens": 251,
+          "completion_tokens": 52,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the identical meaning, with only minor grammatical variations in number and articles.\"\n}"
+        },
+        "ab": {
+          "case_id": "good_untranslated",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The change from singular to plural nouns does not alter the fundamental meaning of the statement.",
+          "validation_error": "",
+          "latency_sec": 4.204896699986421,
+          "prompt_tokens": 251,
+          "completion_tokens": 52,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The change from singular to plural nouns does not alter the fundamental meaning of the statement.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_untranslated",
+      "expected": "bad_untranslated",
+      "judge": {
+        "ab": {
+          "case_id": "bad_untranslated",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and wording.",
+          "validation_error": "",
+          "latency_sec": 2.533016200060956,
+          "prompt_tokens": 253,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and wording.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_untranslated",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and wording.",
+          "validation_error": "",
+          "latency_sec": 2.8763665999285877,
+          "prompt_tokens": 253,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and wording.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_subject_object",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_subject_object",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and wording.",
+          "validation_error": "",
+          "latency_sec": 2.478302299976349,
+          "prompt_tokens": 255,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and wording.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_subject_object",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and wording.",
+          "validation_error": "",
+          "latency_sec": 2.9063123000087216,
+          "prompt_tokens": 255,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and wording.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_subject_object",
+      "expected": "bad_semantic",
+      "judge": {
+        "ab": {
+          "case_id": "bad_subject_object",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages make directly contradictory claims about what the optimizer updates.",
+          "validation_error": "",
+          "latency_sec": 3.1643383000046015,
+          "prompt_tokens": 255,
+          "completion_tokens": 55,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"The passages make directly contradictory claims about what the optimizer updates.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_subject_object",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages make directly contradictory claims about what the optimizer updates and what it does not update.",
+          "validation_error": "",
+          "latency_sec": 3.6373055999865755,
+          "prompt_tokens": 255,
+          "completion_tokens": 61,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"The passages make directly contradictory claims about what the optimizer updates and what it does not update.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_negation_elementwise",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_negation_elementwise",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The only difference between the passages is the hyphenation of 'elementwise', which is a stylistic variation.",
+          "validation_error": "",
+          "latency_sec": 2.7623070999979973,
+          "prompt_tokens": 256,
+          "completion_tokens": 56,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The only difference between the passages is the hyphenation of 'elementwise', which is a stylistic variation.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_negation_elementwise",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The only difference is the hyphenation of 'element-wise' versus 'elementwise', which does not alter the meaning.",
+          "validation_error": "",
+          "latency_sec": 2.8123230000492185,
+          "prompt_tokens": 256,
+          "completion_tokens": 60,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The only difference is the hyphenation of 'element-wise' versus 'elementwise', which does not alter the meaning.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_negation_elementwise",
+      "expected": "bad_negation",
+      "judge": {
+        "ab": {
+          "case_id": "bad_negation_elementwise",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "Passage A states the operations are not the same, while Passage B states they are similar, leading to contradictory claims.",
+          "validation_error": "",
+          "latency_sec": 4.219935200060718,
+          "prompt_tokens": 254,
+          "completion_tokens": 67,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"Passage A states the operations are not the same, while Passage B states they are similar, leading to contradictory claims.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_negation_elementwise",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "Passage A claims similarity, while Passage B explicitly denies sameness, leading to a direct contradiction.",
+          "validation_error": "",
+          "latency_sec": 4.283429100061767,
+          "prompt_tokens": 254,
+          "completion_tokens": 63,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"Passage A claims similarity, while Passage B explicitly denies sameness, leading to a direct contradiction.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_loss_direction",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_loss_direction",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.688738800003193,
+          "prompt_tokens": 249,
+          "completion_tokens": 15,
+          "text_prefix": "{\n  \"score\": 50,\n  \"flags\":"
+        },
+        "ba": {
+          "case_id": "good_loss_direction",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.923050499986857,
+          "prompt_tokens": 249,
+          "completion_tokens": 8,
+          "text_prefix": "{\n  \"score\": 5"
+        }
+      }
+    },
+    {
+      "id": "bad_loss_direction",
+      "expected": "bad_semantic",
+      "judge": {
+        "ab": {
+          "case_id": "bad_loss_direction",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "Passage A states minimization, while Passage B states maximization, which are contradictory objectives.",
+          "validation_error": "",
+          "latency_sec": 4.284041599952616,
+          "prompt_tokens": 249,
+          "completion_tokens": 60,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"Passage A states minimization, while Passage B states maximization, which are contradictory objectives.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_loss_direction",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "Passage A states the goal is to maximize the loss function, while Passage B correctly states the goal is to minimize it, representing a direct contradiction.",
+          "validation_error": "",
+          "latency_sec": 4.264366199960932,
+          "prompt_tokens": 249,
+          "completion_tokens": 73,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"Passage A states the goal is to maximize the loss function, while Passage B correctly states the goal is to minimize it, repre"
+        }
+      }
+    },
+    {
+      "id": "good_dataset_split",
+      "expected": "good",
+      "judge": {
+        "ba": {
+          "case_id": "good_dataset_split",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The words 'adjust' and 'tune' are synonymous in this context, leading to identical meaning.",
+          "validation_error": "",
+          "latency_sec": 2.9543698000488803,
+          "prompt_tokens": 262,
+          "completion_tokens": 55,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The words 'adjust' and 'tune' are synonymous in this context, leading to identical meaning.\"\n}"
+        },
+        "ab": {
+          "case_id": "good_dataset_split",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey identical meaning, with only a stylistic difference in verb choice.",
+          "validation_error": "",
+          "latency_sec": 3.825500600039959,
+          "prompt_tokens": 262,
+          "completion_tokens": 50,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey identical meaning, with only a stylistic difference in verb choice.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_dataset_split",
+      "expected": "bad_semantic",
+      "judge": {
+        "ba": {
+          "case_id": "bad_dataset_split",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages make directly contradictory claims about which dataset is used for hyperparameter tuning.",
+          "validation_error": "",
+          "latency_sec": 3.7289189000148326,
+          "prompt_tokens": 262,
+          "completion_tokens": 59,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"The passages make directly contradictory claims about which dataset is used for hyperparameter tuning.\"\n}"
+        },
+        "ab": {
+          "case_id": "bad_dataset_split",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.671382499975152,
+          "prompt_tokens": 262,
+          "completion_tokens": 4,
+          "text_prefix": "{\n  \""
+        }
+      }
+    },
+    {
+      "id": "good_learning_rate_number",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_learning_rate_number",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The only difference is the verb tense, which does not alter the core meaning of the action described.",
+          "validation_error": "",
+          "latency_sec": 3.04604929999914,
+          "prompt_tokens": 267,
+          "completion_tokens": 55,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The only difference is the verb tense, which does not alter the core meaning of the action described.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_learning_rate_number",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The only difference is the verb tense, which does not alter the factual meaning of the reduction.",
+          "validation_error": "",
+          "latency_sec": 3.0249556999187917,
+          "prompt_tokens": 267,
+          "completion_tokens": 54,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The only difference is the verb tense, which does not alter the factual meaning of the reduction.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_learning_rate_number",
+      "expected": "bad_numeric",
+      "judge": {
+        "ab": {
+          "case_id": "bad_learning_rate_number",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.1807997999712825,
+          "prompt_tokens": 267,
+          "completion_tokens": 5,
+          "text_prefix": "{\n  \"score"
+        },
+        "ba": {
+          "case_id": "bad_learning_rate_number",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "numeric_mismatch"
+          ],
+          "note": "Passage A describes an increase from 0.01 to 0.1, while Passage B describes a reduction from 0.1 to 0.01, making them contradictory.",
+          "validation_error": "",
+          "latency_sec": 4.1762983000371605,
+          "prompt_tokens": 267,
+          "completion_tokens": 82,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"numeric_mismatch\"\n  ],\n  \"note\": \"Passage A describes an increase from 0.01 to 0.1, while Passage B describes a reduction from 0.1 to 0.01, making them contradic"
+        }
+      }
+    },
+    {
+      "id": "good_variance_std",
+      "expected": "good",
+      "judge": {
+        "ba": {
+          "case_id": "good_variance_std",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning; the difference is purely stylistic with the addition of 'The'.",
+          "validation_error": "",
+          "latency_sec": 2.5687603999394923,
+          "prompt_tokens": 252,
+          "completion_tokens": 55,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning; the difference is purely stylistic with the addition of 'The'.\"\n}"
+        },
+        "ab": {
+          "case_id": "good_variance_std",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same mathematical definition; the only difference is a stylistic use of the definite article.",
+          "validation_error": "",
+          "latency_sec": 2.9881975000025705,
+          "prompt_tokens": 252,
+          "completion_tokens": 56,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same mathematical definition; the only difference is a stylistic use of the definite article.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_variance_std",
+      "expected": "bad_semantic",
+      "judge": {
+        "ab": {
+          "case_id": "bad_variance_std",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage B states the inverse mathematical relationship compared to passage A, making them contradictory.",
+          "validation_error": "",
+          "latency_sec": 3.259940000018105,
+          "prompt_tokens": 252,
+          "completion_tokens": 51,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\"\n  ],\n  \"note\": \"Passage B states the inverse mathematical relationship compared to passage A, making them contradictory.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_variance_std",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage A states the inverse of the relationship described in Passage B, making them contradictory.",
+          "validation_error": "",
+          "latency_sec": 3.962612400064245,
+          "prompt_tokens": 252,
+          "completion_tokens": 52,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\"\n  ],\n  \"note\": \"Passage A states the inverse of the relationship described in Passage B, making them contradictory.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_underfit_overfit",
+      "expected": "good",
+      "judge": {
+        "ba": {
+          "case_id": "good_underfit_overfit",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning with only minor phrasing differences.",
+          "validation_error": "",
+          "latency_sec": 3.034437100053765,
+          "prompt_tokens": 260,
+          "completion_tokens": 48,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning with only minor phrasing differences.\"\n}"
+        },
+        "ab": {
+          "case_id": "good_underfit_overfit",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning, with only minor phrasing differences.",
+          "validation_error": "",
+          "latency_sec": 4.329763900022954,
+          "prompt_tokens": 260,
+          "completion_tokens": 49,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning, with only minor phrasing differences.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_underfit_overfit",
+      "expected": "bad_term",
+      "judge": {
+        "ba": {
+          "case_id": "bad_underfit_overfit",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 3.6207502000033855,
+          "prompt_tokens": 262,
+          "completion_tokens": 4,
+          "text_prefix": "{\n  \""
+        },
+        "ab": {
+          "case_id": "bad_underfit_overfit",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.490377099951729,
+          "prompt_tokens": 262,
+          "completion_tokens": 9,
+          "text_prefix": "{\n  \"score\": 25"
+        }
+      }
+    },
+    {
+      "id": "good_softmax_sum",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_softmax_sum",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey identical meaning; the difference is purely stylistic with the presence of 'The' in passage A.",
+          "validation_error": "",
+          "latency_sec": 2.437253199983388,
+          "prompt_tokens": 251,
+          "completion_tokens": 47,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages convey identical meaning; the difference is purely stylistic with the presence of 'The' in passage A.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_softmax_sum",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning; the difference is purely stylistic with the addition of a definite article.",
+          "validation_error": "",
+          "latency_sec": 2.863766999915242,
+          "prompt_tokens": 251,
+          "completion_tokens": 56,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning; the difference is purely stylistic with the addition of a definite article.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_softmax_sum",
+      "expected": "bad_negation",
+      "judge": {
+        "ab": {
+          "case_id": "bad_softmax_sum",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages make directly contradictory claims about whether softmax probabilities sum to one.",
+          "validation_error": "",
+          "latency_sec": 3.295493899961002,
+          "prompt_tokens": 253,
+          "completion_tokens": 57,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"negation_mismatch\"\n  ],\n  \"note\": \"The passages make directly contradictory claims about whether softmax probabilities sum to one.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_softmax_sum",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch",
+            "semantic_mismatch"
+          ],
+          "note": "Passage A states softmax probabilities do not sum to one, while Passage B states they do, creating a direct contradiction.",
+          "validation_error": "",
+          "latency_sec": 3.018795600044541,
+          "prompt_tokens": 253,
+          "completion_tokens": 67,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"negation_mismatch\",\n    \"semantic_mismatch\"\n  ],\n  \"note\": \"Passage A states softmax probabilities do not sum to one, while Passage B states they do, creating a direct contradiction.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_eigenvalue",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_eigenvalue",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The terms 'scaled' and 'stretched' convey the same meaning in the context of eigenvectors and eigenvalues.",
+          "validation_error": "",
+          "latency_sec": 3.668814599979669,
+          "prompt_tokens": 253,
+          "completion_tokens": 46,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The terms 'scaled' and 'stretched' convey the same meaning in the context of eigenvectors and eigenvalues.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_eigenvalue",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The terms 'stretched' and 'scaled' are synonymous in the context of eigenvectors and eigenvalues, and the rest of the meaning is identical.",
+          "validation_error": "",
+          "latency_sec": 3.460665399907157,
+          "prompt_tokens": 253,
+          "completion_tokens": 53,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The terms 'stretched' and 'scaled' are synonymous in the context of eigenvectors and eigenvalues, and the rest of the meaning is identical.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_eigenvalue",
+      "expected": "bad_term",
+      "judge": {
+        "ab": {
+          "case_id": "bad_eigenvalue",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages discuss entirely different mathematical concepts and operations, leading to a complete change in meaning.",
+          "validation_error": "",
+          "latency_sec": 4.919632500037551,
+          "prompt_tokens": 253,
+          "completion_tokens": 52,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\"\n  ],\n  \"note\": \"The passages discuss entirely different mathematical concepts and operations, leading to a complete change in meaning.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_eigenvalue",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.520637500099838,
+          "prompt_tokens": 253,
+          "completion_tokens": 9,
+          "text_prefix": "{\n  \"score\": 0,"
+        }
+      }
+    },
+    {
+      "id": "good_convolution_kernel",
+      "expected": "good",
+      "judge": {
+        "ba": {
+          "case_id": "good_convolution_kernel",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey identical meaning with only minor prepositional and article differences.",
+          "validation_error": "",
+          "latency_sec": 2.9299719999544322,
+          "prompt_tokens": 257,
+          "completion_tokens": 49,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey identical meaning with only minor prepositional and article differences.\"\n}"
+        },
+        "ab": {
+          "case_id": "good_convolution_kernel",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The only difference is the preposition 'across' vs 'over', which convey the same meaning in this context.",
+          "validation_error": "",
+          "latency_sec": 3.4607506999745965,
+          "prompt_tokens": 257,
+          "completion_tokens": 57,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The only difference is the preposition 'across' vs 'over', which convey the same meaning in this context.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_convolution_kernel",
+      "expected": "bad_term",
+      "judge": {
+        "ba": {
+          "case_id": "bad_convolution_kernel",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning, with differences only in phrasing and word order.",
+          "validation_error": "",
+          "latency_sec": 2.961164199979976,
+          "prompt_tokens": 257,
+          "completion_tokens": 52,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning, with differences only in phrasing and word order.\"\n}"
+        },
+        "ab": {
+          "case_id": "bad_convolution_kernel",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning with only minor stylistic and grammatical variations.",
+          "validation_error": "",
+          "latency_sec": 4.586084200069308,
+          "prompt_tokens": 257,
+          "completion_tokens": 50,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning with only minor stylistic and grammatical variations.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_batch_epoch",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_batch_epoch",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning, with only minor stylistic variations in word choice.",
+          "validation_error": "",
+          "latency_sec": 3.823808699962683,
+          "prompt_tokens": 261,
+          "completion_tokens": 52,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning, with only minor stylistic variations in word choice.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_batch_epoch",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning with only minor stylistic variations in word choice.",
+          "validation_error": "",
+          "latency_sec": 3.758900300017558,
+          "prompt_tokens": 261,
+          "completion_tokens": 51,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning with only minor stylistic variations in word choice.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_batch_epoch",
+      "expected": "bad_term",
+      "judge": {
+        "ab": {
+          "case_id": "bad_batch_epoch",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.279137299978174,
+          "prompt_tokens": 261,
+          "completion_tokens": 10,
+          "text_prefix": "{\n  \"score\": 25,"
+        },
+        "ba": {
+          "case_id": "bad_batch_epoch",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.7047432999825105,
+          "prompt_tokens": 261,
+          "completion_tokens": 6,
+          "text_prefix": "{\n  \"score\":"
+        }
+      }
+    },
+    {
+      "id": "good_dimensionality_reduction",
+      "expected": "good",
+      "judge": {
+        "ba": {
+          "case_id": "good_dimensionality_reduction",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.100434000021778,
+          "prompt_tokens": 261,
+          "completion_tokens": 5,
+          "text_prefix": "{\n  \"score"
+        },
+        "ab": {
+          "case_id": "good_dimensionality_reduction",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.536793100065552,
+          "prompt_tokens": 261,
+          "completion_tokens": 51,
+          "text_prefix": "{\n  \"score\": 50,\n  \"flags\": [\n    \"coverage_mismatch\"\n  ],\n  \"note\": \"Passage B specifies 'height data' instead of the more general 'high-dimensional data"
+        }
+      }
+    },
+    {
+      "id": "bad_dimensionality_reduction",
+      "expected": "bad_term",
+      "judge": {
+        "ab": {
+          "case_id": "bad_dimensionality_reduction",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.413966300082393,
+          "prompt_tokens": 256,
+          "completion_tokens": 14,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\":"
+        },
+        "ba": {
+          "case_id": "bad_dimensionality_reduction",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.753406599978916,
+          "prompt_tokens": 256,
+          "completion_tokens": 9,
+          "text_prefix": "{\n  \"score\": 0,"
+        }
+      }
+    },
+    {
+      "id": "good_probability_range",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_probability_range",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "latency_sec": 2.656369899981655,
+          "prompt_tokens": 255,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and content.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_probability_range",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning and content.",
+          "validation_error": "",
+          "latency_sec": 2.305169399944134,
+          "prompt_tokens": 255,
+          "completion_tokens": 34,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages are identical in meaning and content.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_probability_range",
+      "expected": "bad_numeric",
+      "judge": {
+        "ab": {
+          "case_id": "bad_probability_range",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "numeric_mismatch"
+          ],
+          "note": "Passage B states a range for probability that directly contradicts the range given in Passage A.",
+          "validation_error": "",
+          "latency_sec": 4.176559600047767,
+          "prompt_tokens": 253,
+          "completion_tokens": 60,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\",\n    \"numeric_mismatch\"\n  ],\n  \"note\": \"Passage B states a range for probability that directly contradicts the range given in Passage A.\"\n}"
+        },
+        "ba": {
+          "case_id": "bad_probability_range",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage A makes a fundamentally incorrect claim about probability, directly contradicting the correct definition provided in Passage B.",
+          "validation_error": "",
+          "latency_sec": 3.5959881999297068,
+          "prompt_tokens": 253,
+          "completion_tokens": 55,
+          "text_prefix": "{\n  \"score\": 0,\n  \"flags\": [\n    \"semantic_mismatch\"\n  ],\n  \"note\": \"Passage A makes a fundamentally incorrect claim about probability, directly contradicting the correct definition provided in Passage B.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "good_bias_weight",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_bias_weight",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.583993499982171,
+          "prompt_tokens": 252,
+          "completion_tokens": 10,
+          "text_prefix": "{\n  \"score\": 25,"
+        },
+        "ba": {
+          "case_id": "good_bias_weight",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.370317899971269,
+          "prompt_tokens": 252,
+          "completion_tokens": 11,
+          "text_prefix": "{\n  \"score\": 50,\n"
+        }
+      }
+    },
+    {
+      "id": "bad_bias_weight",
+      "expected": "bad_semantic",
+      "judge": {
+        "ab": {
+          "case_id": "bad_bias_weight",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.21306049998384,
+          "prompt_tokens": 253,
+          "completion_tokens": 6,
+          "text_prefix": "{\n  \"score\":"
+        },
+        "ba": {
+          "case_id": "bad_bias_weight",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.31850419996772,
+          "prompt_tokens": 253,
+          "completion_tokens": 7,
+          "text_prefix": "{\n  \"score\": "
+        }
+      }
+    },
+    {
+      "id": "good_distribution",
+      "expected": "good",
+      "judge": {
+        "ab": {
+          "case_id": "good_distribution",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the exact same meaning with only minor word choice differences.",
+          "validation_error": "",
+          "latency_sec": 3.0344647000310943,
+          "prompt_tokens": 258,
+          "completion_tokens": 49,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the exact same meaning with only minor word choice differences.\"\n}"
+        },
+        "ba": {
+          "case_id": "good_distribution",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "The passages convey the identical meaning with only minor stylistic variations in word choice.",
+          "validation_error": "",
+          "latency_sec": 4.473414000007324,
+          "prompt_tokens": 258,
+          "completion_tokens": 50,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [\n    \"format_only\"\n  ],\n  \"note\": \"The passages convey the identical meaning with only minor stylistic variations in word choice.\"\n}"
+        }
+      }
+    },
+    {
+      "id": "bad_distribution",
+      "expected": "bad_term",
+      "judge": {
+        "ab": {
+          "case_id": "bad_distribution",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.216801999951713,
+          "prompt_tokens": 259,
+          "completion_tokens": 7,
+          "text_prefix": "{\n  \"score\": "
+        },
+        "ba": {
+          "case_id": "bad_distribution",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.200419100001454,
+          "prompt_tokens": 259,
+          "completion_tokens": 6,
+          "text_prefix": "{\n  \"score\":"
+        }
+      }
+    },
+    {
+      "id": "real_vector_s0_expected_blind",
+      "expected": "expected_blind",
+      "judge": {
+        "ab": {
+          "case_id": "real_vector_s0_expected_blind",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 3.527828900027089,
+          "prompt_tokens": 537,
+          "completion_tokens": 10,
+          "text_prefix": "{\n  \"score\": 100"
+        },
+        "ba": {
+          "case_id": "real_vector_s0_expected_blind",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 3.405565800028853,
+          "prompt_tokens": 537,
+          "completion_tokens": 8,
+          "text_prefix": "{\n  \"score\": 1"
+        }
+      }
+    },
+    {
+      "id": "real_vector_s1_expected_blind",
+      "expected": "expected_blind",
+      "judge": {
+        "ba": {
+          "case_id": "real_vector_s1_expected_blind",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 3.340660999994725,
+          "prompt_tokens": 541,
+          "completion_tokens": 11,
+          "text_prefix": "{\n  \"score\": 100,"
+        },
+        "ab": {
+          "case_id": "real_vector_s1_expected_blind",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 3.618123700027354,
+          "prompt_tokens": 541,
+          "completion_tokens": 9,
+          "text_prefix": "{\n  \"score\": 10"
+        }
+      }
+    },
+    {
+      "id": "real_regularization_s1_expected_blind",
+      "expected": "expected_blind",
+      "judge": {
+        "ab": {
+          "case_id": "real_regularization_s1_expected_blind",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 3.877003200002946,
+          "prompt_tokens": 680,
+          "completion_tokens": 11,
+          "text_prefix": "{\n  \"score\": 100,"
+        },
+        "ba": {
+          "case_id": "real_regularization_s1_expected_blind",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 3.651924900012091,
+          "prompt_tokens": 680,
+          "completion_tokens": 6,
+          "text_prefix": "{\n  \"score\":"
+        }
+      }
+    },
+    {
+      "id": "real_negation_s0",
+      "expected": "diagnostic_real",
+      "judge": {
+        "ab": {
+          "case_id": "real_negation_s0",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.15386269998271,
+          "prompt_tokens": 674,
+          "completion_tokens": 10,
+          "text_prefix": "{\n  \"score\": 100"
+        },
+        "ba": {
+          "case_id": "real_negation_s0",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 3.7633031000150368,
+          "prompt_tokens": 674,
+          "completion_tokens": 10,
+          "text_prefix": "{\n  \"score\": 100"
+        }
+      }
+    },
+    {
+      "id": "real_numeric_s1",
+      "expected": "diagnostic_real",
+      "judge": {
+        "ba": {
+          "case_id": "real_numeric_s1",
+          "direction": "ba",
+          "ok_transport": true,
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the exact same meaning; differences are purely stylistic.",
+          "validation_error": "",
+          "latency_sec": 3.5247948999749497,
+          "prompt_tokens": 381,
+          "completion_tokens": 38,
+          "text_prefix": "{\n  \"score\": 100,\n  \"flags\": [],\n  \"note\": \"The passages convey the exact same meaning; differences are purely stylistic.\"\n}"
+        },
+        "ab": {
+          "case_id": "real_numeric_s1",
+          "direction": "ab",
+          "ok_transport": true,
+          "score": null,
+          "flags": [],
+          "note": "",
+          "validation_error": "json_parse_fail",
+          "latency_sec": 4.925585099961609,
+          "prompt_tokens": 381,
+          "completion_tokens": 7,
+          "text_prefix": "{\n  \"score\": "
+        }
+      }
+    }
+  ],
+  "pairwise": {
+    "ok": 9,
+    "total": 20,
+    "accuracy": 0.45,
+    "failures": [
+      {
+        "good": "good_regularization",
+        "bad": "bad_regularization",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "margin": 0.0
+      },
+      {
+        "good": "good_dropout_omission",
+        "bad": "bad_dropout_omission",
+        "good_score": 100.0,
+        "bad_score": null,
+        "margin": null
+      },
+      {
+        "good": "good_hallucination",
+        "bad": "bad_hallucination",
+        "good_score": 100.0,
+        "bad_score": null,
+        "margin": null
+      },
+      {
+        "good": "good_untranslated",
+        "bad": "bad_untranslated",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "margin": 0.0
+      },
+      {
+        "good": "good_loss_direction",
+        "bad": "bad_loss_direction",
+        "good_score": null,
+        "bad_score": 0.0,
+        "margin": null
+      },
+      {
+        "good": "good_underfit_overfit",
+        "bad": "bad_underfit_overfit",
+        "good_score": 100.0,
+        "bad_score": null,
+        "margin": null
+      },
+      {
+        "good": "good_convolution_kernel",
+        "bad": "bad_convolution_kernel",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "margin": 0.0
+      },
+      {
+        "good": "good_batch_epoch",
+        "bad": "bad_batch_epoch",
+        "good_score": 100.0,
+        "bad_score": null,
+        "margin": null
+      },
+      {
+        "good": "good_dimensionality_reduction",
+        "bad": "bad_dimensionality_reduction",
+        "good_score": null,
+        "bad_score": null,
+        "margin": null
+      },
+      {
+        "good": "good_bias_weight",
+        "bad": "bad_bias_weight",
+        "good_score": null,
+        "bad_score": null,
+        "margin": null
+      },
+      {
+        "good": "good_distribution",
+        "bad": "bad_distribution",
+        "good_score": 100.0,
+        "bad_score": null,
+        "margin": null
+      }
+    ]
+  },
+  "order_sensitivity": {
+    "mean_abs": 0.0,
+    "max_abs": 0.0,
+    "policy_by_locked_threshold": "one_direction"
+  },
+  "validation": {
+    "transport_error_count": 0,
+    "transport_errors": [],
+    "json_or_schema_error_count": 33,
+    "json_or_schema_errors": [
+      {
+        "case_id": "bad_accuracy_direction",
+        "direction": "ba",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.371591900009662,
+        "prompt_tokens": 255,
+        "completion_tokens": 11,
+        "text_prefix": "{\n  \"score\": 0,\n  "
+      },
+      {
+        "case_id": "bad_dropout_omission",
+        "direction": "ab",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.785792300011963,
+        "prompt_tokens": 253,
+        "completion_tokens": 8,
+        "text_prefix": "{\n  \"score\": 2"
+      },
+      {
+        "case_id": "bad_dropout_omission",
+        "direction": "ba",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.995310099911876,
+        "prompt_tokens": 253,
+        "completion_tokens": 8,
+        "text_prefix": "{\n  \"score\": 5"
+      },
+      {
+        "case_id": "bad_hallucination",
+        "direction": "ba",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.2761567999841645,
+        "prompt_tokens": 264,
+        "completion_tokens": 29,
+        "text_prefix": "{\n  \"score\": 50,\n  \"flags\": [\n    \"coverage_mismatch\"\n  ],\n  "
+      },
+      {
+        "case_id": "bad_hallucination",
+        "direction": "ab",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.750271599972621,
+        "prompt_tokens": 264,
+        "completion_tokens": 6,
+        "text_prefix": "{\n  \"score\":"
+      },
+      {
+        "case_id": "good_loss_direction",
+        "direction": "ab",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.688738800003193,
+        "prompt_tokens": 249,
+        "completion_tokens": 15,
+        "text_prefix": "{\n  \"score\": 50,\n  \"flags\":"
+      },
+      {
+        "case_id": "good_loss_direction",
+        "direction": "ba",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.923050499986857,
+        "prompt_tokens": 249,
+        "completion_tokens": 8,
+        "text_prefix": "{\n  \"score\": 5"
+      },
+      {
+        "case_id": "bad_dataset_split",
+        "direction": "ab",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.671382499975152,
+        "prompt_tokens": 262,
+        "completion_tokens": 4,
+        "text_prefix": "{\n  \""
+      },
+      {
+        "case_id": "bad_learning_rate_number",
+        "direction": "ab",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 4.1807997999712825,
+        "prompt_tokens": 267,
+        "completion_tokens": 5,
+        "text_prefix": "{\n  \"score"
+      },
+      {
+        "case_id": "bad_underfit_overfit",
+        "direction": "ba",
+        "ok_transport": true,
+        "score": null,
+        "flags": [],
+        "note": "",
+        "validation_error": "json_parse_fail",
+        "latency_sec": 3.6207502000033855,
+        "prompt_tokens": 262,
+        "completion_tokens": 4,
+        "text_prefix": "{\n  \""
+      }
+    ],
+    "flag_counts": {
+      "format_only": 28,
+      "semantic_mismatch": 16,
+      "negation_mismatch": 10,
+      "numeric_mismatch": 2
+    }
+  },
+  "runtime": {
+    "elapsed_sec": 48.0424601000268,
+    "latency_median_sec": 3.8512519000214525,
+    "latency_p90_sec": 4.974392599926796,
+    "latency_max_sec": 7.207516599912196,
+    "throughput_calls_per_min": 114.89836258399517,
+    "usage": {
+      "prompt_tokens": 26632,
+      "completion_tokens": 3353
+    },
+    "estimated_cost_usd_from_published_table": 0.03929304
+  }
+}

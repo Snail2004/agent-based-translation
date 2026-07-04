@@ -1,0 +1,488 @@
+{
+  "task": "SF-BT Gemma concurrency benchmark",
+  "model": "google/gemma-4-12b",
+  "profile": {
+    "temperature": 0,
+    "top_p": 1,
+    "seed": 20260612,
+    "repeat_penalty": 1.0,
+    "reasoning_effort": "none"
+  },
+  "sample_count": 6,
+  "sample_rows": [
+    {
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b002",
+      "config": "S0",
+      "order_index": 1327,
+      "src_chars": 724,
+      "mt_chars": 726
+    },
+    {
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b054",
+      "config": "S0",
+      "order_index": 1523,
+      "src_chars": 129,
+      "mt_chars": 131
+    },
+    {
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b043",
+      "config": "S0",
+      "order_index": 1729,
+      "src_chars": 570,
+      "mt_chars": 506
+    },
+    {
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "block_id": "d2l_multilayer_perceptrons_environment_b095",
+      "config": "S1",
+      "order_index": 1877,
+      "src_chars": 405,
+      "mt_chars": 454
+    },
+    {
+      "chapter_id": "d2l_preliminaries",
+      "block_id": "d2l_preliminaries_ndarray_b115",
+      "config": "S0",
+      "order_index": 387,
+      "src_chars": 324,
+      "mt_chars": 305
+    },
+    {
+      "chapter_id": "d2l_preliminaries",
+      "block_id": "d2l_preliminaries_calculus_b020",
+      "config": "S1",
+      "order_index": 635,
+      "src_chars": 180,
+      "mt_chars": 159
+    }
+  ],
+  "runs": [
+    {
+      "workers": 1,
+      "items": 6,
+      "chat_calls": 18,
+      "wall_sec": 51.3530828000512,
+      "items_per_min": 7.010289945039894,
+      "calls_per_min": 21.03086983511968,
+      "median_item_elapsed_sec": 7.805908849986736,
+      "max_item_elapsed_sec": 12.64561660005711,
+      "finish_reason_counts": {
+        "stop": 6
+      },
+      "errors": [],
+      "results": [
+        {
+          "block_id": "d2l_multilayer_perceptrons_mlp_b002",
+          "config": "S0",
+          "src_chars": 724,
+          "mt_chars": 726,
+          "elapsed_sec": 12.64561660005711,
+          "bt_latency_sec": 6.344384900061414,
+          "judge_latency_sec": 6.3003308000043035,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1611
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b054",
+          "config": "S0",
+          "src_chars": 129,
+          "mt_chars": 131,
+          "elapsed_sec": 6.303058800054714,
+          "bt_latency_sec": 1.6444540999364108,
+          "judge_latency_sec": 4.657965900027193,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 854
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_backprop_b043",
+          "config": "S0",
+          "src_chars": 570,
+          "mt_chars": 506,
+          "elapsed_sec": 10.309553000028245,
+          "bt_latency_sec": 4.505759800085798,
+          "judge_latency_sec": 5.80318879999686,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1429
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_environment_b095",
+          "config": "S1",
+          "src_chars": 405,
+          "mt_chars": 454,
+          "elapsed_sec": 8.058569299988449,
+          "bt_latency_sec": 3.374175699893385,
+          "judge_latency_sec": 4.683789200033061,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1201
+        },
+        {
+          "block_id": "d2l_preliminaries_ndarray_b115",
+          "config": "S0",
+          "src_chars": 324,
+          "mt_chars": 305,
+          "elapsed_sec": 7.553248399985023,
+          "bt_latency_sec": 2.9552251000422984,
+          "judge_latency_sec": 4.597420600010082,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1136
+        },
+        {
+          "block_id": "d2l_preliminaries_calculus_b020",
+          "config": "S1",
+          "src_chars": 180,
+          "mt_chars": 159,
+          "elapsed_sec": 6.48018079996109,
+          "bt_latency_sec": 1.9351440999889746,
+          "judge_latency_sec": 4.544384300010279,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 912
+        }
+      ]
+    },
+    {
+      "workers": 2,
+      "items": 6,
+      "chat_calls": 18,
+      "wall_sec": 52.71490999998059,
+      "items_per_min": 6.829187415858863,
+      "calls_per_min": 20.48756224757659,
+      "median_item_elapsed_sec": 18.16435860004276,
+      "max_item_elapsed_sec": 26.010968500049785,
+      "finish_reason_counts": {
+        "stop": 6
+      },
+      "errors": [],
+      "results": [
+        {
+          "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b054",
+          "config": "S0",
+          "src_chars": 129,
+          "mt_chars": 131,
+          "elapsed_sec": 8.17187079996802,
+          "bt_latency_sec": 2.0305602999869734,
+          "judge_latency_sec": 6.140737599926069,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 854
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_mlp_b002",
+          "config": "S0",
+          "src_chars": 724,
+          "mt_chars": 726,
+          "elapsed_sec": 20.941851400071755,
+          "bt_latency_sec": 10.121667900006287,
+          "judge_latency_sec": 10.819606200093403,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1611
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_backprop_b043",
+          "config": "S0",
+          "src_chars": 570,
+          "mt_chars": 506,
+          "elapsed_sec": 26.010968500049785,
+          "bt_latency_sec": 15.117973000044003,
+          "judge_latency_sec": 10.892352599883452,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1426
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_environment_b095",
+          "config": "S1",
+          "src_chars": 405,
+          "mt_chars": 454,
+          "elapsed_sec": 19.013959600008093,
+          "bt_latency_sec": 10.469941099989228,
+          "judge_latency_sec": 8.54339629993774,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1201
+        },
+        {
+          "block_id": "d2l_preliminaries_ndarray_b115",
+          "config": "S0",
+          "src_chars": 324,
+          "mt_chars": 305,
+          "elapsed_sec": 17.314757600077428,
+          "bt_latency_sec": 7.740377000067383,
+          "judge_latency_sec": 9.573804500047117,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1135
+        },
+        {
+          "block_id": "d2l_preliminaries_calculus_b020",
+          "config": "S1",
+          "src_chars": 180,
+          "mt_chars": 159,
+          "elapsed_sec": 12.754982499987818,
+          "bt_latency_sec": 5.532908200053498,
+          "judge_latency_sec": 7.221454899990931,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 905
+        }
+      ]
+    },
+    {
+      "workers": 3,
+      "items": 6,
+      "chat_calls": 18,
+      "wall_sec": 58.789555500028655,
+      "items_per_min": 6.123536688414399,
+      "calls_per_min": 18.3706100652432,
+      "median_item_elapsed_sec": 29.39112689998001,
+      "max_item_elapsed_sec": 40.427699899999425,
+      "finish_reason_counts": {
+        "stop": 6
+      },
+      "errors": [],
+      "results": [
+        {
+          "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b054",
+          "config": "S0",
+          "src_chars": 129,
+          "mt_chars": 131,
+          "elapsed_sec": 11.268636699998751,
+          "bt_latency_sec": 4.1990390999708325,
+          "judge_latency_sec": 7.06894819997251,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 854
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_backprop_b043",
+          "config": "S0",
+          "src_chars": 570,
+          "mt_chars": 506,
+          "elapsed_sec": 36.81654739996884,
+          "bt_latency_sec": 13.529981500003487,
+          "judge_latency_sec": 23.285944900126196,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1426
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_mlp_b002",
+          "config": "S0",
+          "src_chars": 724,
+          "mt_chars": 726,
+          "elapsed_sec": 40.427699899999425,
+          "bt_latency_sec": 16.749466000008397,
+          "judge_latency_sec": 23.67760149994865,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1611
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_environment_b095",
+          "config": "S1",
+          "src_chars": 405,
+          "mt_chars": 454,
+          "elapsed_sec": 39.10885109996889,
+          "bt_latency_sec": 21.73462959995959,
+          "judge_latency_sec": 17.373577399994247,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1201
+        },
+        {
+          "block_id": "d2l_preliminaries_calculus_b020",
+          "config": "S1",
+          "src_chars": 180,
+          "mt_chars": 159,
+          "elapsed_sec": 17.551317299949005,
+          "bt_latency_sec": 6.952718500047922,
+          "judge_latency_sec": 10.598018600023352,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 902
+        },
+        {
+          "block_id": "d2l_preliminaries_ndarray_b115",
+          "config": "S0",
+          "src_chars": 324,
+          "mt_chars": 305,
+          "elapsed_sec": 21.965706399991177,
+          "bt_latency_sec": 13.685836600023322,
+          "judge_latency_sec": 8.279345999937505,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1136
+        }
+      ]
+    },
+    {
+      "workers": 4,
+      "items": 6,
+      "chat_calls": 18,
+      "wall_sec": 51.138208999997005,
+      "items_per_min": 7.039745955905907,
+      "calls_per_min": 21.11923786771772,
+      "median_item_elapsed_sec": 30.440801349992398,
+      "max_item_elapsed_sec": 41.79263129993342,
+      "finish_reason_counts": {
+        "stop": 6
+      },
+      "errors": [],
+      "results": [
+        {
+          "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b054",
+          "config": "S0",
+          "src_chars": 129,
+          "mt_chars": 131,
+          "elapsed_sec": 15.426242299959995,
+          "bt_latency_sec": 5.131967399967834,
+          "judge_latency_sec": 10.29380290012341,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 854
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_environment_b095",
+          "config": "S1",
+          "src_chars": 405,
+          "mt_chars": 454,
+          "elapsed_sec": 25.610776499961503,
+          "bt_latency_sec": 11.40735830005724,
+          "judge_latency_sec": 14.202359699993394,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1201
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_backprop_b043",
+          "config": "S0",
+          "src_chars": 570,
+          "mt_chars": 506,
+          "elapsed_sec": 40.271087800036184,
+          "bt_latency_sec": 17.518152600037865,
+          "judge_latency_sec": 22.75239010003861,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1426
+        },
+        {
+          "block_id": "d2l_multilayer_perceptrons_mlp_b002",
+          "config": "S0",
+          "src_chars": 724,
+          "mt_chars": 726,
+          "elapsed_sec": 41.79263129993342,
+          "bt_latency_sec": 21.82070279994514,
+          "judge_latency_sec": 19.97127550013829,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1611
+        },
+        {
+          "block_id": "d2l_preliminaries_ndarray_b115",
+          "config": "S0",
+          "src_chars": 324,
+          "mt_chars": 305,
+          "elapsed_sec": 35.27082620002329,
+          "bt_latency_sec": 18.5790193999419,
+          "judge_latency_sec": 16.691202100017108,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 1135
+        },
+        {
+          "block_id": "d2l_preliminaries_calculus_b020",
+          "config": "S1",
+          "src_chars": 180,
+          "mt_chars": 159,
+          "elapsed_sec": 25.525167600018904,
+          "bt_latency_sec": 12.927727099973708,
+          "judge_latency_sec": 12.596750000026077,
+          "finish_reasons": [
+            "stop",
+            "stop",
+            "stop"
+          ],
+          "total_tokens": 902
+        }
+      ]
+    }
+  ]
+}

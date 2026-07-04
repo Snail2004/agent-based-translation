@@ -1,0 +1,4745 @@
+{
+  "status": "probe_only_not_thesis_headline_same_family_as_translator",
+  "model": "gpt-5.4-mini",
+  "source_report": "data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_phase1_probe.json",
+  "cache_path": "data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_gpt54mini_judge_probe_cache.sqlite3",
+  "case_count": 46,
+  "judge_call_count": 92,
+  "cases": [
+    {
+      "id": "good_gradient",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "standalone good technical translation",
+      "src": "The gradient is computed during backpropagation to update the model parameters.",
+      "mt": "Gradient được tính trong quá trình lan truyền ngược để cập nhật các tham số của mô hình.",
+      "bt_text": "The gradient is calculated during the backpropagation process to update the model parameters.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 39,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.04305940004997,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only a minor synonym change between 'calculated' and 'computed'.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only a minor synonym change between 'calculated' and 'computed'.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 45,
+            "total_tokens": 318,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.302834299975075,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning with only stylistic wording differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning with only stylistic wording differences.\"}",
+          "latency_sec": 2.362,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 251,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012075,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "e0c47d73eef075fa2f6185cebe66856680ddb5e56b30c1f78c3bb8f99e9542e3"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only wording differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only wording differs.\"}",
+          "latency_sec": 1.473,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 251,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011675,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "0f2d12f806976efa6cdc45356c4495c58a1080e4ca44371d868ab72e7a18821f"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_regularization",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: regularization mistranslated as normalization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Điều chuẩn làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "bt_text": "Regularization reduces overfitting by penalizing large weights.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.398251299979165,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 0.9881343999877572,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages have identical meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}",
+          "latency_sec": 1.588,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 23,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010725,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "5cbe5858c11422130918f554048c5bdb1da17846c8a6d119df4a60479993d5ea"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages have identical meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}",
+          "latency_sec": 1.588,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 23,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010725,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "5cbe5858c11422130918f554048c5bdb1da17846c8a6d119df4a60479993d5ea"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_regularization",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: regularization mistranslated as normalization",
+      "src": "Regularization reduces overfitting by penalizing large weights.",
+      "mt": "Chuẩn hóa làm giảm quá khớp bằng cách phạt các trọng số lớn.",
+      "bt_text": "Regularization reduces overfitting by penalizing large weights.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.398251299979165,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 0.9881343999877572,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages have identical meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}",
+          "latency_sec": 1.588,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 23,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010725,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "5cbe5858c11422130918f554048c5bdb1da17846c8a6d119df4a60479993d5ea"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages have identical meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}",
+          "latency_sec": 1.588,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 23,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010725,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "5cbe5858c11422130918f554048c5bdb1da17846c8a6d119df4a60479993d5ea"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_accuracy_direction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: increase/decrease polarity",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực tăng sau khi điều chỉnh tốc độ học.",
+      "bt_text": "Accuracy on the validation set increased after adjusting the learning rate.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same fact with no difference in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same fact with no difference in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 37,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.232039300026372,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same meaning with no difference in facts or logic.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same meaning with no difference in facts or logic.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 39,
+            "total_tokens": 306,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0940638999454677,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning with only stylistic differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only stylistic differences.\"}",
+          "latency_sec": 1.257,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 25,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011075,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "9d622c2cd82f788919717a57484fffee3f9d2ca133f54d55e22db0cc5780168e"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning with only tense/style differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only tense/style differences.\"}",
+          "latency_sec": 1.819,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 25,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011075,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "7dfc50554527f0dac90c323768e2713cb1091d3a480766d93dcbdbb55f7a6d6c"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_accuracy_direction",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: increase/decrease polarity",
+      "src": "The validation accuracy increases after tuning the learning rate.",
+      "mt": "Độ chính xác trên tập xác thực giảm sau khi điều chỉnh tốc độ học.",
+      "bt_text": "Accuracy on the validation set decreased after adjusting the learning rate.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages contradict each other regarding the direction of the accuracy change (increase vs. decrease).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages contradict each other regarding the direction of the accuracy change (increase vs. decrease).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 45,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.61375739995856,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A states accuracy decreased, while Passage B states it increased.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A states accuracy decreased, while Passage B states it increased.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 41,
+            "total_tokens": 308,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1387839999515563,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "One says validation accuracy increases, the other says it decreased.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"negation_mismatch\"],\"note\":\"One says validation accuracy increases, the other says it decreased.\"}",
+          "latency_sec": 1.519,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 34,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012875,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "e26f441d5d8417f3e6220edbbf4bf8ace767b7ef0616c3525961c6bbf14fbb79"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "A says validation accuracy decreased, while B says it increased.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":25,\"flags\":[\"semantic_mismatch\",\"negation_mismatch\"],\"note\":\"A says validation accuracy decreased, while B says it increased.\"}",
+          "latency_sec": 0.918,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013675,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "4acf78b9764d2bacf3f5bb6106cb7e919bf1d2d1c5ef1f4600c182097fcc98b7"
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_dropout_omission",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: dropout and random masking omitted",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Dropout che ngẫu nhiên các đơn vị ẩn trong quá trình huấn luyện.",
+      "bt_text": "Dropout randomly masks hidden units during the training process.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 31,
+            "total_tokens": 294,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.299557900056243,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 31,
+            "total_tokens": 294,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.7886771999765188,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only wording differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only wording differs.\"}",
+          "latency_sec": 0.916,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 241,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011425,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "15e7314545cbba75ef383b0b89f5806220e912f366cb7d848e4160cf17a8ff70"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only phrasing differs slightly.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only phrasing differs slightly.\"}",
+          "latency_sec": 0.968,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 241,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011825,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "eaf3343763d4a4082c973839674a7630aaf36f8aee331feb884981263dd45c99"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_dropout_omission",
+      "source": "comet_wide",
+      "expected": "bad_omission",
+      "note": "bad: dropout and random masking omitted",
+      "src": "Dropout randomly masks hidden units during training.",
+      "mt": "Trong quá trình huấn luyện, mô hình thay đổi các tầng ẩn.",
+      "bt_text": "During the training process, the model modifies the hidden layers.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A specifies the mechanism (randomly masking units), while Passage B uses the vague term 'modifies'.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A specifies the mechanism (randomly masking units), while Passage B uses the vague term 'modifies'.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 50,
+            "total_tokens": 315,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.235651000053622,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A describes a general modification of hidden layers, while Passage B specifies a specific technique (dropout) and its mechanism (masking units).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 25, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A describes a general modification of hidden layers, while Passage B specifies a specific technique (dropout) and its mechanism (masking units).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 56,
+            "total_tokens": 321,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.5322039000457153,
+          "from_cache": true
+        },
+        "score_mean": 37.5,
+        "score_delta_abs": 25.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "B is much more vague and does not state random dropout masking.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":25,\"flags\":[\"coverage_mismatch\"],\"note\":\"B is much more vague and does not state random dropout masking.\"}",
+          "latency_sec": 1.039,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 242,
+            "cached_tokens": 0,
+            "completion_tokens": 34,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001285,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "de05d5a799c7f7337dea9fb00c6d5c14ee15812f1c2c7cca3fc6f38bb0541f6a"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch",
+            "coverage_mismatch"
+          ],
+          "note": "A describes modifying hidden layers generally, while B specifically says dropout randomly masks hidden units.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":25,\"flags\":[\"semantic_mismatch\",\"coverage_mismatch\"],\"note\":\"A describes modifying hidden layers generally, while B specifically says dropout randomly masks hidden units.\"}",
+          "latency_sec": 0.836,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 242,
+            "cached_tokens": 0,
+            "completion_tokens": 42,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001445,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "bb789ce92f35dbdcdba5a7953794dcfd337b3817ad9944cf37b25c4287b48b1d"
+        },
+        "score_mean": 25.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_hallucination",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: unsupported guarantee added",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc.",
+      "bt_text": "The batch size controls the number of examples processed at the same time.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are semantically identical.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are semantically identical.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 271,
+            "completion_tokens": 31,
+            "total_tokens": 302,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.73839960002806,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same meaning with no difference in facts or scope.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same meaning with no difference in facts or scope.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 271,
+            "completion_tokens": 39,
+            "total_tokens": 310,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9935893999645486,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning.\"}",
+          "latency_sec": 0.93,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 247,
+            "cached_tokens": 0,
+            "completion_tokens": 20,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010175,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "a2385f3e160d3e44ba08ffe922884c0005648948c848bd0ce0e563f60031df9d"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning with only stylistic rephrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning with only stylistic rephrasing.\"}",
+          "latency_sec": 0.886,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 247,
+            "cached_tokens": 0,
+            "completion_tokens": 30,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012175,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "81b78d0eb53f8e9a3e92cd9d497dff7e20f44e9c817c3f1aa3ad64a79fb9d8da"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_hallucination",
+      "source": "comet_wide",
+      "expected": "medium_bad_addition",
+      "note": "bad: unsupported guarantee added",
+      "src": "The batch size controls how many examples are processed at once.",
+      "mt": "Kích thước batch kiểm soát số ví dụ được xử lý cùng lúc và đảm bảo mô hình luôn hội tụ.",
+      "bt_text": "The batch size controls the number of examples processed at once and ensures that the model always converges.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage B adds a claim about ensuring model convergence that is not present in Passage A.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage B adds a claim about ensuring model convergence that is not present in Passage A.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 276,
+            "completion_tokens": 45,
+            "total_tokens": 321,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.1236377999885,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage A includes a claim about ensuring model convergence that is missing in Passage B.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage A includes a claim about ensuring model convergence that is missing in Passage B.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 276,
+            "completion_tokens": 44,
+            "total_tokens": 320,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.2328696000622585,
+          "from_cache": true
+        },
+        "score_mean": 50.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "B adds an extra claim about guaranteed convergence that is not in A.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":25,\"flags\":[\"coverage_mismatch\"],\"note\":\"B adds an extra claim about guaranteed convergence that is not in A.\"}",
+          "latency_sec": 1.054,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 253,
+            "cached_tokens": 0,
+            "completion_tokens": 35,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013325,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "fcd36d2549ddbfa1bd17495d8b7eb9de0ac752079956997c5e406103c67091ae"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "B omits the claim that batch size ensures the model always converges.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":50,\"flags\":[\"coverage_mismatch\"],\"note\":\"B omits the claim that batch size ensures the model always converges.\"}",
+          "latency_sec": 0.91,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 253,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "5eddaa15a6cb2ddd0be0f6d8d01845b081685441ad8e2d15526f7aa7ff7e2701"
+        },
+        "score_mean": 37.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_untranslated",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: English copied instead of translated",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "Hàm kích hoạt đưa tính phi tuyến vào mạng nơ-ron.",
+      "bt_text": "Activation functions introduce nonlinearity into neural networks.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with the only difference being the grammatical number (singular vs. plural).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with the only difference being the grammatical number (singular vs. plural).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 44,
+            "total_tokens": 307,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.655984799959697,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the exact same technical concept with only minor grammatical variations.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages convey the exact same technical concept with only minor grammatical variations.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 37,
+            "total_tokens": 300,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9916827999986708,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning with only singular/plural wording differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only singular/plural wording differences.\"}",
+          "latency_sec": 1.142,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011475,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "cb2e0804590e0593481b64d3668aa5c7fea2962216ac132288dd8c05b7108527"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning with only singular/plural wording differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only singular/plural wording differences.\"}",
+          "latency_sec": 0.985,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011475,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "36b04dfc1146c9c631463cde5207564eb301c5b87226683bd2fc44841ad566a2"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_untranslated",
+      "source": "comet_wide",
+      "expected": "bad_untranslated",
+      "note": "bad: English copied instead of translated",
+      "src": "The activation function introduces nonlinearity into the neural network.",
+      "mt": "The activation function introduces nonlinearity into the neural network.",
+      "bt_text": "The activation function introduces nonlinearity into the neural network.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9192949999123812,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 30,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.0305696000577882,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages are identical in meaning.\"}",
+          "latency_sec": 1.321,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010925,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "9461cb6bdb6326e67bab099fedcf6a754dcf7b6bfcb4bcd2e94020871b9bc98f"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages are identical in meaning.\"}",
+          "latency_sec": 1.321,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010925,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "9461cb6bdb6326e67bab099fedcf6a754dcf7b6bfcb4bcd2e94020871b9bc98f"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_subject_object",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: object relation reversed",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật các trọng số, không phải dữ liệu huấn luyện.",
+      "bt_text": "The optimizer updates the weights, not the training data.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 30,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.278510100091808,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 30,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 0.9873961999546736,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages are identical in meaning.\"}",
+          "latency_sec": 0.788,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010875,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "f695acd75868e9a092f78bf0402ef62c2ace3f42e1013241fc15d3c6dd0f0274"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages are identical in meaning.\"}",
+          "latency_sec": 0.788,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010875,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "f695acd75868e9a092f78bf0402ef62c2ace3f42e1013241fc15d3c6dd0f0274"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_subject_object",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: object relation reversed",
+      "src": "The optimizer updates the weights, not the training data.",
+      "mt": "Bộ tối ưu cập nhật dữ liệu huấn luyện, không phải các trọng số.",
+      "bt_text": "The optimizer updates the training data, not the weights.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite of each other regarding what the optimizer updates.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"The passages state the exact opposite of each other regarding what the optimizer updates.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 48,
+            "total_tokens": 315,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.900633299956098,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite of each other regarding what the optimizer updates.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state the exact opposite of each other regarding what the optimizer updates.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 42,
+            "total_tokens": 309,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.4255255999742076,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch",
+            "semantic_mismatch"
+          ],
+          "note": "The two passages reverse what the optimizer updates.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"negation_mismatch\",\"semantic_mismatch\"],\"note\":\"The two passages reverse what the optimizer updates.\"}",
+          "latency_sec": 1.68,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 35,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013075,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "27a83ee9488549722ec3fc1163fabbad3c9536f73a6f37a789f3191b52725fdf"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch",
+            "semantic_mismatch"
+          ],
+          "note": "The two passages state opposite update targets.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"negation_mismatch\",\"semantic_mismatch\"],\"note\":\"The two passages state opposite update targets.\"}",
+          "latency_sec": 0.992,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 40,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00014075,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "888a75a43de3692513f48cf3a125865d713ad182ecb7beb8126773fccbf93431"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_negation_elementwise",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: negation dropped",
+      "src": "Matrix multiplication is not the same as elementwise multiplication.",
+      "mt": "Phép nhân ma trận không giống với phép nhân theo từng phần tử.",
+      "bt_text": "Matrix multiplication is not the same as element-wise multiplication.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; the only difference is a hyphen in 'element-wise'.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; the only difference is a hyphen in 'element-wise'.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 268,
+            "completion_tokens": 42,
+            "total_tokens": 310,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.086638499982655,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; 'element-wise' and 'elementwise' are synonymous.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; 'element-wise' and 'elementwise' are synonymous.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 268,
+            "completion_tokens": 43,
+            "total_tokens": 311,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.150421200087294,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only hyphenation differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only hyphenation differs.\"}",
+          "latency_sec": 0.985,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011875,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "448d1f89372a553f6cfb92d85b649c9877bfacd8a0f3ccaa1d3be175d09ed4e6"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only formatting/spelling differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only formatting/spelling differs.\"}",
+          "latency_sec": 1.063,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011875,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "1eb20f527a6c0a08c10a8ad54759e3ca86de7762c14ef3c3ee09026551c2321d"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_negation_elementwise",
+      "source": "comet_wide",
+      "expected": "bad_negation",
+      "note": "bad: negation dropped",
+      "src": "Matrix multiplication is not the same as elementwise multiplication.",
+      "mt": "Phép nhân ma trận giống với phép nhân theo từng phần tử.",
+      "bt_text": "Matrix multiplication is similar to element-wise multiplication.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A states they are not the same, while Passage B states they are similar.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A states they are not the same, while Passage B states they are similar.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 266,
+            "completion_tokens": 45,
+            "total_tokens": 311,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.28210890002083,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A claims they are similar, while Passage B explicitly states they are not the same.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A claims they are similar, while Passage B explicitly states they are not the same.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 266,
+            "completion_tokens": 46,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.2878614000510424,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "B reverses A’s core claim by saying the operations are similar rather than not the same.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":25,\"flags\":[\"semantic_mismatch\",\"negation_mismatch\"],\"note\":\"B reverses A’s core claim by saying the operations are similar rather than not the same.\"}",
+          "latency_sec": 1.144,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 241,
+            "cached_tokens": 0,
+            "completion_tokens": 45,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00015025,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "75616774d5463bca0bcacc02cb91fd4bc2f54d9f16208edf009c9e3eb0b07432"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 50.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "B negates equivalence while A states similarity.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":50,\"flags\":[\"negation_mismatch\"],\"note\":\"B negates equivalence while A states similarity.\"}",
+          "latency_sec": 1.286,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 241,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012425,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "3348815f8560d3f79a4761595e231cf971e32410e29e370ee533ac377d2461cb"
+        },
+        "score_mean": 37.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_loss_direction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: minimize vs maximize",
+      "src": "Gradient descent minimizes the loss function.",
+      "mt": "Hạ gradient tối thiểu hóa hàm mất mát.",
+      "bt_text": "Lower the gradient to minimize the loss function.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "Passage A describes the purpose of gradient descent, while Passage B incorrectly suggests lowering the gradient itself as the method.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"semantic_mismatch\"], \"note\": \"Passage A describes the purpose of gradient descent, while Passage B incorrectly suggests lowering the gradient itself as the method.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 261,
+            "completion_tokens": 50,
+            "total_tokens": 311,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.910068500088528,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same fundamental relationship between gradient descent and loss function minimization.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same fundamental relationship between gradient descent and loss function minimization.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 261,
+            "completion_tokens": 38,
+            "total_tokens": 299,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.088585100020282,
+          "from_cache": true
+        },
+        "score_mean": 75.0,
+        "score_delta_abs": 50.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "B changes the meaning from minimizing the loss via gradient descent to lowering the gradient itself.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":25,\"flags\":[\"semantic_mismatch\"],\"note\":\"B changes the meaning from minimizing the loss via gradient descent to lowering the gradient itself.\"}",
+          "latency_sec": 1.082,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 237,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "d0a9dea30054cf612c48a9b37a6cfe6367379c0bf06d6886167a1631b1227237"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 75.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "B states the general method, while A gives a specific instruction to lower the gradient.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":75,\"flags\":[\"semantic_mismatch\"],\"note\":\"B states the general method, while A gives a specific instruction to lower the gradient.\"}",
+          "latency_sec": 1.006,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 237,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "ec96422c3ad1f4e0f6ae53989c815d07f3610974e2509f53254a9a0c695ad1c9"
+        },
+        "score_mean": 50.0,
+        "score_delta_abs": 50.0
+      }
+    },
+    {
+      "id": "bad_loss_direction",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: minimize vs maximize",
+      "src": "Gradient descent minimizes the loss function.",
+      "mt": "Hạ gradient tối đa hóa hàm mất mát.",
+      "bt_text": "Lower the gradient to maximize the loss function.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "Passage B claims to maximize the loss function, which is the opposite of minimizing it.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"Passage B claims to maximize the loss function, which is the opposite of minimizing it.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 261,
+            "completion_tokens": 51,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.937983799958602,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A describes maximizing the loss function, while Passage B describes minimizing it.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A describes maximizing the loss function, while Passage B describes minimizing it.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 261,
+            "completion_tokens": 43,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.2348437000764534,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "B states the opposite optimization objective.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\",\"negation_mismatch\"],\"note\":\"B states the opposite optimization objective.\"}",
+          "latency_sec": 0.839,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 237,
+            "cached_tokens": 0,
+            "completion_tokens": 33,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "cc397fe13504773721562ee33f84a1ced35325fdb1f996d74a1bd6ffbef5b0d1"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "A says to increase loss via lowering gradient, while B says gradient descent minimizes loss.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":25,\"flags\":[\"semantic_mismatch\"],\"note\":\"A says to increase loss via lowering gradient, while B says gradient descent minimizes loss.\"}",
+          "latency_sec": 1.09,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 237,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "67d2d2de7852eb3c26b788caa31b6a70a6d790c19fda8ce5b60504d13d974bfc"
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_dataset_split",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: validation/test set swapped",
+      "src": "We tune hyperparameters on the validation set, not on the test set.",
+      "mt": "Chúng ta điều chỉnh siêu tham số trên tập xác thực, không phải trên tập kiểm tra.",
+      "bt_text": "We adjust the hyperparameters on the validation set, not on the test set.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; 'tune' and 'adjust' are synonyms in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; 'tune' and 'adjust' are synonyms in this context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 43,
+            "total_tokens": 317,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.465628399979323,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The words 'adjust' and 'tune' are synonymous in the context of hyperparameters.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The words 'adjust' and 'tune' are synonymous in the context of hyperparameters.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 40,
+            "total_tokens": 314,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.099578099907376,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only wording differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only wording differs.\"}",
+          "latency_sec": 0.662,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 252,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000117,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "06b44d326dd5e7bd6a466b4fe02670ef7a5852821485700084bb87e5fc1d27f5"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning.\"}",
+          "latency_sec": 4.504,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 252,
+            "cached_tokens": 0,
+            "completion_tokens": 20,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000103,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "257621396846035d1cb765822533012881cb010e679e41f77ce42dde9077ded6"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_dataset_split",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: validation/test set swapped",
+      "src": "We tune hyperparameters on the validation set, not on the test set.",
+      "mt": "Chúng ta điều chỉnh siêu tham số trên tập kiểm tra, không phải trên tập xác thực.",
+      "bt_text": "We adjust the hyperparameters on the test set, not on the validation set.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite regarding which set is used for hyperparameter tuning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state the exact opposite regarding which set is used for hyperparameter tuning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 43,
+            "total_tokens": 317,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 29.965496200020425,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state the exact opposite regarding which set is used for hyperparameter adjustment.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state the exact opposite regarding which set is used for hyperparameter adjustment.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 43,
+            "total_tokens": 317,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1970043999608606,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch",
+            "semantic_mismatch"
+          ],
+          "note": "The passages reverse which set is used for tuning, making the meaning opposite.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"negation_mismatch\",\"semantic_mismatch\"],\"note\":\"The passages reverse which set is used for tuning, making the meaning opposite.\"}",
+          "latency_sec": 0.927,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 252,
+            "cached_tokens": 0,
+            "completion_tokens": 41,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000145,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "b4ed135b3ca026cf0a0ccc5087687412c70a876ee34f52c1abc0ae42ab0f37aa"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch",
+            "semantic_mismatch"
+          ],
+          "note": "The passages state opposite data splits for hyperparameter tuning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"negation_mismatch\",\"semantic_mismatch\"],\"note\":\"The passages state opposite data splits for hyperparameter tuning.\"}",
+          "latency_sec": 1.019,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 252,
+            "cached_tokens": 0,
+            "completion_tokens": 37,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000137,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "e4aa5bfb873bdbbb72a314e6e004420745d16762da9b0213e53c112e2925f199"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_learning_rate_number",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: number and direction reversed",
+      "src": "The learning rate is reduced from 0.1 to 0.01.",
+      "mt": "Tốc độ học được giảm từ 0,1 xuống 0,01.",
+      "bt_text": "The learning rate was reduced from 0.1 to 0.01.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the exact same fact with only a minor tense difference.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages convey the exact same fact with only a minor tense difference.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 279,
+            "completion_tokens": 37,
+            "total_tokens": 316,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.897414200007915,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The change in tense does not affect the factual meaning of the learning rate adjustment.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The change in tense does not affect the factual meaning of the learning rate adjustment.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 279,
+            "completion_tokens": 39,
+            "total_tokens": 318,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0508034999947995,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning; only tense differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning; only tense differs.\"}",
+          "latency_sec": 1.259,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 253,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011125,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "4a29c65c3bd64aeb2c93eebb8ea41e6c026f9cad4273ca9c41149b8de813b7c1"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 75.0,
+          "flags": [],
+          "note": "Same numeric change, but A states a past action while B states a present/general statement.",
+          "validation_error": "invalid_flags",
+          "raw_content_prefix": "{\"score\":75,\"flags\":[\"tense_mismatch\"],\"note\":\"Same numeric change, but A states a past action while B states a present/general statement.\"}",
+          "latency_sec": 0.926,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 253,
+            "cached_tokens": 0,
+            "completion_tokens": 40,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00014325,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "6df41b08f2ef15c07fee162770b80221421dd50a4e2b50f06f1adcf671830064"
+        },
+        "score_mean": 87.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "bad_learning_rate_number",
+      "source": "comet_wide",
+      "expected": "bad_numeric",
+      "note": "bad: number and direction reversed",
+      "src": "The learning rate is reduced from 0.1 to 0.01.",
+      "mt": "Tốc độ học được tăng từ 0,01 lên 0,1.",
+      "bt_text": "The learning rate was increased from 0.01 to 0.1.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state opposite directions of change for the learning rate.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state opposite directions of change for the learning rate.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 279,
+            "completion_tokens": 39,
+            "total_tokens": 318,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.627447700011544,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state opposite directions of change for the learning rate.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages state opposite directions of change for the learning rate.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 279,
+            "completion_tokens": 39,
+            "total_tokens": 318,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0812650999287143,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "numeric_mismatch"
+          ],
+          "note": "The passages state opposite learning-rate changes with reversed values.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\",\"numeric_mismatch\"],\"note\":\"The passages state opposite learning-rate changes with reversed values.\"}",
+          "latency_sec": 0.959,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 253,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "e1636619686e27d95233b73090494c5fd284c74b0e7fdc56d0bb8e562bdb5df8"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "numeric_mismatch"
+          ],
+          "note": "The passages state opposite learning-rate changes with reversed values.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\",\"numeric_mismatch\"],\"note\":\"The passages state opposite learning-rate changes with reversed values.\"}",
+          "latency_sec": 1.074,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 253,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "c5b5681ec183ff5403c846055cf86cfb457d4b88e222a405c8374c5f6d2e7577"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_variance_std",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: variance/std relation reversed",
+      "src": "The variance is the square of the standard deviation.",
+      "mt": "Phương sai là bình phương của độ lệch chuẩn.",
+      "bt_text": "Variance is the square of the standard deviation.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; the only difference is the presence of a definite article.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; the only difference is the presence of a definite article.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 41,
+            "total_tokens": 305,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.35173490003217,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 31,
+            "total_tokens": 295,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.763732000021264,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only formatting differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only formatting differs.\"}",
+          "latency_sec": 0.852,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 240,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000114,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "e43195cee458e78dd0670246f5661e3f0a56253337a0b3c784bf4966307d941f"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning.\"}",
+          "latency_sec": 0.741,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 240,
+            "cached_tokens": 0,
+            "completion_tokens": 20,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "acbc3631084fa4b3e7a1f70d46935bce05e82be0f7aef3c64cd3f34171f6411a"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_variance_std",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: variance/std relation reversed",
+      "src": "The variance is the square of the standard deviation.",
+      "mt": "Độ lệch chuẩn là bình phương của phương sai.",
+      "bt_text": "Standard deviation is the square of the variance.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages state the inverse mathematical relationship between variance and standard deviation.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages state the inverse mathematical relationship between variance and standard deviation.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 39,
+            "total_tokens": 303,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.497808500076644,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages state the inverse mathematical relationship between standard deviation and variance.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages state the inverse mathematical relationship between standard deviation and variance.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 39,
+            "total_tokens": 303,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0080422000028193,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The two passages reverse the relationship between variance and standard deviation.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"The two passages reverse the relationship between variance and standard deviation.\"}",
+          "latency_sec": 0.893,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 240,
+            "cached_tokens": 0,
+            "completion_tokens": 33,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000126,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "ffaff543b8aadf207d07743532fc0f9f5f07ba94e7f99d8eb144b4fdd5e5d9b6"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "They state the same relationship in inverse wording.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"They state the same relationship in inverse wording.\"}",
+          "latency_sec": 0.955,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 240,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000112,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "a5fe84524c05b06922ccd2754ba33db4eabbb1d4ccc41d1d7bd14a0d4b06e23c"
+        },
+        "score_mean": 50.0,
+        "score_delta_abs": 100.0
+      }
+    },
+    {
+      "id": "good_underfit_overfit",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: underfitting changed to overfitting",
+      "src": "A model that underfits has high training error and high validation error.",
+      "mt": "Một mô hình bị thiếu khớp có lỗi huấn luyện cao và lỗi xác thực cao.",
+      "bt_text": "An underfitted model has high training error and high validation error.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same meaning with no differences in facts or relations.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same meaning with no differences in facts or relations.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 272,
+            "completion_tokens": 39,
+            "total_tokens": 311,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.922676100046374,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same definition of an underfitted model.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same definition of an underfitted model.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 272,
+            "completion_tokens": 37,
+            "total_tokens": 309,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0099786000791937,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning.\"}",
+          "latency_sec": 0.73,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 249,
+            "cached_tokens": 0,
+            "completion_tokens": 20,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010225,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "4de23d3d8adcaad4a09ddf960a4602d2eb98979078d5fcab3d52d4a7503ef8a4"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning.\"}",
+          "latency_sec": 0.777,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 249,
+            "cached_tokens": 0,
+            "completion_tokens": 20,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010225,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "42036ec57c6c08f5d7997b2852960921ef5700a00137ec18cd77a4c92db2a621"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_underfit_overfit",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: underfitting changed to overfitting",
+      "src": "A model that underfits has high training error and high validation error.",
+      "mt": "Một mô hình bị quá khớp có lỗi huấn luyện thấp và lỗi xác thực cao.",
+      "bt_text": "An overfitted model has a low training error and a high validation error.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two different types of model errors (underfitting vs. overfitting) with different training error characteristics.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two different types of model errors (underfitting vs. overfitting) with different training error characteristics.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 48,
+            "total_tokens": 322,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.662475499906577,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two different types of model performance (overfitting vs. underfitting) with different error profiles.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two different types of model performance (overfitting vs. underfitting) with different error profiles.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 274,
+            "completion_tokens": 48,
+            "total_tokens": 322,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.313146600034088,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe opposite model behaviors with different training-error claims.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":25,\"flags\":[\"semantic_mismatch\"],\"note\":\"The passages describe opposite model behaviors with different training-error claims.\"}",
+          "latency_sec": 0.933,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 251,
+            "cached_tokens": 0,
+            "completion_tokens": 33,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012875,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "f6264e06db148fc6842b59630a430bd9d2ec849781b33f8a9c774372fb10dc0a"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe opposite model behaviors: overfitting versus underfitting.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"The passages describe opposite model behaviors: overfitting versus underfitting.\"}",
+          "latency_sec": 0.807,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 251,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013475,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "dd15a0fa6e13f0c677e0648ea16a0705cbbe4127d84030861470badef52b21f1"
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_softmax_sum",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: negation inserted",
+      "src": "The softmax outputs probabilities that sum to one.",
+      "mt": "Softmax xuất ra các xác suất có tổng bằng một.",
+      "bt_text": "Softmax outputs probabilities that sum to one.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same meaning with no difference in facts or logic.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same meaning with no difference in facts or logic.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 39,
+            "total_tokens": 302,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.44051570002921,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; the addition of 'The' is a stylistic difference.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; the addition of 'The' is a stylistic difference.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 263,
+            "completion_tokens": 41,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.0953401000006124,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning.\"}",
+          "latency_sec": 0.692,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 240,
+            "cached_tokens": 0,
+            "completion_tokens": 20,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "93acb10718303473f49798e41233a0dfb02386c6d77162052ea5b38a9321ca11"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning.\"}",
+          "latency_sec": 0.771,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 240,
+            "cached_tokens": 0,
+            "completion_tokens": 20,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "7b49af7d398ae335620c43230c6b1daea52d9286398f1324285d7fdd1de5d81b"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_softmax_sum",
+      "source": "comet_wide",
+      "expected": "bad_negation",
+      "note": "bad: negation inserted",
+      "src": "The softmax outputs probabilities that sum to one.",
+      "mt": "Softmax xuất ra các xác suất không có tổng bằng một.",
+      "bt_text": "Softmax outputs probabilities that do not sum to one.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages provide directly contradictory information regarding the sum of the probabilities.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages provide directly contradictory information regarding the sum of the probabilities.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 40,
+            "total_tokens": 305,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 22.017537700012326,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages directly contradict each other regarding whether the probabilities sum to one.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages directly contradict each other regarding whether the probabilities sum to one.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 41,
+            "total_tokens": 306,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1462892000563443,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state opposite claims about whether softmax probabilities sum to one.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"negation_mismatch\"],\"note\":\"The passages state opposite claims about whether softmax probabilities sum to one.\"}",
+          "latency_sec": 1.006,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 242,
+            "cached_tokens": 0,
+            "completion_tokens": 36,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001325,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "d29c4d94db5b8c529c197bf7cad1c0f431f250232a0182276e3aa92479e5a0a8"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages state opposite properties of softmax probabilities.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"negation_mismatch\"],\"note\":\"The passages state opposite properties of softmax probabilities.\"}",
+          "latency_sec": 0.943,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 242,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001245,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "6f1d22838ecf9e47cbd87acffedd88c391fc3b73b3957f7e2ee1c3b86aeb8bbd"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_eigenvalue",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: eigenvalue/eigenvector mistranslated",
+      "src": "An eigenvalue tells how much an eigenvector is scaled.",
+      "mt": "Một trị riêng cho biết một vectơ riêng được co giãn bao nhiêu.",
+      "bt_text": "An eigenvalue indicates how much an eigenvector is stretched.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The terms 'scaled' and 'stretched' are synonymous in this mathematical context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The terms 'scaled' and 'stretched' are synonymous in this mathematical context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 39,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 11.994780999957584,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The terms 'stretched' and 'scaled' are synonymous in this mathematical context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The terms 'stretched' and 'scaled' are synonymous in this mathematical context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 39,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9292809000471607,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages state the same relationship in different words.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Both passages state the same relationship in different words.\"}",
+          "latency_sec": 0.992,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "27aafada13c8ddaf5cd6a25564c3ba7c5a5d1fad3182d3ec2eaecf5cdeec985d"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning; only wording differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning; only wording differs.\"}",
+          "latency_sec": 1.081,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010925,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "54c84c33a09f4f873fe0433a3c487afdf50cfb7f7e8d3e9bc571f461cd2aa364"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_eigenvalue",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: eigenvalue/eigenvector mistranslated",
+      "src": "An eigenvalue tells how much an eigenvector is scaled.",
+      "mt": "Một giá trị ví dụ cho biết một vectơ được sắp xếp như thế nào.",
+      "bt_text": "An example value indicates how a vector is sorted.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe completely different mathematical concepts (eigenvalues/eigenvectors vs. sorting values).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe completely different mathematical concepts (eigenvalues/eigenvectors vs. sorting values).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 44,
+            "total_tokens": 309,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.287828300031833,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two completely different mathematical concepts (vector sorting vs. eigenvalue scaling).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two completely different mathematical concepts (vector sorting vs. eigenvalue scaling).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 42,
+            "total_tokens": 307,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.176401500008069,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "B changes the meaning entirely and does not preserve the eigenvalue/eigenvector relationship.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"B changes the meaning entirely and does not preserve the eigenvalue/eigenvector relationship.\"}",
+          "latency_sec": 1.16,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 38,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013675,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "a8d260fca82f85f48f56caa99a7293cc00def0cf7ebb5bc4f285705c408ea028"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "They describe different mathematical concepts and meanings.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"They describe different mathematical concepts and meanings.\"}",
+          "latency_sec": 0.952,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011875,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "813fbd26763ab29bbd96c54aa7797c2ac69ac583ca77cd85731e8a526ca7ba22"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_convolution_kernel",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: convolution kernel mistranslated",
+      "src": "A convolution kernel slides across the image to detect local patterns.",
+      "mt": "Một kernel tích chập trượt trên ảnh để phát hiện các mẫu cục bộ.",
+      "bt_text": "A convolution kernel slides over an image to detect local patterns.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; 'across' and 'over' are synonymous in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; 'across' and 'over' are synonymous in this context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 269,
+            "completion_tokens": 43,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 16.794123100000434,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning; 'over' and 'across' are synonymous in this context.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning; 'over' and 'across' are synonymous in this context.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 269,
+            "completion_tokens": 43,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.1747087000403553,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning with only minor wording differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning with only minor wording differences.\"}",
+          "latency_sec": 0.951,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 28,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011725,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "fd6c62b0fd6edc358e8ee8bf89a9ec66acb93abebb9c578cd8c8fda246027b42"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only wording differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only wording differs.\"}",
+          "latency_sec": 0.809,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011525,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "521f418d063a2b24da93f63bdd70d47aff2b83c8c7511b61d5dd27a6481d8033"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_convolution_kernel",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: convolution kernel mistranslated",
+      "src": "A convolution kernel slides across the image to detect local patterns.",
+      "mt": "Một hạt nhân hội tụ trượt trên ảnh để phát hiện các mẫu cục bộ.",
+      "bt_text": "A sliding convolutional kernel on an image to detect local patterns.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages convey the exact same technical process and purpose.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages convey the exact same technical process and purpose.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 269,
+            "completion_tokens": 34,
+            "total_tokens": 303,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.935100200003944,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same technical process with no difference in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same technical process with no difference in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 269,
+            "completion_tokens": 38,
+            "total_tokens": 307,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.9479396000970155,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning despite minor grammatical differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning despite minor grammatical differences.\"}",
+          "latency_sec": 0.923,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 246,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001155,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "4fb095298966b8d146dd84d342c348e32c68434dbe2bc43e17bbbcd6b2c36c43"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning with only stylistic rephrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning with only stylistic rephrasing.\"}",
+          "latency_sec": 0.918,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 246,
+            "cached_tokens": 0,
+            "completion_tokens": 30,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001215,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "4b62f56c02fd9d23088da398fd75ad14491d432fd481371eaae8f2530090b16d"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "good_batch_epoch",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: epoch changed to batch",
+      "src": "An epoch is complete after the model has seen every training example once.",
+      "mt": "Một epoch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.",
+      "bt_text": "An epoch is completed after the model has seen each training example once.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are semantically identical.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are semantically identical.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 31,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.43154759996105,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are semantically identical.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are semantically identical.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 31,
+            "total_tokens": 304,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.8454583999700844,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning with only minor wording differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only minor wording differences.\"}",
+          "latency_sec": 1.038,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 249,
+            "cached_tokens": 0,
+            "completion_tokens": 25,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011225,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "a1e1174ab8a5217df0fb79cfd4951e9d753deb8b0c584989dd52f2417f00e20b"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning; only wording differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning; only wording differs.\"}",
+          "latency_sec": 0.78,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 249,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011025,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "a442881230898481033203a5462aed77dfd78bbee5a73956538a53d8e9c83f94"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_batch_epoch",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: epoch changed to batch",
+      "src": "An epoch is complete after the model has seen every training example once.",
+      "mt": "Một batch hoàn tất sau khi mô hình đã thấy mỗi ví dụ huấn luyện một lần.",
+      "bt_text": "A batch is completed after the model has seen each training example once.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 25.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "The passages describe different units of training (epoch vs. batch) which have distinct meanings in machine learning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 25, \"flags\": [\"coverage_mismatch\"], \"note\": \"The passages describe different units of training (epoch vs. batch) which have distinct meanings in machine learning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 48,
+            "total_tokens": 321,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.568146400037222,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The terms 'batch' and 'epoch' are used interchangeably in this context to describe the completion of a full pass over the training data.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The terms 'batch' and 'epoch' are used interchangeably in this context to describe the completion of a full pass over the training data.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 51,
+            "total_tokens": 324,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.398464799975045,
+          "from_cache": true
+        },
+        "score_mean": 62.5,
+        "score_delta_abs": 75.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 75.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages differ in the key term being defined: epoch versus batch.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":75,\"flags\":[\"semantic_mismatch\"],\"note\":\"The passages differ in the key term being defined: epoch versus batch.\"}",
+          "latency_sec": 1.043,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 249,
+            "cached_tokens": 0,
+            "completion_tokens": 35,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013225,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "c5bcf781763964169635041273dfe3f545ee3eabd2bc41c5e5216429fc4f4581"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning.\"}",
+          "latency_sec": 0.706,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 249,
+            "cached_tokens": 0,
+            "completion_tokens": 20,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010225,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "96424f1b40469c46be2e8b0bee950718dd647efe43616b1839e3b6a7a40a991e"
+        },
+        "score_mean": 87.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "good_dimensionality_reduction",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: dimensionality reduction mistranslated",
+      "src": "Dimensionality reduction projects high-dimensional data into a lower-dimensional space.",
+      "mt": "Giảm chiều chiếu dữ liệu chiều cao vào một không gian chiều thấp hơn.",
+      "bt_text": "Reduce the dimension of height data into a lower-dimensional space.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "Passage B narrows the scope from general 'high-dimensional data' to specific 'height data'.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 50, \"flags\": [\"coverage_mismatch\"], \"note\": \"Passage B narrows the scope from general 'high-dimensional data' to specific 'height data'.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 47,
+            "total_tokens": 320,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 17.542155800038017,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same process of dimensionality reduction applied to data.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same process of dimensionality reduction applied to data.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 273,
+            "completion_tokens": 36,
+            "total_tokens": 309,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.007329300045967,
+          "from_cache": true
+        },
+        "score_mean": 75.0,
+        "score_delta_abs": 50.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 50.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "B changes the subject from high-dimensional data to height data, altering the meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":50,\"flags\":[\"semantic_mismatch\"],\"note\":\"B changes the subject from high-dimensional data to height data, altering the meaning.\"}",
+          "latency_sec": 0.939,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 247,
+            "cached_tokens": 0,
+            "completion_tokens": 37,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00013575,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "a81306397ba677bf82b27de903c5827145d5d9c8b8241877fd724f58c6772a42"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 75.0,
+          "flags": [
+            "coverage_mismatch"
+          ],
+          "note": "B is more specific about high-dimensional data and dimensionality reduction, while A only mentions height data.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":75,\"flags\":[\"coverage_mismatch\"],\"note\":\"B is more specific about high-dimensional data and dimensionality reduction, while A only mentions height data.\"}",
+          "latency_sec": 0.969,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 247,
+            "cached_tokens": 0,
+            "completion_tokens": 41,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00014375,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "def8a6f82aa232ddb4bc9239428e6d56f10d286e212437267cb453af0d5ad2d6"
+        },
+        "score_mean": 62.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "bad_dimensionality_reduction",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: dimensionality reduction mistranslated",
+      "src": "Dimensionality reduction projects high-dimensional data into a lower-dimensional space.",
+      "mt": "Chuẩn hóa dữ liệu chiều cao vào một không gian lớn hơn.",
+      "bt_text": "Normalize height data into a larger space.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe completely different operations (dimensionality reduction vs. normalization) and different data types.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe completely different operations (dimensionality reduction vs. normalization) and different data types.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 268,
+            "completion_tokens": 44,
+            "total_tokens": 312,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 23.841423899983056,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch",
+            "coverage_mismatch"
+          ],
+          "note": "Passage A describes normalization (scaling), while Passage B describes dimensionality reduction (projection/compression).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 25, \"flags\": [\"semantic_mismatch\", \"coverage_mismatch\"], \"note\": \"Passage A describes normalization (scaling), while Passage B describes dimensionality reduction (projection/compression).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 268,
+            "completion_tokens": 52,
+            "total_tokens": 320,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.7509908999782056,
+          "from_cache": true
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe opposite operations on different kinds of data.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"The passages describe opposite operations on different kinds of data.\"}",
+          "latency_sec": 0.979,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 32,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012475,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "747514cf161d4e86d35a076abda61ca1fd3387f2d5e2998c510d5dcbb4d2310d"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe opposite operations: expanding to a larger space versus reducing to a lower-dimensional space.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"The passages describe opposite operations: expanding to a larger space versus reducing to a lower-dimensional space.\"}",
+          "latency_sec": 0.928,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 40,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00014075,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "95bdc5df47b68dbc13e1956ddc5e582358ac8af27e75dd028f013b7c393df7e7"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_probability_range",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: probability range violated",
+      "src": "A probability must lie between 0 and 1.",
+      "mt": "Một xác suất phải nằm giữa 0 và 1.",
+      "bt_text": "A probability must lie between 0 and 1.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 30,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.863311199937016,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 267,
+            "completion_tokens": 30,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 0.9718400000128895,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages have identical meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}",
+          "latency_sec": 0.951,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 23,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010675,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "e1d5cc16678585f4619fcb9066b6625783d90615f33fe201a3fa97044382ad57"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages have identical meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}",
+          "latency_sec": 0.951,
+          "from_cache": true,
+          "usage": {
+            "prompt_tokens": 243,
+            "cached_tokens": 0,
+            "completion_tokens": 23,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00010675,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "e1d5cc16678585f4619fcb9066b6625783d90615f33fe201a3fa97044382ad57"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_probability_range",
+      "source": "comet_wide",
+      "expected": "bad_numeric",
+      "note": "bad: probability range violated",
+      "src": "A probability must lie between 0 and 1.",
+      "mt": "Một xác suất phải lớn hơn 1.",
+      "bt_text": "A probability must be greater than 1.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "The passages provide contradictory mathematical constraints for a probability.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"The passages provide contradictory mathematical constraints for a probability.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 37,
+            "total_tokens": 302,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 23.83362859999761,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch"
+          ],
+          "note": "Passage A claims a probability must be greater than 1, while Passage B states it must be between 0 and 1.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"negation_mismatch\"], \"note\": \"Passage A claims a probability must be greater than 1, while Passage B states it must be between 0 and 1.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 54,
+            "total_tokens": 319,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.4636474000290036,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "negation_mismatch",
+            "semantic_mismatch"
+          ],
+          "note": "The passages state opposite constraints on probability.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"negation_mismatch\",\"semantic_mismatch\"],\"note\":\"The passages state opposite constraints on probability.\"}",
+          "latency_sec": 0.901,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 241,
+            "cached_tokens": 0,
+            "completion_tokens": 34,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012825,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "38648311a12117c46eb42ca3960aee6efe77f2b2b3d6b84b104fe6a806f5b555"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages state opposite constraints on probability.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\",\"negation_mismatch\"],\"note\":\"The passages state opposite constraints on probability.\"}",
+          "latency_sec": 1.354,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 241,
+            "cached_tokens": 0,
+            "completion_tokens": 34,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012825,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "34161a24205cdfcbe2d2110d0e45a12e4717ac867c29eea133a9d2c1526ba5f2"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_bias_weight",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: bias/weight and before/after changed",
+      "src": "The bias term shifts the activation before applying the nonlinearity.",
+      "mt": "Hạng bias dịch chuyển kích hoạt trước khi áp dụng phi tuyến.",
+      "bt_text": "The bias shift activates before applying nonlinearity.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same functional sequence of operations.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same functional sequence of operations.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 33,
+            "total_tokens": 297,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.512827700003982,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Both passages describe the same sequence of operations in a neural network.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"Both passages describe the same sequence of operations in a neural network.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 264,
+            "completion_tokens": 36,
+            "total_tokens": 300,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.8981967000290751,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 75.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "B changes the meaning slightly by saying the bias shift itself activates rather than shifts the activation.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":75,\"flags\":[\"semantic_mismatch\"],\"note\":\"B changes the meaning slightly by saying the bias shift itself activates rather than shifts the activation.\"}",
+          "latency_sec": 1.004,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 244,
+            "cached_tokens": 0,
+            "completion_tokens": 39,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000139,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "ec7485f0137f42e966242c3669454b42bd646d42aaa956249f4765623debed2a"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning with only stylistic rephrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only stylistic rephrasing.\"}",
+          "latency_sec": 0.905,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 244,
+            "cached_tokens": 0,
+            "completion_tokens": 27,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000115,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "8865d45e00ff13adc4a3f303ebe251b97d5f0914e5223437c7048498c0b39d74"
+        },
+        "score_mean": 87.5,
+        "score_delta_abs": 25.0
+      }
+    },
+    {
+      "id": "bad_bias_weight",
+      "source": "comet_wide",
+      "expected": "bad_semantic",
+      "note": "bad: bias/weight and before/after changed",
+      "src": "The bias term shifts the activation before applying the nonlinearity.",
+      "mt": "Trọng số dịch chuyển kích hoạt sau khi áp dụng phi tuyến.",
+      "bt_text": "The displacement weight is activated after applying nonlinearity.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch",
+            "negation_mismatch"
+          ],
+          "note": "The passages contradict each other regarding the order of operations (before vs. after nonlinearity).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\", \"negation_mismatch\"], \"note\": \"The passages contradict each other regarding the order of operations (before vs. after nonlinearity).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 50,
+            "total_tokens": 315,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.366910899989307,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 25.0,
+          "flags": [
+            "semantic_mismatch",
+            "coverage_mismatch"
+          ],
+          "note": "The passages describe different operations (displacement weight vs. bias term) occurring at different stages of the process (after vs. before nonlinearity).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 25, \"flags\": [\"semantic_mismatch\", \"coverage_mismatch\"], \"note\": \"The passages describe different operations (displacement weight vs. bias term) occurring at different stages of the process (after vs. before nonlinearity).",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 60,
+            "total_tokens": 325,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.6533632000209764,
+          "from_cache": true
+        },
+        "score_mean": 12.5,
+        "score_delta_abs": 25.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe opposite operations and meanings.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"The passages describe opposite operations and meanings.\"}",
+          "latency_sec": 0.981,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00011925,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "64fb3a6708204f9b31a6b54de84395e90c89500d3d16af82c03020d640fbdeea"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "They describe different operations with different roles and order.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"They describe different operations with different roles and order.\"}",
+          "latency_sec": 0.889,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 245,
+            "cached_tokens": 0,
+            "completion_tokens": 31,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012325,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "d928f8e59426db6de3a5e00b66749ea785024dfbb7ec69416d6e7065267c0d8e"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "good_distribution",
+      "source": "comet_wide",
+      "expected": "good",
+      "note": "good: distribution and statistics changed",
+      "src": "A Gaussian distribution is fully specified by its mean and variance.",
+      "mt": "Một phân phối Gaussian được xác định đầy đủ bởi trung bình và phương sai.",
+      "bt_text": "A Gaussian distribution is fully defined by the mean and the variance.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same mathematical fact with no difference in meaning.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same mathematical fact with no difference in meaning.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 270,
+            "completion_tokens": 38,
+            "total_tokens": 308,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.654084100038745,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages convey the exact same mathematical fact using synonymous phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages convey the exact same mathematical fact using synonymous phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 270,
+            "completion_tokens": 36,
+            "total_tokens": 306,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 1.920182100031525,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning with only stylistic wording differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning with only stylistic wording differences.\"}",
+          "latency_sec": 0.882,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 246,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001195,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "07b9ea4229660c617e7aa82b140365e52b4f25abb3d64d751dda7a0e8e12e361"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning with only a wording change.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning with only a wording change.\"}",
+          "latency_sec": 0.976,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 246,
+            "cached_tokens": 0,
+            "completion_tokens": 28,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.0001175,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "6b988614213aff428f952c93b0917409b7dbf29d04f21d60b577ee1784b94b04"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "bad_distribution",
+      "source": "comet_wide",
+      "expected": "bad_term",
+      "note": "bad: distribution and statistics changed",
+      "src": "A Gaussian distribution is fully specified by its mean and variance.",
+      "mt": "Một phân phối đều được xác định đầy đủ bởi trung vị và độ lệch chuẩn.",
+      "bt_text": "A uniform distribution is fully determined by the median and the standard deviation.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages describe two different types of probability distributions (Gaussian vs. uniform) and different parameters (mean/variance vs. median/standard deviation).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages describe two different types of probability distributions (Gaussian vs. uniform) and different parameters (mean/variance vs. median/standard deviation).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 271,
+            "completion_tokens": 55,
+            "total_tokens": 326,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.07276989996899,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "The passages refer to different types of distributions (Uniform vs. Gaussian) and different parameters (Median/SD vs. Mean/Variance).",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 0, \"flags\": [\"semantic_mismatch\"], \"note\": \"The passages refer to different types of distributions (Uniform vs. Gaussian) and different parameters (Median/SD vs. Mean/Variance).\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 271,
+            "completion_tokens": 53,
+            "total_tokens": 324,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.5141306000296026,
+          "from_cache": true
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "They describe different distributions and different defining parameters.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"They describe different distributions and different defining parameters.\"}",
+          "latency_sec": 0.944,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 247,
+            "cached_tokens": 0,
+            "completion_tokens": 30,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012175,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "eb1aa36c13911e0358395788dbc3f42e56b46c808322b2d38c5d3464417af69e"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 0.0,
+          "flags": [
+            "semantic_mismatch"
+          ],
+          "note": "They describe different distributions and different determining parameters.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":0,\"flags\":[\"semantic_mismatch\"],\"note\":\"They describe different distributions and different determining parameters.\"}",
+          "latency_sec": 0.965,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 247,
+            "cached_tokens": 0,
+            "completion_tokens": 30,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00012175,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "74c226a3f4533c72021f977c7a88b4502940713cc23cfe115d5445329ee7ab34"
+        },
+        "score_mean": 0.0,
+        "score_delta_abs": 0
+      }
+    },
+    {
+      "id": "real_vector_s0_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: vector/vecto",
+      "src": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch,\nwith some abuse of notation, we define the nonlinearity\n$\\sigma$ to apply to its inputs in a rowwise fashion,\ni.e., one example at a time.\nNote that we used the notation for softmax\nin the same way to denote a rowwise operation in :numref:`subsec_softmax_vectorization`.\nOften, as in this section, the activation functions\nthat we apply to hidden layers are not merely rowwise,\nbut elementwise.\nThat means that after computing the linear portion of the layer,\nwe can calculate each activation\nwithout looking at the values taken by the other hidden units.\nThis is true for most activation functions.",
+      "mt": "Vì mỗi hàng trong $\\mathbf{X}$ tương ứng với một ví dụ trong minibatch, với một chút lạm dụng ký hiệu, ta định nghĩa phi tuyến $\\sigma$ áp dụng cho đầu vào của nó theo từng hàng, tức là mỗi lần một ví dụ. Lưu ý rằng chúng ta đã dùng ký hiệu cho softmax theo cùng cách để chỉ một phép toán theo hàng trong :numref:`subsec_softmax_vectorization`. Thông thường, như trong phần này, các hàm kích hoạt mà ta áp dụng cho các tầng ẩn không chỉ theo hàng mà còn theo từng phần tử. Điều đó có nghĩa là sau khi tính phần tuyến tính của tầng, ta có thể tính mỗi kích hoạt mà không cần nhìn vào các giá trị mà các đơn vị ẩn khác nhận được. Điều này đúng với hầu hết các hàm kích hoạt.",
+      "bt_text": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch, with a slight abuse of notation, we define the nonlinearity $\\sigma$ applied to its input row-wise, i.e., one example at a time. Note that we have used the notation for softmax in the same way to denote a row-wise operation in :numref:`subsec_softmax_vectorization`. Typically, as in this section, the activation functions that we apply to the hidden layers are not only row-wise but also element-wise. This means that after computing the linear part of the layer, we can compute each activation without looking at the values that other hidden units receive. This holds true for most activation functions.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 549,
+            "completion_tokens": 39,
+            "total_tokens": 588,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.573516300064512,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 549,
+            "completion_tokens": 39,
+            "total_tokens": 588,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 3.0388701000483707,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages preserve the same meaning with only stylistic rephrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages preserve the same meaning with only stylistic rephrasing.\"}",
+          "latency_sec": 1.042,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 517,
+            "cached_tokens": 0,
+            "completion_tokens": 31,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00019125,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "11f7c30f5967d8a44d736cf1038e4713daf36d25dd1e210137a103c58f3b1305"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the same meaning with only stylistic differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages convey the same meaning with only stylistic differences.\"}",
+          "latency_sec": 0.917,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 517,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00018725,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "92b28e30441558457130fe5b98320c0ca7e1e13d22272b97743b6edbb5c6167d"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "real_vector_s1_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: vector/vecto",
+      "src": "Since each row in $\\mathbf{X}$ corresponds to an example in the minibatch,\nwith some abuse of notation, we define the nonlinearity\n$\\sigma$ to apply to its inputs in a rowwise fashion,\ni.e., one example at a time.\nNote that we used the notation for softmax\nin the same way to denote a rowwise operation in :numref:`subsec_softmax_vectorization`.\nOften, as in this section, the activation functions\nthat we apply to hidden layers are not merely rowwise,\nbut elementwise.\nThat means that after computing the linear portion of the layer,\nwe can calculate each activation\nwithout looking at the values taken by the other hidden units.\nThis is true for most activation functions.",
+      "mt": "Vì mỗi hàng trong $\\mathbf{X}$ tương ứng với một ví dụ trong lô nhỏ, với một chút lạm dụng ký hiệu, ta định nghĩa phi tuyến $\\sigma$ sao cho nó áp dụng lên đầu vào theo từng hàng, tức là một ví dụ tại một thời điểm. Lưu ý rằng chúng ta đã dùng ký hiệu cho softmax theo cùng cách để chỉ một phép toán theo hàng trong :numref:`subsec_softmax_vectorization`. Thông thường, như trong mục này, các hàm kích hoạt mà ta áp dụng cho các tầng ẩn không chỉ theo hàng, mà còn theo phần tử. Điều đó có nghĩa là sau khi tính phần tuyến tính của tầng, ta có thể tính từng kích hoạt mà không cần nhìn vào các giá trị mà các đơn vị ẩn khác nhận được. Điều này đúng với hầu hết các hàm kích hoạt.",
+      "bt_text": "Since each row in $\\mathbf{X}$ corresponds to an example in a mini-batch, with a slight abuse of notation, we define the nonlinearity $\\sigma$ such that it applies to the input row-wise, i.e., one example at a time. Note that we have used the notation for softmax in the same way to denote a row-wise operation in :numref:`subsec_softmax_vectorization`. Typically, as in this section, the activation functions we apply to the hidden layers are not only row-wise, but also element-wise. This means that after computing the linear part of the layer, we can compute each activation without looking at the values that other hidden units receive. This holds true for most activation functions.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 553,
+            "completion_tokens": 39,
+            "total_tokens": 592,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 14.532161900075153,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 553,
+            "completion_tokens": 39,
+            "total_tokens": 592,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.88505299994722,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning; only stylistic differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning; only stylistic differences.\"}",
+          "latency_sec": 0.747,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 521,
+            "cached_tokens": 0,
+            "completion_tokens": 25,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00018025,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "1883b59c2b5de86f072fa2384fc5869992df08ac01dd0aed2d2c95abdf904bd0"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning with only stylistic differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only stylistic differences.\"}",
+          "latency_sec": 0.69,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 521,
+            "cached_tokens": 0,
+            "completion_tokens": 25,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00018025,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "75b5d43fc82f55be08dbd300ba6a2966f0ba7871ac2c52c7738d1ab1c5dbb57a"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "real_regularization_s1_expected_blind",
+      "source": "workdb_diagnostic",
+      "expected": "expected_blind",
+      "note": "real term-style case: regularization",
+      "src": "In this chapter, we will introduce your first truly *deep* network.\nThe simplest deep networks are called multilayer perceptrons,\nand they consist of multiple layers of neurons\neach fully connected to those in the layer below\n(from which they receive input)\nand those above (which they, in turn, influence).\nWhen we train high-capacity models we run the risk of overfitting.\nThus, we will need to provide your first rigorous introduction\nto the notions of overfitting, underfitting, and model selection.\nTo help you combat these problems,\nwe will introduce regularization techniques such as weight decay and dropout.\nWe will also discuss issues relating to numerical stability and parameter initialization\nthat are key to successfully training deep networks.\nThroughout, we aim to give you a firm grasp not just of the concepts\nbut also of the practice of using deep networks.\nAt the end of this chapter,\nwe apply what we have introduced so far to a real case: house price prediction.\nWe punt matters relating to the computational performance,\nscalability, and efficiency of our models to subsequent chapters.",
+      "mt": "Trong chương này, chúng ta sẽ giới thiệu mạng thực sự *sâu* đầu tiên của bạn. Những mạng sâu đơn giản nhất được gọi là perceptron đa tầng, và chúng gồm nhiều tầng nơ-ron, mỗi tầng đều kết nối đầy đủ với các nơ-ron ở tầng bên dưới (từ đó chúng nhận đầu vào) và các nơ-ron ở tầng bên trên (mà chúng, đến lượt mình, ảnh hưởng). Khi huấn luyện các mô hình có năng lực cao, chúng ta đối mặt với nguy cơ quá khớp. Vì vậy, chúng ta sẽ cần đưa ra phần giới thiệu chặt chẽ đầu tiên về các khái niệm quá khớp, thiếu khớp, và chọn mô hình. Để giúp bạn đối phó với những vấn đề này, chúng ta sẽ giới thiệu các kỹ thuật chuẩn hóa như suy giảm trọng số và dropout. Chúng ta cũng sẽ thảo luận các vấn đề liên quan đến ổn định số và khởi tạo tham số, vốn là những yếu tố then chốt để huấn luyện thành công các mạng nơ-ron sâu. Xuyên suốt, chúng tôi hướng tới việc giúp bạn nắm vững không chỉ các khái niệm mà còn cả thực hành sử dụng các mạng sâu. Ở cuối chương này, chúng ta áp dụng những gì đã giới thiệu cho đến nay vào một trường hợp thực tế: dự đoán giá nhà. Chúng ta sẽ gác lại các vấn đề liên quan đến hiệu năng tính toán, khả năng mở rộng, và hiệu quả của các mô hình sang các chương sau.",
+      "bt_text": "In this chapter, we will introduce your first truly *deep* network. The simplest deep networks are called multi-layer perceptrons, and they consist of multiple layers of neurons, where each layer is fully connected to the neurons in the layer below (from which they receive input) and the neurons in the layer above (which they, in turn, influence). When training high-capacity models, we face the risk of overfitting. Therefore, we will need to provide the first rigorous introduction to the concepts of overfitting, underfitting, and model selection. To help you deal with these issues, we will introduce regularization techniques such as weight decay and dropout. We will also discuss issues related to numerical stability and parameter initialization, which are key factors for successfully training deep neural networks. Throughout, we aim to help you master not only the concepts but also the practice of using deep networks. At the end of this chapter, we apply what we have introduced so far to a real-world case: house price prediction. We will set aside issues related to computational performance, scalability, and model efficiency for later chapters.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 692,
+            "completion_tokens": 39,
+            "total_tokens": 731,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.782571199932136,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 692,
+            "completion_tokens": 39,
+            "total_tokens": 731,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 4.631458200048655,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the same meaning with only stylistic differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages convey the same meaning with only stylistic differences.\"}",
+          "latency_sec": 0.975,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 668,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000225,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "9a3ad6b73770a3b8ae67900ad622009494310e9b5519d8b4618442d9a80a4de3"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning; only wording and formatting differ.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning; only wording and formatting differ.\"}",
+          "latency_sec": 0.93,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 668,
+            "cached_tokens": 0,
+            "completion_tokens": 26,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.000219,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "6b8dbe556eab3084509880b46ce0b31dcac1b344466981c3195175130c45df5c"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "real_negation_s0",
+      "source": "workdb_diagnostic",
+      "expected": "diagnostic_real",
+      "note": "real negation candidate",
+      "src": "In this chapter, we will introduce your first truly *deep* network.\nThe simplest deep networks are called multilayer perceptrons,\nand they consist of multiple layers of neurons\neach fully connected to those in the layer below\n(from which they receive input)\nand those above (which they, in turn, influence).\nWhen we train high-capacity models we run the risk of overfitting.\nThus, we will need to provide your first rigorous introduction\nto the notions of overfitting, underfitting, and model selection.\nTo help you combat these problems,\nwe will introduce regularization techniques such as weight decay and dropout.\nWe will also discuss issues relating to numerical stability and parameter initialization\nthat are key to successfully training deep networks.\nThroughout, we aim to give you a firm grasp not just of the concepts\nbut also of the practice of using deep networks.\nAt the end of this chapter,\nwe apply what we have introduced so far to a real case: house price prediction.\nWe punt matters relating to the computational performance,\nscalability, and efficiency of our models to subsequent chapters.",
+      "mt": "Trong chương này, chúng ta sẽ giới thiệu mạng *sâu* thực sự đầu tiên của bạn. Những mạng sâu đơn giản nhất được gọi là perceptron nhiều lớp, và chúng gồm nhiều lớp nơ-ron, mỗi lớp được kết nối đầy đủ với các nơ-ron ở lớp bên dưới (từ đó chúng nhận đầu vào) và các nơ-ron ở lớp bên trên (mà đến lượt mình, chúng ảnh hưởng). Khi huấn luyện các mô hình có năng lực cao, chúng ta có nguy cơ bị quá khớp. Vì vậy, chúng ta sẽ cần giới thiệu một cách chặt chẽ những khái niệm về quá khớp, thiếu khớp và lựa chọn mô hình. Để giúp bạn đối phó với những vấn đề này, chúng ta sẽ giới thiệu các kỹ thuật chính quy hóa như suy giảm trọng số và dropout. Chúng ta cũng sẽ thảo luận các vấn đề liên quan đến độ ổn định số và khởi tạo tham số, vốn là những yếu tố then chốt để huấn luyện thành công các mạng sâu. Xuyên suốt, chúng tôi hướng tới việc giúp bạn nắm vững không chỉ các khái niệm mà còn cả thực hành sử dụng mạng sâu. Ở cuối chương này, chúng ta áp dụng những gì đã giới thiệu cho đến nay vào một trường hợp thực tế: dự đoán giá nhà. Chúng ta sẽ gác lại các vấn đề liên quan đến hiệu năng tính toán, khả năng mở rộng và hiệu quả của các mô hình sang các chương sau.",
+      "bt_text": "In this chapter, we will introduce your first true *deep* network. The simplest deep networks are called multi-layer perceptrons, and they consist of multiple layers of neurons, each layer being fully connected to the neurons in the layer below (from which they receive input) and the neurons in the layer above (which, in turn, they influence). When training high-capacity models, we run the risk of overfitting. Therefore, we will need to rigorously introduce the concepts of overfitting, underfitting, and model selection. To help you deal with these issues, we will introduce regularization techniques such as weight decay and dropout. We will also discuss issues related to numerical stability and parameter initialization, which are key factors for successfully training deep networks. Throughout, we aim to help you master not only the concepts but also the practice of using deep networks. At the end of this chapter, we apply what we have introduced so far to a real-world case: house price prediction. We will set aside issues related to computational performance, scalability, and model efficiency for later chapters.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 686,
+            "completion_tokens": 39,
+            "total_tokens": 725,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 15.103652799967676,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The two passages are identical in meaning, with only minor stylistic variations in phrasing.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The two passages are identical in meaning, with only minor stylistic variations in phrasing.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 686,
+            "completion_tokens": 39,
+            "total_tokens": 725,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 3.0548858999973163,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages convey the same meaning with only stylistic differences.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages convey the same meaning with only stylistic differences.\"}",
+          "latency_sec": 0.889,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 663,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00022375,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "3e5461bf151b4dc317d6ce1013dbaf3142281f246dd4f5b5884d796ef295f781"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning throughout; only stylistic wording and formatting differ.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning throughout; only stylistic wording and formatting differ.\"}",
+          "latency_sec": 0.959,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 663,
+            "cached_tokens": 0,
+            "completion_tokens": 29,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00022375,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "d8cfdeee87c8b6cafd9d3b28cd3cf2f4661db5a42d58023d8649e7f0126a3b80"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    },
+    {
+      "id": "real_numeric_s1",
+      "source": "workdb_diagnostic",
+      "expected": "diagnostic_real",
+      "note": "real numeric/math candidate",
+      "src": "Fortunately, [**the training loop for MLPs\nis exactly the same as for softmax regression.**]\nLeveraging the `d2l` package again,\nwe call the `train_ch3` function\n(see :numref:`sec_softmax_scratch`),\nsetting the number of epochs to 10\nand the learning rate to 0.1.",
+      "mt": "May mắn thay, [**vòng lặp huấn luyện cho MLPs hoàn toàn giống như cho hồi quy softmax.**] Tận dụng lại gói `d2l`, chúng ta gọi hàm `train_ch3` (xem :numref:`sec_softmax_scratch`), đặt số epoch là 10 và tốc độ học là 0.1.",
+      "bt_text": "Fortunately, [**the training loop for MLPs is exactly the same as for softmax regression.**] Leveraging the `d2l` package, we call the `train_ch3` function (see :numref:`sec_softmax_scratch`), setting the number of epochs to 10 and the learning rate to 0.1.",
+      "original_gemma_bt_llm_score": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in content, facts, and parameters.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in content, facts, and parameters.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 393,
+            "completion_tokens": 35,
+            "total_tokens": 428,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 13.51204850000795,
+          "from_cache": true
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [],
+          "note": "The passages are identical in meaning, with differences being purely related to line breaks and formatting.",
+          "validation_error": "",
+          "raw_content_prefix": "```json\n{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning, with differences being purely related to line breaks and formatting.\"}\n```",
+          "finish_reason": "stop",
+          "model_echo": "google/gemma-4-12b",
+          "usage": {
+            "prompt_tokens": 393,
+            "completion_tokens": 41,
+            "total_tokens": 434,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "latency_sec": 2.4406590999569744,
+          "from_cache": true
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      },
+      "gpt_judge": {
+        "ab": {
+          "direction": "ab",
+          "score": 100.0,
+          "flags": [],
+          "note": "Same meaning; only formatting differs.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning; only formatting differs.\"}",
+          "latency_sec": 0.866,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 371,
+            "cached_tokens": 0,
+            "completion_tokens": 24,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00014075,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "8c8905398037c81f426819df068634cd082063864116b3ae216f7b69f7bc8ced"
+        },
+        "ba": {
+          "direction": "ba",
+          "score": 100.0,
+          "flags": [
+            "format_only"
+          ],
+          "note": "Same meaning; only formatting and line breaks differ.",
+          "validation_error": "",
+          "raw_content_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only formatting and line breaks differ.\"}",
+          "latency_sec": 1.138,
+          "from_cache": false,
+          "usage": {
+            "prompt_tokens": 371,
+            "cached_tokens": 0,
+            "completion_tokens": 30,
+            "reasoning_tokens": 0
+          },
+          "cost_usd": 0.00015275,
+          "model_echo": "gpt-5.4-mini",
+          "system_fingerprint": null,
+          "cache_key": "9dd0086c7792236b56988f10e936a186cd11233630e064dbe8e4efa112ddb7ed"
+        },
+        "score_mean": 100.0,
+        "score_delta_abs": 0.0
+      }
+    }
+  ],
+  "pairwise": {
+    "ok": 17,
+    "total": 20,
+    "accuracy": 0.85,
+    "failures": [
+      {
+        "good": "good_regularization",
+        "bad": "bad_regularization",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "ok": false,
+        "margin": 0.0
+      },
+      {
+        "good": "good_untranslated",
+        "bad": "bad_untranslated",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "ok": false,
+        "margin": 0.0
+      },
+      {
+        "good": "good_convolution_kernel",
+        "bad": "bad_convolution_kernel",
+        "good_score": 100.0,
+        "bad_score": 100.0,
+        "ok": false,
+        "margin": 0.0
+      }
+    ]
+  },
+  "order_sensitivity": {
+    "mean_abs": 8.720930232558139,
+    "max_abs": 100.0,
+    "policy_by_locked_threshold": "two_direction",
+    "count_non_expected_blind": 43
+  },
+  "validation": {
+    "json_error_count": 1,
+    "json_errors": [
+      {
+        "case": "good_learning_rate_number",
+        "direction": "ba",
+        "error": "invalid_flags",
+        "prefix": "{\"score\":75,\"flags\":[\"tense_mismatch\"],\"note\":\"Same numeric change, but A states a past action while B states a present/general statement.\"}"
+      }
+    ],
+    "flag_counts": {
+      "format_only": 16,
+      "negation_mismatch": 13,
+      "semantic_mismatch": 29,
+      "coverage_mismatch": 5,
+      "numeric_mismatch": 2
+    }
+  },
+  "runtime": {
+    "elapsed_sec": 84.41469400003552,
+    "calls_api_vs_cache": {
+      "cache": 11,
+      "api": 81
+    },
+    "latency_median_sec_all": 0.959,
+    "latency_p90_sec_all": 1.5051999999999999,
+    "latency_median_sec_api_only": 0.951,
+    "latency_p90_sec_api_only": 1.1568,
+    "usage_total_value_including_cached": {
+      "prompt_tokens": 25574,
+      "cached_tokens": 0,
+      "completion_tokens": 2732,
+      "reasoning_tokens": 0
+    },
+    "usage_incremental_api_only": {
+      "prompt_tokens": 22875,
+      "cached_tokens": 0,
+      "completion_tokens": 2463,
+      "reasoning_tokens": 0
+    },
+    "cost_value_including_cached_usd": 0.0118575,
+    "incremental_cost_api_only_usd": 0.01064475
+  }
+}

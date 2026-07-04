@@ -198,7 +198,7 @@ CodeX bat 4 diem truoc khi chay probe — phan xu:
 2. **Ten composite (DUNG):** percentile-rank composite la thuoc do TUONG DOI trong run, khong so duoc giua sach/run khac -> neu dung phai ten `SF-BT-rank-composite`; headline luon la 2 cot cos/llm.
 3. **Mau thuan mu-thu-tu vs flags dinh huong (DUNG):** CHOT phuong an (a) — giu MU thu tu (equivalence la quan he doi xung, blindness quy hon nhan chieu), flags doi sang KHONG dinh huong: `semantic_mismatch`, `numeric_mismatch`, `negation_mismatch`, `coverage_mismatch` (mot ben noi nhieu/it hon ro ret), `untranslated_residue`, `format_only`. Phan tich CHIEU (omission vs addition) thuoc ve human audit bottom-10 — chuoi BT von khong quy trach nhiem duoc loi nam o luot dich hay luot dich nguoc, gan nhan chieu tu dong la gia chinh xac.
 4. **Encoding probe (file SACH — canh bao la console artifact):** Claude verify bytes: 41 case, 0 mojibake, 40/41 co dau VN chuan, 100% NFC (case con lai = untranslated co y). Quy tac ops ghi vao day: doc probe bang Python utf-8, KHONG tin render cua terminal PowerShell.
-5. **Nhanh ha cap Gemma (bo sung dung):** neu trigger luat ha cap (Pearson<0.6 hoac |diff|>10): headline full = `SF-BT-cos` (du 1,646) + GPT-sample lam audit phu; muon `SF-BT-llm` full bang GPT thi la quyet dinh chi phi RIENG trinh user (uoc ~$0.3-0.6, cost-gate nhu moi khi). GPT-sample 100 block KHONG bao gio duoc trinh bay nhu headline full.
+5. ~~**Nhanh ha cap Gemma (bo sung dung):**~~ **[SUPERSEDED boi §2e 2026-07-04: judge chinh = Gemini khac ho, xung dot Gemma-tu-cham-minh khong con ton tai; audit doi vai — xem §2e.]** (noi dung cu giu lam lich su:) neu trigger luat ha cap (Pearson<0.6 hoac |diff|>10): headline full = `SF-BT-cos` (du 1,646) + GPT-sample lam audit phu; muon `SF-BT-llm` full bang GPT thi la quyet dinh chi phi RIENG trinh user (uoc ~$0.3-0.6, cost-gate nhu moi khi). GPT-sample 100 block KHONG bao gio duoc trinh bay nhu headline full.
 
 Spec het mau thuan. GO Phase-1 probe theo §2b.
 <!-- S2C_SFBT_PROMPTS -->
@@ -298,9 +298,44 @@ Artifacts commit kem muc nay: `probe_sf_bt.py`, `sf_bt_phase1_probe.json`. Cache
 User chot: khong lao vao 8-14h ngay; chay thu de do toc do/loi that roi quyet. Tan thanh — dung ky luat probe-first, va nho cache thi pilot KHONG phi mot call nao (full run sau do nhan lai tu cache).
 
 **Stage A — PILOT (CodeX, ~40-60 phut, $0):**
+0. Cach dem call: "100 luot cham" = 100 block-arm items, NHUNG moi item co 1 BT + 2 judge = ~300 local chat calls, chua tinh embedding. Khong duoc bao 100 request de tranh hieu nham. Token local mien phi, nhung ETA phai tinh theo local call thuc.
 1. Chon **50 block_id co dinh, deterministic, KHONG cherry-pick**: moi chuong 25 block_id, systematic sampling theo order_index (buoc k = floor(N/25), lay block thu k, 2k, 3k...; ghi cong thuc + danh sach id vao report). Cham CA 2 arm cho cung 50 block_id => 100 luot cham, co luon paired delta S1-S0 mau.
 2. Script = `score_sf_bt.py` ban that (khong phai script probe): 2 chieu judge, guard None-bug, report schema §2d muc 3, flags/with-without day du. Pilot chinh la lan smoke-test script nay.
 3. Report them: latency phan vi (p50/p90/max) rieng BT va judge theo do dai block; count too_long_for_llm / bt_truncated / input_matches_source tren mau; **ETA ngoai suy cho 1,646** tu latency thuc te; moi loi bat ky (transport, parse, timeout) ghi ro.
+3b. Benchmark concurrency truoc khi chot full: chay cung prompt/model/profile tren mau nho uncached, so sanh concurrency 1/2/3 (va 4 neu GPU/LM Studio con on). Report wall-time, items/min, parse/finish_reason, va loi transport. Chon concurrency theo throughput that, khong theo gia dinh; neu song song lam cham hoac unstable thi full run dung sequential.
+3c. CodeX benchmark 2026-07-04 (artifact `data/reports/exp_s0s1_builderv2_v1/sf_bt_concurrency_benchmark.json`): mau 6 block-arm items that, moi item 1 BT + 2 judge, Gemma-4-12B profile nhu §2c. Throughput: conc1 7.01 items/min; conc2 6.83; conc3 6.12; conc4 7.04. Khong loi transport/parse, nhung median item latency tang manh khi song song (7.8s -> 18.2s -> 29.4s -> 30.4s). Ket luan hien tai: **sequential la mac dinh an toan**; chi doi neu pilot full-script cho so khac tren sample lon hon.
 4. STOP -> Claude verify -> quyet scope voi user bang so that: (a) full 1,646 mot dem, (b) tung chuong moi dem mot chuong, (c) thu hep 1 chuong (chi khi ETA that su xau; ghi ro cai gia = mat replication xuyen chuong cua SF-BT).
 
-**Ghi chu model (chot voi user):** Gemini/GPT KHONG thay Gemma o vi tri BT/judge chinh — probe §2d da tham dinh thuoc tren Gemma, doi model = doi thuoc = probe lai tu dau; key reseller khong pin duoc model version (rui ro tai lap) + data qua trung gian. Gemini duoc phep ung cu vai AUDIT 100-block (thay GPT-mini, cost-gate nhu cu) — quyet khi den buoc do. Token local mien phi; chi phi duy nhat la thoi gian may chay.
+**Ghi chu model (chot voi user):** ~~Gemini/GPT KHONG thay Gemma o vi tri BT/judge chinh~~ **[Phan JUDGE superseded boi §2e sau khi user cho CodeX probe day du 5 model — dieu kien 'doi model = probe lai tu dau' DA duoc thoa man. Phan BT van dung nguyen: Gemma local giu vi tri BT.]** — probe §2d da tham dinh thuoc tren Gemma, doi model = doi thuoc = probe lai tu dau; key reseller khong pin duoc model version (rui ro tai lap) + data qua trung gian. Gemini duoc phep ung cu vai AUDIT 100-block (thay GPT-mini, cost-gate nhu cu) — quyet khi den buoc do. Token local mien phi; chi phi duy nhat la thoi gian may chay.
+
+<!-- S2E_JUDGE_MODEL -->
+### 2e. CHOT judge model cho SF-BT-llm (Claude verify doc lap 5 artifact, 2026-07-04)
+
+**Verify:** recount tung file (khong tin bang tong hop) — pairwise, order (loai expected_blind), validation error. **Bang CodeX khop 100%**, key KHONG lot vao artifact nao (scan bang chinh key string).
+
+| candidate | pairwise | order mean/max | val_err | ghi chu |
+|---|---|---|---|---|
+| gemma-4-12b local (§2d) | 17/20 | 5.81/75 | 0 | ~15-17m/92 call |
+| gemini-2.5-flash seq | 17/20 | 1.16/25 | 0 | ~10m |
+| gemini-2.5-flash c8 thinking MAC DINH | 9/20 | (gia) | 27+ | **CAM**: thoughts an ~490/512 token budget -> JSON cut, finish=MAX_TOKENS |
+| **gemini-2.5-flash c8 thinking_budget=0** | **17/20** | 4.07/50 | **0** | **24.9s/92 call**, STOP 92/92, thoughts=0, ~$0.045 |
+| gemini-3.1-flash-lite | 17/20 | 6.40/50 | 0 | khong hon gi, order xau hon |
+| gpt-5.4-mini | 17/20 | 8.72/100 | 1 | **LOAI: cung ho Translator** (luat cu, CodeX tu ap dung dung) |
+| qwen3.5-9b local | 17/20 | 11.59/75 | 2 | order + JSON kem |
+
+**Phat hien nen tang: MOI model fail dung CUNG 3 cap** (regularization / untranslated / convolution_kernel) — recount xac nhan tren tung artifact. Nghia la: (a) tren nhom loi phai-bat, TAT CA dat 12/12 — chat luong bat loi khong phai bien phan biet; (b) 3 cap fail la vung mu thiet-ke cua SF-BT (thuat ngu + BT tha thu), model manh may cung khong cuu — cung co phan cong TC/TA/PJ; (c) bien phan biet that = on dinh JSON, on dinh thu tu, toc do, HO model.
+
+**QUYET DINH — judge chinh SF-BT-llm = `gemini-2.5-flash`, cau hinh KHOA:** thinking_budget=0 (bat buoc, xem hang CAM), temperature=0, top_p=1, response_mime_type=application/json, concurrency 8, judge 2 CHIEU (moi candidate deu vuot nguong 3/10 — ke ca seq mean 1.16 co max 25>10 -> khong mo lai chuyen 1 chieu).
+
+**Ly do nhan swap (doi chieu voi tu choi o §2d-A):** dieu kien "doi model = probe lai tu dau" DA thoa man — CodeX chay du bo 46 case/20 cap cho tung candidate. Loi ich khoa hoc thuc: **tach 3 ho hoan toan** — GPT dich xuoi / Gemma dich nguoc / Gemini cham — xung dot "Gemma tu cham ban dich nguoc cua chinh minh" (moi lo ngai #1, tung phai dung ca luat ha cap + audit tra phi) BIEN MAT theo thiet ke. Cong them: judge full run ~25-35 phut thay vi 6-10h.
+
+**Dieu kien bat buoc trong `score_sf_bt.py` full run:**
+1. BT giu nguyen Gemma local, P1 sha khong doi — swap CHI cham judge.
+2. Cache key them: provider/endpoint + thinking_budget + response_mime_type (tren nen R4 cu).
+3. **Log `model_version` tu response API tung call** (probe CHUA co field nay — phai them; voi key reseller khong pin duoc backend, log version + timestamp la bang chung tai lap duy nhat) + finish_reason + token counts.
+4. Loi transport/parse: retry 1 lan, KHONG BAO GIO cache ket qua loi.
+5. Caveat ghi vao thesis: Gemini temp=0 KHONG bit-deterministic (bang chung: seq 1.16/25 vs c8 4.07/50 cung model cung prompt); nguon su that = raw response da cache, report tinh tu cache — CUNG chuan da chap nhan voi GPT Translator, khong phai chuan thap hon.
+6. Audit doi vai: ~~GPT-mini 100 block co phi~~ -> **Gemma-local recham 100 block deterministic, $0** (gio Gemma doc lap voi judge chinh -> convergent evidence). Nguong cu giu nguyen (Pearson<0.6 hoac |mean diff|>10 -> mo thao luan trong thesis, khong am tham ha cot; SF-BT-cos co-primary khong bi anh huong).
+7. **Cost-gate:** probe do $0.045/92 call (case ngan); block that dai hon ~2.5x -> uoc full 3,292 call ~$3-7. PILOT §2d-A chay truoc voi judge moi, do chi phi thuc + ngoai suy; **neu ngoai suy > $10 thi STOP hoi user**. ETA moi: BT local ~2-4h + judge ~25-35m -> MOT BUOI TOI, khong can qua dem.
+
+Artifacts commit: 6 probe json + concurrency benchmark. Cache sqlite de untracked.
