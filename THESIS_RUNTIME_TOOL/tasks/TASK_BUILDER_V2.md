@@ -2621,3 +2621,18 @@ Bao cao: denominator per arm (union pack∪gold — se KHAC 2,487 cua MLP, la co
 
 ### Buoc 4 — STOP
 Khong score, khong commit, khong doc P1-P3. Bao cao: per-arm denominator/resolved_by/masquerade/validation_error/fallback calls/elapsed; duong dan artifacts; audit merge (loaded/skipped_by_reason/deduped/cross_term) cua overlay prelim; xac nhan manifest. Claude se: full-sweep verify decisions-vs-workdb (nhu verify_stop_b), recount headline, tinh TC-Occ/TA-Occ chinh danh + doi chieu P1-P3 (co fragment filter theo EVAL §8), browser smoke UI prelim, roi moi commit.
+<!-- S35_16_RESULTS -->
+### 35.16-RESULTS — cascade prelim + overlay ACCEPTED (Claude verified, 2026-07-04)
+
+**3 self-fix cua CodeX — review tung diff, CHAP NHAN ca 3:**
+1. `--artifact-prefix` (run_experiment_cascade.py): default cascade_<chapter>, sanitize; khong co no thi prelim DE cascade_mlp_* — catch dung. Artifacts ra cascade_preliminaries_*.
+2. materialize khong truyen cascade_report vao composer (bug lan dau ra cascade_rendered_marks=0) — fix + manifest per-chapter (`chapters.<id>.reports`), top-level giu MLP; test moi cover chapter-preference; resolver merge `{**reports, **chapter_reports}` backward-compat.
+3. LM Studio HTTP 500 sau ~1h -> transport error di qua GPT fallback thay vi sap run. Verified: error path return TRUOC _store_cached -> KHONG cache loi, rerun van thu Gemma truoc. Gap con lai (connection error ngoai raise_for_status van crash) ghi nhan, khong chan accept.
+
+**Full-sweep verify (khong sampling):** 2x1848 decisions vs workdb: 0 mismatch. Denominator/resolved_by/masquerade khop bao cao CodeX tung so (S0 921 t2 + 927 t3, S1 1027 + 821; fallback 29+1=30 call ~$0.0072; validation_error 0). Workdb hash 92229381...E8C13F42 khop truoc==sau; frozen 64D989 nguyen. 6 ca quote S0 khong khop tho = markdown formatting (clean-strip khop het, cung lop 4 ca b047 MLP) — benign. t3 marks = t3 decisions - not_rendered dung ca 2 arm (922=927-5, 812=821-9).
+
+**Overlay + UI smoke:** route tra dung file materialized (materialized_loaded_from=overlay_preliminaries.json), mark source khop (756/921/922, 742/1027/812), status = verdict F2-R khong suy bien (S0 1421 cons/702 drift/113 loc/363 unscored; S1 1517/583/113/368 — S1 xanh hon dung huong TC-Occ). MLP route van overlay_mlp.json (3874 marks S1). Browser: prelim b002 render 6424 span 4 lop verdict; focus click "vector" -> chip 1/154, 154 match/6270 dim. 24+3 test CodeX re-run pass.
+
+**Diem chinh danh TC-Occ/TA-Occ ghi o TASK_EVAL_SCORING_V1 §8c** (P1 PASS / P2 PASS / P3 vi pham o o TA — dieu tra xong: ruler divergence, khong phai harness bug). tc_ta_occ_preliminaries.json committed.
+
+**§37 status: ① DONE | ② DONE (§35.9 run + scored + §35.16 cascade/overlay/TC-Occ-TA-Occ chinh danh) | ③ §36 — NEXT.**

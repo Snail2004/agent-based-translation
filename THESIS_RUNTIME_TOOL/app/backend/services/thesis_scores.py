@@ -163,6 +163,7 @@ def resolve_experiment_artifact_path(
     experiment_id: str | None,
     key: str,
     *,
+    chapter_id: str | None = None,
     reports_root: Path | None = None,
 ) -> Path | None:
     """Resolve an experiment artifact path from data/reports/<experiment>/manifest.json."""
@@ -171,6 +172,13 @@ def resolve_experiment_artifact_path(
     if not manifest or not manifest_path:
         return None
     reports = manifest.get("reports") or {}
+    if chapter_id:
+        chapters = manifest.get("chapters") or {}
+        chapter_spec = chapters.get(chapter_id) if isinstance(chapters, dict) else None
+        if isinstance(chapter_spec, dict):
+            chapter_reports = chapter_spec.get("reports") or {}
+            if isinstance(chapter_reports, dict):
+                reports = {**reports, **chapter_reports}
     aliases = {
         key,
         f"{key}_report",

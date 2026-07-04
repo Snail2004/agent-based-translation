@@ -12,5 +12,17 @@
       "S0": "overlay_mlp_S0.json",
       "S1": "overlay_mlp_S1.json"
     }
+  },
+  "chapters": {
+    "d2l_preliminaries": {
+      "reports": {
+        "cascade": "cascade_preliminaries_summary.json",
+        "overlay": "overlay_preliminaries.json",
+        "overlay_by_config": {
+          "S0": "overlay_preliminaries_S0.json",
+          "S1": "overlay_preliminaries_S1.json"
+        }
+      }
+    }
   }
 }

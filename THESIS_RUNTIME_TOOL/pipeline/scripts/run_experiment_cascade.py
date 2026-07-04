@@ -90,6 +90,11 @@ def main() -> int:
     parser.add_argument("--cache-dir", default=str(DEFAULT_CACHE_DIR))
     parser.add_argument("--margin-threshold", type=float, default=DEFAULT_MARGIN_THRESHOLD)
     parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR))
+    parser.add_argument(
+        "--artifact-prefix",
+        default=None,
+        help="Prefix for cascade output files. Defaults to cascade_<chapter>.",
+    )
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--llm-config", default="pipeline/configs/llm_adjudicator.yaml")
     parser.add_argument("--llm-cache", default=str(DEFAULT_T3_CACHE))
@@ -134,6 +139,7 @@ def main() -> int:
         gold_variants_path=Path(args.gold_variants),
         term_scope=args.term_scope,
         out_dir=out_dir,
+        artifact_prefix=args.artifact_prefix,
         preflight_only=args.preflight_only,
         confirm_usd=args.confirm_usd,
         t3_backend=args.t3_backend,
@@ -166,6 +172,7 @@ def run_experiment_cascade(
     gold_variants_path: Path,
     term_scope: str,
     out_dir: Path,
+    artifact_prefix: str | None,
     preflight_only: bool,
     confirm_usd: float | None,
     t3_backend: str,
@@ -176,6 +183,7 @@ def run_experiment_cascade(
     gpt_fallback_on_validation_error: bool,
 ) -> dict[str, Any]:
     started = time.perf_counter()
+    output_prefix = _artifact_prefix(artifact_prefix, chapter)
     workdb_hash_before = _sha256_file(db_path)
     frozen_hash_before = _sha256_file(frozen_db_path)
     identity = preflight_embedding_model(endpoint=embed_endpoint, config=model_config)
@@ -195,7 +203,7 @@ def run_experiment_cascade(
         )
         report["embedding_unavailable"] = True
         report["embedding_error"] = endpoint_report.get("skipped_with_reason", "")
-        _write_json(out_dir / "cascade_mlp_preflight.json", report)
+        _write_json(out_dir / f"{output_prefix}_preflight.json", report)
         return report
 
     client = EmbeddingCacheClient(
@@ -266,7 +274,7 @@ def run_experiment_cascade(
         "reports": reports,
     })
     if preflight_only:
-        _write_json(out_dir / "cascade_mlp_preflight.json", report)
+        _write_json(out_dir / f"{output_prefix}_preflight.json", report)
         return report
 
     if confirm_usd is None:
@@ -305,15 +313,26 @@ def run_experiment_cascade(
             updated, stats = _run_t3_for_config(reports[config], llm_client)
         reports[config] = updated
         run_stats[config] = stats
-        _write_json(out_dir / f"cascade_mlp_{config}.json", updated)
+        _write_json(out_dir / f"{output_prefix}_{config}.json", updated)
     report["mode"] = "run"
     report["reports"] = reports
     report["t3_run_stats"] = run_stats
     report["t3_run_total"] = _sum_run_stats(run_stats)
     report["frozen_db_sha256_after"] = _sha256_file(frozen_db_path)
     report["workdb_sha256_after"] = _sha256_file(db_path)
-    _write_json(out_dir / "cascade_mlp_summary.json", report)
+    _write_json(out_dir / f"{output_prefix}_summary.json", report)
     return report
+
+
+def _artifact_prefix(value: str | None, chapter: str) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        raw = f"cascade_{chapter}"
+    safe = "".join(ch if ch.isalnum() or ch in ("_", "-") else "_" for ch in raw)
+    safe = safe.strip("_-")
+    if not safe:
+        raise ValueError("artifact prefix is empty after sanitization")
+    return safe
 
 
 def estimate_t3_for_report(config_report: dict[str, Any], llm_config: LLMConfig) -> dict[str, Any]:
@@ -837,7 +856,21 @@ class LocalLMStudioT3Client:
             json=request_body,
             timeout=self.timeout_sec,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            latency_ms = int((time.perf_counter() - started) * 1000)
+            return {
+                "text": "",
+                "parsed_json": None,
+                "json_error": f"local_transport_error:{type(exc).__name__}",
+                "usage": {},
+                "latency_ms": latency_ms,
+                "from_cache": False,
+                "cache_key": cache_key,
+                "finish_reason": "",
+                "model_echo": "",
+            }
         latency_ms = int((time.perf_counter() - started) * 1000)
         payload = response.json()
         choice = (payload.get("choices") or [{}])[0]

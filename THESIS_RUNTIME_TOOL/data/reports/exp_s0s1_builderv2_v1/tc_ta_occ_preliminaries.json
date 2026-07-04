@@ -1,0 +1,82 @@
+{
+ "S0": {
+  "tc": 0.9148128052088985,
+  "maj": 1686,
+  "loc": 1843,
+  "ta_pre": 0.7916666666666666,
+  "ta_off": 0.7911255411255411,
+  "hit_pre": 1463,
+  "hit_off": 1462,
+  "n": 1848,
+  "dropped": {
+   "scope:row vector": [
+    "hàng",
+    "vectơ"
+   ],
+   "scope:axis 0": [
+    "trục"
+   ],
+   "scope:axis 1": [
+    "trục"
+   ],
+   "scope:tensor format": [
+    "tensor"
+   ],
+   "scope:column dimension": [
+    "cột"
+   ],
+   "scope:unit length": [
+    "độ dài"
+   ],
+   "scope:row vectors": [
+    "hàng"
+   ],
+   "scope:frobenius norm": [
+    "chuẩn"
+   ],
+   "scope:conditional independence": [
+    "độc lập"
+   ]
+  }
+ },
+ "S1": {
+  "tc": 0.9467101685698749,
+  "maj": 1741,
+  "loc": 1839,
+  "ta_pre": 0.875,
+  "ta_off": 0.875,
+  "hit_pre": 1617,
+  "hit_off": 1617,
+  "n": 1848,
+  "dropped": {
+   "scope:row vector": [
+    "hàng",
+    "vectơ"
+   ],
+   "scope:axis 0": [
+    "trục"
+   ],
+   "scope:axis 1": [
+    "trục"
+   ],
+   "scope:tensor format": [
+    "tensor"
+   ],
+   "scope:column dimension": [
+    "cột"
+   ],
+   "scope:unit length": [
+    "độ dài"
+   ],
+   "scope:row vectors": [
+    "hàng"
+   ],
+   "scope:frobenius norm": [
+    "chuẩn"
+   ],
+   "scope:conditional independence": [
+    "độc lập"
+   ]
+  }
+ }
+}

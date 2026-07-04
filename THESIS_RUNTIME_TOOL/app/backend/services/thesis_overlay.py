@@ -56,6 +56,7 @@ def load_registry_overlay(
         overlay_report = resolve_experiment_artifact_path(
             effective_experiment_id,
             "overlay",
+            chapter_id=chapter_id,
             reports_root=reports_root or THESIS_REPORTS_ROOT,
         )
         if overlay_report:
@@ -89,6 +90,7 @@ def load_registry_overlay(
         cascade_report = resolve_experiment_artifact_path(
             effective_experiment_id,
             "cascade",
+            chapter_id=chapter_id,
             reports_root=reports_root or THESIS_REPORTS_ROOT,
         )
     if cascade_report:

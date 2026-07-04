@@ -176,11 +176,27 @@ def _with_only_config(overlay: dict[str, Any], config: str, stats: dict[str, Any
     return payload
 
 
-def _update_manifest(manifest_path: Path, combined_name: str, per_config_names: dict[str, str]) -> None:
+def _update_manifest(
+    manifest_path: Path,
+    *,
+    chapter_id: str,
+    cascade_name: str | None,
+    combined_name: str,
+    per_config_names: dict[str, str],
+) -> None:
     manifest = _read_json(manifest_path)
+    chapter_entry = manifest.setdefault("chapters", {}).setdefault(chapter_id, {})
+    chapter_reports = chapter_entry.setdefault("reports", {})
+    if cascade_name:
+        chapter_reports["cascade"] = cascade_name
+    chapter_reports["overlay"] = combined_name
+    chapter_reports["overlay_by_config"] = per_config_names
     reports = manifest.setdefault("reports", {})
-    reports["overlay"] = combined_name
-    reports["overlay_by_config"] = per_config_names
+    if not reports.get("overlay") or str(manifest.get("chapter_id") or "") == chapter_id:
+        if cascade_name:
+            reports["cascade"] = cascade_name
+        reports["overlay"] = combined_name
+        reports["overlay_by_config"] = per_config_names
     _write_json(manifest_path, manifest)
 
 
@@ -191,20 +207,30 @@ def main() -> int:
     parser.add_argument("--chapter-id", default="d2l_multilayer_perceptrons")
     parser.add_argument("--reports-root", type=Path, default=THESIS_REPORTS_ROOT)
     parser.add_argument("--out-dir", type=Path, default=None)
-    parser.add_argument("--combined-name", default="overlay_mlp.json")
+    parser.add_argument("--combined-name", default=None)
+    parser.add_argument("--cascade-report", default=None)
     parser.add_argument("--configs", nargs="+", default=["S0", "S1"])
     args = parser.parse_args()
 
     out_dir = args.out_dir or (args.reports_root / args.experiment_id)
     manifest_path = out_dir / "manifest.json"
-    cascade_report = resolve_experiment_artifact_path(args.experiment_id, "cascade", reports_root=args.reports_root)
+    combined_name = args.combined_name or f"overlay_{_chapter_slug(args.chapter_id)}.json"
+    cascade_report = Path(args.cascade_report) if args.cascade_report else resolve_experiment_artifact_path(
+        args.experiment_id,
+        "cascade",
+        chapter_id=args.chapter_id,
+        reports_root=args.reports_root,
+    )
     if not cascade_report:
         raise SystemExit(f"No cascade report found for experiment {args.experiment_id}.")
+    if not cascade_report.is_absolute() and not cascade_report.exists():
+        cascade_report = out_dir / cascade_report
 
     overlay = load_registry_overlay(
         args.job_id,
         experiment_id=args.experiment_id,
         chapter_id=args.chapter_id,
+        cascade_report=cascade_report,
         reports_root=args.reports_root,
         prefer_materialized=False,
     )
@@ -228,14 +254,21 @@ def main() -> int:
         "source_cascade_report": str(cascade_report),
     }
 
-    combined_path = out_dir / args.combined_name
+    combined_path = out_dir / combined_name
     _write_json(combined_path, combined)
     per_config_names: dict[str, str] = {}
+    stem = Path(combined_name).stem
     for config in args.configs:
-        name = f"overlay_mlp_{config}.json"
+        name = f"{stem}_{config}.json"
         per_config_names[config] = name
         _write_json(out_dir / name, _with_only_config(overlay, config, stats_by_config[config]))
-    _update_manifest(manifest_path, args.combined_name, per_config_names)
+    _update_manifest(
+        manifest_path,
+        chapter_id=args.chapter_id,
+        cascade_name=_relative_to_out_dir(cascade_report, out_dir),
+        combined_name=combined_name,
+        per_config_names=per_config_names,
+    )
 
     print(json.dumps({
         "combined": str(combined_path),
@@ -243,6 +276,21 @@ def main() -> int:
         "stats": stats_by_config,
     }, ensure_ascii=False, indent=2))
     return 0
+
+
+def _chapter_slug(chapter_id: str) -> str:
+    raw = str(chapter_id or "chapter")
+    if raw.startswith("d2l_"):
+        raw = raw[4:]
+    safe = "".join(ch if ch.isalnum() or ch in ("_", "-") else "_" for ch in raw)
+    return safe.strip("_-") or "chapter"
+
+
+def _relative_to_out_dir(path: Path, out_dir: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(out_dir.resolve())).replace("\\", "/")
+    except ValueError:
+        return str(path)
 
 
 if __name__ == "__main__":

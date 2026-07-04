@@ -124,3 +124,21 @@ CHOT 4 diem:
 4. **Luan diem chuong ket qua (case study trung tam):** S0 duoc 53/80 diem vector NHO tron lan 74 vector/35 vectơ — voi nguoi doc, van ban tron 2 cach viet TE hon S1 thong nhat 107/109. Tuc B dang THUONG cho su thieu nhat quan cua S0 o term tan suat cao = artifact cua thuoc, khong phai uu diem baseline. He thong memory bien chat luong tu may-rui-tung-cau thanh MOT quyet dinh tu dien: chon dung -> dung ca chuong; chon "sai" quy uoc -> sua 1 dong la lanh ca chuong; S0 sai thi khong co cho nao de sua.
 
 Lien ket: §36 re-election KHONG bat duoc loai (b) khi khong co gold (back-translation cua "vectơ" van ra "vector" — khong co tin hieu bat dong); luoi duy nhat cho loai (b) o production = style-guide adapter do user cung cap.
+<!-- S8C_PRELIM_OFFICIAL -->
+### 8c. PRELIMINARIES OFFICIAL — first pre-registered TC-Occ/TA-Occ run (Claude, 2026-07-04)
+
+Union scope 1,848 occ/arm (cascade_preliminaries_S0/S1.json; full-sweep verified vs workdb, 0 mismatch). Renderings: T2 target_surface / T3 target_quote markdown-stripped; casefold + ws-collapse; not_rendered excluded from TC, counted as miss in TA.
+
+| Metric | S0 | S1 | gap |
+|---|---|---|---|
+| TC-Occ | 0.9148 (1686/1843) | 0.9467 (1741/1839) | **+0.0319** |
+| TA-Occ OFFICIAL (fragment-filtered) | 0.7911 (1462/1848) | 0.8750 (1617/1848) | **+0.0839** |
+| TA-Occ pre-filter (comparability w/ MLP retrospective) | 0.7917 | 0.8750 | +0.0833 |
+
+Fragment filter: 9 term-form drops logged in tc_ta_occ_preliminaries.json (truc/cot/doc lap/chuan/hang/vecto-in-row-vector/tensor/do dai); net effect tiny here (S0 -1 hit, S1 0) — unlike MLP's bare-`hàm` case, prelim ruler had few dangerous fragments. Filter stays mandatory (cheap, prevents the measured MLP failure).
+
+**Predictions:** P1 TC-Occ(S1)>TC-Occ(S0): 0.9467>0.9148 — **PASS**. P2 TA-Occ gap >= block-level TA gap: +0.0839 >= -0.0624 — **PASS**. P3 four-cell direction agreement with block-level: TC cell agrees (+0.0319 vs D +0.0526); **TA cell VIOLATED** (TA-Occ +0.0839 vs block B -0.0624).
+
+**P3 investigation (required by §8 before interpretation) — harness CLEAN, cause structural:** the two TA cells use different rulers BY DESIGN (block B = gold-only; TA-Occ = notebook∪gold). Under the union ruler `scope:vector` scores 52/52 in BOTH arms (both "vector" and "vectơ" accepted) — the §9 orthography disagreement vanishes, so the single term that drove block-B negative (16% of gold denominator) has zero differential effect here. Positive TA-Occ gap driven by real adherence gains: shape +22 (4/26->26/26), vectors +17 (6/25->23/25), elementwise +9, mean/tangent line/differentiation +5 each. Full-sweep DB cross-check 0 mismatch. Conclusion: P3's TA disagreement is the §9 convention-vs-meaning split showing up exactly where predicted — external-standard agreement (B) and approved-form landing (TA-Occ) are DIFFERENT questions; report both, never conflate.
+
+Cross-chapter replication now on record: TC-Occ +0.0319 (prelim, official) vs +0.0597 (MLP, retrospective); TA-Occ +0.0839 vs +0.1194. Direction reproduces on held-out chapter with pre-registered predictions.
