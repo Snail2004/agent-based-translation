@@ -50,3 +50,26 @@
 - Chi tiet cap implement (SSE vs polling, schema field chinh xac) = CodeX de xuat trong khuon nay, Claude review.
 
 **Demo hoi dong:** man hinh Console khi dang chay = bang chung song "he da-agent dang lam viec"; Chapter + Report khi xong = san pham. Trinh tu thi cong giu nguyen §4 (agreement analysis truoc).
+
+## 2d. EVENT SCHEMA v1 KHOA — hop dong 3 ben Console/Orchestrator/CLI (Claude adjudicate 10 diem CodeX vong 1, hoi tu khong can vong 2, 2026-07-05)
+
+**Path (CodeX #1 — theo quy uoc CO SAN cua backend):** `run_events/<run_id>.jsonl`, append-only, doc bang byte-offset nhu Cockpit hien tai. CAM de quy uoc song song.
+
+**Envelope moi event:**
+`{v:1, event_id:"<run_id>.<attempt_id>.<seq>", run_id, attempt_id:int, seq:int (monotonic PER attempt), resume_from:{attempt,seq}|null, ts:ISO, stage:1-of-8 (builder|auditor|translator|cascade|sf_qe|sf_bt|pj|report), script:"ten module that (run_translate|score_sf_bt|...)", agent:vai-tro-on-dinh (Builder|Auditor|Translator|Localizer|Evaluator|Reporter|Orchestrator), event:type, severity:info|warning|error, payload:{...}}`
+
+**Event types (lifecycle du — CodeX #8):** run_start|run_done|run_failed|run_cancelled|run_resumed|heartbeat|health_check|stage_start|stage_done|stage_skipped|checkpoint|llm_call|tool_call|block_done|artifact_created|retry|gate_pause|cost_snapshot|warning|error.
+
+**Payload fields (optional theo type):** model, provider, prompt_version, prompt_sha, cache_key, cache_hit, provider_cached_tokens, tokens_in, tokens_out, **cost_delta_usd** (CLI chi phat delta), duration_ms, block_id, unit(window|block|term|occurrence|call|chapter|artifact), scope{chapter_id, config}, progress{done, total, total_known:bool}, artifact_path, artifact_type, artifact_sha, error_code, retry_count, budget_cap_usd, message(<=200 chars).
+
+**Luat cost (chinh cua Claude tren #4 de tranh race da-process):** stage CLI CHI phat cost_delta_usd; UI tu cong don tu stream; orchestrator (single writer cap run) phat `cost_snapshot` {cost_total_usd, tokens_total, budget_cap_usd} CO THAM QUYEN tai moi ranh gioi stage — lech giua 3 nguon = tin hieu debug, khong phai lay nguon nao ghi de nguon nao.
+
+**Luat emitter (CodeX #5):** mot emitter chung `pipeline/lib/events.py`, buffer + flush theo nhip (moi 20 event hoac 0.5-1s), FORCE flush tai run_*/stage_*/gate_pause/warning/error/cost_snapshot. **KHAC LUAT: event log = observability + audit; RESUME doc manifest/artifact, KHONG BAO GIO doc event log** — cam bien no thanh state machine.
+
+**Luat poll (CodeX #6):** byte-offset + max_bytes/poll (256KB) + `truncated:true` khi cat; orchestrator heartbeat 30s; UI stalled-badge khi >90s khong event/heartbeat.
+
+**Luat rieng tu/nhe (CodeX #9):** CAM dump full prompt/output vao event; chi prompt_sha/prompt_version/cache_key/artifact_path — full prompt doc o Cockpit Inspector (da co). Giam nang UI + chong lo key/context.
+
+**Fixture replay (CodeX #10):** CA HAI — convert log that run_preliminaries_events.jsonl sang schema v1 (regression compatibility) + synthetic ~500 event phu du 20 type ke ca gate_pause/error/retry/health_check/stage_skipped ma log cu chua co.
+
+**Trinh tu UI-1 giu nhu da ban:** emitter lib -> fixture kep -> trang Agent Console (route rieng; header run/cost/cache; feed filter theo stage/agent/severity; checklist 8 stage + progress + artifact link) chay che do replay x10 -> STOP screenshot cho Claude/user review; chua cam pipeline that.
