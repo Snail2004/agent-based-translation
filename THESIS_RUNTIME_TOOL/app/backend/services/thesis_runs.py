@@ -50,6 +50,7 @@ ALLOWLIST = frozenset(
         "agreement_analysis",
         "score_consistency",
         "score_run",
+        "run_one_button",
         "snapshot_runs",
     }
 )
@@ -64,6 +65,7 @@ API_CAPABLE_SCRIPTS = frozenset(
         "score_sf_bt",
         "probe_pj",
         "score_pj",
+        "run_one_button",
     }
 )
 
@@ -72,6 +74,7 @@ PREFLIGHT_ONLY_FLAGS = {
     "run_translate": "--preflight-only",
     "run_experiment_cascade": "--preflight-only",
     "builder_v2_reelection": "--preflight-only",
+    "run_one_button": "--estimate-only",
 }
 
 PROMPT_PREVIEW_SUPPORTED = frozenset({"run_translate"})
@@ -80,6 +83,7 @@ ESTIMATE_PREVIEW_SUPPORTED = frozenset(
         "run_translate",
         "run_experiment_cascade",
         "builder_v2_reelection",
+        "run_one_button",
     }
 )
 
@@ -183,6 +187,9 @@ class RunRegistry:
         dry_run_policy: str | None = None,
         run_id: str | None = None,
         event_log_path: str | None = None,
+        attempt_index: int | None = None,
+        resumed_from: str | None = None,
+        attempt_log_path: str | None = None,
     ) -> dict[str, Any]:
         run_id = validate_run_id(run_id) if run_id else self.new_run_id()
         now = _utc_now()
@@ -204,6 +211,9 @@ class RunRegistry:
             "prompt_preview_token": prompt_preview_token,
             "dry_run_policy": dry_run_policy,
             "event_log_path": event_log_path,
+            "attempt_index": attempt_index,
+            "resumed_from": resumed_from,
+            "attempt_log_path": attempt_log_path,
             "status": "pending",
             "pid": None,
             "started_at": now,
@@ -578,9 +588,13 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
                     stderr=subprocess.STDOUT,
                     text=True,
                     encoding="utf-8",
+                    creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
                 )
                 registry.update_run(run_id, status="running", pid=proc.pid)
                 proc.wait()
+                current = registry.get_run(run_id) or {}
+                if current.get("status") == "cancelled":
+                    return
                 status = "done" if proc.returncode == 0 else "failed"
                 registry.update_run(
                     run_id,
@@ -602,6 +616,40 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
                 pass
 
     threading.Thread(target=_worker, daemon=True, name=f"run-{run_id}").start()
+
+
+def cancel_run(registry: RunRegistry, run_id: str) -> dict[str, Any]:
+    registry.refresh()
+    entry = registry.get_run(run_id)
+    if entry is None:
+        raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
+    pid = int(entry.get("pid") or 0)
+    if entry.get("status") not in {"pending", "running"}:
+        raise RunControlError(
+            "run_not_cancellable",
+            f"Run {run_id} is not running or pending.",
+            409,
+        )
+    if pid > 0:
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/T", "/F", "/PID", str(pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        else:
+            try:
+                os.kill(pid, 15)
+            except OSError:
+                pass
+    updated = registry.update_run(
+        run_id,
+        status="cancelled",
+        exit_code=-15,
+        ended_at=_utc_now(),
+    )
+    return updated or entry
 
 
 def read_log(registry: RunRegistry, run_id: str, *, offset: int = 0) -> dict[str, Any]:
@@ -826,6 +874,11 @@ def build_argv(
     elif script == "snapshot_runs":
         _append_required(argv, "--db", db, "db")
         _append_required(argv, "--out", out, "out")
+    elif script == "run_one_button":
+        if event_log:
+            argv += ["--event-log", str(event_log)]
+        if run_id:
+            argv += ["--run-id", str(validate_run_id(run_id, required=True))]
     elif script in {
         "run_experiment_cascade",
         "builder_v2_reelection",

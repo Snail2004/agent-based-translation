@@ -277,3 +277,17 @@ Smoke that (co API) van giu den truoc demo; test gia nay la dieu kien commit O2.
 ### Ghi nhan trung thuc tu CodeX (giu nguyen ho so)
 - Smoke pause dat PAUSE sai thu muc -> builder_c2 da khoi dong that, bi kill tay; cache temp 44 rows trong _tmp_one_button_smoke (co the co chi phi API nho). Khong dung production DB, frozen hash nguyen. Chap nhan, khong can don (data/jobs gitignored).
 - Chua mo Console browser de kiem live render — se kiem o UI-2 khi noi nut [DICH].
+
+## 2p. O2 NGHIEM THU (review vong 2, Claude doc lap, 2026-07-06) — DAT, commit (v0.8.0)
+
+CodeX da sua du 3 P0 + P1-5/P1-6 + 3 diem P2 (cache_path builder, run_id/attempt that cho pass_event_log, bo FORCE_FLUSH chet). Claude kiem tren code that:
+- P0-1: except SystemExit rieng trong main -> manifest failed + emit run_failed + re-raise. Xac nhan _claim_or_gate raise TRUOC try block nen khong bi dinh oan.
+- P0-2: _argv_for_digest loai --event-log/--run-id/--attempt-id + gia tri; StageSpec.never_skip, preflight_check never_skip=True.
+- P0-3: stage event log co hau to a<attempt> (translate.a<n>.jsonl, preflight_check.a<n>.jsonl, pass_event_log a<n>).
+- P1-5: cancel_run + route POST /api/thesis/runs/<run_id>/cancel; taskkill /T /F /PID (nt), SIGTERM (khac); guard status pending/running (409 neu khong); spawn_run them CREATE_NEW_PROCESS_GROUP + khong ghi de status cancelled. Ghi nhan race nho: worker doc status truoc khi cancel ghi -> co the ket "failed" thay "cancelled" (cosmetic, khong chan).
+- Test kill-resume 0-API dung yeu cau: attempt 1 fail stage2 -> manifest failed + run_failed trong merged log; attempt 2 resume -> stage1 skip (digest chuan hoa), stage2 done, attempt=2, owner_pid moi, child_event stage1 xuat hien DUNG 1 lan trong merged log (khong re-emit).
+- Claude tu chay full suite: 447 passed. Frozen hash tu tinh: 64D989...C715 khop. Workdb exp_s0s1_full tu tinh: 92229381...C13F42 khop. Key-scan diff: sach.
+- Claude va them (test-only): test resume ghi vao data/jobs THAT moi lan chay (uuid moi -> rac tich luy, da co 3 cum) -> monkeypatch TOOL_ROOT ve tmp_path; don 3 cum rac; 84 passed (file lien quan), khong sinh rac moi.
+- P2-7 giu nguyen (cascade estimate $0, gate noi bo --confirm-usd do) — dong y cua CodeX, tranh lan scope; da ghi nhan trong 2o.
+
+Acceptance con lai truoc demo (KHONG chan commit nay): smoke that co API tren chuong da co cache + Console live render (UI-2, khi noi nut [DICH]).

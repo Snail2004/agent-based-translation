@@ -488,6 +488,38 @@ def test_route_allow_api_without_token_rejected(tmp_path, monkeypatch):
     assert resp.get_json()["errors"][0]["code"] == "confirm_token_required"
 
 
+def test_route_cancel_run_taskkills_registered_process(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    services = importlib.import_module("services.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    entry = registry.create_run(script="snapshot_runs", argv=[sys.executable, "-c", "pass"], run_id="run_cancel")
+    registry.update_run(entry["run_id"], status="running", pid=12345)
+    routes.set_registry(registry)
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        services.subprocess,
+        "run",
+        lambda argv, **_kwargs: calls.append([str(item) for item in argv]),
+    )
+    client = app_module.create_app().test_client()
+
+    resp = client.post("/api/thesis/runs/run_cancel/cancel")
+
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["status"] == "cancelled"
+    if services.os.name == "nt":
+        assert calls == [["taskkill", "/T", "/F", "/PID", "12345"]]
+
+
 def test_route_run_events_tails_registered_sidecar_only(tmp_path, monkeypatch):
     monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
     monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))

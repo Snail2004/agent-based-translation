@@ -11,6 +11,7 @@ from services.thesis_runs import (
     RunControlError,
     RunRegistry,
     build_argv,
+    cancel_run,
     generate_estimate_preview,
     generate_prompt_preview,
     read_events,
@@ -225,6 +226,15 @@ def run_events(run_id: str):
         )
     except ValueError:
         return error("invalid_offset", "offset and max_bytes must be integers.", 400)
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+
+
+@bp.post("/thesis/runs/<run_id>/cancel")
+def cancel_thesis_run(run_id: str):
+    try:
+        entry = cancel_run(_get_registry(), run_id)
+        return ok({"run_id": entry["run_id"], "status": entry["status"]})
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
 
