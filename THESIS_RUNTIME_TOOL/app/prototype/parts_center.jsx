@@ -555,159 +555,34 @@ function RunControlPanel({ runControl }) {
 const AGENT_CONSOLE_STAGES = ["builder", "auditor", "translator", "cascade", "sf_qe", "sf_bt", "pj", "report"];
 
 function AgentConsole({ runControl }) {
-  const [stageFilter, setStageFilter] = React.useState("");
-  const [agentFilter, setAgentFilter] = React.useState("");
-  const [severityFilter, setSeverityFilter] = React.useState("");
-  const [consoleTheme, setConsoleTheme] = React.useState(() => {
-    const saved = localStorage.getItem("ailab.console_theme");
-    return saved === "dark" ? "dark" : "paper";
-  });
+  // Thin adapter: maps runControl -> AgentConsoleView (console.jsx, skin ported from Claude Design).
+  const [consoleTheme, setConsoleTheme] = React.useState(() => (localStorage.getItem("ailab.console_theme") === "dark" ? "dark" : "paper"));
   function toggleConsoleTheme() {
-    setConsoleTheme(prev => {
-      const next = prev === "paper" ? "dark" : "paper";
-      localStorage.setItem("ailab.console_theme", next);
-      return next;
-    });
+    setConsoleTheme(prev => { const next = prev === "paper" ? "dark" : "paper"; localStorage.setItem("ailab.console_theme", next); return next; });
   }
   if (!runControl) return null;
-  const runs = runControl.runs || [];
-  const selectedEvents = runControl.selectedRunEvents || { events: [] };
-  const selectedRun = runs.find(row => row.run_id === runControl.selectedRunId) || null;
-  const rawEvents = selectedEvents.events || [];
-  const normalized = rawEvents.map(normalizeConsoleEvent);
-  const aggregate = selectedEvents.aggregate || {};
-  const stageStats = aggregate.stages || {};
-  const filtered = normalized.filter(row => (
-    (!stageFilter || row.stage === stageFilter)
-    && (!agentFilter || row.agent === agentFilter)
-    && (!severityFilter || row.severity === severityFilter)
-  ));
-  const rendered = filtered.slice(-200).reverse();
-  const agents = (aggregate.agents || []).length ? aggregate.agents : uniqueSorted(normalized.map(row => row.agent).filter(Boolean));
-  const severities = (aggregate.severities || []).length ? aggregate.severities : uniqueSorted(normalized.map(row => row.severity).filter(Boolean));
-  const stagesSeenCount = Object.keys(stageStats).filter(Boolean).length || new Set(normalized.map(row => row.stage).filter(Boolean)).size;
-  const costTotal = Number(aggregate.cost_total || 0);
-  const llmEventCount = Number(aggregate.llm_events || 0);
-  const cacheHits = Number(aggregate.cache_hits || 0);
-  const cacheKnown = Number(aggregate.cache_known || 0);
-  const latestBlock = aggregate.latest_block || [...normalized].reverse().find(row => row.payload.block_id || row.payload.block_ids?.length);
-  const latestArtifact = aggregate.latest_artifact || [...normalized].reverse().find(row => row.payload.artifact_path);
-  const warningCount = Number(aggregate.warning_count || 0);
-  const errorCount = Number(aggregate.error_count || 0);
-  const lastEventTs = aggregate.last_ts || normalized[normalized.length - 1]?.ts;
-  const isStalled = !!selectedEvents.running && !!lastEventTs && ageSeconds(lastEventTs) > 90;
-
-  const cachePct = cacheKnown ? `${Math.round((cacheHits / cacheKnown) * 100)}%` : "—";
-  const healthLabel = isStalled ? "stalled" : selectedEvents.running ? "running" : "quiet";
-
+  const sel = runControl.selectedRunEvents || {};
+  const selectedRun = (runControl.runs || []).find(r => r.run_id === runControl.selectedRunId) || null;
   return (
-    <section className={"agent-console console-theme-" + consoleTheme}>
-      <header className="console-bar">
-        <div className="console-bar-title">
-          <span className="console-mark">⬢</span>
-          <b>AGENT CONSOLE</b>
-          <em>one-button run stream · read-only</em>
-        </div>
-        <div className="console-bar-actions">
-          <select className="console-select" value={runControl.selectedRunId || selectedRun?.run_id || ""} onChange={e => runControl.onSelectRun(e.target.value)}>
-            <option value="">select run</option>
-            {runs.slice(0, 30).map(run => <option key={run.run_id} value={run.run_id}>{run.run_id} · {run.status}</option>)}
-          </select>
-          <button className="console-btn" disabled={runControl.busy} onClick={runControl.onRefreshRuns}>↻ refresh</button>
-          <button className="console-btn" onClick={toggleConsoleTheme}>{consoleTheme === "paper" ? "◐ dark" : "◑ paper"}</button>
-        </div>
-      </header>
-
-      <div className="console-grid">
-        <aside className="console-col console-col-left">
-          <div className="console-sec-head">overview</div>
-          <div className="console-kv">
-            <div><span>status</span><b className={"c-status-" + (selectedRun?.status || selectedEvents.status || "idle")}>{selectedRun?.status || selectedEvents.status || "idle"}</b></div>
-            <div><span>stages seen</span><b>{stagesSeenCount} / {AGENT_CONSOLE_STAGES.length}</b></div>
-            <div><span>events</span><b>{formatInt(aggregate.total_events || normalized.length)}</b></div>
-            <div><span>stream</span><b>{selectedEvents.truncated ? "truncated poll" : selectedEvents.partial_line ? "partial line" : "in sync"}</b></div>
-          </div>
-          <div className="console-sec-head">cost &amp; cache</div>
-          <div className="console-kv">
-            <div><span>cost total</span><b>{formatCost(costTotal)}</b></div>
-            <div><span>llm events</span><b>{formatInt(llmEventCount)}</b></div>
-            <div><span>cache hit</span><b>{cachePct}</b></div>
-            <div><span>cache known</span><b>{formatInt(cacheKnown)}</b></div>
-          </div>
-          <div className="console-sec-head">health</div>
-          <div className="console-kv">
-            <div><span>state</span><b className={isStalled ? "c-bad" : selectedEvents.running ? "c-good" : ""}>{healthLabel}</b></div>
-            <div><span>warnings</span><b className={warningCount ? "c-warn" : ""}>{formatInt(warningCount)}</b></div>
-            <div><span>errors</span><b className={errorCount ? "c-bad" : ""}>{formatInt(errorCount)}</b></div>
-            <div><span>last event</span><b>{lastEventTs ? lastEventTs.slice(11, 19) : "—"}</b></div>
-          </div>
-        </aside>
-
-        <main className="console-col console-col-center">
-          <div className="console-sec-head console-rule">:: event stream</div>
-          <div className="console-filterbar">
-            <select value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
-              <option value="">all stages</option>
-              {AGENT_CONSOLE_STAGES.map(stage => <option key={stage} value={stage}>{stage}</option>)}
-            </select>
-            <select value={agentFilter} onChange={e => setAgentFilter(e.target.value)}>
-              <option value="">all agents</option>
-              {agents.map(agent => <option key={agent} value={agent}>{agent}</option>)}
-            </select>
-            <select value={severityFilter} onChange={e => setSeverityFilter(e.target.value)}>
-              <option value="">all severity</option>
-              {severities.map(sev => <option key={sev} value={sev}>{sev}</option>)}
-            </select>
-            <span className="console-shown">{formatInt(rendered.length)} / {formatInt(filtered.length)} shown</span>
-          </div>
-          <div className="console-stream">
-            {rendered.length ? rendered.map(row => (
-              <div key={row.event_id || `${row.seq}:${row.ts}:${row.event_type}`} className={"c-ev sev-" + row.severity}>
-                <span className="c-ev-time">{row.ts ? row.ts.slice(11, 19) : "--:--:--"}</span>
-                <span className="c-ev-tick">{row.severity === "error" ? "✕" : row.severity === "warning" ? "▲" : "├"}</span>
-                <b className="c-ev-type">{row.event_type}</b>
-                <span className="c-ev-src">{row.stage || "-"} · {row.agent || "-"}</span>
-                <span className="c-ev-msg">{row.payload.message || row.payload.error_code || row.payload.artifact_path || row.payload.block_id || ""}</span>
-                <span className="c-ev-seq">#{row.seq || "-"}</span>
-              </div>
-            )) : (
-              <div className="console-empty">Select or replay a run to tail one-button events.</div>
-            )}
-          </div>
-          <div className="console-livebar">
-            <span className="console-sec-head">latest block</span>
-            <b>{latestBlock?.payload?.block_id || latestBlock?.payload?.block_ids?.[0] || "no block yet"}</b>
-            <em>(replay: no text)</em>
-          </div>
-        </main>
-
-        <aside className="console-col console-col-right">
-          <div className="console-sec-head">stages</div>
-          <div className="console-stages">
-            {AGENT_CONSOLE_STAGES.map(stage => {
-              const stat = stageStats[stage] || null;
-              const rows = stat ? [] : normalized.filter(row => row.stage === stage);
-              const latest = rows[rows.length - 1];
-              const progress = latest?.payload?.progress || {};
-              const rowCount = stat?.count || rows.length;
-              return (
-                <div key={stage} className={"console-stage-row" + (rowCount ? " on" : "")}>
-                  <span className="stage-dot" />
-                  <b>{stage}</b>
-                  <em>{stat
-                    ? (stat.total_known === false ? `${formatInt(stat.done)} done / ?` : stat.total ? `${formatInt(stat.done)} / ${formatInt(stat.total)}` : `${formatInt(stat.count)} ev`)
-                    : (progress.total_known === false ? `${formatInt(progress.done)} done / ?` : progress.total ? `${formatInt(progress.done)} / ${formatInt(progress.total)}` : `${rows.length} ev`)}</em>
-                </div>
-              );
-            })}
-          </div>
-          <div className="console-sec-head">latest artifact</div>
-          <div className="console-artifact">{latestArtifact?.payload?.artifact_path || "none yet"}</div>
-          <div className="console-sec-head">watchlist §36</div>
-          <div className="console-watchlist">empty — wired after re-election step</div>
-        </aside>
-      </div>
-    </section>
+    <AgentConsoleView
+      runId={runControl.selectedRunId}
+      runs={runControl.runs || []}
+      onSelectRun={runControl.onSelectRun}
+      events={sel.events || []}
+      running={!!sel.running}
+      status={(selectedRun && selectedRun.status) || sel.status || ""}
+      truncated={!!sel.truncated}
+      partialLine={!!sel.partial_line}
+      blockPreview={sel.blockPreview || []}
+      watchlist={sel.watchlist || []}
+      theme={consoleTheme}
+      onToggleTheme={toggleConsoleTheme}
+      onRefresh={runControl.onRefreshRuns}
+      busy={runControl.busy}
+      onPause={runControl.onPause}
+      onCancel={runControl.onCancel}
+      onResume={runControl.onResume}
+    />
   );
 }
 

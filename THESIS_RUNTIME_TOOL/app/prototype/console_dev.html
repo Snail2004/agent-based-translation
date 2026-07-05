@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280" />
+<title>Agent Console · dev harness (golden fixture)</title>
+<link rel="stylesheet" href="console.css" />
+<style>
+  html, body { margin: 0; height: 100%; background: #222; }
+  #root { height: 100vh; }
+  .dev-note { position: fixed; bottom: 6px; right: 8px; font: 10px monospace; color: #888; z-index: 9; }
+</style>
+</head>
+<body>
+<div id="root">loading golden fixture…</div>
+<div class="dev-note">console_dev · golden preface fixture · not the production app</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+
+<script type="text/babel" src="console.jsx"></script>
+<script type="text/babel">
+const FX = "fixtures/one_button_preface_golden/";
+
+async function loadFixture() {
+  const [rawEvents, blockPreview, watchRaw] = await Promise.all([
+    fetch(FX + "events.jsonl").then(r => r.text()),
+    fetch(FX + "block_preview_sample.json").then(r => r.json()).catch(() => []),
+    fetch(FX + "reports/watchlist.json").then(r => r.json()).catch(() => null),
+  ]);
+  const events = rawEvents.split("\n").filter(l => l.trim()).map(l => JSON.parse(l));
+  // watchlist.json shape is unknown here; normalize a few likely shapes into {term, vi}
+  let watchlist = [];
+  const wl = watchRaw && (watchRaw.watchlist || watchRaw.terms || watchRaw.items || watchRaw);
+  if (Array.isArray(wl)) {
+    watchlist = wl.map(w => (typeof w === "string" ? { term: w } : {
+      term: w.term || w.source_term || w.surface || w.source || w.canonical_source || w.en,
+      vi: w.vi || w.canonical_target_vi || w.target || w.canonical || w.canonical_target || w.decision,
+    })).filter(w => w.term);
+  }
+  return { events, blockPreview: Array.isArray(blockPreview) ? blockPreview : [], watchlist };
+}
+
+function DevHarness() {
+  const [data, setData] = React.useState(null);
+  const [theme, setTheme] = React.useState("paper");
+  React.useEffect(() => { loadFixture().then(setData); }, []);
+  if (!data) return <div style={{ font: "13px monospace", color: "#aaa", padding: 20 }}>loading…</div>;
+  return (
+    <AgentConsoleView
+      runId="replay_preface"
+      runs={[{ run_id: "replay_preface", status: "done" }]}
+      events={data.events}
+      running={false}
+      status="done"
+      blockPreview={data.blockPreview}
+      watchlist={data.watchlist}
+      theme={theme}
+      onToggleTheme={() => setTheme(t => (t === "paper" ? "dark" : "paper"))}
+      onRefresh={() => {}}
+    />
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<DevHarness />);
+</script>
+</body>
+</html>

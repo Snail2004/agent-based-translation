@@ -1,0 +1,374 @@
+/* Agent Console view — self-contained, no dependency on the rest of the prototype.
+   Skin ported from app/prototype/design/agent_console_mock.html (Claude Design),
+   scoped under .agentconsole (see console.css). Driven by the REAL one-button
+   event vocabulary (orchestrator + translator window lifecycle), rendered generically
+   by severity so any future event type still shows up truthfully.
+
+   Used two ways:
+     - dev harness console_dev.html mounts <AgentConsoleView> with golden-fixture data
+     - the main app's AgentConsole wrapper (parts_center.jsx) adapts runControl -> props */
+
+const CONSOLE_STAGE_PLAN = [
+  { id: "preflight_check", label: "preflight", phase: 1 },
+  { id: "builder_c2", label: "builder", phase: 1 },
+  { id: "auditor_c3", label: "auditor", phase: 1 },
+  { id: "decollision_c35", label: "decollision", phase: 1 },
+  { id: "reelection_watchlist", label: "reelection", phase: 1 },
+  { id: "translator", label: "translator", phase: 1 },
+  { id: "score_run_phase_1", label: "score · phase 1", phase: 1, phaseEnd: true },
+  { id: "cascade", label: "cascade", phase: 2 },
+  { id: "sf_qe", label: "sf_qe", phase: 2 },
+  { id: "sf_bt", label: "sf_bt", phase: 2 },
+  { id: "pj", label: "pj", phase: 2, optional: true },
+  { id: "score_run_final", label: "score · final", phase: 2 },
+];
+
+const CONSOLE_SEVERITY_GLYPH = { info: "├", warning: "▲", error: "✕", context: "⊙" };
+
+function consoleEventSeverity(row) {
+  const sev = String(row.severity || "").toLowerCase();
+  if (sev === "error" || sev === "warning") return sev;
+  // context-ish events get the amber ⊙ treatment (e.g. cost snapshots, gate pause)
+  if (row.event === "gate_pause") return "warning";
+  return "info";
+}
+
+function consoleShort(value, n = 46) {
+  const s = String(value == null ? "" : value);
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+function consoleBaseName(p) {
+  if (!p) return "";
+  const s = String(p).replace(/\\/g, "/");
+  return s.slice(s.lastIndexOf("/") + 1);
+}
+
+/* One-line human message per real event type; falls back to a generic label. */
+function consoleMessageFor(row, ctx) {
+  const p = row.payload || {};
+  switch (row.event) {
+    case "run_start": return `run bắt đầu · ${(p.chapters || []).join(", ") || p.job_id || ""}`;
+    case "run_resumed": return `resume run · attempt ${p.attempt_id || "?"}`;
+    case "run_done": return `run kết thúc: ${p.status || "done"}`;
+    case "run_failed": return `run FAILED · ${consoleShort(p.error, 60)}`;
+    case "run_cancelled": return "run huỷ bởi người dùng";
+    case "run_committed": return "ghi kết quả dịch vào workdb";
+    case "stage_start": return `${ctx.label || row.stage} bắt đầu`;
+    case "stage_done": return `${ctx.label || row.stage} xong · exit ${p.exit_code}`;
+    case "stage_skipped": return `${ctx.label || row.stage} bỏ qua · ${p.reason || "resume"}`;
+    case "cost_snapshot": {
+      if (p.estimated_cumulative_usd != null) return `luỹ kế ~$${Number(p.estimated_cumulative_usd).toFixed(4)} / cap $${Number(p.budget_cap_usd || 0).toFixed(2)}`;
+      if (p.estimated_cost_cap_usd != null) return `${ctx.label || row.stage} ước tính cap $${Number(p.estimated_cost_cap_usd).toFixed(4)}`;
+      return "cost snapshot";
+    }
+    case "checkpoint": return `checkpoint · ${p.checkpoint || "saved"}`;
+    case "gate_pause": return `tạm dừng · ${p.reason || "gate"}${p.before_stage ? " trước " + p.before_stage : ""}`;
+    case "heartbeat": return `alive · ${row.stage}${p.active_child_pid ? " · pid " + p.active_child_pid : ""}`;
+    case "health_check": return `${p.id || "check"} · ${p.ok === false ? "FAIL" : "ok"}`;
+    case "window_started": return `window ${ctx.win || "?"} bắt đầu`;
+    case "prompt_built": return `window ${ctx.win || "?"} · prompt dựng xong`;
+    case "request_sent": return `window ${ctx.win || "?"} · gọi LLM`;
+    case "response_received": return `window ${ctx.win || "?"} · nhận kết quả`;
+    case "json_parsed": return `window ${ctx.win || "?"} · parse JSON ok`;
+    case "window_preview_available": return `window ${ctx.win || "?"} · bản dịch sẵn sàng`;
+    case "persist_buffered": return `window ${ctx.win || "?"} · buffer ghi`;
+    case "block_done": return `dịch xong ${p.block_id || ""}`;
+    case "llm_call": return `LLM ${p.model || ""}${p.cache_hit ? " · cache hit" : ""}`;
+    case "artifact_created": return consoleBaseName(p.artifact_path) || "artifact";
+    case "warning": return consoleShort(p.message || p.reason, 60);
+    case "error": return consoleShort(p.error || p.message, 60);
+    case "retry": return `retry ${p.attempt || ""} · ${p.reason || ""}`;
+    default: return consoleShort(p.message || p.reason || row.event, 60);
+  }
+}
+
+/* Pure: turn a raw merged event array into everything the console renders. */
+function deriveConsoleState(events) {
+  const stageInfo = {};
+  CONSOLE_STAGE_PLAN.forEach(s => { stageInfo[s.id] = { status: "pending", start: null, end: null, exit: null, previews: 0 }; });
+  let winCounter = 0;
+  let cumulativeCost = null;
+  let budgetCap = null;
+  let warnings = 0, errors = 0;
+  let phase1Done = false;
+  let runStatus = "";
+  let latestArtifact = null;
+  let latestPreviewWin = null;
+  let stderrTail = [];
+  let paused = false, pausedReason = "";
+  const normalized = [];
+
+  events.forEach((raw, idx) => {
+    const payload = raw && typeof raw.payload === "object" && raw.payload ? raw.payload : {};
+    const stage = raw.stage || "";
+    const event = raw.event || raw.event_type || "";
+    // per-window counter (translator lifecycle) for readable messages
+    if (event === "window_started") winCounter += 1;
+    const ctxPlan = CONSOLE_STAGE_PLAN.find(s => s.id === stage);
+    const ctx = { label: ctxPlan ? ctxPlan.label : stage, win: event.startsWith("window") || ["prompt_built", "request_sent", "response_received", "json_parsed", "persist_buffered"].includes(event) ? Math.max(winCounter, 1) : null };
+    const severity = consoleEventSeverity(raw);
+    if (severity === "warning") warnings += 1;
+    if (severity === "error") errors += 1;
+
+    if (stageInfo[stage]) {
+      const si = stageInfo[stage];
+      if (event === "stage_start") { si.status = "active"; si.start = raw.ts; }
+      else if (event === "stage_done") { si.status = payload.exit_code === 0 ? "done" : "failed"; si.end = raw.ts; si.exit = payload.exit_code; }
+      else if (event === "stage_skipped") { si.status = "done"; si.skipped = true; }
+      else if (event === "window_preview_available") { si.previews += 1; }
+      if (severity === "error") si.status = "failed";
+    }
+    if (event === "window_preview_available") latestPreviewWin = Math.max(winCounter, 1);
+    if (event === "checkpoint" && payload.checkpoint === "phase_1_done") phase1Done = true;
+    if (event === "cost_snapshot") {
+      if (payload.estimated_cumulative_usd != null) cumulativeCost = Number(payload.estimated_cumulative_usd);
+      if (payload.budget_cap_usd != null) budgetCap = Number(payload.budget_cap_usd);
+    }
+    if (event === "gate_pause") { paused = true; pausedReason = payload.reason || "gate"; }
+    if (event === "artifact_created" && payload.artifact_path) latestArtifact = payload.artifact_path;
+    if (event === "stage_done" && payload.artifact_path) latestArtifact = payload.artifact_path;
+    if (event === "run_done") runStatus = payload.status || "done";
+    if (event === "run_failed") { runStatus = "failed"; if (payload.error) stderrTail = String(payload.error).split("\n").slice(-4); }
+    if (event === "error" && payload.error) stderrTail = String(payload.error).split("\n").slice(-4);
+
+    normalized.push({
+      key: raw.event_id || `${raw.seq}:${idx}`,
+      ts: raw.ts || "",
+      stage,
+      agent: raw.agent || "",
+      event,
+      severity,
+      seq: raw.seq,
+      glyph: CONSOLE_SEVERITY_GLYPH[severity === "info" && event === "cost_snapshot" ? "context" : severity] || "├",
+      isCost: event === "cost_snapshot",
+      isContext: event === "gate_pause",
+      dur: payload.duration_s || payload.latency_s || null,
+      message: consoleMessageFor(raw, ctx),
+    });
+  });
+
+  const stagesSeen = CONSOLE_STAGE_PLAN.filter(s => stageInfo[s.id].status !== "pending").length;
+  const lastTs = normalized.length ? normalized[normalized.length - 1].ts : "";
+  // llm-ish activity from the translator lifecycle (real runs have no llm_call yet)
+  const llmCalls = normalized.filter(r => r.event === "request_sent" || r.event === "llm_call").length;
+
+  return {
+    normalized, stageInfo, stagesSeen, cumulativeCost, budgetCap,
+    warnings, errors, phase1Done, runStatus, latestArtifact, latestPreviewWin,
+    stderrTail, paused, pausedReason, lastTs, llmCalls,
+    totalEvents: normalized.length,
+  };
+}
+
+function consoleAgeSeconds(ts) {
+  if (!ts) return Infinity;
+  const t = Date.parse(ts);
+  if (isNaN(t)) return Infinity;
+  return (Date.now() - t) / 1000;
+}
+
+function AgentConsoleView(props) {
+  const {
+    runId, runs = [], onSelectRun,
+    events = [], running = false, status = "",
+    truncated = false, partialLine = false,
+    blockPreview = [], watchlist = [],
+    theme = "paper", onToggleTheme,
+    onRefresh, onPause, onCancel, onResume, busy = false,
+  } = props;
+
+  const [stageFilter, setStageFilter] = React.useState("");
+  const [agentFilter, setAgentFilter] = React.useState("");
+  const [severityFilter, setSeverityFilter] = React.useState("");
+
+  const st = React.useMemo(() => deriveConsoleState(events), [events]);
+  const runStatus = st.runStatus || status || (running ? "running" : "idle");
+  const isTerminal = ["done", "failed", "cancelled"].includes(runStatus);
+  const stalled = running && !isTerminal && consoleAgeSeconds(st.lastTs) > 90;
+
+  const agents = uniqueConsole(st.normalized.map(r => r.agent).filter(Boolean));
+  const severities = uniqueConsole(st.normalized.map(r => r.severity).filter(Boolean));
+  const filtered = st.normalized.filter(r =>
+    (!stageFilter || r.stage === stageFilter)
+    && (!agentFilter || r.agent === agentFilter)
+    && (!severityFilter || r.severity === severityFilter));
+  const rendered = filtered.slice(-220).reverse();
+
+  const costPct = st.budgetCap ? Math.min(100, Math.round((st.cumulativeCost / st.budgetCap) * 100)) : 0;
+  const healthLabel = stalled ? "stalled" : running ? "running" : isTerminal ? runStatus : "quiet";
+  const healthClass = stalled || runStatus === "failed" ? "kv-bad" : running ? "kv-good" : "kv-dim";
+  const statusChipClass = runStatus === "failed" ? "hdr-status-bad" : runStatus === "done" ? "hdr-status-good" : stalled || st.paused ? "hdr-status-warn" : running ? "hdr-status-good" : "";
+
+  // latest translated window preview (text lives in blockPreview prop, not events)
+  const previewIdx = st.latestPreviewWin ? Math.min(st.latestPreviewWin, blockPreview.length) - 1 : blockPreview.length - 1;
+  const preview = previewIdx >= 0 ? blockPreview[previewIdx] : null;
+
+  return (
+    <div className={"agentconsole console-theme-" + theme}>
+      <header className="console-header">
+        <span className="brand">⬢ AGENT CONSOLE</span>
+        <select className="run-picker" aria-label="Run picker" value={runId || ""} onChange={e => onSelectRun && onSelectRun(e.target.value)}>
+          {!runId && <option value="">select run</option>}
+          {runs.slice(0, 40).map(r => <option key={r.run_id} value={r.run_id}>{r.run_id}{r.status ? " · " + r.status : ""}</option>)}
+        </select>
+        <span className="hdr-actions">
+          <button className="btn" type="button" disabled={busy} onClick={onRefresh}>↻ refresh</button>
+          <button className="btn" type="button" disabled={!running || !onPause} onClick={onPause}>⏸ pause after stage</button>
+          {runStatus === "failed" && onResume
+            ? <button className="btn btn-accent" type="button" onClick={onResume}>▸ resume</button>
+            : <button className="btn btn-danger" type="button" disabled={!running || !onCancel} onClick={onCancel}>✕ cancel</button>}
+          <button className="btn" type="button" onClick={onToggleTheme}>◐ theme</button>
+          <span className={"hdr-status " + statusChipClass}>{stalled ? "stalled" : runStatus}</span>
+        </span>
+      </header>
+
+      <div className="console-body">
+        {/* ---------------- LEFT ---------------- */}
+        <aside className="col col-left">
+          <div className="section-label">:: overview</div>
+          <div className="kv-row"><span className="kv-label">status</span><span className={"kv-value " + (runStatus === "failed" ? "kv-bad" : runStatus === "done" ? "kv-good" : "")}>{runStatus}</span></div>
+          <div className="kv-row"><span className="kv-label">stages seen</span><span className="kv-value">{st.stagesSeen} / {CONSOLE_STAGE_PLAN.length}</span></div>
+          <div className="kv-row"><span className="kv-label">events</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
+          <div className="kv-row"><span className="kv-label">stream</span><span className="kv-value kv-dim">{truncated ? "truncated" : partialLine ? "partial line" : running ? "live" : "closed"}</span></div>
+
+          <div className="section-label">:: cost &amp; cache</div>
+          <div className="kv-row"><span className="kv-label">cost total</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
+          <div className="kv-row kv-row-bar"><span className="kv-label">cost / cap</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
+          <div className="bar"><div className="bar-fill" style={{ width: costPct + "%" }} /></div>
+          <div className="kv-row"><span className="kv-label">llm events</span><span className="kv-value">{formatConsoleInt(st.llmCalls)}</span></div>
+
+          <div className="section-label">:: health</div>
+          <div className="kv-row"><span className="kv-label">state</span><span className={"kv-value " + healthClass}>{healthLabel}</span></div>
+          <div className="kv-row"><span className="kv-label">warnings</span><span className={"kv-value " + (st.warnings ? "kv-warn" : "")}>{formatConsoleInt(st.warnings)}</span></div>
+          <div className="kv-row"><span className="kv-label">errors</span><span className={"kv-value " + (st.errors ? "kv-bad" : "")}>{formatConsoleInt(st.errors)}</span></div>
+          <div className="kv-row"><span className="kv-label">last event</span><span className="kv-value kv-dim">{st.lastTs ? st.lastTs.slice(11, 19) : "—"}</span></div>
+        </aside>
+
+        {/* ---------------- MAIN ---------------- */}
+        <main className="col col-main">
+          {runStatus === "failed" && (
+            <div className="banner banner-red">
+              <span className="banner-glyph">✕</span>
+              <span className="banner-msg">Run failed{st.stderrTail.length ? " · " + consoleShort(st.stderrTail[st.stderrTail.length - 1], 70) : ""}</span>
+              {onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
+            </div>
+          )}
+          {st.paused && !isTerminal && runStatus !== "failed" && (
+            <div className="banner banner-amber">
+              <span className="banner-glyph">⏸</span>
+              <span className="banner-msg">Đã dừng · {st.pausedReason} — resume để chạy tiếp</span>
+              {onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
+            </div>
+          )}
+          {st.phase1Done && !isTerminal && !st.paused && (
+            <div className="banner banner-green">
+              <span className="banner-glyph">●</span>
+              <span className="banner-msg">Phase 1 xong — bản dịch + báo cáo nhanh đã sẵn sàng</span>
+            </div>
+          )}
+          {stalled && (
+            <div className="banner banner-red">
+              <span className="banner-glyph badge-stalled">▲</span>
+              <span className="banner-msg">Không có sự kiện {Math.round(consoleAgeSeconds(st.lastTs))}s — có thể treo</span>
+            </div>
+          )}
+
+          <div className="section-label">:: event stream</div>
+          <div className="filterbar">
+            <select className="filter-select" value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
+              <option value="">stage: all</option>
+              {CONSOLE_STAGE_PLAN.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+            <select className="filter-select" value={agentFilter} onChange={e => setAgentFilter(e.target.value)}>
+              <option value="">agent: all</option>
+              {agents.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+            <select className="filter-select" value={severityFilter} onChange={e => setSeverityFilter(e.target.value)}>
+              <option value="">severity: all</option>
+              {severities.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <span className="filter-count">{formatConsoleInt(rendered.length)} / {formatConsoleInt(filtered.length)} shown</span>
+          </div>
+
+          <div className="event-feed">
+            {rendered.length ? rendered.map(r => (
+              <div key={r.key} className={"ev-row ev-" + r.severity + (r.isCost ? " ev-cost" : "") + (r.isContext ? " ev-context" : "")}>
+                <span className="ev-time">{r.ts ? r.ts.slice(11, 19) : "--:--:--"}</span>
+                <span className="ev-glyph">{r.glyph}</span>
+                <span className="ev-body">
+                  <b className="ev-type">{r.event}</b>
+                  <span className="ev-src">{r.stage || "-"}{r.agent ? " · " + r.agent : ""}</span>
+                  <span className="ev-msg">{r.message}</span>
+                  {r.dur != null && <span className="ev-dur">({r.dur}s)</span>}
+                </span>
+                <span className="ev-seq">#{r.seq != null ? r.seq : "-"}</span>
+              </div>
+            )) : <div className="console-empty">Chọn hoặc replay một run để xem dòng sự kiện.</div>}
+          </div>
+
+          {st.stderrTail.length > 0 && (
+            <div className="stderr-panel">
+              <div className="stderr-head">:: stderr tail</div>
+              {st.stderrTail.map((line, i) => <div className="stderr-line" key={i}>{line}</div>)}
+            </div>
+          )}
+
+          <div className="latest-block">
+            <div className="latest-block-head">
+              <span className="latest-block-id">latest block · {preview ? preview.block_id : (st.latestPreviewWin ? "window " + st.latestPreviewWin : "—")}</span>
+              <span className="latest-block-tag">{preview ? (preview.model || "translated") : "no preview"}</span>
+            </div>
+            <div className="typewriter-target">
+              {preview
+                ? <p>{consoleShort(preview.target_text, 180)}</p>
+                : <p className="kv-dim">Bản dịch preview lấy theo block_id (translation_runs.output_text) khi có.</p>}
+            </div>
+          </div>
+        </main>
+
+        {/* ---------------- RIGHT ---------------- */}
+        <aside className="col col-right">
+          <div className="section-label">:: stages</div>
+          {CONSOLE_STAGE_PLAN.map((s, i) => {
+            const si = st.stageInfo[s.id] || { status: "pending" };
+            let cls = "stage-pending", dot = "○", prog = "";
+            if (si.status === "done") { cls = "stage-done"; dot = "●"; prog = si.skipped ? "skipped" : "done"; }
+            else if (si.status === "active") { cls = "stage-active"; dot = "●"; prog = s.id === "translator" && si.previews ? si.previews + "/7 win" : "running"; }
+            else if (si.status === "failed") { cls = "stage-failed"; dot = "✕"; prog = "failed"; }
+            else if (s.optional && isTerminal) { cls = "stage-pending"; dot = "○"; prog = "skipped"; }
+            const prev = CONSOLE_STAGE_PLAN[i - 1];
+            return (
+              <React.Fragment key={s.id}>
+                {prev && prev.phaseEnd && (
+                  <div className="phase-divider"><span className={st.phase1Done ? "phase-ok" : ""}>PHASE 1{st.phase1Done ? " ✓" : ""}</span><span className="phase-line" /><span>PHASE 2</span></div>
+                )}
+                <div className={"stage-row " + cls}>
+                  <span className="stage-dot">{dot}</span>
+                  <span className="stage-name">{s.label}</span>
+                  <span className="stage-progress">{prog}</span>
+                  <span className="stage-eta" />
+                </div>
+              </React.Fragment>
+            );
+          })}
+
+          <div className="section-label">:: latest artifact</div>
+          <div className="artifact-path">{st.latestArtifact ? consoleBaseName(st.latestArtifact) : "none yet"}</div>
+
+          <div className="section-label">:: watchlist §36{watchlist.length ? " · " + watchlist.length + " pending" : ""}</div>
+          {watchlist.length ? watchlist.slice(0, 8).map((w, i) => (
+            <div className="watch-row" key={i}>
+              <span className="watch-term">{w.term || w.source_term || w.surface || w.source || "term"}</span>
+              <span className="watch-arrow">→</span>
+              <span className="watch-vi">{consoleShort(w.vi || w.canonical_target_vi || w.target || w.canonical || "?", 16)}</span>
+            </div>
+          )) : <div className="artifact-path kv-dim">trống — nối sau bước re-election</div>}
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function uniqueConsole(arr) { return Array.from(new Set(arr)).sort(); }
+function formatConsoleInt(n) { return Number(n || 0).toLocaleString("en-US"); }

@@ -1,0 +1,207 @@
+/* Agent Console skin — ported from Claude Design mock (app/prototype/design/agent_console_mock.html).
+   All rules scoped under .agentconsole so the mock's generic class names
+   (.btn/.banner/.kv-row/.stage-row) never collide with the main app CSS.
+   Theme lives on the same wrapper: <div class="agentconsole console-theme-paper|dark">. */
+
+/* ============ THEMES (all colors via --c-*) ============ */
+.agentconsole.console-theme-paper {
+  --c-bg: #f6f1e6;
+  --c-bg-alt: #efe8d6;
+  --c-ink: #33302a;
+  --c-ink-dim: #6f6a5a;
+  --c-ink-faint: #a49d88;
+  --c-border: #d9d1bc;
+  --c-accent: #a5760a;
+  --c-accent-bg: rgba(165, 118, 10, 0.08);
+  --c-green: #4a7c2f;
+  --c-green-bg: rgba(74, 124, 47, 0.10);
+  --c-amber: #a5760a;
+  --c-amber-bg: rgba(165, 118, 10, 0.10);
+  --c-red: #b3402e;
+  --c-red-bg: rgba(179, 64, 46, 0.08);
+}
+.agentconsole.console-theme-dark {
+  --c-bg: #14161a;
+  --c-bg-alt: #1b1e24;
+  --c-ink: #d8dce3;
+  --c-ink-dim: #8b919d;
+  --c-ink-faint: #565c66;
+  --c-border: #2a2e35;
+  --c-accent: #d9a441;
+  --c-accent-bg: rgba(217, 164, 65, 0.10);
+  --c-green: #7fb069;
+  --c-green-bg: rgba(127, 176, 105, 0.10);
+  --c-amber: #d9a441;
+  --c-amber-bg: rgba(217, 164, 65, 0.12);
+  --c-red: #e0604c;
+  --c-red-bg: rgba(224, 96, 76, 0.10);
+}
+
+/* ============ FRAME ============ */
+.agentconsole {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.agentconsole * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--c-border) transparent; }
+.agentconsole ::selection { background: var(--c-accent-bg); }
+.agentconsole button, .agentconsole select { font: inherit; color: inherit; border-radius: 0; }
+
+.agentconsole .console-header {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 6px 12px; border-bottom: 1px solid var(--c-border);
+}
+.agentconsole .brand { font-weight: 700; letter-spacing: 0.1em; font-size: 12px; color: var(--c-accent); white-space: nowrap; }
+.agentconsole .run-picker {
+  background: transparent; border: 1px solid var(--c-border); color: var(--c-ink-dim);
+  padding: 2px 6px; font-size: 11.5px; max-width: 280px; cursor: pointer;
+}
+.agentconsole .run-picker:hover, .agentconsole .filter-select:hover { border-color: var(--c-accent); color: var(--c-ink); }
+.agentconsole .run-picker option, .agentconsole .filter-select option { background: var(--c-bg); color: var(--c-ink); }
+.agentconsole .hdr-actions { display: flex; gap: 6px; margin-left: auto; }
+.agentconsole .hdr-status {
+  white-space: nowrap; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 8px; border: 1px solid var(--c-border); color: var(--c-ink-dim);
+}
+.agentconsole .hdr-status-good { color: var(--c-green); border-color: var(--c-green); background: var(--c-green-bg); }
+.agentconsole .hdr-status-warn { color: var(--c-amber); border-color: var(--c-amber); background: var(--c-amber-bg); }
+.agentconsole .hdr-status-bad  { color: var(--c-red);   border-color: var(--c-red);   background: var(--c-red-bg); }
+
+/* ============ BUTTONS ============ */
+.agentconsole .btn {
+  background: transparent; border: 1px solid var(--c-border); color: var(--c-ink-dim);
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 8px; cursor: pointer; white-space: nowrap;
+}
+.agentconsole .btn:hover { border-color: var(--c-accent); color: var(--c-accent); }
+.agentconsole .btn:focus-visible { outline: 1px solid var(--c-accent); outline-offset: 1px; }
+.agentconsole .btn:disabled { opacity: 0.4; cursor: default; }
+.agentconsole .btn-accent { border-color: var(--c-accent); color: var(--c-accent); background: var(--c-accent-bg); }
+.agentconsole .btn-danger:hover { border-color: var(--c-red); color: var(--c-red); }
+.agentconsole .btn-mini { padding: 0 6px; font-size: 10px; }
+
+/* ============ BODY GRID ============ */
+.agentconsole .console-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px 1fr 265px; }
+.agentconsole .col { min-height: 0; padding: 10px 12px; }
+.agentconsole .col-left { overflow-y: auto; border-right: 1px solid var(--c-border); }
+.agentconsole .col-right { overflow-y: auto; border-left: 1px solid var(--c-border); }
+.agentconsole .col-main { display: flex; flex-direction: column; overflow: hidden; }
+
+/* ============ SECTIONS / KV ROWS ============ */
+.agentconsole .section-label {
+  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--c-accent); margin: 16px 0 6px;
+}
+.agentconsole .section-label:first-child { margin-top: 0; }
+.agentconsole .kv-row {
+  display: flex; justify-content: space-between; gap: 8px; align-items: baseline;
+  padding: 3px 0; border-bottom: 1px dotted var(--c-border);
+}
+.agentconsole .kv-label { color: var(--c-ink-dim); }
+.agentconsole .kv-value { text-align: right; }
+.agentconsole .kv-good { color: var(--c-green); }
+.agentconsole .kv-warn { color: var(--c-amber); }
+.agentconsole .kv-bad  { color: var(--c-red); }
+.agentconsole .kv-dim  { color: var(--c-ink-dim); }
+.agentconsole .kv-row-bar { border-bottom: none; padding-bottom: 0; }
+.agentconsole .bar { height: 4px; background: var(--c-border); margin: 4px 0 10px; }
+.agentconsole .bar-fill { height: 100%; background: var(--c-amber); }
+
+/* ============ BANNERS ============ */
+.agentconsole .banner {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px; margin-bottom: 10px; border: 1px solid;
+}
+.agentconsole .banner-amber { color: var(--c-amber); border-color: var(--c-amber); background: var(--c-amber-bg); }
+.agentconsole .banner-green { color: var(--c-green); border-color: var(--c-green); background: var(--c-green-bg); }
+.agentconsole .banner-red   { color: var(--c-red);   border-color: var(--c-red);   background: var(--c-red-bg); }
+.agentconsole .banner-glyph { font-size: 14px; }
+.agentconsole .banner-msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agentconsole .banner-actions { display: flex; gap: 6px; margin-left: auto; }
+
+/* ============ FILTER BAR ============ */
+.agentconsole .filterbar { flex: none; display: flex; gap: 6px; align-items: center; margin: 2px 0 8px; }
+.agentconsole .filter-select {
+  background: transparent; border: 1px solid var(--c-border); color: var(--c-ink-dim);
+  padding: 1px 4px; font-size: 11px; cursor: pointer;
+}
+.agentconsole .filter-count { margin-left: auto; font-size: 11px; color: var(--c-ink-faint); }
+
+/* ============ EVENT FEED ============ */
+.agentconsole .event-feed { flex: 1; min-height: 0; overflow-y: auto; }
+.agentconsole .ev-row {
+  display: grid; grid-template-columns: auto auto 1fr auto;
+  gap: 0 8px; align-items: baseline; padding: 1px 4px 1px 0;
+}
+.agentconsole .ev-time { color: var(--c-ink-faint); }
+.agentconsole .ev-glyph { color: var(--c-ink-faint); }
+.agentconsole .ev-body { display: flex; gap: 6px; min-width: 0; white-space: nowrap; align-items: baseline; }
+.agentconsole .ev-type { font-weight: 700; }
+.agentconsole .ev-src { color: var(--c-ink-dim); }
+.agentconsole .ev-msg { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.agentconsole .ev-dur { font-style: italic; color: var(--c-ink-dim); }
+.agentconsole .ev-seq { color: var(--c-ink-faint); font-size: 11px; }
+.agentconsole .ev-warning .ev-glyph, .agentconsole .ev-warning .ev-type { color: var(--c-amber); }
+.agentconsole .ev-error .ev-glyph, .agentconsole .ev-error .ev-type, .agentconsole .ev-error .ev-msg { color: var(--c-red); }
+.agentconsole .ev-context .ev-glyph, .agentconsole .ev-context .ev-type, .agentconsole .ev-context .ev-msg, .agentconsole .ev-context .ev-src { color: var(--c-amber); }
+.agentconsole .ev-cost { background: var(--c-accent-bg); }
+
+/* ============ LATEST BLOCK / STDERR ============ */
+.agentconsole .latest-block, .agentconsole .stderr-panel { flex: none; border: 1px solid var(--c-border); background: var(--c-bg-alt); padding: 8px 10px; margin-top: 10px; }
+.agentconsole .latest-block-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.agentconsole .latest-block-id { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c-accent); }
+.agentconsole .latest-block-tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-ink-faint); }
+.agentconsole .typewriter-target p { color: var(--c-ink); margin: 0; }
+.agentconsole .typewriter-caret { color: var(--c-accent); }
+.agentconsole .stderr-panel { border-color: var(--c-red); background: var(--c-red-bg); }
+.agentconsole .stderr-head { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c-red); margin-bottom: 4px; }
+.agentconsole .stderr-line { color: var(--c-red); white-space: pre-wrap; word-break: break-all; }
+
+/* ============ STAGES ============ */
+.agentconsole .stage-row {
+  display: grid; grid-template-columns: 14px 1fr auto minmax(38px, auto);
+  gap: 0 6px; align-items: baseline; padding: 3px 0;
+  border-bottom: 1px dotted var(--c-border);
+}
+.agentconsole .stage-dot { text-align: center; }
+.agentconsole .stage-progress { color: var(--c-ink-dim); font-size: 11.5px; text-align: right; }
+.agentconsole .stage-eta { color: var(--c-ink-faint); font-size: 10.5px; text-align: right; }
+.agentconsole .stage-done .stage-dot { color: var(--c-green); }
+.agentconsole .stage-done .stage-name { color: var(--c-ink-dim); }
+.agentconsole .stage-active .stage-dot { color: var(--c-amber); }
+.agentconsole .stage-active .stage-name { font-weight: 700; }
+.agentconsole .stage-active .stage-progress { color: var(--c-amber); }
+.agentconsole .stage-pending .stage-dot, .agentconsole .stage-pending .stage-name, .agentconsole .stage-pending .stage-progress { color: var(--c-ink-faint); }
+.agentconsole .stage-failed .stage-dot, .agentconsole .stage-failed .stage-name, .agentconsole .stage-failed .stage-progress, .agentconsole .stage-failed .stage-eta { color: var(--c-red); }
+.agentconsole .stage-gated .stage-dot, .agentconsole .stage-gated .stage-progress { color: var(--c-amber); }
+.agentconsole .phase-divider {
+  display: flex; align-items: center; gap: 8px; padding: 6px 0 4px;
+  font-size: 9.5px; letter-spacing: 0.16em; color: var(--c-ink-faint);
+}
+.agentconsole .phase-divider .phase-ok { color: var(--c-green); }
+.agentconsole .phase-line { flex: 1; border-top: 1px solid var(--c-border); }
+
+/* ============ ARTIFACT / WATCHLIST ============ */
+.agentconsole .artifact-path { color: var(--c-ink-dim); font-size: 11.5px; word-break: break-all; }
+.agentconsole .watch-row {
+  display: flex; justify-content: space-between; gap: 6px; align-items: baseline;
+  padding: 3px 0; border-bottom: 1px dotted var(--c-border);
+}
+.agentconsole .watch-term { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agentconsole .watch-arrow { color: var(--c-ink-faint); }
+.agentconsole .watch-vi { color: var(--c-amber); }
+
+/* ============ STALLED BADGE (soft blink) ============ */
+@keyframes console-blink { 50% { opacity: 0.35; } }
+.agentconsole .badge {
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 8px; border: 1px solid var(--c-red); color: var(--c-red); background: var(--c-red-bg);
+  white-space: nowrap;
+}
+.agentconsole .badge-stalled { animation: console-blink 1.6s ease-in-out infinite; }
+.agentconsole .console-empty { color: var(--c-ink-faint); padding: 20px 4px; }
