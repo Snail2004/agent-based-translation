@@ -97,3 +97,22 @@ Nguon doc: app/backend/services/thesis_runs.py (RunControl + read_events), pipel
 **F9 — LOW nhung bug that khi resume:** spawn_run mo stdout log che do "w"; resume tai dung run_id -> log attempt truoc bi XOA TRANG. LUAT: stdout log per-attempt (run_logs/<run_id>.a<attempt>.log) hoac mo "a" + marker attempt. (Event log khong dinh vi da append-only.)
 
 **Khoang trong implementation THUOC UI-1 scope (giao CodeX cung dot):** read_events chua co max_bytes 256KB + truncated flag (§2d doi) + F1 partial-line + F4 replay driver + F8 severity rule trong emitter.
+
+## 2f. CHOT sau vong CodeX doi chieu §2e — sua doi hop dong §2d (Claude adjudicate, 2026-07-05)
+
+CodeX xac nhan F1, F3-F9; phan bien F2 dung cho: "mot os.write append" giam rui ro nhung KHONG phai bao dam hop dong. Claude GHI NHAN va chot nguyen tac CodeX de xuat, voi phuong an cu the do Claude chon:
+
+**F2 CHOT — SINGLE-WRITER INVARIANT (thay the luat os.write o §2e):** moi file event log co DUNG MOT writer tai moi thoi diem.
+- Che do one-button: stage CLI ghi vao file RIENG `run_events/<run_id>.stage_<stage>.a<attempt>.jsonl`; orchestrator la writer DUY NHAT cua file merged `run_events/<run_id>.jsonl` — tail cac file stage bang byte-offset (dung lai cung luat partial-line F1) va append vao file merged, kem event rieng cua no (heartbeat/cost_snapshot/stage_*).
+- seq trong file merged do orchestrator (writer cua file do) cap — monotonic tam thuong vi single-writer; seq goc cua stage giu lai o payload.src_seq de truy vet. event_id van la khoa opaque cap theo writer cua file.
+- Che do standalone (Cockpit chay le mot script, khong orchestrator): stage CLI ghi thang `run_events/<run_id>.jsonl` nhu hien tai — van dung mot writer, invariant giu nguyen.
+- KHONG dung msvcrt.locking (them co che moi phai test), KHONG pipe stdout (spawn_run da chiem stdout cho log). Luat "mot buffer/mot os.write moi flush + emit khong bao gio raise" van GIU nhung ha cap thanh ky luat emitter, khong phai bao dam concurrency.
+
+**Bo sung CodeX duoc GHI NHAN het:**
+1. Replay driver CHI lay path tu `_event_log_path()`/event_root — cam nhan path tu do (chan ca van de Unicode normalization 'Tai lieu').
+2. Registry them attempt first-class khi lam orchestrator: attempt_index, resumed_from, log_path PER ATTEMPT (fix F9), event_log_path per run.
+3. Frontend: CAM `.map()` toan feed. Ring buffer raw store + render latest N (mac dinh 200) + counters tong hop theo stage/severity + filter truoc khi render. Chua can thu vien virtualization.
+4. max_bytes + partial-line la MOT cap khong tach roi: cat 256KB xong PHAI lui ve newline hoan chinh cuoi truoc khi parse va truoc khi advance offset.
+5. Replay test 3 lop: fixture file -> registry entry -> /events?offset endpoint -> UI. Cam mock truc tiep state React.
+
+**Trang thai hop dong: §2d + §2e(F1,F3-F9) + §2f(F2 single-writer + 5 bo sung) = KHOA. Het vong review, sang UI-1.**
