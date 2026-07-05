@@ -635,3 +635,17 @@ Y>>>
 - Bao cao raw agreement + Cohen's kappa, REPORT-ONLY khong lam gate (dang ky truoc: quan the gan-hoa nen kappa nguoi-nguoi cung chi trung binh — so nay de dinh vi do tin cua judge, khong de dau/truot); neu kappa thap -> ghi lam limitation co ho so, khong duoc dung de "chua" lai ket qua.
 
 **Thu tu thi hanh giu nguyen §4h:** CodeX revert v1 -> full 339 -> Claude verify -> Gemma audit -> calibration subset (buoc moi) -> PJ official readout.
+
+### 4j. PJ FULL 339 VERIFIED — S0 troi decisive nhung phan tich tag+gold cho thay phan lon la taste-vs-style-guide, khong phai hong van (Claude recount + phan tich, 2026-07-05)
+
+**Recount doc lap khop CodeX 100%:** overall S0 102 / S1 51 / TIE 186 (n_eff 153); style S0 76 / S1 31 / TIE 232 (n_eff 107); breakdown overall consistent 216 / soft 52 / hard 71 (recount khop); 0/678 fail, model_version 678/678, cost recompute $0.7067, db hash giu, 136 auto-tie + 339 judged = 475 dung scope. Ghi nhan CodeX rerun cache-only de sua breakdown auto-tie (cache deterministic nen hop le, verdict khong doi).
+
+**So ledger 4 du doan dang ky truoc (§4h):**
+- ① tong tie >=80%: **TRUOT (67.8%)** — loi cua Claude khi dang ky: ngoai suy tu tap pilot ma auto-tie chiem 73%, trong khi full auto-tie chi 28.6%; tie rate cua rieng phan judged nhat quan (pilot 58% -> full 54.9%). Ghi trung thuc: du doan sai vi framing so hoc, khong phai instrument doi hanh vi.
+- ② style-alarm KHONG keu: **DUNG nhung sat nut** — S1 style-loss tag-group 76/475=16.00% vs S0 31/475=6.53%, chenh 9.47 diem < 10. PHAI bao cao margin 0.53 diem + phan tich thanh phan: trong 102 ca S1-thua overall, grammar chi 1 + naturalness 9 — tin hieu "hong van" thuc su gan nhu zero; khoang cach den nguong den tu word_choice (86) ma ranh gioi voi terminology la fuzzy da do (probe/pilot).
+- ③ cum chuan-hoa hien o S1-loss terminology: **TRUNG** — 7 block, judge note goi ten truc tiep ("chinh quy hoa ... more accurate than Y's 'chuan hoa'", weight_decay_b002/b006) => **PJ = dung cu doc lap THU TU do cung entry canonical sai §35.8** (sau gold-recall B, §36 forensics, SF-BT §2g).
+- ④ order-inconsistent 30-40%: **DUNG** (123/339 = 36.3%; hard 71 = 20.9% deu bi ha ve TIE).
+
+**Phan tich then chot — taste-vs-gold (cross-ref voi gold glossary 458 term, metric step duoc phep doc gold):** trong 101 ca S1-thua tag terminology/word_choice, **23 ca S1 dung DUNG dang gold cua style guide con S0 khong** (layer->tang x7, generalization error->loi khai quat x5, overfit->qua khop, weight decay->suy giam trong so, example->mau...) — S1 bi phat vi tuan thu quy uoc con nguoi; chieu doi xung S0 chi 10/44. Ket hop bang chung PTERM_03 (judge thich "Mang no-ron nhieu lop" hon gold-style "Perceptron da tang") va note lap lai "more common": **PJ-overall do "taste doc gia ML pho thong", KHONG do "do dung"** — cung ban chat voi bai hoc §9 (TA do "do khop quy uoc ngoai"). TA noi S1 tot hon (khop gold), PJ-overall noi S0 tot hon (khop common usage) — hai dung cu do HAI HE QUY CHIEU khac nhau, mau thuan bieu kien nay la triangulation dung nghia: memory keo ban dich VE style guide va RA XA usage pho thong — dung chuc nang thiet ke; "tot hon" tuy chon he quy chieu. Dien giai nay KHONG duoc dung de xoa ket qua: con so S0 102-51 phai len bao cao nguyen ven kem phan tich nay.
+
+**Con lai truoc official readout:** Gemma audit (§4a: 50 systematic + toan bo 102 cap S1-thua, dao-phan <=10%) -> calibration subset user ~40 cap (§4i) -> §4k official readout + dong thang PJ.

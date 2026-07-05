@@ -17,6 +17,7 @@ from pipeline.scripts.probe_pj import (
     TAG_ORDER,
     _assert_prompt_hash,
     _aggregate_case,
+    _map_call_verdict,
     _normalize_auto_tie_text,
     _run_probe_calls,
     _total_cost,
@@ -31,6 +32,7 @@ from pipeline.scripts.probe_pj import PJ_PROMPT_TEMPLATE
 
 
 DEFAULT_OUT = Path("data/reports/exp_s0s1_builderv2_v1/pj_pilot_50.json")
+DEFAULT_FULL_OUT = Path("data/reports/exp_s0s1_builderv2_v1/pj_full_339.json")
 DEFAULT_EXPERIMENT = "exp_s0s1_builderv2_v1"
 DEFAULT_CHAPTER = "d2l_multilayer_perceptrons"
 DEFAULT_EXPECTED_WORKDB_SHA256 = "92229381172FE30C2A10E2C467232AB992B7EA8ECB40415A1652AB7DE8C13F42"
@@ -45,6 +47,7 @@ def main() -> int:
     parser.add_argument("--cache-db", default=str(DEFAULT_CACHE))
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--sample-size", type=int, default=50)
+    parser.add_argument("--full", action="store_true", help="Judge every non-identical S0/S1 pair instead of a systematic sample.")
     parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument("--max-output-tokens", type=int, default=512)
     parser.add_argument("--thinking-budget", type=int, default=0)
@@ -67,13 +70,20 @@ def main() -> int:
 
     pairs = _load_pairs(db_path, experiment=args.experiment, chapter=args.chapter)
     identical_pairs, different_pairs = _split_pairs(pairs)
-    sampled_different, sampling_report = _sample_different_pairs(different_pairs, sample_size=args.sample_size)
-    cases = [_case_from_pair(pair, seed=args.seed) for pair in sampled_different]
+    judged_different, sampling_report = _select_different_pairs(
+        different_pairs,
+        sample_size=args.sample_size,
+        full=bool(args.full),
+    )
+    cases = [_case_from_pair(pair, seed=args.seed) for pair in judged_different]
     auto_tie_cases = [_auto_tie_case(pair) for pair in identical_pairs]
+    phase = "full" if args.full else f"pilot_{len(judged_different)}_real_pairs"
+    if args.full and args.out == str(DEFAULT_OUT):
+        out_path = DEFAULT_FULL_OUT
 
     report: dict[str, Any] = {
         "metric": "PJ",
-        "phase": "pilot_50_real_pairs",
+        "phase": phase,
         "status": "validate_only" if args.validate_only else "running",
         "db": str(db_path),
         "db_sha256_before": db_sha_before,
@@ -95,7 +105,8 @@ def main() -> int:
             "total_pairs": len(pairs),
             "auto_tie_identical_pairs": len(identical_pairs),
             "different_pairs": len(different_pairs),
-            "sampled_different_pairs": len(sampled_different),
+            "judged_different_pairs": len(judged_different),
+            "sampled_different_pairs": len(judged_different) if not args.full else None,
         },
         "normalization": "NFC + CRLF/CR->LF + strip trailing whitespace per line",
         "sampling": sampling_report,
@@ -121,7 +132,7 @@ def main() -> int:
         concurrency=args.concurrency,
     )
 
-    report["status"] = "pilot_complete_stop_for_review"
+    report["status"] = "full_complete_stop_for_review" if args.full else "pilot_complete_stop_for_review"
     report["db_sha256_after"] = _sha256_file(db_path).upper()
     report["db_unchanged"] = report["db_sha256_before"] == report["db_sha256_after"]
     report["cache"] = cache.stats()
@@ -129,7 +140,7 @@ def main() -> int:
     report["cases"] = cases
     report["auto_tie_cases"] = auto_tie_cases
     report["cost_usd"] = _total_cost(cases)
-    report["aggregates"] = _pilot_aggregates(cases=cases, auto_tie_cases=auto_tie_cases)
+    report["aggregates"] = _pj_aggregates(cases=cases, auto_tie_cases=auto_tie_cases, full=bool(args.full))
     report["latency"] = _latency_summary(cases)
     report["cost_projection"] = _cost_projection(
         cases=cases,
@@ -200,6 +211,24 @@ def _split_pairs(pairs: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], lis
     return identical, different
 
 
+def _select_different_pairs(
+    pairs: list[dict[str, Any]],
+    *,
+    sample_size: int,
+    full: bool,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    if full:
+        return pairs, {
+            "population": "all different S0/S1 MLP block pairs sorted by order_index",
+            "mode": "full",
+            "N": len(pairs),
+            "k": len(pairs),
+            "indices_0based": list(range(len(pairs))),
+            "selected_block_ids": [pair["block_id"] for pair in pairs],
+        }
+    return _sample_different_pairs(pairs, sample_size=sample_size)
+
+
 def _sample_different_pairs(pairs: list[dict[str, Any]], *, sample_size: int) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     if len(pairs) < sample_size:
         raise ValueError(f"Only {len(pairs)} different pairs available, need {sample_size}.")
@@ -263,12 +292,14 @@ def _auto_tie_case(pair: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _pilot_aggregates(*, cases: list[dict[str, Any]], auto_tie_cases: list[dict[str, Any]]) -> dict[str, Any]:
+def _pj_aggregates(*, cases: list[dict[str, Any]], auto_tie_cases: list[dict[str, Any]], full: bool) -> dict[str, Any]:
+    judged_label = f"judged_full_{len(cases)}" if full else f"judged_sample_{len(cases)}"
+    combined_label = "full_plus_all_auto_ties" if full else "sample_plus_all_auto_ties"
     return {
-        "judged_sample_50": _aggregate_scope(cases),
-        "judged_sample_50_without_short_block": _aggregate_scope([case for case in cases if not case.get("short_block")]),
-        "sample_plus_all_auto_ties": _aggregate_scope([*cases, *auto_tie_cases]),
-        "sample_plus_all_auto_ties_without_short_block": _aggregate_scope(
+        judged_label: _aggregate_scope(cases),
+        f"{judged_label}_without_short_block": _aggregate_scope([case for case in cases if not case.get("short_block")]),
+        combined_label: _aggregate_scope([*cases, *auto_tie_cases]),
+        f"{combined_label}_without_short_block": _aggregate_scope(
             [case for case in [*cases, *auto_tie_cases] if not case.get("short_block")]
         ),
     }
@@ -300,6 +331,10 @@ def _aggregate_scope(cases: list[dict[str, Any]]) -> dict[str, Any]:
         "style_tie_rate": style.get("TIE", 0) / n if n else 0.0,
         "overall_win_loss_by_arm": dict(overall_arm),
         "style_win_loss_by_arm": dict(style_arm),
+        "n_effective": {
+            "overall": n - overall.get("TIE", 0),
+            "style": n - style.get("TIE", 0),
+        },
         "tag_counts": {tag: tag_counts.get(tag, 0) for tag in TAG_ORDER if tag_counts.get(tag, 0)},
         "flag_counts": dict(flag_counts),
         "order_inconsistent": {
@@ -307,6 +342,10 @@ def _aggregate_scope(cases: list[dict[str, Any]]) -> dict[str, Any]:
             "style_count": flag_counts.get("style_order_inconsistent", 0),
             "overall_rate": flag_counts.get("overall_order_inconsistent", 0) / n if n else 0.0,
             "style_rate": flag_counts.get("style_order_inconsistent", 0) / n if n else 0.0,
+        },
+        "order_consistency_breakdown": {
+            "overall": _order_consistency_breakdown(cases, verdict_key="overall_verdict"),
+            "style": _order_consistency_breakdown(cases, verdict_key="style_verdict"),
         },
         "style_unsupported_count": flag_counts.get("style_unsupported_by_tags", 0),
         "style_unsupported_rate": flag_counts.get("style_unsupported_by_tags", 0) / n if n else 0.0,
@@ -319,6 +358,50 @@ def _verdict_to_arm(case: dict[str, Any], verdict: str) -> str:
     if verdict == "B":
         return str(case.get("candidate_b_arm") or "B")
     return "TIE"
+
+
+def _order_consistency_breakdown(cases: list[dict[str, Any]], *, verdict_key: str) -> dict[str, Any]:
+    counts = Counter()
+    for case in cases:
+        if case.get("category") == "AUTO-TIE":
+            counts["consistent"] += 1
+            counts["consistent_tie"] += 1
+            continue
+        calls = case.get("calls") or {}
+        mapped: list[str] = []
+        invalid = False
+        for direction in ("ab", "ba"):
+            call = calls.get(direction) or {}
+            verdict = call.get(verdict_key)
+            if call.get("validation_error") or call.get("transport_error") or verdict not in {"X", "Y", "TIE"}:
+                invalid = True
+                break
+            mapped.append(_map_call_verdict(str(verdict), direction=direction))
+        if invalid or len(mapped) != 2:
+            counts["invalid"] += 1
+        elif mapped[0] == mapped[1]:
+            counts["consistent"] += 1
+            if mapped[0] == "TIE":
+                counts["consistent_tie"] += 1
+            else:
+                counts["consistent_win"] += 1
+        elif "TIE" in mapped:
+            counts["soft_tie_vs_win"] += 1
+        else:
+            counts["hard_x_vs_y"] += 1
+    n = len(cases)
+    return {
+        "n": n,
+        "consistent": counts.get("consistent", 0),
+        "consistent_tie": counts.get("consistent_tie", 0),
+        "consistent_win": counts.get("consistent_win", 0),
+        "soft_tie_vs_win": counts.get("soft_tie_vs_win", 0),
+        "hard_x_vs_y": counts.get("hard_x_vs_y", 0),
+        "invalid": counts.get("invalid", 0),
+        "consistent_rate": counts.get("consistent", 0) / n if n else 0.0,
+        "soft_rate": counts.get("soft_tie_vs_win", 0) / n if n else 0.0,
+        "hard_rate": counts.get("hard_x_vs_y", 0) / n if n else 0.0,
+    }
 
 
 def _latency_summary(cases: list[dict[str, Any]]) -> dict[str, Any]:
