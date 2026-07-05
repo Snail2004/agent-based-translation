@@ -73,3 +73,27 @@
 **Fixture replay (CodeX #10):** CA HAI — convert log that run_preliminaries_events.jsonl sang schema v1 (regression compatibility) + synthetic ~500 event phu du 20 type ke ca gate_pause/error/retry/health_check/stage_skipped ma log cu chua co.
 
 **Trinh tu UI-1 giu nhu da ban:** emitter lib -> fixture kep -> trang Agent Console (route rieng; header run/cost/cache; feed filter theo stage/agent/severity; checklist 8 stage + progress + artifact link) chay che do replay x10 -> STOP screenshot cho Claude/user review; chua cam pipeline that.
+
+## 2e. RA SOAT BACKEND LAN 2 (Claude doc lai code that truoc UI-1, 2026-07-05) — 9 phat hien, CHO CodeX doi chieu
+
+Nguon doc: app/backend/services/thesis_runs.py (RunControl + read_events), pipeline/translate/run_events.py (sink cu), app/prototype/index.html (stack = React 18 UMD + Babel standalone, khong build step). Cac "LUAT THEM" duoi day la de xuat bo sung hop dong §2d — chot chinh thuc sau adjudicate vong CodeX.
+
+**F1 — HIGH, partial-line tail (bug se can Console live):** read_events seek(offset) roi doc theo dong, new_offset = tell(). Neu poll bat dung luc writer dang ghi do dang mot dong (mot flush toi 20 event co the bi cat giua chung), duoi dong bi bao parse_error VA offset nhay qua phan con lai -> event mat/vo. LUAT THEM: reader chi tieu thu den ky tu xuong dong CUOI CUNG trong vung doc; phan duoi de lai cho poll sau; new_offset = byte ngay sau dong hoan chinh cuoi. Ap dung ca khi cat theo max_bytes (cat giua dong -> lui ve ranh gioi dong).
+
+**F2 — HIGH, hai process cung append mot file:** orchestrator (heartbeat 30s + cost_snapshot) ghi song song voi stage CLI dang chay. Python text-append co the tach mot flush thanh nhieu OS-write -> dong xen ke -> JSONL hong. LUAT THEM: emitter serialize moi flush thanh MOT buffer bytes (cac dong hoan chinh) va ghi bang MOT os.write tren fd mo binary append (hoac open-append-ghi-dong ngay tung flush); flush > 64KB thi tach theo ranh gioi dong. Giu tinh chat cua sink cu: emit KHONG BAO GIO raise (observability khong duoc lam fail run).
+
+**F3 — MEDIUM, sink cu lech schema:** pipeline/translate/run_events.py phat schema "run_event_v1" (khong co v/stage/agent/severity/event_id; attempt_id la STRING mac dinh = run_id; seq tu 1). UI-1 khong dung sink nay; buoc noi pipeline that thay bang pipeline/lib/events.py — runner.py nhan sink object nen chi can doi class, khong doi call-site. Converter fixture (§2d #10) cover log cu.
+
+**F4 — MEDIUM, replay phai di qua endpoint that:** read_events doi run ton tai trong registry + event_log_path phai nam trong jobs_root/run_events (path-check cung). Fixture replay vi vay KHONG the la file tinh do frontend tu doc: can REPLAY DRIVER (script dev tao entry registry + append dong fixture vao run_events/replay_<name>.jsonl theo toc do x10). Duoc cai hay hon mock: test dung path poll that end-to-end.
+
+**F5 — MEDIUM, duong du lieu preview block chua dac ta:** §2c hua "preview block vua dich xong" nhung §2d cam nhet ban dich vao event (dung luat). LUAT THEM: block_done chi mang block_id; UI fetch text qua endpoint read-only co san (translation_preview — kiem pham vi o buoc noi pipeline that); replay mode khong co DB sau lung -> preview pane hien block_id + tick + nhan "(replay: khong co text)".
+
+**F6 — MEDIUM, cong cost-gate chua phu one-button:** ALLOWLIST RunControl chua co run_one_button/cascade/score_sf_*/pj; confirm_token chi cap duoc qua prompt-preview cua run_translate. Panel xac nhan can uoc tinh TOAN chuoi stage -> orchestrator can mode --estimate-only phat token (tai dung co che PreviewToken/argv-digest co san). Ghi vao danh sach no-chan-duong; KHONG thuoc UI-1.
+
+**F7 — LOW, event_id khong parse duoc:** regex run_id cho phep dau cham -> "<run_id>.<attempt>.<seq>" khong split nguoc duoc. LUAT: event_id la khoa dedupe OPAQUE, cam parse; run_id/attempt_id/seq da la field rieng trong envelope.
+
+**F8 — LOW, severity trung lap voi event type:** warning/error vua la type vua la severity. LUAT: severity la truc loc chinh cua UI; event type warning/error BAT BUOC severity trung ten; type khac mac dinh info.
+
+**F9 — LOW nhung bug that khi resume:** spawn_run mo stdout log che do "w"; resume tai dung run_id -> log attempt truoc bi XOA TRANG. LUAT: stdout log per-attempt (run_logs/<run_id>.a<attempt>.log) hoac mo "a" + marker attempt. (Event log khong dinh vi da append-only.)
+
+**Khoang trong implementation THUOC UI-1 scope (giao CodeX cung dot):** read_events chua co max_bytes 256KB + truncated flag (§2d doi) + F1 partial-line + F4 replay driver + F8 severity rule trong emitter.
