@@ -604,3 +604,20 @@ Y>>>
 **Ly do co che (3 tang):** (1) autoregressive — ban doc sau duoc xu ly trong boi canh ban doc truoc (anchoring), khong co bao dam giao hoan f(A,B)=f(B,A); (2) lech phan bo vi tri/nhan trong du lieu huan luyen (option-label bias); (3) thien vi chi du manh de quyet ca SAT NUT — khac biet ro thi tin hieu de bep thien vi.
 
 **Bang chung noi bo 2 tang (diem manh: ta KHONG chi trich dan, ta DO duoc):** probe 20 cap loi ro = 0/10 lat keo; pilot 50 cap that gan-hoa = 34% lat keo, co ca (underfit_overfit_b020) khen "vi tri Y" o ca 2 chieu voi 2 ly do tu mau thuan; co che 2-chieu ha 100% ca lat ve TIE, khong verdict sai nao lot. Cau chot hoi dong: "dao chieu khong phai phong xa ly thuyet — chung em do duoc position bias o 34% cap gan-hoa va co che hai chieu trung hoa toan bo."
+
+### 4h. DESIGN REVIEW (theo dung nhanh STOP cua §4g): dung vong lap prompt, ve lai pj_judge_v1, chap nhan inconsistency co ho so, GO FULL (Claude, 2026-07-05)
+
+**Recount v4 + pilot v2 khop CodeX** (probe v4 pass co hoc 4 nhom nhung P-GRAM/P-MEAN tut 5/5->4/5 tag, PTERM_02 mat catch; pilot v2: tie tang 58->70%/74->82%, inconsistent overall 40%/style 38%, style_unsupported 2%, 0 fail, db giu, arm slot can 21/50).
+
+**Phan tich quyet dinh — mo "inconsistency" thanh 2 loai (do tren ca 2 pilot):**
+- v1: 33 consistent / 9 soft (TIE<->win) / **8 HARD (X<->Y dao phan)**
+- v2: 30 consistent / 8 soft / **12 HARD**
+=> **Du doan dang ky truoc cua Claude o §4g SAI MOT NUA** (tie tang DUNG, inconsistent giam SAI — ghi trung thuc): prompt v2 khong sua duoc position bias (hard flip con TANG 8->12), chi tra them gia sensitivity (probe tut 2 nhom). Hai data point => inconsistency la THUOC TINH CUA QUAN THE cap gan-hoa + judge, khong phai cua cau chu prompt. **Sua prompt vong 3 = metric-chasing khong co che — TU CHOI, dung vong lap.**
+
+**Vi sao chap nhan duoc >25% (lap luan cau truc, khong phai noi nguong lay duoc):** position bias KHONG THE thien vi arm nao vi 3 tang cau truc: (1) gan arm->slot A/B ngau nhien theo seed tung block (do: 21/50 can); (2) verdict quyet dinh DOI HOI 2 chieu dong y — uu tien theo vi tri khong the tao ra verdict quyet dinh; (3) moi bat dong -> TIE bao thu. => inconsistency cao lam giam SUC MANH THONG KE (it verdict quyet dinh hon), KHONG lam sai lech ket qua. Gate 25% dat truoc khi biet mat do gan-hoa cua quan the (91% tie o SF-BT llm da bao truoc dieu nay) va thuc chat canh mot rui ro bias ma thiet ke da loai bo bang cau truc. **Quyet dinh review: gate 25% nghi huu CO HO SO** (khong xoa lang le): full readout BAT BUOC bao cao phan ra consistent/soft/hard + n_effective; headline giu nguyen luat inconsistent->TIE.
+
+**Chon instrument: VE LAI pj_judge_v1 (sha d47dbb17), bo v2.** Ly do: v1 troi hon v2 tren CA HAI truc chat luong dung cu da do (hard flip 8<12; probe 5/5 ca 4 nhom vs hai nhom 4/5) — day la lua chon calibration giua 2 variant deu da qua probe, quyet tren metric NHIEU CUA DUNG CU (khong phai tren ket qua S0/S1), tai checkpoint review duoc luat chi dinh, TRUOC moi data official. Minh bach outcome: ca 2 pilot decisive deu nghieng S0 (v1 12-9, v2 10-5) — chon v1 neu anh huong gi thi cho S1 NHIEU decisive win hon, khong co dong co thien vi. Bonus: cache v1 nguyen ven -> 50 cap pilot tai dung, full chi ton ~578 call moi ~$0.58.
+
+**GO FULL 339 voi pj_judge_v1.** Du doan dang ky truoc cho full (khoa truoc khi chay): (1) tong tie (ke auto) >=80%; (2) style-alarm KHONG keu (pilot grammar/naturalness ~0 ca 2 arm, 2 pilot doc lap); (3) du doan chuan-hoa §4a giu nguyen: S1-loss tag terminology/meaning phai chua block regularization; (4) order-inconsistent du kien 30-40% judged pairs — la thuoc tinh bao cao, khong con la gate. Sau full: Gemma audit khuon §2h (§4a).
+
+**Viec CodeX:** (1) revert probe_pj.py ve pj_judge_v1 (PROMPT_VERSION + sha d47dbb17... + bullet cu, dung 3 cho da doi); (2) chay full: score_pj.py mo rong scope full 339 (sample = toan bo different pairs), out pj_full_339.json, label phase=full; cache DB giu (50 cap pilot hit); bao cao them phan ra consistent/soft/hard + n_effective; (3) STOP cho Claude verify -> Gemma audit.
