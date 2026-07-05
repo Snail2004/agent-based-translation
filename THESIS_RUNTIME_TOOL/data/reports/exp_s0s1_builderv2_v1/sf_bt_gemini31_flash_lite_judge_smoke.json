@@ -1,0 +1,158 @@
+{
+  "status": "smoke",
+  "model": "gemini-3.1-flash-lite",
+  "cases": [
+    {
+      "id": "good_gradient",
+      "ab": {
+        "direction": "ab",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages convey the exact same meaning, with only stylistic differences in verb choice.",
+        "validation_error": "",
+        "latency_sec": 2.549,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 515,
+          "cached_tokens": 0,
+          "completion_tokens": 33,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.0004278,
+        "raw_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages convey the exact same meaning, with only stylistic differences in verb choice.\"}"
+      },
+      "ba": {
+        "direction": "ba",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages are semantically identical, using synonyms 'calculated' and 'computed' to express the same technical process.",
+        "validation_error": "",
+        "latency_sec": 2.13,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 515,
+          "cached_tokens": 0,
+          "completion_tokens": 40,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.000453,
+        "raw_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are semantically identical, using synonyms 'calculated' and 'computed' to express the same technical process.\"}"
+      }
+    },
+    {
+      "id": "good_regularization",
+      "ab": {
+        "direction": "ab",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages are identical in meaning and content.",
+        "validation_error": "",
+        "latency_sec": 2.678,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 507,
+          "cached_tokens": 0,
+          "completion_tokens": 26,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.0003978,
+        "raw_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}"
+      },
+      "ba": {
+        "direction": "ba",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages are identical in meaning and content.",
+        "validation_error": "",
+        "latency_sec": 2.678,
+        "from_cache": true,
+        "usage": {
+          "prompt_tokens": 507,
+          "cached_tokens": 0,
+          "completion_tokens": 26,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.0003978,
+        "raw_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}"
+      }
+    },
+    {
+      "id": "bad_regularization",
+      "ab": {
+        "direction": "ab",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages are identical in meaning and content.",
+        "validation_error": "",
+        "latency_sec": 2.678,
+        "from_cache": true,
+        "usage": {
+          "prompt_tokens": 507,
+          "cached_tokens": 0,
+          "completion_tokens": 26,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.0003978,
+        "raw_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}"
+      },
+      "ba": {
+        "direction": "ba",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages are identical in meaning and content.",
+        "validation_error": "",
+        "latency_sec": 2.678,
+        "from_cache": true,
+        "usage": {
+          "prompt_tokens": 507,
+          "cached_tokens": 0,
+          "completion_tokens": 26,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.0003978,
+        "raw_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages are identical in meaning and content.\"}"
+      }
+    },
+    {
+      "id": "good_accuracy_direction",
+      "ab": {
+        "direction": "ab",
+        "score": 100.0,
+        "flags": [],
+        "note": "Both passages convey the exact same fact regarding the impact of learning rate tuning on validation accuracy.",
+        "validation_error": "",
+        "latency_sec": 1.742,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 509,
+          "cached_tokens": 0,
+          "completion_tokens": 35,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.0004314,
+        "raw_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"Both passages convey the exact same fact regarding the impact of learning rate tuning on validation accuracy.\"}"
+      },
+      "ba": {
+        "direction": "ba",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages convey the identical meaning regarding the causal relationship between learning rate adjustment and validation accuracy improvement.",
+        "validation_error": "",
+        "latency_sec": 1.426,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 509,
+          "cached_tokens": 0,
+          "completion_tokens": 36,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.000435,
+        "raw_prefix": "{\"score\": 100, \"flags\": [], \"note\": \"The passages convey the identical meaning regarding the causal relationship between learning rate adjustment and validation accuracy improvement.\"}"
+      }
+    }
+  ],
+  "elapsed_sec": 10.700545299914666,
+  "calls": 8,
+  "json_error_count": 0,
+  "cost_usd": 0.0033384
+}

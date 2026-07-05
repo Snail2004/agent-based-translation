@@ -38,3 +38,27 @@ THESIS_RUNTIME_TOOL/data/prepass/
 THESIS_RUNTIME_TOOL/data/eval/localizer_simalign_cache/
 # Blind-leak duplicate of KEY/override_set.csv written by build (build:50 follow-up) — keep only the KEY/ copy under version control
 THESIS_RUNTIME_TOOL/data/eval/memory_tradeoff/override_set.csv
+
+# Session-local + regenerable artifacts (don ve sinh 2026-07-05)
+.claude/
+Tokens-hugging-face.txt
+THESIS_RUNTIME_TOOL/.playwright-cli/
+
+# Console/run logs + debug/smoke (regenerable, precedent: cache/log khong track)
+THESIS_RUNTIME_TOOL/data/reports/**/*.out.log
+THESIS_RUNTIME_TOOL/data/reports/**/*.err.log
+THESIS_RUNTIME_TOOL/data/reports/**/*.console.log
+THESIS_RUNTIME_TOOL/data/reports/**/*.console.err
+THESIS_RUNTIME_TOOL/data/reports/**/run_*_events.jsonl
+THESIS_RUNTIME_TOOL/data/reports/**/sf_bt_phase1_probe_debug.json
+THESIS_RUNTIME_TOOL/data/reports/**/sf_bt_pilot_smoke*.json
+
+# exp_s0s1 large regenerable cascade/overlay/audit artifacts (cung lop voi block
+# EV-D2L-10 o tren: giu tren dia lam cache local, khong track ~120MB; cac summary
+# nho va metrics_mlp.json van duoc commit rieng)
+THESIS_RUNTIME_TOOL/data/reports/exp_s0s1_builderv2_v1/cascade_*_S0.json
+THESIS_RUNTIME_TOOL/data/reports/exp_s0s1_builderv2_v1/cascade_*_S1.json
+THESIS_RUNTIME_TOOL/data/reports/exp_s0s1_builderv2_v1/cascade_*_preflight.json
+THESIS_RUNTIME_TOOL/data/reports/exp_s0s1_builderv2_v1/cascade_*_summary.json
+THESIS_RUNTIME_TOOL/data/reports/exp_s0s1_builderv2_v1/overlay_*.json
+THESIS_RUNTIME_TOOL/data/reports/exp_s0s1_builderv2_v1/metrics_mlp_occurrence_audit.*

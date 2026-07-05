@@ -1,0 +1,179 @@
+{
+  "status": "smoke",
+  "model": "gpt-5.4-mini",
+  "source_report": "data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_phase1_probe.json",
+  "cases": [
+    {
+      "id": "good_gradient",
+      "expected": "good",
+      "ab": {
+        "direction": "ab",
+        "score": 100.0,
+        "flags": [
+          "format_only"
+        ],
+        "note": "Same meaning with only stylistic wording differences.",
+        "validation_error": "",
+        "latency_sec": 2.362,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 251,
+          "cached_tokens": 0,
+          "completion_tokens": 29,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.00012075,
+        "model_echo": "gpt-5.4-mini",
+        "text_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning with only stylistic wording differences.\"}"
+      },
+      "ba": {
+        "direction": "ba",
+        "score": 100.0,
+        "flags": [
+          "format_only"
+        ],
+        "note": "Same meaning; only wording differs.",
+        "validation_error": "",
+        "latency_sec": 1.473,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 251,
+          "cached_tokens": 0,
+          "completion_tokens": 27,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.00011675,
+        "model_echo": "gpt-5.4-mini",
+        "text_prefix": "{\"score\":100,\"flags\":[\"format_only\"],\"note\":\"Same meaning; only wording differs.\"}"
+      },
+      "delta": 0.0
+    },
+    {
+      "id": "good_regularization",
+      "expected": "good",
+      "ab": {
+        "direction": "ab",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages have identical meaning.",
+        "validation_error": "",
+        "latency_sec": 1.588,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 245,
+          "cached_tokens": 0,
+          "completion_tokens": 23,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.00010725,
+        "model_echo": "gpt-5.4-mini",
+        "text_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}"
+      },
+      "ba": {
+        "direction": "ba",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages have identical meaning.",
+        "validation_error": "",
+        "latency_sec": 1.588,
+        "from_cache": true,
+        "usage": {
+          "prompt_tokens": 245,
+          "cached_tokens": 0,
+          "completion_tokens": 23,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.00010725,
+        "model_echo": "gpt-5.4-mini",
+        "text_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}"
+      },
+      "delta": 0.0
+    },
+    {
+      "id": "bad_regularization",
+      "expected": "bad_term",
+      "ab": {
+        "direction": "ab",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages have identical meaning.",
+        "validation_error": "",
+        "latency_sec": 1.588,
+        "from_cache": true,
+        "usage": {
+          "prompt_tokens": 245,
+          "cached_tokens": 0,
+          "completion_tokens": 23,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.00010725,
+        "model_echo": "gpt-5.4-mini",
+        "text_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}"
+      },
+      "ba": {
+        "direction": "ba",
+        "score": 100.0,
+        "flags": [],
+        "note": "The passages have identical meaning.",
+        "validation_error": "",
+        "latency_sec": 1.588,
+        "from_cache": true,
+        "usage": {
+          "prompt_tokens": 245,
+          "cached_tokens": 0,
+          "completion_tokens": 23,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.00010725,
+        "model_echo": "gpt-5.4-mini",
+        "text_prefix": "{\"score\":100,\"flags\":[],\"note\":\"The passages have identical meaning.\"}"
+      },
+      "delta": 0.0
+    },
+    {
+      "id": "good_accuracy_direction",
+      "expected": "good",
+      "ab": {
+        "direction": "ab",
+        "score": 100.0,
+        "flags": [],
+        "note": "Same meaning with only stylistic differences.",
+        "validation_error": "",
+        "latency_sec": 1.257,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 243,
+          "cached_tokens": 0,
+          "completion_tokens": 25,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.00011075,
+        "model_echo": "gpt-5.4-mini",
+        "text_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only stylistic differences.\"}"
+      },
+      "ba": {
+        "direction": "ba",
+        "score": 100.0,
+        "flags": [],
+        "note": "Same meaning with only tense/style differences.",
+        "validation_error": "",
+        "latency_sec": 1.819,
+        "from_cache": false,
+        "usage": {
+          "prompt_tokens": 243,
+          "cached_tokens": 0,
+          "completion_tokens": 25,
+          "reasoning_tokens": 0
+        },
+        "cost_usd": 0.00011075,
+        "model_echo": "gpt-5.4-mini",
+        "text_prefix": "{\"score\":100,\"flags\":[],\"note\":\"Same meaning with only tense/style differences.\"}"
+      },
+      "delta": 0.0
+    }
+  ],
+  "elapsed_sec": 8.681822399958037,
+  "json_error_count": 0,
+  "cost_usd": 0.000888,
+  "calls": 8
+}
