@@ -621,3 +621,17 @@ Y>>>
 **GO FULL 339 voi pj_judge_v1.** Du doan dang ky truoc cho full (khoa truoc khi chay): (1) tong tie (ke auto) >=80%; (2) style-alarm KHONG keu (pilot grammar/naturalness ~0 ca 2 arm, 2 pilot doc lap); (3) du doan chuan-hoa §4a giu nguyen: S1-loss tag terminology/meaning phai chua block regularization; (4) order-inconsistent du kien 30-40% judged pairs — la thuoc tinh bao cao, khong con la gate. Sau full: Gemma audit khuon §2h (§4a).
 
 **Viec CodeX:** (1) revert probe_pj.py ve pj_judge_v1 (PROMPT_VERSION + sha d47dbb17... + bullet cu, dung 3 cho da doi); (2) chay full: score_pj.py mo rong scope full 339 (sample = toan bo different pairs), out pj_full_339.json, label phase=full; cache DB giu (50 cap pilot hit); bao cao them phan ra consistent/soft/hard + n_effective; (3) STOP cho Claude verify -> Gemma audit.
+
+### 4i. Position bias — canh quan nghien cuu + chot calibration subset nguoi cham (Claude adjudicate ban tong hop 3-LLM cua CodeX, 2026-07-05)
+
+**Cau tra loi cho user (tu lieu bao ve, bo sung §4g-B):** position bias la THUOC TINH CO HUU cua LLM hien tai — van lieu chi co cac giai phap TRUNG HOA o tang quy trinh, chua ai xoa duoc o tang model: (1) swap-and-aggregate (Zheng MT-Bench 2023, Wang 2023) = chuan thuc hanh pairwise = CHINH THIET KE CUA TA; (2) PORTIA (Li 2023 split-merge) — cho cau tra loi dai nhieu phan, khong hop block dich ngan; (3) judge fine-tune chong bias (JudgeLM/PandaLM/Prometheus) — giam khong het, la judge moi phai probe lai, khong dang cho 339 cap; (4) pointwise cham rieng roi so — triet bias theo cau truc nhung doi benh scale-drift/bao hoa, TA DA DO benh nay (SF-BT-llm 91% hoa); (5) logit-debias qua hoan vi — can logprobs, API khong cho. Cau chot hoi dong: "khong xoa — do no, trung hoa no o tang aggregation, tra gia bang so verdict quyet dinh thay vi bang do dung."
+
+**Adjudicate bao cao CodeX:** phan loi GHI NHAN toan bo (trung §4h); 3B evidence-span + 3C pointwise = future work/ablation, khong dung full run (3C co them bang chung noi bo: SF-BT bao hoa).
+
+**3A CHOT THANH BUOC CHINH THUC — calibration subset nguoi cham (SAU full run, giao thuc khoa TRUOC khi thay ket qua full):**
+- ~40 cap phan tang tu full: consistent / soft / hard-flip / S0-win / S1-win / tie, phu cac tag chinh;
+- Phieu cham MU tuyet doi: EN goc + 2 ban VI xao vi tri MOI (khong dung slot cua judge), KHONG lo arm, KHONG lo verdict Gemini;
+- Nguoi cham = user (ban ngu Viet, dung chuyen nganh), cham overall + style (X/Y/TIE), uoc 30-60 phut;
+- Bao cao raw agreement + Cohen's kappa, REPORT-ONLY khong lam gate (dang ky truoc: quan the gan-hoa nen kappa nguoi-nguoi cung chi trung binh — so nay de dinh vi do tin cua judge, khong de dau/truot); neu kappa thap -> ghi lam limitation co ho so, khong duoc dung de "chua" lai ket qua.
+
+**Thu tu thi hanh giu nguyen §4h:** CodeX revert v1 -> full 339 -> Claude verify -> Gemma audit -> calibration subset (buoc moi) -> PJ official readout.
