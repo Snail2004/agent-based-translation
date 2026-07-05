@@ -654,6 +654,200 @@ def test_route_run_events_max_bytes_truncates_on_line_boundary(tmp_path, monkeyp
     assert event_path.read_bytes()[data["offset"] - 1:data["offset"]] == b"\n"
 
 
+def test_route_one_button_estimate_confirm_stores_manifest_and_run_dir(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    spawned: list[str] = []
+    monkeypatch.setattr(routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id))
+    client = app_module.create_app().test_client()
+
+    preview = client.get(
+        "/api/thesis/runs/estimate-preview"
+        "?script=run_one_button&job_id=jobA&chapters=d2l_mlp"
+        "&budget_cap_usd=0.75&planned_run_id=run_onebtn&with_s0=true"
+    )
+    assert preview.status_code == 200
+    preview_data = preview.get_json()["data"]
+    assert preview_data["planned_run_id"] == "run_onebtn"
+    assert preview_data["run_dir"].endswith("jobA\\one_button\\run_onebtn") or preview_data["run_dir"].endswith("jobA/one_button/run_onebtn")
+    assert "--estimate-only" in preview_data["estimate_argv_preview"]
+    assert "--estimate-only" not in preview_data["argv_preview"]
+    assert "--workdb" in preview_data["argv_preview"]
+    assert str(tmp_path / "jobA" / "one_button" / "run_onebtn" / "workdb.sqlite3") in preview_data["argv_preview"]
+
+    resp = client.post(
+        "/api/thesis/runs",
+        json={
+            "script": "run_one_button",
+            "job_id": "jobA",
+            "chapters": ["d2l_mlp"],
+            "budget_cap_usd": 0.75,
+            "with_s0": True,
+            "allow_api": True,
+            "planned_run_id": "run_onebtn",
+            "confirm_token": preview_data["confirm_token"],
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()["data"]
+    assert data["run_id"] == "run_onebtn"
+    assert data["manifest_path"].endswith("manifest.json")
+    assert spawned == ["run_onebtn"]
+    detail = client.get("/api/thesis/runs/run_onebtn").get_json()["data"]
+    assert detail["run_dir"] == data["run_dir"]
+    assert detail["manifest_path"] == data["manifest_path"]
+    assert "--estimate-only" not in detail["argv"]
+
+
+def test_route_one_button_pause_manifest_and_unpause(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "one_button" / "run_pause"
+    run_dir.mkdir(parents=True)
+    manifest_path = run_dir / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "status": "paused",
+                "attempt": 2,
+                "stages": [{"name": "builder_c2", "status": "done"}],
+                "estimate_by_stage": [{"stage": "builder_c2", "cost_usd_estimate": 0.01}],
+                "paused_at_stage_boundary_before": "translator",
+                "error": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_pause",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(manifest_path),
+    )
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    pause = client.post("/api/thesis/runs/run_pause/pause")
+    assert pause.status_code == 200
+    assert (run_dir / "PAUSE").exists()
+    manifest = client.get("/api/thesis/runs/run_pause/manifest")
+    assert manifest.status_code == 200
+    data = manifest.get_json()["data"]
+    assert data["status"] == "paused"
+    assert data["attempt"] == 2
+    assert data["paused_at_stage_boundary_before"] == "translator"
+    assert data["stages"][0]["name"] == "builder_c2"
+    unpause = client.delete("/api/thesis/runs/run_pause/pause")
+    assert unpause.status_code == 200
+    assert not (run_dir / "PAUSE").exists()
+    assert client.delete("/api/thesis/runs/run_pause/pause").status_code == 200
+
+    no_run_dir = registry.create_run(script="run_one_button", argv=[sys.executable, "-c", "pass"], run_id="run_nodir")
+    assert no_run_dir["run_id"] == "run_nodir"
+    missing = client.post("/api/thesis/runs/run_nodir/pause")
+    assert missing.status_code == 404
+    assert missing.get_json()["errors"][0]["code"] == "run_pause_unavailable"
+
+
+def test_route_one_button_resume_creates_new_registry_run_and_clears_pause(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import (
+        RunRegistry,
+        build_resume_argv_from_entry,
+        issue_estimate_token_for_argv,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "one_button" / "run_resume"
+    run_dir.mkdir(parents=True)
+    (run_dir / "PAUSE").write_text("paused_by_user\n", encoding="utf-8")
+    manifest_path = run_dir / "manifest.json"
+    manifest_path.write_text(json.dumps({"attempt": 1, "status": "paused"}), encoding="utf-8")
+    event_dir = tmp_path / "run_events"
+    event_dir.mkdir()
+    event_log = event_dir / "run_resume.jsonl"
+    old = registry.create_run(
+        script="run_one_button",
+        argv=[
+            sys.executable,
+            "-m",
+            "pipeline.scripts.run_one_button",
+            "--job-id",
+            "jobA",
+            "--chapters",
+            "d2l_mlp",
+            "--workdb",
+            str(run_dir / "workdb.sqlite3"),
+            "--budget-cap-usd",
+            "1.0",
+            "--event-log",
+            str(event_log),
+            "--run-id",
+            "run_resume",
+            "--estimate-only",
+        ],
+        run_id="run_resume",
+        job_id="jobA",
+        event_log_path=str(event_log),
+        run_dir=str(run_dir),
+        manifest_path=str(manifest_path),
+    )
+    registry.update_run("run_resume", status="paused", exit_code=0)
+    token = issue_estimate_token_for_argv(
+        job_id="jobA",
+        script="run_one_button",
+        argv=build_resume_argv_from_entry(old),
+        preview_kind="resume_estimate_only",
+    )
+    routes.set_registry(registry)
+    spawned: list[str] = []
+    monkeypatch.setattr(routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id))
+    client = app_module.create_app().test_client()
+
+    preview = client.get("/api/thesis/runs/estimate-preview?resume_run_id=run_resume")
+    assert preview.status_code == 200
+    assert "--resume" in preview.get_json()["data"]["argv_preview"]
+
+    resp = client.post("/api/thesis/runs/run_resume/resume", json={"confirm_token": token})
+    assert resp.status_code == 201
+    data = resp.get_json()["data"]
+    assert data["resumed_from"] == "run_resume"
+    assert data["attempt_index"] == 2
+    assert spawned == [data["run_id"]]
+    assert not (run_dir / "PAUSE").exists()
+    new_entry = client.get(f"/api/thesis/runs/{data['run_id']}").get_json()["data"]
+    assert new_entry["resumed_from"] == "run_resume"
+    assert new_entry["attempt_index"] == 2
+    assert new_entry["attempt_log_path"].endswith(f"{data['run_id']}.log")
+    assert "--estimate-only" not in new_entry["argv"]
+    assert "--run-id" not in new_entry["argv"]
+    assert new_entry["argv"][-2:] == ["--resume", "run_resume"]
+
+
 def test_runs_endpoint_refreshes_registry_written_by_replay_process(tmp_path, monkeypatch):
     monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
     monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))

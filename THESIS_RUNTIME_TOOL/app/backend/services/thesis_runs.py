@@ -190,6 +190,8 @@ class RunRegistry:
         attempt_index: int | None = None,
         resumed_from: str | None = None,
         attempt_log_path: str | None = None,
+        run_dir: str | None = None,
+        manifest_path: str | None = None,
     ) -> dict[str, Any]:
         run_id = validate_run_id(run_id) if run_id else self.new_run_id()
         now = _utc_now()
@@ -211,6 +213,8 @@ class RunRegistry:
             "prompt_preview_token": prompt_preview_token,
             "dry_run_policy": dry_run_policy,
             "event_log_path": event_log_path,
+            "run_dir": run_dir,
+            "manifest_path": manifest_path,
             "attempt_index": attempt_index,
             "resumed_from": resumed_from,
             "attempt_log_path": attempt_log_path,
@@ -256,6 +260,10 @@ class RunRegistry:
                     "job_id": r.get("job_id"),
                     "allow_api": bool(r.get("allow_api")),
                     "event_log_path": r.get("event_log_path"),
+                    "run_dir": r.get("run_dir"),
+                    "manifest_path": r.get("manifest_path"),
+                    "attempt_index": r.get("attempt_index"),
+                    "resumed_from": r.get("resumed_from"),
                 }
                 for r in self._runs.values()
             ]
@@ -322,6 +330,35 @@ def resolve_job_db(
     return None
 
 
+def one_button_paths(*, jobs_root: Path, job_id: str, run_id: str) -> dict[str, Path]:
+    """Return canonical one-button paths and reject escapes from data/jobs.
+
+    The UI-2 contract requires RunControl to know the run directory before
+    spawn, so these paths are derived from job_id + run_id rather than from
+    client-provided paths.
+    """
+    job = validate_job_id(job_id, required=True)
+    run = validate_run_id(run_id, required=True)
+    root = Path(jobs_root).resolve()
+    run_dir = (root / job / "one_button" / run).resolve()
+    event_log = (root / "run_events" / f"{run}.jsonl").resolve()
+    for candidate in (run_dir, event_log):
+        try:
+            candidate.relative_to(root)
+        except ValueError as exc:
+            raise RunControlError(
+                "invalid_one_button_path",
+                "Resolved one-button path is outside THESIS_JOBS_ROOT.",
+                500,
+            ) from exc
+    return {
+        "run_dir": run_dir,
+        "manifest_path": run_dir / "manifest.json",
+        "workdb": run_dir / "workdb.sqlite3",
+        "event_log_path": event_log,
+    }
+
+
 def validate_api_gate(
     *,
     allow_api: bool,
@@ -370,6 +407,40 @@ def validate_api_gate(
             )
         _active_tokens.pop(token, None)
     return token
+
+
+def build_resume_argv_from_entry(entry: dict[str, Any]) -> list[str]:
+    """Build the exact real argv for resuming a one-button run.
+
+    Resume is a real run, not an estimate replay.  Callers must pass the
+    returned argv through validate_api_gate when allow_api=true.
+    """
+    if entry.get("script") != "run_one_button":
+        raise RunControlError("resume_not_supported", "Only run_one_button runs can be resumed.", 400)
+    run_id = validate_run_id(str(entry.get("run_id") or ""), required=True)
+    argv = [str(item) for item in (entry.get("argv") or [])]
+    if not argv:
+        raise RunControlError("resume_argv_missing", "Original run argv is missing.", 500)
+    cleaned = _strip_flags_with_values(
+        argv,
+        value_flags={"--run-id", "--attempt-id", "--resume"},
+        bare_flags={"--estimate-only"},
+    )
+    cleaned.extend(["--resume", run_id])
+    validate_args(cleaned[3:])
+    return cleaned
+
+
+def issue_estimate_token_for_argv(
+    *,
+    job_id: str,
+    script: str,
+    argv: list[str],
+    preview_kind: str = "estimate_only",
+) -> str:
+    job = validate_job_id(job_id, required=True)
+    validate_script(script)
+    return _issue_preview_token(job_id=job, script=script, argv=argv, preview_kind=preview_kind)
 
 
 def generate_prompt_preview(
@@ -485,6 +556,10 @@ def generate_estimate_preview(
     report: str | None = None,
     context_budget: int | None = None,
     extra_args: list[str] | None = None,
+    planned_run_id: str | None = None,
+    workdb: str | None = None,
+    budget_cap_usd: float | None = None,
+    with_s0: bool = False,
     python_exe: str | None = None,
     tool_root: Path | None = None,
     jobs_root: Path | None = None,
@@ -500,11 +575,21 @@ def generate_estimate_preview(
     tool = Path(tool_root or Path.cwd()).resolve()
     jobs = Path(jobs_root or tool / "data" / "jobs").resolve()
     db_path = resolve_job_db(db=db, job_id=job, jobs_root=jobs)
-    planned_run_id = f"run_{uuid.uuid4().hex[:12]}"
-    event_log_path = _event_log_path(jobs, planned_run_id)
+    planned = validate_run_id(planned_run_id) or f"run_{uuid.uuid4().hex[:12]}"
+    event_log_path = _event_log_path(jobs, planned)
+    manifest_path = None
+    run_dir = None
+    resolved_workdb = workdb
+    if script == "run_one_button":
+        paths = one_button_paths(jobs_root=jobs, job_id=job, run_id=planned)
+        event_log_path = paths["event_log_path"]
+        run_dir = paths["run_dir"]
+        manifest_path = paths["manifest_path"]
+        resolved_workdb = resolved_workdb or str(paths["workdb"])
     common_kwargs = dict(
         script=script,
         python_exe=python_exe,
+        job_id=job,
         db=db_path,
         chapters=chapters,
         configs=configs,
@@ -516,7 +601,10 @@ def generate_estimate_preview(
         context_budget=context_budget,
         extra_args=extra_args,
         event_log=str(event_log_path),
-        run_id=planned_run_id,
+        run_id=planned,
+        workdb=resolved_workdb,
+        budget_cap_usd=budget_cap_usd,
+        with_s0=with_s0,
     )
     estimate_argv = build_argv(allow_api=False, **common_kwargs)
     run_argv = build_argv(allow_api=True, **common_kwargs)
@@ -531,8 +619,10 @@ def generate_estimate_preview(
         "job_id": job,
         "script": script,
         "confirm_token": token,
-        "planned_run_id": planned_run_id,
+        "planned_run_id": planned,
         "event_log_path": str(event_log_path),
+        "run_dir": str(run_dir) if run_dir else None,
+        "manifest_path": str(manifest_path) if manifest_path else None,
         "confirm_token_ttl_seconds": _CONFIRM_TOKEN_TTL_SECONDS,
         "estimate_argv_preview": _redact_argv(estimate_argv),
         "argv_preview": _redact_argv(run_argv),
@@ -759,6 +849,10 @@ def build_argv(
     smoke_query: str | None = None,
     event_log: str | None = None,
     run_id: str | None = None,
+    job_id: str | None = None,
+    workdb: str | None = None,
+    budget_cap_usd: float | None = None,
+    with_s0: bool = False,
 ) -> list[str]:
     script = validate_script(script)
     exe = python_exe or sys.executable
@@ -775,6 +869,8 @@ def build_argv(
             )
     else:
         flag = None
+
+    extra = _list(extra_args)
 
     if script == "run_translate":
         _append_required(argv, "--db", db, "db")
@@ -875,6 +971,26 @@ def build_argv(
         _append_required(argv, "--db", db, "db")
         _append_required(argv, "--out", out, "out")
     elif script == "run_one_button":
+        if not _has_flag(extra, "--job-id"):
+            _append_required(argv, "--job-id", job_id, "job_id")
+        if not _has_flag(extra, "--chapters"):
+            _append_required_list(argv, "--chapters", chapters, "chapters")
+        if not _has_flag(extra, "--workdb"):
+            _append_required(argv, "--workdb", workdb, "workdb")
+        if not _has_flag(extra, "--budget-cap-usd"):
+            _append_required(argv, "--budget-cap-usd", budget_cap_usd, "budget_cap_usd")
+        if with_s0 and not _has_flag(extra, "--with-s0"):
+            argv.append("--with-s0")
+        if db and not _has_flag(extra, "--db"):
+            argv += ["--db", str(db)]
+        if profile and not _has_flag(extra, "--profile"):
+            argv += ["--profile", str(profile)]
+        if experiment and not _has_flag(extra, "--experiment"):
+            argv += ["--experiment", str(experiment)]
+        if context_budget is not None and not _has_flag(extra, "--context-budget"):
+            argv += ["--context-budget", str(int(context_budget))]
+        if cache and not _has_flag(extra, "--cache-root"):
+            argv += ["--cache-root", str(cache)]
         if event_log:
             argv += ["--event-log", str(event_log)]
         if run_id:
@@ -896,8 +1012,8 @@ def build_argv(
 
     if flag and flag not in argv:
         argv.append(flag)
-    if extra_args:
-        argv.extend(_list(extra_args))
+    if extra:
+        argv.extend(extra)
 
     validate_args(argv[3:])
     return argv
@@ -1053,7 +1169,7 @@ def _single_doc_id(connection: sqlite3.Connection) -> str:
     return str(row["doc_id"])
 
 
-def _append_required(argv: list[str], flag: str, value: str | None, field: str) -> None:
+def _append_required(argv: list[str], flag: str, value: Any | None, field: str) -> None:
     if value is None or str(value).strip() == "":
         raise RunControlError("missing_arg", f"{field} is required for this script.", 400)
     argv.extend([flag, str(value)])
@@ -1080,6 +1196,32 @@ def _list(values: list[str] | tuple[str, ...] | str | None) -> list[str]:
             chunks.extend(item for item in part.split() if item)
         return [str(item).strip() for item in chunks if str(item).strip()]
     return [str(item).strip() for item in values if str(item).strip()]
+
+
+def _has_flag(args: list[str], flag: str) -> bool:
+    return any(str(item) == flag for item in args)
+
+
+def _strip_flags_with_values(
+    argv: list[str],
+    *,
+    value_flags: set[str],
+    bare_flags: set[str],
+) -> list[str]:
+    cleaned: list[str] = []
+    skip_next = False
+    for item in argv:
+        value = str(item)
+        if skip_next:
+            skip_next = False
+            continue
+        if value in value_flags:
+            skip_next = True
+            continue
+        if value in bare_flags:
+            continue
+        cleaned.append(value)
+    return cleaned
 
 
 def _argv_digest(argv: list[str]) -> str:

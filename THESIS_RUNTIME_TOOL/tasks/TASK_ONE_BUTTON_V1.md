@@ -291,3 +291,24 @@ CodeX da sua du 3 P0 + P1-5/P1-6 + 3 diem P2 (cache_path builder, run_id/attempt
 - P2-7 giu nguyen (cascade estimate $0, gate noi bo --confirm-usd do) — dong y cua CodeX, tranh lan scope; da ghi nhan trong 2o.
 
 Acceptance con lai truoc demo (KHONG chan commit nay): smoke that co API tren chuong da co cache + Console live render (UI-2, khi noi nut [DICH]).
+
+## 2q. UI-2 BACKEND B1-B5 NGHIEM THU (Claude doc lap, 2026-07-06) — DAT, commit; B6 smoke that CHO USER DUYET TIEN
+
+Da doc het 3 diff (611 dong), tu chay full suite 450 passed, frozen 64D989 + workdb 922293 tu tinh khop, khong rac data/jobs, key-scan sach.
+
+### DAT
+- B1 one_button_paths: run_dir/manifest/workdb/event_log suy tu job_id+run_id server-side, validate relative_to jobs_root (chong escape); registry luu run_dir/manifest_path, tra ve trong create + list.
+- B2 pause: POST/DELETE /api/thesis/runs/<id>/pause = tao/xoa PAUSE file trong run_dir (dung co che chinh thuc 2o P1-6), idempotent, path tu registry khong nhan tu client.
+- B3 manifest: GET .../manifest doc manifest.json qua _path_under_jobs, tra status/attempt/stages/estimate_by_stage/paused_at_stage_boundary_before/error.
+- B4 resume: build_resume_argv_from_entry strip --run-id/--attempt-id/--resume/--estimate-only roi append --resume <id>; PHAI co confirm_token qua validate_api_gate bind dung argv digest (khong bypass N5); registry run moi voi attempt_index/resumed_from/attempt_log_path (F9 log per-attempt); xoa PAUSE truoc khi spawn; estimate-preview?resume_run_id tra token + estimate_by_stage cache tu manifest (khong can chay lai estimate).
+- B5 build_argv run_one_button du flag, extra_args khong bi double nho _has_flag; cache -> --cache-root (chot duong pin cache cho smoke).
+- Orchestrator-level defense con nguyen: resume khi owner con song -> _claim_or_gate tu choi (khong can status guard o route).
+
+### Ghi chu hop dong cho frontend (Claude UI-2)
+- KHONG spawn estimate-run bang planned_run_id cua run that: neu dung chung id, merged event log bi 2 lan attempt_id=1 -> seq/event_id trung -> aggregate hong. Flow dung: (1) GET estimate-preview (token + planned_run_id, khong spawn); (2) spawn estimate voi id RIENG (allow_api=false, tu them --estimate-only), doc estimate_by_stage tu manifest cua no; (3) POST create run that voi planned_run_id + token.
+- Pause endpoint ghi PAUSE file ngay ca khi run da xong (vo hai); UI nen an nut pause khi status != running.
+
+### B6 smoke that — quyet dinh cache/chapter (tra loi cau hoi CodeX)
+Kiem dia: cache lich su CHI co translate_cache/sf_bt/pj; builder C2/C3/C35 KHONG co cache lich su (chi 44 rows do dang tu smoke loi) -> "chuong da co cache" cho ca chuoi la khong ton tai. Ghep cache nua voi tren MLP (641 blocks) van ton $0.65+ cho builder C2 -> dat hon chay FRESH tren chuong nho.
+CHOT phuong an: B6 = d2l_preface (50 blocks), FRESH, S1-only, budget-cap $1.50. Estimate 0-API da chay (job one_button_preface, run smoke_b6_preface): preflight 5/5 PASS, builder C2 cap $0.1792; du phong translator ~$0.1-0.2 cap, sf_bt ~$0.15 cap, cascade T3 local ~$0, PJ skip. Tong cap du kien ~$0.5-0.7, chi that ~mot nua. Smoke nay dong thoi la TONG DUYET kich ban demo that (acceptance goc = chuong chua tung chay).
+Kich ban: (1) estimate-preview -> confirm -> create qua API that; (2) PAUSE giua chung qua endpoint -> manifest paused dung before_stage; (3) resume qua endpoint (token) -> stage cu skip -> run_done; (4) mot run nhap rieng -> cancel endpoint -> taskkill sach (tasklist kiem); (5) bao cao lech estimate-vs-that TUNG STAGE (du lieu quyet P2-7). CHUA CHAY — cho user xac nhan chi phi.
