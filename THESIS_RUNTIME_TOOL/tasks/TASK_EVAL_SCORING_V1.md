@@ -680,3 +680,28 @@ Y>>>
 - **Instrument properties co ho so:** order-inconsistent 36.3% (thuoc tinh quan the gan-hoa, van lieu §4g-B, trung hoa 100% bang 2-chieu); san nhay = luoi tho (§4d); tag ontology map (§4e); word_choice/terminology ranh mo (probe+pilot+audit deu thay); gate 25% nghi huu co ho so (§4h); kappa nguoi 0.41/0.31 moderate voi 0 dao phan (§4l).
 
 **TRANG THAI: 7/7 THANG OFFICIAL** (TC, TC-Occ, TA, TA-Occ, SF-QE, SF-BT, PJ). Con lai cua EVAL: agreement analysis tong hop 7 thang + (optional) Stage 2 prelim SF-BT/PJ; roi sang TASK_ONE_BUTTON_V1.
+
+## 10. AGREEMENT ANALYSIS — spec KHOA TRUOC KHI TINH (Claude thiet ke, user OK 2026-07-05)
+
+**Muc dich:** dat 7 thang canh nhau tra loi 3 cau: (1) cac thang dong y o dau/mau thuan o dau va vi sao (khung "he quy chieu" §4j); (2) cap block, cac thang co cung chi vao mot cho khong (bang chung hoi tu); (3) moi thang dong gop gi doc nhat (triangulation — tra loi "sao can 7 thang"). Day cung la ban thiet ke noi dung cho muc 3 + phu luc 5 cua renderer one-button (§5d).
+
+**Scope:** MLP (chuong duy nhat du 7/7 thang official). Prelim co TC-Occ/TA-Occ official (§8c) — chi xuat hien o D1 dong ghi chu replication, khong vao ma tran block. **$0 — cam moi API call; thuan doc artifact da co.**
+
+**D1 — Bang tong 7 thang** (moi thang 1 dong): truc do | he quy chieu (gold-convention / tu-nhat-quan / bao-toan-nghia / taste-pho-thong) | S0 | S1 | delta | ket luan 1 cau. LUAT: so chep tu official readout, moi so kem duong dan artifact + commit hash (truy vet); KHONG tinh lai headline.
+
+**D2 — Ma tran dong thuan cap block (475 block MLP, TACH RIENG tung arm):** dinh nghia flag KHOA:
+- TC-Occ-flag: block chua >=1 occurrence vi pham consistency (per-occ fail).
+- TA-Occ-flag: block chua >=1 occ lech gold (fragment-filtered, ruler nhu §8c).
+- SF-QE-flag / SF-BT-cos-flag / SF-BT-llm-flag: block thuoc BOTTOM 10% phan phoi cua thang do tren arm do (thang lien tuc -> flag tuong doi; chot 10% NGAY BAY GIO, cam doi sau khi thay overlap).
+- PJ-flag: block la decisive loss cua arm do (overall_final thua, da gop 2 chieu).
+Output: bang pairwise overlap (Jaccard + %) giua cac flag + doi chieu voi expected-overlap-neu-doc-lap (hypergeometric E[|A∩B|]=|A||B|/N) de khong dien giai qua tay overlap thap; danh sach block bi >=3 thang flag.
+
+**D3 — Bang chung hoi tu:** voi moi block bi >=3 thang flag: trich EN + S0/S1 + thang nao che vi gi (note/score). BAT BUOC kiem cum chuan-hoa: cac block regularization S1 co dong thoi dinh SF-BT-llm-flag + PJ-flag + TA-Occ-flag khong -> neu co, day la exhibit trung tam cua bao cao.
+
+**D4 — Bang dong gop doc nhat:** moi thang 1 vi du THAT da do (ung vien co san: mlp_b009 llm-bat/cos-mu; weight_decay_b018 "chieu cao" BT bat; PJ taste-vs-gold 23/101; TC-Occ bat perceptron-da-tang nhat quan ma D cu mis-fail; SF-QE worst-3; TA-Occ vector/vecto ruler; gate hygiene). CodeX xac minh tung vi du van dung trong artifact hien tai, ghi path.
+
+**D5 — Output:** `agreement_analysis_mlp.json` (machine-readable cho renderer) + `agreement_analysis_mlp.md` (bang doc duoc). Label status/phase dung.
+
+**Du doan dang ky truoc (nhe, ghi de doi chieu trung thuc):** (a) overlap cao nhat = TA-Occ↔TC-Occ (cung truc term); (b) cum chuan-hoa hien o >=3 thang tren S1; (c) PJ-flag ∩ SF-BT-flag THAP (2 truc khac nhau — do la feature khong phai bug); (d) SF-QE↔SF-BT bottom overlap muc vua (cung truc nghia, dung cu khac).
+
+**Quy trinh:** CodeX implement script `pipeline/scripts/agreement_analysis.py` + chay -> STOP -> Claude verify (recount marginal ma tran D2 + membership D3 + doi chieu D1 voi artifact) -> ghi §10b official -> dong TASK_EVAL, sang one-button buoc 1.
