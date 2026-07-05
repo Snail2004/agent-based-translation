@@ -121,6 +121,22 @@ class RunRegistry:
                 except (json.JSONDecodeError, KeyError, TypeError):
                     continue
 
+    def refresh(self) -> None:
+        rows: dict[str, dict[str, Any]] = {}
+        if self._registry_path.exists():
+            with open(self._registry_path, encoding="utf-8") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                        rows[str(entry["run_id"])] = entry
+                    except (json.JSONDecodeError, KeyError, TypeError):
+                        continue
+        with self._lock:
+            self._runs = rows
+
     def _append(self, entry: dict[str, Any]) -> None:
         with open(self._registry_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -194,6 +210,7 @@ class RunRegistry:
             return dict(entry) if entry else None
 
     def list_runs(self) -> list[dict[str, Any]]:
+        self.refresh()
         with self._lock:
             rows = [
                 {
@@ -470,6 +487,7 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
 
 
 def read_log(registry: RunRegistry, run_id: str, *, offset: int = 0) -> dict[str, Any]:
+    registry.refresh()
     entry = registry.get_run(run_id)
     if entry is None:
         raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
@@ -497,8 +515,10 @@ def read_events(
     run_id: str,
     *,
     offset: int = 0,
+    max_bytes: int = 256 * 1024,
     jobs_root: Path | None = None,
 ) -> dict[str, Any]:
+    registry.refresh()
     entry = registry.get_run(run_id)
     if entry is None:
         raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
@@ -508,7 +528,10 @@ def read_events(
     raw_path = entry.get("event_log_path")
     events: list[dict[str, Any]] = []
     safe_offset = max(int(offset or 0), 0)
+    safe_max_bytes = max(64, min(int(max_bytes or 256 * 1024), 1024 * 1024))
     new_offset = safe_offset
+    truncated = False
+    partial_line = False
 
     if raw_path:
         event_path = Path(str(raw_path)).resolve()
@@ -521,9 +544,23 @@ def read_events(
                 500,
             ) from exc
         if event_path.exists():
-            with open(event_path, "r", encoding="utf-8") as fh:
+            with open(event_path, "rb") as fh:
                 fh.seek(safe_offset)
-                for line in fh:
+                raw = fh.read(safe_max_bytes + 1)
+            truncated = len(raw) > safe_max_bytes
+            if truncated:
+                raw = raw[:safe_max_bytes]
+            last_newline = raw.rfind(b"\n")
+            if last_newline < 0:
+                complete = b""
+                partial_line = bool(raw)
+            else:
+                complete = raw[: last_newline + 1]
+                partial_line = last_newline + 1 < len(raw)
+                new_offset = safe_offset + len(complete)
+            if complete:
+                text = complete.decode("utf-8", errors="replace")
+                for line in text.splitlines():
                     line = line.strip()
                     if not line:
                         continue
@@ -531,12 +568,14 @@ def read_events(
                         events.append(json.loads(line))
                     except json.JSONDecodeError:
                         events.append({"event": "parse_error", "raw": line[:500]})
-                new_offset = fh.tell()
 
     return {
         "run_id": run_id,
         "events": events,
         "offset": new_offset,
+        "truncated": truncated,
+        "partial_line": partial_line,
+        "max_bytes": safe_max_bytes,
         "running": entry["status"] == "running",
         "status": entry["status"],
         "exit_code": entry["exit_code"],

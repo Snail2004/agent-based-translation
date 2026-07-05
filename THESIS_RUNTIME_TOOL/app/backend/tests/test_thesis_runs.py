@@ -479,6 +479,141 @@ def test_route_run_events_tails_registered_sidecar_only(tmp_path, monkeypatch):
     assert resp_bad.get_json()["errors"][0]["code"] == "invalid_event_log_path"
 
 
+def test_route_run_events_preserves_partial_line_for_next_poll(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    event_dir = tmp_path / "run_events"
+    event_dir.mkdir()
+    event_path = event_dir / "run_partial.jsonl"
+    first = json.dumps({"event": "stage_start", "seq": 1})
+    partial = json.dumps({"event": "stage_done", "seq": 2})
+    event_path.write_text(first + "\n" + partial[:12], encoding="utf-8")
+    entry = registry.create_run(
+        script="run_translate",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_partial",
+        event_log_path=str(event_path),
+    )
+    registry.update_run(entry["run_id"], status="running", exit_code=None)
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_partial/events?offset=0")
+    assert resp.status_code == 200
+    data = resp.get_json()["data"]
+    assert [event["event"] for event in data["events"]] == ["stage_start"]
+    assert data["partial_line"] is True
+    expected_offset = len(event_path.read_bytes().splitlines(keepends=True)[0])
+    assert data["offset"] == expected_offset
+
+    with event_path.open("a", encoding="utf-8") as fh:
+        fh.write(partial[12:] + "\n")
+    resp2 = client.get(f"/api/thesis/runs/run_partial/events?offset={data['offset']}")
+    data2 = resp2.get_json()["data"]
+    assert [event["event"] for event in data2["events"]] == ["stage_done"]
+    assert data2["partial_line"] is False
+
+
+def test_route_run_events_max_bytes_truncates_on_line_boundary(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    event_dir = tmp_path / "run_events"
+    event_dir.mkdir()
+    event_path = event_dir / "run_trunc.jsonl"
+    rows = [json.dumps({"event": "item", "seq": idx, "payload": "x" * 120}) for idx in range(8)]
+    event_path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    entry = registry.create_run(
+        script="run_translate",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_trunc",
+        event_log_path=str(event_path),
+    )
+    registry.update_run(entry["run_id"], status="running", exit_code=None)
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_trunc/events?offset=0&max_bytes=250")
+    assert resp.status_code == 200
+    data = resp.get_json()["data"]
+    assert data["truncated"] is True
+    assert data["events"]
+    assert data["offset"] <= 250
+    assert event_path.read_bytes()[data["offset"] - 1:data["offset"]] == b"\n"
+
+
+def test_runs_endpoint_refreshes_registry_written_by_replay_process(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    backend_registry = RunRegistry(runs_root=tmp_path)
+    routes.set_registry(backend_registry)
+    client = app_module.create_app().test_client()
+
+    replay_registry = RunRegistry(runs_root=tmp_path)
+    event_dir = tmp_path / "run_events"
+    event_dir.mkdir(exist_ok=True)
+    event_path = event_dir / "replay_external.jsonl"
+    event_path.write_text(json.dumps({"event": "run_start", "seq": 1}) + "\n", encoding="utf-8")
+    replay_registry.create_run(
+        script="snapshot_runs",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="replay_external",
+        event_log_path=str(event_path),
+    )
+    replay_registry.update_run("replay_external", status="done", exit_code=0)
+
+    runs = client.get("/api/thesis/runs").get_json()["data"]
+    assert any(row["run_id"] == "replay_external" for row in runs)
+    events = client.get("/api/thesis/runs/replay_external/events?offset=0").get_json()["data"]
+    assert events["events"][0]["event"] == "run_start"
+
+
+def test_version_endpoint_reads_version_file_and_git_sha_field(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path / "jobs"))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    (tmp_path / "VERSION").write_text("9.8.7\n", encoding="utf-8")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    monkeypatch.setattr(app_module, "HANDOFF_ROOT", tmp_path)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/version")
+    assert resp.status_code == 200
+    data = resp.get_json()["data"]
+    assert data["version"] == "9.8.7"
+    assert data["backend_version"] == "9.8.7"
+    assert "git_sha" in data
+    assert data["event_schema"] == "one_button_event_v1"
+
+
 def test_route_allow_api_without_job_id_rejected(tmp_path, monkeypatch):
     db_path = _make_doc_db(tmp_path)
     monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))

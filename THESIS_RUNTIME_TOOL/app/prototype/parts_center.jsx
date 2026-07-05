@@ -37,7 +37,10 @@ function ModeToggle({ mode, onModeChange, readOnly }) {
     { id: "book", label: "Book" },
     { id: "preview", label: "Preview" },
   ];
-  if (readOnly) items.push({ id: "cockpit", label: "Cockpit" });
+  if (readOnly) {
+    items.push({ id: "console", label: "Console" });
+    items.push({ id: "cockpit", label: "Cockpit" });
+  }
   return (
     <div className="mode-toggle" role="group" aria-label="Center view mode">
       {items.map(item => (
@@ -68,7 +71,8 @@ function EditorToolbar({
         <ModeToggle mode={mode} onModeChange={onModeChange} readOnly={readOnly} />
 
         <span className="toolbar-chapter-meta">
-          {mode === "cockpit" ? "Observability cockpit · read-only"
+          {mode === "console" ? "Agent Console · read-only"
+            : mode === "cockpit" ? "Observability cockpit · read-only"
             : readOnly ? "Thesis DB · read-only"
             : mode === "preview" ? "Translation Preview · read-only"
             : mode === "block" ? block.block_id : `${streamLabel} · ${streamCount || 0} blocks`}
@@ -546,6 +550,160 @@ function RunControlPanel({ runControl }) {
       </div>
     </section>
   );
+}
+
+const AGENT_CONSOLE_STAGES = ["builder", "auditor", "translator", "cascade", "sf_qe", "sf_bt", "pj", "report"];
+
+function AgentConsole({ runControl }) {
+  const [stageFilter, setStageFilter] = React.useState("");
+  const [agentFilter, setAgentFilter] = React.useState("");
+  const [severityFilter, setSeverityFilter] = React.useState("");
+  if (!runControl) return null;
+  const runs = runControl.runs || [];
+  const selectedEvents = runControl.selectedRunEvents || { events: [] };
+  const selectedRun = runs.find(row => row.run_id === runControl.selectedRunId) || null;
+  const rawEvents = selectedEvents.events || [];
+  const normalized = rawEvents.map(normalizeConsoleEvent);
+  const aggregate = selectedEvents.aggregate || {};
+  const stageStats = aggregate.stages || {};
+  const filtered = normalized.filter(row => (
+    (!stageFilter || row.stage === stageFilter)
+    && (!agentFilter || row.agent === agentFilter)
+    && (!severityFilter || row.severity === severityFilter)
+  ));
+  const rendered = filtered.slice(-200).reverse();
+  const agents = (aggregate.agents || []).length ? aggregate.agents : uniqueSorted(normalized.map(row => row.agent).filter(Boolean));
+  const severities = (aggregate.severities || []).length ? aggregate.severities : uniqueSorted(normalized.map(row => row.severity).filter(Boolean));
+  const stagesSeenCount = Object.keys(stageStats).filter(Boolean).length || new Set(normalized.map(row => row.stage).filter(Boolean)).size;
+  const costTotal = Number(aggregate.cost_total || 0);
+  const llmEventCount = Number(aggregate.llm_events || 0);
+  const cacheHits = Number(aggregate.cache_hits || 0);
+  const cacheKnown = Number(aggregate.cache_known || 0);
+  const latestBlock = aggregate.latest_block || [...normalized].reverse().find(row => row.payload.block_id || row.payload.block_ids?.length);
+  const latestArtifact = aggregate.latest_artifact || [...normalized].reverse().find(row => row.payload.artifact_path);
+  const warningCount = Number(aggregate.warning_count || 0);
+  const errorCount = Number(aggregate.error_count || 0);
+  const lastEventTs = aggregate.last_ts || normalized[normalized.length - 1]?.ts;
+  const isStalled = !!selectedEvents.running && !!lastEventTs && ageSeconds(lastEventTs) > 90;
+
+  return (
+    <section className="agent-console">
+      <div className="console-head">
+        <div>
+          <span className="eyebrow">Agent Console</span>
+          <h2>One-button run stream</h2>
+          <p>Runtime timeline only. Final marks stay in Chapter/Preview after materialized overlay.</p>
+        </div>
+        <div className="console-run-picker">
+          <label>
+            <span>run</span>
+            <select value={runControl.selectedRunId || selectedRun?.run_id || ""} onChange={e => runControl.onSelectRun(e.target.value)}>
+              <option value="">select run</option>
+              {runs.slice(0, 30).map(run => <option key={run.run_id} value={run.run_id}>{run.run_id} · {run.status}</option>)}
+            </select>
+          </label>
+          <button className="btn sm" disabled={runControl.busy} onClick={runControl.onRefreshRuns}><Ic.refresh size={13} />Refresh</button>
+        </div>
+      </div>
+
+      <div className="console-kpis">
+        <div><span>status</span><b>{selectedRun?.status || selectedEvents.status || "idle"}</b></div>
+        <div><span>stage</span><b>{stagesSeenCount}/{AGENT_CONSOLE_STAGES.length}</b></div>
+        <div><span>events</span><b>{formatInt(aggregate.total_events || normalized.length)}</b><em>{selectedEvents.truncated ? "truncated poll" : selectedEvents.partial_line ? "waiting partial line" : ""}</em></div>
+        <div><span>cost</span><b>{formatCost(costTotal)}</b></div>
+        <div><span>cache</span><b>{cacheKnown ? `${Math.round((cacheHits / cacheKnown) * 100)}%` : "-"}</b><em>{formatInt(llmEventCount)} llm events</em></div>
+        <div className={isStalled ? "warn-kpi" : ""}><span>health</span><b>{isStalled ? "stalled" : selectedEvents.running ? "running" : "quiet"}</b><em>{warningCount} warn · {errorCount} err</em></div>
+      </div>
+
+      <div className="console-layout">
+        <div className="console-checklist">
+          <div className="console-panel-head">stage checklist</div>
+          {AGENT_CONSOLE_STAGES.map(stage => {
+            const stat = stageStats[stage] || null;
+            const rows = stat ? [] : normalized.filter(row => row.stage === stage);
+            const latest = rows[rows.length - 1];
+            const progress = latest?.payload?.progress || {};
+            const rowCount = stat?.count || rows.length;
+            return (
+              <div key={stage} className={"console-stage-row" + (rowCount ? " on" : "")}>
+                <span className="stage-dot" />
+                <div>
+                  <b>{stage}</b>
+                  <em>{stat
+                    ? (stat.total_known === false ? `${formatInt(stat.done)} done / total pending` : stat.total ? `${formatInt(stat.done)} / ${formatInt(stat.total)}` : `${formatInt(stat.count)} events`)
+                    : (progress.total_known === false ? `${formatInt(progress.done)} done / total pending` : progress.total ? `${formatInt(progress.done)} / ${formatInt(progress.total)} ${latest?.payload?.unit || latest?.payload?.progress?.unit || ""}` : `${rows.length} events`)}</em>
+                </div>
+              </div>
+            );
+          })}
+          <div className="console-panel-head">latest artifact</div>
+          <div className="console-artifact mono">{latestArtifact?.payload?.artifact_path || "none yet"}</div>
+          <div className="console-panel-head">preview</div>
+          <div className="console-preview">
+            <b>{latestBlock?.payload?.block_id || latestBlock?.payload?.block_ids?.[0] || "no block yet"}</b>
+            <em>(replay: no text)</em>
+          </div>
+        </div>
+
+        <div className="console-feed-wrap">
+          <div className="console-filters">
+            <select value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
+              <option value="">all stages</option>
+              {AGENT_CONSOLE_STAGES.map(stage => <option key={stage} value={stage}>{stage}</option>)}
+            </select>
+            <select value={agentFilter} onChange={e => setAgentFilter(e.target.value)}>
+              <option value="">all agents</option>
+              {agents.map(agent => <option key={agent} value={agent}>{agent}</option>)}
+            </select>
+            <select value={severityFilter} onChange={e => setSeverityFilter(e.target.value)}>
+              <option value="">all severity</option>
+              {severities.map(sev => <option key={sev} value={sev}>{sev}</option>)}
+            </select>
+            <span className="mono">{formatInt(rendered.length)} / {formatInt(filtered.length)} shown</span>
+          </div>
+          <div className="console-feed">
+            {rendered.length ? rendered.map(row => (
+              <div key={row.event_id || `${row.seq}:${row.ts}:${row.event_type}`} className={"console-event sev-" + row.severity}>
+                <div className="console-event-main">
+                  <span className="mono">{row.seq || "-"}</span>
+                  <b>{row.event_type}</b>
+                  <em>{row.stage || "-"} · {row.agent || "-"}</em>
+                </div>
+                <div className="console-event-meta">
+                  <span>{row.payload.message || row.payload.error_code || row.payload.artifact_path || row.payload.block_id || ""}</span>
+                  <em className="mono">{row.ts ? row.ts.slice(11, 19) : ""}</em>
+                </div>
+              </div>
+            )) : (
+              <div className="muted">Select or replay a run to tail one-button events.</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function normalizeConsoleEvent(row) {
+  const payload = row?.payload && typeof row.payload === "object" ? row.payload : row || {};
+  return {
+    ...row,
+    payload,
+    event_type: row?.event_type || row?.event || "event",
+    stage: row?.stage || payload.stage || "translator",
+    agent: row?.agent || payload.agent || "Agent",
+    severity: row?.severity || (row?.event === "error" ? "error" : row?.event === "warning" ? "warning" : "info"),
+  };
+}
+
+function uniqueSorted(values) {
+  return [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+function ageSeconds(ts) {
+  const value = Date.parse(ts || "");
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor((Date.now() - value) / 1000));
 }
 
 function ObservabilityCockpit({ observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall }) {
@@ -1878,7 +2036,9 @@ function CenterEditor({
       <FocusTermChip term={focusTerm} index={focusedTermIndex} onJump={onFocusJump} onClear={onClearFocus} />
       {readOnly && <OverlayLegend />}
 
-      {mode === "cockpit" ? (
+      {mode === "console" ? (
+        <AgentConsole runControl={runControl} />
+      ) : mode === "cockpit" ? (
         <ObservabilityCockpit
           observability={observability}
           runControl={runControl}

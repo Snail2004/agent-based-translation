@@ -116,3 +116,17 @@ CodeX xac nhan F1, F3-F9; phan bien F2 dung cho: "mot os.write append" giam rui 
 5. Replay test 3 lop: fixture file -> registry entry -> /events?offset endpoint -> UI. Cam mock truc tiep state React.
 
 **Trang thai hop dong: §2d + §2e(F1,F3-F9) + §2f(F2 single-writer + 5 bo sung) = KHOA. Het vong review, sang UI-1.**
+
+## 2g. UI-1 NGHIEM THU (Claude verify doc lap 2 vong, 2026-07-05) — DAT, commit cung muc nay
+
+**Pham vi giao (§2f) da giao du:** pipeline/lib/events.py (emitter v1, mot buffer/mot os.write binary append, tach >64KB theo ranh gioi dong, emit khong raise, force-flush dung danh sach); read_events harden (max_bytes 256KB clamp 64B-1MB + chi parse den newline cuoi + khong advance offset qua dong do + truncated/partial_line flag); fixture kep (synthetic 500 event phu 20/20 type 8 stage + converted 640 event tu log that); replay driver qua registry that + path chi tu _event_log_path(); trang Agent Console (route console, KPI/checklist/feed filter/stalled badge/preview "(replay: no text)"); RunRegistry.refresh() cho cross-process.
+
+**Vong 1 verify: loi phat hien bang so hoc.** KPI hien 423/500 event: 262144/309829 x 500 = 423.05 — vong poll chi tiep tuc khi result.running, run da done thi poll MOT lan roi bo duoi truncated (mat 77 event vinh vien du UI in chu "truncated poll"). Bug thu 2 cung ho: moi counter (cost/cache/warn-err/checklist) reduce tren ring buffer slice(-1000) — run that voi hang nghin llm_call se tran buffer va dem thieu cost, vi pham luat §2d "UI cong don tu delta".
+
+**Vong 2 verify sau fix: DAT.** Drain: truncated -> re-poll 0ms, partial_line -> 600ms, doc lap voi running. Aggregate: updateRunEventAggregate cong don tang dan tai luc nhan batch (cost_total, cache hits/known, warn/err, per-stage count+progress max(), latest artifact/block, last_ts); ring buffer chi phuc vu render feed (latest 200). Claude tu chay: 29/29 test pass; endpoint tra 500/500 qua 2 poll; /api/version tra 0.6.0 + git_sha tu VERSION file; key-scan sach; frozen 64D989/workdb 922293 khong doi; khong dung sink cu, khong dung pipeline.
+
+**Lech schema GHI NHAN (additive, khong pha hop dong):** envelope co them field `schema:"one_button_event_v1"` va `event_type` trung `event` (tien UI); event_id doi format `run:attempt:writer_id:seq` — HOP LE vi F7 tuyen bo opaque, con chong trung cross-writer tot hon format §2d goc. RunRegistry.refresh() doc lai ca file moi poll — chap nhan o quy mo hien tai, theo doi khi registry phinh.
+
+**VERSIONING KHOA (tra loi cau hoi user):** file VERSION o root THESIS_RUNTIME_TOOL = nguon su that duy nhat, semver-lite v0.MINOR.PATCH — MINOR nhay moi buoc milestone da chot, PATCH cho fix trong buoc, v1.0.0 danh cho ban demo bao ve; backend /api/version doc VERSION + git short-sha; UI badge so UI-vs-API (lech = canh bao frontend cache cu); moi bump mot dong CHANGELOG.md. Hien tai 0.6.0 = UI-1. BAC BO kieu v1.0001 (khong phan biet feature/fix, khong truy vet commit).
+
+**Con no truoc khi Console thanh live:** mot lo liveness da biet — neu MOT dong event > max_bytes cap 1MB thi reader khong bao gio advance (stall vinh vien); xac suat thap vi message cap 200 chars va cam dump prompt, ghi day de vong sau vá neu can. Buoc ke tiep theo trinh tu: no-chan-duong (F6 estimate-only token, run_translate frozen-db write-open, cascade 1-arm, §36 wiring, preflight health-check) -> orchestrator run_one_button -> renderer -> nut [DICH].

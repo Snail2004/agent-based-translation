@@ -2,12 +2,91 @@
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
 const API = window.AILAB_API;
+const UI_VERSION = "0.6.0";
 const STORAGE_DOC = "ailab.doc_id";
 const STORAGE_USER = "ailab.user";
 const STORAGE_CENTER_MODE = "ailab.center_mode";
 const THESIS_PREFIX = "thesis:";
 const DEFAULT_USER = "U2 · Mai";
 const EDITABLE_META = new Set(["title", "author", "domain", "genre", "source_format", "license", "source_url", "contamination_risk"]);
+
+function emptyRunEventAggregate() {
+  return {
+    total_events: 0,
+    cost_total: 0,
+    cache_hits: 0,
+    cache_known: 0,
+    llm_events: 0,
+    warning_count: 0,
+    error_count: 0,
+    stages: {},
+    agents: [],
+    severities: [],
+    latest_artifact: null,
+    latest_block: null,
+    last_ts: null,
+  };
+}
+
+function aggregateEventType(event) {
+  return String(event?.event_type || event?.event || "");
+}
+
+function aggregatePayload(event) {
+  return event?.payload || {};
+}
+
+function updateRunEventAggregate(prevAggregate, events) {
+  const aggregate = {
+    ...emptyRunEventAggregate(),
+    ...(prevAggregate || {}),
+    stages: { ...(prevAggregate?.stages || {}) },
+    agents: [...(prevAggregate?.agents || [])],
+    severities: [...(prevAggregate?.severities || [])],
+  };
+  const agents = new Set(aggregate.agents);
+  const severities = new Set(aggregate.severities);
+  (events || []).forEach(event => {
+    const payload = aggregatePayload(event);
+    const eventType = aggregateEventType(event);
+    const stage = String(event?.stage || payload.stage || "");
+    const severity = String(event?.severity || payload.severity || "info");
+    const agent = String(event?.agent || payload.agent || "");
+    aggregate.total_events += 1;
+    aggregate.cost_total += Number(payload.cost_delta_usd || payload.cost_usd || event?.cost_usd || 0) || 0;
+    if (eventType === "llm_call" || eventType === "response_received") aggregate.llm_events += 1;
+    if (payload.cache_hit !== undefined || payload.from_cache !== undefined) {
+      aggregate.cache_known += 1;
+      if (payload.cache_hit === true || payload.from_cache === true) aggregate.cache_hits += 1;
+    }
+    if (severity === "warning") aggregate.warning_count += 1;
+    if (severity === "error") aggregate.error_count += 1;
+    if (agent) agents.add(agent);
+    if (severity) severities.add(severity);
+    if (payload.artifact_path) aggregate.latest_artifact = { stage, agent, event_type: eventType, payload, ts: event?.ts || "" };
+    if (payload.block_id || payload.block_ids?.length) aggregate.latest_block = { stage, agent, event_type: eventType, payload, ts: event?.ts || "" };
+    if (event?.ts) aggregate.last_ts = event.ts;
+    if (stage) {
+      const prior = aggregate.stages[stage] || { count: 0, done: 0, total: 0, total_known: false, last_event_type: "", last_ts: "" };
+      const progress = payload.progress || {};
+      const hasDone = progress.done !== undefined || payload.done !== undefined;
+      const hasTotal = progress.total !== undefined || payload.total !== undefined;
+      const done = Number(hasDone ? (progress.done ?? payload.done) : (prior.done ?? 0));
+      const total = Number(hasTotal ? (progress.total ?? payload.total) : (prior.total ?? 0));
+      aggregate.stages[stage] = {
+        count: prior.count + 1,
+        done: Number.isFinite(done) ? Math.max(prior.done || 0, done) : prior.done || 0,
+        total: Number.isFinite(total) ? Math.max(prior.total || 0, total) : prior.total || 0,
+        total_known: prior.total_known || progress.total_known === true || payload.total_known === true || hasTotal,
+        last_event_type: eventType,
+        last_ts: event?.ts || prior.last_ts || "",
+      };
+    }
+  });
+  aggregate.agents = Array.from(agents).sort();
+  aggregate.severities = Array.from(severities).sort();
+  return aggregate;
+}
 
 function cloneData(value) {
   return JSON.parse(JSON.stringify(value));
@@ -481,13 +560,15 @@ async function writeBlobToHandle(handle, blob) {
   await writable.close();
 }
 
-function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze, onUndo, onRedo, history, freezeReady, freezeReasons, previewReadOnly, canExportPreview }) {
+function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze, onUndo, onRedo, history, freezeReady, freezeReasons, previewReadOnly, canExportPreview, appVersion }) {
   const [exportOpen, setExportOpen] = useState(false);
   const canUndo = !!history?.can_undo && !dirty && !previewReadOnly;
   const canRedo = !!history?.can_redo && !dirty && !previewReadOnly;
   const readOnlyTip = "Disabled in Translation Preview read-only view.";
   const packageDisabled = false;
   const qcDisabled = false;
+  const apiVersion = appVersion?.backend_version || appVersion?.version || "unknown";
+  const versionMismatch = apiVersion !== "unknown" && apiVersion !== UI_VERSION;
   const previewDisabled = !canExportPreview;
   function chooseExport(kind) {
     setExportOpen(false);
@@ -500,6 +581,10 @@ function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze,
         <span className="tb-sep" />
         <span className="tb-doc tip" data-tip="Active document · one local project folder per doc_id">
           <Ic.doc size={13} className="faint" /><span className="mono">{docId}</span>
+        </span>
+        <span className={"version-badge tip" + (versionMismatch ? " mismatch" : "")} data-tip={`UI ${UI_VERSION} / API ${apiVersion} / git ${appVersion?.git_sha || "unknown"}`}>
+          <span>UI</span><b className="mono">{UI_VERSION}</b><span>API</span><b className="mono">{apiVersion}</b>
+          {appVersion?.git_sha && appVersion.git_sha !== "unknown" ? <em className="mono">{appVersion.git_sha}</em> : null}
         </span>
         <span className="wc-badge tip" data-tip="Autosaved working state and canonical dataset files via backend API.">
           <span className="wc-dot" />working copy
@@ -615,10 +700,11 @@ function App() {
   const [thesisTranslations, setThesisTranslations] = useState({});
   const [thesisObservability, setThesisObservability] = useState(null);
   const [thesisBaseDataset, setThesisBaseDataset] = useState(null);
+  const [appVersion, setAppVersion] = useState({ ui_version: UI_VERSION, backend_version: "unknown", git_sha: "unknown" });
   const [thesisRuns, setThesisRuns] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [selectedRunLog, setSelectedRunLog] = useState({ run_id: null, log: "", offset: 0, running: false, status: "" });
-  const [selectedRunEvents, setSelectedRunEvents] = useState({ run_id: null, events: [], offset: 0, running: false, status: "" });
+  const [selectedRunEvents, setSelectedRunEvents] = useState({ run_id: null, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
   const [runPromptPreview, setRunPromptPreview] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
@@ -643,7 +729,7 @@ function App() {
   const [editing, setEditing] = useState(false);
   const [centerMode, setCenterModeState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_CENTER_MODE);
-    return ["block", "chapter", "book", "preview", "cockpit"].includes(saved) ? saved : "chapter";
+    return ["block", "chapter", "book", "preview", "cockpit", "console"].includes(saved) ? saved : "chapter";
   });
   const [toasts, setToasts] = useState([]);
   const [modal, setModal] = useState(null);
@@ -701,7 +787,7 @@ function App() {
     setThesisRuns([]);
     setSelectedRunId(null);
     setSelectedRunLog({ run_id: null, log: "", offset: 0, running: false, status: "" });
-    setSelectedRunEvents({ run_id: null, events: [], offset: 0, running: false, status: "" });
+    setSelectedRunEvents({ run_id: null, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
     setRunPromptPreview(null);
     setRunError("");
     setSelectedCallId(null);
@@ -768,6 +854,9 @@ function App() {
     setLoading(true);
     setBootError(null);
     try {
+      API.getVersion()
+        .then(value => setAppVersion({ ui_version: UI_VERSION, ...(value || {}) }))
+        .catch(() => setAppVersion({ ui_version: UI_VERSION, backend_version: "unknown", git_sha: "unknown" }));
       const list = await refreshProjects();
       const remembered = localStorage.getItem(STORAGE_DOC);
       const chosen = list.find(p => p.doc_id === remembered && p.status === "available")
@@ -801,7 +890,7 @@ function App() {
   const readOnly = !!docInfo?.read_only || String(activeDocId || "").startsWith(THESIS_PREFIX);
 
   useEffect(() => {
-    if (!readOnly && centerMode === "cockpit") setCenterMode("block");
+    if (!readOnly && (centerMode === "cockpit" || centerMode === "console")) setCenterMode("block");
   }, [readOnly, centerMode]);
 
   useEffect(() => {
@@ -894,7 +983,7 @@ function App() {
       runLogOffsetRef.current = 0;
       runEventOffsetRef.current = 0;
       setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
-      setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status });
+      setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status, aggregate: emptyRunEventAggregate() });
       await refreshThesisRuns();
       toast("Run launched", "good", created.run_id);
     } catch (err) {
@@ -916,7 +1005,7 @@ function App() {
     runLogOffsetRef.current = 0;
     runEventOffsetRef.current = 0;
     setSelectedRunLog({ run_id: runId, log: "", offset: 0, running: true, status: "" });
-    setSelectedRunEvents({ run_id: runId, events: [], offset: 0, running: true, status: "" });
+    setSelectedRunEvents({ run_id: runId, events: [], offset: 0, running: true, status: "", aggregate: emptyRunEventAggregate() });
   }
 
   useEffect(() => {
@@ -929,7 +1018,7 @@ function App() {
         const currentEventOffset = runEventOffsetRef.current || 0;
         const [result, eventResult] = await Promise.all([
           API.getThesisRunLog(selectedRunId, currentOffset),
-          API.getThesisRunEvents(selectedRunId, currentEventOffset).catch(() => null),
+          API.getThesisRunEvents(selectedRunId, currentEventOffset, 262144).catch(() => null),
         ]);
         if (cancelled) return;
         runLogOffsetRef.current = result.offset || currentOffset;
@@ -943,20 +1032,33 @@ function App() {
           exit_code: result.exit_code,
         }));
         if (eventResult) {
-          setSelectedRunEvents(prev => ({
-            run_id: selectedRunId,
-            events: [
-              ...(prev.run_id === selectedRunId ? (prev.events || []) : []),
-              ...(eventResult.events || []),
-            ].slice(-80),
-            offset: eventResult.offset || currentEventOffset,
-            running: !!eventResult.running,
-            status: eventResult.status || "",
-            exit_code: eventResult.exit_code,
-          }));
+          const newEvents = eventResult.events || [];
+          setSelectedRunEvents(prev => {
+            const sameRun = prev.run_id === selectedRunId;
+            return {
+              run_id: selectedRunId,
+              events: [
+                ...(sameRun ? (prev.events || []) : []),
+                ...newEvents,
+              ].slice(-1000),
+              aggregate: updateRunEventAggregate(sameRun ? prev.aggregate : emptyRunEventAggregate(), newEvents),
+              offset: eventResult.offset || currentEventOffset,
+              truncated: !!eventResult.truncated,
+              partial_line: !!eventResult.partial_line,
+              running: !!eventResult.running,
+              status: eventResult.status || "",
+              exit_code: eventResult.exit_code,
+            };
+          });
         }
         await refreshThesisRuns();
-        if (result.running) timer = setTimeout(poll, 1400);
+        const needsDrain = !!eventResult?.truncated;
+        const needsPartialFollowup = !!eventResult?.partial_line;
+        if (needsDrain) {
+          timer = setTimeout(poll, 0);
+        } else if (result.running || eventResult?.running || needsPartialFollowup) {
+          timer = setTimeout(poll, needsPartialFollowup ? 600 : 1400);
+        }
       } catch (_err) {
         if (!cancelled) timer = setTimeout(poll, 2500);
       }
@@ -2220,7 +2322,8 @@ function App() {
       <TopBar docId={docInfo.doc_id} dirty={dirty} lastSaved={lastSaved}
         onValidate={runValidate} onExportOption={doExport} onFreeze={doFreeze}
         onUndo={runUndo} onRedo={runRedo} history={historyState}
-        freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={centerMode === "preview" || readOnly} canExportPreview={!!currentPreviewRun?.run} />
+        freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={centerMode === "preview" || readOnly} canExportPreview={!!currentPreviewRun?.run}
+        appVersion={appVersion} />
       <div className="workspace">
         <LeftSidebar docInfo={docInfo} projects={projects} blocks={visibleBlocks} chapters={chapters} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={selectBlock}

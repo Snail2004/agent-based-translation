@@ -187,9 +187,18 @@ def run_log(run_id: str):
 def run_events(run_id: str):
     try:
         offset = int(request.args.get("offset", "0"))
-        return ok(read_events(_get_registry(), run_id, offset=offset, jobs_root=_jobs_root()))
+        max_bytes = int(request.args.get("max_bytes", str(256 * 1024)))
+        return ok(
+            read_events(
+                _get_registry(),
+                run_id,
+                offset=offset,
+                max_bytes=max_bytes,
+                jobs_root=_jobs_root(),
+            )
+        )
     except ValueError:
-        return error("invalid_offset", "offset must be an integer.", 400)
+        return error("invalid_offset", "offset and max_bytes must be integers.", 400)
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
 
