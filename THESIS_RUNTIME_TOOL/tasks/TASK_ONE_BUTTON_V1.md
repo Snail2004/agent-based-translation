@@ -38,3 +38,15 @@
 - **Q2 = CHAY NEN + BAO CAO 2 DOT** (dung de xuat): progress tung stage; dot 1 = ban dich + TC/TA + hygiene; dot 2 = cascade/SF-QE/SF-BT (+PJ neu S0 bat) tu bo sung.
 - **Q3 = MOT RENDERER NHAN THAM SO MODE** (dung de xuat).
 - **Dieu kien user them:** thiet ke day du phai duoc trinh bay va CHOT truoc khi code — khong vua lam vua sua. Design review se ghi thanh §2c sau khi user phan hoi y tuong.
+
+## 2c. DESIGN CHOT — ba mat tien, mot xuong song (user + Claude, 2026-07-05)
+
+**Y tuong user (2 diem, nhan ca 2):** (1) BO stream ban dich thoi gian thuc — nang, marks/overlay can block hoan chinh + cascade xong; trang Chapter/Preview = mat tien REVIEW ket qua cuoi; (2) THEM man hinh Agent Console kieu ainovel-cli (repo tham chieu da co trong memory): stream tac vu song — agent nao dang chay, goi tool/LLM gi, toi dau, cost/cache — thay cho Cockpit tinh.
+
+**Kien truc:** [DICH] -> Panel xac nhan (uoc tinh $ tung stage, tran budget, checkbox S0 benchmark ~x2) -> **AGENT CONSOLE** (view MOI, live) -> Chapter/Report (review khi xong tung dot).
+- Console layout: trai = tong quan run (stage x/8, cost luy ke vs tran, cache hit %, health LM Studio/API); giua = event stream dong thoi gian (agent + model + window/block + tokens + $ + cache hit/miss) + preview block vua dich xong (block-level tick, KHONG token-stream); phai = checklist 8 stage + link artifact hien dan + watchlist §36 cho duyet.
+- Cockpit hien tai GIU NGUYEN lam view hau kiem (prompt/cache forensics) — khong nhap voi Console: mot cai "DANG xay ra gi", mot cai "DA xay ra gi va vi sao".
+- **Xuong song: event bus JSONL per-run** — schema thong nhat (ts, run_id, stage, agent, event_type, payload{tokens, cost, cache_hit, block_id}); moi stage CLI phat vao mot file; UI tail. Nen mong DA CO MOT NUA: Cockpit da co sidecar-events + live-log-tail panel, run_*_events.jsonl da ton tai — viec con lai la chuan hoa schema + phu day du stage + view moi. Event log nay DONG THOI la ho so audit/tai lap (mot cong doi viec, dung ky luat manifest).
+- Chi tiet cap implement (SSE vs polling, schema field chinh xac) = CodeX de xuat trong khuon nay, Claude review.
+
+**Demo hoi dong:** man hinh Console khi dang chay = bang chung song "he da-agent dang lam viec"; Chapter + Report khi xong = san pham. Trinh tu thi cong giu nguyen §4 (agreement analysis truoc).
