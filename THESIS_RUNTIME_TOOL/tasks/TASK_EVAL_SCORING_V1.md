@@ -705,3 +705,19 @@ Output: bang pairwise overlap (Jaccard + %) giua cac flag + doi chieu voi expect
 **Du doan dang ky truoc (nhe, ghi de doi chieu trung thuc):** (a) overlap cao nhat = TA-Occ↔TC-Occ (cung truc term); (b) cum chuan-hoa hien o >=3 thang tren S1; (c) PJ-flag ∩ SF-BT-flag THAP (2 truc khac nhau — do la feature khong phai bug); (d) SF-QE↔SF-BT bottom overlap muc vua (cung truc nghia, dung cu khac).
 
 **Quy trinh:** CodeX implement script `pipeline/scripts/agreement_analysis.py` + chay -> STOP -> Claude verify (recount marginal ma tran D2 + membership D3 + doi chieu D1 voi artifact) -> ghi §10b official -> dong TASK_EVAL, sang one-button buoc 1.
+
+### 10b. AGREEMENT ANALYSIS VERIFIED + OFFICIAL — TASK_EVAL DONG SO (Claude verify + 1 fix, 2026-07-05)
+
+**Recount doc lap khop:** D1 7/7 so doi chieu dung artifact goc (TC 0.7590/0.8253 + TA 0.7580/0.7657 = metrics_mlp.json; SF-QE 0.7981/0.7987 = sf_qe artifact; SF-BT 0.9719/0.9710 = §2g; PJ 102/51/322 = §4m); D2 marginal khop 100% (S0: TC-Occ 191/TA-Occ 251/QE 48/cos 48/llm 48/PJ 51; S1: 123/181/48/48/48/102); D3 = 69+67 = 136 dung; 0 API.
+
+**FIX bat buoc da ap (Claude sua script + regenerate, $0):** dong TA-Occ MLP mang proxy_warning in ra CA JSON lan MD — ruler = cascade accepted_forms BAO GOM canonical sai "chuan hoa" (do trong D3: accepted_forms co ca 2 dang) => tu-tham-chieu, thien S1; +0.119 CHI duoc dung nhu "tuan thu tu dien tu xay" (production-mode), CAM trinh bay nhu TA-vs-gold; TA-Occ official duy nhat = prelim §8c (gold ruler + fragment filter).
+
+**So ledger 4 du doan dang ky truoc:**
+- (a) TA-Occ↔TC-Occ overlap cao nhat: **PASS ca 2 arm** (S0 jac 0.619, obs 169 vs exp 101; S1 jac 0.462, obs 96 vs exp 47).
+- (b) cum chuan-hoa >=3 thang tren S1: **PASS muc cum** — 22 block chuan-hoa: TA-flag 17, PJ 7, BT-llm 6, triad tron 1 (backprop_b048); per-block triad hiem la co che (BT bottom-10% chi 48 slot) — ghi trung thuc.
+- (c) PJ∩SF-BT thap: **PASS** — S1 cos×PJ obs 4 < exp 10.3 (duoi ca doc lap!), llm×PJ 14 vs 10.3; S0 sat ky vong => 2 truc khac nhau, dung feature.
+- (d) SF-QE↔SF-BT vua: **PASS tren S1** (obs 13/11 vs exp 4.9 = 2.2-2.7x), yeu hon tren S0 (9/5 vs 4.9) — dung huong.
+
+**Findings moi cho bao cao/renderer:** (i) S1 TA-Occ×PJ obs 65 vs exp 38.9 (1.7x) va TC-Occ×PJ 47 vs 26.4 (1.8x) — khop taste-vs-gold §4j duoc DINH LUONG: block lech quy uoc term giau PJ-loss hon han; (ii) SF-BT cos×llm chi giao 14-17/48 (du 3x exp) — complementarity 2 nua SF-BT thanh so; (iii) TC-Occ/TA-Occ flag giam manh S0->S1 (191->123, 251->181) — S1 sach term hon o cap block, nhat quan headline.
+
+**TRANG THAI: TASK_EVAL_SCORING_V1 DONG SO — 7/7 thang official + agreement analysis official.** Con optional: Stage 2 prelim SF-BT/PJ (replication). Tiep: TASK_ONE_BUTTON_V1 buoc 1 (no-chan-duong) theo §2c.
