@@ -47,6 +47,7 @@ DEFAULT_EMBED_MODEL = "text-embedding-bge-m3"
 DEFAULT_JUDGE_MODEL = "gemini-2.5-flash"
 DEFAULT_GEMINI_INPUT_PER_MILLION = 0.72
 DEFAULT_GEMINI_OUTPUT_PER_MILLION = 6.00
+DEFAULT_ESTIMATE_PILOT_REPORT = Path("data/reports/exp_s0s1_builderv2_v1/sf_bt_pilot_100.json")
 
 
 def main() -> int:
@@ -56,8 +57,13 @@ def main() -> int:
     parser.add_argument("--chapters", default=DEFAULT_CHAPTERS)
     parser.add_argument("--configs", default=DEFAULT_CONFIGS)
     parser.add_argument("--sample-per-chapter", type=int, default=25)
+    parser.add_argument("--full", action="store_true", help="Score every eligible block instead of a systematic sample.")
     parser.add_argument("--out", default=str(DEFAULT_OUT))
     parser.add_argument("--cache-db", default=str(DEFAULT_CACHE))
+    parser.add_argument("--estimate-only", action="store_true", help="Write a cost estimate and exit without local model or API calls.")
+    parser.add_argument("--confirm-usd", type=float, default=None, help="Required for non-estimate runs; abort if the estimated Gemini cap exceeds this amount.")
+    parser.add_argument("--estimate-cap-multiplier", type=float, default=1.25)
+    parser.add_argument("--estimate-pilot-report", default=str(DEFAULT_ESTIMATE_PILOT_REPORT))
     parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
     parser.add_argument("--embed-endpoint", default=DEFAULT_EMBED_ENDPOINT)
     parser.add_argument("--bt-model", default=DEFAULT_BT_MODEL)
@@ -79,9 +85,7 @@ def main() -> int:
     out_path = Path(args.out)
     cache = SqliteCache(Path(args.cache_db))
     chapters = [item.strip() for item in str(args.chapters).split(",") if item.strip()]
-    configs = [item.strip() for item in str(args.configs).split(",") if item.strip()]
-    if len(configs) != 2:
-        raise SystemExit("SF-BT pilot expects exactly two configs, e.g. S0,S1.")
+    configs = _normalize_configs(str(args.configs))
 
     db_sha_before = _sha256_file(db_path)
     sample_blocks, sampling_report = _sample_blocks(
@@ -90,14 +94,54 @@ def main() -> int:
         chapters=chapters,
         configs=configs,
         sample_per_chapter=args.sample_per_chapter,
+        full=bool(args.full),
     )
     items = _load_items(db_path, experiment=args.experiment, block_ids=[row["block_id"] for row in sample_blocks], configs=configs)
     if not items:
         raise SystemExit("No sample translation rows found.")
+    estimate = _estimate_sf_bt_cost(
+        items,
+        cache=cache,
+        endpoint=args.endpoint,
+        bt_model=args.bt_model,
+        bt_max_tokens=args.bt_max_tokens,
+        judge_model=args.judge_model,
+        judge_max_tokens=args.judge_max_tokens,
+        thinking_budget=args.thinking_budget,
+        input_price=args.gemini_input_price,
+        output_price=args.gemini_output_price,
+        cap_multiplier=args.estimate_cap_multiplier,
+        pilot_report=Path(args.estimate_pilot_report),
+    )
+    if args.estimate_only:
+        report = {
+            "metric": "SF-BT",
+            "phase": "estimate_full" if args.full else "estimate_sample",
+            "status": "estimate_only",
+            "out": str(out_path),
+            "db": str(db_path),
+            "db_sha256_before": db_sha_before,
+            "experiment": args.experiment,
+            "chapters": chapters,
+            "configs": configs,
+            "sample_per_chapter": args.sample_per_chapter,
+            "full": bool(args.full),
+            "sampling": sampling_report,
+            "estimate": estimate,
+        }
+        _write_json(out_path, report)
+        print(json.dumps(_console_summary(report), ensure_ascii=False, indent=2))
+        return 0
+    if args.confirm_usd is None:
+        raise SystemExit("--confirm-usd is required for SF-BT runs that may call Gemini; use --estimate-only first.")
+    if estimate["estimated_cost_cap_usd"] > args.confirm_usd:
+        raise SystemExit(
+            f"SF-BT estimate cap ${estimate['estimated_cost_cap_usd']:.4f} exceeds --confirm-usd ${args.confirm_usd:.4f}."
+        )
 
     report: dict[str, Any] = {
         "metric": "SF-BT",
-        "phase": "pilot_100_block_arm" if args.sample_per_chapter == 25 else "pilot_custom",
+        "phase": "full" if args.full else ("pilot_100_block_arm" if args.sample_per_chapter == 25 else "pilot_custom"),
         "status": "running",
         "out": str(out_path),
         "db": str(db_path),
@@ -106,7 +150,9 @@ def main() -> int:
         "chapters": chapters,
         "configs": configs,
         "sample_per_chapter": args.sample_per_chapter,
+        "full": bool(args.full),
         "sampling": sampling_report,
+        "estimate": estimate,
         "models": {
             "bt_model": args.bt_model,
             "embed_model": args.embed_model,
@@ -186,7 +232,7 @@ def main() -> int:
     )
     judge_elapsed = time.perf_counter() - judge_started
 
-    report["status"] = "pilot_complete_stop_no_full_run"
+    report["status"] = "full_complete_stop_for_review" if args.full else "pilot_complete_stop_no_full_run"
     report["db_sha256_after"] = _sha256_file(db_path)
     report["cache"] = cache.stats()
     report["elapsed_sec"] = time.perf_counter() - started
@@ -218,6 +264,7 @@ def _sample_blocks(
     chapters: list[str],
     configs: list[str],
     sample_per_chapter: int,
+    full: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     selected: list[dict[str, Any]] = []
     by_chapter: dict[str, Any] = {}
@@ -244,9 +291,9 @@ def _sample_blocks(
                 """.format(",".join("?" * len(configs))),
                 [experiment, chapter, *configs, len(configs)],
             ).fetchall()
-            if len(rows) < sample_per_chapter:
+            if not full and len(rows) < sample_per_chapter:
                 raise ValueError(f"Chapter {chapter} has only {len(rows)} eligible blocks, need {sample_per_chapter}.")
-            indices = _systematic_midpoint_indices(len(rows), sample_per_chapter)
+            indices = list(range(len(rows))) if full else _systematic_midpoint_indices(len(rows), sample_per_chapter)
             chapter_selected = []
             for sample_ordinal, idx in enumerate(indices, 1):
                 row = rows[idx]
@@ -271,9 +318,156 @@ def _sample_blocks(
         "sample_unit": "block_id",
         "arm_unit": "block_id x config",
         "eligible_definition": "block has draft translation rows for every requested config",
-        "sample_per_chapter": sample_per_chapter,
+        "mode": "full" if full else "systematic_sample",
+        "sample_per_chapter": None if full else sample_per_chapter,
         "by_chapter": by_chapter,
         "selected_block_ids": [item["block_id"] for item in selected],
+    }
+
+
+def _normalize_configs(raw: str) -> list[str]:
+    configs = [item.strip() for item in raw.split(",") if item.strip()]
+    normalized: list[str] = []
+    for config in configs:
+        upper = config.upper()
+        if upper not in {"S0", "S1"}:
+            raise SystemExit(f"Unsupported SF-BT config '{config}'. Expected S0 and/or S1.")
+        if upper not in normalized:
+            normalized.append(upper)
+    if not normalized:
+        raise SystemExit("At least one SF-BT config is required.")
+    return normalized
+
+
+def _bt_cache_key(*, endpoint: str, model: str, output_text: str, max_tokens: int) -> str:
+    bt_prompt = BT_PROMPT_TEMPLATE.format(vi_block=output_text)
+    request_profile = {
+        "temperature": 0,
+        "top_p": 1,
+        "seed": SEED,
+        "repeat_penalty": 1.0,
+        "reasoning_effort": "none",
+        "max_tokens": max_tokens,
+    }
+    return _cache_key(
+        {
+            "kind": "chat",
+            "endpoint": endpoint,
+            "model": model,
+            "messages": [{"role": "user", "content": bt_prompt}],
+            "prompt_version": PROMPT_VERSION_BT,
+            "prompt_sha256": _sha256_text(BT_PROMPT_TEMPLATE),
+            "request_params": request_profile,
+        }
+    )
+
+
+def _estimate_sf_bt_cost(
+    items: list[dict[str, Any]],
+    *,
+    cache: SqliteCache,
+    endpoint: str,
+    bt_model: str,
+    bt_max_tokens: int,
+    judge_model: str,
+    judge_max_tokens: int,
+    thinking_budget: int,
+    input_price: float,
+    output_price: float,
+    cap_multiplier: float,
+    pilot_report: Path,
+) -> dict[str, Any]:
+    pilot = _judge_p90_from_report(pilot_report, input_price=input_price, output_price=output_price)
+    logical_judge_calls = 0
+    judge_cache_hits = 0
+    bt_cache_hits = 0
+    judge_cache_unknown = 0
+    too_long_estimated = 0
+    for item in items:
+        bt_cached = cache.get(
+            _bt_cache_key(
+                endpoint=endpoint,
+                model=bt_model,
+                output_text=str(item["output_text"]),
+                max_tokens=bt_max_tokens,
+            )
+        )
+        if bt_cached is None:
+            logical_judge_calls += 2
+            judge_cache_unknown += 2
+            continue
+        bt_cache_hits += 1
+        bt_text = str(bt_cached.get("content") or "")
+        if _estimated_tokens(JUDGE_PROMPT_TEMPLATE.format(first=item["source_text"], second=bt_text)) > 7000:
+            too_long_estimated += 1
+            continue
+        for direction, first, second in (
+            ("ab", str(item["source_text"]), bt_text),
+            ("ba", bt_text, str(item["source_text"])),
+        ):
+            logical_judge_calls += 1
+            key = _judge_cache_key(
+                model=judge_model,
+                direction=direction,
+                first=first,
+                second=second,
+                max_output_tokens=judge_max_tokens,
+                thinking_budget=thinking_budget,
+            )
+            if cache.get(key) is not None:
+                judge_cache_hits += 1
+    fresh_calls = max(0, logical_judge_calls - judge_cache_hits)
+    estimated_cost = fresh_calls * pilot["p90_cost_usd_per_call"]
+    return {
+        "scope_items": len(items),
+        "bt_cache_hits": bt_cache_hits,
+        "logical_judge_calls": logical_judge_calls,
+        "judge_cache_hits": judge_cache_hits,
+        "judge_cache_unknown_without_bt_cache": judge_cache_unknown,
+        "fresh_judge_calls_cap": fresh_calls,
+        "too_long_for_llm_estimated": too_long_estimated,
+        "pilot_report": str(pilot_report),
+        "p90_prompt_tokens_per_call": pilot["p90_prompt_tokens"],
+        "p90_completion_tokens_per_call": pilot["p90_completion_tokens"],
+        "p90_cost_usd_per_call": pilot["p90_cost_usd_per_call"],
+        "estimated_cost_usd": round(estimated_cost, 12),
+        "cap_multiplier": cap_multiplier,
+        "estimated_cost_cap_usd": round(estimated_cost * cap_multiplier, 12),
+        "cache_note": (
+            "Judge cache hits are exact only when BT text is already cached; missing BT is treated as fresh judge work "
+            "for a conservative estimate."
+        ),
+    }
+
+
+def _judge_p90_from_report(path: Path, *, input_price: float, output_price: float) -> dict[str, Any]:
+    prompt_tokens: list[int] = []
+    completion_tokens: list[int] = []
+    costs: list[float] = []
+    if path.exists():
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        for item in payload.get("items") or []:
+            score = item.get("bt_llm_score") or {}
+            for direction in ("ab", "ba"):
+                row = score.get(direction) or {}
+                usage = row.get("usage") or {}
+                prompt = int(usage.get("prompt_tokens") or 0)
+                completion = int(usage.get("completion_tokens") or 0)
+                if prompt or completion:
+                    prompt_tokens.append(prompt)
+                    completion_tokens.append(completion)
+                    costs.append(_gemini_cost(usage, input_price=input_price, output_price=output_price))
+    p90_prompt = int(round(_quantile(sorted(prompt_tokens), 0.90))) if prompt_tokens else 900
+    p90_completion = int(round(_quantile(sorted(completion_tokens), 0.90))) if completion_tokens else 512
+    p90_cost = _quantile(sorted(costs), 0.90) if costs else _gemini_cost(
+        {"prompt_tokens": p90_prompt, "completion_tokens": p90_completion},
+        input_price=input_price,
+        output_price=output_price,
+    )
+    return {
+        "p90_prompt_tokens": p90_prompt,
+        "p90_completion_tokens": p90_completion,
+        "p90_cost_usd_per_call": p90_cost,
     }
 
 
@@ -775,6 +969,15 @@ def _component_value(item: dict[str, Any], key: str) -> float | None:
 
 
 def _paired_delta(items: list[dict[str, Any]], *, getter: Any, configs: list[str]) -> dict[str, Any]:
+    if len(configs) != 2:
+        return {
+            "requires_two_configs": True,
+            "configs": configs,
+            "n": 0,
+            "overall": _delta_stats([]),
+            "by_chapter": {},
+            "pairs": [],
+        }
     a, b = configs
     by_block: dict[tuple[str, str], dict[str, dict[str, Any]]] = defaultdict(dict)
     for item in items:
@@ -1033,13 +1236,21 @@ def _partial(report: dict[str, Any], cache: SqliteCache, started: float, db_path
 
 def _console_summary(report: dict[str, Any]) -> dict[str, Any]:
     aggr = report.get("aggregates", {}).get("all", {})
+    if report.get("status") == "estimate_only":
+        return {
+            "out": report.get("out", str(DEFAULT_OUT)),
+            "status": report["status"],
+            "configs": report.get("configs"),
+            "sampled_items": (report.get("estimate") or {}).get("scope_items"),
+            "estimate": report.get("estimate"),
+        }
     return {
         "out": report.get("out", str(DEFAULT_OUT)),
         "status": report["status"],
-        "db_unchanged": report["db_unchanged"],
-        "items": len(report["items"]),
-        "runtime_summary": report["runtime_summary"],
-        "cost_eta": report["cost_eta"],
+        "db_unchanged": report.get("db_unchanged"),
+        "items": len(report.get("items") or []),
+        "runtime_summary": report.get("runtime_summary"),
+        "cost_eta": report.get("cost_eta"),
         "paired_delta_overall": {
             component: values.get("overall")
             for component, values in (aggr.get("paired_delta") or {}).items()

@@ -19,6 +19,7 @@ from pipeline.scripts.probe_pj import (
     _aggregate_case,
     _map_call_verdict,
     _normalize_auto_tie_text,
+    _pj_cache_key,
     _run_probe_calls,
     _total_cost,
 )
@@ -27,15 +28,17 @@ from pipeline.scripts.score_sf_bt import (
     DEFAULT_GEMINI_INPUT_PER_MILLION,
     DEFAULT_GEMINI_OUTPUT_PER_MILLION,
     SEED,
+    _gemini_cost,
 )
 from pipeline.scripts.probe_pj import PJ_PROMPT_TEMPLATE
 
 
 DEFAULT_OUT = Path("data/reports/exp_s0s1_builderv2_v1/pj_pilot_50.json")
 DEFAULT_FULL_OUT = Path("data/reports/exp_s0s1_builderv2_v1/pj_full_339.json")
+DEFAULT_ESTIMATE_PILOT_REPORT = Path("data/reports/exp_s0s1_builderv2_v1/pj_pilot_50.json")
 DEFAULT_EXPERIMENT = "exp_s0s1_builderv2_v1"
 DEFAULT_CHAPTER = "d2l_multilayer_perceptrons"
-DEFAULT_EXPECTED_WORKDB_SHA256 = "92229381172FE30C2A10E2C467232AB992B7EA8ECB40415A1652AB7DE8C13F42"
+DEFAULT_EXPECTED_WORKDB_SHA256 = ""
 
 
 def main() -> int:
@@ -56,6 +59,10 @@ def main() -> int:
     parser.add_argument("--gemini-input-price", type=float, default=DEFAULT_GEMINI_INPUT_PER_MILLION)
     parser.add_argument("--gemini-output-price", type=float, default=DEFAULT_GEMINI_OUTPUT_PER_MILLION)
     parser.add_argument("--expected-db-sha256", default=DEFAULT_EXPECTED_WORKDB_SHA256)
+    parser.add_argument("--estimate-only", action="store_true", help="Write a cost estimate and exit without API calls.")
+    parser.add_argument("--confirm-usd", type=float, default=None, help="Required for non-estimate runs; abort if estimated cap exceeds this amount.")
+    parser.add_argument("--estimate-cap-multiplier", type=float, default=1.25)
+    parser.add_argument("--estimate-pilot-report", default=str(DEFAULT_ESTIMATE_PILOT_REPORT))
     parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
 
@@ -113,13 +120,33 @@ def main() -> int:
         "cases": cases,
         "auto_tie_cases": auto_tie_cases,
     }
+    cache = SqliteCache(Path(args.cache_db))
+    estimate = _estimate_pj_cost(
+        cases,
+        cache=cache,
+        model=args.model,
+        max_output_tokens=args.max_output_tokens,
+        thinking_budget=args.thinking_budget,
+        input_price=args.gemini_input_price,
+        output_price=args.gemini_output_price,
+        cap_multiplier=args.estimate_cap_multiplier,
+        pilot_report=Path(args.estimate_pilot_report),
+    )
+    report["estimate"] = estimate
     _write_json(out_path, report)
 
-    if args.validate_only:
+    if args.validate_only or args.estimate_only:
+        report["status"] = "estimate_only" if args.estimate_only else report["status"]
+        _write_json(out_path, report)
         print(json.dumps(_console_summary(report), ensure_ascii=False, indent=2))
         return 0
+    if args.confirm_usd is None:
+        raise SystemExit("--confirm-usd is required for PJ runs that may call Gemini; use --estimate-only first.")
+    if estimate["estimated_cost_cap_usd"] > args.confirm_usd:
+        raise SystemExit(
+            f"PJ estimate cap ${estimate['estimated_cost_cap_usd']:.4f} exceeds --confirm-usd ${args.confirm_usd:.4f}."
+        )
 
-    cache = SqliteCache(Path(args.cache_db))
     _run_probe_calls(
         cases,
         cache=cache,
@@ -292,6 +319,96 @@ def _auto_tie_case(pair: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _estimate_pj_cost(
+    cases: list[dict[str, Any]],
+    *,
+    cache: SqliteCache,
+    model: str,
+    max_output_tokens: int,
+    thinking_budget: int,
+    input_price: float,
+    output_price: float,
+    cap_multiplier: float,
+    pilot_report: Path,
+) -> dict[str, Any]:
+    pilot = _pj_p90_from_report(pilot_report, input_price=input_price, output_price=output_price)
+    logical_calls = len(cases) * 2
+    cache_hits = 0
+    for case in cases:
+        for direction, candidate_x, candidate_y in (
+            ("ab", str(case["candidate_a"]), str(case["candidate_b"])),
+            ("ba", str(case["candidate_b"]), str(case["candidate_a"])),
+        ):
+            key = _pj_cache_key(
+                model=model,
+                direction=direction,
+                source=str(case["source"]),
+                candidate_x=candidate_x,
+                candidate_y=candidate_y,
+                max_output_tokens=max_output_tokens,
+                thinking_budget=thinking_budget,
+            )
+            if cache.get(key) is not None:
+                cache_hits += 1
+    fresh_calls = max(0, logical_calls - cache_hits)
+    estimated_cost = fresh_calls * pilot["p90_cost_usd_per_call"]
+    return {
+        "judged_pairs": len(cases),
+        "auto_tie_pairs": 0,
+        "logical_calls": logical_calls,
+        "cache_hits": cache_hits,
+        "fresh_calls": fresh_calls,
+        "pilot_report": str(pilot_report),
+        "p90_prompt_tokens_per_call": pilot["p90_prompt_tokens"],
+        "p90_completion_tokens_per_call": pilot["p90_completion_tokens"],
+        "p90_cost_usd_per_call": pilot["p90_cost_usd_per_call"],
+        "estimated_cost_usd": round(estimated_cost, 12),
+        "cap_multiplier": cap_multiplier,
+        "estimated_cost_cap_usd": round(estimated_cost * cap_multiplier, 12),
+    }
+
+
+def _pj_p90_from_report(path: Path, *, input_price: float, output_price: float) -> dict[str, Any]:
+    prompt_tokens: list[int] = []
+    completion_tokens: list[int] = []
+    costs: list[float] = []
+    if path.exists():
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        for case in payload.get("cases") or []:
+            for call in (case.get("calls") or {}).values():
+                usage = call.get("usage") or {}
+                prompt = int(usage.get("prompt_tokens") or usage.get("prompt_token_count") or 0)
+                completion = int(usage.get("completion_tokens") or usage.get("candidates_token_count") or 0)
+                if prompt or completion:
+                    prompt_tokens.append(prompt)
+                    completion_tokens.append(completion)
+                    costs.append(_gemini_cost({"prompt_tokens": prompt, "completion_tokens": completion}, input_price=input_price, output_price=output_price))
+    p90_prompt = int(round(_quantile(sorted(prompt_tokens), 0.90))) if prompt_tokens else 1200
+    p90_completion = int(round(_quantile(sorted(completion_tokens), 0.90))) if completion_tokens else 512
+    p90_cost = _quantile(sorted(costs), 0.90) if costs else _gemini_cost(
+        {"prompt_tokens": p90_prompt, "completion_tokens": p90_completion},
+        input_price=input_price,
+        output_price=output_price,
+    )
+    return {
+        "p90_prompt_tokens": p90_prompt,
+        "p90_completion_tokens": p90_completion,
+        "p90_cost_usd_per_call": p90_cost,
+    }
+
+
+def _quantile(ordered: list[float], q: float) -> float:
+    if not ordered:
+        return 0.0
+    if len(ordered) == 1:
+        return ordered[0]
+    pos = (len(ordered) - 1) * q
+    lo = int(pos)
+    hi = min(lo + 1, len(ordered) - 1)
+    frac = pos - lo
+    return ordered[lo] * (1 - frac) + ordered[hi] * frac
+
+
 def _pj_aggregates(*, cases: list[dict[str, Any]], auto_tie_cases: list[dict[str, Any]], full: bool) -> dict[str, Any]:
     judged_label = f"judged_full_{len(cases)}" if full else f"judged_sample_{len(cases)}"
     combined_label = "full_plus_all_auto_ties" if full else "sample_plus_all_auto_ties"
@@ -459,6 +576,7 @@ def _console_summary(report: dict[str, Any]) -> dict[str, Any]:
         "phase": report["phase"],
         "db_unchanged": report.get("db_unchanged"),
         "pair_counts": report.get("pair_counts"),
+        "estimate": report.get("estimate"),
         "cache": report.get("cache"),
         "cost_usd": report.get("cost_usd"),
         "aggregates": report.get("aggregates"),

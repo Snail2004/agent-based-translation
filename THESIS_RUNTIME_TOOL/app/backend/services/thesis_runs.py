@@ -25,6 +25,8 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
+from pipeline.lib.event_reader import read_jsonl_events
+
 
 _SHELL_META_RE = re.compile(r"[;&|`$(){}!<>'\"\n\r]")
 _JOB_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -642,12 +644,15 @@ def read_events(
     root = Path(jobs_root or registry.runs_root).resolve()
     event_root = (root / "run_events").resolve()
     raw_path = entry.get("event_log_path")
-    events: list[dict[str, Any]] = []
     safe_offset = max(int(offset or 0), 0)
     safe_max_bytes = max(64, min(int(max_bytes or 256 * 1024), 1024 * 1024))
-    new_offset = safe_offset
-    truncated = False
-    partial_line = False
+    result = {
+        "events": [],
+        "offset": safe_offset,
+        "truncated": False,
+        "partial_line": False,
+        "max_bytes": safe_max_bytes,
+    }
 
     if raw_path:
         event_path = Path(str(raw_path)).resolve()
@@ -659,39 +664,15 @@ def read_events(
                 "Run event log path is outside THESIS_JOBS_ROOT/run_events.",
                 500,
             ) from exc
-        if event_path.exists():
-            with open(event_path, "rb") as fh:
-                fh.seek(safe_offset)
-                raw = fh.read(safe_max_bytes + 1)
-            truncated = len(raw) > safe_max_bytes
-            if truncated:
-                raw = raw[:safe_max_bytes]
-            last_newline = raw.rfind(b"\n")
-            if last_newline < 0:
-                complete = b""
-                partial_line = bool(raw)
-            else:
-                complete = raw[: last_newline + 1]
-                partial_line = last_newline + 1 < len(raw)
-                new_offset = safe_offset + len(complete)
-            if complete:
-                text = complete.decode("utf-8", errors="replace")
-                for line in text.splitlines():
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        events.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        events.append({"event": "parse_error", "raw": line[:500]})
+        result = read_jsonl_events(event_path, offset=safe_offset, max_bytes=safe_max_bytes)
 
     return {
         "run_id": run_id,
-        "events": events,
-        "offset": new_offset,
-        "truncated": truncated,
-        "partial_line": partial_line,
-        "max_bytes": safe_max_bytes,
+        "events": result["events"],
+        "offset": result["offset"],
+        "truncated": result["truncated"],
+        "partial_line": result["partial_line"],
+        "max_bytes": result["max_bytes"],
         "running": entry["status"] == "running",
         "status": entry["status"],
         "exit_code": entry["exit_code"],

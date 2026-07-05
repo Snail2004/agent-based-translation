@@ -23,7 +23,7 @@
 
 ## 3. Ràng buộc triển khai (ghi để không quên khi đóng gói)
 - LM Studio + gemma-4-12b + bge-m3 là DEPENDENCY runtime của app (cascade T3, SF-BT, §36) — app phải kiểm tra endpoint trước khi chạy, báo lỗi tử tế.
-- CometKiwi: py3.11 riêng (numpy<2), model gated HF (user máy mới phải tự login) — cô lập vào subprocess như score_sf_qe hiện tại.
+- CometKiwi / `score_sf_qe`: py3.11 riêng (numpy<2), model gated HF (user máy mới phải tự login). `score_sf_qe.py` import `torch`/`comet` ở module-level nên cả script phải được orchestrator spawn bằng py3.11; không có lớp cô lập subprocess bên trong script.
 - Mọi stage giữ nguyên kỷ luật: frozen ro, workdb copy, cost-gate hiển thị trần $ trước khi gọi API, log/manifest từng artifact.
 
 ## 4. Trình tự
@@ -206,3 +206,13 @@ Nen da khoa: 8 stage (§1), Q1-Q3 (§2b), event contract (§2d-§2f), Console (�
 **THI CONG 2 DOT (giu review de tho):**
 - **O1 (prereq, offline-testable):** one-arm support cho score_run/d2l_translate_score/score_sf_bt; --estimate-only + --confirm-usd cho score_sf_bt + score_pj (validate path, khong API); pipeline/lib/event_reader.py + refactor read_events dung chung; sua §3 file nay (dong "co lap subprocess nhu score_sf_qe" — SAI) thanh "score_sf_qe chay tron duoi py311". STOP.
 - **O2 (orchestrator):** run_one_button.py theo §2j+§2l du 9 muc; RunControl them run_one_button (ALLOWLIST + ESTIMATE_PREVIEW tong hop per-stage); registry attempt fields. Nghiem thu nhu §2j: run chuong co cache + kill-resume + validator merged log + Console live + frozen nguyen ven. STOP.
+
+## 2m. O1 NGHIEM THU (Claude verify doc lap, 2026-07-06) — DAT, commit cung muc nay
+
+**Tu chay lai toan bo bang chung:** 440/440 test pass (164s). Regression 2-arm Claude TU tai lap tren workdb (score_run --profile technical_d2l_v1 --gold-variants): B S0 0.758037 / B S1 0.765651 / D S0 0.759036 / D S1 0.825301 / A S1 0.766378 — khop metrics_mlp.json da commit TUNG CHU SO. S1-only chay sach, so S1 y het luot 2-arm (one-arm khong lam meo thuoc). Frozen 64D989 / workdb 922293 nguyen ven; key-scan sach.
+
+**Estimate-only verify 2 chieu (phat hien quan trong ve cache path):** luot dau Claude truyen --cache-db data/jobs/pj_cache.sqlite3 -> cache_hits 0, estimate $0.817 (678 call x p90 $0.0012 — TRUNG voi cost that cua full 339 hoi truoc ~$0.8, cong thuc p90 chuan). Luot hai voi cache DEFAULT (data/reports/exp_s0s1_builderv2_v1/sf_bt_pilot_cache.sqlite3, 4353 dong): PJ 678/678 hits -> fresh 0 -> $0.00; sf_bt S1: 100 judge hits, 0 fresh, $0.00 + cache_note bao thu trung thuc (BT thieu = coi la fresh). **BAI HOC GHI VAO O2: cost estimate NHAY CAM voi cache path — orchestrator PHAI truyen dung cache db tung stage, sai path = panel bao gia sai ca chuc lan; day cung la ly do estimate_by_stage phai ghi ro cache db path da probe.**
+
+**Ghi nhan them:** score_pj bo default pin hash MLP (khong truyen --expected-db-sha256 = khong check — orchestrator LUON truyen dong); --confirm-usd bat buoc cho run that (breaking co chu dich voi workflow cu); event_reader.py parse_error khong con mang raw line (chi error type — an toan hon, khac endpoint cu, chap nhan); helper drop dong JSON khong-phai-dict (dung hop dong envelope). CodeX tu khai near-miss --gold-variants o regression dau va tu sua — dung ky luat.
+
+**O1 DAT -> phat prompt O2 (run_one_button + RunControl estimate tong hop + registry attempt fields).**

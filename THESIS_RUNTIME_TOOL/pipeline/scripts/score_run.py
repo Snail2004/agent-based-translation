@@ -17,6 +17,11 @@ def main() -> int:
     parser.add_argument("--db", required=True, help="Frozen memory SQLite DB.")
     parser.add_argument("--experiment", default="d2l_p3", help="Experiment ID.")
     parser.add_argument("--config", default="S0", help="Config to score (default: S0).")
+    parser.add_argument(
+        "--configs",
+        nargs="+",
+        help="One or more configs to score for D2L runs, e.g. S1 or S0 S1. Defaults to S0 S1.",
+    )
     parser.add_argument("--prepass", help="Prepass artifacts directory.")
     parser.add_argument("--source", help="Source document.json path.")
     parser.add_argument(
@@ -37,6 +42,7 @@ def main() -> int:
             experiment_id=args.experiment,
             profile_name=args.profile,
             gold_variants_path=args.gold_variants,
+            configs=args.configs,
         )
         _print_d2l_summary(report)
         print(f"\nReport written: {args.out}")
@@ -108,7 +114,8 @@ def main() -> int:
 def _print_d2l_summary(report: dict) -> None:
     print("\n=== D2L Translation Metrics ===")
     print(f"Profile: {report.get('profile')}  Chapters: {report.get('chapters')}")
-    for config in ["S0", "S1"]:
+    configs = report.get("configs") or list((report.get("B_gold_occurrence_adherence") or {}).keys())
+    for config in configs:
         legacy = report["B_tar_vs_gold"][config]["flat"]
         b = report["B_gold_occurrence_adherence"][config]["flat"]
         d = report["D_registry_consistency"][config]
@@ -118,13 +125,14 @@ def _print_d2l_summary(report: dict) -> None:
             f"legacy occurrence_weighted={legacy['occurrence_weighted']:.4f}, "
             f"D={d['overall']:.4f} ({d['terms']} terms)"
         )
-    a = report["A_registry_occurrence_adherence"]["S1"]
-    legacy_a = report["A_tar_vs_registry"]["S1"]
-    print(
-        f"S1 A registry occurrence={a['adherence_lower']:.4f}"
-        f"..{a['adherence_upper']:.4f} ({a['denominator']} source occ), "
-        f"legacy occurrence_weighted={legacy_a['occurrence_weighted']:.4f}"
-    )
+    if "S1" in (report.get("A_registry_occurrence_adherence") or {}):
+        a = report["A_registry_occurrence_adherence"]["S1"]
+        legacy_a = report["A_tar_vs_registry"]["S1"]
+        print(
+            f"S1 A registry occurrence={a['adherence_lower']:.4f}"
+            f"..{a['adherence_upper']:.4f} ({a['denominator']} source occ), "
+            f"legacy occurrence_weighted={legacy_a['occurrence_weighted']:.4f}"
+        )
     print(f"Stage gate: {json.dumps(report.get('stage_gate', {}), ensure_ascii=False)}")
 
 

@@ -59,6 +59,7 @@ def score_d2l_translation_run(
     gold_variants_path: str | Path | None = None,
     term_policy_root: str | Path | None = None,
     doc_id: str = "d2l",
+    configs: list[str] | None = None,
 ) -> dict[str, Any]:
     output_path = Path(out_path)
     audit_csv_path = output_path.with_name(f"{output_path.stem}_occurrence_audit.csv")
@@ -70,9 +71,10 @@ def score_d2l_translation_run(
         resolved_chapters = _resolve_chapters(conn, doc_id, chapters)
         scope_blocks = _scope_blocks(conn, doc_id, resolved_chapters, profile)
         passthrough_blocks = _passthrough_blocks(conn, doc_id, resolved_chapters, profile)
+        selected_configs = _normalize_configs(configs)
         translations = {
             config: _load_translations(conn, experiment_id, config)
-            for config in ["S0", "S1"]
+            for config in selected_configs
         }
         accepted_gold = _load_gold_targets(
             conn,
@@ -84,7 +86,7 @@ def score_d2l_translation_run(
         eval_registry_rows = _prepare_eval_registry_rows(registry_rows, policy_assets)
         b_scores = {
             config: _score_tar_vs_gold(scope_blocks, translations[config], accepted_gold)
-            for config in ["S0", "S1"]
+            for config in selected_configs
         }
         d_scores = {
             config: _score_registry_consistency(
@@ -93,19 +95,13 @@ def score_d2l_translation_run(
                 eval_registry_rows,
                 profile_name=profile.name,
             )
-            for config in ["S0", "S1"]
+            for config in selected_configs
         }
-        a_score = _score_tar_vs_registry(
-            scope_blocks,
-            translations["S1"],
-            registry_rows,
-            profile_name=profile.name,
-        )
         gold_terms = _gold_adherence_terms(accepted_gold)
         registry_terms = _registry_adherence_terms(registry_rows, profile.name)
         occurrence_audit_rows: list[dict[str, Any]] = []
         b_occurrence: dict[str, Any] = {}
-        for config in ["S0", "S1"]:
+        for config in selected_configs:
             flat, audit_rows, source_totals = score_occurrence_adherence(
                 scope_blocks,
                 translations[config],
@@ -128,19 +124,31 @@ def score_d2l_translation_run(
             b_occurrence[config] = {"flat": flat, "recurring": recurring}
             occurrence_audit_rows.extend(audit_rows)
 
-        a_occurrence, a_audit_rows, _ = score_occurrence_adherence(
-            scope_blocks,
-            translations["S1"],
-            registry_terms,
-            ruler="registry",
-            config="S1",
-        )
-        occurrence_audit_rows.extend(a_audit_rows)
+        a_scores: dict[str, Any] = {}
+        a_occurrences: dict[str, Any] = {}
+        if "S1" in translations:
+            a_score = _score_tar_vs_registry(
+                scope_blocks,
+                translations["S1"],
+                registry_rows,
+                profile_name=profile.name,
+            )
+            a_occurrence, a_audit_rows, _ = score_occurrence_adherence(
+                scope_blocks,
+                translations["S1"],
+                registry_terms,
+                ruler="registry",
+                config="S1",
+            )
+            occurrence_audit_rows.extend(a_audit_rows)
+            a_scores["S1"] = a_score
+            a_occurrences["S1"] = a_occurrence
         report = {
             "scored_at": datetime.now(UTC).isoformat(),
             "metric_version": METRIC_VERSION,
             "experiment_id": experiment_id,
             "profile": profile.name,
+            "configs": selected_configs,
             "doc_id": doc_id,
             "chapters": resolved_chapters,
             "scope": _scope_report(
@@ -154,8 +162,8 @@ def score_d2l_translation_run(
             "B_tar_vs_gold": b_scores,
             "B_gold_occurrence_adherence": b_occurrence,
             "D_registry_consistency": d_scores,
-            "A_tar_vs_registry": {"S1": a_score},
-            "A_registry_occurrence_adherence": {"S1": a_occurrence},
+            "A_tar_vs_registry": a_scores,
+            "A_registry_occurrence_adherence": a_occurrences,
             "term_policy": _term_policy_report(eval_registry_rows, policy_assets),
             "injection": {
                 "registry": _registry_stats(registry_rows, profile.name),
@@ -203,6 +211,24 @@ def score_d2l_translation_run(
     output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     write_occurrence_audit(audit_csv_path, audit_html_path, occurrence_audit_rows)
     return report
+
+
+def _normalize_configs(configs: list[str] | None) -> list[str]:
+    values = configs or ["S0", "S1"]
+    seen: set[str] = set()
+    result: list[str] = []
+    for raw in values:
+        value = str(raw or "").strip().upper()
+        if not value:
+            continue
+        if value not in {"S0", "S1"}:
+            raise ValueError(f"Unsupported config for D2L scorer: {raw!r}")
+        if value not in seen:
+            seen.add(value)
+            result.append(value)
+    if not result:
+        raise ValueError("At least one scoring config is required.")
+    return result
 
 
 def _resolve_chapters(
@@ -877,14 +903,13 @@ def _sample_blocks(
 ) -> dict[str, Any]:
     translated_samples = []
     for block in scope_blocks[:5]:
-        translated_samples.append(
-            {
-                "block_id": block.block_id,
-                "source": block.text[:500],
-                "S0": translations["S0"].get(block.block_id, "")[:500],
-                "S1": translations["S1"].get(block.block_id, "")[:500],
-            }
-        )
+        row = {
+            "block_id": block.block_id,
+            "source": block.text[:500],
+        }
+        for config, outputs in translations.items():
+            row[config] = outputs.get(block.block_id, "")[:500]
+        translated_samples.append(row)
     return {
         "translated": translated_samples,
         "passthrough_audit": [
