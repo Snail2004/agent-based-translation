@@ -252,11 +252,19 @@ def _configs_from_args(args: argparse.Namespace) -> list[str]:
 
 def _open_db(path: str, *, read_only: bool) -> sqlite3.Connection:
     if read_only:
-        db_path = Path(path).resolve()
-        conn = sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        return conn
+        return _open_readonly_db(Path(path))
+    return _open_writable_workdb(Path(path))
+
+
+def _open_readonly_db(path: Path) -> sqlite3.Connection:
+    db_path = path.resolve()
+    conn = sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def _open_writable_workdb(path: Path) -> sqlite3.Connection:
     return migrate_db(path)
 
 

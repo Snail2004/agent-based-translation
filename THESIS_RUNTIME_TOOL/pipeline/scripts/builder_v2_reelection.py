@@ -12,6 +12,7 @@ from typing import Any
 
 import requests
 
+from pipeline.lib.events import EventEmitter, NullEventEmitter
 from pipeline.prepass.builder_v2_decollision import normalize_target_key
 from pipeline.retrieval.context_builder import notebook_entries_to_term_rows
 
@@ -70,6 +71,9 @@ def main() -> int:
     parser.add_argument("--cache-db", default="")
     parser.add_argument("--timeout-sec", type=int, default=120)
     parser.add_argument("--context-vote-cap", type=int, default=30)
+    parser.add_argument("--event-log", default="")
+    parser.add_argument("--run-id", default="builder_v2_reelection")
+    parser.add_argument("--attempt-id", type=int, default=1)
     args = parser.parse_args()
 
     notebook_path = Path(args.notebook)
@@ -123,6 +127,26 @@ def main() -> int:
     }
     _write_json(out_dir / "watchlist.json", watchlist)
     _write_json(out_dir / "reelection_preflight.json", report)
+    emitter = _event_emitter(args)
+    emitter.emit(
+        "gate_pause",
+        stage="auditor",
+        script="builder_v2_reelection",
+        agent="ReElection",
+        payload={
+            "message": "Re-election watchlist generated; waiting for review before applying flips.",
+            "artifact_path": str(out_dir / "watchlist.json"),
+            "progress": {
+                "done": len(watchlist),
+                "total": len(watchlist),
+                "total_known": True,
+            },
+            "watchlist_size": len(watchlist),
+            "estimated_calls": estimate,
+            "watchlist_only": True,
+        },
+    )
+    emitter.close()
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
     if args.run_election:
@@ -155,6 +179,16 @@ def main() -> int:
             "STOP-A reached. Re-run election mode only after reviewer approves the watchlist."
         )
     return 0
+
+
+def _event_emitter(args: argparse.Namespace) -> EventEmitter | NullEventEmitter:
+    if not getattr(args, "event_log", ""):
+        return NullEventEmitter()
+    return EventEmitter(
+        Path(args.event_log),
+        run_id=str(getattr(args, "run_id", "") or "builder_v2_reelection"),
+        attempt_id=int(getattr(args, "attempt_id", 1) or 1),
+    )
 
 
 def build_watchlist(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:

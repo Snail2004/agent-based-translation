@@ -368,6 +368,69 @@ def test_confirm_token_must_match_exact_argv(tmp_path):
         assert exc.code == "confirm_token_mismatch"
 
 
+def test_estimate_preview_supports_one_button_script_and_binds_token(tmp_path):
+    from services.thesis_runs import (
+        build_argv,
+        generate_estimate_preview,
+        validate_api_gate,
+        validate_script,
+    )
+
+    validate_script("run_experiment_cascade")
+    preview = generate_estimate_preview(
+        job_id="one_button_job",
+        script="run_experiment_cascade",
+        extra_args=[
+            "--db",
+            str(tmp_path / "memory.sqlite3"),
+            "--configs",
+            "S1",
+            "--out-dir",
+            str(tmp_path / "reports"),
+        ],
+        tool_root=TOOL_ROOT,
+        jobs_root=tmp_path,
+    )
+
+    assert preview["preview_kind"] == "estimate_only"
+    assert preview["confirm_token"]
+    assert "--preflight-only" in preview["estimate_argv_preview"]
+    assert "--preflight-only" not in preview["argv_preview"]
+    assert preview["estimate_by_stage"][0]["script"] == "run_experiment_cascade"
+    token = preview["confirm_token"]
+    validate_api_gate(
+        allow_api=True,
+        script="run_experiment_cascade",
+        confirm_token=token,
+        job_id="one_button_job",
+        argv=preview["argv_preview"],
+    )
+
+    preview2 = generate_estimate_preview(
+        job_id="one_button_job",
+        script="run_experiment_cascade",
+        extra_args=["--db", str(tmp_path / "memory.sqlite3"), "--configs", "S1"],
+        tool_root=TOOL_ROOT,
+        jobs_root=tmp_path,
+    )
+    mismatched = build_argv(
+        script="run_experiment_cascade",
+        extra_args=["--db", str(tmp_path / "memory.sqlite3"), "--configs", "S0"],
+        allow_api=True,
+    )
+    try:
+        validate_api_gate(
+            allow_api=True,
+            script="run_experiment_cascade",
+            confirm_token=preview2["confirm_token"],
+            job_id="one_button_job",
+            argv=mismatched,
+        )
+        assert False, "Expected mismatch"
+    except Exception as exc:
+        assert getattr(exc, "code", "") == "confirm_token_mismatch"
+
+
 def test_route_real_snapshot_script_zero_api(tmp_path, monkeypatch):
     db_path = _make_doc_db(tmp_path)
     out_path = tmp_path / "snapshot.json"

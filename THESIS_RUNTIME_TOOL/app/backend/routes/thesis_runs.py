@@ -11,6 +11,7 @@ from services.thesis_runs import (
     RunControlError,
     RunRegistry,
     build_argv,
+    generate_estimate_preview,
     generate_prompt_preview,
     read_events,
     read_log,
@@ -145,6 +146,31 @@ def prompt_preview():
         preview = generate_prompt_preview(
             job_id=request.args.get("job_id", ""),
             script=request.args.get("script", "run_translate"),
+            db=request.args.get("db"),
+            chapters=_query_list("chapters"),
+            configs=_query_list("configs"),
+            config=request.args.get("config"),
+            profile=request.args.get("profile"),
+            experiment=request.args.get("experiment"),
+            cache=request.args.get("cache"),
+            report=request.args.get("report"),
+            context_budget=_query_int("context_budget"),
+            extra_args=_query_list("extra_args"),
+            python_exe=_python_exe(),
+            tool_root=_tool_root(),
+            jobs_root=_jobs_root(),
+        )
+        return ok(preview)
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+
+
+@bp.get("/thesis/runs/estimate-preview")
+def estimate_preview():
+    try:
+        preview = generate_estimate_preview(
+            job_id=request.args.get("job_id", ""),
+            script=request.args.get("script", ""),
             db=request.args.get("db"),
             chapters=_query_list("chapters"),
             configs=_query_list("configs"),

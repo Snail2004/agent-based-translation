@@ -3,7 +3,9 @@ from __future__ import annotations
 from pipeline.agents.llm_config import LLMConfig
 from pipeline.agents.llm_client import LLMUsage
 from pipeline.scripts.run_experiment_cascade import (
+    _base_report,
     _merge_scope_term,
+    _parse_configs,
     _source_surfaces_from_row,
     _target_forms_from_row,
     _run_t3_for_config,
@@ -103,3 +105,34 @@ def test_notebook_scope_expands_source_variants_and_preserve_forms() -> None:
     _merge_scope_term(terms, source="tensor", forms=["tenxơ"], origin="gold")
     assert list(terms) == ["tensor"]
     assert terms["tensor"]["forms"] == ["tensor", "tenxơ"]
+
+def test_cascade_configs_support_one_arm_and_report_arm_mode() -> None:
+    assert _parse_configs("S1") == ["S1"]
+    assert _parse_configs("S0,S1") == ["S0", "S1"]
+
+    single = _base_report(
+        mode="preflight",
+        experiment_id="exp",
+        chapter="ch",
+        configs=["S1"],
+        endpoint_report={"status": "available"},
+        frozen_hash_before="64D9890000000000",
+        frozen_hash_after="64D9890000000000",
+        workdb_hash_before="abc",
+        workdb_hash_after="abc",
+        elapsed_seconds=0.1,
+    )
+    multi = _base_report(
+        mode="preflight",
+        experiment_id="exp",
+        chapter="ch",
+        configs=["S0", "S1"],
+        endpoint_report={"status": "available"},
+        frozen_hash_before="64D9890000000000",
+        frozen_hash_after="64D9890000000000",
+        workdb_hash_before="abc",
+        workdb_hash_after="abc",
+        elapsed_seconds=0.1,
+    )
+    assert single["arm_mode"] == "single_arm"
+    assert multi["arm_mode"] == "multi_arm"

@@ -38,6 +38,14 @@ ALLOWLIST = frozenset(
         "build_index",
         "run_translate",
         "run_judge",
+        "run_experiment_cascade",
+        "builder_v2_reelection",
+        "preflight_check",
+        "score_sf_qe",
+        "score_sf_bt",
+        "probe_pj",
+        "score_pj",
+        "agreement_analysis",
         "score_consistency",
         "score_run",
         "snapshot_runs",
@@ -50,15 +58,28 @@ API_CAPABLE_SCRIPTS = frozenset(
         "run_translate",
         "run_judge",
         "build_index",
+        "run_experiment_cascade",
+        "score_sf_bt",
+        "probe_pj",
+        "score_pj",
     }
 )
 
 PREFLIGHT_ONLY_FLAGS = {
     "run_prepass": "--preflight-only",
     "run_translate": "--preflight-only",
+    "run_experiment_cascade": "--preflight-only",
+    "builder_v2_reelection": "--preflight-only",
 }
 
 PROMPT_PREVIEW_SUPPORTED = frozenset({"run_translate"})
+ESTIMATE_PREVIEW_SUPPORTED = frozenset(
+    {
+        "run_translate",
+        "run_experiment_cascade",
+        "builder_v2_reelection",
+    }
+)
 
 
 class RunControlError(Exception):
@@ -438,6 +459,101 @@ def generate_prompt_preview(
     }
 
 
+def generate_estimate_preview(
+    *,
+    job_id: str,
+    script: str,
+    db: str | None = None,
+    chapters: list[str] | None = None,
+    configs: list[str] | None = None,
+    config: str | None = None,
+    profile: str | None = None,
+    experiment: str | None = None,
+    cache: str | None = None,
+    report: str | None = None,
+    context_budget: int | None = None,
+    extra_args: list[str] | None = None,
+    python_exe: str | None = None,
+    tool_root: Path | None = None,
+    jobs_root: Path | None = None,
+) -> dict[str, Any]:
+    script = validate_script(script)
+    job = validate_job_id(job_id, required=True)
+    if script not in ESTIMATE_PREVIEW_SUPPORTED:
+        raise RunControlError(
+            "estimate_preview_not_supported",
+            f"Estimate preview is currently supported for {sorted(ESTIMATE_PREVIEW_SUPPORTED)} only.",
+            400,
+        )
+    tool = Path(tool_root or Path.cwd()).resolve()
+    jobs = Path(jobs_root or tool / "data" / "jobs").resolve()
+    db_path = resolve_job_db(db=db, job_id=job, jobs_root=jobs)
+    planned_run_id = f"run_{uuid.uuid4().hex[:12]}"
+    event_log_path = _event_log_path(jobs, planned_run_id)
+    common_kwargs = dict(
+        script=script,
+        python_exe=python_exe,
+        db=db_path,
+        chapters=chapters,
+        configs=configs,
+        config=config,
+        profile=profile,
+        experiment=experiment,
+        cache=cache,
+        report=report,
+        context_budget=context_budget,
+        extra_args=extra_args,
+        event_log=str(event_log_path),
+        run_id=planned_run_id,
+    )
+    estimate_argv = build_argv(allow_api=False, **common_kwargs)
+    run_argv = build_argv(allow_api=True, **common_kwargs)
+    token = _issue_preview_token(
+        job_id=job,
+        script=script,
+        argv=run_argv,
+        preview_kind="estimate_only",
+    )
+    return {
+        "preview_kind": "estimate_only",
+        "job_id": job,
+        "script": script,
+        "confirm_token": token,
+        "planned_run_id": planned_run_id,
+        "event_log_path": str(event_log_path),
+        "confirm_token_ttl_seconds": _CONFIRM_TOKEN_TTL_SECONDS,
+        "estimate_argv_preview": _redact_argv(estimate_argv),
+        "argv_preview": _redact_argv(run_argv),
+        "estimate_by_stage": [
+            {
+                "script": script,
+                "estimate_source": "script_preflight_or_estimate_only",
+                "cost_usd_estimate": None,
+            }
+        ],
+        "read_only": True,
+        "policy": {
+            "confirm_token_binding": "job_id + script + exact argv digest",
+            "orchestrator_note": "One-button orchestrator consumes this interface in a later step.",
+        },
+    }
+
+
+def _issue_preview_token(*, job_id: str, script: str, argv: list[str], preview_kind: str) -> str:
+    token = uuid.uuid4().hex
+    issued = PreviewToken(
+        token=token,
+        job_id=job_id,
+        script=script,
+        argv_digest=_argv_digest(argv),
+        issued_at=time.time(),
+        preview_kind=preview_kind,
+    )
+    with _token_lock:
+        _active_tokens[token] = issued
+    return token
+
+
 def spawn_run(registry: RunRegistry, run_id: str) -> None:
     entry = registry.get_run(run_id)
     if entry is None:
@@ -729,6 +845,20 @@ def build_argv(
     elif script == "snapshot_runs":
         _append_required(argv, "--db", db, "db")
         _append_required(argv, "--out", out, "out")
+    elif script in {
+        "run_experiment_cascade",
+        "builder_v2_reelection",
+        "preflight_check",
+        "score_sf_qe",
+        "score_sf_bt",
+        "probe_pj",
+        "score_pj",
+        "agreement_analysis",
+    }:
+        # One-button scripts have heterogeneous CLIs.  Until the orchestrator
+        # owns a typed command model, RunControl passes validated extra_args
+        # through and only adds generic cost-gate/event flags where supported.
+        pass
 
     if flag and flag not in argv:
         argv.append(flag)

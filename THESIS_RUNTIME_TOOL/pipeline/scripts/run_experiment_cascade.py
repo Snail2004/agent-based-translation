@@ -1107,6 +1107,7 @@ def _base_report(
         "experiment_id": experiment_id,
         "chapter": chapter,
         "configs": configs,
+        "arm_mode": "single_arm" if len(configs) == 1 else "multi_arm",
         "embedding": endpoint_report,
         "frozen_db_sha256_before": frozen_hash_before,
         "frozen_db_sha256_after": frozen_hash_after,

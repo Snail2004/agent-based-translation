@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import sys
 from collections import Counter
 
 from pipeline.scripts.builder_v2_reelection import (
@@ -126,3 +128,58 @@ def test_round2_challenger_needs_two_votes_and_more_than_incumbent() -> None:
     assert _winning_challenger(Counter({"điều chuẩn": 1, "chuẩn hóa": 0}), "chuẩn hóa") == ""
     assert _winning_challenger(Counter({"điều chuẩn": 2, "chuẩn hóa": 2}), "chuẩn hóa") == ""
     assert _winning_challenger(Counter({"điều chuẩn": 2, "chỉnh quy": 2, "chuẩn hóa": 0}), "chuẩn hóa") == ""
+
+def test_preflight_watchlist_emits_gate_pause_event(tmp_path, monkeypatch) -> None:
+    from pipeline.scripts import builder_v2_reelection
+
+    notebook = {
+        "entries": [
+            {
+                "concept_key": "population",
+                "canonical_source_term": "population",
+                "canonical_target_vi": "quan the",
+                "source_variants": [
+                    {
+                        "surface": "population",
+                        "occurrence_count": 2,
+                        "evidence_block_ids": ["b1", "b2"],
+                    }
+                ],
+                "target_variants": [{"text": "tong the"}],
+                "audit": {
+                    "audit_label": "polysemy_or_context_dependent",
+                    "injection_action": "context_sensitive_translate",
+                },
+            }
+        ]
+    }
+    notebook_path = tmp_path / "notebook.json"
+    out_dir = tmp_path / "out"
+    event_log = tmp_path / "events" / "reelection.jsonl"
+    notebook_path.write_text(json.dumps(notebook), encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "builder_v2_reelection",
+            "--notebook",
+            str(notebook_path),
+            "--out-dir",
+            str(out_dir),
+            "--preflight-only",
+            "--event-log",
+            str(event_log),
+            "--run-id",
+            "run_reelection",
+        ],
+    )
+
+    assert builder_v2_reelection.main() == 0
+    assert (out_dir / "watchlist.json").exists()
+    assert not (out_dir / "notebook_reelected.json").exists()
+    rows = [json.loads(line) for line in event_log.read_text(encoding="utf-8").splitlines()]
+    assert [row["event"] for row in rows] == ["gate_pause"]
+    payload = rows[0]["payload"]
+    assert payload["watchlist_only"] is True
+    assert payload["watchlist_size"] == 1
+    assert payload["artifact_path"].endswith("watchlist.json")
