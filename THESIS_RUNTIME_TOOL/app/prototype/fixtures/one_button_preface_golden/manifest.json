@@ -1,0 +1,377 @@
+{
+  "active_stage": null,
+  "argv_digest": "14E031BB035B9FCCB085E3F64E94C63F77A95BB013777DB41FE64E4106205401",
+  "attempt": 1,
+  "budget_cap_usd": 1.5,
+  "chapters": [
+    "d2l_preface"
+  ],
+  "created_at": "2026-07-05T21:05:37.285307+00:00",
+  "db_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\d2l_p1\\memory.sqlite3",
+  "ended_at": "2026-07-05T21:19:15.759361+00:00",
+  "event_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\run_events\\b6_real.jsonl",
+  "experiment": "one_button_b6_real",
+  "frozen_db_sha256_after": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+  "frozen_db_sha256_before": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+  "frozen_db_sha256_expected": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+  "heartbeat": {
+    "active_child_pid": 19044,
+    "child_returncode": null,
+    "last_stage_event_age_sec": 0.8,
+    "stage": "score_run_final"
+  },
+  "heartbeat_at": "2026-07-05T21:19:15.755537+00:00",
+  "job_id": "one_button_preface",
+  "owner_host": "SnailCute",
+  "owner_pid": 2504,
+  "owner_started_at": "2026-07-05T21:05:37.362465+00:00",
+  "phase_1_done": true,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "profile": "technical_d2l_v1",
+  "python": "C:\\Users\\nguye\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "run_dir": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real",
+  "run_id": "b6_real",
+  "schema": "one_button_manifest_v1",
+  "stages": [
+    {
+      "active_child_pid": 9740,
+      "argv_digest": "3D8F3B574B91B9432496082B0847A8D715FE31AF037BD14BFD9F34A49AAEB24B",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\builder_c2\\notebook.json",
+      "artifact_sha": "34A454B86B1466C3FA4F43D359C92A24BCD5F8EE8A5A8BD39E50AFFBD47C3F22",
+      "cost_bearing": true,
+      "ended_at": "2026-07-05T21:07:02.801507+00:00",
+      "estimate": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\builder_c2_cache.sqlite3",
+        "cost_bearing": true,
+        "estimate_argv_digest": "7E170D2A60E93E4318DC8BDAD293D1AB2D4E155ABCBCD61DF06641165EA28EE8",
+        "estimate_exit_code": 0,
+        "estimate_report_path": null,
+        "estimate_source": "script_estimate",
+        "estimate_stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\builder_c2_estimate.log",
+        "estimated_cost_cap_usd": 0.179244,
+        "script": "builder_v2_pilot",
+        "stage": "builder_c2"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "70038DDE7BD87565325B0AA5BF1E69472E93931CCF5C60E719700B5BA3831FB8",
+      "metadata": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\builder_c2_cache.sqlite3"
+      },
+      "name": "builder_c2",
+      "script": "builder_v2_pilot",
+      "stage_event_log_path": null,
+      "started_at": "2026-07-05T21:05:49.697302+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\builder_c2.log",
+      "workdb_sha_after_stage": null
+    },
+    {
+      "active_child_pid": 5232,
+      "argv_digest": "83262C4F89ABB306F3C9C91F2FC8A91C2013AC4522D4C468E78D40F0A8C1AFB9",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\builder_c3\\notebook_audited.json",
+      "artifact_sha": "C1440D82ADCF9C0CD9C2FE237B89FF9FD54B18878DC2502C055C2D1C0D16B8EC",
+      "cost_bearing": true,
+      "ended_at": "2026-07-05T21:07:37.797520+00:00",
+      "estimate": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\builder_c3_cache.sqlite3",
+        "cost_bearing": true,
+        "estimate_argv_digest": "8A7658DB750A117BC05E7A5C09EF01C9937047BB5A3895529E27F3773BEE39BB",
+        "estimate_exit_code": 0,
+        "estimate_report_path": null,
+        "estimate_source": "script_estimate",
+        "estimate_stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\auditor_c3_estimate.log",
+        "estimated_cost_cap_usd": 0.08143625,
+        "script": "builder_v2_c3_audit",
+        "stage": "auditor_c3"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "0F4BA7B2D9B0AD2FF6B04AC980D32FA9490ED4DD39518D6DF50425227685CFBF",
+      "metadata": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\builder_c3_cache.sqlite3"
+      },
+      "name": "auditor_c3",
+      "script": "builder_v2_c3_audit",
+      "stage_event_log_path": null,
+      "started_at": "2026-07-05T21:07:03.293418+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\auditor_c3.log",
+      "workdb_sha_after_stage": null
+    },
+    {
+      "active_child_pid": 55484,
+      "argv_digest": "B0A08A7EA36A1519C6C29D0DC7C1D8F62409D93DD52E379B71E336681F402F4A",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\builder_c35\\notebook_final.json",
+      "artifact_sha": "760E2BB6A6C9A132401B04321551F8AE2D793AC163310B14258A7FD685A903B6",
+      "cost_bearing": true,
+      "decollision_status": {
+        "final_notebook_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\builder_c35\\notebook_decollided.json",
+        "notebook_decollided_exists": true,
+        "notebook_promoted_exists": true
+      },
+      "ended_at": "2026-07-05T21:07:47.478669+00:00",
+      "estimate": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\builder_c35_cache.sqlite3",
+        "cost_bearing": true,
+        "estimate_argv_digest": "6E3C39D07237FEDF929E350B0728EE5387A52DD00CF0AD95F597C6ED4426172D",
+        "estimate_exit_code": 0,
+        "estimate_report_path": null,
+        "estimate_source": "script_estimate",
+        "estimate_stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\decollision_c35_estimate.log",
+        "estimated_cost_cap_usd": 0.0,
+        "script": "builder_v2_c35_decollision",
+        "stage": "decollision_c35"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "28F52B8288AC004A17E5B76B1AE67CF30AA2068DC99A4C7D43729E965DD9AD29",
+      "metadata": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\builder_c35_cache.sqlite3",
+        "decollision_final_notebook_candidates": [
+          "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\builder_c35\\notebook_decollided.json",
+          "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\builder_c35\\notebook_promoted.json"
+        ]
+      },
+      "name": "decollision_c35",
+      "script": "builder_v2_c35_decollision",
+      "stage_event_log_path": null,
+      "started_at": "2026-07-05T21:07:40.330935+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\decollision_c35.log",
+      "workdb_sha_after_stage": null
+    },
+    {
+      "active_child_pid": 35516,
+      "argv_digest": "107250EB8235E4A6F5B2546F6C4B74BB8F6D5ADC4CDC711091B171CEC16012F8",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\reelection\\watchlist.json",
+      "artifact_sha": "035D82D0759363BA28964D92C715A4F59CE2F3FA4430629B790DB1312CD022C6",
+      "cost_bearing": false,
+      "ended_at": "2026-07-05T21:07:49.009729+00:00",
+      "estimate": {
+        "cache_path": null,
+        "cost_bearing": false,
+        "estimate_source": "static_zero",
+        "estimated_cost_cap_usd": 0.0,
+        "script": "builder_v2_reelection",
+        "stage": "reelection_watchlist"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "8BC9122D9AD0FCD6D68EC70C78CC83E46F181D916E46FD2A4F7DB3DB6971F9D2",
+      "metadata": {
+        "agent": "ReElection"
+      },
+      "name": "reelection_watchlist",
+      "script": "builder_v2_reelection",
+      "stage_event_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stage_events\\reelection_watchlist.a1.jsonl",
+      "started_at": "2026-07-05T21:07:47.498133+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\reelection_watchlist.log",
+      "workdb_sha_after_stage": null
+    },
+    {
+      "active_child_pid": 11188,
+      "argv_digest": "9CA0CE63D4171FA278BD9E41F652C136A7508483BBFC7ECC34252373A183E4B1",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\reports\\translate.json",
+      "artifact_sha": "6C83F310AC1939EB21D0662A77A0133F57A46F8A85F151C8AA963547804745A5",
+      "cost_bearing": true,
+      "ended_at": "2026-07-05T21:08:34.741827+00:00",
+      "estimate": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\translate_cache.sqlite3",
+        "cost_bearing": true,
+        "estimate_argv_digest": "D1157CF28E40AC079A46CB3E90492EF5163529B7E42A13C42823422F85A00278",
+        "estimate_exit_code": 0,
+        "estimate_report_path": null,
+        "estimate_source": "script_estimate",
+        "estimate_stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\translator_estimate.log",
+        "estimated_cost_cap_usd": 0.0,
+        "script": "run_translate",
+        "stage": "translator"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "6ED4D4BBC5658CE5B1BB9E7ED65BCC21A803D382C30505FBE30BF7D66F7877B7",
+      "metadata": {
+        "agent": "Translator",
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\translate_cache.sqlite3"
+      },
+      "name": "translator",
+      "script": "run_translate",
+      "stage_event_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stage_events\\translate.a1.jsonl",
+      "started_at": "2026-07-05T21:07:49.522233+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\translator.log",
+      "workdb_sha_after_stage": "52A69CDCFDB437AEF840DD194F635B0327C6538AE7997121E0C6DF2A2EEB72C1"
+    },
+    {
+      "active_child_pid": 30356,
+      "argv_digest": "801B7D7A32A7622F7E01741C1FBC0E31DD0338F594DB1564F75B6B1219F408FB",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\reports\\score_run_phase_1.json",
+      "artifact_sha": "257F73B3853C1C5745A887176658C48F31E086586F52D4BBED8CCC97A4676319",
+      "cost_bearing": false,
+      "ended_at": "2026-07-05T21:08:45.873010+00:00",
+      "estimate": {
+        "cache_path": null,
+        "cost_bearing": false,
+        "estimate_source": "static_zero",
+        "estimated_cost_cap_usd": 0.0,
+        "script": "score_run",
+        "stage": "score_run_phase_1"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "812A6F24D6D0C88B18EDADAE3C34A34281661FDB85BC91AEE40E06FEE1E41FBC",
+      "metadata": {},
+      "name": "score_run_phase_1",
+      "script": "score_run",
+      "stage_event_log_path": null,
+      "started_at": "2026-07-05T21:08:34.798047+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\score_run_phase_1.log",
+      "workdb_sha_after_stage": "52A69CDCFDB437AEF840DD194F635B0327C6538AE7997121E0C6DF2A2EEB72C1"
+    },
+    {
+      "active_child_pid": 45432,
+      "argv_digest": "6782C375BA8E239D974D1CDEA7F10FA229C55AA04263075715BC1A9A9B15F844",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\cascade\\d2l_preface_cascade_summary.json",
+      "artifact_sha": "D9CDDDBDB1194C12AF70CF2C629BB5D13931743780CD94E742ADE0C2B910B456",
+      "cost_bearing": true,
+      "ended_at": "2026-07-05T21:13:23.455991+00:00",
+      "estimate": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\cascade_cache",
+        "cost_bearing": true,
+        "estimate_argv_digest": "3104BADC3FAC9397DC43270F3A5BE98AB4E0185BDE257DADA9D4266F375A0D3C",
+        "estimate_exit_code": 0,
+        "estimate_report_path": null,
+        "estimate_source": "script_estimate",
+        "estimate_stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\cascade_estimate.log",
+        "estimated_cost_cap_usd": 0.0,
+        "script": "run_experiment_cascade",
+        "stage": "cascade"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "F4EEB6D4E2B5865C04C51BD973A7C3010C9273CA958B1D3885DD02DB547D1936",
+      "metadata": {
+        "agent": "Cascade",
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\cache\\cascade_cache"
+      },
+      "name": "cascade",
+      "script": "run_experiment_cascade",
+      "stage_event_log_path": null,
+      "started_at": "2026-07-05T21:09:03.036900+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\cascade.log",
+      "workdb_sha_after_stage": "52A69CDCFDB437AEF840DD194F635B0327C6538AE7997121E0C6DF2A2EEB72C1"
+    },
+    {
+      "active_child_pid": 53356,
+      "argv_digest": "F522766083F4640FC21BB09A8C5A0ED89DCE63B492CB5D0151124635DD47A5A5",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\reports\\sf_qe.json",
+      "artifact_sha": "B4D1767F20054C28FC3976EC2D6AACAC49430A870800F649A3FB40085B7292CD",
+      "cost_bearing": false,
+      "ended_at": "2026-07-05T21:15:05.154846+00:00",
+      "estimate": {
+        "cache_path": null,
+        "cost_bearing": false,
+        "estimate_source": "static_zero",
+        "estimated_cost_cap_usd": 0.0,
+        "script": "score_sf_qe",
+        "stage": "sf_qe"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "812A6F24D6D0C88B18EDADAE3C34A34281661FDB85BC91AEE40E06FEE1E41FBC",
+      "metadata": {
+        "agent": "SF-QE"
+      },
+      "name": "sf_qe",
+      "script": "score_sf_qe",
+      "stage_event_log_path": null,
+      "started_at": "2026-07-05T21:13:23.508673+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\sf_qe.log",
+      "workdb_sha_after_stage": "52A69CDCFDB437AEF840DD194F635B0327C6538AE7997121E0C6DF2A2EEB72C1"
+    },
+    {
+      "active_child_pid": 60620,
+      "argv_digest": "6AE53C933F9ABE9B5198BDF0888CBF3100BD0C038214FFFA2AF2388C97A82BE1",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\reports\\sf_bt.json",
+      "artifact_sha": "7929C401DC1127114F6BFE859B38FD17D6F777BEFD65F63B299155878C6A4832",
+      "cost_bearing": true,
+      "ended_at": "2026-07-05T21:19:03.340021+00:00",
+      "estimate": {
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_pilot_cache.sqlite3",
+        "cost_bearing": true,
+        "estimate_argv_digest": "1CFDDD380D88FCC7D635500A9D57201F72336086AEC8B415E1137EB179F3F85D",
+        "estimate_exit_code": 0,
+        "estimate_report_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\reports\\sf_bt_estimate.json",
+        "estimate_source": "script_estimate",
+        "estimate_stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\sf_bt_estimate.log",
+        "estimated_cost_cap_usd": 0.06941748,
+        "script": "score_sf_bt",
+        "stage": "sf_bt"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "812A6F24D6D0C88B18EDADAE3C34A34281661FDB85BC91AEE40E06FEE1E41FBC",
+      "metadata": {
+        "agent": "SF-BT",
+        "cache_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\exp_s0s1_builderv2_v1\\sf_bt_pilot_cache.sqlite3"
+      },
+      "name": "sf_bt",
+      "script": "score_sf_bt",
+      "stage_event_log_path": null,
+      "started_at": "2026-07-05T21:15:09.409105+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\sf_bt.log",
+      "workdb_sha_after_stage": "52A69CDCFDB437AEF840DD194F635B0327C6538AE7997121E0C6DF2A2EEB72C1"
+    },
+    {
+      "active_child_pid": 19044,
+      "argv_digest": "307B07EEFB5DFFF0D99E3359B6F9EC69A9A7762C9CA3D49F353B479B9FAA85E6",
+      "artifact_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\reports\\score_run_final.json",
+      "artifact_sha": "E8DCEA86FC4C6810DE80CF202919D5BF0FA6E5B09309BD42BA37C73EC2DAF3B0",
+      "cost_bearing": false,
+      "ended_at": "2026-07-05T21:19:15.736522+00:00",
+      "estimate": {
+        "cache_path": null,
+        "cost_bearing": false,
+        "estimate_source": "static_zero",
+        "estimated_cost_cap_usd": 0.0,
+        "script": "score_run",
+        "stage": "score_run_final"
+      },
+      "exit_code": 0,
+      "input_artifact_sha": "812A6F24D6D0C88B18EDADAE3C34A34281661FDB85BC91AEE40E06FEE1E41FBC",
+      "metadata": {
+        "agent": "Report"
+      },
+      "name": "score_run_final",
+      "script": "score_run",
+      "stage_event_log_path": null,
+      "started_at": "2026-07-05T21:19:03.396512+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\score_run_final.log",
+      "workdb_sha_after_stage": "52A69CDCFDB437AEF840DD194F635B0327C6538AE7997121E0C6DF2A2EEB72C1"
+    },
+    {
+      "active_child_pid": 36496,
+      "argv_digest": "48F5BD82A370955000CBB70C840543430BF8403BB76A5C327E43BBF5FDFFDB59",
+      "artifact_path": null,
+      "artifact_sha": null,
+      "cost_bearing": false,
+      "ended_at": "2026-07-05T21:05:48.948286+00:00",
+      "exit_code": 0,
+      "input_artifact_sha": "738F763B6696315F54109F0F2CD561E9A26D58878FA90F49B390D0EE4B89188C",
+      "metadata": {
+        "agent": "PreflightCheck"
+      },
+      "name": "preflight_check",
+      "script": "preflight_check",
+      "stage_event_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stage_events\\preflight_check.a1.jsonl",
+      "started_at": "2026-07-05T21:05:37.368397+00:00",
+      "status": "done",
+      "stdout_log_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\stdout\\preflight_check.log",
+      "workdb_sha_after_stage": null
+    }
+  ],
+  "status": "done",
+  "v": 1,
+  "with_s0": false,
+  "workdb_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\workdb.sqlite3",
+  "workdb_sha256_after": "52A69CDCFDB437AEF840DD194F635B0327C6538AE7997121E0C6DF2A2EEB72C1",
+  "workdb_sha256_before": null
+}

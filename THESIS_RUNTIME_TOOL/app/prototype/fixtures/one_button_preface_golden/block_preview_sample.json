@@ -1,0 +1,82 @@
+[
+  {
+    "block_id": "d2l_preface_index_b001",
+    "config": "S1",
+    "source_text": "# Preface",
+    "target_text": "# Lời nói đầu",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_001"
+  },
+  {
+    "block_id": "d2l_preface_index_b002",
+    "config": "S1",
+    "source_text": "Just a few years ago, there were no legions of deep learning scientists\ndeveloping intelligent products and services at major companies and startups.\nWhen we entered the field, machine learning \ndid not command headlines in daily newspapers.\nOur parents had no idea what machine learning was,\nlet alone why we might prefer it to a career in medicine or law.\nMachine learning was a blue skies academic discipline\nwhose industrial significance was limited\nto a narrow set of real-world applications,\nincluding speech recognition and computer vision.\nMoreover, many of these applications\nrequired so much domain knowledge\nthat they were often regarded as entirely separate areas \nfor which machine learning was one small component.\nAt that time, neural networks---the \npredecessors of the deep learning methods\nthat we focus on in this book---were \ngenerally regarded as outmoded.",
+    "target_text": "Chỉ vài năm trước, chưa hề có những đội ngũ đông đảo các nhà khoa học học sâu phát triển các sản phẩm và dịch vụ thông minh tại các công ty lớn và các startup. Khi chúng tôi bước vào lĩnh vực này, học máy chưa hề chiếm trang nhất trên các tờ báo hằng ngày. Cha mẹ chúng tôi không hề biết học máy là gì, chứ đừng nói đến việc vì sao chúng tôi có thể thích nó hơn một sự nghiệp trong y học hay luật. Học máy là một ngành học thuật đầy triển vọng, nhưng tầm quan trọng công nghiệp của nó chỉ giới hạn ở một nhóm hẹp các ứng dụng thực tế, bao gồm nhận dạng giọng nói và thị giác máy tính. Hơn nữa, nhiều ứng dụng trong số này đòi hỏi quá nhiều tri thức miền đến mức chúng thường được xem là những lĩnh vực hoàn toàn tách biệt, trong đó học máy chỉ là một thành phần nhỏ. Vào thời điểm đó, các mạng nơ-ron---những tiền thân của các phương pháp học sâu mà chúng tôi tập trung trong cuốn sách này---thường bị xem là lỗi thời.",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_001"
+  },
+  {
+    "block_id": "d2l_preface_index_b003",
+    "config": "S1",
+    "source_text": "In just the past five years, deep learning has taken the world by surprise,\ndriving rapid progress in such diverse fields \nas computer vision, natural language processing, \nautomatic speech recognition, reinforcement learning, \nand biomedical informatics.\nMoreover, the success of deep learning\non so many tasks of practical interest\nhas even catalyzed developments \nin theoretical machine learning and statistics.\nWith these advances in hand, \nwe can now build cars that drive themselves\nwith more autonomy than ever before \n(and less autonomy than some companies might have you believe),\nsmart reply systems that automatically draft the most mundane emails,\nhelping people dig out from oppressively large inboxes,\nand software agents that dominate the world's best humans\nat board games like Go, a feat once thought to be decades away.\nAlready, these tools exert ever-wider impacts on industry and society,\nchanging the way movies are made, diseases are diagnosed,\nand playing a growing role in basic sciences---from astrophysics to biology.",
+    "target_text": "Trong chỉ năm năm qua, học sâu đã làm cả thế giới bất ngờ, thúc đẩy tiến bộ nhanh chóng trong những lĩnh vực đa dạng như thị giác máy tính, xử lý ngôn ngữ tự nhiên, nhận dạng tiếng nói tự động, học tăng cường, và tin học y sinh. Hơn nữa, thành công của học sâu trên rất nhiều nhiệm vụ có ý nghĩa thực tiễn thậm chí còn xúc tác cho các phát triển trong học máy lý thuyết và thống kê. Với những tiến bộ này trong tay, giờ đây chúng ta có thể xây dựng những chiếc xe tự lái với quyền tự chủ cao hơn bao giờ hết (và ít quyền tự chủ hơn so với điều mà một số công ty có thể khiến bạn tin), các hệ thống trả lời thông minh tự động soạn thảo những email tầm thường nhất, giúp mọi người thoát khỏi những hộp thư đến quá tải ngột ngạt, và các tác tử phần mềm thống trị những con người giỏi nhất thế giới trong các trò chơi bàn cờ như Go, một kỳ tích từng được cho là còn cách hàng thập kỷ. Ngay từ bây giờ, những công cụ này đang tạo ra tác động ngày càng rộng lớn lên công nghiệp và xã hội, thay đổi cách phim ảnh được làm ra, bệnh tật được chẩn đoán, và đóng vai trò ngày càng lớn trong các khoa học cơ bản---từ vật lý thiên văn đến sinh học.",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_001"
+  },
+  {
+    "block_id": "d2l_preface_index_b004",
+    "config": "S1",
+    "source_text": "## About This Book",
+    "target_text": "## Về cuốn sách này",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_001"
+  },
+  {
+    "block_id": "d2l_preface_index_b005",
+    "config": "S1",
+    "source_text": "This book represents our attempt to make deep learning approachable,\nteaching you the *concepts*, the *context*, and the *code*.",
+    "target_text": "Cuốn sách này là nỗ lực của chúng tôi nhằm làm cho học sâu trở nên dễ tiếp cận, dạy bạn về *các khái niệm*, *bối cảnh*, và *mã nguồn*.",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_001"
+  },
+  {
+    "block_id": "d2l_preface_index_b006",
+    "config": "S1",
+    "source_text": "### One Medium Combining Code, Math, and HTML",
+    "target_text": "### Một phương tiện kết hợp mã nguồn, toán học, và HTML",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_001"
+  },
+  {
+    "block_id": "d2l_preface_index_b007",
+    "config": "S1",
+    "source_text": "For any computing technology to reach its full impact,\nit must be well-understood, well-documented, and supported by\nmature, well-maintained tools.\nThe key ideas should be clearly distilled,\nminimizing the onboarding time needing \nto bring new practitioners up to date.\nMature libraries should automate common tasks,\nand exemplar code should make it easy for practitioners\nto modify, apply, and extend common applications to suit their needs.\nTake dynamic web applications as an example.\nDespite a large number of companies, like Amazon,\ndeveloping successful database-driven web applications in the 1990s,\nthe potential of this technology to aid creative entrepreneurs\nhas been realized to a far greater degree in the past ten years,\nowing in part to the development of powerful, well-documented frameworks.",
+    "target_text": "Để bất kỳ công nghệ tính toán nào phát huy hết tác động của nó, nó phải được hiểu rõ, được ghi chép đầy đủ, và được hỗ trợ bởi các công cụ trưởng thành, được duy trì tốt. Những ý tưởng then chốt cần được chắt lọc rõ ràng, giảm thiểu thời gian nhập môn cần thiết để đưa những người thực hành mới theo kịp. Các thư viện trưởng thành nên tự động hóa các tác vụ phổ biến, và mã nguồn mẫu nên giúp người thực hành dễ dàng sửa đổi, áp dụng, và mở rộng các ứng dụng phổ biến cho phù hợp với nhu cầu của họ. Hãy lấy các ứng dụng web động làm ví dụ. Mặc dù trong thập niên 1990 có rất nhiều công ty, như Amazon, phát triển thành công các ứng dụng web dựa trên cơ sở dữ liệu, tiềm năng của công nghệ này trong việc hỗ trợ các doanh nhân sáng tạo chỉ thực sự được hiện thực hóa ở mức độ lớn hơn nhiều trong mười năm qua, một phần nhờ sự phát triển của các khung làm việc mạnh mẽ, được ghi chép đầy đủ.",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_001"
+  },
+  {
+    "block_id": "d2l_preface_index_b008",
+    "config": "S1",
+    "source_text": "Testing the potential of deep learning presents unique challenges\nbecause any single application brings together various disciplines.\nApplying deep learning requires simultaneously understanding\n(i) the motivations for casting a problem in a particular way;\n(ii) the mathematical form of a given model;\n(iii) the optimization algorithms for fitting the models to data;\n(iv) the statistical principles that tell us \nwhen we should expect our models \nto generalize to unseen data\nand practical methods for certifying \nthat they have, in fact, generalized;\nand (v) the engineering techniques\nrequired to train models efficiently,\nnavigating the pitfalls of numerical computing\nand getting the most out of available hardware.\nTeaching both the critical thinking skills \nrequired to formulate problems,\nthe mathematics to solve them,\nand the software tools to implement those solutions \nall in one place presents formidable challenges.\nOur goal in this book is to present a unified resource\nto bring would-be practitioners up to speed.",
+    "target_text": "Việc kiểm chứng tiềm năng của học sâu đặt ra những thách thức đặc biệt vì bất kỳ ứng dụng đơn lẻ nào cũng kết hợp nhiều ngành khác nhau. Áp dụng học sâu đòi hỏi đồng thời phải hiểu (i) động cơ để đặt một bài toán theo một cách nhất định; (ii) dạng toán học của một mô hình cho trước; (iii) các thuật toán tối ưu để khớp các mô hình với dữ liệu; (iv) các nguyên lý thống kê cho chúng ta biết khi nào nên kỳ vọng các mô hình của mình sẽ khái quát hóa sang dữ liệu chưa thấy và các phương pháp thực tiễn để xác nhận rằng chúng thực sự đã khái quát hóa; và (v) các kỹ thuật kỹ thuật cần thiết để huấn luyện mô hình hiệu quả, điều hướng những cạm bẫy của tính toán số và khai thác tối đa phần cứng sẵn có. Việc dạy cả kỹ năng tư duy phản biện cần để hình thành bài toán, toán học để giải chúng, và các công cụ phần mềm để triển khai những lời giải đó, tất cả trong cùng một nơi, đặt ra những thách thức to lớn. Mục tiêu của chúng tôi trong cuốn sách này là प्रस्तुत một tài nguyên thống nhất để giúp những người muốn thực hành nhanh chóng bắt kịp.",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_001"
+  },
+  {
+    "block_id": "d2l_preface_index_b009",
+    "config": "S1",
+    "source_text": "When we started this book project,\nthere were no resources that simultaneously\n(i) were up to date; (ii) covered the full breadth\nof modern machine learning with substantial technical depth;\nand (iii) interleaved exposition \nof the quality one expects \nfrom an engaging textbook \nwith the clean runnable code\nthat one expects to find in hands-on tutorials.\nWe found plenty of code examples for\nhow to use a given deep learning framework\n(e.g., how to do basic numerical computing with matrices in TensorFlow)\nor for implementing particular techniques\n(e.g., code snippets for LeNet, AlexNet, ResNets, etc.)\nscattered across various blog posts and GitHub repositories.\nHowever, these examples typically focused on\n*how* to implement a given approach,\nbut left out the discussion of \n*why* certain algorithmic decisions are made.\nWhile some interactive resources \nhave popped up sporadically\nto address a particular topic, \ne.g., the engaging blog posts\npublished on the website [Distill](http://distill.pub), or personal blogs,\nthey only covered selected topics in deep learning,\nand often lacked associated code.\nOn the other hand, while several deep learning textbooks \nhave emerged---e.g., :cite:`Goodfellow.Bengio.Courville.2016`, \nwhich offers a comprehensive survey \non the basics of deep learning---these \nresources do not marry the descriptions\nto realizations of the concepts in code,\nsometimes leaving readers clueless \nas to how to implement them.\nMoreover, too many resources \nare hidden behind the paywalls\nof commercial course providers.",
+    "target_text": "Khi chúng tôi bắt đầu dự án cuốn sách này, không có tài nguyên nào đồng thời (i) được cập nhật; (ii) bao quát toàn bộ phạm vi của học máy hiện đại với độ sâu kỹ thuật đáng kể; và (iii) đan xen phần trình bày có chất lượng mà người ta mong đợi từ một giáo trình hấp dẫn với mã nguồn chạy được gọn gàng mà người ta mong đợi tìm thấy trong các hướng dẫn thực hành. Chúng tôi tìm thấy rất nhiều ví dụ mã nguồn về cách sử dụng một khung học sâu nhất định (ví dụ, cách thực hiện tính toán số cơ bản với ma trận trong TensorFlow) hoặc về việc triển khai các kỹ thuật cụ thể (ví dụ, các đoạn mã cho LeNet, AlexNet, ResNets, v.v.) rải rác trên nhiều bài blog và kho GitHub. Tuy nhiên, những ví dụ này thường tập trung vào *cách* triển khai một phương pháp nhất định, nhưng bỏ qua phần thảo luận về *vì sao* một số quyết định thuật toán được đưa ra. Mặc dù thỉnh thoảng có một số tài nguyên tương tác xuất hiện để giải quyết một chủ đề cụ thể, chẳng hạn như các bài blog hấp dẫn được đăng trên trang web [Distill](http://distill.pub), hoặc các blog cá nhân, chúng chỉ bao quát một số chủ đề chọn lọc trong học sâu, và thường thiếu mã nguồn đi kèm. Mặt khác, mặc dù đã xuất hiện một số giáo trình học sâu---ví dụ, :cite:`Goodfellow.Bengio.Courville.2016`, cung cấp một khảo sát toàn diện về những điều cơ bản của học sâu---những tài nguyên này không gắn phần mô tả với hiện thực hóa các khái niệm trong mã nguồn, đôi khi khiến độc giả không biết phải triển khai chúng như thế nào. Hơn nữa, quá nhiều tài nguyên bị ẩn sau các bức tường phí của các nhà cung cấp khóa học thương mại.",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_002"
+  },
+  {
+    "block_id": "d2l_preface_index_b010",
+    "config": "S1",
+    "source_text": "We set out to create a resource that could\n(i) be freely available for everyone;\n(ii) offer sufficient technical depth \nto provide a starting point on the path\nto actually becoming an applied machine learning scientist;\n(iii) include runnable code, showing readers\n*how* to solve problems in practice;\n(iv) allow for rapid updates, both by us\nand also by the community at large;\nand (v) be complemented by a [forum](http://discuss.d2l.ai)\nfor interactive discussion of technical details and to answer questions.",
+    "target_text": "Chúng tôi đặt mục tiêu tạo ra một tài nguyên có thể (i) được cung cấp miễn phí cho mọi người; (ii) có đủ độ sâu kỹ thuật để cung cấp một điểm khởi đầu trên con đường thực sự trở thành một nhà khoa học học máy ứng dụng; (iii) bao gồm mã nguồn chạy được, cho thấy độc giả *cách* giải quyết vấn đề trong thực tế; (iv) cho phép cập nhật nhanh chóng, cả bởi chúng tôi lẫn cộng đồng nói chung; và (v) được bổ trợ bởi một [diễn đàn](http://discuss.d2l.ai) để thảo luận tương tác về các chi tiết kỹ thuật và trả lời câu hỏi.",
+    "model": "gpt-5.4-mini",
+    "window_id": "w_d2l_preface_002"
+  }
+]

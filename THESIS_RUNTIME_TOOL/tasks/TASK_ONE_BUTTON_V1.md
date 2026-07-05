@@ -312,3 +312,36 @@ Da doc het 3 diff (611 dong), tu chay full suite 450 passed, frozen 64D989 + wor
 Kiem dia: cache lich su CHI co translate_cache/sf_bt/pj; builder C2/C3/C35 KHONG co cache lich su (chi 44 rows do dang tu smoke loi) -> "chuong da co cache" cho ca chuoi la khong ton tai. Ghep cache nua voi tren MLP (641 blocks) van ton $0.65+ cho builder C2 -> dat hon chay FRESH tren chuong nho.
 CHOT phuong an: B6 = d2l_preface (50 blocks), FRESH, S1-only, budget-cap $1.50. Estimate 0-API da chay (job one_button_preface, run smoke_b6_preface): preflight 5/5 PASS, builder C2 cap $0.1792; du phong translator ~$0.1-0.2 cap, sf_bt ~$0.15 cap, cascade T3 local ~$0, PJ skip. Tong cap du kien ~$0.5-0.7, chi that ~mot nua. Smoke nay dong thoi la TONG DUYET kich ban demo that (acceptance goc = chuong chua tung chay).
 Kich ban: (1) estimate-preview -> confirm -> create qua API that; (2) PAUSE giua chung qua endpoint -> manifest paused dung before_stage; (3) resume qua endpoint (token) -> stage cu skip -> run_done; (4) mot run nhap rieng -> cancel endpoint -> taskkill sach (tasklist kiem); (5) bao cao lech estimate-vs-that TUNG STAGE (du lieu quyet P2-7). CHUA CHAY — cho user xac nhan chi phi.
+
+## 2r. B6 SMOKE THAT — LAN CHAY THAT DAU TIEN END-TO-END (Claude tu chay + verify, 2026-07-06) — DAT
+
+Chuong d2l_preface (45 blocks translatable / 7 window), S1-only, budget-cap $1.50, FRESH (chua tung chay). Claude tu bam chay orchestrator that, theo doi, boc so.
+
+### KET QUA: status=done, 10/10 stage + preflight exit 0. Frozen 64D989 + workdb production 92229381 BAT BIEN (tu tinh truoc/sau). Key-scan run dir + bundle: sach.
+
+### CHI PHI THAT vs ESTIMATE (du lieu quyet P2-7)
+| stage | estimate cap | THAT | ghi chu |
+|---|---|---|---|
+| builder_c2 | $0.1792 | $0.0275 | cap thu ~6.5x (bao thu) |
+| auditor_c3 | $0.0814 | $0.0158 | cap ~5x |
+| decollision_c35 | $0 | $0 | code, khong LLM |
+| reelection | $0 | $0 | local |
+| translator | **$0 (MU)** | $0.0161 | preflight token->USD doc 0 tai ranh gioi (chua ro vi sao; nho nen khong nguy) |
+| score_phase_1 | $0 | $0 | local |
+| cascade | **$0 (MU)** | $0.00026 | MU voi budget gate orchestrator; noi bo T3 cap $0.064 + gemma local + GPT-fallback fresh $0.00026 do |
+| sf_qe | $0 | $0 | CometKiwi local CPU |
+| sf_bt | $0.0694 | $0.0534 | cap ~1.3x (sat nhat) |
+| score_final | $0 | $0 | local |
+| **TONG** | **$0.33 cap** | **~$0.113** | THAT = 34% cap |
+
+### PHAT HIEN
+1. Cap bao thu, gate KHONG BAO GIO under-protect tren stage no NHIN THAY (builder/auditor/sf_bt). An toan.
+2. P2-7 XAC NHAN co du lieu: cascade MU voi budget gate orchestrator ($0 est) nhung THAT ~$0 (T3 local) -> vo hai o quy mo nay; gate noi bo --confirm-usd + T3 local do. Tren chuong LON co GPT-fallback nhieu thi con so nay khac -> van nen vá truoc khi scale.
+3. MOI: translator CUNG doc $0 tai ranh gioi (khong chi cascade) -> co HAI stage mu, budget gate tich luy under-count = translator+cascade. Preface nho nen $0.016+$0.0003 khong dang; phai dieu tra truoc khi chay chuong lon.
+4. MOI (quan trong cho UI): ban dich production nam `translation_runs.output_text` (khoa block_id+config+experiment), KHONG phai `translation_records` (bang nay RONG). Preview-fetch cua Console/report PHAI doc translation_runs. Da ghi trong README bundle.
+5. Ban dich tieng Viet THAT, chat luong tot (vd "# Preface"->"# Loi noi dau", "deep learning"->"hoc sau").
+
+### GOLDEN FIXTURE (tra loi yeu cau user: chay that 1 lan -> mo phong vo han $0)
+Commit `app/prototype/fixtures/one_button_preface_golden/`: events.jsonl (134 su kien) + manifest + block_preview_sample.json (10 block EN->VI that) + reports (translate/sf_bt/watchlist) + README. Da CHUNG MINH replay: `replay_thesis_events --fixture ... --instant` tai lap 134/134 su kien khop. Tu day sua UI/animation KHONG ton tien. Fixture dong cung o v0.8.0; muon them event type moi thi chup lai hoac dung bo synthetic 20/20.
+
+### CHUA LAM (khong chan): live-test pause/resume/cancel qua HTTP endpoint tren run that (da co test 0-API pass o UI-2); se chay live khi noi frontend [DICH]. B6 uu tien ban ghi sach + fixture -> da co.

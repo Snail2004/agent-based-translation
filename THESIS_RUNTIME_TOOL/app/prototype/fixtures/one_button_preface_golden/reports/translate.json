@@ -1,0 +1,240 @@
+{
+  "experiment_id": "one_button_b6_real",
+  "profile": "technical_d2l_v1",
+  "chapters": [
+    "d2l_preface"
+  ],
+  "run": {
+    "experiment_id": "one_button_b6_real",
+    "profile": "technical_d2l_v1",
+    "db": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\d2l_p1\\memory.sqlite3",
+    "frozen_db_sha256_before": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "frozen_db_sha256_after": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "workdb_path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\workdb.sqlite3",
+    "workdb_sha256_after": "52A69CDCFDB437AEF840DD194F635B0327C6538AE7997121E0C6DF2A2EEB72C1",
+    "memory_notebook": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\builder_c35\\notebook_final.json",
+    "context_budget": 1500,
+    "max_windows": 0,
+    "llm_config": "pipeline/configs/llm_translate.yaml",
+    "zero_api": false
+  },
+  "preflight": {
+    "resolved_chapters": [
+      "d2l_preface"
+    ],
+    "windows_original": 7,
+    "windows_truncated_to": null,
+    "window_ids": [
+      "w_d2l_preface_001",
+      "w_d2l_preface_002",
+      "w_d2l_preface_003",
+      "w_d2l_preface_004",
+      "w_d2l_preface_005",
+      "w_d2l_preface_006",
+      "w_d2l_preface_007"
+    ],
+    "windows": 7,
+    "blocks": 45,
+    "block_type_counts": {
+      "code": 4,
+      "heading": 11,
+      "image": 1,
+      "prose": 34
+    },
+    "translatable_block_type_counts": {
+      "heading": 11,
+      "prose": 34
+    },
+    "registry": {
+      "raw_registry": 1608,
+      "translation_eligible": 1369,
+      "preserve_count": 239,
+      "hapax_dropped": 0
+    },
+    "memory_notebook": {
+      "pack_policy_counts": {
+        "notebook_total": 114,
+        "hard_translate": 54,
+        "preserve": 18,
+        "context_sensitive": 6,
+        "report_only": 36,
+        "repair_queue": 0,
+        "pack_total": 78
+      },
+      "repair_queue_count": 0
+    },
+    "configs": {
+      "S1": {
+        "windows": 7,
+        "prompt_tokens_min": 609,
+        "prompt_tokens_avg": 1449.43,
+        "prompt_tokens_max": 1751,
+        "prompt_tokens_total_est": 10146,
+        "upper_total_with_max_output": 38818,
+        "injected_terms_min": 3,
+        "injected_terms_avg": 15,
+        "injected_terms_max": 24,
+        "dropped_by_budget": [],
+        "dropped_by_budget_count": 0
+      }
+    },
+    "upper_total_all_configs": 38818
+  },
+  "memory_notebook": {
+    "path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\jobs\\one_button_preface\\one_button\\b6_real\\artifacts\\builder_c35\\notebook_final.json",
+    "pack_policy_counts": {
+      "notebook_total": 114,
+      "hard_translate": 54,
+      "preserve": 18,
+      "context_sensitive": 6,
+      "report_only": 36,
+      "repair_queue": 0,
+      "pack_total": 78
+    },
+    "repair_queue": []
+  },
+  "configs": {
+    "S1": {
+      "experiment_id": "one_button_b6_real",
+      "config": "S1",
+      "windows_total": 7,
+      "windows_translated": 7,
+      "windows_failed": 0,
+      "windows_skipped": 0,
+      "blocks_translated": 45,
+      "blocks_failed": 0,
+      "json_fail_rate": 0.0,
+      "total_usage": {
+        "prompt_tokens": 9001,
+        "completion_tokens": 6938,
+        "reasoning_tokens": 0,
+        "cost_usd": 0.01612625,
+        "incremental_cost_usd": 0.01612625,
+        "calls": 7,
+        "cache_hits": 0
+      },
+      "context_stats": {
+        "windows_with_context": 7,
+        "windows_low_context": 0,
+        "dropped_by_budget": 0
+      },
+      "hygiene": {
+        "flagged_blocks": 0,
+        "reasked": 0,
+        "fixed": 0,
+        "still_bad": 0,
+        "by_config": {
+          "S1": {
+            "flagged_blocks": 0,
+            "reasked": 0,
+            "fixed": 0,
+            "still_bad": 0
+          }
+        }
+      },
+      "model": "gpt-5.4-mini",
+      "seed": 20260612,
+      "system_fingerprint": null,
+      "reports": [
+        {
+          "window_id": "w_d2l_preface_001",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1415,
+          "completion_tokens": 1224,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00280175,
+          "incremental_cost_usd": 0.00280175,
+          "from_cache": false,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_preface_002",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 6,
+          "prompt_tokens": 1461,
+          "completion_tokens": 1185,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00273525,
+          "incremental_cost_usd": 0.00273525,
+          "from_cache": false,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_preface_003",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 7,
+          "prompt_tokens": 1397,
+          "completion_tokens": 1155,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00265925,
+          "incremental_cost_usd": 0.00265925,
+          "from_cache": false,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_preface_004",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 8,
+          "prompt_tokens": 1299,
+          "completion_tokens": 1020,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00236475,
+          "incremental_cost_usd": 0.00236475,
+          "from_cache": false,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_preface_005",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 7,
+          "prompt_tokens": 1047,
+          "completion_tokens": 749,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.00175975,
+          "incremental_cost_usd": 0.00175975,
+          "from_cache": false,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_preface_006",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 5,
+          "prompt_tokens": 1814,
+          "completion_tokens": 1369,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.0031915,
+          "incremental_cost_usd": 0.0031915,
+          "from_cache": false,
+          "system_fingerprint": null,
+          "errors": []
+        },
+        {
+          "window_id": "w_d2l_preface_007",
+          "status": "translated",
+          "calls": 1,
+          "block_count": 4,
+          "prompt_tokens": 568,
+          "completion_tokens": 236,
+          "reasoning_tokens": 0,
+          "cost_usd": 0.000614,
+          "incremental_cost_usd": 0.000614,
+          "from_cache": false,
+          "system_fingerprint": null,
+          "errors": []
+        }
+      ]
+    }
+  }
+}

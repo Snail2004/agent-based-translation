@@ -1,0 +1,120 @@
+[
+  {
+    "entry_id": "dependency",
+    "source_term": "dependency",
+    "canonical_target_vi": "phụ thuộc",
+    "audit_label": "polysemy_or_context_dependent",
+    "injection_action": "context_sensitive_translate",
+    "watchlist_reasons": [
+      "audit_polysemy"
+    ],
+    "collision_soft_fallback": null,
+    "candidates": [
+      {
+        "text": "phụ thuộc",
+        "source": "canonical"
+      },
+      {
+        "text": "thư viện phụ thuộc",
+        "source": "target_variant",
+        "evidence_block_id": "d2l_preface_index_b026",
+        "variant_reason": "existing allowed variant"
+      }
+    ],
+    "competitors": [
+      {
+        "text": "thư viện phụ thuộc",
+        "source": "target_variant",
+        "evidence_block_id": "d2l_preface_index_b026",
+        "variant_reason": "existing allowed variant"
+      }
+    ],
+    "backtranslation_calls": 2,
+    "evidence_blocks": 1,
+    "evidence_block_ids": [
+      "d2l_preface_index_b026"
+    ],
+    "estimated_context_vote_calls_cap": 1
+  },
+  {
+    "entry_id": "just in time",
+    "source_term": "just in time",
+    "canonical_target_vi": "đúng lúc",
+    "audit_label": "polysemy_or_context_dependent",
+    "injection_action": "context_sensitive_translate",
+    "watchlist_reasons": [
+      "audit_polysemy"
+    ],
+    "collision_soft_fallback": null,
+    "candidates": [
+      {
+        "text": "đúng lúc",
+        "source": "canonical"
+      },
+      {
+        "text": "vừa đúng lúc",
+        "source": "target_variant",
+        "evidence_block_id": "d2l_preface_index_b014",
+        "variant_reason": "existing allowed variant"
+      }
+    ],
+    "competitors": [
+      {
+        "text": "vừa đúng lúc",
+        "source": "target_variant",
+        "evidence_block_id": "d2l_preface_index_b014",
+        "variant_reason": "existing allowed variant"
+      }
+    ],
+    "backtranslation_calls": 2,
+    "evidence_blocks": 1,
+    "evidence_block_ids": [
+      "d2l_preface_index_b014"
+    ],
+    "estimated_context_vote_calls_cap": 1
+  },
+  {
+    "entry_id": "model",
+    "source_term": "model",
+    "canonical_target_vi": "mô hình",
+    "audit_label": "polysemy_or_context_dependent",
+    "injection_action": "context_sensitive_translate",
+    "watchlist_reasons": [
+      "audit_polysemy"
+    ],
+    "collision_soft_fallback": null,
+    "candidates": [
+      {
+        "text": "mô hình",
+        "source": "canonical"
+      },
+      {
+        "text": "mô hình học máy",
+        "source": "target_variant",
+        "evidence_block_id": "d2l_preface_index_b008",
+        "variant_reason": "existing allowed variant"
+      }
+    ],
+    "competitors": [
+      {
+        "text": "mô hình học máy",
+        "source": "target_variant",
+        "evidence_block_id": "d2l_preface_index_b008",
+        "variant_reason": "existing allowed variant"
+      }
+    ],
+    "backtranslation_calls": 2,
+    "evidence_blocks": 8,
+    "evidence_block_ids": [
+      "d2l_preface_index_b008",
+      "d2l_preface_index_b014",
+      "d2l_preface_index_b015",
+      "d2l_preface_index_b017",
+      "d2l_preface_index_b021",
+      "d2l_preface_index_b025",
+      "d2l_preface_index_b022",
+      "d2l_preface_index_b023"
+    ],
+    "estimated_context_vote_calls_cap": 8
+  }
+]

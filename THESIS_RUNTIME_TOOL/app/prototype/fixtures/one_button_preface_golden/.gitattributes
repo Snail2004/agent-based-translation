@@ -1,0 +1,3 @@
+# Golden recording: freeze bytes exactly as captured (no EOL conversion)
+*.jsonl -text
+*.json -text
