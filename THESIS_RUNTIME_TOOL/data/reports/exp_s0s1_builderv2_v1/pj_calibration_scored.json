@@ -1,0 +1,322 @@
+[
+ {
+  "item": 1,
+  "stratum": "S0_win",
+  "user_ov": "TIE",
+  "gem_ov": "S0",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 2,
+  "stratum": "tie_consistent",
+  "user_ov": "S0",
+  "gem_ov": "TIE",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 3,
+  "stratum": "S1_win",
+  "user_ov": "S1",
+  "gem_ov": "S1",
+  "user_st": "S1",
+  "gem_st": "S1"
+ },
+ {
+  "item": 4,
+  "stratum": "S1_win",
+  "user_ov": "TIE",
+  "gem_ov": "S1",
+  "user_st": "S0",
+  "gem_st": "S1"
+ },
+ {
+  "item": 5,
+  "stratum": "tie_consistent",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 6,
+  "stratum": "S1_win",
+  "user_ov": "S1",
+  "gem_ov": "S1",
+  "user_st": "S1",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 7,
+  "stratum": "S1_win",
+  "user_ov": "S1",
+  "gem_ov": "S1",
+  "user_st": "S1",
+  "gem_st": "S1"
+ },
+ {
+  "item": 8,
+  "stratum": "S1_win",
+  "user_ov": "S1",
+  "gem_ov": "S1",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 9,
+  "stratum": "S0_win",
+  "user_ov": "S0",
+  "gem_ov": "S0",
+  "user_st": "S0",
+  "gem_st": "S0"
+ },
+ {
+  "item": 10,
+  "stratum": "S1_win",
+  "user_ov": "S1",
+  "gem_ov": "S1",
+  "user_st": "S1",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 11,
+  "stratum": "tie_consistent",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 12,
+  "stratum": "S1_win",
+  "user_ov": "S1",
+  "gem_ov": "S1",
+  "user_st": "S1",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 13,
+  "stratum": "S0_win",
+  "user_ov": "TIE",
+  "gem_ov": "S0",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 14,
+  "stratum": "S0_win",
+  "user_ov": "S0",
+  "gem_ov": "S0",
+  "user_st": "S0",
+  "gem_st": "S0"
+ },
+ {
+  "item": 15,
+  "stratum": "tie_consistent",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 16,
+  "stratum": "S1_win",
+  "user_ov": "S1",
+  "gem_ov": "S1",
+  "user_st": "TIE",
+  "gem_st": "S1"
+ },
+ {
+  "item": 17,
+  "stratum": "hard",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "S1",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 18,
+  "stratum": "soft",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 19,
+  "stratum": "hard",
+  "user_ov": "S0",
+  "gem_ov": "TIE",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 20,
+  "stratum": "S0_win",
+  "user_ov": "TIE",
+  "gem_ov": "S0",
+  "user_st": "S0",
+  "gem_st": "S0"
+ },
+ {
+  "item": 21,
+  "stratum": "tie_consistent",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 22,
+  "stratum": "tie_consistent",
+  "user_ov": "S0",
+  "gem_ov": "TIE",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 23,
+  "stratum": "S0_win",
+  "user_ov": "S0",
+  "gem_ov": "S0",
+  "user_st": "S0",
+  "gem_st": "S0"
+ },
+ {
+  "item": 24,
+  "stratum": "hard",
+  "user_ov": "S0",
+  "gem_ov": "TIE",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 25,
+  "stratum": "hard",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 26,
+  "stratum": "soft",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 27,
+  "stratum": "tie_consistent",
+  "user_ov": "S0",
+  "gem_ov": "TIE",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 28,
+  "stratum": "tie_consistent",
+  "user_ov": "S1",
+  "gem_ov": "TIE",
+  "user_st": "S1",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 29,
+  "stratum": "tie_consistent",
+  "user_ov": "S1",
+  "gem_ov": "TIE",
+  "user_st": "S1",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 30,
+  "stratum": "hard",
+  "user_ov": "S0",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 31,
+  "stratum": "S0_win",
+  "user_ov": "S0",
+  "gem_ov": "S0",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 32,
+  "stratum": "hard",
+  "user_ov": "S0",
+  "gem_ov": "TIE",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 33,
+  "stratum": "S0_win",
+  "user_ov": "S0",
+  "gem_ov": "S0",
+  "user_st": "S0",
+  "gem_st": "S0"
+ },
+ {
+  "item": 34,
+  "stratum": "soft",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 35,
+  "stratum": "S0_win",
+  "user_ov": "S0",
+  "gem_ov": "S0",
+  "user_st": "S0",
+  "gem_st": "S0"
+ },
+ {
+  "item": 36,
+  "stratum": "tie_consistent",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 37,
+  "stratum": "soft",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "S1",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 38,
+  "stratum": "soft",
+  "user_ov": "TIE",
+  "gem_ov": "TIE",
+  "user_st": "TIE",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 39,
+  "stratum": "soft",
+  "user_ov": "S0",
+  "gem_ov": "TIE",
+  "user_st": "S0",
+  "gem_st": "TIE"
+ },
+ {
+  "item": 40,
+  "stratum": "S0_win",
+  "user_ov": "TIE",
+  "gem_ov": "S0",
+  "user_st": "S0",
+  "gem_st": "S0"
+ }
+]

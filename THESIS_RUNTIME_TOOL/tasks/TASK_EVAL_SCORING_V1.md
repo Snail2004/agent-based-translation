@@ -657,3 +657,26 @@ Y>>>
 **Phieu cham mu phat hanh (giao thuc §4i, seed 20260705):** 40 cap phan tang tu full (10 S0-win / 8 S1-win / 10 tie-consistent / 6 soft / 6 hard), xao thu tu cau + xao slot X/Y bang seed MOI doc lap voi slot cua judge; file `pj_calibration_sheet.md` (user dien Overall/Style moi cau) + `pj_calibration_key.json` (niem phong: mapping X/Y->arm + verdict Gemini — USER KHONG DUOC MO truoc khi cham xong; Claude cung chi mo khi cham diem). Bao cao sau cham: raw agreement + Cohen's kappa (overall & style rieng), doi chieu theo stratum; REPORT-ONLY khong gate.
 
 **Sau khi user nop phieu: §4l cham kappa -> §4m PJ OFFICIAL READOUT dong thang 7/7.**
+
+### 4l. Calibration nguoi cham SCORED — khong mot ca dao phan overall, huong S0-troi duoc NGUOI xac nhan (Claude cham, 2026-07-05)
+
+**Ket qua (40/40 phieu sach, key mo sau khi cham):** overall raw agreement 25/40 = 62.5%, Cohen kappa 0.408 (moderate); style 22/40 = 55.0%, kappa 0.307. **Cau truc bat dong quan trong hon con so: overall 0/40 dao phan cung (user khong bao gio phan nguoc winner cua Gemini) — toan bo 15 ca bat dong la tie-vs-win; style chi 1 dao.** Kappa muc moderate dung ky vong dang ky truoc (§4i: quan the gan-hoa -> kappa nguoi-may chi trung binh), REPORT-ONLY khong gate.
+
+**Phat hien them:**
+- User tren mau phan tang: overall S0 14 / S1 9 / TIE 17; style S0 17 / S1 9 — **NGUOI cung nghieng S0, cung huong voi judge** => ket qua S0-troi cua full duoc xac nhan boi ca 3 he quy chieu doc lap: Gemini, Gemma khac ho, va nguoi ban ngu.
+- Stratum hard-flip (Gemini tu mau thuan -> ha TIE): user cham 4/6 S0-win => chinh sach TIE-khi-mau-thuan dang BAO THU NGUOC CHIEU S0, tuc loi the S0 neu sai lech thi bi DANH GIA THAP chu khong thoi phong. Stratum soft: user 5/6 TIE dong y voi viec ha bac. Stratum S1_win: user dong y 7/8 — cac ca S1 thang la thang that.
+- User quyet doan hon Gemini o style (14 TIE vs 29): nguoi phan biet van phong tinh hon may tren cap gan-hoa.
+
+**Han che ghi ho so:** nguoi cham = tac gia luan van (khong phai rater doc lap), n=40, 1 rater, khong tinh duoc inter-rater; kappa muc moderate phan anh ca tie-boundary noise cua chinh quan the.
+
+### 4m. PJ OFFICIAL READOUT — THANG 7/7 DONG SO (Claude, 2026-07-05)
+
+**Instrument:** source-aware paired preference; judge gemini-2.5-flash + pj_judge_v1 (sha d47dbb17), 2 chieu dao vi tri, mau thuan->TIE, 2-verdict overall/style, taxonomy 7-tag, auto-tie normalized; da qua: probe 3 vong planted PASS, pilot + design review §4h, Gemma khac-ho audit PASS (0%/2.9% dao), calibration nguoi PASS cau truc (0 dao overall).
+
+**HEADLINE (475 cap MLP):** overall S0 102 / S1 51 / TIE 322 (186 judged + 136 auto), n_eff 153; style S0 76 / S1 31 / TIE 368; breakdown 216 consistent / 52 soft / 71 hard (deu ->TIE); 0/678 loi, $0.7067 (+audit $0 local), tong chi phi ca thang PJ ke probe/pilot ~$1.0.
+- **STYLE-ALARM: IM** (chenh 9.47 < 10 diem; margin 0.53 phai bao cao) — va tin hieu hong-van thuc su ~zero: grammar 1 + naturalness 9 tren 102 ca S1-thua. **Cau tra loi chinh thuc cho cau hoi PJ sinh ra de tra loi: KHONG co bang chung memory lam hong van phong tieng Viet.**
+- **Cum chuan-hoa: PJ = dung cu doc lap thu 4** do cung entry canonical sai (7 block, note judge goi dich danh) — chuoi detect->measure->repair du 4 mat xich.
+- **Dien giai S0-troi decisive (bat buoc di kem con so):** 23/101 ca S1-thua tag term/word_choice la S1 dung DUNG dang gold style-guide (S0 khong) vs doi xung 10/44 => PJ-overall do taste doc gia pho thong; TA (khop gold) va PJ (khop usage) do 2 he quy chieu — memory keo ban dich ve style guide, ra xa usage pho thong, dung chuc nang. Ai muon "hay theo so dong" chon S0-frame; luan van cam ket style guide d2l-vn nen TA/TC la truc chinh, PJ la chuong bao van + goc nhin doc gia.
+- **Instrument properties co ho so:** order-inconsistent 36.3% (thuoc tinh quan the gan-hoa, van lieu §4g-B, trung hoa 100% bang 2-chieu); san nhay = luoi tho (§4d); tag ontology map (§4e); word_choice/terminology ranh mo (probe+pilot+audit deu thay); gate 25% nghi huu co ho so (§4h); kappa nguoi 0.41/0.31 moderate voi 0 dao phan (§4l).
+
+**TRANG THAI: 7/7 THANG OFFICIAL** (TC, TC-Occ, TA, TA-Occ, SF-QE, SF-BT, PJ). Con lai cua EVAL: agreement analysis tong hop 7 thang + (optional) Stage 2 prelim SF-BT/PJ; roi sang TASK_ONE_BUTTON_V1.
