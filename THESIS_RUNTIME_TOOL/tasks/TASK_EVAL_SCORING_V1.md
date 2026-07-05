@@ -567,3 +567,14 @@ Y>>>
 - Tag ontology cua judge da do duoc qua 3 vong: dangling-la/word-order/missing-verb -> grammar; connector-swap -> word_choice; repetition -> omission_addition. Nhat quan, khong phai noise.
 
 **Fix v3 (khong phai answer-chasing — chon lop loi DUY NHAT co nhan khong nhap nhang duoi taxonomy da khoa):** thay dung 2 slot PGRAM_01/PGRAM_05 bang XAO TRAT TU TU voi rang buoc co hoc `sorted(A.split()) == sorted(B.split())` (cung multiset tu) -> omission_addition va word_choice bi loai theo dinh nghia, chi con grammar/naturalness kha di; tien le PGRAM_02 (xao trat tu) da duoc tag grammar. Xao phai KHONG tao ra nghia thay the hop le (giu mot-truc). 18 cap giu nguyen tung ky tu. Sau v3: P-GRAM = xao-trat-tu x3 + thieu-dong-tu + duoi-la (3 loai, dat >=3). Claude diff-review + kiem multiset -> re-probe (~4 call moi).
+
+### 4f. PJ probe #3 PASS TOAN BO — instrument PJ duoc kiem chung, GO PILOT 50 (Claude verify doc lap, 2026-07-05)
+
+**Recount khop CodeX:** P-IDENT 10/10 TIE; P-GRAM 5/5 overall + 5/5 tag grammar; P-MEAN 5/5 + 5/5; P-TERM 5/5 style-TIE + 5/5 terminology; order-inconsistent 0; fail 0/40; db unchanged; 4 call moi (36 cache hit), cost logical $0.03371. PGRAM_01 (rui ro elided-subject ghi truoc): judge bat dung va note "missing the subject" — thay dung cai loi da lo; PGRAM_05 note viet ca cach sua dung. 3 ca lech expected duy nhat = P-TERM overall (da xep khong-gate tu truoc). **Tong 3 vong probe: $0.034 + ~$0.0005, moi lan truot deu la fixture/taxonomy-definition, chua lan nao la loi judge hay he thong — va 2 lan truot sinh ra 2 finding ghi ho so (san nhay + ontology tag).**
+
+**GO PILOT 50 cap that.** Yeu cau (tu §4a/§4c, khong co gi moi):
+- Mo rong probe_pj.py hoac script score_pj.py: nap 475 cap MLP tu workdb (block pairing nhu SF-BT, mode=ro + hash), auto-tie theo normalization §4a (NFC + CRLF->LF + strip trailing) -> cap identical KHONG gui judge; 339 cap khac nhau sort theo order_index, systematic 50: idx_i = floor((i+0.5)*N/k) (cong thuc SF-BT).
+- Moi cap 2 chieu nhu probe; gan X/Y deterministic theo seed; aggregation §4c nguyen xi; short_block flag mang sang (dinh nghia SF-BT), bao cao kep.
+- Report: ty le tie (overall va style rieng), phan bo tag, order-inconsistent rate tung verdict-type (**>25% STOP**), style_unsupported rate (**>20% so pair non-tie-style STOP -> fallback 1-verdict**), win/loss theo arm, chi phi thuc + ngoai suy full 339; label status/phase phai ghi pilot (bai hoc stale label §2g).
+- Cache DB dung chung; khong cache loi; model_version; raw luon luu. Uoc ~100 call ~ $0.08.
+- STOP sau pilot cho Claude verify -> GO/NO-GO full 339.
