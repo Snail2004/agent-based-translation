@@ -157,7 +157,7 @@
 .agentconsole .latest-block-id { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c-accent); }
 .agentconsole .latest-block-tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-ink-faint); }
 .agentconsole .typewriter-target p { color: var(--c-ink); margin: 0; }
-.agentconsole .typewriter-caret { color: var(--c-accent); }
+.agentconsole .typewriter-caret { color: var(--c-accent); animation: console-blink 1s step-start infinite; margin-left: 1px; }
 .agentconsole .stderr-panel { border-color: var(--c-red); background: var(--c-red-bg); }
 .agentconsole .stderr-head { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c-red); margin-bottom: 4px; }
 .agentconsole .stderr-line { color: var(--c-red); white-space: pre-wrap; word-break: break-all; }

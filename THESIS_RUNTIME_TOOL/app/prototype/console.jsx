@@ -321,7 +321,7 @@ function AgentConsoleView(props) {
             </div>
             <div className="typewriter-target">
               {preview
-                ? <p>{consoleShort(preview.target_text, 180)}</p>
+                ? <ConsoleTypewriter text={consoleShort(preview.target_text, 220)} />
                 : <p className="kv-dim">Bản dịch preview lấy theo block_id (translation_runs.output_text) khi có.</p>}
             </div>
           </div>
@@ -372,3 +372,34 @@ function AgentConsoleView(props) {
 
 function uniqueConsole(arr) { return Array.from(new Set(arr)).sort(); }
 function formatConsoleInt(n) { return Number(n || 0).toLocaleString("en-US"); }
+
+/* Typewriter reveal for the latest-block preview only (one effect, one section).
+   Adaptive speed: aims for ~1.4s total regardless of length, floored so short
+   lines still feel typed. Honors prefers-reduced-motion (shows full text). */
+function useConsoleTypewriter(text) {
+  const [shown, setShown] = React.useState(text || "");
+  React.useEffect(() => {
+    const full = text || "";
+    const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || !full) { setShown(full); return; }
+    const cps = Math.max(45, full.length / 1.4);
+    const stepMs = 1000 / cps;
+    let i = 0, timer = null, cancelled = false;
+    setShown("");
+    const tick = () => {
+      if (cancelled) return;
+      i = Math.min(full.length, i + Math.max(1, Math.round(cps / 40)));
+      setShown(full.slice(0, i));
+      if (i < full.length) timer = setTimeout(tick, stepMs);
+    };
+    timer = setTimeout(tick, stepMs);
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [text]);
+  return shown;
+}
+
+function ConsoleTypewriter({ text }) {
+  const shown = useConsoleTypewriter(text);
+  const typing = shown.length < (text || "").length;
+  return <p>{shown}{typing && <span className="typewriter-caret">▌</span>}</p>;
+}
