@@ -593,3 +593,14 @@ Y>>>
 - **sha256(full template v2, LF) = `20fc81d4628972016c672fc1b6be94d497194eae52f11835f4dbd57d996f7f50`**, prompt_version = pj_judge_v2. Y tuong: ma hoa chinh phep thu order-invariance vao dau moi verdict ("defend the same choice no matter which candidate you had read first") + goi ten dung lop flip do duoc (synonym cung register). Hop le vi: pilot = giai doan kiem chung dung cu, thuoc "sua prompt" da ke TRUOC trong §4a, chua co data PJ official nao.
 
 **Ke hoach chay lai (prompt doi -> cache judge vo hieu theo thiet ke):** (1) re-probe 20 cap planted voi v2 — 40 call ~$0.034, DUNG bang nguong §4c cu, all-4-group PASS la dieu kien cung (guard chong over-tying: P-GRAM/P-MEAN van phai bat 4/5); (2) neu probe all-pass theo co che (pass boolean trong report) CodeX DUOC PHEP chay tiep pilot 50 v2 ngay ~$0.10 khong cho review giua (nguong toan so hoc, Claude van verify du artifact sau); (3) STOP sau pilot v2. **Du doan dang ky truoc:** tie rate se tang tren 58%; order-inconsistent giam; PASS neu <=25% ca 2 verdict-type -> GO full; neu VAN >25% -> STOP design review (khong tu dong nói lai nguong).
+
+### 4g-B. Tu lieu bao ve: vi sao phai dao chieu (position bias — hien tuong da chung minh, user hoi 2026-07-05)
+
+**Position bias cua LLM-as-a-judge la hien tuong co ten trong van lieu, khong rieng Gemini — GPT-4/GPT-3.5/Claude deu do duoc.** Nguon trich cho hoi dong:
+- Zheng et al., "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena" (NeurIPS 2023) — bai nen tang LLM-as-judge, do position bias tren nhieu model, va DE XUAT DUNG remedy ta dung: cham 2 chieu dao vi tri + mau thuan = hoa.
+- Wang et al., "Large Language Models are not Fair Evaluators" (arXiv:2305.17926, 2023) — chung minh co the thao tung phan quyet GPT-4 chi bang doi thu tu trinh bay.
+- Doi chieu nguoi: WMT human eval cung xao thu tu trinh bay (primacy effect) — day la ve sinh thi nghiem co dien, khong phai benh rieng cua may.
+
+**Ly do co che (3 tang):** (1) autoregressive — ban doc sau duoc xu ly trong boi canh ban doc truoc (anchoring), khong co bao dam giao hoan f(A,B)=f(B,A); (2) lech phan bo vi tri/nhan trong du lieu huan luyen (option-label bias); (3) thien vi chi du manh de quyet ca SAT NUT — khac biet ro thi tin hieu de bep thien vi.
+
+**Bang chung noi bo 2 tang (diem manh: ta KHONG chi trich dan, ta DO duoc):** probe 20 cap loi ro = 0/10 lat keo; pilot 50 cap that gan-hoa = 34% lat keo, co ca (underfit_overfit_b020) khen "vi tri Y" o ca 2 chieu voi 2 ly do tu mau thuan; co che 2-chieu ha 100% ca lat ve TIE, khong verdict sai nao lot. Cau chot hoi dong: "dao chieu khong phai phong xa ly thuyet — chung em do duoc position bias o 34% cap gan-hoa va co che hai chieu trung hoa toan bo."
