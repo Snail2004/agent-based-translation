@@ -1049,13 +1049,18 @@ def _estimate_stage(
                 "estimate_source": "script_estimate",
                 "estimate_argv_digest": _argv_digest(argv),
                 "estimate_stdout_log_path": str(stdout_path),
-                "estimate_report_path": str(estimate_report) if estimate_report.exists() else None,
                 "estimate_exit_code": proc.returncode,
             }
         )
         loaded: dict[str, Any] = {}
+        actual_report = _estimate_report_path(stage, argv)
+        estimate["estimate_report_path"] = str(actual_report) if actual_report.exists() else None
+        if actual_report.exists():
+            loaded = _read_json(actual_report)
         if estimate_report.exists():
-            loaded = _read_json(estimate_report)
+            # Fallback for scripts where the orchestrator forced an output
+            # path.  Scripts with baked-in --report/--out use actual_report.
+            loaded = loaded or _read_json(estimate_report)
         if not loaded:
             loaded = _read_last_json_object(stdout_path)
         if loaded:
@@ -1087,13 +1092,56 @@ def _with_estimate_output(stage: StageSpec, estimate_report: Path) -> list[str]:
     return argv
 
 
-def _estimate_report_path(stage: StageSpec) -> Path:
+def _estimate_report_path(stage: StageSpec, argv: list[str] | None = None) -> Path:
+    if argv is not None:
+        explicit = _estimate_report_path_from_argv(stage, argv)
+        if explicit is not None:
+            return explicit
     if stage.artifact_path is not None:
         return stage.artifact_path.parent / f"{stage.name}_estimate.json"
     return TOOL_ROOT / "data" / "tmp" / f"{stage.name}_estimate.json"
 
 
+def _estimate_report_path_from_argv(stage: StageSpec, argv: list[str]) -> Path | None:
+    if stage.script == "run_translate":
+        report = _argv_flag_value(argv, "--report")
+        return _resolve(report) if report else None
+    if stage.script in {"score_sf_bt", "score_pj"}:
+        out = _argv_flag_value(argv, "--out")
+        return _resolve(out) if out else None
+    if stage.script == "run_experiment_cascade":
+        out_dir = _argv_flag_value(argv, "--out-dir")
+        prefix = _argv_flag_value(argv, "--artifact-prefix")
+        if out_dir and prefix:
+            return _resolve(out_dir) / f"{prefix}_preflight.json"
+    return None
+
+
+def _argv_flag_value(argv: list[str], flag: str) -> str | None:
+    for idx, item in enumerate(argv):
+        if str(item) == flag and idx + 1 < len(argv):
+            return str(argv[idx + 1])
+    return None
+
+
 def _extract_cost_estimate(payload: dict[str, Any]) -> dict[str, Any]:
+    t3_total = payload.get("t3_estimate_total") if isinstance(payload, dict) else None
+    if isinstance(t3_total, dict) and "cost_cap_usd" in t3_total:
+        try:
+            result: dict[str, Any] = {"estimated_cost_cap_usd": float(t3_total["cost_cap_usd"])}
+            for key in (
+                "calls",
+                "prompt_tokens_estimate",
+                "output_tokens_cap",
+                "input_cost_estimate_usd",
+                "output_cost_cap_usd",
+                "prompt_tokens_max_single_call",
+            ):
+                if key in t3_total:
+                    result[f"cascade_{key}"] = t3_total[key]
+            return result
+        except (TypeError, ValueError):
+            pass
     candidates = [
         payload,
         payload.get("estimate") if isinstance(payload, dict) else None,

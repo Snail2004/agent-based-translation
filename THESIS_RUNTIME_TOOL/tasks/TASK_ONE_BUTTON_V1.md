@@ -345,3 +345,11 @@ Chuong d2l_preface (45 blocks translatable / 7 window), S1-only, budget-cap $1.5
 Commit `app/prototype/fixtures/one_button_preface_golden/`: events.jsonl (134 su kien) + manifest + block_preview_sample.json (10 block EN->VI that) + reports (translate/sf_bt/watchlist) + README. Da CHUNG MINH replay: `replay_thesis_events --fixture ... --instant` tai lap 134/134 su kien khop. Tu day sua UI/animation KHONG ton tien. Fixture dong cung o v0.8.0; muon them event type moi thi chup lai hoac dung bo synthetic 20/20.
 
 ### CHUA LAM (khong chan): live-test pause/resume/cancel qua HTTP endpoint tren run that (da co test 0-API pass o UI-2); se chay live khi noi frontend [DICH]. B6 uu tien ban ghi sach + fixture -> da co.
+
+## 2s. VA 2 STAGE MU (estimate cascade + translator) NGHIEM THU (Claude review, 2026-07-06) — DAT, commit
+
+CodeX va estimate-path trong run_one_button.py (0-API). Claude doc diff + tu chay + tu tinh tay + BAT 1 loi test.
+- Gia: `_estimate_report_path_from_argv` doc duong dan report THAT tu argv (run_translate --report / sf_bt+pj --out / cascade --out-dir+prefix -> <prefix>_preflight.json), khong con tro phantom `<stage>_estimate.json`; `_extract_cost_estimate` doc them `t3_estimate_total.cost_cap_usd` (cascade) o dau ham + carry cascade_* detail; nhanh translator token->USD giu nguyen.
+- Verify doc lap: tu tinh tay translator cap = (10146*0.25 + 28672*2.0)/1e6 = $0.05988050 KHOP CodeX; cascade $0.06399325 = gia tri trong artifact golden. Full suite 454 passed, frozen 64D989 + workdb 92229381 bat bien, key sach.
+- LOI CLAUDE BAT (green-tests-can-hide lan 3 trong milestone nay): test golden CodeX doc tu `data/jobs/.../b6_real/` (GITIGNORED, chua commit) + 2 file preflight KHONG nam trong bundle commit -> xanh tren may user nhung VO tren checkout sach/CI. Va: copy `translate_preflight.json` + `cascade_preflight.json` vao bundle commit `app/prototype/fixtures/one_button_preface_golden/reports/`, tro GOLDEN_ONE_BUTTON_RUN vao bundle (parents[2], khong con data/jobs), CHUNG MINH doc lap = an b6_real -> golden test van 2 passed. Bai hoc lap lai: reviewer PHAI kiem test co doc artifact da-commit khong, dung tin "X passed".
+- Ket qua: budget gate orchestrator gio NHIN THAY translator (~$0.06) va cascade (~$0.064) -> het under-count; con so len UI se dung tu dau.

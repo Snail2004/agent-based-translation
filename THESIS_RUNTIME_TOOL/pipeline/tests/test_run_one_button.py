@@ -15,6 +15,16 @@ if str(BACKEND_ROOT) not in sys.path:
 from services.thesis_runs import RunRegistry, build_argv, cancel_run  # noqa: E402
 from pipeline.scripts import run_one_button  # noqa: E402
 
+# Point at the COMMITTED golden bundle, not the gitignored data/jobs run dir:
+# these preflight fixtures must survive a clean checkout / CI.
+GOLDEN_ONE_BUTTON_RUN = (
+    Path(__file__).resolve().parents[2]
+    / "app"
+    / "prototype"
+    / "fixtures"
+    / "one_button_preface_golden"
+)
+
 
 def test_read_last_json_object_prefers_cost_object(tmp_path: Path) -> None:
     log = tmp_path / "estimate.log"
@@ -94,6 +104,71 @@ def test_translate_preflight_cost_cap_from_tokens() -> None:
     assert estimate["translation_prompt_tokens_est"] == 1000
     assert estimate["translation_output_tokens_cap"] == 4000
     assert estimate["estimated_cost_cap_usd"] == 0.00825
+
+
+def test_estimate_report_path_prefers_run_translate_report_arg(tmp_path: Path) -> None:
+    report = tmp_path / "reports" / "translate_preflight.json"
+    phantom = tmp_path / "artifacts" / "translator_not_real.json"
+    stage = run_one_button.StageSpec(
+        name="translator",
+        script="run_translate",
+        argv=[sys.executable, "-m", "pipeline.scripts.run_translate", "--report", str(report)],
+        artifact_path=phantom,
+    )
+
+    assert run_one_button._estimate_report_path(stage, stage.argv) == report.resolve()
+
+
+def test_estimate_report_path_uses_cascade_prefix_convention(tmp_path: Path) -> None:
+    out_dir = tmp_path / "artifacts" / "cascade"
+    stage = run_one_button.StageSpec(
+        name="cascade",
+        script="run_experiment_cascade",
+        argv=[
+            sys.executable,
+            "-m",
+            "pipeline.scripts.run_experiment_cascade",
+            "--out-dir",
+            str(out_dir),
+            "--artifact-prefix",
+            "d2l_preface_cascade",
+        ],
+        artifact_path=out_dir / "d2l_preface_cascade_summary.json",
+    )
+
+    assert (
+        run_one_button._estimate_report_path(stage, stage.argv)
+        == (out_dir / "d2l_preface_cascade_preflight.json").resolve()
+    )
+
+
+def test_golden_translate_preflight_cost_cap_from_real_report() -> None:
+    payload = json.loads(
+        (GOLDEN_ONE_BUTTON_RUN / "reports" / "translate_preflight.json").read_text(encoding="utf-8")
+    )
+
+    estimate = run_one_button._extract_cost_estimate(payload)
+
+    assert 0.055 <= estimate["estimated_cost_cap_usd"] <= 0.065
+    assert estimate["translation_prompt_tokens_est"] > 0
+    assert estimate["translation_output_tokens_cap"] > 0
+
+
+def test_golden_cascade_preflight_cost_cap_from_real_report() -> None:
+    payload = json.loads(
+        (
+            GOLDEN_ONE_BUTTON_RUN
+            / "reports"
+            / "cascade_preflight.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    estimate = run_one_button._extract_cost_estimate(payload)
+
+    assert 0.06 <= estimate["estimated_cost_cap_usd"] <= 0.07
+    assert estimate["cascade_calls"] > 0
+    assert estimate["cascade_prompt_tokens_estimate"] > 0
+    assert estimate["cascade_output_tokens_cap"] > 0
 
 
 def test_resume_skips_done_stage_without_reemitting_attempt1_events(tmp_path: Path, monkeypatch) -> None:
