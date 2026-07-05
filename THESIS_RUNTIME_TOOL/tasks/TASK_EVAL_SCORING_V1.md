@@ -553,3 +553,17 @@ Y>>>
 **Bonus findings (ghi ho so):** PTERM_01/02 overall TIE => judge KHONG phan xu quy uoc term (dung phan vai: truc term thuoc TC/TA, PJ khong cham lai); PTERM_03 judge thich "Mang no-ron nhieu lop" hon "Perceptron da tang" order-consistent 2 chieu (quan sat phu, khong gate); 2 co che order-inconsistent da no dung thiet ke (style o PMEAN_01, overall o PTERM_02) va deu bi ha ve TIE.
 
 **Lenh sua (planted v2, script GIU NGUYEN):** tao pj_planted_set_v2.json — thay DUNG 2 cap PGRAM_01 va PGRAM_05 bang 2 loi HINH THAI - CU PHAP khong the nham sang word_choice/meaning (vi du: lap nguyen cum tu, cau cut giua chung, vo cau truc chu-vi ro rang), prose tu block MLP that, mot-truc-mot-loi, expected ghi truoc; 18 cap khac giu nguyen tung ky tu de an cache (36/40 call hit, ~4 call moi ~$0.005). Claude diff-review 2 cap moi -> re-probe day du 20 cap -> cham lai bang DUNG bang nguong §4c.
+
+### 4e. PJ probe #2 VERIFIED — P-GRAM van FAIL (3/5 tag), loi thuoc DINH NGHIA taxonomy cua ta, khong phai judge; fix v3 co bao chung co hoc (Claude, 2026-07-05)
+
+**Recount khop CodeX:** 4/40 call moi (36 cache hit — 3 nhom PASS tai lap nguyen ven), 0 fail, db unchanged, cost logical $0.03402. P-GRAM: overall 5/5 (moi winner deu bat dung ca 2 chieu, note goi ten dung cum bi lap), grammar-tag van 3/5 -> FAIL theo luat.
+
+**Chan doan:** 2 fixture lap-cum bi tag omission_addition — DUNG theo dinh nghia da khoa trong prompt ("content ... added to one candidate"): cum lap la content added nghia den. Fixture cai loi thuoc lop ma taxonomy xep hop le vao 2 o -> bug fixture lan 2. **BAC de xuat sua taxonomy/nguong cua CodeX** — doi luat sau khi thay data bi cam; fixture phuc tung taxonomy da khoa, khong nguoc lai.
+
+**Findings ghi ho so:**
+- Judge catch-ability da chung minh XONG tren moi lop loi thu: 5/5 winner + note dung ban chat; cai con thieu duy nhat la fixture co nhan khong nhap nhang.
+- Guard style_unsupported_by_tags NO DUNG THIET KE 2 lan (style X/Y bi ha ve TIE vi tags_final khong co style-group) — co che §4c thu 3 duoc chung minh song, truoc ca pilot.
+- INSTRUMENT PROPERTY ghi truoc khi chay pilot/full: loi lop-lap (repetition) trong data that se roi vao omission_addition => KHONG duoc style-alarm dem (alarm chi dem grammar/naturalness/word_choice). Diem mu ke toan nay duoc khai bao a-priori; khi doc phan bo tag production phai nho repetition nam o omission_addition.
+- Tag ontology cua judge da do duoc qua 3 vong: dangling-la/word-order/missing-verb -> grammar; connector-swap -> word_choice; repetition -> omission_addition. Nhat quan, khong phai noise.
+
+**Fix v3 (khong phai answer-chasing — chon lop loi DUY NHAT co nhan khong nhap nhang duoi taxonomy da khoa):** thay dung 2 slot PGRAM_01/PGRAM_05 bang XAO TRAT TU TU voi rang buoc co hoc `sorted(A.split()) == sorted(B.split())` (cung multiset tu) -> omission_addition va word_choice bi loai theo dinh nghia, chi con grammar/naturalness kha di; tien le PGRAM_02 (xao trat tu) da duoc tag grammar. Xao phai KHONG tao ra nghia thay the hop le (giu mot-truc). 18 cap giu nguyen tung ky tu. Sau v3: P-GRAM = xao-trat-tu x3 + thieu-dong-tu + duoi-la (3 loai, dat >=3). Claude diff-review + kiem multiset -> re-probe (~4 call moi).
