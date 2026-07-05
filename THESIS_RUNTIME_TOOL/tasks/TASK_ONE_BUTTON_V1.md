@@ -130,3 +130,15 @@ CodeX xac nhan F1, F3-F9; phan bien F2 dung cho: "mot os.write append" giam rui 
 **VERSIONING KHOA (tra loi cau hoi user):** file VERSION o root THESIS_RUNTIME_TOOL = nguon su that duy nhat, semver-lite v0.MINOR.PATCH — MINOR nhay moi buoc milestone da chot, PATCH cho fix trong buoc, v1.0.0 danh cho ban demo bao ve; backend /api/version doc VERSION + git short-sha; UI badge so UI-vs-API (lech = canh bao frontend cache cu); moi bump mot dong CHANGELOG.md. Hien tai 0.6.0 = UI-1. BAC BO kieu v1.0001 (khong phan biet feature/fix, khong truy vet commit).
 
 **Con no truoc khi Console thanh live:** mot lo liveness da biet — neu MOT dong event > max_bytes cap 1MB thi reader khong bao gio advance (stall vinh vien); xac suat thap vi message cap 200 chars va cam dump prompt, ghi day de vong sau vá neu can. Buoc ke tiep theo trinh tu: no-chan-duong (F6 estimate-only token, run_translate frozen-db write-open, cascade 1-arm, §36 wiring, preflight health-check) -> orchestrator run_one_button -> renderer -> nut [DICH].
+
+## 2h. DESIGN PASS CONSOLE — SKIN-ONLY (user chot 2 cau hoi, Claude tu implement, 2026-07-05)
+
+**User chot:** (1) pham vi = Console full-screen TRUOC, app annotation giu nguyen, cai to tong the de sau one-button; (2) theme = CA HAI: paper+amber (kieu ainovel-cli) mac dinh + toggle dark terminal.
+
+**Hop dong cung:** SKIN-ONLY — khong dung poll loop / aggregate / API / RunControl props; chi markup + CSS + conditional render sidebar. Chay song song an toan voi CodeX N1-N5 vi ranh gioi file roi nhau: Claude chi dung app/prototype/(app.jsx, parts_center.jsx, styles.css) + task file; CodeX dung pipeline/ + app/backend/.
+
+**Thiet ke (theo ainovel-cli + layout §2c von da chot):**
+- Vao tab Console: workspace an LeftSidebar + RightPanel (conditional render, khong unmount logic khac), console chiem full width.
+- 3 cot: TRAI ~260px = tong quan run (status/stage/events/cost/cache/health, hang label-trai gia-tri-phai kieu TUI); GIUA = event stream (time HH:MM:SS + event type mau theo severity + stage-agent mo + message, filter giu nguyen) + preview strip; PHAI ~280px = checklist 8 stage + latest artifact + cho watchlist §36.
+- Typography: monospace stack trong console; CSS variables --c-* rieng cho console, 2 bo gia tri theme-paper / theme-dark; toggle luu localStorage.
+- Ly do bac full-overhaul: annotation dang chay tot, khong nam tren duong demo [DICH]->Console->Report; repo ainovel-cli la Go TUI khong co code web tai dung — screenshot + §2c la spec du.

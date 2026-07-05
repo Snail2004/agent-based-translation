@@ -2324,13 +2324,13 @@ function App() {
         onUndo={runUndo} onRedo={runRedo} history={historyState}
         freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={centerMode === "preview" || readOnly} canExportPreview={!!currentPreviewRun?.run}
         appVersion={appVersion} />
-      <div className="workspace">
-        <LeftSidebar docInfo={docInfo} projects={projects} blocks={visibleBlocks} chapters={chapters} review={review}
+      <div className={"workspace" + (centerMode === "console" ? " workspace--console" : "")}>
+        {centerMode !== "console" && <LeftSidebar docInfo={docInfo} projects={projects} blocks={visibleBlocks} chapters={chapters} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={selectBlock}
           onSelectProject={selectProject}
           filters={filters} onToggleFilter={toggleFilter} counts={filterCounts} total={blocks.length}
           errors={errors}
-          onOpenProjectSource={() => setView("project")} />
+          onOpenProjectSource={() => setView("project")} />}
         <CenterEditor block={block} docInfo={docInfo} reviewed={!!review.blocks?.[selectedId]?.reviewed} spans={spans}
           editing={editing} mode={centerMode} onModeChange={setCenterMode}
           chapter={activeChapter} chapters={chapters} chapterBlocks={chapterBlocks} allBlocks={blocks} review={review} selectedId={selectedId}
@@ -2365,7 +2365,7 @@ function App() {
           onFocusSpan={focusSpan}
           onClearFocus={clearFocusedTerm}
           onFocusJump={jumpFocusedTerm} />
-        {centerMode === "preview" ? (
+        {centerMode === "console" ? null : centerMode === "preview" ? (
           <PreviewRightPanel docInfo={docInfo} block={block} />
         ) : (
           <RightPanel openTabs={rightOpenTabs} onToggleTab={toggleRightTab} counts={rpCounts}
