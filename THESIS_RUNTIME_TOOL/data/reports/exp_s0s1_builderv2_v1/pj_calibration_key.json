@@ -1,0 +1,502 @@
+{
+ "seed": 20260705,
+ "plan": [
+  [
+   "S0_win",
+   10
+  ],
+  [
+   "S1_win",
+   8
+  ],
+  [
+   "tie_consistent",
+   10
+  ],
+  [
+   "soft",
+   6
+  ],
+  [
+   "hard",
+   6
+  ]
+ ],
+ "items": [
+  {
+   "item": 1,
+   "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b069",
+   "stratum": "S0_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 2,
+   "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b062",
+   "stratum": "tie_consistent",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 3,
+   "block_id": "d2l_multilayer_perceptrons_mlp_b018",
+   "stratum": "S1_win",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "S1",
+   "gemini_style_arm": "S1",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 4,
+   "block_id": "d2l_multilayer_perceptrons_dropout_b017",
+   "stratum": "S1_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S1",
+   "gemini_style_arm": "S1",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 5,
+   "block_id": "d2l_multilayer_perceptrons_environment_b007",
+   "stratum": "tie_consistent",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 6,
+   "block_id": "d2l_multilayer_perceptrons_environment_b085",
+   "stratum": "S1_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S1",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 7,
+   "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b056",
+   "stratum": "S1_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S1",
+   "gemini_style_arm": "S1",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 8,
+   "block_id": "d2l_multilayer_perceptrons_backprop_b033",
+   "stratum": "S1_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S1",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "terminology"
+   ]
+  },
+  {
+   "item": 9,
+   "block_id": "d2l_multilayer_perceptrons_environment_b052",
+   "stratum": "S0_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "S0",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 10,
+   "block_id": "d2l_multilayer_perceptrons_weight_decay_b012",
+   "stratum": "S1_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S1",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "terminology"
+   ]
+  },
+  {
+   "item": 11,
+   "block_id": "d2l_multilayer_perceptrons_mlp_b064",
+   "stratum": "tie_consistent",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 12,
+   "block_id": "d2l_multilayer_perceptrons_weight_decay_b018",
+   "stratum": "S1_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S1",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "terminology",
+    "meaning"
+   ]
+  },
+  {
+   "item": 13,
+   "block_id": "d2l_multilayer_perceptrons_index_b001",
+   "stratum": "S0_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "terminology"
+   ]
+  },
+  {
+   "item": 14,
+   "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b043",
+   "stratum": "S0_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "S0",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 15,
+   "block_id": "d2l_multilayer_perceptrons_mlp_b010",
+   "stratum": "tie_consistent",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "terminology"
+   ]
+  },
+  {
+   "item": 16,
+   "block_id": "d2l_multilayer_perceptrons_backprop_b039",
+   "stratum": "S1_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S1",
+   "gemini_style_arm": "S1",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 17,
+   "block_id": "d2l_multilayer_perceptrons_mlp_b028",
+   "stratum": "hard",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "naturalness",
+    "word_choice"
+   ]
+  },
+  {
+   "item": 18,
+   "block_id": "d2l_multilayer_perceptrons_mlp_concise_b019",
+   "stratum": "soft",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "terminology"
+   ]
+  },
+  {
+   "item": 19,
+   "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b034",
+   "stratum": "hard",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 20,
+   "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b014",
+   "stratum": "S0_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "S0",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 21,
+   "block_id": "d2l_multilayer_perceptrons_mlp_b007",
+   "stratum": "tie_consistent",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 22,
+   "block_id": "d2l_multilayer_perceptrons_weight_decay_b008",
+   "stratum": "tie_consistent",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 23,
+   "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b065",
+   "stratum": "S0_win",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "S0",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 24,
+   "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b015",
+   "stratum": "hard",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 25,
+   "block_id": "d2l_multilayer_perceptrons_weight_decay_b009",
+   "stratum": "hard",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 26,
+   "block_id": "d2l_multilayer_perceptrons_environment_b070",
+   "stratum": "soft",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 27,
+   "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b001",
+   "stratum": "tie_consistent",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 28,
+   "block_id": "d2l_multilayer_perceptrons_backprop_b006",
+   "stratum": "tie_consistent",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 29,
+   "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b037",
+   "stratum": "tie_consistent",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 30,
+   "block_id": "d2l_multilayer_perceptrons_environment_b016",
+   "stratum": "hard",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 31,
+   "block_id": "d2l_multilayer_perceptrons_dropout_b040",
+   "stratum": "S0_win",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "terminology"
+   ]
+  },
+  {
+   "item": 32,
+   "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b020",
+   "stratum": "hard",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 33,
+   "block_id": "d2l_multilayer_perceptrons_dropout_b012",
+   "stratum": "S0_win",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "S0",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 34,
+   "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b028",
+   "stratum": "soft",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 35,
+   "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b022",
+   "stratum": "S0_win",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "S0",
+   "gemini_tags": [
+    "word_choice",
+    "terminology"
+   ]
+  },
+  {
+   "item": 36,
+   "block_id": "d2l_multilayer_perceptrons_environment_b031",
+   "stratum": "tie_consistent",
+   "X_arm": "S1",
+   "Y_arm": "S0",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": []
+  },
+  {
+   "item": 37,
+   "block_id": "d2l_multilayer_perceptrons_backprop_b042",
+   "stratum": "soft",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 38,
+   "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b031",
+   "stratum": "soft",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 39,
+   "block_id": "d2l_multilayer_perceptrons_dropout_b003",
+   "stratum": "soft",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "TIE",
+   "gemini_style_arm": "TIE",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  },
+  {
+   "item": 40,
+   "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b031",
+   "stratum": "S0_win",
+   "X_arm": "S0",
+   "Y_arm": "S1",
+   "gemini_overall_arm": "S0",
+   "gemini_style_arm": "S0",
+   "gemini_tags": [
+    "word_choice"
+   ]
+  }
+ ]
+}
