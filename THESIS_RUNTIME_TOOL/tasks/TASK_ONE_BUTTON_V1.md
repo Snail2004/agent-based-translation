@@ -216,3 +216,22 @@ Nen da khoa: 8 stage (§1), Q1-Q3 (§2b), event contract (§2d-§2f), Console (�
 **Ghi nhan them:** score_pj bo default pin hash MLP (khong truyen --expected-db-sha256 = khong check — orchestrator LUON truyen dong); --confirm-usd bat buoc cho run that (breaking co chu dich voi workflow cu); event_reader.py parse_error khong con mang raw line (chi error type — an toan hon, khac endpoint cu, chap nhan); helper drop dong JSON khong-phai-dict (dung hop dong envelope). CodeX tu khai near-miss --gold-variants o regression dau va tu sua — dung ky luat.
 
 **O1 DAT -> phat prompt O2 (run_one_button + RunControl estimate tong hop + registry attempt fields).**
+
+## 2n. CONSOLE INTERACTION CONTRACT + lich cac buoc sau O2 (user chot 2 cau hoi + nguyen tac hieu ung, 2026-07-06)
+
+**Stream:** live theo nhip event (poll 1.4s + flush 0.5-1s = tre 1-3s, mat nguoi = live). KHONG token-stream (tai khang dinh §2c). Don vi nho nhat = block/window tick + progress {done/total}.
+
+**Live-detail per stage:** Translator = block_done mang block_id -> preview pane fetch ban dich tu workdb qua endpoint read-only (F5). Builder = v1 chi co progress windows tu orchestrator (builder chua co emitter — §2l khong gom wiring); muc "so tay lon dan" (+N entries: ten 3-5 term, <=200 chars) DOI builder_v2_pilot nhan --event-log nhu reelection da lam -> xep vao luot UI-3 sau O2, thay doi nho co kiem soat.
+
+**Interaction contract (nguyen tac: XEM tu do — SUA tai diem dung — KHONG SUA khi dang bay):**
+- Xem moi luc: event/cost/cache/block/artifact; prompt full qua Cockpit Inspector (event chi mang sha).
+- Sua truoc run: panel xac nhan (budget, S0, model). Sua trong run: CAM giua stage (argv da bind digest, sua = pha reproducibility + vo resume); chi tai gate_pause (vd tang budget roi resume).
+- **PAUSE = "dung sau stage nay" (BO SUNG SCOPE O2):** control-flag file canh manifest, orchestrator check tai ranh gioi stage -> gate_pause paused_by_user, resume binh thuong. Dung giua stage = CANCEL (taskkill tree, da co O2). Duyet watchlist §36 tai gate nhu da khoa.
+
+**Hieu ung (user chot, luot polish SAU O2):** dong event/status ngan = typewriter (gia cam giac stream nhu log agent); block preview dai = typewriter toc do cao HOAC hieu ung khac; **LUAT: moi phan dung MOT hieu ung, cam chong cheo.** Thuan CSS/JS, khong dung tang data.
+
+**Model panel (user chot: SAU nut [DICH], TRUOC demo Thay — buoc rieng co review):** 2 bang: providers (them LM Studio endpoint/OpenAI/Gemini + nut Test tai dung preflight_check) + stage->model (tang nao dung model nao, chon tu danh sach da dang ky). RANG BUOC KHOA HOC: nhan "cau hinh da kiem dinh" (gemma-4-12b T3 103/103, pj gemini-2.5-flash da calibrate, prompt sha pin) vs "tuy chinh — so do KHONG so sanh duoc voi baseline luan van"; config-hash ghi vao manifest + report de moi ket qua tu khai chay bang gi.
+
+**Extras chot cho buoc UI cuoi/polish:** ETA per stage (tu progress + toc do trung binh), notification khi phase_1_done/run_done (title blink/browser notification), nut "Xuat ho so run" (zip event log + manifest + report — phu luc luan van).
+
+**Lich sau O2:** O2 (dang lam, + pause-flag) -> UI-2 nut [DICH] + panel xac nhan + auto-chuyen Console + notify 2 dot + pause/cancel/resume buttons -> renderer 2-phase -> UI-3 model panel + builder live-notebook + polish hieu ung -> demo Thay.
