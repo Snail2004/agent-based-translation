@@ -155,3 +155,23 @@ CodeX xac nhan F1, F3-F9; phan bien F2 dung cho: "mot os.write append" giam rui 
 - **N5:** ALLOWLIST mo rong; API_CAPABLE them cascade/sf_bt/pj — gate KIN: scoring script khong co PREFLIGHT_ONLY flag -> allow_api=false bi chan dry_run_not_supported, allow_api=true doi token ma khong nguon nao cap (estimate-preview tu choi script ngoai 3 script co dry-run that) -> khong co duong API lau. Ghi nhan gioi han CodeX tu khai: estimate-preview chi phu run_translate/cascade/reelection; scoring can --estimate-only rieng truoc khi vao cong nay (viec cua buoc orchestrator). Ghi chu: build_argv nhanh script moi chua gan --event-log/--run-id (di qua extra_args) — orchestrator xu ly.
 
 **VERSION 0.7.0** (milestone N1-N5) + CHANGELOG. Buoc ke: orchestrator run_one_button (single-writer merged event log §2f, tieu thu estimate-preview N5, goi preflight_check N4 voi py311, cascade 1-arm N2, watchlist gate N3).
+
+## 2j. ORCHESTRATOR DESIGN — de xuat Claude, CHO CodeX phan bien 1 vong truoc khi code (2026-07-05)
+
+Nen da khoa: 8 stage (§1), Q1-Q3 (§2b), event contract (§2d-§2f), Console (§2g-§2h), N1-N5 (§2i). §2j chi quyet nhung khoan con ho:
+
+**J1 — Hinh dang:** `pipeline/scripts/run_one_button.py`, process cha duy nhat. Stage = subprocess `python -m pipeline.scripts.<script>` voi argv that (khong import-call) — ranh gioi trung voi RunControl, giu cach ly loi/env (py311 cho sf_qe). Args chinh: `--job-id --chapters --workdb --with-s0 (Q1 checkbox) --budget-cap-usd --resume <run_id> --event-log --run-id --attempt-id`.
+
+**J2 — Manifest = nguon su that resume (KHAC LUAT §2d):** `data/jobs/<job_id>/one_button/<run_id>/manifest.json`, ghi atomic (tmp+os.replace) sau MOI chuyen trang thai stage. Fields: v, run_id, attempt, job_id, chapters, with_s0, workdb_path, budget_cap_usd, stages[8]{name, status(pending|running|done|failed|skipped), artifact_path, artifact_sha, exit_code, started/ended, cost_delta_cum}. **Resume granularity = STAGE**: --resume doc manifest, stage done + artifact sha khop -> skip; stage dang do/failed -> chay lai stage do TU DAU (khong mid-stage); attempt+1, log per-attempt (F9), event log per-attempt merge tiep.
+
+**J3 — Event single-writer (thi cong §2f):** moi stage nhan `--event-log run_events/<run>.stage_<s>.a<n>.jsonl` rieng; orchestrator la writer DUY NHAT cua `run_events/<run_id>.jsonl`: tail cac file stage bang byte-offset (luat partial-line F1 dung read_events da harden — tai su dung ham, khong viet lai), append vao merged voi seq do orchestrator cap + payload.src_seq; xen event rieng: run_start/run_resumed, stage_start/done, heartbeat 30s, cost_snapshot tai ranh gioi stage, run_done/failed. Stage chua co emitter (score_run, sf_qe...) -> orchestrator TU phat stage_start/done thay mat (script khong can sua o buoc nay).
+
+**J4 — Hai dot bao cao (Q2):** dot 1 = builder -> auditor -> [gate_pause watchlist N3, KHONG chan] -> translator -> score_run nhanh (TC/TA/hygiene) -> artifact_created bao cao dot 1. Dot 2 = cascade(1-arm N2, 2-arm neu with_s0) -> sf_qe(py311) -> sf_bt -> [pj CHI khi with_s0] -> report tong. Run chi run_done sau dot 2; dot 1 xong phat checkpoint {phase:1_done}.
+
+**J5 — Cost gate:** vao cong = estimate-preview N5 (RunControl them run_one_button vao ALLOWLIST + ESTIMATE_PREVIEW; estimate_by_stage tong hop: builder/translator tu preflight co san, cascade/sf local = $0, PJ can `--estimate-only` MOI cho score_pj — viec trong scope buoc nay vi PJ la scoring API-capable duy nhat). Trong run: orchestrator kiem cost cong don tai moi ranh gioi stage, vuot budget_cap -> gate_pause + dung an toan (resume duoc). KHONG kiem giua stage (stage tu co cap rieng cua no).
+
+**J6 — Loi & retry:** stage exit != 0 -> retry dung 1 lan (event retry) roi run_failed; khong retry stage API-ton-tien (translator/builder/pj) — fail thang, nguoi dung resume sau khi xu ly. Registry them attempt fields (§2f #2): attempt_index, resumed_from, log_path per attempt.
+
+**Pham vi buoc nay KHONG gom:** renderer thong nhat (buoc sau), nut [DICH] UI (buoc sau), scoring --estimate-only ngoai score_pj, wiring emitter vao tung stage script (J3 cho phep orchestrator phat thay).
+
+**Nghiem thu buoc nay:** chay run_one_button tren chuong DA CO cache (0-API hoac gan 0) -> manifest du 8 stage, merged event log hop le (validator: seq monotonic, event_id unique, parse 100%), Console hien thi live dung, resume giua chung hoat dong (kill giua stage -> resume -> done), frozen db nguyen ven.
