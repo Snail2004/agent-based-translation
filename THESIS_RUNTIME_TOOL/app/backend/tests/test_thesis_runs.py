@@ -848,6 +848,170 @@ def test_route_one_button_resume_creates_new_registry_run_and_clears_pause(tmp_p
     assert new_entry["argv"][-2:] == ["--resume", "run_resume"]
 
 
+def test_route_one_button_block_preview_reads_translation_runs_workdb_ro(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "one_button" / "run_preview"
+    run_dir.mkdir(parents=True)
+    workdb = run_dir / "workdb.sqlite3"
+    con = sqlite3.connect(workdb)
+    con.executescript(
+        """
+        CREATE TABLE blocks (
+            block_id TEXT PRIMARY KEY,
+            text TEXT,
+            order_index INTEGER
+        );
+        CREATE TABLE translation_runs (
+            run_id TEXT,
+            block_id TEXT,
+            config TEXT,
+            output_text TEXT,
+            model TEXT,
+            window_id TEXT,
+            created_at TEXT
+        );
+        """
+    )
+    con.executemany(
+        "INSERT INTO blocks(block_id, text, order_index) VALUES (?, ?, ?)",
+        [
+            ("b001", "source one", 1),
+            ("b002", "source two", 2),
+        ],
+    )
+    con.executemany(
+        """
+        INSERT INTO translation_runs(run_id, block_id, config, output_text, model, window_id, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            ("old_b001", "b001", "S1", "old target", "old-model", "w001", "2026-01-01T00:00:00"),
+            ("new_b001", "b001", "S1", "new target", "gpt-5.4-mini", "w001", "2026-01-02T00:00:00"),
+            ("b002_s1", "b002", "S1", "target two", "gpt-5.4-mini", "w002", "2026-01-02T00:00:00"),
+        ],
+    )
+    con.commit()
+    con.close()
+    manifest_path = run_dir / "manifest.json"
+    manifest_path.write_text(json.dumps({"workdb_path": str(workdb)}), encoding="utf-8")
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_preview",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(manifest_path),
+    )
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_preview/block-preview?limit=2")
+
+    assert resp.status_code == 200
+    data = resp.get_json()["data"]
+    assert data["source"] == "translation_runs"
+    assert [row["block_id"] for row in data["blocks"]] == ["b001", "b002"]
+    assert data["blocks"][0]["source_text"] == "source one"
+    assert data["blocks"][0]["target_text"] == "new target"
+    assert data["blocks"][0]["model"] == "gpt-5.4-mini"
+    assert data["blocks"][0]["window_id"] == "w001"
+
+
+def test_route_one_button_block_preview_missing_workdb_returns_empty(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "one_button" / "run_empty"
+    run_dir.mkdir(parents=True)
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_empty",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(run_dir / "manifest.json"),
+    )
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_empty/block-preview")
+
+    assert resp.status_code == 200
+    assert resp.get_json()["data"] == {"blocks": [], "source": "none"}
+
+
+def test_route_one_button_watchlist_reads_run_artifact_and_missing_is_empty(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "one_button" / "run_watch"
+    watch_dir = run_dir / "artifacts" / "reelection"
+    watch_dir.mkdir(parents=True)
+    watchlist = [
+        {
+            "source_term": "regularization",
+            "canonical_target_vi": "điều chuẩn",
+            "audit_label": "keep_as_translate_term",
+            "injection_action": "translate",
+        }
+    ]
+    (watch_dir / "watchlist.json").write_text(json.dumps(watchlist, ensure_ascii=False), encoding="utf-8")
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_watch",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(run_dir / "manifest.json"),
+    )
+    missing_dir = tmp_path / "jobA" / "one_button" / "run_no_watch"
+    missing_dir.mkdir(parents=True)
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_no_watch",
+        job_id="jobA",
+        run_dir=str(missing_dir),
+        manifest_path=str(missing_dir / "manifest.json"),
+    )
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_watch/watchlist")
+    missing = client.get("/api/thesis/runs/run_no_watch/watchlist")
+
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["watchlist"] == watchlist
+    assert missing.status_code == 200
+    assert missing.get_json()["data"] == {"watchlist": []}
+
+
 def test_runs_endpoint_refreshes_registry_written_by_replay_process(tmp_path, monkeypatch):
     monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
     monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))

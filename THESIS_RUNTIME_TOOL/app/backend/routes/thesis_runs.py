@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -360,6 +361,45 @@ def run_manifest(run_id: str):
         return error(exc.code, exc.message, exc.status)
 
 
+@bp.get("/thesis/runs/<run_id>/block-preview")
+def run_block_preview(run_id: str):
+    try:
+        limit = int(request.args.get("limit", "12"))
+        limit = max(1, min(limit, 100))
+        entry = _run_entry(run_id)
+        workdb_path = _workdb_path_from_entry(entry)
+        if workdb_path is None or not workdb_path.exists():
+            return ok({"blocks": [], "source": "none"})
+        return ok({"blocks": _read_block_preview(workdb_path, limit=limit), "source": "translation_runs"})
+    except ValueError:
+        return error("invalid_limit", "limit must be an integer.", 400)
+    except sqlite3.Error as exc:
+        return error("workdb_read_failed", f"Could not read workdb: {exc}", 500)
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+
+
+@bp.get("/thesis/runs/<run_id>/watchlist")
+def run_watchlist(run_id: str):
+    try:
+        entry = _run_entry(run_id)
+        watchlist_path = _watchlist_path_from_entry(entry)
+        if watchlist_path is None or not watchlist_path.exists():
+            return ok({"watchlist": []})
+        payload = json.loads(watchlist_path.read_text(encoding="utf-8"))
+        if isinstance(payload, list):
+            watchlist = payload
+        elif isinstance(payload, dict):
+            watchlist = payload.get("watchlist") or []
+        else:
+            watchlist = []
+        return ok({"watchlist": watchlist})
+    except json.JSONDecodeError as exc:
+        return error("watchlist_invalid_json", f"Watchlist is not valid JSON: {exc}", 500)
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+
+
 @bp.post("/thesis/runs/<run_id>/resume")
 def resume_thesis_run(run_id: str):
     try:
@@ -491,11 +531,15 @@ def _manifest_estimates(entry: dict) -> list[dict]:
     return manifest.get("estimate_by_stage") or []
 
 
-def _manifest_path_for_run(run_id: str) -> Path:
+def _run_entry(run_id: str) -> dict:
     entry = _get_registry().get_run(run_id)
     if entry is None:
         raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
-    return _manifest_path_for_entry(entry)
+    return entry
+
+
+def _manifest_path_for_run(run_id: str) -> Path:
+    return _manifest_path_for_entry(_run_entry(run_id))
 
 
 def _manifest_path_for_entry(entry: dict) -> Path:
@@ -517,6 +561,84 @@ def _pause_file_from_entry(entry: dict) -> Path:
     if not raw_dir:
         raise RunControlError("run_pause_unavailable", "Run does not have a run_dir.", 404)
     return _path_under_jobs(raw_dir, "run_dir") / "PAUSE"
+
+
+def _run_dir_from_entry(entry: dict) -> Path | None:
+    raw_dir = entry.get("run_dir")
+    if raw_dir:
+        return _path_under_jobs(raw_dir, "run_dir")
+    return None
+
+
+def _watchlist_path_from_entry(entry: dict) -> Path | None:
+    run_dir = _run_dir_from_entry(entry)
+    if run_dir is None:
+        return None
+    return _path_under_jobs(run_dir / "artifacts" / "reelection" / "watchlist.json", "watchlist_path")
+
+
+def _workdb_path_from_entry(entry: dict) -> Path | None:
+    manifest_path = None
+    try:
+        manifest_path = _manifest_path_for_entry(entry)
+    except RunControlError:
+        pass
+    if manifest_path and manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            manifest = {}
+        raw_workdb = manifest.get("workdb_path") or manifest.get("workdb")
+        if raw_workdb:
+            return _path_under_jobs(raw_workdb, "workdb_path")
+    run_dir = _run_dir_from_entry(entry)
+    if run_dir is not None:
+        return _path_under_jobs(run_dir / "workdb.sqlite3", "workdb_path")
+    return None
+
+
+def _read_block_preview(workdb_path: Path, *, limit: int) -> list[dict]:
+    uri = f"file:{workdb_path.resolve().as_posix()}?mode=ro"
+    with sqlite3.connect(uri, uri=True) as con:
+        con.row_factory = sqlite3.Row
+        rows = con.execute(
+            """
+            WITH ranked AS (
+                SELECT
+                    tr.block_id,
+                    b.text AS source_text,
+                    tr.output_text AS target_text,
+                    tr.model,
+                    tr.window_id,
+                    tr.config,
+                    b.order_index,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY tr.block_id, tr.config
+                        ORDER BY COALESCE(tr.created_at, '') DESC, tr.run_id DESC
+                    ) AS rn
+                FROM translation_runs tr
+                JOIN blocks b ON b.block_id = tr.block_id
+                WHERE tr.output_text IS NOT NULL AND TRIM(tr.output_text) <> ''
+            )
+            SELECT block_id, source_text, target_text, model, window_id, config
+            FROM ranked
+            WHERE rn = 1
+            ORDER BY COALESCE(window_id, ''), order_index, block_id, config
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [
+        {
+            "block_id": row["block_id"],
+            "source_text": row["source_text"],
+            "target_text": row["target_text"],
+            "model": row["model"],
+            "window_id": row["window_id"],
+            "config": row["config"],
+        }
+        for row in rows
+    ]
 
 
 def _path_under_jobs(raw_path: str | Path, field: str) -> Path:
