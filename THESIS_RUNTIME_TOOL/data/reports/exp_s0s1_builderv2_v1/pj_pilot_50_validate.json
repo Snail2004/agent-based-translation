@@ -1,0 +1,3898 @@
+{
+  "metric": "PJ",
+  "phase": "pilot_50_real_pairs",
+  "status": "validate_only",
+  "db": "data\\jobs\\exp_s0s1_full\\memory.sqlite3",
+  "db_sha256_before": "92229381172FE30C2A10E2C467232AB992B7EA8ECB40415A1652AB7DE8C13F42",
+  "expected_db_sha256": "92229381172FE30C2A10E2C467232AB992B7EA8ECB40415A1652AB7DE8C13F42",
+  "experiment": "exp_s0s1_builderv2_v1",
+  "chapter": "d2l_multilayer_perceptrons",
+  "model": "gemini-2.5-flash",
+  "prompt_version": "pj_judge_v1",
+  "prompt_sha256": "d47dbb171a30133f921063f0dad8f724256dc21d528d18724556b1d6d4f82bc2",
+  "request_profile": {
+    "temperature": 0,
+    "thinking_budget": 0,
+    "response_mime_type": "application/json",
+    "max_output_tokens": 512,
+    "concurrency": 8,
+    "seed_for_arm_assignment": 20260612
+  },
+  "pair_counts": {
+    "total_pairs": 475,
+    "auto_tie_identical_pairs": 136,
+    "different_pairs": 339,
+    "sampled_different_pairs": 50
+  },
+  "normalization": "NFC + CRLF/CR->LF + strip trailing whitespace per line",
+  "sampling": {
+    "population": "different S0/S1 MLP block pairs sorted by order_index",
+    "formula": "idx_i = floor((i + 0.5) * N / k), i=0..k-1",
+    "N": 339,
+    "k": 50,
+    "indices_0based": [
+      3,
+      10,
+      16,
+      23,
+      30,
+      37,
+      44,
+      50,
+      57,
+      64,
+      71,
+      77,
+      84,
+      91,
+      98,
+      105,
+      111,
+      118,
+      125,
+      132,
+      138,
+      145,
+      152,
+      159,
+      166,
+      172,
+      179,
+      186,
+      193,
+      200,
+      206,
+      213,
+      220,
+      227,
+      233,
+      240,
+      247,
+      254,
+      261,
+      267,
+      274,
+      281,
+      288,
+      294,
+      301,
+      308,
+      315,
+      322,
+      328,
+      335
+    ],
+    "selected_block_ids": [
+      "d2l_multilayer_perceptrons_mlp_b002",
+      "d2l_multilayer_perceptrons_mlp_b009",
+      "d2l_multilayer_perceptrons_mlp_b017",
+      "d2l_multilayer_perceptrons_mlp_b027",
+      "d2l_multilayer_perceptrons_mlp_b049",
+      "d2l_multilayer_perceptrons_mlp_b070",
+      "d2l_multilayer_perceptrons_mlp_scratch_b008",
+      "d2l_multilayer_perceptrons_mlp_scratch_b036",
+      "d2l_multilayer_perceptrons_mlp_concise_b019",
+      "d2l_multilayer_perceptrons_underfit_overfit_b007",
+      "d2l_multilayer_perceptrons_underfit_overfit_b014",
+      "d2l_multilayer_perceptrons_underfit_overfit_b020",
+      "d2l_multilayer_perceptrons_underfit_overfit_b028",
+      "d2l_multilayer_perceptrons_underfit_overfit_b035",
+      "d2l_multilayer_perceptrons_underfit_overfit_b047",
+      "d2l_multilayer_perceptrons_underfit_overfit_b069",
+      "d2l_multilayer_perceptrons_underfit_overfit_b078",
+      "d2l_multilayer_perceptrons_weight_decay_b005",
+      "d2l_multilayer_perceptrons_weight_decay_b013",
+      "d2l_multilayer_perceptrons_weight_decay_b025",
+      "d2l_multilayer_perceptrons_weight_decay_b035",
+      "d2l_multilayer_perceptrons_weight_decay_b052",
+      "d2l_multilayer_perceptrons_dropout_b002",
+      "d2l_multilayer_perceptrons_dropout_b009",
+      "d2l_multilayer_perceptrons_dropout_b016",
+      "d2l_multilayer_perceptrons_dropout_b035",
+      "d2l_multilayer_perceptrons_backprop_b004",
+      "d2l_multilayer_perceptrons_backprop_b012",
+      "d2l_multilayer_perceptrons_backprop_b026",
+      "d2l_multilayer_perceptrons_backprop_b039",
+      "d2l_multilayer_perceptrons_numerical_stability_and_init_b001",
+      "d2l_multilayer_perceptrons_numerical_stability_and_init_b010",
+      "d2l_multilayer_perceptrons_numerical_stability_and_init_b025",
+      "d2l_multilayer_perceptrons_numerical_stability_and_init_b038",
+      "d2l_multilayer_perceptrons_environment_b002",
+      "d2l_multilayer_perceptrons_environment_b009",
+      "d2l_multilayer_perceptrons_environment_b023",
+      "d2l_multilayer_perceptrons_environment_b033",
+      "d2l_multilayer_perceptrons_environment_b040",
+      "d2l_multilayer_perceptrons_environment_b049",
+      "d2l_multilayer_perceptrons_environment_b058",
+      "d2l_multilayer_perceptrons_environment_b068",
+      "d2l_multilayer_perceptrons_environment_b076",
+      "d2l_multilayer_perceptrons_environment_b085",
+      "d2l_multilayer_perceptrons_environment_b094",
+      "d2l_multilayer_perceptrons_kaggle_house_price_b005",
+      "d2l_multilayer_perceptrons_kaggle_house_price_b025",
+      "d2l_multilayer_perceptrons_kaggle_house_price_b040",
+      "d2l_multilayer_perceptrons_kaggle_house_price_b057",
+      "d2l_multilayer_perceptrons_kaggle_house_price_b067"
+    ]
+  },
+  "cases": [
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b002",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b002",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b002",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1327,
+      "block_type": "prose",
+      "source": "In :numref:`chap_linear`, we introduced\nsoftmax regression (:numref:`sec_softmax`),\nimplementing the algorithm from scratch\n(:numref:`sec_softmax_scratch`) and using high-level APIs\n(:numref:`sec_softmax_concise`),\nand training classifiers to recognize\n10 categories of clothing from low-resolution images.\nAlong the way, we learned how to wrangle data,\ncoerce our outputs into a valid probability distribution,\napply an appropriate loss function,\nand minimize it with respect to our model's parameters.\nNow that we have mastered these mechanics\nin the context of simple linear models,\nwe can launch our exploration of deep neural networks,\nthe comparatively rich class of models\nwith which this book is primarily concerned.",
+      "candidate_a": "Trong :numref:`chap_linear`, chúng ta đã giới thiệu hồi quy softmax (:numref:`sec_softmax`), triển khai thuật toán từ đầu (:numref:`sec_softmax_scratch`) và sử dụng các API cấp cao (:numref:`sec_softmax_concise`), đồng thời huấn luyện các bộ phân loại để nhận dạng 10 loại quần áo từ các ảnh có độ phân giải thấp. Trên đường đi, chúng ta đã học cách xử lý dữ liệu, ép đầu ra của mình thành một phân phối xác suất hợp lệ, áp dụng một hàm mất mát thích hợp, và tối thiểu hóa nó theo các tham số của mô hình. Giờ đây khi đã nắm vững các cơ chế này trong bối cảnh các mô hình tuyến tính đơn giản, chúng ta có thể bắt đầu khám phá các mạng nơ-ron sâu, một lớp mô hình phong phú hơn tương đối mà cuốn sách này chủ yếu tập trung vào.",
+      "candidate_b": "Trong :numref:`chap_linear`, chúng ta đã giới thiệu hồi quy softmax (:numref:`sec_softmax`), cài đặt thuật toán từ đầu (:numref:`sec_softmax_scratch`) và sử dụng các API cấp cao (:numref:`sec_softmax_concise`), đồng thời huấn luyện các bộ phân loại để nhận biết 10 loại quần áo từ các ảnh có độ phân giải thấp. Trong quá trình đó, chúng ta đã học cách xử lý dữ liệu, ép đầu ra của mình thành một phân phối xác suất hợp lệ, áp dụng một hàm mất mát thích hợp, và tối thiểu hóa nó theo các tham số của mô hình. Giờ đây khi đã nắm vững những cơ chế này trong bối cảnh các mô hình tuyến tính đơn giản, chúng ta có thể bắt đầu khám phá các mạng nơ-ron sâu, một lớp mô hình phong phú hơn tương đối mà cuốn sách này chủ yếu tập trung vào.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 724,
+      "source_token_count": 97,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b009",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b009",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b009",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1334,
+      "block_type": "prose",
+      "source": "And yet despite the apparent absurdity of linearity here,\nas compared with our previous examples,\nit is less obvious that we could address the problem\nwith a simple preprocessing fix.\nThat is because the significance of any pixel\ndepends in complex ways on its context\n(the values of the surrounding pixels).\nWhile there might exist a representation of our data\nthat would take into account\nthe relevant interactions among our features,\non top of which a linear model would be suitable,\nwe simply do not know how to calculate it by hand.\nWith deep neural networks, we used observational data\nto jointly learn both a representation via hidden layers\nand a linear predictor that acts upon that representation.",
+      "candidate_a": "Và dù ở đây tính tuyến tính có vẻ phi lý đến vậy, so với các ví dụ trước của chúng ta, thì cũng không hiển nhiên rằng ta có thể giải quyết vấn đề bằng một chỉnh sửa tiền xử lý đơn giản. Đó là vì ý nghĩa của bất kỳ pixel nào cũng phụ thuộc theo những cách phức tạp vào ngữ cảnh của nó (các giá trị của những pixel xung quanh). Mặc dù có thể tồn tại một biểu diễn cho dữ liệu của chúng ta có tính đến các tương tác liên quan giữa các đặc trưng, trên đó một mô hình tuyến tính sẽ phù hợp, nhưng chúng ta đơn giản là không biết cách tính nó bằng tay. Với các mạng nơ-ron sâu, chúng ta đã dùng dữ liệu quan sát để đồng thời học cả một biểu diễn thông qua các lớp ẩn và một bộ dự đoán tuyến tính tác động lên biểu diễn đó.",
+      "candidate_b": "Và mặc dù sự phi lý hiển nhiên của tính tuyến tính ở đây, so với các ví dụ trước của chúng ta, nhưng rõ ràng hơn là chúng ta có thể giải quyết vấn đề bằng một cách sửa tiền xử lý đơn giản. Đó là vì ý nghĩa của bất kỳ pixel nào cũng phụ thuộc theo những cách phức tạp vào ngữ cảnh của nó (các giá trị của những pixel xung quanh). Mặc dù có thể tồn tại một biểu diễn của dữ liệu của chúng ta có thể tính đến các tương tác liên quan giữa các đặc trưng của chúng ta, trên đó một mô hình tuyến tính sẽ phù hợp, chúng ta đơn giản là không biết cách tính nó bằng tay. Với mạng nơ-ron sâu, chúng ta đã dùng dữ liệu quan sát để đồng thời học cả một biểu diễn thông qua các tầng ẩn và một bộ dự đoán tuyến tính tác động lên biểu diễn đó.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 707,
+      "source_token_count": 118,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b017",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b017",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b017",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1342,
+      "block_type": "prose",
+      "source": "Note that after adding the hidden layer,\nour model now requires us to track and update\nadditional sets of parameters.\nSo what have we gained in exchange?\nYou might be surprised to find out\nthat---in the model defined above---*we\ngain nothing for our troubles*!\nThe reason is plain.\nThe hidden units above are given by\nan affine function of the inputs,\nand the outputs (pre-softmax) are just\nan affine function of the hidden units.\nAn affine function of an affine function\nis itself an affine function.\nMoreover, our linear model was already\ncapable of representing any affine function.",
+      "candidate_a": "Lưu ý rằng sau khi thêm tầng ẩn, mô hình của chúng ta giờ đây đòi hỏi phải theo dõi và cập nhật thêm các tập tham số. Vậy đổi lại chúng ta được gì? Có thể bạn sẽ ngạc nhiên khi biết rằng---trong mô hình được định nghĩa ở trên---*chúng ta chẳng được gì cho công sức bỏ ra*! Lý do rất rõ ràng. Các đơn vị ẩn ở trên được cho bởi một hàm affine của đầu vào, và các đầu ra (trước softmax) chỉ là một hàm affine của các đơn vị ẩn. Một hàm affine của một hàm affine thì bản thân nó cũng là một hàm affine. Hơn nữa, mô hình tuyến tính của chúng ta vốn đã có thể biểu diễn bất kỳ hàm affine nào.",
+      "candidate_b": "Lưu ý rằng sau khi thêm tầng ẩn, mô hình của chúng ta giờ đây đòi hỏi phải theo dõi và cập nhật thêm các bộ tham số. Vậy đổi lại chúng ta được gì? Bạn có thể sẽ ngạc nhiên khi biết rằng---trong mô hình được định nghĩa ở trên---*chúng ta chẳng được gì cho công sức bỏ ra*! Lý do rất rõ ràng. Các đơn vị ẩn ở trên được cho bởi một hàm affine của đầu vào, và các đầu ra (trước softmax) chỉ là một hàm affine của các đơn vị ẩn. Một hàm affine của một hàm affine thì bản thân nó cũng là một hàm affine. Hơn nữa, mô hình tuyến tính của chúng ta vốn đã có thể biểu diễn bất kỳ hàm affine nào.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 585,
+      "source_token_count": 98,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b027",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b027",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b027",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1352,
+      "block_type": "heading",
+      "source": "## Activation Functions\n:label:`subsec_activation-functions`",
+      "candidate_a": "## Các hàm kích hoạt :label:`subsec_activation-functions`",
+      "candidate_b": "## Hàm kích hoạt :label:`subsec_activation-functions`",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": true,
+      "source_char_count": 60,
+      "source_token_count": 4,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b049",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b049",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b049",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1374,
+      "block_type": "prose",
+      "source": "In the earliest neural networks, scientists\nwere interested in modeling biological neurons\nwhich either *fire* or *do not fire*.\nThus the pioneers of this field,\ngoing all the way back to McCulloch and Pitts,\nthe inventors of the artificial neuron,\nfocused on thresholding units.\nA thresholding activation takes value 0\nwhen its input is below some threshold\nand value 1 when the input exceeds the threshold.",
+      "candidate_a": "Trong những mạng nơ-ron đầu tiên, các nhà khoa học quan tâm đến việc mô hình hóa các nơ-ron sinh học vốn hoặc *phát xung* hoặc *không phát xung*. Vì vậy, những người tiên phong của lĩnh vực này, bắt đầu từ McCulloch và Pitts, những người phát minh ra nơ-ron nhân tạo, đã tập trung vào các đơn vị ngưỡng. Một kích hoạt ngưỡng nhận giá trị 0 khi đầu vào của nó thấp hơn một ngưỡng nào đó và nhận giá trị 1 khi đầu vào vượt quá ngưỡng.",
+      "candidate_b": "Trong những mạng nơ-ron đầu tiên, các nhà khoa học quan tâm đến việc mô hình hóa các nơ-ron sinh học, vốn hoặc *phát xung* hoặc *không phát xung*. Vì vậy, những người tiên phong của lĩnh vực này, bắt đầu từ McCulloch và Pitts, những người phát minh ra nơ-ron nhân tạo, đã tập trung vào các đơn vị ngưỡng. Một hàm kích hoạt ngưỡng nhận giá trị 0 khi đầu vào của nó thấp hơn một ngưỡng nào đó và nhận giá trị 1 khi đầu vào vượt quá ngưỡng.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 408,
+      "source_token_count": 66,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b070",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b070",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b070",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1395,
+      "block_type": "prose",
+      "source": "The derivative of tanh function is plotted below.\nAs the input nears 0,\nthe derivative of the tanh function approaches a maximum of 1.\nAnd as we saw with the sigmoid function,\nas the input moves away from 0 in either direction,\nthe derivative of the tanh function approaches 0.",
+      "candidate_a": "Đạo hàm của hàm tanh được vẽ bên dưới. Khi đầu vào tiến gần 0, đạo hàm của hàm tanh tiến tới giá trị cực đại là 1. Và như chúng ta đã thấy với hàm sigmoid, khi đầu vào đi xa khỏi 0 theo cả hai hướng, đạo hàm của hàm tanh tiến tới 0.",
+      "candidate_b": "Đạo hàm của hàm tanh được vẽ bên dưới. Khi đầu vào tiến gần 0, đạo hàm của hàm tanh tiến tới giá trị cực đại là 1. Và như chúng ta đã thấy với hàm sigmoid, khi đầu vào đi xa khỏi 0 theo một trong hai hướng, đạo hàm của hàm tanh tiến tới 0.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 277,
+      "source_token_count": 50,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b008",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b008",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b008",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1414,
+      "block_type": "prose",
+      "source": "Recall that Fashion-MNIST contains 10 classes,\nand that each image consists of a $28 \\times 28 = 784$\ngrid of grayscale pixel values.\nAgain, we will disregard the spatial structure\namong the pixels for now,\nso we can think of this as simply a classification dataset\nwith 784 input features and 10 classes.\nTo begin, we will [**implement an MLP\nwith one hidden layer and 256 hidden units.**]\nNote that we can regard both of these quantities\nas hyperparameters.\nTypically, we choose layer widths in powers of 2,\nwhich tend to be computationally efficient because\nof how memory is allocated and addressed in hardware.",
+      "candidate_a": "Nhớ lại rằng Fashion-MNIST chứa 10 lớp, và mỗi ảnh gồm một lưới $28 \\times 28 = 784$ giá trị pixel mức xám. Một lần nữa, trước mắt chúng ta sẽ bỏ qua cấu trúc không gian giữa các pixel, vì vậy ta có thể xem đây đơn giản là một bộ dữ liệu phân loại với 784 đặc trưng đầu vào và 10 lớp. Để bắt đầu, chúng ta sẽ [**triển khai một MLP với một tầng ẩn và 256 đơn vị ẩn.**] Lưu ý rằng chúng ta có thể xem cả hai đại lượng này là siêu tham số. Thông thường, chúng ta chọn độ rộng tầng theo lũy thừa của 2, vì chúng có xu hướng hiệu quả về mặt tính toán do cách bộ nhớ được cấp phát và địa chỉ hóa trong phần cứng.",
+      "candidate_b": "Nhớ lại rằng Fashion-MNIST chứa 10 lớp, và mỗi ảnh gồm một lưới $28 \\times 28 = 784$ giá trị pixel thang xám. Một lần nữa, hiện tại chúng ta sẽ bỏ qua cấu trúc không gian giữa các pixel, vì vậy có thể xem đây đơn giản là một bộ dữ liệu phân loại với 784 đặc trưng đầu vào và 10 lớp. Trước hết, chúng ta sẽ [**cài đặt một MLP với một lớp ẩn và 256 đơn vị ẩn.**] Lưu ý rằng chúng ta có thể xem cả hai đại lượng này là siêu tham số. Thông thường, chúng ta chọn độ rộng lớp theo lũy thừa của 2, vì cách này thường hiệu quả về mặt tính toán do cách bộ nhớ được cấp phát và địa chỉ hóa trong phần cứng.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 614,
+      "source_token_count": 104,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b036",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b036",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b036",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1442,
+      "block_type": "prose",
+      "source": "* We saw that implementing a simple MLP is easy, even when done manually.\n* However, with a large number of layers, implementing MLPs from scratch can still get messy (e.g., naming and keeping track of our model's parameters).",
+      "candidate_a": "* Chúng ta đã thấy rằng việc triển khai một MLP đơn giản là dễ dàng, ngay cả khi làm thủ công. * Tuy nhiên, với số lượng tầng lớn, việc triển khai MLP từ đầu vẫn có thể trở nên rối rắm (ví dụ: đặt tên và theo dõi các tham số của mô hình).",
+      "candidate_b": "* Chúng ta đã thấy rằng việc triển khai một MLP đơn giản là dễ dàng, ngay cả khi làm thủ công. * Tuy nhiên, với số lượng lớp lớn, việc triển khai MLP từ đầu vẫn có thể trở nên rối rắm (ví dụ: đặt tên và theo dõi các tham số của mô hình).",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 226,
+      "source_token_count": 39,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_concise_b019",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_concise_b019",
+      "block_id": "d2l_multilayer_perceptrons_mlp_concise_b019",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1466,
+      "block_type": "prose",
+      "source": "1. Try adding different numbers of hidden layers (you may also modify the learning rate). What setting works best?\n1. Try out different activation functions. Which one works best?\n1. Try different schemes for initializing the weights. What method works best?",
+      "candidate_a": "1. Hãy thử thêm các số lượng tầng ẩn khác nhau (bạn cũng có thể sửa đổi tốc độ học). Thiết lập nào hoạt động tốt nhất? 1. Hãy thử các hàm kích hoạt khác nhau. Hàm nào hoạt động tốt nhất? 1. Hãy thử các sơ đồ khác nhau để khởi tạo các trọng số. Phương pháp nào hoạt động tốt nhất?",
+      "candidate_b": "1. Thử thêm các số lượng lớp ẩn khác nhau (bạn cũng có thể sửa đổi tốc độ học). Thiết lập nào hoạt động tốt nhất? 1. Thử các hàm kích hoạt khác nhau. Hàm nào hoạt động tốt nhất? 1. Thử các lược đồ khác nhau để khởi tạo trọng số. Phương pháp nào hoạt động tốt nhất?",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 258,
+      "source_token_count": 41,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b007",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b007",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b007",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1476,
+      "block_type": "heading",
+      "source": "## Training Error and Generalization Error",
+      "candidate_a": "## Sai số huấn luyện và sai số khái quát hóa",
+      "candidate_b": "## Lỗi Huấn Luyện và Lỗi Khái Quát Hóa",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": true,
+      "source_char_count": 42,
+      "source_token_count": 6,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b014",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b014",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b014",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1483,
+      "block_type": "prose",
+      "source": "Since generalization is the fundamental problem in machine learning,\nyou might not be surprised to learn\nthat many mathematicians and theorists have dedicated their lives\nto developing formal theories to describe this phenomenon.\nIn their [eponymous theorem](https://en.wikipedia.org/wiki/Glivenko%E2%80%93Cantelli_theorem), Glivenko and Cantelli\nderived the rate at which the training error\nconverges to the generalization error.\nIn a series of seminal papers, [Vapnik and Chervonenkis](https://en.wikipedia.org/wiki/Vapnik%E2%80%93Chervonenkis_theory)\nextended this theory to more general classes of functions.\nThis work laid the foundations of statistical learning theory.",
+      "candidate_a": "Vì khái quát hóa là vấn đề cơ bản trong học máy, bạn có lẽ sẽ không ngạc nhiên khi biết rằng nhiều nhà toán học và nhà lý thuyết đã dành cả đời để phát triển các lý thuyết hình thức nhằm mô tả hiện tượng này. Trong [định lý cùng tên](https://en.wikipedia.org/wiki/Glivenko%E2%80%93Cantelli_theorem) của họ, Glivenko và Cantelli đã suy ra tốc độ mà sai số huấn luyện hội tụ về sai số khái quát hóa. Trong một loạt bài báo nền tảng, [Vapnik và Chervonenkis](https://en.wikipedia.org/wiki/Vapnik%E2%80%93Chervonenkis_theory) đã mở rộng lý thuyết này cho các lớp hàm tổng quát hơn. Công trình này đã đặt nền móng cho lý thuyết học thống kê.",
+      "candidate_b": "Vì khái quát hóa là vấn đề cơ bản trong máy học, có lẽ bạn sẽ không ngạc nhiên khi biết rằng nhiều nhà toán học và nhà lý thuyết đã dành cả đời để phát triển các lý thuyết hình thức nhằm mô tả hiện tượng này. Trong [định lý cùng tên](https://en.wikipedia.org/wiki/Glivenko%E2%80%93Cantelli_theorem) của họ, Glivenko và Cantelli đã suy ra tốc độ mà lỗi huấn luyện hội tụ về lỗi khái quát hóa. Trong một loạt bài báo nền tảng, [Vapnik và Chervonenkis](https://en.wikipedia.org/wiki/Vapnik%E2%80%93Chervonenkis_theory) đã mở rộng lý thuyết này sang các lớp hàm tổng quát hơn. Công trình này đã đặt nền móng cho lý thuyết học thống kê.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 675,
+      "source_token_count": 80,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b020",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b020",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b020",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1489,
+      "block_type": "prose",
+      "source": "When we train our models, we attempt to search for a function\nthat fits the training data as well as possible.\nIf the function is so flexible that it can catch on to spurious patterns\njust as easily as to true associations,\nthen it might perform *too well* without producing a model\nthat generalizes well to unseen data.\nThis is precisely what we want to avoid or at least control.\nMany of the techniques in deep learning are heuristics and tricks\naimed at guarding against overfitting.",
+      "candidate_a": "Khi huấn luyện các mô hình, chúng ta cố gắng tìm kiếm một hàm khớp với dữ liệu huấn luyện tốt nhất có thể. Nếu hàm đó đủ linh hoạt để bám vào các mẫu nhiễu cũng dễ dàng như các mối liên hệ thật, thì nó có thể hoạt động *quá tốt* mà không tạo ra một mô hình khái quát hóa tốt trên dữ liệu chưa thấy. Đây chính là điều chúng ta muốn tránh hoặc ít nhất là kiểm soát. Nhiều kỹ thuật trong học sâu là các kinh nghiệm và mẹo nhằm bảo vệ khỏi hiện tượng quá khớp.",
+      "candidate_b": "Khi chúng ta huấn luyện các mô hình, chúng ta cố gắng tìm kiếm một hàm khớp với dữ liệu huấn luyện tốt nhất có thể. Nếu hàm đó linh hoạt đến mức có thể nắm bắt các mẫu nhiễu cũng dễ dàng như các mối liên hệ thực sự, thì nó có thể hoạt động *quá tốt* mà không tạo ra một mô hình khái quát hóa tốt trên dữ liệu chưa thấy. Đây chính xác là điều chúng ta muốn tránh hoặc ít nhất là kiểm soát. Nhiều kỹ thuật trong học sâu là các kinh nghiệm và mẹo nhằm bảo vệ chống lại quá khớp.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 486,
+      "source_token_count": 86,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b028",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b028",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b028",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1497,
+      "block_type": "prose",
+      "source": "With MLPs, for example,\nwe may wish to compare models with\ndifferent numbers of hidden layers,\ndifferent numbers of hidden units,\nand various choices of the activation functions\napplied to each hidden layer.\nIn order to determine the best among our candidate models,\nwe will typically employ a validation dataset.",
+      "candidate_a": "Với MLP, chẳng hạn, ta có thể muốn so sánh các mô hình với số lượng tầng ẩn khác nhau, số lượng đơn vị ẩn khác nhau, và các lựa chọn khác nhau của các hàm kích hoạt được áp dụng cho từng tầng ẩn. Để xác định mô hình tốt nhất trong số các mô hình ứng viên, ta thường sử dụng một tập dữ liệu xác thực.",
+      "candidate_b": "Với MLP, chẳng hạn, chúng ta có thể muốn so sánh các mô hình với số lượng tầng ẩn khác nhau, số lượng đơn vị ẩn khác nhau, và các lựa chọn khác nhau của các hàm kích hoạt được áp dụng cho mỗi tầng ẩn. Để xác định mô hình tốt nhất trong số các mô hình ứng viên, chúng ta thường sẽ sử dụng một tập xác thực.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 313,
+      "source_token_count": 50,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b035",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b035",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b035",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1504,
+      "block_type": "prose",
+      "source": "When training data is scarce,\nwe might not even be able to afford to hold out\nenough data to constitute a proper validation set.\nOne popular solution to this problem is to employ\n$K$*-fold cross-validation*.\nHere, the original training data is split into $K$ non-overlapping subsets.\nThen model training and validation are executed $K$ times,\neach time training on $K-1$ subsets and validating\non a different subset (the one not used for training in that round).\nFinally, the training and validation errors are estimated\nby averaging over the results from the $K$ experiments.",
+      "candidate_a": "Khi dữ liệu huấn luyện khan hiếm, chúng ta thậm chí có thể không đủ khả năng giữ lại đủ dữ liệu để tạo thành một tập xác thực phù hợp. Một giải pháp phổ biến cho vấn đề này là sử dụng *xác thực chéo $K$-fold*. Ở đây, dữ liệu huấn luyện ban đầu được chia thành $K$ tập con không chồng lấp. Sau đó, việc huấn luyện và xác thực mô hình được thực hiện $K$ lần, mỗi lần huấn luyện trên $K-1$ tập con và xác thực trên một tập con khác (tập không được dùng để huấn luyện trong vòng đó). Cuối cùng, sai số huấn luyện và sai số xác thực được ước lượng bằng cách lấy trung bình các kết quả từ $K$ thí nghiệm.",
+      "candidate_b": "Khi dữ liệu huấn luyện khan hiếm, chúng ta thậm chí có thể không đủ khả năng giữ lại đủ dữ liệu để tạo thành một tập xác thực đúng nghĩa. Một giải pháp phổ biến cho vấn đề này là dùng xác thực chéo $K$*-fold*. Ở đây, dữ liệu huấn luyện ban đầu được chia thành $K$ tập con không chồng lấp. Sau đó huấn luyện mô hình và xác thực được thực hiện $K$ lần, mỗi lần huấn luyện trên $K-1$ tập con và xác thực trên một tập con khác (tập không được dùng để huấn luyện trong vòng đó). Cuối cùng, lỗi huấn luyện và lỗi xác thực được ước lượng bằng cách lấy trung bình các kết quả từ $K$ thí nghiệm.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 576,
+      "source_token_count": 93,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b047",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b047",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b047",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1516,
+      "block_type": "prose",
+      "source": "The other big consideration to bear in mind is the dataset size.\nFixing our model, the fewer samples we have in the training dataset,\nthe more likely (and more severely) we are to encounter overfitting.\nAs we increase the amount of training data,\nthe generalization error typically decreases.\nMoreover, in general, more data never hurt.\nFor a fixed task and data distribution,\nthere is typically a relationship between model complexity and dataset size.\nGiven more data, we might profitably attempt to fit a more complex model.\nAbsent sufficient data, simpler models may be more difficult to beat.\nFor many tasks, deep learning only outperforms linear models\nwhen many thousands of training examples are available.\nIn part, the current success of deep learning\nowes to the current abundance of massive datasets\ndue to Internet companies, cheap storage, connected devices,\nand the broad digitization of the economy.",
+      "candidate_a": "Một cân nhắc lớn khác cần ghi nhớ là kích thước bộ dữ liệu. Giữ cố định mô hình của chúng ta, càng ít mẫu trong tập dữ liệu huấn luyện thì chúng ta càng dễ (và càng nghiêm trọng) gặp phải quá khớp. Khi chúng ta tăng lượng dữ liệu huấn luyện, lỗi khái quát hóa thường giảm. Hơn nữa, nói chung, nhiều dữ liệu không bao giờ là điều xấu. Với một nhiệm vụ và phân phối dữ liệu cố định, thường tồn tại mối quan hệ giữa độ phức tạp mô hình và kích thước bộ dữ liệu. Khi có nhiều dữ liệu hơn, ta có thể thử khớp một mô hình phức tạp hơn một cách hiệu quả. Nếu không đủ dữ liệu, các mô hình đơn giản hơn có thể khó bị vượt qua. Với nhiều nhiệm vụ, học sâu chỉ vượt trội hơn các mô hình tuyến tính khi có sẵn hàng chục nghìn mẫu huấn luyện. Một phần, thành công hiện nay của học sâu là nhờ sự dồi dào hiện tại của các bộ dữ liệu khổng lồ do các công ty Internet, lưu trữ rẻ, các thiết bị kết nối và sự số hóa rộng khắp của nền kinh tế.",
+      "candidate_b": "Một cân nhắc lớn khác cần ghi nhớ là kích thước tập dữ liệu. Giữ cố định mô hình của chúng ta, càng ít mẫu trong tập huấn luyện thì chúng ta càng có khả năng (và càng nghiêm trọng) gặp phải hiện tượng quá khớp. Khi tăng lượng dữ liệu huấn luyện, sai số khái quát hóa thường giảm. Hơn nữa, nói chung, nhiều dữ liệu không bao giờ gây hại. Với một nhiệm vụ và phân phối dữ liệu cố định, thường tồn tại mối quan hệ giữa độ phức tạp của mô hình và kích thước tập dữ liệu. Khi có nhiều dữ liệu hơn, ta có thể thử khớp một mô hình phức tạp hơn một cách hiệu quả. Khi không đủ dữ liệu, các mô hình đơn giản có thể khó bị đánh bại hơn. Với nhiều nhiệm vụ, học sâu chỉ vượt trội hơn các mô hình tuyến tính khi có sẵn hàng chục nghìn ví dụ huấn luyện. Một phần, thành công hiện tại của học sâu là nhờ sự phong phú hiện nay của các tập dữ liệu khổng lồ do các công ty Internet, lưu trữ rẻ, thiết bị kết nối và quá trình số hóa rộng khắp của nền kinh tế.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 914,
+      "source_token_count": 145,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b069",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b069",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b069",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1538,
+      "block_type": "heading",
+      "source": "### [**Third-Order Polynomial Function Fitting (Normal)**]",
+      "candidate_a": "### [**Khớp hàm đa thức bậc ba (bình thường)**]",
+      "candidate_b": "### [**Khớp hàm đa thức bậc ba (Bình thường)**]",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": true,
+      "source_char_count": 58,
+      "source_token_count": 6,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b078",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b078",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b078",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1547,
+      "block_type": "prose",
+      "source": "In the subsequent sections, we will continue\nto discuss overfitting problems\nand methods for dealing with them,\nsuch as weight decay and dropout.",
+      "candidate_a": "Trong các phần tiếp theo, chúng ta sẽ tiếp tục thảo luận về các vấn đề khớp quá mức và các phương pháp xử lý chúng, chẳng hạn như suy giảm trọng số và dropout.",
+      "candidate_b": "Trong các phần tiếp theo, chúng ta sẽ tiếp tục thảo luận về các vấn đề quá khớp và các phương pháp để xử lý chúng, chẳng hạn như suy giảm trọng số và dropout.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 145,
+      "source_token_count": 23,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b005",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b005",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b005",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1559,
+      "block_type": "heading",
+      "source": "## Norms and Weight Decay",
+      "candidate_a": "## Các chuẩn và suy giảm trọng số",
+      "candidate_b": "## Chuẩn và suy giảm trọng số",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": true,
+      "source_char_count": 25,
+      "source_token_count": 5,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b013",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b013",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b013",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1567,
+      "block_type": "prose",
+      "source": "One reason to work with the $L_2$ norm\nis that it places an outsize penalty\non large components of the weight vector.\nThis biases our learning algorithm\ntowards models that distribute weight evenly\nacross a larger number of features.\nIn practice, this might make them more robust\nto measurement error in a single variable.\nBy contrast, $L_1$ penalties lead to models\nthat concentrate weights on a small set of features by clearing the other weights to zero.\nThis is called *feature selection*,\nwhich may be desirable for other reasons.",
+      "candidate_a": "Một lý do để làm việc với chuẩn $L_2$ là nó đặt một mức phạt rất lớn lên các thành phần lớn của vector trọng số. Điều này khiến thuật toán học của chúng ta thiên về các mô hình phân bổ trọng số đều hơn trên một số lượng đặc trưng lớn hơn. Trong thực tế, điều này có thể làm chúng vững hơn trước sai số đo lường trong một biến đơn lẻ. Ngược lại, các hạng phạt $L_1$ dẫn đến các mô hình tập trung trọng số vào một tập nhỏ các đặc trưng bằng cách đưa các trọng số khác về 0. Điều này được gọi là *chọn đặc trưng*, và điều đó có thể mong muốn vì những lý do khác.",
+      "candidate_b": "Một lý do để làm việc với chuẩn $L_2$ là nó đặt mức phạt rất lớn lên các thành phần lớn của vector trọng số. Điều này thiên lệch thuật toán học của chúng ta về phía các mô hình phân bổ trọng số đều hơn trên nhiều đặc trưng hơn. Trong thực tế, điều này có thể làm cho chúng bền vững hơn trước sai số đo lường ở một biến đơn lẻ. Ngược lại, các hình phạt $L_1$ dẫn đến các mô hình tập trung trọng số vào một tập nhỏ các đặc trưng bằng cách đưa các trọng số khác về 0. Điều này được gọi là *lựa chọn đặc trưng*, và có thể hữu ích vì những lý do khác.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 535,
+      "source_token_count": 89,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b025",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b025",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b025",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1579,
+      "block_type": "prose",
+      "source": "We choose our label to be a linear function of our inputs,\ncorrupted by Gaussian noise with zero mean and standard deviation 0.01.\nTo make the effects of overfitting pronounced,\nwe can increase the dimensionality of our problem to $d = 200$\nand work with a small training set containing only 20 examples.",
+      "candidate_a": "Chúng ta chọn nhãn của mình là một hàm tuyến tính của các đầu vào, bị nhiễu Gaussian với trung bình bằng 0 và độ lệch chuẩn 0.01. Để làm cho các tác động của quá khớp trở nên rõ rệt, chúng ta có thể tăng số chiều của bài toán lên $d = 200$ và làm việc với một tập huấn luyện nhỏ chỉ gồm 20 ví dụ.",
+      "candidate_b": "Chúng ta chọn nhãn của mình là một hàm tuyến tính của các đầu vào, bị nhiễu bởi nhiễu Gaussian có kỳ vọng bằng 0 và độ lệch chuẩn 0.01. Để làm cho tác động của overfitting trở nên rõ rệt, chúng ta có thể tăng số chiều của bài toán lên $d = 200$ và làm việc với một tập huấn luyện nhỏ chỉ gồm 20 ví dụ.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 304,
+      "source_token_count": 53,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b035",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b035",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b035",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1589,
+      "block_type": "prose",
+      "source": "Perhaps the most convenient way to implement this penalty\nis to square all terms in place and sum them up.",
+      "candidate_a": "Có lẽ cách thuận tiện nhất để triển khai hạng phạt này là bình phương tất cả các hạng tại chỗ rồi cộng chúng lại.",
+      "candidate_b": "Có lẽ cách thuận tiện nhất để triển khai hình phạt này là bình phương tất cả các hạng tử tại chỗ rồi cộng chúng lại.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 106,
+      "source_token_count": 20,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b052",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b052",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b052",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1606,
+      "block_type": "prose",
+      "source": ":begin_tab:`mxnet`\nIn the following code, we specify\nthe weight decay hyperparameter directly\nthrough `wd` when instantiating our `Trainer`.\nBy default, Gluon decays both\nweights and biases simultaneously.\nNote that the hyperparameter `wd`\nwill be multiplied by `wd_mult`\nwhen updating model parameters.\nThus, if we set `wd_mult` to zero,\nthe bias parameter $b$ will not decay.\n:end_tab:",
+      "candidate_a": ":begin_tab:`mxnet` Trong đoạn mã sau, chúng ta chỉ định siêu tham số suy giảm trọng số trực tiếp thông qua `wd` khi khởi tạo `Trainer` của mình. Theo mặc định, Gluon làm suy giảm đồng thời cả trọng số và độ lệch. Lưu ý rằng siêu tham số `wd` sẽ được nhân với `wd_mult` khi cập nhật tham số mô hình. Do đó, nếu chúng ta đặt `wd_mult` bằng 0, tham số độ lệch $b$ sẽ không suy giảm. :end_tab:",
+      "candidate_b": ":begin_tab:`mxnet` Trong đoạn mã sau, chúng ta chỉ định trực tiếp siêu tham số suy giảm trọng số thông qua `wd` khi khởi tạo `Trainer` của mình. Theo mặc định, Gluon làm suy giảm đồng thời cả trọng số và bias. Lưu ý rằng siêu tham số `wd` sẽ được nhân với `wd_mult` khi cập nhật các tham số mô hình. Vì vậy, nếu chúng ta đặt `wd_mult` bằng không, tham số bias $b$ sẽ không bị suy giảm. :end_tab:",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 387,
+      "source_token_count": 56,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b002",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b002",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b002",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1624,
+      "block_type": "prose",
+      "source": "In :numref:`sec_weight_decay`,\nwe introduced the classical approach\nto regularizing statistical models\nby penalizing the $L_2$ norm of the weights.\nIn probabilistic terms, we could justify this technique\nby arguing that we have assumed a prior belief\nthat weights take values from\na Gaussian distribution with mean zero.\nMore intuitively, we might argue\nthat we encouraged the model to spread out its weights\namong many features rather than depending too much\non a small number of potentially spurious associations.",
+      "candidate_a": "Trong :numref:`sec_weight_decay`, chúng ta đã giới thiệu cách tiếp cận cổ điển để chuẩn hóa các mô hình thống kê bằng cách phạt chuẩn $L_2$ của các trọng số. Xét theo nghĩa xác suất, ta có thể biện minh cho kỹ thuật này bằng cách lập luận rằng ta đã giả định một niềm tin tiên nghiệm rằng các trọng số nhận các giá trị từ một Gaussian distribution với trung bình bằng không. Trực quan hơn, ta có thể lập luận rằng ta đã khuyến khích mô hình phân tán các trọng số của nó trên nhiều đặc trưng thay vì phụ thuộc quá nhiều vào một số ít mối liên hệ có khả năng là ngẫu nhiên.",
+      "candidate_b": "Trong :numref:`sec_weight_decay`, chúng ta đã giới thiệu cách tiếp cận cổ điển để điều chuẩn các mô hình thống kê bằng cách phạt chuẩn $L_2$ của các trọng số. Xét theo xác suất, ta có thể biện minh cho kỹ thuật này bằng cách cho rằng ta đã giả định một niềm tin tiên nghiệm rằng các trọng số nhận các giá trị từ một phân phối Gaussian có trung bình bằng không. Trực quan hơn, ta có thể lập luận rằng ta khuyến khích mô hình phân tán các trọng số của nó trên nhiều đặc trưng thay vì phụ thuộc quá nhiều vào một số ít mối liên hệ có khả năng là ngẫu nhiên.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 515,
+      "source_token_count": 78,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b009",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b009",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b009",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1631,
+      "block_type": "heading",
+      "source": "## Robustness through Perturbations",
+      "candidate_a": "## Độ vững chắc thông qua các nhiễu loạn",
+      "candidate_b": "## Độ bền vững thông qua nhiễu loạn",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": true,
+      "source_char_count": 35,
+      "source_token_count": 4,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b016",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b016",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b016",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1638,
+      "block_type": "prose",
+      "source": "In Bishop's work, he added Gaussian noise\nto the inputs to a linear model.\nAt each training iteration, he added noise\nsampled from a distribution with mean zero\n$\\epsilon \\sim \\mathcal{N}(0,\\sigma^2)$ to the input $\\mathbf{x}$,\nyielding a perturbed point $\\mathbf{x}' = \\mathbf{x} + \\epsilon$.\nIn expectation, $E[\\mathbf{x}'] = \\mathbf{x}$.",
+      "candidate_a": "Trong công trình của Bishop, ông đã thêm nhiễu Gaussian vào đầu vào của một mô hình tuyến tính. Ở mỗi lượt lặp huấn luyện, ông thêm nhiễu được lấy mẫu từ một phân phối có trung bình bằng 0 $\\epsilon \\sim \\mathcal{N}(0,\\sigma^2)$ vào đầu vào $\\mathbf{x}$, tạo ra một điểm bị nhiễu $\\mathbf{x}' = \\mathbf{x} + \\epsilon$. Trong kỳ vọng, $E[\\mathbf{x}'] = \\mathbf{x}$. ",
+      "candidate_b": "Trong công trình của Bishop, ông đã thêm nhiễu Gaussian vào đầu vào của một mô hình tuyến tính. Ở mỗi vòng lặp huấn luyện, ông thêm nhiễu được lấy mẫu từ một phân phối có kỳ vọng bằng 0 $\\epsilon \\sim \\mathcal{N}(0,\\sigma^2)$ vào đầu vào $\\mathbf{x}$, thu được một điểm bị nhiễu loạn $\\mathbf{x}' = \\mathbf{x} + \\epsilon$. Theo kỳ vọng, $E[\\mathbf{x}'] = \\mathbf{x}$. ",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 340,
+      "source_token_count": 49,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b035",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b035",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b035",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1657,
+      "block_type": "prose",
+      "source": "Again, we work with the Fashion-MNIST dataset\nintroduced in :numref:`sec_fashion_mnist`.\nWe [**define an MLP with\ntwo hidden layers containing 256 units each.**]",
+      "candidate_a": "Một lần nữa, chúng ta làm việc với bộ dữ liệu Fashion-MNIST được giới thiệu trong :numref:`sec_fashion_mnist`. Chúng ta [**định nghĩa một MLP với hai tầng ẩn, mỗi tầng chứa 256 đơn vị.**]",
+      "candidate_b": "Một lần nữa, chúng ta làm việc với bộ dữ liệu Fashion-MNIST đã được giới thiệu trong :numref:`sec_fashion_mnist`. Chúng ta [**định nghĩa một MLP với hai lớp ẩn, mỗi lớp chứa 256 đơn vị.**]",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 161,
+      "source_token_count": 22,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b004",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b004",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b004",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1690,
+      "block_type": "prose",
+      "source": "In this section, we take a deep dive\ninto the details of *backward propagation*\n(more commonly called *backpropagation*).\nTo convey some insight for both the\ntechniques and their implementations,\nwe rely on some basic mathematics and computational graphs.\nTo start, we focus our exposition on\na one-hidden-layer MLP\nwith weight decay ($L_2$ regularization).",
+      "candidate_a": "Trong phần này, chúng ta đi sâu vào chi tiết của *lan truyền ngược* (thường được gọi là *backpropagation*). Để truyền đạt một số hiểu biết về cả kỹ thuật lẫn cách triển khai của chúng, chúng ta dựa vào một số toán học cơ bản và đồ thị tính toán. Trước hết, chúng ta tập trung trình bày trên một MLP một tầng ẩn với suy giảm trọng số ($L_2$ chuẩn hóa).",
+      "candidate_b": "Trong phần này, chúng ta đi sâu vào chi tiết của *lan truyền ngược* (thường được gọi là *backpropagation*). Để truyền đạt một số hiểu biết về cả các kỹ thuật lẫn cách triển khai của chúng, chúng ta dựa vào một số toán học cơ bản và đồ thị tính toán. Trước hết, chúng ta tập trung trình bày về một MLP một tầng ẩn với suy giảm trọng số ($L_2$ regularization).",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 357,
+      "source_token_count": 53,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b012",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b012",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b012",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1698,
+      "block_type": "prose",
+      "source": "$$\\mathbf{o}= \\mathbf{W}^{(2)} \\mathbf{h}.$$",
+      "candidate_a": "$$\\mathbf{o}= \\mathbf{W}^{(2)} \\mathbf{h}.$$",
+      "candidate_b": "$$mathbf{o}= mathbf{W}^{(2)} mathbf{h}.$$",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": true,
+      "source_char_count": 44,
+      "source_token_count": 3,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b026",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b026",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b026",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1712,
+      "block_type": "prose",
+      "source": "Here we use the $\\text{prod}$ operator\nto multiply its arguments\nafter the necessary operations,\nsuch as transposition and swapping input positions,\nhave been carried out.\nFor vectors, this is straightforward:\nit is simply matrix-matrix multiplication.\nFor higher dimensional tensors,\nwe use the appropriate counterpart.\nThe operator $\\text{prod}$ hides all the notation overhead.",
+      "candidate_a": "Ở đây chúng ta dùng toán tử $\\text{prod}$ để nhân các đối số của nó sau khi các phép toán cần thiết, chẳng hạn như chuyển vị và hoán đổi vị trí đầu vào, đã được thực hiện. Với các vector, điều này rất đơn giản: đó chỉ là phép nhân ma trận-ma trận. Với các tensor có số chiều cao hơn, chúng ta dùng đối ứng thích hợp. Toán tử $\\text{prod}$ che giấu toàn bộ phần ký hiệu rườm rà.",
+      "candidate_b": "Ở đây chúng ta dùng toán tử $\\text{prod}$ để nhân các đối số của nó sau khi các phép toán cần thiết, chẳng hạn như chuyển vị và hoán đổi vị trí đầu vào, đã được thực hiện. Với các vector, điều này rất đơn giản: đó chỉ là phép nhân ma trận-ma trận. Với các tensor có số chiều cao hơn, chúng ta dùng đối tượng tương ứng thích hợp. Toán tử $\\text{prod}$ che giấu toàn bộ phần ký hiệu rườm rà.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 380,
+      "source_token_count": 52,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b039",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b039",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b039",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1725,
+      "block_type": "prose",
+      "source": "Finally, we can obtain the gradient\n$\\partial J/\\partial \\mathbf{W}^{(1)} \\in \\mathbb{R}^{h \\times d}$\nof the model parameters closest to the input layer.\nAccording to the chain rule, we get",
+      "candidate_a": "Cuối cùng, chúng ta có thể thu được gradient $\\partial J/\\partial \\mathbf{W}^{(1)} \\in \\mathbb{R}^{h \\times d}$ của các tham số mô hình gần lớp đầu vào nhất. Theo quy tắc dây chuyền, ta có",
+      "candidate_b": "Cuối cùng, chúng ta có thể thu được gradient $\\partial J/\\partial \\mathbf{W}^{(1)} \\in \\mathbb{R}^{h \\times d}$ của các tham số mô hình gần tầng đầu vào nhất. Theo quy tắc chuỗi, ta có",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 190,
+      "source_token_count": 29,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b001",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b001",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b001",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1736,
+      "block_type": "heading",
+      "source": "# Numerical Stability and Initialization\n:label:`sec_numerical_stability`",
+      "candidate_a": "# Ổn định số và khởi tạo :label:`sec_numerical_stability`",
+      "candidate_b": "# Ổn định số và Khởi tạo :label:`sec_numerical_stability`",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": true,
+      "source_char_count": 73,
+      "source_token_count": 6,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b010",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b010",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b010",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1745,
+      "block_type": "heading",
+      "source": "### (**Vanishing Gradients**)",
+      "candidate_a": "### (**Gradient tiêu biến**)",
+      "candidate_b": "### (**Gradient biến mất**)",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": true,
+      "source_char_count": 29,
+      "source_token_count": 3,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b025",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b025",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b025",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1760,
+      "block_type": "prose",
+      "source": "One way of addressing---or at least mitigating---the\nissues raised above is through careful initialization.\nAdditional care during optimization\nand suitable regularization can further enhance stability.",
+      "candidate_a": "Một cách để giải quyết---hoặc ít nhất là giảm nhẹ---những vấn đề nêu trên là khởi tạo một cách cẩn thận. Sự cẩn trọng bổ sung trong quá trình tối ưu hóa và regularization phù hợp có thể tiếp tục tăng cường tính ổn định.",
+      "candidate_b": "Một cách để giải quyết---hoặc ít nhất là giảm nhẹ---những vấn đề nêu trên là thông qua khởi tạo cẩn thận. Sự cẩn trọng bổ sung trong tối ưu hóa và chuẩn hóa phù hợp có thể tiếp tục nâng cao độ ổn định.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 202,
+      "source_token_count": 25,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b038",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b038",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b038",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1773,
+      "block_type": "heading",
+      "source": "### Beyond",
+      "candidate_a": "### Xa hơn",
+      "candidate_b": "### Mở rộng",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b002",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b002",
+      "block_id": "d2l_multilayer_perceptrons_environment_b002",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1784,
+      "block_type": "prose",
+      "source": "In the previous sections, we worked through\na number of hands-on applications of machine learning,\nfitting models to a variety of datasets.\nAnd yet, we never stopped to contemplate\neither where data come from in the first place\nor what we plan to ultimately do\nwith the outputs from our models.\nToo often, machine learning developers\nin possession of data rush to develop models\nwithout pausing to consider these fundamental issues.",
+      "candidate_a": "Trong các phần trước, chúng ta đã thực hiện một số ứng dụng thực hành của máy học, khớp các mô hình với nhiều bộ dữ liệu khác nhau. Tuy vậy, chúng ta chưa bao giờ dừng lại để suy ngẫm về việc dữ liệu đến từ đâu ngay từ đầu hoặc cuối cùng chúng ta dự định làm gì với đầu ra từ các mô hình của mình. Quá thường xuyên, các nhà phát triển máy học đang nắm trong tay dữ liệu lại vội vàng phát triển mô hình mà không dừng lại để xem xét những vấn đề nền tảng này.",
+      "candidate_b": "Trong các phần trước, chúng ta đã thực hiện một số ứng dụng thực hành của học máy, khớp các mô hình với nhiều bộ dữ liệu khác nhau. Tuy nhiên, chúng ta chưa bao giờ dừng lại để suy ngẫm xem dữ liệu ngay từ đầu đến từ đâu hoặc cuối cùng chúng ta dự định làm gì với đầu ra từ các mô hình của mình. Quá thường xuyên, các nhà phát triển học máy khi đã có dữ liệu thì vội vàng phát triển mô hình mà không dừng lại để xem xét những vấn đề nền tảng này.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 432,
+      "source_token_count": 71,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b009",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b009",
+      "block_id": "d2l_multilayer_perceptrons_environment_b009",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1791,
+      "block_type": "prose",
+      "source": "Fortunately, under some restricted assumptions\non the ways our data might change in the future,\nprincipled algorithms can detect shift\nand sometimes even adapt on the fly,\nimproving on the accuracy of the original classifier.",
+      "candidate_a": "May mắn thay, dưới một số giả định hạn chế về cách dữ liệu của chúng ta có thể thay đổi trong tương lai, các thuật toán có cơ sở có thể phát hiện sự dịch chuyển và đôi khi thậm chí thích nghi ngay trong quá trình, cải thiện độ chính xác của bộ phân loại ban đầu.",
+      "candidate_b": "May mắn thay, dưới một số giả định bị giới hạn về những cách dữ liệu của chúng ta có thể thay đổi trong tương lai, các thuật toán có cơ sở có thể phát hiện sự dịch chuyển và đôi khi thậm chí thích nghi ngay khi đang chạy, cải thiện độ chính xác của bộ phân loại ban đầu.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 225,
+      "source_token_count": 35,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b023",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b023",
+      "block_id": "d2l_multilayer_perceptrons_environment_b023",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1805,
+      "block_type": "heading",
+      "source": "## Examples of Distribution Shift",
+      "candidate_a": "## Các ví dụ về lệch phân phối",
+      "candidate_b": "## Ví dụ về dịch chuyển phân phối",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": true,
+      "source_char_count": 33,
+      "source_token_count": 5,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b033",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b033",
+      "block_id": "d2l_multilayer_perceptrons_environment_b033",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1815,
+      "block_type": "prose",
+      "source": "A much more subtle situation arises\nwhen the distribution changes slowly\n(also known as *nonstationary distribution*)\nand the model is not updated adequately.\nBelow are some typical cases.",
+      "candidate_a": "Một tình huống tinh tế hơn nhiều xảy ra khi phân phối thay đổi chậm (còn được gọi là *phân phối không dừng*) và mô hình không được cập nhật đầy đủ. Dưới đây là một số trường hợp điển hình.",
+      "candidate_b": "Một tình huống tinh tế hơn nhiều xuất hiện khi phân phối thay đổi chậm (còn gọi là *phân phối không dừng*) và mô hình không được cập nhật đầy đủ. Dưới đây là một số trường hợp điển hình.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 188,
+      "source_token_count": 28,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b040",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b040",
+      "block_id": "d2l_multilayer_perceptrons_environment_b040",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1822,
+      "block_type": "prose",
+      "source": "Let us first reflect about what exactly\nis happening during model training:\nwe iterate over features and associated labels\nof training data\n$\\{(\\mathbf{x}_1, y_1), \\ldots, (\\mathbf{x}_n, y_n)\\}$\nand update the parameters of a model $f$ after every minibatch.\nFor simplicity we do not consider regularization,\nso we largely minimize the loss on the training:",
+      "candidate_a": "Trước hết, hãy suy ngẫm về chính xác điều gì đang xảy ra trong quá trình huấn luyện mô hình: chúng ta lặp qua các đặc trưng và nhãn tương ứng của dữ liệu huấn luyện $\\{(\\mathbf{x}_1, y_1), \\ldots, (\\mathbf{x}_n, y_n)\\}$ và cập nhật các tham số của một mô hình $f$ sau mỗi minibatch. Để đơn giản, chúng ta không xét regularization, vì vậy về cơ bản ta tối thiểu hóa loss trên tập huấn luyện:",
+      "candidate_b": "Trước hết, hãy suy ngẫm về chính xác điều gì đang xảy ra trong quá trình huấn luyện mô hình: ta lặp qua các đặc trưng và nhãn tương ứng của dữ liệu huấn luyện $\\{(\\mathbf{x}_1, y_1), \\ldots, (\\mathbf{x}_n, y_n)\\}$ và cập nhật các tham số của một mô hình $f$ sau mỗi lô nhỏ. Để đơn giản, ta không xét chuẩn hóa, nên về cơ bản ta tối thiểu hóa mất mát trên dữ liệu huấn luyện:",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 357,
+      "source_token_count": 54,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b049",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b049",
+      "block_id": "d2l_multilayer_perceptrons_environment_b049",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1831,
+      "block_type": "prose",
+      "source": "$$\\beta_i \\stackrel{\\mathrm{def}}{=} \\frac{p(\\mathbf{x}_i)}{q(\\mathbf{x}_i)}.$$",
+      "candidate_a": "$$\\beta_i \\stackrel{\\mathrm{def}}{=} \\frac{p(\\mathbf{x}_i)}{q(\\mathbf{x}_i)}.$$",
+      "candidate_b": "$$\beta_i \\stackrel{\\mathrm{def}}{=} \\frac{p(\\mathbf{x}_i)}{q(\\mathbf{x}_i)}.$$",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": true,
+      "source_char_count": 79,
+      "source_token_count": 3,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b058",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b058",
+      "block_id": "d2l_multilayer_perceptrons_environment_b058",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1840,
+      "block_type": "prose",
+      "source": "As a result, we need to solve two problems:\nfirst one to distinguish between\ndata drawn from both distributions,\nand then a weighted empirical risk minimization problem\nin :eqref:`eq_weighted-empirical-risk-min`\nwhere we weigh terms by $\\beta_i$.",
+      "candidate_a": "Do đó, chúng ta cần giải quyết hai vấn đề: thứ nhất là phân biệt giữa dữ liệu lấy từ cả hai phân phối, và sau đó là một bài toán tối thiểu hóa rủi ro thực nghiệm có trọng số trong :eqref:`eq_weighted-empirical-risk-min` nơi chúng ta gán trọng số cho các hạng tử bằng $\beta_i$.",
+      "candidate_b": "Do đó, chúng ta cần giải quyết hai bài toán: trước hết là phân biệt giữa dữ liệu được lấy từ cả hai phân phối, và sau đó là một bài toán tối thiểu hóa rủi ro thực nghiệm có trọng số trong :eqref:`eq_weighted-empirical-risk-min` trong đó chúng ta gán trọng số cho các hạng tử bằng $\beta_i$.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 246,
+      "source_token_count": 35,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b068",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b068",
+      "block_id": "d2l_multilayer_perceptrons_environment_b068",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1850,
+      "block_type": "prose",
+      "source": "To estimate the target label distribution,\nwe first take our reasonably good off-the-shelf classifier\n(typically trained on the training data)\nand compute its confusion matrix using the validation set\n(also from the training distribution).\nThe *confusion matrix*, $\\mathbf{C}$, is simply a $k \\times k$ matrix,\nwhere each column corresponds to the label category (ground truth)\nand each row corresponds to our model's predicted category.\nEach cell's value $c_{ij}$ is the fraction of total predictions on the validation set\nwhere the true label was $j$ and our model predicted $i$.",
+      "candidate_a": "Để ước lượng phân phối nhãn đích, trước hết chúng ta lấy bộ phân loại sẵn có đủ tốt của mình (thường được huấn luyện trên dữ liệu huấn luyện) và tính ma trận nhầm lẫn của nó bằng tập xác thực (cũng từ phân phối huấn luyện). *Ma trận nhầm lẫn*, $\\mathbf{C}$, đơn giản là một ma trận $k \\times k$, trong đó mỗi cột tương ứng với danh mục nhãn (nhãn thật) và mỗi hàng tương ứng với danh mục dự đoán của mô hình. Giá trị của mỗi ô $c_{ij}$ là tỉ lệ trên toàn bộ các dự đoán trong tập xác thực mà nhãn thật là $j$ và mô hình của chúng ta dự đoán là $i$.",
+      "candidate_b": "Để ước lượng phân phối nhãn mục tiêu, trước hết chúng ta lấy bộ phân loại có sẵn khá tốt của mình (thường được huấn luyện trên dữ liệu huấn luyện) và tính ma trận nhầm lẫn của nó bằng cách sử dụng tập xác thực (cũng từ phân phối huấn luyện). *Ma trận nhầm lẫn*, $\\mathbf{C}$, đơn giản là một ma trận $k \\times k$, trong đó mỗi cột tương ứng với danh mục nhãn (nhãn thật) và mỗi hàng tương ứng với danh mục được mô hình dự đoán. Giá trị của mỗi ô $c_{ij}$ là tỷ lệ trên tổng số dự đoán trên tập xác thực mà ở đó nhãn thật là $j$ và mô hình của chúng ta dự đoán là $i$.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 581,
+      "source_token_count": 89,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b076",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b076",
+      "block_id": "d2l_multilayer_perceptrons_environment_b076",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1858,
+      "block_type": "prose",
+      "source": "* In computational advertising, new products are launched,\nold products become less popular. This means that the distribution over ads and their popularity changes gradually and any click-through rate predictor needs to change gradually with it.\n* Traffic camera lenses degrade gradually due to environmental wear, affecting image quality progressively.\n* News content changes gradually (i.e., most of the news remains unchanged but new stories appear).",
+      "candidate_a": "* Trong quảng cáo tính toán, sản phẩm mới được ra mắt, sản phẩm cũ trở nên kém phổ biến hơn. Điều này có nghĩa là phân phối của các quảng cáo và mức độ phổ biến của chúng thay đổi dần dần, và bất kỳ bộ dự đoán tỷ lệ nhấp chuột nào cũng cần thay đổi dần dần theo. * Ống kính camera giao thông bị xuống cấp dần do hao mòn môi trường, làm chất lượng hình ảnh suy giảm theo thời gian. * Nội dung tin tức thay đổi dần dần (tức là phần lớn tin tức không đổi nhưng các câu chuyện mới xuất hiện).",
+      "candidate_b": "* Trong quảng cáo tính toán, sản phẩm mới được ra mắt, sản phẩm cũ trở nên kém phổ biến hơn. Điều này có nghĩa là phân phối của quảng cáo và mức độ phổ biến của chúng thay đổi dần dần và bất kỳ bộ dự đoán tỷ lệ nhấp chuột nào cũng cần thay đổi dần theo. * Ống kính camera giao thông bị xuống cấp dần do hao mòn môi trường, làm ảnh hưởng đến chất lượng hình ảnh theo thời gian. * Nội dung tin tức thay đổi dần dần (tức là phần lớn tin tức không đổi nhưng các câu chuyện mới xuất hiện).",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 453,
+      "source_token_count": 66,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b085",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b085",
+      "block_id": "d2l_multilayer_perceptrons_environment_b085",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1867,
+      "block_type": "heading",
+      "source": "### Bandits",
+      "candidate_a": "### Bài toán bandit",
+      "candidate_b": "### Bandit",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": true,
+      "source_char_count": 11,
+      "source_token_count": 2,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b094",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b094",
+      "block_id": "d2l_multilayer_perceptrons_environment_b094",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1876,
+      "block_type": "prose",
+      "source": "Finally, it is important to remember\nthat when you deploy machine learning systems\nyou are not merely optimizing a predictive model---you\nare typically providing a tool that will\nbe used to (partially or fully) automate decisions.\nThese technical systems can impact the lives\nof individuals subject to the resulting decisions.\nThe leap from considering predictions to decisions\nraises not only new technical questions,\nbut also a slew of ethical questions\nthat must be carefully considered.\nIf we are deploying a medical diagnostic system,\nwe need to know for which populations\nit may work and which it may not.\nOverlooking foreseeable risks to the welfare of\na subpopulation could cause us to administer inferior care.\nMoreover, once we contemplate decision-making systems,\nwe must step back and reconsider how we evaluate our technology.\nAmong other consequences of this change of scope,\nwe will find that *accuracy* is seldom the right measure.\nFor instance, when translating predictions into actions,\nwe will often want to take into account\nthe potential cost sensitivity of erring in various ways.\nIf one way of misclassifying an image\ncould be perceived as a racial sleight of hand,\nwhile misclassification to a different category\nwould be harmless, then we might want to adjust\nour thresholds accordingly, accounting for societal values\nin designing the decision-making protocol.\nWe also want to be careful about\nhow prediction systems can lead to feedback loops.\nFor example, consider predictive policing systems,\nwhich allocate patrol officers\nto areas with high forecasted crime.\nIt is easy to see how a worrying pattern can emerge:",
+      "candidate_a": "Cuối cùng, điều quan trọng cần nhớ là khi bạn triển khai các hệ thống máy học, bạn không chỉ đơn thuần tối ưu hóa một mô hình dự đoán---thông thường bạn đang cung cấp một công cụ sẽ được dùng để tự động hóa (một phần hoặc toàn bộ) các quyết định. Những hệ thống kỹ thuật này có thể tác động đến cuộc sống của các cá nhân chịu ảnh hưởng bởi các quyết định được tạo ra. Bước chuyển từ việc xem xét dự đoán sang quyết định không chỉ đặt ra các câu hỏi kỹ thuật mới, mà còn kéo theo hàng loạt câu hỏi đạo đức cần được cân nhắc cẩn thận. Nếu chúng ta đang triển khai một hệ thống chẩn đoán y khoa, chúng ta cần biết nó có thể hoạt động tốt cho những quần thể nào và không phù hợp với những quần thể nào. Bỏ qua các rủi ro có thể thấy trước đối với phúc lợi của một phân nhóm dân số có thể khiến chúng ta cung cấp dịch vụ chăm sóc kém hơn. Hơn nữa, một khi chúng ta xem xét các hệ thống ra quyết định, chúng ta phải lùi lại một bước và xem xét lại cách đánh giá công nghệ của mình. Trong số các hệ quả khác của sự thay đổi phạm vi này, chúng ta sẽ thấy rằng *độ chính xác* hiếm khi là thước đo đúng. Chẳng hạn, khi chuyển các dự đoán thành hành động, chúng ta thường muốn tính đến độ nhạy chi phí tiềm tàng của việc mắc lỗi theo nhiều cách khác nhau. Nếu một cách phân loại sai một hình ảnh có thể bị xem là một trò đánh tráo chủng tộc, trong khi việc phân loại sai sang một hạng mục khác lại vô hại, thì chúng ta có thể muốn điều chỉnh các ngưỡng của mình cho phù hợp, đồng thời tính đến các giá trị xã hội khi thiết kế giao thức ra quyết định. Chúng ta cũng muốn cẩn trọng về cách các hệ thống dự đoán có thể dẫn đến các vòng phản hồi. Ví dụ, hãy xét các hệ thống cảnh sát dự đoán, vốn phân bổ cảnh sát tuần tra đến những khu vực có dự báo tội phạm cao. Không khó để thấy một mẫu đáng lo ngại có thể xuất hiện:",
+      "candidate_b": "Cuối cùng, điều quan trọng là phải nhớ rằng khi bạn triển khai các hệ thống học máy, bạn không chỉ đơn thuần tối ưu một mô hình dự đoán---thông thường bạn đang cung cấp một công cụ sẽ được dùng để tự động hóa (một phần hoặc toàn bộ) các quyết định. Những hệ thống kỹ thuật này có thể tác động đến cuộc sống của các cá nhân chịu ảnh hưởng bởi các quyết định được tạo ra. Bước chuyển từ việc xem xét dự đoán sang quyết định không chỉ đặt ra các câu hỏi kỹ thuật mới, mà còn kéo theo hàng loạt câu hỏi đạo đức cần được cân nhắc cẩn thận. Nếu chúng ta triển khai một hệ thống chẩn đoán y khoa, chúng ta cần biết nó có thể hoạt động tốt với những nhóm dân số nào và không hoạt động tốt với những nhóm nào. Bỏ qua các rủi ro có thể lường trước đối với phúc lợi của một nhóm phụ có thể khiến chúng ta cung cấp dịch vụ chăm sóc kém hơn. Hơn nữa, một khi chúng ta suy xét đến các hệ thống ra quyết định, chúng ta phải lùi lại và xem xét lại cách đánh giá công nghệ của mình. Trong số các hệ quả khác của sự thay đổi phạm vi này, chúng ta sẽ thấy rằng *độ chính xác* hiếm khi là thước đo đúng. Chẳng hạn, khi chuyển các dự đoán thành hành động, chúng ta thường muốn tính đến độ nhạy chi phí tiềm tàng của việc mắc lỗi theo nhiều cách khác nhau. Nếu một cách phân loại sai một hình ảnh có thể bị xem như một trò đánh tráo mang tính chủng tộc, trong khi việc phân loại sai sang một lớp khác lại vô hại, thì chúng ta có thể muốn điều chỉnh các ngưỡng của mình cho phù hợp, tính đến các giá trị xã hội khi thiết kế giao thức ra quyết định. Chúng ta cũng muốn cẩn trọng về cách các hệ thống dự đoán có thể dẫn đến các vòng phản hồi. Ví dụ, hãy xét các hệ thống cảnh sát dự báo, vốn phân bổ cảnh sát tuần tra đến những khu vực có dự báo tội phạm cao. Không khó để thấy một mô thức đáng lo ngại có thể xuất hiện:",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 1642,
+      "source_token_count": 258,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b005",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b005",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b005",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1888,
+      "block_type": "prose",
+      "source": "Throughout the book, we will train and test models\non various downloaded datasets.\nHere, we (**implement several utility functions\nto facilitate data downloading**).\nFirst, we maintain a dictionary `DATA_HUB`\nthat maps a string (the *name* of the dataset)\nto a tuple containing both the URL to locate the dataset\nand the SHA-1 key that verifies the integrity of the file.\nAll such datasets are hosted at the site\nwhose address is `DATA_URL`.",
+      "candidate_a": "Trong suốt cuốn sách, chúng ta sẽ huấn luyện và kiểm tra các mô hình trên nhiều bộ dữ liệu được tải xuống khác nhau. Ở đây, chúng ta (**triển khai một số hàm tiện ích để hỗ trợ việc tải dữ liệu**). Trước hết, chúng ta duy trì một từ điển `DATA_HUB` ánh xạ một chuỗi (tên của bộ dữ liệu) tới một bộ gồm cả URL để định vị bộ dữ liệu và khóa SHA-1 để xác minh tính toàn vẹn của tệp. Tất cả các bộ dữ liệu như vậy đều được lưu trữ tại trang có địa chỉ là `DATA_URL`.",
+      "candidate_b": "Trong suốt cuốn sách, chúng ta sẽ huấn luyện và kiểm tra các mô hình trên nhiều bộ dữ liệu đã tải xuống khác nhau. Ở đây, chúng ta (**triển khai một số hàm tiện ích để hỗ trợ tải dữ liệu**). Trước hết, chúng ta duy trì một từ điển `DATA_HUB` ánh xạ một chuỗi (tên của bộ dữ liệu) tới một bộ gồm cả URL để định vị bộ dữ liệu và khóa SHA-1 dùng để xác minh tính toàn vẹn của tệp. Tất cả các bộ dữ liệu như vậy đều được lưu trữ tại trang có địa chỉ là `DATA_URL`.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 441,
+      "source_token_count": 72,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b025",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b025",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b025",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1908,
+      "block_type": "prose",
+      "source": "We use `pandas` to load the two csv files containing training and test data respectively.",
+      "candidate_a": "Chúng ta dùng `pandas` để nạp hai tệp csv chứa lần lượt dữ liệu huấn luyện và dữ liệu kiểm tra.",
+      "candidate_b": "Chúng ta dùng `pandas` để tải hai tệp csv chứa dữ liệu huấn luyện và kiểm tra tương ứng.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 89,
+      "source_token_count": 15,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b040",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b040",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b040",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1923,
+      "block_type": "prose",
+      "source": "You can see that this conversion increases\nthe number of features from 79 to 331.\nFinally, via the `values` attribute,\nwe can [**extract the NumPy format from the `pandas` format\nand convert it into the tensor**]\nrepresentation for training.",
+      "candidate_a": "Bạn có thể thấy rằng phép chuyển đổi này làm tăng số lượng đặc trưng từ 79 lên 331. Cuối cùng, thông qua thuộc tính `values`, chúng ta có thể [**trích xuất định dạng NumPy từ định dạng `pandas` và chuyển nó thành biểu diễn tensor**] cho training.",
+      "candidate_b": "Bạn có thể thấy rằng phép chuyển đổi này làm tăng số lượng đặc trưng từ 79 lên 331. Cuối cùng, thông qua thuộc tính `values`, chúng ta có thể [**trích xuất định dạng NumPy từ định dạng `pandas` và chuyển nó thành biểu diễn tensor**] để huấn luyện.",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": false,
+      "source_char_count": 241,
+      "source_token_count": 39,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b057",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b057",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b057",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1940,
+      "block_type": "heading",
+      "source": "## $K$-Fold Cross-Validation",
+      "candidate_a": "## Xác thực chéo $K$-Fold",
+      "candidate_b": "## $K$-Fold Cross-Validation",
+      "candidate_a_arm": "S1",
+      "candidate_b_arm": "S0",
+      "short_block": true,
+      "source_char_count": 28,
+      "source_token_count": 3,
+      "arm_assignment_seed": 20260612
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b067",
+      "category": "REAL-PAIR",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b067",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b067",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1950,
+      "block_type": "prose",
+      "source": "Now that we know what a good choice of hyperparameters should be,\nwe might as well use all the data to train on it\n(rather than just $1-1/K$ of the data\nthat are used in the cross-validation slices).\nThe model that we obtain in this way\ncan then be applied to the test set.\nSaving the predictions in a csv file\nwill simplify uploading the results to Kaggle.",
+      "candidate_a": "Bây giờ khi đã biết lựa chọn siêu tham số nào là tốt, chúng ta cũng có thể dùng toàn bộ dữ liệu để huấn luyện trên đó (thay vì chỉ $1-1/K$ dữ liệu được dùng trong các lát cắt kiểm định chéo). Mô hình mà chúng ta thu được theo cách này sau đó có thể được áp dụng cho tập kiểm tra. Lưu các dự đoán trong một tệp csv sẽ giúp việc tải kết quả lên Kaggle trở nên đơn giản hơn.",
+      "candidate_b": "Bây giờ khi chúng ta đã biết lựa chọn siêu tham số tốt nên như thế nào, chúng ta cũng có thể dùng toàn bộ dữ liệu để huấn luyện trên đó (thay vì chỉ $1-1/K$ của dữ liệu được dùng trong các lát cắt xác thực chéo). Mô hình mà chúng ta thu được theo cách này sau đó có thể được áp dụng cho tập kiểm tra. Lưu các dự đoán trong một tệp csv sẽ giúp việc tải kết quả lên Kaggle trở nên đơn giản hơn.",
+      "candidate_a_arm": "S0",
+      "candidate_b_arm": "S1",
+      "short_block": false,
+      "source_char_count": 357,
+      "source_token_count": 68,
+      "arm_assignment_seed": 20260612
+    }
+  ],
+  "auto_tie_cases": [
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b024_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b024",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b024",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1349,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 27,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b032_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b032",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b032",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1357,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 17,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b034_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b034",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b034",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1359,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 40,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b044_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b044",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b044",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1369,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 258,
+      "source_token_count": 37,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b045_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b045",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b045",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1370,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 61,
+      "source_token_count": 8,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b046_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b046",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b046",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1371,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 20,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b048_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b048",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b048",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1373,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 55,
+      "source_token_count": 5,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b055_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b055",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b055",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1380,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 74,
+      "source_token_count": 12,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b056_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b056",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b056",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1381,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 147,
+      "source_token_count": 8,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b063_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b063",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b063",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1388,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 65,
+      "source_token_count": 7,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b068_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b068",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b068",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1393,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 39,
+      "source_token_count": 7,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b069_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b069",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b069",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1394,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 71,
+      "source_token_count": 6,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b075_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b075",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b075",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1400,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b077_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b077",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b077",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1402,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b079_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b079",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b079",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1404,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 71,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b080_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b080",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b080",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1405,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 73,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_b081_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_b081",
+      "block_id": "d2l_multilayer_perceptrons_mlp_b081",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1406,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 77,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b013_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b013",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b013",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1419,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 22,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b018_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b018",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b018",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1424,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 8,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b019_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b019",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b019",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1425,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 199,
+      "source_token_count": 30,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b023_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b023",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b023",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1429,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 16,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b028_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b028",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b028",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1434,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 11,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b035_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b035",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b035",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1441,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b037_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b037",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b037",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1443,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b039_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b039",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b039",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1445,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 71,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b040_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b040",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b040",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1446,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 73,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_scratch_b041_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_scratch_b041",
+      "block_id": "d2l_multilayer_perceptrons_mlp_scratch_b041",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1447,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 77,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_concise_b006_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_concise_b006",
+      "block_id": "d2l_multilayer_perceptrons_mlp_concise_b006",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1453,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 8,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_concise_b016_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_concise_b016",
+      "block_id": "d2l_multilayer_perceptrons_mlp_concise_b016",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1463,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_concise_b018_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_concise_b018",
+      "block_id": "d2l_multilayer_perceptrons_mlp_concise_b018",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1465,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_concise_b020_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_concise_b020",
+      "block_id": "d2l_multilayer_perceptrons_mlp_concise_b020",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1467,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 71,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_concise_b021_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_concise_b021",
+      "block_id": "d2l_multilayer_perceptrons_mlp_concise_b021",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1468,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 73,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_mlp_concise_b022_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_mlp_concise_b022",
+      "block_id": "d2l_multilayer_perceptrons_mlp_concise_b022",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1469,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 77,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b024_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b024",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b024",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1493,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 137,
+      "source_token_count": 25,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b036_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b036",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b036",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1505,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 31,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b042_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b042",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b042",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1511,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 33,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b043_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b043",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b043",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1512,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 318,
+      "source_token_count": 61,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b046_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b046",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b046",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1515,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 16,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b048_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b048",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b048",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1517,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 24,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b049_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b049",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b049",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1518,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 85,
+      "source_token_count": 12,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b055_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b055",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b055",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1524,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 126,
+      "source_token_count": 19,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b061_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b061",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b061",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1530,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 34,
+      "source_token_count": 6,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b079_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b079",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b079",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1548,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b081_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b081",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b081",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1550,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b083_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b083",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b083",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1552,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 71,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_underfit_overfit_b084_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_underfit_overfit_b084",
+      "block_id": "d2l_multilayer_perceptrons_underfit_overfit_b084",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1553,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 73,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b001_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b001",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b001",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1555,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 40,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b010_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b010",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b010",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1564,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 58,
+      "source_token_count": 5,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b023_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b023",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b023",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1577,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 44,
+      "source_token_count": 7,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b039_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b039",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b039",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1593,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 36,
+      "source_token_count": 5,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b047_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b047",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b047",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1601,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 28,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b062_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b062",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b062",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1616,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b064_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b064",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b064",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1618,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b066_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b066",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b066",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1620,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 71,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b067_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b067",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b067",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1621,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 73,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_weight_decay_b068_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_weight_decay_b068",
+      "block_id": "d2l_multilayer_perceptrons_weight_decay_b068",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1622,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 77,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b001_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b001",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b001",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1623,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 30,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b019_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b019",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b019",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1641,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 64,
+      "source_token_count": 10,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b020_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b020",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b020",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1642,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 22,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b024_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b024",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b024",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1646,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 30,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b030_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b030",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b030",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1652,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 202,
+      "source_token_count": 33,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b034_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b034",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b034",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1656,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 29,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b039_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b039",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b039",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1661,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 22,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b044_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b044",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b044",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1666,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 30,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b045_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b045",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b045",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1667,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 73,
+      "source_token_count": 12,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b049_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b049",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b049",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1671,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 31,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b054_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b054",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b054",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1676,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 40,
+      "source_token_count": 7,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b058_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b058",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b058",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1680,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b060_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b060",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b060",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1682,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b062_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b062",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b062",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1684,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 72,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b063_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b063",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b063",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1685,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 74,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_dropout_b064_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_dropout_b064",
+      "block_id": "d2l_multilayer_perceptrons_dropout_b064",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1686,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 77,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b001_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b001",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b001",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1687,
+      "block_type": "heading",
+      "short_block": false,
+      "source_char_count": 91,
+      "source_token_count": 9,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b005_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b005",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b005",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1691,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 22,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b016_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b016",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b016",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1702,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 115,
+      "source_token_count": 7,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b018_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b018",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b018",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1704,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 14,
+      "source_token_count": 5,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b019_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b019",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b019",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1705,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 72,
+      "source_token_count": 12,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b020_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b020",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b020",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1706,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 45,
+      "source_token_count": 6,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b023_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b023",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b023",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1709,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 18,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b025_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b025",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b025",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1711,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 175,
+      "source_token_count": 10,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b028_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b028",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b028",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1714,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 89,
+      "source_token_count": 13,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b032_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b032",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b032",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1718,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 165,
+      "source_token_count": 15,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b034_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b034",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b034",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1720,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 380,
+      "source_token_count": 24,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b041_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b041",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b041",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1727,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 27,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b045_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b045",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b045",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1731,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b047_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b047",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b047",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1733,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_backprop_b049_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_backprop_b049",
+      "block_id": "d2l_multilayer_perceptrons_backprop_b049",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1735,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 43,
+      "source_token_count": 1,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b006_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b006",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b006",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1741,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 165,
+      "source_token_count": 27,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b007_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b007",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b007",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1742,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 385,
+      "source_token_count": 18,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b016_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b016",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b016",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1751,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 29,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b024_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b024",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b024",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1759,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 27,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b026_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b026",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b026",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1761,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 26,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b028_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b028",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b028",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1763,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 48,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b030_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b030",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b030",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1765,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 50,
+      "source_token_count": 5,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b036_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b036",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b036",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1771,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 116,
+      "source_token_count": 6,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b041_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b041",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b041",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1776,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b043_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b043",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b043",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1778,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b045_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b045",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b045",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1780,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 72,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b046_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b046",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b046",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1781,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 74,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_numerical_stability_and_init_b047_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b047",
+      "block_id": "d2l_multilayer_perceptrons_numerical_stability_and_init_b047",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1782,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 77,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b010_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b010",
+      "block_id": "d2l_multilayer_perceptrons_environment_b010",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1792,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 19,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b014_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b014",
+      "block_id": "d2l_multilayer_perceptrons_environment_b014",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1796,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 79,
+      "source_token_count": 12,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b017_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b017",
+      "block_id": "d2l_multilayer_perceptrons_environment_b017",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1799,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 15,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b019_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b019",
+      "block_id": "d2l_multilayer_perceptrons_environment_b019",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1801,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 17,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b025_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b025",
+      "block_id": "d2l_multilayer_perceptrons_environment_b025",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1807,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 23,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b029_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b029",
+      "block_id": "d2l_multilayer_perceptrons_environment_b029",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1811,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 21,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b032_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b032",
+      "block_id": "d2l_multilayer_perceptrons_environment_b032",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1814,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 31,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b041_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b041",
+      "block_id": "d2l_multilayer_perceptrons_environment_b041",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1823,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 115,
+      "source_token_count": 6,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b043_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b043",
+      "block_id": "d2l_multilayer_perceptrons_environment_b043",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1825,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 135,
+      "source_token_count": 12,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b051_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b051",
+      "block_id": "d2l_multilayer_perceptrons_environment_b051",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1833,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 132,
+      "source_token_count": 7,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b062_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b062",
+      "block_id": "d2l_multilayer_perceptrons_environment_b062",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1844,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 26,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b066_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b066",
+      "block_id": "d2l_multilayer_perceptrons_environment_b066",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1848,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 61,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b071_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b071",
+      "block_id": "d2l_multilayer_perceptrons_environment_b071",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1853,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 53,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b080_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b080",
+      "block_id": "d2l_multilayer_perceptrons_environment_b080",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1862,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 18,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b082_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b082",
+      "block_id": "d2l_multilayer_perceptrons_environment_b082",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1864,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 19,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b087_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b087",
+      "block_id": "d2l_multilayer_perceptrons_environment_b087",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1869,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 11,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b089_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b089",
+      "block_id": "d2l_multilayer_perceptrons_environment_b089",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1871,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 26,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b097_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b097",
+      "block_id": "d2l_multilayer_perceptrons_environment_b097",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1879,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b099_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b099",
+      "block_id": "d2l_multilayer_perceptrons_environment_b099",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1881,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_environment_b101_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_environment_b101",
+      "block_id": "d2l_multilayer_perceptrons_environment_b101",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1883,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 43,
+      "source_token_count": 1,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b001_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b001",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b001",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1884,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 61,
+      "source_token_count": 7,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b003_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b003",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b003",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1886,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 244,
+      "source_token_count": 40,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b011_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b011",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b011",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1894,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 9,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b015_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b015",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b015",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1898,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 70,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b017_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b017",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b017",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1900,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 36,
+      "source_token_count": 6,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b023_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b023",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b023",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1906,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 104,
+      "source_token_count": 17,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b033_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b033",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b033",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1916,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 21,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b035_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b035",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b035",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1918,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 40,
+      "source_token_count": 5,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b049_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b049",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b049",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1932,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 74,
+      "source_token_count": 4,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b071_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b071",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b071",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1954,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 202,
+      "source_token_count": 32,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b072_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b072",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b072",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1955,
+      "block_type": "prose",
+      "short_block": false,
+      "source_char_count": 428,
+      "source_token_count": 77,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b074_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b074",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b074",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1957,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 10,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b076_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b076",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b076",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1959,
+      "block_type": "heading",
+      "short_block": true,
+      "source_char_count": 12,
+      "source_token_count": 2,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b078_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b078",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b078",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1961,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 72,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b079_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b079",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b079",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1962,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 74,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    },
+    {
+      "id": "PJ_MLP_d2l_multilayer_perceptrons_kaggle_house_price_b080_auto_tie",
+      "category": "AUTO-TIE",
+      "source_block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b080",
+      "block_id": "d2l_multilayer_perceptrons_kaggle_house_price_b080",
+      "chapter_id": "d2l_multilayer_perceptrons",
+      "order_index": 1963,
+      "block_type": "prose",
+      "short_block": true,
+      "source_char_count": 77,
+      "source_token_count": 3,
+      "auto_tie_reason": "normalized S0 output equals normalized S1 output",
+      "final": {
+        "overall_final": "TIE",
+        "style_final": "TIE",
+        "tags_final": [],
+        "flags": [
+          "auto_tie_identical_normalized"
+        ]
+      }
+    }
+  ]
+}
