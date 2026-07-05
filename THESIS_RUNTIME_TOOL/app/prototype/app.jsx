@@ -705,6 +705,8 @@ function App() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [selectedRunLog, setSelectedRunLog] = useState({ run_id: null, log: "", offset: 0, running: false, status: "" });
   const [selectedRunEvents, setSelectedRunEvents] = useState({ run_id: null, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
+  const [runBlockPreview, setRunBlockPreview] = useState([]);
+  const [runWatchlist, setRunWatchlist] = useState([]);
   const [runPromptPreview, setRunPromptPreview] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
@@ -788,6 +790,8 @@ function App() {
     setSelectedRunId(null);
     setSelectedRunLog({ run_id: null, log: "", offset: 0, running: false, status: "" });
     setSelectedRunEvents({ run_id: null, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
+    setRunBlockPreview([]);
+    setRunWatchlist([]);
     setRunPromptPreview(null);
     setRunError("");
     setSelectedCallId(null);
@@ -1006,6 +1010,66 @@ function App() {
     runEventOffsetRef.current = 0;
     setSelectedRunLog({ run_id: runId, log: "", offset: 0, running: true, status: "" });
     setSelectedRunEvents({ run_id: runId, events: [], offset: 0, running: true, status: "", aggregate: emptyRunEventAggregate() });
+    setRunBlockPreview([]);
+    setRunWatchlist([]);
+  }
+
+  async function pauseRun() {
+    if (!selectedRunId) return;
+    try {
+      await API.pauseThesisRun(selectedRunId);
+      toast("Đã đặt cờ tạm dừng", "good", "Run sẽ dừng ở ranh giới stage kế tiếp");
+    } catch (err) {
+      toast("Pause thất bại", "bad", errorMessage(err));
+    }
+  }
+
+  function cancelRun() {
+    if (!selectedRunId) return;
+    setModal({ kind: "cancel-run", runId: selectedRunId });
+  }
+
+  async function confirmCancelRun() {
+    const runId = modal?.runId || selectedRunId;
+    setModal(null);
+    if (!runId) return;
+    try {
+      await API.cancelThesisRun(runId);
+      toast("Đã gửi lệnh hủy", "good", runId);
+      await refreshThesisRuns();
+    } catch (err) {
+      toast("Cancel thất bại", "bad", errorMessage(err));
+    }
+  }
+
+  async function resumeRun() {
+    if (!selectedRunId) return;
+    setRunBusy(true);
+    try {
+      const estimate = await API.getThesisResumeEstimate(selectedRunId);
+      setModal({ kind: "resume-run", runId: selectedRunId, estimate });
+    } catch (err) {
+      toast("Không lấy được ước tính resume", "bad", errorMessage(err));
+    } finally {
+      setRunBusy(false);
+    }
+  }
+
+  async function confirmResumeRun() {
+    const pending = modal;
+    setModal(null);
+    if (!pending?.runId || !pending?.estimate?.confirm_token) return;
+    setRunBusy(true);
+    try {
+      const resumed = await API.resumeThesisRun(pending.runId, { confirm_token: pending.estimate.confirm_token });
+      toast("Đã resume run", "good", `${resumed.run_id} · attempt ${resumed.attempt_index}`);
+      await refreshThesisRuns();
+      selectRun(resumed.run_id);
+    } catch (err) {
+      toast("Resume thất bại", "bad", errorMessage(err));
+    } finally {
+      setRunBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -1016,11 +1080,15 @@ function App() {
       try {
         const currentOffset = runLogOffsetRef.current || 0;
         const currentEventOffset = runEventOffsetRef.current || 0;
-        const [result, eventResult] = await Promise.all([
+        const [result, eventResult, previewResult, watchResult] = await Promise.all([
           API.getThesisRunLog(selectedRunId, currentOffset),
           API.getThesisRunEvents(selectedRunId, currentEventOffset, 262144).catch(() => null),
+          API.getThesisRunBlockPreview(selectedRunId, 12).catch(() => null),
+          API.getThesisRunWatchlist(selectedRunId).catch(() => null),
         ]);
         if (cancelled) return;
+        if (previewResult) setRunBlockPreview(previewResult.blocks || []);
+        if (watchResult) setRunWatchlist(watchResult.watchlist || []);
         runLogOffsetRef.current = result.offset || currentOffset;
         if (eventResult) runEventOffsetRef.current = eventResult.offset || currentEventOffset;
         setSelectedRunLog(prev => ({
@@ -2345,6 +2413,8 @@ function App() {
             selectedRunId,
             selectedRunLog,
             selectedRunEvents,
+            blockPreview: runBlockPreview,
+            watchlist: runWatchlist,
             runForm,
             promptPreview: runPromptPreview,
             busy: runBusy,
@@ -2354,6 +2424,9 @@ function App() {
             onCreateRun: createThesisRun,
             onSelectRun: selectRun,
             onRefreshRuns: refreshThesisRuns,
+            onPause: pauseRun,
+            onCancel: cancelRun,
+            onResume: resumeRun,
           }}
           selectedCallId={selectedCallId}
           selectedCallDetail={selectedCallDetail}
@@ -2406,6 +2479,40 @@ function App() {
           </div>
         </Modal>
       )}
+
+      {modal?.kind === "cancel-run" && (
+        <Modal title="Hủy run" icon={Ic.alert} tone="bad" onClose={() => setModal(null)}
+          actions={<><button className="btn" onClick={() => setModal(null)}>Không hủy</button>
+            <button className="btn primary" onClick={confirmCancelRun}><Ic.alert size={12} />Hủy run</button></>}>
+          <p>Dừng cứng tiến trình đang chạy (taskkill toàn bộ cây tiến trình). Các stage đã hoàn tất vẫn được giữ trong manifest — có thể resume lại từ checkpoint sau này.</p>
+          <p className="mono">{modal.runId}</p>
+        </Modal>
+      )}
+
+      {modal?.kind === "resume-run" && (() => {
+        const stages = modal.estimate?.estimate_by_stage || [];
+        const costOf = (s) => {
+          const v = s?.cost_cap_usd ?? s?.estimate_usd ?? s?.cost_usd ?? s?.budget_usd;
+          return typeof v === "number" ? `$${v.toFixed(4)}` : "";
+        };
+        return (
+          <Modal title="Resume run" icon={Ic.play} onClose={() => setModal(null)}
+            actions={<><button className="btn" onClick={() => setModal(null)}>Không</button>
+              <button className="btn primary" onClick={confirmResumeRun}><Ic.play size={12} />Resume (chạy API thật)</button></>}>
+            <p>Chạy tiếp từ stage đã checkpoint bằng argv gốc (bỏ <span className="mono">--estimate-only</span>, thêm <span className="mono">--resume</span>). Xác nhận này gắn với đúng argv digest của run.</p>
+            {stages.length ? (
+              <ul className="file-list">
+                {stages.map((s, i) => (
+                  <li key={i}><Ic.file size={12} /><span className="mono">{s.stage || s.name || `stage ${i + 1}`}</span><span className="muted">{costOf(s)}</span></li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">Manifest chưa có ước tính theo stage; orchestrator vẫn áp budget gate nội bộ khi chạy.</p>
+            )}
+            <p className="mono">{modal.runId}</p>
+          </Modal>
+        );
+      })()}
 
       {modal?.kind === "delete-term" && (() => {
         const term = modal.term;

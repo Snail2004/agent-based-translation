@@ -117,6 +117,14 @@
       const query = new URLSearchParams(params || {});
       return request(`/thesis/runs/prompt-preview?${query.toString()}`);
     },
+    getThesisRunManifest: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/manifest`),
+    getThesisRunBlockPreview: (runId, limit) => request(`/thesis/runs/${encodeURIComponent(runId)}/block-preview?limit=${encodeURIComponent(limit || 12)}`),
+    getThesisRunWatchlist: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/watchlist`),
+    pauseThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/pause`, { method: "POST", body: {} }),
+    unpauseThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/pause`, { method: "DELETE", body: {} }),
+    cancelThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/cancel`, { method: "POST", body: {} }),
+    getThesisResumeEstimate: (runId) => request(`/thesis/runs/estimate-preview?resume_run_id=${encodeURIComponent(runId)}`),
+    resumeThesisRun: (runId, payload) => request(`/thesis/runs/${encodeURIComponent(runId)}/resume`, { method: "POST", body: payload || {} }),
     createProject: (payload) => request("/projects", { method: "POST", body: payload }),
     getProject: (docId) => request(`/projects/${encodeURIComponent(docId)}`),
     patchProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "PATCH", body: payload }),

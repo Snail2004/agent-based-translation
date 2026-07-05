@@ -573,8 +573,8 @@ function AgentConsole({ runControl }) {
       status={(selectedRun && selectedRun.status) || sel.status || ""}
       truncated={!!sel.truncated}
       partialLine={!!sel.partial_line}
-      blockPreview={sel.blockPreview || []}
-      watchlist={sel.watchlist || []}
+      blockPreview={runControl.blockPreview || sel.blockPreview || []}
+      watchlist={runControl.watchlist || sel.watchlist || []}
       theme={consoleTheme}
       onToggleTheme={toggleConsoleTheme}
       onRefresh={runControl.onRefreshRuns}
