@@ -235,3 +235,45 @@ Nen da khoa: 8 stage (§1), Q1-Q3 (§2b), event contract (§2d-§2f), Console (�
 **Extras chot cho buoc UI cuoi/polish:** ETA per stage (tu progress + toc do trung binh), notification khi phase_1_done/run_done (title blink/browser notification), nut "Xuat ho so run" (zip event log + manifest + report — phu luc luan van).
 
 **Lich sau O2:** O2 (dang lam, + pause-flag) -> UI-2 nut [DICH] + panel xac nhan + auto-chuyen Console + notify 2 dot + pause/cancel/resume buttons -> renderer 2-phase -> UI-3 model panel + builder live-notebook + polish hieu ung -> demo Thay.
+
+## 2o. O2 REVIEW VONG 1 (Claude doc lap tren code that, 2026-07-06) — KET LUAN: KHOAN COMMIT, tra CodeX vong 2
+
+Pham vi da doc: run_one_button.py (moi, ~1590 dong), diff thesis_runs.py (+15), test_run_one_button.py (moi). Da tu chay lai test, tu tinh hash, tu validate merged log — khong dua vao bao cao.
+
+### Verified doc lap (DAT)
+- Frozen DB hash tu tinh: 64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715 — khop baseline.
+- Merged smoke logs (smoke_o2_gate_afterfix, smoke_o2_pause2) tu validate: seq monotonic, event_id unique, gate_pause payload dung (budget_cap_exceeded $0.6497 > $0.01; paused_by_user before builder_c2).
+- Cost math translator preflight (test 0.00825): (1000 x 0.25 + 4000 x 2.0) / 1e6 = 0.00825 — khop tay.
+- os.kill(pid, 0) tren py3.13 Windows: test thuc nghiem = probe ton tai, KHONG giet process; dead pid sau khi handle released -> OSError -> _pid_alive dung. spawn_run worker thoat sau proc.wait() nen handle duoc tha -> zombie-check dung trong kich ban thuc. Con lai: pid-reuse false positive (chap nhan, co heartbeat_at trong payload de nguoi dung phan xu).
+- run_translate tu tao workdb copy tu frozen khi thieu (_prepare_workdb) -> orchestrator khong can tao truoc, dong [DICH] khong can buoc tay.
+- J4 mapping dung: builder_v2_pilot / c3_audit / c35_decollision / reelection --preflight-only / run_translate --memory-notebook / run_experiment_cascade (khong phai run_cascade_localize) / sf_qe interpreter py311 / sf_bt + pj co estimate + confirm-usd; PJ chi khi --with-s0; one-arm S1 default; multi-chapter guard; frozen-hash assert truoc run; --expected-db-sha256 cua PJ materialize dong tu workdb (fix dung bai hoc O1).
+- Key-leak scan file moi + smoke artifacts: sach.
+- Full suite sau va import (P1-4): 444 passed.
+
+### P0 — phai sua truoc khi commit
+- P0-1 SystemExit khong bi bat o main: _run_stage fail raise SystemExit (BaseException, khong phai Exception) -> manifest ket status "running", KHONG phat run_failed -> UI treo "dang chay" vinh vien khi stage fail. Fix: bat SystemExit rieng (ghi manifest failed + emit run_failed roi re-raise).
+- P0-2 argv_digest chua flag bien thien: translator argv co --attempt-id <n> -> resume lam digest lech -> translator KHONG BAO GIO skip du da done, re-run ca stage (cache do lai nhung sai resume stage-granularity J2). Fix: chuan hoa argv truoc khi digest (loai --event-log/--run-id/--attempt-id + gia tri). LUU Y: sau khi chuan hoa, preflight_check se skip duoc tren resume — KHONG duoc phep: preflight phai luon chay lai (env co the da doi sau crash) -> danh dau stage never_skip.
+- P0-3 stage event file khong co hau to attempt (spec 2f khoa <run>.stage_<s>.a<n>.jsonl): translate.jsonl dung chung moi attempt + drain offset ve 0 khi chay lai -> event attempt cu bi re-emit vao merged log -> UI aggregate dem trung llm_call/cost -> cost hien thi phong dai. Fix: ten file stage event kem a<attempt>.
+
+### P1 — nen sua trong vong nay
+- P1-4 (DA VA boi Claude): test_run_one_button import app.backend.services... -> namespace package `app` vao sys.modules che module app.py -> 78 test test_api_smoke ERROR khi chay full suite (chay le thi pass — dung bai "green tests can hide"). Da sua theo convention BACKEND_ROOT sys.path + `from services.thesis_runs import ...`; 444 passed. CodeX dung pattern nay cho test sau.
+- P1-5 CANCEL endpoint (scope O2 theo 2n) chua co: thesis_runs khong co cancel/taskkill; orchestrator chi xu ly KeyboardInterrupt. Lam o vong nay: endpoint cancel -> taskkill /T /F pid tu registry (pid cua orchestrator, tree kill keo ca stage con).
+- P1-6 pause_requested trong manifest co race: orchestrator ghi manifest tu ban sao in-memory (heartbeat 30s + stage record) -> flag UI dat vao manifest co the bi ghi de mat. CHOT: co che pause chinh thuc cho UI = PAUSE file trong run_dir (da co san); pause_requested trong manifest chi coi la best-effort, khong dua vao.
+
+### P2 — ghi nhan, sua khi tien tay
+- P2-7 cascade estimate = $0: preflight cascade khong xuat key cost nao _extract_cost_estimate hieu -> budget gate mu voi cascade, chi con --confirm-usd noi bo do. Kem ghi chu thiet ke: moi stage cost-bearing nhan confirm_usd = TOAN BO budget -> tong chi xau nhat co the vuot budget neu estimate sai; chap nhan cho demo, ghi ro trong spec.
+- P2-8 builder C2/C3/C35 metadata thieu cache_path -> estimate_by_stage khong ghi cache da probe (bai hoc O1 ap dung chua du).
+- P2-9 pass_event_log stage truyen --run-id <ten stage> --attempt-id 1 vao stage file (envelope sai trong file stage; merged log da sua khi re-emit) -> truyen run_id/attempt that.
+- P2-10 FORCE_FLUSH_EVENTS trong run_one_button la hang so chet (khong tham chieu).
+
+### Acceptance con thieu (dieu kien commit)
+Kill giua stage -> resume -> done chua duoc chay. Yeu cau CodeX chung minh 0-API bang pytest resume voi stage plan gia (monkeypatch _build_stage_plan -> stage script = python -c nho, co stage ghi artifact + stage event file):
+(a) attempt 2 skip dung cac stage done theo digest chuan hoa;
+(b) merged log KHONG chua ban sao event cua attempt cu (P0-3);
+(c) stage fail -> manifest status failed + run_failed co mat trong merged log (P0-1);
+(d) manifest attempt tang va owner_pid cap nhat.
+Smoke that (co API) van giu den truoc demo; test gia nay la dieu kien commit O2.
+
+### Ghi nhan trung thuc tu CodeX (giu nguyen ho so)
+- Smoke pause dat PAUSE sai thu muc -> builder_c2 da khoi dong that, bi kill tay; cache temp 44 rows trong _tmp_one_button_smoke (co the co chi phi API nho). Khong dung production DB, frozen hash nguyen. Chap nhan, khong can don (data/jobs gitignored).
+- Chua mo Console browser de kiem live render — se kiem o UI-2 khi noi nut [DICH].
