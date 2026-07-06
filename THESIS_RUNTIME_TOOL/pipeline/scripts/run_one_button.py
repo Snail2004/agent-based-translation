@@ -1609,7 +1609,19 @@ def _write_manifest(path: Path, manifest: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(_json_safe(manifest), ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
-    os.replace(tmp, path)
+    # os.replace is atomic but on Windows raises PermissionError (WinError 5) when the
+    # destination is briefly locked by OneDrive sync, antivirus, or a concurrent reader.
+    # The heartbeat rewrites the manifest often, so on long runs a transient lock is
+    # eventually hit and would crash the whole run. Retry with short backoff.
+    last_err: PermissionError | None = None
+    for attempt in range(10):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError as err:
+            last_err = err
+            time.sleep(0.1 * (attempt + 1))
+    raise last_err  # type: ignore[misc]
 
 
 def _append_jsonl_atomic(path: Path, rows: list[dict[str, Any]]) -> None:
