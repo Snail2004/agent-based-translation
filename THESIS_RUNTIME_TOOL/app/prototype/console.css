@@ -168,7 +168,17 @@
   gap: 0 6px; align-items: baseline; padding: 3px 0;
   border-bottom: 1px dotted var(--c-border);
 }
-.agentconsole .stage-dot { text-align: center; }
+/* text-align centers the glyph; the width/height/background/border-radius resets
+   neutralize the app's DEAD old-console `.stage-dot` rule (styles.css, unscoped:
+   an 8x8 beige rounded box). That box collided with this console's glyph dot,
+   painting a beige circle behind the green ● and offsetting them into a "double
+   dot". The dev harness never loaded styles.css, so it always showed a single dot. */
+.agentconsole .stage-dot {
+  text-align: center;
+  width: auto; height: auto;
+  background: transparent; border-radius: 0;
+  flex: none; align-self: baseline;
+}
 .agentconsole .stage-progress { color: var(--c-ink-dim); font-size: 11.5px; text-align: right; }
 .agentconsole .stage-eta { color: var(--c-ink-faint); font-size: 10.5px; text-align: right; }
 .agentconsole .stage-done .stage-dot { color: var(--c-green); }
