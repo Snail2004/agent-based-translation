@@ -181,8 +181,32 @@ function AgentConsoleView(props) {
   const [stageFilter, setStageFilter] = React.useState("");
   const [agentFilter, setAgentFilter] = React.useState("");
   const [severityFilter, setSeverityFilter] = React.useState("");
+  // Client-side replay: reveal saved events over time so a finished run animates
+  // (stages progress, cost climbs, typewriter fires). No backend, no new run — the
+  // real block-preview/watchlist stay attached to this same run.
+  const [replayN, setReplayN] = React.useState(null);
+  const replayTimer = React.useRef(null);
+  const stopReplay = React.useCallback(() => {
+    if (replayTimer.current) { clearInterval(replayTimer.current); replayTimer.current = null; }
+  }, []);
+  React.useEffect(() => () => stopReplay(), [stopReplay]);
+  React.useEffect(() => { setReplayN(null); stopReplay(); }, [runId, stopReplay]);
+  function startReplay() {
+    if (!events.length) return;
+    stopReplay();
+    let i = 0;
+    const step = Math.max(1, Math.round(events.length / 60));
+    setReplayN(0);
+    replayTimer.current = setInterval(() => {
+      i += step;
+      if (i >= events.length) { setReplayN(null); stopReplay(); }
+      else setReplayN(i);
+    }, 220);
+  }
+  const replaying = replayN != null;
+  const shownEvents = replaying ? events.slice(0, replayN) : events;
 
-  const st = React.useMemo(() => deriveConsoleState(events), [events]);
+  const st = React.useMemo(() => deriveConsoleState(shownEvents), [shownEvents]);
   const runStatus = st.runStatus || status || (running ? "running" : "idle");
   const isTerminal = ["done", "failed", "cancelled"].includes(runStatus);
   const stalled = running && !isTerminal && consoleAgeSeconds(st.lastTs) > 90;
@@ -214,6 +238,7 @@ function AgentConsoleView(props) {
         </select>
         <span className="hdr-actions">
           {onDich && <button className="btn btn-accent" type="button" disabled={busy || running} onClick={onDich} title="Chạy toàn bộ pipeline one-button cho dataset đang mở">▸ DỊCH</button>}
+          {events.length > 0 && !running && <button className="btn" type="button" onClick={startReplay} title="Phát lại event stream theo thời gian (client-side, $0)">{replaying ? "▶ replaying…" : "▶ replay"}</button>}
           <button className="btn" type="button" disabled={busy} onClick={onRefresh}>↻ refresh</button>
           <button className="btn" type="button" disabled={!running || !onPause} onClick={onPause}>⏸ pause after stage</button>
           {runStatus === "failed" && onResume

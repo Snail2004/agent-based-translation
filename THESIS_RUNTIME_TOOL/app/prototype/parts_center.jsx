@@ -1937,7 +1937,7 @@ function CenterEditor({
         onChangeType={onChangeType} onToggleOpening={onToggleOpening}
         onToggleFlag={onToggleFlag} onMarkReviewed={() => onMarkReviewed(block.block_id)} readOnly={readOnly} />
       <FocusTermChip term={focusTerm} index={focusedTermIndex} onJump={onFocusJump} onClear={onClearFocus} />
-      {readOnly && <OverlayLegend />}
+      {readOnly && mode !== "console" && mode !== "cockpit" && <OverlayLegend />}
 
       {mode === "console" ? (
         <AgentConsole runControl={runControl} />

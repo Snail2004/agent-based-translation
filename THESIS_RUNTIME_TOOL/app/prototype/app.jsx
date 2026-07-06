@@ -574,28 +574,23 @@ function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze,
     setExportOpen(false);
     onExportOption(kind);
   }
+  const gitSha = appVersion?.git_sha && appVersion.git_sha !== "unknown" ? appVersion.git_sha : "";
+  const userName = currentUser();
+  const userInitial = (userName[0] || "M").toUpperCase();
+  function runAction(fn) { setExportOpen(false); if (fn) fn(); }
   return (
     <div className="topbar">
       <div className="tb-left">
-        <span className="tb-app"><span className="tb-logo">▧</span>AILAB <span className="tb-app-sub">Dataset Tool</span></span>
-        <span className="tb-sep" />
+        <span className="tb-logo" aria-label="AILAB">▧</span>
         <span className="tb-doc tip" data-tip="Active document · one local project folder per doc_id">
-          <Ic.doc size={13} className="faint" /><span className="mono">{docId}</span>
-        </span>
-        <span className={"version-badge tip" + (versionMismatch ? " mismatch" : "")} data-tip={`UI ${UI_VERSION} / API ${apiVersion} / git ${appVersion?.git_sha || "unknown"}`}>
-          <span>UI</span><b className="mono">{UI_VERSION}</b><span>API</span><b className="mono">{apiVersion}</b>
-          {appVersion?.git_sha && appVersion.git_sha !== "unknown" ? <em className="mono">{appVersion.git_sha}</em> : null}
-        </span>
-        <span className="wc-badge tip" data-tip="Autosaved working state and canonical dataset files via backend API.">
-          <span className="wc-dot" />working copy
+          <Ic.doc size={13} className="faint" /><span className="mono">{docId || "no document"}</span>
         </span>
       </div>
 
       <div className="tb-right">
-        <span className="autosave tip" data-tip="Writes go through the Flask backend. Freeze creates a validated versioned snapshot.">
+        <span className="autosave">
           {dirty ? <><span className="as-spin" />saving...</> : <><Ic.check size={12} className="as-ok" />saved {lastSaved}</>}
         </span>
-        <span className="tb-sep" />
         <div className="undo-group">
           <button className="btn icon-only tip" disabled={!canUndo} data-tip={previewReadOnly ? readOnlyTip : dirty ? "Wait for current save to finish" : historyTip("Undo", history?.undo_top)} onClick={onUndo} aria-label="Undo">
             <Ic.undo size={13} />
@@ -604,40 +599,45 @@ function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze,
             <Ic.redo size={13} />
           </button>
         </div>
-        <span className="tb-sep" />
-        <span className="user-chip tip" data-tip="Current local user"><span className="ua">M</span>{currentUser()}</span>
-        <span className="tb-sep" />
-        {previewReadOnly && <span className="preview-top-badge"><Ic.eye size={12} />preview read-only</span>}
-        <button className="btn" disabled={previewReadOnly} data-tip={previewReadOnly ? readOnlyTip : ""} onClick={onValidate}><Ic.checkCircle size={13} />Validate</button>
         <div className="export-menu-wrap">
-          <button className="btn" onClick={() => setExportOpen(v => !v)} disabled={!docId} data-tip={!docId ? "Open a project first." : ""}>
-            <Ic.upload size={13} />Export<Ic.chevDown size={11} />
+          <button className="btn icon-only tb-menu-btn" onClick={() => setExportOpen(v => !v)} aria-label="Menu & account">
+            <span className="ua">{userInitial}</span><Ic.chevDown size={11} className="faint" />
           </button>
-          {exportOpen && (
-            <div className="export-menu">
-              <button disabled={packageDisabled} onClick={() => chooseExport("package")}>
-                <Ic.layers size={13} />
-                <span><b>Dataset package</b><em>Source + dataset + working state + QC</em></span>
+          {exportOpen && (<>
+            <div className="menu-scrim" onClick={() => setExportOpen(false)} />
+            <div className="export-menu tb-menu">
+              <div className="tb-menu-user">
+                <span className="ua">{userInitial}</span>
+                <div><b>{userName}</b><em>local user</em></div>
+              </div>
+              <div className="tb-menu-meta">
+                <span>UI {UI_VERSION} · API {apiVersion}</span>
+                {gitSha ? <span>git {gitSha}</span> : null}
+                <span>{previewReadOnly ? "preview · read-only view" : "working copy · autosaved"}</span>
+              </div>
+              <div className="tb-menu-div" />
+              <button disabled={previewReadOnly} onClick={() => runAction(onValidate)}>
+                <Ic.checkCircle size={13} /><span><b>Validate</b><em>Grouped issues & gates</em></span>
               </button>
-              <button disabled={qcDisabled} onClick={() => chooseExport("qc")}>
-                <Ic.checkCircle size={13} />
-                <span><b>QC report</b><em>Counts, validation, review, freeze gates</em></span>
+              <div className="tb-menu-label">Export</div>
+              <button disabled={!docId} onClick={() => chooseExport("package")}>
+                <Ic.layers size={13} /><span><b>Dataset package</b><em>Source + dataset + working state + QC</em></span>
               </button>
-              <button onClick={() => chooseExport("dataset-previews")}>
-                <Ic.book size={13} />
-                <span><b>Dataset + all previews</b><em>Dataset package + all translated previews</em></span>
+              <button disabled={!docId} onClick={() => chooseExport("qc")}>
+                <Ic.checkCircle size={13} /><span><b>QC report</b><em>Counts, validation, review, freeze gates</em></span>
               </button>
-              <button disabled={previewDisabled} onClick={() => chooseExport("preview")}>
-                <Ic.eye size={13} />
-                <span><b>Translation preview</b><em>Current preview run only, not gold</em></span>
+              <button disabled={!docId} onClick={() => chooseExport("dataset-previews")}>
+                <Ic.book size={13} /><span><b>Dataset + all previews</b><em>Package + all translated previews</em></span>
+              </button>
+              <button disabled={!docId || previewDisabled} onClick={() => chooseExport("preview")}>
+                <Ic.eye size={13} /><span><b>Translation preview</b><em>Current preview run only, not gold</em></span>
+              </button>
+              <div className="tb-menu-div" />
+              <button disabled={previewReadOnly || !freezeReady} onClick={() => runAction(onFreeze)}>
+                <Ic.snow size={13} /><span><b>Freeze snapshot</b><em>{freezeReady ? "Versioned snapshot after gates pass" : "Blocked: " + freezeReasons.join(" · ")}</em></span>
               </button>
             </div>
-          )}
-        </div>
-        <div className="tip tip-left" data-tip={previewReadOnly ? readOnlyTip : freezeReady ? "Create a versioned snapshot after validation and review gates pass" : "Blocked: " + freezeReasons.join(" · ")}>
-          <button className="btn primary" disabled={previewReadOnly || !freezeReady} onClick={onFreeze}>
-            <Ic.snow size={13} />Freeze
-          </button>
+          </>)}
         </div>
       </div>
     </div>
