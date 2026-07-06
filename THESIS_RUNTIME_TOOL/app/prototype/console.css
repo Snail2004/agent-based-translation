@@ -205,3 +205,17 @@
 }
 .agentconsole .badge-stalled { animation: console-blink 1.6s ease-in-out infinite; }
 .agentconsole .console-empty { color: var(--c-ink-faint); padding: 20px 4px; }
+
+/* ============ APP-EMBED HARDENING ============
+   In the main app (index.html) the app's styles.css loads alongside this file and
+   defines generic, UNSCOPED .col / .col-left / .col-right (white --panel background,
+   flex column, overflow hidden). Those class names collide with the console's
+   identically-named columns. The scoped rules above set border/overflow but left
+   background/display unset, so the app's values leaked in — the left/right columns
+   rendered on a white background instead of the paper/dark skin (and did not follow
+   the console theme toggle). The dev harness (console_dev.html) never showed this
+   because it loads console.css only. Re-assert background + block flow here so the
+   console looks identical whether standalone or embedded. */
+.agentconsole .col-left,
+.agentconsole .col-right { background: var(--c-bg); display: block; }
+.agentconsole .col-main { background: var(--c-bg); }

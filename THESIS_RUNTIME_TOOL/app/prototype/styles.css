@@ -127,6 +127,14 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 
 /* ---------- Agent Console (terminal skin, paper default + dark toggle) ---------- */
 .workspace--console { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+/* The Agent Console mounts as the 2nd child of a flex-column .col-center, below the
+   mode-toggle toolbar. console.css gives .agentconsole height:100% for the standalone
+   dev harness (#root = 100vh, single child). Embedded here that overshoots by the
+   toolbar's height and pushes the LATEST BLOCK panel below the viewport (page cannot
+   scroll — .col overflow is hidden). Make it fill the *remaining* space instead so the
+   internal event feed scrolls, exactly like the dev harness. */
+.workspace--console .col-center { min-height: 0; }
+.workspace--console .agentconsole { flex: 1 1 auto; min-height: 0; height: auto; }
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: .04em;
