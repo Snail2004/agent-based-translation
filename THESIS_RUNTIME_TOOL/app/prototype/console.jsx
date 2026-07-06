@@ -309,7 +309,14 @@ function AgentConsoleView(props) {
         <span className="brand">⬢ AGENT CONSOLE</span>
         <select className="run-picker" aria-label="Run picker" value={runId || ""} onChange={e => onSelectRun && onSelectRun(e.target.value)}>
           {!runId && <option value="">select run</option>}
-          {runs.slice(0, 40).map(r => <option key={r.run_id} value={r.run_id}>{r.run_id}{r.status ? " · " + r.status : ""}</option>)}
+          {runs.slice(0, 40).map(r => {
+            const t = r.started_at ? new Date(r.started_at) : null;
+            const stamp = t && !isNaN(t.getTime())
+              ? " · " + String(t.getMonth()+1).padStart(2,"0") + "-" + String(t.getDate()).padStart(2,"0")
+                + " " + String(t.getHours()).padStart(2,"0") + ":" + String(t.getMinutes()).padStart(2,"0")
+              : "";
+            return <option key={r.run_id} value={r.run_id}>{r.run_id}{r.status ? " · " + r.status : ""}{stamp}</option>;
+          })}
         </select>
         <span className="hdr-actions">
           {onDich && <button className="btn btn-accent" type="button" disabled={busy || running} onClick={onDich} title="Chạy toàn bộ pipeline one-button cho dataset đang mở">▸ DỊCH</button>}
