@@ -10,7 +10,7 @@ import pytest
 from pipeline.agents.llm_client import LLMResult, LLMUsage
 from pipeline.ingest.document_loader import load_document
 from pipeline.memory.store_init import migrate_db
-from pipeline.translate.runner import TranslateReport, translate_windows
+from pipeline.translate.runner import TranslateReport, _pack_summary_for_event, translate_windows
 from pipeline.translate.run_events import EventSink
 from pipeline.translate.windower import Window
 from pipeline.translate.prompt import build_messages
@@ -150,6 +150,36 @@ def _read_events(path: Path) -> list[dict]:
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def test_pack_summary_for_event_maps_context_pack_counts() -> None:
+    pack = ContextPack(
+        glossary_lines=["gradient -> gradient"],
+        preserve_lines=["PyTorch"],
+        context_sensitive_lines=["shape -> hinh dang"],
+        entity_lines=[],
+        address_lines=[],
+        token_estimate=123,
+        anchors=Anchors(
+            doc_id="d2l",
+            block_ids=["b001"],
+            term_block_ids={"gradient": ["b001"], "shape": ["b001"]},
+            term_counts={"gradient": 1, "shape": 1},
+            entity_block_ids={},
+            entity_counts={},
+            has_dialogue=False,
+        ),
+        dropped_by_budget=[
+            DroppedItem(item_id="x", item_type="term", line="x -> y", reason="budget")
+        ],
+    )
+
+    assert _pack_summary_for_event(pack) == {
+        "injected": 3,
+        "excluded": 0,
+        "dropped_by_budget": 1,
+        "est_tokens": 123,
+    }
 
 
 def test_runner_translate_one_window(tmp_path):

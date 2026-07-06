@@ -1,6 +1,6 @@
 # TASK_APP_E04_pack_summary_event — Emit pack_summary vào merged one-button event để Console hiện dòng MEMORY
 
-- **Status:** READY
+- **Status:** DONE — verified PASS (Claude, independent), committed
 - **Refs:** TASK_APP_E03 (Phase B trơ — renderer đã merge) | TASK_RUN_EVENT_01 (sidecar event schema) | TASK_APP_B01 (Cockpit MemoryPackInspector — nguồn field context_audit) | pack-exclusion-injection-action-gate | prompt-memory-design-is-first-class
 - **Branch/Commit:** (điền khi imple xong)
 - **Người làm:** CodeX implement · Claude review độc lập
@@ -76,12 +76,17 @@ python -m pytest THESIS_RUNTIME_TOOL/pipeline THESIS_RUNTIME_TOOL/app/backend/te
 # 4) Frozen DB hash KHÔNG đổi; emit là 0-API.
 ```
 
-## 5. Implementation notes *(CodeX điền)*
+## 5. Implementation notes *(CodeX — tóm tắt)*
 
-- Đường event đã trace (file nào → merge ở đâu), event chọn để đính, có phải thêm allowlist giữ payload khi merge không. Output các lệnh acceptance (dán nguyên văn).
+- `runner.py`: prompt_built giờ emit `pack_summary=_pack_summary_for_event(context_pack)` (map từ `_context_pack_summary`: injected=included_count, excluded, dropped_by_budget, est_tokens=token_estimate). Cố ý KHÔNG emit mandatory/soft (chưa có split contract).
+- `run_one_button.py MergedEventWriter`: `_stage_event_payload` copy top-level keys (pack_summary, window_id, config, profile, experiment_id, block_ids) vào merged payload; nếu thiếu pack_summary thì suy từ `context_summary` (top-level/payload) → **tự nâng cấp sidecar cũ**.
+- Golden fixture: 7/7 prompt_built thêm `payload.pack_summary` (từ run b6_real). Regression tests cho mapper/merger/fixture.
+- 28 focused pass · full suite 462 pass · frozen hash 64D989…C715 · 0-API.
 
-## 6. Review *(Claude điền)*
+## 6. Review *(Claude — verify độc lập)*
 
-- **Verdict:** PASS / REWORK.
-- Findings: verify độc lập bằng cách **quét merged event thật** (không chỉ tin test) khẳng định `pack_summary` có mặt & Console render; kiểm 0-API, frozen hash, golden khớp run thật (không hardcode số đẹp).
-- Follow-up (nếu có): mở TASK mới.
+- **Verdict: PASS.**
+- **Re-merge smoke trên sidecar THẬT** (run_214651ffe3d5, path nâng cấp cũ): 7/7 prompt_built → `payload.pack_summary`, giá trị suy đúng từ context_summary thật (injected 20,25,18,14,15,10,4).
+- **Anti-fabrication golden:** chuỗi injected của fixture [20,24,20,14,14,10,3] **khớp tuyệt đối** sidecar thật của run `b6_real` (run gốc sinh golden) → giá trị THẬT, không gõ tay. Diff surgical 7+/7−.
+- **UI:** console_dev (đọc golden) render 7 dòng `window N · pack X inj (Y excl) · Z drop · Ttok`, 0 fallback "prompt dựng xong". mandatory/soft bỏ đúng (null).
+- 28 focused pass; frozen hash 64D989…C715 nguyên; 0-API. Renderer E03 chạy đúng khi có dữ liệu → khép kín Phase B.

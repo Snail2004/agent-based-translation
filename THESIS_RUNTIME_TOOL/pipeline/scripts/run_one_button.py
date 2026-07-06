@@ -95,7 +95,7 @@ class MergedEventWriter:
         rows: list[dict[str, Any]] = []
         for event in events:
             self.seq += 1
-            payload = dict(event.get("payload") or {})
+            payload = _stage_event_payload(event)
             payload["src_seq"] = event.get("seq")
             payload["src_event_id"] = event.get("event_id")
             payload["src_stage_event_log_path"] = str(stage.stage_event_log_path) if stage.stage_event_log_path else None
@@ -118,6 +118,34 @@ class MergedEventWriter:
                 }
             )
         _append_jsonl_atomic(self.path, rows)
+
+
+def _stage_event_payload(event: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(event.get("payload") or {})
+    for key in ("pack_summary", "window_id", "config", "profile", "experiment_id", "block_ids"):
+        if key in event and event[key] is not None:
+            payload[key] = event[key]
+    if "pack_summary" not in payload:
+        context_summary = payload.get("context_summary") or event.get("context_summary")
+        pack_summary = _pack_summary_from_context_summary(context_summary)
+        if pack_summary is not None:
+            payload["pack_summary"] = pack_summary
+    return payload
+
+
+def _pack_summary_from_context_summary(context_summary: Any) -> dict[str, int] | None:
+    if not isinstance(context_summary, dict):
+        return None
+    injected = context_summary.get("included_count")
+    if injected is None:
+        return None
+    est_tokens = context_summary.get("estimated_tokens", context_summary.get("token_estimate", 0))
+    return {
+        "injected": int(injected or 0),
+        "excluded": int(context_summary.get("excluded_count") or 0),
+        "dropped_by_budget": int(context_summary.get("dropped_by_budget_count") or 0),
+        "est_tokens": int(est_tokens or 0),
+    }
 
 
 def main() -> int:

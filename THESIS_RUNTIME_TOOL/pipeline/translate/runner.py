@@ -202,6 +202,7 @@ def translate_windows(
                 ),
                 messages_summary=_messages_summary(messages),
                 context_summary=_context_pack_summary(context_pack),
+                pack_summary=_pack_summary_for_event(context_pack),
                 committed=False,
             )
 
@@ -901,6 +902,18 @@ def _context_pack_summary(context_pack: Any | None) -> dict[str, Any]:
         "low_context": bool(getattr(context_pack, "low_context", False)),
         "token_estimate": int(getattr(context_pack, "token_estimate", 0) or 0),
         "dropped_by_budget_sample": dropped[:3],
+    }
+
+
+def _pack_summary_for_event(context_pack: Any | None) -> dict[str, int] | None:
+    if context_pack is None:
+        return None
+    summary = _context_pack_summary(context_pack)
+    return {
+        "injected": int(summary.get("included_count") or 0),
+        "excluded": int(summary.get("excluded_count") or 0),
+        "dropped_by_budget": int(summary.get("dropped_by_budget_count") or 0),
+        "est_tokens": int(summary.get("token_estimate") or 0),
     }
 
 

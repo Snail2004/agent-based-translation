@@ -171,6 +171,66 @@ def test_golden_cascade_preflight_cost_cap_from_real_report() -> None:
     assert estimate["cascade_output_tokens_cap"] > 0
 
 
+def test_reemit_stage_events_lifts_context_summary_to_pack_summary(tmp_path: Path) -> None:
+    merged_log = tmp_path / "merged.jsonl"
+    stage_event_log = tmp_path / "stage_events" / "translate.a1.jsonl"
+    stage = run_one_button.StageSpec(
+        name="translator",
+        script="run_translate",
+        argv=[sys.executable, "-m", "pipeline.scripts.run_translate"],
+        stage_event_log_path=stage_event_log,
+    )
+    writer = run_one_button.MergedEventWriter(merged_log, run_id="run_test", attempt_id=1)
+
+    writer.reemit_stage_events(
+        [
+            {
+                "schema": "run_event_v1",
+                "seq": 2,
+                "event": "prompt_built",
+                "window_id": "w001",
+                "config": "S1",
+                "context_summary": {
+                    "included_count": 20,
+                    "excluded_count": 0,
+                    "dropped_by_budget_count": 1,
+                    "token_estimate": 176,
+                },
+            }
+        ],
+        stage=stage,
+    )
+
+    row = json.loads(merged_log.read_text(encoding="utf-8").strip())
+    assert row["event"] == "prompt_built"
+    assert row["payload"]["pack_summary"] == {
+        "injected": 20,
+        "excluded": 0,
+        "dropped_by_budget": 1,
+        "est_tokens": 176,
+    }
+    assert row["payload"]["window_id"] == "w001"
+    assert row["payload"]["src_seq"] == 2
+
+
+def test_golden_one_button_fixture_has_pack_summary() -> None:
+    events = [
+        json.loads(line)
+        for line in (GOLDEN_ONE_BUTTON_RUN / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    prompt_events = [row for row in events if row.get("event") == "prompt_built"]
+    pack_summaries = [
+        row.get("payload", {}).get("pack_summary")
+        for row in prompt_events
+        if row.get("payload", {}).get("pack_summary")
+    ]
+
+    assert pack_summaries
+    assert all(summary["injected"] >= 0 for summary in pack_summaries)
+    assert any(summary["est_tokens"] > 0 for summary in pack_summaries)
+
+
 def test_resume_skips_done_stage_without_reemitting_attempt1_events(tmp_path: Path, monkeypatch) -> None:
     suffix = uuid.uuid4().hex[:8]
     job_id = f"resume_demo_{suffix}"
