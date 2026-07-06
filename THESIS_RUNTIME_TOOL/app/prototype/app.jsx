@@ -708,7 +708,7 @@ function App() {
   const [runBlockPreview, setRunBlockPreview] = useState([]);
   const [runWatchlist, setRunWatchlist] = useState([]);
   const [runReportSummary, setRunReportSummary] = useState(null);
-  const [dichForm, setDichForm] = useState({ chapters: "d2l_preface", profile: "technical_d2l_v1", db: "data/jobs/d2l_p1/memory.sqlite3", budget_cap_usd: 1.5 });
+  const [dichForm, setDichForm] = useState({ chapters: "d2l_preface", profile: "technical_d2l_v1", db: "data/jobs/d2l_p1/memory.sqlite3", budget_cap_usd: 1.5, with_s0: false });
   const [runPromptPreview, setRunPromptPreview] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
@@ -1078,6 +1078,7 @@ function App() {
         experiment: "one_button_ui",
         budget_cap_usd: String(dichForm.budget_cap_usd || 1.5),
         db: dichForm.db || "",
+        with_s0: String(!!dichForm.with_s0),
       };
       const est = await API.getThesisOneButtonEstimate(estParams);
       const payload = {
@@ -1088,7 +1089,7 @@ function App() {
         profile: dichForm.profile || undefined,
         experiment: "one_button_ui",
         budget_cap_usd: Number(dichForm.budget_cap_usd || 1.5),
-        with_s0: false,
+        with_s0: !!dichForm.with_s0,
         allow_api: true,
         confirm_token: est.confirm_token,
         planned_run_id: est.planned_run_id,
@@ -2560,6 +2561,10 @@ function App() {
             <label><span>db nguồn (frozen, đọc mode=ro)</span><input value={dichForm.db} onChange={e => setDichForm(f => ({ ...f, db: e.target.value }))} placeholder="data/jobs/d2l_p1/memory.sqlite3" /></label>
             <label><span>budget cap ($)</span><input type="number" step="0.1" min="0.01" value={dichForm.budget_cap_usd} onChange={e => setDichForm(f => ({ ...f, budget_cap_usd: e.target.value }))} /></label>
           </div>
+          <label style={{display:"flex",alignItems:"center",gap:"8px",marginTop:"6px",cursor:"pointer"}}>
+            <input type="checkbox" checked={!!dichForm.with_s0} onChange={e => setDichForm(f => ({ ...f, with_s0: e.target.checked }))} />
+            <span>Kèm baseline <span className="mono">S0</span> (chạy S0+S1 để có so sánh S0↔S1 — tốn thêm API)</span>
+          </label>
           <p className="muted"><Ic.alert size={11} /> Chạy API thật. Gate ngân sách sẽ tự pause nếu ước tính luỹ kế vượt <span className="mono">${Number(dichForm.budget_cap_usd || 1.5).toFixed(2)}</span>. Con số cost trong Console là TRẦN trên — thực tế thường thấp hơn nhiều (cascade T3 chạy Gemma local ~$0).</p>
         </Modal>
       )}
