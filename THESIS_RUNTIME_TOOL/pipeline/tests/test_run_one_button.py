@@ -205,7 +205,6 @@ def test_reemit_stage_events_lifts_context_summary_to_pack_summary(tmp_path: Pat
     assert row["event"] == "prompt_built"
     assert row["payload"]["pack_summary"] == {
         "injected": 20,
-        "excluded": 0,
         "dropped_by_budget": 1,
         "est_tokens": 176,
     }
@@ -229,6 +228,12 @@ def test_golden_one_button_fixture_has_pack_summary() -> None:
     assert pack_summaries
     assert all(summary["injected"] >= 0 for summary in pack_summaries)
     assert any(summary["est_tokens"] > 0 for summary in pack_summaries)
+    assert all("excluded" not in summary for summary in pack_summaries)
+    assert all(
+        summary["injected"] == summary["mandatory"] + summary["soft"] + summary["preserve"] + summary.get("address", 0)
+        for summary in pack_summaries
+    )
+    assert any(summary.get("sample", {}).get("mandatory") for summary in pack_summaries)
 
 
 def test_resume_skips_done_stage_without_reemitting_attempt1_events(tmp_path: Path, monkeypatch) -> None:

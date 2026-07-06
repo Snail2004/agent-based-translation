@@ -74,11 +74,33 @@ function consolePackMessage(summary, ctx) {
   const detail = [];
   if (summary.mandatory != null) detail.push(`${summary.mandatory} mand`);
   if (summary.soft != null) detail.push(`${summary.soft} soft`);
-  if (excluded != null) detail.push(`${excluded} excl`);
+  if (summary.preserve != null) detail.push(`${summary.preserve} preserve`);
+  if (summary.quarantine) detail.push(`${summary.quarantine} quarantine`);
+  if (summary.address) detail.push(`${summary.address} address`);
+  if (excluded) detail.push(`${excluded} excl`);
   if (detail.length) parts.push(`(${detail.join("/")})`);
   parts.push(`· ${dropped} drop`);
   if (tokens != null) parts.push(`· ${tokens}tok`);
   return parts.join(" ");
+}
+
+function consolePackContentRows(summary) {
+  const sample = summary && typeof summary.sample === "object" && summary.sample ? summary.sample : {};
+  const more = summary && typeof summary.more === "object" && summary.more ? summary.more : {};
+  const buckets = [
+    ["mandatory", "MAND"],
+    ["soft", "SOFT"],
+    ["preserve", "KEEP"],
+    ["address", "ADDR"],
+    ["quarantine", "QUAR"],
+  ];
+  const rows = [];
+  buckets.forEach(([key, label]) => {
+    const values = Array.isArray(sample[key]) ? sample[key].slice(0, 6) : [];
+    values.forEach((line, index) => rows.push({ key: `${key}:${index}`, label, line: String(line) }));
+    if (more[key]) rows.push({ key: `${key}:more`, label, line: `+${more[key]} more` });
+  });
+  return rows;
 }
 
 /* One-line human message per real event type; falls back to a generic label. */
@@ -136,6 +158,8 @@ function deriveConsoleState(events) {
   let translatorTotal = null;
   let stderrTail = [];
   let paused = false, pausedReason = "";
+  let latestPackSummary = null;
+  let latestPackWindow = null;
   const normalized = [];
 
   events.forEach((raw, idx) => {
@@ -164,6 +188,10 @@ function deriveConsoleState(events) {
       translatorTotal = Math.max(Number(translatorTotal || 0), Number(payloadTotal));
     }
     if (event === "window_preview_available") latestPreviewWin = Math.max(winCounter, 1);
+    if ((event === "prompt_built" || event === "pack_built") && payload.pack_summary) {
+      latestPackSummary = payload.pack_summary;
+      latestPackWindow = payload.window_id || (ctx.win ? `window ${ctx.win}` : "");
+    }
     if (event === "checkpoint" && payload.checkpoint === "phase_1_done") phase1Done = true;
     if (event === "cost_snapshot") {
       if (payload.estimated_cumulative_usd != null) cumulativeCost = Number(payload.estimated_cumulative_usd);
@@ -201,7 +229,7 @@ function deriveConsoleState(events) {
     normalized, stageInfo, stagesSeen, cumulativeCost, budgetCap,
     warnings, errors, phase1Done, runStatus, latestArtifact, latestPreviewWin,
     stderrTail, paused, pausedReason, lastTs, llmCalls,
-    translatorTotal,
+    translatorTotal, latestPackSummary, latestPackWindow,
     totalEvents: normalized.length,
   };
 }
@@ -264,6 +292,7 @@ function AgentConsoleView(props) {
     && (!agentFilter || r.agent === agentFilter)
     && (!severityFilter || r.severity === severityFilter));
   const rendered = filtered.slice(-220).reverse();
+  const memoryRows = consolePackContentRows(st.latestPackSummary);
 
   const costPct = st.budgetCap ? Math.min(100, Math.round((st.cumulativeCost / st.budgetCap) * 100)) : 0;
   const healthLabel = stalled ? "stalled" : running ? "running" : isTerminal ? runStatus : "quiet";
@@ -432,6 +461,15 @@ function AgentConsoleView(props) {
 
           <div className="section-label">:: latest artifact</div>
           <div className="artifact-path">{st.latestArtifact ? consoleBaseName(st.latestArtifact) : "none yet"}</div>
+
+          <div className="section-label">:: memory content{st.latestPackWindow ? " · " + st.latestPackWindow : ""}</div>
+          {memoryRows.length ? memoryRows.map(row => (
+            <div className="watch-row" key={row.key}>
+              <span className="watch-term">{row.label}</span>
+              <span className="watch-arrow">·</span>
+              <span className="watch-vi">{consoleShort(row.line, 46)}</span>
+            </div>
+          )) : <div className="artifact-path kv-dim">Chưa có pack sample trong event.</div>}
 
           <div className="section-label">:: results</div>
           {reportSummary && (reportSummary.final?.present || reportSummary.phase_1?.present) ? (

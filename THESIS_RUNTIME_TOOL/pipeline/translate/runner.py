@@ -880,7 +880,6 @@ def _context_pack_summary(context_pack: Any | None) -> dict[str, Any]:
     if context_pack is None:
         return {
             "included_count": 0,
-            "excluded_count": 0,
             "dropped_by_budget_count": 0,
             "anchors_count": {"terms": 0, "entities": 0, "address_policies": 0},
             "low_context": False,
@@ -896,7 +895,6 @@ def _context_pack_summary(context_pack: Any | None) -> dict[str, Any]:
     )
     return {
         "included_count": included_count,
-        "excluded_count": 0,
         "dropped_by_budget_count": len(dropped),
         "anchors_count": _context_anchors_count(context_pack),
         "low_context": bool(getattr(context_pack, "low_context", False)),
@@ -905,15 +903,58 @@ def _context_pack_summary(context_pack: Any | None) -> dict[str, Any]:
     }
 
 
-def _pack_summary_for_event(context_pack: Any | None) -> dict[str, int] | None:
+def _pack_summary_for_event(context_pack: Any | None) -> dict[str, Any] | None:
     if context_pack is None:
         return None
     summary = _context_pack_summary(context_pack)
-    return {
+    pack_summary: dict[str, Any] = {
         "injected": int(summary.get("included_count") or 0),
-        "excluded": int(summary.get("excluded_count") or 0),
+        "mandatory": len(getattr(context_pack, "glossary_lines", []) or [])
+        + len(getattr(context_pack, "entity_lines", []) or []),
+        "soft": len(getattr(context_pack, "context_sensitive_lines", []) or []),
+        "preserve": len(getattr(context_pack, "preserve_lines", []) or []),
+        "quarantine": len(getattr(context_pack, "repair_queue", []) or []),
+        "address": len(getattr(context_pack, "address_lines", []) or []),
         "dropped_by_budget": int(summary.get("dropped_by_budget_count") or 0),
         "est_tokens": int(summary.get("token_estimate") or 0),
+    }
+    pack_summary["sample"] = _pack_summary_sample(context_pack)
+    pack_summary["more"] = _pack_summary_more(pack_summary["sample"], context_pack)
+    return pack_summary
+
+
+def _pack_summary_sample(context_pack: Any, *, limit: int = 6) -> dict[str, list[str]]:
+    buckets = {
+        "mandatory": list(getattr(context_pack, "glossary_lines", []) or [])
+        + list(getattr(context_pack, "entity_lines", []) or []),
+        "soft": list(getattr(context_pack, "context_sensitive_lines", []) or []),
+        "preserve": list(getattr(context_pack, "preserve_lines", []) or []),
+        "address": list(getattr(context_pack, "address_lines", []) or []),
+    }
+    sample = {key: [str(line) for line in lines[:limit]] for key, lines in buckets.items() if lines}
+    repair_queue = getattr(context_pack, "repair_queue", []) or []
+    if repair_queue:
+        sample["quarantine"] = [
+            str(item.get("source_term") or item.get("glossary_id") or item)
+            for item in repair_queue[:limit]
+            if isinstance(item, dict)
+        ]
+    return sample
+
+
+def _pack_summary_more(sample: dict[str, list[str]], context_pack: Any, *, limit: int = 6) -> dict[str, int]:
+    totals = {
+        "mandatory": len(getattr(context_pack, "glossary_lines", []) or [])
+        + len(getattr(context_pack, "entity_lines", []) or []),
+        "soft": len(getattr(context_pack, "context_sensitive_lines", []) or []),
+        "preserve": len(getattr(context_pack, "preserve_lines", []) or []),
+        "address": len(getattr(context_pack, "address_lines", []) or []),
+        "quarantine": len(getattr(context_pack, "repair_queue", []) or []),
+    }
+    return {
+        key: max(0, count - len(sample.get(key, [])))
+        for key, count in totals.items()
+        if count > limit
     }
 
 

@@ -176,9 +176,19 @@ def test_pack_summary_for_event_maps_context_pack_counts() -> None:
 
     assert _pack_summary_for_event(pack) == {
         "injected": 3,
-        "excluded": 0,
+        "mandatory": 1,
+        "soft": 1,
+        "preserve": 1,
+        "quarantine": 0,
+        "address": 0,
         "dropped_by_budget": 1,
         "est_tokens": 123,
+        "sample": {
+            "mandatory": ["gradient -> gradient"],
+            "soft": ["shape -> hinh dang"],
+            "preserve": ["PyTorch"],
+        },
+        "more": {},
     }
 
 

@@ -140,12 +140,21 @@ def _pack_summary_from_context_summary(context_summary: Any) -> dict[str, int] |
     if injected is None:
         return None
     est_tokens = context_summary.get("estimated_tokens", context_summary.get("token_estimate", 0))
-    return {
+    summary = {
         "injected": int(injected or 0),
-        "excluded": int(context_summary.get("excluded_count") or 0),
         "dropped_by_budget": int(context_summary.get("dropped_by_budget_count") or 0),
         "est_tokens": int(est_tokens or 0),
     }
+    for source_key, target_key in (
+        ("mandatory", "mandatory"),
+        ("soft", "soft"),
+        ("preserve", "preserve"),
+        ("quarantine", "quarantine"),
+        ("address", "address"),
+    ):
+        if source_key in context_summary:
+            summary[target_key] = int(context_summary.get(source_key) or 0)
+    return summary
 
 
 def main() -> int:
