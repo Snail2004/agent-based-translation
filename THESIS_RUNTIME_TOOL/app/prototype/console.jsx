@@ -175,7 +175,7 @@ function AgentConsoleView(props) {
     truncated = false, partialLine = false,
     blockPreview = [], watchlist = [],
     theme = "paper", onToggleTheme,
-    onRefresh, onPause, onCancel, onResume, busy = false,
+    onRefresh, onPause, onCancel, onResume, onDich, busy = false,
   } = props;
 
   const [stageFilter, setStageFilter] = React.useState("");
@@ -213,6 +213,7 @@ function AgentConsoleView(props) {
           {runs.slice(0, 40).map(r => <option key={r.run_id} value={r.run_id}>{r.run_id}{r.status ? " · " + r.status : ""}</option>)}
         </select>
         <span className="hdr-actions">
+          {onDich && <button className="btn btn-accent" type="button" disabled={busy || running} onClick={onDich} title="Chạy toàn bộ pipeline one-button cho dataset đang mở">▸ DỊCH</button>}
           <button className="btn" type="button" disabled={busy} onClick={onRefresh}>↻ refresh</button>
           <button className="btn" type="button" disabled={!running || !onPause} onClick={onPause}>⏸ pause after stage</button>
           {runStatus === "failed" && onResume

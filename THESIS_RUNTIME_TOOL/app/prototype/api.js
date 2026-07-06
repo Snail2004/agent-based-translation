@@ -123,6 +123,10 @@
     pauseThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/pause`, { method: "POST", body: {} }),
     unpauseThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/pause`, { method: "DELETE", body: {} }),
     cancelThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/cancel`, { method: "POST", body: {} }),
+    getThesisOneButtonEstimate: (params) => {
+      const query = new URLSearchParams(params || {});
+      return request(`/thesis/runs/estimate-preview?${query.toString()}`);
+    },
     getThesisResumeEstimate: (runId) => request(`/thesis/runs/estimate-preview?resume_run_id=${encodeURIComponent(runId)}`),
     resumeThesisRun: (runId, payload) => request(`/thesis/runs/${encodeURIComponent(runId)}/resume`, { method: "POST", body: payload || {} }),
     createProject: (payload) => request("/projects", { method: "POST", body: payload }),

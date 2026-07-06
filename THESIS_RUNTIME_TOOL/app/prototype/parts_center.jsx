@@ -582,6 +582,7 @@ function AgentConsole({ runControl }) {
       onPause={runControl.onPause}
       onCancel={runControl.onCancel}
       onResume={runControl.onResume}
+      onDich={runControl.onDich}
     />
   );
 }

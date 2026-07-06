@@ -707,6 +707,7 @@ function App() {
   const [selectedRunEvents, setSelectedRunEvents] = useState({ run_id: null, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
   const [runBlockPreview, setRunBlockPreview] = useState([]);
   const [runWatchlist, setRunWatchlist] = useState([]);
+  const [dichForm, setDichForm] = useState({ chapters: "d2l_preface", profile: "technical_d2l_v1", db: "data/jobs/d2l_p1/memory.sqlite3", budget_cap_usd: 1.5 });
   const [runPromptPreview, setRunPromptPreview] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
@@ -1050,6 +1051,59 @@ function App() {
       setModal({ kind: "resume-run", runId: selectedRunId, estimate });
     } catch (err) {
       toast("Không lấy được ước tính resume", "bad", errorMessage(err));
+    } finally {
+      setRunBusy(false);
+    }
+  }
+
+  function openDichModal() {
+    const jobId = thesisJobId(activeDocId);
+    if (!jobId) { toast("Chưa mở dataset thesis", "bad", "Chọn một dataset thesis trước khi dịch."); return; }
+    setModal({ kind: "dich-run", jobId });
+  }
+
+  async function confirmDich() {
+    const jobId = thesisJobId(activeDocId);
+    if (!jobId) return;
+    setRunBusy(true);
+    try {
+      const estParams = {
+        job_id: jobId,
+        script: "run_one_button",
+        chapters: (dichForm.chapters || "").trim(),
+        profile: dichForm.profile || "",
+        experiment: "one_button_ui",
+        budget_cap_usd: String(dichForm.budget_cap_usd || 1.5),
+        db: dichForm.db || "",
+      };
+      const est = await API.getThesisOneButtonEstimate(estParams);
+      const payload = {
+        script: "run_one_button",
+        job_id: jobId,
+        db: dichForm.db || undefined,
+        chapters: splitWords(dichForm.chapters),
+        profile: dichForm.profile || undefined,
+        experiment: "one_button_ui",
+        budget_cap_usd: Number(dichForm.budget_cap_usd || 1.5),
+        with_s0: false,
+        allow_api: true,
+        confirm_token: est.confirm_token,
+        planned_run_id: est.planned_run_id,
+      };
+      const created = await API.createThesisRun(payload);
+      setModal(null);
+      setSelectedRunId(created.run_id);
+      runLogOffsetRef.current = 0;
+      runEventOffsetRef.current = 0;
+      setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
+      setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status, aggregate: emptyRunEventAggregate() });
+      setRunBlockPreview([]);
+      setRunWatchlist([]);
+      setCenterMode("console");
+      await refreshThesisRuns();
+      toast("Đã bắt đầu dịch", "good", created.run_id);
+    } catch (err) {
+      toast("Khởi động dịch thất bại", "bad", errorMessage(err));
     } finally {
       setRunBusy(false);
     }
@@ -2427,6 +2481,7 @@ function App() {
             onPause: pauseRun,
             onCancel: cancelRun,
             onResume: resumeRun,
+            onDich: openDichModal,
           }}
           selectedCallId={selectedCallId}
           selectedCallDetail={selectedCallDetail}
@@ -2477,6 +2532,21 @@ function App() {
               <div key={reason} className="fc-row bad"><Ic.xCircle size={13} />{reason}</div>
             )) : <div className="fc-row ok"><Ic.checkCircle size={13} />All freeze gates are clear.</div>}
           </div>
+        </Modal>
+      )}
+
+      {modal?.kind === "dich-run" && (
+        <Modal title="Dịch — one-button" icon={Ic.play} onClose={() => setModal(null)}
+          actions={<><button className="btn" onClick={() => setModal(null)}>Huỷ</button>
+            <button className="btn primary" disabled={runBusy || !(dichForm.chapters || "").trim()} onClick={confirmDich}><Ic.play size={12} />Bắt đầu dịch (API thật)</button></>}>
+          <p>Chạy toàn bộ pipeline một-phát (Builder → Auditor → Translator → chấm điểm → report) cho dataset <span className="mono">{modal.jobId}</span>. Tiến trình hiện live ở tab Console; có thể Pause/Resume/Cancel bất kỳ lúc nào.</p>
+          <div className="run-grid">
+            <label><span>chapters</span><input value={dichForm.chapters} onChange={e => setDichForm(f => ({ ...f, chapters: e.target.value }))} placeholder="d2l_preface" /></label>
+            <label><span>profile</span><input value={dichForm.profile} onChange={e => setDichForm(f => ({ ...f, profile: e.target.value }))} placeholder="technical_d2l_v1" /></label>
+            <label><span>db nguồn (frozen, đọc mode=ro)</span><input value={dichForm.db} onChange={e => setDichForm(f => ({ ...f, db: e.target.value }))} placeholder="data/jobs/d2l_p1/memory.sqlite3" /></label>
+            <label><span>budget cap ($)</span><input type="number" step="0.1" min="0.01" value={dichForm.budget_cap_usd} onChange={e => setDichForm(f => ({ ...f, budget_cap_usd: e.target.value }))} /></label>
+          </div>
+          <p className="muted"><Ic.alert size={11} /> Chạy API thật. Gate ngân sách sẽ tự pause nếu ước tính luỹ kế vượt <span className="mono">${Number(dichForm.budget_cap_usd || 1.5).toFixed(2)}</span>. Con số cost trong Console là TRẦN trên — thực tế thường thấp hơn nhiều (cascade T3 chạy Gemma local ~$0).</p>
         </Modal>
       )}
 
