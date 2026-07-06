@@ -298,6 +298,9 @@ function AgentConsoleView(props) {
   const healthLabel = stalled ? "stalled" : running ? "running" : isTerminal ? runStatus : "quiet";
   const healthClass = stalled || runStatus === "failed" ? "kv-bad" : running ? "kv-good" : "kv-dim";
   const statusChipClass = runStatus === "failed" ? "hdr-status-bad" : runStatus === "done" ? "hdr-status-good" : stalled || st.paused ? "hdr-status-warn" : running ? "hdr-status-good" : "";
+  const reportCfgs = (reportSummary && reportSummary.phase_1 && reportSummary.phase_1.configs) || [];
+  const isCompareRun = reportCfgs.includes("S0") || !!(reportSummary && reportSummary.compare && reportSummary.compare.present);
+  const armsLabel = reportCfgs.length ? (isCompareRun ? "S0+S1" : reportCfgs.join("+")) : (isCompareRun ? "S0+S1" : null);
 
   // latest translated window preview (text lives in blockPreview prop, not events)
   const previewIdx = st.latestPreviewWin ? Math.min(st.latestPreviewWin, blockPreview.length) - 1 : blockPreview.length - 1;
@@ -328,6 +331,7 @@ function AgentConsoleView(props) {
             : <button className="btn btn-danger" type="button" disabled={!running || !onCancel} onClick={onCancel}>✕ cancel</button>}
           <button className="btn" type="button" onClick={onToggleTheme}>◐ theme</button>
           <span className={"hdr-status " + statusChipClass}>{stalled ? "stalled" : runStatus}</span>
+          {armsLabel && <span className={"hdr-status " + (isCompareRun ? "hdr-status-good" : "")} title={isCompareRun ? "Chạy cả S0 và S1 (có so sánh)" : "Chỉ S1"}>{armsLabel}</span>}
         </span>
       </header>
 
@@ -336,6 +340,7 @@ function AgentConsoleView(props) {
         <aside className="col col-left">
           <div className="section-label">:: overview</div>
           <div className="kv-row"><span className="kv-label">status</span><span className={"kv-value " + (runStatus === "failed" ? "kv-bad" : runStatus === "done" ? "kv-good" : "")}>{runStatus}</span></div>
+          {armsLabel && <div className="kv-row"><span className="kv-label">arms</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
           <div className="kv-row"><span className="kv-label">stages seen</span><span className="kv-value">{st.stagesSeen} / {CONSOLE_STAGE_PLAN.length}</span></div>
           <div className="kv-row"><span className="kv-label">events</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
           <div className="kv-row"><span className="kv-label">stream</span><span className="kv-value kv-dim">{truncated ? "truncated" : partialLine ? "partial line" : running ? "live" : "closed"}</span></div>
