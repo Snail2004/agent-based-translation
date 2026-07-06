@@ -400,6 +400,22 @@ def run_watchlist(run_id: str):
         return error(exc.code, exc.message, exc.status)
 
 
+@bp.get("/thesis/runs/<run_id>/report-summary")
+def run_report_summary(run_id: str):
+    try:
+        entry = _run_entry(run_id)
+        reports_dir = _reports_dir_from_entry(entry)
+        if reports_dir is None:
+            return ok(_empty_report_summary())
+        phase_1_path = _path_under_jobs(reports_dir / "score_run_phase_1.json", "report_path")
+        final_path = _path_under_jobs(reports_dir / "score_run_final.json", "report_path")
+        phase_1 = _read_json_optional(phase_1_path)
+        final = _read_json_optional(final_path)
+        return ok(_build_report_summary(phase_1, final))
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+
+
 @bp.post("/thesis/runs/<run_id>/resume")
 def resume_thesis_run(run_id: str):
     try:
@@ -577,6 +593,13 @@ def _watchlist_path_from_entry(entry: dict) -> Path | None:
     return _path_under_jobs(run_dir / "artifacts" / "reelection" / "watchlist.json", "watchlist_path")
 
 
+def _reports_dir_from_entry(entry: dict) -> Path | None:
+    run_dir = _run_dir_from_entry(entry)
+    if run_dir is None:
+        return None
+    return _path_under_jobs(run_dir / "reports", "reports_path")
+
+
 def _workdb_path_from_entry(entry: dict) -> Path | None:
     manifest_path = None
     try:
@@ -639,6 +662,151 @@ def _read_block_preview(workdb_path: Path, *, limit: int) -> list[dict]:
         }
         for row in rows
     ]
+
+
+def _empty_report_summary() -> dict:
+    return {
+        "phase_1": {"present": False, "metrics": [], "configs": None},
+        "final": {
+            "present": False,
+            "metrics": [],
+            "verdict": None,
+            "report_path": None,
+        },
+        "compare": {"present": False, "gap": None},
+    }
+
+
+def _read_json_optional(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise RunControlError("report_invalid_json", f"Report is not valid JSON: {exc}", 500) from exc
+    if not isinstance(payload, dict):
+        raise RunControlError("report_invalid_shape", "Report JSON must be an object.", 500)
+    return payload
+
+
+def _build_report_summary(phase_1: dict | None, final: dict | None) -> dict:
+    summary = _empty_report_summary()
+    if phase_1:
+        summary["phase_1"] = {
+            "present": True,
+            "metrics": _score_run_metrics(phase_1),
+            "configs": phase_1.get("configs") or None,
+            "report_path": "reports/score_run_phase_1.json",
+        }
+    if final:
+        summary["final"] = {
+            "present": True,
+            "metrics": _score_run_metrics(final),
+            "verdict": _score_run_verdict(final),
+            "report_path": "reports/score_run_final.json",
+        }
+        summary["compare"] = _score_run_compare(final)
+    return summary
+
+
+def _score_run_metrics(report: dict) -> list[dict]:
+    configs = _score_run_configs(report)
+    multi = len(configs) > 1
+    metrics: list[dict] = []
+    for config in configs:
+        label_prefix = f"{config} " if multi else ""
+        key_suffix = f"_{config}" if multi else ""
+        consistency = ((report.get("D_registry_consistency") or {}).get(config) or {})
+        if consistency.get("overall") is not None:
+            metrics.append(
+                {
+                    "key": f"TC{key_suffix}",
+                    "label": f"{label_prefix}term consistency",
+                    "value": _round_metric(consistency.get("overall")),
+                    "unit": "ratio",
+                    "status": None,
+                }
+            )
+        gold = (((report.get("B_gold_occurrence_adherence") or {}).get(config) or {}).get("flat") or {})
+        if gold.get("adherence_lower") is not None:
+            metrics.append(
+                {
+                    "key": f"TA{key_suffix}",
+                    "label": f"{label_prefix}gold adherence",
+                    "value": _round_metric(gold.get("adherence_lower")),
+                    "unit": "ratio",
+                    "status": None,
+                }
+            )
+        registry = ((report.get("A_registry_occurrence_adherence") or {}).get(config) or {})
+        if registry.get("adherence_lower") is not None:
+            metrics.append(
+                {
+                    "key": f"TA_REGISTRY{key_suffix}",
+                    "label": f"{label_prefix}registry adherence",
+                    "value": _round_metric(registry.get("adherence_lower")),
+                    "unit": "ratio",
+                    "status": None,
+                }
+            )
+    return metrics
+
+
+def _score_run_configs(report: dict) -> list[str]:
+    configs = [str(item) for item in (report.get("configs") or []) if str(item).strip()]
+    if configs:
+        return configs
+    found: set[str] = set()
+    for key in ("D_registry_consistency", "B_gold_occurrence_adherence", "A_registry_occurrence_adherence"):
+        value = report.get(key)
+        if isinstance(value, dict):
+            found.update(str(item) for item in value.keys())
+    return sorted(found)
+
+
+def _round_metric(value: object) -> float | None:
+    try:
+        return round(float(value), 6)
+    except (TypeError, ValueError):
+        return None
+
+
+def _score_run_verdict(report: dict) -> dict:
+    gate = report.get("stage_gate") if isinstance(report.get("stage_gate"), dict) else {}
+    reasons: list[str] = []
+    for key, value in gate.items():
+        if isinstance(value, dict):
+            for sub_key, sub_value in value.items():
+                if sub_value is False:
+                    reasons.append(f"{key}:{sub_key}")
+        elif value is False:
+            reasons.append(str(key))
+    return {"pass": not reasons if gate else None, "reasons": reasons}
+
+
+def _score_run_compare(report: dict) -> dict:
+    configs = _score_run_configs(report)
+    if len(configs) < 2:
+        return {"present": False, "gap": None}
+    s0, s1 = ("S0", "S1") if {"S0", "S1"}.issubset(set(configs)) else (configs[0], configs[1])
+    gaps: dict[str, float] = {}
+    for key, label in (
+        ("D_registry_consistency", "TC"),
+        ("B_gold_occurrence_adherence", "TA"),
+        ("A_registry_occurrence_adherence", "TA_REGISTRY"),
+    ):
+        if key == "B_gold_occurrence_adherence":
+            left = ((((report.get(key) or {}).get(s0) or {}).get("flat") or {}).get("adherence_lower"))
+            right = ((((report.get(key) or {}).get(s1) or {}).get("flat") or {}).get("adherence_lower"))
+        else:
+            left = ((report.get(key) or {}).get(s0) or {}).get("adherence_lower")
+            right = ((report.get(key) or {}).get(s1) or {}).get("adherence_lower")
+            if key == "D_registry_consistency":
+                left = ((report.get(key) or {}).get(s0) or {}).get("overall")
+                right = ((report.get(key) or {}).get(s1) or {}).get("overall")
+        if left is not None and right is not None:
+            gaps[label] = _round_metric(float(right) - float(left))  # type: ignore[arg-type]
+    return {"present": bool(gaps), "gap": gaps or None, "baseline": s0, "candidate": s1}
 
 
 def _path_under_jobs(raw_path: str | Path, field: str) -> Path:

@@ -44,6 +44,43 @@ function consoleBaseName(p) {
   return s.slice(s.lastIndexOf("/") + 1);
 }
 
+function consoleDuration(start, end) {
+  if (!start || !end) return "";
+  const a = Date.parse(start);
+  const b = Date.parse(end);
+  if (isNaN(a) || isNaN(b) || b < a) return "";
+  const seconds = Math.round((b - a) / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function formatConsoleMetric(value, unit) {
+  if (value == null || value === "") return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  if (unit === "ratio") return n.toFixed(3);
+  return Math.abs(n) >= 10 ? n.toFixed(2) : n.toFixed(4);
+}
+
+function consolePackMessage(summary, ctx) {
+  if (!summary || typeof summary !== "object") return null;
+  const injected = summary.injected ?? summary.included_count;
+  if (injected == null) return null;
+  const dropped = summary.dropped_by_budget ?? summary.dropped_by_budget_count ?? 0;
+  const excluded = summary.excluded ?? summary.excluded_count ?? null;
+  const tokens = summary.est_tokens ?? summary.token_estimate ?? null;
+  const parts = [`window ${ctx.win || "?"} · pack ${injected} inj`];
+  const detail = [];
+  if (summary.mandatory != null) detail.push(`${summary.mandatory} mand`);
+  if (summary.soft != null) detail.push(`${summary.soft} soft`);
+  if (excluded != null) detail.push(`${excluded} excl`);
+  if (detail.length) parts.push(`(${detail.join("/")})`);
+  parts.push(`· ${dropped} drop`);
+  if (tokens != null) parts.push(`· ${tokens}tok`);
+  return parts.join(" ");
+}
+
 /* One-line human message per real event type; falls back to a generic label. */
 function consoleMessageFor(row, ctx) {
   const p = row.payload || {};
@@ -67,7 +104,8 @@ function consoleMessageFor(row, ctx) {
     case "heartbeat": return `alive · ${row.stage}${p.active_child_pid ? " · pid " + p.active_child_pid : ""}`;
     case "health_check": return `${p.id || "check"} · ${p.ok === false ? "FAIL" : "ok"}`;
     case "window_started": return `window ${ctx.win || "?"} bắt đầu`;
-    case "prompt_built": return `window ${ctx.win || "?"} · prompt dựng xong`;
+    case "prompt_built": return consolePackMessage(p.pack_summary || p.context_summary, ctx) || `window ${ctx.win || "?"} · prompt dựng xong`;
+    case "pack_built": return consolePackMessage(p.pack_summary || p.context_summary || p, ctx) || `window ${ctx.win || "?"} · pack dựng xong`;
     case "request_sent": return `window ${ctx.win || "?"} · gọi LLM`;
     case "response_received": return `window ${ctx.win || "?"} · nhận kết quả`;
     case "json_parsed": return `window ${ctx.win || "?"} · parse JSON ok`;
@@ -95,6 +133,7 @@ function deriveConsoleState(events) {
   let runStatus = "";
   let latestArtifact = null;
   let latestPreviewWin = null;
+  let translatorTotal = null;
   let stderrTail = [];
   let paused = false, pausedReason = "";
   const normalized = [];
@@ -118,6 +157,11 @@ function deriveConsoleState(events) {
       else if (event === "stage_skipped") { si.status = "done"; si.skipped = true; }
       else if (event === "window_preview_available") { si.previews += 1; }
       if (severity === "error") si.status = "failed";
+    }
+    const progressTotal = payload.progress && payload.progress.total != null ? Number(payload.progress.total) : null;
+    const payloadTotal = payload.total_windows ?? payload.windows_total ?? payload.window_total ?? progressTotal;
+    if (stage === "translator" && payloadTotal != null && Number.isFinite(Number(payloadTotal))) {
+      translatorTotal = Math.max(Number(translatorTotal || 0), Number(payloadTotal));
     }
     if (event === "window_preview_available") latestPreviewWin = Math.max(winCounter, 1);
     if (event === "checkpoint" && payload.checkpoint === "phase_1_done") phase1Done = true;
@@ -157,6 +201,7 @@ function deriveConsoleState(events) {
     normalized, stageInfo, stagesSeen, cumulativeCost, budgetCap,
     warnings, errors, phase1Done, runStatus, latestArtifact, latestPreviewWin,
     stderrTail, paused, pausedReason, lastTs, llmCalls,
+    translatorTotal,
     totalEvents: normalized.length,
   };
 }
@@ -174,6 +219,7 @@ function AgentConsoleView(props) {
     events = [], running = false, status = "",
     truncated = false, partialLine = false,
     blockPreview = [], watchlist = [],
+    reportSummary = null,
     theme = "paper", onToggleTheme,
     onRefresh, onPause, onCancel, onResume, onDich, busy = false,
   } = props;
@@ -259,8 +305,8 @@ function AgentConsoleView(props) {
           <div className="kv-row"><span className="kv-label">stream</span><span className="kv-value kv-dim">{truncated ? "truncated" : partialLine ? "partial line" : running ? "live" : "closed"}</span></div>
 
           <div className="section-label">:: cost &amp; cache</div>
-          <div className="kv-row"><span className="kv-label">cost total</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
-          <div className="kv-row kv-row-bar"><span className="kv-label">cost / cap</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
+          <div className="kv-row"><span className="kv-label">cap total</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
+          <div className="kv-row kv-row-bar"><span className="kv-label">cap / budget</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
           <div className="bar"><div className="bar-fill" style={{ width: costPct + "%" }} /></div>
           <div className="kv-row"><span className="kv-label">llm events</span><span className="kv-value">{formatConsoleInt(st.llmCalls)}</span></div>
 
@@ -360,7 +406,12 @@ function AgentConsoleView(props) {
             const si = st.stageInfo[s.id] || { status: "pending" };
             let cls = "stage-pending", dot = "○", prog = "";
             if (si.status === "done") { cls = "stage-done"; dot = "●"; prog = si.skipped ? "skipped" : "done"; }
-            else if (si.status === "active") { cls = "stage-active"; dot = "●"; prog = s.id === "translator" && si.previews ? si.previews + "/7 win" : "running"; }
+            else if (si.status === "active") {
+              cls = "stage-active";
+              dot = "●";
+              const total = st.translatorTotal || blockPreview.length || null;
+              prog = s.id === "translator" && si.previews ? si.previews + "/" + (total || "?") + " win" : "running";
+            }
             else if (si.status === "failed") { cls = "stage-failed"; dot = "✕"; prog = "failed"; }
             else if (s.optional && isTerminal) { cls = "stage-pending"; dot = "○"; prog = "skipped"; }
             const prev = CONSOLE_STAGE_PLAN[i - 1];
@@ -373,7 +424,7 @@ function AgentConsoleView(props) {
                   <span className="stage-dot">{dot}</span>
                   <span className="stage-name">{s.label}</span>
                   <span className="stage-progress">{prog}</span>
-                  <span className="stage-eta" />
+                  <span className="stage-eta">{consoleDuration(si.start, si.end)}</span>
                 </div>
               </React.Fragment>
             );
@@ -381,6 +432,27 @@ function AgentConsoleView(props) {
 
           <div className="section-label">:: latest artifact</div>
           <div className="artifact-path">{st.latestArtifact ? consoleBaseName(st.latestArtifact) : "none yet"}</div>
+
+          <div className="section-label">:: results</div>
+          {reportSummary && (reportSummary.final?.present || reportSummary.phase_1?.present) ? (
+            <>
+              {((reportSummary.final?.present ? reportSummary.final.metrics : reportSummary.phase_1?.metrics) || []).map(m => (
+                <div className="kv-row" key={m.key}>
+                  <span className="kv-label">{m.label || m.key}</span>
+                  <span className={"kv-value " + (m.status === "good" ? "kv-good" : m.status === "warn" ? "kv-warn" : m.status === "bad" ? "kv-bad" : "")}>
+                    {formatConsoleMetric(m.value, m.unit)}
+                  </span>
+                </div>
+              ))}
+              {reportSummary.final?.present && reportSummary.final.verdict && typeof reportSummary.final.verdict.pass === "boolean" && (
+                <div className={"banner " + (reportSummary.final.verdict.pass === false ? "banner-red" : "banner-green")}>
+                  <span className="banner-glyph">{reportSummary.final.verdict.pass === false ? "✕" : "●"}</span>
+                  <span className="banner-msg">{reportSummary.final.verdict.pass === false ? ("Gate FAIL · " + ((reportSummary.final.verdict.reasons || []).join(", ") || "see report")) : "Gate PASS"}</span>
+                </div>
+              )}
+              {reportSummary.final?.report_path && <div className="artifact-path">{reportSummary.final.report_path}</div>}
+            </>
+          ) : <div className="artifact-path kv-dim">Chưa có điểm — hiện sau khi score chạy xong.</div>}
 
           <div className="section-label">:: watchlist §36{watchlist.length ? " · " + watchlist.length + " pending" : ""}</div>
           {watchlist.length ? watchlist.slice(0, 8).map((w, i) => (
@@ -428,4 +500,8 @@ function ConsoleTypewriter({ text }) {
   const shown = useConsoleTypewriter(text);
   const typing = shown.length < (text || "").length;
   return <p>{shown}{typing && <span className="typewriter-caret">▌</span>}</p>;
+}
+
+if (typeof window !== "undefined") {
+  window.AgentConsoleView = AgentConsoleView;
 }

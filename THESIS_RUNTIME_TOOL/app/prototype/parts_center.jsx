@@ -562,8 +562,18 @@ function AgentConsole({ runControl }) {
   if (!runControl) return null;
   const sel = runControl.selectedRunEvents || {};
   const selectedRun = (runControl.runs || []).find(r => r.run_id === runControl.selectedRunId) || null;
+  const ConsoleView = typeof window !== "undefined" ? window.AgentConsoleView : null;
+  if (!ConsoleView) {
+    return (
+      <div className="agentconsole">
+        <div className="console-shell">
+          <div className="artifact-path">Agent Console loading...</div>
+        </div>
+      </div>
+    );
+  }
   return (
-    <AgentConsoleView
+    <ConsoleView
       runId={runControl.selectedRunId}
       runs={runControl.runs || []}
       onSelectRun={runControl.onSelectRun}
@@ -574,6 +584,7 @@ function AgentConsole({ runControl }) {
       partialLine={!!sel.partial_line}
       blockPreview={runControl.blockPreview || sel.blockPreview || []}
       watchlist={runControl.watchlist || sel.watchlist || []}
+      reportSummary={runControl.reportSummary || sel.reportSummary || null}
       theme={consoleTheme}
       onToggleTheme={toggleConsoleTheme}
       onRefresh={runControl.onRefreshRuns}

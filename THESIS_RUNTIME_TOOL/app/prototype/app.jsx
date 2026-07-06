@@ -707,6 +707,7 @@ function App() {
   const [selectedRunEvents, setSelectedRunEvents] = useState({ run_id: null, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
   const [runBlockPreview, setRunBlockPreview] = useState([]);
   const [runWatchlist, setRunWatchlist] = useState([]);
+  const [runReportSummary, setRunReportSummary] = useState(null);
   const [dichForm, setDichForm] = useState({ chapters: "d2l_preface", profile: "technical_d2l_v1", db: "data/jobs/d2l_p1/memory.sqlite3", budget_cap_usd: 1.5 });
   const [runPromptPreview, setRunPromptPreview] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
@@ -793,6 +794,7 @@ function App() {
     setSelectedRunEvents({ run_id: null, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
     setRunBlockPreview([]);
     setRunWatchlist([]);
+    setRunReportSummary(null);
     setRunPromptPreview(null);
     setRunError("");
     setSelectedCallId(null);
@@ -1013,6 +1015,7 @@ function App() {
     setSelectedRunEvents({ run_id: runId, events: [], offset: 0, running: true, status: "", aggregate: emptyRunEventAggregate() });
     setRunBlockPreview([]);
     setRunWatchlist([]);
+    setRunReportSummary(null);
   }
 
   async function pauseRun() {
@@ -1099,6 +1102,7 @@ function App() {
       setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status, aggregate: emptyRunEventAggregate() });
       setRunBlockPreview([]);
       setRunWatchlist([]);
+      setRunReportSummary(null);
       setCenterMode("console");
       await refreshThesisRuns();
       toast("Đã bắt đầu dịch", "good", created.run_id);
@@ -1134,15 +1138,17 @@ function App() {
       try {
         const currentOffset = runLogOffsetRef.current || 0;
         const currentEventOffset = runEventOffsetRef.current || 0;
-        const [result, eventResult, previewResult, watchResult] = await Promise.all([
+        const [result, eventResult, previewResult, watchResult, reportResult] = await Promise.all([
           API.getThesisRunLog(selectedRunId, currentOffset),
           API.getThesisRunEvents(selectedRunId, currentEventOffset, 262144).catch(() => null),
           API.getThesisRunBlockPreview(selectedRunId, 12).catch(() => null),
           API.getThesisRunWatchlist(selectedRunId).catch(() => null),
+          API.getThesisRunReportSummary(selectedRunId).catch(() => null),
         ]);
         if (cancelled) return;
         if (previewResult) setRunBlockPreview(previewResult.blocks || []);
         if (watchResult) setRunWatchlist(watchResult.watchlist || []);
+        if (reportResult) setRunReportSummary(reportResult);
         runLogOffsetRef.current = result.offset || currentOffset;
         if (eventResult) runEventOffsetRef.current = eventResult.offset || currentEventOffset;
         setSelectedRunLog(prev => ({
@@ -2476,6 +2482,7 @@ function App() {
             selectedRunEvents,
             blockPreview: runBlockPreview,
             watchlist: runWatchlist,
+            reportSummary: runReportSummary,
             runForm,
             promptPreview: runPromptPreview,
             busy: runBusy,
