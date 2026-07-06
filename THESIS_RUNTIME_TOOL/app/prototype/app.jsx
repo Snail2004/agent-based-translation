@@ -1192,6 +1192,13 @@ function App() {
     };
   }, [selectedRunId, refreshThesisRuns]);
 
+  // Entering Console with nothing selected: auto-pick the newest run so the view
+  // opens populated instead of idle-empty (registry list is newest-first).
+  useEffect(() => {
+    if (centerMode !== "console" || selectedRunId || !thesisRuns.length) return;
+    selectRun(thesisRuns[0].run_id);
+  }, [centerMode, selectedRunId, thesisRuns]);
+
   function setCenterMode(mode) {
     setCenterModeState(mode);
     localStorage.setItem(STORAGE_CENTER_MODE, mode);

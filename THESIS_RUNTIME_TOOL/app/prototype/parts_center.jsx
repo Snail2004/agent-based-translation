@@ -63,6 +63,7 @@ function EditorToolbar({
   const [typeOpen, setTypeOpen] = React.useState(false);
   const [flagOpen, setFlagOpen] = React.useState(false);
   const readOnlyPreview = mode === "preview" || readOnly;
+  const consoleLike = mode === "console" || mode === "cockpit";
   const qualityFlags = block.quality_flags || [];
   const flags = qualityFlags.filter(f => f !== "ok");
   return (
@@ -70,13 +71,11 @@ function EditorToolbar({
       <div className="ed-tb-left">
         <ModeToggle mode={mode} onModeChange={onModeChange} readOnly={readOnly} />
 
-        <span className="toolbar-chapter-meta">
-          {mode === "console" ? "Agent Console · read-only"
-            : mode === "cockpit" ? "Observability cockpit · read-only"
-            : readOnly ? "Thesis DB · read-only"
+        {!consoleLike && <span className="toolbar-chapter-meta">
+          {readOnly ? "Thesis DB · read-only"
             : mode === "preview" ? "Translation Preview · read-only"
             : mode === "block" ? block.block_id : `${streamLabel} · ${streamCount || 0} blocks`}
-        </span>
+        </span>}
 
         {/* block_type dropdown */}
         {!readOnlyPreview && <div className="dd">
@@ -130,14 +129,14 @@ function EditorToolbar({
           </>)}
         </div>}
 
-        {readOnlyPreview && (
-          <span className="mini-badge warn"><Ic.eye size={11} />{mode === "cockpit" ? "observability only" : "preview only · not gold"}</span>
+        {readOnlyPreview && !consoleLike && (
+          <span className="mini-badge warn"><Ic.eye size={11} />preview only · not gold</span>
         )}
       </div>
 
       <div className="ed-tb-right">
         {readOnlyPreview ? (
-          <span className="preview-toolbar-note"><Ic.lock size={12} />Read-only cockpit/viewer. No save, review, or promote actions in this view.</span>
+          consoleLike ? null : <span className="preview-toolbar-note"><Ic.lock size={12} />Read-only cockpit/viewer. No save, review, or promote actions in this view.</span>
         ) : mode !== "block" && (
           <button className="btn sm" onClick={onNextUnreviewed}>
             <Ic.arrowRight size={13} />Next unreviewed
