@@ -679,7 +679,7 @@ def test_route_one_button_estimate_confirm_stores_manifest_and_run_dir(tmp_path,
     assert "--estimate-only" in preview_data["estimate_argv_preview"]
     assert "--estimate-only" not in preview_data["argv_preview"]
     assert "--workdb" in preview_data["argv_preview"]
-    assert str(tmp_path / "jobA" / "one_button" / "run_onebtn" / "workdb.sqlite3") in preview_data["argv_preview"]
+    assert str(tmp_path / "_work" / "one_button" / "jobA" / "run_onebtn" / "workdb.sqlite3") in preview_data["argv_preview"]
 
     resp = client.post(
         "/api/thesis/runs",

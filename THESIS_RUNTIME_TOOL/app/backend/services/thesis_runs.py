@@ -342,7 +342,13 @@ def one_button_paths(*, jobs_root: Path, job_id: str, run_id: str) -> dict[str, 
     root = Path(jobs_root).resolve()
     run_dir = (root / job / "one_button" / run).resolve()
     event_log = (root / "run_events" / f"{run}.jsonl").resolve()
-    for candidate in (run_dir, event_log):
+    # The translate stage's workdb must NOT live under the frozen DB's job dir
+    # (data/jobs/<job>/): run_translate refuses any --workdb inside the frozen
+    # DB's parent directory to protect the read-only frozen DB. Place it under a
+    # dedicated work root (a sibling of run_events, still inside
+    # THESIS_JOBS_ROOT) so it stays managed but clear of the job dir.
+    workdb = (root / "_work" / "one_button" / job / run / "workdb.sqlite3").resolve()
+    for candidate in (run_dir, event_log, workdb):
         try:
             candidate.relative_to(root)
         except ValueError as exc:
@@ -354,7 +360,7 @@ def one_button_paths(*, jobs_root: Path, job_id: str, run_id: str) -> dict[str, 
     return {
         "run_dir": run_dir,
         "manifest_path": run_dir / "manifest.json",
-        "workdb": run_dir / "workdb.sqlite3",
+        "workdb": workdb,
         "event_log_path": event_log,
     }
 
