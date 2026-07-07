@@ -1174,7 +1174,7 @@ function App() {
               events: [
                 ...(sameRun ? (prev.events || []) : []),
                 ...newEvents,
-              ].slice(-1000),
+              ].slice(-20000),
               aggregate: updateRunEventAggregate(sameRun ? prev.aggregate : emptyRunEventAggregate(), newEvents),
               offset: eventResult.offset || currentEventOffset,
               truncated: !!eventResult.truncated,

@@ -24,6 +24,12 @@ const CONSOLE_STAGE_PLAN = [
 ];
 
 const CONSOLE_SEVERITY_GLYPH = { info: "├", warning: "▲", error: "✕", context: "⊙" };
+const CONSOLE_TERMINAL_STATUSES = new Set(["done", "failed", "cancelled", "canceled", "error"]);
+const CONSOLE_RENDER_CAP = 2000;
+
+function consoleIsTerminalStatus(status) {
+  return CONSOLE_TERMINAL_STATUSES.has(String(status || "").toLowerCase());
+}
 
 function consoleEventSeverity(row) {
   const sev = String(row.severity || "").toLowerCase();
@@ -61,6 +67,13 @@ function formatConsoleMetric(value, unit) {
   if (!Number.isFinite(n)) return String(value);
   if (unit === "ratio") return n.toFixed(3);
   return Math.abs(n) >= 10 ? n.toFixed(2) : n.toFixed(4);
+}
+
+function formatConsoleSignedRatio(value) {
+  if (value == null || value === "") return "?";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return (n >= 0 ? "+" : "") + n.toFixed(3);
 }
 
 function consolePackMessage(summary, ctx) {
@@ -197,7 +210,13 @@ function deriveConsoleState(events) {
       if (payload.estimated_cumulative_usd != null) cumulativeCost = Number(payload.estimated_cumulative_usd);
       if (payload.budget_cap_usd != null) budgetCap = Number(payload.budget_cap_usd);
     }
-    if (event === "gate_pause") { paused = true; pausedReason = payload.reason || "gate"; }
+    if (event === "gate_pause") {
+      paused = true;
+      pausedReason = payload.reason || "gate";
+    } else if (paused && event === "stage_start") {
+      paused = false;
+      pausedReason = "";
+    }
     if (event === "artifact_created" && payload.artifact_path) latestArtifact = payload.artifact_path;
     if (event === "stage_done" && payload.artifact_path) latestArtifact = payload.artifact_path;
     if (event === "run_done") runStatus = payload.status || "done";
@@ -212,6 +231,8 @@ function deriveConsoleState(events) {
       event,
       severity,
       seq: raw.seq,
+      attempt: raw.attempt_id,
+      lineNo: idx + 1,
       glyph: CONSOLE_SEVERITY_GLYPH[severity === "info" && event === "cost_snapshot" ? "context" : severity] || "├",
       isCost: event === "cost_snapshot",
       isContext: event === "gate_pause",
@@ -282,8 +303,11 @@ function AgentConsoleView(props) {
 
   const st = React.useMemo(() => deriveConsoleState(shownEvents), [shownEvents]);
   const runStatus = st.runStatus || status || (running ? "running" : "idle");
-  const isTerminal = ["done", "failed", "cancelled"].includes(runStatus);
-  const stalled = running && !isTerminal && consoleAgeSeconds(st.lastTs) > 90;
+  const hasRun = !!runId;
+  const isTerminal = hasRun && consoleIsTerminalStatus(runStatus);
+  const isOpenRun = hasRun && !isTerminal;
+  const stalled = isOpenRun && running && consoleAgeSeconds(st.lastTs) > 90;
+  const canResumeRun = !!onResume && (runStatus === "failed" || st.paused || stalled);
 
   const agents = uniqueConsole(st.normalized.map(r => r.agent).filter(Boolean));
   const severities = uniqueConsole(st.normalized.map(r => r.severity).filter(Boolean));
@@ -291,16 +315,18 @@ function AgentConsoleView(props) {
     (!stageFilter || r.stage === stageFilter)
     && (!agentFilter || r.agent === agentFilter)
     && (!severityFilter || r.severity === severityFilter));
-  const rendered = filtered.slice(-220).reverse();
+  const hiddenOlderEvents = Math.max(0, filtered.length - CONSOLE_RENDER_CAP);
+  const rendered = filtered.slice(-CONSOLE_RENDER_CAP).reverse();
   const memoryRows = consolePackContentRows(st.latestPackSummary);
 
   const costPct = st.budgetCap ? Math.min(100, Math.round((st.cumulativeCost / st.budgetCap) * 100)) : 0;
-  const healthLabel = stalled ? "stalled" : running ? "running" : isTerminal ? runStatus : "quiet";
-  const healthClass = stalled || runStatus === "failed" ? "kv-bad" : running ? "kv-good" : "kv-dim";
-  const statusChipClass = runStatus === "failed" ? "hdr-status-bad" : runStatus === "done" ? "hdr-status-good" : stalled || st.paused ? "hdr-status-warn" : running ? "hdr-status-good" : "";
+  const healthLabel = stalled ? "stalled" : running ? "running" : isTerminal ? runStatus : isOpenRun ? (runStatus || "connecting") : "quiet";
+  const healthClass = stalled || runStatus === "failed" ? "kv-bad" : running ? "kv-good" : isOpenRun ? "kv-warn" : "kv-dim";
+  const statusChipClass = runStatus === "failed" ? "hdr-status-bad" : runStatus === "done" ? "hdr-status-good" : stalled || st.paused || (isOpenRun && !running) ? "hdr-status-warn" : running ? "hdr-status-good" : "";
   const reportCfgs = (reportSummary && reportSummary.phase_1 && reportSummary.phase_1.configs) || [];
   const isCompareRun = reportCfgs.includes("S0") || !!(reportSummary && reportSummary.compare && reportSummary.compare.present);
   const armsLabel = reportCfgs.length ? (isCompareRun ? "S0+S1" : reportCfgs.join("+")) : (isCompareRun ? "S0+S1" : null);
+  const compareGap = reportSummary && reportSummary.compare && reportSummary.compare.present ? (reportSummary.compare.gap || {}) : null;
 
   // latest translated window preview (text lives in blockPreview prop, not events)
   const previewIdx = st.latestPreviewWin ? Math.min(st.latestPreviewWin, blockPreview.length) - 1 : blockPreview.length - 1;
@@ -322,13 +348,13 @@ function AgentConsoleView(props) {
           })}
         </select>
         <span className="hdr-actions">
-          {onDich && <button className="btn btn-accent" type="button" disabled={busy || running} onClick={onDich} title="Chạy toàn bộ pipeline one-button cho dataset đang mở">▸ DỊCH</button>}
-          {events.length > 0 && !running && <button className="btn" type="button" onClick={startReplay} title="Phát lại event stream theo thời gian (client-side, $0)">{replaying ? "▶ replaying…" : "▶ replay"}</button>}
+          {onDich && <button className="btn btn-accent" type="button" disabled={busy || isOpenRun} onClick={onDich} title="Chạy toàn bộ pipeline one-button cho dataset đang mở">▸ DỊCH</button>}
+          {events.length > 0 && !isOpenRun && <button className="btn" type="button" onClick={startReplay} title="Phát lại event stream theo thời gian (client-side, $0)">{replaying ? "▶ replaying…" : "▶ replay"}</button>}
           <button className="btn" type="button" disabled={busy} onClick={onRefresh}>↻ refresh</button>
-          <button className="btn" type="button" disabled={!running || !onPause} onClick={onPause}>⏸ pause after stage</button>
-          {runStatus === "failed" && onResume
+          <button className="btn" type="button" disabled={!isOpenRun || !onPause} onClick={onPause}>⏸ pause after stage</button>
+          {canResumeRun
             ? <button className="btn btn-accent" type="button" onClick={onResume}>▸ resume</button>
-            : <button className="btn btn-danger" type="button" disabled={!running || !onCancel} onClick={onCancel}>✕ cancel</button>}
+            : <button className="btn btn-danger" type="button" disabled={!isOpenRun || !onCancel} onClick={onCancel}>✕ cancel</button>}
           <button className="btn" type="button" onClick={onToggleTheme}>◐ theme</button>
           <span className={"hdr-status " + statusChipClass}>{stalled ? "stalled" : runStatus}</span>
           {armsLabel && <span className={"hdr-status " + (isCompareRun ? "hdr-status-good" : "")} title={isCompareRun ? "Chạy cả S0 và S1 (có so sánh)" : "Chỉ S1"}>{armsLabel}</span>}
@@ -343,7 +369,7 @@ function AgentConsoleView(props) {
           {armsLabel && <div className="kv-row"><span className="kv-label">arms</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
           <div className="kv-row"><span className="kv-label">stages seen</span><span className="kv-value">{st.stagesSeen} / {CONSOLE_STAGE_PLAN.length}</span></div>
           <div className="kv-row"><span className="kv-label">events</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
-          <div className="kv-row"><span className="kv-label">stream</span><span className="kv-value kv-dim">{truncated ? "truncated" : partialLine ? "partial line" : running ? "live" : "closed"}</span></div>
+          <div className="kv-row"><span className="kv-label">stream</span><span className="kv-value kv-dim">{truncated ? "truncated" : partialLine ? "partial line" : isOpenRun ? (running ? "live" : "connecting") : "closed"}</span></div>
 
           <div className="section-label">:: cost &amp; cache</div>
           <div className="kv-row"><span className="kv-label">cap total</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
@@ -384,6 +410,7 @@ function AgentConsoleView(props) {
             <div className="banner banner-red">
               <span className="banner-glyph badge-stalled">▲</span>
               <span className="banner-msg">Không có sự kiện {Math.round(consoleAgeSeconds(st.lastTs))}s — có thể treo</span>
+              {onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
             </div>
           )}
 
@@ -415,9 +442,12 @@ function AgentConsoleView(props) {
                   <span className="ev-msg">{r.message}</span>
                   {r.dur != null && <span className="ev-dur">({r.dur}s)</span>}
                 </span>
-                <span className="ev-seq">#{r.seq != null ? r.seq : "-"}</span>
+                <span className="ev-seq">#{r.lineNo != null ? r.lineNo : "-"}{r.attempt != null && r.seq != null ? ` · a${r.attempt}/${r.seq}` : ""}</span>
               </div>
             )) : <div className="console-empty">Chọn hoặc replay một run để xem dòng sự kiện.</div>}
+            {hiddenOlderEvents > 0 && (
+              <div className="console-empty">... {formatConsoleInt(hiddenOlderEvents)} dòng cũ hơn ẩn - dùng filter để thu hẹp.</div>
+            )}
           </div>
 
           {st.stderrTail.length > 0 && (
@@ -494,6 +524,18 @@ function AgentConsoleView(props) {
                   </span>
                 </div>
               ))}
+              {compareGap && (
+                <>
+                  <div className="kv-row">
+                    <span className="kv-label">gap TC (S1-S0)</span>
+                    <span className={"kv-value " + (Number(compareGap.TC) >= 0 ? "kv-good" : "kv-bad")}>{formatConsoleSignedRatio(compareGap.TC)}</span>
+                  </div>
+                  <div className="kv-row">
+                    <span className="kv-label">gap TA (S1-S0)</span>
+                    <span className={"kv-value " + (Number(compareGap.TA) >= 0 ? "kv-good" : "kv-warn")}>{formatConsoleSignedRatio(compareGap.TA)}</span>
+                  </div>
+                </>
+              )}
               {reportSummary.final?.present && reportSummary.final.verdict && typeof reportSummary.final.verdict.pass === "boolean" && (
                 <div className={"banner " + (reportSummary.final.verdict.pass === false ? "banner-red" : "banner-green")}>
                   <span className="banner-glyph">{reportSummary.final.verdict.pass === false ? "✕" : "●"}</span>

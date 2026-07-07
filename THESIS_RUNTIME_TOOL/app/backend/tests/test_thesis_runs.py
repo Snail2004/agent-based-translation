@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 import sqlite3
 import subprocess
 import sys
@@ -85,6 +86,44 @@ def _reset_app_modules() -> None:
             or name.startswith("services.thesis_")
         ):
             sys.modules.pop(name, None)
+
+
+def _create_resumable_one_button_run(tmp_path: Path, registry, *, run_id: str, pid: int | None = None):
+    run_dir = tmp_path / "jobA" / "one_button" / run_id
+    run_dir.mkdir(parents=True)
+    manifest_path = run_dir / "manifest.json"
+    manifest_path.write_text(json.dumps({"attempt": 1, "status": "paused"}), encoding="utf-8")
+    event_dir = tmp_path / "run_events"
+    event_dir.mkdir(exist_ok=True)
+    event_log = event_dir / f"{run_id}.jsonl"
+    entry = registry.create_run(
+        script="run_one_button",
+        argv=[
+            sys.executable,
+            "-m",
+            "pipeline.scripts.run_one_button",
+            "--job-id",
+            "jobA",
+            "--chapters",
+            "d2l_mlp",
+            "--workdb",
+            str(run_dir / "workdb.sqlite3"),
+            "--budget-cap-usd",
+            "1.0",
+            "--event-log",
+            str(event_log),
+            "--run-id",
+            run_id,
+            "--estimate-only",
+        ],
+        run_id=run_id,
+        job_id="jobA",
+        event_log_path=str(event_log),
+        run_dir=str(run_dir),
+        manifest_path=str(manifest_path),
+    )
+    registry.update_run(run_id, status="paused", exit_code=0, pid=pid)
+    return entry, run_dir
 
 
 def test_build_argv_uses_real_module_invocation_and_no_job_arg(tmp_path):
@@ -846,6 +885,87 @@ def test_route_one_button_resume_creates_new_registry_run_and_clears_pause(tmp_p
     assert "--estimate-only" not in new_entry["argv"]
     assert "--run-id" not in new_entry["argv"]
     assert new_entry["argv"][-2:] == ["--resume", "run_resume"]
+
+
+def test_route_one_button_resume_rejects_live_pid_without_spawning(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import (
+        RunRegistry,
+        build_resume_argv_from_entry,
+        issue_estimate_token_for_argv,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    old, _run_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_live_resume",
+        pid=os.getpid(),
+    )
+    token = issue_estimate_token_for_argv(
+        job_id="jobA",
+        script="run_one_button",
+        argv=build_resume_argv_from_entry(old),
+        preview_kind="resume_estimate_only",
+    )
+    routes.set_registry(registry)
+    spawned: list[str] = []
+    monkeypatch.setattr(routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id))
+    client = app_module.create_app().test_client()
+
+    resp = client.post("/api/thesis/runs/run_live_resume/resume", json={"confirm_token": token})
+
+    assert resp.status_code == 409
+    assert resp.get_json()["errors"][0]["code"] == "run_still_active"
+    assert spawned == []
+
+
+def test_route_one_button_resume_allows_dead_pid(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import (
+        RunRegistry,
+        build_resume_argv_from_entry,
+        issue_estimate_token_for_argv,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    old, _run_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_dead_resume",
+        pid=999999999,
+    )
+    token = issue_estimate_token_for_argv(
+        job_id="jobA",
+        script="run_one_button",
+        argv=build_resume_argv_from_entry(old),
+        preview_kind="resume_estimate_only",
+    )
+    routes.set_registry(registry)
+    spawned: list[str] = []
+    monkeypatch.setattr(routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id))
+    client = app_module.create_app().test_client()
+
+    resp = client.post("/api/thesis/runs/run_dead_resume/resume", json={"confirm_token": token})
+
+    assert resp.status_code == 201
+    data = resp.get_json()["data"]
+    assert data["resumed_from"] == "run_dead_resume"
+    assert spawned == [data["run_id"]]
 
 
 def test_route_one_button_block_preview_reads_translation_runs_workdb_ro(tmp_path, monkeypatch):

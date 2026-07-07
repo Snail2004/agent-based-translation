@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import subprocess
 import sys
 from pathlib import Path
 
@@ -424,6 +426,12 @@ def resume_thesis_run(run_id: str):
         entry = registry.get_run(run_id)
         if entry is None:
             raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
+        if _is_pid_alive(entry.get("pid")):
+            raise RunControlError(
+                "run_still_active",
+                "Run vẫn đang chạy; hãy Cancel trước rồi Resume.",
+                409,
+            )
         manifest_path = _manifest_path_for_entry(entry)
         manifest = {}
         if manifest_path.exists():
@@ -475,6 +483,50 @@ def resume_thesis_run(run_id: str):
         return error("manifest_invalid_json", f"Manifest is not valid JSON: {exc}", 500)
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
+
+
+def _is_pid_alive(pid: object) -> bool:
+    try:
+        value = int(pid or 0)
+    except (TypeError, ValueError):
+        return False
+    if value <= 0:
+        return False
+    if os.name == "nt":
+        try:
+            import ctypes
+
+            process_query_limited_information = 0x1000
+            handle = ctypes.windll.kernel32.OpenProcess(
+                process_query_limited_information,
+                False,
+                value,
+            )
+            if handle:
+                ctypes.windll.kernel32.CloseHandle(handle)
+                return True
+        except Exception:
+            pass
+        try:
+            result = subprocess.run(
+                ["tasklist", "/FI", f"PID eq {value}", "/FO", "CSV", "/NH"],
+                text=True,
+                capture_output=True,
+                timeout=5,
+                check=False,
+            )
+        except Exception:
+            return False
+        return str(value) in result.stdout
+    try:
+        os.kill(value, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
 
 
 def _body_list(body: dict, key: str) -> list[str]:
