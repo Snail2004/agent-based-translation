@@ -164,6 +164,61 @@ function consoleConsistencyTierText(row) {
   return `${prefix}${consoleTierCount(single) || "—"}`;
 }
 
+function consoleWatchReasonLabel(item) {
+  const label = String(item.audit_label || item.label || "").trim();
+  const reasons = Array.isArray(item.watchlist_reasons) ? item.watchlist_reasons.map(String) : [];
+  const joined = [label, ...reasons].join(" ").toLowerCase();
+  if (item.collision_soft_fallback || joined.includes("collision")) return "collision";
+  if (joined.includes("polysemy") || joined.includes("audit_polysemy") || joined.includes("context")) return "polysemy · ngữ cảnh";
+  return label || reasons[0] || "held";
+}
+
+function consoleWatchInjectionLabel(item) {
+  const action = String(item.injection_action || item.action || "").trim();
+  if (!action) return "held";
+  if (action === "context_sensitive_translate") return "soft · do-not-force";
+  if (action === "translate" || action === "hard_translate") return "mandatory";
+  if (action === "preserve") return "preserve";
+  if (action === "deprioritize") return "report-only";
+  if (action === "review_only") return "review-only";
+  return action;
+}
+
+function consoleWatchBlockRef(blockId) {
+  const text = String(blockId || "").trim();
+  const match = text.match(/_b(\d+)$/);
+  return match ? `b${match[1]}` : text;
+}
+
+function consoleWatchCandidateLabel(candidate) {
+  const text = String(candidate && candidate.text || "").trim();
+  const block = consoleWatchBlockRef(candidate && candidate.evidence_block_id);
+  return block ? `${text} (${block})` : text;
+}
+
+function consoleWatchCandidatesLine(item) {
+  const candidates = Array.isArray(item.candidates) ? item.candidates : [];
+  const competitors = Array.isArray(item.competitors) && item.competitors.length
+    ? item.competitors
+    : candidates.filter(candidate => String(candidate && candidate.source || "") !== "canonical");
+  const canonicalCandidate = candidates.find(candidate => String(candidate && candidate.source || "") === "canonical");
+  const canonical = String((canonicalCandidate && canonicalCandidate.text) || item.canonical_target_vi || item.vi || item.target || item.canonical || "").trim();
+  const shown = competitors.slice(0, 3).map(consoleWatchCandidateLabel).filter(Boolean);
+  const more = competitors.length > shown.length ? ` +${competitors.length - shown.length}` : "";
+  if (!canonical && !shown.length) return "";
+  if (!shown.length) return `canonical: ${canonical}`;
+  return `canonical: ${canonical || "?"} · vs: ${shown.join(", ")}${more}`;
+}
+
+function consoleWatchEvidenceLine(item) {
+  const evidenceBlocks = Number(item.evidence_blocks || 0) || (Array.isArray(item.evidence_block_ids) ? item.evidence_block_ids.length : 0);
+  const btCalls = Number(item.backtranslation_calls || 0);
+  const pieces = [];
+  if (evidenceBlocks) pieces.push(`${evidenceBlocks} blocks`);
+  if (btCalls) pieces.push(`${btCalls} BT`);
+  return pieces.join(" / ");
+}
+
 /* One-line human message per real event type; falls back to a generic label. */
 function consoleMessageFor(row, ctx) {
   const p = row.payload || {};
@@ -651,14 +706,41 @@ function AgentConsoleView(props) {
             </>
           )}
 
-          <div className="section-label">:: watchlist §36{watchlist.length ? " · " + watchlist.length + " pending" : ""}</div>
-          {watchlist.length ? watchlist.slice(0, 8).map((w, i) => (
-            <div className="watch-row" key={i}>
-              <span className="watch-term">{w.term || w.source_term || w.surface || w.source || "term"}</span>
-              <span className="watch-arrow">→</span>
-              <span className="watch-vi">{consoleShort(w.vi || w.canonical_target_vi || w.target || w.canonical || "?", 16)}</span>
-            </div>
-          )) : <div className="artifact-path kv-dim">trống — nối sau bước re-election</div>}
+          <div className="section-label">:: watchlist §36{watchlist.length ? " · " + watchlist.length + " pending / held" : ""}</div>
+          {watchlist.length ? watchlist.slice(0, 8).map((w, i) => {
+            const source = w.term || w.source_term || w.surface || w.source || "term";
+            const target = w.vi || w.canonical_target_vi || w.target || w.canonical || "?";
+            const candidatesLine = consoleWatchCandidatesLine(w);
+            const evidenceLine = consoleWatchEvidenceLine(w);
+            return (
+              <React.Fragment key={w.entry_id || source || i}>
+                <div className="watch-row">
+                  <span className="watch-term">{consoleShort(source, 28)}</span>
+                  <span className="watch-arrow">→</span>
+                  <span className="watch-vi">{consoleShort(target, 28)}</span>
+                </div>
+                <div className="watch-row">
+                  <span className="watch-term kv-warn">{consoleShort(consoleWatchReasonLabel(w), 24)}</span>
+                  <span className="watch-arrow">·</span>
+                  <span className="watch-vi kv-dim">{consoleShort(consoleWatchInjectionLabel(w), 34)}</span>
+                </div>
+                {candidatesLine && (
+                  <div className="watch-row">
+                    <span className="watch-term kv-dim">candidates</span>
+                    <span className="watch-arrow">·</span>
+                    <span className="watch-vi">{consoleShort(candidatesLine, 70)}</span>
+                  </div>
+                )}
+                {evidenceLine && (
+                  <div className="watch-row">
+                    <span className="watch-term kv-dim">evidence</span>
+                    <span className="watch-arrow">·</span>
+                    <span className="watch-vi kv-dim">{evidenceLine}</span>
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          }) : <div className="artifact-path kv-dim">trống — nối sau bước re-election</div>}
         </aside>
       </div>
     </div>
