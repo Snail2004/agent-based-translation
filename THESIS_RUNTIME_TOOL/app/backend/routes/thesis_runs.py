@@ -756,6 +756,7 @@ def _build_report_summary(phase_1: dict | None, final: dict | None) -> dict:
             "present": True,
             "metrics": _score_run_metrics(final),
             "verdict": _score_run_verdict(final),
+            "stage_gate": _score_run_stage_gate_digest(final),
             "report_path": "reports/score_run_final.json",
         }
         summary["compare"] = _score_run_compare(final)
@@ -803,7 +804,27 @@ def _score_run_metrics(report: dict) -> list[dict]:
                     "status": None,
                 }
             )
+    _score_run_apply_relative_metric_status(metrics)
     return metrics
+
+
+def _score_run_apply_relative_metric_status(metrics: list[dict]) -> None:
+    by_key = {str(row.get("key")): row for row in metrics}
+    for key, s1_row in list(by_key.items()):
+        if not key.endswith("_S1"):
+            continue
+        s0_row = by_key.get(key[:-3] + "_S0")
+        if not s0_row:
+            continue
+        s0_value = s0_row.get("value")
+        s1_value = s1_row.get("value")
+        if s0_value is None or s1_value is None:
+            continue
+        try:
+            delta = float(s1_value) - float(s0_value)
+        except (TypeError, ValueError):
+            continue
+        s1_row["status"] = "good" if delta >= -0.000001 else "warn"
 
 
 def _score_run_configs(report: dict) -> list[str]:
@@ -836,6 +857,36 @@ def _score_run_verdict(report: dict) -> dict:
         elif value is False:
             reasons.append(str(key))
     return {"pass": not reasons if gate else None, "reasons": reasons}
+
+
+def _score_run_stage_gate_digest(report: dict) -> dict:
+    gate = report.get("stage_gate") if isinstance(report.get("stage_gate"), dict) else {}
+    failed: list[str] = []
+    passed = 0
+    total = 0
+
+    def visit(prefix: str, value: object) -> None:
+        nonlocal passed, total
+        if isinstance(value, dict):
+            for sub_key, sub_value in value.items():
+                visit(f"{prefix}.{sub_key}" if prefix else str(sub_key), sub_value)
+            return
+        if isinstance(value, bool):
+            total += 1
+            if value:
+                passed += 1
+            else:
+                failed.append(prefix)
+
+    for key, value in gate.items():
+        visit(str(key), value)
+    return {
+        "present": bool(gate),
+        "passed": passed,
+        "total": total,
+        "all_ok": (not failed) if total else None,
+        "failed": failed,
+    }
 
 
 def _score_run_compare(report: dict) -> dict:

@@ -1178,13 +1178,78 @@ def test_route_one_button_report_summary_reads_score_reports(tmp_path, monkeypat
     assert data["phase_1"]["present"] is True
     assert data["final"]["present"] is True
     assert data["final"]["verdict"] == {"pass": True, "reasons": []}
+    assert data["final"]["stage_gate"] == {
+        "present": True,
+        "passed": 3,
+        "total": 3,
+        "all_ok": True,
+        "failed": [],
+    }
     assert data["final"]["report_path"] == "reports/score_run_final.json"
-    assert [(row["key"], row["value"]) for row in data["final"]["metrics"]] == [
-        ("TC", 0.9467),
-        ("TA", 0.875),
-        ("TA_REGISTRY", 0.91),
+    assert [(row["key"], row["value"], row["status"]) for row in data["final"]["metrics"]] == [
+        ("TC", 0.9467, None),
+        ("TA", 0.875, None),
+        ("TA_REGISTRY", 0.91, None),
     ]
     assert data["compare"] == {"present": False, "gap": None}
+
+
+def test_route_one_button_report_summary_colors_compare_metrics_relatively(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "one_button" / "run_compare_scores"
+    reports_dir = run_dir / "reports"
+    reports_dir.mkdir(parents=True)
+    report = {
+        "configs": ["S0", "S1"],
+        "D_registry_consistency": {"S0": {"overall": 0.777778}, "S1": {"overall": 1.0}},
+        "B_gold_occurrence_adherence": {
+            "S0": {"flat": {"adherence_lower": 0.747368}},
+            "S1": {"flat": {"adherence_lower": 0.705263}},
+        },
+        "stage_gate": {
+            "no_passthrough_translated": {"S0": True, "S1": True},
+            "scope_equals_translation_runs": {"S0": True, "S1": True},
+            "manual_passthrough_audit_required": True,
+        },
+    }
+    (reports_dir / "score_run_final.json").write_text(json.dumps(report), encoding="utf-8")
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_compare_scores",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(run_dir / "manifest.json"),
+    )
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_compare_scores/report-summary")
+
+    assert resp.status_code == 200
+    final = resp.get_json()["data"]["final"]
+    by_key = {row["key"]: row for row in final["metrics"]}
+    assert by_key["TC_S0"]["status"] is None
+    assert by_key["TC_S1"]["status"] == "good"
+    assert by_key["TA_S0"]["status"] is None
+    assert by_key["TA_S1"]["status"] == "warn"
+    assert final["stage_gate"] == {
+        "present": True,
+        "passed": 5,
+        "total": 5,
+        "all_ok": True,
+        "failed": [],
+    }
 
 
 def test_route_one_button_report_summary_projects_consistency_bridge(tmp_path, monkeypatch):

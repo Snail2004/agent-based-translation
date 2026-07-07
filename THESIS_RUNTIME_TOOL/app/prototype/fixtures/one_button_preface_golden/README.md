@@ -13,6 +13,10 @@ Console UI + animations at $0 instead of re-running the paid pipeline.
   (NOT `translation_records`, which is empty). Block-preview fetch must target that.
 - `reports/translate.json` `reports/sf_bt.json` `reports/watchlist.json` — Phase-1/2
   report-render inputs.
+- `report_summary.json` — API-shaped summary projected from real scored run
+  `run_e79867ab0ec9` (`score_run_phase_1.json` + `score_run_final.json`).
+  This is illustrative/representative real data for the static Console harness:
+  RESULTS, S0-vs-S1 gap, consistency bridge, and watchlist-depth panels.
 
 ## Replay
 Instant (static layout):

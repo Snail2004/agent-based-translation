@@ -24,22 +24,22 @@
 const FX = "fixtures/one_button_preface_golden/";
 
 async function loadFixture() {
-  const [rawEvents, blockPreview, watchRaw] = await Promise.all([
+  const [rawEvents, blockPreview, watchRaw, reportSummary] = await Promise.all([
     fetch(FX + "events.jsonl").then(r => r.text()),
     fetch(FX + "block_preview_sample.json").then(r => r.json()).catch(() => []),
     fetch(FX + "reports/watchlist.json").then(r => r.json()).catch(() => null),
+    fetch(FX + "report_summary.json").then(r => r.json()).catch(() => null),
   ]);
   const events = rawEvents.split("\n").filter(l => l.trim()).map(l => JSON.parse(l));
-  // watchlist.json shape is unknown here; normalize a few likely shapes into {term, vi}
+  // Preserve raw watchlist entries so the depth panel can render reasons/candidates.
+  // Keep a guard for older string-only fixtures.
   let watchlist = [];
   const wl = watchRaw && (watchRaw.watchlist || watchRaw.terms || watchRaw.items || watchRaw);
   if (Array.isArray(wl)) {
-    watchlist = wl.map(w => (typeof w === "string" ? { term: w } : {
-      term: w.term || w.source_term || w.surface || w.source || w.canonical_source || w.en,
-      vi: w.vi || w.canonical_target_vi || w.target || w.canonical || w.canonical_target || w.decision,
-    })).filter(w => w.term);
+    watchlist = wl.map(w => (typeof w === "string" ? { term: w } : w))
+      .filter(w => w && (w.term || w.source_term || w.surface || w.source || w.canonical_source || w.en));
   }
-  return { events, blockPreview: Array.isArray(blockPreview) ? blockPreview : [], watchlist };
+  return { events, blockPreview: Array.isArray(blockPreview) ? blockPreview : [], watchlist, reportSummary };
 }
 
 function DevHarness() {
@@ -56,6 +56,7 @@ function DevHarness() {
       status="done"
       blockPreview={data.blockPreview}
       watchlist={data.watchlist}
+      reportSummary={data.reportSummary}
       theme={theme}
       onToggleTheme={() => setTheme(t => (t === "paper" ? "dark" : "paper"))}
       onRefresh={() => {}}

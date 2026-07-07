@@ -82,6 +82,15 @@ function formatConsoleSignedRatio(value) {
   return (n >= 0 ? "+" : "") + n.toFixed(3);
 }
 
+function formatConsoleGate(gate) {
+  if (!gate || !gate.present) return null;
+  const passed = Number(gate.passed || 0);
+  const total = Number(gate.total || 0);
+  const failed = Array.isArray(gate.failed) ? gate.failed : [];
+  if (gate.all_ok === false) return `${passed}/${total} fail ${consoleShort(failed.join(", ") || "invariant", 28)}`;
+  return `${passed}/${total} ok`;
+}
+
 function consolePackMessage(summary, ctx) {
   if (!summary || typeof summary !== "object") return null;
   const injected = summary.injected ?? summary.included_count;
@@ -430,6 +439,8 @@ function AgentConsoleView(props) {
   const isCompareRun = reportCfgs.includes("S0") || !!(reportSummary && reportSummary.compare && reportSummary.compare.present);
   const armsLabel = reportCfgs.length ? (isCompareRun ? "S0+S1" : reportCfgs.join("+")) : (isCompareRun ? "S0+S1" : null);
   const compareGap = reportSummary && reportSummary.compare && reportSummary.compare.present ? (reportSummary.compare.gap || {}) : null;
+  const finalGate = reportSummary && reportSummary.final && reportSummary.final.stage_gate && reportSummary.final.stage_gate.present ? reportSummary.final.stage_gate : null;
+  const finalGateText = formatConsoleGate(finalGate);
   const consistencySummary = reportSummary && reportSummary.consistency && reportSummary.consistency.present ? reportSummary.consistency : null;
   const consistencyTierRows = consoleConsistencyTierRows(consistencySummary);
   const consistencyNotable = (consistencySummary && consistencySummary.notable_terms) || [];
@@ -635,6 +646,12 @@ function AgentConsoleView(props) {
                   </span>
                 </div>
               ))}
+              {finalGateText && (
+                <div className="kv-row">
+                  <span className="kv-label">gates</span>
+                  <span className={"kv-value " + (finalGate.all_ok === false ? "kv-bad" : "kv-good")}>{finalGateText}</span>
+                </div>
+              )}
               {compareGap && (
                 <>
                   <div className="kv-row">

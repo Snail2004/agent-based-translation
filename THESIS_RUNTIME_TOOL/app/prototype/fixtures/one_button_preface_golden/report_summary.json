@@ -1,0 +1,259 @@
+{
+  "phase_1": {
+    "present": true,
+    "metrics": [
+      {
+        "key": "TC",
+        "label": "term consistency",
+        "value": 1.0,
+        "unit": "ratio",
+        "status": null
+      },
+      {
+        "key": "TA",
+        "label": "gold adherence",
+        "value": 0.705263,
+        "unit": "ratio",
+        "status": null
+      },
+      {
+        "key": "TA_REGISTRY",
+        "label": "registry adherence",
+        "value": 0.848315,
+        "unit": "ratio",
+        "status": null
+      }
+    ],
+    "configs": [
+      "S1"
+    ],
+    "report_path": "reports/score_run_phase_1.json"
+  },
+  "final": {
+    "present": true,
+    "metrics": [
+      {
+        "key": "TC_S0",
+        "label": "S0 term consistency",
+        "value": 0.777778,
+        "unit": "ratio",
+        "status": null
+      },
+      {
+        "key": "TA_S0",
+        "label": "S0 gold adherence",
+        "value": 0.747368,
+        "unit": "ratio",
+        "status": null
+      },
+      {
+        "key": "TC_S1",
+        "label": "S1 term consistency",
+        "value": 1.0,
+        "unit": "ratio",
+        "status": "good"
+      },
+      {
+        "key": "TA_S1",
+        "label": "S1 gold adherence",
+        "value": 0.705263,
+        "unit": "ratio",
+        "status": "warn"
+      },
+      {
+        "key": "TA_REGISTRY_S1",
+        "label": "S1 registry adherence",
+        "value": 0.848315,
+        "unit": "ratio",
+        "status": null
+      }
+    ],
+    "verdict": {
+      "pass": true,
+      "reasons": []
+    },
+    "stage_gate": {
+      "present": true,
+      "passed": 7,
+      "total": 7,
+      "all_ok": true,
+      "failed": []
+    },
+    "report_path": "reports/score_run_final.json"
+  },
+  "compare": {
+    "present": true,
+    "gap": {
+      "TC": 0.222222,
+      "TA": -0.042105
+    },
+    "baseline": "S0",
+    "candidate": "S1"
+  },
+  "consistency": {
+    "present": true,
+    "configs": [
+      "S0",
+      "S1"
+    ],
+    "overall": {
+      "S0": 0.777778,
+      "S1": 1.0
+    },
+    "by_tier": {
+      "S0": {
+        "hard": {
+          "overall": 0.777778,
+          "detected_only": 0.777778,
+          "terms": 9,
+          "consistent_terms": 7,
+          "drift_terms": 2,
+          "undetected_terms": 0
+        },
+        "soft": {
+          "overall": 0.909091,
+          "detected_only": 0.909091,
+          "terms": 11,
+          "consistent_terms": 10,
+          "drift_terms": 1,
+          "undetected_terms": 0
+        },
+        "preserve": {
+          "overall": 1.0,
+          "detected_only": 1.0,
+          "terms": 4,
+          "consistent_terms": 4,
+          "drift_terms": 0,
+          "undetected_terms": 0
+        },
+        "entity": {
+          "overall": 0.0,
+          "detected_only": 0.0,
+          "terms": 0,
+          "consistent_terms": 0,
+          "drift_terms": 0,
+          "undetected_terms": 0
+        },
+        "ignore_for_consistency": {
+          "overall": 0.6,
+          "detected_only": 0.75,
+          "terms": 5,
+          "consistent_terms": 3,
+          "drift_terms": 1,
+          "undetected_terms": 1
+        }
+      },
+      "S1": {
+        "hard": {
+          "overall": 1.0,
+          "detected_only": 1.0,
+          "terms": 9,
+          "consistent_terms": 9,
+          "drift_terms": 0,
+          "undetected_terms": 0
+        },
+        "soft": {
+          "overall": 0.909091,
+          "detected_only": 0.909091,
+          "terms": 11,
+          "consistent_terms": 10,
+          "drift_terms": 1,
+          "undetected_terms": 0
+        },
+        "preserve": {
+          "overall": 1.0,
+          "detected_only": 1.0,
+          "terms": 4,
+          "consistent_terms": 4,
+          "drift_terms": 0,
+          "undetected_terms": 0
+        },
+        "entity": {
+          "overall": 0.0,
+          "detected_only": 0.0,
+          "terms": 0,
+          "consistent_terms": 0,
+          "drift_terms": 0,
+          "undetected_terms": 0
+        },
+        "ignore_for_consistency": {
+          "overall": 0.8,
+          "detected_only": 0.8,
+          "terms": 5,
+          "consistent_terms": 4,
+          "drift_terms": 1,
+          "undetected_terms": 0
+        }
+      }
+    },
+    "notable_terms": [
+      {
+        "source_term": "Automatic Speech Recognition",
+        "tier": "hard",
+        "by_config": {
+          "S0": {
+            "status": "drift",
+            "forms": {
+              "nhận dạng giọng nói tự động": 1,
+              "nhận dạng tiếng nói tự động": 1
+            },
+            "target_term": "nhận dạng tiếng nói tự động"
+          },
+          "S1": {
+            "status": "consistent",
+            "forms": {
+              "nhận dạng tiếng nói tự động": 2
+            },
+            "target_term": "nhận dạng tiếng nói tự động"
+          }
+        },
+        "fixed_by_injection": true
+      },
+      {
+        "source_term": "optimization algorithms",
+        "tier": "hard",
+        "by_config": {
+          "S0": {
+            "status": "drift",
+            "forms": {
+              "các thuật toán tối ưu": 1,
+              "thuật toán tối ưu hóa": 1
+            },
+            "target_term": "thuật toán tối ưu hóa"
+          },
+          "S1": {
+            "status": "consistent",
+            "forms": {
+              "thuật toán tối ưu hóa": 1
+            },
+            "target_term": "thuật toán tối ưu hóa"
+          }
+        },
+        "fixed_by_injection": true
+      },
+      {
+        "source_term": "models",
+        "tier": "soft",
+        "by_config": {
+          "S0": {
+            "status": "drift",
+            "forms": {
+              "các mô hình": 5,
+              "mô hình": 3
+            },
+            "target_term": "mô hình"
+          },
+          "S1": {
+            "status": "drift",
+            "forms": {
+              "các mô hình": 6,
+              "mô hình": 2
+            },
+            "target_term": "mô hình"
+          }
+        },
+        "fixed_by_injection": false
+      }
+    ]
+  }
+}
