@@ -726,6 +726,7 @@ def _empty_report_summary() -> dict:
             "report_path": None,
         },
         "compare": {"present": False, "gap": None},
+        "consistency": {"present": False},
     }
 
 
@@ -758,6 +759,7 @@ def _build_report_summary(phase_1: dict | None, final: dict | None) -> dict:
             "report_path": "reports/score_run_final.json",
         }
         summary["compare"] = _score_run_compare(final)
+        summary["consistency"] = _score_run_consistency_projection(final)
     return summary
 
 
@@ -859,6 +861,133 @@ def _score_run_compare(report: dict) -> dict:
         if left is not None and right is not None:
             gaps[label] = _round_metric(float(right) - float(left))  # type: ignore[arg-type]
     return {"present": bool(gaps), "gap": gaps or None, "baseline": s0, "candidate": s1}
+
+
+def _score_run_consistency_projection(report: dict) -> dict:
+    consistency_root = report.get("D_registry_consistency")
+    if not isinstance(consistency_root, dict):
+        return {"present": False}
+    configs = [
+        cfg
+        for cfg in _score_run_configs(report)
+        if isinstance(consistency_root.get(cfg), dict)
+    ]
+    if not configs:
+        return {"present": False}
+
+    overall: dict[str, float | None] = {}
+    by_tier: dict[str, dict] = {}
+    terms_by_source: dict[str, dict[str, dict]] = {}
+    injected_tiers = {"hard", "soft", "preserve"}
+
+    for cfg in configs:
+        cfg_consistency = consistency_root.get(cfg) or {}
+        overall[cfg] = _round_metric(cfg_consistency.get("overall"))
+        by_tier[cfg] = cfg_consistency.get("by_tier") or {}
+        for term in cfg_consistency.get("terms_all") or []:
+            if not isinstance(term, dict):
+                continue
+            source_term = str(term.get("source_term") or "").strip()
+            if not source_term:
+                continue
+            tier = str(term.get("constraint_strength") or "").strip()
+            if tier == "ignore_for_consistency":
+                continue
+            status = str(term.get("status") or "").strip()
+            if status == "consistent":
+                existing = terms_by_source.get(source_term)
+                if existing and any(
+                    str(row.get("status") or "") != "consistent"
+                    for row in existing.values()
+                ):
+                    existing[cfg] = term
+                continue
+            terms_by_source.setdefault(source_term, {})[cfg] = term
+
+    notable_terms: list[dict] = []
+    for source_term, rows in terms_by_source.items():
+        s0_row = rows.get("S0")
+        s1_row = rows.get("S1")
+        if s1_row is None:
+            s1_rows = (((consistency_root.get("S1") or {}).get("terms_all") or [])
+                       if isinstance(consistency_root.get("S1"), dict) else [])
+            for candidate in s1_rows:
+                if isinstance(candidate, dict) and str(candidate.get("source_term") or "").strip() == source_term:
+                    if str(candidate.get("constraint_strength") or "").strip() != "ignore_for_consistency":
+                        s1_row = candidate
+                    break
+        if s0_row is None:
+            s0_rows = (((consistency_root.get("S0") or {}).get("terms_all") or [])
+                       if isinstance(consistency_root.get("S0"), dict) else [])
+            for candidate in s0_rows:
+                if isinstance(candidate, dict) and str(candidate.get("source_term") or "").strip() == source_term:
+                    if str(candidate.get("constraint_strength") or "").strip() != "ignore_for_consistency":
+                        s0_row = candidate
+                    break
+
+        primary_row = s1_row or s0_row or next(iter(rows.values()))
+        tier = str(primary_row.get("constraint_strength") or "").strip()
+        s0_status = str((s0_row or {}).get("status") or "")
+        s1_status = str((s1_row or {}).get("status") or "")
+        fixed_by_injection = (
+            bool(s0_row)
+            and bool(s1_row)
+            and s0_status != "consistent"
+            and s1_status == "consistent"
+            and tier in injected_tiers
+        )
+        by_config: dict[str, dict] = {}
+        for cfg, row in (("S0", s0_row), ("S1", s1_row)):
+            if not row:
+                continue
+            by_config[cfg] = {
+                "status": row.get("status"),
+                "forms": row.get("forms_used") or {},
+                "target_term": row.get("target_term"),
+            }
+        for cfg, row in rows.items():
+            if cfg not in by_config:
+                by_config[cfg] = {
+                    "status": row.get("status"),
+                    "forms": row.get("forms_used") or {},
+                    "target_term": row.get("target_term"),
+                }
+        notable_terms.append(
+            {
+                "source_term": source_term,
+                "tier": tier,
+                "by_config": by_config,
+                "fixed_by_injection": fixed_by_injection,
+            }
+        )
+
+    def _notable_sort_key(item: dict) -> tuple[int, str, str]:
+        s1_status = str(((item.get("by_config") or {}).get("S1") or {}).get("status") or "consistent")
+        fixed = bool(item.get("fixed_by_injection"))
+        is_s1_non_consistent = s1_status != "consistent"
+        return (
+            0 if fixed else 1 if is_s1_non_consistent else 2,
+            str(item.get("tier") or ""),
+            str(item.get("source_term") or "").casefold(),
+        )
+
+    notable_terms = sorted(notable_terms, key=_notable_sort_key)
+    fixed_terms = [item for item in notable_terms if item.get("fixed_by_injection")]
+    capped_terms = fixed_terms[:]
+    for item in notable_terms:
+        if item.get("fixed_by_injection"):
+            continue
+        if len(capped_terms) >= 50:
+            break
+        capped_terms.append(item)
+
+    return {
+        "present": True,
+        "configs": configs,
+        "overall": overall,
+        "by_tier": by_tier,
+        "notable_terms": capped_terms,
+    }
 
 
 def _path_under_jobs(raw_path: str | Path, field: str) -> Path:

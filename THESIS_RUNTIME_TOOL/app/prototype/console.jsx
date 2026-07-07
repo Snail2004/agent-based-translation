@@ -26,6 +26,12 @@ const CONSOLE_STAGE_PLAN = [
 const CONSOLE_SEVERITY_GLYPH = { info: "├", warning: "▲", error: "✕", context: "⊙" };
 const CONSOLE_TERMINAL_STATUSES = new Set(["done", "failed", "cancelled", "canceled", "error"]);
 const CONSOLE_RENDER_CAP = 2000;
+const CONSOLE_INJECTED_TIERS = ["hard", "soft", "preserve"];
+const CONSOLE_TIER_LABELS = {
+  hard: "mandatory (hard)",
+  soft: "soft",
+  preserve: "preserve",
+};
 
 function consoleIsTerminalStatus(status) {
   return CONSOLE_TERMINAL_STATUSES.has(String(status || "").toLowerCase());
@@ -114,6 +120,48 @@ function consolePackContentRows(summary) {
     if (more[key]) rows.push({ key: `${key}:more`, label, line: `+${more[key]} more` });
   });
   return rows;
+}
+
+function consoleTierCount(row) {
+  if (!row || !Number(row.terms)) return null;
+  return `${Number(row.consistent_terms || 0)}/${Number(row.terms || 0)}`;
+}
+
+function consoleTierIsComplete(row) {
+  return !!row && Number(row.terms || 0) > 0 && Number(row.consistent_terms || 0) === Number(row.terms || 0);
+}
+
+function consoleFormsSummary(forms, limit = 3) {
+  const entries = Object.entries(forms || {})
+    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0) || String(a[0]).localeCompare(String(b[0])));
+  if (!entries.length) return "none";
+  return entries.slice(0, limit).map(([form, count]) => `"${form}" x${count}`).join(" / ");
+}
+
+function consoleConsistencyTierRows(consistency) {
+  if (!consistency || !consistency.present) return [];
+  const configs = consistency.configs || [];
+  const byTier = consistency.by_tier || {};
+  const notable = consistency.notable_terms || [];
+  return CONSOLE_INJECTED_TIERS.map(tier => {
+    const s0 = byTier.S0 && byTier.S0[tier];
+    const s1 = byTier.S1 && byTier.S1[tier];
+    const fallbackCfg = configs.find(cfg => byTier[cfg] && byTier[cfg][tier] && Number(byTier[cfg][tier].terms || 0) > 0);
+    const fallback = fallbackCfg ? byTier[fallbackCfg][tier] : null;
+    const fixedCount = notable.filter(item => item.fixed_by_injection && item.tier === tier).length;
+    if (!s0 && !s1 && !fallback) return null;
+    return { tier, s0, s1, fallbackCfg, fallback, fixedCount };
+  }).filter(Boolean);
+}
+
+function consoleConsistencyTierText(row) {
+  if (row.s0 && row.s1) {
+    const suffix = row.fixedCount ? ` (+${row.fixedCount} memory-fixed)` : "";
+    return `${consoleTierCount(row.s0)} -> ${consoleTierCount(row.s1)}${consoleTierIsComplete(row.s1) ? " ✓" : ""}${suffix}`;
+  }
+  const single = row.s1 || row.s0 || row.fallback;
+  const prefix = row.fallbackCfg ? row.fallbackCfg + " " : "";
+  return `${prefix}${consoleTierCount(single) || "—"}`;
 }
 
 /* One-line human message per real event type; falls back to a generic label. */
@@ -327,6 +375,14 @@ function AgentConsoleView(props) {
   const isCompareRun = reportCfgs.includes("S0") || !!(reportSummary && reportSummary.compare && reportSummary.compare.present);
   const armsLabel = reportCfgs.length ? (isCompareRun ? "S0+S1" : reportCfgs.join("+")) : (isCompareRun ? "S0+S1" : null);
   const compareGap = reportSummary && reportSummary.compare && reportSummary.compare.present ? (reportSummary.compare.gap || {}) : null;
+  const consistencySummary = reportSummary && reportSummary.consistency && reportSummary.consistency.present ? reportSummary.consistency : null;
+  const consistencyTierRows = consoleConsistencyTierRows(consistencySummary);
+  const consistencyNotable = (consistencySummary && consistencySummary.notable_terms) || [];
+  const consistencyFixedTerms = consistencyNotable.filter(item => item.fixed_by_injection);
+  const consistencyResidualDrift = consistencyNotable.filter(item => {
+    const s1 = item.by_config && item.by_config.S1;
+    return s1 && s1.status && s1.status !== "consistent" && !item.fixed_by_injection;
+  });
 
   // latest translated window preview (text lives in blockPreview prop, not events)
   const previewIdx = st.latestPreviewWin ? Math.min(st.latestPreviewWin, blockPreview.length) - 1 : blockPreview.length - 1;
@@ -545,6 +601,55 @@ function AgentConsoleView(props) {
               {reportSummary.final?.report_path && <div className="artifact-path">{reportSummary.final.report_path}</div>}
             </>
           ) : <div className="artifact-path kv-dim">Chưa có điểm — hiện sau khi score chạy xong.</div>}
+
+          {consistencySummary && (
+            <>
+              <div className="section-label">:: consistency (memory -&gt; render)</div>
+              {consistencyTierRows.length ? consistencyTierRows.map(row => {
+                const s1Complete = row.s1 ? consoleTierIsComplete(row.s1) : consoleTierIsComplete(row.fallback);
+                return (
+                  <div className="kv-row" key={row.tier}>
+                    <span className="kv-label">{CONSOLE_TIER_LABELS[row.tier] || row.tier}</span>
+                    <span className={"kv-value " + (s1Complete ? "kv-good" : "kv-warn")}>{consoleConsistencyTierText(row)}</span>
+                  </div>
+                );
+              }) : <div className="artifact-path kv-dim">Không có tier injection trong báo cáo.</div>}
+
+              {consistencyFixedTerms.length > 0 && (
+                <>
+                  <div className="artifact-path kv-good">memory-fixed</div>
+                  {consistencyFixedTerms.slice(0, 6).map(item => {
+                    const s0 = item.by_config && item.by_config.S0;
+                    const s1 = item.by_config && item.by_config.S1;
+                    return (
+                      <div className="watch-row" key={"fixed:" + item.source_term}>
+                        <span className="watch-term">{consoleShort(item.source_term, 26)}</span>
+                        <span className="watch-arrow">→</span>
+                        <span className="watch-vi">{consoleShort(`S0: ${consoleFormsSummary(s0 && s0.forms)} -> S1: ${consoleFormsSummary(s1 && s1.forms)} ✓`, 64)}</span>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+
+              {consistencyResidualDrift.length > 0 && (
+                <>
+                  <div className="artifact-path kv-dim">residual drift</div>
+                  {consistencyResidualDrift.slice(0, 6).map(item => {
+                    const s1 = item.by_config && item.by_config.S1;
+                    const soft = item.tier === "soft";
+                    return (
+                      <div className="watch-row" key={"residual:" + item.source_term}>
+                        <span className="watch-term">{consoleShort(item.source_term, 22)} [{item.tier}]</span>
+                        <span className="watch-arrow">→</span>
+                        <span className={"watch-vi " + (soft ? "kv-warn" : "kv-bad")}>{consoleShort(`${soft ? "lệch được phép (do-not-force)" : "cần xem"}: ${consoleFormsSummary(s1 && s1.forms)}`, 56)}</span>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </>
+          )}
 
           <div className="section-label">:: watchlist §36{watchlist.length ? " · " + watchlist.length + " pending" : ""}</div>
           {watchlist.length ? watchlist.slice(0, 8).map((w, i) => (

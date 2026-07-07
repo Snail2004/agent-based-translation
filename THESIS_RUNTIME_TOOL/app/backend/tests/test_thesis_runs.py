@@ -1187,6 +1187,170 @@ def test_route_one_button_report_summary_reads_score_reports(tmp_path, monkeypat
     assert data["compare"] == {"present": False, "gap": None}
 
 
+def test_route_one_button_report_summary_projects_consistency_bridge(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "one_button" / "run_consistency"
+    reports_dir = run_dir / "reports"
+    reports_dir.mkdir(parents=True)
+    report = {
+        "configs": ["S0", "S1"],
+        "D_registry_consistency": {
+            "S0": {
+                "overall": 0.5,
+                "by_tier": {
+                    "hard": {"terms": 2, "consistent_terms": 1, "drift_terms": 1, "undetected_terms": 0},
+                    "soft": {"terms": 1, "consistent_terms": 0, "drift_terms": 1, "undetected_terms": 0},
+                    "ignore_for_consistency": {"terms": 1, "consistent_terms": 0, "drift_terms": 1, "undetected_terms": 0},
+                },
+                "terms_all": [
+                    {
+                        "source_term": "optimization algorithms",
+                        "target_term": "thuật toán tối ưu hóa",
+                        "constraint_strength": "hard",
+                        "status": "drift",
+                        "forms_used": {"các thuật toán tối ưu": 1, "thuật toán tối ưu hóa": 1},
+                    },
+                    {
+                        "source_term": "models",
+                        "target_term": "mô hình",
+                        "constraint_strength": "soft",
+                        "status": "drift",
+                        "forms_used": {"các mô hình": 2, "mô hình": 1},
+                    },
+                    {
+                        "source_term": "example",
+                        "target_term": "mẫu",
+                        "constraint_strength": "ignore_for_consistency",
+                        "status": "drift",
+                        "forms_used": {"mẫu": 1, "ví dụ": 4},
+                    },
+                ],
+            },
+            "S1": {
+                "overall": 1.0,
+                "by_tier": {
+                    "hard": {"terms": 2, "consistent_terms": 2, "drift_terms": 0, "undetected_terms": 0},
+                    "soft": {"terms": 1, "consistent_terms": 0, "drift_terms": 1, "undetected_terms": 0},
+                },
+                "terms_all": [
+                    {
+                        "source_term": "optimization algorithms",
+                        "target_term": "thuật toán tối ưu hóa",
+                        "constraint_strength": "hard",
+                        "status": "consistent",
+                        "forms_used": {"thuật toán tối ưu hóa": 2},
+                    },
+                    {
+                        "source_term": "models",
+                        "target_term": "mô hình",
+                        "constraint_strength": "soft",
+                        "status": "drift",
+                        "forms_used": {"các mô hình": 3, "mô hình": 1},
+                    },
+                    {
+                        "source_term": "example",
+                        "target_term": "mẫu",
+                        "constraint_strength": "ignore_for_consistency",
+                        "status": "drift",
+                        "forms_used": {"mẫu": 1, "ví dụ": 4},
+                    },
+                ],
+            },
+        },
+    }
+    (reports_dir / "score_run_final.json").write_text(json.dumps(report, ensure_ascii=False), encoding="utf-8")
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_consistency",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(run_dir / "manifest.json"),
+    )
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_consistency/report-summary")
+
+    assert resp.status_code == 200
+    consistency = resp.get_json()["data"]["consistency"]
+    assert consistency["present"] is True
+    assert consistency["overall"] == {"S0": 0.5, "S1": 1.0}
+    assert consistency["by_tier"]["S0"]["hard"]["terms"] == 2
+    terms = {item["source_term"]: item for item in consistency["notable_terms"]}
+    assert "example" not in terms
+    assert terms["optimization algorithms"]["fixed_by_injection"] is True
+    assert terms["optimization algorithms"]["by_config"]["S0"]["status"] == "drift"
+    assert terms["optimization algorithms"]["by_config"]["S1"]["status"] == "consistent"
+    assert terms["models"]["fixed_by_injection"] is False
+    assert terms["models"]["tier"] == "soft"
+
+
+def test_route_one_button_report_summary_consistency_single_arm_has_no_fixed_entries(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    run_dir = tmp_path / "jobA" / "one_button" / "run_consistency_s1"
+    reports_dir = run_dir / "reports"
+    reports_dir.mkdir(parents=True)
+    report = {
+        "configs": ["S1"],
+        "D_registry_consistency": {
+            "S1": {
+                "overall": 0.5,
+                "by_tier": {"hard": {"terms": 1, "consistent_terms": 0, "drift_terms": 1}},
+                "terms_all": [
+                    {
+                        "source_term": "framework",
+                        "target_term": "khung phần mềm",
+                        "constraint_strength": "hard",
+                        "status": "drift",
+                        "forms_used": {"khung phần mềm": 1, "framework": 1},
+                    }
+                ],
+            }
+        },
+    }
+    (reports_dir / "score_run_final.json").write_text(json.dumps(report, ensure_ascii=False), encoding="utf-8")
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_consistency_s1",
+        job_id="jobA",
+        run_dir=str(run_dir),
+        manifest_path=str(run_dir / "manifest.json"),
+    )
+    routes.set_registry(registry)
+    client = app_module.create_app().test_client()
+
+    resp = client.get("/api/thesis/runs/run_consistency_s1/report-summary")
+
+    assert resp.status_code == 200
+    consistency = resp.get_json()["data"]["consistency"]
+    assert consistency["present"] is True
+    assert consistency["configs"] == ["S1"]
+    assert consistency["notable_terms"][0]["source_term"] == "framework"
+    assert consistency["notable_terms"][0]["fixed_by_injection"] is False
+
+
 def test_route_one_button_report_summary_missing_reports_returns_empty(tmp_path, monkeypatch):
     monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
     monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
