@@ -9,6 +9,11 @@ const STORAGE_CENTER_MODE = "ailab.center_mode";
 const THESIS_PREFIX = "thesis:";
 const DEFAULT_USER = "U2 · Mai";
 const EDITABLE_META = new Set(["title", "author", "domain", "genre", "source_format", "license", "source_url", "contamination_risk"]);
+const RUN_TERMINAL_STATUSES = new Set(["done", "failed", "cancelled", "canceled", "error"]);
+
+function isRunTerminalStatus(status) {
+  return RUN_TERMINAL_STATUSES.has(String(status || "").toLowerCase());
+}
 
 function emptyRunEventAggregate() {
   return {
@@ -1183,9 +1188,10 @@ function App() {
         await refreshThesisRuns();
         const needsDrain = !!eventResult?.truncated;
         const needsPartialFollowup = !!eventResult?.partial_line;
+        const pollStatus = eventResult?.status || result.status || "";
         if (needsDrain) {
           timer = setTimeout(poll, 0);
-        } else if (result.running || eventResult?.running || needsPartialFollowup) {
+        } else if (needsPartialFollowup || !isRunTerminalStatus(pollStatus)) {
           timer = setTimeout(poll, needsPartialFollowup ? 600 : 1400);
         }
       } catch (_err) {
