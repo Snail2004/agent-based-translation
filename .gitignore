@@ -30,6 +30,11 @@ THESIS_RUNTIME_TOOL/data/eval/human_ratings.csv
 # D2L raw clone — track provenance only, not the 214MB repo
 THESIS_RUNTIME_TOOL/data/sources/d2l-vi/
 
+# Copyrighted local reference texts supplied by user.
+# Keep metadata/manifests in git; do not redistribute full Vietnamese EPUB/PDF text.
+reference/literary/*/vi/*.epub
+reference/literary/*/vi/*.pdf
+
 # D2L token-bloat baseline (audit-only, has cache copy) + intermediate prepass artifacts
 THESIS_RUNTIME_TOOL/data/_baseline/
 THESIS_RUNTIME_TOOL/data/prepass/
