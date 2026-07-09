@@ -1854,8 +1854,11 @@ def run_m1(
         "attribution_enum_dropped": 0,
         "attribution_enum_normalized": 0,
         "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
         "named_pronoun_downgraded": 0,
         "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
         "context_only_used_true": 0,
         "brief_leak_tokens_dropped": 0,
         "nonperson_event_dropped": 0,
@@ -1948,6 +1951,7 @@ def run_m1(
                 validate=lambda payload: validate_lexicon(
                     payload,
                     valid_block_ids=set(window.block_ids),
+                    chapter_block_ids=set(block_ids),
                     known_entity_ids=set(ledger),
                 ),
             )
@@ -1973,6 +1977,15 @@ def run_m1(
             validation_counts["pronoun_dropped"] += int(
                 (lex_validation.get("counts") or {}).get("pronoun_dropped", 0)
             )
+            validation_counts["mention_named_ids_cleared"] += int(
+                (lex_validation.get("counts") or {}).get("mention_named_ids_cleared", 0)
+            )
+            validation_counts["outside_window_neighbor_dropped"] += int(
+                (lex_validation.get("counts") or {}).get("outside_window_neighbor_dropped", 0)
+            )
+            validation_counts["outside_window_nonexistent_dropped"] += int(
+                (lex_validation.get("counts") or {}).get("outside_window_nonexistent_dropped", 0)
+            )
 
             narrative_messages = build_narrative_messages(
                 design_doc=design_doc,
@@ -1994,6 +2007,7 @@ def run_m1(
                 validate=lambda payload: validate_narrative(
                     payload,
                     valid_block_ids=set(window.block_ids),
+                    chapter_block_ids=set(block_ids),
                     known_entity_ids=set(ledger),
                 ),
             )
@@ -2029,6 +2043,12 @@ def run_m1(
             )
             validation_counts["nonperson_event_dropped"] += int(
                 (narrative_validation.get("counts") or {}).get("nonperson_event_dropped", 0)
+            )
+            validation_counts["outside_window_neighbor_dropped"] += int(
+                (narrative_validation.get("counts") or {}).get("outside_window_neighbor_dropped", 0)
+            )
+            validation_counts["outside_window_nonexistent_dropped"] += int(
+                (narrative_validation.get("counts") or {}).get("outside_window_nonexistent_dropped", 0)
             )
             validation_counts["context_only_used_true"] += int(
                 (narrative_validation.get("counts") or {}).get("context_only_used_true", 0)
@@ -2469,12 +2489,23 @@ def revalidate_m1_artifacts(out_dir: Path) -> dict[str, Any]:
         "attribution_enum_dropped": 0,
         "attribution_enum_normalized": 0,
         "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
         "named_pronoun_downgraded": 0,
         "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
         "context_only_used_true": 0,
         "brief_leak_tokens_dropped": 0,
         "nonperson_event_dropped": 0,
     }
+    chapter_blocks_by_id: dict[str, set[str]] = {}
+    for brief_path in sorted((out_dir / "brief").glob("*.json")):
+        brief_payload = json.loads(brief_path.read_text(encoding="utf-8"))
+        chapter_id = str(brief_payload.get("chapter_id") or "")
+        if chapter_id:
+            chapter_blocks_by_id[chapter_id] = {
+                str(block_id) for block_id in brief_payload.get("block_ids") or []
+            }
     for subdir, mode in [
         ("brief", BRIEF_VERSION),
         ("lexicon", LEXICON_VERSION),
@@ -2484,6 +2515,10 @@ def revalidate_m1_artifacts(out_dir: Path) -> dict[str, Any]:
             payload = json.loads(artifact_path.read_text(encoding="utf-8"))
             parsed = payload.get("parsed_json")
             valid_block_ids = set(str(block_id) for block_id in payload.get("block_ids") or [])
+            chapter_block_ids = chapter_blocks_by_id.get(
+                str(payload.get("chapter_id") or ""),
+                valid_block_ids,
+            )
             known_ids = _known_ids_from_report(report)
             if not isinstance(parsed, dict):
                 validation = ValidationReport(
@@ -2503,12 +2538,14 @@ def revalidate_m1_artifacts(out_dir: Path) -> dict[str, Any]:
                 validation = validate_lexicon(
                     parsed,
                     valid_block_ids=valid_block_ids,
+                    chapter_block_ids=chapter_block_ids,
                     known_entity_ids=known_ids,
                 )
             else:
                 validation = validate_narrative(
                     parsed,
                     valid_block_ids=valid_block_ids,
+                    chapter_block_ids=chapter_block_ids,
                     known_entity_ids=known_ids,
                 )
             payload["validation"] = validation.to_dict()
@@ -2525,6 +2562,9 @@ def revalidate_m1_artifacts(out_dir: Path) -> dict[str, Any]:
                 validation_counts["lexicon_ok" if validation.ok else "lexicon_failed"] += 1
                 validation_counts["pronoun_dropped"] += int(
                     validation.counts.get("pronoun_dropped", 0)
+                )
+                validation_counts["mention_named_ids_cleared"] += int(
+                    validation.counts.get("mention_named_ids_cleared", 0)
                 )
             else:
                 validation_counts["narrative_ok" if validation.ok else "narrative_failed"] += 1
@@ -2544,6 +2584,12 @@ def revalidate_m1_artifacts(out_dir: Path) -> dict[str, Any]:
                 validation_counts["nonperson_event_dropped"] += int(
                     validation.counts.get("nonperson_event_dropped", 0)
                 )
+            validation_counts["outside_window_neighbor_dropped"] += int(
+                validation.counts.get("outside_window_neighbor_dropped", 0)
+            )
+            validation_counts["outside_window_nonexistent_dropped"] += int(
+                validation.counts.get("outside_window_nonexistent_dropped", 0)
+            )
             validation_counts["context_only_used_true"] += int(
                 validation.counts.get("context_only_used_true", 0)
             )
@@ -2870,6 +2916,7 @@ def validate_lexicon(
     obj: dict[str, Any],
     *,
     valid_block_ids: set[str],
+    chapter_block_ids: set[str] | None = None,
     known_entity_ids: set[str] | None = None,
 ) -> ValidationReport:
     known = known_entity_ids or set()
@@ -2883,18 +2930,47 @@ def validate_lexicon(
         "unknown": 0,
         "dropped_bad_block": 0,
         "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
         "context_only_used_true": 1 if obj.get("context_only_used") else 0,
     }
     _require_top(obj, ["chapter_id", "window_block_ids", "context_only_used", "glossary_candidates", "character_mentions"], errors)
+    kept_terms: list[Any] = []
     for idx, term in enumerate(_as_list(obj.get("glossary_candidates"), "glossary_candidates", errors)):
-        counts["glossary"] += 1
         _require_item(term, ["source_term", "proposed_target_vi", "category", "do_not_translate", "termhood", "block_ids"], f"glossary_candidates[{idx}]", errors)
+        term_blocks = [str(block_id) for block_id in term.get("block_ids") or []]
+        drop_kind, bad_blocks = _outside_window_drop_kind(
+            term_blocks,
+            valid_block_ids=valid_block_ids,
+            chapter_block_ids=chapter_block_ids,
+        )
+        if drop_kind is not None:
+            counts[f"outside_window_{drop_kind}_dropped"] += 1
+            counts["dropped_bad_block"] += len(bad_blocks)
+            term_blocks = [block_id for block_id in term_blocks if block_id in valid_block_ids]
+            if term_blocks:
+                term["block_ids"] = term_blocks
+                warnings.append(
+                    f"glossary_candidates[{idx}].block_ids filtered because some "
+                    f"were outside active window ({drop_kind}): {bad_blocks}"
+                )
+            else:
+                warnings.append(
+                    f"glossary_candidates[{idx}] dropped because block_ids are "
+                    f"outside active window ({drop_kind}): {bad_blocks}"
+                )
+                continue
+        kept_terms.append(term)
+        counts["glossary"] += 1
         if term.get("category") not in GLOSSARY_CATEGORIES:
             errors.append(f"glossary_candidates[{idx}].category invalid: {term.get('category')}")
-        bad_blocks = _bad_blocks(term.get("block_ids"), valid_block_ids)
+        bad_blocks = _bad_blocks(term_blocks, valid_block_ids)
         if bad_blocks:
             counts["dropped_bad_block"] += len(bad_blocks)
             errors.append(f"glossary_candidates[{idx}].block_ids outside window: {bad_blocks}")
+    if isinstance(obj.get("glossary_candidates"), list):
+        obj["glossary_candidates"] = kept_terms
     mention_surfaces: set[str] = set()
     kept_mentions: list[Any] = []
     for idx, mention in enumerate(_as_list(obj.get("character_mentions"), "character_mentions", errors)):
@@ -2903,9 +2979,31 @@ def validate_lexicon(
             counts["pronoun_dropped"] += 1
             warnings.append(f"character_mentions[{idx}] dropped because surface is plain pronoun: {surface}")
             continue
+        _require_item(mention, ["mention_id", "surface", "mention_type", "resolution_status", "candidate_entity_ids", "block_ids"], f"character_mentions[{idx}]", errors)
+        mention_blocks = [str(block_id) for block_id in mention.get("block_ids") or []]
+        drop_kind, bad_blocks = _outside_window_drop_kind(
+            mention_blocks,
+            valid_block_ids=valid_block_ids,
+            chapter_block_ids=chapter_block_ids,
+        )
+        if drop_kind is not None:
+            counts[f"outside_window_{drop_kind}_dropped"] += 1
+            counts["dropped_bad_block"] += len(bad_blocks)
+            mention_blocks = [block_id for block_id in mention_blocks if block_id in valid_block_ids]
+            if mention_blocks:
+                mention["block_ids"] = mention_blocks
+                warnings.append(
+                    f"character_mentions[{idx}].block_ids filtered because some "
+                    f"were outside active window ({drop_kind}): {bad_blocks}"
+                )
+            else:
+                warnings.append(
+                    f"character_mentions[{idx}] dropped because block_ids are "
+                    f"outside active window ({drop_kind}): {bad_blocks}"
+                )
+                continue
         counts["mentions"] += 1
         kept_mentions.append(mention)
-        _require_item(mention, ["mention_id", "surface", "mention_type", "resolution_status", "candidate_entity_ids", "block_ids"], f"character_mentions[{idx}]", errors)
         mention_surfaces.add(surface.casefold())
         if mention.get("mention_type") not in MENTION_TYPES:
             errors.append(f"character_mentions[{idx}].mention_type invalid: {mention.get('mention_type')}")
@@ -2914,6 +3012,23 @@ def validate_lexicon(
             errors.append(f"character_mentions[{idx}].resolution_status invalid: {status}")
         else:
             counts[status] += 1
+        candidate_ids = mention.get("candidate_entity_ids")
+        if status == "named" and isinstance(candidate_ids, list) and candidate_ids:
+            unknown_ids = [
+                str(item)
+                for item in candidate_ids
+                if known and str(item) not in known
+            ]
+            if unknown_ids:
+                errors.append(
+                    f"character_mentions[{idx}].candidate_entity_ids unknown: {unknown_ids}"
+                )
+            mention["candidate_entity_ids"] = []
+            counts["mention_named_ids_cleared"] += 1
+            warnings.append(
+                f"character_mentions[{idx}].candidate_entity_ids cleared "
+                "because named surface is authoritative"
+            )
         _validate_candidate_ids(
             path=f"character_mentions[{idx}]",
             status=status,
@@ -2923,7 +3038,7 @@ def validate_lexicon(
         )
         if "canonical_entity_id" in mention:
             errors.append(f"character_mentions[{idx}] must not include canonical_entity_id")
-        bad_blocks = _bad_blocks(mention.get("block_ids"), valid_block_ids)
+        bad_blocks = _bad_blocks(mention_blocks, valid_block_ids)
         if bad_blocks:
             counts["dropped_bad_block"] += len(bad_blocks)
             errors.append(f"character_mentions[{idx}].block_ids outside window: {bad_blocks}")
@@ -2940,6 +3055,7 @@ def validate_narrative(
     obj: dict[str, Any],
     *,
     valid_block_ids: set[str],
+    chapter_block_ids: set[str] | None = None,
     known_entity_ids: set[str] | None = None,
 ) -> ValidationReport:
     known = known_entity_ids or set()
@@ -2958,14 +3074,32 @@ def validate_narrative(
         "attribution_enum_normalized": 0,
         "named_pronoun_downgraded": 0,
         "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
     }
     _require_top(obj, ["chapter_id", "window_block_ids", "context_only_used", "speaker_turns", "relation_events"], errors)
     kept_turns: list[Any] = []
     for idx, turn in enumerate(_as_list(obj.get("speaker_turns"), "speaker_turns", errors)):
-        counts["turns"] += 1
         _require_item(turn, ["turn_id", "speaker", "addressee", "utterance_quote", "address_term_used", "register_cue", "utterance_gist", "block_id"], f"speaker_turns[{idx}]", errors)
-        if turn.get("block_id") not in valid_block_ids:
-            errors.append(f"speaker_turns[{idx}].block_id outside window: {turn.get('block_id')}")
+        block_id = str(turn.get("block_id") or "")
+        if not block_id:
+            if "block_id" in turn:
+                errors.append(f"speaker_turns[{idx}].block_id is required")
+        elif block_id not in valid_block_ids:
+            drop_kind, bad_blocks = _outside_window_drop_kind(
+                [block_id],
+                valid_block_ids=valid_block_ids,
+                chapter_block_ids=chapter_block_ids,
+            )
+            if drop_kind is not None:
+                counts[f"outside_window_{drop_kind}_dropped"] += 1
+                warnings.append(
+                    f"speaker_turns[{idx}] dropped because block_id is "
+                    f"outside active window ({drop_kind}): {bad_blocks}"
+                )
+                continue
+            errors.append(f"speaker_turns[{idx}].block_id outside window: {block_id}")
+        counts["turns"] += 1
         if str(turn.get("address_term_used") or "").strip():
             counts["address_term_present"] += 1
         for role in ["speaker", "addressee"]:
@@ -2984,8 +3118,24 @@ def validate_narrative(
     for idx, event in enumerate(_as_list(obj.get("relation_events"), "relation_events", errors)):
         event_errors: list[str] = []
         _require_item(event, ["event_id", "actor", "target", "event_type", "evidence_quote", "block_id"], f"relation_events[{idx}]", errors)
-        if event.get("block_id") not in valid_block_ids:
-            event_errors.append(f"relation_events[{idx}].block_id outside window: {event.get('block_id')}")
+        block_id = str(event.get("block_id") or "")
+        if not block_id:
+            if "block_id" in event:
+                event_errors.append(f"relation_events[{idx}].block_id is required")
+        elif block_id not in valid_block_ids:
+            drop_kind, bad_blocks = _outside_window_drop_kind(
+                [block_id],
+                valid_block_ids=valid_block_ids,
+                chapter_block_ids=chapter_block_ids,
+            )
+            if drop_kind is not None:
+                counts[f"outside_window_{drop_kind}_dropped"] += 1
+                warnings.append(
+                    f"relation_events[{idx}] dropped because block_id is "
+                    f"outside active window ({drop_kind}): {bad_blocks}"
+                )
+                continue
+            event_errors.append(f"relation_events[{idx}].block_id outside window: {block_id}")
         event_type = str(event.get("event_type") or "")
         if not re.fullmatch(r"[a-z][a-z0-9_]*", event_type):
             event_errors.append(f"relation_events[{idx}].event_type must be lower_snake_case: {event_type}")
@@ -3369,6 +3519,20 @@ def _as_list(value: Any, path: str, errors: list[str]) -> list[Any]:
 
 def _bad_blocks(values: Any, valid_block_ids: set[str]) -> list[str]:
     return [str(value) for value in values or [] if str(value) not in valid_block_ids]
+
+
+def _outside_window_drop_kind(
+    block_ids: list[str],
+    *,
+    valid_block_ids: set[str],
+    chapter_block_ids: set[str] | None,
+) -> tuple[str | None, list[str]]:
+    bad_blocks = [block_id for block_id in block_ids if block_id not in valid_block_ids]
+    if not bad_blocks or chapter_block_ids is None:
+        return None, bad_blocks
+    if any(block_id not in chapter_block_ids for block_id in bad_blocks):
+        return "nonexistent", bad_blocks
+    return "neighbor", bad_blocks
 
 
 def _validate_candidate_ids(

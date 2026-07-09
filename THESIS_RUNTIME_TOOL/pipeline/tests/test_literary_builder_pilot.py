@@ -129,6 +129,119 @@ def test_lexicon_validator_drops_pronoun_without_retrying_window() -> None:
     assert any("plain pronoun" in warning for warning in report.warnings)
 
 
+def test_lexicon_validator_normalizes_named_candidate_ids() -> None:
+    payload = {
+        "chapter_id": "bk_ch01",
+        "window_block_ids": ["bk_ch01_b001"],
+        "context_only_used": False,
+        "glossary_candidates": [],
+        "character_mentions": [
+            {
+                "mention_id": "m_bk_ch01_b001_01",
+                "surface": "Mr. Alden",
+                "mention_type": "name",
+                "resolution_status": "named",
+                "candidate_entity_ids": ["ent_alden"],
+                "block_ids": ["bk_ch01_b001"],
+            }
+        ],
+    }
+
+    report = validate_lexicon(
+        payload,
+        valid_block_ids={"bk_ch01_b001"},
+        chapter_block_ids={"bk_ch01_b001"},
+        known_entity_ids={"ent_alden"},
+    )
+
+    assert report.ok
+    assert report.counts["mention_named_ids_cleared"] == 1
+    assert payload["character_mentions"][0]["candidate_entity_ids"] == []
+    assert any("named surface is authoritative" in warning for warning in report.warnings)
+
+
+def test_lexicon_validator_drops_outside_window_entries_by_kind() -> None:
+    payload = {
+        "chapter_id": "bk_ch01",
+        "window_block_ids": ["bk_ch01_b002"],
+        "context_only_used": True,
+        "glossary_candidates": [
+            {
+                "source_term": "Blackmoor",
+                "proposed_target_vi": "Blackmoor",
+                "category": "place",
+                "do_not_translate": True,
+                "termhood": "proper_name",
+                "block_ids": ["bk_ch01_b003"],
+            },
+            {
+                "source_term": "Raven Hall",
+                "proposed_target_vi": "Raven Hall",
+                "category": "place",
+                "do_not_translate": True,
+                "termhood": "proper_name",
+                "block_ids": ["bk_ch01_b002", "bk_ch01_b003"],
+            }
+        ],
+        "character_mentions": [
+            {
+                "mention_id": "m_bk_ch01_b001_01",
+                "surface": "Mira",
+                "mention_type": "name",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "block_ids": ["bk_ch01_b001"],
+            },
+            {
+                "mention_id": "m_bk_ch01_b002_02",
+                "surface": "Bram",
+                "mention_type": "name",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "block_ids": ["bk_ch01_b002", "bk_ch01_b003"],
+            },
+            {
+                "mention_id": "m_bk_ch01_b999_01",
+                "surface": "Rook",
+                "mention_type": "name",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "block_ids": ["bk_ch01_b999"],
+            },
+            {
+                "mention_id": "m_bk_ch01_b002_01",
+                "surface": "Mr. Alden",
+                "mention_type": "name",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "block_ids": ["bk_ch01_b002"],
+            },
+        ],
+    }
+
+    report = validate_lexicon(
+        payload,
+        valid_block_ids={"bk_ch01_b002"},
+        chapter_block_ids={"bk_ch01_b001", "bk_ch01_b002", "bk_ch01_b003"},
+    )
+
+    assert report.ok
+    assert report.counts["outside_window_neighbor_dropped"] == 4
+    assert report.counts["outside_window_nonexistent_dropped"] == 1
+    assert payload["glossary_candidates"] == [
+        {
+            "source_term": "Raven Hall",
+            "proposed_target_vi": "Raven Hall",
+            "category": "place",
+            "do_not_translate": True,
+            "termhood": "proper_name",
+            "block_ids": ["bk_ch01_b002"],
+        }
+    ]
+    assert [item["surface"] for item in payload["character_mentions"]] == ["Bram", "Mr. Alden"]
+    assert payload["character_mentions"][0]["block_ids"] == ["bk_ch01_b002"]
+
+
 def test_narrative_validator_normalizes_named_candidate_id_conflicts() -> None:
     payload = {
         "chapter_id": "bk_ch01",
@@ -177,6 +290,119 @@ def test_narrative_validator_normalizes_named_candidate_id_conflicts() -> None:
     assert turn["speaker"]["candidate_entity_ids"] == ["ent_narrator"]
     assert turn["addressee"]["resolution_status"] == "named"
     assert turn["addressee"]["candidate_entity_ids"] == []
+
+
+def test_narrative_validator_drops_outside_window_entries_by_kind() -> None:
+    def reference(surface: str) -> dict[str, object]:
+        return {
+            "surface": surface,
+            "reference_kind": "person",
+            "resolution_status": "named",
+            "candidate_entity_ids": [],
+            "attribution_method": "explicit_tag",
+            "confidence": "high",
+        }
+
+    payload = {
+        "chapter_id": "bk_ch01",
+        "window_block_ids": ["bk_ch01_b002"],
+        "context_only_used": True,
+        "speaker_turns": [
+            {
+                "turn_id": "t_bk_ch01_b003_01",
+                "speaker": reference("Mira"),
+                "addressee": reference("Mr. Alden"),
+                "utterance_quote": "Wait.",
+                "address_term_used": "",
+                "register_cue": "neutral",
+                "utterance_gist": "asks him to wait",
+                "block_id": "bk_ch01_b003",
+            },
+            {
+                "turn_id": "t_bk_ch01_b002_01",
+                "speaker": reference("Mr. Alden"),
+                "addressee": reference("Mira"),
+                "utterance_quote": "Come in.",
+                "address_term_used": "",
+                "register_cue": "neutral",
+                "utterance_gist": "invites her inside",
+                "block_id": "bk_ch01_b002",
+            },
+        ],
+        "relation_events": [
+            {
+                "event_id": "e_bk_ch01_b999_01",
+                "actor": reference("Mira"),
+                "target": reference("Mr. Alden"),
+                "event_type": "addresses",
+                "evidence_quote": "Mr. Alden",
+                "block_id": "bk_ch01_b999",
+            },
+            {
+                "event_id": "e_bk_ch01_b002_01",
+                "actor": reference("Mr. Alden"),
+                "target": reference("Mira"),
+                "event_type": "invites",
+                "evidence_quote": "Come in.",
+                "block_id": "bk_ch01_b002",
+            },
+        ],
+    }
+
+    report = validate_narrative(
+        payload,
+        valid_block_ids={"bk_ch01_b002"},
+        chapter_block_ids={"bk_ch01_b001", "bk_ch01_b002", "bk_ch01_b003"},
+    )
+
+    assert report.ok
+    assert report.counts["outside_window_neighbor_dropped"] == 1
+    assert report.counts["outside_window_nonexistent_dropped"] == 1
+    assert [item["turn_id"] for item in payload["speaker_turns"]] == ["t_bk_ch01_b002_01"]
+    assert [item["event_id"] for item in payload["relation_events"]] == ["e_bk_ch01_b002_01"]
+
+
+def test_narrative_validator_keeps_missing_block_id_as_hard_failure() -> None:
+    payload = {
+        "chapter_id": "bk_ch01",
+        "window_block_ids": ["bk_ch01_b001"],
+        "context_only_used": False,
+        "speaker_turns": [],
+        "relation_events": [
+            {
+                "event_id": "e_bk_ch01_missing_01",
+                "actor": {
+                    "surface": "Mira",
+                    "reference_kind": "person",
+                    "resolution_status": "named",
+                    "candidate_entity_ids": [],
+                    "attribution_method": "explicit_tag",
+                    "confidence": "high",
+                },
+                "target": {
+                    "surface": "Mr. Alden",
+                    "reference_kind": "person",
+                    "resolution_status": "named",
+                    "candidate_entity_ids": [],
+                    "attribution_method": "explicit_tag",
+                    "confidence": "high",
+                },
+                "event_type": "addresses",
+                "evidence_quote": "Mr. Alden",
+            }
+        ],
+    }
+
+    report = validate_narrative(
+        payload,
+        valid_block_ids={"bk_ch01_b001"},
+        chapter_block_ids={"bk_ch01_b001"},
+    )
+
+    assert not report.ok
+    assert report.counts["outside_window_neighbor_dropped"] == 0
+    assert report.counts["outside_window_nonexistent_dropped"] == 0
+    assert any("block_id is required" in error for error in report.errors)
 
 
 def test_narrative_validator_keeps_unknown_candidate_id_as_hard_failure() -> None:
