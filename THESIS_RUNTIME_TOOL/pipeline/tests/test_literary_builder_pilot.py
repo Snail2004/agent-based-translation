@@ -362,6 +362,50 @@ def test_narrative_validator_drops_outside_window_entries_by_kind() -> None:
     assert [item["event_id"] for item in payload["relation_events"]] == ["e_bk_ch01_b002_01"]
 
 
+def test_narrative_validator_allows_missing_utterance_gist() -> None:
+    payload = {
+        "chapter_id": "bk_ch01",
+        "window_block_ids": ["bk_ch01_b001"],
+        "context_only_used": False,
+        "speaker_turns": [
+            {
+                "turn_id": "t_bk_ch01_b001_01",
+                "speaker": {
+                    "surface": "Mira",
+                    "reference_kind": "person",
+                    "resolution_status": "named",
+                    "candidate_entity_ids": [],
+                    "attribution_method": "explicit_tag",
+                    "confidence": "high",
+                },
+                "addressee": {
+                    "surface": "Mr. Alden",
+                    "reference_kind": "person",
+                    "resolution_status": "named",
+                    "candidate_entity_ids": [],
+                    "attribution_method": "explicit_tag",
+                    "confidence": "high",
+                },
+                "utterance_quote": "Mr. Alden?",
+                "address_term_used": "Mr. Alden",
+                "register_cue": "neutral",
+                "block_id": "bk_ch01_b001",
+            }
+        ],
+        "relation_events": [],
+    }
+
+    report = validate_narrative(
+        payload,
+        valid_block_ids={"bk_ch01_b001"},
+        chapter_block_ids={"bk_ch01_b001"},
+    )
+
+    assert report.ok
+    assert not any("utterance_gist" in error for error in report.errors)
+    assert report.counts["turns"] == 1
+
+
 def test_narrative_validator_keeps_missing_block_id_as_hard_failure() -> None:
     payload = {
         "chapter_id": "bk_ch01",

@@ -3080,7 +3080,7 @@ def validate_narrative(
     _require_top(obj, ["chapter_id", "window_block_ids", "context_only_used", "speaker_turns", "relation_events"], errors)
     kept_turns: list[Any] = []
     for idx, turn in enumerate(_as_list(obj.get("speaker_turns"), "speaker_turns", errors)):
-        _require_item(turn, ["turn_id", "speaker", "addressee", "utterance_quote", "address_term_used", "register_cue", "utterance_gist", "block_id"], f"speaker_turns[{idx}]", errors)
+        _require_item(turn, ["turn_id", "speaker", "addressee", "utterance_quote", "address_term_used", "register_cue", "block_id"], f"speaker_turns[{idx}]", errors)
         block_id = str(turn.get("block_id") or "")
         if not block_id:
             if "block_id" in turn:
