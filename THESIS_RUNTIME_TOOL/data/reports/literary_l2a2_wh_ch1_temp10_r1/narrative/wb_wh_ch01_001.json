@@ -1,0 +1,406 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_wh_ch01_001",
+  "chapter_id": "wh_ch01",
+  "block_ids": [
+    "wh_ch01_b001",
+    "wh_ch01_b002",
+    "wh_ch01_b003",
+    "wh_ch01_b004",
+    "wh_ch01_b005",
+    "wh_ch01_b006",
+    "wh_ch01_b007",
+    "wh_ch01_b008"
+  ],
+  "previous_tail_block_ids": [],
+  "next_tail_block_ids": [
+    "wh_ch01_b009",
+    "wh_ch01_b010"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. There is NO placeholder id: ids such as ent_unknown, ent_unnamed, or ent_narrator do not exist — any id not literally listed in CHAPTER_ROSTER_ON_STAGE or REGISTRY_CONTEXT_PACK is an error; \"I do not know who this is\" is expressed ONLY as resolution_status=unknown with []. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch01_b006\", \"wh_ch01_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_wh_ch01_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"wh_ch01_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_wh_ch01_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"wh_ch01_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | single_scene_one_location\nneutral_premise | A visitor calls on Mr. Heathcliff at Wuthering Heights, is shown inside, meets servants and dogs, exchanges remarks with Heathcliff, and leaves planning another visit.\ncast | I | visitor | wh_ch01_b002\ncast | Mr. Heathcliff | landlord | wh_ch01_b002\ncast | Joseph | servant | wh_ch01_b008\ncast | a lusty dame | servant | wh_ch01_b020\nscene | wh_ch01_b002..wh_ch01_b028 | co_present_count=4 | I, Mr. Heathcliff, Joseph, a lusty dame\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\nwh_ch01_b001..wh_ch01_b008 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_joseph | Joseph | Joseph\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_wh_ch01_b002_01 | Mr. Heathcliff | name | named | \nm_wh_ch01_b003_01 | Mr. Heathcliff | name | named | \nm_wh_ch01_b005_01 | Mr. Lockwood | name | named | \nm_wh_ch01_b008_01 | Joseph | name | named | \nm_wh_ch01_b008_02 | Mr. Lockwood | name | named | \n\nCHAPTER_ID\nwh_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n(none)\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch01_b009] “Here we have the whole establishment of domestics, I suppose,” was the reflection suggested by this compound order. “No wonder the grass grows up between the flags, and cattle are the only hedge-cutters.”\n[wh_ch01_b010] Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy. “The Lord help us!” he soliloquised in an undertone of peevish displeasure, while relieving me of my horse: looking, meantime, in my face so sourly that I charitably conjectured he must have need of divine aid to digest his dinner, and his pious ejaculation had no reference to my unexpected advent.\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch01_b001] CHAPTER I\n[wh_ch01_b002] 1801—I have just returned from a visit to my landlord—the solitary neighbour that I shall be troubled with. This is certainly a beautiful country! In all England, I do not believe that I could have fixed on a situation so completely removed from the stir of society. A perfect misanthropist’s Heaven—and Mr. Heathcliff and I are such a suitable pair to divide the desolation between us. A capital fellow! He little imagined how my heart warmed towards him when I beheld his black eyes withdraw so suspiciously under their brows, as I rode up, and when his fingers sheltered themselves, with a jealous resolution, still further in his waistcoat, as I announced my name.\n[wh_ch01_b003] “Mr. Heathcliff?” I said.\n[wh_ch01_b004] A nod was the answer.\n[wh_ch01_b005] “Mr. Lockwood, your new tenant, sir. I do myself the honour of calling as soon as possible after my arrival, to express the hope that I have not inconvenienced you by my perseverance in soliciting the occupation of Thrushcross Grange: I heard yesterday you had had some thoughts—”\n[wh_ch01_b006] “Thrushcross Grange is my own, sir,” he interrupted, wincing. “I should not allow any one to inconvenience me, if I could hinder it—walk in!”\n[wh_ch01_b007] The “walk in” was uttered with closed teeth, and expressed the sentiment, “Go to the Deuce!” even the gate over which he leant manifested no sympathising movement to the words; and I think that circumstance determined me to accept the invitation: I felt interested in a man who seemed more exaggeratedly reserved than myself.\n[wh_ch01_b008] When he saw my horse’s breast fairly pushing the barrier, he did put out his hand to unchain it, and then sullenly preceded me up the causeway, calling, as we entered the court,—“Joseph, take Mr. Lockwood’s horse; and bring up some wine.”"
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch01",
+    "window_block_ids": [
+      "wh_ch01_b001",
+      "wh_ch01_b002",
+      "wh_ch01_b003",
+      "wh_ch01_b004",
+      "wh_ch01_b005",
+      "wh_ch01_b006",
+      "wh_ch01_b007",
+      "wh_ch01_b008"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_wh_ch01_b003_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Mr. Heathcliff?",
+        "address_term_used": "Mr. Heathcliff",
+        "register_cue": "neutral",
+        "utterance_gist": "asks to confirm the man's identity",
+        "block_id": "wh_ch01_b003"
+      },
+      {
+        "turn_id": "t_wh_ch01_b005_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_heathcliff"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Mr. Lockwood, your new tenant, sir.",
+        "address_term_used": "sir",
+        "register_cue": "deferential",
+        "utterance_gist": "introduces himself as the new tenant",
+        "block_id": "wh_ch01_b005"
+      },
+      {
+        "turn_id": "t_wh_ch01_b006_01",
+        "speaker": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Thrushcross Grange is my own, sir",
+        "address_term_used": "sir",
+        "register_cue": "hostile",
+        "utterance_gist": "states the property is his own",
+        "block_id": "wh_ch01_b006"
+      },
+      {
+        "turn_id": "t_wh_ch01_b006_02",
+        "speaker": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "walk in!",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "invites him to enter",
+        "block_id": "wh_ch01_b006"
+      },
+      {
+        "turn_id": "t_wh_ch01_b008_01",
+        "speaker": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Joseph",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Joseph, take Mr. Lockwood’s horse",
+        "address_term_used": "Joseph",
+        "register_cue": "neutral",
+        "utterance_gist": "orders Joseph to take the horse",
+        "block_id": "wh_ch01_b008"
+      },
+      {
+        "turn_id": "t_wh_ch01_b008_02",
+        "speaker": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Joseph",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "bring up some wine",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "orders wine to be brought up",
+        "block_id": "wh_ch01_b008"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_wh_ch01_b003_01",
+        "actor": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "addresses",
+        "evidence_quote": "Mr. Heathcliff? I said",
+        "block_id": "wh_ch01_b003"
+      },
+      {
+        "event_id": "e_wh_ch01_b005_01",
+        "actor": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_heathcliff"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "introduces",
+        "evidence_quote": "Mr. Lockwood, your new tenant",
+        "block_id": "wh_ch01_b005"
+      },
+      {
+        "event_id": "e_wh_ch01_b006_01",
+        "actor": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "orders",
+        "evidence_quote": "walk in!",
+        "block_id": "wh_ch01_b006"
+      },
+      {
+        "event_id": "e_wh_ch01_b008_01",
+        "actor": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Joseph",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "orders",
+        "evidence_quote": "Joseph, take Mr. Lockwood’s horse",
+        "block_id": "wh_ch01_b008"
+      },
+      {
+        "event_id": "e_wh_ch01_b008_02",
+        "actor": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Joseph",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "orders",
+        "evidence_quote": "bring up some wine",
+        "block_id": "wh_ch01_b008"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "speaker_turns[0].addressee.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[2].speaker.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[3].speaker.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[4].speaker.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[4].addressee.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[5].speaker.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[5].addressee.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[0].target.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[2].actor.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[3].actor.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[3].target.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[4].actor.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[4].target.candidate_entity_ids cleared because named surface is authoritative"
+    ],
+    "counts": {
+      "turns": 6,
+      "events": 5,
+      "phase_leak": 0,
+      "address_term_present": 4,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 4,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 0,
+      "attribution_enum_dropped": 0,
+      "attribution_enum_normalized": 0,
+      "named_pronoun_downgraded": 0,
+      "named_ids_cleared": 13
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "077c251ec8dce7d10c38873a6a4574f9c7a1c39c4ecde15e5246d01cd6f06669",
+      "latency_ms": 8628,
+      "cost_usd": 0.00373725,
+      "usage": {
+        "prompt_tokens": 2557,
+        "cached_tokens": 0,
+        "completion_tokens": 1549,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "speaker_turns[0].addressee.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[2].speaker.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[3].speaker.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[4].speaker.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[4].addressee.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[5].speaker.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[5].addressee.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[0].target.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[2].actor.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[3].actor.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[3].target.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[4].actor.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[4].target.candidate_entity_ids cleared because named surface is authoritative"
+        ],
+        "counts": {
+          "turns": 6,
+          "events": 5,
+          "phase_leak": 0,
+          "address_term_present": 4,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 4,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 0,
+          "attribution_enum_dropped": 0,
+          "attribution_enum_normalized": 0,
+          "named_pronoun_downgraded": 0,
+          "named_ids_cleared": 13
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch01\",\"window_block_ids\":[\"wh_ch01_b001\",\"wh_ch01_b002\",\"wh_ch01_b003\",\"wh_ch01_b004\",\"wh_ch01_b005\",\"wh_ch01_b006\",\"wh_ch01_b007\",\"wh_ch01_b008\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_wh_ch01_b003_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Mr. Heathcliff?\",\"address_term_used\":\"Mr. Heathcliff\",\"register_cue\":\"neutral\",\"utterance_gist\":\"asks to confirm the man's identity\",\"block_id\":\"wh_ch01_b003\"},{\"turn_id\":\"t_wh_ch01_b005_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Mr. Lockwood, your new tenant, sir.\",\"address_term_used\":\"sir\",\"register_cue\":\"deferential\",\"utterance_gist\":\"introduces himself as the new tenant\",\"block_id\":\"wh_ch01_b005\"},{\"turn_id\":\"t_wh_ch01_b006_01\",\"speaker\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Thrushcross Grange is my own, sir\",\"address_term_used\":\"sir\",\"register_cue\":\"hostile\",\"utterance_gist\":\"states the property is his own\",\"block_id\":\"wh_ch01_b006\"},{\"turn_id\":\"t_wh_ch01_b006_02\",\"speaker\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"walk in!\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"invites him to enter\",\"block_id\":\"wh_ch01_b006\"},{\"turn_id\":\"t_wh_ch01_b008_01\",\"speaker\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Joseph\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_joseph\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Joseph, take Mr. Lockwood’s horse\",\"address_term_used\":\"Joseph\",\"register_cue\":\"neutral\",\"utterance_gist\":\"orders Joseph to take the horse\",\"block_id\":\"wh_ch01_b008\"},{\"turn_id\":\"t_wh_ch01_b008_02\",\"speaker\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Joseph\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_joseph\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"bring up some wine\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"orders wine to be brought up\",\"block_id\":\"wh_ch01_b008\"}],\"relation_events\":[{\"event_id\":\"e_wh_ch01_b003_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"addresses\",\"evidence_quote\":\"Mr. Heathcliff? I said\",\"block_id\":\"wh_ch01_b003\"},{\"event_id\":\"e_wh_ch01_b005_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"high\"},\"target\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"introduces\",\"evidence_quote\":\"Mr. Lockwood, your new tenant\",\"block_id\":\"wh_ch01_b005\"},{\"event_id\":\"e_wh_ch01_b006_01\",\"actor\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"orders\",\"evidence_quote\":\"walk in!\",\"block_id\":\"wh_ch01_b006\"},{\"event_id\":\"e_wh_ch01_b008_01\",\"actor\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Joseph\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_joseph\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"orders\",\"evidence_quote\":\"Joseph, take Mr. Lockwood’s horse\",\"block_id\":\"wh_ch01_b008\"},{\"event_id\":\"e_wh_ch01_b008_02\",\"actor\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mr_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Joseph\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_joseph\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"orders\",\"evidence_quote\":\"bring up some wine\",\"block_id\":\"wh_ch01_b008\"}]}"
+    }
+  ],
+  "cost_usd": 0.00373725,
+  "prompt_tokens": 2557,
+  "cached_tokens": 0,
+  "completion_tokens": 1549,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

@@ -1,0 +1,228 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_wh_ch01_005",
+  "chapter_id": "wh_ch01",
+  "block_ids": [
+    "wh_ch01_b015",
+    "wh_ch01_b016",
+    "wh_ch01_b017",
+    "wh_ch01_b018"
+  ],
+  "previous_tail_block_ids": [
+    "wh_ch01_b013",
+    "wh_ch01_b014"
+  ],
+  "next_tail_block_ids": [
+    "wh_ch01_b019",
+    "wh_ch01_b020"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. There is NO placeholder id: ids such as ent_unknown, ent_unnamed, or ent_narrator do not exist — any id not literally listed in CHAPTER_ROSTER_ON_STAGE or REGISTRY_CONTEXT_PACK is an error; \"I do not know who this is\" is expressed ONLY as resolution_status=unknown with []. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch01_b006\", \"wh_ch01_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_wh_ch01_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"wh_ch01_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_wh_ch01_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"wh_ch01_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | single_scene_one_location\nneutral_premise | A visitor calls on Mr. Heathcliff at Wuthering Heights, is shown inside by Joseph, observes the house, has an awkward exchange with the dogs, and leaves after discussing the place with Heathcliff.\ncast | I | visitor | wh_ch01_b002\ncast | Mr. Heathcliff | landlord | wh_ch01_b002\ncast | Joseph | servant | wh_ch01_b008\ncast | a lusty dame | servant | wh_ch01_b020\nscene | wh_ch01_b002..wh_ch01_b028 | co_present_count=4 | I, Mr. Heathcliff, Joseph, a lusty dame\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\nwh_ch01_b015..wh_ch01_b018 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_joseph | Joseph | Joseph\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_wh_ch01_b018_01 | Mr. Heathcliff | name | named | \n\nCHAPTER_ID\nwh_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch01_b013] One step brought us into the family sitting-room, without any introductory lobby or passage: they call it here “the house” pre-eminently. It includes kitchen and parlour, generally; but I believe at Wuthering Heights the kitchen is forced to retreat altogether into another quarter: at least I distinguished a chatter of tongues, and a clatter of culinary utensils, deep within; and I observed no signs of roasting, boiling, or baking, about the huge fireplace; nor any glitter of copper saucepans and tin cullenders on the walls. One end, indeed, reflected splendidly both light and heat from ranks of immense pewter dishes, interspersed with silver jugs and tankards, towering row after row, on a vast oak dresser, to the very roof. The latter had never been under-drawn: its entire anatomy lay bare to an inquiring eye, except where a frame of wood laden with oatcakes and clusters of legs of beef, mutton, and ham, concealed it. Above the chimney were sundry villainous old guns, and a couple of horse-pistols: and, by way of ornament, three gaudily painted canisters disposed along its ledge. The floor was of smooth, white stone; the chairs, high-backed, primitive structures, painted green: one or two heavy black ones lurking in the shade. In an arch under the dresser reposed a huge, liver-coloured bitch pointer, surrounded by a swarm of squealing puppies; and other dogs haunted other recesses.\n[wh_ch01_b014] The apartment and furniture would have been nothing extraordinary as belonging to a homely, northern farmer, with a stubborn countenance, and stalwart limbs set out to advantage in knee-breeches and gaiters. Such an individual seated in his arm-chair, his mug of ale frothing on the round table before him, is to be seen in any circuit of five or six miles among these hills, if you go at the right time after dinner. But Mr. Heathcliff forms a singular contrast to his abode and style of living. He is a dark-skinned gipsy in aspect, in dress and manners a gentleman: that is, as much a gentleman as many a country squire: rather slovenly, perhaps, yet not looking amiss with his negligence, because he has an erect and handsome figure; and rather morose. Possibly, some people might suspect him of a degree of under-bred pride; I have a sympathetic chord within that tells me it is nothing of the sort: I know, by instinct, his reserve springs from an aversion to showy displays of feeling—to manifestations of mutual kindliness. He’ll love and hate equally under cover, and esteem it a species of impertinence to be loved or hated again. No, I’m running on too fast: I bestow my own attributes over-liberally on him. Mr. Heathcliff may have entirely dissimilar reasons for keeping his hand out of the way when he meets a would-be acquaintance, to those which actuate me. Let me hope my constitution is almost peculiar: my dear mother used to say I should never have a comfortable home; and only last summer I proved myself perfectly unworthy of one.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch01_b019] Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him, leaving me vis-à-vis the ruffianly bitch and a pair of grim shaggy sheep-dogs, who shared with her a jealous guardianship over all my movements. Not anxious to come in contact with their fangs, I sat still; but, imagining they would scarcely understand tacit insults, I unfortunately indulged in winking and making faces at the trio, and some turn of my physiognomy so irritated madam, that she suddenly broke into a fury and leapt on my knees. I flung her back, and hastened to interpose the table between us. This proceeding aroused the whole hive: half-a-dozen four-footed fiends, of various sizes and ages, issued from hidden dens to the common centre. I felt my heels and coat-laps peculiar subjects of assault; and parrying off the larger combatants as effectually as I could with the poker, I was constrained to demand, aloud, assistance from some of the household in re-establishing peace.\n[wh_ch01_b020] Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm: I don’t think they moved one second faster than usual, though the hearth was an absolute tempest of worrying and yelping. Happily, an inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flourishing a frying-pan: and used that weapon, and her tongue, to such purpose, that the storm subsided magically, and she only remained, heaving like a sea after a high wind, when her master entered on the scene.\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch01_b015] While enjoying a month of fine weather at the sea-coast, I was thrown into the company of a most fascinating creature: a real goddess in my eyes, as long as she took no notice of me. I “never told my love” vocally; still, if looks have language, the merest idiot might have guessed I was over head and ears: she understood me at last, and looked a return—the sweetest of all imaginable looks. And what did I do? I confess it with shame—shrunk icily into myself, like a snail; at every glance retired colder and farther; till finally the poor innocent was led to doubt her own senses, and, overwhelmed with confusion at her supposed mistake, persuaded her mamma to decamp.\n[wh_ch01_b016] By this curious turn of disposition I have gained the reputation of deliberate heartlessness; how undeserved, I alone can appreciate.\n[wh_ch01_b017] I took a seat at the end of the hearthstone opposite that towards which my landlord advanced, and filled up an interval of silence by attempting to caress the canine mother, who had left her nursery, and was sneaking wolfishly to the back of my legs, her lip curled up, and her white teeth watering for a snatch. My caress provoked a long, guttural gnarl.\n[wh_ch01_b018] “You’d better let the dog alone,” growled Mr. Heathcliff in unison, checking fiercer demonstrations with a punch of his foot. “She’s not accustomed to be spoiled—not kept for a pet.” Then, striding to a side door, he shouted again, “Joseph!”"
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch01",
+    "window_block_ids": [
+      "wh_ch01_b018",
+      "wh_ch01_b019",
+      "wh_ch01_b020"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_wh_ch01_b018_01",
+        "speaker": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "You’d better let the dog alone",
+        "address_term_used": null,
+        "register_cue": "hostile",
+        "utterance_gist": "warns the visitor to stop touching the dog",
+        "block_id": "wh_ch01_b018"
+      },
+      {
+        "turn_id": "t_wh_ch01_b018_02",
+        "speaker": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Joseph",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Joseph!",
+        "address_term_used": "Joseph",
+        "register_cue": "neutral",
+        "utterance_gist": "calls Joseph",
+        "block_id": "wh_ch01_b018"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_wh_ch01_b018_01",
+        "actor": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "warns",
+        "evidence_quote": "You’d better let the dog alone",
+        "block_id": "wh_ch01_b018"
+      },
+      {
+        "event_id": "e_wh_ch01_b018_02",
+        "actor": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "strikes",
+        "evidence_quote": "checking fiercer demonstrations with a punch",
+        "block_id": "wh_ch01_b018"
+      },
+      {
+        "event_id": "e_wh_ch01_b018_03",
+        "actor": {
+          "surface": "Mr. Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Joseph",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "orders",
+        "evidence_quote": "he shouted again, \"Joseph!\"",
+        "block_id": "wh_ch01_b018"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "turns": 2,
+      "events": 3,
+      "phase_leak": 0,
+      "address_term_present": 1,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 0,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 0,
+      "attribution_enum_dropped": 0,
+      "attribution_enum_normalized": 0,
+      "named_pronoun_downgraded": 0,
+      "named_ids_cleared": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "050bbc5bc38aaa2bb460ea4c78a227ce6e4fc0a35df2a1d45798f1a94c241efe",
+      "latency_ms": 4328,
+      "cost_usd": 0.0021545,
+      "usage": {
+        "prompt_tokens": 3306,
+        "cached_tokens": 0,
+        "completion_tokens": 664,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "turns": 2,
+          "events": 3,
+          "phase_leak": 0,
+          "address_term_present": 1,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 0,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 0,
+          "attribution_enum_dropped": 0,
+          "attribution_enum_normalized": 0,
+          "named_pronoun_downgraded": 0,
+          "named_ids_cleared": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch01\",\"window_block_ids\":[\"wh_ch01_b018\",\"wh_ch01_b019\",\"wh_ch01_b020\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_wh_ch01_b018_01\",\"speaker\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"You’d better let the dog alone\",\"address_term_used\":null,\"register_cue\":\"hostile\",\"utterance_gist\":\"warns the visitor to stop touching the dog\",\"block_id\":\"wh_ch01_b018\"},{\"turn_id\":\"t_wh_ch01_b018_02\",\"speaker\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Joseph\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Joseph!\",\"address_term_used\":\"Joseph\",\"register_cue\":\"neutral\",\"utterance_gist\":\"calls Joseph\",\"block_id\":\"wh_ch01_b018\"}],\"relation_events\":[{\"event_id\":\"e_wh_ch01_b018_01\",\"actor\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"warns\",\"evidence_quote\":\"You’d better let the dog alone\",\"block_id\":\"wh_ch01_b018\"},{\"event_id\":\"e_wh_ch01_b018_02\",\"actor\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"strikes\",\"evidence_quote\":\"checking fiercer demonstrations with a punch\",\"block_id\":\"wh_ch01_b018\"},{\"event_id\":\"e_wh_ch01_b018_03\",\"actor\":{\"surface\":\"Mr. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Joseph\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"orders\",\"evidence_quote\":\"he shouted again, \\\"Joseph!\\\"\",\"block_id\":\"wh_ch01_b018\"}]}"
+    }
+  ],
+  "cost_usd": 0.0021545,
+  "prompt_tokens": 3306,
+  "cached_tokens": 0,
+  "completion_tokens": 664,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

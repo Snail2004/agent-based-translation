@@ -1,0 +1,251 @@
+{
+  "mode": "literary_lexicon_v1",
+  "window_id": "wb_wh_ch01_003",
+  "chapter_id": "wh_ch01",
+  "block_ids": [
+    "wh_ch01_b013"
+  ],
+  "previous_tail_block_ids": [
+    "wh_ch01_b011",
+    "wh_ch01_b012"
+  ],
+  "next_tail_block_ids": [
+    "wh_ch01_b014",
+    "wh_ch01_b015"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_lexicon_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- The user gives you one WINDOW, not a whole chapter. Extract every qualifying item visible in this window; do not impose a count cap. Windowing keeps each call small; downstream code consolidates duplicates.\n- glossary_candidates are NOT people. Put places (a named house or estate, a town or village, a region — use the work's own proper names) and objects/terms that are NAMED, culturally/period-specific, or plot-significant. An object qualifies ONLY on that bar — NOT ordinary household implements or rooms. Negative examples: window, gate, chair, dinner, letter, moor (unless a proper place name), servant, poker, frying-pan, cellar, hearth, kitchen, table, fire.\n- Each glossary target proposed_target_vi MUST use full Vietnamese diacritics.\n- category MUST be exactly one of: place, object, cultural, other.\n- character_mentions: record every NON-PRONOMINAL surface that names or refers to a person — proper names, nicknames, shortened names, spelling variants, titles used as identity (\"the master\", \"the mistress\"), and characterizing epithets (\"the ruffian\"). One row per surface occurrence-group in this window. A bare pronoun (he/she/I/they…) is NOT a mention surface here even though it refers to a person — skip it entirely; it is resolved later in the narrative pass.\n- Do NOT put plain pronouns as a mention surface: i, me, my, you, your, he, him, his, she, her, we, us, they, them, and their possessives.\n- character_mentions are SINGLE persons. Do NOT record a group (\"the household\", \"the Lintons\", \"the servants\") here — groups appear only in the narrative pass as an addressee/target with reference_kind group.\n- A character_mention must REFER TO A PERSON. Do NOT record descriptions of appearance or body parts, rooms, furniture, or objects (e.g. \"stalwart limbs\", \"a stubborn countenance\", \"the apartment\", \"the round table\", \"a country squire\" used descriptively). A descriptor qualifies only when it stands in for a specific person as a referring expression (\"the master\", \"the ruffian\").\n- The CONTEXT_ONLY tail is READ-ONLY background to help you understand the window — you MUST NOT extract any glossary_candidate or character_mention that lives only in it. Everything you output must come from the ACTIVE window, and every block_id you cite must be an ACTIVE-window marker. Set top-level context_only_used=true if you leaned on the tail to understand the window (advisory audit only); never cite a context-only block_id.\n- mention_type MUST be exactly one of: name, nickname, descriptor. Use descriptor for both titles-used-as-identity (\"the master\", \"the mistress\") and characterizing epithets (\"the ruffian\", \"the old man\").\n- Give every mention a stable mention_id of the form m_<block>_<n> (for example m_wh_ch01_b006_01).\n- resolution_status MUST be exactly one of: named, candidate, unknown. Use named for ANY explicit proper name or nickname — including a bare first name like \"Mira\" or \"Alden\", even on first mention and even without a title (named describes the SURFACE being a real name, not whether you already know the person). Use candidate when the surface is a descriptor or title (never a bare pronoun — pronouns are not extracted in this pass at all) that you map to a specific entity from REGISTRY_CONTEXT_PACK but are not certain. Use unknown ONLY for a non-name reference you cannot attribute — a real proper name is never unknown.\n- candidate_entity_ids: fill ONLY when resolution_status is candidate, copying entity_id values verbatim from REGISTRY_CONTEXT_PACK (a surface may list more than one candidate). Leave it [] for named or unknown. Do NOT invent new entity_id values (never coin an id such as char_<name> or ent_<name>) and do NOT output canonical_entity_id — identity is assigned later by consolidation. If NO REGISTRY_CONTEXT_PACK entry matches the person, leave candidate_entity_ids [] and use resolution_status named (for a real proper name) or unknown (otherwise) — never mint an id to fill the gap.\n- Descriptor examples such as \"his aunt\", \"the innkeeper\", \"the coachman\", or \"the old gardener\" are candidate ONLY when REGISTRY_CONTEXT_PACK gives a matching entity_id. Without a matching pack id, they are unknown with []. There is NO placeholder id: never output an id such as ent_unknown, ent_unnamed, or ent_narrator — any id not literally present in REGISTRY_CONTEXT_PACK is invalid.\n- Do NOT output relationships, dialogue, summaries, or motifs in this pass.\n- Every block_ids entry MUST be a block marker COPIED VERBATIM from the [brackets] in the window text (they look like wh_ch01_b005) — never abbreviate the id or drop its prefix. Only markers that literally appear in this window are allowed.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch01_b005\", \"wh_ch01_b006\"],\n  \"context_only_used\": false,\n  \"glossary_candidates\": [\n    {\"source_term\": \"the Blackmoor Estate\", \"proposed_target_vi\": \"Điền trang Blackmoor\", \"category\": \"place\", \"do_not_translate\": false, \"termhood\": \"name of the principal house; must stay consistent\", \"block_ids\": [\"wh_ch01_b002\"]}\n  ],\n  \"character_mentions\": [\n    {\"mention_id\": \"m_wh_ch01_b003_01\", \"surface\": \"Mr. Alden\", \"mention_type\": \"name\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"block_ids\": [\"wh_ch01_b003\"]},\n    {\"mention_id\": \"m_wh_ch01_b006_01\", \"surface\": \"the master\", \"mention_type\": \"descriptor\", \"resolution_status\": \"unknown\", \"candidate_entity_ids\": [], \"block_ids\": [\"wh_ch01_b006\"]}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | single_scene_one_location\nneutral_premise | A visitor calls on Mr. Heathcliff at Wuthering Heights, is shown inside by Joseph, observes the house, has an awkward exchange with the dogs, and leaves after discussing the place with Heathcliff.\ncast | I | visitor | wh_ch01_b002\ncast | Mr. Heathcliff | landlord | wh_ch01_b002\ncast | Joseph | servant | wh_ch01_b008\ncast | a lusty dame | servant | wh_ch01_b020\nscene | wh_ch01_b002..wh_ch01_b028 | co_present_count=4 | I, Mr. Heathcliff, Joseph, a lusty dame\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nREGISTRY_CONTEXT_PACK\nent_joseph | Joseph | seeded:chapter_brief_cast:no_surface_alias\nent_mr_heathcliff | Mr. Heathcliff | seeded:chapter_brief_cast:no_surface_alias\n\nCHAPTER_ID\nwh_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch01_b011] Wuthering Heights is the name of Mr. Heathcliff’s dwelling. “Wuthering” being a significant provincial adjective, descriptive of the atmospheric tumult to which its station is exposed in stormy weather. Pure, bracing ventilation they must have up there at all times, indeed: one may guess the power of the north wind, blowing over the edge, by the excessive slant of a few stunted firs at the end of the house; and by a range of gaunt thorns all stretching their limbs one way, as if craving alms of the sun. Happily, the architect had foresight to build it strong: the narrow windows are deeply set in the wall, and the corners defended with large jutting stones.\n[wh_ch01_b012] Before passing the threshold, I paused to admire a quantity of grotesque carving lavished over the front, and especially about the principal door; above which, among a wilderness of crumbling griffins and shameless little boys, I detected the date “1500,” and the name “Hareton Earnshaw.” I would have made a few comments, and requested a short history of the place from the surly owner; but his attitude at the door appeared to demand my speedy entrance, or complete departure, and I had no desire to aggravate his impatience previous to inspecting the penetralium.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch01_b014] The apartment and furniture would have been nothing extraordinary as belonging to a homely, northern farmer, with a stubborn countenance, and stalwart limbs set out to advantage in knee-breeches and gaiters. Such an individual seated in his arm-chair, his mug of ale frothing on the round table before him, is to be seen in any circuit of five or six miles among these hills, if you go at the right time after dinner. But Mr. Heathcliff forms a singular contrast to his abode and style of living. He is a dark-skinned gipsy in aspect, in dress and manners a gentleman: that is, as much a gentleman as many a country squire: rather slovenly, perhaps, yet not looking amiss with his negligence, because he has an erect and handsome figure; and rather morose. Possibly, some people might suspect him of a degree of under-bred pride; I have a sympathetic chord within that tells me it is nothing of the sort: I know, by instinct, his reserve springs from an aversion to showy displays of feeling—to manifestations of mutual kindliness. He’ll love and hate equally under cover, and esteem it a species of impertinence to be loved or hated again. No, I’m running on too fast: I bestow my own attributes over-liberally on him. Mr. Heathcliff may have entirely dissimilar reasons for keeping his hand out of the way when he meets a would-be acquaintance, to those which actuate me. Let me hope my constitution is almost peculiar: my dear mother used to say I should never have a comfortable home; and only last summer I proved myself perfectly unworthy of one.\n[wh_ch01_b015] While enjoying a month of fine weather at the sea-coast, I was thrown into the company of a most fascinating creature: a real goddess in my eyes, as long as she took no notice of me. I “never told my love” vocally; still, if looks have language, the merest idiot might have guessed I was over head and ears: she understood me at last, and looked a return—the sweetest of all imaginable looks. And what did I do? I confess it with shame—shrunk icily into myself, like a snail; at every glance retired colder and farther; till finally the poor innocent was led to doubt her own senses, and, overwhelmed with confusion at her supposed mistake, persuaded her mamma to decamp.\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch01_b013] One step brought us into the family sitting-room, without any introductory lobby or passage: they call it here “the house” pre-eminently. It includes kitchen and parlour, generally; but I believe at Wuthering Heights the kitchen is forced to retreat altogether into another quarter: at least I distinguished a chatter of tongues, and a clatter of culinary utensils, deep within; and I observed no signs of roasting, boiling, or baking, about the huge fireplace; nor any glitter of copper saucepans and tin cullenders on the walls. One end, indeed, reflected splendidly both light and heat from ranks of immense pewter dishes, interspersed with silver jugs and tankards, towering row after row, on a vast oak dresser, to the very roof. The latter had never been under-drawn: its entire anatomy lay bare to an inquiring eye, except where a frame of wood laden with oatcakes and clusters of legs of beef, mutton, and ham, concealed it. Above the chimney were sundry villainous old guns, and a couple of horse-pistols: and, by way of ornament, three gaudily painted canisters disposed along its ledge. The floor was of smooth, white stone; the chairs, high-backed, primitive structures, painted green: one or two heavy black ones lurking in the shade. In an arch under the dresser reposed a huge, liver-coloured bitch pointer, surrounded by a swarm of squealing puppies; and other dogs haunted other recesses."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch01",
+    "window_block_ids": [
+      "wh_ch01_b013"
+    ],
+    "context_only_used": false,
+    "glossary_candidates": [
+      {
+        "source_term": "Wuthering Heights",
+        "proposed_target_vi": "Điền trang Wuthering Heights",
+        "category": "place",
+        "do_not_translate": false,
+        "termhood": "tên của ngôi nhà chính; phải nhất quán",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "the house",
+        "proposed_target_vi": "ngôi nhà",
+        "category": "place",
+        "do_not_translate": false,
+        "termhood": "cách gọi định danh cho tòa nhà",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "the family sitting-room",
+        "proposed_target_vi": "phòng ngồi của gia đình",
+        "category": "place",
+        "do_not_translate": false,
+        "termhood": "không gian trong nhà được gọi tên trong văn bản",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "the kitchen",
+        "proposed_target_vi": "nhà bếp",
+        "category": "place",
+        "do_not_translate": false,
+        "termhood": "không gian được nêu đích danh trong mô tả ngôi nhà",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "the parlour",
+        "proposed_target_vi": "phòng khách",
+        "category": "place",
+        "do_not_translate": false,
+        "termhood": "không gian được nêu đích danh trong mô tả ngôi nhà",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "the chimney",
+        "proposed_target_vi": "ống khói",
+        "category": "object",
+        "do_not_translate": false,
+        "termhood": "đặc điểm kiến trúc được nêu đích danh trong cảnh",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "the oak dresser",
+        "proposed_target_vi": "tủ gỗ sồi",
+        "category": "object",
+        "do_not_translate": false,
+        "termhood": "đồ đạc nổi bật, được nêu đích danh",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "horse-pistols",
+        "proposed_target_vi": "súng lục cưỡi ngựa",
+        "category": "object",
+        "do_not_translate": false,
+        "termhood": "vật dụng được nêu tên cụ thể",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "canisters",
+        "proposed_target_vi": "hộp đựng trà",
+        "category": "object",
+        "do_not_translate": false,
+        "termhood": "đồ đựng được nêu trong trang trí nội thất",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "The floor",
+        "proposed_target_vi": "sàn nhà",
+        "category": "object",
+        "do_not_translate": false,
+        "termhood": "bộ phận kiến trúc được nêu đích danh",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      },
+      {
+        "source_term": "the chairs",
+        "proposed_target_vi": "những chiếc ghế",
+        "category": "object",
+        "do_not_translate": false,
+        "termhood": "vật dụng được nêu trong mô tả cảnh",
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      }
+    ],
+    "character_mentions": [
+      {
+        "mention_id": "m_wh_ch01_b013_01",
+        "surface": "Hareton Earnshaw",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "wh_ch01_b013"
+        ]
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "lexicon",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "glossary": 11,
+      "mentions": 1,
+      "named": 1,
+      "candidate": 0,
+      "unknown": 0,
+      "dropped_bad_block": 0,
+      "pronoun_dropped": 0,
+      "context_only_used_true": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "7ac7076925c8ecf8a18c402def7c9fa03606bad8b5b32caa1941998ef2840543",
+      "latency_ms": 15426,
+      "cost_usd": 0.002091,
+      "usage": {
+        "prompt_tokens": 2684,
+        "cached_tokens": 0,
+        "completion_tokens": 710,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "lexicon",
+        "ok": false,
+        "errors": [
+          "glossary_candidates[0].block_ids outside window: ['wh_ch01_b011', 'wh_ch01_b012']",
+          "character_mentions[0].block_ids outside window: ['wh_ch01_b012']"
+        ],
+        "warnings": [],
+        "counts": {
+          "glossary": 11,
+          "mentions": 1,
+          "named": 1,
+          "candidate": 0,
+          "unknown": 0,
+          "dropped_bad_block": 3,
+          "pronoun_dropped": 0,
+          "context_only_used_true": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch01\",\"window_block_ids\":[\"wh_ch01_b011\",\"wh_ch01_b012\",\"wh_ch01_b013\"],\"context_only_used\":false,\"glossary_candidates\":[{\"source_term\":\"Wuthering Heights\",\"proposed_target_vi\":\"Điền trang Wuthering Heights\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"tên của ngôi nhà chính; phải nhất quán\",\"block_ids\":[\"wh_ch01_b011\",\"wh_ch01_b012\",\"wh_ch01_b013\"]},{\"source_term\":\"the house\",\"proposed_target_vi\":\"ngôi nhà\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"cách gọi định danh cho tòa nhà\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the family sitting-room\",\"proposed_target_vi\":\"phòng ngồi của gia đình\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"không gian trong nhà được gọi tên trong văn bản\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the kitchen\",\"proposed_target_vi\":\"nhà bếp\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"không gian được nêu đích danh trong mô tả ngôi nhà\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the parlour\",\"proposed_target_vi\":\"phòng khách\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"không gian được nêu đích danh trong mô tả ngôi nhà\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the chimney\",\"proposed_target_vi\":\"ống khói\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"đặc điểm kiến trúc được nêu đích danh trong cảnh\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the oak dresser\",\"proposed_target_vi\":\"tủ gỗ sồi\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"đồ đạc nổi bật, được nêu đích danh\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"horse-pistols\",\"proposed_target_vi\":\"súng lục cưỡi ngựa\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"vật dụng được nêu tên cụ thể\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"canisters\",\"proposed_target_vi\":\"hộp đựng trà\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"đồ đựng được nêu trong trang trí nội thất\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"The floor\",\"proposed_target_vi\":\"sàn nhà\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"bộ phận kiến trúc được nêu đích danh\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the chairs\",\"proposed_target_vi\":\"những chiếc ghế\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"vật dụng được nêu trong mô tả cảnh\",\"block_ids\":[\"wh_ch01_b013\"]}],\"character_mentions\":[{\"mention_id\":\"m_wh_ch01_b012_01\",\"surface\":\"Hareton Earnshaw\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch01_b012\"]}]}"
+    },
+    {
+      "attempt": 2,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "7215c57468d1fa23514dc1f69d901ce54ae53ac351e95093937735e1d6fed68a",
+      "latency_ms": 3943,
+      "cost_usd": 0.00172685,
+      "usage": {
+        "prompt_tokens": 3493,
+        "cached_tokens": 2304,
+        "completion_tokens": 686,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "lexicon",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "glossary": 11,
+          "mentions": 1,
+          "named": 1,
+          "candidate": 0,
+          "unknown": 0,
+          "dropped_bad_block": 0,
+          "pronoun_dropped": 0,
+          "context_only_used_true": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch01\",\"window_block_ids\":[\"wh_ch01_b013\"],\"context_only_used\":false,\"glossary_candidates\":[{\"source_term\":\"Wuthering Heights\",\"proposed_target_vi\":\"Điền trang Wuthering Heights\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"tên của ngôi nhà chính; phải nhất quán\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the house\",\"proposed_target_vi\":\"ngôi nhà\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"cách gọi định danh cho tòa nhà\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the family sitting-room\",\"proposed_target_vi\":\"phòng ngồi của gia đình\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"không gian trong nhà được gọi tên trong văn bản\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the kitchen\",\"proposed_target_vi\":\"nhà bếp\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"không gian được nêu đích danh trong mô tả ngôi nhà\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the parlour\",\"proposed_target_vi\":\"phòng khách\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"không gian được nêu đích danh trong mô tả ngôi nhà\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the chimney\",\"proposed_target_vi\":\"ống khói\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"đặc điểm kiến trúc được nêu đích danh trong cảnh\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the oak dresser\",\"proposed_target_vi\":\"tủ gỗ sồi\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"đồ đạc nổi bật, được nêu đích danh\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"horse-pistols\",\"proposed_target_vi\":\"súng lục cưỡi ngựa\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"vật dụng được nêu tên cụ thể\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"canisters\",\"proposed_target_vi\":\"hộp đựng trà\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"đồ đựng được nêu trong trang trí nội thất\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"The floor\",\"proposed_target_vi\":\"sàn nhà\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"bộ phận kiến trúc được nêu đích danh\",\"block_ids\":[\"wh_ch01_b013\"]},{\"source_term\":\"the chairs\",\"proposed_target_vi\":\"những chiếc ghế\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"vật dụng được nêu trong mô tả cảnh\",\"block_ids\":[\"wh_ch01_b013\"]}],\"character_mentions\":[{\"mention_id\":\"m_wh_ch01_b013_01\",\"surface\":\"Hareton Earnshaw\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch01_b013\"]}]}"
+    }
+  ],
+  "cost_usd": 0.00381785,
+  "prompt_tokens": 6177,
+  "cached_tokens": 2304,
+  "completion_tokens": 1396,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

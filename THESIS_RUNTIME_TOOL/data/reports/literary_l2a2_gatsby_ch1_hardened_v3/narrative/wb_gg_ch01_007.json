@@ -1,0 +1,276 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_gg_ch01_007",
+  "chapter_id": "gg_ch01",
+  "block_ids": [
+    "gg_ch01_b022",
+    "gg_ch01_b023",
+    "gg_ch01_b024",
+    "gg_ch01_b025",
+    "gg_ch01_b026",
+    "gg_ch01_b027",
+    "gg_ch01_b028"
+  ],
+  "previous_tail_block_ids": [
+    "gg_ch01_b020",
+    "gg_ch01_b021"
+  ],
+  "next_tail_block_ids": [
+    "gg_ch01_b029",
+    "gg_ch01_b030"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. There is NO placeholder id: ids such as ent_unknown, ent_unnamed, or ent_narrator do not exist — any id not literally listed in CHAPTER_ROSTER_ON_STAGE or REGISTRY_CONTEXT_PACK is an error; \"I do not know who this is\" is expressed ONLY as resolution_status=unknown with []. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"gg_ch01_b006\", \"gg_ch01_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_gg_ch01_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"gg_ch01_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_gg_ch01_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"gg_ch01_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | West Egg and East Egg, Long Island | frame_present | few_scenes\nneutral_premise | The narrator recalls his background, moves to West Egg, visits the Buchanans for dinner, meets Jordan Baker, hears talk of Gatsby, and later sees Gatsby alone near the mansion.\ncast | I | narrator | gg_ch01_b001\ncast | Nick Carraway | traveller | gg_ch01_b044\ncast | Tom Buchanan | host | gg_ch01_b019\ncast | Daisy Buchanan | host | gg_ch01_b030\ncast | Miss Baker | guest | gg_ch01_b028\ncast | Jordan Baker | guest | gg_ch01_b127\ncast | Gatsby | neighbor | gg_ch01_b152\nscene | gg_ch01_b001..gg_ch01_b015 | co_present_count=1 | I\nscene | gg_ch01_b016..gg_ch01_b152 | co_present_count=5 | Nick Carraway, Tom Buchanan, Daisy Buchanan, Miss Baker, Jordan Baker\nscene | gg_ch01_b152..gg_ch01_b153 | co_present_count=2 | I, Gatsby\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\ngg_ch01_b022..gg_ch01_b028 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_daisy | Daisy | Daisy\nent_daisy_buchanan | Daisy Buchanan | seeded:chapter_brief_cast:no_surface_alias\nent_gatsby | Gatsby | Gatsby\nent_jordan_baker | Jordan Baker | seeded:chapter_brief_cast:no_surface_alias\nent_nick_carraway | Nick Carraway | seeded:chapter_brief_cast:no_surface_alias\nent_the_carraways | The Carraways | The Carraways\nent_the_tom_buchanans | the Tom Buchanans | the Tom Buchanans\nent_tom | Tom | Tom\nent_tom_buchanan | Tom Buchanan | Tom Buchanan\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_gg_ch01_b028_01 | Tom Buchanan | name | named | \n\nCHAPTER_ID\ngg_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b020] He had changed since his New Haven years. Now he was a sturdy straw-haired man of thirty, with a rather hard mouth and a supercilious manner. Two shining arrogant eyes had established dominance over his face and gave him the appearance of always leaning aggressively forward. Not even the effeminate swank of his riding clothes could hide the enormous power of that body—he seemed to fill those glistening boots until he strained the top lacing, and you could see a great pack of muscle shifting when his shoulder moved under his thin coat. It was a body capable of enormous leverage—a cruel body.\n[gg_ch01_b021] His speaking voice, a gruff husky tenor, added to the impression of fractiousness he conveyed. There was a touch of paternal contempt in it, even toward people he liked—and there were men at New Haven who had hated his guts.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b029] The younger of the two was a stranger to me. She was extended full length at her end of the divan, completely motionless, and with her chin raised a little, as if she were balancing something on it which was quite likely to fall. If she saw me out of the corner of her eyes she gave no hint of it—indeed, I was almost surprised into murmuring an apology for having disturbed her by coming in.\n[gg_ch01_b030] The other girl, Daisy, made an attempt to rise—she leaned slightly forward with a conscientious expression—then she laughed, an absurd, charming little laugh, and I laughed too and came forward into the room.\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[gg_ch01_b022] “Now, don’t think my opinion on these matters is final,” he seemed to say, “just because I’m stronger and more of a man than you are.” We were in the same senior society, and while we were never intimate I always had the impression that he approved of me and wanted me to like him with some harsh, defiant wistfulness of his own.\n[gg_ch01_b023] We talked for a few minutes on the sunny porch.\n[gg_ch01_b024] “I’ve got a nice place here,” he said, his eyes flashing about restlessly.\n[gg_ch01_b025] Turning me around by one arm, he moved a broad flat hand along the front vista, including in its sweep a sunken Italian garden, a half acre of deep, pungent roses, and a snub-nosed motorboat that bumped the tide offshore.\n[gg_ch01_b026] “It belonged to Demaine, the oil man.” He turned me around again, politely and abruptly. “We’ll go inside.”\n[gg_ch01_b027] We walked through a high hallway into a bright rosy-coloured space, fragilely bound into the house by French windows at either end. The windows were ajar and gleaming white against the fresh grass outside that seemed to grow a little way into the house. A breeze blew through the room, blew curtains in at one end and out the other like pale flags, twisting them up toward the frosted wedding-cake of the ceiling, and then rippled over the wine-coloured rug, making a shadow on it as wind does on the sea.\n[gg_ch01_b028] The only completely stationary object in the room was an enormous couch on which two young women were buoyed up as though upon an anchored balloon. They were both in white, and their dresses were rippling and fluttering as if they had just been blown back in after a short flight around the house. I must have stood for a few moments listening to the whip and snap of the curtains and the groan of a picture on the wall. Then there was a boom as Tom Buchanan shut the rear windows and the caught wind died out about the room, and the curtains and the rugs and the two young women ballooned slowly to the floor."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "gg_ch01",
+    "window_block_ids": [
+      "gg_ch01_b022",
+      "gg_ch01_b023",
+      "gg_ch01_b024",
+      "gg_ch01_b025",
+      "gg_ch01_b026",
+      "gg_ch01_b027",
+      "gg_ch01_b028"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_gg_ch01_b022_01",
+        "speaker": {
+          "surface": "he",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_tom_buchanan"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "you",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick_carraway"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Now, don’t think my opinion on these matters is final",
+        "address_term_used": null,
+        "register_cue": "hostile",
+        "utterance_gist": "says his opinion is not final",
+        "block_id": "gg_ch01_b022"
+      },
+      {
+        "turn_id": "t_gg_ch01_b024_01",
+        "speaker": {
+          "surface": "he",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_tom_buchanan"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "me",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick_carraway"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I’ve got a nice place here",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "comments on his house",
+        "block_id": "gg_ch01_b024"
+      },
+      {
+        "turn_id": "t_gg_ch01_b026_01",
+        "speaker": {
+          "surface": "He",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_tom_buchanan"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "me",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick_carraway"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "It belonged to Demaine, the oil man.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "identifies the former owner",
+        "block_id": "gg_ch01_b026"
+      },
+      {
+        "turn_id": "t_gg_ch01_b026_02",
+        "speaker": {
+          "surface": "He",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_tom_buchanan"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "me",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick_carraway"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "We’ll go inside.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says they will go inside",
+        "block_id": "gg_ch01_b026"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_gg_ch01_b025_01",
+        "actor": {
+          "surface": "he",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_tom_buchanan"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "me",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick_carraway"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "guides",
+        "evidence_quote": "Turning me around by one arm",
+        "block_id": "gg_ch01_b025"
+      },
+      {
+        "event_id": "e_gg_ch01_b026_01",
+        "actor": {
+          "surface": "He",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_tom_buchanan"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "me",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick_carraway"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "orders",
+        "evidence_quote": "We’ll go inside",
+        "block_id": "gg_ch01_b026"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "relation_events[2] dropped because target.reference_kind is group"
+    ],
+    "counts": {
+      "turns": 4,
+      "events": 2,
+      "phase_leak": 0,
+      "address_term_present": 0,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 0,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 1,
+      "attribution_enum_dropped": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "8fa2bc2fec8e3ef1a755a0b82e9f05c4ef0ad2b5fad277e816d3df339d626e11",
+      "latency_ms": 12036,
+      "cost_usd": 0.002734,
+      "usage": {
+        "prompt_tokens": 2864,
+        "cached_tokens": 0,
+        "completion_tokens": 1009,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "relation_events[2] dropped because target.reference_kind is group"
+        ],
+        "counts": {
+          "turns": 4,
+          "events": 2,
+          "phase_leak": 0,
+          "address_term_present": 0,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 0,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 1,
+          "attribution_enum_dropped": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"gg_ch01\",\"window_block_ids\":[\"gg_ch01_b022\",\"gg_ch01_b023\",\"gg_ch01_b024\",\"gg_ch01_b025\",\"gg_ch01_b026\",\"gg_ch01_b027\",\"gg_ch01_b028\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_gg_ch01_b022_01\",\"speaker\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"you\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick_carraway\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Now, don’t think my opinion on these matters is final\",\"address_term_used\":null,\"register_cue\":\"hostile\",\"utterance_gist\":\"says his opinion is not final\",\"block_id\":\"gg_ch01_b022\"},{\"turn_id\":\"t_gg_ch01_b024_01\",\"speaker\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"me\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick_carraway\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I’ve got a nice place here\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"comments on his house\",\"block_id\":\"gg_ch01_b024\"},{\"turn_id\":\"t_gg_ch01_b026_01\",\"speaker\":{\"surface\":\"He\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"me\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick_carraway\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"It belonged to Demaine, the oil man.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"identifies the former owner\",\"block_id\":\"gg_ch01_b026\"},{\"turn_id\":\"t_gg_ch01_b026_02\",\"speaker\":{\"surface\":\"He\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"me\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick_carraway\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"We’ll go inside.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says they will go inside\",\"block_id\":\"gg_ch01_b026\"}],\"relation_events\":[{\"event_id\":\"e_gg_ch01_b025_01\",\"actor\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"me\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick_carraway\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"guides\",\"evidence_quote\":\"Turning me around by one arm\",\"block_id\":\"gg_ch01_b025\"},{\"event_id\":\"e_gg_ch01_b026_01\",\"actor\":{\"surface\":\"He\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"me\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick_carraway\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"orders\",\"evidence_quote\":\"We’ll go inside\",\"block_id\":\"gg_ch01_b026\"},{\"event_id\":\"e_gg_ch01_b028_01\",\"actor\":{\"surface\":\"Tom Buchanan\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"the two young women\",\"reference_kind\":\"group\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"opens\",\"evidence_quote\":\"Tom Buchanan shut the rear windows\",\"block_id\":\"gg_ch01_b028\"}]}"
+    }
+  ],
+  "cost_usd": 0.002734,
+  "prompt_tokens": 2864,
+  "completion_tokens": 1009,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

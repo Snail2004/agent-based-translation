@@ -1,0 +1,227 @@
+{
+  "mode": "literary_lexicon_v1",
+  "window_id": "wb_gg_ch01_022",
+  "chapter_id": "gg_ch01",
+  "block_ids": [
+    "gg_ch01_b138",
+    "gg_ch01_b139",
+    "gg_ch01_b140",
+    "gg_ch01_b141",
+    "gg_ch01_b142",
+    "gg_ch01_b143",
+    "gg_ch01_b144",
+    "gg_ch01_b145"
+  ],
+  "previous_tail_block_ids": [
+    "gg_ch01_b136",
+    "gg_ch01_b137"
+  ],
+  "next_tail_block_ids": [
+    "gg_ch01_b146",
+    "gg_ch01_b147"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_lexicon_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- The user gives you one WINDOW, not a whole chapter. Extract every qualifying item visible in this window; do not impose a count cap. Windowing keeps each call small; downstream code consolidates duplicates.\n- glossary_candidates are NOT people. Put places (a named house or estate, a town or village, a region — use the work's own proper names) and objects/terms that are NAMED, culturally/period-specific, or plot-significant. An object qualifies ONLY on that bar — NOT ordinary household implements or rooms. Negative examples: window, gate, chair, dinner, letter, moor (unless a proper place name), servant, poker, frying-pan, cellar, hearth, kitchen, table, fire.\n- Each glossary target proposed_target_vi MUST use full Vietnamese diacritics.\n- category MUST be exactly one of: place, object, cultural, other.\n- character_mentions: record EVERY surface that names or refers to a person — proper names, nicknames, shortened names, spelling variants, titles used as identity (\"the master\", \"the mistress\"), and characterizing epithets (\"the ruffian\"). One row per surface occurrence-group in this window.\n- Do NOT put plain pronouns as a mention surface: i, me, my, you, your, he, him, his, she, her, we, us, they, them, and their possessives.\n- character_mentions are SINGLE persons. Do NOT record a group (\"the household\", \"the Lintons\", \"the servants\") here — groups appear only in the narrative pass as an addressee/target with reference_kind group.\n- A character_mention must REFER TO A PERSON. Do NOT record descriptions of appearance or body parts, rooms, furniture, or objects (e.g. \"stalwart limbs\", \"a stubborn countenance\", \"the apartment\", \"the round table\", \"a country squire\" used descriptively). A descriptor qualifies only when it stands in for a specific person as a referring expression (\"the master\", \"the ruffian\").\n- The CONTEXT_ONLY tail is READ-ONLY background to help you understand the window — you MUST NOT extract any glossary_candidate or character_mention that lives only in it. Everything you output must come from the ACTIVE window, and every block_id you cite must be an ACTIVE-window marker. Set top-level context_only_used=true if you leaned on the tail to understand the window (advisory audit only); never cite a context-only block_id.\n- mention_type MUST be exactly one of: name, nickname, descriptor. Use descriptor for both titles-used-as-identity (\"the master\", \"the mistress\") and characterizing epithets (\"the ruffian\", \"the old man\").\n- Give every mention a stable mention_id of the form m_<block>_<n> (for example m_gg_ch01_b006_01).\n- resolution_status MUST be exactly one of: named, candidate, unknown. Use named for ANY explicit proper name or nickname — including a bare first name like \"Mira\" or \"Alden\", even on first mention and even without a title (named describes the SURFACE being a real name, not whether you already know the person). Use candidate when the surface is a descriptor/title/pronoun that you map to a specific entity from REGISTRY_CONTEXT_PACK but are not certain. Use unknown ONLY for a non-name reference you cannot attribute — a real proper name is never unknown.\n- candidate_entity_ids: fill ONLY when resolution_status is candidate, copying entity_id values verbatim from REGISTRY_CONTEXT_PACK (a surface may list more than one candidate). Leave it [] for named or unknown. Do NOT invent new entity_id values (never coin an id such as char_<name> or ent_<name>) and do NOT output canonical_entity_id — identity is assigned later by consolidation. If NO REGISTRY_CONTEXT_PACK entry matches the person, leave candidate_entity_ids [] and use resolution_status named (for a real proper name) or unknown (otherwise) — never mint an id to fill the gap.\n- Descriptor examples such as \"his aunt\", \"the innkeeper\", \"the coachman\", or \"the old gardener\" are candidate ONLY when REGISTRY_CONTEXT_PACK gives a matching entity_id. Without a matching pack id, they are unknown with []. There is NO placeholder id: never output an id such as ent_unknown, ent_unnamed, or ent_narrator — any id not literally present in REGISTRY_CONTEXT_PACK is invalid.\n- Do NOT output relationships, dialogue, summaries, or motifs in this pass.\n- Every block_ids entry MUST be a block marker COPIED VERBATIM from the [brackets] in the window text (they look like gg_ch01_b005) — never abbreviate the id or drop its prefix. Only markers that literally appear in this window are allowed.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"gg_ch01_b005\", \"gg_ch01_b006\"],\n  \"context_only_used\": false,\n  \"glossary_candidates\": [\n    {\"source_term\": \"the Blackmoor Estate\", \"proposed_target_vi\": \"Điền trang Blackmoor\", \"category\": \"place\", \"do_not_translate\": false, \"termhood\": \"name of the principal house; must stay consistent\", \"block_ids\": [\"gg_ch01_b002\"]}\n  ],\n  \"character_mentions\": [\n    {\"mention_id\": \"m_gg_ch01_b003_01\", \"surface\": \"Mr. Alden\", \"mention_type\": \"name\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"block_ids\": [\"gg_ch01_b003\"]},\n    {\"mention_id\": \"m_gg_ch01_b006_01\", \"surface\": \"the master\", \"mention_type\": \"descriptor\", \"resolution_status\": \"unknown\", \"candidate_entity_ids\": [], \"block_ids\": [\"gg_ch01_b006\"]}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | West Egg and East Egg, Long Island | frame_present | few_scenes\nneutral_premise | The narrator recalls his background, moves to West Egg, visits the Buchanans for dinner, meets Jordan Baker, hears talk of Gatsby, and later sees Gatsby alone near the mansion.\ncast | I | narrator | gg_ch01_b001\ncast | Nick Carraway | traveller | gg_ch01_b044\ncast | Tom Buchanan | host | gg_ch01_b019\ncast | Daisy Buchanan | host | gg_ch01_b030\ncast | Miss Baker | guest | gg_ch01_b028\ncast | Jordan Baker | guest | gg_ch01_b127\ncast | Gatsby | neighbor | gg_ch01_b152\nscene | gg_ch01_b001..gg_ch01_b015 | co_present_count=1 | I\nscene | gg_ch01_b016..gg_ch01_b152 | co_present_count=5 | Nick Carraway, Tom Buchanan, Daisy Buchanan, Miss Baker, Jordan Baker\nscene | gg_ch01_b152..gg_ch01_b153 | co_present_count=2 | I, Gatsby\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nREGISTRY_CONTEXT_PACK\nent_daisy | Daisy | Daisy\nent_nick | Nick | Nick\nent_tom | Tom | Tom\nent_daisy_buchanan | Daisy Buchanan | seeded:chapter_brief_cast:no_surface_alias\nent_gatsby | Gatsby | seeded:chapter_brief_cast:no_surface_alias\nent_jordan_baker | Jordan Baker | seeded:chapter_brief_cast:no_surface_alias\nent_nick_carraway | Nick Carraway | seeded:chapter_brief_cast:no_surface_alias\nent_tom_buchanan | Tom Buchanan | seeded:chapter_brief_cast:no_surface_alias\n\nCHAPTER_ID\ngg_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b136] “Who oughtn’t to?” inquired Daisy coldly.\n[gg_ch01_b137] “Her family.”\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b146] “I forgot to ask you something, and it’s important. We heard you were engaged to a girl out West.”\n[gg_ch01_b147] “That’s right,” corroborated Tom kindly. “We heard that you were engaged.”\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[gg_ch01_b138] “Her family is one aunt about a thousand years old. Besides, Nick’s going to look after her, aren’t you, Nick? She’s going to spend lots of weekends out here this summer. I think the home influence will be very good for her.”\n[gg_ch01_b139] Daisy and Tom looked at each other for a moment in silence.\n[gg_ch01_b140] “Is she from New York?” I asked quickly.\n[gg_ch01_b141] “From Louisville. Our white girlhood was passed together there. Our beautiful white—”\n[gg_ch01_b142] “Did you give Nick a little heart to heart talk on the veranda?” demanded Tom suddenly.\n[gg_ch01_b143] “Did I?” She looked at me. “I can’t seem to remember, but I think we talked about the Nordic race. Yes, I’m sure we did. It sort of crept up on us and first thing you know—”\n[gg_ch01_b144] “Don’t believe everything you hear, Nick,” he advised me.\n[gg_ch01_b145] I said lightly that I had heard nothing at all, and a few minutes later I got up to go home. They came to the door with me and stood side by side in a cheerful square of light. As I started my motor Daisy peremptorily called: “Wait!"
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "gg_ch01",
+    "window_block_ids": [
+      "gg_ch01_b138",
+      "gg_ch01_b139",
+      "gg_ch01_b140",
+      "gg_ch01_b141",
+      "gg_ch01_b142",
+      "gg_ch01_b143",
+      "gg_ch01_b144",
+      "gg_ch01_b145"
+    ],
+    "context_only_used": false,
+    "glossary_candidates": [],
+    "character_mentions": [
+      {
+        "mention_id": "m_gg_ch01_b138_01",
+        "surface": "Nick",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "gg_ch01_b138"
+        ]
+      },
+      {
+        "mention_id": "m_gg_ch01_b139_01",
+        "surface": "Daisy",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "gg_ch01_b139"
+        ]
+      },
+      {
+        "mention_id": "m_gg_ch01_b139_02",
+        "surface": "Tom",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "gg_ch01_b139"
+        ]
+      },
+      {
+        "mention_id": "m_gg_ch01_b142_01",
+        "surface": "Nick",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "gg_ch01_b142"
+        ]
+      },
+      {
+        "mention_id": "m_gg_ch01_b142_02",
+        "surface": "Tom",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "gg_ch01_b142"
+        ]
+      },
+      {
+        "mention_id": "m_gg_ch01_b144_01",
+        "surface": "Nick",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "gg_ch01_b144"
+        ]
+      },
+      {
+        "mention_id": "m_gg_ch01_b144_02",
+        "surface": "Tom",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "gg_ch01_b144"
+        ]
+      },
+      {
+        "mention_id": "m_gg_ch01_b145_01",
+        "surface": "Daisy",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "gg_ch01_b145"
+        ]
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "lexicon",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "glossary": 0,
+      "mentions": 8,
+      "named": 8,
+      "candidate": 0,
+      "unknown": 0,
+      "dropped_bad_block": 0,
+      "pronoun_dropped": 0,
+      "context_only_used_true": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "63be1eb5ee8576af4a8622049fabb81348515c683d6602f3cba03da6641dd200",
+      "latency_ms": 4537,
+      "cost_usd": 0.002356,
+      "usage": {
+        "prompt_tokens": 2048,
+        "cached_tokens": 0,
+        "completion_tokens": 922,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "lexicon",
+        "ok": false,
+        "errors": [
+          "character_mentions[3].surface is plain pronoun: I",
+          "character_mentions[4].surface is plain pronoun: Our",
+          "character_mentions[7].surface is plain pronoun: She",
+          "character_mentions[9].surface is plain pronoun: he",
+          "character_mentions[10].surface is plain pronoun: I",
+          "character_mentions[11].surface is plain pronoun: They"
+        ],
+        "warnings": [],
+        "counts": {
+          "glossary": 0,
+          "mentions": 13,
+          "named": 7,
+          "candidate": 1,
+          "unknown": 5,
+          "dropped_bad_block": 0,
+          "pronoun_dropped": 6,
+          "context_only_used_true": 0
+        }
+      },
+      "raw_text": "{\n  \"chapter_id\": \"gg_ch01\",\n  \"window_block_ids\": [\"gg_ch01_b138\", \"gg_ch01_b139\", \"gg_ch01_b140\", \"gg_ch01_b141\", \"gg_ch01_b142\", \"gg_ch01_b143\", \"gg_ch01_b144\", \"gg_ch01_b145\"],\n  \"context_only_used\": false,\n  \"glossary_candidates\": [],\n  \"character_mentions\": [\n    {\n      \"mention_id\": \"m_gg_ch01_b138_01\",\n      \"surface\": \"Nick\",\n      \"mention_type\": \"name\",\n      \"resolution_status\": \"named\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b138\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b139_01\",\n      \"surface\": \"Daisy\",\n      \"mention_type\": \"name\",\n      \"resolution_status\": \"named\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b139\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b139_02\",\n      \"surface\": \"Tom\",\n      \"mention_type\": \"name\",\n      \"resolution_status\": \"named\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b139\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b140_01\",\n      \"surface\": \"I\",\n      \"mention_type\": \"descriptor\",\n      \"resolution_status\": \"unknown\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b140\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b141_01\",\n      \"surface\": \"Our\",\n      \"mention_type\": \"descriptor\",\n      \"resolution_status\": \"unknown\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b141\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b142_01\",\n      \"surface\": \"Nick\",\n      \"mention_type\": \"name\",\n      \"resolution_status\": \"named\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b142\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b142_02\",\n      \"surface\": \"Tom\",\n      \"mention_type\": \"name\",\n      \"resolution_status\": \"named\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b142\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b143_01\",\n      \"surface\": \"She\",\n      \"mention_type\": \"descriptor\",\n      \"resolution_status\": \"unknown\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b143\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b144_01\",\n      \"surface\": \"Nick\",\n      \"mention_type\": \"name\",\n      \"resolution_status\": \"named\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b144\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b144_02\",\n      \"surface\": \"he\",\n      \"mention_type\": \"descriptor\",\n      \"resolution_status\": \"candidate\",\n      \"candidate_entity_ids\": [\"ent_tom\"],\n      \"block_ids\": [\"gg_ch01_b144\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b145_01\",\n      \"surface\": \"I\",\n      \"mention_type\": \"descriptor\",\n      \"resolution_status\": \"unknown\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b145\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b145_02\",\n      \"surface\": \"They\",\n      \"mention_type\": \"descriptor\",\n      \"resolution_status\": \"unknown\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b145\"]\n    },\n    {\n      \"mention_id\": \"m_gg_ch01_b145_03\",\n      \"surface\": \"Daisy\",\n      \"mention_type\": \"name\",\n      \"resolution_status\": \"named\",\n      \"candidate_entity_ids\": [],\n      \"block_ids\": [\"gg_ch01_b145\"]\n    }\n  ]\n}"
+    },
+    {
+      "attempt": 2,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "50857e84dbf7fdf3b01bbd79723bbe2192f552a49ae5509c25af96677a0ef270",
+      "latency_ms": 2792,
+      "cost_usd": 0.0012068,
+      "usage": {
+        "prompt_tokens": 3064,
+        "cached_tokens": 1792,
+        "completion_tokens": 422,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "lexicon",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "glossary": 0,
+          "mentions": 8,
+          "named": 8,
+          "candidate": 0,
+          "unknown": 0,
+          "dropped_bad_block": 0,
+          "pronoun_dropped": 0,
+          "context_only_used_true": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"gg_ch01\",\"window_block_ids\":[\"gg_ch01_b138\",\"gg_ch01_b139\",\"gg_ch01_b140\",\"gg_ch01_b141\",\"gg_ch01_b142\",\"gg_ch01_b143\",\"gg_ch01_b144\",\"gg_ch01_b145\"],\"context_only_used\":false,\"glossary_candidates\":[],\"character_mentions\":[{\"mention_id\":\"m_gg_ch01_b138_01\",\"surface\":\"Nick\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"gg_ch01_b138\"]},{\"mention_id\":\"m_gg_ch01_b139_01\",\"surface\":\"Daisy\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"gg_ch01_b139\"]},{\"mention_id\":\"m_gg_ch01_b139_02\",\"surface\":\"Tom\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"gg_ch01_b139\"]},{\"mention_id\":\"m_gg_ch01_b142_01\",\"surface\":\"Nick\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"gg_ch01_b142\"]},{\"mention_id\":\"m_gg_ch01_b142_02\",\"surface\":\"Tom\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"gg_ch01_b142\"]},{\"mention_id\":\"m_gg_ch01_b144_01\",\"surface\":\"Nick\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"gg_ch01_b144\"]},{\"mention_id\":\"m_gg_ch01_b144_02\",\"surface\":\"Tom\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"gg_ch01_b144\"]},{\"mention_id\":\"m_gg_ch01_b145_01\",\"surface\":\"Daisy\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"gg_ch01_b145\"]}]}"
+    }
+  ],
+  "cost_usd": 0.0035628,
+  "prompt_tokens": 5112,
+  "completion_tokens": 1344,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}
