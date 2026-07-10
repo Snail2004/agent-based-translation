@@ -397,3 +397,37 @@ là strictness CodeX thêm khi implement, nới nó không mở lại lock.)
 - Amendment #2 relax code independently gated: diff removes ONLY the `same_identity outside_group` check, keeps exists/no-dup/must_touch_group, surfaces `evidence_atom_id_normalized` + `evidence_cross_group_source_atoms`; focused tests re-run by Claude 15/15.
 
 **Next:** CodeX re-runs `--resume` (no code change needed — prompt loads from design doc at runtime). Expect: identity ch1 from_cache, phase ch1 real call, then remaining scopes.
+
+---
+
+## AMENDMENT #4 (2026-07-11, Claude gate) — TWO wiring defects found after resume; ch1 checkpoint INVALID; fixes are mechanical, NO new LLM stage, NO prompt change
+
+### Defect A (SILENT — worse): runtime phase payload was EMPTY; ch1 published a bible with 0 relations that "passed"
+
+Evidence (real artifacts): phase ch1 call = 525 prompt tokens vs dry-run estimate 5,689 for the same scope; model returned `{"relation_phases":[],"relation_facts":[]}` (17 tokens) — correct behavior for the input it was given. Real m4_full digest ch1 has 3 pairs / 18 event_ids, ALL 18 join the event index; the evidence never reached the model.
+
+Root cause: type mismatch between scaffold and runtime batching. `scope["phase_rows"]` is already the output of `_phase_pair_batches` (batches `{provisional_pair, history}`), but `_runtime_phase_pair_batches` expects FLAT rows keyed by `source_chapter_id` → `affected` = empty set → zero pair batches → `pair_evidence: []` sent. Dry-run sized the CORRECT payload; runtime built a DIFFERENT one. Green equivalence tests missed it because both compared sides were built from the same wrong path.
+
+Fix (CodeX, no judgment involved):
+1. `_runtime_phase_shards` consumes the MAPPED batches directly (affected-pair filtering already happened at scope build; delete the re-derivation from `source_chapter_id`).
+2. Fail-closed guard: runtime (`scaffold_only=False`) phase request with non-empty mapped pairs but zero history events → raise wiring error (technical halt), never send.
+3. Surface counters in phase audit/report: `phase_pairs_sent`, `phase_history_rows_sent`, `phase_events_sent` (ch1 expected: 3 / 3 / 18).
+4. **Invalidate ch1**: delete `checkpoints/m3_v2/wh_ch01.json` + `story_bible_v2/wh_ch01_story_bible.json` (published from an empty-evidence run — invalid regardless of what a correct run would output). Resume re-runs ch1: identity replays from local cache ($0, prompt untouched); phase ch1 is a new real call (~5.7k in est).
+5. Tests: (a) runtime rendered phase prompt for a synthetic scope MUST contain a known evidence quote from the history events; (b) scaffold-vs-runtime payload row/event count equivalence; (c) the empty-payload guard fires on a constructed empty batch.
+
+### Defect B (loud, correct halt at ch2): provisional digest pair id `ent_hareton` has no binding to final ids
+
+Evidence: ch2 digest `relation_event_summary` names the same person under THREE provisional ids (`ent_the_young_man`, `ent_hareton_earnshaw`, `ent_hareton`). The first two resolve via atom `hint_entity_id`; `ent_hareton` never appears as a hint because every "Hareton" B1 mention is `named` with empty `candidate_entity_ids`. `_remap_phase_rows_to_final_ids` fail-closed correctly.
+
+Decision: **REJECT the proposed new LLM binding hand-shake** (identity stage returning provisional→final mappings). Reasons: (1) it would change the LOCKED identity prompt → invalidates identity caches for ch1+ch2 (~19k+ tokens re-billed) and adds schema churn mid-run; (2) it re-asks the model a judgment it already made at atom level; the mapping is derivable by COMPOSING two recorded LLM judgments — that is bookkeeping, not language work (the inverse of the Mrs.-Heathcliff lesson: code may follow LLM identity decisions, it may not make them).
+
+Mechanical rule (scope-level, after identity apply, fail-closed):
+- For each unresolved provisional id P: over all summary rows whose pair contains P, over their JOINED events, find P's side per event mechanically — (i) `side.candidate_entity_ids == [P]`, or (ii) by elimination when the other side resolves to the pair-mate's final id. Resolve that side ONLY via existing `_resolve_final_entity_ref` paths (hint binding / unique candidate / exact same-block atom surface).
+- Collect distinct final ids across witnesses. Exactly one → bind P→final for THIS scope; record `provisional_bindings` in audit with witness event/block ids. Zero or ≥2 → stay unresolved → halt exactly as today (design an escalation only if a real corpus case demands it — measure first).
+- Expected on real ch2: `ent_hareton → ent_hareton_earnshaw` via witness `e_wh_ch02_b058_01` (target surface "Hareton"@wh_ch02_b058 = atom `m_wh_ch02_b058_01`, which the identity partition placed in `ent_hareton_earnshaw`). Both halted pairs then map.
+- Tests: real ch2 fixture (digest summary + joined events + real identity raw response) produces exactly this binding; synthetic two-conflicting-witnesses → halt; synthetic zero-witness → halt.
+
+### Run plan after both fixes
+No prompt changes anywhere → identity ch1 AND ch2 replay from local cache at $0; only phase calls (and ch3 identity) are new spend. Resume order: ch1 (invalidated, re-publishes with real evidence) → ch2 → ch3. Report must show the new counters so the phase payloads are auditable per run.
+
+Method note for the thesis log: defect A is the strongest instance yet of audit-real-rendered-prompts — a green, published, validator-passing artifact was invalid, and the ONLY visible symptom was a token count (525 vs 5,689 estimate) on a real call.
