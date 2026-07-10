@@ -454,3 +454,20 @@ Verified: atom "the young man"@b079 hints `ent_the_young_man`; identity group `g
 **Tests:** compare event_id SETS before remap vs after merge (must be equal — nothing dropped, nothing invented), not just counts or a sample quote; collapsed-pair fixture from the REAL ch2 rows must yield ONE batch for (ent_hareton_earnshaw, ent_mr_lockwood) with all 5 events; per-pair empty guard fires on a constructed empty batch; missing-join fixture hard-fails listing the id.
 
 **Housekeeping (approved):** delete ch1 checkpoint + story bible only; KEEP the empty-payload raw responses as audit evidence. Identity ch1+ch2 expected cache-hit (no identity input changes). Bug B stays as amendment #4 (witness composition, zero-witness/multi-final still halt).
+
+---
+
+## AMENDMENT #5 (2026-07-11, Claude gate) — phase_response_rejected ch1: 3 punctuation slips + 1 validator-stricter-than-locked-spec; model judgment CORRECT on all 4; fixes validator-side only, cached response replays at $0
+
+**Verified on real artifacts.** Phase ch1 real call (4,316 in / 577 out) produced 4 phases + 4 relation facts, all interpretively sound (joseph dependent/servant_of heathcliff; joseph–lockwood strained; heathcliff–lockwood strained b003–b025 closed → friendly open from b026; landlord_of/tenant_of at b005). The 4 validator errors:
+
+1. **3 × apostrophe (mechanical):** model wrote ASCII `'` in "Mr. Lockwood's horse" (1 phase trigger + 2 facts, all b008); source b008 has curly `’`. Content verbatim otherwise.
+2. **1 × trigger_evidence location:** quote "you are flurried, Mr. Lockwood" is real and verbatim — at b027, INSIDE the phase's range (b026 → open). Source b026 = "Heathcliff's countenance relaxed into a grin" → the model's claim that the friendly phase STARTS at b026 is defensible interpretation. The LOCKED design contract (§5.4 code-validate line) requires "mọi trigger có evidence trong range" — evidence within the RANGE. The implemented check (line ~2739) demands substring of trigger_block specifically — stricter than spec. Validator wrong, model right (variant-4; cf. amendment #2).
+
+**Decisions (all validator-side; prompt LOCKED untouched → cached phase response replays $0):**
+
+1. **Punctuation-fold quote locating (uniform helper, all quote gates — identity evidence, phase trigger_evidence, fact evidence_quote):** when exact substring fails, fold Unicode punctuation (’‘→', “”→", —–→-) on both sides to LOCATE; on a UNIQUE folded match, restore the SOURCE-verbatim substring into the stored artifact (source text is the authority) and count per-stage `evidence_quote_punct_normalized`. No match / ambiguous → reject as today. Precedent: amendment #1 unique-mapping normalize; D2L scorer casefold+punctuation hardening.
+2. **Range check per locked spec:** trigger_evidence must locate verbatim (after fold) in ANY block of the phase's range [valid_from_block .. valid_until_block, or scope end when open]. Keep `trigger_block must_equal_start`. Record the located block as `trigger_evidence_block` on the stored row (surfaced provenance). Do NOT auto-move trigger_block (phase start = model's interpretive claim, untouchable by code).
+3. **Raw-file overwrite (audit finding — CONFIRMED, fix REQUIRED before next resume):** resume overwrote `literary_phase_segment..._attempt_01.json`, destroying the empty-payload evidence file (still recoverable in SQLite llm_call_cache; amendment #4 + report preserve the record). Raw filenames must be append-only across resumes: scan existing files and continue the attempt sequence (or embed a resume/run id); open exclusively — NEVER overwrite an existing raw file.
+
+**Expected on resume:** ch1 identity + phase both from cache ($0); after normalize(3) + range-locate(1) the response fully passes → ch1 publishes 4 phases + 4 facts; counters `evidence_quote_punct_normalized=3`, trigger located at b027. Then ch2 (identity cache-hit, phase real call with merged final-pair batches, `collapsed_pair_batches ≥ 1`) → ch3. Test: real ch1 phase raw as fixture must fully pass; ASCII-vs-curly fixture keeps rejecting on ambiguous/multi-match; range-located block outside range still rejects.
