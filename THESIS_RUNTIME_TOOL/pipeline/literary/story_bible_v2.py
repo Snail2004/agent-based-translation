@@ -9,8 +9,11 @@ behind a later gate.  This file therefore makes the data contract, estimate,
 checkpoint contract, and prompt rendering reviewable before any model call.
 """
 
+import copy
 import json
+import os
 import re
+import uuid
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -29,6 +32,7 @@ from pipeline.literary.builder_pilot import (
     select_chapters,
 )
 from pipeline.literary.checkpoint import (
+    CheckpointLock,
     artifact_manifest,
     build_checkpoint,
     canonical_hash,
@@ -480,6 +484,7 @@ def build_identity_messages(
     atoms: list[dict[str, Any]],
     prior_groups: list[dict[str, Any]],
     identity_hints: list[dict[str, Any]],
+    scaffold_only: bool = True,
 ) -> list[dict[str, str]]:
     prompt_prior_groups = [
         {
@@ -490,16 +495,17 @@ def build_identity_messages(
         }
         for group in prior_groups
     ]
-    user_payload = {
+    user_payload: dict[str, Any] = {
         "scope": scope,
         "atoms": atoms,
         "prior_groups": prompt_prior_groups,
         "identity_hints": identity_hints,
-        "dry_run_note": (
+    }
+    if scaffold_only:
+        user_payload["dry_run_note"] = (
             "This scaffold uses provisional prior groups only for token sizing. "
             "They are not identity verdicts and will not be published."
-        ),
-    }
+        )
     return [
         {
             "role": "system",
@@ -577,8 +583,9 @@ def build_phase_messages(
     chapter_id: str,
     scope: str,
     phase_rows: list[dict[str, Any]],
+    scaffold_only: bool = True,
 ) -> list[dict[str, str]]:
-    user_payload = {
+    user_payload: dict[str, Any] = {
         "scope": scope,
         "predicate_taxonomy_version": PREDICATE_TAXONOMY_VERSION,
         "pair_evidence": phase_rows,
@@ -586,11 +593,12 @@ def build_phase_messages(
             "relation_facts": "list",
             "relation_phases": "list; every phase must include its pair because this is a batch",
         },
-        "dry_run_note": (
+    }
+    if scaffold_only:
+        user_payload["dry_run_note"] = (
             "Pair ids are pre-identity provisional ids for prompt sizing only. "
             "A real run remaps evidence to final ids after identity partition before this call."
-        ),
-    }
+        )
     return [
         {
             "role": "system",
@@ -703,6 +711,93 @@ def _identity_shards(
     return shards
 
 
+def _runtime_prior_groups(
+    *,
+    state: dict[str, Any],
+    frontier_atoms: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Expose only already-published groups mechanically linked to this frontier."""
+
+    frontier_surfaces = {
+        _surface_key(str(atom.get("surface") or ""))
+        for atom in frontier_atoms
+        if str(atom.get("surface") or "")
+    }
+    frontier_hints = {
+        str(atom.get("hint_entity_id") or "")
+        for atom in frontier_atoms
+        if str(atom.get("hint_entity_id") or "")
+    }
+    groups: list[dict[str, Any]] = []
+    for entity in state.get("entities") or []:
+        if not isinstance(entity, dict):
+            continue
+        entity_id = str(entity.get("entity_id") or "")
+        canonical = str(entity.get("canonical") or "")
+        if not entity_id or not canonical:
+            continue
+        aliases = [canonical]
+        for alias in entity.get("aliases") or []:
+            if isinstance(alias, dict) and str(alias.get("surface") or ""):
+                aliases.append(str(alias["surface"]))
+        alias_keys = {_surface_key(surface) for surface in aliases if surface}
+        if entity_id not in frontier_hints and not (alias_keys & frontier_surfaces):
+            continue
+        groups.append(
+            {
+                "entity_id": entity_id,
+                "canonical_surface": canonical,
+                "referent_kind": str(entity.get("referent_kind") or "unknown"),
+                "member_summary": [
+                    str(atom_id) for atom_id in (entity.get("member_atom_ids") or [])[:12]
+                ],
+            }
+        )
+    return sorted(groups, key=lambda item: str(item["entity_id"]))
+
+
+def _runtime_identity_shards(
+    *,
+    frontier_atoms: list[dict[str, Any]],
+    state: dict[str, Any],
+    design_doc: Path,
+    chapter_id: str,
+    scope: str,
+    identity_hints: list[dict[str, Any]],
+    prompt_cap: int | None,
+) -> list[dict[str, Any]]:
+    """Build the post-scaffold identity request plan with no dry-run-only fields."""
+
+    components = _identity_components(frontier_atoms)
+    component_rows = [
+        {"component_id": f"component_{index:04d}", "atoms": component}
+        for index, component in enumerate(components, start=1)
+    ]
+
+    def build_for_components(component_batch: list[dict[str, Any]]) -> list[dict[str, str]]:
+        atoms = [atom for component in component_batch for atom in component["atoms"]]
+        return build_identity_messages(
+            design_doc=design_doc,
+            chapter_id=chapter_id,
+            scope=scope,
+            atoms=atoms,
+            prior_groups=_runtime_prior_groups(state=state, frontier_atoms=atoms),
+            identity_hints=identity_hints,
+            scaffold_only=False,
+        )
+
+    shards = _shard_for_cap(
+        items=component_rows,
+        build_messages=build_for_components,
+        prompt_cap=prompt_cap,
+    )
+    for shard in shards:
+        shard["items"] = [
+            atom for component in shard["items"] for atom in component["atoms"]
+        ]
+    return shards
+
+
 def _phase_pair_batches(
     *,
     phase_rows: list[dict[str, Any]],
@@ -727,6 +822,57 @@ def _phase_pair_batches(
         }
         for pair, history in sorted(by_pair.items())
     ]
+
+
+def _runtime_phase_pair_batches(
+    *,
+    phase_rows: list[dict[str, Any]],
+    chapter_id: str,
+) -> list[dict[str, Any]]:
+    """Batch final-id pair histories after the identity partition has been applied."""
+
+    affected = {
+        tuple(str(value) for value in row.get("pair") or [])
+        for row in phase_rows
+        if str(row.get("source_chapter_id") or "") == chapter_id
+    }
+    by_pair: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for row in phase_rows:
+        pair = tuple(str(value) for value in row.get("pair") or [])
+        if len(pair) != 2 or pair not in affected:
+            continue
+        by_pair.setdefault(pair, []).append(row)
+    return [
+        {"pair": list(pair), "history": history}
+        for pair, history in sorted(by_pair.items())
+    ]
+
+
+def _runtime_phase_shards(
+    *,
+    phase_rows: list[dict[str, Any]],
+    design_doc: Path,
+    chapter_id: str,
+    scope: str,
+    prompt_cap: int | None,
+) -> list[dict[str, Any]]:
+    """Build phase requests after all references point to final identity ids."""
+
+    pair_batches = _runtime_phase_pair_batches(
+        phase_rows=phase_rows,
+        chapter_id=chapter_id,
+    )
+    return _shard_for_cap(
+        items=pair_batches,
+        build_messages=lambda shard: build_phase_messages(
+            design_doc=design_doc,
+            chapter_id=chapter_id,
+            scope=scope,
+            phase_rows=shard,
+            scaffold_only=False,
+        ),
+        prompt_cap=prompt_cap,
+    )
 
 
 def _scope_payloads(
@@ -948,6 +1094,838 @@ def write_m3_v2_checkpoint_atomic(out_dir: Path, checkpoint: dict[str, Any]) -> 
     return path
 
 
+class M3V2SemanticGateError(RuntimeError):
+    """A semantic B4 response failed and must not be regenerated automatically."""
+
+    def __init__(self, code: str, errors: list[str] | None = None) -> None:
+        self.code = code
+        self.errors = list(errors or [])
+        detail = "; ".join(self.errors[:8])
+        super().__init__(f"{code}: {detail}" if detail else code)
+
+
+def empty_m3_v2_state() -> dict[str, Any]:
+    """Canonical state persisted in every M3 v2 checkpoint."""
+
+    return {
+        "entities": [],
+        "atom_to_entity": {},
+        "atom_catalog": {},
+        "hint_to_entities": {},
+        "relation_facts": [],
+        "relation_phases": [],
+        "speaker_turns": [],
+        "relation_events": [],
+        "review_only": [],
+    }
+
+
+def _copy_state(state: dict[str, Any] | None) -> dict[str, Any]:
+    return copy.deepcopy(state if state is not None else empty_m3_v2_state())
+
+
+def _state_entities_by_id(state: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    result: dict[str, dict[str, Any]] = {}
+    for entity in state.get("entities") or []:
+        if not isinstance(entity, dict):
+            continue
+        entity_id = str(entity.get("entity_id") or "")
+        if entity_id:
+            result[entity_id] = entity
+    return result
+
+
+def _mint_entity_id(
+    *,
+    canonical_atom: dict[str, Any],
+    occupied_ids: set[str],
+) -> str:
+    """Mint a readable deterministic id without treating two equal surfaces as equal."""
+
+    base = _surface_key(str(canonical_atom.get("surface") or "")) or "entity"
+    preferred = f"ent_{base}"
+    if preferred not in occupied_ids:
+        return preferred
+    suffix = canonical_hash(str(canonical_atom.get("atom_id") or ""))[:10]
+    candidate = f"{preferred}_{suffix}"
+    if candidate in occupied_ids:
+        raise M3V2SemanticGateError("stable_id_mint_collision", [candidate])
+    return candidate
+
+
+def _dedupe_aliases(aliases: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[tuple[str, tuple[str, ...], str, str | None]] = set()
+    output: list[dict[str, Any]] = []
+    for alias in aliases:
+        key = (
+            str(alias.get("surface") or ""),
+            tuple(sorted(str(item) for item in alias.get("member_atom_ids") or [])),
+            str(alias.get("valid_from_block") or ""),
+            str(alias.get("valid_until_block")) if alias.get("valid_until_block") is not None else None,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(alias)
+    return output
+
+
+def apply_identity_partition_response(
+    state: dict[str, Any],
+    response: dict[str, Any],
+    *,
+    atoms: list[dict[str, Any]],
+    source_text_by_block: dict[str, str],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Apply a validated identity partition to a copy of the prior state.
+
+    The function makes no linguistic inference.  It either uses an explicit,
+    valid ``reuse_entity_id`` or mints an id from the model-selected canonical
+    atom.  Two groups claiming one old id are an unresolvable split tie and halt.
+    """
+
+    working = _copy_state(state)
+    entities_by_id = _state_entities_by_id(working)
+    errors = validate_identity_partition_response(
+        response,
+        atoms=atoms,
+        prior_entity_ids=set(entities_by_id),
+        source_text_by_block=source_text_by_block,
+    )
+    if errors:
+        raise M3V2SemanticGateError("identity_response_rejected", errors)
+
+    groups = list(response.get("groups") or [])
+    reuse_claims: dict[str, list[dict[str, Any]]] = {}
+    for group in groups:
+        reuse = group.get("reuse_entity_id")
+        if reuse is not None:
+            reuse_claims.setdefault(str(reuse), []).append(group)
+    duplicate_reuse = [entity_id for entity_id, rows in reuse_claims.items() if len(rows) > 1]
+    if duplicate_reuse:
+        # Frontier prompts do not carry the old canonical atom as an output atom.
+        # Picking a branch here would be code performing an identity judgement.
+        raise M3V2SemanticGateError("stable_id_split_tie", sorted(duplicate_reuse))
+
+    atoms_by_id = {str(atom["atom_id"]): atom for atom in atoms}
+    audit = {
+        "groups_applied": 0,
+        "entities_minted": 0,
+        "entities_reused": 0,
+        "review_only_groups": 0,
+        "blocked_for_runtime": 0,
+        "supersedes": [],
+    }
+    occupied_ids = set(entities_by_id)
+    for group in groups:
+        member_ids = [str(value) for value in group["member_atom_ids"]]
+        canonical_atom = atoms_by_id[str(group["canonical_atom_id"])]
+        reuse = group.get("reuse_entity_id")
+        if reuse is not None:
+            entity_id = str(reuse)
+            entity = entities_by_id[entity_id]
+            if str(entity.get("referent_kind") or "") != str(group["referent_kind"]):
+                raise M3V2SemanticGateError(
+                    "identity_reuse_kind_collision",
+                    [entity_id, str(entity.get("referent_kind")), str(group.get("referent_kind"))],
+                )
+            audit["entities_reused"] += 1
+        else:
+            entity_id = _mint_entity_id(canonical_atom=canonical_atom, occupied_ids=occupied_ids)
+            occupied_ids.add(entity_id)
+            entity = {
+                "entity_id": entity_id,
+                "canonical": str(canonical_atom["surface"]),
+                "canonical_atom_id": str(canonical_atom["atom_id"]),
+                "referent_kind": str(group["referent_kind"]),
+                "member_atom_ids": [],
+                "aliases": [],
+                "supersedes_entity_ids": [],
+                "status": str(group["status"]),
+            }
+            working["entities"].append(entity)
+            entities_by_id[entity_id] = entity
+            audit["entities_minted"] += 1
+
+        if str(group.get("status") or "") != "resolved" or str(group.get("referent_kind") or "") != "person":
+            audit["review_only_groups"] += 1
+            working["review_only"].append(
+                {
+                    "kind": "identity_group",
+                    "entity_id": entity_id,
+                    "referent_kind": str(group.get("referent_kind") or ""),
+                    "status": str(group.get("status") or ""),
+                    "member_atom_ids": member_ids,
+                }
+            )
+
+        entity["member_atom_ids"] = sorted(
+            set(str(value) for value in entity.get("member_atom_ids") or []) | set(member_ids)
+        )
+        entity["aliases"] = _dedupe_aliases(
+            [*(entity.get("aliases") or []), *copy.deepcopy(group.get("alias_bindings") or [])]
+        )
+        for atom_id in member_ids:
+            atom = atoms_by_id[atom_id]
+            working["atom_to_entity"][atom_id] = entity_id
+            working["atom_catalog"][atom_id] = copy.deepcopy(atom)
+        audit["groups_applied"] += 1
+
+    hint_to_entities: dict[str, set[str]] = {}
+    for atom_id, entity_id in (working.get("atom_to_entity") or {}).items():
+        atom = (working.get("atom_catalog") or {}).get(atom_id) or {}
+        hint = str(atom.get("hint_entity_id") or "")
+        if hint:
+            hint_to_entities.setdefault(hint, set()).add(str(entity_id))
+    working["hint_to_entities"] = {
+        hint: sorted(entity_ids) for hint, entity_ids in sorted(hint_to_entities.items())
+    }
+    return working, audit
+
+
+def _resolve_final_entity_ref(
+    state: dict[str, Any],
+    ref: Any,
+    *,
+    block_id: str | None = None,
+) -> str | None:
+    """Resolve only an explicit B1/B2 hint or exact same-block atom surface."""
+
+    entity_ids = set(_state_entities_by_id(state))
+    raw = str(ref or "") if isinstance(ref, str) else ""
+    if raw in entity_ids:
+        return raw
+    if raw:
+        hinted = (state.get("hint_to_entities") or {}).get(raw) or []
+        if len(hinted) == 1:
+            return str(hinted[0])
+    if isinstance(ref, dict):
+        candidates = [str(value) for value in ref.get("candidate_entity_ids") or [] if str(value)]
+        if len(candidates) == 1:
+            resolved = (state.get("hint_to_entities") or {}).get(candidates[0]) or []
+            if len(resolved) == 1:
+                return str(resolved[0])
+        raw = str(ref.get("surface") or "")
+    if not raw or not block_id:
+        return None
+    matched = {
+        str(entity_id)
+        for atom_id, entity_id in (state.get("atom_to_entity") or {}).items()
+        if str(((state.get("atom_catalog") or {}).get(atom_id) or {}).get("block_id") or "") == str(block_id)
+        and _surface_key(str(((state.get("atom_catalog") or {}).get(atom_id) or {}).get("surface") or ""))
+        == _surface_key(raw)
+    }
+    return next(iter(matched)) if len(matched) == 1 else None
+
+
+def _remap_phase_rows_to_final_ids(
+    state: dict[str, Any],
+    phase_rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Map only unambiguous evidence into the phase stage; preserve residuals for review."""
+
+    mapped: list[dict[str, Any]] = []
+    unresolved: list[dict[str, Any]] = []
+    for row in phase_rows:
+        pair = [str(value) for value in row.get("provisional_pair") or []]
+        if len(pair) != 2:
+            unresolved.append({"reason": "invalid_provisional_pair", "row": row})
+            continue
+        final_pair = [
+            _resolve_final_entity_ref(state, pair[0]),
+            _resolve_final_entity_ref(state, pair[1]),
+        ]
+        if None in final_pair or final_pair[0] == final_pair[1]:
+            unresolved.append({"reason": "unresolved_or_collapsed_pair", "row": row})
+            continue
+        mapped.append({**copy.deepcopy(row), "pair": sorted(str(value) for value in final_pair)})
+    return mapped, unresolved
+
+
+def apply_phase_segment_response(
+    state: dict[str, Any],
+    response: dict[str, Any],
+    *,
+    allowed_pairs: set[tuple[str, str]],
+    source_text_by_block: dict[str, str],
+    block_ordinals: dict[str, int],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Replace only affected-pair facts/phases after semantic validation."""
+
+    working = _copy_state(state)
+    entity_ids = set(_state_entities_by_id(working))
+    errors = validate_phase_segment_response(
+        response,
+        entity_ids=entity_ids,
+        source_text_by_block=source_text_by_block,
+        block_ordinals=block_ordinals,
+        allowed_pairs=allowed_pairs,
+    )
+    if errors:
+        raise M3V2SemanticGateError("phase_response_rejected", errors)
+    facts = copy.deepcopy(response.get("relation_facts") or [])
+    phases = copy.deepcopy(response.get("relation_phases") or [])
+    affected = set(allowed_pairs)
+    working["relation_facts"] = [
+        row
+        for row in working.get("relation_facts") or []
+        if tuple(sorted([str(row.get("subject_ref") or ""), str(row.get("object_ref") or "")])) not in affected
+    ]
+    working["relation_phases"] = [
+        row
+        for row in working.get("relation_phases") or []
+        if tuple(sorted(str(value) for value in row.get("pair") or [])) not in affected
+    ]
+    for fact in facts:
+        if fact.get("predicate_code") == "other":
+            fact["status"] = "review_only"
+            working["review_only"].append({"kind": "relation_fact", **copy.deepcopy(fact)})
+        else:
+            fact["status"] = "published"
+        working["relation_facts"].append(fact)
+    for phase in phases:
+        phase["status"] = str(phase.get("status") or "open")
+        working["relation_phases"].append(phase)
+    return working, {
+        "pairs_replayed": len(affected),
+        "facts_applied": len(facts),
+        "phases_applied": len(phases),
+        "review_only_facts": sum(1 for fact in facts if fact.get("predicate_code") == "other"),
+    }
+
+
+def _asof_interactions(
+    *,
+    m1_dir: Path,
+    m1_checkpoints: list[dict[str, Any]],
+    state: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Keep every B2 turn/event; unresolved references remain explicit rather than dropped."""
+
+    turns: list[dict[str, Any]] = []
+    events: list[dict[str, Any]] = []
+    for artifact_path in _manifest_paths(
+        root=Path(m1_dir), checkpoints=m1_checkpoints, directory="narrative"
+    ):
+        parsed = _clean_parsed_payload(artifact_path)
+        for turn in parsed.get("speaker_turns") or []:
+            if not isinstance(turn, dict):
+                continue
+            row = copy.deepcopy(turn)
+            block_id = str(row.get("block_id") or "")
+            row["speaker_entity_id"] = _resolve_final_entity_ref(
+                state, row.get("speaker"), block_id=block_id
+            )
+            row["addressee_entity_id"] = _resolve_final_entity_ref(
+                state, row.get("addressee"), block_id=block_id
+            )
+            turns.append(row)
+        for event in parsed.get("relation_events") or []:
+            if not isinstance(event, dict):
+                continue
+            row = copy.deepcopy(event)
+            block_id = str(row.get("block_id") or "")
+            row["actor_entity_id"] = _resolve_final_entity_ref(
+                state, row.get("actor"), block_id=block_id
+            )
+            row["target_entity_id"] = _resolve_final_entity_ref(
+                state, row.get("target"), block_id=block_id
+            )
+            events.append(row)
+    turns.sort(key=lambda row: (str(row.get("block_id") or ""), str(row.get("turn_id") or "")))
+    events.sort(key=lambda row: (str(row.get("block_id") or ""), str(row.get("event_id") or "")))
+    return turns, events
+
+
+def _observed_address_policies(state: dict[str, Any]) -> list[dict[str, Any]]:
+    observed: dict[tuple[str, str], list[str]] = {}
+    for turn in state.get("speaker_turns") or []:
+        source = str(turn.get("speaker_entity_id") or "")
+        target = str(turn.get("addressee_entity_id") or "")
+        term = str(turn.get("address_term_used") or "").strip()
+        if source and target and term:
+            observed.setdefault((source, target), [])
+            if term not in observed[(source, target)]:
+                observed[(source, target)].append(term)
+    rows: list[dict[str, Any]] = []
+    for phase in state.get("relation_phases") or []:
+        pair = [str(value) for value in phase.get("pair") or []]
+        if len(pair) != 2:
+            continue
+        rows.append(
+            {
+                "pair": pair,
+                "phase_ref": f"{phase.get('phase_label')}@{phase.get('valid_from_block')}",
+                "a_to_b": {
+                    "observed_terms": observed.get((pair[0], pair[1]), []),
+                    "evidence_level": "observed" if observed.get((pair[0], pair[1])) else "unsupported",
+                    "needs_human_review": True,
+                    "runtime_usable": False,
+                },
+                "b_to_a": {
+                    "observed_terms": observed.get((pair[1], pair[0]), []),
+                    "evidence_level": "observed" if observed.get((pair[1], pair[0])) else "unsupported",
+                    "needs_human_review": True,
+                    "runtime_usable": False,
+                },
+                "proposal_only": True,
+            }
+        )
+    return rows
+
+
+def _glossary_as_of(m1_dir: Path, m1_checkpoints: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for artifact_path in _manifest_paths(
+        root=Path(m1_dir), checkpoints=m1_checkpoints, directory="lexicon"
+    ):
+        parsed = _clean_parsed_payload(artifact_path)
+        for term in parsed.get("glossary_candidates") or []:
+            if not isinstance(term, dict):
+                continue
+            source = str(term.get("source_term") or "").strip()
+            if not source:
+                continue
+            key = _surface_key(source)
+            row = rows.setdefault(
+                key,
+                {
+                    "source_term": source,
+                    "proposed_target_vi": str(term.get("proposed_target_vi") or ""),
+                    "category": str(term.get("category") or "other"),
+                    "block_ids": [],
+                    "status": "candidate",
+                },
+            )
+            row["block_ids"] = sorted(
+                set(str(value) for value in row["block_ids"] + list(term.get("block_ids") or []))
+            )
+    return sorted(rows.values(), key=lambda row: str(row["source_term"]).casefold())
+
+
+def build_story_bible_v2(
+    *,
+    chapter: dict[str, Any],
+    state: dict[str, Any],
+    m1_dir: Path,
+    m1_checkpoints: list[dict[str, Any]],
+    digests: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Materialize the published, scope-bounded Story Bible view from approved state."""
+
+    chapter_id = str(chapter["chapter_id"])
+    block_ids = [str(block.get("block_id") or "") for block in chapter.get("blocks") or []]
+    entities = [
+        copy.deepcopy(entity)
+        for entity in state.get("entities") or []
+        if entity.get("referent_kind") == "person" and entity.get("status") == "resolved"
+    ]
+    person_ids = {str(entity["entity_id"]) for entity in entities}
+    facts = [
+        copy.deepcopy(row)
+        for row in state.get("relation_facts") or []
+        if row.get("status") == "published"
+        and str(row.get("subject_ref") or "") in person_ids
+        and str(row.get("object_ref") or "") in person_ids
+    ]
+    phases = [
+        copy.deepcopy(row)
+        for row in state.get("relation_phases") or []
+        if set(str(value) for value in row.get("pair") or []).issubset(person_ids)
+    ]
+    narration_segments = [
+        {"chapter_id": str(digest.get("chapter_id") or ""), **copy.deepcopy(segment)}
+        for digest in digests
+        for segment in digest.get("narration_frame_segments") or []
+        if isinstance(segment, dict)
+    ]
+    return {
+        "scope": f"M3_asof_{chapter_id}",
+        "artifact_scope_end_block": block_ids[-1] if block_ids else "",
+        "status": "partial_story_bible_v2",
+        "registry_T1_glossary": _glossary_as_of(m1_dir, m1_checkpoints),
+        "registry_T2_entities": entities,
+        "registry_T3_speaker_turns": copy.deepcopy(state.get("speaker_turns") or []),
+        "registry_T3_relation_events": copy.deepcopy(state.get("relation_events") or []),
+        "registry_T4_chapter_digests": copy.deepcopy(digests),
+        "relation_facts": facts,
+        "entity_relations": phases,
+        "address_policies": _observed_address_policies(state),
+        "narration_frame_segments": narration_segments,
+        "review_only": copy.deepcopy(state.get("review_only") or []),
+        "source_ranges": {"first_block": block_ids[0] if block_ids else "", "last_block": block_ids[-1] if block_ids else ""},
+    }
+
+
+def validate_story_bible_v2(
+    story: dict[str, Any],
+    *,
+    expected_turn_count: int,
+    expected_event_count: int,
+) -> list[str]:
+    """Semantic publish gate for the v2 artifact, without old pilot assumptions."""
+
+    errors: list[str] = []
+    entities = story.get("registry_T2_entities") or []
+    entity_ids = [str(entity.get("entity_id") or "") for entity in entities if isinstance(entity, dict)]
+    if len(entity_ids) != len(set(entity_ids)) or not all(entity_ids):
+        errors.append("registry_T2 entity ids invalid_or_duplicate")
+    if any(str(entity.get("referent_kind") or "") != "person" for entity in entities if isinstance(entity, dict)):
+        errors.append("registry_T2 must be person_only")
+    if len(story.get("registry_T3_speaker_turns") or []) != expected_turn_count:
+        errors.append("speaker_turn_count changed during consolidation")
+    if len([row for row in story.get("registry_T3_speaker_turns") or [] if isinstance(row, dict)]) != expected_turn_count:
+        errors.append("speaker_turns malformed")
+    if len(story.get("registry_T3_relation_events") or []) != expected_event_count:
+        errors.append("relation_event_count changed during consolidation")
+    if len([row for row in story.get("registry_T4_chapter_digests") or [] if isinstance(row, dict)]) == 0:
+        errors.append("missing digests")
+    for fact in story.get("relation_facts") or []:
+        if fact.get("predicate_code") not in PREDICATE_CODES:
+            errors.append("relation_fact predicate invalid")
+        if fact.get("subject_ref") == fact.get("object_ref"):
+            errors.append("relation_fact self_loop")
+    for phase in story.get("entity_relations") or []:
+        pair = [str(value) for value in phase.get("pair") or []]
+        if len(pair) != 2 or pair[0] == pair[1] or any(value not in entity_ids for value in pair):
+            errors.append("relation_phase pair invalid")
+    if expected_event_count < 0:
+        errors.append("event_count invalid")
+    return errors
+
+
+def _response_batch(
+    payload: dict[str, Any],
+    *,
+    field: str,
+    expected_count: int,
+) -> list[dict[str, Any]]:
+    value = payload.get(field)
+    if isinstance(value, dict):
+        rows = [value]
+    elif isinstance(value, list) and all(isinstance(item, dict) for item in value):
+        rows = list(value)
+    else:
+        raise M3V2SemanticGateError(f"{field}_responses_missing")
+    if len(rows) != expected_count:
+        raise M3V2SemanticGateError(
+            f"{field}_response_shard_count",
+            [f"expected={expected_count}", f"actual={len(rows)}"],
+        )
+    return rows
+
+
+def _m3_v2_prefix(
+    *,
+    document: dict[str, Any],
+    chain: dict[str, Any],
+    out_dir: Path,
+    design_doc: Path,
+    config: LLMConfig,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Return the valid M3 v2 prefix and resume mismatches, never globbing files."""
+
+    checkpoints: list[dict[str, Any]] = []
+    mismatches: list[dict[str, Any]] = []
+    parent_hash: str | None = None
+    selected = chain["selected"]
+    for index, chapter in enumerate(selected):
+        chapter_id = str(chapter["chapter_id"])
+        path = _m3_v2_checkpoint_path(out_dir, chapter_id)
+        if not path.is_file():
+            mismatches.append({"chapter_id": chapter_id, "fields": ["missing"]})
+            break
+        checkpoint = read_checkpoint(path)
+        expected = {
+            "stage": M3_V2_STAGE,
+            "chapter_id": chapter_id,
+            "chapter_index": index,
+            "chapter_sequence_prefix": [str(item["chapter_id"]) for item in selected[: index + 1]],
+            "source_hash": chapter_source_hash(chapter),
+            "prompt_hashes": _m3_v2_prompt_hashes(design_doc, chapter_id),
+            "config_hash": _m3_v2_config_hash(config),
+            "schema_version": M3_V2_CHECKPOINT_SCHEMA_VERSION,
+            "parent_checkpoint_hash": parent_hash,
+            "input_m1_checkpoint_hash": str(chain["m1_checkpoints"][index]["checkpoint_hash"]),
+            "input_m2_checkpoint_hash": str(chain["m2_checkpoints"][index]["checkpoint_hash"]),
+        }
+        errors = validate_checkpoint(checkpoint, root=out_dir, expected=expected)
+        if errors:
+            mismatches.append({"chapter_id": chapter_id, "fields": errors})
+            break
+        state = (checkpoint.get("state") or {}).get("m3_state")
+        if not isinstance(state, dict):
+            mismatches.append({"chapter_id": chapter_id, "fields": ["m3_state"]})
+            break
+        checkpoints.append(checkpoint)
+        parent_hash = str(checkpoint["checkpoint_hash"])
+    return checkpoints, mismatches
+
+
+def _atomic_json_write(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
+    encoded = (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    try:
+        with temporary.open("xb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def run_m3_v2_from_responses(
+    document: dict[str, Any],
+    chapters: list[str],
+    *,
+    out_dir: Path,
+    design_doc: Path,
+    config: LLMConfig,
+    m1_dir: Path,
+    m2_dir: Path,
+    responses_by_scope: dict[str, dict[str, Any]],
+    resume: bool = False,
+) -> dict[str, Any]:
+    """Apply supplied model-shaped responses and publish only passed scope artifacts.
+
+    This is intentionally client-free.  Phase 2 uses it with synthetic responses;
+    a later API task will supply persisted raw responses to this exact executor.
+    """
+
+    chain = load_m3_v2_input_chain(
+        document=document,
+        chapters=chapters,
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+        design_doc=design_doc,
+    )
+    scopes = _scope_payloads(
+        document=document,
+        chain=chain,
+        m1_dir=Path(m1_dir),
+        m2_dir=Path(m2_dir),
+        design_doc=Path(design_doc),
+        config=config,
+    )
+    source_text = _source_text_by_block(document)
+    ordinals = {
+        str(block.get("block_id") or ""): int(block.get("order_index") or 0)
+        for chapter in document.get("chapters") or []
+        for block in chapter.get("blocks") or []
+    }
+    report_path = Path(out_dir) / "m3_v2_report.json"
+    lock = CheckpointLock(Path(out_dir))
+    lock.acquire()
+    try:
+        restored: list[dict[str, Any]] = []
+        resume_mismatches: list[dict[str, Any]] = []
+        state = empty_m3_v2_state()
+        parent_hash: str | None = None
+        if resume:
+            restored, resume_mismatches = _m3_v2_prefix(
+                document=document,
+                chain=chain,
+                out_dir=Path(out_dir),
+                design_doc=design_doc,
+                config=config,
+            )
+            if restored:
+                state = _copy_state((restored[-1].get("state") or {}).get("m3_state") or {})
+                parent_hash = str(restored[-1]["checkpoint_hash"])
+        scope_reports: list[dict[str, Any]] = []
+        start_index = len(restored)
+        for index, scope in enumerate(scopes[start_index:], start=start_index):
+            chapter = chain["selected"][index]
+            chapter_id = str(chapter["chapter_id"])
+            scope_key = str(scope["scope"])
+            scope_responses = responses_by_scope.get(scope_key)
+            if not isinstance(scope_responses, dict):
+                raise M3V2SemanticGateError("scope_responses_missing", [scope_key])
+
+            identity_shards = _runtime_identity_shards(
+                frontier_atoms=scope["frontier_atoms"],
+                state=state,
+                design_doc=Path(design_doc),
+                chapter_id=chapter_id,
+                scope=scope_key,
+                identity_hints=scope["identity_hints"],
+                prompt_cap=config.prompt_token_cap,
+            )
+            if any("dry_run_note" in shard["messages"][1]["content"] for shard in identity_shards):
+                raise RuntimeError("M3 v2 runtime identity request retained dry_run_note")
+            identity_responses = _response_batch(
+                scope_responses,
+                field="identity",
+                expected_count=len(identity_shards),
+            )
+            identity_payload = {
+                "groups": [
+                    group
+                    for response in identity_responses
+                    for group in response.get("groups") or []
+                ]
+            }
+            state, identity_audit = apply_identity_partition_response(
+                state,
+                identity_payload,
+                atoms=scope["frontier_atoms"],
+                source_text_by_block=source_text,
+            )
+
+            mapped_phase_rows, unresolved_phase_rows = _remap_phase_rows_to_final_ids(
+                state, scope["phase_rows"]
+            )
+            if unresolved_phase_rows:
+                raise M3V2SemanticGateError(
+                    "blocked_for_runtime_unresolved_relation",
+                    [str(row.get("reason") or "") for row in unresolved_phase_rows],
+                )
+            allowed_pairs = {tuple(row["pair"]) for row in mapped_phase_rows}
+            phase_shards = _runtime_phase_shards(
+                phase_rows=mapped_phase_rows,
+                design_doc=Path(design_doc),
+                chapter_id=chapter_id,
+                scope=scope_key,
+                prompt_cap=config.prompt_token_cap,
+            )
+            if any("dry_run_note" in shard["messages"][1]["content"] for shard in phase_shards):
+                raise RuntimeError("M3 v2 runtime phase request retained dry_run_note")
+            phase_responses = _response_batch(
+                scope_responses,
+                field="phase",
+                expected_count=len(phase_shards),
+            )
+            phase_payload = {
+                "relation_facts": [
+                    row
+                    for response in phase_responses
+                    for row in response.get("relation_facts") or []
+                ],
+                "relation_phases": [
+                    row
+                    for response in phase_responses
+                    for row in response.get("relation_phases") or []
+                ],
+            }
+            state, phase_audit = apply_phase_segment_response(
+                state,
+                phase_payload,
+                allowed_pairs=allowed_pairs,
+                source_text_by_block=source_text,
+                block_ordinals=ordinals,
+            )
+
+            turns, events = _asof_interactions(
+                m1_dir=Path(m1_dir),
+                m1_checkpoints=chain["m1_checkpoints"][: index + 1],
+                state=state,
+            )
+            state["speaker_turns"] = turns
+            state["relation_events"] = events
+            digests = _digest_payloads_as_of(
+                m2_dir=Path(m2_dir),
+                m2_checkpoints=chain["m2_checkpoints"][: index + 1],
+            )
+            story = build_story_bible_v2(
+                chapter=chapter,
+                state=state,
+                m1_dir=Path(m1_dir),
+                m1_checkpoints=chain["m1_checkpoints"][: index + 1],
+                digests=digests,
+            )
+            gate_errors = validate_story_bible_v2(
+                story,
+                expected_turn_count=len(turns),
+                expected_event_count=len(events),
+            )
+            if gate_errors:
+                raise M3V2SemanticGateError("publish_gate_rejected", gate_errors)
+
+            story_path = Path(out_dir) / "story_bible_v2" / f"{chapter_id}_story_bible.json"
+            _atomic_json_write(story_path, story)
+            raw_responses = [
+                {
+                    "mode": IDENTITY_PARTITION_VERSION,
+                    "scope": scope_key,
+                    "raw_json": copy.deepcopy(response),
+                }
+                for response in identity_responses
+            ] + [
+                {
+                    "mode": PHASE_SEGMENT_VERSION,
+                    "scope": scope_key,
+                    "raw_json": copy.deepcopy(response),
+                }
+                for response in phase_responses
+            ]
+            checkpoint = build_m3_v2_checkpoint(
+                out_dir=Path(out_dir),
+                chapter=chapter,
+                chapter_index=index,
+                chapter_sequence_prefix=[
+                    str(item["chapter_id"]) for item in chain["selected"][: index + 1]
+                ],
+                design_doc=Path(design_doc),
+                config=config,
+                input_m1_checkpoint_hash=scope["m1_checkpoint_hash"],
+                input_m2_checkpoint_hash=scope["m2_checkpoint_hash"],
+                parent_checkpoint_hash=parent_hash,
+                state={"m3_state": state, "identity_audit": identity_audit, "phase_audit": phase_audit},
+                raw_responses=raw_responses,
+                published_artifacts=[story_path],
+            )
+            checkpoint_path = write_m3_v2_checkpoint_atomic(Path(out_dir), checkpoint)
+            parent_hash = str(checkpoint["checkpoint_hash"])
+            scope_reports.append(
+                {
+                    "scope": scope_key,
+                    "chapter_id": chapter_id,
+                    "status": "published",
+                    "identity_audit": identity_audit,
+                    "phase_audit": phase_audit,
+                    "runtime_request_plan": {
+                        "identity_shards": len(identity_shards),
+                        "phase_shards": len(phase_shards),
+                        "dry_run_note_omitted": True,
+                    },
+                    "story_bible": str(story_path),
+                    "checkpoint": str(checkpoint_path),
+                }
+            )
+        report = {
+            "phase": "L2A-M4d",
+            "milestone": "M3_v2_apply_synthetic",
+            "zero_api": True,
+            "status": "needs_claude_gate",
+            "chapters_selected": [str(item["chapter_id"]) for item in chain["selected"]],
+            "resume": {
+                "enabled": resume,
+                "restored": [str(item["chapter_id"]) for item in restored],
+                "mismatches": resume_mismatches,
+                "lock_took_over_stale": lock.took_over_stale,
+            },
+            "scopes": scope_reports,
+            "stop": "Synthetic apply/publish complete. Claude must approve before any API run.",
+        }
+    except M3V2SemanticGateError as exc:
+        report = {
+            "phase": "L2A-M4d",
+            "milestone": "M3_v2_apply_synthetic",
+            "zero_api": True,
+            "status": "halted_semantic_gate",
+            "gate_code": exc.code,
+            "errors": exc.errors,
+            "stop": "No failed scope was published or checkpointed. Resolve the semantic gate before API.",
+        }
+    finally:
+        lock.release()
+    _atomic_json_write(report_path, report)
+    return report
+
+
 def _source_text_by_block(document: dict[str, Any]) -> dict[str, str]:
     by_id, _chapter_for_block = _block_maps(document)
     return {
@@ -1060,6 +2038,7 @@ def validate_phase_segment_response(
     entity_ids: set[str],
     source_text_by_block: dict[str, str],
     block_ordinals: dict[str, int],
+    allowed_pairs: set[tuple[str, str]] | None = None,
 ) -> list[str]:
     """Validate batch phase/fact output before a future apply-to-copy gate."""
 
@@ -1087,6 +2066,8 @@ def validate_phase_segment_response(
             errors.append(f"{prefix}.pair invalid")
             continue
         pair_key = tuple(sorted(pair))
+        if allowed_pairs is not None and pair_key not in allowed_pairs:
+            errors.append(f"{prefix}.pair not_in_input_batch")
         if phase.get("phase_label") not in PHASE_LABELS:
             errors.append(f"{prefix}.phase_label invalid")
         start = str(phase.get("valid_from_block") or "")
@@ -1130,6 +2111,8 @@ def validate_phase_segment_response(
         obj = str(fact.get("object_ref") or "")
         if not subject or not obj or subject == obj or subject not in entity_ids or obj not in entity_ids:
             errors.append(f"{prefix}.subject_or_object invalid")
+        elif allowed_pairs is not None and tuple(sorted([subject, obj])) not in allowed_pairs:
+            errors.append(f"{prefix}.subject_or_object not_in_input_batch")
         if fact.get("predicate_code") not in PREDICATE_CODES:
             errors.append(f"{prefix}.predicate_code invalid")
         valid_from = str(fact.get("valid_from_block") or "")

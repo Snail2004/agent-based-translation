@@ -24,9 +24,16 @@ from pipeline.literary.checkpoint import (
 from pipeline.literary.story_bible_v2 import (
     M3_V2_CHECKPOINT_SCHEMA_VERSION,
     M3_V2_STAGE,
+    M3V2SemanticGateError,
+    apply_identity_partition_response,
+    apply_phase_segment_response,
+    build_identity_messages,
     build_identity_atoms_as_of,
     build_m3_v2_checkpoint,
+    build_phase_messages,
+    empty_m3_v2_state,
     load_m3_v2_input_chain,
+    run_m3_v2_from_responses,
     run_m3_v2_dry_run,
     validate_identity_partition_response,
     validate_phase_segment_response,
@@ -90,7 +97,7 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def _make_chain(tmp_path: Path) -> tuple[dict, Path, Path]:
+def _make_chain(tmp_path: Path, *, include_relation: bool = True) -> tuple[dict, Path, Path]:
     document = _document()
     m1_dir = tmp_path / "m1"
     m2_dir = tmp_path / "m2"
@@ -139,7 +146,9 @@ def _make_chain(tmp_path: Path) -> tuple[dict, Path, Path]:
                             "actor": {"surface": "Mira", "candidate_entity_ids": ["ent_mira"]},
                             "target": {"surface": "Rowan", "candidate_entity_ids": ["ent_rowan"]},
                         }
-                    ],
+                    ]
+                    if include_relation
+                    else [],
                 },
                 "validation": {"ok": True},
             },
@@ -177,7 +186,9 @@ def _make_chain(tmp_path: Path) -> tuple[dict, Path, Path]:
                             "observed_valence_hint": "unclear",
                             "status": "evidence_only",
                         }
-                    ],
+                    ]
+                    if include_relation
+                    else [],
                     "translator_relevant_facts": [],
                 },
                 "validation": {"ok": True},
@@ -203,6 +214,64 @@ def _make_chain(tmp_path: Path) -> tuple[dict, Path, Path]:
         write_checkpoint_atomic(_checkpoint_path(m2_dir, "m2", chapter_id), m2_checkpoint)
         parent_m2 = str(m2_checkpoint["checkpoint_hash"])
     return document, m1_dir, m2_dir
+
+
+def _valid_identity_response(atoms: list[dict]) -> dict:
+    """Produce a model-shaped, evidence-backed response for a synthetic scope."""
+
+    assert atoms
+    first = atoms[0]
+    member_ids = [str(atom["atom_id"]) for atom in atoms]
+    return {
+        "groups": [
+            {
+                "group_key": "synthetic_group_01",
+                "reuse_entity_id": None,
+                "referent_kind": "person",
+                "canonical_atom_id": str(first["atom_id"]),
+                "member_atom_ids": member_ids,
+                "status": "resolved",
+                "alias_bindings": [
+                    {
+                        "surface": str(first["surface"]),
+                        "member_atom_ids": member_ids,
+                        "valid_from_block": str(first["block_id"]),
+                        "valid_until_block": None,
+                    }
+                ],
+                "evidence": [
+                    {
+                        "block_id": str(first["block_id"]),
+                        "quote": str(first["surface"]),
+                        "source_atom_ids": member_ids,
+                        "supports": "same_identity",
+                    }
+                ]
+                if len(member_ids) > 1
+                else [],
+            }
+        ]
+    }
+
+
+def _single_atom_group(atom: dict, *, reuse_entity_id: str | None = None) -> dict:
+    return {
+        "group_key": f"g_{atom['atom_id']}",
+        "reuse_entity_id": reuse_entity_id,
+        "referent_kind": "person",
+        "canonical_atom_id": str(atom["atom_id"]),
+        "member_atom_ids": [str(atom["atom_id"])],
+        "status": "resolved",
+        "alias_bindings": [
+            {
+                "surface": str(atom["surface"]),
+                "member_atom_ids": [str(atom["atom_id"])],
+                "valid_from_block": str(atom["block_id"]),
+                "valid_until_block": None,
+            }
+        ],
+        "evidence": [],
+    }
 
 
 def test_m3_v2_dry_run_uses_asof_manifests_and_keeps_same_surface_atoms_separate(tmp_path: Path) -> None:
@@ -397,3 +466,232 @@ def test_m3_v2_checkpoint_contract_binds_m1_m2_and_artifact_manifest(tmp_path: P
             "input_m2_checkpoint_hash": "m2hash",
         },
     ) == []
+
+
+def test_m3_v2_synthetic_apply_publishes_and_resumes_without_api(tmp_path: Path) -> None:
+    """A clean model-shaped response reaches the only publish path, then restores."""
+
+    document, m1_dir, m2_dir = _make_chain(tmp_path, include_relation=False)
+    atoms = build_identity_atoms_as_of(
+        document=document,
+        m1_dir=m1_dir,
+        m1_checkpoints=[
+            read_checkpoint(_checkpoint_path(m1_dir, "m1", "bk_ch01"))
+        ],
+    )["atoms"]
+    out_dir = tmp_path / "m3"
+    responses = {
+        "M3_asof_bk_ch01": {
+            "identity": _valid_identity_response(atoms),
+            "phase": {"relation_facts": [], "relation_phases": []},
+        }
+    }
+
+    report = run_m3_v2_from_responses(
+        document,
+        ["bk_ch01"],
+        out_dir=out_dir,
+        design_doc=DESIGN_DOC,
+        config=_config(),
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+        responses_by_scope=responses,
+    )
+    assert report["zero_api"] is True
+    assert report["status"] == "needs_claude_gate"
+    assert [row["status"] for row in report["scopes"]] == ["published"]
+
+    story_path = out_dir / "story_bible_v2" / "bk_ch01_story_bible.json"
+    story = json.loads(story_path.read_text(encoding="utf-8"))
+    assert story["scope"] == "M3_asof_bk_ch01"
+    assert len(story["registry_T2_entities"]) == 1
+    checkpoint_path = out_dir / "checkpoints" / M3_V2_STAGE / "bk_ch01.json"
+    checkpoint = read_checkpoint(checkpoint_path)
+    assert validate_checkpoint(
+        checkpoint,
+        root=out_dir,
+        expected={
+            "stage": M3_V2_STAGE,
+            "chapter_id": "bk_ch01",
+            "schema_version": M3_V2_CHECKPOINT_SCHEMA_VERSION,
+        },
+    ) == []
+
+    resumed = run_m3_v2_from_responses(
+        document,
+        ["bk_ch01"],
+        out_dir=out_dir,
+        design_doc=DESIGN_DOC,
+        config=_config(),
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+        responses_by_scope={},
+        resume=True,
+    )
+    assert resumed["status"] == "needs_claude_gate"
+    assert resumed["resume"]["restored"] == ["bk_ch01"]
+    assert resumed["scopes"] == []
+
+
+def test_m3_v2_identity_gate_rejects_missing_atom_and_wrong_quote(tmp_path: Path) -> None:
+    document, m1_dir, _m2_dir = _make_chain(tmp_path)
+    checkpoint = read_checkpoint(_checkpoint_path(m1_dir, "m1", "bk_ch01"))
+    atoms = build_identity_atoms_as_of(
+        document=document,
+        m1_dir=m1_dir,
+        m1_checkpoints=[checkpoint],
+    )["atoms"]
+    source = {
+        block["block_id"]: block["clean_text"]
+        for block in document["chapters"][0]["blocks"]
+    }
+
+    missing = _valid_identity_response(atoms)
+    missing["groups"][0]["member_atom_ids"] = [str(atoms[0]["atom_id"])]
+    missing["groups"][0]["alias_bindings"][0]["member_atom_ids"] = [str(atoms[0]["atom_id"])]
+    missing["groups"][0]["evidence"][0]["source_atom_ids"] = [str(atoms[0]["atom_id"])]
+    with pytest.raises(M3V2SemanticGateError, match="identity_response_rejected"):
+        apply_identity_partition_response(
+            empty_m3_v2_state(),
+            missing,
+            atoms=atoms,
+            source_text_by_block=source,
+        )
+
+    wrong_quote = _valid_identity_response(atoms)
+    wrong_quote["groups"][0]["evidence"][0]["quote"] = "invented evidence"
+    with pytest.raises(M3V2SemanticGateError, match="identity_response_rejected"):
+        apply_identity_partition_response(
+            empty_m3_v2_state(),
+            wrong_quote,
+            atoms=atoms,
+            source_text_by_block=source,
+        )
+
+
+def test_m3_v2_identity_gate_rejects_unknown_reuse_and_split_tie(tmp_path: Path) -> None:
+    document, m1_dir, _m2_dir = _make_chain(tmp_path)
+    checkpoint = read_checkpoint(_checkpoint_path(m1_dir, "m1", "bk_ch01"))
+    atoms = build_identity_atoms_as_of(
+        document=document,
+        m1_dir=m1_dir,
+        m1_checkpoints=[checkpoint],
+    )["atoms"]
+    source = {
+        block["block_id"]: block["clean_text"]
+        for block in document["chapters"][0]["blocks"]
+    }
+
+    unknown_reuse = _valid_identity_response(atoms)
+    unknown_reuse["groups"][0]["reuse_entity_id"] = "ent_not_in_prior_state"
+    with pytest.raises(M3V2SemanticGateError, match="identity_response_rejected"):
+        apply_identity_partition_response(
+            empty_m3_v2_state(),
+            unknown_reuse,
+            atoms=atoms,
+            source_text_by_block=source,
+        )
+
+    prior = empty_m3_v2_state()
+    prior["entities"] = [
+        {
+            "entity_id": "ent_existing",
+            "canonical": "the master",
+            "referent_kind": "person",
+            "member_atom_ids": [],
+            "aliases": [],
+            "supersedes_entity_ids": [],
+            "status": "resolved",
+        }
+    ]
+    split_tie = {
+        "groups": [
+            _single_atom_group(atoms[0], reuse_entity_id="ent_existing"),
+            _single_atom_group(atoms[1], reuse_entity_id="ent_existing"),
+        ]
+    }
+    with pytest.raises(M3V2SemanticGateError, match="stable_id_split_tie"):
+        apply_identity_partition_response(
+            prior,
+            split_tie,
+            atoms=atoms,
+            source_text_by_block=source,
+        )
+
+
+def test_m3_v2_phase_apply_marks_fact_published_and_real_messages_omit_scaffold_note() -> None:
+    source = {"bk_ch02_b001": "Mira warned Rowan about the house."}
+    state = empty_m3_v2_state()
+    state["entities"] = [
+        {
+            "entity_id": "ent_mira",
+            "canonical": "Mira",
+            "referent_kind": "person",
+            "member_atom_ids": [],
+            "aliases": [],
+            "supersedes_entity_ids": [],
+            "status": "resolved",
+        },
+        {
+            "entity_id": "ent_rowan",
+            "canonical": "Rowan",
+            "referent_kind": "person",
+            "member_atom_ids": [],
+            "aliases": [],
+            "supersedes_entity_ids": [],
+            "status": "resolved",
+        },
+    ]
+    phase = {
+        "relation_facts": [
+            {
+                "subject_ref": "ent_mira",
+                "predicate_code": "neighbor_of",
+                "object_ref": "ent_rowan",
+                "valid_from_block": "bk_ch02_b001",
+                "evidence_block": "bk_ch02_b001",
+                "evidence_quote": "Mira warned Rowan",
+                "predicate_note": "",
+            }
+        ],
+        "relation_phases": [
+            {
+                "pair": ["ent_mira", "ent_rowan"],
+                "phase_label": "strained",
+                "valid_from_block": "bk_ch02_b001",
+                "valid_until_block": None,
+                "trigger_block": "bk_ch02_b001",
+                "trigger_evidence": "warned",
+                "status": "open",
+            }
+        ],
+    }
+    applied, audit = apply_phase_segment_response(
+        state,
+        phase,
+        allowed_pairs={("ent_mira", "ent_rowan")},
+        source_text_by_block=source,
+        block_ordinals={"bk_ch02_b001": 1},
+    )
+    assert audit["facts_applied"] == 1
+    assert applied["relation_facts"][0]["status"] == "published"
+    assert applied["relation_phases"][0]["phase_label"] == "strained"
+
+    identity_messages = build_identity_messages(
+        design_doc=DESIGN_DOC,
+        chapter_id="bk_ch01",
+        scope="M3_asof_bk_ch01",
+        atoms=[],
+        prior_groups=[],
+        identity_hints=[],
+        scaffold_only=False,
+    )
+    phase_messages = build_phase_messages(
+        design_doc=DESIGN_DOC,
+        chapter_id="bk_ch01",
+        scope="M3_asof_bk_ch01",
+        phase_rows=[],
+        scaffold_only=False,
+    )
+    assert "dry_run_note" not in identity_messages[1]["content"]
+    assert "dry_run_note" not in phase_messages[1]["content"]

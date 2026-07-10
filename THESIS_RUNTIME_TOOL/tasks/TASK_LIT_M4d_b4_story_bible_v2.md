@@ -252,3 +252,39 @@ Tự verify (không tin số báo cáo):
    (shard 02) và component "the master/Mr. Earnshaw" (shard 01) không nhìn thấy nhau → có thể ra
    2 group cho cùng người; an toàn nhờ thiên hướng SPLIT (nối lại được) + flag review. Ghi số đo
    trường hợp này ở gate output pha 2; nếu nhiều → cân nhắc pass hợp nhất theo evidence ở scope sau.
+
+---
+# GATE PHA 2 (Claude verify độc lập, 2026-07-11): **PASS — apply/publish đạt chuẩn; API cần thêm MỘT driver hook**
+
+Tự verify trên code + tự chạy test:
+- `apply_identity_partition_response`: làm trên BẢN SAO, validate trước, split-tie
+  (2 group cùng claim 1 reuse id) → halt fail-closed với comment đúng bản chất ("picking a
+  branch here would be code performing an identity judgement"); reuse kiểm kind-collision;
+  mint tất định (surface-key → suffix hash atom, không bao giờ coi 2 surface bằng nhau);
+  non-person/non-resolved → review_only. KHÔNG có suy luận ngôn ngữ trong code. ĐẠT.
+- Executor `run_m3_v2_from_responses`: identity apply → remap phase rows sang final ids
+  (unresolved → halt blocked_for_runtime) → phase/fact apply (allowed_pairs ràng đúng scope)
+  → build story bible → publish gate → ghi atomic → checkpoint SAU publish (kèm raw responses
+  + audits + m1/m2 input hash + parent chain) → resume prefix. Guard runtime raise nếu
+  dry_run_note còn trong prompt. Fail semantic → report halted, KHÔNG publish scope lỗi.
+- Synthetic tests phủ ĐỦ các ca gate yêu cầu: happy-path publish+resume; thiếu atom; quote
+  sai; reuse id lạ; split-tie; dry_run_note omitted; book-neutral qua loader runtime; chain
+  M2 gãy bị reject; checkpoint contract. Tự chạy: 9/9 focused + 369/369 pipeline suite.
+- Client-free THẬT (chỉ import estimate_prompt_tokens — helper đếm, không phải client).
+  Frozen DB tự tính KHỚP; keyscan sạch; scope diff đúng 2 file khai báo.
+
+**PHÁT HIỆN GATE — thiếu MỘT mảnh wiring cho bước API (không phải lỗi, là việc kế):**
+Prompt runtime scope N+1 phụ thuộc state ĐÃ APPLY của scope N (frontier prior_groups từ final
+ids), nhưng executor nhận responses_by_scope trọn gói và halt `scope_responses_missing` không
+kèm rendered prompts → driver API bên ngoài KHÔNG có cách lấy đúng prompt để gọi model, và tự
+render lại ngoài executor sẽ rủi ro lệch prompt-gọi vs prompt-apply.
+**Yêu cầu (chọn phương án hook):** thêm tham số optional `request_llm(messages, meta) -> response`
+vào executor — khi scope thiếu response thì gọi hook NGAY TRONG vòng lặp (prompt byte-identical
+với bản apply), persist raw response + usage trước khi apply; không có hook → giữ hành vi hiện
+tại. Hook nối vào LLM client cache sẵn có (sqlite cache, usage log, confirm-usd, halt khi
+technical-retry >10%). Equivalence check bắt buộc: runtime prompt ch01 (state rỗng) phải ==
+dry-run shard ch01 TRỪ dry_run_note.
+**Sau hook + test 0-API cho hook (mock client): ĐƯỢC PHÉP chạy API 10 call gpt-5.4** (config
+m4full_m2_gpt54 nhánh riêng out_dir literary_m4d_b4v2, --confirm, quota ngày mới). Gate output
+theo acceptance §R5 + 2 canary vòng-2 + watch-item under-merge xuyên-shard + tiêu chí B0
+embedded-cast (ch03 dream-cast phải ra literary_allusion/mentioned, không thành on-stage person).
