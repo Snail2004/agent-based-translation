@@ -431,11 +431,34 @@ Cờ/loại nếu: (a) block ref không có trong chương; (b) `narration_frame
 ### 5.1 Tổng quan — 4 lớp riêng, code làm nặng, LLM phán điểm-huyệt
 B4 KHÔNG phải một call (tránh tái tạo monolith). Là pipeline: mỗi lớp = code deterministic gom candidate → **micro-call LLM CHỈ cho ca mơ hồ** (kèm lát cắt evidence) → code apply có gate. Đầu ra artifact = **Story Bible** (KHÔNG ghi DB ở pilot). Thứ tự: L1 identity → L2 interaction → L3 relation-phase → **L3b character-state** → L4 address-policy → Auditor → canary → freeze.
 
-### 5.2 Lớp 1 — Identity consolidation (entity + alias + valid_range)
-- **Code:** cluster `character_mentions` theo exact-name match (deterministic) + nối `candidate_entity_ids` vào entity pack. Mint `entity_id` mới cho cluster tên rõ chưa có.
-- **LLM micro-call `literary_identity_adjudicate_v1`** CHỈ cho cluster mơ hồ (surface trùng nhưng nghi khác người / descriptor→ai). Prompt hỏi: *"Given these mention surfaces with their block evidence and the candidate entities, are they ONE person or SEVERAL? Split when marital/generational/temporal evidence shows distinct referents (e.g. a mother and a daughter who share a name). Return groupings with per-alias valid_from_block/valid_to_block. Prefer SPLIT when unsure — merging two people is worse than leaving two entities."*
-- **Code apply có gate:** giữ split khi LLM không chắc; gán alias `valid_from/to_block` (open interval); **canary** (§1.7) chạy ở đây — hai/ba Catherine KHÔNG merge, "Catherine Linton" đúng mẹ/con theo range.
-- Output T2: `{entity_id, canonical, entity_type, aliases:[{surface, valid_from_block, valid_to_block}]}`.
+### 5.2 Lớp 1 — Identity partition trên mention-atom (B4 v2, thay adjudicate_v1)
+- **Atom = MỘT mention row** `(atom_id, block_id, surface, quote_context, hint_entity_id)` từ B1
+  artifact (ledger id chỉ là hint). Lý do đã đo: cùng surface "the master" trong MỘT chương chỉ
+  3 người khác nhau; atom cấp chương không tách nổi (M4d vòng 2, verified).
+- **Code (tất định):** dựng atoms as-of N từ union chain-manifest; tính FRONTIER (atom mới +
+  group cũ có evidence mới); shard theo component nếu vượt cap — estimator quyết số call.
+- **LLM `literary_identity_partition_v1`** (frontier-incremental, KHÔNG gửi lại toàn bộ khi
+  không đổi):
+> - Prompt version: literary_identity_partition_v1.
+> You are resolving character identity for one chapter of a long book. Each ATOM is one mention occurrence: {atom_id, block_id, surface, quote_context, hint_entity_id}. PRIOR_GROUPS are identity groups already established in earlier chapters: {entity_id, canonical_surface, referent_kind, member_summary}. IDENTITY_HINTS are statements taken from chapter digests; treat them as leads to check against the quoted text, never as evidence by themselves.
+> Assign EVERY listed atom to exactly one group. A group is one real-world referent.
+> - An honorific difference (Mr./Mrs./Miss/young/old) is NOT evidence of identity: a wife, a widow and a father-in-law can share one surname; a title like "the master" can pass between people inside one chapter.
+> - The SAME surface may denote DIFFERENT people in different scenes or narration frames; judge each atom from its own quote_context.
+> - To extend a prior group, set reuse_entity_id to its entity_id. Reopen or split a prior group ONLY with a quote contradicting its unity, recorded in evidence with supports=different_identity.
+> - Prefer SPLIT when unsure — merging two people is worse than leaving two entities.
+> - referent_kind: person | place | group_reference | literary_allusion | unknown. A coordination surface naming two people at once counts as group_reference, never a person.
+> - Output JSON only: {"groups": [{"group_key": string, "reuse_entity_id": string or null, "referent_kind": string, "canonical_atom_id": string, "member_atom_ids": [strings], "status": "resolved" | "uncertain" | "quarantine", "alias_bindings": [{"surface": string, "member_atom_ids": [strings], "valid_from_block": string, "valid_until_block": string or null}], "evidence": [{"block_id": string, "quote": string, "source_atom_ids": [strings], "supports": "same_identity" | "different_identity"}]}]}
+> - Every input atom appears exactly once across all groups. Do NOT invent atom ids, do NOT mint entity ids, do NOT paraphrase quotes — copy them verbatim from the given text. Output nothing but the JSON object.
+- **Code apply có gate (trên BẢN SAO, publish atomic):** exact-partition; không atom trùng nhóm;
+  không merge khác referent_kind; quote phải là substring THẬT của block; no-new-collision.
+  **ID ổn định xuyên scope:** group mở rộng giữ entity_id cũ (reuse_entity_id); split → nhánh chứa
+  canonical atom cũ GIỮ id + `supersedes_entity_ids` ghi nhánh mới; tie → halt. LLM không bao giờ
+  mint id cuối — code mint tất định.
+- **Identity đổi → replay:** mọi pair chứa entity có membership đổi = affected set; remap toàn bộ
+  evidence cũ rồi chạy lại L3 phase cho các pair đó từ evidence đầu tiên.
+- Output T2: `{entity_id, canonical, referent_kind, aliases:[{surface, valid_from_block,
+  valid_until_block|null}], supersedes_entity_ids}`. referent_kind ≠ person → KHÔNG vào T2:
+  place đối chiếu về T1, group_reference/unknown → review_only (§30-style quarantine).
 
 ### 5.3 Lớp 2 — Interaction consolidation (speaker/addressee cleanup)
 - **Code:** resolve `speaker`/`addressee` candidate/unknown bằng turn-alternation + roster + `attribution_method` (gate theo METHOD, không confidence). Pronoun→entity khi turn-order + roster cho phép.
@@ -444,9 +467,12 @@ B4 KHÔNG phải một call (tránh tái tạo monolith). Là pipeline: mỗi l�
 
 ### 5.4 Lớp 3 — Relation-phase consolidation (change-point → interval) *(lõi)*
 - **Code:** gom `relation_events` + `relation_event_summary` theo cặp, sắp theo block; đánh dấu candidate boundary (valence flip từ b3).
-- **LLM micro-call `literary_phase_segment_v1`** cho từng cặp:
-  > You are segmenting one character pair's relationship into ordered phases from an evidence stream. Read the pair's events in text order. Output a list of NON-OVERLAPPING phases in block order. Each phase: phase_label from EXACTLY this set [allied, friendly, neutral, strained, hostile, estranged, dependent, reconciled]; valid_from_block; valid_to_block (use null + status "open" for the last, unclosed phase); trigger_block (the block where this phase begins); trigger_evidence (a short quote). Open a NEW phase only when a trigger shows a strong change in language or action — a single mocking remark or momentary mood is an event, NOT a new phase. Do NOT invent phases with no event evidence. Prefer FEWER phases when evidence is weak.
-- **Code validate:** non-overlap, block-order tăng, taxonomy enum, đúng 1 open-interval cuối, mọi trigger có evidence trong range. Reject → nếu cặp có **≥2 candidate_transition hoặc valence-flip mạnh** thì đánh `blocked_for_runtime` (KHÔNG nhồi relation/address cho cặp tới khi human review — tránh single-phase CHE under-seg); cặp đơn giản mới fallback single-phase + review.
+- **LLM micro-call `literary_phase_segment_v2`** cho từng cặp (shard/batch tất định theo pair, estimator quyết số call):
+> - Prompt version: literary_phase_segment_v2.
+> You are segmenting one character pair's relationship into ordered phases from an evidence stream, and extracting directed relationship facts. The pair header gives two entity ids, A and B. Read the pair's events in text order.
+> PHASES: output a list of NON-OVERLAPPING phases in block order. Each phase: phase_label from EXACTLY this set [allied, friendly, neutral, strained, hostile, estranged, dependent, reconciled]; valid_from_block; valid_until_block (use null + status "open" for the last, unclosed phase); trigger_block (the block where this phase begins); trigger_evidence (a short verbatim quote). Open a NEW phase only when a trigger shows a strong change in language or action — a single mocking remark or momentary mood is an event, NOT a new phase. Do NOT invent phases with no event evidence. Prefer FEWER phases when evidence is weak.
+> RELATION_FACTS: directed factual relationships between A and B that the evidence states or clearly shows. Each fact: {subject_ref (A or B's entity id), predicate_code from EXACTLY this set [parent_of, child_of, spouse_of, sibling_of, daughter_in_law_of, son_in_law_of, father_in_law_of, mother_in_law_of, grandparent_of, grandchild_of, cousin_of, servant_of, master_of, landlord_of, tenant_of, guest_of, neighbor_of, guardian_of, ward_of, other], object_ref, valid_from_block, evidence_block, evidence_quote (verbatim), predicate_note (free text)}. Direction matters: subject predicate object means the subject IS the predicate of the object. Use predicate_code "other" ONLY when nothing in the set fits. Do NOT derive a fact from a title or an honorific alone; every fact needs quoted evidence. Output empty lists when the evidence supports nothing.
+- **Code validate:** non-overlap, block-order tăng, taxonomy enum, đúng 1 open-interval cuối, mọi trigger có evidence trong range; relation_facts: predicate_code trong `literary_predicate_taxonomy_v1` (list ở blockquote trên — versioned cùng prompt), không self-loop, subject/object đúng 2 id của pair, evidence_quote là substring THẬT của evidence_block; `other` → review_only (không runtime). Retry taxonomy: transport/parse/schema-malformed retry 1 lần (lưu raw); semantic-gate fail KHÔNG regenerate → quarantine/halt. Reject → nếu cặp có **≥2 candidate_transition hoặc valence-flip mạnh** thì đánh `blocked_for_runtime` (KHÔNG nhồi relation/address cho cặp tới khi human review — tránh single-phase CHE under-seg); cặp đơn giản mới fallback single-phase + review.
 - Output `entity_relations`: `{pair, phase_label, valid_from_block, valid_to_block|null, status, trigger_block, trigger_evidence}`. **`valence` KHÔNG do LLM xuất** — code suy từ `phase_label` qua map cố định (allied/friendly/dependent/reconciled→positive; neutral→neutral; strained/hostile/estranged→negative).
 
 ### 5.4b Lớp 3b — Character-state interval consolidation

@@ -168,3 +168,49 @@ nằm trong T2 person registry.
 3. Thứ tự wire: identity partition trước rồi phase (phase dùng partition mới) trong CÙNG scope,
    hay 2 pass toàn sách? (Claude nghiêng: cùng scope, identity trước — phase refs phải trỏ
    final ids của scope đó.)
+
+---
+# VÒNG 2 — Claude verify + CHỐT SCHEMA (2026-07-11): nhận toàn bộ findings, R1 bị bác bằng phản chứng thật
+
+Verify trên artifact:
+- **BLOCKER atom: CONFIRMED, giàu hơn trích dẫn.** "the master" trong ch4 chỉ 3 người:
+  ent_mr_earnshaw (b004/b036/b038/b044), ent_heathcliff (b026), unknown (b016/b035/b039);
+  "the young master" b042 = ent_hindley; "the mistress" cũng đổi referent. Đếm mention rows
+  khớp chính xác 22/67/86/82 (ch1-4). → **R1 của Claude bị bác đúng quy trình**: atom mặc định
+  = (mention_id × block_id), bỏ escape hatch, frontier-incremental là cơ chế bound prompt.
+- **MAJOR taxonomy: CONFIRMED.** Design §5.4 đã khoá enum 8 nhãn [allied, friendly, neutral,
+  strained, hostile, estranged, dependent, reconciled] — enum rev2 của Claude bị vứt, dùng
+  enum design + version hoá qua prompt marker.
+- 5 MAJOR + 2 MINOR còn lại: NHẬN CẢ. Stable-ID (reuse_entity_id/supersedes + quy tắc cơ học:
+  mở rộng giữ id; split nhánh chứa canonical atom cũ giữ id, nhánh kia mint mới; tie → halt);
+  alias_bindings[] trong output identity; predicate_code taxonomy đóng versioned
+  (`literary_predicate_taxonomy_v1`, other→review_only); affected-pair replay khi identity đổi
+  (mọi pair chứa entity có membership đổi → remap evidence + chạy lại phase từ evidence đầu);
+  **2 LOGICAL stages** shard tất định theo component/pair-batch, estimator quyết số call;
+  retry taxonomy (transport/parse/schema = 1 retry + lưu raw; semantic-gate fail = KHÔNG
+  regenerate → quarantine/halt); quarantine 2 mức (review_only vẫn publish scope;
+  blocked_for_runtime khi chạm speaker/relation/address → halt gate).
+- Trình tự trong scope (Sol Q3, chốt): atoms as-of N → identity partition → remap evidence →
+  affected pairs → phase/fact segmentation → address observed-only → gate trên bản sao →
+  atomic publish + M3 checkpoint.
+
+## PROMPT ĐÃ SOẠN XONG (Claude, verify bằng loader thật + grep book-neutral):
+- `literary_identity_partition_v1` — blockquote mới trong design §5.2 (extract 2.080 chars/10
+  dòng qua load_system_prompt_from_design, KHÔNG leak tên nhân vật/địa danh WH).
+- `literary_phase_segment_v2` — thay v1 (chưa từng wire) trong design §5.4: giữ nguyên enum 8
+  nhãn + rule change-point, THÊM RELATION_FACTS có hướng với predicate_code đóng 20 mã;
+  interval nửa mở valid_until_block. Extract 1.744 chars OK.
+- Validator §5.4 bổ sung: fact checks (enum, no self-loop, subject/object ∈ pair, quote là
+  substring thật) + retry taxonomy.
+
+## CANARY BỔ SUNG (theo Sol vòng 2):
+- **the-master ch4:** atom b026 về group Heathcliff; b004/b036/b038/b044 về group Earnshaw-cha;
+  b042 (young master) về Hindley — 1 surface ≥3 group trong 1 chương.
+- **stable-ID ch1→ch4:** entity_id của Lockwood/Heathcliff/Joseph GIỐNG HỆT qua 4 as-of scope.
+
+## **SCHEMA LOCKED — GREENLIGHT IMPLEMENT (CodeX Terra max, theo routing):**
+2 pha bắt buộc: (1) scaffold + dry-run 0-API — atoms/frontier/sharding estimator/gate battery/
+checkpoint M3/render prompt THẬT trên ch1-4, nộp rendered prompts + estimate cho Claude duyệt;
+KHÔNG gọi API ở pha này. (2) sau duyệt: API run ch1-4 (--confirm, gpt-5.4, trần theo estimator),
+halt nếu technical-retry >10% hoặc bất kỳ semantic gate fail. Acceptance = §R5 rev2 + 2 canary
+mới + canary per-scope cũ. D2L-intact: suite xanh + frozen DB hash + prompt D2L byte-identical.
