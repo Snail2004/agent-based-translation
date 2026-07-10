@@ -80,3 +80,91 @@
 - Sau vòng-2: Claude chốt spec cuối, CodeX implement + dry-run 0-API trên ch1-4
   (adjudication call render prompt thật, --confirm trước khi gọi API).
 - Gate: Claude tự chấm §1.4 trên artifact thật. PASS → mở đường scale 34 chương.
+
+---
+# VÒNG 1 — Claude verify critique của CodeX Sol (2026-07-11): 3 BLOCKER đều CONFIRMED → REV2
+
+Verify từng citation trên artifact thật:
+- **B1 (atom = mention-occurrence) CONFIRMED, mạnh hơn trích dẫn:** chính văn bản tự phân biệt —
+  ch4 b017 Lockwood: "What! Catherine Linton? ... it was not my ghostly Catherine". Digest ch3
+  s_04 dùng `ent_catherine_linton` = hồn ma (Catherine mẹ); ch4 b016 "Catherine Linton was her
+  maiden name" = Catherine trẻ. MỘT id, HAI người. Partition trên entity_id không tách nổi.
+- **B2 (relation fact có hướng ≠ phase) CONFIRMED:** taxonomy phase hiện chỉ có valence-label;
+  "daughter-in-law" là kinship fact có chiều, pair unordered làm mất chiều.
+- **B3 (LLM phase segmentation) CONFIRMED:** `_phase_label_from_valence_hint` trong
+  `_consolidate_relations` là code dịch valence→label = việc ngôn ngữ. Đính chính nhỏ:
+  `candidate_transition` CÓ tồn tại (sub-field optional per-relation, vd ch02 b082
+  "she briefly intercedes for his safety") — dùng làm INPUT cho LLM phase call, không thay nó.
+- **MAJOR as-of CONFIRMED:** `run_m3` đọc `_load_m1_report` (final); checkpoint ch02
+  `artifact_manifest` chỉ chứa 27 artifact của riêng ch02 → as-of phải chain-validate rồi
+  UNION manifest ch1..N (tái dùng pattern `_m1_checkpoint_chain_for_m2` có sẵn), cấm glob.
+- **Phát hiện thêm khi verify (Claude):** phase (lockwood,heathcliff)@b011 trong bible thật ra
+  là (lockwood, ent_mrs_heathcliff) trong digest — bị remap qua merge sai. Digest LUÔN đúng
+  ở tầng nó; mọi ô nhiễm nằm ở resolver/merge của M3.
+- MAJOR incremental / evidence-gate / M3-checkpoint + MINOR place: CHẤP NHẬN cả 4.
+  5 câu trả lời của Sol cho Q1-Q5: nhận cả 5 (per-scope incremental; partition schema;
+  block-ordinal map + interval nửa mở; apply-to-copy + gate battery; group_reference/quarantine).
+
+## REV2 — thiết kế chốt để Sol confirm (vòng 2, KHÔNG mở lại hướng đã chốt)
+
+### R1. Atom granularity (điều chỉnh duy nhất của Claude so với đề xuất Sol)
+Atom = `(source_entity_id × surface × chapter)` kèm block_ids đầy đủ — KHÔNG per-occurrence
+mặc định. Lý do: case Catherine Linton tách ở ranh giới CHƯƠNG; per-occurrence thổi prompt
+(ch2 ~90 block); atoms bounded ~30-60/chương. Escape hatch: LLM được phép trả
+`mixed_within_atom` cho một atom → atom đó (và CHỈ nó) được nổ ra per-occurrence trong một
+micro-call tiếp theo. Sol confirm hay phản chứng bằng một case within-chapter thật.
+
+### R2. Hai stage LLM per-scope (prompt do Claude viết, blockquote version-marker)
+- `literary_identity_partition_v1`: input = atoms frontier (mới/có-evidence-mới so với
+  checkpoint trước) + partition đã chốt (state, có thể mở lại khi evidence mâu thuẫn) +
+  identity facts từ digest (hint, không phải evidence). Output = partition đúng schema Sol Q2:
+  `component_id / groups[] {member_atom_ids, canonical_atom_id, referent_kind
+  person|place|group_reference|literary_allusion}, status resolved|uncertain|quarantine,
+  evidence[] {block_id, quote, source_atom_ids, supports same_identity|different_identity}`.
+  Mọi atom xuất hiện đúng 1 lần; LLM không mint id cuối; code mint id tất định từ
+  canonical_atom_id.
+- `literary_phase_segment_v1`: input = relation_event_summary rows (+ evidence quotes resolve
+  từ event_index) + candidate_transition + phases mở as-of trước. Output TÁCH ĐÔI:
+  `relation_facts[]` CÓ HƯỚNG {subject_ref, predicate (English mở, style-free, vd
+  daughter_in_law_of/landlord_of/servant_of), object_ref, valid_from_block, evidence} và
+  `relation_phases[]` pair-level {pair unordered, phase_label enum đóng
+  friendly|strained|hostile|tender|ambivalent|unlabeled, transition đóng/mở interval}.
+  character_state_changes chỉ là context, không tự mở phase.
+- Code sau 2 call: apply vào BẢN SAO → gate battery (exact partition; không atom trùng nhóm;
+  không merge khác referent_kind; không self-loop relation; không mất turn/event/vocative;
+  quote phải là substring THẬT của block — kiểm bằng code; no-new-collision) → pass hết mới
+  publish. Fail gate nào → scope đó đánh dấu quarantine + halt báo Claude, không auto-retry đè.
+
+### R3. As-of + checkpoint M3
+Bible-as-of-N: chain-validate m1 checkpoints ch1..N (parent-hash liền, prefix tuyệt đối) →
+union artifact_manifest từng checkpoint làm danh sách file ĐƯỢC PHÉP đọc; digest đọc qua m2
+checkpoint hash tương ứng. M3 checkpoint per-scope (tái dùng checkpoint.py): M1/M2 input
+hashes + prompt hashes + model/config + parent B4 hash + raw response + usage + manifest;
+resume = longest valid prefix. Interval nửa mở [valid_from, valid_until); block-ordinal map
+toàn sách build từ document (tất định).
+
+### R4. Registry đa loại — tuyên bố rõ, không âm thầm
+T2 v2 = registry person-only như cũ; atoms có referent_kind ≠ person đi về:
+place → T1 glossary (đối chiếu entry sẵn có), group_reference/quarantine → section riêng
+`review_only` (theo §30). Canary WH-place đổi thành: `ent_wuthering_heights` KHÔNG được
+nằm trong T2 person registry.
+
+### R5. Acceptance ch1-4 (sửa theo B2 + giữ per-scope canary cũ)
+- ch2: relation_fact `ent_mrs_heathcliff --daughter_in_law_of--> ent_heathcliff`
+  evidence b042/b046 (KHÔNG phải phase); Mrs. Heathcliff ≠ Heathcliff entity; Hareton join
+  2 id; phase (lockwood, mrs_heathcliff) tồn tại riêng, không remap về heathcliff.
+- ch3: `ent_catherine_linton`-atom(ch3) thuộc người GHOST/Catherine-mẹ; as-of ch3 chưa có
+  Nelly-narration entities ch4.
+- ch4: atom Catherine Linton(ch4) thuộc Catherine trẻ (cùng người với ent_mrs_heathcliff —
+  đây là chỗ đo BLOCKER-1 fix); narrator switch 2 segments; Hareton = Earnshaw cuối trong facts.
+- ch1: registry as-of đúng 10±? entity của riêng ch1 (đếm cụ thể khi implement), Hareton
+  mentioned_historical, King Lear literary_allusion (referent_kind mới thay presence-status hack).
+- Cost trần pilot ch1-4: 8 call (2/scope) gpt-5.4, ước <45k tok — trong quota ngày.
+
+**Câu hỏi vòng 2 cho Sol (chỉ 3, đóng):**
+1. R1 atom granularity chapter-level + escape hatch: confirm hay đưa case within-chapter thật?
+2. Schema 2 output R2 đủ để code apply tất định chưa — còn field nào thiếu để gate battery
+   chạy không suy diễn?
+3. Thứ tự wire: identity partition trước rồi phase (phase dùng partition mới) trong CÙNG scope,
+   hay 2 pass toàn sách? (Claude nghiêng: cùng scope, identity trước — phase refs phải trỏ
+   final ids của scope đó.)
