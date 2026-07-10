@@ -313,3 +313,17 @@ checkpoint + raw responses + usage thật per-call. Claude chấm acceptance: th
 stable-ID ch1→ch4 / daughter_in_law_of neo b046 / King Lear literary_allusion / narration ch4
 2 segment / đếm entity as-of ch1 (no-leak) / watch-item under-merge xuyên-shard (ĐO số ca) /
 tiêu chí B0 embedded-cast (dream-cast ch03 không thành on-stage person).
+
+---
+# GATE MỞ KHOÁ SCALE (user chốt 2026-07-11): review kép SAU run API, TRƯỚC 34 chương
+Sau khi 10 call chạy xong và Claude gate output (7 mục acceptance):
+1. **Sol max — architecture review as-built trên ARTIFACT THẬT**: toàn bộ story_bible_v2.py
+   + 4 story bible thật + raw responses + checkpoint chain. Câu hỏi định hướng: (a) validator
+   có quá chặt/quá lỏng so với hành vi THẬT của gpt-5.4; (b) under-merge xuyên-shard đo được
+   bao nhiêu ca, có cần pass hợp nhất; (c) frontier-incremental có giữ được bound khi ngoại
+   suy 34 chương (số liệu shard thật); (d) khoảng trống nào giữa Story Bible schema và nhu cầu
+   Translator/address-policy tầng kế.
+2. **Claude — gate độc lập như thường + verify từng citation của Sol.**
+3. Hai bên đối chiếu finding; mâu thuẫn → vòng 2; đồng thuận → USER quyết mở khoá 34 chương.
+Lý do KHÔNG review trước run (đã quyết): 5 lớp soi đã qua; run 10-call là probe fail-closed
+rẻ nhất; hành vi model thật là ẩn số duy nhất còn lại mà không review tĩnh nào trả lời được.
