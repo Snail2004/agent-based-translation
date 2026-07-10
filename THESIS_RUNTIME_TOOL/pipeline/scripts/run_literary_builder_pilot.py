@@ -129,6 +129,13 @@ def main() -> int:
         help="For --milestone M2: directory containing the passed M1 artifacts.",
     )
     parser.add_argument(
+        "--digest-context",
+        help=(
+            "For --milestone M2 subset runs: prior validated digest artifacts or "
+            "M2 checkpoints used as strict neighbor-summary input."
+        ),
+    )
+    parser.add_argument(
         "--window-target-tokens",
         type=int,
         default=500,
@@ -248,12 +255,14 @@ def _run_milestone(args: argparse.Namespace) -> int:
     design_doc = Path(args.design_doc)
 
     if args.milestone == "M2":
+        digest_context = Path(args.digest_context) if args.digest_context else None
         estimate = estimate_m2(
             document,
             args.chapters,
             design_doc=design_doc,
             config=config,
             m1_dir=m1_dir,
+            digest_context=digest_context,
         )
         if args.estimate_only:
             print(json.dumps(estimate, ensure_ascii=False, indent=2))
@@ -273,6 +282,7 @@ def _run_milestone(args: argparse.Namespace) -> int:
                 out_dir=out_dir,
                 m1_dir=m1_dir,
                 confirm_usd=float(args.confirm_usd),
+                digest_context=digest_context,
                 resume=bool(args.resume),
             )
         except Exception as exc:

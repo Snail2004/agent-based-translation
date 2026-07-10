@@ -1,0 +1,102 @@
+{
+  "stage": "m2",
+  "chapter_id": "wh_ch03",
+  "chapter_index": 0,
+  "chapter_sequence_prefix": [
+    "wh_ch03"
+  ],
+  "source_hash": "2e170e7af07094c8eaad6bfacd424ffc443f20d603370aece58bd56407b231df",
+  "prompt_hashes": {
+    "literary_digest_v1": "06a233638e2e1f2b2acdabb7e3fb96ea72fe9cb09606717f632dc1f912123398"
+  },
+  "config_hash": "aa74b26bcf86255b2a9e4960866137e0dd8baa656bdd4c7a8ed6c54468d97430",
+  "schema_version": "literary_m2_checkpoint_v2",
+  "parent_checkpoint_hash": null,
+  "input_m1_checkpoint_hash": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+  "state": {
+    "chapter_summaries": [
+      {
+        "chapter_id": "wh_ch03",
+        "summary": "Lockwood is lodged in a forbidden chamber at Wuthering Heights, where he finds Catherine’s old books and her childish diary describing Hindley’s cruelty to Heathcliff and her own rebellion. He falls into disturbing dreams: one of Jabez Branderham’s endless sermon, then one of a ghostly child identifying itself as Catherine Linton begging to be let in. His scream brings Heathcliff, who reacts with extraordinary agitation when Catherine’s name is mentioned and later, believing himself alone, begs “Cathy” to return. Before dawn Lockwood witnesses more of the household’s bitterness: Heathcliff abuses Zillah and his daughter-in-law, who defies him. Heathcliff then guides Lockwood safely across the snow-covered moor back toward Thrushcross Grange, where Lockwood returns exhausted and deeply affected by the night’s events."
+      }
+    ],
+    "neighbor_source": {
+      "wh_ch03": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch01.json"
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+        }
+      ]
+    }
+  },
+  "digest_summary": "Lockwood is lodged in a forbidden chamber at Wuthering Heights, where he finds Catherine’s old books and her childish diary describing Hindley’s cruelty to Heathcliff and her own rebellion. He falls into disturbing dreams: one of Jabez Branderham’s endless sermon, then one of a ghostly child identifying itself as Catherine Linton begging to be let in. His scream brings Heathcliff, who reacts with extraordinary agitation when Catherine’s name is mentioned and later, believing himself alone, begs “Cathy” to return. Before dawn Lockwood witnesses more of the household’s bitterness: Heathcliff abuses Zillah and his daughter-in-law, who defies him. Heathcliff then guides Lockwood safely across the snow-covered moor back toward Thrushcross Grange, where Lockwood returns exhausted and deeply affected by the night’s events.",
+  "validation_counts": {
+    "digest_ok": 1,
+    "digest_failed": 0,
+    "parse_fail": 0,
+    "frame_segments": 1,
+    "scenes": 5,
+    "state_changes": 0,
+    "translator_facts": 8,
+    "motifs": 5
+  },
+  "accounting": {
+    "logical_calls": 1,
+    "attempts": 1,
+    "cache_hits": 0,
+    "cost_usd": 0.0,
+    "prompt_tokens": 10546,
+    "cached_tokens": 0,
+    "completion_tokens": 3452,
+    "reasoning_tokens": 0,
+    "incremental_cost_usd": 0.0,
+    "incremental_prompt_tokens": 10546,
+    "incremental_cached_tokens": 0,
+    "incremental_completion_tokens": 3452,
+    "incremental_reasoning_tokens": 0
+  },
+  "call_records": [
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch03",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0,
+      "prompt_tokens": 10546,
+      "cached_tokens": 0,
+      "completion_tokens": 3452,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 5,
+        "state_changes": 0,
+        "unresolved_mystery": 4,
+        "unresolved_pending_transition": 0,
+        "unresolved_question": 1,
+        "translator_facts": 8,
+        "motifs": 5,
+        "nonnarrative_block_skipped": 3
+      },
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 10546,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 3452,
+      "incremental_reasoning_tokens": 0
+    }
+  ],
+  "artifact_manifest": [
+    {
+      "path": "digest/wh_ch03.json",
+      "sha256": "c4736607f481474c07fdd6b93e64236cdbfed0f248866a2a47874ca10d6b0a9d",
+      "size": 73496
+    }
+  ],
+  "created_at": "2026-07-10T14:25:29.151103+00:00",
+  "checkpoint_hash": "b1216be078e0c53e4e189db8fc29e2d1bf70d6ae633fd1d323926f7a3d3bf1df"
+}

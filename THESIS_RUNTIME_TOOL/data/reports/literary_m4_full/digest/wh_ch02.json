@@ -1,0 +1,492 @@
+{
+  "mode": "literary_digest_v1",
+  "window_id": "wh_ch02",
+  "chapter_id": "wh_ch02",
+  "block_ids": [
+    "wh_ch02_b001",
+    "wh_ch02_b002",
+    "wh_ch02_b003",
+    "wh_ch02_b004",
+    "wh_ch02_b005",
+    "wh_ch02_b006",
+    "wh_ch02_b007",
+    "wh_ch02_b008",
+    "wh_ch02_b009",
+    "wh_ch02_b010",
+    "wh_ch02_b011",
+    "wh_ch02_b012",
+    "wh_ch02_b013",
+    "wh_ch02_b014",
+    "wh_ch02_b015",
+    "wh_ch02_b016",
+    "wh_ch02_b017",
+    "wh_ch02_b018",
+    "wh_ch02_b019",
+    "wh_ch02_b020",
+    "wh_ch02_b021",
+    "wh_ch02_b022",
+    "wh_ch02_b023",
+    "wh_ch02_b024",
+    "wh_ch02_b025",
+    "wh_ch02_b026",
+    "wh_ch02_b027",
+    "wh_ch02_b028",
+    "wh_ch02_b029",
+    "wh_ch02_b030",
+    "wh_ch02_b031",
+    "wh_ch02_b032",
+    "wh_ch02_b033",
+    "wh_ch02_b034",
+    "wh_ch02_b035",
+    "wh_ch02_b036",
+    "wh_ch02_b037",
+    "wh_ch02_b038",
+    "wh_ch02_b039",
+    "wh_ch02_b040",
+    "wh_ch02_b041",
+    "wh_ch02_b042",
+    "wh_ch02_b043",
+    "wh_ch02_b044",
+    "wh_ch02_b045",
+    "wh_ch02_b046",
+    "wh_ch02_b047",
+    "wh_ch02_b048",
+    "wh_ch02_b049",
+    "wh_ch02_b050",
+    "wh_ch02_b051",
+    "wh_ch02_b052",
+    "wh_ch02_b053",
+    "wh_ch02_b054",
+    "wh_ch02_b055",
+    "wh_ch02_b056",
+    "wh_ch02_b057",
+    "wh_ch02_b058",
+    "wh_ch02_b059",
+    "wh_ch02_b060",
+    "wh_ch02_b061",
+    "wh_ch02_b062",
+    "wh_ch02_b063",
+    "wh_ch02_b064",
+    "wh_ch02_b065",
+    "wh_ch02_b066",
+    "wh_ch02_b067",
+    "wh_ch02_b068",
+    "wh_ch02_b069",
+    "wh_ch02_b070",
+    "wh_ch02_b071",
+    "wh_ch02_b072",
+    "wh_ch02_b073",
+    "wh_ch02_b074",
+    "wh_ch02_b075",
+    "wh_ch02_b076",
+    "wh_ch02_b077",
+    "wh_ch02_b078",
+    "wh_ch02_b079",
+    "wh_ch02_b080",
+    "wh_ch02_b081",
+    "wh_ch02_b082",
+    "wh_ch02_b083",
+    "wh_ch02_b084",
+    "wh_ch02_b085",
+    "wh_ch02_b086",
+    "wh_ch02_b087",
+    "wh_ch02_b088",
+    "wh_ch02_b089",
+    "wh_ch02_b090",
+    "wh_ch02_b091",
+    "wh_ch02_b092"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_digest_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- narration_frame_segments: split the chapter into CONTIGUOUS block ranges by WHO narrates. Some works switch narrator mid-chapter or mid-passage; do not assume one narrator per chapter — segment by who actually narrates, however many that is. story_time_label is one of: frame_present, retrospective_past, embedded_flashback.\n- Do NOT finalize relationship phases and do NOT output valid_from/to intervals. For relations, only aggregate this chapter's observed events per pair; if the text clearly shows a turning point, note a candidate_transition with a trigger block. Every relation_event_summary row has status \"evidence_only\".\n- relation_event_summary.observed_valence_hint is one of: positive, negative, mixed, unclear. It is an EVENT summary, NOT a phase label and NOT a trigger on its own — consolidation still needs event evidence to open a phase.\n- character_state_changes: only changes VISIBLE in this chapter to a character's social_status, alias_or_title, life_status, or residence — each with trigger_block and evidence_quote. observed_scope is \"this_chapter\".\n- unresolved_threads: open questions or pending turning points the chapter raises but does not resolve. kind is one of: mystery, pending_transition, question. Include opened_block.\n- translator_relevant_facts: a curated list, MAX 8 per chapter, of facts a translator needs to render THIS chapter correctly. Not every motif — only what changes how text is rendered. Each has fact_type one of: narrator, register, speech_style, status, setting; and block_evidence.\n- motifs: recurring images/themes, each with block_ids.\n- Prefer entity_id references (ent_*) from CHAPTER_ROSTER where available; else a clean surface. Every block reference MUST be COPIED VERBATIM from the [brackets] in the chapter text (they look like bk_ch04_b012) — never abbreviate or drop the prefix.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"ch04\",\n  \"chapter_rolling_summary\": \"<=150 English words, for the next chapter's context\",\n  \"narration_frame_segments\": [\n    {\"narrator_ref\": \"ent_alden\", \"block_range\": [\"bk_ch04_b001\", \"bk_ch04_b004\"], \"story_time_label\": \"frame_present\"},\n    {\"narrator_ref\": \"ent_mira\", \"block_range\": [\"bk_ch04_b005\", \"bk_ch04_b040\"], \"story_time_label\": \"retrospective_past\"}\n  ],\n  \"scene_summaries\": [\n    {\"scene_id\": \"s_ch04_01\", \"block_range\": [\"bk_ch04_b005\", \"bk_ch04_b018\"], \"summary\": \"...\", \"key_participants\": [\"ent_master\", \"ent_rook\", \"ent_bram\"]}\n  ],\n  \"character_state_changes\": [\n    {\"entity_ref\": \"ent_rook\", \"attribute\": \"social_status\", \"from\": \"orphan_outsider\", \"to\": \"taken_into_household\", \"trigger_block\": \"bk_ch04_b012\", \"evidence_quote\": \"you must take him in as one of ours\", \"observed_scope\": \"this_chapter\"}\n  ],\n  \"relation_event_summary\": [\n    {\"pair\": [\"ent_bram\", \"ent_rook\"], \"observed_valence_hint\": \"negative\", \"event_ids\": [\"e_bk_ch04_b014_01\"], \"candidate_transition\": {\"trigger_block\": \"bk_ch04_b012\", \"note\": \"arrival sparks the son's jealousy\"}, \"status\": \"evidence_only\"}\n  ],\n  \"unresolved_threads\": [\n    {\"thread_id\": \"th_ch04_01\", \"description\": \"The outsider child's origin and real name unknown\", \"opened_block\": \"bk_ch04_b010\", \"kind\": \"mystery\"},\n    {\"thread_id\": \"th_ch04_02\", \"description\": \"The son's resentment likely to escalate\", \"opened_block\": \"bk_ch04_b016\", \"kind\": \"pending_transition\", \"pair\": [\"ent_bram\", \"ent_rook\"]}\n  ],\n  \"motifs\": [{\"note\": \"the intruder disrupting the household\", \"block_ids\": [\"bk_ch04_b012\"]}],\n  \"translator_relevant_facts\": [\n    {\"fact_type\": \"narrator\", \"fact\": \"Mira narrates in past tense, addressing the listener; her stance to the child is ambivalent\", \"block_evidence\": [\"bk_ch04_b005\"]},\n    {\"fact_type\": \"register\", \"fact\": \"the master uses an affectionate/paternal register to the child\", \"block_evidence\": [\"bk_ch04_b012\"]}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "PREVIOUS_CHAPTER_ROLLING_SUMMARY\n(none)\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch01\nLockwood visits Heathcliff at Wuthering Heights, is admitted after a terse exchange, and endures a hostile but memorable first encounter with the house, Joseph, the dogs, and a vigorous kitchen servant who restores order. Heathcliff appears reserved, suspicious, and unexpectedly civil at the end, offering wine and conversation. Lockwood, amused and intrigued by the isolation and the owner’s manner, decides to return the next day despite Heathcliff’s evident wish to avoid repetition.\n\nCHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | few_scenes\nneutral_premise | Mr. Lockwood revisits Wuthering Heights in bad weather, meets the household at tea, learns who lives there, asks for a guide, and is kept overnight after a struggle at the door.\ncast | Mr. Lockwood | tenant/visitor | wh_ch02_b002\ncast | Joseph | servant | wh_ch02_b004\ncast | Mrs. Heathcliff | hostess | wh_ch02_b010\ncast | the young man | worker | wh_ch02_b010\ncast | Heathcliff | master/host | wh_ch02_b029\ncast | Hareton Earnshaw | worker | wh_ch02_b053\ncast | Zillah | housewife | wh_ch02_b089\nscene | wh_ch02_b002..wh_ch02_b009 | co_present_count=2 | Mr. Lockwood, Joseph\nscene | wh_ch02_b010..wh_ch02_b028 | co_present_count=3 | Mr. Lockwood, Mrs. Heathcliff, the young man\nscene | wh_ch02_b029..wh_ch02_b055 | co_present_count=4 | Mr. Lockwood, Heathcliff, Mrs. Heathcliff, the young man\nscene | wh_ch02_b056..wh_ch02_b092 | co_present_count=6 | Mr. Lockwood, Heathcliff, Mrs. Heathcliff, Joseph, Hareton Earnshaw, Zillah\n\nCHAPTER_ROSTER\nent_earnshaw | Earnshaw | Earnshaw\nent_hareton | Hareton | Hareton\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_heathcliff | Heathcliff | Heathcliff\nent_joseph | Joseph | Joseph\nent_king_lear | King Lear | King Lear\nent_mr_and_mrs_heathcliff | Mr. and Mrs. Heathcliff | Mr. and Mrs. Heathcliff\nent_mr_earnshaw | Mr. Earnshaw | Mr. Earnshaw\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\nent_mrs_heathcliff | Mrs. Heathcliff | Mrs. Heathcliff\nent_the_young_man | the young man | the young man\nent_zillah | Zillah | Zillah\n\nCHAPTER_RELATION_EVENTS\nJoseph -> ent_mr_lockwood | asks | wh_ch02_b005 | e_wh_ch02_b005_01 | What are ye for?\nJoseph -> ent_mr_lockwood | orders | wh_ch02_b005 | e_wh_ch02_b005_02 | Go round by th’ end\nJoseph -> ent_mr_lockwood | states | wh_ch02_b007 | e_wh_ch02_b007_01 | There’s nobbut t’ missis\nent_mr_lockwood -> Joseph | asks | wh_ch02_b008 | e_wh_ch02_b008_01 | Cannot you tell her\nent_mr_lockwood -> Mrs. Heathcliff | remarks | wh_ch02_b011 | e_wh_ch02_b011_01 | Rough weather!\nthe young man -> ent_mr_lockwood | orders | wh_ch02_b013 | e_wh_ch02_b013_01 | Sit down\nent_mr_lockwood -> ent_mrs_heathcliff | asks | wh_ch02_b015 | e_wh_ch02_b015_01 | Do you intend parting\nent_mr_lockwood -> ent_mrs_heathcliff | addresses | wh_ch02_b017 | e_wh_ch02_b017_01 | Ah, your favourites are among these?\nent_mrs_heathcliff -> ent_mr_lockwood | mocks | wh_ch02_b018 | e_wh_ch02_b018_01 | A strange choice of favourites!\nent_mrs_heathcliff -> ent_mr_lockwood | orders | wh_ch02_b020 | e_wh_ch02_b020_01 | You should not have come out\nent_mrs_heathcliff -> ent_mr_lockwood | refuses | wh_ch02_b022 | e_wh_ch02_b022_01 | I don’t want your help\nent_mr_lockwood -> ent_mrs_heathcliff | apologizes | wh_ch02_b023 | e_wh_ch02_b023_01 | I beg your pardon!\nent_mrs_heathcliff -> ent_mr_lockwood | questions | wh_ch02_b024 | e_wh_ch02_b024_01 | Were you asked to tea?\nent_mr_lockwood -> ent_mrs_heathcliff | accepts | wh_ch02_b025 | e_wh_ch02_b025_01 | I shall be glad to have a cup\nent_mrs_heathcliff -> ent_mr_lockwood | questions | wh_ch02_b026 | e_wh_ch02_b026_01 | Were you asked?\nent_mr_lockwood -> ent_mrs_heathcliff | addresses | wh_ch02_b027 | e_wh_ch02_b027_01 | You are the proper person\nthe young man -> ent_mr_lockwood | stares_at | wh_ch02_b029 | e_wh_ch02_b029_01 | looked down on me\nent_mr_lockwood -> ent_heathcliff | requests | wh_ch02_b030 | e_wh_ch02_b030_01 | I am come, according to promise\nent_heathcliff -> ent_mr_lockwood | warns | wh_ch02_b031 | e_wh_ch02_b031_01 | you should select the thick of a snow-storm\nent_heathcliff -> the shabby coat | addresses | wh_ch02_b036 | e_wh_ch02_b036_01 | Are you going to mak’ the tea?\nent_mrs_heathcliff -> Heathcliff | asks | wh_ch02_b037 | e_wh_ch02_b037_01 | Is he to have any?\nHeathcliff -> ent_mrs_heathcliff | orders | wh_ch02_b038 | e_wh_ch02_b038_01 | Get it ready, will you?\nHeathcliff -> ent_mr_lockwood | invites | wh_ch02_b038 | e_wh_ch02_b038_02 | bring forward your chair\nent_heathcliff -> my amiable lady | addresses | wh_ch02_b041 | e_wh_ch02_b041_01 | My amiable lady!\nent_mr_lockwood -> Mrs. Heathcliff | corrects | wh_ch02_b042 | e_wh_ch02_b042_01 | Mrs. Heathcliff, your wife, I mean\nHeathcliff -> ent_mrs_heathcliff | states | wh_ch02_b046 | e_wh_ch02_b046_01 | Mrs. Heathcliff is my daughter-in-law\nHeathcliff -> ent_mrs_heathcliff | looks_toward | wh_ch02_b046 | e_wh_ch02_b046_02 | turned...a peculiar look in her direction\nent_the_young_man -> ent_mr_lockwood | curses | wh_ch02_b048 | e_wh_ch02_b048_01 | smothered the storm in a brutal curse\nent_heathcliff -> ent_mr_lockwood | answers | wh_ch02_b049 | e_wh_ch02_b049_01 | Unhappy in your conjectures\nent_hareton_earnshaw -> ent_mr_lockwood | threatens | wh_ch02_b053 | e_wh_ch02_b053_01 | respect it!\nHeathcliff -> Hareton | orders | wh_ch02_b058 | e_wh_ch02_b058_01 | Hareton, drive those dozen sheep\nJoseph -> ent_mr_lockwood | scolds | wh_ch02_b060 | e_wh_ch02_b060_01 | Aw wonder how yah can faishion\nent_mrs_heathcliff -> Joseph | insults | wh_ch02_b062 | e_wh_ch02_b062_01 | You scandalous old hypocrite!\nthe little witch -> ent_joseph | mocks | wh_ch02_b064 | e_wh_ch02_b064_01 | No, reprobate! you are a castaway\nI -> ent_mrs_heathcliff | asks | wh_ch02_b066 | e_wh_ch02_b066_01 | you must excuse me\nent_mrs_heathcliff -> I | instructs | wh_ch02_b067 | e_wh_ch02_b067_01 | Take the road you came\nent_mrs_heathcliff -> I | refuses | wh_ch02_b069 | e_wh_ch02_b069_01 | I cannot escort you\nI -> ent_mrs_heathcliff | requests | wh_ch02_b070 | e_wh_ch02_b070_01 | ask you to cross the threshold\nMrs. Heathcliff -> ent_mr_lockwood | lists | wh_ch02_b071 | e_wh_ch02_b071_01 | There is himself, Earnshaw\nHeathcliff -> ent_mr_lockwood | warns | wh_ch02_b076 | e_wh_ch02_b076_01 | lesson to you\nthe unmannerly wretch -> ent_mr_lockwood | refuses | wh_ch02_b078 | e_wh_ch02_b078_01 | No, no! A stranger is a stranger\nent_mr_lockwood -> Earnshaw | strikes | wh_ch02_b079 | e_wh_ch02_b079_01 | pushed past him into the yard\nent_hareton -> ent_mr_lockwood | offers | wh_ch02_b080 | e_wh_ch02_b080_01 | I’ll go with him as far as the park\nent_heathcliff -> ent_hareton | rebukes | wh_ch02_b081 | e_wh_ch02_b081_01 | You’ll go with him to hell!\nMrs. Heathcliff -> ent_mr_lockwood | intercedes | wh_ch02_b082 | e_wh_ch02_b082_01 | somebody must go\nHareton -> ent_mrs_heathcliff | refuses | wh_ch02_b083 | e_wh_ch02_b083_01 | Not at your command!\nent_mrs_heathcliff -> ent_hareton | curses | wh_ch02_b084 | e_wh_ch02_b084_01 | I hope his ghost will haunt you\nthe ancient -> he | chases | wh_ch02_b087 | e_wh_ch02_b087_01 | pursuing my retreat\nent_zillah -> ent_heathcliff | refuses | wh_ch02_b089 | e_wh_ch02_b089_01 | not daring to attack her master\nent_zillah -> ent_hareton_earnshaw | addresses | wh_ch02_b089 | e_wh_ch02_b089_02 | turned her vocal artillery against the younger scoundrel\nent_zillah -> ent_hareton_earnshaw | addresses | wh_ch02_b090 | e_wh_ch02_b090_01 | she cried, \"I wonder what you’ll have agait next?\"\nent_zillah -> ent_mr_lockwood | pulls | wh_ch02_b091 | e_wh_ch02_b091_01 | she suddenly splashed a pint of icy water\nent_heathcliff -> Zillah | orders | wh_ch02_b092 | e_wh_ch02_b092_01 | He told Zillah to give me a glass of brandy\n\nCHAPTER_ID\nwh_ch02\n\nFULL_CHAPTER_TEXT_WITH_BLOCK_MARKERS\n[wh_ch02_b001] CHAPTER II\n[wh_ch02_b002] Yesterday afternoon set in misty and cold. I had half a mind to spend it by my study fire, instead of wading through heath and mud to Wuthering Heights. On coming up from dinner, however, (N.B.—I dine between twelve and one o’clock; the housekeeper, a matronly lady, taken as a fixture along with the house, could not, or would not, comprehend my request that I might be served at five)—on mounting the stairs with this lazy intention, and stepping into the room, I saw a servant-girl on her knees surrounded by brushes and coal-scuttles, and raising an infernal dust as she extinguished the flames with heaps of cinders. This spectacle drove me back immediately; I took my hat, and, after a four-miles’ walk, arrived at Heathcliff’s garden-gate just in time to escape the first feathery flakes of a snow shower.\n[wh_ch02_b003] On that bleak hill top the earth was hard with a black frost, and the air made me shiver through every limb. Being unable to remove the chain, I jumped over, and, running up the flagged causeway bordered with straggling gooseberry-bushes, knocked vainly for admittance, till my knuckles tingled and the dogs howled.\n[wh_ch02_b004] “Wretched inmates!” I ejaculated, mentally, “you deserve perpetual isolation from your species for your churlish inhospitality. At least, I would not keep my doors barred in the day-time. I don’t care—I will get in!” So resolved, I grasped the latch and shook it vehemently. Vinegar-faced Joseph projected his head from a round window of the barn.\n[wh_ch02_b005] “What are ye for?” he shouted. “T’ maister’s down i’ t’ fowld. Go round by th’ end o’ t’ laith, if ye went to spake to him.”\n[wh_ch02_b006] “Is there nobody inside to open the door?” I hallooed, responsively.\n[wh_ch02_b007] “There’s nobbut t’ missis; and shoo’ll not oppen ’t an ye mak’ yer flaysome dins till neeght.”\n[wh_ch02_b008] “Why? Cannot you tell her whom I am, eh, Joseph?”\n[wh_ch02_b009] “Nor-ne me! I’ll hae no hend wi’t,” muttered the head, vanishing.\n[wh_ch02_b010] The snow began to drive thickly. I seized the handle to essay another trial; when a young man without coat, and shouldering a pitchfork, appeared in the yard behind. He hailed me to follow him, and, after marching through a wash-house, and a paved area containing a coal-shed, pump, and pigeon-cot, we at length arrived in the huge, warm, cheerful apartment where I was formerly received. It glowed delightfully in the radiance of an immense fire, compounded of coal, peat, and wood; and near the table, laid for a plentiful evening meal, I was pleased to observe the “missis,” an individual whose existence I had never previously suspected. I bowed and waited, thinking she would bid me take a seat. She looked at me, leaning back in her chair, and remained motionless and mute.\n[wh_ch02_b011] “Rough weather!” I remarked. “I’m afraid, Mrs. Heathcliff, the door must bear the consequence of your servants’ leisure attendance: I had hard work to make them hear me.”\n[wh_ch02_b012] She never opened her mouth. I stared—she stared also: at any rate, she kept her eyes on me in a cool, regardless manner, exceedingly embarrassing and disagreeable.\n[wh_ch02_b013] “Sit down,” said the young man, gruffly. “He’ll be in soon.”\n[wh_ch02_b014] I obeyed; and hemmed, and called the villain Juno, who deigned, at this second interview, to move the extreme tip of her tail, in token of owning my acquaintance.\n[wh_ch02_b015] “A beautiful animal!” I commenced again. “Do you intend parting with the little ones, madam?”\n[wh_ch02_b016] “They are not mine,” said the amiable hostess, more repellingly than Heathcliff himself could have replied.\n[wh_ch02_b017] “Ah, your favourites are among these?” I continued, turning to an obscure cushion full of something like cats.\n[wh_ch02_b018] “A strange choice of favourites!” she observed scornfully.\n[wh_ch02_b019] Unluckily, it was a heap of dead rabbits. I hemmed once more, and drew closer to the hearth, repeating my comment on the wildness of the evening.\n[wh_ch02_b020] “You should not have come out,” she said, rising and reaching from the chimney-piece two of the painted canisters.\n[wh_ch02_b021] Her position before was sheltered from the light; now, I had a distinct view of her whole figure and countenance. She was slender, and apparently scarcely past girlhood: an admirable form, and the most exquisite little face that I have ever had the pleasure of beholding; small features, very fair; flaxen ringlets, or rather golden, hanging loose on her delicate neck; and eyes, had they been agreeable in expression, that would have been irresistible: fortunately for my susceptible heart, the only sentiment they evinced hovered between scorn and a kind of desperation, singularly unnatural to be detected there. The canisters were almost out of her reach; I made a motion to aid her; she turned upon me as a miser might turn if any one attempted to assist him in counting his gold.\n[wh_ch02_b022] “I don’t want your help,” she snapped; “I can get them for myself.”\n[wh_ch02_b023] “I beg your pardon!” I hastened to reply.\n[wh_ch02_b024] “Were you asked to tea?” she demanded, tying an apron over her neat black frock, and standing with a spoonful of the leaf poised over the pot.\n[wh_ch02_b025] “I shall be glad to have a cup,” I answered.\n[wh_ch02_b026] “Were you asked?” she repeated.\n[wh_ch02_b027] “No,” I said, half smiling. “You are the proper person to ask me.”\n[wh_ch02_b028] She flung the tea back, spoon and all, and resumed her chair in a pet; her forehead corrugated, and her red under-lip pushed out, like a child’s ready to cry.\n[wh_ch02_b029] Meanwhile, the young man had slung on to his person a decidedly shabby upper garment, and, erecting himself before the blaze, looked down on me from the corner of his eyes, for all the world as if there were some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common labourer: still his bearing was free, almost haughty, and he showed none of a domestic’s assiduity in attending on the lady of the house. In the absence of clear proofs of his condition, I deemed it best to abstain from noticing his curious conduct; and, five minutes afterwards, the entrance of Heathcliff relieved me, in some measure, from my uncomfortable state.\n[wh_ch02_b030] “You see, sir, I am come, according to promise!” I exclaimed, assuming the cheerful; “and I fear I shall be weather-bound for half an hour, if you can afford me shelter during that space.”\n[wh_ch02_b031] “Half an hour?” he said, shaking the white flakes from his clothes; “I wonder you should select the thick of a snow-storm to ramble about in. Do you know that you run a risk of being lost in the marshes? People familiar with these moors often miss their road on such evenings; and I can tell you there is no chance of a change at present.”\n[wh_ch02_b032] “Perhaps I can get a guide among your lads, and he might stay at the Grange till morning—could you spare me one?”\n[wh_ch02_b033] “No, I could not.”\n[wh_ch02_b034] “Oh, indeed! Well, then, I must trust to my own sagacity.”\n[wh_ch02_b035] “Umph!”\n[wh_ch02_b036] “Are you going to mak’ the tea?” demanded he of the shabby coat, shifting his ferocious gaze from me to the young lady.\n[wh_ch02_b037] “Is he to have any?” she asked, appealing to Heathcliff.\n[wh_ch02_b038] “Get it ready, will you?” was the answer, uttered so savagely that I started. The tone in which the words were said revealed a genuine bad nature. I no longer felt inclined to call Heathcliff a capital fellow. When the preparations were finished, he invited me with—“Now, sir, bring forward your chair.” And we all, including the rustic youth, drew round the table: an austere silence prevailing while we discussed our meal.\n[wh_ch02_b039] I thought, if I had caused the cloud, it was my duty to make an effort to dispel it. They could not every day sit so grim and taciturn; and it was impossible, however ill-tempered they might be, that the universal scowl they wore was their every-day countenance.\n[wh_ch02_b040] “It is strange,” I began, in the interval of swallowing one cup of tea and receiving another—“it is strange how custom can mould our tastes and ideas: many could not imagine the existence of happiness in a life of such complete exile from the world as you spend, Mr. Heathcliff; yet, I’ll venture to say, that, surrounded by your family, and with your amiable lady as the presiding genius over your home and heart—”\n[wh_ch02_b041] “My amiable lady!” he interrupted, with an almost diabolical sneer on his face. “Where is she—my amiable lady?”\n[wh_ch02_b042] “Mrs. Heathcliff, your wife, I mean.”\n[wh_ch02_b043] “Well, yes—oh, you would intimate that her spirit has taken the post of ministering angel, and guards the fortunes of Wuthering Heights, even when her body is gone. Is that it?”\n[wh_ch02_b044] Perceiving myself in a blunder, I attempted to correct it. I might have seen there was too great a disparity between the ages of the parties to make it likely that they were man and wife. One was about forty: a period of mental vigour at which men seldom cherish the delusion of being married for love by girls: that dream is reserved for the solace of our declining years. The other did not look seventeen.\n[wh_ch02_b045] Then it flashed upon me—“The clown at my elbow, who is drinking his tea out of a basin and eating his bread with unwashed hands, may be her husband: Heathcliff junior, of course. Here is the consequence of being buried alive: she has thrown herself away upon that boor from sheer ignorance that better individuals existed! A sad pity—I must beware how I cause her to regret her choice.” The last reflection may seem conceited; it was not. My neighbour struck me as bordering on repulsive; I knew, through experience, that I was tolerably attractive.\n[wh_ch02_b046] “Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.\n[wh_ch02_b047] “Ah, certainly—I see now: you are the favoured possessor of the beneficent fairy,” I remarked, turning to my neighbour.\n[wh_ch02_b048] This was worse than before: the youth grew crimson, and clenched his fist, with every appearance of a meditated assault. But he seemed to recollect himself presently, and smothered the storm in a brutal curse, muttered on my behalf: which, however, I took care not to notice.\n[wh_ch02_b049] “Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”\n[wh_ch02_b050] “And this young man is—”\n[wh_ch02_b051] “Not my son, assuredly.”\n[wh_ch02_b052] Heathcliff smiled again, as if it were rather too bold a jest to attribute the paternity of that bear to him.\n[wh_ch02_b053] “My name is Hareton Earnshaw,” growled the other; “and I’d counsel you to respect it!”\n[wh_ch02_b054] “I’ve shown no disrespect,” was my reply, laughing internally at the dignity with which he announced himself.\n[wh_ch02_b055] He fixed his eye on me longer than I cared to return the stare, for fear I might be tempted either to box his ears or render my hilarity audible. I began to feel unmistakably out of place in that pleasant family circle. The dismal spiritual atmosphere overcame, and more than neutralised, the glowing physical comforts round me; and I resolved to be cautious how I ventured under those rafters a third time.\n[wh_ch02_b056] The business of eating being concluded, and no one uttering a word of sociable conversation, I approached a window to examine the weather. A sorrowful sight I saw: dark night coming down prematurely, and sky and hills mingled in one bitter whirl of wind and suffocating snow.\n[wh_ch02_b057] “I don’t think it possible for me to get home now without a guide,” I could not help exclaiming. “The roads will be buried already; and, if they were bare, I could scarcely distinguish a foot in advance.”\n[wh_ch02_b058] “Hareton, drive those dozen sheep into the barn porch. They’ll be covered if left in the fold all night: and put a plank before them,” said Heathcliff.\n[wh_ch02_b059] “How must I do?” I continued, with rising irritation.\n[wh_ch02_b060] There was no reply to my question; and on looking round I saw only Joseph bringing in a pail of porridge for the dogs, and Mrs. Heathcliff leaning over the fire, diverting herself with burning a bundle of matches which had fallen from the chimney-piece as she restored the tea-canister to its place. The former, when he had deposited his burden, took a critical survey of the room, and in cracked tones grated out—“Aw wonder how yah can faishion to stand thear i’ idleness un war, when all on ’ems goan out! Bud yah’re a nowt, and it’s no use talking—yah’ll niver mend o’yer ill ways, but goa raight to t’ divil, like yer mother afore ye!”\n[wh_ch02_b061] I imagined, for a moment, that this piece of eloquence was addressed to me; and, sufficiently enraged, stepped towards the aged rascal with an intention of kicking him out of the door. Mrs. Heathcliff, however, checked me by her answer.\n[wh_ch02_b062] “You scandalous old hypocrite!” she replied. “Are you not afraid of being carried away bodily, whenever you mention the devil’s name? I warn you to refrain from provoking me, or I’ll ask your abduction as a special favour! Stop! look here, Joseph,” she continued, taking a long, dark book from a shelf; “I’ll show you how far I’ve progressed in the Black Art: I shall soon be competent to make a clear house of it. The red cow didn’t die by chance; and your rheumatism can hardly be reckoned among providential visitations!”\n[wh_ch02_b063] “Oh, wicked, wicked!” gasped the elder; “may the Lord deliver us from evil!”\n[wh_ch02_b064] “No, reprobate! you are a castaway—be off, or I’ll hurt you seriously! I’ll have you all modelled in wax and clay! and the first who passes the limits I fix shall—I’ll not say what he shall be done to—but, you’ll see! Go, I’m looking at you!”\n[wh_ch02_b065] The little witch put a mock malignity into her beautiful eyes, and Joseph, trembling with sincere horror, hurried out, praying, and ejaculating “wicked” as he went. I thought her conduct must be prompted by a species of dreary fun; and, now that we were alone, I endeavoured to interest her in my distress.\n[wh_ch02_b066] “Mrs. Heathcliff,” I said earnestly, “you must excuse me for troubling you. I presume, because, with that face, I’m sure you cannot help being good-hearted. Do point out some landmarks by which I may know my way home: I have no more idea how to get there than you would have how to get to London!”\n[wh_ch02_b067] “Take the road you came,” she answered, ensconcing herself in a chair, with a candle, and the long book open before her. “It is brief advice, but as sound as I can give.”\n[wh_ch02_b068] “Then, if you hear of me being discovered dead in a bog or a pit full of snow, your conscience won’t whisper that it is partly your fault?”\n[wh_ch02_b069] “How so? I cannot escort you. They wouldn’t let me go to the end of the garden wall.”\n[wh_ch02_b070] “ You ! I should be sorry to ask you to cross the threshold, for my convenience, on such a night,” I cried. “I want you to tell me my way, not to show it: or else to persuade Mr. Heathcliff to give me a guide.”\n[wh_ch02_b071] “Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”\n[wh_ch02_b072] “Are there no boys at the farm?”\n[wh_ch02_b073] “No; those are all.”\n[wh_ch02_b074] “Then, it follows that I am compelled to stay.”\n[wh_ch02_b075] “That you may settle with your host. I have nothing to do with it.”\n[wh_ch02_b076] “I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”\n[wh_ch02_b077] “I can sleep on a chair in this room,” I replied.\n[wh_ch02_b078] “No, no! A stranger is a stranger, be he rich or poor: it will not suit me to permit any one the range of the place while I am off guard!” said the unmannerly wretch.\n[wh_ch02_b079] With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me.\n[wh_ch02_b080] “I’ll go with him as far as the park,” he said.\n[wh_ch02_b081] “You’ll go with him to hell!” exclaimed his master, or whatever relation he bore. “And who is to look after the horses, eh?”\n[wh_ch02_b082] “A man’s life is of more consequence than one evening’s neglect of the horses: somebody must go,” murmured Mrs. Heathcliff, more kindly than I expected.\n[wh_ch02_b083] “Not at your command!” retorted Hareton. “If you set store on him, you’d better be quiet.”\n[wh_ch02_b084] “Then I hope his ghost will haunt you; and I hope Mr. Heathcliff will never get another tenant till the Grange is a ruin,” she answered, sharply.\n[wh_ch02_b085] “Hearken, hearken, shoo’s cursing on ’em!” muttered Joseph, towards whom I had been steering.\n[wh_ch02_b086] He sat within earshot, milking the cows by the light of a lantern, which I seized unceremoniously, and, calling out that I would send it back on the morrow, rushed to the nearest postern.\n[wh_ch02_b087] “Maister, maister, he’s staling t’ lanthern!” shouted the ancient, pursuing my retreat. “Hey, Gnasher! Hey, dog! Hey Wolf, holld him, holld him!”\n[wh_ch02_b088] On opening the little door, two hairy monsters flew at my throat, bearing me down, and extinguishing the light; while a mingled guffaw from Heathcliff and Hareton put the copestone on my rage and humiliation. Fortunately, the beasts seemed more bent on stretching their paws, and yawning, and flourishing their tails, than devouring me alive; but they would suffer no resurrection, and I was forced to lie till their malignant masters pleased to deliver me: then, hatless and trembling with wrath, I ordered the miscreants to let me out—on their peril to keep me one minute longer—with several incoherent threats of retaliation that, in their indefinite depth of virulency, smacked of King Lear.\n[wh_ch02_b089] The vehemence of my agitation brought on a copious bleeding at the nose, and still Heathcliff laughed, and still I scolded. I don’t know what would have concluded the scene, had there not been one person at hand rather more rational than myself, and more benevolent than my entertainer. This was Zillah, the stout housewife; who at length issued forth to inquire into the nature of the uproar. She thought that some of them had been laying violent hands on me; and, not daring to attack her master, she turned her vocal artillery against the younger scoundrel.\n[wh_ch02_b090] “Well, Mr. Earnshaw,” she cried, “I wonder what you’ll have agait next? Are we going to murder folk on our very door-stones? I see this house will never do for me—look at t’ poor lad, he’s fair choking! Wisht, wisht; you mun’n’t go on so. Come in, and I’ll cure that: there now, hold ye still.”\n[wh_ch02_b091] With these words she suddenly splashed a pint of icy water down my neck, and pulled me into the kitchen. Mr. Heathcliff followed, his accidental merriment expiring quickly in his habitual moroseness.\n[wh_ch02_b092] I was sick exceedingly, and dizzy, and faint; and thus compelled perforce to accept lodgings under his roof. He told Zillah to give me a glass of brandy, and then passed on to the inner room; while she condoled with me on my sorry predicament, and having obeyed his orders, whereby I was somewhat revived, ushered me to bed."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch02",
+    "chapter_rolling_summary": "Lockwood returns to Wuthering Heights in worsening snow, meets the silent, hostile household at tea, and learns the younger man is Hareton Earnshaw and Mrs. Heathcliff is Heathcliff’s daughter-in-law, not his wife. Unable to find a guide, Lockwood is refused help, forced to remain, and finally attacked by the dogs while trying to leave. Zillah intervenes and gets him inside, where Heathcliff’s rough household order and mutual ill will are fully exposed.",
+    "narration_frame_segments": [
+      {
+        "narrator_ref": "ent_mr_lockwood",
+        "block_range": [
+          "wh_ch02_b002",
+          "wh_ch02_b092"
+        ],
+        "story_time_label": "frame_present"
+      }
+    ],
+    "scene_summaries": [
+      {
+        "scene_id": "s_wh_ch02_01",
+        "block_range": [
+          "wh_ch02_b002",
+          "wh_ch02_b009"
+        ],
+        "summary": "Lockwood arrives in snow and mist, cannot get in, and exchanges terse words with Joseph at the outer door.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_joseph"
+        ]
+      },
+      {
+        "scene_id": "s_wh_ch02_02",
+        "block_range": [
+          "wh_ch02_b010",
+          "wh_ch02_b028"
+        ],
+        "summary": "A young man admits Lockwood to the inner room, where Mrs. Heathcliff sits coldly over tea and repels his conversational attempts.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_mrs_heathcliff",
+          "ent_the_young_man"
+        ]
+      },
+      {
+        "scene_id": "s_wh_ch02_03",
+        "block_range": [
+          "wh_ch02_b029",
+          "wh_ch02_b055"
+        ],
+        "summary": "Heathcliff appears, refuses a guide, and reveals that Mrs. Heathcliff is his daughter-in-law; Lockwood realizes the household is not as he assumed and feels increasingly unwelcome.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_heathcliff",
+          "ent_mrs_heathcliff",
+          "ent_hareton_earnshaw"
+        ]
+      },
+      {
+        "scene_id": "s_wh_ch02_04",
+        "block_range": [
+          "wh_ch02_b056",
+          "wh_ch02_b092"
+        ],
+        "summary": "As night and snow worsen, Lockwood is denied a guide, argues for help, is driven into the yard, attacked by the dogs, and finally rescued by Zillah, who gets him brandy and bed.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_heathcliff",
+          "ent_hareton_earnshaw",
+          "ent_joseph",
+          "ent_zillah",
+          "ent_mrs_heathcliff"
+        ]
+      }
+    ],
+    "character_state_changes": [
+      {
+        "entity_ref": "ent_mrs_heathcliff",
+        "attribute": "alias_or_title",
+        "from": "Mrs. Heathcliff",
+        "to": "Mrs. Heathcliff, Heathcliff's daughter-in-law",
+        "trigger_block": "wh_ch02_b046",
+        "evidence_quote": "Mrs. Heathcliff is my daughter-in-law",
+        "observed_scope": "this_chapter"
+      },
+      {
+        "entity_ref": "ent_hareton_earnshaw",
+        "attribute": "alias_or_title",
+        "from": "the young man",
+        "to": "Hareton Earnshaw",
+        "trigger_block": "wh_ch02_b053",
+        "evidence_quote": "My name is Hareton Earnshaw",
+        "observed_scope": "this_chapter"
+      },
+      {
+        "entity_ref": "ent_mr_lockwood",
+        "attribute": "life_status",
+        "from": "safe_arrival",
+        "to": "injured_and_overnight_guest",
+        "trigger_block": "wh_ch02_b092",
+        "evidence_quote": "I was sick exceedingly, and dizzy, and faint; and thus compelled perforce to accept lodgings under his roof",
+        "observed_scope": "this_chapter"
+      }
+    ],
+    "relation_event_summary": [
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_joseph"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch02_b005_01",
+          "e_wh_ch02_b005_02",
+          "e_wh_ch02_b007_01",
+          "e_wh_ch02_b008_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_mrs_heathcliff"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch02_b011_01",
+          "e_wh_ch02_b015_01",
+          "e_wh_ch02_b017_01",
+          "e_wh_ch02_b023_01",
+          "e_wh_ch02_b024_01",
+          "e_wh_ch02_b025_01",
+          "e_wh_ch02_b026_01",
+          "e_wh_ch02_b027_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_heathcliff"
+        ],
+        "observed_valence_hint": "mixed",
+        "event_ids": [
+          "e_wh_ch02_b030_01",
+          "e_wh_ch02_b031_01",
+          "e_wh_ch02_b038_02",
+          "e_wh_ch02_b046_01",
+          "e_wh_ch02_b049_01",
+          "e_wh_ch02_b076_01",
+          "e_wh_ch02_b092_01"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch02_b046",
+          "note": "Lockwood's mistaken social reading is corrected; Heathcliff's household hierarchy becomes clearer"
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_heathcliff",
+          "ent_mrs_heathcliff"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch02_b037_01",
+          "e_wh_ch02_b038_01",
+          "e_wh_ch02_b046_01",
+          "e_wh_ch02_b046_02"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_heathcliff",
+          "ent_hareton_earnshaw"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch02_b058_01",
+          "e_wh_ch02_b081_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mrs_heathcliff",
+          "ent_hareton_earnshaw"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch02_b083_01",
+          "e_wh_ch02_b084_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_zillah",
+          "ent_mr_lockwood"
+        ],
+        "observed_valence_hint": "positive",
+        "event_ids": [
+          "e_wh_ch02_b089_01",
+          "e_wh_ch02_b091_01"
+        ],
+        "status": "evidence_only"
+      }
+    ],
+    "unresolved_threads": [
+      {
+        "thread_id": "th_wh_ch02_01",
+        "description": "Why Mrs. Heathcliff is hostile and confined at Wuthering Heights remains unclear",
+        "opened_block": "wh_ch02_b020",
+        "kind": "question"
+      },
+      {
+        "thread_id": "th_wh_ch02_02",
+        "description": "The exact family relation between Heathcliff, Mrs. Heathcliff, and Hareton is still only partly explained",
+        "opened_block": "wh_ch02_b046",
+        "kind": "mystery"
+      },
+      {
+        "thread_id": "th_wh_ch02_03",
+        "description": "Lockwood may remain trapped overnight at Wuthering Heights",
+        "opened_block": "wh_ch02_b076",
+        "kind": "pending_transition"
+      }
+    ],
+    "motifs": [
+      {
+        "note": "snow, mud, and storm as barriers to movement",
+        "block_ids": [
+          "wh_ch02_b002",
+          "wh_ch02_b003",
+          "wh_ch02_b056"
+        ]
+      },
+      {
+        "note": "misread kinship and household roles",
+        "block_ids": [
+          "wh_ch02_b044",
+          "wh_ch02_b046",
+          "wh_ch02_b049"
+        ]
+      },
+      {
+        "note": "dogs and violent household disorder",
+        "block_ids": [
+          "wh_ch02_b087",
+          "wh_ch02_b088"
+        ]
+      }
+    ],
+    "translator_relevant_facts": [
+      {
+        "fact_type": "narrator",
+        "fact": "First-person Lockwood narration, ironic and self-satisfied, with frequent asides to the reader",
+        "block_evidence": [
+          "wh_ch02_b002",
+          "wh_ch02_b045"
+        ]
+      },
+      {
+        "fact_type": "register",
+        "fact": "Joseph speaks in broad Yorkshire dialect",
+        "block_evidence": [
+          "wh_ch02_b005",
+          "wh_ch02_b007",
+          "wh_ch02_b060"
+        ]
+      },
+      {
+        "fact_type": "speech_style",
+        "fact": "Heathcliff’s speech is terse, severe, and commanding",
+        "block_evidence": [
+          "wh_ch02_b031",
+          "wh_ch02_b038",
+          "wh_ch02_b076"
+        ]
+      },
+      {
+        "fact_type": "speech_style",
+        "fact": "Mrs. Heathcliff speaks sharply and contemptuously, often in clipped retorts",
+        "block_evidence": [
+          "wh_ch02_b022",
+          "wh_ch02_b062",
+          "wh_ch02_b067"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Mrs. Heathcliff is explicitly identified as Heathcliff’s daughter-in-law, not his wife",
+        "block_evidence": [
+          "wh_ch02_b046",
+          "wh_ch02_b049"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Hareton introduces himself by full name and demands respect",
+        "block_evidence": [
+          "wh_ch02_b053"
+        ]
+      },
+      {
+        "fact_type": "setting",
+        "fact": "Wuthering Heights is isolated, storm-bound, and difficult to leave in bad weather",
+        "block_evidence": [
+          "wh_ch02_b003",
+          "wh_ch02_b056",
+          "wh_ch02_b088"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Zillah functions as the practical household woman who intervenes when the men do not",
+        "block_evidence": [
+          "wh_ch02_b089",
+          "wh_ch02_b092"
+        ]
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "digest",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "narration coverage skipped non-narrative block wh_ch02_b001"
+    ],
+    "counts": {
+      "frame_segments": 1,
+      "scenes": 4,
+      "state_changes": 3,
+      "unresolved_mystery": 1,
+      "unresolved_pending_transition": 1,
+      "unresolved_question": 1,
+      "translator_facts": 8,
+      "motifs": 3,
+      "nonnarrative_block_skipped": 1
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": true,
+      "cache_key": "41ea10e8082956854f2d18c79f70eb1668067372f376a6ae3c0d12953d851791",
+      "latency_ms": 12633,
+      "cost_usd": 0.005932,
+      "usage": {
+        "prompt_tokens": 8744,
+        "cached_tokens": 0,
+        "completion_tokens": 1873,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "digest",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "narration coverage skipped non-narrative block wh_ch02_b001"
+        ],
+        "counts": {
+          "frame_segments": 1,
+          "scenes": 4,
+          "state_changes": 3,
+          "unresolved_mystery": 1,
+          "unresolved_pending_transition": 1,
+          "unresolved_question": 1,
+          "translator_facts": 8,
+          "motifs": 3,
+          "nonnarrative_block_skipped": 1
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch02\",\"chapter_rolling_summary\":\"Lockwood returns to Wuthering Heights in worsening snow, meets the silent, hostile household at tea, and learns the younger man is Hareton Earnshaw and Mrs. Heathcliff is Heathcliff’s daughter-in-law, not his wife. Unable to find a guide, Lockwood is refused help, forced to remain, and finally attacked by the dogs while trying to leave. Zillah intervenes and gets him inside, where Heathcliff’s rough household order and mutual ill will are fully exposed.\",\"narration_frame_segments\":[{\"narrator_ref\":\"ent_mr_lockwood\",\"block_range\":[\"wh_ch02_b002\",\"wh_ch02_b092\"],\"story_time_label\":\"frame_present\"}],\"scene_summaries\":[{\"scene_id\":\"s_wh_ch02_01\",\"block_range\":[\"wh_ch02_b002\",\"wh_ch02_b009\"],\"summary\":\"Lockwood arrives in snow and mist, cannot get in, and exchanges terse words with Joseph at the outer door.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_joseph\"]},{\"scene_id\":\"s_wh_ch02_02\",\"block_range\":[\"wh_ch02_b010\",\"wh_ch02_b028\"],\"summary\":\"A young man admits Lockwood to the inner room, where Mrs. Heathcliff sits coldly over tea and repels his conversational attempts.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_mrs_heathcliff\",\"ent_the_young_man\"]},{\"scene_id\":\"s_wh_ch02_03\",\"block_range\":[\"wh_ch02_b029\",\"wh_ch02_b055\"],\"summary\":\"Heathcliff appears, refuses a guide, and reveals that Mrs. Heathcliff is his daughter-in-law; Lockwood realizes the household is not as he assumed and feels increasingly unwelcome.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_heathcliff\",\"ent_mrs_heathcliff\",\"ent_hareton_earnshaw\"]},{\"scene_id\":\"s_wh_ch02_04\",\"block_range\":[\"wh_ch02_b056\",\"wh_ch02_b092\"],\"summary\":\"As night and snow worsen, Lockwood is denied a guide, argues for help, is driven into the yard, attacked by the dogs, and finally rescued by Zillah, who gets him brandy and bed.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_heathcliff\",\"ent_hareton_earnshaw\",\"ent_joseph\",\"ent_zillah\",\"ent_mrs_heathcliff\"]}],\"character_state_changes\":[{\"entity_ref\":\"ent_mrs_heathcliff\",\"attribute\":\"alias_or_title\",\"from\":\"Mrs. Heathcliff\",\"to\":\"Mrs. Heathcliff, Heathcliff's daughter-in-law\",\"trigger_block\":\"wh_ch02_b046\",\"evidence_quote\":\"Mrs. Heathcliff is my daughter-in-law\",\"observed_scope\":\"this_chapter\"},{\"entity_ref\":\"ent_hareton_earnshaw\",\"attribute\":\"alias_or_title\",\"from\":\"the young man\",\"to\":\"Hareton Earnshaw\",\"trigger_block\":\"wh_ch02_b053\",\"evidence_quote\":\"My name is Hareton Earnshaw\",\"observed_scope\":\"this_chapter\"},{\"entity_ref\":\"ent_mr_lockwood\",\"attribute\":\"life_status\",\"from\":\"safe_arrival\",\"to\":\"injured_and_overnight_guest\",\"trigger_block\":\"wh_ch02_b092\",\"evidence_quote\":\"I was sick exceedingly, and dizzy, and faint; and thus compelled perforce to accept lodgings under his roof\",\"observed_scope\":\"this_chapter\"}],\"relation_event_summary\":[{\"pair\":[\"ent_mr_lockwood\",\"ent_joseph\"],\"observed_valence_hint\":\"negative\",\"event_ids\":[\"e_wh_ch02_b005_01\",\"e_wh_ch02_b005_02\",\"e_wh_ch02_b007_01\",\"e_wh_ch02_b008_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_mr_lockwood\",\"ent_mrs_heathcliff\"],\"observed_valence_hint\":\"negative\",\"event_ids\":[\"e_wh_ch02_b011_01\",\"e_wh_ch02_b015_01\",\"e_wh_ch02_b017_01\",\"e_wh_ch02_b023_01\",\"e_wh_ch02_b024_01\",\"e_wh_ch02_b025_01\",\"e_wh_ch02_b026_01\",\"e_wh_ch02_b027_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_mr_lockwood\",\"ent_heathcliff\"],\"observed_valence_hint\":\"mixed\",\"event_ids\":[\"e_wh_ch02_b030_01\",\"e_wh_ch02_b031_01\",\"e_wh_ch02_b038_02\",\"e_wh_ch02_b046_01\",\"e_wh_ch02_b049_01\",\"e_wh_ch02_b076_01\",\"e_wh_ch02_b092_01\"],\"candidate_transition\":{\"trigger_block\":\"wh_ch02_b046\",\"note\":\"Lockwood's mistaken social reading is corrected; Heathcliff's household hierarchy becomes clearer\"},\"status\":\"evidence_only\"},{\"pair\":[\"ent_heathcliff\",\"ent_mrs_heathcliff\"],\"observed_valence_hint\":\"negative\",\"event_ids\":[\"e_wh_ch02_b037_01\",\"e_wh_ch02_b038_01\",\"e_wh_ch02_b046_01\",\"e_wh_ch02_b046_02\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_heathcliff\",\"ent_hareton_earnshaw\"],\"observed_valence_hint\":\"negative\",\"event_ids\":[\"e_wh_ch02_b058_01\",\"e_wh_ch02_b081_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_mrs_heathcliff\",\"ent_hareton_earnshaw\"],\"observed_valence_hint\":\"negative\",\"event_ids\":[\"e_wh_ch02_b083_01\",\"e_wh_ch02_b084_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_zillah\",\"ent_mr_lockwood\"],\"observed_valence_hint\":\"positive\",\"event_ids\":[\"e_wh_ch02_b089_01\",\"e_wh_ch02_b091_01\"],\"status\":\"evidence_only\"}],\"unresolved_threads\":[{\"thread_id\":\"th_wh_ch02_01\",\"description\":\"Why Mrs. Heathcliff is hostile and confined at Wuthering Heights remains unclear\",\"opened_block\":\"wh_ch02_b020\",\"kind\":\"question\"},{\"thread_id\":\"th_wh_ch02_02\",\"description\":\"The exact family relation between Heathcliff, Mrs. Heathcliff, and Hareton is still only partly explained\",\"opened_block\":\"wh_ch02_b046\",\"kind\":\"mystery\"},{\"thread_id\":\"th_wh_ch02_03\",\"description\":\"Lockwood may remain trapped overnight at Wuthering Heights\",\"opened_block\":\"wh_ch02_b076\",\"kind\":\"pending_transition\"}],\"motifs\":[{\"note\":\"snow, mud, and storm as barriers to movement\",\"block_ids\":[\"wh_ch02_b002\",\"wh_ch02_b003\",\"wh_ch02_b056\"]},{\"note\":\"misread kinship and household roles\",\"block_ids\":[\"wh_ch02_b044\",\"wh_ch02_b046\",\"wh_ch02_b049\"]},{\"note\":\"dogs and violent household disorder\",\"block_ids\":[\"wh_ch02_b087\",\"wh_ch02_b088\"]}],\"translator_relevant_facts\":[{\"fact_type\":\"narrator\",\"fact\":\"First-person Lockwood narration, ironic and self-satisfied, with frequent asides to the reader\",\"block_evidence\":[\"wh_ch02_b002\",\"wh_ch02_b045\"]},{\"fact_type\":\"register\",\"fact\":\"Joseph speaks in broad Yorkshire dialect\",\"block_evidence\":[\"wh_ch02_b005\",\"wh_ch02_b007\",\"wh_ch02_b060\"]},{\"fact_type\":\"speech_style\",\"fact\":\"Heathcliff’s speech is terse, severe, and commanding\",\"block_evidence\":[\"wh_ch02_b031\",\"wh_ch02_b038\",\"wh_ch02_b076\"]},{\"fact_type\":\"speech_style\",\"fact\":\"Mrs. Heathcliff speaks sharply and contemptuously, often in clipped retorts\",\"block_evidence\":[\"wh_ch02_b022\",\"wh_ch02_b062\",\"wh_ch02_b067\"]},{\"fact_type\":\"status\",\"fact\":\"Mrs. Heathcliff is explicitly identified as Heathcliff’s daughter-in-law, not his wife\",\"block_evidence\":[\"wh_ch02_b046\",\"wh_ch02_b049\"]},{\"fact_type\":\"status\",\"fact\":\"Hareton introduces himself by full name and demands respect\",\"block_evidence\":[\"wh_ch02_b053\"]},{\"fact_type\":\"setting\",\"fact\":\"Wuthering Heights is isolated, storm-bound, and difficult to leave in bad weather\",\"block_evidence\":[\"wh_ch02_b003\",\"wh_ch02_b056\",\"wh_ch02_b088\"]},{\"fact_type\":\"status\",\"fact\":\"Zillah functions as the practical household woman who intervenes when the men do not\",\"block_evidence\":[\"wh_ch02_b089\",\"wh_ch02_b092\"]}]}"
+    }
+  ],
+  "cost_usd": 0.005932,
+  "prompt_tokens": 8744,
+  "cached_tokens": 0,
+  "completion_tokens": 1873,
+  "reasoning_tokens": 0,
+  "cache_hits": 1
+}

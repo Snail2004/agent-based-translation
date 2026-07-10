@@ -1,0 +1,162 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_wh_ch03_006",
+  "chapter_id": "wh_ch03",
+  "block_ids": [
+    "wh_ch03_b022",
+    "wh_ch03_b023"
+  ],
+  "previous_tail_block_ids": [
+    "wh_ch03_b020",
+    "wh_ch03_b021"
+  ],
+  "next_tail_block_ids": [
+    "wh_ch03_b024",
+    "wh_ch03_b025"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. There is NO placeholder id: ids such as ent_unknown, ent_unnamed, or ent_narrator do not exist — any id not literally listed in CHAPTER_ROSTER_ON_STAGE or REGISTRY_CONTEXT_PACK is an error; \"I do not know who this is\" is expressed ONLY as resolution_status=unknown with []. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch03_b006\", \"wh_ch03_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_wh_ch03_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"wh_ch03_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_wh_ch03_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"wh_ch03_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | few_scenes\nneutral_premise | Mr. Lockwood spends a night at Wuthering Heights, reads old writings, falls into troubled sleep, is startled by a tapping at the window, then meets Heathcliff and leaves the next morning for the Grange.\ncast | I | guest | wh_ch03_b002\ncast | she | servant | wh_ch03_b002\ncast | Heathcliff | host | wh_ch03_b004\ncast | Joseph | servant | wh_ch03_b008\ncast | Hindley | master | wh_ch03_b009\ncast | Frances | hostess | wh_ch03_b011\ncast | the unhappy ploughboy | worker | wh_ch03_b010\ncast | Jabez Branderham | preacher | wh_ch03_b020\ncast | Catherine Linton | child | wh_ch03_b031\ncast | little, ice-cold hand | unknown child | wh_ch03_b027\ncast | Zillah | servant | wh_ch03_b048\ncast | Hareton Earnshaw | young man | wh_ch03_b060\ncast | Mrs. Heathcliff | household member | wh_ch03_b061\ncast | the young lady | household member | wh_ch03_b063\ncast | my landlord | host | wh_ch03_b065\ncast | my human fixture | household member | wh_ch03_b067\nscene | wh_ch03_b002..wh_ch03_b015 | co_present_count=2 | I, she\nscene | wh_ch03_b017..wh_ch03_b026 | co_present_count=1 | I\nscene | wh_ch03_b027..wh_ch03_b034 | co_present_count=2 | I, Catherine Linton\nscene | wh_ch03_b040..wh_ch03_b057 | co_present_count=2 | I, Heathcliff\nscene | wh_ch03_b058..wh_ch03_b064 | co_present_count=5 | I, Joseph, Hareton Earnshaw, Mrs. Heathcliff, the young lady\nscene | wh_ch03_b065..wh_ch03_b067 | co_present_count=2 | I, my landlord\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch01\nA tenant visits Mr. Heathcliff at Wuthering Heights, is let in, meets Joseph and other household staff, has trouble with the dogs, and stays long enough to exchange remarks before leaving and planning another visit.\n\nwh_ch02\nMr. Lockwood revisits Wuthering Heights in bad weather, meets the household at tea, learns who lives there, asks for a guide, and is kept overnight after a struggle at the door.\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\nwh_ch03_b022..wh_ch03_b023 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_catherine | Catherine | Catherine\nent_catherine_earnshaw | Catherine Earnshaw | Catherine Earnshaw\nent_catherine_heathcliff | Catherine Heathcliff | Catherine Heathcliff\nent_catherine_linton | Catherine Linton | Catherine Linton\nent_catherine_s | Catherine’s | Catherine’s\nent_earnshaw | Earnshaw | Earnshaw\nent_frances | Frances | Frances\nent_hareton | Hareton | Hareton\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_heathcliff | Heathcliff | Heathcliff\nent_hindley | Hindley | Hindley\nent_jabez | Jabez | Jabez\nent_jabez_branderham | Jabez Branderham | Jabez Branderham\nent_joseph | Joseph | Joseph\nent_king_lear | King Lear | King Lear\nent_linton | Linton | Linton\nent_maister_hindley | Maister Hindley | Maister Hindley\nent_miss_cathy | Miss Cathy | Miss Cathy\nent_mr_and_mrs_heathcliff | Mr. and Mrs. Heathcliff | Mr. and Mrs. Heathcliff\nent_mr_earnshaw | Mr. Earnshaw | Mr. Earnshaw\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\nent_mrs_heathcliff | Mrs. Heathcliff | Mrs. Heathcliff\nent_the_young_man | the young man | the young man\nent_zillah | Zillah | Zillah\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_wh_ch03_b022_01 | the clergyman | descriptor | unknown | \nm_wh_ch03_b022_02 | Jabez | name | named | \nm_wh_ch03_b022_03 | the brother | descriptor | unknown | \nm_wh_ch03_b022_04 | the flock | descriptor | unknown | \nm_wh_ch03_b023_01 | Joseph | name | named | \nm_wh_ch03_b023_02 | Jabez Branderham | name | named | \n\nCHAPTER_ID\nwh_ch03\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch03_b020] I began to nod drowsily over the dim page: my eye wandered from manuscript to print. I saw a red ornamented title—“Seventy Times Seven, and the First of the Seventy-First. A Pious Discourse delivered by the Reverend Jabez Branderham, in the Chapel of Gimmerden Sough.” And while I was, half-consciously, worrying my brain to guess what Jabez Branderham would make of his subject, I sank back in bed, and fell asleep. Alas, for the effects of bad tea and bad temper! What else could it be that made me pass such a terrible night? I don’t remember another that I can at all compare with it since I was capable of suffering.\n[wh_ch03_b021] I began to dream, almost before I ceased to be sensible of my locality. I thought it was morning; and I had set out on my way home, with Joseph for a guide. The snow lay yards deep in our road; and, as we floundered on, my companion wearied me with constant reproaches that I had not brought a pilgrim’s staff: telling me that I could never get into the house without one, and boastfully flourishing a heavy-headed cudgel, which I understood to be so denominated. For a moment I considered it absurd that I should need such a weapon to gain admittance into my own residence. Then a new idea flashed across me. I was not going there: we were journeying to hear the famous Jabez Branderham preach, from the text—“Seventy Times Seven;” and either Joseph, the preacher, or I had committed the “First of the Seventy-First,” and were to be publicly exposed and excommunicated.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch03_b024] “Sir,” I exclaimed, “sitting here within these four walls, at one stretch, I have endured and forgiven the four hundred and ninety heads of your discourse. Seventy times seven times have I plucked up my hat and been about to depart—Seventy times seven times have you preposterously forced me to resume my seat. The four hundred and ninety-first is too much. Fellow-martyrs, have at him! Drag him down, and crush him to atoms, that the place which knows him may know him no more!”\n[wh_ch03_b025] “ Thou art the Man! ” cried Jabez, after a solemn pause, leaning over his cushion. “Seventy times seven times didst thou gapingly contort thy visage—seventy times seven did I take counsel with my soul—Lo, this is human weakness: this also may be absolved! The First of the Seventy-First is come. Brethren, execute upon him the judgment written. Such honour have all His saints!”\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch03_b022] We came to the chapel. I have passed it really in my walks, twice or thrice; it lies in a hollow, between two hills: an elevated hollow, near a swamp, whose peaty moisture is said to answer all the purposes of embalming on the few corpses deposited there. The roof has been kept whole hitherto; but as the clergyman’s stipend is only twenty pounds per annum, and a house with two rooms, threatening speedily to determine into one, no clergyman will undertake the duties of pastor: especially as it is currently reported that his flock would rather let him starve than increase the living by one penny from their own pockets. However, in my dream, Jabez had a full and attentive congregation; and he preached—good God! what a sermon; divided into four hundred and ninety parts, each fully equal to an ordinary address from the pulpit, and each discussing a separate sin! Where he searched for them, I cannot tell. He had his private manner of interpreting the phrase, and it seemed necessary the brother should sin different sins on every occasion. They were of the most curious character: odd transgressions that I never imagined previously.\n[wh_ch03_b023] Oh, how weary I grew. How I writhed, and yawned, and nodded, and revived! How I pinched and pricked myself, and rubbed my eyes, and stood up, and sat down again, and nudged Joseph to inform me if he would ever have done. I was condemned to hear all out: finally, he reached the “ First of the Seventy-First .” At that crisis, a sudden inspiration descended on me; I was moved to rise and denounce Jabez Branderham as the sinner of the sin that no Christian need pardon."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch03",
+    "window_block_ids": [
+      "wh_ch03_b022",
+      "wh_ch03_b023"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [],
+    "relation_events": [
+      {
+        "event_id": "e_wh_ch03_b023_01",
+        "actor": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Joseph",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "nudges",
+        "evidence_quote": "nudged Joseph",
+        "block_id": "wh_ch03_b023"
+      },
+      {
+        "event_id": "e_wh_ch03_b023_02",
+        "actor": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Jabez Branderham",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "denounces",
+        "evidence_quote": "denounce Jabez Branderham",
+        "block_id": "wh_ch03_b023"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "relation_events[0].target.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[1].target.candidate_entity_ids cleared because named surface is authoritative"
+    ],
+    "counts": {
+      "turns": 0,
+      "events": 2,
+      "phase_leak": 0,
+      "address_term_present": 0,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 0,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 0,
+      "attribution_enum_dropped": 0,
+      "attribution_enum_normalized": 0,
+      "named_pronoun_downgraded": 0,
+      "named_ids_cleared": 2,
+      "outside_window_neighbor_dropped": 0,
+      "outside_window_nonexistent_dropped": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "8efcfe7cd8ead608e8c67e2622fcd451848e6ac912419f6ba24758ddb1b5bf07",
+      "latency_ms": 2434,
+      "cost_usd": 0.00108755,
+      "usage": {
+        "prompt_tokens": 3635,
+        "cached_tokens": 1792,
+        "completion_tokens": 291,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "relation_events[0].target.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[1].target.candidate_entity_ids cleared because named surface is authoritative"
+        ],
+        "counts": {
+          "turns": 0,
+          "events": 2,
+          "phase_leak": 0,
+          "address_term_present": 0,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 0,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 0,
+          "attribution_enum_dropped": 0,
+          "attribution_enum_normalized": 0,
+          "named_pronoun_downgraded": 0,
+          "named_ids_cleared": 2,
+          "outside_window_neighbor_dropped": 0,
+          "outside_window_nonexistent_dropped": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch03\",\"window_block_ids\":[\"wh_ch03_b022\",\"wh_ch03_b023\"],\"context_only_used\":false,\"speaker_turns\":[],\"relation_events\":[{\"event_id\":\"e_wh_ch03_b023_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Joseph\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_joseph\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"nudges\",\"evidence_quote\":\"nudged Joseph\",\"block_id\":\"wh_ch03_b023\"},{\"event_id\":\"e_wh_ch03_b023_02\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Jabez Branderham\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_jabez_branderham\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"denounces\",\"evidence_quote\":\"denounce Jabez Branderham\",\"block_id\":\"wh_ch03_b023\"}]}"
+    }
+  ],
+  "cost_usd": 0.00108755,
+  "prompt_tokens": 3635,
+  "cached_tokens": 1792,
+  "completion_tokens": 291,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

@@ -1,0 +1,90 @@
+{
+  "stage": "m2",
+  "chapter_id": "wh_ch01",
+  "chapter_index": 0,
+  "chapter_sequence_prefix": [
+    "wh_ch01"
+  ],
+  "source_hash": "fdea2d071ddee7f766a267eaed845a3604392aebe62fac1df9815c2f92506f5c",
+  "prompt_hashes": {
+    "literary_digest_v1": "06a233638e2e1f2b2acdabb7e3fb96ea72fe9cb09606717f632dc1f912123398"
+  },
+  "config_hash": "96db9c9125982044f51df9a2615d39656d7a3d722856e18c281ad9a2cfbfe3e7",
+  "schema_version": "literary_m2_checkpoint_v2",
+  "parent_checkpoint_hash": null,
+  "input_m1_checkpoint_hash": "d7ce3c3e3a9eca24f19d581f6b9ce5351cc2e108b593a5e9812c01571b4df11c",
+  "state": {
+    "chapter_summaries": [
+      {
+        "chapter_id": "wh_ch01",
+        "summary": "Lockwood visits Heathcliff at Wuthering Heights, is admitted after a terse exchange, and endures a hostile but memorable first encounter with the house, Joseph, the dogs, and a vigorous kitchen servant who restores order. Heathcliff appears reserved, suspicious, and unexpectedly civil at the end, offering wine and conversation. Lockwood, amused and intrigued by the isolation and the owner’s manner, decides to return the next day despite Heathcliff’s evident wish to avoid repetition."
+      }
+    ]
+  },
+  "digest_summary": "Lockwood visits Heathcliff at Wuthering Heights, is admitted after a terse exchange, and endures a hostile but memorable first encounter with the house, Joseph, the dogs, and a vigorous kitchen servant who restores order. Heathcliff appears reserved, suspicious, and unexpectedly civil at the end, offering wine and conversation. Lockwood, amused and intrigued by the isolation and the owner’s manner, decides to return the next day despite Heathcliff’s evident wish to avoid repetition.",
+  "validation_counts": {
+    "digest_ok": 1,
+    "digest_failed": 0,
+    "parse_fail": 0,
+    "frame_segments": 1,
+    "scenes": 1,
+    "state_changes": 2,
+    "translator_facts": 6,
+    "motifs": 3
+  },
+  "accounting": {
+    "logical_calls": 1,
+    "attempts": 1,
+    "cache_hits": 1,
+    "cost_usd": 0.00414925,
+    "prompt_tokens": 4717,
+    "cached_tokens": 0,
+    "completion_tokens": 1485,
+    "reasoning_tokens": 0,
+    "incremental_cost_usd": 0.0,
+    "incremental_prompt_tokens": 0,
+    "incremental_cached_tokens": 0,
+    "incremental_completion_tokens": 0,
+    "incremental_reasoning_tokens": 0
+  },
+  "call_records": [
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch01",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00414925,
+      "prompt_tokens": 4717,
+      "cached_tokens": 0,
+      "completion_tokens": 1485,
+      "reasoning_tokens": 0,
+      "cache_hits": 1,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 1,
+        "state_changes": 2,
+        "unresolved_mystery": 1,
+        "unresolved_pending_transition": 1,
+        "unresolved_question": 0,
+        "translator_facts": 6,
+        "motifs": 3,
+        "nonnarrative_block_skipped": 1
+      },
+      "incremental_cost_usd": 0,
+      "incremental_prompt_tokens": 0,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 0,
+      "incremental_reasoning_tokens": 0
+    }
+  ],
+  "artifact_manifest": [
+    {
+      "path": "digest/wh_ch01.json",
+      "sha256": "0eefd8b81564b4227906ebe35b67f6ec85004255426da8c039011b7010c40069",
+      "size": 33380
+    }
+  ],
+  "created_at": "2026-07-10T09:15:05.697004+00:00",
+  "checkpoint_hash": "fc0b8f09b0a577ecfc60816a868e68a78c0c44a87e5c34558fad4c866022c38b"
+}

@@ -1,0 +1,89 @@
+{
+  "calls": 858,
+  "windows": 412,
+  "prompt_tokens_est": 2315111,
+  "max_prompt_tokens_est": 10784,
+  "total_tokens_upper_bound": 7586663,
+  "cost_cap_usd": 11.12188175,
+  "prompt_token_cap": 6500,
+  "token_growth_halt": true,
+  "mode_stats": {
+    "literary_chapter_brief_v1": {
+      "count": 34,
+      "p50": 5638.5,
+      "p90": 9288.4,
+      "p95": 10279.6,
+      "max": 10784
+    },
+    "literary_lexicon_v1": {
+      "count": 412,
+      "p50": 2385.5,
+      "p90": 2779.0,
+      "p95": 2917.1,
+      "max": 3780
+    },
+    "literary_narrative_v1": {
+      "count": 412,
+      "p50": 2677.5,
+      "p90": 3071.0,
+      "p95": 3209.1,
+      "max": 4072
+    }
+  },
+  "chapters_over_6500": [
+    {
+      "chapter_id": "wh_ch03",
+      "max_prompt_tokens_est": 8041
+    },
+    {
+      "chapter_id": "wh_ch07",
+      "max_prompt_tokens_est": 6800
+    },
+    {
+      "chapter_id": "wh_ch09",
+      "max_prompt_tokens_est": 9796
+    },
+    {
+      "chapter_id": "wh_ch10",
+      "max_prompt_tokens_est": 10303
+    },
+    {
+      "chapter_id": "wh_ch11",
+      "max_prompt_tokens_est": 6950
+    },
+    {
+      "chapter_id": "wh_ch12",
+      "max_prompt_tokens_est": 8104
+    },
+    {
+      "chapter_id": "wh_ch13",
+      "max_prompt_tokens_est": 7144
+    },
+    {
+      "chapter_id": "wh_ch17",
+      "max_prompt_tokens_est": 10784
+    },
+    {
+      "chapter_id": "wh_ch21",
+      "max_prompt_tokens_est": 10267
+    },
+    {
+      "chapter_id": "wh_ch27",
+      "max_prompt_tokens_est": 7583
+    },
+    {
+      "chapter_id": "wh_ch32",
+      "max_prompt_tokens_est": 6987
+    },
+    {
+      "chapter_id": "wh_ch34",
+      "max_prompt_tokens_est": 7350
+    }
+  ],
+  "ch1_4_max": {
+    "wh_ch01": 3876,
+    "wh_ch02": 6055,
+    "wh_ch03": 8041,
+    "wh_ch04": 4816
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "stage": "m2",
+  "chapter_id": "wh_ch03",
+  "chapter_index": 2,
+  "chapter_sequence_prefix": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03"
+  ],
+  "source_hash": "2e170e7af07094c8eaad6bfacd424ffc443f20d603370aece58bd56407b231df",
+  "prompt_hashes": {
+    "literary_digest_v1": "06a233638e2e1f2b2acdabb7e3fb96ea72fe9cb09606717f632dc1f912123398"
+  },
+  "config_hash": "96db9c9125982044f51df9a2615d39656d7a3d722856e18c281ad9a2cfbfe3e7",
+  "schema_version": "literary_m2_checkpoint_v1",
+  "parent_checkpoint_hash": "eac216e9ecd6fe474ef9f42e8755bcc12dd25b00397bb0951384fbb33f7027f0",
+  "input_m1_checkpoint_hash": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+  "state": {
+    "chapter_summaries": [
+      {
+        "chapter_id": "wh_ch01",
+        "summary": "Lockwood visits Heathcliff at Wuthering Heights, is admitted after a terse exchange, and endures a hostile but memorable first encounter with the house, Joseph, the dogs, and a vigorous kitchen servant who restores order. Heathcliff appears reserved, suspicious, and unexpectedly civil at the end, offering wine and conversation. Lockwood, amused and intrigued by the isolation and the owner’s manner, decides to return the next day despite Heathcliff’s evident wish to avoid repetition."
+      },
+      {
+        "chapter_id": "wh_ch02",
+        "summary": "Lockwood returns to Wuthering Heights in worsening snow, meets the silent, hostile household at tea, and learns the younger man is Hareton Earnshaw and Mrs. Heathcliff is Heathcliff’s daughter-in-law, not his wife. Unable to find a guide, he is denied help, forced to remain, and finally attacked by the dogs while trying to leave. Zillah intervenes and gets him inside, where Heathcliff’s rough household order and mutual ill will are fully exposed."
+      },
+      {
+        "chapter_id": "wh_ch03",
+        "summary": "Lockwood spends a sleepless night at Wuthering Heights, reads Catherine Earnshaw’s marked-up books, and falls into a nightmare that blurs with the tapping at his window. The “little cold hand” and the name Catherine Linton unsettle him deeply. Heathcliff, jolted by Lockwood’s cries, is then revealed in raw grief, calling for Catherine to come in. By morning, Lockwood has observed the household’s harsh hierarchy: Joseph’s silent contempt, Hareton’s rough authority, Mrs. Heathcliff’s defiance, and Heathcliff’s volatile dominance. He escapes through the snow with Heathcliff’s guidance and returns to the Grange exhausted."
+      }
+    ]
+  },
+  "digest_summary": "Lockwood spends a sleepless night at Wuthering Heights, reads Catherine Earnshaw’s marked-up books, and falls into a nightmare that blurs with the tapping at his window. The “little cold hand” and the name Catherine Linton unsettle him deeply. Heathcliff, jolted by Lockwood’s cries, is then revealed in raw grief, calling for Catherine to come in. By morning, Lockwood has observed the household’s harsh hierarchy: Joseph’s silent contempt, Hareton’s rough authority, Mrs. Heathcliff’s defiance, and Heathcliff’s volatile dominance. He escapes through the snow with Heathcliff’s guidance and returns to the Grange exhausted.",
+  "validation_counts": {
+    "digest_ok": 1,
+    "digest_failed": 0,
+    "parse_fail": 0,
+    "frame_segments": 1,
+    "scenes": 5,
+    "state_changes": 1,
+    "translator_facts": 5,
+    "motifs": 3
+  },
+  "accounting": {
+    "logical_calls": 1,
+    "attempts": 1,
+    "cache_hits": 0,
+    "cost_usd": 0.00717025,
+    "prompt_tokens": 10545,
+    "cached_tokens": 0,
+    "completion_tokens": 2267,
+    "reasoning_tokens": 0,
+    "incremental_cost_usd": 0.00717025,
+    "incremental_prompt_tokens": 10545,
+    "incremental_cached_tokens": 0,
+    "incremental_completion_tokens": 2267,
+    "incremental_reasoning_tokens": 0
+  },
+  "call_records": [
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch03",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00717025,
+      "prompt_tokens": 10545,
+      "cached_tokens": 0,
+      "completion_tokens": 2267,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 5,
+        "state_changes": 1,
+        "unresolved_mystery": 2,
+        "unresolved_pending_transition": 1,
+        "unresolved_question": 0,
+        "translator_facts": 5,
+        "motifs": 3
+      },
+      "incremental_cost_usd": 0.00717025,
+      "incremental_prompt_tokens": 10545,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 2267,
+      "incremental_reasoning_tokens": 0
+    }
+  ],
+  "artifact_manifest": [
+    {
+      "path": "digest/wh_ch03.json",
+      "sha256": "4bfb6e3bd5067ed89f9e6f01849be8d1ea5927f1318d4b9842013e3be37df5b6",
+      "size": 62826
+    }
+  ],
+  "created_at": "2026-07-10T09:00:00.156797+00:00",
+  "checkpoint_hash": "7e530002b6821337014b637a540e6c898cb3a47011dbf1449deedea122daca3b"
+}

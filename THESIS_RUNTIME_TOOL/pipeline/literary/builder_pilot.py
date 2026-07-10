@@ -36,7 +36,7 @@ DIGEST_VERSION = "literary_digest_v1"
 CONSOLIDATE_VERSION = "literary_consolidate_v1"
 RESPONSE_FORMAT_JSON = {"type": "json_object"}
 M1_CHECKPOINT_SCHEMA_VERSION = "literary_m1_checkpoint_v1"
-M2_CHECKPOINT_SCHEMA_VERSION = "literary_m2_checkpoint_v1"
+M2_CHECKPOINT_SCHEMA_VERSION = "literary_m2_checkpoint_v2"
 NEIGHBOR_SUMMARY_K = 2
 PACK_POLICY_VERSION = "literary_registry_pack_v1"
 
@@ -975,49 +975,180 @@ def _require_resume_from_document_start(
 
 def _m1_checkpoint_chain_for_m2(
     *,
+    document: dict[str, Any],
     selected: list[dict[str, Any]],
     m1_dir: Path,
     design_doc: Path,
     m1_report: dict[str, Any],
-) -> list[dict[str, Any]]:
-    checkpoints: list[dict[str, Any]] = []
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Validate selected M2 inputs against their absolute M1 ancestor chain."""
+
     parent_hash: str | None = None
-    prefix: list[str] = []
     reported_selected = m1_report.get("chapters_selected")
     report_chapters = (
         [str(chapter_id) for chapter_id in reported_selected]
         if isinstance(reported_selected, list)
         else []
     )
-    for chapter_index, chapter in enumerate(selected):
-        chapter_id = str(chapter["chapter_id"])
-        prefix.append(chapter_id)
+
+    if not report_chapters:
+        raise ValueError("M2 requires m1_report.chapters_selected for as-of validation")
+    if len(report_chapters) != len(set(report_chapters)):
+        raise ValueError("M1 report chapters_selected contains duplicate chapter IDs")
+
+    chapters_by_id = {
+        str(chapter.get("chapter_id") or ""): chapter
+        for chapter in document.get("chapters") or []
+    }
+    missing_document = [chapter_id for chapter_id in report_chapters if chapter_id not in chapters_by_id]
+    if missing_document:
+        raise ValueError(
+            "M1 report contains chapters absent from the current document: "
+            f"{missing_document}"
+        )
+
+    selected_ids = [str(chapter["chapter_id"]) for chapter in selected]
+    missing_from_m1 = [chapter_id for chapter_id in selected_ids if chapter_id not in report_chapters]
+    if missing_from_m1:
+        raise ValueError(
+            "M2 selected chapters are absent from m1_report.chapters_selected: "
+            f"{missing_from_m1}"
+        )
+
+    absolute_index = {chapter_id: index for index, chapter_id in enumerate(report_chapters)}
+    last_required_index = max(absolute_index[chapter_id] for chapter_id in selected_ids)
+    checkpoints_by_id: dict[str, dict[str, Any]] = {}
+    expected_config_hash: str | None = None
+    for chapter_index, chapter_id in enumerate(report_chapters[: last_required_index + 1]):
+        chapter = chapters_by_id[chapter_id]
         path = _checkpoint_path(m1_dir, "m1", chapter_id)
         if not path.is_file():
             # A final M1 ledger is as-of only when that report itself contains
             # exactly this one chapter. A multi-chapter legacy report would
             # leak future entities into a one-chapter M2 digest.
-            if len(selected) == 1 and report_chapters == [chapter_id]:
-                return []
+            if len(selected_ids) == 1 and report_chapters == [chapter_id]:
+                return [], report_chapters
             raise ValueError(f"M2 requires M1 as-of checkpoint for {chapter_id}: {path}")
         checkpoint = read_checkpoint(path)
+        checkpoint_config_hash = str(checkpoint.get("config_hash") or "")
+        if not checkpoint_config_hash:
+            raise ValueError(f"Invalid M1 as-of checkpoint {chapter_id}: ['config_hash']")
+        if expected_config_hash is None:
+            expected_config_hash = checkpoint_config_hash
         expected = {
             "stage": "m1",
             "chapter_id": chapter_id,
             "chapter_index": chapter_index,
-            "chapter_sequence_prefix": list(prefix),
+            "chapter_sequence_prefix": report_chapters[: chapter_index + 1],
             "source_hash": chapter_source_hash(chapter),
             "prompt_hashes": _checkpoint_prompt_hashes(design_doc, "m1", chapter_id),
             "schema_version": M1_CHECKPOINT_SCHEMA_VERSION,
             "parent_checkpoint_hash": parent_hash,
-            "config_hash": checkpoint.get("config_hash"),
+            "config_hash": expected_config_hash,
         }
         errors = validate_checkpoint(checkpoint, root=m1_dir, expected=expected)
         if errors:
             raise ValueError(f"Invalid M1 as-of checkpoint {chapter_id}: {errors}")
-        checkpoints.append(checkpoint)
+        checkpoints_by_id[chapter_id] = checkpoint
         parent_hash = str(checkpoint["checkpoint_hash"])
-    return checkpoints
+    return [checkpoints_by_id[chapter_id] for chapter_id in selected_ids], report_chapters
+
+
+def _load_digest_context_summary(
+    digest_context: Path,
+    chapter_id: str,
+) -> tuple[str, str] | None:
+    """Load one validated neighbor summary without constraining its model config."""
+
+    context_root = Path(digest_context)
+    artifact_paths = [
+        context_root / "digest" / f"{chapter_id}.json",
+        context_root / f"{chapter_id}.json",
+    ]
+    seen_paths: set[Path] = set()
+    for path in artifact_paths:
+        if path in seen_paths:
+            continue
+        seen_paths.add(path)
+        if not path.is_file():
+            continue
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        parsed = payload.get("parsed_json")
+        validation = payload.get("validation") or {}
+        if not isinstance(parsed, dict) or not validation.get("ok"):
+            raise ValueError(f"Digest context artifact is not a clean digest: {path}")
+        if str(parsed.get("chapter_id") or "") != chapter_id:
+            raise ValueError(f"Digest context artifact chapter_id mismatch: {path}")
+        summary = str(parsed.get("chapter_rolling_summary") or "").strip()
+        if not summary:
+            raise ValueError(f"Digest context artifact has no chapter_rolling_summary: {path}")
+        return summary, f"digest_context_artifact:{path}"
+
+    checkpoint_path = _checkpoint_path(context_root, "m2", chapter_id)
+    if not checkpoint_path.is_file():
+        return None
+    checkpoint = read_checkpoint(checkpoint_path)
+    errors = validate_checkpoint(
+        checkpoint,
+        root=context_root,
+        expected={
+            "stage": "m2",
+            "chapter_id": chapter_id,
+            "schema_version": M2_CHECKPOINT_SCHEMA_VERSION,
+        },
+    )
+    if errors:
+        raise ValueError(
+            f"Digest context checkpoint is invalid for {chapter_id}: {errors}"
+        )
+    summary = str(checkpoint.get("digest_summary") or "").strip()
+    if not summary:
+        raise ValueError(
+            f"Digest context checkpoint has no digest_summary: {checkpoint_path}"
+        )
+    return summary, f"digest_context_checkpoint:{checkpoint_path}"
+
+
+def _resolve_digest_neighbors(
+    *,
+    absolute_chapters: list[str],
+    chapter_id: str,
+    in_run_summaries: dict[str, str],
+    digest_context: Path | None,
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    """Resolve the K prior gists in absolute book order, or fail closed."""
+
+    try:
+        chapter_index = absolute_chapters.index(chapter_id)
+    except ValueError as exc:
+        raise ValueError(f"Chapter {chapter_id} is absent from the absolute M1 chain") from exc
+    neighbor_ids = absolute_chapters[max(0, chapter_index - NEIGHBOR_SUMMARY_K) : chapter_index]
+    summaries: list[dict[str, str]] = []
+    provenance: list[dict[str, str]] = []
+    for neighbor_id in neighbor_ids:
+        if neighbor_id in in_run_summaries:
+            summary = str(in_run_summaries[neighbor_id] or "").strip()
+            if not summary:
+                raise ValueError(
+                    f"In-run digest neighbor {neighbor_id} for {chapter_id} has no summary"
+                )
+            summaries.append({"chapter_id": neighbor_id, "summary": summary})
+            provenance.append({"chapter_id": neighbor_id, "source": "in_run"})
+            continue
+        context_value = (
+            _load_digest_context_summary(digest_context, neighbor_id)
+            if digest_context is not None
+            else None
+        )
+        if context_value is None:
+            hint = "supply --digest-context" if digest_context is None else str(digest_context)
+            raise FileNotFoundError(
+                f"Missing required digest neighbor {neighbor_id} for {chapter_id}; {hint}"
+            )
+        summary, source = context_value
+        summaries.append({"chapter_id": neighbor_id, "summary": summary})
+        provenance.append({"chapter_id": neighbor_id, "source": source})
+    return summaries, provenance
 
 
 def build_chapter_brief_messages(
@@ -2590,12 +2721,14 @@ def estimate_m2(
     design_doc: Path,
     config: LLMConfig,
     m1_dir: Path,
+    digest_context: Path | None = None,
 ) -> dict[str, Any]:
     """Estimate the L2A-1 M2 chapter digest run without model calls."""
 
     selected = select_chapters(document, chapters)
     m1_report = _load_m1_report(m1_dir)
-    m1_checkpoints = _m1_checkpoint_chain_for_m2(
+    m1_checkpoints, absolute_chapters = _m1_checkpoint_chain_for_m2(
+        document=document,
         selected=selected,
         m1_dir=m1_dir,
         design_doc=design_doc,
@@ -2606,6 +2739,8 @@ def estimate_m2(
     max_prompt_tokens = 0
     total_prompt_tokens = 0
     chapter_summaries: list[dict[str, str]] = []
+    in_run_summaries: dict[str, str] = {}
+    neighbor_source: dict[str, list[dict[str, str]]] = {}
     for chapter_index, chapter in enumerate(selected):
         relation_events = _chapter_relation_events_from_m1(m1_dir, chapter)
         chapter_id = str(chapter["chapter_id"])
@@ -2616,11 +2751,14 @@ def estimate_m2(
             if m1_checkpoints
             else fallback_roster
         )
-        neighbor_text = render_neighbor_summaries(
-            neighbor_summaries_for_index(
-                chapter_summaries, chapter_index, k=NEIGHBOR_SUMMARY_K
-            )
+        neighbors, provenance = _resolve_digest_neighbors(
+            absolute_chapters=absolute_chapters,
+            chapter_id=chapter_id,
+            in_run_summaries=in_run_summaries,
+            digest_context=digest_context,
         )
+        neighbor_text = render_neighbor_summaries(neighbors)
+        neighbor_source[chapter_id] = provenance
         messages = build_digest_messages(
             design_doc=design_doc,
             chapter=chapter,
@@ -2639,11 +2777,8 @@ def estimate_m2(
                 "mode": DIGEST_VERSION,
                 "prompt_tokens_est": prompt_tokens,
                 "max_output_tokens": config.max_output_tokens,
-                "neighbor_summary_count": len(
-                    neighbor_summaries_for_index(
-                        chapter_summaries, chapter_index, k=NEIGHBOR_SUMMARY_K
-                    )
-                ),
+                "neighbor_summary_count": len(neighbors),
+                "neighbor_source": provenance,
                 "relation_event_lines": len(
                     [line for line in relation_events.splitlines() if line.strip()]
                 ),
@@ -2655,6 +2790,7 @@ def estimate_m2(
                 "summary": "(generated by this chapter digest during real run)",
             }
         )
+        in_run_summaries[chapter_id] = "(generated by this chapter digest during real run)"
     upper_tokens = total_prompt_tokens + len(calls) * config.max_output_tokens
     cost_cap = _estimate_cost_cap(
         prompt_tokens=total_prompt_tokens,
@@ -2667,6 +2803,8 @@ def estimate_m2(
         "zero_api": True,
         "prompt_source": str(design_doc),
         "m1_report": str(Path(m1_dir) / "m1_report.json"),
+        "digest_context": str(digest_context) if digest_context is not None else None,
+        "neighbor_source": neighbor_source,
         "chapters_requested": chapters,
         "chapters_selected": [chapter["chapter_id"] for chapter in selected],
         "calls": len(calls),
@@ -2692,6 +2830,7 @@ def run_m2(
     out_dir: Path,
     m1_dir: Path,
     confirm_usd: float,
+    digest_context: Path | None = None,
     resume: bool = False,
 ) -> dict[str, Any]:
     lock = CheckpointLock(Path(out_dir))
@@ -2706,6 +2845,7 @@ def run_m2(
             out_dir=out_dir,
             m1_dir=m1_dir,
             confirm_usd=confirm_usd,
+            digest_context=digest_context,
             resume=resume,
             lock_took_over_stale=lock.took_over_stale,
         )
@@ -2723,6 +2863,7 @@ def _run_m2_locked(
     out_dir: Path,
     m1_dir: Path,
     confirm_usd: float,
+    digest_context: Path | None = None,
     resume: bool = False,
     lock_took_over_stale: bool = False,
 ) -> dict[str, Any]:
@@ -2732,6 +2873,7 @@ def _run_m2_locked(
         design_doc=design_doc,
         config=config,
         m1_dir=m1_dir,
+        digest_context=digest_context,
     )
     if estimate["token_growth_halt"]:
         raise SystemExit(
@@ -2748,7 +2890,8 @@ def _run_m2_locked(
     if resume:
         _require_resume_from_document_start(document, selected)
     m1_report = _load_m1_report(m1_dir)
-    m1_checkpoints = _m1_checkpoint_chain_for_m2(
+    m1_checkpoints, absolute_chapters = _m1_checkpoint_chain_for_m2(
+        document=document,
         selected=selected,
         m1_dir=m1_dir,
         design_doc=design_doc,
@@ -2779,6 +2922,8 @@ def _run_m2_locked(
     cache_hits = 0
     calls = 0
     chapter_summaries: list[dict[str, str]] = []
+    in_run_summaries: dict[str, str] = {}
+    neighbor_source: dict[str, list[dict[str, str]]] = {}
     checkpoint_config = _checkpoint_config_hash(config, "m2")
     restored_checkpoints: list[dict[str, Any]] = []
     resume_mismatches: list[dict[str, Any]] = []
@@ -2809,6 +2954,14 @@ def _run_m2_locked(
             chapter_summaries = list(
                 (restored_checkpoints[-1].get("state") or {}).get("chapter_summaries") or []
             )
+            in_run_summaries = {
+                str(item.get("chapter_id") or ""): str(item.get("summary") or "")
+                for item in chapter_summaries
+                if str(item.get("chapter_id") or "").strip()
+            }
+            neighbor_source = dict(
+                (restored_checkpoints[-1].get("state") or {}).get("neighbor_source") or {}
+            )
             checkpoint_parent_hash = str(restored_checkpoints[-1]["checkpoint_hash"])
             calls = int(restored_accounting["attempts"])
             cache_hits = int(restored_accounting["cache_hits"])
@@ -2836,11 +2989,14 @@ def _run_m2_locked(
             if m1_checkpoints
             else fallback_roster
         )
-        neighbor_text = render_neighbor_summaries(
-            neighbor_summaries_for_index(
-                chapter_summaries, chapter_index, k=NEIGHBOR_SUMMARY_K
-            )
+        neighbors, provenance = _resolve_digest_neighbors(
+            absolute_chapters=absolute_chapters,
+            chapter_id=chapter_id,
+            in_run_summaries=in_run_summaries,
+            digest_context=digest_context,
         )
+        neighbor_text = render_neighbor_summaries(neighbors)
+        neighbor_source[chapter_id] = provenance
         messages = build_digest_messages(
             design_doc=design_doc,
             chapter=chapter,
@@ -2858,9 +3014,10 @@ def _run_m2_locked(
             chapter_id=chapter_id,
             block_ids=block_ids,
             out_path=chapter_work / "digest" / f"{chapter_id}.json",
-            validate=lambda payload, ids=block_ids: validate_digest(
+            validate=lambda payload, ids=block_ids, blocks=chapter.get("blocks") or []: validate_digest(
                 payload,
                 chapter_block_ids=ids,
+                chapter_blocks=blocks,
             ),
         )
         calls += len(digest_result["attempts"])
@@ -2886,6 +3043,7 @@ def _run_m2_locked(
                     "summary": digest_summary.strip() or "(digest summary unavailable)",
                 }
             )
+            in_run_summaries[chapter_id] = digest_summary.strip() or "(digest summary unavailable)"
         promoted = _promote_chapter_artifacts(chapter_work, out_dir, "m2", chapter_id)
         chapter_counts = _diff_counts(validation_counts, chapter_counts_before)
         chapter_calls = call_records[chapter_call_start:]
@@ -2904,7 +3062,10 @@ def _run_m2_locked(
                     parent_checkpoint_hash=checkpoint_parent_hash,
                     input_m1_checkpoint_hash=input_m1_hashes.get(chapter_id),
                 ),
-                "state": {"chapter_summaries": chapter_summaries},
+                "state": {
+                    "chapter_summaries": chapter_summaries,
+                    "neighbor_source": neighbor_source,
+                },
                 "digest_summary": digest_summary if isinstance(parsed, dict) else "",
                 "validation_counts": chapter_counts,
                 "accounting": chapter_accounting,
@@ -2930,6 +3091,8 @@ def _run_m2_locked(
         "status": "needs_claude_gate",
         "prompt_source": str(design_doc),
         "m1_report": str(Path(m1_dir) / "m1_report.json"),
+        "digest_context": str(digest_context) if digest_context is not None else None,
+        "neighbor_source": neighbor_source,
         "model": config.model,
         "chapters_requested": chapters,
         "chapters_selected": [chapter["chapter_id"] for chapter in selected],
@@ -3826,7 +3989,12 @@ def validate_narrative(
     return _report("narrative", errors, warnings, counts)
 
 
-def validate_digest(obj: dict[str, Any], *, chapter_block_ids: list[str]) -> ValidationReport:
+def validate_digest(
+    obj: dict[str, Any],
+    *,
+    chapter_block_ids: list[str],
+    chapter_blocks: Sequence[dict[str, Any]] | None = None,
+) -> ValidationReport:
     valid = set(chapter_block_ids)
     errors: list[str] = []
     warnings: list[str] = []
@@ -3839,6 +4007,7 @@ def validate_digest(obj: dict[str, Any], *, chapter_block_ids: list[str]) -> Val
         "unresolved_question": 0,
         "translator_facts": 0,
         "motifs": 0,
+        "nonnarrative_block_skipped": 0,
     }
     _require_top(
         obj,
@@ -3857,7 +4026,28 @@ def validate_digest(obj: dict[str, Any], *, chapter_block_ids: list[str]) -> Val
     )
     segments = _as_list(obj.get("narration_frame_segments"), "narration_frame_segments", errors)
     counts["frame_segments"] = len(segments)
-    _validate_contiguous_segments(segments, chapter_block_ids, errors)
+    coverage_block_ids = list(chapter_block_ids)
+    if chapter_blocks is not None:
+        coverage_block_ids = []
+        for block in chapter_blocks:
+            block_id = str(block.get("block_id") or "")
+            text = str(
+                block.get("text")
+                or block.get("clean_text")
+                or block.get("source_text")
+                or ""
+            )
+            if str(block.get("block_type") or "") == "heading" or not any(
+                character.isalpha() for character in text
+            ):
+                counts["nonnarrative_block_skipped"] += 1
+                warnings.append(
+                    "narration coverage skipped non-narrative block "
+                    f"{block_id or '<missing-block-id>'}"
+                )
+                continue
+            coverage_block_ids.append(block_id)
+    _validate_contiguous_segments(segments, coverage_block_ids, errors)
     for idx, segment in enumerate(segments):
         if segment.get("story_time_label") not in DIGEST_STORY_TIME:
             errors.append(f"narration_frame_segments[{idx}].story_time_label invalid: {segment.get('story_time_label')}")
@@ -4343,7 +4533,15 @@ def _validate_contiguous_segments(
         start_i = index_by_block[start]
         end_i = index_by_block[end]
         if start_i != expected_start:
-            errors.append(f"narration_frame_segments[{idx}] starts at {start}, expected {chapter_block_ids[expected_start]}")
+            expected_block = (
+                chapter_block_ids[expected_start]
+                if expected_start < len(chapter_block_ids)
+                else "<end>"
+            )
+            errors.append(
+                f"narration_frame_segments[{idx}] starts at {start}, "
+                f"expected {expected_block}"
+            )
         if end_i < start_i:
             errors.append(f"narration_frame_segments[{idx}] has reversed block_range")
         expected_start = end_i + 1

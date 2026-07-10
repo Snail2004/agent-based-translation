@@ -1,0 +1,394 @@
+{
+  "mode": "literary_digest_v1",
+  "window_id": "wh_ch04",
+  "chapter_id": "wh_ch04",
+  "block_ids": [
+    "wh_ch04_b001",
+    "wh_ch04_b002",
+    "wh_ch04_b003",
+    "wh_ch04_b004",
+    "wh_ch04_b005",
+    "wh_ch04_b006",
+    "wh_ch04_b007",
+    "wh_ch04_b008",
+    "wh_ch04_b009",
+    "wh_ch04_b010",
+    "wh_ch04_b011",
+    "wh_ch04_b012",
+    "wh_ch04_b013",
+    "wh_ch04_b014",
+    "wh_ch04_b015",
+    "wh_ch04_b016",
+    "wh_ch04_b017",
+    "wh_ch04_b018",
+    "wh_ch04_b019",
+    "wh_ch04_b020",
+    "wh_ch04_b021",
+    "wh_ch04_b022",
+    "wh_ch04_b023",
+    "wh_ch04_b024",
+    "wh_ch04_b025",
+    "wh_ch04_b026",
+    "wh_ch04_b027",
+    "wh_ch04_b028",
+    "wh_ch04_b029",
+    "wh_ch04_b030",
+    "wh_ch04_b031",
+    "wh_ch04_b032",
+    "wh_ch04_b033",
+    "wh_ch04_b034",
+    "wh_ch04_b035",
+    "wh_ch04_b036",
+    "wh_ch04_b037",
+    "wh_ch04_b038",
+    "wh_ch04_b039",
+    "wh_ch04_b040",
+    "wh_ch04_b041",
+    "wh_ch04_b042",
+    "wh_ch04_b043",
+    "wh_ch04_b044",
+    "wh_ch04_b045"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_digest_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- narration_frame_segments: split the chapter into CONTIGUOUS block ranges by WHO narrates. Some works switch narrator mid-chapter or mid-passage; do not assume one narrator per chapter — segment by who actually narrates, however many that is. story_time_label is one of: frame_present, retrospective_past, embedded_flashback.\n- Do NOT finalize relationship phases and do NOT output valid_from/to intervals. For relations, only aggregate this chapter's observed events per pair; if the text clearly shows a turning point, note a candidate_transition with a trigger block. Every relation_event_summary row has status \"evidence_only\".\n- relation_event_summary.observed_valence_hint is one of: positive, negative, mixed, unclear. It is an EVENT summary, NOT a phase label and NOT a trigger on its own — consolidation still needs event evidence to open a phase.\n- character_state_changes: only changes VISIBLE in this chapter to a character's social_status, alias_or_title, life_status, or residence — each with trigger_block and evidence_quote. observed_scope is \"this_chapter\".\n- unresolved_threads: open questions or pending turning points the chapter raises but does not resolve. kind is one of: mystery, pending_transition, question. Include opened_block.\n- translator_relevant_facts: a curated list, MAX 8 per chapter, of facts a translator needs to render THIS chapter correctly. Not every motif — only what changes how text is rendered. Each has fact_type one of: narrator, register, speech_style, status, setting; and block_evidence.\n- motifs: recurring images/themes, each with block_ids.\n- Prefer entity_id references (ent_*) from CHAPTER_ROSTER where available; else a clean surface. Every block reference MUST be COPIED VERBATIM from the [brackets] in the chapter text (they look like bk_ch04_b012) — never abbreviate or drop the prefix.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"ch04\",\n  \"chapter_rolling_summary\": \"<=150 English words, for the next chapter's context\",\n  \"narration_frame_segments\": [\n    {\"narrator_ref\": \"ent_alden\", \"block_range\": [\"bk_ch04_b001\", \"bk_ch04_b004\"], \"story_time_label\": \"frame_present\"},\n    {\"narrator_ref\": \"ent_mira\", \"block_range\": [\"bk_ch04_b005\", \"bk_ch04_b040\"], \"story_time_label\": \"retrospective_past\"}\n  ],\n  \"scene_summaries\": [\n    {\"scene_id\": \"s_ch04_01\", \"block_range\": [\"bk_ch04_b005\", \"bk_ch04_b018\"], \"summary\": \"...\", \"key_participants\": [\"ent_master\", \"ent_rook\", \"ent_bram\"]}\n  ],\n  \"character_state_changes\": [\n    {\"entity_ref\": \"ent_rook\", \"attribute\": \"social_status\", \"from\": \"orphan_outsider\", \"to\": \"taken_into_household\", \"trigger_block\": \"bk_ch04_b012\", \"evidence_quote\": \"you must take him in as one of ours\", \"observed_scope\": \"this_chapter\"}\n  ],\n  \"relation_event_summary\": [\n    {\"pair\": [\"ent_bram\", \"ent_rook\"], \"observed_valence_hint\": \"negative\", \"event_ids\": [\"e_bk_ch04_b014_01\"], \"candidate_transition\": {\"trigger_block\": \"bk_ch04_b012\", \"note\": \"arrival sparks the son's jealousy\"}, \"status\": \"evidence_only\"}\n  ],\n  \"unresolved_threads\": [\n    {\"thread_id\": \"th_ch04_01\", \"description\": \"The outsider child's origin and real name unknown\", \"opened_block\": \"bk_ch04_b010\", \"kind\": \"mystery\"},\n    {\"thread_id\": \"th_ch04_02\", \"description\": \"The son's resentment likely to escalate\", \"opened_block\": \"bk_ch04_b016\", \"kind\": \"pending_transition\", \"pair\": [\"ent_bram\", \"ent_rook\"]}\n  ],\n  \"motifs\": [{\"note\": \"the intruder disrupting the household\", \"block_ids\": [\"bk_ch04_b012\"]}],\n  \"translator_relevant_facts\": [\n    {\"fact_type\": \"narrator\", \"fact\": \"Mira narrates in past tense, addressing the listener; her stance to the child is ambivalent\", \"block_evidence\": [\"bk_ch04_b005\"]},\n    {\"fact_type\": \"register\", \"fact\": \"the master uses an affectionate/paternal register to the child\", \"block_evidence\": [\"bk_ch04_b012\"]}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "PREVIOUS_CHAPTER_ROLLING_SUMMARY\n(none)\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch02\nLockwood returns to Wuthering Heights in worsening snow, meets the silent, hostile household at tea, and learns the younger man is Hareton Earnshaw and Mrs. Heathcliff is Heathcliff’s daughter-in-law, not his wife. Unable to find a guide, Lockwood is refused help, forced to remain, and finally attacked by the dogs while trying to leave. Zillah intervenes and gets him inside, where Heathcliff’s rough household order and mutual ill will are fully exposed.\n\nwh_ch03\nLockwood spends a stormy night at Wuthering Heights, reading Catherine Earnshaw’s scribbled books and falling into a feverish dream that turns into a nightmare of haunting, accusation, and violence. He wakes to Heathcliff’s panic at the window and accidentally reveals the name Catherine Linton, visibly shaking Heathcliff. At dawn, Lockwood escapes through snow with Heathcliff’s reluctant guidance and returns to the Grange exhausted and shaken, while the chapter deepens the mystery of Catherine, Heathcliff, and the house’s buried past.\n\nCHAPTER_BRIEF\nsetting | Thrushcross Grange | frame_present | few_scenes\nneutral_premise | Lockwood talks with Mrs. Dean at Thrushcross Grange about the households at Wuthering Heights, and she begins recounting events from the earlier years at Wuthering Heights, including Mr. Earnshaw’s return with Heathcliff and later disputes among the children.\ncast | Mrs. Dean | housekeeper | wh_ch04_b002\ncast | I | visitor | wh_ch04_b002\ncast | Heathcliff | master | wh_ch04_b009\ncast | Mrs. Heathcliff | occupant | wh_ch04_b013\ncast | Catherine Linton | daughter | wh_ch04_b016\ncast | Hareton Earnshaw | child | wh_ch04_b019\ncast | Miss Cathy | child | wh_ch04_b024\ncast | Mr. Lockwood | visitor | wh_ch04_b002\ncast | Mr. Hindley Earnshaw | master | wh_ch04_b035\ncast | Joseph | servant | wh_ch04_b035\ncast | Mr. Earnshaw | master | wh_ch04_b035\ncast | Hindley | child | wh_ch04_b035\ncast | Cathy | child | wh_ch04_b035\ncast | Mrs. Earnshaw | mistress | wh_ch04_b036\nscene | wh_ch04_b002..wh_ch04_b033 | co_present_count=2 | Mr. Lockwood, Mrs. Dean\nscene | wh_ch04_b035..wh_ch04_b045 | co_present_count=5 | Mr. Earnshaw, Joseph, Hindley, Cathy, I\n\nCHAPTER_ROSTER\nent_branderham | Branderham | Branderham\nent_catherine | Catherine | Catherine\nent_catherine_earnshaw | Catherine Earnshaw | Catherine Earnshaw\nent_catherine_heathcliff | Catherine Heathcliff | Catherine Heathcliff\nent_catherine_linton | Catherine Linton | Catherine Linton\nent_catherine_s | Catherine’s | Catherine’s\nent_cathy | Cathy | Cathy\nent_earnshaw | Earnshaw | Earnshaw\nent_frances | Frances | Frances\nent_hareton | Hareton | Hareton\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_heathcliff | Heathcliff | Heathcliff\nent_heathcliff_s | Heathcliff’s | Heathcliff’s\nent_hindley | Hindley | Hindley\nent_jabez | Jabez | Jabez\nent_jabez_branderham | Jabez Branderham | Jabez Branderham\nent_jabez_s | Jabez’s | Jabez’s\nent_joseph | Joseph | Joseph\nent_king_lear | King Lear | King Lear\nent_linton | Linton | Linton\nent_maister_hindley | Maister Hindley | Maister Hindley\nent_miss_cathy | Miss Cathy | Miss Cathy\nent_mr_and_mrs_heathcliff | Mr. and Mrs. Heathcliff | Mr. and Mrs. Heathcliff\nent_mr_earnshaw | Mr. Earnshaw | Mr. Earnshaw\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_hindley_earnshaw | Mr. Hindley Earnshaw | Mr. Hindley Earnshaw\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\nent_mrs_dean | Mrs. Dean | Mrs. Dean\nent_mrs_earnshaw | Mrs. Earnshaw | Mrs. Earnshaw\nent_mrs_heathcliff | Mrs. Heathcliff | Mrs. Heathcliff\n\nCHAPTER_RELATION_EVENTS\nent_mr_lockwood -> Mrs. Dean | addresses | wh_ch04_b003 | e_wh_ch04_b003_01 | You have lived here\nMrs. Dean -> ent_mr_lockwood | states | wh_ch04_b004 | e_wh_ch04_b004_01 | Eighteen, sir\nent_mr_lockwood -> Mrs. Dean | asks | wh_ch04_b007 | e_wh_ch04_b007_01 | you’ve seen a good many alterations\nent_mr_lockwood -> Mrs. Dean | asks | wh_ch04_b009 | e_wh_ch04_b009_01 | I asked Mrs. Dean why Heathcliff\nent_mrs_dean -> ent_mr_lockwood | addresses | wh_ch04_b010 | e_wh_ch04_b010_01 | Rich, sir!\nent_mr_lockwood -> ent_mrs_dean | asks | wh_ch04_b011 | e_wh_ch04_b011_01 | He had a son, it seems?\nent_mrs_dean -> ent_mr_lockwood | replies | wh_ch04_b012 | e_wh_ch04_b012_01 | Yes, he had one\nent_mr_lockwood -> Mrs. Dean | asks | wh_ch04_b013 | e_wh_ch04_b013_01 | Mrs. Heathcliff, is his widow?\nent_mrs_dean -> ent_mr_lockwood | replies | wh_ch04_b014 | e_wh_ch04_b014_01 | Yes.\nent_mr_lockwood -> ent_mrs_dean | asks | wh_ch04_b015 | e_wh_ch04_b015_01 | Where did she come from\nent_mrs_dean -> ent_mr_lockwood | states | wh_ch04_b016 | e_wh_ch04_b016_01 | she is my late master’s daughter\nent_mr_lockwood -> ent_mrs_dean | exclaims | wh_ch04_b017 | e_wh_ch04_b017_01 | What! Catherine Linton?\nMrs. Dean -> ent_mr_lockwood | confirms | wh_ch04_b018 | e_wh_ch04_b018_01 | It was.\nent_mr_lockwood -> ent_mrs_dean | asks | wh_ch04_b019 | e_wh_ch04_b019_01 | And who is that Earnshaw\nMrs. Dean -> ent_mr_lockwood | answers | wh_ch04_b020 | e_wh_ch04_b020_01 | he is the late Mrs. Linton’s nephew\nent_mr_lockwood -> ent_mrs_dean | asks | wh_ch04_b021 | e_wh_ch04_b021_01 | The young lady’s cousin, then?\nMrs. Dean -> ent_mr_lockwood | confirms | wh_ch04_b022 | e_wh_ch04_b022_01 | Yes; and her husband was\nent_mr_lockwood -> ent_mrs_dean | remarks | wh_ch04_b023 | e_wh_ch04_b023_01 | I see the house at Wuthering Heights\nMrs. Dean -> ent_mr_lockwood | answers | wh_ch04_b024 | e_wh_ch04_b024_01 | Very old, sir; and Hareton\nMrs. Dean -> ent_mr_lockwood | asks | wh_ch04_b024 | e_wh_ch04_b024_02 | Have you been to Wuthering Heights?\nMrs. Dean -> ent_mr_lockwood | desires | wh_ch04_b024 | e_wh_ch04_b024_03 | I should like to hear how she is\nMrs. Dean -> ent_mr_lockwood | asks | wh_ch04_b026 | e_wh_ch04_b026_01 | how did you like the master\nMrs. Dean -> ent_mr_lockwood | tells | wh_ch04_b030 | e_wh_ch04_b030_01 | I know all about it\nMrs. Dean -> ent_mr_lockwood | agrees | wh_ch04_b032 | e_wh_ch04_b032_01 | Oh, certainly, sir!\nMr. Earnshaw -> Joseph | orders | wh_ch04_b035 | e_wh_ch04_b035_01 | told Joseph what was to be done\nMr. Earnshaw -> ent_hindley | addresses | wh_ch04_b035 | e_wh_ch04_b035_02 | turned to Hindley\nMr. Earnshaw -> Cathy | asks | wh_ch04_b035 | e_wh_ch04_b035_03 | he asked Miss Cathy\nent_mr_earnshaw -> ent_mrs_earnshaw | addresses | wh_ch04_b037 | e_wh_ch04_b036_01 | See here, wife!\nent_mr_earnshaw -> ent_mrs_earnshaw | shows | wh_ch04_b037 | e_wh_ch04_b037_01 | See here, wife!\nMrs. Earnshaw -> ent_mr_earnshaw | asks | wh_ch04_b038 | e_wh_ch04_b038_01 | asking how he could fashion\nent_mr_earnshaw -> the child | brings | wh_ch04_b038 | e_wh_ch04_b038_02 | bring this gipsy brat into the house\nent_mr_earnshaw -> the child | takes | wh_ch04_b038 | e_wh_ch04_b038_03 | take it home with me\nHindley -> Cathy | looks_at | wh_ch04_b039 | e_wh_ch04_b039_01 | Hindley and Cathy contented themselves with looking and listening\nCathy -> the stranger | spits_at | wh_ch04_b039 | e_wh_ch04_b039_02 | showed her humour by grinning and spitting at the stupid little thing\nmy father -> Cathy | strikes | wh_ch04_b039 | e_wh_ch04_b039_03 | earning for her pains a sound blow from her father\nent_mrs_dean -> it | places | wh_ch04_b039 | e_wh_ch04_b039_04 | I put it on the landing\nMr. Earnshaw -> it | finds | wh_ch04_b039 | e_wh_ch04_b039_05 | there he found it on quitting his chamber\nMiss Cathy -> Heathcliff | befriends | wh_ch04_b040 | e_wh_ch04_b040_02 | Miss Cathy and he were now very thick\nHindley -> Heathcliff | hates | wh_ch04_b040 | e_wh_ch04_b040_03 | Hindley hated him\nent_mrs_dean -> Heathcliff | plagues | wh_ch04_b040 | e_wh_ch04_b040_04 | I did the same; and we plagued\nthe mistress -> Heathcliff | defends | wh_ch04_b040 | e_wh_ch04_b040_05 | the mistress never put in a word\nent_earnshaw -> Heathcliff | pets | wh_ch04_b041 | e_wh_ch04_b041_01 | He took to Heathcliff strangely\nent_earnshaw -> ent_cathy | prefers | wh_ch04_b041 | e_wh_ch04_b041_02 | far above Cathy\nent_mrs_dean -> Heathcliff | nurses | wh_ch04_b042 | e_wh_ch04_b042_02 | would have me constantly by his pillow\nHeathcliff -> Hindley | orders | wh_ch04_b044 | e_wh_ch04_b044_01 | You must exchange horses with me\nHindley -> Heathcliff | strikes | wh_ch04_b044 | e_wh_ch04_b044_02 | cuffed him over the ears\nHeathcliff -> Hindley | threatens | wh_ch04_b044 | e_wh_ch04_b044_03 | you’ll get them again\nI -> ent_heathcliff | persuades | wh_ch04_b045 | e_wh_ch04_b045_01 | I persuaded him easily\n\nCHAPTER_ID\nwh_ch04\n\nFULL_CHAPTER_TEXT_WITH_BLOCK_MARKERS\n[wh_ch04_b001] CHAPTER IV\n[wh_ch04_b002] What vain weather-cocks we are! I, who had determined to hold myself independent of all social intercourse, and thanked my stars that, at length, I had lighted on a spot where it was next to impracticable—I, weak wretch, after maintaining till dusk a struggle with low spirits and solitude, was finally compelled to strike my colours; and under pretence of gaining information concerning the necessities of my establishment, I desired Mrs. Dean, when she brought in supper, to sit down while I ate it; hoping sincerely she would prove a regular gossip, and either rouse me to animation or lull me to sleep by her talk.\n[wh_ch04_b003] “You have lived here a considerable time,” I commenced; “did you not say sixteen years?”\n[wh_ch04_b004] “Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”\n[wh_ch04_b005] “Indeed.”\n[wh_ch04_b006] There ensued a pause. She was not a gossip, I feared; unless about her own affairs, and those could hardly interest me. However, having studied for an interval, with a fist on either knee, and a cloud of meditation over her ruddy countenance, she ejaculated—“Ah, times are greatly changed since then!”\n[wh_ch04_b007] “Yes,” I remarked, “you’ve seen a good many alterations, I suppose?”\n[wh_ch04_b008] “I have: and troubles too,” she said.\n[wh_ch04_b009] “Oh, I’ll turn the talk on my landlord’s family!” I thought to myself. “A good subject to start! And that pretty girl-widow, I should like to know her history: whether she be a native of the country, or, as is more probable, an exotic that the surly indigenae will not recognise for kin.” With this intention I asked Mrs. Dean why Heathcliff let Thrushcross Grange, and preferred living in a situation and residence so much inferior. “Is he not rich enough to keep the estate in good order?” I inquired.\n[wh_ch04_b010] “Rich, sir!” she returned. “He has nobody knows what money, and every year it increases. Yes, yes, he’s rich enough to live in a finer house than this: but he’s very near—close-handed; and, if he had meant to flit to Thrushcross Grange, as soon as he heard of a good tenant he could not have borne to miss the chance of getting a few hundreds more. It is strange people should be so greedy, when they are alone in the world!”\n[wh_ch04_b011] “He had a son, it seems?”\n[wh_ch04_b012] “Yes, he had one—he is dead.”\n[wh_ch04_b013] “And that young lady, Mrs. Heathcliff, is his widow?”\n[wh_ch04_b014] “Yes.”\n[wh_ch04_b015] “Where did she come from originally?”\n[wh_ch04_b016] “Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”\n[wh_ch04_b017] “What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”\n[wh_ch04_b018] “It was.”\n[wh_ch04_b019] “And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”\n[wh_ch04_b020] “No; he is the late Mrs. Linton’s nephew.”\n[wh_ch04_b021] “The young lady’s cousin, then?”\n[wh_ch04_b022] “Yes; and her husband was her cousin also: one on the mother’s, the other on the father’s side: Heathcliff married Mr. Linton’s sister.”\n[wh_ch04_b023] “I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door. Are they an old family?”\n[wh_ch04_b024] “Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons. Have you been to Wuthering Heights? I beg pardon for asking; but I should like to hear how she is!”\n[wh_ch04_b025] “Mrs. Heathcliff? she looked very well, and very handsome; yet, I think, not very happy.”\n[wh_ch04_b026] “Oh dear, I don’t wonder! And how did you like the master?”\n[wh_ch04_b027] “A rough fellow, rather, Mrs. Dean. Is not that his character?”\n[wh_ch04_b028] “Rough as a saw-edge, and hard as whinstone! The less you meddle with him the better.”\n[wh_ch04_b029] “He must have had some ups and downs in life to make him such a churl. Do you know anything of his history?”\n[wh_ch04_b030] “It’s a cuckoo’s, sir—I know all about it: except where he was born, and who were his parents, and how he got his money at first. And Hareton has been cast out like an unfledged dunnock! The unfortunate lad is the only one in all this parish that does not guess how he has been cheated.”\n[wh_ch04_b031] “Well, Mrs. Dean, it will be a charitable deed to tell me something of my neighbours: I feel I shall not rest if I go to bed; so be good enough to sit and chat an hour.”\n[wh_ch04_b032] “Oh, certainly, sir! I’ll just fetch a little sewing, and then I’ll sit as long as you please. But you’ve caught cold: I saw you shivering, and you must have some gruel to drive it out.”\n[wh_ch04_b033] The worthy woman bustled off, and I crouched nearer the fire; my head felt hot, and the rest of me chill: moreover, I was excited, almost to a pitch of foolishness, through my nerves and brain. This caused me to feel, not uncomfortable, but rather fearful (as I am still) of serious effects from the incidents of to-day and yesterday. She returned presently, bringing a smoking basin and a basket of work; and, having placed the former on the hob, drew in her seat, evidently pleased to find me so companionable.\n[wh_ch04_b034] * * * * *\n[wh_ch04_b035] Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set me to. One fine summer morning—it was the beginning of harvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating my porridge with them—and he said, speaking to his son, “Now, my bonny man, I’m going to Liverpool to-day, what shall I bring you? You may choose what you like: only let it be little, for I shall walk there and back: sixty miles each way, that is a long spell!” Hindley named a fiddle, and then he asked Miss Cathy; she was hardly six years old, but she could ride any horse in the stable, and she chose a whip. He did not forget me; for he had a kind heart, though he was rather severe sometimes. He promised to bring me a pocketful of apples and pears, and then he kissed his children, said good-bye, and set off.\n[wh_ch04_b036] It seemed a long while to us all—the three days of his absence—and often did little Cathy ask when he would be home. Mrs. Earnshaw expected him by supper-time on the third evening, and she put the meal off hour after hour; there were no signs of his coming, however, and at last the children got tired of running down to the gate to look. Then it grew dark; she would have had them to bed, but they begged sadly to be allowed to stay up; and, just about eleven o’clock, the door-latch was raised quietly, and in stepped the master. He threw himself into a chair, laughing and groaning, and bid them all stand off, for he was nearly killed—he would not have such another walk for the three kingdoms.\n[wh_ch04_b037] “And at the end of it to be flighted to death!” he said, opening his great-coat, which he held bundled up in his arms. “See here, wife! I was never so beaten with anything in my life: but you must e’en take it as a gift of God; though it’s as dark almost as if it came from the devil.”\n[wh_ch04_b038] We crowded round, and over Miss Cathy’s head I had a peep at a dirty, ragged, black-haired child; big enough both to walk and talk: indeed, its face looked older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready to fling it out of doors: she did fly up, asking how he could fashion to bring that gipsy brat into the house, when they had their own bairns to feed and fend for? What he meant to do with it, and whether he were mad? The master tried to explain the matter; but he was really half dead with fatigue, and all that I could make out, amongst her scolding, was a tale of his seeing it starving, and houseless, and as good as dumb, in the streets of Liverpool, where he picked it up and inquired for its owner. Not a soul knew to whom it belonged, he said; and his money and time being both limited, he thought it better to take it home with him at once, than run into vain expenses there: because he was determined he would not leave it as he found it. Well, the conclusion was, that my mistress grumbled herself calm; and Mr. Earnshaw told me to wash it, and give it clean things, and let it sleep with the children.\n[wh_ch04_b039] Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had lost her whip in attending on the stranger, showed her humour by grinning and spitting at the stupid little thing; earning for her pains a sound blow from her father, to teach her cleaner manners. They entirely refused to have it in bed with them, or even in their room; and I had no more sense, so I put it on the landing of the stairs, hoping it might be gone on the morrow. By chance, or else attracted by hearing his voice, it crept to Mr. Earnshaw’s door, and there he found it on quitting his chamber. Inquiries were made as to how it got there; I was obliged to confess, and in recompense for my cowardice and inhumanity was sent out of the house.\n[wh_ch04_b040] This was Heathcliff’s first introduction to the family. On coming back a few days afterwards (for I did not consider my banishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated him: and to say the truth I did the same; and we plagued and went on with him shamefully: for I wasn’t reasonable enough to feel my injustice, and the mistress never put in a word on his behalf when she saw him wronged.\n[wh_ch04_b041] He seemed a sullen, patient child; hardened, perhaps, to ill-treatment: he would stand Hindley’s blows without winking or shedding a tear, and my pinches moved him only to draw in a breath and open his eyes, as if he had hurt himself by accident, and nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poor fatherless child, as he called him. He took to Heathcliff strangely, believing all he said (for that matter, he said precious little, and generally the truth), and petting him up far above Cathy, who was too mischievous and wayward for a favourite.\n[wh_ch04_b042] So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sympathised a while; but when the children fell ill of the measles, and I had to tend them, and take on me the cares of a woman at once, I changed my idea. Heathcliff was dangerously sick; and while he lay at the worst he would have me constantly by his pillow: I suppose he felt I did a good deal for him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.\n[wh_ch04_b043] He got through, and the doctor affirmed it was in a great measure owing to me, and praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid his indulgence by any sign of gratitude. He was not insolent to his benefactor, he was simply insensible; though knowing perfectly the hold he had on his heart, and conscious he had only to speak and all the house would be obliged to bend to his wishes. As an instance, I remember Mr. Earnshaw once bought a couple of colts at the parish fair, and gave the lads each one. Heathcliff took the handsomest, but it soon fell lame, and when he discovered it, he said to Hindley—\n[wh_ch04_b044] “You must exchange horses with me: I don’t like mine; and if you won’t I shall tell your father of the three thrashings you’ve given me this week, and show him my arm, which is black to the shoulder.” Hindley put out his tongue, and cuffed him over the ears. “You’d better do it at once,” he persisted, escaping to the porch (they were in the stable): “you will have to: and if I speak of these blows, you’ll get them again with interest.” “Off, dog!” cried Hindley, threatening him with an iron weight used for weighing potatoes and hay. “Throw it,” he replied, standing still, “and then I’ll tell how you boasted that you would turn me out of doors as soon as he died, and see whether he will not turn you out directly.” Hindley threw it, hitting him on the breast, and down he fell, but staggered up immediately, breathless and white; and, had not I prevented it, he would have gone just so to the master, and got full revenge by letting his condition plead for him, intimating who had caused it. “Take my colt, Gipsy, then!” said young Earnshaw. “And I pray that he may break your neck: take him, and be damned, you beggarly interloper! and wheedle my father out of all he has: only afterwards show him what you are, imp of Satan.—And take that, I hope he’ll kick out your brains!”\n[wh_ch04_b045] Heathcliff had gone to loose the beast, and shift it to his own stall; he was passing behind it, when Hindley finished his speech by knocking him under its feet, and without stopping to examine whether his hopes were fulfilled, ran away as fast as he could. I was surprised to witness how coolly the child gathered himself up, and went on with his intention; exchanging saddles and all, and then sitting down on a bundle of hay to overcome the qualm which the violent blow occasioned, before he entered the house. I persuaded him easily to let me lay the blame of his bruises on the horse: he minded little what tale was told since he had what he wanted. He complained so seldom, indeed, of such stirs as these, that I really thought him not vindictive: I was deceived completely, as you will hear."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch04",
+    "chapter_rolling_summary": "At Thrushcross Grange, Lockwood draws Mrs. Dean into conversation and learns that Heathcliff is wealthy, miserly, and living apart from the Grange household. Mrs. Dean then begins her long retrospective account of the earlier Wuthering Heights years: Mr. Earnshaw returns from Liverpool with the foundling who will be named Heathcliff, the household reacts with hostility, and the child gradually becomes Mr. Earnshaw’s favorite. Hindley’s early cruelty and Heathcliff’s quiet endurance are established, along with the first seeds of a lasting feud.",
+    "narration_frame_segments": [
+      {
+        "narrator_ref": "ent_mr_lockwood",
+        "block_range": [
+          "wh_ch04_b002",
+          "wh_ch04_b033"
+        ],
+        "story_time_label": "frame_present"
+      },
+      {
+        "narrator_ref": "ent_mrs_dean",
+        "block_range": [
+          "wh_ch04_b035",
+          "wh_ch04_b045"
+        ],
+        "story_time_label": "retrospective_past"
+      }
+    ],
+    "scene_summaries": [
+      {
+        "scene_id": "s_wh_ch04_01",
+        "block_range": [
+          "wh_ch04_b002",
+          "wh_ch04_b033"
+        ],
+        "summary": "Lockwood, restless and ill at ease, persuades Mrs. Dean to sit and talk. He probes the household situation at Wuthering Heights, learning of Heathcliff’s wealth, Catherine Linton’s identity as Mrs. Heathcliff, Hareton’s kinship, and the general bitterness surrounding the family.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_mrs_dean"
+        ]
+      },
+      {
+        "scene_id": "s_wh_ch04_02",
+        "block_range": [
+          "wh_ch04_b035",
+          "wh_ch04_b045"
+        ],
+        "summary": "Mrs. Dean recounts Mr. Earnshaw’s journey to Liverpool, his return with a ragged foreign child, the family’s rejection of the boy, and the gradual change as Mr. Earnshaw names him Heathcliff and favors him over Hindley and Cathy. The chapter ends with Hindley’s growing hatred and Heathcliff’s quiet resilience during abuse.",
+        "key_participants": [
+          "ent_mrs_dean",
+          "ent_mr_earnshaw",
+          "ent_hindley",
+          "ent_cathy",
+          "ent_heathcliff",
+          "ent_joseph"
+        ]
+      }
+    ],
+    "character_state_changes": [
+      {
+        "entity_ref": "ent_heathcliff",
+        "attribute": "alias_or_title",
+        "from": "unnamed_child",
+        "to": "Heathcliff",
+        "trigger_block": "wh_ch04_b040",
+        "evidence_quote": "they had christened him “Heathcliff”",
+        "observed_scope": "this_chapter"
+      },
+      {
+        "entity_ref": "ent_heathcliff",
+        "attribute": "social_status",
+        "from": "foundling_outsider",
+        "to": "favored_child_in_house",
+        "trigger_block": "wh_ch04_b041",
+        "evidence_quote": "He took to Heathcliff strangely",
+        "observed_scope": "this_chapter"
+      },
+      {
+        "entity_ref": "ent_hindley",
+        "attribute": "social_status",
+        "from": "master's_son",
+        "to": "resentful_heir",
+        "trigger_block": "wh_ch04_b042",
+        "evidence_quote": "the young master had learned to regard his father as an oppressor",
+        "observed_scope": "this_chapter"
+      }
+    ],
+    "relation_event_summary": [
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_mrs_dean"
+        ],
+        "observed_valence_hint": "positive",
+        "event_ids": [
+          "e_wh_ch04_b003_01",
+          "e_wh_ch04_b004_01",
+          "e_wh_ch04_b031_01",
+          "e_wh_ch04_b032_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_heathcliff"
+        ],
+        "observed_valence_hint": "unclear",
+        "event_ids": [
+          "e_wh_ch04_b009_01",
+          "e_wh_ch04_b023_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_mrs_heathcliff"
+        ],
+        "observed_valence_hint": "mixed",
+        "event_ids": [
+          "e_wh_ch04_b013_01",
+          "e_wh_ch04_b016_01",
+          "e_wh_ch04_b025_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mr_earnshaw",
+          "ent_heathcliff"
+        ],
+        "observed_valence_hint": "positive",
+        "event_ids": [
+          "e_wh_ch04_b038_02",
+          "e_wh_ch04_b040_05",
+          "e_wh_ch04_b041_01"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch04_b038",
+          "note": "foundling is brought home and begins to be favored"
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_hindley",
+          "ent_heathcliff"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch04_b040_03",
+          "e_wh_ch04_b044_02",
+          "e_wh_ch04_b044_03"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch04_b044",
+          "note": "open hostility becomes active physical conflict"
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_cathy",
+          "ent_heathcliff"
+        ],
+        "observed_valence_hint": "positive",
+        "event_ids": [
+          "e_wh_ch04_b040_02",
+          "e_wh_ch04_b041_02"
+        ],
+        "status": "evidence_only"
+      }
+    ],
+    "unresolved_threads": [
+      {
+        "thread_id": "th_wh_ch04_01",
+        "description": "Who the foundling child really is and what future he will have in the household",
+        "opened_block": "wh_ch04_b038",
+        "kind": "mystery"
+      },
+      {
+        "thread_id": "th_wh_ch04_02",
+        "description": "Whether Hindley's resentment toward Heathcliff will harden into lasting domination or revenge",
+        "opened_block": "wh_ch04_b044",
+        "kind": "pending_transition",
+        "pair": [
+          "ent_hindley",
+          "ent_heathcliff"
+        ]
+      },
+      {
+        "thread_id": "th_wh_ch04_03",
+        "description": "How Heathcliff's quiet endurance will affect later family power struggles",
+        "opened_block": "wh_ch04_b045",
+        "kind": "question"
+      }
+    ],
+    "motifs": [
+      {
+        "note": "the foundling brought into the house",
+        "block_ids": [
+          "wh_ch04_b038",
+          "wh_ch04_b040"
+        ]
+      },
+      {
+        "note": "food, fatigue, and household care",
+        "block_ids": [
+          "wh_ch04_b033",
+          "wh_ch04_b042"
+        ]
+      },
+      {
+        "note": "blows and rough treatment",
+        "block_ids": [
+          "wh_ch04_b039",
+          "wh_ch04_b044",
+          "wh_ch04_b045"
+        ]
+      }
+    ],
+    "translator_relevant_facts": [
+      {
+        "fact_type": "narrator",
+        "fact": "Lockwood frames the chapter in first person, then Mrs. Dean takes over for a long retrospective tale in oral storytelling mode",
+        "block_evidence": [
+          "wh_ch04_b002",
+          "wh_ch04_b035"
+        ]
+      },
+      {
+        "fact_type": "register",
+        "fact": "Mrs. Dean’s speech is colloquial, affectionate, and full of rural idiom",
+        "block_evidence": [
+          "wh_ch04_b004",
+          "wh_ch04_b024",
+          "wh_ch04_b038"
+        ]
+      },
+      {
+        "fact_type": "speech_style",
+        "fact": "Lockwood uses polite, probing conversational questions; Mrs. Dean answers expansively once engaged",
+        "block_evidence": [
+          "wh_ch04_b007",
+          "wh_ch04_b031"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Heathcliff is revealed as wealthy despite living roughly and miserly at Wuthering Heights",
+        "block_evidence": [
+          "wh_ch04_b010"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Catherine Linton is identified as Mrs. Heathcliff, and Hareton as the last Earnshaw",
+        "block_evidence": [
+          "wh_ch04_b016",
+          "wh_ch04_b024"
+        ]
+      },
+      {
+        "fact_type": "setting",
+        "fact": "The retrospective scenes are at Wuthering Heights, with Liverpool as the source of the foundling",
+        "block_evidence": [
+          "wh_ch04_b035",
+          "wh_ch04_b038"
+        ]
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "digest",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "narration coverage skipped non-narrative block wh_ch04_b001",
+      "narration coverage skipped non-narrative block wh_ch04_b034"
+    ],
+    "counts": {
+      "frame_segments": 2,
+      "scenes": 2,
+      "state_changes": 3,
+      "unresolved_mystery": 1,
+      "unresolved_pending_transition": 1,
+      "unresolved_question": 1,
+      "translator_facts": 6,
+      "motifs": 3,
+      "nonnarrative_block_skipped": 2
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "02222af9b47542d83e47cd1360f7b75e5ae02d775311fd397925cbe27ff75a6b",
+      "latency_ms": 9855,
+      "cost_usd": 0.0050285,
+      "usage": {
+        "prompt_tokens": 7522,
+        "cached_tokens": 0,
+        "completion_tokens": 1574,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "digest",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "narration coverage skipped non-narrative block wh_ch04_b001",
+          "narration coverage skipped non-narrative block wh_ch04_b034"
+        ],
+        "counts": {
+          "frame_segments": 2,
+          "scenes": 2,
+          "state_changes": 3,
+          "unresolved_mystery": 1,
+          "unresolved_pending_transition": 1,
+          "unresolved_question": 1,
+          "translator_facts": 6,
+          "motifs": 3,
+          "nonnarrative_block_skipped": 2
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch04\",\"chapter_rolling_summary\":\"At Thrushcross Grange, Lockwood draws Mrs. Dean into conversation and learns that Heathcliff is wealthy, miserly, and living apart from the Grange household. Mrs. Dean then begins her long retrospective account of the earlier Wuthering Heights years: Mr. Earnshaw returns from Liverpool with the foundling who will be named Heathcliff, the household reacts with hostility, and the child gradually becomes Mr. Earnshaw’s favorite. Hindley’s early cruelty and Heathcliff’s quiet endurance are established, along with the first seeds of a lasting feud.\",\"narration_frame_segments\":[{\"narrator_ref\":\"ent_mr_lockwood\",\"block_range\":[\"wh_ch04_b002\",\"wh_ch04_b033\"],\"story_time_label\":\"frame_present\"},{\"narrator_ref\":\"ent_mrs_dean\",\"block_range\":[\"wh_ch04_b035\",\"wh_ch04_b045\"],\"story_time_label\":\"retrospective_past\"}],\"scene_summaries\":[{\"scene_id\":\"s_wh_ch04_01\",\"block_range\":[\"wh_ch04_b002\",\"wh_ch04_b033\"],\"summary\":\"Lockwood, restless and ill at ease, persuades Mrs. Dean to sit and talk. He probes the household situation at Wuthering Heights, learning of Heathcliff’s wealth, Catherine Linton’s identity as Mrs. Heathcliff, Hareton’s kinship, and the general bitterness surrounding the family.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_mrs_dean\"]},{\"scene_id\":\"s_wh_ch04_02\",\"block_range\":[\"wh_ch04_b035\",\"wh_ch04_b045\"],\"summary\":\"Mrs. Dean recounts Mr. Earnshaw’s journey to Liverpool, his return with a ragged foreign child, the family’s rejection of the boy, and the gradual change as Mr. Earnshaw names him Heathcliff and favors him over Hindley and Cathy. The chapter ends with Hindley’s growing hatred and Heathcliff’s quiet resilience during abuse.\",\"key_participants\":[\"ent_mrs_dean\",\"ent_mr_earnshaw\",\"ent_hindley\",\"ent_cathy\",\"ent_heathcliff\",\"ent_joseph\"]}],\"character_state_changes\":[{\"entity_ref\":\"ent_heathcliff\",\"attribute\":\"alias_or_title\",\"from\":\"unnamed_child\",\"to\":\"Heathcliff\",\"trigger_block\":\"wh_ch04_b040\",\"evidence_quote\":\"they had christened him “Heathcliff”\",\"observed_scope\":\"this_chapter\"},{\"entity_ref\":\"ent_heathcliff\",\"attribute\":\"social_status\",\"from\":\"foundling_outsider\",\"to\":\"favored_child_in_house\",\"trigger_block\":\"wh_ch04_b041\",\"evidence_quote\":\"He took to Heathcliff strangely\",\"observed_scope\":\"this_chapter\"},{\"entity_ref\":\"ent_hindley\",\"attribute\":\"social_status\",\"from\":\"master's_son\",\"to\":\"resentful_heir\",\"trigger_block\":\"wh_ch04_b042\",\"evidence_quote\":\"the young master had learned to regard his father as an oppressor\",\"observed_scope\":\"this_chapter\"}],\"relation_event_summary\":[{\"pair\":[\"ent_mr_lockwood\",\"ent_mrs_dean\"],\"observed_valence_hint\":\"positive\",\"event_ids\":[\"e_wh_ch04_b003_01\",\"e_wh_ch04_b004_01\",\"e_wh_ch04_b031_01\",\"e_wh_ch04_b032_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_mr_lockwood\",\"ent_heathcliff\"],\"observed_valence_hint\":\"unclear\",\"event_ids\":[\"e_wh_ch04_b009_01\",\"e_wh_ch04_b023_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_mr_lockwood\",\"ent_mrs_heathcliff\"],\"observed_valence_hint\":\"mixed\",\"event_ids\":[\"e_wh_ch04_b013_01\",\"e_wh_ch04_b016_01\",\"e_wh_ch04_b025_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_mr_earnshaw\",\"ent_heathcliff\"],\"observed_valence_hint\":\"positive\",\"event_ids\":[\"e_wh_ch04_b038_02\",\"e_wh_ch04_b040_05\",\"e_wh_ch04_b041_01\"],\"candidate_transition\":{\"trigger_block\":\"wh_ch04_b038\",\"note\":\"foundling is brought home and begins to be favored\"},\"status\":\"evidence_only\"},{\"pair\":[\"ent_hindley\",\"ent_heathcliff\"],\"observed_valence_hint\":\"negative\",\"event_ids\":[\"e_wh_ch04_b040_03\",\"e_wh_ch04_b044_02\",\"e_wh_ch04_b044_03\"],\"candidate_transition\":{\"trigger_block\":\"wh_ch04_b044\",\"note\":\"open hostility becomes active physical conflict\"},\"status\":\"evidence_only\"},{\"pair\":[\"ent_cathy\",\"ent_heathcliff\"],\"observed_valence_hint\":\"positive\",\"event_ids\":[\"e_wh_ch04_b040_02\",\"e_wh_ch04_b041_02\"],\"status\":\"evidence_only\"}],\"unresolved_threads\":[{\"thread_id\":\"th_wh_ch04_01\",\"description\":\"Who the foundling child really is and what future he will have in the household\",\"opened_block\":\"wh_ch04_b038\",\"kind\":\"mystery\"},{\"thread_id\":\"th_wh_ch04_02\",\"description\":\"Whether Hindley's resentment toward Heathcliff will harden into lasting domination or revenge\",\"opened_block\":\"wh_ch04_b044\",\"kind\":\"pending_transition\",\"pair\":[\"ent_hindley\",\"ent_heathcliff\"]},{\"thread_id\":\"th_wh_ch04_03\",\"description\":\"How Heathcliff's quiet endurance will affect later family power struggles\",\"opened_block\":\"wh_ch04_b045\",\"kind\":\"question\"}],\"motifs\":[{\"note\":\"the foundling brought into the house\",\"block_ids\":[\"wh_ch04_b038\",\"wh_ch04_b040\"]},{\"note\":\"food, fatigue, and household care\",\"block_ids\":[\"wh_ch04_b033\",\"wh_ch04_b042\"]},{\"note\":\"blows and rough treatment\",\"block_ids\":[\"wh_ch04_b039\",\"wh_ch04_b044\",\"wh_ch04_b045\"]}],\"translator_relevant_facts\":[{\"fact_type\":\"narrator\",\"fact\":\"Lockwood frames the chapter in first person, then Mrs. Dean takes over for a long retrospective tale in oral storytelling mode\",\"block_evidence\":[\"wh_ch04_b002\",\"wh_ch04_b035\"]},{\"fact_type\":\"register\",\"fact\":\"Mrs. Dean’s speech is colloquial, affectionate, and full of rural idiom\",\"block_evidence\":[\"wh_ch04_b004\",\"wh_ch04_b024\",\"wh_ch04_b038\"]},{\"fact_type\":\"speech_style\",\"fact\":\"Lockwood uses polite, probing conversational questions; Mrs. Dean answers expansively once engaged\",\"block_evidence\":[\"wh_ch04_b007\",\"wh_ch04_b031\"]},{\"fact_type\":\"status\",\"fact\":\"Heathcliff is revealed as wealthy despite living roughly and miserly at Wuthering Heights\",\"block_evidence\":[\"wh_ch04_b010\"]},{\"fact_type\":\"status\",\"fact\":\"Catherine Linton is identified as Mrs. Heathcliff, and Hareton as the last Earnshaw\",\"block_evidence\":[\"wh_ch04_b016\",\"wh_ch04_b024\"]},{\"fact_type\":\"setting\",\"fact\":\"The retrospective scenes are at Wuthering Heights, with Liverpool as the source of the foundling\",\"block_evidence\":[\"wh_ch04_b035\",\"wh_ch04_b038\"]}]}"
+    }
+  ],
+  "cost_usd": 0.0050285,
+  "prompt_tokens": 7522,
+  "cached_tokens": 0,
+  "completion_tokens": 1574,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

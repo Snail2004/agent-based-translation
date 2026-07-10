@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import socket
 from pathlib import Path
 
@@ -70,10 +71,16 @@ class FakeLiteraryClient:
         del response_format, bypass_cache
         self.calls += 1
         user = str(messages[-1]["content"])
-        chapter_id = "bk_ch02" if "bk_ch02" in tag else "bk_ch01"
+        chapter_match = re.search(r"bk_ch\d+", tag)
+        chapter_id = chapter_match.group(0) if chapter_match else "bk_ch01"
         block_id = f"{chapter_id}_b001"
         if "literary_chapter_brief_v1" in tag:
-            name = "Bob" if chapter_id == "bk_ch02" else "Alice"
+            name = {
+                "bk_ch01": "Alice",
+                "bk_ch02": "Bob",
+                "bk_ch03": "Cara",
+                "bk_ch04": "Drew",
+            }.get(chapter_id, "Alice")
             payload = {
                 "chapter_id": chapter_id,
                 "cast_on_stage": [

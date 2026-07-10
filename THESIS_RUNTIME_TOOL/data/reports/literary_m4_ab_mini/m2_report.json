@@ -1,0 +1,280 @@
+{
+  "phase": "L2A-1",
+  "milestone": "M2",
+  "status": "needs_claude_gate",
+  "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+  "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+  "digest_context": "data\\reports\\literary_m4_full",
+  "neighbor_source": {
+    "wh_ch03": [
+      {
+        "chapter_id": "wh_ch01",
+        "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch01.json"
+      },
+      {
+        "chapter_id": "wh_ch02",
+        "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+      }
+    ],
+    "wh_ch04": [
+      {
+        "chapter_id": "wh_ch02",
+        "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+      },
+      {
+        "chapter_id": "wh_ch03",
+        "source": "in_run"
+      }
+    ]
+  },
+  "model": "gpt-5.4-mini",
+  "chapters_requested": [
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "chapters_selected": [
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "modes": [
+    "literary_digest_v1"
+  ],
+  "estimate": {
+    "phase": "L2A-1",
+    "milestone": "M2",
+    "zero_api": true,
+    "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+    "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+    "digest_context": "data\\reports\\literary_m4_full",
+    "neighbor_source": {
+      "wh_ch03": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch01.json"
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+        }
+      ],
+      "wh_ch04": [
+        {
+          "chapter_id": "wh_ch02",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+        },
+        {
+          "chapter_id": "wh_ch03",
+          "source": "in_run"
+        }
+      ]
+    },
+    "chapters_requested": [
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "chapters_selected": [
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "calls": 2,
+    "modes": [
+      "literary_digest_v1"
+    ],
+    "prompt_tokens_est": 17231,
+    "max_prompt_tokens_est": 10274,
+    "max_output_tokens_per_call": 6144,
+    "total_tokens_upper_bound": 29519,
+    "prompt_token_cap": 14000,
+    "cost_cap_usd": 0.02888375,
+    "call_estimates": [
+      {
+        "chapter_id": "wh_ch03",
+        "mode": "literary_digest_v1",
+        "prompt_tokens_est": 10274,
+        "max_output_tokens": 6144,
+        "neighbor_summary_count": 2,
+        "neighbor_source": [
+          {
+            "chapter_id": "wh_ch01",
+            "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch01.json"
+          },
+          {
+            "chapter_id": "wh_ch02",
+            "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+          }
+        ],
+        "relation_event_lines": 43
+      },
+      {
+        "chapter_id": "wh_ch04",
+        "mode": "literary_digest_v1",
+        "prompt_tokens_est": 6957,
+        "max_output_tokens": 6144,
+        "neighbor_summary_count": 2,
+        "neighbor_source": [
+          {
+            "chapter_id": "wh_ch02",
+            "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+          },
+          {
+            "chapter_id": "wh_ch03",
+            "source": "in_run"
+          }
+        ],
+        "relation_event_lines": 48
+      }
+    ],
+    "token_growth_halt": false
+  },
+  "actual": {
+    "calls": 2,
+    "cache_hits": 0,
+    "cost_usd": 0.010583,
+    "prompt_tokens": 18068,
+    "cached_tokens": 0,
+    "completion_tokens": 3033,
+    "reasoning_tokens": 0
+  },
+  "accounting_resume": {
+    "restored_total": {
+      "logical_calls": 0,
+      "attempts": 0,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "cached_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 0,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 0,
+      "incremental_reasoning_tokens": 0
+    },
+    "this_attempt": {
+      "logical_calls": 2,
+      "attempts": 2,
+      "cache_hits": 0,
+      "cost_usd": 0.010583,
+      "prompt_tokens": 18068,
+      "cached_tokens": 0,
+      "completion_tokens": 3033,
+      "reasoning_tokens": 0
+    },
+    "combined_total": {
+      "logical_calls": 2,
+      "attempts": 2,
+      "cache_hits": 0,
+      "cost_usd": 0.010583,
+      "prompt_tokens": 18068,
+      "cached_tokens": 0,
+      "completion_tokens": 3033,
+      "reasoning_tokens": 0,
+      "incremental_cost_usd": 0.010583,
+      "incremental_prompt_tokens": 18068,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 3033,
+      "incremental_reasoning_tokens": 0
+    }
+  },
+  "resume": {
+    "enabled": false,
+    "resumed_from_checkpoint": [],
+    "ran": [
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "mismatches": [],
+    "lock_took_over_stale": false
+  },
+  "checkpoint_config_hash": "00437a210a416664221c1ab1b7c24b7c023747c55715d1ce1d2028d308db15ee",
+  "input_m1_checkpoint_hashes": {
+    "wh_ch03": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+    "wh_ch04": "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11"
+  },
+  "validation_counts": {
+    "digest_ok": 2,
+    "digest_failed": 0,
+    "parse_fail": 0,
+    "frame_segments": 3,
+    "scenes": 6,
+    "state_changes": 4,
+    "translator_facts": 11,
+    "motifs": 7
+  },
+  "chapter_summaries": [
+    {
+      "chapter_id": "wh_ch03",
+      "summary": "Lockwood spends a stormy night at Wuthering Heights, reading Catherine Earnshaw’s scribbled books and falling into a feverish dream that turns into a nightmare of haunting, accusation, and violence. He wakes to Heathcliff’s panic at the window and accidentally reveals the name Catherine Linton, visibly shaking Heathcliff. At dawn, Lockwood escapes through snow with Heathcliff’s reluctant guidance and returns to the Grange exhausted and shaken, while the chapter deepens the mystery of Catherine, Heathcliff, and the house’s buried past."
+    },
+    {
+      "chapter_id": "wh_ch04",
+      "summary": "At Thrushcross Grange, Lockwood draws Mrs. Dean into conversation and learns that Heathcliff is wealthy, miserly, and living apart from the Grange household. Mrs. Dean then begins her long retrospective account of the earlier Wuthering Heights years: Mr. Earnshaw returns from Liverpool with the foundling who will be named Heathcliff, the household reacts with hostility, and the child gradually becomes Mr. Earnshaw’s favorite. Hindley’s early cruelty and Heathcliff’s quiet endurance are established, along with the first seeds of a lasting feud."
+    }
+  ],
+  "call_records": [
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch03",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0055545,
+      "prompt_tokens": 10546,
+      "cached_tokens": 0,
+      "completion_tokens": 1459,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 4,
+        "state_changes": 1,
+        "unresolved_mystery": 2,
+        "unresolved_pending_transition": 0,
+        "unresolved_question": 1,
+        "translator_facts": 5,
+        "motifs": 4,
+        "nonnarrative_block_skipped": 3
+      },
+      "incremental_cost_usd": 0.0055545,
+      "incremental_prompt_tokens": 10546,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 1459,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch04",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0050285,
+      "prompt_tokens": 7522,
+      "cached_tokens": 0,
+      "completion_tokens": 1574,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 2,
+        "scenes": 2,
+        "state_changes": 3,
+        "unresolved_mystery": 1,
+        "unresolved_pending_transition": 1,
+        "unresolved_question": 1,
+        "translator_facts": 6,
+        "motifs": 3,
+        "nonnarrative_block_skipped": 2
+      },
+      "incremental_cost_usd": 0.0050285,
+      "incremental_prompt_tokens": 7522,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 1574,
+      "incremental_reasoning_tokens": 0
+    }
+  ],
+  "artifacts": {
+    "digest_dir": "data\\reports\\literary_m4_ab_mini\\digest",
+    "report": "data\\reports\\literary_m4_ab_mini\\m2_report.json"
+  },
+  "stop": "M2 complete. Claude must verify digest before M3."
+}

@@ -544,6 +544,110 @@ def test_digest_validator_rejects_phase_finalization() -> None:
     assert any("must not finalize phase_label" in error for error in report.errors)
 
 
+def _digest_with_segments(segments: list[dict[str, object]]) -> dict[str, object]:
+    return {
+        "chapter_id": "bk_ch01",
+        "chapter_rolling_summary": "A short chapter summary.",
+        "narration_frame_segments": segments,
+        "scene_summaries": [],
+        "character_state_changes": [],
+        "relation_event_summary": [],
+        "unresolved_threads": [],
+        "motifs": [],
+        "translator_relevant_facts": [],
+    }
+
+
+def test_digest_coverage_skips_heading_at_chapter_start() -> None:
+    payload = _digest_with_segments(
+        [
+            {
+                "narrator_ref": "ent_alden",
+                "block_range": ["bk_ch01_b002", "bk_ch01_b003"],
+                "story_time_label": "frame_present",
+            }
+        ]
+    )
+    blocks = [
+        {"block_id": "bk_ch01_b001", "block_type": "heading", "text": "CHAPTER I"},
+        {"block_id": "bk_ch01_b002", "block_type": "paragraph", "text": "Alden entered."},
+        {"block_id": "bk_ch01_b003", "block_type": "paragraph", "text": "Mira answered."},
+    ]
+
+    report = validate_digest(
+        payload,
+        chapter_block_ids=[block["block_id"] for block in blocks],
+        chapter_blocks=blocks,
+    )
+
+    assert report.ok
+    assert report.counts["nonnarrative_block_skipped"] == 1
+
+
+def test_digest_coverage_skips_letterless_separator() -> None:
+    payload = _digest_with_segments(
+        [
+            {
+                "narrator_ref": "ent_alden",
+                "block_range": ["bk_ch01_b001", "bk_ch01_b002"],
+                "story_time_label": "frame_present",
+            },
+            {
+                "narrator_ref": "ent_mira",
+                "block_range": ["bk_ch01_b004", "bk_ch01_b004"],
+                "story_time_label": "retrospective_past",
+            },
+        ]
+    )
+    blocks = [
+        {"block_id": "bk_ch01_b001", "block_type": "paragraph", "text": "Alden entered."},
+        {"block_id": "bk_ch01_b002", "block_type": "paragraph", "text": "Mira answered."},
+        {"block_id": "bk_ch01_b003", "block_type": "paragraph", "text": "* * * * *"},
+        {"block_id": "bk_ch01_b004", "block_type": "paragraph", "text": "The story continued."},
+    ]
+
+    report = validate_digest(
+        payload,
+        chapter_block_ids=[block["block_id"] for block in blocks],
+        chapter_blocks=blocks,
+    )
+
+    assert report.ok
+    assert report.counts["nonnarrative_block_skipped"] == 1
+
+
+def test_digest_coverage_still_rejects_real_narrative_gap() -> None:
+    payload = _digest_with_segments(
+        [
+            {
+                "narrator_ref": "ent_alden",
+                "block_range": ["bk_ch01_b001", "bk_ch01_b001"],
+                "story_time_label": "frame_present",
+            },
+            {
+                "narrator_ref": "ent_mira",
+                "block_range": ["bk_ch01_b003", "bk_ch01_b003"],
+                "story_time_label": "retrospective_past",
+            },
+        ]
+    )
+    blocks = [
+        {"block_id": "bk_ch01_b001", "block_type": "paragraph", "text": "Alden entered."},
+        {"block_id": "bk_ch01_b002", "block_type": "paragraph", "text": "Mira answered."},
+        {"block_id": "bk_ch01_b003", "block_type": "paragraph", "text": "The story continued."},
+    ]
+
+    report = validate_digest(
+        payload,
+        chapter_block_ids=[block["block_id"] for block in blocks],
+        chapter_blocks=blocks,
+    )
+
+    assert not report.ok
+    assert report.counts["nonnarrative_block_skipped"] == 0
+    assert any("starts at bk_ch01_b003, expected bk_ch01_b002" in error for error in report.errors)
+
+
 def test_narrative_validator_drops_non_person_relation_target_without_failing_window() -> None:
     payload = {
         "chapter_id": "wh_ch01",

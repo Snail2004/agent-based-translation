@@ -1,0 +1,34 @@
+{
+  "date": "2026-07-10",
+  "model": "gpt-5.4",
+  "quota_limit_tokens": 250000,
+  "safety_limit_tokens": 225000,
+  "observed_before_tokens": 0,
+  "observed_after_tokens": 25131,
+  "observed_after_calls": 2,
+  "remaining_to_safety_tokens": 199869,
+  "remaining_to_hard_limit_tokens": 224869,
+  "status": "within_safety_limit",
+  "runs": [
+    {
+      "arm": "gpt-5.4",
+      "cache": "data/jobs/literary_m4_ab_gpt54_cache.sqlite3",
+      "prompt_tokens": 18128,
+      "completion_tokens": 7003,
+      "reasoning_tokens": 0,
+      "total_tokens": 25131,
+      "calls": 2,
+      "cost_usd_recorded": 0.0
+    }
+  ],
+  "historical": [
+    {
+      "date": "2026-07-09",
+      "model": "gpt-5.4",
+      "total_tokens": 54869,
+      "calls": 15,
+      "cache": "data/jobs/literary_builder_cache_gpt54_key2.sqlite3"
+    }
+  ],
+  "note": "The gpt-5.4 provider usage was recorded at zero cost under the free quota. The gpt-5.4-mini arm is tracked separately and is not included in this 250k budget."
+}

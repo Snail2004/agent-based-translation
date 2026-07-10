@@ -1,0 +1,30 @@
+py.exe : Traceback (most recent call last):
+At line:2 char:57
++ ... rs = 1..34; & py -3.13 -m pipeline.scripts.run_literary_builder_pilot ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\nguye\OneDrive\Tài liệu\Baitap\DuAnCNTT\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME
+_TOOL\pipeline\scripts\run_literary_builder_pilot.py", line 410, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\Users\nguye\OneDrive\Tài liệu\Baitap\DuAnCNTT\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME
+_TOOL\pipeline\scripts\run_literary_builder_pilot.py", line 146, in main
+    return _run_milestone(args)
+  File "C:\Users\nguye\OneDrive\Tài liệu\Baitap\DuAnCNTT\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME
+_TOOL\pipeline\scripts\run_literary_builder_pilot.py", line 251, in _run_milestone
+    estimate = estimate_m2(
+        document,
+    ...<3 lines>...
+        m1_dir=m1_dir,
+    )
+  File "C:\Users\nguye\OneDrive\Tài liệu\Baitap\DuAnCNTT\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME
+_TOOL\pipeline\literary\builder_pilot.py", line 2597, in estimate_m2
+    m1_report = _load_m1_report(m1_dir)
+  File "C:\Users\nguye\OneDrive\Tài liệu\Baitap\DuAnCNTT\odl-pdf-demo\research\agent-based-translation\THESIS_RUNTIME
+_TOOL\pipeline\literary\builder_pilot.py", line 1400, in _load_m1_report
+    raise FileNotFoundError(f"M1 report not found for M2 digest: {report_path}")
+FileNotFoundError: M1 report not found for M2 digest: data\reports\literary_m4_full\m1_report.json

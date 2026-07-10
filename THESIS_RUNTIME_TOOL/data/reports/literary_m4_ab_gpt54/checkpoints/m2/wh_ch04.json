@@ -1,0 +1,117 @@
+{
+  "stage": "m2",
+  "chapter_id": "wh_ch04",
+  "chapter_index": 1,
+  "chapter_sequence_prefix": [
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "source_hash": "bf677ecba031c34f7b67ec482d6a90a750e771d69b0e91979a740540626739da",
+  "prompt_hashes": {
+    "literary_digest_v1": "06a233638e2e1f2b2acdabb7e3fb96ea72fe9cb09606717f632dc1f912123398"
+  },
+  "config_hash": "aa74b26bcf86255b2a9e4960866137e0dd8baa656bdd4c7a8ed6c54468d97430",
+  "schema_version": "literary_m2_checkpoint_v2",
+  "parent_checkpoint_hash": "b1216be078e0c53e4e189db8fc29e2d1bf70d6ae633fd1d323926f7a3d3bf1df",
+  "input_m1_checkpoint_hash": "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11",
+  "state": {
+    "chapter_summaries": [
+      {
+        "chapter_id": "wh_ch03",
+        "summary": "Lockwood is lodged in a forbidden chamber at Wuthering Heights, where he finds Catherine’s old books and her childish diary describing Hindley’s cruelty to Heathcliff and her own rebellion. He falls into disturbing dreams: one of Jabez Branderham’s endless sermon, then one of a ghostly child identifying itself as Catherine Linton begging to be let in. His scream brings Heathcliff, who reacts with extraordinary agitation when Catherine’s name is mentioned and later, believing himself alone, begs “Cathy” to return. Before dawn Lockwood witnesses more of the household’s bitterness: Heathcliff abuses Zillah and his daughter-in-law, who defies him. Heathcliff then guides Lockwood safely across the snow-covered moor back toward Thrushcross Grange, where Lockwood returns exhausted and deeply affected by the night’s events."
+      },
+      {
+        "chapter_id": "wh_ch04",
+        "summary": "At Thrushcross Grange, Lockwood questions Mrs. Dean about the tangled inhabitants of Wuthering Heights and learns that young Mrs. Heathcliff is Catherine Linton, Hareton is Catherine’s cousin and the last Earnshaw, and Heathcliff is wealthy but miserly. Mrs. Dean then begins her history of earlier days at Wuthering Heights. She recalls Mr. Earnshaw returning from Liverpool with a ragged orphan child he names Heathcliff. The household resists him at once: Mrs. Earnshaw rejects him, Cathy insults him, Nelly and Hindley mistreat him, while old Earnshaw increasingly favors him. Cathy becomes close to Heathcliff, but Hindley’s hatred deepens as he sees Heathcliff as a usurper. During illness Nelly softens somewhat toward Heathcliff, yet she notes his cold endurance and latent vindictiveness. A violent quarrel over the colts shows Hindley’s brutality and Heathcliff’s calculating revengefulness."
+      }
+    ],
+    "neighbor_source": {
+      "wh_ch03": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch01.json"
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+        }
+      ],
+      "wh_ch04": [
+        {
+          "chapter_id": "wh_ch02",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+        },
+        {
+          "chapter_id": "wh_ch03",
+          "source": "in_run"
+        }
+      ]
+    }
+  },
+  "digest_summary": "At Thrushcross Grange, Lockwood questions Mrs. Dean about the tangled inhabitants of Wuthering Heights and learns that young Mrs. Heathcliff is Catherine Linton, Hareton is Catherine’s cousin and the last Earnshaw, and Heathcliff is wealthy but miserly. Mrs. Dean then begins her history of earlier days at Wuthering Heights. She recalls Mr. Earnshaw returning from Liverpool with a ragged orphan child he names Heathcliff. The household resists him at once: Mrs. Earnshaw rejects him, Cathy insults him, Nelly and Hindley mistreat him, while old Earnshaw increasingly favors him. Cathy becomes close to Heathcliff, but Hindley’s hatred deepens as he sees Heathcliff as a usurper. During illness Nelly softens somewhat toward Heathcliff, yet she notes his cold endurance and latent vindictiveness. A violent quarrel over the colts shows Hindley’s brutality and Heathcliff’s calculating revengefulness.",
+  "validation_counts": {
+    "digest_ok": 1,
+    "digest_failed": 0,
+    "parse_fail": 0,
+    "frame_segments": 2,
+    "scenes": 4,
+    "state_changes": 3,
+    "translator_facts": 8,
+    "motifs": 4
+  },
+  "accounting": {
+    "logical_calls": 1,
+    "attempts": 1,
+    "cache_hits": 0,
+    "cost_usd": 0.0,
+    "prompt_tokens": 7582,
+    "cached_tokens": 0,
+    "completion_tokens": 3551,
+    "reasoning_tokens": 0,
+    "incremental_cost_usd": 0.0,
+    "incremental_prompt_tokens": 7582,
+    "incremental_cached_tokens": 0,
+    "incremental_completion_tokens": 3551,
+    "incremental_reasoning_tokens": 0
+  },
+  "call_records": [
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch04",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0,
+      "prompt_tokens": 7582,
+      "cached_tokens": 0,
+      "completion_tokens": 3551,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 2,
+        "scenes": 4,
+        "state_changes": 3,
+        "unresolved_mystery": 2,
+        "unresolved_pending_transition": 2,
+        "unresolved_question": 0,
+        "translator_facts": 8,
+        "motifs": 4,
+        "nonnarrative_block_skipped": 2
+      },
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 7582,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 3551,
+      "incremental_reasoning_tokens": 0
+    }
+  ],
+  "artifact_manifest": [
+    {
+      "path": "digest/wh_ch04.json",
+      "sha256": "e95ef4f3a357007c26a3c399497ec10614f9a51d05902e54e0deace1ef5ff495",
+      "size": 60146
+    }
+  ],
+  "created_at": "2026-07-10T14:25:55.215915+00:00",
+  "checkpoint_hash": "acbcafc1f3e74be6ece7565d2b9eaccd5f198a58578a83d23239ce941e0f53a6"
+}

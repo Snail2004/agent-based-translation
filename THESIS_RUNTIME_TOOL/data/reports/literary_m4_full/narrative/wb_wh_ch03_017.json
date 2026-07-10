@@ -1,0 +1,216 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_wh_ch03_017",
+  "chapter_id": "wh_ch03",
+  "block_ids": [
+    "wh_ch03_b066",
+    "wh_ch03_b067"
+  ],
+  "previous_tail_block_ids": [
+    "wh_ch03_b064",
+    "wh_ch03_b065"
+  ],
+  "next_tail_block_ids": [],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. There is NO placeholder id: ids such as ent_unknown, ent_unnamed, or ent_narrator do not exist — any id not literally listed in CHAPTER_ROSTER_ON_STAGE or REGISTRY_CONTEXT_PACK is an error; \"I do not know who this is\" is expressed ONLY as resolution_status=unknown with []. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch03_b006\", \"wh_ch03_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_wh_ch03_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"wh_ch03_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_wh_ch03_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"wh_ch03_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | few_scenes\nneutral_premise | Mr. Lockwood spends a night at Wuthering Heights, reads old writings, falls into troubled sleep, is startled by a tapping at the window, then meets Heathcliff and leaves the next morning for the Grange.\ncast | I | guest | wh_ch03_b002\ncast | she | servant | wh_ch03_b002\ncast | Heathcliff | host | wh_ch03_b004\ncast | Joseph | servant | wh_ch03_b008\ncast | Hindley | master | wh_ch03_b009\ncast | Frances | hostess | wh_ch03_b011\ncast | the unhappy ploughboy | worker | wh_ch03_b010\ncast | Jabez Branderham | preacher | wh_ch03_b020\ncast | Catherine Linton | child | wh_ch03_b031\ncast | little, ice-cold hand | unknown child | wh_ch03_b027\ncast | Zillah | servant | wh_ch03_b048\ncast | Hareton Earnshaw | young man | wh_ch03_b060\ncast | Mrs. Heathcliff | household member | wh_ch03_b061\ncast | the young lady | household member | wh_ch03_b063\ncast | my landlord | host | wh_ch03_b065\ncast | my human fixture | household member | wh_ch03_b067\nscene | wh_ch03_b002..wh_ch03_b015 | co_present_count=2 | I, she\nscene | wh_ch03_b017..wh_ch03_b026 | co_present_count=1 | I\nscene | wh_ch03_b027..wh_ch03_b034 | co_present_count=2 | I, Catherine Linton\nscene | wh_ch03_b040..wh_ch03_b057 | co_present_count=2 | I, Heathcliff\nscene | wh_ch03_b058..wh_ch03_b064 | co_present_count=5 | I, Joseph, Hareton Earnshaw, Mrs. Heathcliff, the young lady\nscene | wh_ch03_b065..wh_ch03_b067 | co_present_count=2 | I, my landlord\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch01\nA tenant visits Mr. Heathcliff at Wuthering Heights, is let in, meets Joseph and other household staff, has trouble with the dogs, and stays long enough to exchange remarks before leaving and planning another visit.\n\nwh_ch02\nMr. Lockwood revisits Wuthering Heights in bad weather, meets the household at tea, learns who lives there, asks for a guide, and is kept overnight after a struggle at the door.\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\nwh_ch03_b066..wh_ch03_b067 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_branderham | Branderham | Branderham\nent_catherine | Catherine | Catherine\nent_catherine_earnshaw | Catherine Earnshaw | Catherine Earnshaw\nent_catherine_heathcliff | Catherine Heathcliff | Catherine Heathcliff\nent_catherine_linton | Catherine Linton | Catherine Linton\nent_catherine_s | Catherine’s | Catherine’s\nent_cathy | Cathy | Cathy\nent_earnshaw | Earnshaw | Earnshaw\nent_frances | Frances | Frances\nent_hareton | Hareton | Hareton\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_heathcliff | Heathcliff | Heathcliff\nent_heathcliff_s | Heathcliff’s | Heathcliff’s\nent_hindley | Hindley | Hindley\nent_jabez | Jabez | Jabez\nent_jabez_branderham | Jabez Branderham | Jabez Branderham\nent_jabez_s | Jabez’s | Jabez’s\nent_joseph | Joseph | Joseph\nent_king_lear | King Lear | King Lear\nent_linton | Linton | Linton\nent_maister_hindley | Maister Hindley | Maister Hindley\nent_miss_cathy | Miss Cathy | Miss Cathy\nent_mr_and_mrs_heathcliff | Mr. and Mrs. Heathcliff | Mr. and Mrs. Heathcliff\nent_mr_earnshaw | Mr. Earnshaw | Mr. Earnshaw\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\nent_mrs_heathcliff | Mrs. Heathcliff | Mrs. Heathcliff\nent_the_reverend_jabez_branderham | the Reverend Jabez Branderham | the Reverend Jabez Branderham\nent_the_young_man | the young man | the young man\nent_your_servant_zillah | your servant Zillah | your servant Zillah\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_wh_ch03_b066_01 | the porter’s lodge | descriptor | unknown | \nm_wh_ch03_b067_01 | My human fixture | descriptor | candidate | ent_zillah\nm_wh_ch03_b067_02 | the servant | descriptor | unknown | \n\nCHAPTER_ID\nwh_ch03\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch03_b064] Heathcliff lifted his hand, and the speaker sprang to a safer distance, obviously acquainted with its weight. Having no desire to be entertained by a cat-and-dog combat, I stepped forward briskly, as if eager to partake the warmth of the hearth, and innocent of any knowledge of the interrupted dispute. Each had enough decorum to suspend further hostilities: Heathcliff placed his fists, out of temptation, in his pockets; Mrs. Heathcliff curled her lip, and walked to a seat far off, where she kept her word by playing the part of a statue during the remainder of my stay. That was not long. I declined joining their breakfast, and, at the first gleam of dawn, took an opportunity of escaping into the free air, now clear, and still, and cold as impalpable ice.\n[wh_ch03_b065] My landlord halloed for me to stop ere I reached the bottom of the garden, and offered to accompany me across the moor. It was well he did, for the whole hill-back was one billowy, white ocean; the swells and falls not indicating corresponding rises and depressions in the ground: many pits, at least, were filled to a level; and entire ranges of mounds, the refuse of the quarries, blotted from the chart which my yesterday’s walk left pictured in my mind. I had remarked on one side of the road, at intervals of six or seven yards, a line of upright stones, continued through the whole length of the barren: these were erected and daubed with lime on purpose to serve as guides in the dark, and also when a fall, like the present, confounded the deep swamps on either hand with the firmer path: but, excepting a dirty dot pointing up here and there, all traces of their existence had vanished: and my companion found it necessary to warn me frequently to steer to the right or left, when I imagined I was following, correctly, the windings of the road.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n(none)\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch03_b066] We exchanged little conversation, and he halted at the entrance of Thrushcross Park, saying, I could make no error there. Our adieux were limited to a hasty bow, and then I pushed forward, trusting to my own resources; for the porter’s lodge is untenanted as yet. The distance from the gate to the Grange is two miles; I believe I managed to make it four, what with losing myself among the trees, and sinking up to the neck in snow: a predicament which only those who have experienced it can appreciate. At any rate, whatever were my wanderings, the clock chimed twelve as I entered the house; and that gave exactly an hour for every mile of the usual way from Wuthering Heights.\n[wh_ch03_b067] My human fixture and her satellites rushed to welcome me; exclaiming, tumultuously, they had completely given me up: everybody conjectured that I perished last night; and they were wondering how they must set about the search for my remains. I bid them be quiet, now that they saw me returned, and, benumbed to my very heart, I dragged upstairs; whence, after putting on dry clothes, and pacing to and fro thirty or forty minutes, to restore the animal heat, I adjourned to my study, feeble as a kitten: almost too much so to enjoy the cheerful fire and smoking coffee which the servant had prepared for my refreshment."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch03",
+    "window_block_ids": [
+      "wh_ch03_b066",
+      "wh_ch03_b067"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_wh_ch03_b066_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "he",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I could make no error there.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says he cannot err there",
+        "block_id": "wh_ch03_b066"
+      },
+      {
+        "turn_id": "t_wh_ch03_b067_01",
+        "speaker": {
+          "surface": "My human fixture and her satellites",
+          "reference_kind": "group",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "addressee": {
+          "surface": "they",
+          "reference_kind": "group",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "utterance_quote": "they had completely given me up",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "they say they had given him up for lost",
+        "block_id": "wh_ch03_b067"
+      },
+      {
+        "turn_id": "t_wh_ch03_b067_02",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "them",
+          "reference_kind": "group",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "utterance_quote": "I bid them be quiet",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "tells them to be quiet",
+        "block_id": "wh_ch03_b067"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_wh_ch03_b066_01",
+        "actor": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "he",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "says",
+        "evidence_quote": "I could make no error there",
+        "block_id": "wh_ch03_b066"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "relation_events[1] dropped because actor.reference_kind is group",
+      "relation_events[2] dropped because target.reference_kind is group"
+    ],
+    "counts": {
+      "turns": 3,
+      "events": 1,
+      "phase_leak": 0,
+      "address_term_present": 0,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 5,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 2,
+      "attribution_enum_dropped": 0,
+      "attribution_enum_normalized": 0,
+      "named_pronoun_downgraded": 0,
+      "named_ids_cleared": 0,
+      "outside_window_neighbor_dropped": 0,
+      "outside_window_nonexistent_dropped": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "fa92d2b8b193a7c2ee9627831174ee8064e7fedf6e243bba59e2e6fec197d515",
+      "latency_ms": 5426,
+      "cost_usd": 0.00208705,
+      "usage": {
+        "prompt_tokens": 3441,
+        "cached_tokens": 1792,
+        "completion_tokens": 815,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "relation_events[1] dropped because actor.reference_kind is group",
+          "relation_events[2] dropped because target.reference_kind is group"
+        ],
+        "counts": {
+          "turns": 3,
+          "events": 1,
+          "phase_leak": 0,
+          "address_term_present": 0,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 5,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 2,
+          "attribution_enum_dropped": 0,
+          "attribution_enum_normalized": 0,
+          "named_pronoun_downgraded": 0,
+          "named_ids_cleared": 0,
+          "outside_window_neighbor_dropped": 0,
+          "outside_window_nonexistent_dropped": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch03\",\"window_block_ids\":[\"wh_ch03_b066\",\"wh_ch03_b067\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_wh_ch03_b066_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I could make no error there.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says he cannot err there\",\"block_id\":\"wh_ch03_b066\"},{\"turn_id\":\"t_wh_ch03_b067_01\",\"speaker\":{\"surface\":\"My human fixture and her satellites\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"they\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"utterance_quote\":\"they had completely given me up\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"they say they had given him up for lost\",\"block_id\":\"wh_ch03_b067\"},{\"turn_id\":\"t_wh_ch03_b067_02\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"them\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"utterance_quote\":\"I bid them be quiet\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"tells them to be quiet\",\"block_id\":\"wh_ch03_b067\"}],\"relation_events\":[{\"event_id\":\"e_wh_ch03_b066_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"high\"},\"target\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"says\",\"evidence_quote\":\"I could make no error there\",\"block_id\":\"wh_ch03_b066\"},{\"event_id\":\"e_wh_ch03_b067_01\",\"actor\":{\"surface\":\"My human fixture and her satellites\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"high\"},\"event_type\":\"exclaims\",\"evidence_quote\":\"exclaiming, tumultuously\",\"block_id\":\"wh_ch03_b067\"},{\"event_id\":\"e_wh_ch03_b067_02\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"high\"},\"target\":{\"surface\":\"them\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"event_type\":\"orders\",\"evidence_quote\":\"I bid them be quiet\",\"block_id\":\"wh_ch03_b067\"}]}"
+    }
+  ],
+  "cost_usd": 0.00208705,
+  "prompt_tokens": 3441,
+  "cached_tokens": 1792,
+  "completion_tokens": 815,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

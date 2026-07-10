@@ -1,0 +1,102 @@
+{
+  "stage": "m2",
+  "chapter_id": "wh_ch03",
+  "chapter_index": 0,
+  "chapter_sequence_prefix": [
+    "wh_ch03"
+  ],
+  "source_hash": "2e170e7af07094c8eaad6bfacd424ffc443f20d603370aece58bd56407b231df",
+  "prompt_hashes": {
+    "literary_digest_v1": "06a233638e2e1f2b2acdabb7e3fb96ea72fe9cb09606717f632dc1f912123398"
+  },
+  "config_hash": "00437a210a416664221c1ab1b7c24b7c023747c55715d1ce1d2028d308db15ee",
+  "schema_version": "literary_m2_checkpoint_v2",
+  "parent_checkpoint_hash": null,
+  "input_m1_checkpoint_hash": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+  "state": {
+    "chapter_summaries": [
+      {
+        "chapter_id": "wh_ch03",
+        "summary": "Lockwood spends a stormy night at Wuthering Heights, reading Catherine Earnshaw’s scribbled books and falling into a feverish dream that turns into a nightmare of haunting, accusation, and violence. He wakes to Heathcliff’s panic at the window and accidentally reveals the name Catherine Linton, visibly shaking Heathcliff. At dawn, Lockwood escapes through snow with Heathcliff’s reluctant guidance and returns to the Grange exhausted and shaken, while the chapter deepens the mystery of Catherine, Heathcliff, and the house’s buried past."
+      }
+    ],
+    "neighbor_source": {
+      "wh_ch03": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch01.json"
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "source": "digest_context_artifact:data\\reports\\literary_m4_full\\digest\\wh_ch02.json"
+        }
+      ]
+    }
+  },
+  "digest_summary": "Lockwood spends a stormy night at Wuthering Heights, reading Catherine Earnshaw’s scribbled books and falling into a feverish dream that turns into a nightmare of haunting, accusation, and violence. He wakes to Heathcliff’s panic at the window and accidentally reveals the name Catherine Linton, visibly shaking Heathcliff. At dawn, Lockwood escapes through snow with Heathcliff’s reluctant guidance and returns to the Grange exhausted and shaken, while the chapter deepens the mystery of Catherine, Heathcliff, and the house’s buried past.",
+  "validation_counts": {
+    "digest_ok": 1,
+    "digest_failed": 0,
+    "parse_fail": 0,
+    "frame_segments": 1,
+    "scenes": 4,
+    "state_changes": 1,
+    "translator_facts": 5,
+    "motifs": 4
+  },
+  "accounting": {
+    "logical_calls": 1,
+    "attempts": 1,
+    "cache_hits": 0,
+    "cost_usd": 0.0055545,
+    "prompt_tokens": 10546,
+    "cached_tokens": 0,
+    "completion_tokens": 1459,
+    "reasoning_tokens": 0,
+    "incremental_cost_usd": 0.0055545,
+    "incremental_prompt_tokens": 10546,
+    "incremental_cached_tokens": 0,
+    "incremental_completion_tokens": 1459,
+    "incremental_reasoning_tokens": 0
+  },
+  "call_records": [
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch03",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0055545,
+      "prompt_tokens": 10546,
+      "cached_tokens": 0,
+      "completion_tokens": 1459,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 4,
+        "state_changes": 1,
+        "unresolved_mystery": 2,
+        "unresolved_pending_transition": 0,
+        "unresolved_question": 1,
+        "translator_facts": 5,
+        "motifs": 4,
+        "nonnarrative_block_skipped": 3
+      },
+      "incremental_cost_usd": 0.0055545,
+      "incremental_prompt_tokens": 10546,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 1459,
+      "incremental_reasoning_tokens": 0
+    }
+  ],
+  "artifact_manifest": [
+    {
+      "path": "digest/wh_ch03.json",
+      "sha256": "e8a0e36bd4b26278e770736f45056d27cd8a99040cbb30a37daa74cf062a8e0b",
+      "size": 59153
+    }
+  ],
+  "created_at": "2026-07-10T14:23:45.976509+00:00",
+  "checkpoint_hash": "4f535ccc7429f8991e75683a6800a0bd89975433c934952da4ea4d0ff4733ae3"
+}

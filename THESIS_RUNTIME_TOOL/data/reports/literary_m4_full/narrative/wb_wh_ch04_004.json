@@ -1,0 +1,433 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_wh_ch04_004",
+  "chapter_id": "wh_ch04",
+  "block_ids": [
+    "wh_ch04_b025",
+    "wh_ch04_b026",
+    "wh_ch04_b027",
+    "wh_ch04_b028",
+    "wh_ch04_b029",
+    "wh_ch04_b030",
+    "wh_ch04_b031",
+    "wh_ch04_b032"
+  ],
+  "previous_tail_block_ids": [
+    "wh_ch04_b023",
+    "wh_ch04_b024"
+  ],
+  "next_tail_block_ids": [
+    "wh_ch04_b033",
+    "wh_ch04_b034"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. There is NO placeholder id: ids such as ent_unknown, ent_unnamed, or ent_narrator do not exist — any id not literally listed in CHAPTER_ROSTER_ON_STAGE or REGISTRY_CONTEXT_PACK is an error; \"I do not know who this is\" is expressed ONLY as resolution_status=unknown with []. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch04_b006\", \"wh_ch04_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_wh_ch04_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"wh_ch04_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_wh_ch04_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"wh_ch04_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Thrushcross Grange | frame_present | few_scenes\nneutral_premise | Lockwood talks with Mrs. Dean at Thrushcross Grange about the households at Wuthering Heights, and she begins recounting events from the earlier years at Wuthering Heights, including Mr. Earnshaw’s return with Heathcliff and later disputes among the children.\ncast | Mrs. Dean | housekeeper | wh_ch04_b002\ncast | I | visitor | wh_ch04_b002\ncast | Heathcliff | master | wh_ch04_b009\ncast | Mrs. Heathcliff | occupant | wh_ch04_b013\ncast | Catherine Linton | daughter | wh_ch04_b016\ncast | Hareton Earnshaw | child | wh_ch04_b019\ncast | Miss Cathy | child | wh_ch04_b024\ncast | Mr. Lockwood | visitor | wh_ch04_b002\ncast | Mr. Hindley Earnshaw | master | wh_ch04_b035\ncast | Joseph | servant | wh_ch04_b035\ncast | Mr. Earnshaw | master | wh_ch04_b035\ncast | Hindley | child | wh_ch04_b035\ncast | Cathy | child | wh_ch04_b035\ncast | Mrs. Earnshaw | mistress | wh_ch04_b036\nscene | wh_ch04_b002..wh_ch04_b033 | co_present_count=2 | Mr. Lockwood, Mrs. Dean\nscene | wh_ch04_b035..wh_ch04_b045 | co_present_count=5 | Mr. Earnshaw, Joseph, Hindley, Cathy, I\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch02\nMr. Lockwood revisits Wuthering Heights in bad weather, meets the household at tea, learns who lives there, asks for a guide, and is kept overnight after a struggle at the door.\n\nwh_ch03\nMr. Lockwood spends a night at Wuthering Heights, reads old writings, falls into troubled sleep, is startled by a tapping at the window, then meets Heathcliff and leaves the next morning for the Grange.\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\nwh_ch04_b025..wh_ch04_b032 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_branderham | Branderham | Branderham\nent_catherine | Catherine | Catherine\nent_catherine_earnshaw | Catherine Earnshaw | Catherine Earnshaw\nent_catherine_heathcliff | Catherine Heathcliff | Catherine Heathcliff\nent_catherine_linton | Catherine Linton | Catherine Linton\nent_catherine_s | Catherine’s | Catherine’s\nent_cathy | Cathy | Cathy\nent_earnshaw | Earnshaw | Earnshaw\nent_frances | Frances | Frances\nent_hareton | Hareton | Hareton\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_heathcliff | Heathcliff | Heathcliff\nent_heathcliff_s | Heathcliff’s | Heathcliff’s\nent_hindley | Hindley | Hindley\nent_jabez | Jabez | Jabez\nent_jabez_branderham | Jabez Branderham | Jabez Branderham\nent_jabez_s | Jabez’s | Jabez’s\nent_joseph | Joseph | Joseph\nent_king_lear | King Lear | King Lear\nent_linton | Linton | Linton\nent_maister_hindley | Maister Hindley | Maister Hindley\nent_miss_cathy | Miss Cathy | Miss Cathy\nent_mr_and_mrs_heathcliff | Mr. and Mrs. Heathcliff | Mr. and Mrs. Heathcliff\nent_mr_earnshaw | Mr. Earnshaw | Mr. Earnshaw\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_hindley_earnshaw | Mr. Hindley Earnshaw | seeded:chapter_brief_cast:no_surface_alias\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\nent_mrs_dean | Mrs. Dean | Mrs. Dean\nent_mrs_earnshaw | Mrs. Earnshaw | seeded:chapter_brief_cast:no_surface_alias\nent_mrs_heathcliff | Mrs. Heathcliff | Mrs. Heathcliff\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_wh_ch04_b025_01 | Mrs. Heathcliff | name | named | \nm_wh_ch04_b026_01 | Mrs. Dean | name | named | \nm_wh_ch04_b026_02 | the master | descriptor | candidate | ent_heathcliff,ent_mr_heathcliff\nm_wh_ch04_b027_01 | Mrs. Dean | name | named | \nm_wh_ch04_b030_01 | Hareton | name | named | \nm_wh_ch04_b031_01 | Mrs. Dean | name | named | \n\nCHAPTER_ID\nwh_ch04\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch04_b023] “I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door. Are they an old family?”\n[wh_ch04_b024] “Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons. Have you been to Wuthering Heights? I beg pardon for asking; but I should like to hear how she is!”\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch04_b033] The worthy woman bustled off, and I crouched nearer the fire; my head felt hot, and the rest of me chill: moreover, I was excited, almost to a pitch of foolishness, through my nerves and brain. This caused me to feel, not uncomfortable, but rather fearful (as I am still) of serious effects from the incidents of to-day and yesterday. She returned presently, bringing a smoking basin and a basket of work; and, having placed the former on the hob, drew in her seat, evidently pleased to find me so companionable.\n[wh_ch04_b034] * * * * *\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch04_b025] “Mrs. Heathcliff? she looked very well, and very handsome; yet, I think, not very happy.”\n[wh_ch04_b026] “Oh dear, I don’t wonder! And how did you like the master?”\n[wh_ch04_b027] “A rough fellow, rather, Mrs. Dean. Is not that his character?”\n[wh_ch04_b028] “Rough as a saw-edge, and hard as whinstone! The less you meddle with him the better.”\n[wh_ch04_b029] “He must have had some ups and downs in life to make him such a churl. Do you know anything of his history?”\n[wh_ch04_b030] “It’s a cuckoo’s, sir—I know all about it: except where he was born, and who were his parents, and how he got his money at first. And Hareton has been cast out like an unfledged dunnock! The unfortunate lad is the only one in all this parish that does not guess how he has been cheated.”\n[wh_ch04_b031] “Well, Mrs. Dean, it will be a charitable deed to tell me something of my neighbours: I feel I shall not rest if I go to bed; so be good enough to sit and chat an hour.”\n[wh_ch04_b032] “Oh, certainly, sir! I’ll just fetch a little sewing, and then I’ll sit as long as you please. But you’ve caught cold: I saw you shivering, and you must have some gruel to drive it out.”"
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch04",
+    "window_block_ids": [
+      "wh_ch04_b025",
+      "wh_ch04_b026",
+      "wh_ch04_b027",
+      "wh_ch04_b028",
+      "wh_ch04_b029",
+      "wh_ch04_b030",
+      "wh_ch04_b031",
+      "wh_ch04_b032"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_wh_ch04_b025_01",
+        "speaker": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "addressee": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "utterance_quote": "Mrs. Heathcliff? she looked very well",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "comments on Mrs. Heathcliff's appearance",
+        "block_id": "wh_ch04_b025"
+      },
+      {
+        "turn_id": "t_wh_ch04_b026_01",
+        "speaker": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Oh dear, I don’t wonder! And how did you like the master?",
+        "address_term_used": "sir",
+        "register_cue": "neutral",
+        "utterance_gist": "asks about the master",
+        "block_id": "wh_ch04_b026"
+      },
+      {
+        "turn_id": "t_wh_ch04_b027_01",
+        "speaker": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "addressee": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "A rough fellow, rather, Mrs. Dean.",
+        "address_term_used": "Mrs. Dean",
+        "register_cue": "neutral",
+        "utterance_gist": "describes the master as rough",
+        "block_id": "wh_ch04_b027"
+      },
+      {
+        "turn_id": "t_wh_ch04_b028_01",
+        "speaker": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "utterance_quote": "Rough as a saw-edge, and hard as whinstone!",
+        "address_term_used": null,
+        "register_cue": "hostile",
+        "utterance_gist": "describes the master harshly",
+        "block_id": "wh_ch04_b028"
+      },
+      {
+        "turn_id": "t_wh_ch04_b029_01",
+        "speaker": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "addressee": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Do you know anything of his history?",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "asks about his history",
+        "block_id": "wh_ch04_b029"
+      },
+      {
+        "turn_id": "t_wh_ch04_b030_01",
+        "speaker": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "It’s a cuckoo’s, sir—I know all about it:",
+        "address_term_used": "sir",
+        "register_cue": "neutral",
+        "utterance_gist": "claims to know his history",
+        "block_id": "wh_ch04_b030"
+      },
+      {
+        "turn_id": "t_wh_ch04_b031_01",
+        "speaker": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "addressee": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Well, Mrs. Dean, it will be a charitable deed",
+        "address_term_used": "Mrs. Dean",
+        "register_cue": "neutral",
+        "utterance_gist": "asks her to sit and chat",
+        "block_id": "wh_ch04_b031"
+      },
+      {
+        "turn_id": "t_wh_ch04_b032_01",
+        "speaker": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Oh, certainly, sir! I’ll just fetch a little sewing",
+        "address_term_used": "sir",
+        "register_cue": "deferential",
+        "utterance_gist": "agrees to fetch sewing",
+        "block_id": "wh_ch04_b032"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_wh_ch04_b026_01",
+        "actor": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "asks",
+        "evidence_quote": "how did you like the master",
+        "block_id": "wh_ch04_b026"
+      },
+      {
+        "event_id": "e_wh_ch04_b030_01",
+        "actor": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "tells",
+        "evidence_quote": "I know all about it",
+        "block_id": "wh_ch04_b030"
+      },
+      {
+        "event_id": "e_wh_ch04_b032_01",
+        "actor": {
+          "surface": "Mrs. Dean",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "sir",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "agrees",
+        "evidence_quote": "Oh, certainly, sir!",
+        "block_id": "wh_ch04_b032"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "speaker_turns[1].speaker.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[2].addressee.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[3].speaker.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[4].addressee.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[5].speaker.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[6].addressee.candidate_entity_ids cleared because named surface is authoritative",
+      "speaker_turns[7].speaker.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[0] dropped because actor.reference_kind is unknown",
+      "relation_events[0].target.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[1].actor.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[2] dropped because actor.reference_kind is unknown",
+      "relation_events[2].target.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[3].actor.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[3] dropped because target.reference_kind is unknown",
+      "relation_events[4] dropped because actor.reference_kind is unknown",
+      "relation_events[4].target.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[5].actor.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[6] dropped because actor.reference_kind is unknown",
+      "relation_events[6].target.candidate_entity_ids cleared because named surface is authoritative",
+      "relation_events[7].actor.candidate_entity_ids cleared because named surface is authoritative"
+    ],
+    "counts": {
+      "turns": 8,
+      "events": 3,
+      "phase_leak": 0,
+      "address_term_present": 5,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 11,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 5,
+      "attribution_enum_dropped": 0,
+      "attribution_enum_normalized": 0,
+      "named_pronoun_downgraded": 0,
+      "named_ids_cleared": 15,
+      "outside_window_neighbor_dropped": 0,
+      "outside_window_nonexistent_dropped": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "a2b8d3ce239fc0ae6c2916a1288525a35d4ee9a28063f4f2d65fab35289ac624",
+      "latency_ms": 11597,
+      "cost_usd": 0.0047198,
+      "usage": {
+        "prompt_tokens": 3228,
+        "cached_tokens": 1792,
+        "completion_tokens": 2158,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "speaker_turns[1].speaker.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[2].addressee.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[3].speaker.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[4].addressee.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[5].speaker.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[6].addressee.candidate_entity_ids cleared because named surface is authoritative",
+          "speaker_turns[7].speaker.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[0] dropped because actor.reference_kind is unknown",
+          "relation_events[0].target.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[1].actor.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[2] dropped because actor.reference_kind is unknown",
+          "relation_events[2].target.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[3].actor.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[3] dropped because target.reference_kind is unknown",
+          "relation_events[4] dropped because actor.reference_kind is unknown",
+          "relation_events[4].target.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[5].actor.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[6] dropped because actor.reference_kind is unknown",
+          "relation_events[6].target.candidate_entity_ids cleared because named surface is authoritative",
+          "relation_events[7].actor.candidate_entity_ids cleared because named surface is authoritative"
+        ],
+        "counts": {
+          "turns": 8,
+          "events": 3,
+          "phase_leak": 0,
+          "address_term_present": 5,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 11,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 5,
+          "attribution_enum_dropped": 0,
+          "attribution_enum_normalized": 0,
+          "named_pronoun_downgraded": 0,
+          "named_ids_cleared": 15,
+          "outside_window_neighbor_dropped": 0,
+          "outside_window_nonexistent_dropped": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch04\",\"window_block_ids\":[\"wh_ch04_b025\",\"wh_ch04_b026\",\"wh_ch04_b027\",\"wh_ch04_b028\",\"wh_ch04_b029\",\"wh_ch04_b030\",\"wh_ch04_b031\",\"wh_ch04_b032\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_wh_ch04_b025_01\",\"speaker\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"utterance_quote\":\"Mrs. Heathcliff? she looked very well\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"comments on Mrs. Heathcliff's appearance\",\"block_id\":\"wh_ch04_b025\"},{\"turn_id\":\"t_wh_ch04_b026_01\",\"speaker\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Oh dear, I don’t wonder! And how did you like the master?\",\"address_term_used\":\"sir\",\"register_cue\":\"neutral\",\"utterance_gist\":\"asks about the master\",\"block_id\":\"wh_ch04_b026\"},{\"turn_id\":\"t_wh_ch04_b027_01\",\"speaker\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"A rough fellow, rather, Mrs. Dean.\",\"address_term_used\":\"Mrs. Dean\",\"register_cue\":\"neutral\",\"utterance_gist\":\"describes the master as rough\",\"block_id\":\"wh_ch04_b027\"},{\"turn_id\":\"t_wh_ch04_b028_01\",\"speaker\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"utterance_quote\":\"Rough as a saw-edge, and hard as whinstone!\",\"address_term_used\":null,\"register_cue\":\"hostile\",\"utterance_gist\":\"describes the master harshly\",\"block_id\":\"wh_ch04_b028\"},{\"turn_id\":\"t_wh_ch04_b029_01\",\"speaker\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Do you know anything of his history?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"asks about his history\",\"block_id\":\"wh_ch04_b029\"},{\"turn_id\":\"t_wh_ch04_b030_01\",\"speaker\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"It’s a cuckoo’s, sir—I know all about it:\",\"address_term_used\":\"sir\",\"register_cue\":\"neutral\",\"utterance_gist\":\"claims to know his history\",\"block_id\":\"wh_ch04_b030\"},{\"turn_id\":\"t_wh_ch04_b031_01\",\"speaker\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Well, Mrs. Dean, it will be a charitable deed\",\"address_term_used\":\"Mrs. Dean\",\"register_cue\":\"neutral\",\"utterance_gist\":\"asks her to sit and chat\",\"block_id\":\"wh_ch04_b031\"},{\"turn_id\":\"t_wh_ch04_b032_01\",\"speaker\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Oh, certainly, sir! I’ll just fetch a little sewing\",\"address_term_used\":\"sir\",\"register_cue\":\"deferential\",\"utterance_gist\":\"agrees to fetch sewing\",\"block_id\":\"wh_ch04_b032\"}],\"relation_events\":[{\"event_id\":\"e_wh_ch04_b025_01\",\"actor\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"target\":{\"surface\":\"Mrs. Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_heathcliff\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"comments_on\",\"evidence_quote\":\"she looked very well\",\"block_id\":\"wh_ch04_b025\"},{\"event_id\":\"e_wh_ch04_b026_01\",\"actor\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"asks\",\"evidence_quote\":\"how did you like the master\",\"block_id\":\"wh_ch04_b026\"},{\"event_id\":\"e_wh_ch04_b027_01\",\"actor\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"target\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"addresses\",\"evidence_quote\":\"Mrs. Dean\",\"block_id\":\"wh_ch04_b027\"},{\"event_id\":\"e_wh_ch04_b028_01\",\"actor\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"event_type\":\"describes\",\"evidence_quote\":\"Rough as a saw-edge\",\"block_id\":\"wh_ch04_b028\"},{\"event_id\":\"e_wh_ch04_b029_01\",\"actor\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"target\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"asks\",\"evidence_quote\":\"Do you know anything\",\"block_id\":\"wh_ch04_b029\"},{\"event_id\":\"e_wh_ch04_b030_01\",\"actor\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"tells\",\"evidence_quote\":\"I know all about it\",\"block_id\":\"wh_ch04_b030\"},{\"event_id\":\"e_wh_ch04_b031_01\",\"actor\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"target\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"requests\",\"evidence_quote\":\"Well, Mrs. Dean\",\"block_id\":\"wh_ch04_b031\"},{\"event_id\":\"e_wh_ch04_b032_01\",\"actor\":{\"surface\":\"Mrs. Dean\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_mrs_dean\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"sir\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"agrees\",\"evidence_quote\":\"Oh, certainly, sir!\",\"block_id\":\"wh_ch04_b032\"}]}"
+    }
+  ],
+  "cost_usd": 0.0047198,
+  "prompt_tokens": 3228,
+  "cached_tokens": 1792,
+  "completion_tokens": 2158,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

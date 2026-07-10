@@ -1,0 +1,552 @@
+{
+  "mode": "literary_digest_v1",
+  "window_id": "wh_ch03",
+  "chapter_id": "wh_ch03",
+  "block_ids": [
+    "wh_ch03_b001",
+    "wh_ch03_b002",
+    "wh_ch03_b003",
+    "wh_ch03_b004",
+    "wh_ch03_b005",
+    "wh_ch03_b006",
+    "wh_ch03_b007",
+    "wh_ch03_b008",
+    "wh_ch03_b009",
+    "wh_ch03_b010",
+    "wh_ch03_b011",
+    "wh_ch03_b012",
+    "wh_ch03_b013",
+    "wh_ch03_b014",
+    "wh_ch03_b015",
+    "wh_ch03_b016",
+    "wh_ch03_b017",
+    "wh_ch03_b018",
+    "wh_ch03_b019",
+    "wh_ch03_b020",
+    "wh_ch03_b021",
+    "wh_ch03_b022",
+    "wh_ch03_b023",
+    "wh_ch03_b024",
+    "wh_ch03_b025",
+    "wh_ch03_b026",
+    "wh_ch03_b027",
+    "wh_ch03_b028",
+    "wh_ch03_b029",
+    "wh_ch03_b030",
+    "wh_ch03_b031",
+    "wh_ch03_b032",
+    "wh_ch03_b033",
+    "wh_ch03_b034",
+    "wh_ch03_b035",
+    "wh_ch03_b036",
+    "wh_ch03_b037",
+    "wh_ch03_b038",
+    "wh_ch03_b039",
+    "wh_ch03_b040",
+    "wh_ch03_b041",
+    "wh_ch03_b042",
+    "wh_ch03_b043",
+    "wh_ch03_b044",
+    "wh_ch03_b045",
+    "wh_ch03_b046",
+    "wh_ch03_b047",
+    "wh_ch03_b048",
+    "wh_ch03_b049",
+    "wh_ch03_b050",
+    "wh_ch03_b051",
+    "wh_ch03_b052",
+    "wh_ch03_b053",
+    "wh_ch03_b054",
+    "wh_ch03_b055",
+    "wh_ch03_b056",
+    "wh_ch03_b057",
+    "wh_ch03_b058",
+    "wh_ch03_b059",
+    "wh_ch03_b060",
+    "wh_ch03_b061",
+    "wh_ch03_b062",
+    "wh_ch03_b063",
+    "wh_ch03_b064",
+    "wh_ch03_b065",
+    "wh_ch03_b066",
+    "wh_ch03_b067"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_digest_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- narration_frame_segments: split the chapter into CONTIGUOUS block ranges by WHO narrates. Some works switch narrator mid-chapter or mid-passage; do not assume one narrator per chapter — segment by who actually narrates, however many that is. story_time_label is one of: frame_present, retrospective_past, embedded_flashback.\n- Do NOT finalize relationship phases and do NOT output valid_from/to intervals. For relations, only aggregate this chapter's observed events per pair; if the text clearly shows a turning point, note a candidate_transition with a trigger block. Every relation_event_summary row has status \"evidence_only\".\n- relation_event_summary.observed_valence_hint is one of: positive, negative, mixed, unclear. It is an EVENT summary, NOT a phase label and NOT a trigger on its own — consolidation still needs event evidence to open a phase.\n- character_state_changes: only changes VISIBLE in this chapter to a character's social_status, alias_or_title, life_status, or residence — each with trigger_block and evidence_quote. observed_scope is \"this_chapter\".\n- unresolved_threads: open questions or pending turning points the chapter raises but does not resolve. kind is one of: mystery, pending_transition, question. Include opened_block.\n- translator_relevant_facts: a curated list, MAX 8 per chapter, of facts a translator needs to render THIS chapter correctly. Not every motif — only what changes how text is rendered. Each has fact_type one of: narrator, register, speech_style, status, setting; and block_evidence.\n- motifs: recurring images/themes, each with block_ids.\n- Prefer entity_id references (ent_*) from CHAPTER_ROSTER where available; else a clean surface. Every block reference MUST be COPIED VERBATIM from the [brackets] in the chapter text (they look like bk_ch04_b012) — never abbreviate or drop the prefix.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"ch04\",\n  \"chapter_rolling_summary\": \"<=150 English words, for the next chapter's context\",\n  \"narration_frame_segments\": [\n    {\"narrator_ref\": \"ent_alden\", \"block_range\": [\"bk_ch04_b001\", \"bk_ch04_b004\"], \"story_time_label\": \"frame_present\"},\n    {\"narrator_ref\": \"ent_mira\", \"block_range\": [\"bk_ch04_b005\", \"bk_ch04_b040\"], \"story_time_label\": \"retrospective_past\"}\n  ],\n  \"scene_summaries\": [\n    {\"scene_id\": \"s_ch04_01\", \"block_range\": [\"bk_ch04_b005\", \"bk_ch04_b018\"], \"summary\": \"...\", \"key_participants\": [\"ent_master\", \"ent_rook\", \"ent_bram\"]}\n  ],\n  \"character_state_changes\": [\n    {\"entity_ref\": \"ent_rook\", \"attribute\": \"social_status\", \"from\": \"orphan_outsider\", \"to\": \"taken_into_household\", \"trigger_block\": \"bk_ch04_b012\", \"evidence_quote\": \"you must take him in as one of ours\", \"observed_scope\": \"this_chapter\"}\n  ],\n  \"relation_event_summary\": [\n    {\"pair\": [\"ent_bram\", \"ent_rook\"], \"observed_valence_hint\": \"negative\", \"event_ids\": [\"e_bk_ch04_b014_01\"], \"candidate_transition\": {\"trigger_block\": \"bk_ch04_b012\", \"note\": \"arrival sparks the son's jealousy\"}, \"status\": \"evidence_only\"}\n  ],\n  \"unresolved_threads\": [\n    {\"thread_id\": \"th_ch04_01\", \"description\": \"The outsider child's origin and real name unknown\", \"opened_block\": \"bk_ch04_b010\", \"kind\": \"mystery\"},\n    {\"thread_id\": \"th_ch04_02\", \"description\": \"The son's resentment likely to escalate\", \"opened_block\": \"bk_ch04_b016\", \"kind\": \"pending_transition\", \"pair\": [\"ent_bram\", \"ent_rook\"]}\n  ],\n  \"motifs\": [{\"note\": \"the intruder disrupting the household\", \"block_ids\": [\"bk_ch04_b012\"]}],\n  \"translator_relevant_facts\": [\n    {\"fact_type\": \"narrator\", \"fact\": \"Mira narrates in past tense, addressing the listener; her stance to the child is ambivalent\", \"block_evidence\": [\"bk_ch04_b005\"]},\n    {\"fact_type\": \"register\", \"fact\": \"the master uses an affectionate/paternal register to the child\", \"block_evidence\": [\"bk_ch04_b012\"]}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "PREVIOUS_CHAPTER_ROLLING_SUMMARY\n(none)\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch01\nLockwood visits Heathcliff at Wuthering Heights, is admitted after a terse exchange, and endures a hostile but memorable first encounter with the house, Joseph, the dogs, and a vigorous kitchen servant who restores order. Heathcliff appears reserved, suspicious, and unexpectedly civil at the end, offering wine and conversation. Lockwood, amused and intrigued by the isolation and the owner’s manner, decides to return the next day despite Heathcliff’s evident wish to avoid repetition.\n\nwh_ch02\nLockwood returns to Wuthering Heights in worsening snow, meets the silent, hostile household at tea, and learns the younger man is Hareton Earnshaw and Mrs. Heathcliff is Heathcliff’s daughter-in-law, not his wife. Unable to find a guide, Lockwood is refused help, forced to remain, and finally attacked by the dogs while trying to leave. Zillah intervenes and gets him inside, where Heathcliff’s rough household order and mutual ill will are fully exposed.\n\nCHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | few_scenes\nneutral_premise | Mr. Lockwood spends a night at Wuthering Heights, reads old writings, falls into troubled sleep, is startled by a tapping at the window, then meets Heathcliff and leaves the next morning for the Grange.\ncast | I | guest | wh_ch03_b002\ncast | she | servant | wh_ch03_b002\ncast | Heathcliff | host | wh_ch03_b004\ncast | Joseph | servant | wh_ch03_b008\ncast | Hindley | master | wh_ch03_b009\ncast | Frances | hostess | wh_ch03_b011\ncast | the unhappy ploughboy | worker | wh_ch03_b010\ncast | Jabez Branderham | preacher | wh_ch03_b020\ncast | Catherine Linton | child | wh_ch03_b031\ncast | little, ice-cold hand | unknown child | wh_ch03_b027\ncast | Zillah | servant | wh_ch03_b048\ncast | Hareton Earnshaw | young man | wh_ch03_b060\ncast | Mrs. Heathcliff | household member | wh_ch03_b061\ncast | the young lady | household member | wh_ch03_b063\ncast | my landlord | host | wh_ch03_b065\ncast | my human fixture | household member | wh_ch03_b067\nscene | wh_ch03_b002..wh_ch03_b015 | co_present_count=2 | I, she\nscene | wh_ch03_b017..wh_ch03_b026 | co_present_count=1 | I\nscene | wh_ch03_b027..wh_ch03_b034 | co_present_count=2 | I, Catherine Linton\nscene | wh_ch03_b040..wh_ch03_b057 | co_present_count=2 | I, Heathcliff\nscene | wh_ch03_b058..wh_ch03_b064 | co_present_count=5 | I, Joseph, Hareton Earnshaw, Mrs. Heathcliff, the young lady\nscene | wh_ch03_b065..wh_ch03_b067 | co_present_count=2 | I, my landlord\n\nCHAPTER_ROSTER\nent_branderham | Branderham | Branderham\nent_catherine | Catherine | Catherine\nent_catherine_earnshaw | Catherine Earnshaw | Catherine Earnshaw\nent_catherine_heathcliff | Catherine Heathcliff | Catherine Heathcliff\nent_catherine_linton | Catherine Linton | Catherine Linton\nent_catherine_s | Catherine’s | Catherine’s\nent_cathy | Cathy | Cathy\nent_earnshaw | Earnshaw | Earnshaw\nent_frances | Frances | Frances\nent_hareton | Hareton | Hareton\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_heathcliff | Heathcliff | Heathcliff\nent_heathcliff_s | Heathcliff’s | Heathcliff’s\nent_hindley | Hindley | Hindley\nent_jabez | Jabez | Jabez\nent_jabez_branderham | Jabez Branderham | Jabez Branderham\nent_jabez_s | Jabez’s | Jabez’s\nent_joseph | Joseph | Joseph\nent_king_lear | King Lear | King Lear\nent_linton | Linton | Linton\nent_maister_hindley | Maister Hindley | Maister Hindley\nent_miss_cathy | Miss Cathy | Miss Cathy\nent_mr_and_mrs_heathcliff | Mr. and Mrs. Heathcliff | Mr. and Mrs. Heathcliff\nent_mr_earnshaw | Mr. Earnshaw | Mr. Earnshaw\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\nent_mrs_heathcliff | Mrs. Heathcliff | Mrs. Heathcliff\nent_the_reverend_jabez_branderham | the Reverend Jabez Branderham | the Reverend Jabez Branderham\nent_the_young_man | the young man | the young man\nent_your_servant_zillah | your servant Zillah | your servant Zillah\n\nCHAPTER_RELATION_EVENTS\nent_zillah -> ent_mr_lockwood | advises | wh_ch03_b002 | e_wh_ch03_b002_01 | hide the candle, and not make a noise\nthe narrator -> Joseph | mocks | wh_ch03_b008 | e_wh_ch03_b008_02 | greatly amused to behold\nHindley -> Heathcliff | mocks | wh_ch03_b009 | e_wh_ch03_b009_01 | his conduct to Heathcliff is atrocious\nthe tyrant -> you | warns | wh_ch03_b011 | e_wh_ch03_b011_01 | You forget you have a master here\nFrances -> his hair | pulls | wh_ch03_b011 | e_wh_ch03_b011_02 | Frances pulled his hair heartily\nour chaplain -> ent_hindley | addresses | wh_ch03_b014 | e_wh_ch03_b014_01 | Maister Hindley!\nour chaplain -> ent_miss_cathy | reports | wh_ch03_b014 | e_wh_ch03_b014_02 | Miss Cathy’s riven\nour chaplain -> ent_heathcliff | reports | wh_ch03_b014 | e_wh_ch03_b014_03 | Heathcliff’s pawsed\nent_catherine_earnshaw -> ent_hindley | mocks | wh_ch03_b018 | e_wh_ch03_b018_01 | Hindley calls him a vagabond\nent_catherine_earnshaw -> Heathcliff | pities | wh_ch03_b018 | e_wh_ch03_b018_02 | Poor Heathcliff!\nent_hindley -> Heathcliff | calls | wh_ch03_b018 | e_wh_ch03_b018_03 | calls him a vagabond\nent_hindley -> Heathcliff | forbids | wh_ch03_b018 | e_wh_ch03_b018_04 | won’t let him sit with us\nJoseph -> ent_mr_lockwood | reproaches | wh_ch03_b021 | e_wh_ch03_b021_01 | telling me that I could never get\nJoseph -> ent_mr_lockwood | flourishes | wh_ch03_b021 | e_wh_ch03_b021_02 | flourishing a heavy-headed cudgel\nent_mr_lockwood -> Joseph | nudges | wh_ch03_b023 | e_wh_ch03_b023_01 | nudged Joseph\nent_mr_lockwood -> Jabez Branderham | denounces | wh_ch03_b023 | e_wh_ch03_b023_02 | denounce Jabez Branderham\nI -> ent_jabez_branderham | addresses | wh_ch03_b024 | e_wh_ch03_b024_01 | Sir, I exclaimed\nJabez -> ent_mr_lockwood | addresses | wh_ch03_b025 | e_wh_ch03_b025_01 | Thou art the Man\nI -> Joseph | grapples | wh_ch03_b026 | e_wh_ch03_b026_01 | grappling with Joseph\nent_mr_lockwood -> Heathcliff | addresses | wh_ch03_b046 | e_wh_ch03_b046_01 | your guest, sir\nent_mr_lockwood -> Heathcliff | apologizes_to | wh_ch03_b046 | e_wh_ch03_b046_02 | I’m sorry I disturbed you\nent_heathcliff -> Mr. Lockwood | curses | wh_ch03_b047 | e_wh_ch03_b047_01 | God confound you, Mr. Lockwood\nent_heathcliff -> Mr. Lockwood | questions | wh_ch03_b047 | e_wh_ch03_b047_02 | who showed you up into this room\nent_mr_lockwood -> Mr. Heathcliff | informs | wh_ch03_b048 | e_wh_ch03_b048_01 | It was your servant Zillah\nent_mr_lockwood -> Mr. Heathcliff | dismisses | wh_ch03_b048 | e_wh_ch03_b048_02 | she richly deserves it\nHeathcliff -> Mr. Lockwood | questions | wh_ch03_b049 | e_wh_ch03_b049_01 | What do you mean?\nHeathcliff -> Mr. Lockwood | orders | wh_ch03_b049 | e_wh_ch03_b049_02 | Lie down and finish out the night\nHeathcliff -> Mr. Lockwood | warns | wh_ch03_b049 | e_wh_ch03_b049_03 | don’t repeat that horrid noise\nent_mr_lockwood -> ent_mrs_heathcliff | mentions | wh_ch03_b050 | e_wh_ch03_b050_01 | the little fiend\nent_mr_lockwood -> Heathcliff | asks | wh_ch03_b050 | e_wh_ch03_b050_02 | Was not the Reverend Jabez Branderham akin to you\nHeathcliff -> ent_mr_lockwood | rebukes | wh_ch03_b052 | e_wh_ch03_b052_01 | What can you mean by talking\nHeathcliff -> ent_mr_lockwood | threatens | wh_ch03_b052 | e_wh_ch03_b052_02 | How—how dare you, under my roof?\nHeathcliff -> ent_mr_lockwood | exclaims | wh_ch03_b052 | e_wh_ch03_b052_03 | he’s mad to speak so\nent_mr_lockwood -> Heathcliff | addresses | wh_ch03_b053 | e_wh_ch03_b053_01 | I could have taken oath\nent_heathcliff -> Mr. Lockwood | orders | wh_ch03_b054 | e_wh_ch03_b054_01 | you may go into my room\nHeathcliff -> ent_mr_lockwood | orders | wh_ch03_b056 | e_wh_ch03_b056_01 | Take the candle, and go\nent_mr_heathcliff -> ent_cathy | cries_out | wh_ch03_b057 | e_wh_ch03_b057_02 | Come in! come in!\nJoseph -> ent_mr_lockwood | ignores | wh_ch03_b059 | e_wh_ch03_b059_01 | My presence in his sanctum\nHareton Earnshaw -> ent_mr_lockwood | orders | wh_ch03_b060 | e_wh_ch03_b060_01 | there was the place where I must go\nent_heathcliff -> ent_mrs_heathcliff | rebukes | wh_ch03_b062 | e_wh_ch03_b062_01 | you worthless—\nent_catherine_linton -> ent_heathcliff | refuses | wh_ch03_b063 | e_wh_ch03_b063_01 | I’ll not do anything\nent_mr_heathcliff -> ent_mr_lockwood | calls | wh_ch03_b065 | e_wh_ch03_b065_01 | halloed for me to stop\nent_mr_lockwood -> ent_mr_lockwood | says | wh_ch03_b066 | e_wh_ch03_b066_01 | I could make no error there\n\nCHAPTER_ID\nwh_ch03\n\nFULL_CHAPTER_TEXT_WITH_BLOCK_MARKERS\n[wh_ch03_b001] CHAPTER III\n[wh_ch03_b002] While leading the way upstairs, she recommended that I should hide the candle, and not make a noise; for her master had an odd notion about the chamber she would put me in, and never let anybody lodge there willingly. I asked the reason. She did not know, she answered: she had only lived there a year or two; and they had so many queer goings on, she could not begin to be curious.\n[wh_ch03_b003] Too stupefied to be curious myself, I fastened my door and glanced round for the bed. The whole furniture consisted of a chair, a clothes-press, and a large oak case, with squares cut out near the top resembling coach windows. Having approached this structure, I looked inside, and perceived it to be a singular sort of old-fashioned couch, very conveniently designed to obviate the necessity for every member of the family having a room to himself. In fact, it formed a little closet, and the ledge of a window, which it enclosed, served as a table.\n[wh_ch03_b004] I slid back the panelled sides, got in with my light, pulled them together again, and felt secure against the vigilance of Heathcliff, and every one else.\n[wh_ch03_b005] The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .\n[wh_ch03_b006] In vapid listlessness I leant my head against the window, and continued spelling over Catherine Earnshaw—Heathcliff—Linton, till my eyes closed; but they had not rested five minutes when a glare of white letters started from the dark, as vivid as spectres—the air swarmed with Catherines; and rousing myself to dispel the obtrusive name, I discovered my candle-wick reclining on one of the antique volumes, and perfuming the place with an odour of roasted calf-skin.\n[wh_ch03_b007] I snuffed it off, and, very ill at ease under the influence of cold and lingering nausea, sat up and spread open the injured tome on my knee. It was a Testament, in lean type, and smelling dreadfully musty: a fly-leaf bore the inscription—“Catherine Earnshaw, her book,” and a date some quarter of a century back.\n[wh_ch03_b008] I shut it, and took up another and another, till I had examined all. Catherine’s library was select, and its state of dilapidation proved it to have been well used, though not altogether for a legitimate purpose: scarcely one chapter had escaped a pen-and-ink commentary—at least the appearance of one—covering every morsel of blank that the printer had left. Some were detached sentences; other parts took the form of a regular diary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.\n[wh_ch03_b009] “An awful Sunday,” commenced the paragraph beneath. “I wish my father were back again. Hindley is a detestable substitute—his conduct to Heathcliff is atrocious—H. and I are going to rebel—we took our initiatory step this evening.\n[wh_ch03_b010] “All day had been flooding with rain; we could not go to church, so Joseph must needs get up a congregation in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we were ranged in a row, on a sack of corn, groaning and shivering, and hoping that Joseph would shiver too, so that he might give us a short homily for his own sake. A vain idea! The service lasted precisely three hours; and yet my brother had the face to exclaim, when he saw us descending, ‘What, done already?’ On Sunday evenings we used to be permitted to play, if we did not make much noise; now a mere titter is sufficient to send us into corners.\n[wh_ch03_b011] “‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, like two babies, kissing and talking nonsense by the hour—foolish palaver that we should be ashamed of. We made ourselves as snug as our means allowed in the arch of the dresser. I had just fastened our pinafores together, and hung them up for a curtain, when in comes Joseph, on an errand from the stables. He tears down my handiwork, boxes my ears, and croaks:\n[wh_ch03_b012] “‘T’ maister nobbut just buried, and Sabbath not o’ered, und t’ sound o’ t’ gospel still i’ yer lugs, and ye darr be laiking! Shame on ye! sit ye down, ill childer! there’s good books eneugh if ye’ll read ’em: sit ye down, and think o’ yer sowls!’\n[wh_ch03_b013] “Saying this, he compelled us so to square our positions that we might receive from the far-off fire a dull ray to show us the text of the lumber he thrust upon us. I could not bear the employment. I took my dingy volume by the scroop, and hurled it into the dog-kennel, vowing I hated a good book. Heathcliff kicked his to the same place. Then there was a hubbub!\n[wh_ch03_b014] “‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’\n[wh_ch03_b015] “Hindley hurried up from his paradise on the hearth, and seizing one of us by the collar, and the other by the arm, hurled both into the back-kitchen; where, Joseph asseverated, ‘owd Nick’ would fetch us as sure as we were living: and, so comforted, we each sought a separate nook to await his advent. I reached this book, and a pot of ink from a shelf, and pushed the house-door ajar to give me light, and I have got the time on with writing for twenty minutes; but my companion is impatient, and proposes that we should appropriate the dairywoman’s cloak, and have a scamper on the moors, under its shelter. A pleasant suggestion—and then, if the surly old man come in, he may believe his prophecy verified—we cannot be damper, or colder, in the rain than we are here.”\n[wh_ch03_b016] * * * * * *\n[wh_ch03_b017] I suppose Catherine fulfilled her project, for the next sentence took up another subject: she waxed lachrymose.\n[wh_ch03_b018] “How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we break his orders. He has been blaming our father (how dared he?) for treating H. too liberally; and swears he will reduce him to his right place—”\n[wh_ch03_b019] * * * * * *\n[wh_ch03_b020] I began to nod drowsily over the dim page: my eye wandered from manuscript to print. I saw a red ornamented title—“Seventy Times Seven, and the First of the Seventy-First. A Pious Discourse delivered by the Reverend Jabez Branderham, in the Chapel of Gimmerden Sough.” And while I was, half-consciously, worrying my brain to guess what Jabez Branderham would make of his subject, I sank back in bed, and fell asleep. Alas, for the effects of bad tea and bad temper! What else could it be that made me pass such a terrible night? I don’t remember another that I can at all compare with it since I was capable of suffering.\n[wh_ch03_b021] I began to dream, almost before I ceased to be sensible of my locality. I thought it was morning; and I had set out on my way home, with Joseph for a guide. The snow lay yards deep in our road; and, as we floundered on, my companion wearied me with constant reproaches that I had not brought a pilgrim’s staff: telling me that I could never get into the house without one, and boastfully flourishing a heavy-headed cudgel, which I understood to be so denominated. For a moment I considered it absurd that I should need such a weapon to gain admittance into my own residence. Then a new idea flashed across me. I was not going there: we were journeying to hear the famous Jabez Branderham preach, from the text—“Seventy Times Seven;” and either Joseph, the preacher, or I had committed the “First of the Seventy-First,” and were to be publicly exposed and excommunicated.\n[wh_ch03_b022] We came to the chapel. I have passed it really in my walks, twice or thrice; it lies in a hollow, between two hills: an elevated hollow, near a swamp, whose peaty moisture is said to answer all the purposes of embalming on the few corpses deposited there. The roof has been kept whole hitherto; but as the clergyman’s stipend is only twenty pounds per annum, and a house with two rooms, threatening speedily to determine into one, no clergyman will undertake the duties of pastor: especially as it is currently reported that his flock would rather let him starve than increase the living by one penny from their own pockets. However, in my dream, Jabez had a full and attentive congregation; and he preached—good God! what a sermon; divided into four hundred and ninety parts, each fully equal to an ordinary address from the pulpit, and each discussing a separate sin! Where he searched for them, I cannot tell. He had his private manner of interpreting the phrase, and it seemed necessary the brother should sin different sins on every occasion. They were of the most curious character: odd transgressions that I never imagined previously.\n[wh_ch03_b023] Oh, how weary I grew. How I writhed, and yawned, and nodded, and revived! How I pinched and pricked myself, and rubbed my eyes, and stood up, and sat down again, and nudged Joseph to inform me if he would ever have done. I was condemned to hear all out: finally, he reached the “ First of the Seventy-First .” At that crisis, a sudden inspiration descended on me; I was moved to rise and denounce Jabez Branderham as the sinner of the sin that no Christian need pardon.\n[wh_ch03_b024] “Sir,” I exclaimed, “sitting here within these four walls, at one stretch, I have endured and forgiven the four hundred and ninety heads of your discourse. Seventy times seven times have I plucked up my hat and been about to depart—Seventy times seven times have you preposterously forced me to resume my seat. The four hundred and ninety-first is too much. Fellow-martyrs, have at him! Drag him down, and crush him to atoms, that the place which knows him may know him no more!”\n[wh_ch03_b025] “ Thou art the Man! ” cried Jabez, after a solemn pause, leaning over his cushion. “Seventy times seven times didst thou gapingly contort thy visage—seventy times seven did I take counsel with my soul—Lo, this is human weakness: this also may be absolved! The First of the Seventy-First is come. Brethren, execute upon him the judgment written. Such honour have all His saints!”\n[wh_ch03_b026] With that concluding word, the whole assembly, exalting their pilgrim’s staves, rushed round me in a body; and I, having no weapon to raise in self-defence, commenced grappling with Joseph, my nearest and most ferocious assailant, for his. In the confluence of the multitude, several clubs crossed; blows, aimed at me, fell on other sconces. Presently the whole chapel resounded with rappings and counter rappings: every man’s hand was against his neighbour; and Branderham, unwilling to remain idle, poured forth his zeal in a shower of loud taps on the boards of the pulpit, which responded so smartly that, at last, to my unspeakable relief, they woke me. And what was it that had suggested the tremendous tumult? What had played Jabez’s part in the row? Merely the branch of a fir-tree that touched my lattice as the blast wailed by, and rattled its dry cones against the panes! I listened doubtingly an instant; detected the disturber, then turned and dozed, and dreamt again: if possible, still more disagreeably than before.\n[wh_ch03_b027] This time, I remembered I was lying in the oak closet, and I heard distinctly the gusty wind, and the driving of the snow; I heard, also, the fir bough repeat its teasing sound, and ascribed it to the right cause: but it annoyed me so much, that I resolved to silence it, if possible; and, I thought, I rose and endeavoured to unhasp the casement. The hook was soldered into the staple: a circumstance observed by me when awake, but forgotten. “I must stop it, nevertheless!” I muttered, knocking my knuckles through the glass, and stretching an arm out to seize the importunate branch; instead of which, my fingers closed on the fingers of a little, ice-cold hand!\n[wh_ch03_b028] The intense horror of nightmare came over me: I tried to draw back my arm, but the hand clung to it, and a most melancholy voice sobbed,\n[wh_ch03_b029] “Let me in—let me in!”\n[wh_ch03_b030] “Who are you?” I asked, struggling, meanwhile, to disengage myself.\n[wh_ch03_b031] “Catherine Linton,” it replied, shiveringly (why did I think of Linton ? I had read Earnshaw twenty times for Linton)—“I’m come home: I’d lost my way on the moor!”\n[wh_ch03_b032] As it spoke, I discerned, obscurely, a child’s face looking through the window. Terror made me cruel; and, finding it useless to attempt shaking the creature off, I pulled its wrist on to the broken pane, and rubbed it to and fro till the blood ran down and soaked the bedclothes: still it wailed, “Let me in!” and maintained its tenacious gripe, almost maddening me with fear.\n[wh_ch03_b033] “How can I!” I said at length. “Let me go, if you want me to let you in!”\n[wh_ch03_b034] The fingers relaxed, I snatched mine through the hole, hurriedly piled the books up in a pyramid against it, and stopped my ears to exclude the lamentable prayer.\n[wh_ch03_b035] I seemed to keep them closed above a quarter of an hour; yet, the instant I listened again, there was the doleful cry moaning on!\n[wh_ch03_b036] “Begone!” I shouted. “I’ll never let you in, not if you beg for twenty years.”\n[wh_ch03_b037] “It is twenty years,” mourned the voice: “twenty years. I’ve been a waif for twenty years!”\n[wh_ch03_b038] Thereat began a feeble scratching outside, and the pile of books moved as if thrust forward.\n[wh_ch03_b039] I tried to jump up; but could not stir a limb; and so yelled aloud, in a frenzy of fright.\n[wh_ch03_b040] To my confusion, I discovered the yell was not ideal: hasty footsteps approached my chamber door; somebody pushed it open, with a vigorous hand, and a light glimmered through the squares at the top of the bed. I sat shuddering, yet, and wiping the perspiration from my forehead: the intruder appeared to hesitate, and muttered to himself.\n[wh_ch03_b041] At last, he said, in a half-whisper, plainly not expecting an answer,\n[wh_ch03_b042] “Is any one here?”\n[wh_ch03_b043] I considered it best to confess my presence; for I knew Heathcliff’s accents, and feared he might search further, if I kept quiet.\n[wh_ch03_b044] With this intention, I turned and opened the panels. I shall not soon forget the effect my action produced.\n[wh_ch03_b045] Heathcliff stood near the entrance, in his shirt and trousers; with a candle dripping over his fingers, and his face as white as the wall behind him. The first creak of the oak startled him like an electric shock: the light leaped from his hold to a distance of some feet, and his agitation was so extreme, that he could hardly pick it up.\n[wh_ch03_b046] “It is only your guest, sir,” I called out, desirous to spare him the humiliation of exposing his cowardice further. “I had the misfortune to scream in my sleep, owing to a frightful nightmare. I’m sorry I disturbed you.”\n[wh_ch03_b047] “Oh, God confound you, Mr. Lockwood! I wish you were at the—” commenced my host, setting the candle on a chair, because he found it impossible to hold it steady. “And who showed you up into this room?” he continued, crushing his nails into his palms, and grinding his teeth to subdue the maxillary convulsions. “Who was it? I’ve a good mind to turn them out of the house this moment!”\n[wh_ch03_b048] “It was your servant Zillah,” I replied, flinging myself on to the floor, and rapidly resuming my garments. “I should not care if you did, Mr. Heathcliff; she richly deserves it. I suppose that she wanted to get another proof that the place was haunted, at my expense. Well, it is—swarming with ghosts and goblins! You have reason in shutting it up, I assure you. No one will thank you for a doze in such a den!”\n[wh_ch03_b049] “What do you mean?” asked Heathcliff, “and what are you doing? Lie down and finish out the night, since you are here; but, for Heaven’s sake! don’t repeat that horrid noise: nothing could excuse it, unless you were having your throat cut!”\n[wh_ch03_b050] “If the little fiend had got in at the window, she probably would have strangled me!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked little soul! She told me she had been walking the earth these twenty years: a just punishment for her mortal transgressions, I’ve no doubt!”\n[wh_ch03_b051] Scarcely were these words uttered when I recollected the association of Heathcliff’s with Catherine’s name in the book, which had completely slipped from my memory, till thus awakened. I blushed at my inconsideration: but, without showing further consciousness of the offence, I hastened to add—“The truth is, sir, I passed the first part of the night in—” Here I stopped afresh—I was about to say “perusing those old volumes,” then it would have revealed my knowledge of their written, as well as their printed, contents; so, correcting myself, I went on—“in spelling over the name scratched on that window-ledge. A monotonous occupation, calculated to set me asleep, like counting, or—”\n[wh_ch03_b052] “What can you mean by talking in this way to me! ” thundered Heathcliff with savage vehemence. “How—how dare you, under my roof?—God! he’s mad to speak so!” And he struck his forehead with rage.\n[wh_ch03_b053] I did not know whether to resent this language or pursue my explanation; but he seemed so powerfully affected that I took pity and proceeded with my dreams; affirming I had never heard the appellation of “Catherine Linton” before, but reading it often over produced an impression which personified itself when I had no longer my imagination under control. Heathcliff gradually fell back into the shelter of the bed, as I spoke; finally sitting down almost concealed behind it. I guessed, however, by his irregular and intercepted breathing, that he struggled to vanquish an excess of violent emotion. Not liking to show him that I had heard the conflict, I continued my toilette rather noisily, looked at my watch, and soliloquised on the length of the night: “Not three o’clock yet! I could have taken oath it had been six. Time stagnates here: we must surely have retired to rest at eight!”\n[wh_ch03_b054] “Always at nine in winter, and rise at four,” said my host, suppressing a groan: and, as I fancied, by the motion of his arm’s shadow, dashing a tear from his eyes. “Mr. Lockwood,” he added, “you may go into my room: you’ll only be in the way, coming downstairs so early: and your childish outcry has sent sleep to the devil for me.”\n[wh_ch03_b055] “And for me, too,” I replied. “I’ll walk in the yard till daylight, and then I’ll be off; and you need not dread a repetition of my intrusion. I’m now quite cured of seeking pleasure in society, be it country or town. A sensible man ought to find sufficient company in himself.”\n[wh_ch03_b056] “Delightful company!” muttered Heathcliff. “Take the candle, and go where you please. I shall join you directly. Keep out of the yard, though, the dogs are unchained; and the house—Juno mounts sentinel there, and—nay, you can only ramble about the steps and passages. But, away with you! I’ll come in two minutes!”\n[wh_ch03_b057] I obeyed, so far as to quit the chamber; when, ignorant where the narrow lobbies led, I stood still, and was witness, involuntarily, to a piece of superstition on the part of my landlord which belied, oddly, his apparent sense. He got on to the bed, and wrenched open the lattice, bursting, as he pulled at it, into an uncontrollable passion of tears. “Come in! come in!” he sobbed. “Cathy, do come. Oh, do— once more! Oh! my heart’s darling! hear me this time, Catherine, at last!” The spectre showed a spectre’s ordinary caprice: it gave no sign of being; but the snow and wind whirled wildly through, even reaching my station, and blowing out the light.\n[wh_ch03_b058] There was such anguish in the gush of grief that accompanied this raving, that my compassion made me overlook its folly, and I drew off, half angry to have listened at all, and vexed at having related my ridiculous nightmare, since it produced that agony; though why was beyond my comprehension. I descended cautiously to the lower regions, and landed in the back-kitchen, where a gleam of fire, raked compactly together, enabled me to rekindle my candle. Nothing was stirring except a brindled, grey cat, which crept from the ashes, and saluted me with a querulous mew.\n[wh_ch03_b059] Two benches, shaped in sections of a circle, nearly enclosed the hearth; on one of these I stretched myself, and Grimalkin mounted the other. We were both of us nodding ere any one invaded our retreat, and then it was Joseph, shuffling down a wooden ladder that vanished in the roof, through a trap: the ascent to his garret, I suppose. He cast a sinister look at the little flame which I had enticed to play between the ribs, swept the cat from its elevation, and bestowing himself in the vacancy, commenced the operation of stuffing a three-inch pipe with tobacco. My presence in his sanctum was evidently esteemed a piece of impudence too shameful for remark: he silently applied the tube to his lips, folded his arms, and puffed away. I let him enjoy the luxury unannoyed; and after sucking out his last wreath, and heaving a profound sigh, he got up, and departed as solemnly as he came.\n[wh_ch03_b060] A more elastic footstep entered next; and now I opened my mouth for a “good-morning,” but closed it again, the salutation unachieved; for Hareton Earnshaw was performing his orison sotto voce , in a series of curses directed against every object he touched, while he rummaged a corner for a spade or shovel to dig through the drifts. He glanced over the back of the bench, dilating his nostrils, and thought as little of exchanging civilities with me as with my companion the cat. I guessed, by his preparations, that egress was allowed, and, leaving my hard couch, made a movement to follow him. He noticed this, and thrust at an inner door with the end of his spade, intimating by an inarticulate sound that there was the place where I must go, if I changed my locality.\n[wh_ch03_b061] It opened into the house, where the females were already astir; Zillah urging flakes of flame up the chimney with a colossal bellows; and Mrs. Heathcliff, kneeling on the hearth, reading a book by the aid of the blaze. She held her hand interposed between the furnace-heat and her eyes, and seemed absorbed in her occupation; desisting from it only to chide the servant for covering her with sparks, or to push away a dog, now and then, that snoozled its nose overforwardly into her face. I was surprised to see Heathcliff there also. He stood by the fire, his back towards me, just finishing a stormy scene with poor Zillah; who ever and anon interrupted her labour to pluck up the corner of her apron, and heave an indignant groan.\n[wh_ch03_b062] “And you, you worthless—” he broke out as I entered, turning to his daughter-in-law, and employing an epithet as harmless as duck, or sheep, but generally represented by a dash—. “There you are, at your idle tricks again! The rest of them do earn their bread—you live on my charity! Put your trash away, and find something to do. You shall pay me for the plague of having you eternally in my sight—do you hear, damnable jade?”\n[wh_ch03_b063] “I’ll put my trash away, because you can make me if I refuse,” answered the young lady, closing her book, and throwing it on a chair. “But I’ll not do anything, though you should swear your tongue out, except what I please!”\n[wh_ch03_b064] Heathcliff lifted his hand, and the speaker sprang to a safer distance, obviously acquainted with its weight. Having no desire to be entertained by a cat-and-dog combat, I stepped forward briskly, as if eager to partake the warmth of the hearth, and innocent of any knowledge of the interrupted dispute. Each had enough decorum to suspend further hostilities: Heathcliff placed his fists, out of temptation, in his pockets; Mrs. Heathcliff curled her lip, and walked to a seat far off, where she kept her word by playing the part of a statue during the remainder of my stay. That was not long. I declined joining their breakfast, and, at the first gleam of dawn, took an opportunity of escaping into the free air, now clear, and still, and cold as impalpable ice.\n[wh_ch03_b065] My landlord halloed for me to stop ere I reached the bottom of the garden, and offered to accompany me across the moor. It was well he did, for the whole hill-back was one billowy, white ocean; the swells and falls not indicating corresponding rises and depressions in the ground: many pits, at least, were filled to a level; and entire ranges of mounds, the refuse of the quarries, blotted from the chart which my yesterday’s walk left pictured in my mind. I had remarked on one side of the road, at intervals of six or seven yards, a line of upright stones, continued through the whole length of the barren: these were erected and daubed with lime on purpose to serve as guides in the dark, and also when a fall, like the present, confounded the deep swamps on either hand with the firmer path: but, excepting a dirty dot pointing up here and there, all traces of their existence had vanished: and my companion found it necessary to warn me frequently to steer to the right or left, when I imagined I was following, correctly, the windings of the road.\n[wh_ch03_b066] We exchanged little conversation, and he halted at the entrance of Thrushcross Park, saying, I could make no error there. Our adieux were limited to a hasty bow, and then I pushed forward, trusting to my own resources; for the porter’s lodge is untenanted as yet. The distance from the gate to the Grange is two miles; I believe I managed to make it four, what with losing myself among the trees, and sinking up to the neck in snow: a predicament which only those who have experienced it can appreciate. At any rate, whatever were my wanderings, the clock chimed twelve as I entered the house; and that gave exactly an hour for every mile of the usual way from Wuthering Heights.\n[wh_ch03_b067] My human fixture and her satellites rushed to welcome me; exclaiming, tumultuously, they had completely given me up: everybody conjectured that I perished last night; and they were wondering how they must set about the search for my remains. I bid them be quiet, now that they saw me returned, and, benumbed to my very heart, I dragged upstairs; whence, after putting on dry clothes, and pacing to and fro thirty or forty minutes, to restore the animal heat, I adjourned to my study, feeble as a kitten: almost too much so to enjoy the cheerful fire and smoking coffee which the servant had prepared for my refreshment."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch03",
+    "chapter_rolling_summary": "Lockwood is lodged in a forbidden chamber at Wuthering Heights, where he finds Catherine’s old books and her childish diary describing Hindley’s cruelty to Heathcliff and her own rebellion. He falls into disturbing dreams: one of Jabez Branderham’s endless sermon, then one of a ghostly child identifying itself as Catherine Linton begging to be let in. His scream brings Heathcliff, who reacts with extraordinary agitation when Catherine’s name is mentioned and later, believing himself alone, begs “Cathy” to return. Before dawn Lockwood witnesses more of the household’s bitterness: Heathcliff abuses Zillah and his daughter-in-law, who defies him. Heathcliff then guides Lockwood safely across the snow-covered moor back toward Thrushcross Grange, where Lockwood returns exhausted and deeply affected by the night’s events.",
+    "narration_frame_segments": [
+      {
+        "narrator_ref": "ent_mr_lockwood",
+        "block_range": [
+          "wh_ch03_b002",
+          "wh_ch03_b067"
+        ],
+        "story_time_label": "frame_present"
+      }
+    ],
+    "scene_summaries": [
+      {
+        "scene_id": "s_wh_ch03_01",
+        "block_range": [
+          "wh_ch03_b002",
+          "wh_ch03_b015"
+        ],
+        "summary": "Zillah secretly installs Lockwood in a forbidden chamber. Exploring it, he finds Catherine’s old books and reads diary-like marginalia describing an oppressive Sunday under Hindley, Joseph’s religious tyranny, and Catherine and Heathcliff’s shared rebellion.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_your_servant_zillah",
+          "ent_catherine_earnshaw",
+          "ent_hindley",
+          "ent_heathcliff",
+          "ent_joseph",
+          "ent_frances"
+        ]
+      },
+      {
+        "scene_id": "s_wh_ch03_02",
+        "block_range": [
+          "wh_ch03_b017",
+          "wh_ch03_b026"
+        ],
+        "summary": "Lockwood reads a second diary fragment in which Catherine laments Hindley’s harsher degradation of Heathcliff. Drowsing over a sermon by Jabez Branderham, he falls into a grotesque nightmare of endless preaching and violent chapel chaos.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_catherine_earnshaw",
+          "ent_hindley",
+          "ent_heathcliff",
+          "ent_jabez_branderham",
+          "ent_joseph"
+        ]
+      },
+      {
+        "scene_id": "s_wh_ch03_03",
+        "block_range": [
+          "wh_ch03_b027",
+          "wh_ch03_b058"
+        ],
+        "summary": "In a second dream, Lockwood grasps a ghostly child’s hand at the broken window; the child calls itself Catherine Linton and begs to enter after twenty years on the moor. Lockwood’s scream wakes Heathcliff, who is enraged and shaken; after Lockwood mentions Catherine’s name, Heathcliff collapses into grief and later implores the absent Cathy to come in.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_catherine_linton",
+          "ent_heathcliff"
+        ]
+      },
+      {
+        "scene_id": "s_wh_ch03_04",
+        "block_range": [
+          "wh_ch03_b059",
+          "wh_ch03_b064"
+        ],
+        "summary": "Before dawn in the kitchen and house, Lockwood encounters Joseph’s silent hostility, Hareton’s rough dismissal, and a fierce quarrel in which Heathcliff abuses Zillah and Mrs. Heathcliff, while the young woman openly defies him.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_joseph",
+          "ent_hareton_earnshaw",
+          "ent_your_servant_zillah",
+          "ent_heathcliff",
+          "ent_mrs_heathcliff"
+        ]
+      },
+      {
+        "scene_id": "s_wh_ch03_05",
+        "block_range": [
+          "wh_ch03_b065",
+          "wh_ch03_b067"
+        ],
+        "summary": "At dawn Heathcliff accompanies Lockwood partway across the snow-covered moor, guiding him through hidden dangers. Lockwood reaches the Grange exhausted and is welcomed back by anxious servants who had feared him dead.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_heathcliff"
+        ]
+      }
+    ],
+    "character_state_changes": [],
+    "relation_event_summary": [
+      {
+        "pair": [
+          "ent_your_servant_zillah",
+          "ent_mr_lockwood"
+        ],
+        "observed_valence_hint": "mixed",
+        "event_ids": [
+          "e_wh_ch03_b002_01"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch03_b002",
+          "note": "Zillah covertly helps Lockwood but places him in a room associated with danger or superstition."
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_hindley",
+          "ent_heathcliff"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch03_b009_01",
+          "e_wh_ch03_b018_03",
+          "e_wh_ch03_b018_04"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch03_b018",
+          "note": "Catherine’s diary depicts Hindley explicitly degrading Heathcliff’s place in the household."
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_catherine_earnshaw",
+          "ent_heathcliff"
+        ],
+        "observed_valence_hint": "positive",
+        "event_ids": [
+          "e_wh_ch03_b018_02"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch03_b009",
+          "note": "The diary presents Catherine and Heathcliff as allied companions resisting Hindley together."
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_catherine_earnshaw",
+          "ent_hindley"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch03_b018_01"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch03_b018",
+          "note": "Catherine’s diary shows emotional rupture as Hindley’s treatment makes her cry and angers her."
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_joseph"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch03_b021_01",
+          "e_wh_ch03_b021_02",
+          "e_wh_ch03_b023_01",
+          "e_wh_ch03_b026_01",
+          "e_wh_ch03_b059_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_heathcliff"
+        ],
+        "observed_valence_hint": "mixed",
+        "event_ids": [
+          "e_wh_ch03_b046_01",
+          "e_wh_ch03_b046_02",
+          "e_wh_ch03_b047_01",
+          "e_wh_ch03_b047_02",
+          "e_wh_ch03_b049_01",
+          "e_wh_ch03_b049_02",
+          "e_wh_ch03_b049_03",
+          "e_wh_ch03_b052_01",
+          "e_wh_ch03_b052_02",
+          "e_wh_ch03_b054_01",
+          "e_wh_ch03_b056_01",
+          "e_wh_ch03_b065_01"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch03_b057",
+          "note": "After hostility and alarm, Lockwood inadvertently witnesses Heathcliff’s private grief, complicating his view of him."
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_heathcliff",
+          "ent_catherine_linton"
+        ],
+        "observed_valence_hint": "mixed",
+        "event_ids": [
+          "e_wh_ch03_b057_02"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch03_b057",
+          "note": "Heathcliff’s anguished appeal to Cathy reveals an intense unresolved bond reaching beyond death or memory."
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_heathcliff",
+          "ent_mrs_heathcliff"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch03_b062_01",
+          "e_wh_ch03_b063_01"
+        ],
+        "candidate_transition": {
+          "trigger_block": "wh_ch03_b062",
+          "note": "Open verbal abuse and defiance show a sharply antagonistic domestic relationship."
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_heathcliff",
+          "ent_your_servant_zillah"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [],
+        "candidate_transition": {
+          "trigger_block": "wh_ch03_b061",
+          "note": "Heathcliff is described as finishing a stormy scene with Zillah, suggesting active household tension."
+        },
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_hareton_earnshaw",
+          "ent_mr_lockwood"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch03_b060_01"
+        ],
+        "status": "evidence_only"
+      }
+    ],
+    "unresolved_threads": [
+      {
+        "thread_id": "th_wh_ch03_01",
+        "description": "Why Heathcliff forbids anyone to sleep in the chamber and what history attaches to it.",
+        "opened_block": "wh_ch03_b002",
+        "kind": "mystery"
+      },
+      {
+        "thread_id": "th_wh_ch03_02",
+        "description": "What became of Catherine after the diary years, and how the names Earnshaw, Heathcliff, and Linton connect.",
+        "opened_block": "wh_ch03_b005",
+        "kind": "mystery"
+      },
+      {
+        "thread_id": "th_wh_ch03_03",
+        "description": "Whether Lockwood’s encounter with Catherine Linton is supernatural, dream-generated, or tied to the room’s history.",
+        "opened_block": "wh_ch03_b027",
+        "kind": "mystery"
+      },
+      {
+        "thread_id": "th_wh_ch03_04",
+        "description": "The nature and history of Heathcliff’s bond with Catherine, revealed by his extreme grief and invocation of 'Cathy.'",
+        "opened_block": "wh_ch03_b057",
+        "kind": "mystery"
+      },
+      {
+        "thread_id": "th_wh_ch03_05",
+        "description": "The violent hostility between Heathcliff and Mrs. Heathcliff is visible but unexplained.",
+        "opened_block": "wh_ch03_b062",
+        "kind": "question"
+      }
+    ],
+    "motifs": [
+      {
+        "note": "names repeated as haunted traces of identity and marriage",
+        "block_ids": [
+          "wh_ch03_b005",
+          "wh_ch03_b006",
+          "wh_ch03_b051"
+        ]
+      },
+      {
+        "note": "religious oppression and parody",
+        "block_ids": [
+          "wh_ch03_b010",
+          "wh_ch03_b012",
+          "wh_ch03_b020",
+          "wh_ch03_b024",
+          "wh_ch03_b025"
+        ]
+      },
+      {
+        "note": "storm, snow, and the moor as threatening isolation",
+        "block_ids": [
+          "wh_ch03_b021",
+          "wh_ch03_b027",
+          "wh_ch03_b057",
+          "wh_ch03_b065",
+          "wh_ch03_b066"
+        ]
+      },
+      {
+        "note": "windows and thresholds between inside and outside, living and dead",
+        "block_ids": [
+          "wh_ch03_b003",
+          "wh_ch03_b027",
+          "wh_ch03_b032",
+          "wh_ch03_b057"
+        ]
+      },
+      {
+        "note": "ghostly return and unresolved mourning",
+        "block_ids": [
+          "wh_ch03_b029",
+          "wh_ch03_b037",
+          "wh_ch03_b057"
+        ]
+      }
+    ],
+    "translator_relevant_facts": [
+      {
+        "fact_type": "narrator",
+        "fact": "Lockwood narrates in first person with ironic, self-dramatizing commentary that shifts between observation, mockery, and genuine fear.",
+        "block_evidence": [
+          "wh_ch03_b008",
+          "wh_ch03_b020",
+          "wh_ch03_b058"
+        ]
+      },
+      {
+        "fact_type": "speech_style",
+        "fact": "Joseph’s speech is rendered in heavy Yorkshire dialect and should remain distinctly nonstandard and difficult.",
+        "block_evidence": [
+          "wh_ch03_b012",
+          "wh_ch03_b014"
+        ]
+      },
+      {
+        "fact_type": "setting",
+        "fact": "The bed is an enclosed oak box-bed/closet built into the wall, shaping the claustrophobic staging of the ghost scene.",
+        "block_evidence": [
+          "wh_ch03_b003",
+          "wh_ch03_b004",
+          "wh_ch03_b027"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Catherine’s diary shows Hindley acting as household master after Mr. Earnshaw’s burial and reducing Heathcliff’s rank.",
+        "block_evidence": [
+          "wh_ch03_b009",
+          "wh_ch03_b018"
+        ]
+      },
+      {
+        "fact_type": "speech_style",
+        "fact": "Catherine’s embedded diary uses a childish but vivid retrospective voice distinct from Lockwood’s narration.",
+        "block_evidence": [
+          "wh_ch03_b008",
+          "wh_ch03_b009",
+          "wh_ch03_b018"
+        ]
+      },
+      {
+        "fact_type": "setting",
+        "fact": "The sermon scene and the Catherine-at-the-window episode are dreams/nightmare experiences framed within Lockwood’s night in the chamber.",
+        "block_evidence": [
+          "wh_ch03_b021",
+          "wh_ch03_b027",
+          "wh_ch03_b040"
+        ]
+      },
+      {
+        "fact_type": "register",
+        "fact": "Heathcliff’s language swings from controlled command to violent outburst and then to intimate, grief-stricken pleading when addressing Cathy.",
+        "block_evidence": [
+          "wh_ch03_b049",
+          "wh_ch03_b052",
+          "wh_ch03_b057"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Mrs. Heathcliff is explicitly called Heathcliff’s daughter-in-law here, clarifying household relationships for forms of address.",
+        "block_evidence": [
+          "wh_ch03_b062"
+        ]
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "digest",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "narration coverage skipped non-narrative block wh_ch03_b001",
+      "narration coverage skipped non-narrative block wh_ch03_b016",
+      "narration coverage skipped non-narrative block wh_ch03_b019"
+    ],
+    "counts": {
+      "frame_segments": 1,
+      "scenes": 5,
+      "state_changes": 0,
+      "unresolved_mystery": 4,
+      "unresolved_pending_transition": 0,
+      "unresolved_question": 1,
+      "translator_facts": 8,
+      "motifs": 5,
+      "nonnarrative_block_skipped": 3
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "5fffe4b9698018e3680fcaa599c2732369d58faef7518ae018486d8b8c57930e",
+      "latency_ms": 26942,
+      "cost_usd": 0.0,
+      "usage": {
+        "prompt_tokens": 10546,
+        "cached_tokens": 0,
+        "completion_tokens": 3452,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "digest",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "narration coverage skipped non-narrative block wh_ch03_b001",
+          "narration coverage skipped non-narrative block wh_ch03_b016",
+          "narration coverage skipped non-narrative block wh_ch03_b019"
+        ],
+        "counts": {
+          "frame_segments": 1,
+          "scenes": 5,
+          "state_changes": 0,
+          "unresolved_mystery": 4,
+          "unresolved_pending_transition": 0,
+          "unresolved_question": 1,
+          "translator_facts": 8,
+          "motifs": 5,
+          "nonnarrative_block_skipped": 3
+        }
+      },
+      "raw_text": "{\n  \"chapter_id\": \"wh_ch03\",\n  \"chapter_rolling_summary\": \"Lockwood is lodged in a forbidden chamber at Wuthering Heights, where he finds Catherine’s old books and her childish diary describing Hindley’s cruelty to Heathcliff and her own rebellion. He falls into disturbing dreams: one of Jabez Branderham’s endless sermon, then one of a ghostly child identifying itself as Catherine Linton begging to be let in. His scream brings Heathcliff, who reacts with extraordinary agitation when Catherine’s name is mentioned and later, believing himself alone, begs “Cathy” to return. Before dawn Lockwood witnesses more of the household’s bitterness: Heathcliff abuses Zillah and his daughter-in-law, who defies him. Heathcliff then guides Lockwood safely across the snow-covered moor back toward Thrushcross Grange, where Lockwood returns exhausted and deeply affected by the night’s events.\",\n  \"narration_frame_segments\": [\n    {\n      \"narrator_ref\": \"ent_mr_lockwood\",\n      \"block_range\": [\n        \"wh_ch03_b002\",\n        \"wh_ch03_b067\"\n      ],\n      \"story_time_label\": \"frame_present\"\n    }\n  ],\n  \"scene_summaries\": [\n    {\n      \"scene_id\": \"s_wh_ch03_01\",\n      \"block_range\": [\n        \"wh_ch03_b002\",\n        \"wh_ch03_b015\"\n      ],\n      \"summary\": \"Zillah secretly installs Lockwood in a forbidden chamber. Exploring it, he finds Catherine’s old books and reads diary-like marginalia describing an oppressive Sunday under Hindley, Joseph’s religious tyranny, and Catherine and Heathcliff’s shared rebellion.\",\n      \"key_participants\": [\n        \"ent_mr_lockwood\",\n        \"ent_your_servant_zillah\",\n        \"ent_catherine_earnshaw\",\n        \"ent_hindley\",\n        \"ent_heathcliff\",\n        \"ent_joseph\",\n        \"ent_frances\"\n      ]\n    },\n    {\n      \"scene_id\": \"s_wh_ch03_02\",\n      \"block_range\": [\n        \"wh_ch03_b017\",\n        \"wh_ch03_b026\"\n      ],\n      \"summary\": \"Lockwood reads a second diary fragment in which Catherine laments Hindley’s harsher degradation of Heathcliff. Drowsing over a sermon by Jabez Branderham, he falls into a grotesque nightmare of endless preaching and violent chapel chaos.\",\n      \"key_participants\": [\n        \"ent_mr_lockwood\",\n        \"ent_catherine_earnshaw\",\n        \"ent_hindley\",\n        \"ent_heathcliff\",\n        \"ent_jabez_branderham\",\n        \"ent_joseph\"\n      ]\n    },\n    {\n      \"scene_id\": \"s_wh_ch03_03\",\n      \"block_range\": [\n        \"wh_ch03_b027\",\n        \"wh_ch03_b058\"\n      ],\n      \"summary\": \"In a second dream, Lockwood grasps a ghostly child’s hand at the broken window; the child calls itself Catherine Linton and begs to enter after twenty years on the moor. Lockwood’s scream wakes Heathcliff, who is enraged and shaken; after Lockwood mentions Catherine’s name, Heathcliff collapses into grief and later implores the absent Cathy to come in.\",\n      \"key_participants\": [\n        \"ent_mr_lockwood\",\n        \"ent_catherine_linton\",\n        \"ent_heathcliff\"\n      ]\n    },\n    {\n      \"scene_id\": \"s_wh_ch03_04\",\n      \"block_range\": [\n        \"wh_ch03_b059\",\n        \"wh_ch03_b064\"\n      ],\n      \"summary\": \"Before dawn in the kitchen and house, Lockwood encounters Joseph’s silent hostility, Hareton’s rough dismissal, and a fierce quarrel in which Heathcliff abuses Zillah and Mrs. Heathcliff, while the young woman openly defies him.\",\n      \"key_participants\": [\n        \"ent_mr_lockwood\",\n        \"ent_joseph\",\n        \"ent_hareton_earnshaw\",\n        \"ent_your_servant_zillah\",\n        \"ent_heathcliff\",\n        \"ent_mrs_heathcliff\"\n      ]\n    },\n    {\n      \"scene_id\": \"s_wh_ch03_05\",\n      \"block_range\": [\n        \"wh_ch03_b065\",\n        \"wh_ch03_b067\"\n      ],\n      \"summary\": \"At dawn Heathcliff accompanies Lockwood partway across the snow-covered moor, guiding him through hidden dangers. Lockwood reaches the Grange exhausted and is welcomed back by anxious servants who had feared him dead.\",\n      \"key_participants\": [\n        \"ent_mr_lockwood\",\n        \"ent_heathcliff\"\n      ]\n    }\n  ],\n  \"character_state_changes\": [],\n  \"relation_event_summary\": [\n    {\n      \"pair\": [\n        \"ent_your_servant_zillah\",\n        \"ent_mr_lockwood\"\n      ],\n      \"observed_valence_hint\": \"mixed\",\n      \"event_ids\": [\n        \"e_wh_ch03_b002_01\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch03_b002\",\n        \"note\": \"Zillah covertly helps Lockwood but places him in a room associated with danger or superstition.\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_hindley\",\n        \"ent_heathcliff\"\n      ],\n      \"observed_valence_hint\": \"negative\",\n      \"event_ids\": [\n        \"e_wh_ch03_b009_01\",\n        \"e_wh_ch03_b018_03\",\n        \"e_wh_ch03_b018_04\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch03_b018\",\n        \"note\": \"Catherine’s diary depicts Hindley explicitly degrading Heathcliff’s place in the household.\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_catherine_earnshaw\",\n        \"ent_heathcliff\"\n      ],\n      \"observed_valence_hint\": \"positive\",\n      \"event_ids\": [\n        \"e_wh_ch03_b018_02\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch03_b009\",\n        \"note\": \"The diary presents Catherine and Heathcliff as allied companions resisting Hindley together.\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_catherine_earnshaw\",\n        \"ent_hindley\"\n      ],\n      \"observed_valence_hint\": \"negative\",\n      \"event_ids\": [\n        \"e_wh_ch03_b018_01\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch03_b018\",\n        \"note\": \"Catherine’s diary shows emotional rupture as Hindley’s treatment makes her cry and angers her.\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_mr_lockwood\",\n        \"ent_joseph\"\n      ],\n      \"observed_valence_hint\": \"negative\",\n      \"event_ids\": [\n        \"e_wh_ch03_b021_01\",\n        \"e_wh_ch03_b021_02\",\n        \"e_wh_ch03_b023_01\",\n        \"e_wh_ch03_b026_01\",\n        \"e_wh_ch03_b059_01\"\n      ],\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_mr_lockwood\",\n        \"ent_heathcliff\"\n      ],\n      \"observed_valence_hint\": \"mixed\",\n      \"event_ids\": [\n        \"e_wh_ch03_b046_01\",\n        \"e_wh_ch03_b046_02\",\n        \"e_wh_ch03_b047_01\",\n        \"e_wh_ch03_b047_02\",\n        \"e_wh_ch03_b049_01\",\n        \"e_wh_ch03_b049_02\",\n        \"e_wh_ch03_b049_03\",\n        \"e_wh_ch03_b052_01\",\n        \"e_wh_ch03_b052_02\",\n        \"e_wh_ch03_b054_01\",\n        \"e_wh_ch03_b056_01\",\n        \"e_wh_ch03_b065_01\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch03_b057\",\n        \"note\": \"After hostility and alarm, Lockwood inadvertently witnesses Heathcliff’s private grief, complicating his view of him.\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_heathcliff\",\n        \"ent_catherine_linton\"\n      ],\n      \"observed_valence_hint\": \"mixed\",\n      \"event_ids\": [\n        \"e_wh_ch03_b057_02\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch03_b057\",\n        \"note\": \"Heathcliff’s anguished appeal to Cathy reveals an intense unresolved bond reaching beyond death or memory.\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_heathcliff\",\n        \"ent_mrs_heathcliff\"\n      ],\n      \"observed_valence_hint\": \"negative\",\n      \"event_ids\": [\n        \"e_wh_ch03_b062_01\",\n        \"e_wh_ch03_b063_01\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch03_b062\",\n        \"note\": \"Open verbal abuse and defiance show a sharply antagonistic domestic relationship.\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_heathcliff\",\n        \"ent_your_servant_zillah\"\n      ],\n      \"observed_valence_hint\": \"negative\",\n      \"event_ids\": [],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch03_b061\",\n        \"note\": \"Heathcliff is described as finishing a stormy scene with Zillah, suggesting active household tension.\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_hareton_earnshaw\",\n        \"ent_mr_lockwood\"\n      ],\n      \"observed_valence_hint\": \"negative\",\n      \"event_ids\": [\n        \"e_wh_ch03_b060_01\"\n      ],\n      \"status\": \"evidence_only\"\n    }\n  ],\n  \"unresolved_threads\": [\n    {\n      \"thread_id\": \"th_wh_ch03_01\",\n      \"description\": \"Why Heathcliff forbids anyone to sleep in the chamber and what history attaches to it.\",\n      \"opened_block\": \"wh_ch03_b002\",\n      \"kind\": \"mystery\"\n    },\n    {\n      \"thread_id\": \"th_wh_ch03_02\",\n      \"description\": \"What became of Catherine after the diary years, and how the names Earnshaw, Heathcliff, and Linton connect.\",\n      \"opened_block\": \"wh_ch03_b005\",\n      \"kind\": \"mystery\"\n    },\n    {\n      \"thread_id\": \"th_wh_ch03_03\",\n      \"description\": \"Whether Lockwood’s encounter with Catherine Linton is supernatural, dream-generated, or tied to the room’s history.\",\n      \"opened_block\": \"wh_ch03_b027\",\n      \"kind\": \"mystery\"\n    },\n    {\n      \"thread_id\": \"th_wh_ch03_04\",\n      \"description\": \"The nature and history of Heathcliff’s bond with Catherine, revealed by his extreme grief and invocation of 'Cathy.'\",\n      \"opened_block\": \"wh_ch03_b057\",\n      \"kind\": \"mystery\"\n    },\n    {\n      \"thread_id\": \"th_wh_ch03_05\",\n      \"description\": \"The violent hostility between Heathcliff and Mrs. Heathcliff is visible but unexplained.\",\n      \"opened_block\": \"wh_ch03_b062\",\n      \"kind\": \"question\"\n    }\n  ],\n  \"motifs\": [\n    {\n      \"note\": \"names repeated as haunted traces of identity and marriage\",\n      \"block_ids\": [\n        \"wh_ch03_b005\",\n        \"wh_ch03_b006\",\n        \"wh_ch03_b051\"\n      ]\n    },\n    {\n      \"note\": \"religious oppression and parody\",\n      \"block_ids\": [\n        \"wh_ch03_b010\",\n        \"wh_ch03_b012\",\n        \"wh_ch03_b020\",\n        \"wh_ch03_b024\",\n        \"wh_ch03_b025\"\n      ]\n    },\n    {\n      \"note\": \"storm, snow, and the moor as threatening isolation\",\n      \"block_ids\": [\n        \"wh_ch03_b021\",\n        \"wh_ch03_b027\",\n        \"wh_ch03_b057\",\n        \"wh_ch03_b065\",\n        \"wh_ch03_b066\"\n      ]\n    },\n    {\n      \"note\": \"windows and thresholds between inside and outside, living and dead\",\n      \"block_ids\": [\n        \"wh_ch03_b003\",\n        \"wh_ch03_b027\",\n        \"wh_ch03_b032\",\n        \"wh_ch03_b057\"\n      ]\n    },\n    {\n      \"note\": \"ghostly return and unresolved mourning\",\n      \"block_ids\": [\n        \"wh_ch03_b029\",\n        \"wh_ch03_b037\",\n        \"wh_ch03_b057\"\n      ]\n    }\n  ],\n  \"translator_relevant_facts\": [\n    {\n      \"fact_type\": \"narrator\",\n      \"fact\": \"Lockwood narrates in first person with ironic, self-dramatizing commentary that shifts between observation, mockery, and genuine fear.\",\n      \"block_evidence\": [\n        \"wh_ch03_b008\",\n        \"wh_ch03_b020\",\n        \"wh_ch03_b058\"\n      ]\n    },\n    {\n      \"fact_type\": \"speech_style\",\n      \"fact\": \"Joseph’s speech is rendered in heavy Yorkshire dialect and should remain distinctly nonstandard and difficult.\",\n      \"block_evidence\": [\n        \"wh_ch03_b012\",\n        \"wh_ch03_b014\"\n      ]\n    },\n    {\n      \"fact_type\": \"setting\",\n      \"fact\": \"The bed is an enclosed oak box-bed/closet built into the wall, shaping the claustrophobic staging of the ghost scene.\",\n      \"block_evidence\": [\n        \"wh_ch03_b003\",\n        \"wh_ch03_b004\",\n        \"wh_ch03_b027\"\n      ]\n    },\n    {\n      \"fact_type\": \"status\",\n      \"fact\": \"Catherine’s diary shows Hindley acting as household master after Mr. Earnshaw’s burial and reducing Heathcliff’s rank.\",\n      \"block_evidence\": [\n        \"wh_ch03_b009\",\n        \"wh_ch03_b018\"\n      ]\n    },\n    {\n      \"fact_type\": \"speech_style\",\n      \"fact\": \"Catherine’s embedded diary uses a childish but vivid retrospective voice distinct from Lockwood’s narration.\",\n      \"block_evidence\": [\n        \"wh_ch03_b008\",\n        \"wh_ch03_b009\",\n        \"wh_ch03_b018\"\n      ]\n    },\n    {\n      \"fact_type\": \"setting\",\n      \"fact\": \"The sermon scene and the Catherine-at-the-window episode are dreams/nightmare experiences framed within Lockwood’s night in the chamber.\",\n      \"block_evidence\": [\n        \"wh_ch03_b021\",\n        \"wh_ch03_b027\",\n        \"wh_ch03_b040\"\n      ]\n    },\n    {\n      \"fact_type\": \"register\",\n      \"fact\": \"Heathcliff’s language swings from controlled command to violent outburst and then to intimate, grief-stricken pleading when addressing Cathy.\",\n      \"block_evidence\": [\n        \"wh_ch03_b049\",\n        \"wh_ch03_b052\",\n        \"wh_ch03_b057\"\n      ]\n    },\n    {\n      \"fact_type\": \"status\",\n      \"fact\": \"Mrs. Heathcliff is explicitly called Heathcliff’s daughter-in-law here, clarifying household relationships for forms of address.\",\n      \"block_evidence\": [\n        \"wh_ch03_b062\"\n      ]\n    }\n  ]\n}"
+    }
+  ],
+  "cost_usd": 0.0,
+  "prompt_tokens": 10546,
+  "cached_tokens": 0,
+  "completion_tokens": 3452,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

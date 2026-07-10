@@ -1,0 +1,1836 @@
+{
+  "stage": "m1",
+  "chapter_id": "wh_ch04",
+  "chapter_index": 3,
+  "chapter_sequence_prefix": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "source_hash": "bf677ecba031c34f7b67ec482d6a90a750e771d69b0e91979a740540626739da",
+  "prompt_hashes": {
+    "literary_chapter_brief_v1": "d7dd14a00905bf00a5f188d4f027872c64ffdfe2174e3f172577af606d55f187",
+    "literary_lexicon_v1": "9784afb7025dc56c84da4550ffa569fee59d57f8f1814bb780f4a0552bb8751d",
+    "literary_narrative_v1": "98cfdc5b23ffb4d0fe00eee8745f39a51dc2ff5be9ac2073356038df7bc4c731"
+  },
+  "config_hash": "0aee88939d04d70563987233163a00349fe85938eca53c85dd41bcb238f6fdb7",
+  "schema_version": "literary_m1_checkpoint_v1",
+  "parent_checkpoint_hash": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+  "state": {
+    "entity_ledger": {
+      "ent_mr_heathcliff": {
+        "entity_id": "ent_mr_heathcliff",
+        "canonical": "Mr. Heathcliff",
+        "aliases": [
+          "Mr. Heathcliff"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_joseph": {
+        "entity_id": "ent_joseph",
+        "canonical": "Joseph",
+        "aliases": [
+          "Joseph"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_mr_lockwood": {
+        "entity_id": "ent_mr_lockwood",
+        "canonical": "Mr. Lockwood",
+        "aliases": [
+          "Mr. Lockwood"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null
+      },
+      "ent_hareton_earnshaw": {
+        "entity_id": "ent_hareton_earnshaw",
+        "canonical": "Hareton Earnshaw",
+        "aliases": [
+          "Hareton Earnshaw"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null
+      },
+      "ent_heathcliff": {
+        "entity_id": "ent_heathcliff",
+        "canonical": "Heathcliff",
+        "aliases": [
+          "Heathcliff"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null
+      },
+      "ent_zillah": {
+        "entity_id": "ent_zillah",
+        "canonical": "Zillah",
+        "aliases": [
+          "Zillah"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_mrs_heathcliff": {
+        "entity_id": "ent_mrs_heathcliff",
+        "canonical": "Mrs. Heathcliff",
+        "aliases": [
+          "Mrs. Heathcliff"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null
+      },
+      "ent_the_young_man": {
+        "entity_id": "ent_the_young_man",
+        "canonical": "the young man",
+        "aliases": [
+          "the young man"
+        ]
+      },
+      "ent_mr_and_mrs_heathcliff": {
+        "entity_id": "ent_mr_and_mrs_heathcliff",
+        "canonical": "Mr. and Mrs. Heathcliff",
+        "aliases": [
+          "Mr. and Mrs. Heathcliff"
+        ]
+      },
+      "ent_hareton": {
+        "entity_id": "ent_hareton",
+        "canonical": "Hareton",
+        "aliases": [
+          "Hareton"
+        ]
+      },
+      "ent_earnshaw": {
+        "entity_id": "ent_earnshaw",
+        "canonical": "Earnshaw",
+        "aliases": [
+          "Earnshaw"
+        ]
+      },
+      "ent_king_lear": {
+        "entity_id": "ent_king_lear",
+        "canonical": "King Lear",
+        "aliases": [
+          "King Lear"
+        ]
+      },
+      "ent_mr_earnshaw": {
+        "entity_id": "ent_mr_earnshaw",
+        "canonical": "Mr. Earnshaw",
+        "aliases": [
+          "Mr. Earnshaw"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null
+      },
+      "ent_hindley": {
+        "entity_id": "ent_hindley",
+        "canonical": "Hindley",
+        "aliases": [
+          "Hindley"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_frances": {
+        "entity_id": "ent_frances",
+        "canonical": "Frances",
+        "aliases": [
+          "Frances"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_jabez_branderham": {
+        "entity_id": "ent_jabez_branderham",
+        "canonical": "Jabez Branderham",
+        "aliases": [
+          "Jabez Branderham"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_catherine_linton": {
+        "entity_id": "ent_catherine_linton",
+        "canonical": "Catherine Linton",
+        "aliases": [
+          "Catherine Linton"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_catherine_earnshaw": {
+        "entity_id": "ent_catherine_earnshaw",
+        "canonical": "Catherine Earnshaw",
+        "aliases": [
+          "Catherine Earnshaw"
+        ]
+      },
+      "ent_catherine_heathcliff": {
+        "entity_id": "ent_catherine_heathcliff",
+        "canonical": "Catherine Heathcliff",
+        "aliases": [
+          "Catherine Heathcliff"
+        ]
+      },
+      "ent_linton": {
+        "entity_id": "ent_linton",
+        "canonical": "Linton",
+        "aliases": [
+          "Linton"
+        ]
+      },
+      "ent_catherine_s": {
+        "entity_id": "ent_catherine_s",
+        "canonical": "Catherine’s",
+        "aliases": [
+          "Catherine’s"
+        ]
+      },
+      "ent_maister_hindley": {
+        "entity_id": "ent_maister_hindley",
+        "canonical": "Maister Hindley",
+        "aliases": [
+          "Maister Hindley"
+        ]
+      },
+      "ent_miss_cathy": {
+        "entity_id": "ent_miss_cathy",
+        "canonical": "Miss Cathy",
+        "aliases": [
+          "Miss Cathy"
+        ]
+      },
+      "ent_catherine": {
+        "entity_id": "ent_catherine",
+        "canonical": "Catherine",
+        "aliases": [
+          "Catherine"
+        ]
+      },
+      "ent_jabez": {
+        "entity_id": "ent_jabez",
+        "canonical": "Jabez",
+        "aliases": [
+          "Jabez"
+        ]
+      },
+      "ent_branderham": {
+        "entity_id": "ent_branderham",
+        "canonical": "Branderham",
+        "aliases": [
+          "Branderham"
+        ]
+      },
+      "ent_jabez_s": {
+        "entity_id": "ent_jabez_s",
+        "canonical": "Jabez’s",
+        "aliases": [
+          "Jabez’s"
+        ]
+      },
+      "ent_heathcliff_s": {
+        "entity_id": "ent_heathcliff_s",
+        "canonical": "Heathcliff’s",
+        "aliases": [
+          "Heathcliff’s"
+        ]
+      },
+      "ent_your_servant_zillah": {
+        "entity_id": "ent_your_servant_zillah",
+        "canonical": "your servant Zillah",
+        "aliases": [
+          "your servant Zillah"
+        ]
+      },
+      "ent_the_reverend_jabez_branderham": {
+        "entity_id": "ent_the_reverend_jabez_branderham",
+        "canonical": "the Reverend Jabez Branderham",
+        "aliases": [
+          "the Reverend Jabez Branderham"
+        ]
+      },
+      "ent_cathy": {
+        "entity_id": "ent_cathy",
+        "canonical": "Cathy",
+        "aliases": [
+          "Cathy"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null
+      },
+      "ent_mr_hindley_earnshaw": {
+        "entity_id": "ent_mr_hindley_earnshaw",
+        "canonical": "Mr. Hindley Earnshaw",
+        "aliases": [
+          "Mr. Hindley Earnshaw"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_mrs_earnshaw": {
+        "entity_id": "ent_mrs_earnshaw",
+        "canonical": "Mrs. Earnshaw",
+        "aliases": [
+          "Mrs. Earnshaw"
+        ],
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "seeded": true
+      },
+      "ent_mrs_dean": {
+        "entity_id": "ent_mrs_dean",
+        "canonical": "Mrs. Dean",
+        "aliases": [
+          "Mrs. Dean"
+        ]
+      },
+      "ent_wuthering_heights": {
+        "entity_id": "ent_wuthering_heights",
+        "canonical": "Wuthering Heights",
+        "aliases": [
+          "Wuthering Heights"
+        ]
+      }
+    },
+    "chapter_summaries": [
+      {
+        "chapter_id": "wh_ch01",
+        "summary": "A tenant visits Mr. Heathcliff at Wuthering Heights, is let in, meets Joseph and other household staff, has trouble with the dogs, and stays long enough to exchange remarks before leaving and planning another visit.",
+        "seed_report": {
+          "seeded_cast": [
+            {
+              "index": 1,
+              "surface": "Mr. Heathcliff",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_mr_heathcliff",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch01_b002"
+            },
+            {
+              "index": 2,
+              "surface": "Joseph",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_joseph",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch01_b008"
+            }
+          ],
+          "seed_skipped_cast": [
+            {
+              "index": 0,
+              "surface": "I",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 3,
+              "surface": "the canine mother",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 4,
+              "surface": "the lusty dame",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            }
+          ]
+        }
+      },
+      {
+        "chapter_id": "wh_ch02",
+        "summary": "Mr. Lockwood revisits Wuthering Heights in bad weather, meets the household at tea, learns who lives there, asks for a guide, and is kept overnight after a struggle at the door.",
+        "seed_report": {
+          "seeded_cast": [
+            {
+              "index": 0,
+              "surface": "Mr. Lockwood",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_mr_lockwood",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch02_b002"
+            },
+            {
+              "index": 1,
+              "surface": "Joseph",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_joseph",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch02_b004"
+            },
+            {
+              "index": 4,
+              "surface": "Heathcliff",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_heathcliff",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch02_b029"
+            },
+            {
+              "index": 5,
+              "surface": "Hareton Earnshaw",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_hareton_earnshaw",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch02_b053"
+            },
+            {
+              "index": 6,
+              "surface": "Zillah",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_zillah",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch02_b089"
+            }
+          ],
+          "seed_skipped_cast": [
+            {
+              "index": 2,
+              "surface": "Mrs. Heathcliff",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 3,
+              "surface": "the young man",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            }
+          ]
+        }
+      },
+      {
+        "chapter_id": "wh_ch03",
+        "summary": "Mr. Lockwood spends a night at Wuthering Heights, reads old writings, falls into troubled sleep, is startled by a tapping at the window, then meets Heathcliff and leaves the next morning for the Grange.",
+        "seed_report": {
+          "seeded_cast": [
+            {
+              "index": 2,
+              "surface": "Heathcliff",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_heathcliff",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b004"
+            },
+            {
+              "index": 3,
+              "surface": "Joseph",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_joseph",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b008"
+            },
+            {
+              "index": 4,
+              "surface": "Hindley",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_hindley",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b009"
+            },
+            {
+              "index": 5,
+              "surface": "Frances",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_frances",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b011"
+            },
+            {
+              "index": 7,
+              "surface": "Jabez Branderham",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_jabez_branderham",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b020"
+            },
+            {
+              "index": 8,
+              "surface": "Catherine Linton",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_catherine_linton",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b031"
+            },
+            {
+              "index": 10,
+              "surface": "Zillah",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_zillah",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b048"
+            },
+            {
+              "index": 11,
+              "surface": "Hareton Earnshaw",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_hareton_earnshaw",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b060"
+            },
+            {
+              "index": 12,
+              "surface": "Mrs. Heathcliff",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_mrs_heathcliff",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch03_b061"
+            }
+          ],
+          "seed_skipped_cast": [
+            {
+              "index": 0,
+              "surface": "I",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 1,
+              "surface": "she",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 6,
+              "surface": "the unhappy ploughboy",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 9,
+              "surface": "little, ice-cold hand",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 13,
+              "surface": "the young lady",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 14,
+              "surface": "my landlord",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 15,
+              "surface": "my human fixture",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            }
+          ]
+        }
+      },
+      {
+        "chapter_id": "wh_ch04",
+        "summary": "Lockwood talks with Mrs. Dean at Thrushcross Grange about the households at Wuthering Heights, and she begins recounting events from the earlier years at Wuthering Heights, including Mr. Earnshaw’s return with Heathcliff and later disputes among the children.",
+        "seed_report": {
+          "seeded_cast": [
+            {
+              "index": 2,
+              "surface": "Heathcliff",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_heathcliff",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b009"
+            },
+            {
+              "index": 3,
+              "surface": "Mrs. Heathcliff",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_mrs_heathcliff",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b013"
+            },
+            {
+              "index": 4,
+              "surface": "Catherine Linton",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_catherine_linton",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b016"
+            },
+            {
+              "index": 5,
+              "surface": "Hareton Earnshaw",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_hareton_earnshaw",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b019"
+            },
+            {
+              "index": 7,
+              "surface": "Mr. Lockwood",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_mr_lockwood",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b002"
+            },
+            {
+              "index": 8,
+              "surface": "Mr. Hindley Earnshaw",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_mr_hindley_earnshaw",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b035"
+            },
+            {
+              "index": 9,
+              "surface": "Joseph",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_joseph",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b035"
+            },
+            {
+              "index": 10,
+              "surface": "Mr. Earnshaw",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_mr_earnshaw",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b035"
+            },
+            {
+              "index": 11,
+              "surface": "Hindley",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_hindley",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b035"
+            },
+            {
+              "index": 12,
+              "surface": "Cathy",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_cathy",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b035"
+            },
+            {
+              "index": 13,
+              "surface": "Mrs. Earnshaw",
+              "surface_kind": "proper_name",
+              "entity_id": "ent_mrs_earnshaw",
+              "source": "chapter_brief_cast",
+              "evidence_scope": "chapter_level",
+              "surface_evidence_block": null,
+              "first_seen_block": "wh_ch04_b036"
+            }
+          ],
+          "seed_skipped_cast": [
+            {
+              "index": 0,
+              "surface": "Mrs. Dean",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 1,
+              "surface": "I",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            },
+            {
+              "index": 6,
+              "surface": "Miss Cathy",
+              "surface_kind": "descriptor",
+              "reason": "surface_kind_not_proper_name"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "cast_seed_report": {
+    "seeded_cast": [
+      {
+        "index": 2,
+        "surface": "Heathcliff",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_heathcliff",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b009"
+      },
+      {
+        "index": 3,
+        "surface": "Mrs. Heathcliff",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_mrs_heathcliff",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b013"
+      },
+      {
+        "index": 4,
+        "surface": "Catherine Linton",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_catherine_linton",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b016"
+      },
+      {
+        "index": 5,
+        "surface": "Hareton Earnshaw",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_hareton_earnshaw",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b019"
+      },
+      {
+        "index": 7,
+        "surface": "Mr. Lockwood",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_mr_lockwood",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b002"
+      },
+      {
+        "index": 8,
+        "surface": "Mr. Hindley Earnshaw",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_mr_hindley_earnshaw",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b035"
+      },
+      {
+        "index": 9,
+        "surface": "Joseph",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_joseph",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b035"
+      },
+      {
+        "index": 10,
+        "surface": "Mr. Earnshaw",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_mr_earnshaw",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b035"
+      },
+      {
+        "index": 11,
+        "surface": "Hindley",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_hindley",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b035"
+      },
+      {
+        "index": 12,
+        "surface": "Cathy",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_cathy",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b035"
+      },
+      {
+        "index": 13,
+        "surface": "Mrs. Earnshaw",
+        "surface_kind": "proper_name",
+        "entity_id": "ent_mrs_earnshaw",
+        "source": "chapter_brief_cast",
+        "evidence_scope": "chapter_level",
+        "surface_evidence_block": null,
+        "first_seen_block": "wh_ch04_b036"
+      }
+    ],
+    "seed_skipped_cast": [
+      {
+        "index": 0,
+        "surface": "Mrs. Dean",
+        "surface_kind": "descriptor",
+        "reason": "surface_kind_not_proper_name"
+      },
+      {
+        "index": 1,
+        "surface": "I",
+        "surface_kind": "descriptor",
+        "reason": "surface_kind_not_proper_name"
+      },
+      {
+        "index": 6,
+        "surface": "Miss Cathy",
+        "surface_kind": "descriptor",
+        "reason": "surface_kind_not_proper_name"
+      }
+    ]
+  },
+  "validation_counts": {
+    "brief_ok": 1,
+    "brief_failed": 0,
+    "seeded_cast": 11,
+    "seed_skipped_cast": 3,
+    "lexicon_ok": 12,
+    "lexicon_failed": 0,
+    "narrative_ok": 12,
+    "narrative_failed": 0,
+    "parse_fail": 0,
+    "phase_leak": 0,
+    "attribution_enum_dropped": 0,
+    "attribution_enum_normalized": 5,
+    "pronoun_dropped": 16,
+    "mention_named_ids_cleared": 6,
+    "named_pronoun_downgraded": 2,
+    "named_ids_cleared": 48,
+    "outside_window_neighbor_dropped": 32,
+    "outside_window_nonexistent_dropped": 0,
+    "context_only_used_true": 7,
+    "brief_leak_tokens_dropped": 0,
+    "nonperson_event_dropped": 11
+  },
+  "accounting": {
+    "logical_calls": 25,
+    "attempts": 26,
+    "cache_hits": 0,
+    "cost_usd": 0.0645243,
+    "prompt_tokens": 86990,
+    "cached_tokens": 23552,
+    "completion_tokens": 24038,
+    "reasoning_tokens": 0,
+    "incremental_cost_usd": 0.0645243,
+    "incremental_prompt_tokens": 86990,
+    "incremental_cached_tokens": 23552,
+    "incremental_completion_tokens": 24038,
+    "incremental_reasoning_tokens": 0
+  },
+  "call_records": [
+    {
+      "mode": "literary_chapter_brief_v1",
+      "window_id": "wh_ch04",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0024615,
+      "prompt_tokens": 5206,
+      "cached_tokens": 0,
+      "completion_tokens": 580,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "cast_on_stage": 14,
+        "cast_proper_name": 11,
+        "cast_descriptor": 3,
+        "scenes": 2,
+        "cast_dropped": 0,
+        "scene_dropped": 0,
+        "leak_tokens_dropped": 0,
+        "dropped_bad_block": 0
+      },
+      "incremental_cost_usd": 0.0024615,
+      "incremental_prompt_tokens": 5206,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 580,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_001",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00163125,
+      "prompt_tokens": 2701,
+      "cached_tokens": 0,
+      "completion_tokens": 478,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 3,
+        "named": 1,
+        "candidate": 2,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 5,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 0
+      },
+      "incremental_cost_usd": 0.00163125,
+      "incremental_prompt_tokens": 2701,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 478,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_001",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00331525,
+      "prompt_tokens": 3197,
+      "cached_tokens": 0,
+      "completion_tokens": 1258,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 5,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 1,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 4,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 2,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 4,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.00331525,
+      "incremental_prompt_tokens": 3197,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 1258,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_002",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.001537,
+      "prompt_tokens": 2548,
+      "cached_tokens": 0,
+      "completion_tokens": 450,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 6,
+        "named": 5,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 1,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 0
+      },
+      "incremental_cost_usd": 0.001537,
+      "incremental_prompt_tokens": 2548,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 450,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_002",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0047198,
+      "prompt_tokens": 3140,
+      "cached_tokens": 1792,
+      "completion_tokens": 2169,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 8,
+        "events": 8,
+        "phase_leak": 0,
+        "address_term_present": 3,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.0047198,
+      "incremental_prompt_tokens": 3140,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 2169,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_003",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0021235,
+      "prompt_tokens": 2422,
+      "cached_tokens": 0,
+      "completion_tokens": 759,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 14,
+        "named": 9,
+        "candidate": 1,
+        "unknown": 4,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 1
+      },
+      "incremental_cost_usd": 0.0021235,
+      "incremental_prompt_tokens": 2422,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 759,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_003",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0060903,
+      "prompt_tokens": 3206,
+      "cached_tokens": 1792,
+      "completion_tokens": 2846,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 11,
+        "events": 10,
+        "phase_leak": 0,
+        "address_term_present": 1,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.0060903,
+      "incremental_prompt_tokens": 3206,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 2846,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_004",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00170275,
+      "prompt_tokens": 2651,
+      "cached_tokens": 0,
+      "completion_tokens": 520,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 3,
+        "mentions": 6,
+        "named": 5,
+        "candidate": 1,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 0
+      },
+      "incremental_cost_usd": 0.00170275,
+      "incremental_prompt_tokens": 2651,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 520,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_004",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0047198,
+      "prompt_tokens": 3228,
+      "cached_tokens": 1792,
+      "completion_tokens": 2158,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 8,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 5,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 11,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 5,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 15,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.0047198,
+      "incremental_prompt_tokens": 3228,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 2158,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_005",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0031815,
+      "prompt_tokens": 2846,
+      "cached_tokens": 0,
+      "completion_tokens": 1235,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 6,
+        "mentions": 12,
+        "named": 7,
+        "candidate": 0,
+        "unknown": 5,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 8,
+        "mention_named_ids_cleared": 6,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 0
+      },
+      "incremental_cost_usd": 0.0031815,
+      "incremental_prompt_tokens": 2846,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 1235,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_005",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00241105,
+      "prompt_tokens": 3545,
+      "cached_tokens": 1792,
+      "completion_tokens": 964,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 3,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 2,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 1,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 1,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 1,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 9,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.00241105,
+      "incremental_prompt_tokens": 3545,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 964,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_006",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0014,
+      "prompt_tokens": 3208,
+      "cached_tokens": 0,
+      "completion_tokens": 299,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 2,
+        "mentions": 3,
+        "named": 1,
+        "candidate": 2,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 1
+      },
+      "incremental_cost_usd": 0.0014,
+      "incremental_prompt_tokens": 3208,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 299,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_006",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0016843,
+      "prompt_tokens": 3710,
+      "cached_tokens": 1792,
+      "completion_tokens": 580,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 2,
+        "events": 2,
+        "phase_leak": 0,
+        "address_term_present": 2,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.0016843,
+      "incremental_prompt_tokens": 3710,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 580,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_007",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00147325,
+      "prompt_tokens": 2981,
+      "cached_tokens": 0,
+      "completion_tokens": 364,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 6,
+        "named": 3,
+        "candidate": 2,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 1
+      },
+      "incremental_cost_usd": 0.00147325,
+      "incremental_prompt_tokens": 2981,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 364,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_007",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00214505,
+      "prompt_tokens": 3585,
+      "cached_tokens": 1792,
+      "completion_tokens": 826,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 3,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 2,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.00214505,
+      "incremental_prompt_tokens": 3585,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 826,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_008",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00232525,
+      "prompt_tokens": 3221,
+      "cached_tokens": 0,
+      "completion_tokens": 760,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 10,
+        "named": 7,
+        "candidate": 0,
+        "unknown": 3,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 1
+      },
+      "incremental_cost_usd": 0.00232525,
+      "incremental_prompt_tokens": 3221,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 760,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_008",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00330155,
+      "prompt_tokens": 3867,
+      "cached_tokens": 1792,
+      "completion_tokens": 1369,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 0,
+        "events": 9,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 7,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 2,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 12,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.00330155,
+      "incremental_prompt_tokens": 3867,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 1369,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_009",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00257475,
+      "prompt_tokens": 3387,
+      "cached_tokens": 0,
+      "completion_tokens": 864,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 9,
+        "named": 6,
+        "candidate": 3,
+        "unknown": 0,
+        "dropped_bad_block": 9,
+        "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 9,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 1
+      },
+      "incremental_cost_usd": 0.00257475,
+      "incremental_prompt_tokens": 3387,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 864,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_009",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0028783,
+      "prompt_tokens": 8590,
+      "cached_tokens": 5632,
+      "completion_tokens": 999,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 0,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 1,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 1,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 2,
+        "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.0028783,
+      "incremental_prompt_tokens": 8590,
+      "incremental_cached_tokens": 5632,
+      "incremental_completion_tokens": 999,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_010",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00272175,
+      "prompt_tokens": 3199,
+      "cached_tokens": 0,
+      "completion_tokens": 961,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 3,
+        "mentions": 7,
+        "named": 5,
+        "candidate": 1,
+        "unknown": 1,
+        "dropped_bad_block": 8,
+        "pronoun_dropped": 2,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 8,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 1
+      },
+      "incremental_cost_usd": 0.00272175,
+      "incremental_prompt_tokens": 3199,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 961,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_010",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0046303,
+      "prompt_tokens": 3774,
+      "cached_tokens": 1792,
+      "completion_tokens": 2045,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 1,
+        "events": 0,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 1,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 1,
+        "outside_window_neighbor_dropped": 14,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.0046303,
+      "incremental_prompt_tokens": 3774,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 2045,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_011",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.001436,
+      "prompt_tokens": 3064,
+      "cached_tokens": 0,
+      "completion_tokens": 335,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 2,
+        "mentions": 4,
+        "named": 1,
+        "candidate": 3,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 1
+      },
+      "incremental_cost_usd": 0.001436,
+      "incremental_prompt_tokens": 3064,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 335,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_011",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0023558,
+      "prompt_tokens": 3596,
+      "cached_tokens": 1792,
+      "completion_tokens": 930,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 3,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 1,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 11,
+        "outside_window_neighbor_dropped": 1,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.0023558,
+      "incremental_prompt_tokens": 3596,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 930,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_wh_ch04_012",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00096375,
+      "prompt_tokens": 2823,
+      "cached_tokens": 0,
+      "completion_tokens": 129,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 2,
+        "named": 2,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "mention_named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0,
+        "context_only_used_true": 0
+      },
+      "incremental_cost_usd": 0.00096375,
+      "incremental_prompt_tokens": 2823,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 129,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_wh_ch04_012",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00074055,
+      "prompt_tokens": 3295,
+      "cached_tokens": 1792,
+      "completion_tokens": 160,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 0,
+        "events": 1,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 1,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0,
+        "attribution_enum_normalized": 0,
+        "named_pronoun_downgraded": 0,
+        "named_ids_cleared": 0,
+        "outside_window_neighbor_dropped": 0,
+        "outside_window_nonexistent_dropped": 0
+      },
+      "incremental_cost_usd": 0.00074055,
+      "incremental_prompt_tokens": 3295,
+      "incremental_cached_tokens": 1792,
+      "incremental_completion_tokens": 160,
+      "incremental_reasoning_tokens": 0
+    }
+  ],
+  "artifact_manifest": [
+    {
+      "path": "brief/wh_ch04.json",
+      "sha256": "ba99bcae8d8ca043bddc546d195e2ab6b476934e6ecae5a729217e16e8b1a149",
+      "size": 29862
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_001.json",
+      "sha256": "9ebf92defaf31025876cfa2547aec024065e059a8ab9a281f14aea14f01a66c8",
+      "size": 17652
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_002.json",
+      "sha256": "9b5f10696b7244a648e9996e9e9b821e11fdd8e7602c28518c0d3d9f156147eb",
+      "size": 16970
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_003.json",
+      "sha256": "9556fd35cf8c69ccd98fc562fa968851bff09c32f87a0a4998c4240b1bd6c995",
+      "size": 20020
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_004.json",
+      "sha256": "c45194e6a3fe457608776c88d87d68f37162f2f4490a495e73ba80222ec9eb88",
+      "size": 18287
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_005.json",
+      "sha256": "bfc6fa7098d224d5cac0bf25c73c556698fe7c1ec3cbb15f869ab261f51fbb3b",
+      "size": 27013
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_006.json",
+      "sha256": "a6ad93c7d0620c962e5627908ec65d6b5ef16d3a4f4a741599c671f22d0baea0",
+      "size": 18743
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_007.json",
+      "sha256": "5db915476dd7c7e484d859076164150e6dd4905787e6ef7bc347833930818a53",
+      "size": 18319
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_008.json",
+      "sha256": "05edd370e1ec4298aebc9bb09dc98f9772e63efb3ed05e44c95047def95458dc",
+      "size": 21771
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_009.json",
+      "sha256": "3d64c31e7d8739c09e6394c60deea8426286517f838ffc104a41a6df43128fc1",
+      "size": 24802
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_010.json",
+      "sha256": "b4ed150767a50b982da41105a6f665c240b6f10ade3b92639dfc836646a02efd",
+      "size": 24964
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_011.json",
+      "sha256": "8d15a3cb9c7d61d599e51d9e30239570d8f5b6e7fb6db72b3d557ca1a789dd2a",
+      "size": 18256
+    },
+    {
+      "path": "lexicon/wb_wh_ch04_012.json",
+      "sha256": "3246f584ff69d05f6a65b6f740d9711af71a6aab1f6d3943c2e4760a6f74f8bc",
+      "size": 15014
+    },
+    {
+      "path": "narrative/wb_wh_ch04_001.json",
+      "sha256": "85227a3eb78b0bf72f5a61e2642b5d10206f2482e2afd9d6d169a06829c1dd51",
+      "size": 29114
+    },
+    {
+      "path": "narrative/wb_wh_ch04_002.json",
+      "sha256": "975b3ae69fee470f35ed68fa349d9863a607a32d6507eb90ee3f85f2ae68d092",
+      "size": 38867
+    },
+    {
+      "path": "narrative/wb_wh_ch04_003.json",
+      "sha256": "0362cfafa10e13691f5f573f0d3d3d49998c20f488924eb17d4ae29d9d9671fc",
+      "size": 46490
+    },
+    {
+      "path": "narrative/wb_wh_ch04_004.json",
+      "sha256": "c8175cd7cf3d70e212e7f0215b4215521944dd30aed60bc8c0cf7799dca44fca",
+      "size": 38729
+    },
+    {
+      "path": "narrative/wb_wh_ch04_005.json",
+      "sha256": "fd7d918a9cca43e7ade2c5eed5e3ada8c8c22287fb5d2469b819bffb0f264945",
+      "size": 28355
+    },
+    {
+      "path": "narrative/wb_wh_ch04_006.json",
+      "sha256": "93b04b4dc96ad943131eb455fd4085ab8a9d7691511f7870efaae694a53c8062",
+      "size": 23734
+    },
+    {
+      "path": "narrative/wb_wh_ch04_007.json",
+      "sha256": "72f3fde994f5d3db13dc01460ec6d21d901d98ddf1d4d5c35dc42d4727815592",
+      "size": 25967
+    },
+    {
+      "path": "narrative/wb_wh_ch04_008.json",
+      "sha256": "7b741b2e23ae83adbafeed1597070c3a0cc0352b88bc3e9ded04bb1e018a51ef",
+      "size": 34194
+    },
+    {
+      "path": "narrative/wb_wh_ch04_009.json",
+      "sha256": "b786eb87e872a14f91d1db371ae2f0f9331213e8276a8330e83753e745ad8b9b",
+      "size": 27921
+    },
+    {
+      "path": "narrative/wb_wh_ch04_010.json",
+      "sha256": "d8091a607e9b28c24926a7c424f49e80ed78889ed9453dea2cb085fc704f1189",
+      "size": 31381
+    },
+    {
+      "path": "narrative/wb_wh_ch04_011.json",
+      "sha256": "8cde9640045324ad30d424479b44ba9209caf5ea4245bdb36a510dd09a5bf1d6",
+      "size": 28446
+    },
+    {
+      "path": "narrative/wb_wh_ch04_012.json",
+      "sha256": "ed842bf303d30c57ee63c05c9ab71e1c7814fa9656444e926aee5ea409dbb850",
+      "size": 17272
+    }
+  ],
+  "created_at": "2026-07-10T08:16:12.507024+00:00",
+  "checkpoint_hash": "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11"
+}
