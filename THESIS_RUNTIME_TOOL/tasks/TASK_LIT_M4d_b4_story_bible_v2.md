@@ -357,3 +357,43 @@ Soi raw response thật (m3_v2/wh_ch01/...shard_01_attempt_01.json):
   — mở rộng phải có bằng chứng mới, không normalize phòng hờ).
 - CodeX: **Luna max** (fix nhỏ, spec chặt). Sau fix + test → chạy lại M3V2 (resume; kỳ vọng
   call ch1-identity from_cache=true, $0, rồi đi tiếp 9 call thật).
+
+---
+# CHỐT AMENDMENT #2 (Claude, 2026-07-11): validator ĐỌC SAI ngữ nghĩa evidence — NỚI invariant,
+# KHÔNG lọc atom, GIỮ provenance nguyên văn
+
+Soi 4 evidence bị bác trên raw thật: b019 "Joseph mumbled... so HIS MASTER dived down" và
+b020 "MR. HEATHCLIFF and HIS MAN climbed" — mỗi câu giải quyết danh tính cho HAI nhân vật cùng
+lúc (his master→Heathcliff NEO QUA Joseph; his man→Joseph neo qua Heathcliff). Model trích cùng
+câu cho cả hai nhóm, kê đủ atoms câu đó resolve = cách annotator người làm. Check
+`same_identity source_atom outside_group` đọc nghĩa đen "mọi atom = một người" là ĐỌC SAI ngữ
+nghĩa: source_atom_ids là "các atom mà quote này resolve", không phải "các atom cùng một người".
+(Variant-4 validator-wrong, đo trên call thật; check này cũng KHÔNG thuộc schema đã khoá —
+là strictness CodeX thêm khi implement, nới nó không mở lại lock.)
+
+**Quyết định — phương án 3 (không phải 2 phương án CodeX nêu):**
+- KHÔNG lọc atom khỏi evidence (mất provenance — đúng lo ngại của CodeX).
+- KHÔNG cho qua vô điều kiện: giữ các check (a) atom tồn tại sau normalize, (b) không duplicate,
+  (c) must_touch_group (≥1 source atom thuộc group — check sẵn có).
+- NỚI đúng một điều: same_identity ĐƯỢC PHÉP chứa atom thuộc NHÓM KHÁC (câu resolve chéo),
+  đếm + surface `evidence_cross_group_source_atoms` trong audit/report (kỳ vọng =4 trên ch1).
+- Test: fixture = raw response thật → sau normalize(17) + relax phải PASS TRỌN;
+  same_identity trỏ atom KHÔNG TỒN TẠI vẫn reject; prompt GIỮ KHOÁ → resume ăn cache $0.
+
+---
+
+## AMENDMENT #3 (2026-07-11, Claude gate) — phase prompt micro-change: OUTPUT JSON line (API compatibility)
+
+**Trigger (real artifacts):** resume after amendment #2 halted at `halted_technical_gate` / `request_llm_parse_or_transport_failed`: OpenAI 400 `'messages' must contain the word 'json' ... to use 'response_format' of type 'json_object'` on `literary_phase_segment_v2` wh_ch01 shard 1, attempts 1+2 (raw retained, usage 0/0 — no tokens billed, no publish/checkpoint). Identity ch1 replayed from cache as designed ($0). Verified: the phase blockquote contained NO literal "json" (identity prompt has it via its Output-JSON-only line); the rendered user payload keys don't contain the substring either.
+
+**Decision (APPROVED, prompt owner = Claude):** append exactly ONE line to the `literary_phase_segment_v2` blockquote:
+
+`OUTPUT: JSON only — one JSON object with exactly two keys, "relation_phases" and "relation_facts", holding the lists described above; every phase includes its pair. No text outside the JSON object.`
+
+- Fixes the API requirement (literal "JSON" in messages) — a transport/compatibility constraint, not a semantic change.
+- Also closes a latent gap: the prompt never declared the output envelope; only the user payload's `response_envelope` did. The line states exactly the keys the parser/validator already requires (`relation_phases`, `relation_facts`, phase includes `pair`) — alignment with existing code, no new schema.
+- Verified via REAL loader (`load_system_prompt_for_chapter`, PHASE_SEGMENT_VERSION): rendered prompt now contains "JSON"; identity prompt untouched → identity cache keys preserved.
+- Cache impact: phase prompts get a new cache key — acceptable, no successful phase response exists to lose. Identity ch1 stays $0 on resume.
+- Amendment #2 relax code independently gated: diff removes ONLY the `same_identity outside_group` check, keeps exists/no-dup/must_touch_group, surfaces `evidence_atom_id_normalized` + `evidence_cross_group_source_atoms`; focused tests re-run by Claude 15/15.
+
+**Next:** CodeX re-runs `--resume` (no code change needed — prompt loads from design doc at runtime). Expect: identity ch1 from_cache, phase ch1 real call, then remaining scopes.
