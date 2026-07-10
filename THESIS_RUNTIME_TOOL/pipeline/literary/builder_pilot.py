@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import os
 import re
+import shutil
 import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
@@ -12,6 +14,17 @@ from xml.etree import ElementTree as ET
 
 from pipeline.agents.llm_client import LLMClient, LLMResult, estimate_prompt_tokens
 from pipeline.agents.llm_config import LLMConfig
+from pipeline.literary.checkpoint import (
+    CheckpointLock,
+    artifact_manifest,
+    build_checkpoint,
+    canonical_hash,
+    chapter_source_hash,
+    config_hash,
+    read_checkpoint,
+    validate_checkpoint,
+    write_checkpoint_atomic,
+)
 from pipeline.prepass.runner import build_d2l_prepass_windows
 
 
@@ -22,6 +35,10 @@ NARRATIVE_VERSION = "literary_narrative_v1"
 DIGEST_VERSION = "literary_digest_v1"
 CONSOLIDATE_VERSION = "literary_consolidate_v1"
 RESPONSE_FORMAT_JSON = {"type": "json_object"}
+M1_CHECKPOINT_SCHEMA_VERSION = "literary_m1_checkpoint_v1"
+M2_CHECKPOINT_SCHEMA_VERSION = "literary_m2_checkpoint_v1"
+NEIGHBOR_SUMMARY_K = 2
+PACK_POLICY_VERSION = "literary_registry_pack_v1"
 
 GLOSSARY_CATEGORIES = {"place", "object", "cultural", "other"}
 MENTION_TYPES = {"name", "nickname", "descriptor"}
@@ -684,6 +701,323 @@ def load_system_prompt_for_chapter(design_doc: Path, prompt_version: str, chapte
     """Render book-neutral examples with the active chapter id to prevent copied bad ids."""
     prompt = load_system_prompt_from_design(design_doc, prompt_version)
     return prompt.replace("bk_ch01", str(chapter_id))
+
+
+def _checkpoint_path(out_dir: Path, stage: str, chapter_id: str) -> Path:
+    return Path(out_dir) / "checkpoints" / stage / f"{chapter_id}.json"
+
+
+def _checkpoint_prompt_hashes(
+    design_doc: Path,
+    stage: str,
+    chapter_id: str,
+) -> dict[str, str]:
+    versions = (
+        [BRIEF_VERSION, LEXICON_VERSION, NARRATIVE_VERSION]
+        if stage == "m1"
+        else [DIGEST_VERSION]
+    )
+    return {
+        version: canonical_hash(
+            load_system_prompt_for_chapter(design_doc, version, chapter_id)
+        )
+        for version in versions
+    }
+
+
+def _checkpoint_config_hash(
+    config: LLMConfig,
+    stage: str,
+    *,
+    window_target_tokens: int = 500,
+    window_max_blocks: int = 8,
+) -> str:
+    return config_hash(
+        {
+            "stage": stage,
+            "model": config.model,
+            "temperature": config.temperature,
+            "seed": config.seed,
+            "reasoning_effort": config.reasoning_effort,
+            "verbosity": config.verbosity,
+            "response_format": RESPONSE_FORMAT_JSON,
+            "max_output_tokens": config.max_output_tokens,
+            "daily_token_cap": config.daily_token_cap,
+            "pricing": config.pricing,
+            "prompt_token_cap": config.prompt_token_cap,
+            "window_target_tokens": window_target_tokens if stage == "m1" else None,
+            "window_max_blocks": window_max_blocks if stage == "m1" else None,
+            "neighbor_k": NEIGHBOR_SUMMARY_K,
+            "pack_policy_version": PACK_POLICY_VERSION,
+        }
+    )
+
+
+def _empty_accounting() -> dict[str, int | float]:
+    return {
+        "logical_calls": 0,
+        "attempts": 0,
+        "cache_hits": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 0,
+        "cached_tokens": 0,
+        "completion_tokens": 0,
+        "reasoning_tokens": 0,
+        "incremental_cost_usd": 0.0,
+        "incremental_prompt_tokens": 0,
+        "incremental_cached_tokens": 0,
+        "incremental_completion_tokens": 0,
+        "incremental_reasoning_tokens": 0,
+    }
+
+
+def _add_accounting(
+    left: dict[str, int | float],
+    right: dict[str, int | float],
+) -> dict[str, int | float]:
+    result = _empty_accounting()
+    for key in result:
+        value = float(left.get(key, 0)) + float(right.get(key, 0))
+        result[key] = round(value, 12) if key.endswith("cost_usd") else int(value)
+    return result
+
+
+def _incremental_accounting_view(
+    accounting: dict[str, int | float],
+) -> dict[str, int | float]:
+    return {
+        "logical_calls": int(accounting.get("logical_calls", 0)),
+        "attempts": int(accounting.get("attempts", 0)),
+        "cache_hits": int(accounting.get("cache_hits", 0)),
+        "cost_usd": float(accounting.get("incremental_cost_usd", 0)),
+        "prompt_tokens": int(accounting.get("incremental_prompt_tokens", 0)),
+        "cached_tokens": int(accounting.get("incremental_cached_tokens", 0)),
+        "completion_tokens": int(accounting.get("incremental_completion_tokens", 0)),
+        "reasoning_tokens": int(accounting.get("incremental_reasoning_tokens", 0)),
+    }
+
+
+def _add_counts(left: dict[str, int], right: dict[str, int]) -> dict[str, int]:
+    result = dict(left)
+    for key, value in right.items():
+        result[key] = int(result.get(key, 0)) + int(value)
+    return result
+
+
+def _diff_counts(after: dict[str, int], before: dict[str, int]) -> dict[str, int]:
+    return {key: int(after.get(key, 0)) - int(before.get(key, 0)) for key in after}
+
+
+def _chapter_accounting(call_records: list[dict[str, Any]]) -> dict[str, int | float]:
+    result = _empty_accounting()
+    result["logical_calls"] = len(call_records)
+    result["attempts"] = sum(int(item.get("attempts") or 0) for item in call_records)
+    for item in call_records:
+        result["cache_hits"] = int(result["cache_hits"]) + int(item.get("cache_hits") or 0)
+        result["cost_usd"] = float(result["cost_usd"]) + float(item.get("cost_usd") or 0)
+        for key in [
+            "prompt_tokens",
+            "cached_tokens",
+            "completion_tokens",
+            "reasoning_tokens",
+        ]:
+            result[key] = int(result[key]) + int(item.get(key) or 0)
+        result["incremental_cost_usd"] = float(result["incremental_cost_usd"]) + float(item.get("incremental_cost_usd") or 0)
+        for key in ["prompt_tokens", "cached_tokens", "completion_tokens", "reasoning_tokens"]:
+            incremental_key = f"incremental_{key}"
+            result[incremental_key] = int(result[incremental_key]) + int(item.get(incremental_key) or 0)
+    result["cost_usd"] = round(float(result["cost_usd"]), 12)
+    result["incremental_cost_usd"] = round(float(result["incremental_cost_usd"]), 12)
+    return result
+
+
+def _chapter_checkpoint_clean(stage: str, counts: dict[str, int]) -> bool:
+    if stage == "m1":
+        return all(
+            int(counts.get(key, 0)) == 0
+            for key in [
+                "brief_failed",
+                "lexicon_failed",
+                "narrative_failed",
+                "parse_fail",
+                "phase_leak",
+            ]
+        )
+    return all(
+        int(counts.get(key, 0)) == 0
+        for key in ["digest_failed", "parse_fail"]
+    )
+
+
+def _chapter_work_dir(out_dir: Path, stage: str, chapter_id: str) -> Path:
+    path = Path(out_dir) / ".checkpoint_work" / stage / chapter_id
+    if path.exists():
+        shutil.rmtree(path)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _promote_chapter_artifacts(
+    work_dir: Path,
+    out_dir: Path,
+    stage: str,
+    chapter_id: str,
+) -> list[Path]:
+    promoted: list[Path] = []
+    subdirs = ["brief", "lexicon", "narrative"] if stage == "m1" else ["digest"]
+    for subdir in subdirs:
+        source_dir = Path(work_dir) / subdir
+        destination_dir = Path(out_dir) / subdir
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        pattern = f"wb_{chapter_id}_*.json" if subdir in {"lexicon", "narrative"} else f"{chapter_id}.json"
+        sources = sorted(source_dir.glob(pattern)) if source_dir.exists() else []
+        for stale in destination_dir.glob(pattern):
+            stale.unlink()
+        for source in sources:
+            destination = destination_dir / source.name
+            os.replace(source, destination)
+            promoted.append(destination)
+    shutil.rmtree(work_dir, ignore_errors=True)
+    return promoted
+
+
+def _checkpoint_expected(
+    *,
+    stage: str,
+    chapter: dict[str, Any],
+    chapter_index: int,
+    chapter_sequence_prefix: list[str],
+    design_doc: Path,
+    config_hash_value: str,
+    parent_checkpoint_hash: str | None,
+    input_m1_checkpoint_hash: str | None = None,
+) -> dict[str, Any]:
+    expected = {
+        "stage": stage,
+        "chapter_id": str(chapter["chapter_id"]),
+        "chapter_index": chapter_index,
+        "chapter_sequence_prefix": chapter_sequence_prefix,
+        "source_hash": chapter_source_hash(chapter),
+        "prompt_hashes": _checkpoint_prompt_hashes(
+            design_doc, stage, str(chapter["chapter_id"])
+        ),
+        "config_hash": config_hash_value,
+        "schema_version": (
+            M1_CHECKPOINT_SCHEMA_VERSION if stage == "m1" else M2_CHECKPOINT_SCHEMA_VERSION
+        ),
+        "parent_checkpoint_hash": parent_checkpoint_hash,
+    }
+    if stage == "m2":
+        expected["input_m1_checkpoint_hash"] = input_m1_checkpoint_hash
+    return expected
+
+
+def _load_valid_checkpoint_prefix(
+    *,
+    stage: str,
+    selected: list[dict[str, Any]],
+    out_dir: Path,
+    design_doc: Path,
+    config_hash_value: str,
+    input_m1_hashes: dict[str, str] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    checkpoints: list[dict[str, Any]] = []
+    mismatches: list[dict[str, Any]] = []
+    parent_hash: str | None = None
+    prefix: list[str] = []
+    for chapter_index, chapter in enumerate(selected):
+        chapter_id = str(chapter["chapter_id"])
+        prefix.append(chapter_id)
+        path = _checkpoint_path(out_dir, stage, chapter_id)
+        if not path.is_file():
+            mismatches.append({"chapter_id": chapter_id, "fields": ["missing"]})
+            break
+        try:
+            checkpoint = read_checkpoint(path)
+        except Exception as exc:
+            mismatches.append(
+                {"chapter_id": chapter_id, "fields": [f"read_error:{type(exc).__name__}"]}
+            )
+            break
+        expected = _checkpoint_expected(
+            stage=stage,
+            chapter=chapter,
+            chapter_index=chapter_index,
+            chapter_sequence_prefix=list(prefix),
+            design_doc=design_doc,
+            config_hash_value=config_hash_value,
+            parent_checkpoint_hash=parent_hash,
+            input_m1_checkpoint_hash=(input_m1_hashes or {}).get(chapter_id),
+        )
+        errors = validate_checkpoint(checkpoint, root=out_dir, expected=expected)
+        if errors:
+            mismatches.append({"chapter_id": chapter_id, "fields": errors})
+            break
+        checkpoints.append(checkpoint)
+        parent_hash = str(checkpoint["checkpoint_hash"])
+    return checkpoints, mismatches
+
+
+def _require_resume_from_document_start(
+    document: dict[str, Any], selected: list[dict[str, Any]]
+) -> None:
+    document_chapters = document.get("chapters") or []
+    if not selected or not document_chapters:
+        return
+    expected = str(document_chapters[0].get("chapter_id") or "")
+    actual = str(selected[0].get("chapter_id") or "")
+    if actual != expected:
+        raise ValueError(
+            "--resume requires the full chapter prefix from the document start; "
+            f"expected first chapter {expected}, got {actual}"
+        )
+
+
+def _m1_checkpoint_chain_for_m2(
+    *,
+    selected: list[dict[str, Any]],
+    m1_dir: Path,
+    design_doc: Path,
+    m1_report: dict[str, Any],
+) -> list[dict[str, Any]]:
+    checkpoints: list[dict[str, Any]] = []
+    parent_hash: str | None = None
+    prefix: list[str] = []
+    reported_selected = m1_report.get("chapters_selected")
+    report_chapters = (
+        [str(chapter_id) for chapter_id in reported_selected]
+        if isinstance(reported_selected, list)
+        else []
+    )
+    for chapter_index, chapter in enumerate(selected):
+        chapter_id = str(chapter["chapter_id"])
+        prefix.append(chapter_id)
+        path = _checkpoint_path(m1_dir, "m1", chapter_id)
+        if not path.is_file():
+            # A final M1 ledger is as-of only when that report itself contains
+            # exactly this one chapter. A multi-chapter legacy report would
+            # leak future entities into a one-chapter M2 digest.
+            if len(selected) == 1 and report_chapters == [chapter_id]:
+                return []
+            raise ValueError(f"M2 requires M1 as-of checkpoint for {chapter_id}: {path}")
+        checkpoint = read_checkpoint(path)
+        expected = {
+            "stage": "m1",
+            "chapter_id": chapter_id,
+            "chapter_index": chapter_index,
+            "chapter_sequence_prefix": list(prefix),
+            "source_hash": chapter_source_hash(chapter),
+            "prompt_hashes": _checkpoint_prompt_hashes(design_doc, "m1", chapter_id),
+            "schema_version": M1_CHECKPOINT_SCHEMA_VERSION,
+            "parent_checkpoint_hash": parent_hash,
+            "config_hash": checkpoint.get("config_hash"),
+        }
+        errors = validate_checkpoint(checkpoint, root=m1_dir, expected=expected)
+        if errors:
+            raise ValueError(f"Invalid M1 as-of checkpoint {chapter_id}: {errors}")
+        checkpoints.append(checkpoint)
+        parent_hash = str(checkpoint["checkpoint_hash"])
+    return checkpoints
 
 
 def build_chapter_brief_messages(
@@ -1812,6 +2146,41 @@ def run_m1(
     confirm_usd: float,
     window_target_tokens: int = 500,
     window_max_blocks: int = 8,
+    resume: bool = False,
+) -> dict[str, Any]:
+    lock = CheckpointLock(Path(out_dir))
+    lock.acquire()
+    try:
+        return _run_m1_locked(
+            document,
+            chapters,
+            design_doc=design_doc,
+            config=config,
+            client=client,
+            out_dir=out_dir,
+            confirm_usd=confirm_usd,
+            window_target_tokens=window_target_tokens,
+            window_max_blocks=window_max_blocks,
+            resume=resume,
+            lock_took_over_stale=lock.took_over_stale,
+        )
+    finally:
+        lock.release()
+
+
+def _run_m1_locked(
+    document: dict[str, Any],
+    chapters: list[str],
+    *,
+    design_doc: Path,
+    config: LLMConfig,
+    client: LLMClient,
+    out_dir: Path,
+    confirm_usd: float,
+    window_target_tokens: int = 500,
+    window_max_blocks: int = 8,
+    resume: bool = False,
+    lock_took_over_stale: bool = False,
 ) -> dict[str, Any]:
     estimate = estimate_m1(
         document,
@@ -1833,6 +2202,8 @@ def run_m1(
         )
 
     selected = select_chapters(document, chapters)
+    if resume:
+        _require_resume_from_document_start(document, selected)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "brief").mkdir(parents=True, exist_ok=True)
     (out_dir / "lexicon").mkdir(parents=True, exist_ok=True)
@@ -1870,12 +2241,65 @@ def run_m1(
     total_cached_tokens = 0
     cache_hits = 0
     calls = 0
+    checkpoint_config = _checkpoint_config_hash(
+        config,
+        "m1",
+        window_target_tokens=window_target_tokens,
+        window_max_blocks=window_max_blocks,
+    )
+    restored_checkpoints: list[dict[str, Any]] = []
+    resume_mismatches: list[dict[str, Any]] = []
+    restored_accounting = _empty_accounting()
+    restored_chapters: list[str] = []
+    ran_chapters: list[str] = []
+    checkpoint_parent_hash: str | None = None
+    checkpoint_chain_clean = True
+    if resume:
+        restored_checkpoints, resume_mismatches = _load_valid_checkpoint_prefix(
+            stage="m1",
+            selected=selected,
+            out_dir=out_dir,
+            design_doc=design_doc,
+            config_hash_value=checkpoint_config,
+        )
+        for checkpoint in restored_checkpoints:
+            restored_chapters.append(str(checkpoint["chapter_id"]))
+            restored_accounting = _add_accounting(
+                restored_accounting, checkpoint.get("accounting") or {}
+            )
+            validation_counts = _add_counts(
+                validation_counts, checkpoint.get("validation_counts") or {}
+            )
+            call_records.extend(checkpoint.get("call_records") or [])
+        if restored_checkpoints:
+            latest_state = restored_checkpoints[-1].get("state") or {}
+            ledger = dict(latest_state.get("entity_ledger") or {})
+            chapter_summaries = list(latest_state.get("chapter_summaries") or [])
+            checkpoint_parent_hash = str(restored_checkpoints[-1]["checkpoint_hash"])
+            calls = int(restored_accounting["attempts"])
+            cache_hits = int(restored_accounting["cache_hits"])
+            total_cost = float(restored_accounting["cost_usd"])
+            total_prompt_tokens = int(restored_accounting["prompt_tokens"])
+            total_cached_tokens = int(restored_accounting["cached_tokens"])
+            total_completion_tokens = int(restored_accounting["completion_tokens"])
+            total_reasoning_tokens = int(restored_accounting["reasoning_tokens"])
+    start_index = len(restored_checkpoints)
+    this_attempt_call_start = len(call_records)
 
-    for chapter_index, chapter in enumerate(selected):
+    for chapter_index, chapter in enumerate(selected[start_index:], start=start_index):
         chapter_id = str(chapter["chapter_id"])
+        ran_chapters.append(chapter_id)
+        chapter_call_start = len(call_records)
+        chapter_counts_before = dict(validation_counts)
+        chapter_work = _chapter_work_dir(out_dir, "m1", chapter_id)
+        (chapter_work / "brief").mkdir(parents=True, exist_ok=True)
+        (chapter_work / "lexicon").mkdir(parents=True, exist_ok=True)
+        (chapter_work / "narrative").mkdir(parents=True, exist_ok=True)
         block_ids = [str(block.get("block_id")) for block in chapter.get("blocks") or []]
         neighbor_text = render_neighbor_summaries(
-            neighbor_summaries_for_index(chapter_summaries, chapter_index, k=2)
+            neighbor_summaries_for_index(
+                chapter_summaries, chapter_index, k=NEIGHBOR_SUMMARY_K
+            )
         )
         brief_messages = build_chapter_brief_messages(
             design_doc=design_doc,
@@ -1890,7 +2314,7 @@ def run_m1(
             mode=BRIEF_VERSION,
             chapter_id=chapter_id,
             block_ids=block_ids,
-            out_path=out_dir / "brief" / f"{chapter_id}.json",
+            out_path=chapter_work / "brief" / f"{chapter_id}.json",
             validate=lambda payload, ids=block_ids: validate_chapter_brief(
                 payload,
                 chapter_block_ids=ids,
@@ -1947,7 +2371,7 @@ def run_m1(
                 tag=f"lit_m1_{window.window_id}_{LEXICON_VERSION}",
                 mode=LEXICON_VERSION,
                 window=window,
-                out_path=out_dir / "lexicon" / f"{window.window_id}.json",
+                out_path=chapter_work / "lexicon" / f"{window.window_id}.json",
                 validate=lambda payload: validate_lexicon(
                     payload,
                     valid_block_ids=set(window.block_ids),
@@ -2003,7 +2427,7 @@ def run_m1(
                 tag=f"lit_m1_{window.window_id}_{NARRATIVE_VERSION}",
                 mode=NARRATIVE_VERSION,
                 window=window,
-                out_path=out_dir / "narrative" / f"{window.window_id}.json",
+                out_path=chapter_work / "narrative" / f"{window.window_id}.json",
                 validate=lambda payload: validate_narrative(
                     payload,
                     valid_block_ids=set(window.block_ids),
@@ -2053,7 +2477,46 @@ def run_m1(
             validation_counts["context_only_used_true"] += int(
                 (narrative_validation.get("counts") or {}).get("context_only_used_true", 0)
             )
+        promoted = _promote_chapter_artifacts(chapter_work, out_dir, "m1", chapter_id)
+        chapter_counts = _diff_counts(validation_counts, chapter_counts_before)
+        chapter_calls = call_records[chapter_call_start:]
+        chapter_accounting = _chapter_accounting(chapter_calls)
+        if checkpoint_chain_clean and _chapter_checkpoint_clean("m1", chapter_counts):
+            checkpoint_base = {
+                **_checkpoint_expected(
+                    stage="m1",
+                    chapter=chapter,
+                    chapter_index=chapter_index,
+                    chapter_sequence_prefix=[
+                        str(item["chapter_id"]) for item in selected[: chapter_index + 1]
+                    ],
+                    design_doc=design_doc,
+                    config_hash_value=checkpoint_config,
+                    parent_checkpoint_hash=checkpoint_parent_hash,
+                ),
+                "state": {
+                    "entity_ledger": ledger,
+                    "chapter_summaries": chapter_summaries,
+                },
+                "cast_seed_report": seed_report,
+                "validation_counts": chapter_counts,
+                "accounting": chapter_accounting,
+                "call_records": chapter_calls,
+                "artifact_manifest": artifact_manifest(promoted, root=out_dir),
+            }
+            checkpoint = build_checkpoint(checkpoint_base)
+            write_checkpoint_atomic(
+                _checkpoint_path(out_dir, "m1", chapter_id), checkpoint
+            )
+            checkpoint_parent_hash = str(checkpoint["checkpoint_hash"])
+        else:
+            checkpoint_chain_clean = False
 
+    ran_artifact_accounting = _chapter_accounting(
+        call_records[this_attempt_call_start:]
+    )
+    this_attempt_accounting = _incremental_accounting_view(ran_artifact_accounting)
+    combined_accounting = _add_accounting(restored_accounting, ran_artifact_accounting)
     report = {
         "phase": "L2A-1",
         "milestone": "M1",
@@ -2077,6 +2540,19 @@ def run_m1(
             "completion_tokens": total_completion_tokens,
             "reasoning_tokens": total_reasoning_tokens,
         },
+        "accounting_resume": {
+            "restored_total": restored_accounting,
+            "this_attempt": this_attempt_accounting,
+            "combined_total": combined_accounting,
+        },
+        "resume": {
+            "enabled": resume,
+            "resumed_from_checkpoint": restored_chapters,
+            "ran": ran_chapters,
+            "mismatches": resume_mismatches,
+            "lock_took_over_stale": lock_took_over_stale,
+        },
+        "checkpoint_config_hash": checkpoint_config,
         "validation_counts": validation_counts,
         "cast_seed_report": {
             "chapters": [
@@ -2090,6 +2566,7 @@ def run_m1(
         },
         "entity_ledger_size": len(ledger),
         "entity_ledger": ledger,
+        "chapter_summaries": chapter_summaries,
         "call_records": call_records,
         "artifacts": {
             "brief_dir": str(out_dir / "brief"),
@@ -2118,7 +2595,13 @@ def estimate_m2(
 
     selected = select_chapters(document, chapters)
     m1_report = _load_m1_report(m1_dir)
-    chapter_roster = _chapter_roster_from_m1(m1_report)
+    m1_checkpoints = _m1_checkpoint_chain_for_m2(
+        selected=selected,
+        m1_dir=m1_dir,
+        design_doc=design_doc,
+        m1_report=m1_report,
+    )
+    fallback_roster = _chapter_roster_from_m1(m1_report)
     calls: list[dict[str, Any]] = []
     max_prompt_tokens = 0
     total_prompt_tokens = 0
@@ -2126,8 +2609,17 @@ def estimate_m2(
     for chapter_index, chapter in enumerate(selected):
         relation_events = _chapter_relation_events_from_m1(m1_dir, chapter)
         chapter_id = str(chapter["chapter_id"])
+        chapter_roster = (
+            roster_from_ledger(
+                (m1_checkpoints[chapter_index].get("state") or {}).get("entity_ledger") or {}
+            )
+            if m1_checkpoints
+            else fallback_roster
+        )
         neighbor_text = render_neighbor_summaries(
-            neighbor_summaries_for_index(chapter_summaries, chapter_index, k=2)
+            neighbor_summaries_for_index(
+                chapter_summaries, chapter_index, k=NEIGHBOR_SUMMARY_K
+            )
         )
         messages = build_digest_messages(
             design_doc=design_doc,
@@ -2148,7 +2640,9 @@ def estimate_m2(
                 "prompt_tokens_est": prompt_tokens,
                 "max_output_tokens": config.max_output_tokens,
                 "neighbor_summary_count": len(
-                    neighbor_summaries_for_index(chapter_summaries, chapter_index, k=2)
+                    neighbor_summaries_for_index(
+                        chapter_summaries, chapter_index, k=NEIGHBOR_SUMMARY_K
+                    )
                 ),
                 "relation_event_lines": len(
                     [line for line in relation_events.splitlines() if line.strip()]
@@ -2198,6 +2692,39 @@ def run_m2(
     out_dir: Path,
     m1_dir: Path,
     confirm_usd: float,
+    resume: bool = False,
+) -> dict[str, Any]:
+    lock = CheckpointLock(Path(out_dir))
+    lock.acquire()
+    try:
+        return _run_m2_locked(
+            document,
+            chapters,
+            design_doc=design_doc,
+            config=config,
+            client=client,
+            out_dir=out_dir,
+            m1_dir=m1_dir,
+            confirm_usd=confirm_usd,
+            resume=resume,
+            lock_took_over_stale=lock.took_over_stale,
+        )
+    finally:
+        lock.release()
+
+
+def _run_m2_locked(
+    document: dict[str, Any],
+    chapters: list[str],
+    *,
+    design_doc: Path,
+    config: LLMConfig,
+    client: LLMClient,
+    out_dir: Path,
+    m1_dir: Path,
+    confirm_usd: float,
+    resume: bool = False,
+    lock_took_over_stale: bool = False,
 ) -> dict[str, Any]:
     estimate = estimate_m2(
         document,
@@ -2218,8 +2745,19 @@ def run_m2(
         )
 
     selected = select_chapters(document, chapters)
+    if resume:
+        _require_resume_from_document_start(document, selected)
     m1_report = _load_m1_report(m1_dir)
-    chapter_roster = _chapter_roster_from_m1(m1_report)
+    m1_checkpoints = _m1_checkpoint_chain_for_m2(
+        selected=selected,
+        m1_dir=m1_dir,
+        design_doc=design_doc,
+        m1_report=m1_report,
+    )
+    fallback_roster = _chapter_roster_from_m1(m1_report)
+    input_m1_hashes = {
+        str(item["chapter_id"]): str(item["checkpoint_hash"]) for item in m1_checkpoints
+    }
     digest_dir = Path(out_dir) / "digest"
     digest_dir.mkdir(parents=True, exist_ok=True)
     call_records: list[dict[str, Any]] = []
@@ -2235,19 +2773,73 @@ def run_m2(
     }
     total_cost = 0.0
     total_prompt_tokens = 0
+    total_cached_tokens = 0
     total_completion_tokens = 0
     total_reasoning_tokens = 0
     cache_hits = 0
     calls = 0
-    previous_summary = ""
     chapter_summaries: list[dict[str, str]] = []
+    checkpoint_config = _checkpoint_config_hash(config, "m2")
+    restored_checkpoints: list[dict[str, Any]] = []
+    resume_mismatches: list[dict[str, Any]] = []
+    restored_accounting = _empty_accounting()
+    restored_chapters: list[str] = []
+    ran_chapters: list[str] = []
+    checkpoint_parent_hash: str | None = None
+    checkpoint_chain_clean = True
+    if resume:
+        restored_checkpoints, resume_mismatches = _load_valid_checkpoint_prefix(
+            stage="m2",
+            selected=selected,
+            out_dir=out_dir,
+            design_doc=design_doc,
+            config_hash_value=checkpoint_config,
+            input_m1_hashes=input_m1_hashes,
+        )
+        for checkpoint in restored_checkpoints:
+            restored_chapters.append(str(checkpoint["chapter_id"]))
+            restored_accounting = _add_accounting(
+                restored_accounting, checkpoint.get("accounting") or {}
+            )
+            validation_counts = _add_counts(
+                validation_counts, checkpoint.get("validation_counts") or {}
+            )
+            call_records.extend(checkpoint.get("call_records") or [])
+        if restored_checkpoints:
+            chapter_summaries = list(
+                (restored_checkpoints[-1].get("state") or {}).get("chapter_summaries") or []
+            )
+            checkpoint_parent_hash = str(restored_checkpoints[-1]["checkpoint_hash"])
+            calls = int(restored_accounting["attempts"])
+            cache_hits = int(restored_accounting["cache_hits"])
+            total_cost = float(restored_accounting["cost_usd"])
+            total_prompt_tokens = int(restored_accounting["prompt_tokens"])
+            total_cached_tokens = int(restored_accounting["cached_tokens"])
+            total_completion_tokens = int(restored_accounting["completion_tokens"])
+            total_reasoning_tokens = int(restored_accounting["reasoning_tokens"])
+    start_index = len(restored_checkpoints)
+    this_attempt_call_start = len(call_records)
 
-    for chapter_index, chapter in enumerate(selected):
+    for chapter_index, chapter in enumerate(selected[start_index:], start=start_index):
         chapter_id = str(chapter["chapter_id"])
+        ran_chapters.append(chapter_id)
+        chapter_call_start = len(call_records)
+        chapter_counts_before = dict(validation_counts)
+        chapter_work = _chapter_work_dir(out_dir, "m2", chapter_id)
+        (chapter_work / "digest").mkdir(parents=True, exist_ok=True)
         block_ids = [str(block.get("block_id")) for block in chapter.get("blocks") or []]
         relation_events = _chapter_relation_events_from_m1(m1_dir, chapter)
+        chapter_roster = (
+            roster_from_ledger(
+                (m1_checkpoints[chapter_index].get("state") or {}).get("entity_ledger") or {}
+            )
+            if m1_checkpoints
+            else fallback_roster
+        )
         neighbor_text = render_neighbor_summaries(
-            neighbor_summaries_for_index(chapter_summaries, chapter_index, k=2)
+            neighbor_summaries_for_index(
+                chapter_summaries, chapter_index, k=NEIGHBOR_SUMMARY_K
+            )
         )
         messages = build_digest_messages(
             design_doc=design_doc,
@@ -2265,7 +2857,7 @@ def run_m2(
             mode=DIGEST_VERSION,
             chapter_id=chapter_id,
             block_ids=block_ids,
-            out_path=digest_dir / f"{chapter_id}.json",
+            out_path=chapter_work / "digest" / f"{chapter_id}.json",
             validate=lambda payload, ids=block_ids: validate_digest(
                 payload,
                 chapter_block_ids=ids,
@@ -2274,6 +2866,7 @@ def run_m2(
         calls += len(digest_result["attempts"])
         total_cost += float(digest_result["cost_usd"])
         total_prompt_tokens += int(digest_result["prompt_tokens"])
+        total_cached_tokens += int(digest_result["cached_tokens"])
         total_completion_tokens += int(digest_result["completion_tokens"])
         total_reasoning_tokens += int(digest_result["reasoning_tokens"])
         cache_hits += int(digest_result["cache_hits"])
@@ -2286,14 +2879,51 @@ def run_m2(
             validation_counts[key] += int((validation.get("counts") or {}).get(key, 0))
         parsed = digest_result.get("parsed_json") or {}
         if isinstance(parsed, dict):
-            previous_summary = str(parsed.get("chapter_rolling_summary") or "")
+            digest_summary = str(parsed.get("chapter_rolling_summary") or "")
             chapter_summaries.append(
                 {
                     "chapter_id": chapter_id,
-                    "summary": previous_summary.strip() or "(digest summary unavailable)",
+                    "summary": digest_summary.strip() or "(digest summary unavailable)",
                 }
             )
+        promoted = _promote_chapter_artifacts(chapter_work, out_dir, "m2", chapter_id)
+        chapter_counts = _diff_counts(validation_counts, chapter_counts_before)
+        chapter_calls = call_records[chapter_call_start:]
+        chapter_accounting = _chapter_accounting(chapter_calls)
+        if checkpoint_chain_clean and _chapter_checkpoint_clean("m2", chapter_counts):
+            checkpoint_base = {
+                **_checkpoint_expected(
+                    stage="m2",
+                    chapter=chapter,
+                    chapter_index=chapter_index,
+                    chapter_sequence_prefix=[
+                        str(item["chapter_id"]) for item in selected[: chapter_index + 1]
+                    ],
+                    design_doc=design_doc,
+                    config_hash_value=checkpoint_config,
+                    parent_checkpoint_hash=checkpoint_parent_hash,
+                    input_m1_checkpoint_hash=input_m1_hashes.get(chapter_id),
+                ),
+                "state": {"chapter_summaries": chapter_summaries},
+                "digest_summary": digest_summary if isinstance(parsed, dict) else "",
+                "validation_counts": chapter_counts,
+                "accounting": chapter_accounting,
+                "call_records": chapter_calls,
+                "artifact_manifest": artifact_manifest(promoted, root=out_dir),
+            }
+            checkpoint = build_checkpoint(checkpoint_base)
+            write_checkpoint_atomic(
+                _checkpoint_path(out_dir, "m2", chapter_id), checkpoint
+            )
+            checkpoint_parent_hash = str(checkpoint["checkpoint_hash"])
+        else:
+            checkpoint_chain_clean = False
 
+    ran_artifact_accounting = _chapter_accounting(
+        call_records[this_attempt_call_start:]
+    )
+    this_attempt_accounting = _incremental_accounting_view(ran_artifact_accounting)
+    combined_accounting = _add_accounting(restored_accounting, ran_artifact_accounting)
     report = {
         "phase": "L2A-1",
         "milestone": "M2",
@@ -2310,10 +2940,26 @@ def run_m2(
             "cache_hits": cache_hits,
             "cost_usd": round(total_cost, 12),
             "prompt_tokens": total_prompt_tokens,
+            "cached_tokens": total_cached_tokens,
             "completion_tokens": total_completion_tokens,
             "reasoning_tokens": total_reasoning_tokens,
         },
+        "accounting_resume": {
+            "restored_total": restored_accounting,
+            "this_attempt": this_attempt_accounting,
+            "combined_total": combined_accounting,
+        },
+        "resume": {
+            "enabled": resume,
+            "resumed_from_checkpoint": restored_chapters,
+            "ran": ran_chapters,
+            "mismatches": resume_mismatches,
+            "lock_took_over_stale": lock_took_over_stale,
+        },
+        "checkpoint_config_hash": checkpoint_config,
+        "input_m1_checkpoint_hashes": input_m1_hashes,
         "validation_counts": validation_counts,
+        "chapter_summaries": chapter_summaries,
         "call_records": call_records,
         "artifacts": {
             "digest_dir": str(digest_dir),
@@ -2773,6 +3419,9 @@ def _llm_attempt_payload(
 
 
 def _call_summary(call_payload: dict[str, Any]) -> dict[str, Any]:
+    live_attempts = [
+        attempt for attempt in call_payload["attempts"] if not attempt.get("from_cache")
+    ]
     return {
         "mode": call_payload["mode"],
         "window_id": call_payload["window_id"],
@@ -2786,6 +3435,13 @@ def _call_summary(call_payload: dict[str, Any]) -> dict[str, Any]:
         "cache_hits": call_payload["cache_hits"],
         "errors": call_payload["validation"]["errors"],
         "counts": call_payload["validation"].get("counts") or {},
+        "incremental_cost_usd": round(
+            sum(float(item.get("cost_usd") or 0) for item in live_attempts), 12
+        ),
+        "incremental_prompt_tokens": sum(int((item.get("usage") or {}).get("prompt_tokens") or 0) for item in live_attempts),
+        "incremental_cached_tokens": sum(int((item.get("usage") or {}).get("cached_tokens") or 0) for item in live_attempts),
+        "incremental_completion_tokens": sum(int((item.get("usage") or {}).get("completion_tokens") or 0) for item in live_attempts),
+        "incremental_reasoning_tokens": sum(int((item.get("usage") or {}).get("reasoning_tokens") or 0) for item in live_attempts),
     }
 
 

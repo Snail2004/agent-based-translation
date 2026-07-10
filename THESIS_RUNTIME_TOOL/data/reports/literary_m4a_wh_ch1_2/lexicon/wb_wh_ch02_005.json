@@ -1,0 +1,176 @@
+{
+  "mode": "literary_lexicon_v1",
+  "window_id": "wb_wh_ch02_005",
+  "chapter_id": "wh_ch02",
+  "block_ids": [
+    "wh_ch02_b033",
+    "wh_ch02_b034",
+    "wh_ch02_b035",
+    "wh_ch02_b036",
+    "wh_ch02_b037",
+    "wh_ch02_b038",
+    "wh_ch02_b039",
+    "wh_ch02_b040"
+  ],
+  "previous_tail_block_ids": [
+    "wh_ch02_b031",
+    "wh_ch02_b032"
+  ],
+  "next_tail_block_ids": [
+    "wh_ch02_b041",
+    "wh_ch02_b042"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_lexicon_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- The user gives you one WINDOW, not a whole chapter. Extract every qualifying item visible in this window; do not impose a count cap. Windowing keeps each call small; downstream code consolidates duplicates.\n- glossary_candidates are NOT people. Put places (a named house or estate, a town or village, a region — use the work's own proper names) and objects/terms that are NAMED, culturally/period-specific, or plot-significant. An object qualifies ONLY on that bar — NOT ordinary household implements or rooms. Negative examples: window, gate, chair, dinner, letter, moor (unless a proper place name), servant, poker, frying-pan, cellar, hearth, kitchen, table, fire.\n- Each glossary target proposed_target_vi MUST use full Vietnamese diacritics.\n- category MUST be exactly one of: place, object, cultural, other.\n- character_mentions: record every NON-PRONOMINAL surface that names or refers to a person — proper names, nicknames, shortened names, spelling variants, titles used as identity (\"the master\", \"the mistress\"), and characterizing epithets (\"the ruffian\"). One row per surface occurrence-group in this window. A bare pronoun (he/she/I/they…) is NOT a mention surface here even though it refers to a person — skip it entirely; it is resolved later in the narrative pass.\n- Do NOT put plain pronouns as a mention surface: i, me, my, you, your, he, him, his, she, her, we, us, they, them, and their possessives.\n- character_mentions are SINGLE persons. Do NOT record a group (\"the household\", \"the Lintons\", \"the servants\") here — groups appear only in the narrative pass as an addressee/target with reference_kind group.\n- A character_mention must REFER TO A PERSON. Do NOT record descriptions of appearance or body parts, rooms, furniture, or objects (e.g. \"stalwart limbs\", \"a stubborn countenance\", \"the apartment\", \"the round table\", \"a country squire\" used descriptively). A descriptor qualifies only when it stands in for a specific person as a referring expression (\"the master\", \"the ruffian\").\n- The CONTEXT_ONLY tail is READ-ONLY background to help you understand the window — you MUST NOT extract any glossary_candidate or character_mention that lives only in it. Everything you output must come from the ACTIVE window, and every block_id you cite must be an ACTIVE-window marker. Set top-level context_only_used=true if you leaned on the tail to understand the window (advisory audit only); never cite a context-only block_id.\n- mention_type MUST be exactly one of: name, nickname, descriptor. Use descriptor for both titles-used-as-identity (\"the master\", \"the mistress\") and characterizing epithets (\"the ruffian\", \"the old man\").\n- Give every mention a stable mention_id of the form m_<block>_<n> (for example m_wh_ch02_b006_01).\n- resolution_status MUST be exactly one of: named, candidate, unknown. Use named for ANY explicit proper name or nickname — including a bare first name like \"Mira\" or \"Alden\", even on first mention and even without a title (named describes the SURFACE being a real name, not whether you already know the person). Use candidate when the surface is a descriptor or title (never a bare pronoun — pronouns are not extracted in this pass at all) that you map to a specific entity from REGISTRY_CONTEXT_PACK but are not certain. Use unknown ONLY for a non-name reference you cannot attribute — a real proper name is never unknown.\n- candidate_entity_ids: fill ONLY when resolution_status is candidate, copying entity_id values verbatim from REGISTRY_CONTEXT_PACK (a surface may list more than one candidate). Leave it [] for named or unknown. Do NOT invent new entity_id values (never coin an id such as char_<name> or ent_<name>) and do NOT output canonical_entity_id — identity is assigned later by consolidation. If NO REGISTRY_CONTEXT_PACK entry matches the person, leave candidate_entity_ids [] and use resolution_status named (for a real proper name) or unknown (otherwise) — never mint an id to fill the gap.\n- Descriptor examples such as \"his aunt\", \"the innkeeper\", \"the coachman\", or \"the old gardener\" are candidate ONLY when REGISTRY_CONTEXT_PACK gives a matching entity_id. Without a matching pack id, they are unknown with []. There is NO placeholder id: never output an id such as ent_unknown, ent_unnamed, or ent_narrator — any id not literally present in REGISTRY_CONTEXT_PACK is invalid.\n- Do NOT output relationships, dialogue, summaries, or motifs in this pass.\n- Every block_ids entry MUST be a block marker COPIED VERBATIM from the [brackets] in the window text (they look like wh_ch02_b005) — never abbreviate the id or drop its prefix. Only markers that literally appear in this window are allowed.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch02_b005\", \"wh_ch02_b006\"],\n  \"context_only_used\": false,\n  \"glossary_candidates\": [\n    {\"source_term\": \"the Blackmoor Estate\", \"proposed_target_vi\": \"Điền trang Blackmoor\", \"category\": \"place\", \"do_not_translate\": false, \"termhood\": \"name of the principal house; must stay consistent\", \"block_ids\": [\"wh_ch02_b002\"]}\n  ],\n  \"character_mentions\": [\n    {\"mention_id\": \"m_wh_ch02_b003_01\", \"surface\": \"Mr. Alden\", \"mention_type\": \"name\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"block_ids\": [\"wh_ch02_b003\"]},\n    {\"mention_id\": \"m_wh_ch02_b006_01\", \"surface\": \"the master\", \"mention_type\": \"descriptor\", \"resolution_status\": \"unknown\", \"candidate_entity_ids\": [], \"block_ids\": [\"wh_ch02_b006\"]}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | few_scenes\nneutral_premise | Mr. Lockwood revisits Wuthering Heights in bad weather, meets the household at tea, learns who lives there, asks for a guide, and is kept overnight after a struggle at the door.\ncast | Mr. Lockwood | tenant/visitor | wh_ch02_b002\ncast | Joseph | servant | wh_ch02_b004\ncast | Mrs. Heathcliff | hostess | wh_ch02_b010\ncast | the young man | worker | wh_ch02_b010\ncast | Heathcliff | master/host | wh_ch02_b029\ncast | Hareton Earnshaw | worker | wh_ch02_b053\ncast | Zillah | housewife | wh_ch02_b089\nscene | wh_ch02_b002..wh_ch02_b009 | co_present_count=2 | Mr. Lockwood, Joseph\nscene | wh_ch02_b010..wh_ch02_b028 | co_present_count=3 | Mr. Lockwood, Mrs. Heathcliff, the young man\nscene | wh_ch02_b029..wh_ch02_b055 | co_present_count=4 | Mr. Lockwood, Heathcliff, Mrs. Heathcliff, the young man\nscene | wh_ch02_b056..wh_ch02_b092 | co_present_count=6 | Mr. Lockwood, Heathcliff, Mrs. Heathcliff, Joseph, Hareton Earnshaw, Zillah\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch01\nA tenant visits Mr. Heathcliff at Wuthering Heights, is let in, meets Joseph and other household staff, has trouble with the dogs, and stays long enough to exchange remarks before leaving and planning another visit.\n\nREGISTRY_CONTEXT_PACK\nent_heathcliff | Heathcliff | Heathcliff\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_hareton_earnshaw | Hareton Earnshaw | seeded:chapter_brief_cast:no_surface_alias\nent_joseph | Joseph | seeded:chapter_brief_cast:no_surface_alias\nent_mr_lockwood | Mr. Lockwood | seeded:chapter_brief_cast:no_surface_alias\nent_zillah | Zillah | seeded:chapter_brief_cast:no_surface_alias\n\nCHAPTER_ID\nwh_ch02\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch02_b031] “Half an hour?” he said, shaking the white flakes from his clothes; “I wonder you should select the thick of a snow-storm to ramble about in. Do you know that you run a risk of being lost in the marshes? People familiar with these moors often miss their road on such evenings; and I can tell you there is no chance of a change at present.”\n[wh_ch02_b032] “Perhaps I can get a guide among your lads, and he might stay at the Grange till morning—could you spare me one?”\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch02_b041] “My amiable lady!” he interrupted, with an almost diabolical sneer on his face. “Where is she—my amiable lady?”\n[wh_ch02_b042] “Mrs. Heathcliff, your wife, I mean.”\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch02_b033] “No, I could not.”\n[wh_ch02_b034] “Oh, indeed! Well, then, I must trust to my own sagacity.”\n[wh_ch02_b035] “Umph!”\n[wh_ch02_b036] “Are you going to mak’ the tea?” demanded he of the shabby coat, shifting his ferocious gaze from me to the young lady.\n[wh_ch02_b037] “Is he to have any?” she asked, appealing to Heathcliff.\n[wh_ch02_b038] “Get it ready, will you?” was the answer, uttered so savagely that I started. The tone in which the words were said revealed a genuine bad nature. I no longer felt inclined to call Heathcliff a capital fellow. When the preparations were finished, he invited me with—“Now, sir, bring forward your chair.” And we all, including the rustic youth, drew round the table: an austere silence prevailing while we discussed our meal.\n[wh_ch02_b039] I thought, if I had caused the cloud, it was my duty to make an effort to dispel it. They could not every day sit so grim and taciturn; and it was impossible, however ill-tempered they might be, that the universal scowl they wore was their every-day countenance.\n[wh_ch02_b040] “It is strange,” I began, in the interval of swallowing one cup of tea and receiving another—“it is strange how custom can mould our tastes and ideas: many could not imagine the existence of happiness in a life of such complete exile from the world as you spend, Mr. Heathcliff; yet, I’ll venture to say, that, surrounded by your family, and with your amiable lady as the presiding genius over your home and heart—”"
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch02",
+    "window_block_ids": [
+      "wh_ch02_b033",
+      "wh_ch02_b034",
+      "wh_ch02_b035",
+      "wh_ch02_b036",
+      "wh_ch02_b037",
+      "wh_ch02_b038",
+      "wh_ch02_b039",
+      "wh_ch02_b040"
+    ],
+    "context_only_used": true,
+    "glossary_candidates": [],
+    "character_mentions": [
+      {
+        "mention_id": "m_wh_ch02_b036_01",
+        "surface": "the shabby coat",
+        "mention_type": "descriptor",
+        "resolution_status": "unknown",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "wh_ch02_b036"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b036_02",
+        "surface": "the young lady",
+        "mention_type": "descriptor",
+        "resolution_status": "candidate",
+        "candidate_entity_ids": [
+          "ent_zillah"
+        ],
+        "block_ids": [
+          "wh_ch02_b036"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b037_02",
+        "surface": "Heathcliff",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "wh_ch02_b037"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b040_01",
+        "surface": "Mr. Heathcliff",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "wh_ch02_b040"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b040_02",
+        "surface": "your amiable lady",
+        "mention_type": "descriptor",
+        "resolution_status": "candidate",
+        "candidate_entity_ids": [
+          "ent_zillah"
+        ],
+        "block_ids": [
+          "wh_ch02_b040"
+        ]
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "lexicon",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "glossary_candidates[0] dropped because block_ids are outside active window (neighbor): ['wh_ch02_b032']",
+      "character_mentions[2] dropped because surface is plain pronoun: he",
+      "character_mentions[3] dropped because surface is plain pronoun: she"
+    ],
+    "counts": {
+      "glossary": 0,
+      "mentions": 5,
+      "named": 2,
+      "candidate": 2,
+      "unknown": 1,
+      "dropped_bad_block": 1,
+      "pronoun_dropped": 2,
+      "mention_named_ids_cleared": 0,
+      "outside_window_neighbor_dropped": 1,
+      "outside_window_nonexistent_dropped": 0,
+      "context_only_used_true": 1
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "dd7c5bb1a52c505f7d638ae86d1e556d340789c91abecf7066ecac951f7107a7",
+      "latency_ms": 3245,
+      "cost_usd": 0.001507,
+      "usage": {
+        "prompt_tokens": 2404,
+        "cached_tokens": 0,
+        "completion_tokens": 453,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "lexicon",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "glossary_candidates[0] dropped because block_ids are outside active window (neighbor): ['wh_ch02_b032']",
+          "character_mentions[2] dropped because surface is plain pronoun: he",
+          "character_mentions[3] dropped because surface is plain pronoun: she"
+        ],
+        "counts": {
+          "glossary": 0,
+          "mentions": 5,
+          "named": 2,
+          "candidate": 2,
+          "unknown": 1,
+          "dropped_bad_block": 1,
+          "pronoun_dropped": 2,
+          "mention_named_ids_cleared": 0,
+          "outside_window_neighbor_dropped": 1,
+          "outside_window_nonexistent_dropped": 0,
+          "context_only_used_true": 1
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch02\",\"window_block_ids\":[\"wh_ch02_b033\",\"wh_ch02_b034\",\"wh_ch02_b035\",\"wh_ch02_b036\",\"wh_ch02_b037\",\"wh_ch02_b038\",\"wh_ch02_b039\",\"wh_ch02_b040\"],\"context_only_used\":true,\"glossary_candidates\":[{\"source_term\":\"the Grange\",\"proposed_target_vi\":\"Trang viên Grange\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"named place referenced as destination for the guide\",\"block_ids\":[\"wh_ch02_b032\"]}],\"character_mentions\":[{\"mention_id\":\"m_wh_ch02_b036_01\",\"surface\":\"the shabby coat\",\"mention_type\":\"descriptor\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch02_b036\"]},{\"mention_id\":\"m_wh_ch02_b036_02\",\"surface\":\"the young lady\",\"mention_type\":\"descriptor\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_zillah\"],\"block_ids\":[\"wh_ch02_b036\"]},{\"mention_id\":\"m_wh_ch02_b036_03\",\"surface\":\"he\",\"mention_type\":\"descriptor\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_heathcliff\"],\"block_ids\":[\"wh_ch02_b036\"]},{\"mention_id\":\"m_wh_ch02_b037_01\",\"surface\":\"she\",\"mention_type\":\"descriptor\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_zillah\"],\"block_ids\":[\"wh_ch02_b037\"]},{\"mention_id\":\"m_wh_ch02_b037_02\",\"surface\":\"Heathcliff\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch02_b037\"]},{\"mention_id\":\"m_wh_ch02_b040_01\",\"surface\":\"Mr. Heathcliff\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch02_b040\"]},{\"mention_id\":\"m_wh_ch02_b040_02\",\"surface\":\"your amiable lady\",\"mention_type\":\"descriptor\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_zillah\"],\"block_ids\":[\"wh_ch02_b040\"]}]}"
+    }
+  ],
+  "cost_usd": 0.001507,
+  "prompt_tokens": 2404,
+  "cached_tokens": 0,
+  "completion_tokens": 453,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

@@ -1,0 +1,378 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_wh_ch02_010",
+  "chapter_id": "wh_ch02",
+  "block_ids": [
+    "wh_ch02_b072",
+    "wh_ch02_b073",
+    "wh_ch02_b074",
+    "wh_ch02_b075",
+    "wh_ch02_b076",
+    "wh_ch02_b077",
+    "wh_ch02_b078",
+    "wh_ch02_b079"
+  ],
+  "previous_tail_block_ids": [
+    "wh_ch02_b070",
+    "wh_ch02_b071"
+  ],
+  "next_tail_block_ids": [
+    "wh_ch02_b080",
+    "wh_ch02_b081"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. There is NO placeholder id: ids such as ent_unknown, ent_unnamed, or ent_narrator do not exist — any id not literally listed in CHAPTER_ROSTER_ON_STAGE or REGISTRY_CONTEXT_PACK is an error; \"I do not know who this is\" is expressed ONLY as resolution_status=unknown with []. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch02_b006\", \"wh_ch02_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_wh_ch02_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"wh_ch02_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_wh_ch02_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"wh_ch02_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | few_scenes\nneutral_premise | Mr. Lockwood revisits Wuthering Heights in bad weather, meets the household at tea, learns who lives there, asks for a guide, and is kept overnight after a struggle at the door.\ncast | Mr. Lockwood | tenant/visitor | wh_ch02_b002\ncast | Joseph | servant | wh_ch02_b004\ncast | Mrs. Heathcliff | hostess | wh_ch02_b010\ncast | the young man | worker | wh_ch02_b010\ncast | Heathcliff | master/host | wh_ch02_b029\ncast | Hareton Earnshaw | worker | wh_ch02_b053\ncast | Zillah | housewife | wh_ch02_b089\nscene | wh_ch02_b002..wh_ch02_b009 | co_present_count=2 | Mr. Lockwood, Joseph\nscene | wh_ch02_b010..wh_ch02_b028 | co_present_count=3 | Mr. Lockwood, Mrs. Heathcliff, the young man\nscene | wh_ch02_b029..wh_ch02_b055 | co_present_count=4 | Mr. Lockwood, Heathcliff, Mrs. Heathcliff, the young man\nscene | wh_ch02_b056..wh_ch02_b092 | co_present_count=6 | Mr. Lockwood, Heathcliff, Mrs. Heathcliff, Joseph, Hareton Earnshaw, Zillah\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch01\nA tenant visits Mr. Heathcliff at Wuthering Heights, is let in, meets Joseph and other household staff, has trouble with the dogs, and stays long enough to exchange remarks before leaving and planning another visit.\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\nwh_ch02_b072..wh_ch02_b079 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_earnshaw | Earnshaw | Earnshaw\nent_hareton | Hareton | Hareton\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_heathcliff | Heathcliff | Heathcliff\nent_joseph | Joseph | Joseph\nent_mr_and_mrs_heathcliff | Mr. and Mrs. Heathcliff | Mr. and Mrs. Heathcliff\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\nent_mrs_heathcliff | Mrs. Heathcliff | Mrs. Heathcliff\nent_the_young_man | the young man | the young man\nent_zillah | Zillah | Zillah\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_wh_ch02_b076_01 | Heathcliff | name | named | \nm_wh_ch02_b076_02 | Hareton | name | named | \nm_wh_ch02_b076_03 | Joseph | name | named | \nm_wh_ch02_b078_01 | the unmannerly wretch | descriptor | unknown | \nm_wh_ch02_b079_01 | Earnshaw | name | named | \nm_wh_ch02_b079_02 | the young man | descriptor | candidate | ent_the_young_man\n\nCHAPTER_ID\nwh_ch02\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch02_b070] “ You ! I should be sorry to ask you to cross the threshold, for my convenience, on such a night,” I cried. “I want you to tell me my way, not to show it: or else to persuade Mr. Heathcliff to give me a guide.”\n[wh_ch02_b071] “Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch02_b080] “I’ll go with him as far as the park,” he said.\n[wh_ch02_b081] “You’ll go with him to hell!” exclaimed his master, or whatever relation he bore. “And who is to look after the horses, eh?”\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch02_b072] “Are there no boys at the farm?”\n[wh_ch02_b073] “No; those are all.”\n[wh_ch02_b074] “Then, it follows that I am compelled to stay.”\n[wh_ch02_b075] “That you may settle with your host. I have nothing to do with it.”\n[wh_ch02_b076] “I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”\n[wh_ch02_b077] “I can sleep on a chair in this room,” I replied.\n[wh_ch02_b078] “No, no! A stranger is a stranger, be he rich or poor: it will not suit me to permit any one the range of the place while I am off guard!” said the unmannerly wretch.\n[wh_ch02_b079] With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch02",
+    "window_block_ids": [
+      "wh_ch02_b072",
+      "wh_ch02_b073",
+      "wh_ch02_b074",
+      "wh_ch02_b075",
+      "wh_ch02_b076",
+      "wh_ch02_b077",
+      "wh_ch02_b078",
+      "wh_ch02_b079"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_wh_ch02_b072_01",
+        "speaker": {
+          "surface": "Mr. Lockwood",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "low"
+        },
+        "utterance_quote": "Are there no boys at the farm?",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "block_id": "wh_ch02_b072"
+      },
+      {
+        "turn_id": "t_wh_ch02_b073_01",
+        "speaker": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "low"
+        },
+        "addressee": {
+          "surface": "Mr. Lockwood",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "No; those are all.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "block_id": "wh_ch02_b073"
+      },
+      {
+        "turn_id": "t_wh_ch02_b074_01",
+        "speaker": {
+          "surface": "Mr. Lockwood",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "low"
+        },
+        "utterance_quote": "Then, it follows that I am compelled to stay.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "block_id": "wh_ch02_b074"
+      },
+      {
+        "turn_id": "t_wh_ch02_b075_01",
+        "speaker": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "low"
+        },
+        "addressee": {
+          "surface": "Mr. Lockwood",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "That you may settle with your host.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "block_id": "wh_ch02_b075"
+      },
+      {
+        "turn_id": "t_wh_ch02_b076_01",
+        "speaker": {
+          "surface": "Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "you",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I hope it will be a lesson to you",
+        "address_term_used": null,
+        "register_cue": "hostile",
+        "block_id": "wh_ch02_b076"
+      },
+      {
+        "turn_id": "t_wh_ch02_b077_01",
+        "speaker": {
+          "surface": "Mr. Lockwood",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "low"
+        },
+        "utterance_quote": "I can sleep on a chair in this room",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "block_id": "wh_ch02_b077"
+      },
+      {
+        "turn_id": "t_wh_ch02_b078_01",
+        "speaker": {
+          "surface": "the unmannerly wretch",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "addressee": {
+          "surface": "unknown",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "low"
+        },
+        "utterance_quote": "No, no! A stranger is a stranger",
+        "address_term_used": null,
+        "register_cue": "hostile",
+        "block_id": "wh_ch02_b078"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_wh_ch02_b076_01",
+        "actor": {
+          "surface": "Heathcliff",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Mr. Lockwood",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "warns",
+        "evidence_quote": "lesson to you",
+        "block_id": "wh_ch02_b076"
+      },
+      {
+        "event_id": "e_wh_ch02_b078_01",
+        "actor": {
+          "surface": "the unmannerly wretch",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "target": {
+          "surface": "Mr. Lockwood",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "refuses",
+        "evidence_quote": "No, no! A stranger is a stranger",
+        "block_id": "wh_ch02_b078"
+      },
+      {
+        "event_id": "e_wh_ch02_b079_01",
+        "actor": {
+          "surface": "Mr. Lockwood",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "Earnshaw",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "strikes",
+        "evidence_quote": "pushed past him into the yard",
+        "block_id": "wh_ch02_b079"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "relation_events[0] dropped because target.reference_kind is unknown",
+      "relation_events[1] dropped because actor.reference_kind is unknown",
+      "relation_events[2] dropped because target.reference_kind is unknown",
+      "relation_events[3] dropped because actor.reference_kind is unknown",
+      "relation_events[5] dropped because target.reference_kind is unknown"
+    ],
+    "counts": {
+      "turns": 7,
+      "events": 3,
+      "phase_leak": 0,
+      "address_term_present": 0,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 13,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 5,
+      "attribution_enum_dropped": 0,
+      "attribution_enum_normalized": 0,
+      "named_pronoun_downgraded": 0,
+      "named_ids_cleared": 0,
+      "outside_window_neighbor_dropped": 0,
+      "outside_window_nonexistent_dropped": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "635c76fc9ff3b3c60bf59f02350c41712338a1fe5cccdf3a28353487e405970e",
+      "latency_ms": 10634,
+      "cost_usd": 0.00411955,
+      "usage": {
+        "prompt_tokens": 2763,
+        "cached_tokens": 1792,
+        "completion_tokens": 1916,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "relation_events[0] dropped because target.reference_kind is unknown",
+          "relation_events[1] dropped because actor.reference_kind is unknown",
+          "relation_events[2] dropped because target.reference_kind is unknown",
+          "relation_events[3] dropped because actor.reference_kind is unknown",
+          "relation_events[5] dropped because target.reference_kind is unknown"
+        ],
+        "counts": {
+          "turns": 7,
+          "events": 3,
+          "phase_leak": 0,
+          "address_term_present": 0,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 13,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 5,
+          "attribution_enum_dropped": 0,
+          "attribution_enum_normalized": 0,
+          "named_pronoun_downgraded": 0,
+          "named_ids_cleared": 0,
+          "outside_window_neighbor_dropped": 0,
+          "outside_window_nonexistent_dropped": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch02\",\"window_block_ids\":[\"wh_ch02_b072\",\"wh_ch02_b073\",\"wh_ch02_b074\",\"wh_ch02_b075\",\"wh_ch02_b076\",\"wh_ch02_b077\",\"wh_ch02_b078\",\"wh_ch02_b079\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_wh_ch02_b072_01\",\"speaker\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"utterance_quote\":\"Are there no boys at the farm?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"block_id\":\"wh_ch02_b072\"},{\"turn_id\":\"t_wh_ch02_b073_01\",\"speaker\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"No; those are all.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"block_id\":\"wh_ch02_b073\"},{\"turn_id\":\"t_wh_ch02_b074_01\",\"speaker\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"utterance_quote\":\"Then, it follows that I am compelled to stay.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"block_id\":\"wh_ch02_b074\"},{\"turn_id\":\"t_wh_ch02_b075_01\",\"speaker\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"That you may settle with your host.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"block_id\":\"wh_ch02_b075\"},{\"turn_id\":\"t_wh_ch02_b076_01\",\"speaker\":{\"surface\":\"Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"you\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I hope it will be a lesson to you\",\"address_term_used\":null,\"register_cue\":\"hostile\",\"block_id\":\"wh_ch02_b076\"},{\"turn_id\":\"t_wh_ch02_b077_01\",\"speaker\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"utterance_quote\":\"I can sleep on a chair in this room\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"block_id\":\"wh_ch02_b077\"},{\"turn_id\":\"t_wh_ch02_b078_01\",\"speaker\":{\"surface\":\"the unmannerly wretch\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"utterance_quote\":\"No, no! A stranger is a stranger\",\"address_term_used\":null,\"register_cue\":\"hostile\",\"block_id\":\"wh_ch02_b078\"}],\"relation_events\":[{\"event_id\":\"e_wh_ch02_b072_01\",\"actor\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"event_type\":\"asks\",\"evidence_quote\":\"Are there no boys at the farm?\",\"block_id\":\"wh_ch02_b072\"},{\"event_id\":\"e_wh_ch02_b073_01\",\"actor\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"target\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"answers\",\"evidence_quote\":\"No; those are all.\",\"block_id\":\"wh_ch02_b073\"},{\"event_id\":\"e_wh_ch02_b074_01\",\"actor\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"event_type\":\"states\",\"evidence_quote\":\"I am compelled to stay\",\"block_id\":\"wh_ch02_b074\"},{\"event_id\":\"e_wh_ch02_b075_01\",\"actor\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"target\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"directs\",\"evidence_quote\":\"settle with your host\",\"block_id\":\"wh_ch02_b075\"},{\"event_id\":\"e_wh_ch02_b076_01\",\"actor\":{\"surface\":\"Heathcliff\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"warns\",\"evidence_quote\":\"lesson to you\",\"block_id\":\"wh_ch02_b076\"},{\"event_id\":\"e_wh_ch02_b077_01\",\"actor\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"low\"},\"event_type\":\"offers\",\"evidence_quote\":\"sleep on a chair in this room\",\"block_id\":\"wh_ch02_b077\"},{\"event_id\":\"e_wh_ch02_b078_01\",\"actor\":{\"surface\":\"the unmannerly wretch\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"narrator_inference\",\"confidence\":\"low\"},\"target\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"refuses\",\"evidence_quote\":\"No, no! A stranger is a stranger\",\"block_id\":\"wh_ch02_b078\"},{\"event_id\":\"e_wh_ch02_b079_01\",\"actor\":{\"surface\":\"Mr. Lockwood\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_mr_lockwood\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Earnshaw\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"strikes\",\"evidence_quote\":\"pushed past him into the yard\",\"block_id\":\"wh_ch02_b079\"}]}"
+    }
+  ],
+  "cost_usd": 0.00411955,
+  "prompt_tokens": 2763,
+  "cached_tokens": 1792,
+  "completion_tokens": 1916,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

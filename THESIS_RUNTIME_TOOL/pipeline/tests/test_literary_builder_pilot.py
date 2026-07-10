@@ -948,6 +948,7 @@ def test_l2a1_m2_estimate_uses_m1_ledger_without_api(tmp_path: Path) -> None:
     (m1_dir / "m1_report.json").write_text(
         json.dumps(
             {
+                "chapters_selected": ["wh_ch01"],
                 "validation_counts": {"lexicon_failed": 0, "narrative_failed": 0},
                 "entity_ledger": {
                     "ent_mr_heathcliff": {

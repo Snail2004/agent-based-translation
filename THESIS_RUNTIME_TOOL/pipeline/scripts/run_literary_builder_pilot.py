@@ -100,6 +100,11 @@ def main() -> int:
         help="For --milestone M1: re-run validators on existing artifacts without API.",
     )
     parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume M1/M2 from the longest valid per-chapter checkpoint prefix.",
+    )
+    parser.add_argument(
         "--confirm-usd",
         type=float,
         help="For --milestone M1/M2 real run: refuse if estimated cap exceeds this amount.",
@@ -268,6 +273,7 @@ def _run_milestone(args: argparse.Namespace) -> int:
                 out_dir=out_dir,
                 m1_dir=m1_dir,
                 confirm_usd=float(args.confirm_usd),
+                resume=bool(args.resume),
             )
         except Exception as exc:
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -345,6 +351,7 @@ def _run_milestone(args: argparse.Namespace) -> int:
             confirm_usd=float(args.confirm_usd),
             window_target_tokens=args.window_target_tokens,
             window_max_blocks=args.window_max_blocks,
+            resume=bool(args.resume),
         )
     except Exception as exc:
         out_dir.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,219 @@
+{
+  "mode": "literary_lexicon_v1",
+  "window_id": "wb_wh_ch02_011",
+  "chapter_id": "wh_ch02",
+  "block_ids": [
+    "wh_ch02_b080",
+    "wh_ch02_b081",
+    "wh_ch02_b082",
+    "wh_ch02_b083",
+    "wh_ch02_b084",
+    "wh_ch02_b085",
+    "wh_ch02_b086",
+    "wh_ch02_b087"
+  ],
+  "previous_tail_block_ids": [
+    "wh_ch02_b078",
+    "wh_ch02_b079"
+  ],
+  "next_tail_block_ids": [
+    "wh_ch02_b088",
+    "wh_ch02_b089"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_lexicon_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- The user gives you one WINDOW, not a whole chapter. Extract every qualifying item visible in this window; do not impose a count cap. Windowing keeps each call small; downstream code consolidates duplicates.\n- glossary_candidates are NOT people. Put places (a named house or estate, a town or village, a region — use the work's own proper names) and objects/terms that are NAMED, culturally/period-specific, or plot-significant. An object qualifies ONLY on that bar — NOT ordinary household implements or rooms. Negative examples: window, gate, chair, dinner, letter, moor (unless a proper place name), servant, poker, frying-pan, cellar, hearth, kitchen, table, fire.\n- Each glossary target proposed_target_vi MUST use full Vietnamese diacritics.\n- category MUST be exactly one of: place, object, cultural, other.\n- character_mentions: record every NON-PRONOMINAL surface that names or refers to a person — proper names, nicknames, shortened names, spelling variants, titles used as identity (\"the master\", \"the mistress\"), and characterizing epithets (\"the ruffian\"). One row per surface occurrence-group in this window. A bare pronoun (he/she/I/they…) is NOT a mention surface here even though it refers to a person — skip it entirely; it is resolved later in the narrative pass.\n- Do NOT put plain pronouns as a mention surface: i, me, my, you, your, he, him, his, she, her, we, us, they, them, and their possessives.\n- character_mentions are SINGLE persons. Do NOT record a group (\"the household\", \"the Lintons\", \"the servants\") here — groups appear only in the narrative pass as an addressee/target with reference_kind group.\n- A character_mention must REFER TO A PERSON. Do NOT record descriptions of appearance or body parts, rooms, furniture, or objects (e.g. \"stalwart limbs\", \"a stubborn countenance\", \"the apartment\", \"the round table\", \"a country squire\" used descriptively). A descriptor qualifies only when it stands in for a specific person as a referring expression (\"the master\", \"the ruffian\").\n- The CONTEXT_ONLY tail is READ-ONLY background to help you understand the window — you MUST NOT extract any glossary_candidate or character_mention that lives only in it. Everything you output must come from the ACTIVE window, and every block_id you cite must be an ACTIVE-window marker. Set top-level context_only_used=true if you leaned on the tail to understand the window (advisory audit only); never cite a context-only block_id.\n- mention_type MUST be exactly one of: name, nickname, descriptor. Use descriptor for both titles-used-as-identity (\"the master\", \"the mistress\") and characterizing epithets (\"the ruffian\", \"the old man\").\n- Give every mention a stable mention_id of the form m_<block>_<n> (for example m_wh_ch02_b006_01).\n- resolution_status MUST be exactly one of: named, candidate, unknown. Use named for ANY explicit proper name or nickname — including a bare first name like \"Mira\" or \"Alden\", even on first mention and even without a title (named describes the SURFACE being a real name, not whether you already know the person). Use candidate when the surface is a descriptor or title (never a bare pronoun — pronouns are not extracted in this pass at all) that you map to a specific entity from REGISTRY_CONTEXT_PACK but are not certain. Use unknown ONLY for a non-name reference you cannot attribute — a real proper name is never unknown.\n- candidate_entity_ids: fill ONLY when resolution_status is candidate, copying entity_id values verbatim from REGISTRY_CONTEXT_PACK (a surface may list more than one candidate). Leave it [] for named or unknown. Do NOT invent new entity_id values (never coin an id such as char_<name> or ent_<name>) and do NOT output canonical_entity_id — identity is assigned later by consolidation. If NO REGISTRY_CONTEXT_PACK entry matches the person, leave candidate_entity_ids [] and use resolution_status named (for a real proper name) or unknown (otherwise) — never mint an id to fill the gap.\n- Descriptor examples such as \"his aunt\", \"the innkeeper\", \"the coachman\", or \"the old gardener\" are candidate ONLY when REGISTRY_CONTEXT_PACK gives a matching entity_id. Without a matching pack id, they are unknown with []. There is NO placeholder id: never output an id such as ent_unknown, ent_unnamed, or ent_narrator — any id not literally present in REGISTRY_CONTEXT_PACK is invalid.\n- Do NOT output relationships, dialogue, summaries, or motifs in this pass.\n- Every block_ids entry MUST be a block marker COPIED VERBATIM from the [brackets] in the window text (they look like wh_ch02_b005) — never abbreviate the id or drop its prefix. Only markers that literally appear in this window are allowed.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"wh_ch02_b005\", \"wh_ch02_b006\"],\n  \"context_only_used\": false,\n  \"glossary_candidates\": [\n    {\"source_term\": \"the Blackmoor Estate\", \"proposed_target_vi\": \"Điền trang Blackmoor\", \"category\": \"place\", \"do_not_translate\": false, \"termhood\": \"name of the principal house; must stay consistent\", \"block_ids\": [\"wh_ch02_b002\"]}\n  ],\n  \"character_mentions\": [\n    {\"mention_id\": \"m_wh_ch02_b003_01\", \"surface\": \"Mr. Alden\", \"mention_type\": \"name\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"block_ids\": [\"wh_ch02_b003\"]},\n    {\"mention_id\": \"m_wh_ch02_b006_01\", \"surface\": \"the master\", \"mention_type\": \"descriptor\", \"resolution_status\": \"unknown\", \"candidate_entity_ids\": [], \"block_ids\": [\"wh_ch02_b006\"]}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | Wuthering Heights | frame_present | few_scenes\nneutral_premise | Mr. Lockwood revisits Wuthering Heights in bad weather, meets the household at tea, learns who lives there, asks for a guide, and is kept overnight after a struggle at the door.\ncast | Mr. Lockwood | tenant/visitor | wh_ch02_b002\ncast | Joseph | servant | wh_ch02_b004\ncast | Mrs. Heathcliff | hostess | wh_ch02_b010\ncast | the young man | worker | wh_ch02_b010\ncast | Heathcliff | master/host | wh_ch02_b029\ncast | Hareton Earnshaw | worker | wh_ch02_b053\ncast | Zillah | housewife | wh_ch02_b089\nscene | wh_ch02_b002..wh_ch02_b009 | co_present_count=2 | Mr. Lockwood, Joseph\nscene | wh_ch02_b010..wh_ch02_b028 | co_present_count=3 | Mr. Lockwood, Mrs. Heathcliff, the young man\nscene | wh_ch02_b029..wh_ch02_b055 | co_present_count=4 | Mr. Lockwood, Heathcliff, Mrs. Heathcliff, the young man\nscene | wh_ch02_b056..wh_ch02_b092 | co_present_count=6 | Mr. Lockwood, Heathcliff, Mrs. Heathcliff, Joseph, Hareton Earnshaw, Zillah\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\nwh_ch01\nA tenant visits Mr. Heathcliff at Wuthering Heights, is let in, meets Joseph and other household staff, has trouble with the dogs, and stays long enough to exchange remarks before leaving and planning another visit.\n\nREGISTRY_CONTEXT_PACK\nent_hareton | Hareton | Hareton\nent_heathcliff | Heathcliff | Heathcliff\nent_joseph | Joseph | Joseph\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mrs_heathcliff | Mrs. Heathcliff | Mrs. Heathcliff\nent_hareton_earnshaw | Hareton Earnshaw | seeded:chapter_brief_cast:no_surface_alias\nent_mr_lockwood | Mr. Lockwood | seeded:chapter_brief_cast:no_surface_alias\nent_zillah | Zillah | seeded:chapter_brief_cast:no_surface_alias\n\nCHAPTER_ID\nwh_ch02\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch02_b078] “No, no! A stranger is a stranger, be he rich or poor: it will not suit me to permit any one the range of the place while I am off guard!” said the unmannerly wretch.\n[wh_ch02_b079] With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[wh_ch02_b088] On opening the little door, two hairy monsters flew at my throat, bearing me down, and extinguishing the light; while a mingled guffaw from Heathcliff and Hareton put the copestone on my rage and humiliation. Fortunately, the beasts seemed more bent on stretching their paws, and yawning, and flourishing their tails, than devouring me alive; but they would suffer no resurrection, and I was forced to lie till their malignant masters pleased to deliver me: then, hatless and trembling with wrath, I ordered the miscreants to let me out—on their peril to keep me one minute longer—with several incoherent threats of retaliation that, in their indefinite depth of virulency, smacked of King Lear.\n[wh_ch02_b089] The vehemence of my agitation brought on a copious bleeding at the nose, and still Heathcliff laughed, and still I scolded. I don’t know what would have concluded the scene, had there not been one person at hand rather more rational than myself, and more benevolent than my entertainer. This was Zillah, the stout housewife; who at length issued forth to inquire into the nature of the uproar. She thought that some of them had been laying violent hands on me; and, not daring to attack her master, she turned her vocal artillery against the younger scoundrel.\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[wh_ch02_b080] “I’ll go with him as far as the park,” he said.\n[wh_ch02_b081] “You’ll go with him to hell!” exclaimed his master, or whatever relation he bore. “And who is to look after the horses, eh?”\n[wh_ch02_b082] “A man’s life is of more consequence than one evening’s neglect of the horses: somebody must go,” murmured Mrs. Heathcliff, more kindly than I expected.\n[wh_ch02_b083] “Not at your command!” retorted Hareton. “If you set store on him, you’d better be quiet.”\n[wh_ch02_b084] “Then I hope his ghost will haunt you; and I hope Mr. Heathcliff will never get another tenant till the Grange is a ruin,” she answered, sharply.\n[wh_ch02_b085] “Hearken, hearken, shoo’s cursing on ’em!” muttered Joseph, towards whom I had been steering.\n[wh_ch02_b086] He sat within earshot, milking the cows by the light of a lantern, which I seized unceremoniously, and, calling out that I would send it back on the morrow, rushed to the nearest postern.\n[wh_ch02_b087] “Maister, maister, he’s staling t’ lanthern!” shouted the ancient, pursuing my retreat. “Hey, Gnasher! Hey, dog! Hey Wolf, holld him, holld him!”"
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch02",
+    "window_block_ids": [
+      "wh_ch02_b080",
+      "wh_ch02_b081",
+      "wh_ch02_b082",
+      "wh_ch02_b083",
+      "wh_ch02_b084",
+      "wh_ch02_b085",
+      "wh_ch02_b086",
+      "wh_ch02_b087"
+    ],
+    "context_only_used": true,
+    "glossary_candidates": [
+      {
+        "source_term": "the park",
+        "proposed_target_vi": "công viên",
+        "category": "place",
+        "do_not_translate": false,
+        "termhood": "named locale used as a route reference",
+        "block_ids": [
+          "wh_ch02_b080"
+        ]
+      },
+      {
+        "source_term": "the Grange",
+        "proposed_target_vi": "The Grange",
+        "category": "place",
+        "do_not_translate": false,
+        "termhood": "named estate referenced as a landmark",
+        "block_ids": [
+          "wh_ch02_b084"
+        ]
+      },
+      {
+        "source_term": "the horses",
+        "proposed_target_vi": "những con ngựa",
+        "category": "object",
+        "do_not_translate": false,
+        "termhood": "plot-significant animals being guarded",
+        "block_ids": [
+          "wh_ch02_b081"
+        ]
+      },
+      {
+        "source_term": "the light of a lantern",
+        "proposed_target_vi": "ánh sáng của chiếc đèn lồng",
+        "category": "object",
+        "do_not_translate": false,
+        "termhood": "named tool central to the action",
+        "block_ids": [
+          "wh_ch02_b086"
+        ]
+      }
+    ],
+    "character_mentions": [
+      {
+        "mention_id": "m_wh_ch02_b081_01",
+        "surface": "his master",
+        "mention_type": "descriptor",
+        "resolution_status": "candidate",
+        "candidate_entity_ids": [
+          "ent_heathcliff"
+        ],
+        "block_ids": [
+          "wh_ch02_b081"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b082_01",
+        "surface": "Mrs. Heathcliff",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "wh_ch02_b082"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b083_01",
+        "surface": "Hareton",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "wh_ch02_b083"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b084_01",
+        "surface": "Mr. Heathcliff",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "wh_ch02_b084"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b085_01",
+        "surface": "Joseph",
+        "mention_type": "name",
+        "resolution_status": "named",
+        "candidate_entity_ids": [],
+        "block_ids": [
+          "wh_ch02_b085"
+        ]
+      },
+      {
+        "mention_id": "m_wh_ch02_b087_01",
+        "surface": "Maister",
+        "mention_type": "descriptor",
+        "resolution_status": "candidate",
+        "candidate_entity_ids": [
+          "ent_heathcliff"
+        ],
+        "block_ids": [
+          "wh_ch02_b087"
+        ]
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "lexicon",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "glossary": 4,
+      "mentions": 6,
+      "named": 4,
+      "candidate": 2,
+      "unknown": 0,
+      "dropped_bad_block": 0,
+      "pronoun_dropped": 0,
+      "mention_named_ids_cleared": 0,
+      "outside_window_neighbor_dropped": 0,
+      "outside_window_nonexistent_dropped": 0,
+      "context_only_used_true": 1
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "9d5e07df08685462135586287891faf5021b99cde6ea5eb9b6f4220a809f61ef",
+      "latency_ms": 3891,
+      "cost_usd": 0.001746,
+      "usage": {
+        "prompt_tokens": 2608,
+        "cached_tokens": 0,
+        "completion_tokens": 547,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "lexicon",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "glossary": 4,
+          "mentions": 6,
+          "named": 4,
+          "candidate": 2,
+          "unknown": 0,
+          "dropped_bad_block": 0,
+          "pronoun_dropped": 0,
+          "mention_named_ids_cleared": 0,
+          "outside_window_neighbor_dropped": 0,
+          "outside_window_nonexistent_dropped": 0,
+          "context_only_used_true": 1
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch02\",\"window_block_ids\":[\"wh_ch02_b080\",\"wh_ch02_b081\",\"wh_ch02_b082\",\"wh_ch02_b083\",\"wh_ch02_b084\",\"wh_ch02_b085\",\"wh_ch02_b086\",\"wh_ch02_b087\"],\"context_only_used\":true,\"glossary_candidates\":[{\"source_term\":\"the park\",\"proposed_target_vi\":\"công viên\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"named locale used as a route reference\",\"block_ids\":[\"wh_ch02_b080\"]},{\"source_term\":\"the Grange\",\"proposed_target_vi\":\"The Grange\",\"category\":\"place\",\"do_not_translate\":false,\"termhood\":\"named estate referenced as a landmark\",\"block_ids\":[\"wh_ch02_b084\"]},{\"source_term\":\"the horses\",\"proposed_target_vi\":\"những con ngựa\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"plot-significant animals being guarded\",\"block_ids\":[\"wh_ch02_b081\"]},{\"source_term\":\"the light of a lantern\",\"proposed_target_vi\":\"ánh sáng của chiếc đèn lồng\",\"category\":\"object\",\"do_not_translate\":false,\"termhood\":\"named tool central to the action\",\"block_ids\":[\"wh_ch02_b086\"]}],\"character_mentions\":[{\"mention_id\":\"m_wh_ch02_b081_01\",\"surface\":\"his master\",\"mention_type\":\"descriptor\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_heathcliff\"],\"block_ids\":[\"wh_ch02_b081\"]},{\"mention_id\":\"m_wh_ch02_b082_01\",\"surface\":\"Mrs. Heathcliff\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch02_b082\"]},{\"mention_id\":\"m_wh_ch02_b083_01\",\"surface\":\"Hareton\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch02_b083\"]},{\"mention_id\":\"m_wh_ch02_b084_01\",\"surface\":\"Mr. Heathcliff\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch02_b084\"]},{\"mention_id\":\"m_wh_ch02_b085_01\",\"surface\":\"Joseph\",\"mention_type\":\"name\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"block_ids\":[\"wh_ch02_b085\"]},{\"mention_id\":\"m_wh_ch02_b087_01\",\"surface\":\"Maister\",\"mention_type\":\"descriptor\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_heathcliff\"],\"block_ids\":[\"wh_ch02_b087\"]}]}"
+    }
+  ],
+  "cost_usd": 0.001746,
+  "prompt_tokens": 2608,
+  "cached_tokens": 0,
+  "completion_tokens": 547,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}
