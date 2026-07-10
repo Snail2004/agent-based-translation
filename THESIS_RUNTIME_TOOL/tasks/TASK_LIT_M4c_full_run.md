@@ -242,3 +242,50 @@ provenance ghi model per-stage. M1 giữ mini. Đồng nhất theo stage, không
 **Lệnh tiếp:** re-run M2 ch01-04 TOÀN BỘ bằng 5.4 (~50k tok quota, digest ch01-02 mini bị thay —
 stage phải thuần nhất) → run_m3 → báo cáo B4 thô. Xác nhận luôn trạng thái fix estimator rev5
 (neighbor placeholder ~150 từ) — nếu chưa làm thì làm trong lượt này.
+
+---
+## GATE M4c CUỐI (Claude verify độc lập trên artifact, 2026-07-11): **M2 PASS / B4-pilot FAIL (hết tầm đúng dự kiến)**
+
+### M2 gpt-5.4 ch01-04: **PASS — chốt stage**
+- Verify từng số trên `m2_report.json`: 4/4 call attempts=1, per-chapter prompt/completion khớp
+  từng token với báo cáo (4717/1674, 8800/3357, 10670/3247, 7645/3348; tổng 31832+11626=43458).
+- Model đồng nhất `gpt-5.4`; neighbor provenance `in_run` đúng cả ch2-4; resume accounting sạch.
+- Digest ch02 mang đủ evidence tải trọng: "Mrs. Heathcliff" ×40, daughter-in-law b042/b046 → input
+  cho B4 là ĐỦ, lỗi phía dưới không phải lỗi M2.
+- Estimator rev5: diff chỉ chạm đường estimate (placeholder ~150 từ, provenance
+  `in_run_estimate_placeholder`, đường chạy thật không đổi) + 1 test mới. Đúng spec.
+- An ninh: frozen DB hash 64D989...C715 tự tính lại KHỚP; grep `sk-` sạch trên artifacts mới.
+
+### B4/M3: **FAIL acceptance — nhưng đúng nghĩa "pilot ch1 hết tầm", không phải lỗi thi công**
+Chấm 5 acceptance check trên `story_bible/*.json` thật:
+1. **Heathcliff dup merge: FAIL (tệ hơn không merge).** `ent_mr_heathcliff` gộp đúng vào
+   `ent_heathcliff` NHƯNG rule `honorific_variant_same_surface_core` gộp luôn
+   `ent_mrs_heathcliff` — Mrs. Heathcliff là CON DÂU (Catherine trẻ), nhân vật khác hoàn toàn.
+   `_strip_leading_honorific` (mr|mrs|miss cùng lõi họ → 1 cluster) là code làm identity judgment
+   = việc ngôn ngữ. Đúng tình cờ với ch1, sai hệ thống từ ch2 (cả ent_mrs_earnshaw cũng bị nuốt).
+2. **Hareton ch1↔ch2 join: FAIL.** `ent_hareton` / `ent_hareton_earnshaw` vẫn 2 entity; canary
+   `hareton_historical_not_present=false` bắt đúng.
+3. **King Lear allusion: PASS.** `presence_status=mentioned_historical`, không vào runtime role.
+4. **Narrator switch ch4: PASS.** 2 segments (Lockwood b002-b033 frame_present; Mrs. Dean
+   b035-b045 retrospective_past), separator b034 exempt đúng theo FIX D.
+5. **Daughter-in-law phase: FAIL.** Evidence có đủ trong digest nhưng merge sai xoá nhân vật →
+   không tồn tại phase nào cho bà; quan hệ (heathcliff, mrs_heathcliff) biến mất.
+
+Lỗi cấu trúc thêm (đều do M3 hiện tại = code pilot ch1 chạy lặp 4 lần):
+- **Future-leak as-of tầng M3**: cả 4 file bible đều chứa nguyên ledger CUỐI 30 entity (bible
+  "as-of ch1" biết Hindley/Zillah/Catherine Linton/Nelly) — đúng lớp bug M2 as-of vừa diệt.
+  Scope hardcode `"ch1"`/`"M3_ch1"`, canary ch1-specific chạy trên data 4 chương.
+- Pair không chuẩn hoá unordered: (lockwood,heathcliff) ≠ (heathcliff,lockwood) thành 2 phase;
+  (heathcliff,hareton) trùng 2 interval cùng mở. Mọi interval `valid_to=null` — không có
+  change-point, chưa phải interval-valued memory thật.
+- Phase engine = `generic_valence_fallback` toàn "strained" + needs_human_review (dán nhãn
+  trung thực, nhưng là placeholder). `entity_type` hardcode "person" (Wuthering Heights = person).
+- Fragment chưa xử: ent_catherine_s / ent_heathcliff_s / ent_jabez_s / ent_your_servant_zillah /
+  ent_and_mrs_heathcliff (surface garbled).
+
+Điểm giữ đúng kỷ luật: address_policies chỉ phát observed vocatives + runtime_usable=false +
+proposal_only (đúng code-never-does-language-work); halt đúng chỗ (`needs_claude_gate`); artifact
+tự khai `partial_story_bible`, canary fail không giấu.
+
+**Quyết định:** M2 đóng. B4 v2 = task thiết kế riêng (TASK_LIT_M4d) — 2 vòng thảo luận CodeX
+(Sol xhigh review) trước khi implement; KHÔNG scale 34 chương trước khi B4 v2 pass gate trên ch1-4.

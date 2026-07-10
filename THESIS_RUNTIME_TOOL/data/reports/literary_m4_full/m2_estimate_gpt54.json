@@ -1,0 +1,121 @@
+{
+  "phase": "L2A-1",
+  "milestone": "M2",
+  "zero_api": true,
+  "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+  "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+  "digest_context": null,
+  "neighbor_source": {
+    "wh_ch01": [],
+    "wh_ch02": [
+      {
+        "chapter_id": "wh_ch01",
+        "source": "in_run_estimate_placeholder"
+      }
+    ],
+    "wh_ch03": [
+      {
+        "chapter_id": "wh_ch01",
+        "source": "in_run_estimate_placeholder"
+      },
+      {
+        "chapter_id": "wh_ch02",
+        "source": "in_run_estimate_placeholder"
+      }
+    ],
+    "wh_ch04": [
+      {
+        "chapter_id": "wh_ch02",
+        "source": "in_run_estimate_placeholder"
+      },
+      {
+        "chapter_id": "wh_ch03",
+        "source": "in_run_estimate_placeholder"
+      }
+    ]
+  },
+  "chapters_requested": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "chapters_selected": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "calls": 4,
+  "modes": [
+    "literary_digest_v1"
+  ],
+  "prompt_tokens_est": 30766,
+  "max_prompt_tokens_est": 10482,
+  "max_output_tokens_per_call": 6144,
+  "total_tokens_upper_bound": 55342,
+  "prompt_token_cap": 14000,
+  "cost_cap_usd": 0.0,
+  "call_estimates": [
+    {
+      "chapter_id": "wh_ch01",
+      "mode": "literary_digest_v1",
+      "prompt_tokens_est": 4745,
+      "max_output_tokens": 6144,
+      "neighbor_summary_count": 0,
+      "neighbor_source": [],
+      "relation_event_lines": 19
+    },
+    {
+      "chapter_id": "wh_ch02",
+      "mode": "literary_digest_v1",
+      "prompt_tokens_est": 8265,
+      "max_output_tokens": 6144,
+      "neighbor_summary_count": 1,
+      "neighbor_source": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "in_run_estimate_placeholder"
+        }
+      ],
+      "relation_event_lines": 53
+    },
+    {
+      "chapter_id": "wh_ch03",
+      "mode": "literary_digest_v1",
+      "prompt_tokens_est": 10482,
+      "max_output_tokens": 6144,
+      "neighbor_summary_count": 2,
+      "neighbor_source": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "in_run_estimate_placeholder"
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "source": "in_run_estimate_placeholder"
+        }
+      ],
+      "relation_event_lines": 43
+    },
+    {
+      "chapter_id": "wh_ch04",
+      "mode": "literary_digest_v1",
+      "prompt_tokens_est": 7274,
+      "max_output_tokens": 6144,
+      "neighbor_summary_count": 2,
+      "neighbor_source": [
+        {
+          "chapter_id": "wh_ch02",
+          "source": "in_run_estimate_placeholder"
+        },
+        {
+          "chapter_id": "wh_ch03",
+          "source": "in_run_estimate_placeholder"
+        }
+      ],
+      "relation_event_lines": 48
+    }
+  ],
+  "token_growth_halt": false
+}

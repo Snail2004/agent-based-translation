@@ -1,0 +1,5087 @@
+{
+  "report_type": "raw_m4c_m2_m3",
+  "generated_from": {
+    "m2_report": "data\\reports\\literary_m4_full\\m2_report.json",
+    "m3_report": "data\\reports\\literary_m4_full\\m3_report.json",
+    "story_bible_dir": "data\\reports\\literary_m4_full\\story_bible"
+  },
+  "estimator_rev5": {
+    "status": "implemented_and_tested",
+    "placeholder_words": 144,
+    "estimate": {
+      "phase": "L2A-1",
+      "milestone": "M2",
+      "zero_api": true,
+      "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+      "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+      "digest_context": null,
+      "neighbor_source": {
+        "wh_ch01": [],
+        "wh_ch02": [
+          {
+            "chapter_id": "wh_ch01",
+            "source": "in_run_estimate_placeholder"
+          }
+        ],
+        "wh_ch03": [
+          {
+            "chapter_id": "wh_ch01",
+            "source": "in_run_estimate_placeholder"
+          },
+          {
+            "chapter_id": "wh_ch02",
+            "source": "in_run_estimate_placeholder"
+          }
+        ],
+        "wh_ch04": [
+          {
+            "chapter_id": "wh_ch02",
+            "source": "in_run_estimate_placeholder"
+          },
+          {
+            "chapter_id": "wh_ch03",
+            "source": "in_run_estimate_placeholder"
+          }
+        ]
+      },
+      "chapters_requested": [
+        "wh_ch01",
+        "wh_ch02",
+        "wh_ch03",
+        "wh_ch04"
+      ],
+      "chapters_selected": [
+        "wh_ch01",
+        "wh_ch02",
+        "wh_ch03",
+        "wh_ch04"
+      ],
+      "calls": 4,
+      "modes": [
+        "literary_digest_v1"
+      ],
+      "prompt_tokens_est": 30766,
+      "max_prompt_tokens_est": 10482,
+      "max_output_tokens_per_call": 6144,
+      "total_tokens_upper_bound": 55342,
+      "prompt_token_cap": 14000,
+      "cost_cap_usd": 0.0,
+      "call_estimates": [
+        {
+          "chapter_id": "wh_ch01",
+          "mode": "literary_digest_v1",
+          "prompt_tokens_est": 4745,
+          "max_output_tokens": 6144,
+          "neighbor_summary_count": 0,
+          "neighbor_source": [],
+          "relation_event_lines": 19
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "mode": "literary_digest_v1",
+          "prompt_tokens_est": 8265,
+          "max_output_tokens": 6144,
+          "neighbor_summary_count": 1,
+          "neighbor_source": [
+            {
+              "chapter_id": "wh_ch01",
+              "source": "in_run_estimate_placeholder"
+            }
+          ],
+          "relation_event_lines": 53
+        },
+        {
+          "chapter_id": "wh_ch03",
+          "mode": "literary_digest_v1",
+          "prompt_tokens_est": 10482,
+          "max_output_tokens": 6144,
+          "neighbor_summary_count": 2,
+          "neighbor_source": [
+            {
+              "chapter_id": "wh_ch01",
+              "source": "in_run_estimate_placeholder"
+            },
+            {
+              "chapter_id": "wh_ch02",
+              "source": "in_run_estimate_placeholder"
+            }
+          ],
+          "relation_event_lines": 43
+        },
+        {
+          "chapter_id": "wh_ch04",
+          "mode": "literary_digest_v1",
+          "prompt_tokens_est": 7274,
+          "max_output_tokens": 6144,
+          "neighbor_summary_count": 2,
+          "neighbor_source": [
+            {
+              "chapter_id": "wh_ch02",
+              "source": "in_run_estimate_placeholder"
+            },
+            {
+              "chapter_id": "wh_ch03",
+              "source": "in_run_estimate_placeholder"
+            }
+          ],
+          "relation_event_lines": 48
+        }
+      ],
+      "token_growth_halt": false
+    }
+  },
+  "m2": {
+    "phase": "L2A-1",
+    "milestone": "M2",
+    "status": "needs_claude_gate",
+    "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+    "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+    "digest_context": null,
+    "neighbor_source": {
+      "wh_ch01": [],
+      "wh_ch02": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "in_run"
+        }
+      ],
+      "wh_ch03": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "in_run"
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "source": "in_run"
+        }
+      ],
+      "wh_ch04": [
+        {
+          "chapter_id": "wh_ch02",
+          "source": "in_run"
+        },
+        {
+          "chapter_id": "wh_ch03",
+          "source": "in_run"
+        }
+      ]
+    },
+    "model": "gpt-5.4",
+    "chapters_requested": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "chapters_selected": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "modes": [
+      "literary_digest_v1"
+    ],
+    "estimate": {
+      "phase": "L2A-1",
+      "milestone": "M2",
+      "zero_api": true,
+      "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+      "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+      "digest_context": null,
+      "neighbor_source": {
+        "wh_ch01": [],
+        "wh_ch02": [
+          {
+            "chapter_id": "wh_ch01",
+            "source": "in_run_estimate_placeholder"
+          }
+        ],
+        "wh_ch03": [
+          {
+            "chapter_id": "wh_ch01",
+            "source": "in_run_estimate_placeholder"
+          },
+          {
+            "chapter_id": "wh_ch02",
+            "source": "in_run_estimate_placeholder"
+          }
+        ],
+        "wh_ch04": [
+          {
+            "chapter_id": "wh_ch02",
+            "source": "in_run_estimate_placeholder"
+          },
+          {
+            "chapter_id": "wh_ch03",
+            "source": "in_run_estimate_placeholder"
+          }
+        ]
+      },
+      "chapters_requested": [
+        "wh_ch01",
+        "wh_ch02",
+        "wh_ch03",
+        "wh_ch04"
+      ],
+      "chapters_selected": [
+        "wh_ch01",
+        "wh_ch02",
+        "wh_ch03",
+        "wh_ch04"
+      ],
+      "calls": 4,
+      "modes": [
+        "literary_digest_v1"
+      ],
+      "prompt_tokens_est": 30766,
+      "max_prompt_tokens_est": 10482,
+      "max_output_tokens_per_call": 6144,
+      "total_tokens_upper_bound": 55342,
+      "prompt_token_cap": 14000,
+      "cost_cap_usd": 0.0,
+      "call_estimates": [
+        {
+          "chapter_id": "wh_ch01",
+          "mode": "literary_digest_v1",
+          "prompt_tokens_est": 4745,
+          "max_output_tokens": 6144,
+          "neighbor_summary_count": 0,
+          "neighbor_source": [],
+          "relation_event_lines": 19
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "mode": "literary_digest_v1",
+          "prompt_tokens_est": 8265,
+          "max_output_tokens": 6144,
+          "neighbor_summary_count": 1,
+          "neighbor_source": [
+            {
+              "chapter_id": "wh_ch01",
+              "source": "in_run_estimate_placeholder"
+            }
+          ],
+          "relation_event_lines": 53
+        },
+        {
+          "chapter_id": "wh_ch03",
+          "mode": "literary_digest_v1",
+          "prompt_tokens_est": 10482,
+          "max_output_tokens": 6144,
+          "neighbor_summary_count": 2,
+          "neighbor_source": [
+            {
+              "chapter_id": "wh_ch01",
+              "source": "in_run_estimate_placeholder"
+            },
+            {
+              "chapter_id": "wh_ch02",
+              "source": "in_run_estimate_placeholder"
+            }
+          ],
+          "relation_event_lines": 43
+        },
+        {
+          "chapter_id": "wh_ch04",
+          "mode": "literary_digest_v1",
+          "prompt_tokens_est": 7274,
+          "max_output_tokens": 6144,
+          "neighbor_summary_count": 2,
+          "neighbor_source": [
+            {
+              "chapter_id": "wh_ch02",
+              "source": "in_run_estimate_placeholder"
+            },
+            {
+              "chapter_id": "wh_ch03",
+              "source": "in_run_estimate_placeholder"
+            }
+          ],
+          "relation_event_lines": 48
+        }
+      ],
+      "token_growth_halt": false
+    },
+    "actual": {
+      "calls": 4,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 31832,
+      "cached_tokens": 0,
+      "completion_tokens": 11626,
+      "reasoning_tokens": 0
+    },
+    "accounting_resume": {
+      "restored_total": {
+        "logical_calls": 0,
+        "attempts": 0,
+        "cache_hits": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 0,
+        "cached_tokens": 0,
+        "completion_tokens": 0,
+        "reasoning_tokens": 0,
+        "incremental_cost_usd": 0.0,
+        "incremental_prompt_tokens": 0,
+        "incremental_cached_tokens": 0,
+        "incremental_completion_tokens": 0,
+        "incremental_reasoning_tokens": 0
+      },
+      "this_attempt": {
+        "logical_calls": 4,
+        "attempts": 4,
+        "cache_hits": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 31832,
+        "cached_tokens": 0,
+        "completion_tokens": 11626,
+        "reasoning_tokens": 0
+      },
+      "combined_total": {
+        "logical_calls": 4,
+        "attempts": 4,
+        "cache_hits": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 31832,
+        "cached_tokens": 0,
+        "completion_tokens": 11626,
+        "reasoning_tokens": 0,
+        "incremental_cost_usd": 0.0,
+        "incremental_prompt_tokens": 31832,
+        "incremental_cached_tokens": 0,
+        "incremental_completion_tokens": 11626,
+        "incremental_reasoning_tokens": 0
+      }
+    },
+    "resume": {
+      "enabled": false,
+      "resumed_from_checkpoint": [],
+      "ran": [
+        "wh_ch01",
+        "wh_ch02",
+        "wh_ch03",
+        "wh_ch04"
+      ],
+      "mismatches": [],
+      "lock_took_over_stale": false
+    },
+    "checkpoint_config_hash": "aa74b26bcf86255b2a9e4960866137e0dd8baa656bdd4c7a8ed6c54468d97430",
+    "input_m1_checkpoint_hashes": {
+      "wh_ch01": "d7ce3c3e3a9eca24f19d581f6b9ce5351cc2e108b593a5e9812c01571b4df11c",
+      "wh_ch02": "9221629ccd53b3a1bf4881b84a445549af000145e90db056d016a1a3460a2761",
+      "wh_ch03": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+      "wh_ch04": "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11"
+    },
+    "validation_counts": {
+      "digest_ok": 4,
+      "digest_failed": 0,
+      "parse_fail": 0,
+      "frame_segments": 5,
+      "scenes": 16,
+      "state_changes": 4,
+      "translator_facts": 31,
+      "motifs": 20
+    },
+    "chapter_summaries": [
+      {
+        "chapter_id": "wh_ch01",
+        "summary": "Lockwood narrates his first visit to Wuthering Heights in 1801. He meets his landlord, Mr. Heathcliff, whose reserved and suspicious manner fascinates him. After entering the bleak, old house and noting its strange architecture, furnishings, and the name Hareton Earnshaw carved above the door, Lockwood reflects at length on Heathcliff’s character and on his own awkwardness in human relations. Left briefly alone, he attempts to pet a dog and provokes a violent attack from several of the house dogs, until a kitchen woman intervenes. Heathcliff responds with brusque indifference, then offers wine and becomes somewhat more civil. Despite clear signs that Heathcliff does not welcome company, Lockwood decides he will visit again."
+      },
+      {
+        "chapter_id": "wh_ch02",
+        "summary": "Lockwood revisits Wuthering Heights in worsening snow and is admitted only after difficulty. Inside, he meets a young woman he assumes is Mrs. Heathcliff, a rough young man, and later Heathcliff. Through awkward conversation he learns the young woman is Heathcliff’s daughter-in-law and that her husband is dead, while the rough youth is Hareton Earnshaw. The household remains hostile and confusing: Joseph is surly, Mrs. Heathcliff alternates between scorn and a brief show of pity, Hareton is aggressive, and Heathcliff refuses both guidance and hospitality. When Lockwood tries to leave alone, dogs attack him at the door, provoking laughter from Heathcliff and Hareton. Zillah intervenes, tends him, and he is forced to stay the night under Heathcliff’s roof."
+      },
+      {
+        "chapter_id": "wh_ch03",
+        "summary": "Lockwood is put to sleep in a forbidden old bed-closet at Wuthering Heights. Reading Catherine Earnshaw’s old books and diary fragments, he learns of Hindley’s cruelty toward Heathcliff and Catherine in childhood. He then suffers two disturbing dreams: one a grotesque sermon by Jabez Branderham, the other a ghostly encounter at the window with “Catherine Linton,” who begs to be let in after wandering twenty years. His scream brings Heathcliff, whose violent agitation reveals a deep connection to Catherine; after Lockwood mentions the dream, Heathcliff later opens the window and desperately calls for “Cathy.” At dawn Lockwood witnesses Heathcliff’s harsh treatment of Zillah and his daughter-in-law, then leaves Wuthering Heights and returns exhausted to Thrushcross Grange."
+      },
+      {
+        "chapter_id": "wh_ch04",
+        "summary": "At Thrushcross Grange, Lockwood draws Mrs. Dean into explaining the tangled Wuthering Heights household. She identifies Catherine Heathcliff as Catherine Linton, daughter of her late master, and Hareton as the last Earnshaw, dispossessed by Heathcliff. Mrs. Dean then begins her history of earlier years at Wuthering Heights. She recounts old Mr. Earnshaw’s return from Liverpool with a ragged orphan child he had found starving, whom the family soon named Heathcliff. Cathy quickly befriended him, but Hindley hated him, and Nelly admits she joined in mistreating him at first. Mr. Earnshaw increasingly favored Heathcliff, deepening resentment in the house. After illness softens Nelly somewhat toward him, she still observes his hardness and calculating nature. The chapter ends with a violent quarrel in which Heathcliff maneuvers Hindley out of a better colt and silently stores up revenge."
+      }
+    ],
+    "call_records": [
+      {
+        "mode": "literary_digest_v1",
+        "window_id": "wh_ch01",
+        "ok": true,
+        "attempts": 1,
+        "cost_usd": 0.0,
+        "prompt_tokens": 4717,
+        "cached_tokens": 0,
+        "completion_tokens": 1674,
+        "reasoning_tokens": 0,
+        "cache_hits": 0,
+        "errors": [],
+        "counts": {
+          "frame_segments": 1,
+          "scenes": 1,
+          "state_changes": 0,
+          "unresolved_mystery": 2,
+          "unresolved_pending_transition": 1,
+          "unresolved_question": 0,
+          "translator_facts": 7,
+          "motifs": 4,
+          "nonnarrative_block_skipped": 1
+        },
+        "incremental_cost_usd": 0.0,
+        "incremental_prompt_tokens": 4717,
+        "incremental_cached_tokens": 0,
+        "incremental_completion_tokens": 1674,
+        "incremental_reasoning_tokens": 0
+      },
+      {
+        "mode": "literary_digest_v1",
+        "window_id": "wh_ch02",
+        "ok": true,
+        "attempts": 1,
+        "cost_usd": 0.0,
+        "prompt_tokens": 8800,
+        "cached_tokens": 0,
+        "completion_tokens": 3357,
+        "reasoning_tokens": 0,
+        "cache_hits": 0,
+        "errors": [],
+        "counts": {
+          "frame_segments": 1,
+          "scenes": 4,
+          "state_changes": 3,
+          "unresolved_mystery": 2,
+          "unresolved_pending_transition": 1,
+          "unresolved_question": 1,
+          "translator_facts": 8,
+          "motifs": 5,
+          "nonnarrative_block_skipped": 1
+        },
+        "incremental_cost_usd": 0.0,
+        "incremental_prompt_tokens": 8800,
+        "incremental_cached_tokens": 0,
+        "incremental_completion_tokens": 3357,
+        "incremental_reasoning_tokens": 0
+      },
+      {
+        "mode": "literary_digest_v1",
+        "window_id": "wh_ch03",
+        "ok": true,
+        "attempts": 1,
+        "cost_usd": 0.0,
+        "prompt_tokens": 10670,
+        "cached_tokens": 0,
+        "completion_tokens": 3247,
+        "reasoning_tokens": 0,
+        "cache_hits": 0,
+        "errors": [],
+        "counts": {
+          "frame_segments": 1,
+          "scenes": 7,
+          "state_changes": 0,
+          "unresolved_mystery": 3,
+          "unresolved_pending_transition": 1,
+          "unresolved_question": 1,
+          "translator_facts": 8,
+          "motifs": 6,
+          "nonnarrative_block_skipped": 3
+        },
+        "incremental_cost_usd": 0.0,
+        "incremental_prompt_tokens": 10670,
+        "incremental_cached_tokens": 0,
+        "incremental_completion_tokens": 3247,
+        "incremental_reasoning_tokens": 0
+      },
+      {
+        "mode": "literary_digest_v1",
+        "window_id": "wh_ch04",
+        "ok": true,
+        "attempts": 1,
+        "cost_usd": 0.0,
+        "prompt_tokens": 7645,
+        "cached_tokens": 0,
+        "completion_tokens": 3348,
+        "reasoning_tokens": 0,
+        "cache_hits": 0,
+        "errors": [],
+        "counts": {
+          "frame_segments": 2,
+          "scenes": 4,
+          "state_changes": 1,
+          "unresolved_mystery": 2,
+          "unresolved_pending_transition": 2,
+          "unresolved_question": 0,
+          "translator_facts": 8,
+          "motifs": 5,
+          "nonnarrative_block_skipped": 2
+        },
+        "incremental_cost_usd": 0.0,
+        "incremental_prompt_tokens": 7645,
+        "incremental_cached_tokens": 0,
+        "incremental_completion_tokens": 3348,
+        "incremental_reasoning_tokens": 0
+      }
+    ],
+    "artifacts": {
+      "digest_dir": "data\\reports\\literary_m4_full\\digest",
+      "report": "data\\reports\\literary_m4_full\\m2_report.json"
+    },
+    "stop": "M2 complete. Claude must verify digest before M3."
+  },
+  "m3": {
+    "phase": "L2A-1",
+    "milestone": "M3",
+    "status": "needs_claude_gate",
+    "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+    "digest_dir": "data\\reports\\literary_m4_full\\digest",
+    "chapters_requested": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "chapters_selected": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "modes": [
+      "literary_consolidate_v1"
+    ],
+    "estimate": {
+      "phase": "L2A-1",
+      "milestone": "M3",
+      "zero_api": true,
+      "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+      "digest_dir": "data\\reports\\literary_m4_full\\digest",
+      "chapters_requested": [
+        "wh_ch01",
+        "wh_ch02",
+        "wh_ch03",
+        "wh_ch04"
+      ],
+      "chapters_selected": [
+        "wh_ch01",
+        "wh_ch02",
+        "wh_ch03",
+        "wh_ch04"
+      ],
+      "calls": 0,
+      "modes": [
+        "literary_consolidate_v1"
+      ],
+      "cost_cap_usd": 0.0,
+      "micro_calls": 0,
+      "note": "M3 scaffold is zero-API: candidate refs resolve from B1/B2 evidence, unresolved refs stay unresolved, and relation phases use a generic valence fallback marked needs_human_review."
+    },
+    "actual": {
+      "calls": 0,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "validation_counts": {
+      "story_bible_ok": 4,
+      "story_bible_failed": 0,
+      "entities": 120,
+      "aliases_with_valid_range": 140,
+      "phases": 23,
+      "open_intervals": 23,
+      "entity_state_intervals": 4,
+      "address_policies_proposed": 23,
+      "address_dirs_unsupported": 28,
+      "state_changes_dropped_temporary": 0,
+      "canary_pass": 0,
+      "canary_fail": 4
+    },
+    "call_records": [
+      {
+        "mode": "literary_consolidate_v1",
+        "window_id": "wh_ch01",
+        "ok": true,
+        "attempts": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "reasoning_tokens": 0,
+        "cache_hits": 0,
+        "errors": [],
+        "counts": {
+          "entities": 30,
+          "aliases_with_valid_range": 35,
+          "phases": 3,
+          "open_intervals": 3,
+          "entity_state_intervals": 0,
+          "address_policies_proposed": 3,
+          "address_dirs_unsupported": 2
+        }
+      },
+      {
+        "mode": "literary_consolidate_v1",
+        "window_id": "wh_ch02",
+        "ok": true,
+        "attempts": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "reasoning_tokens": 0,
+        "cache_hits": 0,
+        "errors": [],
+        "counts": {
+          "entities": 30,
+          "aliases_with_valid_range": 35,
+          "phases": 8,
+          "open_intervals": 8,
+          "entity_state_intervals": 3,
+          "address_policies_proposed": 8,
+          "address_dirs_unsupported": 10
+        }
+      },
+      {
+        "mode": "literary_consolidate_v1",
+        "window_id": "wh_ch03",
+        "ok": true,
+        "attempts": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "reasoning_tokens": 0,
+        "cache_hits": 0,
+        "errors": [],
+        "counts": {
+          "entities": 30,
+          "aliases_with_valid_range": 35,
+          "phases": 5,
+          "open_intervals": 5,
+          "entity_state_intervals": 0,
+          "address_policies_proposed": 5,
+          "address_dirs_unsupported": 6
+        }
+      },
+      {
+        "mode": "literary_consolidate_v1",
+        "window_id": "wh_ch04",
+        "ok": true,
+        "attempts": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "reasoning_tokens": 0,
+        "cache_hits": 0,
+        "errors": [],
+        "counts": {
+          "entities": 30,
+          "aliases_with_valid_range": 35,
+          "phases": 7,
+          "open_intervals": 7,
+          "entity_state_intervals": 1,
+          "address_policies_proposed": 7,
+          "address_dirs_unsupported": 10
+        }
+      }
+    ],
+    "artifacts": {
+      "story_bible_dir": "data\\reports\\literary_m4_full\\story_bible",
+      "stories": [
+        {
+          "chapter_id": "wh_ch01",
+          "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch01_story_bible.json",
+          "validation": {
+            "name": "story_bible",
+            "ok": true,
+            "errors": [],
+            "warnings": [],
+            "counts": {
+              "entities": 30,
+              "aliases_with_valid_range": 35,
+              "phases": 3,
+              "open_intervals": 3,
+              "entity_state_intervals": 0,
+              "address_policies_proposed": 3,
+              "address_dirs_unsupported": 2
+            }
+          }
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch02_story_bible.json",
+          "validation": {
+            "name": "story_bible",
+            "ok": true,
+            "errors": [],
+            "warnings": [],
+            "counts": {
+              "entities": 30,
+              "aliases_with_valid_range": 35,
+              "phases": 8,
+              "open_intervals": 8,
+              "entity_state_intervals": 3,
+              "address_policies_proposed": 8,
+              "address_dirs_unsupported": 10
+            }
+          }
+        },
+        {
+          "chapter_id": "wh_ch03",
+          "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch03_story_bible.json",
+          "validation": {
+            "name": "story_bible",
+            "ok": true,
+            "errors": [],
+            "warnings": [],
+            "counts": {
+              "entities": 30,
+              "aliases_with_valid_range": 35,
+              "phases": 5,
+              "open_intervals": 5,
+              "entity_state_intervals": 0,
+              "address_policies_proposed": 5,
+              "address_dirs_unsupported": 6
+            }
+          }
+        },
+        {
+          "chapter_id": "wh_ch04",
+          "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch04_story_bible.json",
+          "validation": {
+            "name": "story_bible",
+            "ok": true,
+            "errors": [],
+            "warnings": [],
+            "counts": {
+              "entities": 30,
+              "aliases_with_valid_range": 35,
+              "phases": 7,
+              "open_intervals": 7,
+              "entity_state_intervals": 1,
+              "address_policies_proposed": 7,
+              "address_dirs_unsupported": 10
+            }
+          }
+        }
+      ],
+      "report": "data\\reports\\literary_m4_full\\m3_report.json"
+    },
+    "stop": "M3 complete. Claude must verify Story Bible before M4."
+  },
+  "b4_raw": [
+    {
+      "chapter_id": "wh_ch01",
+      "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch01_story_bible.json",
+      "scope": "ch1",
+      "artifact_scope_end_block": "wh_ch01_b028",
+      "registry_T2_entities": [
+        {
+          "entity_id": "ent_and_mrs_heathcliff",
+          "canonical": "and Mrs. Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_and_mrs_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. and Mrs. Heathcliff",
+              "valid_from_block": "wh_ch02_b029",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_branderham",
+          "canonical": "Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "Branderham",
+              "valid_from_block": "wh_ch03_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_catherine",
+          "canonical": "Catherine",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine",
+              "valid_from_block": "wh_ch03_b017",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_earnshaw",
+          "canonical": "Catherine Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Earnshaw",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_heathcliff",
+          "canonical": "Catherine Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Heathcliff",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_catherine_linton",
+          "canonical": "Catherine Linton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_linton"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Linton",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_s",
+          "canonical": "Catherine’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine’s",
+              "valid_from_block": "wh_ch03_b008",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_cathy",
+          "canonical": "Cathy",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_cathy",
+            "ent_miss_cathy"
+          ],
+          "aliases": [
+            {
+              "surface": "Miss Cathy",
+              "valid_from_block": "wh_ch03_b014",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Cathy",
+              "valid_from_block": "wh_ch03_b057",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_dean",
+          "canonical": "Dean",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mrs_dean"
+          ],
+          "aliases": [
+            {
+              "surface": "Mrs. Dean",
+              "valid_from_block": "wh_ch04_b002",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_earnshaw",
+          "canonical": "Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_earnshaw",
+            "ent_mr_earnshaw",
+            "ent_mrs_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Earnshaw",
+              "valid_from_block": "wh_ch02_b071",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mr. Earnshaw",
+              "valid_from_block": "wh_ch02_b090",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mrs. Earnshaw",
+              "valid_from_block": "wh_ch04_b036",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_frances",
+          "canonical": "Frances",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_frances"
+          ],
+          "aliases": [
+            {
+              "surface": "Frances",
+              "valid_from_block": "wh_ch03_b011",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hareton",
+          "canonical": "Hareton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hareton"
+          ],
+          "aliases": [
+            {
+              "surface": "Hareton",
+              "valid_from_block": "wh_ch02_b058",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hareton_earnshaw",
+          "canonical": "Hareton Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hareton_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Hareton Earnshaw",
+              "valid_from_block": "wh_ch01_b012",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_heathcliff",
+          "canonical": "Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_heathcliff",
+            "ent_mr_heathcliff",
+            "ent_mrs_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Heathcliff",
+              "valid_from_block": "wh_ch01_b002",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Heathcliff",
+              "valid_from_block": "wh_ch01_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mrs. Heathcliff",
+              "valid_from_block": "wh_ch02_b011",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_heathcliff_s",
+          "canonical": "Heathcliff’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_heathcliff_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Heathcliff’s",
+              "valid_from_block": "wh_ch03_b043",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_hindley",
+          "canonical": "Hindley",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hindley"
+          ],
+          "aliases": [
+            {
+              "surface": "Hindley",
+              "valid_from_block": "wh_ch03_b009",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hindley_earnshaw",
+          "canonical": "Hindley Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_hindley_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Hindley Earnshaw",
+              "valid_from_block": "wh_ch04_b035",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_jabez",
+          "canonical": "Jabez",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez",
+              "valid_from_block": "wh_ch03_b022",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_jabez_branderham",
+          "canonical": "Jabez Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez Branderham",
+              "valid_from_block": "wh_ch03_b020",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_jabez_s",
+          "canonical": "Jabez’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez’s",
+              "valid_from_block": "wh_ch03_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_joseph",
+          "canonical": "Joseph",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_joseph"
+          ],
+          "aliases": [
+            {
+              "surface": "Joseph",
+              "valid_from_block": "wh_ch01_b008",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_king_lear",
+          "canonical": "King Lear",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_king_lear"
+          ],
+          "aliases": [
+            {
+              "surface": "King Lear",
+              "valid_from_block": "wh_ch02_b088",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_linton",
+          "canonical": "Linton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_linton"
+          ],
+          "aliases": [
+            {
+              "surface": "Linton",
+              "valid_from_block": "wh_ch03_b006",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_lockwood",
+          "canonical": "Lockwood",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Lockwood",
+              "valid_from_block": "wh_ch01_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_maister_hindley",
+          "canonical": "Maister Hindley",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_maister_hindley"
+          ],
+          "aliases": [
+            {
+              "surface": "Maister Hindley",
+              "valid_from_block": "wh_ch03_b014",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_the_reverend_jabez_branderham",
+          "canonical": "the Reverend Jabez Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_the_reverend_jabez_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "the Reverend Jabez Branderham",
+              "valid_from_block": "wh_ch03_b050",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_the_young_man",
+          "canonical": "the young man",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_the_young_man"
+          ],
+          "aliases": [
+            {
+              "surface": "the young man",
+              "valid_from_block": "wh_ch02_b013",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_wuthering_heights",
+          "canonical": "Wuthering Heights",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_wuthering_heights"
+          ],
+          "aliases": [
+            {
+              "surface": "Wuthering Heights",
+              "valid_from_block": "wh_ch04_b023",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_your_servant_zillah",
+          "canonical": "your servant Zillah",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_your_servant_zillah"
+          ],
+          "aliases": [
+            {
+              "surface": "your servant Zillah",
+              "valid_from_block": "wh_ch03_b048",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_zillah",
+          "canonical": "Zillah",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_zillah"
+          ],
+          "aliases": [
+            {
+              "surface": "Zillah",
+              "valid_from_block": "wh_ch02_b071",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        }
+      ],
+      "entity_relations": [
+        {
+          "pair": [
+            "ent_lockwood",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch01_b003",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch01_b003",
+          "trigger_evidence": "Mr. Heathcliff?",
+          "source_event_ids": [
+            "e_wh_ch01_b003_01",
+            "e_wh_ch01_b005_01",
+            "e_wh_ch01_b006_01",
+            "e_wh_ch01_b006_02",
+            "e_wh_ch01_b018_01",
+            "e_wh_ch01_b021_01",
+            "e_wh_ch01_b022_01",
+            "e_wh_ch01_b023_03",
+            "e_wh_ch01_b024_01",
+            "e_wh_ch01_b025_01",
+            "e_wh_ch01_b026_01",
+            "e_wh_ch01_b027_01",
+            "e_wh_ch01_b027_02",
+            "e_wh_ch01_b027_03",
+            "e_wh_ch01_b027_04"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_joseph"
+          ],
+          "phase_label": "neutral",
+          "valid_from_block": "wh_ch01_b008",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch01_b008",
+          "trigger_evidence": "Joseph, take Mr. Lockwood's horse",
+          "source_event_ids": [
+            "e_wh_ch01_b008_01",
+            "e_wh_ch01_b018_02"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_joseph",
+            "ent_lockwood"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch01_b010",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch01_b010",
+          "trigger_evidence": "The Lord help us!",
+          "source_event_ids": [
+            "e_wh_ch01_b010_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        }
+      ],
+      "address_policies": [
+        {
+          "pair": [
+            "ent_lockwood",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch01_b003",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Mr. Heathcliff",
+              "sir",
+              "Mrs. Heathcliff",
+              "madam"
+            ]
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "sir",
+              "Mr. Lockwood"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_joseph"
+          ],
+          "phase_ref": "neutral@wh_ch01_b008",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Joseph"
+            ]
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_joseph",
+            "ent_lockwood"
+          ],
+          "phase_ref": "strained@wh_ch01_b010",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Joseph"
+            ]
+          },
+          "proposal_only": true
+        }
+      ],
+      "narration_frame_segments": [
+        {
+          "narrator_ref": "ent_mr_lockwood",
+          "block_range": [
+            "wh_ch01_b002",
+            "wh_ch01_b028"
+          ],
+          "story_time_label": "frame_present"
+        }
+      ],
+      "audit": {
+        "scope": "M3_ch1",
+        "identity_merges": [
+          {
+            "merged_into": "ent_cathy",
+            "source_entity_ids": [
+              "ent_cathy",
+              "ent_miss_cathy"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          },
+          {
+            "merged_into": "ent_earnshaw",
+            "source_entity_ids": [
+              "ent_earnshaw",
+              "ent_mr_earnshaw",
+              "ent_mrs_earnshaw"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          },
+          {
+            "merged_into": "ent_heathcliff",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          }
+        ],
+        "historical_mentions": [
+          "ent_and_mrs_heathcliff",
+          "ent_branderham",
+          "ent_catherine_heathcliff",
+          "ent_catherine_s",
+          "ent_heathcliff_s",
+          "ent_hindley_earnshaw",
+          "ent_jabez_s",
+          "ent_king_lear",
+          "ent_linton",
+          "ent_maister_hindley",
+          "ent_the_reverend_jabez_branderham",
+          "ent_wuthering_heights",
+          "ent_your_servant_zillah"
+        ],
+        "state_changes_dropped_temporary": 0,
+        "micro_calls": 0,
+        "escalated": 0,
+        "pairs_blocked_for_runtime": 0,
+        "phase_segmentation_mode": "generic_valence_fallback_no_book_specific_rules"
+      },
+      "canary_report": {
+        "pass": false,
+        "checks": {
+          "heathcliff_honorific_merge": true,
+          "hareton_historical_not_present": false,
+          "lockwood_temporary_residence_dropped": true
+        }
+      },
+      "validation": {
+        "name": "story_bible",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "entities": 30,
+          "aliases_with_valid_range": 35,
+          "phases": 3,
+          "open_intervals": 3,
+          "entity_state_intervals": 0,
+          "address_policies_proposed": 3,
+          "address_dirs_unsupported": 2
+        }
+      },
+      "case_entities": {
+        "ent_heathcliff": [
+          {
+            "entity_id": "ent_heathcliff",
+            "canonical": "Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. Heathcliff",
+                "valid_from_block": "wh_ch01_b002",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Heathcliff",
+                "valid_from_block": "wh_ch01_b026",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b011",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_mr_heathcliff": [
+          {
+            "entity_id": "ent_heathcliff",
+            "canonical": "Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. Heathcliff",
+                "valid_from_block": "wh_ch01_b002",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Heathcliff",
+                "valid_from_block": "wh_ch01_b026",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b011",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_hareton": [
+          {
+            "entity_id": "ent_hareton",
+            "canonical": "Hareton",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_hareton"
+            ],
+            "aliases": [
+              {
+                "surface": "Hareton",
+                "valid_from_block": "wh_ch02_b058",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_hareton_earnshaw": [
+          {
+            "entity_id": "ent_hareton_earnshaw",
+            "canonical": "Hareton Earnshaw",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_hareton_earnshaw"
+            ],
+            "aliases": [
+              {
+                "surface": "Hareton Earnshaw",
+                "valid_from_block": "wh_ch01_b012",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_king_lear": [
+          {
+            "entity_id": "ent_king_lear",
+            "canonical": "King Lear",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_king_lear"
+            ],
+            "aliases": [
+              {
+                "surface": "King Lear",
+                "valid_from_block": "wh_ch02_b088",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "mentioned_historical",
+            "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+          }
+        ],
+        "ent_mr_and_mrs_heathcliff": [
+          {
+            "entity_id": "ent_and_mrs_heathcliff",
+            "canonical": "and Mrs. Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_mr_and_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. and Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b029",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "mentioned_historical",
+            "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+          }
+        ]
+      }
+    },
+    {
+      "chapter_id": "wh_ch02",
+      "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch02_story_bible.json",
+      "scope": "ch1",
+      "artifact_scope_end_block": "wh_ch02_b092",
+      "registry_T2_entities": [
+        {
+          "entity_id": "ent_and_mrs_heathcliff",
+          "canonical": "and Mrs. Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_and_mrs_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. and Mrs. Heathcliff",
+              "valid_from_block": "wh_ch02_b029",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_branderham",
+          "canonical": "Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "Branderham",
+              "valid_from_block": "wh_ch03_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_catherine",
+          "canonical": "Catherine",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine",
+              "valid_from_block": "wh_ch03_b017",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_earnshaw",
+          "canonical": "Catherine Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Earnshaw",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_heathcliff",
+          "canonical": "Catherine Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Heathcliff",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_catherine_linton",
+          "canonical": "Catherine Linton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_linton"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Linton",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_s",
+          "canonical": "Catherine’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine’s",
+              "valid_from_block": "wh_ch03_b008",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_cathy",
+          "canonical": "Cathy",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_cathy",
+            "ent_miss_cathy"
+          ],
+          "aliases": [
+            {
+              "surface": "Miss Cathy",
+              "valid_from_block": "wh_ch03_b014",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Cathy",
+              "valid_from_block": "wh_ch03_b057",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_dean",
+          "canonical": "Dean",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mrs_dean"
+          ],
+          "aliases": [
+            {
+              "surface": "Mrs. Dean",
+              "valid_from_block": "wh_ch04_b002",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_earnshaw",
+          "canonical": "Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_earnshaw",
+            "ent_mr_earnshaw",
+            "ent_mrs_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Earnshaw",
+              "valid_from_block": "wh_ch02_b071",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mr. Earnshaw",
+              "valid_from_block": "wh_ch02_b090",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mrs. Earnshaw",
+              "valid_from_block": "wh_ch04_b036",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_frances",
+          "canonical": "Frances",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_frances"
+          ],
+          "aliases": [
+            {
+              "surface": "Frances",
+              "valid_from_block": "wh_ch03_b011",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hareton",
+          "canonical": "Hareton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hareton"
+          ],
+          "aliases": [
+            {
+              "surface": "Hareton",
+              "valid_from_block": "wh_ch02_b058",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hareton_earnshaw",
+          "canonical": "Hareton Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hareton_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Hareton Earnshaw",
+              "valid_from_block": "wh_ch01_b012",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_heathcliff",
+          "canonical": "Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_heathcliff",
+            "ent_mr_heathcliff",
+            "ent_mrs_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Heathcliff",
+              "valid_from_block": "wh_ch01_b002",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Heathcliff",
+              "valid_from_block": "wh_ch01_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mrs. Heathcliff",
+              "valid_from_block": "wh_ch02_b011",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_heathcliff_s",
+          "canonical": "Heathcliff’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_heathcliff_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Heathcliff’s",
+              "valid_from_block": "wh_ch03_b043",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_hindley",
+          "canonical": "Hindley",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hindley"
+          ],
+          "aliases": [
+            {
+              "surface": "Hindley",
+              "valid_from_block": "wh_ch03_b009",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hindley_earnshaw",
+          "canonical": "Hindley Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_hindley_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Hindley Earnshaw",
+              "valid_from_block": "wh_ch04_b035",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_jabez",
+          "canonical": "Jabez",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez",
+              "valid_from_block": "wh_ch03_b022",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_jabez_branderham",
+          "canonical": "Jabez Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez Branderham",
+              "valid_from_block": "wh_ch03_b020",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_jabez_s",
+          "canonical": "Jabez’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez’s",
+              "valid_from_block": "wh_ch03_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_joseph",
+          "canonical": "Joseph",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_joseph"
+          ],
+          "aliases": [
+            {
+              "surface": "Joseph",
+              "valid_from_block": "wh_ch01_b008",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_king_lear",
+          "canonical": "King Lear",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_king_lear"
+          ],
+          "aliases": [
+            {
+              "surface": "King Lear",
+              "valid_from_block": "wh_ch02_b088",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_linton",
+          "canonical": "Linton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_linton"
+          ],
+          "aliases": [
+            {
+              "surface": "Linton",
+              "valid_from_block": "wh_ch03_b006",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_lockwood",
+          "canonical": "Lockwood",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Lockwood",
+              "valid_from_block": "wh_ch01_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_maister_hindley",
+          "canonical": "Maister Hindley",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_maister_hindley"
+          ],
+          "aliases": [
+            {
+              "surface": "Maister Hindley",
+              "valid_from_block": "wh_ch03_b014",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_the_reverend_jabez_branderham",
+          "canonical": "the Reverend Jabez Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_the_reverend_jabez_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "the Reverend Jabez Branderham",
+              "valid_from_block": "wh_ch03_b050",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_the_young_man",
+          "canonical": "the young man",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_the_young_man"
+          ],
+          "aliases": [
+            {
+              "surface": "the young man",
+              "valid_from_block": "wh_ch02_b013",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_wuthering_heights",
+          "canonical": "Wuthering Heights",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_wuthering_heights"
+          ],
+          "aliases": [
+            {
+              "surface": "Wuthering Heights",
+              "valid_from_block": "wh_ch04_b023",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_your_servant_zillah",
+          "canonical": "your servant Zillah",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_your_servant_zillah"
+          ],
+          "aliases": [
+            {
+              "surface": "your servant Zillah",
+              "valid_from_block": "wh_ch03_b048",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_zillah",
+          "canonical": "Zillah",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_zillah"
+          ],
+          "aliases": [
+            {
+              "surface": "Zillah",
+              "valid_from_block": "wh_ch02_b071",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        }
+      ],
+      "entity_relations": [
+        {
+          "pair": [
+            "ent_joseph",
+            "ent_lockwood"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch02_b005",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch02_b005",
+          "trigger_evidence": "What are ye for?",
+          "source_event_ids": [
+            "e_wh_ch02_b005_01",
+            "e_wh_ch02_b005_02",
+            "e_wh_ch02_b007_01",
+            "e_wh_ch02_b008_01",
+            "e_wh_ch02_b060_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_lockwood",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch02_b011",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch02_b011",
+          "trigger_evidence": "Rough weather!",
+          "source_event_ids": [
+            "e_wh_ch02_b011_01",
+            "e_wh_ch02_b015_01",
+            "e_wh_ch02_b018_01",
+            "e_wh_ch02_b020_01",
+            "e_wh_ch02_b022_01",
+            "e_wh_ch02_b023_01",
+            "e_wh_ch02_b024_01",
+            "e_wh_ch02_b026_01",
+            "e_wh_ch02_b027_01",
+            "e_wh_ch02_b066_01",
+            "e_wh_ch02_b067_01",
+            "e_wh_ch02_b069_01",
+            "e_wh_ch02_b070_01",
+            "e_wh_ch02_b071_01",
+            "e_wh_ch02_b082_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_the_young_man",
+            "ent_lockwood"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch02_b013",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch02_b013",
+          "trigger_evidence": "Sit down",
+          "source_event_ids": [
+            "e_wh_ch02_b013_01",
+            "e_wh_ch02_b029_01",
+            "e_wh_ch02_b048_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_lockwood"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch02_b030",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch02_b030",
+          "trigger_evidence": "I am come, according to promise",
+          "source_event_ids": [
+            "e_wh_ch02_b030_01",
+            "e_wh_ch02_b031_01",
+            "e_wh_ch02_b038_02",
+            "e_wh_ch02_b049_01",
+            "e_wh_ch02_b076_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_hareton_earnshaw",
+            "ent_lockwood"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch02_b053",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch02_b053",
+          "trigger_evidence": "respect it!",
+          "source_event_ids": [
+            "e_wh_ch02_b053_01",
+            "e_wh_ch02_b080_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_hareton"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch02_b058",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch02_b058",
+          "trigger_evidence": "Hareton, drive those dozen sheep",
+          "source_event_ids": [
+            "e_wh_ch02_b058_01",
+            "e_wh_ch02_b081_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_hareton"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch02_b084",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch02_b084",
+          "trigger_evidence": "I hope his ghost will haunt you",
+          "source_event_ids": [
+            "e_wh_ch02_b084_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_zillah",
+            "ent_lockwood"
+          ],
+          "phase_label": "friendly",
+          "valid_from_block": "wh_ch02_b091",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch02_b091",
+          "trigger_evidence": "she suddenly splashed a pint of icy water",
+          "source_event_ids": [
+            "e_wh_ch02_b091_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        }
+      ],
+      "address_policies": [
+        {
+          "pair": [
+            "ent_joseph",
+            "ent_lockwood"
+          ],
+          "phase_ref": "strained@wh_ch02_b005",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Joseph"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_lockwood",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch02_b011",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Mr. Heathcliff",
+              "sir",
+              "Mrs. Heathcliff",
+              "madam"
+            ]
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "sir",
+              "Mr. Lockwood"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_the_young_man",
+            "ent_lockwood"
+          ],
+          "phase_ref": "strained@wh_ch02_b013",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "my neighbour"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_lockwood"
+          ],
+          "phase_ref": "strained@wh_ch02_b030",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "sir",
+              "Mr. Lockwood"
+            ]
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Mr. Heathcliff",
+              "sir",
+              "Mrs. Heathcliff",
+              "madam"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_hareton_earnshaw",
+            "ent_lockwood"
+          ],
+          "phase_ref": "strained@wh_ch02_b053",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_hareton"
+          ],
+          "phase_ref": "strained@wh_ch02_b058",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_hareton"
+          ],
+          "phase_ref": "strained@wh_ch02_b084",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_zillah",
+            "ent_lockwood"
+          ],
+          "phase_ref": "friendly@wh_ch02_b091",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        }
+      ],
+      "narration_frame_segments": [
+        {
+          "narrator_ref": "ent_mr_lockwood",
+          "block_range": [
+            "wh_ch02_b002",
+            "wh_ch02_b092"
+          ],
+          "story_time_label": "frame_present"
+        }
+      ],
+      "audit": {
+        "scope": "M3_ch1",
+        "identity_merges": [
+          {
+            "merged_into": "ent_cathy",
+            "source_entity_ids": [
+              "ent_cathy",
+              "ent_miss_cathy"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          },
+          {
+            "merged_into": "ent_earnshaw",
+            "source_entity_ids": [
+              "ent_earnshaw",
+              "ent_mr_earnshaw",
+              "ent_mrs_earnshaw"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          },
+          {
+            "merged_into": "ent_heathcliff",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          }
+        ],
+        "historical_mentions": [
+          "ent_and_mrs_heathcliff",
+          "ent_branderham",
+          "ent_catherine_heathcliff",
+          "ent_catherine_s",
+          "ent_heathcliff_s",
+          "ent_hindley_earnshaw",
+          "ent_jabez_s",
+          "ent_king_lear",
+          "ent_linton",
+          "ent_maister_hindley",
+          "ent_the_reverend_jabez_branderham",
+          "ent_wuthering_heights",
+          "ent_your_servant_zillah"
+        ],
+        "state_changes_dropped_temporary": 0,
+        "micro_calls": 0,
+        "escalated": 0,
+        "pairs_blocked_for_runtime": 0,
+        "phase_segmentation_mode": "generic_valence_fallback_no_book_specific_rules"
+      },
+      "canary_report": {
+        "pass": false,
+        "checks": {
+          "heathcliff_honorific_merge": true,
+          "hareton_historical_not_present": false,
+          "lockwood_temporary_residence_dropped": true
+        }
+      },
+      "validation": {
+        "name": "story_bible",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "entities": 30,
+          "aliases_with_valid_range": 35,
+          "phases": 8,
+          "open_intervals": 8,
+          "entity_state_intervals": 3,
+          "address_policies_proposed": 8,
+          "address_dirs_unsupported": 10
+        }
+      },
+      "case_entities": {
+        "ent_heathcliff": [
+          {
+            "entity_id": "ent_heathcliff",
+            "canonical": "Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. Heathcliff",
+                "valid_from_block": "wh_ch01_b002",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Heathcliff",
+                "valid_from_block": "wh_ch01_b026",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b011",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_mr_heathcliff": [
+          {
+            "entity_id": "ent_heathcliff",
+            "canonical": "Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. Heathcliff",
+                "valid_from_block": "wh_ch01_b002",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Heathcliff",
+                "valid_from_block": "wh_ch01_b026",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b011",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_hareton": [
+          {
+            "entity_id": "ent_hareton",
+            "canonical": "Hareton",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_hareton"
+            ],
+            "aliases": [
+              {
+                "surface": "Hareton",
+                "valid_from_block": "wh_ch02_b058",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_hareton_earnshaw": [
+          {
+            "entity_id": "ent_hareton_earnshaw",
+            "canonical": "Hareton Earnshaw",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_hareton_earnshaw"
+            ],
+            "aliases": [
+              {
+                "surface": "Hareton Earnshaw",
+                "valid_from_block": "wh_ch01_b012",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_king_lear": [
+          {
+            "entity_id": "ent_king_lear",
+            "canonical": "King Lear",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_king_lear"
+            ],
+            "aliases": [
+              {
+                "surface": "King Lear",
+                "valid_from_block": "wh_ch02_b088",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "mentioned_historical",
+            "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+          }
+        ],
+        "ent_mr_and_mrs_heathcliff": [
+          {
+            "entity_id": "ent_and_mrs_heathcliff",
+            "canonical": "and Mrs. Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_mr_and_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. and Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b029",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "mentioned_historical",
+            "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+          }
+        ]
+      }
+    },
+    {
+      "chapter_id": "wh_ch03",
+      "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch03_story_bible.json",
+      "scope": "ch1",
+      "artifact_scope_end_block": "wh_ch03_b067",
+      "registry_T2_entities": [
+        {
+          "entity_id": "ent_and_mrs_heathcliff",
+          "canonical": "and Mrs. Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_and_mrs_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. and Mrs. Heathcliff",
+              "valid_from_block": "wh_ch02_b029",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_branderham",
+          "canonical": "Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "Branderham",
+              "valid_from_block": "wh_ch03_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_catherine",
+          "canonical": "Catherine",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine",
+              "valid_from_block": "wh_ch03_b017",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_earnshaw",
+          "canonical": "Catherine Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Earnshaw",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_heathcliff",
+          "canonical": "Catherine Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Heathcliff",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_catherine_linton",
+          "canonical": "Catherine Linton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_linton"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Linton",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_s",
+          "canonical": "Catherine’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine’s",
+              "valid_from_block": "wh_ch03_b008",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_cathy",
+          "canonical": "Cathy",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_cathy",
+            "ent_miss_cathy"
+          ],
+          "aliases": [
+            {
+              "surface": "Miss Cathy",
+              "valid_from_block": "wh_ch03_b014",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Cathy",
+              "valid_from_block": "wh_ch03_b057",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_dean",
+          "canonical": "Dean",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mrs_dean"
+          ],
+          "aliases": [
+            {
+              "surface": "Mrs. Dean",
+              "valid_from_block": "wh_ch04_b002",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_earnshaw",
+          "canonical": "Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_earnshaw",
+            "ent_mr_earnshaw",
+            "ent_mrs_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Earnshaw",
+              "valid_from_block": "wh_ch02_b071",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mr. Earnshaw",
+              "valid_from_block": "wh_ch02_b090",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mrs. Earnshaw",
+              "valid_from_block": "wh_ch04_b036",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_frances",
+          "canonical": "Frances",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_frances"
+          ],
+          "aliases": [
+            {
+              "surface": "Frances",
+              "valid_from_block": "wh_ch03_b011",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hareton",
+          "canonical": "Hareton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hareton"
+          ],
+          "aliases": [
+            {
+              "surface": "Hareton",
+              "valid_from_block": "wh_ch02_b058",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hareton_earnshaw",
+          "canonical": "Hareton Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hareton_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Hareton Earnshaw",
+              "valid_from_block": "wh_ch01_b012",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_heathcliff",
+          "canonical": "Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_heathcliff",
+            "ent_mr_heathcliff",
+            "ent_mrs_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Heathcliff",
+              "valid_from_block": "wh_ch01_b002",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Heathcliff",
+              "valid_from_block": "wh_ch01_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mrs. Heathcliff",
+              "valid_from_block": "wh_ch02_b011",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_heathcliff_s",
+          "canonical": "Heathcliff’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_heathcliff_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Heathcliff’s",
+              "valid_from_block": "wh_ch03_b043",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_hindley",
+          "canonical": "Hindley",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hindley"
+          ],
+          "aliases": [
+            {
+              "surface": "Hindley",
+              "valid_from_block": "wh_ch03_b009",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hindley_earnshaw",
+          "canonical": "Hindley Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_hindley_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Hindley Earnshaw",
+              "valid_from_block": "wh_ch04_b035",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_jabez",
+          "canonical": "Jabez",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez",
+              "valid_from_block": "wh_ch03_b022",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_jabez_branderham",
+          "canonical": "Jabez Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez Branderham",
+              "valid_from_block": "wh_ch03_b020",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_jabez_s",
+          "canonical": "Jabez’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez’s",
+              "valid_from_block": "wh_ch03_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_joseph",
+          "canonical": "Joseph",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_joseph"
+          ],
+          "aliases": [
+            {
+              "surface": "Joseph",
+              "valid_from_block": "wh_ch01_b008",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_king_lear",
+          "canonical": "King Lear",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_king_lear"
+          ],
+          "aliases": [
+            {
+              "surface": "King Lear",
+              "valid_from_block": "wh_ch02_b088",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_linton",
+          "canonical": "Linton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_linton"
+          ],
+          "aliases": [
+            {
+              "surface": "Linton",
+              "valid_from_block": "wh_ch03_b006",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_lockwood",
+          "canonical": "Lockwood",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Lockwood",
+              "valid_from_block": "wh_ch01_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_maister_hindley",
+          "canonical": "Maister Hindley",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_maister_hindley"
+          ],
+          "aliases": [
+            {
+              "surface": "Maister Hindley",
+              "valid_from_block": "wh_ch03_b014",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_the_reverend_jabez_branderham",
+          "canonical": "the Reverend Jabez Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_the_reverend_jabez_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "the Reverend Jabez Branderham",
+              "valid_from_block": "wh_ch03_b050",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_the_young_man",
+          "canonical": "the young man",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_the_young_man"
+          ],
+          "aliases": [
+            {
+              "surface": "the young man",
+              "valid_from_block": "wh_ch02_b013",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_wuthering_heights",
+          "canonical": "Wuthering Heights",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_wuthering_heights"
+          ],
+          "aliases": [
+            {
+              "surface": "Wuthering Heights",
+              "valid_from_block": "wh_ch04_b023",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_your_servant_zillah",
+          "canonical": "your servant Zillah",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_your_servant_zillah"
+          ],
+          "aliases": [
+            {
+              "surface": "your servant Zillah",
+              "valid_from_block": "wh_ch03_b048",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_zillah",
+          "canonical": "Zillah",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_zillah"
+          ],
+          "aliases": [
+            {
+              "surface": "Zillah",
+              "valid_from_block": "wh_ch02_b071",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        }
+      ],
+      "entity_relations": [
+        {
+          "pair": [
+            "ent_hindley",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch03_b009",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch03_b009",
+          "trigger_evidence": "his conduct to Heathcliff is atrocious",
+          "source_event_ids": [
+            "e_wh_ch03_b009_01",
+            "e_wh_ch03_b018_03",
+            "e_wh_ch03_b018_04"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_catherine_earnshaw",
+            "ent_heathcliff"
+          ],
+          "phase_label": "friendly",
+          "valid_from_block": "wh_ch03_b018",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch03_b018",
+          "trigger_evidence": "Poor Heathcliff!",
+          "source_event_ids": [
+            "e_wh_ch03_b018_02"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_joseph",
+            "ent_lockwood"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch03_b021",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch03_b021",
+          "trigger_evidence": "telling me that I could never get",
+          "source_event_ids": [
+            "e_wh_ch03_b021_01",
+            "e_wh_ch03_b021_02",
+            "e_wh_ch03_b026_01",
+            "e_wh_ch03_b059_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_lockwood",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch03_b046",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch03_b046",
+          "trigger_evidence": "your guest, sir",
+          "source_event_ids": [
+            "e_wh_ch03_b046_01",
+            "e_wh_ch03_b046_02",
+            "e_wh_ch03_b047_01",
+            "e_wh_ch03_b047_02",
+            "e_wh_ch03_b049_01",
+            "e_wh_ch03_b049_02",
+            "e_wh_ch03_b049_03",
+            "e_wh_ch03_b050_02",
+            "e_wh_ch03_b052_01",
+            "e_wh_ch03_b052_02",
+            "e_wh_ch03_b054_01",
+            "e_wh_ch03_b056_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_cathy"
+          ],
+          "phase_label": "friendly",
+          "valid_from_block": "wh_ch03_b057",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch03_b057",
+          "trigger_evidence": "Come in! come in!",
+          "source_event_ids": [
+            "e_wh_ch03_b057_02"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        }
+      ],
+      "address_policies": [
+        {
+          "pair": [
+            "ent_hindley",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch03_b009",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_catherine_earnshaw",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "friendly@wh_ch03_b018",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_joseph",
+            "ent_lockwood"
+          ],
+          "phase_ref": "strained@wh_ch03_b021",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Joseph"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_lockwood",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch03_b046",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Mr. Heathcliff",
+              "sir",
+              "Mrs. Heathcliff",
+              "madam"
+            ]
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "sir",
+              "Mr. Lockwood"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_heathcliff",
+            "ent_cathy"
+          ],
+          "phase_ref": "friendly@wh_ch03_b057",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Cathy"
+            ]
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        }
+      ],
+      "narration_frame_segments": [
+        {
+          "narrator_ref": "ent_mr_lockwood",
+          "block_range": [
+            "wh_ch03_b002",
+            "wh_ch03_b067"
+          ],
+          "story_time_label": "frame_present"
+        }
+      ],
+      "audit": {
+        "scope": "M3_ch1",
+        "identity_merges": [
+          {
+            "merged_into": "ent_cathy",
+            "source_entity_ids": [
+              "ent_cathy",
+              "ent_miss_cathy"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          },
+          {
+            "merged_into": "ent_earnshaw",
+            "source_entity_ids": [
+              "ent_earnshaw",
+              "ent_mr_earnshaw",
+              "ent_mrs_earnshaw"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          },
+          {
+            "merged_into": "ent_heathcliff",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          }
+        ],
+        "historical_mentions": [
+          "ent_and_mrs_heathcliff",
+          "ent_branderham",
+          "ent_catherine_heathcliff",
+          "ent_catherine_s",
+          "ent_heathcliff_s",
+          "ent_hindley_earnshaw",
+          "ent_jabez_s",
+          "ent_king_lear",
+          "ent_linton",
+          "ent_maister_hindley",
+          "ent_the_reverend_jabez_branderham",
+          "ent_wuthering_heights",
+          "ent_your_servant_zillah"
+        ],
+        "state_changes_dropped_temporary": 0,
+        "micro_calls": 0,
+        "escalated": 0,
+        "pairs_blocked_for_runtime": 0,
+        "phase_segmentation_mode": "generic_valence_fallback_no_book_specific_rules"
+      },
+      "canary_report": {
+        "pass": false,
+        "checks": {
+          "heathcliff_honorific_merge": true,
+          "hareton_historical_not_present": false,
+          "lockwood_temporary_residence_dropped": true
+        }
+      },
+      "validation": {
+        "name": "story_bible",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "entities": 30,
+          "aliases_with_valid_range": 35,
+          "phases": 5,
+          "open_intervals": 5,
+          "entity_state_intervals": 0,
+          "address_policies_proposed": 5,
+          "address_dirs_unsupported": 6
+        }
+      },
+      "case_entities": {
+        "ent_heathcliff": [
+          {
+            "entity_id": "ent_heathcliff",
+            "canonical": "Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. Heathcliff",
+                "valid_from_block": "wh_ch01_b002",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Heathcliff",
+                "valid_from_block": "wh_ch01_b026",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b011",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_mr_heathcliff": [
+          {
+            "entity_id": "ent_heathcliff",
+            "canonical": "Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. Heathcliff",
+                "valid_from_block": "wh_ch01_b002",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Heathcliff",
+                "valid_from_block": "wh_ch01_b026",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b011",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_hareton": [
+          {
+            "entity_id": "ent_hareton",
+            "canonical": "Hareton",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_hareton"
+            ],
+            "aliases": [
+              {
+                "surface": "Hareton",
+                "valid_from_block": "wh_ch02_b058",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_hareton_earnshaw": [
+          {
+            "entity_id": "ent_hareton_earnshaw",
+            "canonical": "Hareton Earnshaw",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_hareton_earnshaw"
+            ],
+            "aliases": [
+              {
+                "surface": "Hareton Earnshaw",
+                "valid_from_block": "wh_ch01_b012",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_king_lear": [
+          {
+            "entity_id": "ent_king_lear",
+            "canonical": "King Lear",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_king_lear"
+            ],
+            "aliases": [
+              {
+                "surface": "King Lear",
+                "valid_from_block": "wh_ch02_b088",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "mentioned_historical",
+            "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+          }
+        ],
+        "ent_mr_and_mrs_heathcliff": [
+          {
+            "entity_id": "ent_and_mrs_heathcliff",
+            "canonical": "and Mrs. Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_mr_and_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. and Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b029",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "mentioned_historical",
+            "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+          }
+        ]
+      }
+    },
+    {
+      "chapter_id": "wh_ch04",
+      "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch04_story_bible.json",
+      "scope": "ch1",
+      "artifact_scope_end_block": "wh_ch04_b045",
+      "registry_T2_entities": [
+        {
+          "entity_id": "ent_and_mrs_heathcliff",
+          "canonical": "and Mrs. Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_and_mrs_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. and Mrs. Heathcliff",
+              "valid_from_block": "wh_ch02_b029",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_branderham",
+          "canonical": "Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "Branderham",
+              "valid_from_block": "wh_ch03_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_catherine",
+          "canonical": "Catherine",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine",
+              "valid_from_block": "wh_ch03_b017",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_earnshaw",
+          "canonical": "Catherine Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Earnshaw",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_heathcliff",
+          "canonical": "Catherine Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Heathcliff",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_catherine_linton",
+          "canonical": "Catherine Linton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_linton"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine Linton",
+              "valid_from_block": "wh_ch03_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_catherine_s",
+          "canonical": "Catherine’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_catherine_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Catherine’s",
+              "valid_from_block": "wh_ch03_b008",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_cathy",
+          "canonical": "Cathy",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_cathy",
+            "ent_miss_cathy"
+          ],
+          "aliases": [
+            {
+              "surface": "Miss Cathy",
+              "valid_from_block": "wh_ch03_b014",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Cathy",
+              "valid_from_block": "wh_ch03_b057",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_dean",
+          "canonical": "Dean",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mrs_dean"
+          ],
+          "aliases": [
+            {
+              "surface": "Mrs. Dean",
+              "valid_from_block": "wh_ch04_b002",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_earnshaw",
+          "canonical": "Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_earnshaw",
+            "ent_mr_earnshaw",
+            "ent_mrs_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Earnshaw",
+              "valid_from_block": "wh_ch02_b071",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mr. Earnshaw",
+              "valid_from_block": "wh_ch02_b090",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mrs. Earnshaw",
+              "valid_from_block": "wh_ch04_b036",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_frances",
+          "canonical": "Frances",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_frances"
+          ],
+          "aliases": [
+            {
+              "surface": "Frances",
+              "valid_from_block": "wh_ch03_b011",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hareton",
+          "canonical": "Hareton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hareton"
+          ],
+          "aliases": [
+            {
+              "surface": "Hareton",
+              "valid_from_block": "wh_ch02_b058",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hareton_earnshaw",
+          "canonical": "Hareton Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hareton_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Hareton Earnshaw",
+              "valid_from_block": "wh_ch01_b012",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_heathcliff",
+          "canonical": "Heathcliff",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_heathcliff",
+            "ent_mr_heathcliff",
+            "ent_mrs_heathcliff"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Heathcliff",
+              "valid_from_block": "wh_ch01_b002",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Heathcliff",
+              "valid_from_block": "wh_ch01_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            },
+            {
+              "surface": "Mrs. Heathcliff",
+              "valid_from_block": "wh_ch02_b011",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_heathcliff_s",
+          "canonical": "Heathcliff’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_heathcliff_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Heathcliff’s",
+              "valid_from_block": "wh_ch03_b043",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_hindley",
+          "canonical": "Hindley",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_hindley"
+          ],
+          "aliases": [
+            {
+              "surface": "Hindley",
+              "valid_from_block": "wh_ch03_b009",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_hindley_earnshaw",
+          "canonical": "Hindley Earnshaw",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_hindley_earnshaw"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Hindley Earnshaw",
+              "valid_from_block": "wh_ch04_b035",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_jabez",
+          "canonical": "Jabez",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez",
+              "valid_from_block": "wh_ch03_b022",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_jabez_branderham",
+          "canonical": "Jabez Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez Branderham",
+              "valid_from_block": "wh_ch03_b020",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_jabez_s",
+          "canonical": "Jabez’s",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_jabez_s"
+          ],
+          "aliases": [
+            {
+              "surface": "Jabez’s",
+              "valid_from_block": "wh_ch03_b026",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_joseph",
+          "canonical": "Joseph",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_joseph"
+          ],
+          "aliases": [
+            {
+              "surface": "Joseph",
+              "valid_from_block": "wh_ch01_b008",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_king_lear",
+          "canonical": "King Lear",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_king_lear"
+          ],
+          "aliases": [
+            {
+              "surface": "King Lear",
+              "valid_from_block": "wh_ch02_b088",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_linton",
+          "canonical": "Linton",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_linton"
+          ],
+          "aliases": [
+            {
+              "surface": "Linton",
+              "valid_from_block": "wh_ch03_b006",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_lockwood",
+          "canonical": "Lockwood",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_mr_lockwood"
+          ],
+          "aliases": [
+            {
+              "surface": "Mr. Lockwood",
+              "valid_from_block": "wh_ch01_b005",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_maister_hindley",
+          "canonical": "Maister Hindley",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_maister_hindley"
+          ],
+          "aliases": [
+            {
+              "surface": "Maister Hindley",
+              "valid_from_block": "wh_ch03_b014",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_the_reverend_jabez_branderham",
+          "canonical": "the Reverend Jabez Branderham",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_the_reverend_jabez_branderham"
+          ],
+          "aliases": [
+            {
+              "surface": "the Reverend Jabez Branderham",
+              "valid_from_block": "wh_ch03_b050",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_the_young_man",
+          "canonical": "the young man",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_the_young_man"
+          ],
+          "aliases": [
+            {
+              "surface": "the young man",
+              "valid_from_block": "wh_ch02_b013",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        },
+        {
+          "entity_id": "ent_wuthering_heights",
+          "canonical": "Wuthering Heights",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_wuthering_heights"
+          ],
+          "aliases": [
+            {
+              "surface": "Wuthering Heights",
+              "valid_from_block": "wh_ch04_b023",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_your_servant_zillah",
+          "canonical": "your servant Zillah",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_your_servant_zillah"
+          ],
+          "aliases": [
+            {
+              "surface": "your servant Zillah",
+              "valid_from_block": "wh_ch03_b048",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "mentioned_historical",
+          "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+        },
+        {
+          "entity_id": "ent_zillah",
+          "canonical": "Zillah",
+          "entity_type": "person",
+          "source_entity_ids": [
+            "ent_zillah"
+          ],
+          "aliases": [
+            {
+              "surface": "Zillah",
+              "valid_from_block": "wh_ch02_b071",
+              "valid_to_block": null,
+              "status": "open_within_scope"
+            }
+          ],
+          "presence_status": "present_or_narrating"
+        }
+      ],
+      "entity_relations": [
+        {
+          "pair": [
+            "ent_lockwood",
+            "ent_dean"
+          ],
+          "phase_label": "friendly",
+          "valid_from_block": "wh_ch04_b003",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch04_b003",
+          "trigger_evidence": "You have lived here",
+          "source_event_ids": [
+            "e_wh_ch04_b003_01",
+            "e_wh_ch04_b004_01",
+            "e_wh_ch04_b007_01",
+            "e_wh_ch04_b009_01",
+            "e_wh_ch04_b010_01",
+            "e_wh_ch04_b011_01",
+            "e_wh_ch04_b012_01",
+            "e_wh_ch04_b013_01",
+            "e_wh_ch04_b014_01",
+            "e_wh_ch04_b015_01",
+            "e_wh_ch04_b016_01",
+            "e_wh_ch04_b017_01",
+            "e_wh_ch04_b018_01",
+            "e_wh_ch04_b019_01",
+            "e_wh_ch04_b020_01",
+            "e_wh_ch04_b021_01",
+            "e_wh_ch04_b022_01",
+            "e_wh_ch04_b023_01",
+            "e_wh_ch04_b024_01",
+            "e_wh_ch04_b024_02",
+            "e_wh_ch04_b024_03",
+            "e_wh_ch04_b026_01",
+            "e_wh_ch04_b030_01",
+            "e_wh_ch04_b032_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_earnshaw",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch04_b038",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch04_b038",
+          "trigger_evidence": "bring this gipsy brat into the house",
+          "source_event_ids": [
+            "e_wh_ch04_b038_02",
+            "e_wh_ch04_b038_03",
+            "e_wh_ch04_b041_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_cathy",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch04_b039",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch04_b039",
+          "trigger_evidence": "showed her humour by grinning and spitting at the stupid little thing",
+          "source_event_ids": [
+            "e_wh_ch04_b039_02",
+            "e_wh_ch04_b040_02"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_dean",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch04_b040",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch04_b040",
+          "trigger_evidence": "I did the same; and we plagued",
+          "source_event_ids": [
+            "e_wh_ch04_b040_04",
+            "e_wh_ch04_b042_02",
+            "e_wh_ch04_b045_01"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_earnshaw",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch04_b040",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch04_b040",
+          "trigger_evidence": "the mistress never put in a word",
+          "source_event_ids": [
+            "e_wh_ch04_b040_05"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_hindley",
+            "ent_heathcliff"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch04_b040",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch04_b040",
+          "trigger_evidence": "Hindley hated him",
+          "source_event_ids": [
+            "e_wh_ch04_b040_03",
+            "e_wh_ch04_b044_01",
+            "e_wh_ch04_b044_02",
+            "e_wh_ch04_b044_03"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        },
+        {
+          "pair": [
+            "ent_earnshaw",
+            "ent_cathy"
+          ],
+          "phase_label": "strained",
+          "valid_from_block": "wh_ch04_b041",
+          "valid_to_block": null,
+          "status": "open_within_scope",
+          "trigger_block": "wh_ch04_b041",
+          "trigger_evidence": "far above Cathy",
+          "source_event_ids": [
+            "e_wh_ch04_b041_02"
+          ],
+          "needs_human_review": true,
+          "phase_source": "observed_valence_hint_fallback"
+        }
+      ],
+      "address_policies": [
+        {
+          "pair": [
+            "ent_lockwood",
+            "ent_dean"
+          ],
+          "phase_ref": "friendly@wh_ch04_b003",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Mrs. Heathcliff"
+            ]
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "sir"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_earnshaw",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch04_b038",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_cathy",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch04_b039",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Cathy"
+            ]
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_dean",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch04_b040",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_earnshaw",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch04_b040",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_hindley",
+            "ent_heathcliff"
+          ],
+          "phase_ref": "strained@wh_ch04_b040",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        },
+        {
+          "pair": [
+            "ent_earnshaw",
+            "ent_cathy"
+          ],
+          "phase_ref": "strained@wh_ch04_b041",
+          "a_to_b": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "observed",
+            "needs_human_review": true,
+            "runtime_usable": false,
+            "observed_terms": [
+              "Miss Cathy"
+            ]
+          },
+          "b_to_a": {
+            "self": "",
+            "address": "",
+            "register": "",
+            "evidence_level": "unsupported",
+            "needs_human_review": true,
+            "runtime_usable": false
+          },
+          "proposal_only": true
+        }
+      ],
+      "narration_frame_segments": [
+        {
+          "narrator_ref": "ent_mr_lockwood",
+          "block_range": [
+            "wh_ch04_b002",
+            "wh_ch04_b033"
+          ],
+          "story_time_label": "frame_present"
+        },
+        {
+          "narrator_ref": "ent_mrs_dean",
+          "block_range": [
+            "wh_ch04_b035",
+            "wh_ch04_b045"
+          ],
+          "story_time_label": "retrospective_past"
+        }
+      ],
+      "audit": {
+        "scope": "M3_ch1",
+        "identity_merges": [
+          {
+            "merged_into": "ent_cathy",
+            "source_entity_ids": [
+              "ent_cathy",
+              "ent_miss_cathy"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          },
+          {
+            "merged_into": "ent_earnshaw",
+            "source_entity_ids": [
+              "ent_earnshaw",
+              "ent_mr_earnshaw",
+              "ent_mrs_earnshaw"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          },
+          {
+            "merged_into": "ent_heathcliff",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "reason": "honorific_variant_same_surface_core"
+          }
+        ],
+        "historical_mentions": [
+          "ent_and_mrs_heathcliff",
+          "ent_branderham",
+          "ent_catherine_heathcliff",
+          "ent_catherine_s",
+          "ent_heathcliff_s",
+          "ent_hindley_earnshaw",
+          "ent_jabez_s",
+          "ent_king_lear",
+          "ent_linton",
+          "ent_maister_hindley",
+          "ent_the_reverend_jabez_branderham",
+          "ent_wuthering_heights",
+          "ent_your_servant_zillah"
+        ],
+        "state_changes_dropped_temporary": 0,
+        "micro_calls": 0,
+        "escalated": 0,
+        "pairs_blocked_for_runtime": 0,
+        "phase_segmentation_mode": "generic_valence_fallback_no_book_specific_rules"
+      },
+      "canary_report": {
+        "pass": false,
+        "checks": {
+          "heathcliff_honorific_merge": true,
+          "hareton_historical_not_present": false,
+          "lockwood_temporary_residence_dropped": true
+        }
+      },
+      "validation": {
+        "name": "story_bible",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "entities": 30,
+          "aliases_with_valid_range": 35,
+          "phases": 7,
+          "open_intervals": 7,
+          "entity_state_intervals": 1,
+          "address_policies_proposed": 7,
+          "address_dirs_unsupported": 10
+        }
+      },
+      "case_entities": {
+        "ent_heathcliff": [
+          {
+            "entity_id": "ent_heathcliff",
+            "canonical": "Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. Heathcliff",
+                "valid_from_block": "wh_ch01_b002",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Heathcliff",
+                "valid_from_block": "wh_ch01_b026",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b011",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_mr_heathcliff": [
+          {
+            "entity_id": "ent_heathcliff",
+            "canonical": "Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_heathcliff",
+              "ent_mr_heathcliff",
+              "ent_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. Heathcliff",
+                "valid_from_block": "wh_ch01_b002",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Heathcliff",
+                "valid_from_block": "wh_ch01_b026",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              },
+              {
+                "surface": "Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b011",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_hareton": [
+          {
+            "entity_id": "ent_hareton",
+            "canonical": "Hareton",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_hareton"
+            ],
+            "aliases": [
+              {
+                "surface": "Hareton",
+                "valid_from_block": "wh_ch02_b058",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_hareton_earnshaw": [
+          {
+            "entity_id": "ent_hareton_earnshaw",
+            "canonical": "Hareton Earnshaw",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_hareton_earnshaw"
+            ],
+            "aliases": [
+              {
+                "surface": "Hareton Earnshaw",
+                "valid_from_block": "wh_ch01_b012",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "present_or_narrating"
+          }
+        ],
+        "ent_king_lear": [
+          {
+            "entity_id": "ent_king_lear",
+            "canonical": "King Lear",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_king_lear"
+            ],
+            "aliases": [
+              {
+                "surface": "King Lear",
+                "valid_from_block": "wh_ch02_b088",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "mentioned_historical",
+            "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+          }
+        ],
+        "ent_mr_and_mrs_heathcliff": [
+          {
+            "entity_id": "ent_and_mrs_heathcliff",
+            "canonical": "and Mrs. Heathcliff",
+            "entity_type": "person",
+            "source_entity_ids": [
+              "ent_mr_and_mrs_heathcliff"
+            ],
+            "aliases": [
+              {
+                "surface": "Mr. and Mrs. Heathcliff",
+                "valid_from_block": "wh_ch02_b029",
+                "valid_to_block": null,
+                "status": "open_within_scope"
+              }
+            ],
+            "presence_status": "mentioned_historical",
+            "auditor_note": "Mentioned in text but absent from resolved runtime roles in this pilot scope."
+          }
+        ]
+      }
+    }
+  ],
+  "verification": {
+    "full_suite": "523 passed",
+    "frozen_db_sha256": "64D98965F8859869931152B2AA814FB03AFBF15E6A9853532FD0EF28B555C715",
+    "openai_api_key_present_after_run": false,
+    "gpt54_tokens_2026_07_10_all_data_sqlite3": 68589,
+    "gpt54_calls_2026_07_10_all_data_sqlite3": 6,
+    "gpt54_safety_limit": 225000,
+    "gpt54_remaining_to_safety": 156411
+  }
+}

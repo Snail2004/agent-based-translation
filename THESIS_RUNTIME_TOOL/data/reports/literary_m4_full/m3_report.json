@@ -1,0 +1,239 @@
+{
+  "phase": "L2A-1",
+  "milestone": "M3",
+  "status": "needs_claude_gate",
+  "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+  "digest_dir": "data\\reports\\literary_m4_full\\digest",
+  "chapters_requested": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "chapters_selected": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "modes": [
+    "literary_consolidate_v1"
+  ],
+  "estimate": {
+    "phase": "L2A-1",
+    "milestone": "M3",
+    "zero_api": true,
+    "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+    "digest_dir": "data\\reports\\literary_m4_full\\digest",
+    "chapters_requested": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "chapters_selected": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "calls": 0,
+    "modes": [
+      "literary_consolidate_v1"
+    ],
+    "cost_cap_usd": 0.0,
+    "micro_calls": 0,
+    "note": "M3 scaffold is zero-API: candidate refs resolve from B1/B2 evidence, unresolved refs stay unresolved, and relation phases use a generic valence fallback marked needs_human_review."
+  },
+  "actual": {
+    "calls": 0,
+    "cache_hits": 0,
+    "cost_usd": 0.0,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "reasoning_tokens": 0
+  },
+  "validation_counts": {
+    "story_bible_ok": 4,
+    "story_bible_failed": 0,
+    "entities": 120,
+    "aliases_with_valid_range": 140,
+    "phases": 23,
+    "open_intervals": 23,
+    "entity_state_intervals": 4,
+    "address_policies_proposed": 23,
+    "address_dirs_unsupported": 28,
+    "state_changes_dropped_temporary": 0,
+    "canary_pass": 0,
+    "canary_fail": 4
+  },
+  "call_records": [
+    {
+      "mode": "literary_consolidate_v1",
+      "window_id": "wh_ch01",
+      "ok": true,
+      "attempts": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "entities": 30,
+        "aliases_with_valid_range": 35,
+        "phases": 3,
+        "open_intervals": 3,
+        "entity_state_intervals": 0,
+        "address_policies_proposed": 3,
+        "address_dirs_unsupported": 2
+      }
+    },
+    {
+      "mode": "literary_consolidate_v1",
+      "window_id": "wh_ch02",
+      "ok": true,
+      "attempts": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "entities": 30,
+        "aliases_with_valid_range": 35,
+        "phases": 8,
+        "open_intervals": 8,
+        "entity_state_intervals": 3,
+        "address_policies_proposed": 8,
+        "address_dirs_unsupported": 10
+      }
+    },
+    {
+      "mode": "literary_consolidate_v1",
+      "window_id": "wh_ch03",
+      "ok": true,
+      "attempts": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "entities": 30,
+        "aliases_with_valid_range": 35,
+        "phases": 5,
+        "open_intervals": 5,
+        "entity_state_intervals": 0,
+        "address_policies_proposed": 5,
+        "address_dirs_unsupported": 6
+      }
+    },
+    {
+      "mode": "literary_consolidate_v1",
+      "window_id": "wh_ch04",
+      "ok": true,
+      "attempts": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "entities": 30,
+        "aliases_with_valid_range": 35,
+        "phases": 7,
+        "open_intervals": 7,
+        "entity_state_intervals": 1,
+        "address_policies_proposed": 7,
+        "address_dirs_unsupported": 10
+      }
+    }
+  ],
+  "artifacts": {
+    "story_bible_dir": "data\\reports\\literary_m4_full\\story_bible",
+    "stories": [
+      {
+        "chapter_id": "wh_ch01",
+        "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch01_story_bible.json",
+        "validation": {
+          "name": "story_bible",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "counts": {
+            "entities": 30,
+            "aliases_with_valid_range": 35,
+            "phases": 3,
+            "open_intervals": 3,
+            "entity_state_intervals": 0,
+            "address_policies_proposed": 3,
+            "address_dirs_unsupported": 2
+          }
+        }
+      },
+      {
+        "chapter_id": "wh_ch02",
+        "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch02_story_bible.json",
+        "validation": {
+          "name": "story_bible",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "counts": {
+            "entities": 30,
+            "aliases_with_valid_range": 35,
+            "phases": 8,
+            "open_intervals": 8,
+            "entity_state_intervals": 3,
+            "address_policies_proposed": 8,
+            "address_dirs_unsupported": 10
+          }
+        }
+      },
+      {
+        "chapter_id": "wh_ch03",
+        "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch03_story_bible.json",
+        "validation": {
+          "name": "story_bible",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "counts": {
+            "entities": 30,
+            "aliases_with_valid_range": 35,
+            "phases": 5,
+            "open_intervals": 5,
+            "entity_state_intervals": 0,
+            "address_policies_proposed": 5,
+            "address_dirs_unsupported": 6
+          }
+        }
+      },
+      {
+        "chapter_id": "wh_ch04",
+        "path": "data\\reports\\literary_m4_full\\story_bible\\wh_ch04_story_bible.json",
+        "validation": {
+          "name": "story_bible",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "counts": {
+            "entities": 30,
+            "aliases_with_valid_range": 35,
+            "phases": 7,
+            "open_intervals": 7,
+            "entity_state_intervals": 1,
+            "address_policies_proposed": 7,
+            "address_dirs_unsupported": 10
+          }
+        }
+      }
+    ],
+    "report": "data\\reports\\literary_m4_full\\m3_report.json"
+  },
+  "stop": "M3 complete. Claude must verify Story Bible before M4."
+}

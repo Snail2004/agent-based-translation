@@ -85,6 +85,31 @@ def test_m2_suffix_selection_validates_absolute_m1_chain(tmp_path: Path) -> None
 
 
 @pytest.mark.skipif(not DESIGN_DOC.exists(), reason="Prompt design doc is not present")
+def test_m2_estimate_marks_in_run_neighbors_as_sizing_placeholders(tmp_path: Path) -> None:
+    document, m1_dir = _prepare_full_m1(tmp_path)
+
+    estimate = estimate_m2(
+        document,
+        _chapter_ids(),
+        design_doc=DESIGN_DOC,
+        config=_config(),
+        m1_dir=m1_dir,
+    )
+
+    assert estimate["zero_api"] is True
+    assert estimate["neighbor_source"]["bk_ch01"] == []
+    for chapter_id in _chapter_ids()[1:]:
+        assert all(
+            row["source"] == "in_run_estimate_placeholder"
+            for row in estimate["neighbor_source"][chapter_id]
+        )
+    assert all(
+        call["neighbor_summary_count"] == min(2, index)
+        for index, call in enumerate(estimate["call_estimates"])
+    )
+
+
+@pytest.mark.skipif(not DESIGN_DOC.exists(), reason="Prompt design doc is not present")
 def test_m2_suffix_rejects_broken_absolute_ancestor_chain(tmp_path: Path) -> None:
     document, m1_dir = _prepare_full_m1(tmp_path)
     checkpoint_path = m1_dir / "checkpoints" / "m1" / "bk_ch02.json"

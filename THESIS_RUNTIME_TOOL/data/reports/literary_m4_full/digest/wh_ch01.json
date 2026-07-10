@@ -44,7 +44,7 @@
   ],
   "parsed_json": {
     "chapter_id": "wh_ch01",
-    "chapter_rolling_summary": "Lockwood visits Heathcliff at Wuthering Heights, is admitted after a terse exchange, and endures a hostile but memorable first encounter with the house, Joseph, the dogs, and a vigorous kitchen servant who restores order. Heathcliff appears reserved, suspicious, and unexpectedly civil at the end, offering wine and conversation. Lockwood, amused and intrigued by the isolation and the owner’s manner, decides to return the next day despite Heathcliff’s evident wish to avoid repetition.",
+    "chapter_rolling_summary": "Lockwood narrates his first visit to Wuthering Heights in 1801. He meets his landlord, Mr. Heathcliff, whose reserved and suspicious manner fascinates him. After entering the bleak, old house and noting its strange architecture, furnishings, and the name Hareton Earnshaw carved above the door, Lockwood reflects at length on Heathcliff’s character and on his own awkwardness in human relations. Left briefly alone, he attempts to pet a dog and provokes a violent attack from several of the house dogs, until a kitchen woman intervenes. Heathcliff responds with brusque indifference, then offers wine and becomes somewhat more civil. Despite clear signs that Heathcliff does not welcome company, Lockwood decides he will visit again.",
     "narration_frame_segments": [
       {
         "narrator_ref": "ent_mr_lockwood",
@@ -62,35 +62,18 @@
           "wh_ch01_b002",
           "wh_ch01_b028"
         ],
-        "summary": "Lockwood narrates his first visit to Wuthering Heights: he greets Heathcliff, is let in, observes the house and household, is set upon by dogs, and finally exchanges ironic civility with Heathcliff before leaving resolved to come again.",
+        "summary": "Lockwood recounts his first call on Mr. Heathcliff at Wuthering Heights, observes the house and its inhabitants, suffers a dog attack, then shares strained but slightly thawing conversation and resolves to return.",
         "key_participants": [
           "ent_mr_lockwood",
           "ent_mr_heathcliff",
           "ent_joseph",
-          "ent_heathcliff"
+          "ent_hareton_earnshaw",
+          "the canine mother",
+          "the lusty dame"
         ]
       }
     ],
-    "character_state_changes": [
-      {
-        "entity_ref": "ent_mr_lockwood",
-        "attribute": "residence",
-        "from": "at_thrushcross_grange",
-        "to": "visiting_wuthering_heights",
-        "trigger_block": "wh_ch01_b002",
-        "evidence_quote": "I have just returned from a visit to my landlord",
-        "observed_scope": "this_chapter"
-      },
-      {
-        "entity_ref": "ent_mr_lockwood",
-        "attribute": "social_status",
-        "from": "new_arrival",
-        "to": "recognized_tenant",
-        "trigger_block": "wh_ch01_b005",
-        "evidence_quote": "Mr. Lockwood, your new tenant, sir",
-        "observed_scope": "this_chapter"
-      }
-    ],
+    "character_state_changes": [],
     "relation_event_summary": [
       {
         "pair": [
@@ -102,16 +85,22 @@
           "e_wh_ch01_b003_01",
           "e_wh_ch01_b005_01",
           "e_wh_ch01_b006_01",
+          "e_wh_ch01_b006_02",
           "e_wh_ch01_b018_01",
           "e_wh_ch01_b021_01",
+          "e_wh_ch01_b022_01",
           "e_wh_ch01_b023_03",
+          "e_wh_ch01_b024_01",
+          "e_wh_ch01_b025_01",
+          "e_wh_ch01_b026_01",
           "e_wh_ch01_b027_01",
+          "e_wh_ch01_b027_02",
           "e_wh_ch01_b027_03",
           "e_wh_ch01_b027_04"
         ],
         "candidate_transition": {
-          "trigger_block": "wh_ch01_b027",
-          "note": "hostility softens into wary civility over wine and conversation"
+          "trigger_block": "wh_ch01_b026",
+          "note": "after Lockwood's sharp reply, Heathcliff grins and the exchange becomes briefly more convivial"
         },
         "status": "evidence_only"
       },
@@ -120,10 +109,21 @@
           "ent_mr_heathcliff",
           "ent_joseph"
         ],
-        "observed_valence_hint": "negative",
+        "observed_valence_hint": "unclear",
         "event_ids": [
           "e_wh_ch01_b008_01",
           "e_wh_ch01_b018_02"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_joseph",
+          "ent_mr_lockwood"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch01_b010_01"
         ],
         "status": "evidence_only"
       }
@@ -131,13 +131,19 @@
     "unresolved_threads": [
       {
         "thread_id": "th_wh_ch01_01",
-        "description": "Why Heathcliff is so guarded and hostile to visitors remains unclear.",
-        "opened_block": "wh_ch01_b007",
+        "description": "Why Heathcliff lives as a gentleman in such a rough household, and what his background is, remains unclear.",
+        "opened_block": "wh_ch01_b014",
         "kind": "mystery"
       },
       {
         "thread_id": "th_wh_ch01_02",
-        "description": "Lockwood plans another visit, but whether it will be welcomed is doubtful.",
+        "description": "The significance of the carved name 'Hareton Earnshaw' over the door is not explained.",
+        "opened_block": "wh_ch01_b012",
+        "kind": "mystery"
+      },
+      {
+        "thread_id": "th_wh_ch01_03",
+        "description": "Lockwood plans another visit although Heathcliff seems not to want one.",
         "opened_block": "wh_ch01_b028",
         "kind": "pending_transition",
         "pair": [
@@ -148,79 +154,90 @@
     ],
     "motifs": [
       {
-        "note": "isolation and social desolation",
+        "note": "isolation and misanthropy",
         "block_ids": [
           "wh_ch01_b002",
-          "wh_ch01_b007",
-          "wh_ch01_b027",
           "wh_ch01_b028"
         ]
       },
       {
-        "note": "dogs as hostile guardians of the household",
+        "note": "storm and atmospheric violence mirrored in the house",
         "block_ids": [
-          "wh_ch01_b013",
-          "wh_ch01_b017",
-          "wh_ch01_b018",
-          "wh_ch01_b019",
+          "wh_ch01_b011",
           "wh_ch01_b020"
         ]
       },
       {
-        "note": "Heathcliff’s abrupt hospitality",
+        "note": "animal hostility and guarded thresholds",
         "block_ids": [
-          "wh_ch01_b023",
-          "wh_ch01_b027"
+          "wh_ch01_b017",
+          "wh_ch01_b018",
+          "wh_ch01_b019",
+          "wh_ch01_b023"
+        ]
+      },
+      {
+        "note": "misreading character through projection",
+        "block_ids": [
+          "wh_ch01_b014",
+          "wh_ch01_b015",
+          "wh_ch01_b016"
         ]
       }
     ],
     "translator_relevant_facts": [
       {
         "fact_type": "narrator",
-        "fact": "Lockwood narrates in first person from a frame-present visit, with ironic self-commentary.",
+        "fact": "The chapter is first-person narration by Lockwood, recounting his immediate experience with ironic self-commentary.",
         "block_evidence": [
-          "wh_ch01_b002"
-        ]
-      },
-      {
-        "fact_type": "register",
-        "fact": "The chapter mixes elevated descriptive prose with sharp colloquial insult and rural dialect.",
-        "block_evidence": [
-          "wh_ch01_b007",
-          "wh_ch01_b010",
-          "wh_ch01_b022"
+          "wh_ch01_b002",
+          "wh_ch01_b028"
         ]
       },
       {
         "fact_type": "speech_style",
-        "fact": "Heathcliff’s speech is clipped, curt, and frequently imperative.",
+        "fact": "Heathcliff's dialogue is clipped, terse, and brusque, often marked by compressed phrasing.",
         "block_evidence": [
           "wh_ch01_b006",
-          "wh_ch01_b008",
           "wh_ch01_b018",
           "wh_ch01_b027"
         ]
       },
       {
         "fact_type": "speech_style",
-        "fact": "Joseph’s speech is dialectal/religious and peevish.",
+        "fact": "Joseph speaks in a marked religious, peevish manner that should sound rustic and old-fashioned.",
         "block_evidence": [
           "wh_ch01_b010"
         ]
       },
       {
-        "fact_type": "status",
-        "fact": "Lockwood is explicitly identified as the new tenant.",
+        "fact_type": "setting",
+        "fact": "'Wuthering' is explicitly glossed as a provincial adjective describing turbulent weather exposure.",
         "block_evidence": [
-          "wh_ch01_b005"
+          "wh_ch01_b011"
         ]
       },
       {
         "fact_type": "setting",
-        "fact": "Wuthering Heights is rendered as an isolated, wind-beaten house with harsh interior furnishings and a crowded dog-filled hearth-room.",
+        "fact": "The main room called 'the house' functions as combined sitting-room/kitchen/parlour in local usage.",
         "block_evidence": [
-          "wh_ch01_b011",
           "wh_ch01_b013"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Lockwood is Heathcliff's new tenant at Thrushcross Grange, which shapes their guarded politeness.",
+        "block_evidence": [
+          "wh_ch01_b005",
+          "wh_ch01_b028"
+        ]
+      },
+      {
+        "fact_type": "register",
+        "fact": "Lockwood's narration mixes formal politeness in speech with sardonic, elaborate descriptive prose.",
+        "block_evidence": [
+          "wh_ch01_b005",
+          "wh_ch01_b022"
         ]
       }
     ]
@@ -236,28 +253,28 @@
     "counts": {
       "frame_segments": 1,
       "scenes": 1,
-      "state_changes": 2,
-      "unresolved_mystery": 1,
+      "state_changes": 0,
+      "unresolved_mystery": 2,
       "unresolved_pending_transition": 1,
       "unresolved_question": 0,
-      "translator_facts": 6,
-      "motifs": 3,
+      "translator_facts": 7,
+      "motifs": 4,
       "nonnarrative_block_skipped": 1
     }
   },
   "attempts": [
     {
       "attempt": 1,
-      "model": "gpt-5.4-mini",
+      "model": "gpt-5.4",
       "system_fingerprint": null,
-      "from_cache": true,
-      "cache_key": "3ce5d7343345f92c77aa139542b34c751cccbbd19b7dfeff047cd7bb07e6814d",
-      "latency_ms": 12546,
-      "cost_usd": 0.00414925,
+      "from_cache": false,
+      "cache_key": "3fd9c11bf9955196140e6c42b5265450e3c22b470d4225dd5dc0d404c6f45b24",
+      "latency_ms": 29213,
+      "cost_usd": 0.0,
       "usage": {
         "prompt_tokens": 4717,
         "cached_tokens": 0,
-        "completion_tokens": 1485,
+        "completion_tokens": 1674,
         "reasoning_tokens": 0
       },
       "json_error": null,
@@ -271,22 +288,22 @@
         "counts": {
           "frame_segments": 1,
           "scenes": 1,
-          "state_changes": 2,
-          "unresolved_mystery": 1,
+          "state_changes": 0,
+          "unresolved_mystery": 2,
           "unresolved_pending_transition": 1,
           "unresolved_question": 0,
-          "translator_facts": 6,
-          "motifs": 3,
+          "translator_facts": 7,
+          "motifs": 4,
           "nonnarrative_block_skipped": 1
         }
       },
-      "raw_text": "{\n  \"chapter_id\": \"wh_ch01\",\n  \"chapter_rolling_summary\": \"Lockwood visits Heathcliff at Wuthering Heights, is admitted after a terse exchange, and endures a hostile but memorable first encounter with the house, Joseph, the dogs, and a vigorous kitchen servant who restores order. Heathcliff appears reserved, suspicious, and unexpectedly civil at the end, offering wine and conversation. Lockwood, amused and intrigued by the isolation and the owner’s manner, decides to return the next day despite Heathcliff’s evident wish to avoid repetition.\",\n  \"narration_frame_segments\": [\n    {\n      \"narrator_ref\": \"ent_mr_lockwood\",\n      \"block_range\": [\n        \"wh_ch01_b002\",\n        \"wh_ch01_b028\"\n      ],\n      \"story_time_label\": \"frame_present\"\n    }\n  ],\n  \"scene_summaries\": [\n    {\n      \"scene_id\": \"s_wh_ch01_01\",\n      \"block_range\": [\n        \"wh_ch01_b002\",\n        \"wh_ch01_b028\"\n      ],\n      \"summary\": \"Lockwood narrates his first visit to Wuthering Heights: he greets Heathcliff, is let in, observes the house and household, is set upon by dogs, and finally exchanges ironic civility with Heathcliff before leaving resolved to come again.\",\n      \"key_participants\": [\n        \"ent_mr_lockwood\",\n        \"ent_mr_heathcliff\",\n        \"ent_joseph\",\n        \"ent_heathcliff\"\n      ]\n    }\n  ],\n  \"character_state_changes\": [\n    {\n      \"entity_ref\": \"ent_mr_lockwood\",\n      \"attribute\": \"residence\",\n      \"from\": \"at_thrushcross_grange\",\n      \"to\": \"visiting_wuthering_heights\",\n      \"trigger_block\": \"wh_ch01_b002\",\n      \"evidence_quote\": \"I have just returned from a visit to my landlord\",\n      \"observed_scope\": \"this_chapter\"\n    },\n    {\n      \"entity_ref\": \"ent_mr_lockwood\",\n      \"attribute\": \"social_status\",\n      \"from\": \"new_arrival\",\n      \"to\": \"recognized_tenant\",\n      \"trigger_block\": \"wh_ch01_b005\",\n      \"evidence_quote\": \"Mr. Lockwood, your new tenant, sir\",\n      \"observed_scope\": \"this_chapter\"\n    }\n  ],\n  \"relation_event_summary\": [\n    {\n      \"pair\": [\n        \"ent_mr_lockwood\",\n        \"ent_mr_heathcliff\"\n      ],\n      \"observed_valence_hint\": \"mixed\",\n      \"event_ids\": [\n        \"e_wh_ch01_b003_01\",\n        \"e_wh_ch01_b005_01\",\n        \"e_wh_ch01_b006_01\",\n        \"e_wh_ch01_b018_01\",\n        \"e_wh_ch01_b021_01\",\n        \"e_wh_ch01_b023_03\",\n        \"e_wh_ch01_b027_01\",\n        \"e_wh_ch01_b027_03\",\n        \"e_wh_ch01_b027_04\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch01_b027\",\n        \"note\": \"hostility softens into wary civility over wine and conversation\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_mr_heathcliff\",\n        \"ent_joseph\"\n      ],\n      \"observed_valence_hint\": \"negative\",\n      \"event_ids\": [\n        \"e_wh_ch01_b008_01\",\n        \"e_wh_ch01_b018_02\"\n      ],\n      \"status\": \"evidence_only\"\n    }\n  ],\n  \"unresolved_threads\": [\n    {\n      \"thread_id\": \"th_wh_ch01_01\",\n      \"description\": \"Why Heathcliff is so guarded and hostile to visitors remains unclear.\",\n      \"opened_block\": \"wh_ch01_b007\",\n      \"kind\": \"mystery\"\n    },\n    {\n      \"thread_id\": \"th_wh_ch01_02\",\n      \"description\": \"Lockwood plans another visit, but whether it will be welcomed is doubtful.\",\n      \"opened_block\": \"wh_ch01_b028\",\n      \"kind\": \"pending_transition\",\n      \"pair\": [\n        \"ent_mr_lockwood\",\n        \"ent_mr_heathcliff\"\n      ]\n    }\n  ],\n  \"motifs\": [\n    {\n      \"note\": \"isolation and social desolation\",\n      \"block_ids\": [\n        \"wh_ch01_b002\",\n        \"wh_ch01_b007\",\n        \"wh_ch01_b027\",\n        \"wh_ch01_b028\"\n      ]\n    },\n    {\n      \"note\": \"dogs as hostile guardians of the household\",\n      \"block_ids\": [\n        \"wh_ch01_b013\",\n        \"wh_ch01_b017\",\n        \"wh_ch01_b018\",\n        \"wh_ch01_b019\",\n        \"wh_ch01_b020\"\n      ]\n    },\n    {\n      \"note\": \"Heathcliff’s abrupt hospitality\",\n      \"block_ids\": [\n        \"wh_ch01_b023\",\n        \"wh_ch01_b027\"\n      ]\n    }\n  ],\n  \"translator_relevant_facts\": [\n    {\n      \"fact_type\": \"narrator\",\n      \"fact\": \"Lockwood narrates in first person from a frame-present visit, with ironic self-commentary.\",\n      \"block_evidence\": [\n        \"wh_ch01_b002\"\n      ]\n    },\n    {\n      \"fact_type\": \"register\",\n      \"fact\": \"The chapter mixes elevated descriptive prose with sharp colloquial insult and rural dialect.\",\n      \"block_evidence\": [\n        \"wh_ch01_b007\",\n        \"wh_ch01_b010\",\n        \"wh_ch01_b022\"\n      ]\n    },\n    {\n      \"fact_type\": \"speech_style\",\n      \"fact\": \"Heathcliff’s speech is clipped, curt, and frequently imperative.\",\n      \"block_evidence\": [\n        \"wh_ch01_b006\",\n        \"wh_ch01_b008\",\n        \"wh_ch01_b018\",\n        \"wh_ch01_b027\"\n      ]\n    },\n    {\n      \"fact_type\": \"speech_style\",\n      \"fact\": \"Joseph’s speech is dialectal/religious and peevish.\",\n      \"block_evidence\": [\n        \"wh_ch01_b010\"\n      ]\n    },\n    {\n      \"fact_type\": \"status\",\n      \"fact\": \"Lockwood is explicitly identified as the new tenant.\",\n      \"block_evidence\": [\n        \"wh_ch01_b005\"\n      ]\n    },\n    {\n      \"fact_type\": \"setting\",\n      \"fact\": \"Wuthering Heights is rendered as an isolated, wind-beaten house with harsh interior furnishings and a crowded dog-filled hearth-room.\",\n      \"block_evidence\": [\n        \"wh_ch01_b011\",\n        \"wh_ch01_b013\"\n      ]\n    }\n  ]\n}"
+      "raw_text": "{\n  \"chapter_id\": \"wh_ch01\",\n  \"chapter_rolling_summary\": \"Lockwood narrates his first visit to Wuthering Heights in 1801. He meets his landlord, Mr. Heathcliff, whose reserved and suspicious manner fascinates him. After entering the bleak, old house and noting its strange architecture, furnishings, and the name Hareton Earnshaw carved above the door, Lockwood reflects at length on Heathcliff’s character and on his own awkwardness in human relations. Left briefly alone, he attempts to pet a dog and provokes a violent attack from several of the house dogs, until a kitchen woman intervenes. Heathcliff responds with brusque indifference, then offers wine and becomes somewhat more civil. Despite clear signs that Heathcliff does not welcome company, Lockwood decides he will visit again.\",\n  \"narration_frame_segments\": [\n    {\n      \"narrator_ref\": \"ent_mr_lockwood\",\n      \"block_range\": [\n        \"wh_ch01_b002\",\n        \"wh_ch01_b028\"\n      ],\n      \"story_time_label\": \"frame_present\"\n    }\n  ],\n  \"scene_summaries\": [\n    {\n      \"scene_id\": \"s_wh_ch01_01\",\n      \"block_range\": [\n        \"wh_ch01_b002\",\n        \"wh_ch01_b028\"\n      ],\n      \"summary\": \"Lockwood recounts his first call on Mr. Heathcliff at Wuthering Heights, observes the house and its inhabitants, suffers a dog attack, then shares strained but slightly thawing conversation and resolves to return.\",\n      \"key_participants\": [\n        \"ent_mr_lockwood\",\n        \"ent_mr_heathcliff\",\n        \"ent_joseph\",\n        \"ent_hareton_earnshaw\",\n        \"the canine mother\",\n        \"the lusty dame\"\n      ]\n    }\n  ],\n  \"character_state_changes\": [],\n  \"relation_event_summary\": [\n    {\n      \"pair\": [\n        \"ent_mr_lockwood\",\n        \"ent_mr_heathcliff\"\n      ],\n      \"observed_valence_hint\": \"mixed\",\n      \"event_ids\": [\n        \"e_wh_ch01_b003_01\",\n        \"e_wh_ch01_b005_01\",\n        \"e_wh_ch01_b006_01\",\n        \"e_wh_ch01_b006_02\",\n        \"e_wh_ch01_b018_01\",\n        \"e_wh_ch01_b021_01\",\n        \"e_wh_ch01_b022_01\",\n        \"e_wh_ch01_b023_03\",\n        \"e_wh_ch01_b024_01\",\n        \"e_wh_ch01_b025_01\",\n        \"e_wh_ch01_b026_01\",\n        \"e_wh_ch01_b027_01\",\n        \"e_wh_ch01_b027_02\",\n        \"e_wh_ch01_b027_03\",\n        \"e_wh_ch01_b027_04\"\n      ],\n      \"candidate_transition\": {\n        \"trigger_block\": \"wh_ch01_b026\",\n        \"note\": \"after Lockwood's sharp reply, Heathcliff grins and the exchange becomes briefly more convivial\"\n      },\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_mr_heathcliff\",\n        \"ent_joseph\"\n      ],\n      \"observed_valence_hint\": \"unclear\",\n      \"event_ids\": [\n        \"e_wh_ch01_b008_01\",\n        \"e_wh_ch01_b018_02\"\n      ],\n      \"status\": \"evidence_only\"\n    },\n    {\n      \"pair\": [\n        \"ent_joseph\",\n        \"ent_mr_lockwood\"\n      ],\n      \"observed_valence_hint\": \"negative\",\n      \"event_ids\": [\n        \"e_wh_ch01_b010_01\"\n      ],\n      \"status\": \"evidence_only\"\n    }\n  ],\n  \"unresolved_threads\": [\n    {\n      \"thread_id\": \"th_wh_ch01_01\",\n      \"description\": \"Why Heathcliff lives as a gentleman in such a rough household, and what his background is, remains unclear.\",\n      \"opened_block\": \"wh_ch01_b014\",\n      \"kind\": \"mystery\"\n    },\n    {\n      \"thread_id\": \"th_wh_ch01_02\",\n      \"description\": \"The significance of the carved name 'Hareton Earnshaw' over the door is not explained.\",\n      \"opened_block\": \"wh_ch01_b012\",\n      \"kind\": \"mystery\"\n    },\n    {\n      \"thread_id\": \"th_wh_ch01_03\",\n      \"description\": \"Lockwood plans another visit although Heathcliff seems not to want one.\",\n      \"opened_block\": \"wh_ch01_b028\",\n      \"kind\": \"pending_transition\",\n      \"pair\": [\n        \"ent_mr_lockwood\",\n        \"ent_mr_heathcliff\"\n      ]\n    }\n  ],\n  \"motifs\": [\n    {\n      \"note\": \"isolation and misanthropy\",\n      \"block_ids\": [\n        \"wh_ch01_b002\",\n        \"wh_ch01_b028\"\n      ]\n    },\n    {\n      \"note\": \"storm and atmospheric violence mirrored in the house\",\n      \"block_ids\": [\n        \"wh_ch01_b011\",\n        \"wh_ch01_b020\"\n      ]\n    },\n    {\n      \"note\": \"animal hostility and guarded thresholds\",\n      \"block_ids\": [\n        \"wh_ch01_b017\",\n        \"wh_ch01_b018\",\n        \"wh_ch01_b019\",\n        \"wh_ch01_b023\"\n      ]\n    },\n    {\n      \"note\": \"misreading character through projection\",\n      \"block_ids\": [\n        \"wh_ch01_b014\",\n        \"wh_ch01_b015\",\n        \"wh_ch01_b016\"\n      ]\n    }\n  ],\n  \"translator_relevant_facts\": [\n    {\n      \"fact_type\": \"narrator\",\n      \"fact\": \"The chapter is first-person narration by Lockwood, recounting his immediate experience with ironic self-commentary.\",\n      \"block_evidence\": [\n        \"wh_ch01_b002\",\n        \"wh_ch01_b028\"\n      ]\n    },\n    {\n      \"fact_type\": \"speech_style\",\n      \"fact\": \"Heathcliff's dialogue is clipped, terse, and brusque, often marked by compressed phrasing.\",\n      \"block_evidence\": [\n        \"wh_ch01_b006\",\n        \"wh_ch01_b018\",\n        \"wh_ch01_b027\"\n      ]\n    },\n    {\n      \"fact_type\": \"speech_style\",\n      \"fact\": \"Joseph speaks in a marked religious, peevish manner that should sound rustic and old-fashioned.\",\n      \"block_evidence\": [\n        \"wh_ch01_b010\"\n      ]\n    },\n    {\n      \"fact_type\": \"setting\",\n      \"fact\": \"'Wuthering' is explicitly glossed as a provincial adjective describing turbulent weather exposure.\",\n      \"block_evidence\": [\n        \"wh_ch01_b011\"\n      ]\n    },\n    {\n      \"fact_type\": \"setting\",\n      \"fact\": \"The main room called 'the house' functions as combined sitting-room/kitchen/parlour in local usage.\",\n      \"block_evidence\": [\n        \"wh_ch01_b013\"\n      ]\n    },\n    {\n      \"fact_type\": \"status\",\n      \"fact\": \"Lockwood is Heathcliff's new tenant at Thrushcross Grange, which shapes their guarded politeness.\",\n      \"block_evidence\": [\n        \"wh_ch01_b005\",\n        \"wh_ch01_b028\"\n      ]\n    },\n    {\n      \"fact_type\": \"register\",\n      \"fact\": \"Lockwood's narration mixes formal politeness in speech with sardonic, elaborate descriptive prose.\",\n      \"block_evidence\": [\n        \"wh_ch01_b005\",\n        \"wh_ch01_b022\"\n      ]\n    }\n  ]\n}"
     }
   ],
-  "cost_usd": 0.00414925,
+  "cost_usd": 0.0,
   "prompt_tokens": 4717,
   "cached_tokens": 0,
-  "completion_tokens": 1485,
+  "completion_tokens": 1674,
   "reasoning_tokens": 0,
-  "cache_hits": 1
+  "cache_hits": 0
 }

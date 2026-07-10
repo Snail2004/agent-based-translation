@@ -4,10 +4,10 @@
   "quota_limit_tokens": 250000,
   "safety_limit_tokens": 225000,
   "observed_before_tokens": 0,
-  "observed_after_tokens": 25131,
-  "observed_after_calls": 2,
-  "remaining_to_safety_tokens": 199869,
-  "remaining_to_hard_limit_tokens": 224869,
+  "observed_after_tokens": 68589,
+  "observed_after_calls": 6,
+  "remaining_to_safety_tokens": 156411,
+  "remaining_to_hard_limit_tokens": 181411,
   "status": "within_safety_limit",
   "runs": [
     {
@@ -18,6 +18,17 @@
       "reasoning_tokens": 0,
       "total_tokens": 25131,
       "calls": 2,
+      "cost_usd_recorded": 0.0
+    },
+    {
+      "arm": "gpt-5.4",
+      "run": "literary_m4_full_m2",
+      "cache": "data/jobs/literary_m4_full_gpt54_cache.sqlite3",
+      "prompt_tokens": 31832,
+      "completion_tokens": 11626,
+      "reasoning_tokens": 0,
+      "total_tokens": 43458,
+      "calls": 4,
       "cost_usd_recorded": 0.0
     }
   ],

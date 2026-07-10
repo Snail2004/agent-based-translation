@@ -1,14 +1,54 @@
 {
   "phase": "L2A-1",
   "milestone": "M2",
-  "status": "halted_transport_error",
+  "status": "needs_claude_gate",
   "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
-  "model": "gpt-5.4-mini",
+  "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+  "digest_context": null,
+  "neighbor_source": {
+    "wh_ch01": [],
+    "wh_ch02": [
+      {
+        "chapter_id": "wh_ch01",
+        "source": "in_run"
+      }
+    ],
+    "wh_ch03": [
+      {
+        "chapter_id": "wh_ch01",
+        "source": "in_run"
+      },
+      {
+        "chapter_id": "wh_ch02",
+        "source": "in_run"
+      }
+    ],
+    "wh_ch04": [
+      {
+        "chapter_id": "wh_ch02",
+        "source": "in_run"
+      },
+      {
+        "chapter_id": "wh_ch03",
+        "source": "in_run"
+      }
+    ]
+  },
+  "model": "gpt-5.4",
   "chapters_requested": [
     "wh_ch01",
     "wh_ch02",
     "wh_ch03",
     "wh_ch04"
+  ],
+  "chapters_selected": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03",
+    "wh_ch04"
+  ],
+  "modes": [
+    "literary_digest_v1"
   ],
   "estimate": {
     "phase": "L2A-1",
@@ -16,6 +56,36 @@
     "zero_api": true,
     "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
     "m1_report": "data\\reports\\literary_m4_full\\m1_report.json",
+    "digest_context": null,
+    "neighbor_source": {
+      "wh_ch01": [],
+      "wh_ch02": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "in_run_estimate_placeholder"
+        }
+      ],
+      "wh_ch03": [
+        {
+          "chapter_id": "wh_ch01",
+          "source": "in_run_estimate_placeholder"
+        },
+        {
+          "chapter_id": "wh_ch02",
+          "source": "in_run_estimate_placeholder"
+        }
+      ],
+      "wh_ch04": [
+        {
+          "chapter_id": "wh_ch02",
+          "source": "in_run_estimate_placeholder"
+        },
+        {
+          "chapter_id": "wh_ch03",
+          "source": "in_run_estimate_placeholder"
+        }
+      ]
+    },
     "chapters_requested": [
       "wh_ch01",
       "wh_ch02",
@@ -32,12 +102,12 @@
     "modes": [
       "literary_digest_v1"
     ],
-    "prompt_tokens_est": 29718,
-    "max_prompt_tokens_est": 10063,
+    "prompt_tokens_est": 30766,
+    "max_prompt_tokens_est": 10482,
     "max_output_tokens_per_call": 6144,
-    "total_tokens_upper_bound": 54294,
-    "prompt_token_cap": 11500,
-    "cost_cap_usd": 0.0565815,
+    "total_tokens_upper_bound": 55342,
+    "prompt_token_cap": 14000,
+    "cost_cap_usd": 0.0,
     "call_estimates": [
       {
         "chapter_id": "wh_ch01",
@@ -45,39 +115,281 @@
         "prompt_tokens_est": 4745,
         "max_output_tokens": 6144,
         "neighbor_summary_count": 0,
+        "neighbor_source": [],
         "relation_event_lines": 19
       },
       {
         "chapter_id": "wh_ch02",
         "mode": "literary_digest_v1",
-        "prompt_tokens_est": 8055,
+        "prompt_tokens_est": 8265,
         "max_output_tokens": 6144,
         "neighbor_summary_count": 1,
+        "neighbor_source": [
+          {
+            "chapter_id": "wh_ch01",
+            "source": "in_run_estimate_placeholder"
+          }
+        ],
         "relation_event_lines": 53
       },
       {
         "chapter_id": "wh_ch03",
         "mode": "literary_digest_v1",
-        "prompt_tokens_est": 10063,
+        "prompt_tokens_est": 10482,
         "max_output_tokens": 6144,
         "neighbor_summary_count": 2,
+        "neighbor_source": [
+          {
+            "chapter_id": "wh_ch01",
+            "source": "in_run_estimate_placeholder"
+          },
+          {
+            "chapter_id": "wh_ch02",
+            "source": "in_run_estimate_placeholder"
+          }
+        ],
         "relation_event_lines": 43
       },
       {
         "chapter_id": "wh_ch04",
         "mode": "literary_digest_v1",
-        "prompt_tokens_est": 6855,
+        "prompt_tokens_est": 7274,
         "max_output_tokens": 6144,
         "neighbor_summary_count": 2,
+        "neighbor_source": [
+          {
+            "chapter_id": "wh_ch02",
+            "source": "in_run_estimate_placeholder"
+          },
+          {
+            "chapter_id": "wh_ch03",
+            "source": "in_run_estimate_placeholder"
+          }
+        ],
         "relation_event_lines": 48
       }
     ],
     "token_growth_halt": false
   },
-  "error_type": "PromptTokenCeilingExceeded",
-  "error": "Estimated prompt token cap would be exceeded: 12379 > 11500",
+  "actual": {
+    "calls": 4,
+    "cache_hits": 0,
+    "cost_usd": 0.0,
+    "prompt_tokens": 31832,
+    "cached_tokens": 0,
+    "completion_tokens": 11626,
+    "reasoning_tokens": 0
+  },
+  "accounting_resume": {
+    "restored_total": {
+      "logical_calls": 0,
+      "attempts": 0,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "cached_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 0,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 0,
+      "incremental_reasoning_tokens": 0
+    },
+    "this_attempt": {
+      "logical_calls": 4,
+      "attempts": 4,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 31832,
+      "cached_tokens": 0,
+      "completion_tokens": 11626,
+      "reasoning_tokens": 0
+    },
+    "combined_total": {
+      "logical_calls": 4,
+      "attempts": 4,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 31832,
+      "cached_tokens": 0,
+      "completion_tokens": 11626,
+      "reasoning_tokens": 0,
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 31832,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 11626,
+      "incremental_reasoning_tokens": 0
+    }
+  },
+  "resume": {
+    "enabled": false,
+    "resumed_from_checkpoint": [],
+    "ran": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "mismatches": [],
+    "lock_took_over_stale": false
+  },
+  "checkpoint_config_hash": "aa74b26bcf86255b2a9e4960866137e0dd8baa656bdd4c7a8ed6c54468d97430",
+  "input_m1_checkpoint_hashes": {
+    "wh_ch01": "d7ce3c3e3a9eca24f19d581f6b9ce5351cc2e108b593a5e9812c01571b4df11c",
+    "wh_ch02": "9221629ccd53b3a1bf4881b84a445549af000145e90db056d016a1a3460a2761",
+    "wh_ch03": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+    "wh_ch04": "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11"
+  },
+  "validation_counts": {
+    "digest_ok": 4,
+    "digest_failed": 0,
+    "parse_fail": 0,
+    "frame_segments": 5,
+    "scenes": 16,
+    "state_changes": 4,
+    "translator_facts": 31,
+    "motifs": 20
+  },
+  "chapter_summaries": [
+    {
+      "chapter_id": "wh_ch01",
+      "summary": "Lockwood narrates his first visit to Wuthering Heights in 1801. He meets his landlord, Mr. Heathcliff, whose reserved and suspicious manner fascinates him. After entering the bleak, old house and noting its strange architecture, furnishings, and the name Hareton Earnshaw carved above the door, Lockwood reflects at length on Heathcliff’s character and on his own awkwardness in human relations. Left briefly alone, he attempts to pet a dog and provokes a violent attack from several of the house dogs, until a kitchen woman intervenes. Heathcliff responds with brusque indifference, then offers wine and becomes somewhat more civil. Despite clear signs that Heathcliff does not welcome company, Lockwood decides he will visit again."
+    },
+    {
+      "chapter_id": "wh_ch02",
+      "summary": "Lockwood revisits Wuthering Heights in worsening snow and is admitted only after difficulty. Inside, he meets a young woman he assumes is Mrs. Heathcliff, a rough young man, and later Heathcliff. Through awkward conversation he learns the young woman is Heathcliff’s daughter-in-law and that her husband is dead, while the rough youth is Hareton Earnshaw. The household remains hostile and confusing: Joseph is surly, Mrs. Heathcliff alternates between scorn and a brief show of pity, Hareton is aggressive, and Heathcliff refuses both guidance and hospitality. When Lockwood tries to leave alone, dogs attack him at the door, provoking laughter from Heathcliff and Hareton. Zillah intervenes, tends him, and he is forced to stay the night under Heathcliff’s roof."
+    },
+    {
+      "chapter_id": "wh_ch03",
+      "summary": "Lockwood is put to sleep in a forbidden old bed-closet at Wuthering Heights. Reading Catherine Earnshaw’s old books and diary fragments, he learns of Hindley’s cruelty toward Heathcliff and Catherine in childhood. He then suffers two disturbing dreams: one a grotesque sermon by Jabez Branderham, the other a ghostly encounter at the window with “Catherine Linton,” who begs to be let in after wandering twenty years. His scream brings Heathcliff, whose violent agitation reveals a deep connection to Catherine; after Lockwood mentions the dream, Heathcliff later opens the window and desperately calls for “Cathy.” At dawn Lockwood witnesses Heathcliff’s harsh treatment of Zillah and his daughter-in-law, then leaves Wuthering Heights and returns exhausted to Thrushcross Grange."
+    },
+    {
+      "chapter_id": "wh_ch04",
+      "summary": "At Thrushcross Grange, Lockwood draws Mrs. Dean into explaining the tangled Wuthering Heights household. She identifies Catherine Heathcliff as Catherine Linton, daughter of her late master, and Hareton as the last Earnshaw, dispossessed by Heathcliff. Mrs. Dean then begins her history of earlier years at Wuthering Heights. She recounts old Mr. Earnshaw’s return from Liverpool with a ragged orphan child he had found starving, whom the family soon named Heathcliff. Cathy quickly befriended him, but Hindley hated him, and Nelly admits she joined in mistreating him at first. Mr. Earnshaw increasingly favored Heathcliff, deepening resentment in the house. After illness softens Nelly somewhat toward him, she still observes his hardness and calculating nature. The chapter ends with a violent quarrel in which Heathcliff maneuvers Hindley out of a better colt and silently stores up revenge."
+    }
+  ],
+  "call_records": [
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch01",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0,
+      "prompt_tokens": 4717,
+      "cached_tokens": 0,
+      "completion_tokens": 1674,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 1,
+        "state_changes": 0,
+        "unresolved_mystery": 2,
+        "unresolved_pending_transition": 1,
+        "unresolved_question": 0,
+        "translator_facts": 7,
+        "motifs": 4,
+        "nonnarrative_block_skipped": 1
+      },
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 4717,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 1674,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch02",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0,
+      "prompt_tokens": 8800,
+      "cached_tokens": 0,
+      "completion_tokens": 3357,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 4,
+        "state_changes": 3,
+        "unresolved_mystery": 2,
+        "unresolved_pending_transition": 1,
+        "unresolved_question": 1,
+        "translator_facts": 8,
+        "motifs": 5,
+        "nonnarrative_block_skipped": 1
+      },
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 8800,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 3357,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch03",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0,
+      "prompt_tokens": 10670,
+      "cached_tokens": 0,
+      "completion_tokens": 3247,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 7,
+        "state_changes": 0,
+        "unresolved_mystery": 3,
+        "unresolved_pending_transition": 1,
+        "unresolved_question": 1,
+        "translator_facts": 8,
+        "motifs": 6,
+        "nonnarrative_block_skipped": 3
+      },
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 10670,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 3247,
+      "incremental_reasoning_tokens": 0
+    },
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch04",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0,
+      "prompt_tokens": 7645,
+      "cached_tokens": 0,
+      "completion_tokens": 3348,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 2,
+        "scenes": 4,
+        "state_changes": 1,
+        "unresolved_mystery": 2,
+        "unresolved_pending_transition": 2,
+        "unresolved_question": 0,
+        "translator_facts": 8,
+        "motifs": 5,
+        "nonnarrative_block_skipped": 2
+      },
+      "incremental_cost_usd": 0.0,
+      "incremental_prompt_tokens": 7645,
+      "incremental_cached_tokens": 0,
+      "incremental_completion_tokens": 3348,
+      "incremental_reasoning_tokens": 0
+    }
+  ],
   "artifacts": {
+    "digest_dir": "data\\reports\\literary_m4_full\\digest",
     "report": "data\\reports\\literary_m4_full\\m2_report.json"
   },
-  "stop": "M2 did not complete; resolve transport/quota before retry."
+  "stop": "M2 complete. Claude must verify digest before M3."
 }
