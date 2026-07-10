@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from pipeline.agents.llm_client import LLMResult, LLMUsage
 from pipeline.agents.llm_config import LLMConfig
 from pipeline.literary.builder_pilot import (
     M1_CHECKPOINT_SCHEMA_VERSION,
@@ -33,6 +34,7 @@ from pipeline.literary.story_bible_v2 import (
     build_phase_messages,
     empty_m3_v2_state,
     load_m3_v2_input_chain,
+    make_m3_v2_request_llm,
     run_m3_v2_from_responses,
     run_m3_v2_dry_run,
     validate_identity_partition_response,
@@ -53,6 +55,22 @@ def _config() -> LLMConfig:
         max_output_tokens=512,
         prompt_token_cap=8_000,
         pricing={"input": 0.0, "cached_input": 0.0, "output": 0.0},
+    )
+
+
+def _hook_result(payload: dict | None, *, json_error: str | None = None) -> LLMResult:
+    text = json.dumps(payload, ensure_ascii=False) if payload is not None else "{bad json"
+    return LLMResult(
+        text=text,
+        parsed_json=payload,
+        json_error=json_error,
+        model="fake-m3-v2",
+        system_fingerprint="fp_m3v2_test",
+        usage=LLMUsage(prompt_tokens=17, cached_tokens=0, completion_tokens=9),
+        cost_usd=0.000017,
+        latency_ms=2,
+        from_cache=False,
+        cache_key="cache_m3v2_test",
     )
 
 
@@ -695,3 +713,168 @@ def test_m3_v2_phase_apply_marks_fact_published_and_real_messages_omit_scaffold_
     )
     assert "dry_run_note" not in identity_messages[1]["content"]
     assert "dry_run_note" not in phase_messages[1]["content"]
+
+
+def test_m3_v2_request_hook_uses_runtime_prompt_and_persists_raw_usage(tmp_path: Path) -> None:
+    """The hook receives the exact in-loop prompt and persists before apply/publish."""
+
+    document, m1_dir, m2_dir = _make_chain(tmp_path, include_relation=False)
+    observed: list[tuple[list[dict[str, str]], dict]] = []
+
+    def request_llm(messages: list[dict[str, str]], meta: dict) -> LLMResult:
+        observed.append((messages, dict(meta)))
+        user = json.loads(messages[1]["content"])
+        if meta["mode"] == "literary_identity_partition_v1":
+            return _hook_result(_valid_identity_response(user["atoms"]))
+        return _hook_result({"relation_facts": [], "relation_phases": []})
+
+    out_dir = tmp_path / "m3_hook"
+    report = run_m3_v2_from_responses(
+        document,
+        ["bk_ch01"],
+        out_dir=out_dir,
+        design_doc=DESIGN_DOC,
+        config=_config(),
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+        request_llm=request_llm,
+        confirm_usd=1.0,
+    )
+    assert report["zero_api"] is False
+    assert report["status"] == "needs_claude_gate"
+    assert report["request_accounting"]["combined"] == {
+        "logical_calls": 2,
+        "attempts": 2,
+        "technical_retries": 0,
+        "cache_hits": 0,
+        "cost_usd": 0.000034,
+        "prompt_tokens": 34,
+        "cached_tokens": 0,
+        "completion_tokens": 18,
+        "reasoning_tokens": 0,
+    }
+    assert [meta["mode"] for _messages, meta in observed] == [
+        "literary_identity_partition_v1",
+        "literary_phase_segment_v2",
+    ]
+    assert all("dry_run_note" not in messages[1]["content"] for messages, _meta in observed)
+
+    dry = run_m3_v2_dry_run(
+        document,
+        ["bk_ch01"],
+        out_dir=tmp_path / "m3_dry",
+        design_doc=DESIGN_DOC,
+        config=_config(),
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+    )
+    rendered = [
+        json.loads(Path(row["path"]).read_text(encoding="utf-8"))
+        for row in dry["rendered_prompts"]
+    ]
+    for mode, messages in [
+        (meta["mode"], messages) for messages, meta in observed
+    ]:
+        scaffold = next(row for row in rendered if row["mode"] == mode)
+        expected_user = json.loads(scaffold["messages"][1]["content"])
+        assert expected_user.pop("dry_run_note")
+        assert scaffold["messages"][0] == messages[0]
+        assert expected_user == json.loads(messages[1]["content"])
+
+    checkpoint = read_checkpoint(out_dir / "checkpoints" / M3_V2_STAGE / "bk_ch01.json")
+    raw = checkpoint["raw_responses"]
+    assert len(raw) == 2
+    assert all(row["source"] == "request_llm" for row in raw)
+    assert all(row["usage"]["prompt_tokens"] == 17 for row in raw)
+    assert all((out_dir / row["raw_response_path"]).is_file() for row in raw)
+
+
+def test_m3_v2_request_hook_halts_when_parse_retry_rate_exceeds_gate(tmp_path: Path) -> None:
+    """A parse repair is technical, but excessive repair cannot publish a scope."""
+
+    document, m1_dir, m2_dir = _make_chain(tmp_path, include_relation=False)
+    identity_calls = 0
+
+    def request_llm(messages: list[dict[str, str]], meta: dict) -> LLMResult:
+        nonlocal identity_calls
+        if meta["mode"] == "literary_identity_partition_v1":
+            identity_calls += 1
+            if identity_calls == 1:
+                return _hook_result(None, json_error="invalid_json")
+            user = json.loads(messages[1]["content"])
+            return _hook_result(_valid_identity_response(user["atoms"]))
+        return _hook_result({"relation_facts": [], "relation_phases": []})
+
+    out_dir = tmp_path / "m3_retry_gate"
+    report = run_m3_v2_from_responses(
+        document,
+        ["bk_ch01"],
+        out_dir=out_dir,
+        design_doc=DESIGN_DOC,
+        config=_config(),
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+        request_llm=request_llm,
+        confirm_usd=1.0,
+    )
+    assert report["status"] == "halted_technical_gate"
+    assert report["gate_code"] == "technical_retry_rate_exceeded"
+    assert report["request_accounting"]["combined"]["technical_retries"] == 1
+    assert not (out_dir / "story_bible_v2" / "bk_ch01_story_bible.json").exists()
+    assert not (out_dir / "checkpoints" / M3_V2_STAGE / "bk_ch01.json").exists()
+    raw_paths = list((out_dir / "raw_responses" / M3_V2_STAGE / "bk_ch01").glob("*.json"))
+    assert len(raw_paths) == 3
+
+
+def test_m3_v2_request_hook_retains_transport_attempt_accounting_on_halt(tmp_path: Path) -> None:
+    document, m1_dir, m2_dir = _make_chain(tmp_path, include_relation=False)
+
+    def request_llm(_messages: list[dict[str, str]], _meta: dict) -> LLMResult:
+        raise RuntimeError("synthetic transport outage")
+
+    out_dir = tmp_path / "m3_transport_halt"
+    report = run_m3_v2_from_responses(
+        document,
+        ["bk_ch01"],
+        out_dir=out_dir,
+        design_doc=DESIGN_DOC,
+        config=_config(),
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+        request_llm=request_llm,
+        confirm_usd=1.0,
+    )
+    assert report["status"] == "halted_technical_gate"
+    assert report["gate_code"] == "request_llm_parse_or_transport_failed"
+    assert report["request_accounting"]["combined"]["attempts"] == 2
+    assert report["request_accounting"]["combined"]["technical_retries"] == 1
+    raw_paths = list((out_dir / "raw_responses" / M3_V2_STAGE / "bk_ch01").glob("*.json"))
+    assert len(raw_paths) == 2
+    assert all(
+        json.loads(path.read_text(encoding="utf-8"))["technical_error"]["type"] == "RuntimeError"
+        for path in raw_paths
+    )
+
+
+def test_m3_v2_llm_client_adapter_uses_json_cache_contract() -> None:
+    calls: list[dict] = []
+
+    class FakeClient:
+        def call(self, messages, **kwargs):
+            calls.append({"messages": messages, **kwargs})
+            return _hook_result({"groups": []})
+
+    adapter = make_m3_v2_request_llm(FakeClient())
+    result = adapter(
+        [{"role": "user", "content": "{}"}],
+        {"tag": "m3v2-test", "bypass_cache": True},
+    )
+    assert result.parsed_json == {"groups": []}
+    assert calls == [
+        {
+            "messages": [{"role": "user", "content": "{}"}],
+            "response_format": {"type": "json_object"},
+            "tag": "m3v2-test",
+            "bypass_cache": True,
+        }
+    ]

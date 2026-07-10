@@ -17,7 +17,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-from pipeline.agents.llm_client import estimate_prompt_tokens
+from pipeline.agents.llm_client import LLMClient, LLMResult, estimate_prompt_tokens
 from pipeline.agents.llm_config import LLMConfig
 from pipeline.literary.builder_pilot import (
     M2_CHECKPOINT_SCHEMA_VERSION,
@@ -79,6 +79,10 @@ PREDICATE_CODES = {
     "ward_of",
     "other",
 }
+
+
+RequestLLM = Callable[[list[dict[str, str]], dict[str, Any]], LLMResult]
+M3_V2_MAX_TECHNICAL_RETRY_RATE = 0.10
 
 
 def _m3_v2_checkpoint_path(out_dir: Path, chapter_id: str) -> Path:
@@ -1104,6 +1108,37 @@ class M3V2SemanticGateError(RuntimeError):
         super().__init__(f"{code}: {detail}" if detail else code)
 
 
+class M3V2TechnicalGateError(RuntimeError):
+    """A transport or parse failure exhausted the allowed technical retry path."""
+
+    def __init__(
+        self,
+        code: str,
+        errors: list[str] | None = None,
+        *,
+        accounting: dict[str, int | float] | None = None,
+    ) -> None:
+        self.code = code
+        self.errors = list(errors or [])
+        self.accounting = dict(accounting or {})
+        detail = "; ".join(self.errors[:8])
+        super().__init__(f"{code}: {detail}" if detail else code)
+
+
+def make_m3_v2_request_llm(client: LLMClient) -> RequestLLM:
+    """Adapt the shared cache-backed client to M3 v2's in-loop request contract."""
+
+    def request(messages: list[dict[str, str]], meta: dict[str, Any]) -> LLMResult:
+        return client.call(
+            messages,
+            response_format=RESPONSE_FORMAT_JSON,
+            tag=str(meta["tag"]),
+            bypass_cache=bool(meta.get("bypass_cache", False)),
+        )
+
+    return request
+
+
 def empty_m3_v2_state() -> dict[str, Any]:
     """Canonical state persisted in every M3 v2 checkpoint."""
 
@@ -1615,6 +1650,266 @@ def _response_batch(
     return rows
 
 
+def _empty_m3_v2_request_accounting() -> dict[str, int | float]:
+    return {
+        "logical_calls": 0,
+        "attempts": 0,
+        "technical_retries": 0,
+        "cache_hits": 0,
+        "cost_usd": 0.0,
+        "prompt_tokens": 0,
+        "cached_tokens": 0,
+        "completion_tokens": 0,
+        "reasoning_tokens": 0,
+    }
+
+
+def _add_m3_v2_request_accounting(
+    left: dict[str, int | float],
+    right: dict[str, int | float],
+) -> dict[str, int | float]:
+    merged = _empty_m3_v2_request_accounting()
+    for key in merged:
+        value = float(left.get(key, 0)) + float(right.get(key, 0))
+        merged[key] = round(value, 12) if key == "cost_usd" else int(value)
+    return merged
+
+
+def _m3_v2_raw_response_path(
+    out_dir: Path,
+    *,
+    chapter_id: str,
+    mode: str,
+    shard_index: int,
+    attempt_index: int,
+) -> Path:
+    return (
+        Path(out_dir)
+        / "raw_responses"
+        / M3_V2_STAGE
+        / chapter_id
+        / f"{mode}_shard_{shard_index:02d}_attempt_{attempt_index:02d}.json"
+    )
+
+
+def _m3_v2_usage_payload(result: LLMResult | None) -> dict[str, int]:
+    if result is None:
+        return {
+            "prompt_tokens": 0,
+            "cached_tokens": 0,
+            "completion_tokens": 0,
+            "reasoning_tokens": 0,
+        }
+    return {
+        "prompt_tokens": int(result.usage.prompt_tokens),
+        "cached_tokens": int(result.usage.cached_tokens),
+        "completion_tokens": int(result.usage.completion_tokens),
+        "reasoning_tokens": int(result.usage.reasoning_tokens),
+    }
+
+
+def _persist_m3_v2_raw_response(
+    out_dir: Path,
+    *,
+    messages: list[dict[str, str]],
+    meta: dict[str, Any],
+    source: str,
+    result: LLMResult | None = None,
+    provided_json: dict[str, Any] | None = None,
+    technical_error: Exception | None = None,
+) -> tuple[Path, dict[str, Any]]:
+    """Persist a raw response/usage record before any semantic apply path runs."""
+
+    path = _m3_v2_raw_response_path(
+        out_dir,
+        chapter_id=str(meta["chapter_id"]),
+        mode=str(meta["mode"]),
+        shard_index=int(meta["shard_index"]),
+        attempt_index=int(meta["attempt_index"]),
+    )
+    usage = _m3_v2_usage_payload(result)
+    payload = {
+        "phase": "L2A-M4d",
+        "milestone": "M3_v2_request",
+        "source": source,
+        "scope": str(meta["scope"]),
+        "chapter_id": str(meta["chapter_id"]),
+        "mode": str(meta["mode"]),
+        "shard_index": int(meta["shard_index"]),
+        "shard_count": int(meta["shard_count"]),
+        "attempt_index": int(meta["attempt_index"]),
+        "tag": str(meta["tag"]),
+        "prompt_sha256": canonical_hash(messages),
+        "prompt_tokens_est": int(meta["prompt_tokens_est"]),
+        "bypass_cache": bool(meta.get("bypass_cache", False)),
+        "model": result.model if result is not None else None,
+        "system_fingerprint": result.system_fingerprint if result is not None else None,
+        "from_cache": bool(result.from_cache) if result is not None else False,
+        "cache_key": result.cache_key if result is not None else None,
+        "latency_ms": int(result.latency_ms) if result is not None else 0,
+        "cost_usd": float(result.cost_usd) if result is not None else 0.0,
+        "usage": usage,
+        "json_error": result.json_error if result is not None else None,
+        "raw_text": result.text if result is not None else None,
+        "parsed_json": result.parsed_json if result is not None else provided_json,
+        "technical_error": (
+            {"type": type(technical_error).__name__, "message": str(technical_error)}
+            if technical_error is not None
+            else None
+        ),
+    }
+    _atomic_json_write(path, payload)
+    checkpoint_record = {
+        "mode": payload["mode"],
+        "scope": payload["scope"],
+        "shard_index": payload["shard_index"],
+        "attempt_index": payload["attempt_index"],
+        "source": source,
+        "raw_response_path": path.relative_to(Path(out_dir)).as_posix(),
+        "prompt_sha256": payload["prompt_sha256"],
+        "model": payload["model"],
+        "from_cache": payload["from_cache"],
+        "cache_key": payload["cache_key"],
+        "cost_usd": payload["cost_usd"],
+        "usage": usage,
+    }
+    return path, checkpoint_record
+
+
+def _resolve_m3_v2_response_batch(
+    *,
+    supplied_scope_responses: dict[str, Any] | None,
+    field: str,
+    mode: str,
+    shards: list[dict[str, Any]],
+    out_dir: Path,
+    scope: str,
+    chapter_id: str,
+    request_llm: RequestLLM | None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[Path], dict[str, int | float]]:
+    """Use supplied synthetic JSON or request each runtime shard in the apply loop."""
+
+    accounting = _empty_m3_v2_request_accounting()
+    raw_records: list[dict[str, Any]] = []
+    raw_paths: list[Path] = []
+    if isinstance(supplied_scope_responses, dict) and field in supplied_scope_responses:
+        responses = _response_batch(
+            supplied_scope_responses,
+            field=field,
+            expected_count=len(shards),
+        )
+        for shard_index, (response, shard) in enumerate(zip(responses, shards, strict=True), start=1):
+            meta = {
+                "scope": scope,
+                "chapter_id": chapter_id,
+                "mode": mode,
+                "shard_index": shard_index,
+                "shard_count": len(shards),
+                "attempt_index": 1,
+                "tag": f"synthetic_m3v2_{chapter_id}_{mode}_s{shard_index:02d}",
+                "prompt_tokens_est": int(shard["prompt_tokens_est"]),
+                "bypass_cache": False,
+            }
+            raw_path, raw_record = _persist_m3_v2_raw_response(
+                out_dir,
+                messages=shard["messages"],
+                meta=meta,
+                source="provided_synthetic",
+                provided_json=copy.deepcopy(response),
+            )
+            raw_paths.append(raw_path)
+            raw_records.append(raw_record)
+        return responses, raw_records, raw_paths, accounting
+
+    if request_llm is None:
+        raise M3V2SemanticGateError("scope_responses_missing", [scope, field])
+
+    responses: list[dict[str, Any]] = []
+    for shard_index, shard in enumerate(shards, start=1):
+        accounting["logical_calls"] = int(accounting["logical_calls"]) + 1
+        parsed: dict[str, Any] | None = None
+        last_error: str | None = None
+        for attempt_index in [1, 2]:
+            meta = {
+                "scope": scope,
+                "chapter_id": chapter_id,
+                "mode": mode,
+                "shard_index": shard_index,
+                "shard_count": len(shards),
+                "attempt_index": attempt_index,
+                "tag": f"lit_m3v2_{chapter_id}_{mode}_s{shard_index:02d}:attempt{attempt_index}",
+                "prompt_tokens_est": int(shard["prompt_tokens_est"]),
+                "bypass_cache": attempt_index > 1,
+            }
+            accounting["attempts"] = int(accounting["attempts"]) + 1
+            try:
+                result = request_llm(shard["messages"], meta)
+            except Exception as exc:
+                raw_path, raw_record = _persist_m3_v2_raw_response(
+                    out_dir,
+                    messages=shard["messages"],
+                    meta=meta,
+                    source="request_llm",
+                    technical_error=exc,
+                )
+                raw_paths.append(raw_path)
+                raw_records.append(raw_record)
+                last_error = f"{type(exc).__name__}: {exc}"
+            else:
+                if not isinstance(result, LLMResult):
+                    contract_error = TypeError(
+                        "request_llm must return LLMResult from the shared cache-backed client"
+                    )
+                    raw_path, raw_record = _persist_m3_v2_raw_response(
+                        out_dir,
+                        messages=shard["messages"],
+                        meta=meta,
+                        source="request_llm",
+                        technical_error=contract_error,
+                    )
+                    raw_paths.append(raw_path)
+                    raw_records.append(raw_record)
+                    last_error = str(contract_error)
+                else:
+                    raw_path, raw_record = _persist_m3_v2_raw_response(
+                        out_dir,
+                        messages=shard["messages"],
+                        meta=meta,
+                        source="request_llm",
+                        result=result,
+                    )
+                    raw_paths.append(raw_path)
+                    raw_records.append(raw_record)
+                    accounting["cache_hits"] = int(accounting["cache_hits"]) + int(result.from_cache)
+                    accounting["cost_usd"] = round(
+                        float(accounting["cost_usd"]) + float(result.cost_usd), 12
+                    )
+                    usage = _m3_v2_usage_payload(result)
+                    for key, value in usage.items():
+                        accounting[key] = int(accounting[key]) + int(value)
+                    if isinstance(result.parsed_json, dict) and result.json_error is None:
+                        parsed = result.parsed_json
+                        break
+                    last_error = result.json_error or "parsed_json_not_object"
+
+            if attempt_index == 1:
+                accounting["technical_retries"] = int(accounting["technical_retries"]) + 1
+                continue
+            raise M3V2TechnicalGateError(
+                "request_llm_parse_or_transport_failed",
+                [scope, mode, f"shard={shard_index}", last_error or "unknown"],
+                accounting=accounting,
+            )
+        if parsed is None:  # pragma: no cover - loop either breaks or raises.
+            raise M3V2TechnicalGateError(
+                "request_llm_missing_parsed_response",
+                [scope, mode],
+                accounting=accounting,
+            )
+        responses.append(parsed)
+    return responses, raw_records, raw_paths, accounting
+
+
 def _m3_v2_prefix(
     *,
     document: dict[str, Any],
@@ -1686,14 +1981,25 @@ def run_m3_v2_from_responses(
     config: LLMConfig,
     m1_dir: Path,
     m2_dir: Path,
-    responses_by_scope: dict[str, dict[str, Any]],
+    responses_by_scope: dict[str, dict[str, Any]] | None = None,
+    request_llm: RequestLLM | None = None,
+    confirm_usd: float | None = None,
+    max_technical_retry_rate: float = M3_V2_MAX_TECHNICAL_RETRY_RATE,
     resume: bool = False,
 ) -> dict[str, Any]:
-    """Apply supplied model-shaped responses and publish only passed scope artifacts.
+    """Apply supplied or in-loop model responses and publish only passed artifacts.
 
-    This is intentionally client-free.  Phase 2 uses it with synthetic responses;
-    a later API task will supply persisted raw responses to this exact executor.
+    ``request_llm`` is optional so the same executor remains usable for 0-API
+    synthetic tests. When present, it receives the exact post-state runtime
+    messages and must return the shared ``LLMResult`` shape. Its raw output and
+    usage are persisted before semantic validation or state mutation.
     """
+
+    if responses_by_scope is None and request_llm is None:
+        raise ValueError("Provide synthetic responses_by_scope or a request_llm hook")
+    if not 0.0 <= max_technical_retry_rate <= 1.0:
+        raise ValueError("max_technical_retry_rate must be between 0 and 1")
+    supplied_responses = dict(responses_by_scope or {})
 
     chain = load_m3_v2_input_chain(
         document=document,
@@ -1702,6 +2008,23 @@ def run_m3_v2_from_responses(
         m2_dir=m2_dir,
         design_doc=design_doc,
     )
+    estimate: dict[str, Any] | None = None
+    if request_llm is not None:
+        estimate = estimate_m3_v2(
+            document,
+            chapters,
+            design_doc=design_doc,
+            config=config,
+            m1_dir=m1_dir,
+            m2_dir=m2_dir,
+        )
+        if confirm_usd is None:
+            raise ValueError("--confirm-usd is required when M3 v2 supplies request_llm")
+        if float(estimate["cost_cap_usd"]) > float(confirm_usd):
+            raise ValueError(
+                "M3 v2 refused: estimate cost cap "
+                f"${float(estimate['cost_cap_usd']):.4f} exceeds --confirm-usd ${float(confirm_usd):.4f}"
+            )
     scopes = _scope_payloads(
         document=document,
         chain=chain,
@@ -1719,6 +2042,9 @@ def run_m3_v2_from_responses(
     report_path = Path(out_dir) / "m3_v2_report.json"
     lock = CheckpointLock(Path(out_dir))
     lock.acquire()
+    restored_request_accounting = _empty_m3_v2_request_accounting()
+    this_attempt_request_accounting = _empty_m3_v2_request_accounting()
+    scope_reports: list[dict[str, Any]] = []
     try:
         restored: list[dict[str, Any]] = []
         resume_mismatches: list[dict[str, Any]] = []
@@ -1735,15 +2061,18 @@ def run_m3_v2_from_responses(
             if restored:
                 state = _copy_state((restored[-1].get("state") or {}).get("m3_state") or {})
                 parent_hash = str(restored[-1]["checkpoint_hash"])
-        scope_reports: list[dict[str, Any]] = []
+            for checkpoint in restored:
+                checkpoint_state = checkpoint.get("state") or {}
+                restored_request_accounting = _add_m3_v2_request_accounting(
+                    restored_request_accounting,
+                    checkpoint_state.get("request_accounting") or {},
+                )
         start_index = len(restored)
         for index, scope in enumerate(scopes[start_index:], start=start_index):
             chapter = chain["selected"][index]
             chapter_id = str(chapter["chapter_id"])
             scope_key = str(scope["scope"])
-            scope_responses = responses_by_scope.get(scope_key)
-            if not isinstance(scope_responses, dict):
-                raise M3V2SemanticGateError("scope_responses_missing", [scope_key])
+            scope_responses = supplied_responses.get(scope_key)
 
             identity_shards = _runtime_identity_shards(
                 frontier_atoms=scope["frontier_atoms"],
@@ -1756,10 +2085,24 @@ def run_m3_v2_from_responses(
             )
             if any("dry_run_note" in shard["messages"][1]["content"] for shard in identity_shards):
                 raise RuntimeError("M3 v2 runtime identity request retained dry_run_note")
-            identity_responses = _response_batch(
-                scope_responses,
+            (
+                identity_responses,
+                identity_raw_records,
+                identity_raw_paths,
+                identity_request_accounting,
+            ) = _resolve_m3_v2_response_batch(
+                supplied_scope_responses=scope_responses,
                 field="identity",
-                expected_count=len(identity_shards),
+                mode=IDENTITY_PARTITION_VERSION,
+                shards=identity_shards,
+                out_dir=Path(out_dir),
+                scope=scope_key,
+                chapter_id=chapter_id,
+                request_llm=request_llm,
+            )
+            this_attempt_request_accounting = _add_m3_v2_request_accounting(
+                this_attempt_request_accounting,
+                identity_request_accounting,
             )
             identity_payload = {
                 "groups": [
@@ -1793,10 +2136,24 @@ def run_m3_v2_from_responses(
             )
             if any("dry_run_note" in shard["messages"][1]["content"] for shard in phase_shards):
                 raise RuntimeError("M3 v2 runtime phase request retained dry_run_note")
-            phase_responses = _response_batch(
-                scope_responses,
+            (
+                phase_responses,
+                phase_raw_records,
+                phase_raw_paths,
+                phase_request_accounting,
+            ) = _resolve_m3_v2_response_batch(
+                supplied_scope_responses=scope_responses,
                 field="phase",
-                expected_count=len(phase_shards),
+                mode=PHASE_SEGMENT_VERSION,
+                shards=phase_shards,
+                out_dir=Path(out_dir),
+                scope=scope_key,
+                chapter_id=chapter_id,
+                request_llm=request_llm,
+            )
+            this_attempt_request_accounting = _add_m3_v2_request_accounting(
+                this_attempt_request_accounting,
+                phase_request_accounting,
             )
             phase_payload = {
                 "relation_facts": [
@@ -1817,6 +2174,27 @@ def run_m3_v2_from_responses(
                 source_text_by_block=source_text,
                 block_ordinals=ordinals,
             )
+
+            combined_request_accounting = _add_m3_v2_request_accounting(
+                restored_request_accounting,
+                this_attempt_request_accounting,
+            )
+            technical_retry_rate = (
+                float(combined_request_accounting["technical_retries"])
+                / float(combined_request_accounting["logical_calls"])
+                if int(combined_request_accounting["logical_calls"])
+                else 0.0
+            )
+            if request_llm is not None and technical_retry_rate > max_technical_retry_rate:
+                raise M3V2TechnicalGateError(
+                    "technical_retry_rate_exceeded",
+                    [
+                        f"retries={int(combined_request_accounting['technical_retries'])}",
+                        f"logical_calls={int(combined_request_accounting['logical_calls'])}",
+                        f"rate={technical_retry_rate:.4f}",
+                        f"max={max_technical_retry_rate:.4f}",
+                    ],
+                )
 
             turns, events = _asof_interactions(
                 m1_dir=Path(m1_dir),
@@ -1846,21 +2224,11 @@ def run_m3_v2_from_responses(
 
             story_path = Path(out_dir) / "story_bible_v2" / f"{chapter_id}_story_bible.json"
             _atomic_json_write(story_path, story)
-            raw_responses = [
-                {
-                    "mode": IDENTITY_PARTITION_VERSION,
-                    "scope": scope_key,
-                    "raw_json": copy.deepcopy(response),
-                }
-                for response in identity_responses
-            ] + [
-                {
-                    "mode": PHASE_SEGMENT_VERSION,
-                    "scope": scope_key,
-                    "raw_json": copy.deepcopy(response),
-                }
-                for response in phase_responses
-            ]
+            raw_responses = [*identity_raw_records, *phase_raw_records]
+            scope_request_accounting = _add_m3_v2_request_accounting(
+                identity_request_accounting,
+                phase_request_accounting,
+            )
             checkpoint = build_m3_v2_checkpoint(
                 out_dir=Path(out_dir),
                 chapter=chapter,
@@ -1873,9 +2241,14 @@ def run_m3_v2_from_responses(
                 input_m1_checkpoint_hash=scope["m1_checkpoint_hash"],
                 input_m2_checkpoint_hash=scope["m2_checkpoint_hash"],
                 parent_checkpoint_hash=parent_hash,
-                state={"m3_state": state, "identity_audit": identity_audit, "phase_audit": phase_audit},
+                state={
+                    "m3_state": state,
+                    "identity_audit": identity_audit,
+                    "phase_audit": phase_audit,
+                    "request_accounting": scope_request_accounting,
+                },
                 raw_responses=raw_responses,
-                published_artifacts=[story_path],
+                published_artifacts=[story_path, *identity_raw_paths, *phase_raw_paths],
             )
             checkpoint_path = write_m3_v2_checkpoint_atomic(Path(out_dir), checkpoint)
             parent_hash = str(checkpoint["checkpoint_hash"])
@@ -1891,15 +2264,25 @@ def run_m3_v2_from_responses(
                         "phase_shards": len(phase_shards),
                         "dry_run_note_omitted": True,
                     },
+                    "request_accounting": scope_request_accounting,
                     "story_bible": str(story_path),
                     "checkpoint": str(checkpoint_path),
                 }
             )
         report = {
             "phase": "L2A-M4d",
-            "milestone": "M3_v2_apply_synthetic",
-            "zero_api": True,
+            "milestone": "M3_v2_apply",
+            "zero_api": request_llm is None,
             "status": "needs_claude_gate",
+            "estimate": estimate,
+            "request_accounting": {
+                "restored": restored_request_accounting,
+                "this_attempt": this_attempt_request_accounting,
+                "combined": _add_m3_v2_request_accounting(
+                    restored_request_accounting,
+                    this_attempt_request_accounting,
+                ),
+            },
             "chapters_selected": [str(item["chapter_id"]) for item in chain["selected"]],
             "resume": {
                 "enabled": resume,
@@ -1908,17 +2291,51 @@ def run_m3_v2_from_responses(
                 "lock_took_over_stale": lock.took_over_stale,
             },
             "scopes": scope_reports,
-            "stop": "Synthetic apply/publish complete. Claude must approve before any API run.",
+            "stop": (
+                "Apply/publish complete. Claude must approve artifacts before any further API run."
+            ),
         }
     except M3V2SemanticGateError as exc:
         report = {
             "phase": "L2A-M4d",
-            "milestone": "M3_v2_apply_synthetic",
-            "zero_api": True,
+            "milestone": "M3_v2_apply",
+            "zero_api": request_llm is None,
             "status": "halted_semantic_gate",
             "gate_code": exc.code,
             "errors": exc.errors,
+            "estimate": estimate,
+            "request_accounting": {
+                "restored": restored_request_accounting,
+                "this_attempt": this_attempt_request_accounting,
+                "combined": _add_m3_v2_request_accounting(
+                    restored_request_accounting,
+                    this_attempt_request_accounting,
+                ),
+            },
             "stop": "No failed scope was published or checkpointed. Resolve the semantic gate before API.",
+        }
+    except M3V2TechnicalGateError as exc:
+        this_attempt_request_accounting = _add_m3_v2_request_accounting(
+            this_attempt_request_accounting,
+            exc.accounting,
+        )
+        report = {
+            "phase": "L2A-M4d",
+            "milestone": "M3_v2_apply",
+            "zero_api": request_llm is None,
+            "status": "halted_technical_gate",
+            "gate_code": exc.code,
+            "errors": exc.errors,
+            "estimate": estimate,
+            "request_accounting": {
+                "restored": restored_request_accounting,
+                "this_attempt": this_attempt_request_accounting,
+                "combined": _add_m3_v2_request_accounting(
+                    restored_request_accounting,
+                    this_attempt_request_accounting,
+                ),
+            },
+            "stop": "Raw attempts were retained; resolve the technical gate before retrying.",
         }
     finally:
         lock.release()

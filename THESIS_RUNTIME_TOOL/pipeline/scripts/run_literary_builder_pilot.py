@@ -28,6 +28,8 @@ from pipeline.literary.builder_pilot import (  # noqa: E402
 )
 from pipeline.literary.story_bible_v2 import (  # noqa: E402
     estimate_m3_v2,
+    make_m3_v2_request_llm,
+    run_m3_v2_from_responses,
     run_m3_v2_dry_run,
 )
 from pipeline.agents.llm_client import LLMClient  # noqa: E402
@@ -74,7 +76,7 @@ def main() -> int:
         choices=["M1", "M2", "M3", "M3V2"],
         help=(
             "Run a literary milestone. M1 = B0+B1+B2; M2 = B3 digest; "
-            "M3 = legacy B4 pilot; M3V2 = B4 v2 zero-API scaffold only."
+            "M3 = legacy B4 pilot; M3V2 = B4 v2 scaffold/apply."
         ),
     )
     parser.add_argument(
@@ -101,7 +103,7 @@ def main() -> int:
     parser.add_argument(
         "--estimate-only",
         action="store_true",
-        help="For --milestone M1/M2: estimate prompt tokens/cost without API.",
+        help="For --milestone M1/M2/M3V2: estimate prompt tokens/cost without API.",
     )
     parser.add_argument(
         "--revalidate-existing",
@@ -111,12 +113,12 @@ def main() -> int:
     parser.add_argument(
         "--resume",
         action="store_true",
-        help="Resume M1/M2 from the longest valid per-chapter checkpoint prefix.",
+        help="Resume M1/M2/M3V2 from the longest valid per-chapter checkpoint prefix.",
     )
     parser.add_argument(
         "--confirm-usd",
         type=float,
-        help="For --milestone M1/M2 real run: refuse if estimated cap exceeds this amount.",
+        help="For real M1/M2/M3V2 runs: refuse if estimated cap exceeds this amount.",
     )
     parser.add_argument(
         "--config",
@@ -287,10 +289,24 @@ def _run_milestone(args: argparse.Namespace) -> int:
         if args.estimate_only:
             print(json.dumps(estimate, ensure_ascii=False, indent=2))
             return 0
-        if not args.dry_run:
+        if args.dry_run:
+            report = run_m3_v2_dry_run(
+                document,
+                args.chapters,
+                out_dir=out_dir,
+                design_doc=design_doc,
+                config=config,
+                m1_dir=m1_dir,
+                m2_dir=m2_dir,
+            )
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 0
+        if args.confirm_usd is None:
             print(json.dumps(estimate, ensure_ascii=False, indent=2))
-            raise SystemExit("M3V2 is scaffold-only; pass --dry-run. API execution is not wired.")
-        report = run_m3_v2_dry_run(
+            raise SystemExit("--confirm-usd is required for real M3V2 API run")
+        _ensure_api_key()
+        client = LLMClient(config=config, cache_path=args.cache)
+        report = run_m3_v2_from_responses(
             document,
             args.chapters,
             out_dir=out_dir,
@@ -298,9 +314,12 @@ def _run_milestone(args: argparse.Namespace) -> int:
             config=config,
             m1_dir=m1_dir,
             m2_dir=m2_dir,
+            request_llm=make_m3_v2_request_llm(client),
+            confirm_usd=float(args.confirm_usd),
+            resume=bool(args.resume),
         )
         print(json.dumps(report, ensure_ascii=False, indent=2))
-        return 0
+        return 0 if report.get("status") == "needs_claude_gate" else 2
 
     if args.milestone == "M2":
         digest_context = Path(args.digest_context) if args.digest_context else None

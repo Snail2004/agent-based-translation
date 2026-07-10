@@ -288,3 +288,28 @@ dry-run shard ch01 TRỪ dry_run_note.
 m4full_m2_gpt54 nhánh riêng out_dir literary_m4d_b4v2, --confirm, quota ngày mới). Gate output
 theo acceptance §R5 + 2 canary vòng-2 + watch-item under-merge xuyên-shard + tiêu chí B0
 embedded-cast (ch03 dream-cast phải ra literary_allusion/mentioned, không thành on-stage person).
+
+---
+# GATE HOOK (Claude verify độc lập, 2026-07-11): **PASS — DUYỆT CHẠY API 10 CALL gpt-5.4**
+
+Tự verify:
+- Hook `request_llm` gọi NGAY TRONG vòng apply → prompt-gọi == prompt-apply (byte-identical,
+  đúng yêu cầu gate pha 2). Raw response + usage persist ATOMIC trước apply ở MỌI nhánh
+  (thành công / exception / contract sai / parse fail). Attempt-2 bypass_cache; lỗi kỹ thuật
+  (transport/parse) tách hẳn semantic gate — semantic KHÔNG regenerate, đúng taxonomy.
+- Halt technical-retry >10%: M3_V2_MAX_TECHNICAL_RETRY_RATE=0.10, kiểm trên accounting combined,
+  raise technical_retry_rate_exceeded. --confirm-usd bắt buộc, CLI exit 1 TRƯỚC khi khởi tạo
+  client. Adapter make_m3_v2_request_llm dùng LLMClient cache sẵn có (JSON contract test riêng).
+- Equivalence test runtime-ch01 == dry-run trừ dry_run_note: CÓ, pass.
+- Tự chạy: 13/13 focused; full pipeline suite 373/373 (một fail chroma ở lần chạy đầu là FLAKE
+  isolation — rerun đơn lẻ pass + rerun suite pass, không thuộc scope thay đổi).
+- Frozen DB tự tính KHỚP; keyscan 3 file sạch; scope diff đúng khai báo.
+
+**DUYỆT API:** chạy 10 call gpt-5.4 trên ch1-4 — config `llm_prepass_m4full_m2_gpt54.yaml`
+(nhánh cache/out riêng: out_dir data/reports/literary_m4d_b4v2, cache literary_builder_cache_
+gpt54_key2), `--milestone M3V2 --confirm-usd`, ngày quota mới (upper 169k < 225k safety).
+OPENAI-KEY-2, xoá key khỏi env sau run. Nộp gate: m3_v2_report + 4 story bible + chain
+checkpoint + raw responses + usage thật per-call. Claude chấm acceptance: the-master 3 nhóm /
+stable-ID ch1→ch4 / daughter_in_law_of neo b046 / King Lear literary_allusion / narration ch4
+2 segment / đếm entity as-of ch1 (no-leak) / watch-item under-merge xuyên-shard (ĐO số ca) /
+tiêu chí B0 embedded-cast (dream-cast ch03 không thành on-stage person).
