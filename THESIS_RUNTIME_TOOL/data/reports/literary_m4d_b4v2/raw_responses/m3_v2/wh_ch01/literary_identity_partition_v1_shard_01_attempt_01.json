@@ -1,0 +1,364 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch01",
+  "chapter_id": "wh_ch01",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 1,
+  "shard_count": 1,
+  "attempt_index": 1,
+  "tag": "lit_m3v2_wh_ch01_literary_identity_partition_v1_s01:attempt1",
+  "prompt_sha256": "ae2d31ef69906a4da88c8bf97ebab9aa3e166993897be471f11b9de6a4a641b3",
+  "prompt_tokens_est": 5296,
+  "bypass_cache": false,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": false,
+  "cache_key": "5efed720460f13317add506f680524eaed865b21335688f8e52e6cd08ab3984a",
+  "latency_ms": 12588,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 5388,
+    "cached_tokens": 0,
+    "completion_tokens": 2290,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"groups\":[{\"group_key\":\"grp_1\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch01_b002_01__wh_ch01_b002\",\"member_atom_ids\":[\"atom_m_wh_ch01_b002_01__wh_ch01_b002\",\"atom_m_wh_ch01_b003_01__wh_ch01_b003\",\"atom_m_wh_ch01_b011_01__wh_ch01_b011\",\"atom_m_wh_ch01_b014_01__wh_ch01_b014\",\"atom_m_wh_ch01_b018_01__wh_ch01_b018\",\"atom_m_wh_ch01_b020_01__wh_ch01_b020\",\"atom_m_wh_ch01_b012_02__wh_ch01_b012\",\"atom_m_wh_ch01_b017_01__wh_ch01_b017\",\"atom_m_wh_ch01_b019_02__wh_ch01_b019\",\"atom_m_wh_ch01_b020_04__wh_ch01_b020\",\"atom_m_wh_ch01_b026_01__wh_ch01_b026\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Mr. Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch01_b002_01__wh_ch01_b002\",\"atom_m_wh_ch01_b003_01__wh_ch01_b003\",\"atom_m_wh_ch01_b011_01__wh_ch01_b011\",\"atom_m_wh_ch01_b014_01__wh_ch01_b014\",\"atom_m_wh_ch01_b018_01__wh_ch01_b018\",\"atom_m_wh_ch01_b020_01__wh_ch01_b020\"],\"valid_from_block\":\"wh_ch01_b002\",\"valid_until_block\":null},{\"surface\":\"the surly owner\",\"member_atom_ids\":[\"atom_m_wh_ch01_b012_02__wh_ch01_b012\"],\"valid_from_block\":\"wh_ch01_b012\",\"valid_until_block\":\"wh_ch01_b012\"},{\"surface\":\"my landlord\",\"member_atom_ids\":[\"atom_m_wh_ch01_b017_01__wh_ch01_b017\"],\"valid_from_block\":\"wh_ch01_b017\",\"valid_until_block\":\"wh_ch01_b017\"},{\"surface\":\"his master\",\"member_atom_ids\":[\"atom_m_wh_ch01_b019_02__wh_ch01_b019\"],\"valid_from_block\":\"wh_ch01_b019\",\"valid_until_block\":\"wh_ch01_b019\"},{\"surface\":\"her master\",\"member_atom_ids\":[\"atom_m_wh_ch01_b020_04__wh_ch01_b020\"],\"valid_from_block\":\"wh_ch01_b020\",\"valid_until_block\":\"wh_ch01_b020\"},{\"surface\":\"Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch01_b026_01__wh_ch01_b026\"],\"valid_from_block\":\"wh_ch01_b026\",\"valid_until_block\":\"wh_ch01_b026\"}],\"evidence\":[{\"block_id\":\"wh_ch01_b011\",\"quote\":\"Wuthering Heights is the name of Mr. Heathcliff’s dwelling.\",\"source_atom_ids\":[\"atom_m_wh_ch01_b011_01\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch01_b012\",\"quote\":\"I would have made a few comments, and requested a short history of the place from the surly owner; but his attitude at the door appeared to demand my speedy entrance, or complete departure\",\"source_atom_ids\":[\"atom_m_wh_ch01_b012_02\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch01_b019\",\"quote\":\"Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him\",\"source_atom_ids\":[\"atom_m_wh_ch01_b019_01\",\"atom_m_wh_ch01_b019_02\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch01_b020\",\"quote\":\"Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm:\",\"source_atom_ids\":[\"atom_m_wh_ch01_b020_01\",\"atom_m_wh_ch01_b020_02\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch01_b020\",\"quote\":\"she only remained, heaving like a sea after a high wind, when her master entered on the scene.\",\"source_atom_ids\":[\"atom_m_wh_ch01_b020_04\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_2\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch01_b005_01__wh_ch01_b005\",\"member_atom_ids\":[\"atom_m_wh_ch01_b005_01__wh_ch01_b005\",\"atom_m_wh_ch01_b008_02__wh_ch01_b008\",\"atom_m_wh_ch01_b027_01__wh_ch01_b027\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Mr. Lockwood\",\"member_atom_ids\":[\"atom_m_wh_ch01_b005_01__wh_ch01_b005\",\"atom_m_wh_ch01_b008_02__wh_ch01_b008\",\"atom_m_wh_ch01_b027_01__wh_ch01_b027\"],\"valid_from_block\":\"wh_ch01_b005\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch01_b005\",\"quote\":\"“Mr. Lockwood, your new tenant, sir.\",\"source_atom_ids\":[\"atom_m_wh_ch01_b005_01\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch01_b008\",\"quote\":\"“Joseph, take Mr. Lockwood’s horse; and bring up some wine.”\",\"source_atom_ids\":[\"atom_m_wh_ch01_b008_02\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch01_b027\",\"quote\":\"“Come, come,” he said, “you are flurried, Mr. Lockwood.\",\"source_atom_ids\":[\"atom_m_wh_ch01_b027_01\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_3\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch01_b008_01__wh_ch01_b008\",\"member_atom_ids\":[\"atom_m_wh_ch01_b008_01__wh_ch01_b008\",\"atom_m_wh_ch01_b010_01__wh_ch01_b010\",\"atom_m_wh_ch01_b019_01__wh_ch01_b019\",\"atom_m_wh_ch01_b010_02__wh_ch01_b010\",\"atom_m_wh_ch01_b020_02__wh_ch01_b020\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Joseph\",\"member_atom_ids\":[\"atom_m_wh_ch01_b008_01__wh_ch01_b008\",\"atom_m_wh_ch01_b010_01__wh_ch01_b010\",\"atom_m_wh_ch01_b019_01__wh_ch01_b019\"],\"valid_from_block\":\"wh_ch01_b008\",\"valid_until_block\":null},{\"surface\":\"an old man\",\"member_atom_ids\":[\"atom_m_wh_ch01_b010_02__wh_ch01_b010\"],\"valid_from_block\":\"wh_ch01_b010\",\"valid_until_block\":\"wh_ch01_b010\"},{\"surface\":\"his man\",\"member_atom_ids\":[\"atom_m_wh_ch01_b020_02__wh_ch01_b020\"],\"valid_from_block\":\"wh_ch01_b020\",\"valid_until_block\":\"wh_ch01_b020\"}],\"evidence\":[{\"block_id\":\"wh_ch01_b010\",\"quote\":\"Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy.\",\"source_atom_ids\":[\"atom_m_wh_ch01_b010_01\",\"atom_m_wh_ch01_b010_02\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch01_b019\",\"quote\":\"Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him\",\"source_atom_ids\":[\"atom_m_wh_ch01_b019_01\",\"atom_m_wh_ch01_b019_02\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch01_b020\",\"quote\":\"Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm:\",\"source_atom_ids\":[\"atom_m_wh_ch01_b020_01\",\"atom_m_wh_ch01_b020_02\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_4\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch01_b012_01__wh_ch01_b012\",\"member_atom_ids\":[\"atom_m_wh_ch01_b012_01__wh_ch01_b012\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Hareton Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch01_b012_01__wh_ch01_b012\"],\"valid_from_block\":\"wh_ch01_b012\",\"valid_until_block\":\"wh_ch01_b012\"}],\"evidence\":[{\"block_id\":\"wh_ch01_b012\",\"quote\":\"I detected the date “1500,” and the name “Hareton Earnshaw.”\",\"source_atom_ids\":[\"atom_m_wh_ch01_b012_01\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_5\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch01_b019_03__wh_ch01_b019\",\"member_atom_ids\":[\"atom_m_wh_ch01_b019_03__wh_ch01_b019\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"madam\",\"member_atom_ids\":[\"atom_m_wh_ch01_b019_03__wh_ch01_b019\"],\"valid_from_block\":\"wh_ch01_b019\",\"valid_until_block\":\"wh_ch01_b019\"}],\"evidence\":[{\"block_id\":\"wh_ch01_b019\",\"quote\":\"some turn of my physiognomy so irritated madam, that she suddenly broke into a fury and leapt on my knees.\",\"source_atom_ids\":[\"atom_m_wh_ch01_b019_03__wh_ch01_b019\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_6\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch01_b020_03__wh_ch01_b020\",\"member_atom_ids\":[\"atom_m_wh_ch01_b020_03__wh_ch01_b020\"],\"status\":\"uncertain\",\"alias_bindings\":[{\"surface\":\"a lusty dame\",\"member_atom_ids\":[\"atom_m_wh_ch01_b020_03__wh_ch01_b020\"],\"valid_from_block\":\"wh_ch01_b020\",\"valid_until_block\":\"wh_ch01_b020\"}],\"evidence\":[{\"block_id\":\"wh_ch01_b020\",\"quote\":\"a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flourishing a frying-pan:\",\"source_atom_ids\":[\"atom_m_wh_ch01_b020_03__wh_ch01_b020\"],\"supports\":\"same_identity\"}]}]}",
+  "parsed_json": {
+    "groups": [
+      {
+        "group_key": "grp_1",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch01_b002_01__wh_ch01_b002",
+        "member_atom_ids": [
+          "atom_m_wh_ch01_b002_01__wh_ch01_b002",
+          "atom_m_wh_ch01_b003_01__wh_ch01_b003",
+          "atom_m_wh_ch01_b011_01__wh_ch01_b011",
+          "atom_m_wh_ch01_b014_01__wh_ch01_b014",
+          "atom_m_wh_ch01_b018_01__wh_ch01_b018",
+          "atom_m_wh_ch01_b020_01__wh_ch01_b020",
+          "atom_m_wh_ch01_b012_02__wh_ch01_b012",
+          "atom_m_wh_ch01_b017_01__wh_ch01_b017",
+          "atom_m_wh_ch01_b019_02__wh_ch01_b019",
+          "atom_m_wh_ch01_b020_04__wh_ch01_b020",
+          "atom_m_wh_ch01_b026_01__wh_ch01_b026"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Mr. Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b002_01__wh_ch01_b002",
+              "atom_m_wh_ch01_b003_01__wh_ch01_b003",
+              "atom_m_wh_ch01_b011_01__wh_ch01_b011",
+              "atom_m_wh_ch01_b014_01__wh_ch01_b014",
+              "atom_m_wh_ch01_b018_01__wh_ch01_b018",
+              "atom_m_wh_ch01_b020_01__wh_ch01_b020"
+            ],
+            "valid_from_block": "wh_ch01_b002",
+            "valid_until_block": null
+          },
+          {
+            "surface": "the surly owner",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b012_02__wh_ch01_b012"
+            ],
+            "valid_from_block": "wh_ch01_b012",
+            "valid_until_block": "wh_ch01_b012"
+          },
+          {
+            "surface": "my landlord",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b017_01__wh_ch01_b017"
+            ],
+            "valid_from_block": "wh_ch01_b017",
+            "valid_until_block": "wh_ch01_b017"
+          },
+          {
+            "surface": "his master",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b019_02__wh_ch01_b019"
+            ],
+            "valid_from_block": "wh_ch01_b019",
+            "valid_until_block": "wh_ch01_b019"
+          },
+          {
+            "surface": "her master",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b020_04__wh_ch01_b020"
+            ],
+            "valid_from_block": "wh_ch01_b020",
+            "valid_until_block": "wh_ch01_b020"
+          },
+          {
+            "surface": "Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b026_01__wh_ch01_b026"
+            ],
+            "valid_from_block": "wh_ch01_b026",
+            "valid_until_block": "wh_ch01_b026"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch01_b011",
+            "quote": "Wuthering Heights is the name of Mr. Heathcliff’s dwelling.",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b011_01"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch01_b012",
+            "quote": "I would have made a few comments, and requested a short history of the place from the surly owner; but his attitude at the door appeared to demand my speedy entrance, or complete departure",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b012_02"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch01_b019",
+            "quote": "Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b019_01",
+              "atom_m_wh_ch01_b019_02"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch01_b020",
+            "quote": "Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm:",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b020_01",
+              "atom_m_wh_ch01_b020_02"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch01_b020",
+            "quote": "she only remained, heaving like a sea after a high wind, when her master entered on the scene.",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b020_04"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_2",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch01_b005_01__wh_ch01_b005",
+        "member_atom_ids": [
+          "atom_m_wh_ch01_b005_01__wh_ch01_b005",
+          "atom_m_wh_ch01_b008_02__wh_ch01_b008",
+          "atom_m_wh_ch01_b027_01__wh_ch01_b027"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Mr. Lockwood",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b005_01__wh_ch01_b005",
+              "atom_m_wh_ch01_b008_02__wh_ch01_b008",
+              "atom_m_wh_ch01_b027_01__wh_ch01_b027"
+            ],
+            "valid_from_block": "wh_ch01_b005",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch01_b005",
+            "quote": "“Mr. Lockwood, your new tenant, sir.",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b005_01"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch01_b008",
+            "quote": "“Joseph, take Mr. Lockwood’s horse; and bring up some wine.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b008_02"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch01_b027",
+            "quote": "“Come, come,” he said, “you are flurried, Mr. Lockwood.",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b027_01"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_3",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch01_b008_01__wh_ch01_b008",
+        "member_atom_ids": [
+          "atom_m_wh_ch01_b008_01__wh_ch01_b008",
+          "atom_m_wh_ch01_b010_01__wh_ch01_b010",
+          "atom_m_wh_ch01_b019_01__wh_ch01_b019",
+          "atom_m_wh_ch01_b010_02__wh_ch01_b010",
+          "atom_m_wh_ch01_b020_02__wh_ch01_b020"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Joseph",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b008_01__wh_ch01_b008",
+              "atom_m_wh_ch01_b010_01__wh_ch01_b010",
+              "atom_m_wh_ch01_b019_01__wh_ch01_b019"
+            ],
+            "valid_from_block": "wh_ch01_b008",
+            "valid_until_block": null
+          },
+          {
+            "surface": "an old man",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b010_02__wh_ch01_b010"
+            ],
+            "valid_from_block": "wh_ch01_b010",
+            "valid_until_block": "wh_ch01_b010"
+          },
+          {
+            "surface": "his man",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b020_02__wh_ch01_b020"
+            ],
+            "valid_from_block": "wh_ch01_b020",
+            "valid_until_block": "wh_ch01_b020"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch01_b010",
+            "quote": "Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy.",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b010_01",
+              "atom_m_wh_ch01_b010_02"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch01_b019",
+            "quote": "Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b019_01",
+              "atom_m_wh_ch01_b019_02"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch01_b020",
+            "quote": "Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm:",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b020_01",
+              "atom_m_wh_ch01_b020_02"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_4",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch01_b012_01__wh_ch01_b012",
+        "member_atom_ids": [
+          "atom_m_wh_ch01_b012_01__wh_ch01_b012"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Hareton Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b012_01__wh_ch01_b012"
+            ],
+            "valid_from_block": "wh_ch01_b012",
+            "valid_until_block": "wh_ch01_b012"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch01_b012",
+            "quote": "I detected the date “1500,” and the name “Hareton Earnshaw.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b012_01"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_5",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch01_b019_03__wh_ch01_b019",
+        "member_atom_ids": [
+          "atom_m_wh_ch01_b019_03__wh_ch01_b019"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "madam",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b019_03__wh_ch01_b019"
+            ],
+            "valid_from_block": "wh_ch01_b019",
+            "valid_until_block": "wh_ch01_b019"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch01_b019",
+            "quote": "some turn of my physiognomy so irritated madam, that she suddenly broke into a fury and leapt on my knees.",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b019_03__wh_ch01_b019"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_6",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch01_b020_03__wh_ch01_b020",
+        "member_atom_ids": [
+          "atom_m_wh_ch01_b020_03__wh_ch01_b020"
+        ],
+        "status": "uncertain",
+        "alias_bindings": [
+          {
+            "surface": "a lusty dame",
+            "member_atom_ids": [
+              "atom_m_wh_ch01_b020_03__wh_ch01_b020"
+            ],
+            "valid_from_block": "wh_ch01_b020",
+            "valid_until_block": "wh_ch01_b020"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch01_b020",
+            "quote": "a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flourishing a frying-pan:",
+            "source_atom_ids": [
+              "atom_m_wh_ch01_b020_03__wh_ch01_b020"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      }
+    ]
+  },
+  "technical_error": null
+}

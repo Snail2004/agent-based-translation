@@ -1,0 +1,194 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_apply",
+  "zero_api": false,
+  "status": "halted_semantic_gate",
+  "gate_code": "identity_response_rejected",
+  "errors": [
+    "groups[0].evidence[0].source_atom_ids invalid",
+    "groups[0].evidence[1].source_atom_ids invalid",
+    "groups[0].evidence[2].source_atom_ids invalid",
+    "groups[0].evidence[3].source_atom_ids invalid",
+    "groups[0].evidence[4].source_atom_ids invalid",
+    "groups[1].evidence[0].source_atom_ids invalid",
+    "groups[1].evidence[1].source_atom_ids invalid",
+    "groups[1].evidence[2].source_atom_ids invalid",
+    "groups[2].evidence[0].source_atom_ids invalid",
+    "groups[2].evidence[1].source_atom_ids invalid",
+    "groups[2].evidence[2].source_atom_ids invalid",
+    "groups[3].evidence[0].source_atom_ids invalid"
+  ],
+  "estimate": {
+    "phase": "L2A-M4d",
+    "milestone": "M3_v2_scaffold",
+    "zero_api": true,
+    "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+    "model": "gpt-5.4",
+    "chapters_selected": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03"
+    ],
+    "modes": [
+      "literary_identity_partition_v1",
+      "literary_phase_segment_v2"
+    ],
+    "logical_stages_per_scope": 2,
+    "physical_calls": 7,
+    "call_estimates": [
+      {
+        "scope": "M3_asof_wh_ch01",
+        "chapter_id": "wh_ch01",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 22,
+        "prompt_tokens_est": 5333,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch01",
+        "chapter_id": "wh_ch01",
+        "mode": "literary_phase_segment_v2",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 3,
+        "prompt_tokens_est": 5638,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch02",
+        "chapter_id": "wh_ch02",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 68,
+        "prompt_tokens_est": 13311,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch02",
+        "chapter_id": "wh_ch02",
+        "mode": "literary_phase_segment_v2",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 9,
+        "prompt_tokens_est": 12102,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch03",
+        "chapter_id": "wh_ch03",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 1,
+        "shard_count": 2,
+        "items": 59,
+        "prompt_tokens_est": 13881,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch03",
+        "chapter_id": "wh_ch03",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 2,
+        "shard_count": 2,
+        "items": 27,
+        "prompt_tokens_est": 9131,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch03",
+        "chapter_id": "wh_ch03",
+        "mode": "literary_phase_segment_v2",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 6,
+        "prompt_tokens_est": 11646,
+        "max_output_tokens": 6144
+      }
+    ],
+    "scope_summary": [
+      {
+        "scope": "M3_asof_wh_ch01",
+        "atoms_total_as_of": 22,
+        "frontier_atoms": 22,
+        "prior_groups_for_frontier": 0,
+        "prior_group_injections": 0,
+        "phase_rows_as_of": 3,
+        "identity_shards": 1,
+        "phase_shards": 1,
+        "m1_checkpoint_hash": "d7ce3c3e3a9eca24f19d581f6b9ce5351cc2e108b593a5e9812c01571b4df11c",
+        "m2_checkpoint_hash": "1fbf2503faf3b13f843e5dbd5ac75041136c493b1fa2ee62eae6392d16ab3211"
+      },
+      {
+        "scope": "M3_asof_wh_ch02",
+        "atoms_total_as_of": 90,
+        "frontier_atoms": 68,
+        "prior_groups_for_frontier": 12,
+        "prior_group_injections": 12,
+        "phase_rows_as_of": 9,
+        "identity_shards": 1,
+        "phase_shards": 1,
+        "m1_checkpoint_hash": "9221629ccd53b3a1bf4881b84a445549af000145e90db056d016a1a3460a2761",
+        "m2_checkpoint_hash": "0a94dc2563344c3b154119ec97ef86ea4444193398a2c18faec4c19e8ae02096"
+      },
+      {
+        "scope": "M3_asof_wh_ch03",
+        "atoms_total_as_of": 176,
+        "frontier_atoms": 86,
+        "prior_groups_for_frontier": 50,
+        "prior_group_injections": 51,
+        "phase_rows_as_of": 6,
+        "identity_shards": 2,
+        "phase_shards": 1,
+        "m1_checkpoint_hash": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+        "m2_checkpoint_hash": "6014102e981436addba02a21ba9e51d97125e880cd76ddb7e76d4fe2aec95d37"
+      }
+    ],
+    "prompt_tokens_est": 71042,
+    "max_prompt_tokens_est": 13881,
+    "max_output_tokens_per_call": 6144,
+    "total_tokens_upper_bound": 114050,
+    "prompt_token_cap": 14000,
+    "cost_cap_usd": 0.0,
+    "token_growth_halt": false,
+    "scaffold_only": true,
+    "note": "Dry-run phase prompts use B1/B3 provisional hints only to size the second logical stage. They are not B4 decisions and no Story Bible/checkpoint is published."
+  },
+  "request_accounting": {
+    "restored": {
+      "logical_calls": 0,
+      "attempts": 0,
+      "technical_retries": 0,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "cached_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "this_attempt": {
+      "logical_calls": 1,
+      "attempts": 1,
+      "technical_retries": 0,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 5388,
+      "cached_tokens": 0,
+      "completion_tokens": 2290,
+      "reasoning_tokens": 0
+    },
+    "combined": {
+      "logical_calls": 1,
+      "attempts": 1,
+      "technical_retries": 0,
+      "cache_hits": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 5388,
+      "cached_tokens": 0,
+      "completion_tokens": 2290,
+      "reasoning_tokens": 0
+    }
+  },
+  "stop": "No failed scope was published or checkpointed. Resolve the semantic gate before API."
+}

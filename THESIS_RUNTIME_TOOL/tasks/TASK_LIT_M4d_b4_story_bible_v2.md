@@ -327,3 +327,33 @@ Sau khi 10 call chạy xong và Claude gate output (7 mục acceptance):
 3. Hai bên đối chiếu finding; mâu thuẫn → vòng 2; đồng thuận → USER quyết mở khoá 34 chương.
 Lý do KHÔNG review trước run (đã quyết): 5 lớp soi đã qua; run 10-call là probe fail-closed
 rẻ nhất; hành vi model thật là ẩn số duy nhất còn lại mà không review tĩnh nào trả lời được.
+
+---
+# GATE CALL THẬT #1 (Claude, 2026-07-11): fail-closed ĐÚNG THIẾT KẾ — lỗi là FORMAT-SLIP
+# trường phụ, fix = normalize hẹp trong code, PROMPT GIỮ NGUYÊN KHOÁ
+
+Soi raw response thật (m3_v2/wh_ch01/...shard_01_attempt_01.json):
+- **Phần phán đoán của model ĐÚNG**: 22/22 member_atom_ids full-form, exact partition 6 nhóm
+  (11 Heathcliff-cluster / 3 / 5 Joseph / 1 Hareton-inscription / 1 / 1 uncertain) — nội dung
+  hợp lý. Trượt CHỈ ở evidence.source_atom_ids: 17/19 dùng dạng ngắn `atom_m_..._01` thiếu
+  suffix `__wh_ch01_bXXX` (2 cái còn lại full-form — slip không hệ thống).
+- **Gốc rễ**: atom_id hiện THỪA thông tin (mention_id đã chứa block: `atom_m_wh_ch01_b011_01__
+  wh_ch01_b011`) — model nén phần thừa ở section verbose. Lỗi format trường PHỤ (provenance),
+  không phải lỗi ngôn ngữ/danh tính.
+- Kỷ luật giữ đúng: semantic gate KHÔNG regenerate (1 call, 0 retry), raw persist đầy đủ,
+  không publish gì. Chi phí 7.678 tok NẰM TRONG CACHE — không mất.
+
+**QUYẾT ĐỊNH (theo pattern validator-fix-field-keep-item-not-drop, variant 5):**
+- **Fix CODE, hẹp**: trong validate/apply identity, evidence.source_atom_ids dạng ngắn được
+  chấp nhận KHI VÀ CHỈ KHI mention_id đó map về ĐÚNG MỘT atom trong tập atom của shard
+  (đã đo: 1/257 mention ch1-4 có >1 block → nhập nhằng THẬT tồn tại, ca đó vẫn hard-fail).
+  Đếm + surface `evidence_atom_id_normalized` trong audit/report — số cao ở 9 call còn lại là
+  tín hiệu theo dõi, không phải để mừng.
+- **PROMPT GIỮ NGUYÊN** (đã khoá): normalize tất định là lớp robust (tiền lệ B2
+  attribution_method — prompt cấm rồi model vẫn trượt); và giữ nguyên prompt bytes để re-run
+  ch1 shard 1 ăn LLM-CACHE → response cũ được TÁI DÙNG $0, sau normalize sẽ PASS.
+- Test: fixture = CHÍNH raw response thật bị reject; + ca ngắn-nhập-nhằng phải reject;
+  + ca ngắn-không-tồn-tại phải reject. member_atom_ids/alias KHÔNG normalize (chưa thấy slip
+  — mở rộng phải có bằng chứng mới, không normalize phòng hờ).
+- CodeX: **Luna max** (fix nhỏ, spec chặt). Sau fix + test → chạy lại M3V2 (resume; kỳ vọng
+  call ch1-identity from_cache=true, $0, rồi đi tiếp 9 call thật).
