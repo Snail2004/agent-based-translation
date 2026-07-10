@@ -431,3 +431,26 @@ Mechanical rule (scope-level, after identity apply, fail-closed):
 No prompt changes anywhere → identity ch1 AND ch2 replay from local cache at $0; only phase calls (and ch3 identity) are new spend. Resume order: ch1 (invalidated, re-publishes with real evidence) → ch2 → ch3. Report must show the new counters so the phase payloads are auditable per run.
 
 Method note for the thesis log: defect A is the strongest instance yet of audit-real-rendered-prompts — a green, published, validator-passing artifact was invalid, and the ONLY visible symptom was a token count (525 vs 5,689 estimate) on a real call.
+
+---
+
+## AMENDMENT #4b (2026-07-11, Sol mandatory amendment — Claude VERIFIED & APPROVED) — Fix A must merge by FINAL pair; per-pair guards; event-join integrity
+
+Sol's review of amendment #4 raised one new BLOCKER + one MAJOR. Claude verified every claim on real artifacts before approving:
+
+**BLOCKER (confirmed):** "use mapped batches directly" is insufficient. Real ch2 digest has TWO provisional pairs that collapse to ONE final pair:
+- `ent_the_young_man ↔ ent_mr_lockwood` (e_wh_ch02_b013_01, b029_01, b048_01)
+- `ent_hareton_earnshaw ↔ ent_mr_lockwood` (e_wh_ch02_b053_01, b080_01)
+Verified: atom "the young man"@b079 hints `ent_the_young_man`; identity group `grp_hareton_earnshaw` (18 members, incl. b013/b050/b053 atoms) holds both families → both rows map to (ent_hareton_earnshaw, ent_mr_lockwood). Sending two batches for one pair gives the model two disjoint timelines of the same relationship → duplicate/conflicting phases (the validator's duplicate-open-interval check would halt AFTER paying for the call — fix the input, don't rely on the output gate).
+
+**Required pipeline:** mapped provisional batches → GROUP BY final pair → concatenate histories (deterministic order: source_chapter_id, then original row order; events keep their block ids for text-order reading) → shard → send. `allowed_pairs` = final pairs after merge.
+
+**MAJOR (confirmed):** guards must be PER final pair, not per request: every final pair must carry ≥1 history row and ≥1 joined event, else wiring halt. Additionally `_phase_rows_as_of` line ~575 silently drops event_ids missing from the event index (`if eid in event_index`) — silent evidence loss. Missing join → hard-fail with the offending ids listed (no silent drop, no partial prompt). Escalation policy only if real corpus shows benign frequency — measure first.
+
+**Pre-measurement (Claude, offline):** all cited summary event_ids join the index for the current inputs — ch1 18/18, ch2 38/38, ch3 23/23, missing=0. The hard-fail guard will not fire on this run; it protects the 34-chapter scale.
+
+**Counters (report + audit):** `provisional_pair_batches`, `final_pairs_sent`, `collapsed_pair_batches`, `history_rows_sent`, `events_sent`. Expected ch2: provisional≥9-row-derived batches with `collapsed_pair_batches ≥ 1` (the_young_man+hareton_earnshaw collapse); ch1: 3/3/0/3/18.
+
+**Tests:** compare event_id SETS before remap vs after merge (must be equal — nothing dropped, nothing invented), not just counts or a sample quote; collapsed-pair fixture from the REAL ch2 rows must yield ONE batch for (ent_hareton_earnshaw, ent_mr_lockwood) with all 5 events; per-pair empty guard fires on a constructed empty batch; missing-join fixture hard-fails listing the id.
+
+**Housekeeping (approved):** delete ch1 checkpoint + story bible only; KEEP the empty-payload raw responses as audit evidence. Identity ch1+ch2 expected cache-hit (no identity input changes). Bug B stays as amendment #4 (witness composition, zero-witness/multi-final still halt).
