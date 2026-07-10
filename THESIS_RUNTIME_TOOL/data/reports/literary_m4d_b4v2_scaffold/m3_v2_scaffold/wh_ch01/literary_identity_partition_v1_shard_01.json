@@ -1,0 +1,241 @@
+{
+  "zero_api": true,
+  "scope": "M3_asof_wh_ch01",
+  "chapter_id": "wh_ch01",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 1,
+  "shard_count": 1,
+  "items": [
+    {
+      "atom_id": "atom_m_wh_ch01_b002_01__wh_ch01_b002",
+      "mention_id": "m_wh_ch01_b002_01",
+      "block_id": "wh_ch01_b002",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "y a beautiful country! In all England, I do not believe that I could have fixed on a situation so completely removed from the stir of society. A perfect misanthropist’s Heaven—and Mr. Heathcliff and I are such a suitable pair to divide the desolation between us. A capital fellow! He little imagined how my heart warmed towards him when I beheld his black eyes",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b003_01__wh_ch01_b003",
+      "mention_id": "m_wh_ch01_b003_01",
+      "block_id": "wh_ch01_b003",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "“Mr. Heathcliff?” I said.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b011_01__wh_ch01_b011",
+      "mention_id": "m_wh_ch01_b011_01",
+      "block_id": "wh_ch01_b011",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "Wuthering Heights is the name of Mr. Heathcliff’s dwelling. “Wuthering” being a significant provincial adjective, descriptive of the atmospheric tumult to which its station is exposed in stormy weather. Pure, bracing ventilation they must have up there at all times, indeed: one may guess the power of the north wind, blowing over the edge, by the excessive sl",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b014_01__wh_ch01_b014",
+      "mention_id": "m_wh_ch01_b014_01",
+      "block_id": "wh_ch01_b014",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "rm-chair, his mug of ale frothing on the round table before him, is to be seen in any circuit of five or six miles among these hills, if you go at the right time after dinner. But Mr. Heathcliff forms a singular contrast to his abode and style of living. He is a dark-skinned gipsy in aspect, in dress and manners a gentleman: that is, as much a gentleman as m",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b018_01__wh_ch01_b018",
+      "mention_id": "m_wh_ch01_b018_01",
+      "block_id": "wh_ch01_b018",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "“You’d better let the dog alone,” growled Mr. Heathcliff in unison, checking fiercer demonstrations with a punch of his foot. “She’s not accustomed to be spoiled—not kept for a pet.” Then, striding to a side door, he shouted again, “Joseph!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b020_01__wh_ch01_b020",
+      "mention_id": "m_wh_ch01_b020_01",
+      "block_id": "wh_ch01_b020",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm: I don’t think they moved one second faster than usual, though the hearth was an absolute tempest of worrying and yelping. Happily, an inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flouri",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b005_01__wh_ch01_b005",
+      "mention_id": "m_wh_ch01_b005_01",
+      "block_id": "wh_ch01_b005",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Lockwood",
+      "quote_context": "“Mr. Lockwood, your new tenant, sir. I do myself the honour of calling as soon as possible after my arrival, to express the hope that I have not inconvenienced you by my perseverance in soliciting the occupation of Thrushcross Grange: I heard yesterday you had had some thoughts—”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b008_02__wh_ch01_b008",
+      "mention_id": "m_wh_ch01_b008_02",
+      "block_id": "wh_ch01_b008",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Lockwood",
+      "quote_context": "When he saw my horse’s breast fairly pushing the barrier, he did put out his hand to unchain it, and then sullenly preceded me up the causeway, calling, as we entered the court,—“Joseph, take Mr. Lockwood’s horse; and bring up some wine.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b027_01__wh_ch01_b027",
+      "mention_id": "m_wh_ch01_b027_01",
+      "block_id": "wh_ch01_b027",
+      "chapter_id": "wh_ch01",
+      "surface": "Mr. Lockwood",
+      "quote_context": "“Come, come,” he said, “you are flurried, Mr. Lockwood. Here, take a little wine. Guests are so exceedingly rare in this house that I and my dogs, I am willing to own, hardly know how to receive them. Your health, sir?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b008_01__wh_ch01_b008",
+      "mention_id": "m_wh_ch01_b008_01",
+      "block_id": "wh_ch01_b008",
+      "chapter_id": "wh_ch01",
+      "surface": "Joseph",
+      "quote_context": "When he saw my horse’s breast fairly pushing the barrier, he did put out his hand to unchain it, and then sullenly preceded me up the causeway, calling, as we entered the court,—“Joseph, take Mr. Lockwood’s horse; and bring up some wine.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b010_01__wh_ch01_b010",
+      "mention_id": "m_wh_ch01_b010_01",
+      "block_id": "wh_ch01_b010",
+      "chapter_id": "wh_ch01",
+      "surface": "Joseph",
+      "quote_context": "Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy. “The Lord help us!” he soliloquised in an undertone of peevish displeasure, while relieving me of my horse: looking, meantime, in my face so sourly that I charitably conjectured he must have need of divine aid to digest his dinner, and his pious ejaculation had no reference to",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b019_01__wh_ch01_b019",
+      "mention_id": "m_wh_ch01_b019_01",
+      "block_id": "wh_ch01_b019",
+      "chapter_id": "wh_ch01",
+      "surface": "Joseph",
+      "quote_context": "Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him, leaving me vis-à-vis the ruffianly bitch and a pair of grim shaggy sheep-dogs, who shared with her a jealous guardianship over all my movements. Not anxious to come in contact with their fangs, I sat still; but, imagining they would ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b010_02__wh_ch01_b010",
+      "mention_id": "m_wh_ch01_b010_02",
+      "block_id": "wh_ch01_b010",
+      "chapter_id": "wh_ch01",
+      "surface": "an old man",
+      "quote_context": "Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy. “The Lord help us!” he soliloquised in an undertone of peevish displeasure, while relieving me of my horse: looking, meantime, in my face so sourly that I charitably conjectured he must have need of divine aid to digest his dinner, and his pious ejaculation had no reference to",
+      "hint_entity_id": "ent_joseph",
+      "source_artifact": "lexicon/wb_wh_ch01_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b012_01__wh_ch01_b012",
+      "mention_id": "m_wh_ch01_b012_01",
+      "block_id": "wh_ch01_b012",
+      "chapter_id": "wh_ch01",
+      "surface": "Hareton Earnshaw",
+      "quote_context": "over the front, and especially about the principal door; above which, among a wilderness of crumbling griffins and shameless little boys, I detected the date “1500,” and the name “Hareton Earnshaw.” I would have made a few comments, and requested a short history of the place from the surly owner; but his attitude at the door appeared to demand my speedy entr",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b012_02__wh_ch01_b012",
+      "mention_id": "m_wh_ch01_b012_02",
+      "block_id": "wh_ch01_b012",
+      "chapter_id": "wh_ch01",
+      "surface": "the surly owner",
+      "quote_context": " griffins and shameless little boys, I detected the date “1500,” and the name “Hareton Earnshaw.” I would have made a few comments, and requested a short history of the place from the surly owner; but his attitude at the door appeared to demand my speedy entrance, or complete departure, and I had no desire to aggravate his impatience previous to inspecting t",
+      "hint_entity_id": "ent_mr_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch01_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b017_01__wh_ch01_b017",
+      "mention_id": "m_wh_ch01_b017_01",
+      "block_id": "wh_ch01_b017",
+      "chapter_id": "wh_ch01",
+      "surface": "my landlord",
+      "quote_context": "I took a seat at the end of the hearthstone opposite that towards which my landlord advanced, and filled up an interval of silence by attempting to caress the canine mother, who had left her nursery, and was sneaking wolfishly to the back of my legs, her lip curled up, and her white teeth watering for a snatch. My caress provoked a long, guttural gnarl.",
+      "hint_entity_id": "ent_mr_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch01_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b019_02__wh_ch01_b019",
+      "mention_id": "m_wh_ch01_b019_02",
+      "block_id": "wh_ch01_b019",
+      "chapter_id": "wh_ch01",
+      "surface": "his master",
+      "quote_context": "Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him, leaving me vis-à-vis the ruffianly bitch and a pair of grim shaggy sheep-dogs, who shared with her a jealous guardianship over all my movements. Not anxious to come in contact with their fangs, I sat still; but, imagining they would ",
+      "hint_entity_id": "ent_mr_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch01_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b020_04__wh_ch01_b020",
+      "mention_id": "m_wh_ch01_b020_04",
+      "block_id": "wh_ch01_b020",
+      "chapter_id": "wh_ch01",
+      "surface": "her master",
+      "quote_context": " inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flourishing a frying-pan: and used that weapon, and her tongue, to such purpose, that the storm subsided magically, and she only remained, heaving like a sea after a high wind, when her master entered on the scene.",
+      "hint_entity_id": "ent_mr_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch01_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b019_03__wh_ch01_b019",
+      "mention_id": "m_wh_ch01_b019_03",
+      "block_id": "wh_ch01_b019",
+      "chapter_id": "wh_ch01",
+      "surface": "madam",
+      "quote_context": " still; but, imagining they would scarcely understand tacit insults, I unfortunately indulged in winking and making faces at the trio, and some turn of my physiognomy so irritated madam, that she suddenly broke into a fury and leapt on my knees. I flung her back, and hastened to interpose the table between us. This proceeding aroused the whole hive: half-a-d",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b020_02__wh_ch01_b020",
+      "mention_id": "m_wh_ch01_b020_02",
+      "block_id": "wh_ch01_b020",
+      "chapter_id": "wh_ch01",
+      "surface": "his man",
+      "quote_context": "Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm: I don’t think they moved one second faster than usual, though the hearth was an absolute tempest of worrying and yelping. Happily, an inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flouri",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b020_03__wh_ch01_b020",
+      "mention_id": "m_wh_ch01_b020_03",
+      "block_id": "wh_ch01_b020",
+      "chapter_id": "wh_ch01",
+      "surface": "a lusty dame",
+      "quote_context": "I don’t think they moved one second faster than usual, though the hearth was an absolute tempest of worrying and yelping. Happily, an inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flourishing a frying-pan: and used that weapon, and her tongue, to such purpose, ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch01_b026_01__wh_ch01_b026",
+      "mention_id": "m_wh_ch01_b026_01",
+      "block_id": "wh_ch01_b026",
+      "chapter_id": "wh_ch01",
+      "surface": "Heathcliff",
+      "quote_context": "“If I had been, I would have set my signet on the biter.” Heathcliff’s countenance relaxed into a grin.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch01_007.json"
+    }
+  ],
+  "prompt_tokens_est": 5333,
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_identity_partition_v1.\nYou are resolving character identity for one chapter of a long book. Each ATOM is one mention occurrence: {atom_id, block_id, surface, quote_context, hint_entity_id}. PRIOR_GROUPS are identity groups already established in earlier chapters: {entity_id, canonical_surface, referent_kind, member_summary}. IDENTITY_HINTS are statements taken from chapter digests; treat them as leads to check against the quoted text, never as evidence by themselves.\nAssign EVERY listed atom to exactly one group. A group is one real-world referent.\n- An honorific difference (Mr./Mrs./Miss/young/old) is NOT evidence of identity: a wife, a widow and a father-in-law can share one surname; a title like \"the master\" can pass between people inside one chapter.\n- The SAME surface may denote DIFFERENT people in different scenes or narration frames; judge each atom from its own quote_context.\n- To extend a prior group, set reuse_entity_id to its entity_id. Reopen or split a prior group ONLY with a quote contradicting its unity, recorded in evidence with supports=different_identity.\n- Prefer SPLIT when unsure — merging two people is worse than leaving two entities.\n- referent_kind: person | place | group_reference | literary_allusion | unknown. A coordination surface naming two people at once counts as group_reference, never a person.\n- Output JSON only: {\"groups\": [{\"group_key\": string, \"reuse_entity_id\": string or null, \"referent_kind\": string, \"canonical_atom_id\": string, \"member_atom_ids\": [strings], \"status\": \"resolved\" | \"uncertain\" | \"quarantine\", \"alias_bindings\": [{\"surface\": string, \"member_atom_ids\": [strings], \"valid_from_block\": string, \"valid_until_block\": string or null}], \"evidence\": [{\"block_id\": string, \"quote\": string, \"source_atom_ids\": [strings], \"supports\": \"same_identity\" | \"different_identity\"}]}]}\n- Every input atom appears exactly once across all groups. Do NOT invent atom ids, do NOT mint entity ids, do NOT paraphrase quotes — copy them verbatim from the given text. Output nothing but the JSON object."
+    },
+    {
+      "role": "user",
+      "content": "{\n  \"scope\": \"M3_asof_wh_ch01\",\n  \"atoms\": [\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b002_01__wh_ch01_b002\",\n      \"mention_id\": \"m_wh_ch01_b002_01\",\n      \"block_id\": \"wh_ch01_b002\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"y a beautiful country! In all England, I do not believe that I could have fixed on a situation so completely removed from the stir of society. A perfect misanthropist’s Heaven—and Mr. Heathcliff and I are such a suitable pair to divide the desolation between us. A capital fellow! He little imagined how my heart warmed towards him when I beheld his black eyes\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b003_01__wh_ch01_b003\",\n      \"mention_id\": \"m_wh_ch01_b003_01\",\n      \"block_id\": \"wh_ch01_b003\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"“Mr. Heathcliff?” I said.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b011_01__wh_ch01_b011\",\n      \"mention_id\": \"m_wh_ch01_b011_01\",\n      \"block_id\": \"wh_ch01_b011\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"Wuthering Heights is the name of Mr. Heathcliff’s dwelling. “Wuthering” being a significant provincial adjective, descriptive of the atmospheric tumult to which its station is exposed in stormy weather. Pure, bracing ventilation they must have up there at all times, indeed: one may guess the power of the north wind, blowing over the edge, by the excessive sl\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b014_01__wh_ch01_b014\",\n      \"mention_id\": \"m_wh_ch01_b014_01\",\n      \"block_id\": \"wh_ch01_b014\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"rm-chair, his mug of ale frothing on the round table before him, is to be seen in any circuit of five or six miles among these hills, if you go at the right time after dinner. But Mr. Heathcliff forms a singular contrast to his abode and style of living. He is a dark-skinned gipsy in aspect, in dress and manners a gentleman: that is, as much a gentleman as m\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b018_01__wh_ch01_b018\",\n      \"mention_id\": \"m_wh_ch01_b018_01\",\n      \"block_id\": \"wh_ch01_b018\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"“You’d better let the dog alone,” growled Mr. Heathcliff in unison, checking fiercer demonstrations with a punch of his foot. “She’s not accustomed to be spoiled—not kept for a pet.” Then, striding to a side door, he shouted again, “Joseph!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b020_01__wh_ch01_b020\",\n      \"mention_id\": \"m_wh_ch01_b020_01\",\n      \"block_id\": \"wh_ch01_b020\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm: I don’t think they moved one second faster than usual, though the hearth was an absolute tempest of worrying and yelping. Happily, an inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flouri\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b005_01__wh_ch01_b005\",\n      \"mention_id\": \"m_wh_ch01_b005_01\",\n      \"block_id\": \"wh_ch01_b005\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Lockwood\",\n      \"quote_context\": \"“Mr. Lockwood, your new tenant, sir. I do myself the honour of calling as soon as possible after my arrival, to express the hope that I have not inconvenienced you by my perseverance in soliciting the occupation of Thrushcross Grange: I heard yesterday you had had some thoughts—”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b008_02__wh_ch01_b008\",\n      \"mention_id\": \"m_wh_ch01_b008_02\",\n      \"block_id\": \"wh_ch01_b008\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Lockwood\",\n      \"quote_context\": \"When he saw my horse’s breast fairly pushing the barrier, he did put out his hand to unchain it, and then sullenly preceded me up the causeway, calling, as we entered the court,—“Joseph, take Mr. Lockwood’s horse; and bring up some wine.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b027_01__wh_ch01_b027\",\n      \"mention_id\": \"m_wh_ch01_b027_01\",\n      \"block_id\": \"wh_ch01_b027\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Mr. Lockwood\",\n      \"quote_context\": \"“Come, come,” he said, “you are flurried, Mr. Lockwood. Here, take a little wine. Guests are so exceedingly rare in this house that I and my dogs, I am willing to own, hardly know how to receive them. Your health, sir?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b008_01__wh_ch01_b008\",\n      \"mention_id\": \"m_wh_ch01_b008_01\",\n      \"block_id\": \"wh_ch01_b008\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"When he saw my horse’s breast fairly pushing the barrier, he did put out his hand to unchain it, and then sullenly preceded me up the causeway, calling, as we entered the court,—“Joseph, take Mr. Lockwood’s horse; and bring up some wine.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b010_01__wh_ch01_b010\",\n      \"mention_id\": \"m_wh_ch01_b010_01\",\n      \"block_id\": \"wh_ch01_b010\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy. “The Lord help us!” he soliloquised in an undertone of peevish displeasure, while relieving me of my horse: looking, meantime, in my face so sourly that I charitably conjectured he must have need of divine aid to digest his dinner, and his pious ejaculation had no reference to\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b019_01__wh_ch01_b019\",\n      \"mention_id\": \"m_wh_ch01_b019_01\",\n      \"block_id\": \"wh_ch01_b019\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him, leaving me vis-à-vis the ruffianly bitch and a pair of grim shaggy sheep-dogs, who shared with her a jealous guardianship over all my movements. Not anxious to come in contact with their fangs, I sat still; but, imagining they would \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b010_02__wh_ch01_b010\",\n      \"mention_id\": \"m_wh_ch01_b010_02\",\n      \"block_id\": \"wh_ch01_b010\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"an old man\",\n      \"quote_context\": \"Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy. “The Lord help us!” he soliloquised in an undertone of peevish displeasure, while relieving me of my horse: looking, meantime, in my face so sourly that I charitably conjectured he must have need of divine aid to digest his dinner, and his pious ejaculation had no reference to\",\n      \"hint_entity_id\": \"ent_joseph\",\n      \"source_artifact\": \"lexicon/wb_wh_ch01_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b012_01__wh_ch01_b012\",\n      \"mention_id\": \"m_wh_ch01_b012_01\",\n      \"block_id\": \"wh_ch01_b012\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Hareton Earnshaw\",\n      \"quote_context\": \"over the front, and especially about the principal door; above which, among a wilderness of crumbling griffins and shameless little boys, I detected the date “1500,” and the name “Hareton Earnshaw.” I would have made a few comments, and requested a short history of the place from the surly owner; but his attitude at the door appeared to demand my speedy entr\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b012_02__wh_ch01_b012\",\n      \"mention_id\": \"m_wh_ch01_b012_02\",\n      \"block_id\": \"wh_ch01_b012\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"the surly owner\",\n      \"quote_context\": \" griffins and shameless little boys, I detected the date “1500,” and the name “Hareton Earnshaw.” I would have made a few comments, and requested a short history of the place from the surly owner; but his attitude at the door appeared to demand my speedy entrance, or complete departure, and I had no desire to aggravate his impatience previous to inspecting t\",\n      \"hint_entity_id\": \"ent_mr_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch01_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b017_01__wh_ch01_b017\",\n      \"mention_id\": \"m_wh_ch01_b017_01\",\n      \"block_id\": \"wh_ch01_b017\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"my landlord\",\n      \"quote_context\": \"I took a seat at the end of the hearthstone opposite that towards which my landlord advanced, and filled up an interval of silence by attempting to caress the canine mother, who had left her nursery, and was sneaking wolfishly to the back of my legs, her lip curled up, and her white teeth watering for a snatch. My caress provoked a long, guttural gnarl.\",\n      \"hint_entity_id\": \"ent_mr_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch01_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b019_02__wh_ch01_b019\",\n      \"mention_id\": \"m_wh_ch01_b019_02\",\n      \"block_id\": \"wh_ch01_b019\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"his master\",\n      \"quote_context\": \"Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him, leaving me vis-à-vis the ruffianly bitch and a pair of grim shaggy sheep-dogs, who shared with her a jealous guardianship over all my movements. Not anxious to come in contact with their fangs, I sat still; but, imagining they would \",\n      \"hint_entity_id\": \"ent_mr_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch01_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b020_04__wh_ch01_b020\",\n      \"mention_id\": \"m_wh_ch01_b020_04\",\n      \"block_id\": \"wh_ch01_b020\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"her master\",\n      \"quote_context\": \" inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flourishing a frying-pan: and used that weapon, and her tongue, to such purpose, that the storm subsided magically, and she only remained, heaving like a sea after a high wind, when her master entered on the scene.\",\n      \"hint_entity_id\": \"ent_mr_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch01_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b019_03__wh_ch01_b019\",\n      \"mention_id\": \"m_wh_ch01_b019_03\",\n      \"block_id\": \"wh_ch01_b019\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"madam\",\n      \"quote_context\": \" still; but, imagining they would scarcely understand tacit insults, I unfortunately indulged in winking and making faces at the trio, and some turn of my physiognomy so irritated madam, that she suddenly broke into a fury and leapt on my knees. I flung her back, and hastened to interpose the table between us. This proceeding aroused the whole hive: half-a-d\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b020_02__wh_ch01_b020\",\n      \"mention_id\": \"m_wh_ch01_b020_02\",\n      \"block_id\": \"wh_ch01_b020\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"his man\",\n      \"quote_context\": \"Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm: I don’t think they moved one second faster than usual, though the hearth was an absolute tempest of worrying and yelping. Happily, an inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flouri\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b020_03__wh_ch01_b020\",\n      \"mention_id\": \"m_wh_ch01_b020_03\",\n      \"block_id\": \"wh_ch01_b020\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"a lusty dame\",\n      \"quote_context\": \"I don’t think they moved one second faster than usual, though the hearth was an absolute tempest of worrying and yelping. Happily, an inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flourishing a frying-pan: and used that weapon, and her tongue, to such purpose, \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch01_b026_01__wh_ch01_b026\",\n      \"mention_id\": \"m_wh_ch01_b026_01\",\n      \"block_id\": \"wh_ch01_b026\",\n      \"chapter_id\": \"wh_ch01\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“If I had been, I would have set my signet on the biter.” Heathcliff’s countenance relaxed into a grin.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch01_007.json\"\n    }\n  ],\n  \"prior_groups\": [],\n  \"identity_hints\": [\n    {\n      \"chapter_id\": \"wh_ch01\",\n      \"narration_frame_segments\": [\n        {\n          \"narrator_ref\": \"ent_mr_lockwood\",\n          \"block_range\": [\n            \"wh_ch01_b002\",\n            \"wh_ch01_b028\"\n          ],\n          \"story_time_label\": \"frame_present\"\n        }\n      ],\n      \"relation_event_summary\": [\n        {\n          \"pair\": [\n            \"ent_mr_lockwood\",\n            \"ent_mr_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch01_b003_01\",\n            \"e_wh_ch01_b005_01\",\n            \"e_wh_ch01_b006_01\",\n            \"e_wh_ch01_b006_02\",\n            \"e_wh_ch01_b018_01\",\n            \"e_wh_ch01_b021_01\",\n            \"e_wh_ch01_b022_01\",\n            \"e_wh_ch01_b023_03\",\n            \"e_wh_ch01_b024_01\",\n            \"e_wh_ch01_b025_01\",\n            \"e_wh_ch01_b026_01\",\n            \"e_wh_ch01_b027_01\",\n            \"e_wh_ch01_b027_02\",\n            \"e_wh_ch01_b027_03\",\n            \"e_wh_ch01_b027_04\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch01_b026\",\n            \"note\": \"after Lockwood's sharp reply, Heathcliff grins and the exchange becomes briefly more convivial\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mr_heathcliff\",\n            \"ent_joseph\"\n          ],\n          \"observed_valence_hint\": \"unclear\",\n          \"event_ids\": [\n            \"e_wh_ch01_b008_01\",\n            \"e_wh_ch01_b018_02\"\n          ],\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_joseph\",\n            \"ent_mr_lockwood\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch01_b010_01\"\n          ],\n          \"status\": \"evidence_only\"\n        }\n      ],\n      \"translator_relevant_facts\": [\n        {\n          \"fact_type\": \"narrator\",\n          \"fact\": \"The chapter is first-person narration by Lockwood, recounting his immediate experience with ironic self-commentary.\",\n          \"block_evidence\": [\n            \"wh_ch01_b002\",\n            \"wh_ch01_b028\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Heathcliff's dialogue is clipped, terse, and brusque, often marked by compressed phrasing.\",\n          \"block_evidence\": [\n            \"wh_ch01_b006\",\n            \"wh_ch01_b018\",\n            \"wh_ch01_b027\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Joseph speaks in a marked religious, peevish manner that should sound rustic and old-fashioned.\",\n          \"block_evidence\": [\n            \"wh_ch01_b010\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"'Wuthering' is explicitly glossed as a provincial adjective describing turbulent weather exposure.\",\n          \"block_evidence\": [\n            \"wh_ch01_b011\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"The main room called 'the house' functions as combined sitting-room/kitchen/parlour in local usage.\",\n          \"block_evidence\": [\n            \"wh_ch01_b013\"\n          ]\n        },\n        {\n          \"fact_type\": \"status\",\n          \"fact\": \"Lockwood is Heathcliff's new tenant at Thrushcross Grange, which shapes their guarded politeness.\",\n          \"block_evidence\": [\n            \"wh_ch01_b005\",\n            \"wh_ch01_b028\"\n          ]\n        },\n        {\n          \"fact_type\": \"register\",\n          \"fact\": \"Lockwood's narration mixes formal politeness in speech with sardonic, elaborate descriptive prose.\",\n          \"block_evidence\": [\n            \"wh_ch01_b005\",\n            \"wh_ch01_b022\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"dry_run_note\": \"This scaffold uses provisional prior groups only for token sizing. They are not identity verdicts and will not be published.\"\n}"
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "zero_api": true,
+  "scope": "M3_asof_wh_ch03",
+  "chapter_id": "wh_ch03",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 2,
+  "shard_count": 2,
+  "items": [
+    {
+      "atom_id": "atom_m_wh_ch03_b026_03__wh_ch03_b026",
+      "mention_id": "m_wh_ch03_b026_03",
+      "block_id": "wh_ch03_b026",
+      "chapter_id": "wh_ch03",
+      "surface": "Jabez’s",
+      "quote_context": "e boards of the pulpit, which responded so smartly that, at last, to my unspeakable relief, they woke me. And what was it that had suggested the tremendous tumult? What had played Jabez’s part in the row? Merely the branch of a fir-tree that touched my lattice as the blast wailed by, and rattled its dry cones against the panes! I listened doubtingly an insta",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b040_01__wh_ch03_b040",
+      "mention_id": "m_wh_ch03_b040_01",
+      "block_id": "wh_ch03_b040",
+      "chapter_id": "wh_ch03",
+      "surface": "my chamber door",
+      "quote_context": "To my confusion, I discovered the yell was not ideal: hasty footsteps approached my chamber door; somebody pushed it open, with a vigorous hand, and a light glimmered through the squares at the top of the bed. I sat shuddering, yet, and wiping the perspiration from my forehead: the intruder appeared to hesitate, and muttered to himself.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b040_02__wh_ch03_b040",
+      "mention_id": "m_wh_ch03_b040_02",
+      "block_id": "wh_ch03_b040",
+      "chapter_id": "wh_ch03",
+      "surface": "the intruder",
+      "quote_context": "To my confusion, I discovered the yell was not ideal: hasty footsteps approached my chamber door; somebody pushed it open, with a vigorous hand, and a light glimmered through the squares at the top of the bed. I sat shuddering, yet, and wiping the perspiration from my forehead: the intruder appeared to hesitate, and muttered to himself.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b043_01__wh_ch03_b043",
+      "mention_id": "m_wh_ch03_b043_01",
+      "block_id": "wh_ch03_b043",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff’s",
+      "quote_context": "I considered it best to confess my presence; for I knew Heathcliff’s accents, and feared he might search further, if I kept quiet.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b051_01__wh_ch03_b051",
+      "mention_id": "m_wh_ch03_b051_01",
+      "block_id": "wh_ch03_b051",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff’s",
+      "quote_context": "Scarcely were these words uttered when I recollected the association of Heathcliff’s with Catherine’s name in the book, which had completely slipped from my memory, till thus awakened. I blushed at my inconsideration: but, without showing further consciousness of the offence, I hastened to add—“The truth is, sir, I passed the first part of the night in—” Her",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b046_01__wh_ch03_b046",
+      "mention_id": "m_wh_ch03_b046_01",
+      "block_id": "wh_ch03_b046",
+      "chapter_id": "wh_ch03",
+      "surface": "your guest, sir",
+      "quote_context": "“It is only your guest, sir,” I called out, desirous to spare him the humiliation of exposing his cowardice further. “I had the misfortune to scream in my sleep, owing to a frightful nightmare. I’m sorry I disturbed you.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b047_01__wh_ch03_b047",
+      "mention_id": "m_wh_ch03_b047_01",
+      "block_id": "wh_ch03_b047",
+      "chapter_id": "wh_ch03",
+      "surface": "Mr. Lockwood",
+      "quote_context": "“Oh, God confound you, Mr. Lockwood! I wish you were at the—” commenced my host, setting the candle on a chair, because he found it impossible to hold it steady. “And who showed you up into this room?” he continued, crushing his nails into his palms, and grinding his teeth to subdue the maxillary convulsions. “Who was it? I’ve a good mind to turn them out of",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b054_02__wh_ch03_b054",
+      "mention_id": "m_wh_ch03_b054_02",
+      "block_id": "wh_ch03_b054",
+      "chapter_id": "wh_ch03",
+      "surface": "Mr. Lockwood",
+      "quote_context": "“Always at nine in winter, and rise at four,” said my host, suppressing a groan: and, as I fancied, by the motion of his arm’s shadow, dashing a tear from his eyes. “Mr. Lockwood,” he added, “you may go into my room: you’ll only be in the way, coming downstairs so early: and your childish outcry has sent sleep to the devil for me.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b047_02__wh_ch03_b047",
+      "mention_id": "m_wh_ch03_b047_02",
+      "block_id": "wh_ch03_b047",
+      "chapter_id": "wh_ch03",
+      "surface": "my host",
+      "quote_context": "“Oh, God confound you, Mr. Lockwood! I wish you were at the—” commenced my host, setting the candle on a chair, because he found it impossible to hold it steady. “And who showed you up into this room?” he continued, crushing his nails into his palms, and grinding his teeth to subdue the maxillary convulsions. “Who was it? I’ve a good mind to turn them out of",
+      "hint_entity_id": "ent_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch03_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b054_01__wh_ch03_b054",
+      "mention_id": "m_wh_ch03_b054_01",
+      "block_id": "wh_ch03_b054",
+      "chapter_id": "wh_ch03",
+      "surface": "my host",
+      "quote_context": "“Always at nine in winter, and rise at four,” said my host, suppressing a groan: and, as I fancied, by the motion of his arm’s shadow, dashing a tear from his eyes. “Mr. Lockwood,” he added, “you may go into my room: you’ll only be in the way, coming downstairs so early: and your childish outcry has sent sleep to the devil for me.”",
+      "hint_entity_id": "ent_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch03_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b048_01__wh_ch03_b048",
+      "mention_id": "m_wh_ch03_b048_01",
+      "block_id": "wh_ch03_b048",
+      "chapter_id": "wh_ch03",
+      "surface": "your servant Zillah",
+      "quote_context": "“It was your servant Zillah,” I replied, flinging myself on to the floor, and rapidly resuming my garments. “I should not care if you did, Mr. Heathcliff; she richly deserves it. I suppose that she wanted to get another proof that the place was haunted, at my expense. Well, it is—swarming with ghosts and goblins! You have reason in shutting it up, I assure y",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b048_02__wh_ch03_b048",
+      "mention_id": "m_wh_ch03_b048_02",
+      "block_id": "wh_ch03_b048",
+      "chapter_id": "wh_ch03",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "“It was your servant Zillah,” I replied, flinging myself on to the floor, and rapidly resuming my garments. “I should not care if you did, Mr. Heathcliff; she richly deserves it. I suppose that she wanted to get another proof that the place was haunted, at my expense. Well, it is—swarming with ghosts and goblins! You have reason in shutting it up, I assure y",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b050_01__wh_ch03_b050",
+      "mention_id": "m_wh_ch03_b050_01",
+      "block_id": "wh_ch03_b050",
+      "chapter_id": "wh_ch03",
+      "surface": "the little fiend",
+      "quote_context": "“If the little fiend had got in at the window, she probably would have strangled me!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked l",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b050_02__wh_ch03_b050",
+      "mention_id": "m_wh_ch03_b050_02",
+      "block_id": "wh_ch03_b050",
+      "chapter_id": "wh_ch03",
+      "surface": "the Reverend Jabez Branderham",
+      "quote_context": "the little fiend had got in at the window, she probably would have strangled me!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked littl",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b050_04__wh_ch03_b050",
+      "mention_id": "m_wh_ch03_b050_04",
+      "block_id": "wh_ch03_b050",
+      "chapter_id": "wh_ch03",
+      "surface": "that minx",
+      "quote_context": "trangled me!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked little soul! She told me she had been walking the earth these twenty year",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b050_06__wh_ch03_b050",
+      "mention_id": "m_wh_ch03_b050_06",
+      "block_id": "wh_ch03_b050",
+      "chapter_id": "wh_ch03",
+      "surface": "Earnshaw",
+      "quote_context": "ot going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked little soul! She told me she had been walking the earth these twenty years: a just punishment for her mor",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b057_01__wh_ch03_b057",
+      "mention_id": "m_wh_ch03_b057_01",
+      "block_id": "wh_ch03_b057",
+      "chapter_id": "wh_ch03",
+      "surface": "my landlord",
+      "quote_context": "I obeyed, so far as to quit the chamber; when, ignorant where the narrow lobbies led, I stood still, and was witness, involuntarily, to a piece of superstition on the part of my landlord which belied, oddly, his apparent sense. He got on to the bed, and wrenched open the lattice, bursting, as he pulled at it, into an uncontrollable passion of tears. “Come in",
+      "hint_entity_id": "ent_mr_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch03_013.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b065_01__wh_ch03_b065",
+      "mention_id": "m_wh_ch03_b065_01",
+      "block_id": "wh_ch03_b065",
+      "chapter_id": "wh_ch03",
+      "surface": "My landlord",
+      "quote_context": "My landlord halloed for me to stop ere I reached the bottom of the garden, and offered to accompany me across the moor. It was well he did, for the whole hill-back was one billowy, white ocean; the swells and falls not indicating corresponding rises and depressions in the ground: many pits, at least, were filled to a level; and entire ranges of mounds, the r",
+      "hint_entity_id": "ent_mr_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch03_016.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b057_02__wh_ch03_b057",
+      "mention_id": "m_wh_ch03_b057_02",
+      "block_id": "wh_ch03_b057",
+      "chapter_id": "wh_ch03",
+      "surface": "Cathy",
+      "quote_context": "ly, his apparent sense. He got on to the bed, and wrenched open the lattice, bursting, as he pulled at it, into an uncontrollable passion of tears. “Come in! come in!” he sobbed. “Cathy, do come. Oh, do— once more! Oh! my heart’s darling! hear me this time, Catherine, at last!” The spectre showed a spectre’s ordinary caprice: it gave no sign of being; but th",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_013.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b060_01__wh_ch03_b060",
+      "mention_id": "m_wh_ch03_b060_01",
+      "block_id": "wh_ch03_b060",
+      "chapter_id": "wh_ch03",
+      "surface": "Hareton Earnshaw",
+      "quote_context": "A more elastic footstep entered next; and now I opened my mouth for a “good-morning,” but closed it again, the salutation unachieved; for Hareton Earnshaw was performing his orison sotto voce , in a series of curses directed against every object he touched, while he rummaged a corner for a spade or shovel to dig through the drifts. He glanced over the back o",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_014.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b061_01__wh_ch03_b061",
+      "mention_id": "m_wh_ch03_b061_01",
+      "block_id": "wh_ch03_b061",
+      "chapter_id": "wh_ch03",
+      "surface": "Zillah",
+      "quote_context": "It opened into the house, where the females were already astir; Zillah urging flakes of flame up the chimney with a colossal bellows; and Mrs. Heathcliff, kneeling on the hearth, reading a book by the aid of the blaze. She held her hand interposed between the furnace-heat and her eyes, and seemed absorbed in her occupation; desisting from it only to chide th",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_015.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b061_02__wh_ch03_b061",
+      "mention_id": "m_wh_ch03_b061_02",
+      "block_id": "wh_ch03_b061",
+      "chapter_id": "wh_ch03",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "It opened into the house, where the females were already astir; Zillah urging flakes of flame up the chimney with a colossal bellows; and Mrs. Heathcliff, kneeling on the hearth, reading a book by the aid of the blaze. She held her hand interposed between the furnace-heat and her eyes, and seemed absorbed in her occupation; desisting from it only to chide th",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_015.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b064_02__wh_ch03_b064",
+      "mention_id": "m_wh_ch03_b064_02",
+      "block_id": "wh_ch03_b064",
+      "chapter_id": "wh_ch03",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": ", and innocent of any knowledge of the interrupted dispute. Each had enough decorum to suspend further hostilities: Heathcliff placed his fists, out of temptation, in his pockets; Mrs. Heathcliff curled her lip, and walked to a seat far off, where she kept her word by playing the part of a statue during the remainder of my stay. That was not long. I declined",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_016.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b063_01__wh_ch03_b063",
+      "mention_id": "m_wh_ch03_b063_01",
+      "block_id": "wh_ch03_b063",
+      "chapter_id": "wh_ch03",
+      "surface": "the young lady",
+      "quote_context": "“I’ll put my trash away, because you can make me if I refuse,” answered the young lady, closing her book, and throwing it on a chair. “But I’ll not do anything, though you should swear your tongue out, except what I please!”",
+      "hint_entity_id": "ent_catherine_linton",
+      "source_artifact": "lexicon/wb_wh_ch03_015.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b066_01__wh_ch03_b066",
+      "mention_id": "m_wh_ch03_b066_01",
+      "block_id": "wh_ch03_b066",
+      "chapter_id": "wh_ch03",
+      "surface": "the porter’s lodge",
+      "quote_context": "lted at the entrance of Thrushcross Park, saying, I could make no error there. Our adieux were limited to a hasty bow, and then I pushed forward, trusting to my own resources; for the porter’s lodge is untenanted as yet. The distance from the gate to the Grange is two miles; I believe I managed to make it four, what with losing myself among the trees, and si",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_017.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b067_01__wh_ch03_b067",
+      "mention_id": "m_wh_ch03_b067_01",
+      "block_id": "wh_ch03_b067",
+      "chapter_id": "wh_ch03",
+      "surface": "My human fixture",
+      "quote_context": "My human fixture and her satellites rushed to welcome me; exclaiming, tumultuously, they had completely given me up: everybody conjectured that I perished last night; and they were wondering how they must set about the search for my remains. I bid them be quiet, now that they saw me returned, and, benumbed to my very heart, I dragged upstairs; whence, after ",
+      "hint_entity_id": "ent_zillah",
+      "source_artifact": "lexicon/wb_wh_ch03_017.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b067_02__wh_ch03_b067",
+      "mention_id": "m_wh_ch03_b067_02",
+      "block_id": "wh_ch03_b067",
+      "chapter_id": "wh_ch03",
+      "surface": "the servant",
+      "quote_context": "et, now that they saw me returned, and, benumbed to my very heart, I dragged upstairs; whence, after putting on dry clothes, and pacing to and fro thirty or forty minutes, to restore the animal heat, I adjourned to my study, feeble as a kitten: almost too much so to enjoy the cheerful fire and smoking coffee which the servant had prepared for my refreshment.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_017.json"
+    }
+  ],
+  "prompt_tokens_est": 9131,
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_identity_partition_v1.\nYou are resolving character identity for one chapter of a long book. Each ATOM is one mention occurrence: {atom_id, block_id, surface, quote_context, hint_entity_id}. PRIOR_GROUPS are identity groups already established in earlier chapters: {entity_id, canonical_surface, referent_kind, member_summary}. IDENTITY_HINTS are statements taken from chapter digests; treat them as leads to check against the quoted text, never as evidence by themselves.\nAssign EVERY listed atom to exactly one group. A group is one real-world referent.\n- An honorific difference (Mr./Mrs./Miss/young/old) is NOT evidence of identity: a wife, a widow and a father-in-law can share one surname; a title like \"the master\" can pass between people inside one chapter.\n- The SAME surface may denote DIFFERENT people in different scenes or narration frames; judge each atom from its own quote_context.\n- To extend a prior group, set reuse_entity_id to its entity_id. Reopen or split a prior group ONLY with a quote contradicting its unity, recorded in evidence with supports=different_identity.\n- Prefer SPLIT when unsure — merging two people is worse than leaving two entities.\n- referent_kind: person | place | group_reference | literary_allusion | unknown. A coordination surface naming two people at once counts as group_reference, never a person.\n- Output JSON only: {\"groups\": [{\"group_key\": string, \"reuse_entity_id\": string or null, \"referent_kind\": string, \"canonical_atom_id\": string, \"member_atom_ids\": [strings], \"status\": \"resolved\" | \"uncertain\" | \"quarantine\", \"alias_bindings\": [{\"surface\": string, \"member_atom_ids\": [strings], \"valid_from_block\": string, \"valid_until_block\": string or null}], \"evidence\": [{\"block_id\": string, \"quote\": string, \"source_atom_ids\": [strings], \"supports\": \"same_identity\" | \"different_identity\"}]}]}\n- Every input atom appears exactly once across all groups. Do NOT invent atom ids, do NOT mint entity ids, do NOT paraphrase quotes — copy them verbatim from the given text. Output nothing but the JSON object."
+    },
+    {
+      "role": "user",
+      "content": "{\n  \"scope\": \"M3_asof_wh_ch03\",\n  \"atoms\": [\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b026_03__wh_ch03_b026\",\n      \"mention_id\": \"m_wh_ch03_b026_03\",\n      \"block_id\": \"wh_ch03_b026\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Jabez’s\",\n      \"quote_context\": \"e boards of the pulpit, which responded so smartly that, at last, to my unspeakable relief, they woke me. And what was it that had suggested the tremendous tumult? What had played Jabez’s part in the row? Merely the branch of a fir-tree that touched my lattice as the blast wailed by, and rattled its dry cones against the panes! I listened doubtingly an insta\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b040_01__wh_ch03_b040\",\n      \"mention_id\": \"m_wh_ch03_b040_01\",\n      \"block_id\": \"wh_ch03_b040\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"my chamber door\",\n      \"quote_context\": \"To my confusion, I discovered the yell was not ideal: hasty footsteps approached my chamber door; somebody pushed it open, with a vigorous hand, and a light glimmered through the squares at the top of the bed. I sat shuddering, yet, and wiping the perspiration from my forehead: the intruder appeared to hesitate, and muttered to himself.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b040_02__wh_ch03_b040\",\n      \"mention_id\": \"m_wh_ch03_b040_02\",\n      \"block_id\": \"wh_ch03_b040\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the intruder\",\n      \"quote_context\": \"To my confusion, I discovered the yell was not ideal: hasty footsteps approached my chamber door; somebody pushed it open, with a vigorous hand, and a light glimmered through the squares at the top of the bed. I sat shuddering, yet, and wiping the perspiration from my forehead: the intruder appeared to hesitate, and muttered to himself.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b043_01__wh_ch03_b043\",\n      \"mention_id\": \"m_wh_ch03_b043_01\",\n      \"block_id\": \"wh_ch03_b043\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff’s\",\n      \"quote_context\": \"I considered it best to confess my presence; for I knew Heathcliff’s accents, and feared he might search further, if I kept quiet.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b051_01__wh_ch03_b051\",\n      \"mention_id\": \"m_wh_ch03_b051_01\",\n      \"block_id\": \"wh_ch03_b051\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff’s\",\n      \"quote_context\": \"Scarcely were these words uttered when I recollected the association of Heathcliff’s with Catherine’s name in the book, which had completely slipped from my memory, till thus awakened. I blushed at my inconsideration: but, without showing further consciousness of the offence, I hastened to add—“The truth is, sir, I passed the first part of the night in—” Her\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b046_01__wh_ch03_b046\",\n      \"mention_id\": \"m_wh_ch03_b046_01\",\n      \"block_id\": \"wh_ch03_b046\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"your guest, sir\",\n      \"quote_context\": \"“It is only your guest, sir,” I called out, desirous to spare him the humiliation of exposing his cowardice further. “I had the misfortune to scream in my sleep, owing to a frightful nightmare. I’m sorry I disturbed you.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b047_01__wh_ch03_b047\",\n      \"mention_id\": \"m_wh_ch03_b047_01\",\n      \"block_id\": \"wh_ch03_b047\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Mr. Lockwood\",\n      \"quote_context\": \"“Oh, God confound you, Mr. Lockwood! I wish you were at the—” commenced my host, setting the candle on a chair, because he found it impossible to hold it steady. “And who showed you up into this room?” he continued, crushing his nails into his palms, and grinding his teeth to subdue the maxillary convulsions. “Who was it? I’ve a good mind to turn them out of\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b054_02__wh_ch03_b054\",\n      \"mention_id\": \"m_wh_ch03_b054_02\",\n      \"block_id\": \"wh_ch03_b054\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Mr. Lockwood\",\n      \"quote_context\": \"“Always at nine in winter, and rise at four,” said my host, suppressing a groan: and, as I fancied, by the motion of his arm’s shadow, dashing a tear from his eyes. “Mr. Lockwood,” he added, “you may go into my room: you’ll only be in the way, coming downstairs so early: and your childish outcry has sent sleep to the devil for me.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b047_02__wh_ch03_b047\",\n      \"mention_id\": \"m_wh_ch03_b047_02\",\n      \"block_id\": \"wh_ch03_b047\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"my host\",\n      \"quote_context\": \"“Oh, God confound you, Mr. Lockwood! I wish you were at the—” commenced my host, setting the candle on a chair, because he found it impossible to hold it steady. “And who showed you up into this room?” he continued, crushing his nails into his palms, and grinding his teeth to subdue the maxillary convulsions. “Who was it? I’ve a good mind to turn them out of\",\n      \"hint_entity_id\": \"ent_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch03_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b054_01__wh_ch03_b054\",\n      \"mention_id\": \"m_wh_ch03_b054_01\",\n      \"block_id\": \"wh_ch03_b054\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"my host\",\n      \"quote_context\": \"“Always at nine in winter, and rise at four,” said my host, suppressing a groan: and, as I fancied, by the motion of his arm’s shadow, dashing a tear from his eyes. “Mr. Lockwood,” he added, “you may go into my room: you’ll only be in the way, coming downstairs so early: and your childish outcry has sent sleep to the devil for me.”\",\n      \"hint_entity_id\": \"ent_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch03_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b048_01__wh_ch03_b048\",\n      \"mention_id\": \"m_wh_ch03_b048_01\",\n      \"block_id\": \"wh_ch03_b048\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"your servant Zillah\",\n      \"quote_context\": \"“It was your servant Zillah,” I replied, flinging myself on to the floor, and rapidly resuming my garments. “I should not care if you did, Mr. Heathcliff; she richly deserves it. I suppose that she wanted to get another proof that the place was haunted, at my expense. Well, it is—swarming with ghosts and goblins! You have reason in shutting it up, I assure y\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b048_02__wh_ch03_b048\",\n      \"mention_id\": \"m_wh_ch03_b048_02\",\n      \"block_id\": \"wh_ch03_b048\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"“It was your servant Zillah,” I replied, flinging myself on to the floor, and rapidly resuming my garments. “I should not care if you did, Mr. Heathcliff; she richly deserves it. I suppose that she wanted to get another proof that the place was haunted, at my expense. Well, it is—swarming with ghosts and goblins! You have reason in shutting it up, I assure y\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b050_01__wh_ch03_b050\",\n      \"mention_id\": \"m_wh_ch03_b050_01\",\n      \"block_id\": \"wh_ch03_b050\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the little fiend\",\n      \"quote_context\": \"“If the little fiend had got in at the window, she probably would have strangled me!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked l\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b050_02__wh_ch03_b050\",\n      \"mention_id\": \"m_wh_ch03_b050_02\",\n      \"block_id\": \"wh_ch03_b050\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the Reverend Jabez Branderham\",\n      \"quote_context\": \"the little fiend had got in at the window, she probably would have strangled me!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked littl\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b050_04__wh_ch03_b050\",\n      \"mention_id\": \"m_wh_ch03_b050_04\",\n      \"block_id\": \"wh_ch03_b050\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"that minx\",\n      \"quote_context\": \"trangled me!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked little soul! She told me she had been walking the earth these twenty year\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b050_06__wh_ch03_b050\",\n      \"mention_id\": \"m_wh_ch03_b050_06\",\n      \"block_id\": \"wh_ch03_b050\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Earnshaw\",\n      \"quote_context\": \"ot going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked little soul! She told me she had been walking the earth these twenty years: a just punishment for her mor\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b057_01__wh_ch03_b057\",\n      \"mention_id\": \"m_wh_ch03_b057_01\",\n      \"block_id\": \"wh_ch03_b057\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"my landlord\",\n      \"quote_context\": \"I obeyed, so far as to quit the chamber; when, ignorant where the narrow lobbies led, I stood still, and was witness, involuntarily, to a piece of superstition on the part of my landlord which belied, oddly, his apparent sense. He got on to the bed, and wrenched open the lattice, bursting, as he pulled at it, into an uncontrollable passion of tears. “Come in\",\n      \"hint_entity_id\": \"ent_mr_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch03_013.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b065_01__wh_ch03_b065\",\n      \"mention_id\": \"m_wh_ch03_b065_01\",\n      \"block_id\": \"wh_ch03_b065\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"My landlord\",\n      \"quote_context\": \"My landlord halloed for me to stop ere I reached the bottom of the garden, and offered to accompany me across the moor. It was well he did, for the whole hill-back was one billowy, white ocean; the swells and falls not indicating corresponding rises and depressions in the ground: many pits, at least, were filled to a level; and entire ranges of mounds, the r\",\n      \"hint_entity_id\": \"ent_mr_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch03_016.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b057_02__wh_ch03_b057\",\n      \"mention_id\": \"m_wh_ch03_b057_02\",\n      \"block_id\": \"wh_ch03_b057\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Cathy\",\n      \"quote_context\": \"ly, his apparent sense. He got on to the bed, and wrenched open the lattice, bursting, as he pulled at it, into an uncontrollable passion of tears. “Come in! come in!” he sobbed. “Cathy, do come. Oh, do— once more! Oh! my heart’s darling! hear me this time, Catherine, at last!” The spectre showed a spectre’s ordinary caprice: it gave no sign of being; but th\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_013.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b060_01__wh_ch03_b060\",\n      \"mention_id\": \"m_wh_ch03_b060_01\",\n      \"block_id\": \"wh_ch03_b060\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Hareton Earnshaw\",\n      \"quote_context\": \"A more elastic footstep entered next; and now I opened my mouth for a “good-morning,” but closed it again, the salutation unachieved; for Hareton Earnshaw was performing his orison sotto voce , in a series of curses directed against every object he touched, while he rummaged a corner for a spade or shovel to dig through the drifts. He glanced over the back o\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_014.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b061_01__wh_ch03_b061\",\n      \"mention_id\": \"m_wh_ch03_b061_01\",\n      \"block_id\": \"wh_ch03_b061\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Zillah\",\n      \"quote_context\": \"It opened into the house, where the females were already astir; Zillah urging flakes of flame up the chimney with a colossal bellows; and Mrs. Heathcliff, kneeling on the hearth, reading a book by the aid of the blaze. She held her hand interposed between the furnace-heat and her eyes, and seemed absorbed in her occupation; desisting from it only to chide th\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_015.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b061_02__wh_ch03_b061\",\n      \"mention_id\": \"m_wh_ch03_b061_02\",\n      \"block_id\": \"wh_ch03_b061\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"It opened into the house, where the females were already astir; Zillah urging flakes of flame up the chimney with a colossal bellows; and Mrs. Heathcliff, kneeling on the hearth, reading a book by the aid of the blaze. She held her hand interposed between the furnace-heat and her eyes, and seemed absorbed in her occupation; desisting from it only to chide th\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_015.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b064_02__wh_ch03_b064\",\n      \"mention_id\": \"m_wh_ch03_b064_02\",\n      \"block_id\": \"wh_ch03_b064\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \", and innocent of any knowledge of the interrupted dispute. Each had enough decorum to suspend further hostilities: Heathcliff placed his fists, out of temptation, in his pockets; Mrs. Heathcliff curled her lip, and walked to a seat far off, where she kept her word by playing the part of a statue during the remainder of my stay. That was not long. I declined\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_016.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b063_01__wh_ch03_b063\",\n      \"mention_id\": \"m_wh_ch03_b063_01\",\n      \"block_id\": \"wh_ch03_b063\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the young lady\",\n      \"quote_context\": \"“I’ll put my trash away, because you can make me if I refuse,” answered the young lady, closing her book, and throwing it on a chair. “But I’ll not do anything, though you should swear your tongue out, except what I please!”\",\n      \"hint_entity_id\": \"ent_catherine_linton\",\n      \"source_artifact\": \"lexicon/wb_wh_ch03_015.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b066_01__wh_ch03_b066\",\n      \"mention_id\": \"m_wh_ch03_b066_01\",\n      \"block_id\": \"wh_ch03_b066\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the porter’s lodge\",\n      \"quote_context\": \"lted at the entrance of Thrushcross Park, saying, I could make no error there. Our adieux were limited to a hasty bow, and then I pushed forward, trusting to my own resources; for the porter’s lodge is untenanted as yet. The distance from the gate to the Grange is two miles; I believe I managed to make it four, what with losing myself among the trees, and si\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_017.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b067_01__wh_ch03_b067\",\n      \"mention_id\": \"m_wh_ch03_b067_01\",\n      \"block_id\": \"wh_ch03_b067\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"My human fixture\",\n      \"quote_context\": \"My human fixture and her satellites rushed to welcome me; exclaiming, tumultuously, they had completely given me up: everybody conjectured that I perished last night; and they were wondering how they must set about the search for my remains. I bid them be quiet, now that they saw me returned, and, benumbed to my very heart, I dragged upstairs; whence, after \",\n      \"hint_entity_id\": \"ent_zillah\",\n      \"source_artifact\": \"lexicon/wb_wh_ch03_017.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b067_02__wh_ch03_b067\",\n      \"mention_id\": \"m_wh_ch03_b067_02\",\n      \"block_id\": \"wh_ch03_b067\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the servant\",\n      \"quote_context\": \"et, now that they saw me returned, and, benumbed to my very heart, I dragged upstairs; whence, after putting on dry clothes, and pacing to and fro thirty or forty minutes, to restore the animal heat, I adjourned to my study, feeble as a kitten: almost too much so to enjoy the cheerful fire and smoking coffee which the servant had prepared for my refreshment.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_017.json\"\n    }\n  ],\n  \"prior_groups\": [\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b002_01_wh_ch01_b002\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b002_01__wh_ch01_b002\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b003_01_wh_ch01_b003\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b003_01__wh_ch01_b003\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b005_01_wh_ch01_b005\",\n      \"canonical_surface\": \"Mr. Lockwood\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b005_01__wh_ch01_b005\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b008_02_wh_ch01_b008\",\n      \"canonical_surface\": \"Mr. Lockwood\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b008_02__wh_ch01_b008\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b011_01_wh_ch01_b011\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b011_01__wh_ch01_b011\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b012_01_wh_ch01_b012\",\n      \"canonical_surface\": \"Hareton Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b012_01__wh_ch01_b012\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b014_01_wh_ch01_b014\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b014_01__wh_ch01_b014\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b018_01_wh_ch01_b018\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b018_01__wh_ch01_b018\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b020_01_wh_ch01_b020\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b020_01__wh_ch01_b020\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b027_01_wh_ch01_b027\",\n      \"canonical_surface\": \"Mr. Lockwood\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b027_01__wh_ch01_b027\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b011_01_wh_ch02_b011\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b011_01__wh_ch02_b011\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b029_03_wh_ch02_b029\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b029_03__wh_ch02_b029\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b040_01_wh_ch02_b040\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b040_01__wh_ch02_b040\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b042_01_wh_ch02_b042\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b042_01__wh_ch02_b042\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b042_01_wh_ch02_b046\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b042_01__wh_ch02_b046\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b053_01_wh_ch02_b053\",\n      \"canonical_surface\": \"Hareton Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b053_01__wh_ch02_b053\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b060_02_wh_ch02_b060\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b060_02__wh_ch02_b060\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b066_01_wh_ch02_b066\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b066_01__wh_ch02_b066\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b070_01_wh_ch02_b070\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b070_01__wh_ch02_b070\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b071_01_wh_ch02_b071\",\n      \"canonical_surface\": \"Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b071_01__wh_ch02_b071\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b071_02_wh_ch02_b071\",\n      \"canonical_surface\": \"Zillah\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b071_02__wh_ch02_b071\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b079_01_wh_ch02_b079\",\n      \"canonical_surface\": \"Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b079_01__wh_ch02_b079\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b082_01_wh_ch02_b082\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b082_01__wh_ch02_b082\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b084_01_wh_ch02_b084\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b084_01__wh_ch02_b084\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b089_02_wh_ch02_b089\",\n      \"canonical_surface\": \"Zillah\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b089_02__wh_ch02_b089\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b091_01_wh_ch02_b091\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b091_01__wh_ch02_b091\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b092_01_wh_ch02_b092\",\n      \"canonical_surface\": \"Zillah\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b092_01__wh_ch02_b092\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_ent_heathcliff\",\n      \"canonical_surface\": \"t’ maister’s\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b005_01__wh_ch02_b005\",\n        \"atom_m_wh_ch02_b049_01__wh_ch02_b049\",\n        \"atom_m_wh_ch02_b081_01__wh_ch02_b081\",\n        \"atom_m_wh_ch02_b087_01__wh_ch02_b087\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_ent_mr_heathcliff\",\n      \"canonical_surface\": \"the surly owner\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b012_02__wh_ch01_b012\",\n        \"atom_m_wh_ch01_b017_01__wh_ch01_b017\",\n        \"atom_m_wh_ch01_b019_02__wh_ch01_b019\",\n        \"atom_m_wh_ch01_b020_04__wh_ch01_b020\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_ent_zillah\",\n      \"canonical_surface\": \"the young lady\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b036_02__wh_ch02_b036\",\n        \"atom_m_wh_ch02_b040_02__wh_ch02_b040\"\n      ]\n    }\n  ],\n  \"identity_hints\": [\n    {\n      \"chapter_id\": \"wh_ch03\",\n      \"narration_frame_segments\": [\n        {\n          \"narrator_ref\": \"ent_mr_lockwood\",\n          \"block_range\": [\n            \"wh_ch03_b002\",\n            \"wh_ch03_b067\"\n          ],\n          \"story_time_label\": \"frame_present\"\n        }\n      ],\n      \"relation_event_summary\": [\n        {\n          \"pair\": [\n            \"ent_hindley\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch03_b009_01\",\n            \"e_wh_ch03_b018_03\",\n            \"e_wh_ch03_b018_04\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b018\",\n            \"note\": \"Catherine’s diary states Hindley is actively reducing Heathcliff’s position in the household and separating him from Catherine.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_catherine_earnshaw\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"positive\",\n          \"event_ids\": [\n            \"e_wh_ch03_b018_02\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b018\",\n            \"note\": \"Diary evidence shows emotional solidarity between Catherine and Heathcliff under Hindley’s oppression.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mr_lockwood\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch03_b046_01\",\n            \"e_wh_ch03_b046_02\",\n            \"e_wh_ch03_b047_01\",\n            \"e_wh_ch03_b047_02\",\n            \"e_wh_ch03_b049_01\",\n            \"e_wh_ch03_b049_02\",\n            \"e_wh_ch03_b049_03\",\n            \"e_wh_ch03_b050_02\",\n            \"e_wh_ch03_b052_01\",\n            \"e_wh_ch03_b052_02\",\n            \"e_wh_ch03_b054_01\",\n            \"e_wh_ch03_b056_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b052\",\n            \"note\": \"Lockwood’s mention of Catherine provokes a sharp emotional rupture and reveals a deeper sensitivity in Heathcliff.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_heathcliff\",\n            \"ent_cathy\"\n          ],\n          \"observed_valence_hint\": \"positive\",\n          \"event_ids\": [\n            \"e_wh_ch03_b057_02\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b057\",\n            \"note\": \"Heathcliff’s anguished appeal at the window exposes an intense unresolved attachment to Cathy/Catherine.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_heathcliff\",\n            \"ent_mrs_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch03_b062_01\",\n            \"e_wh_ch03_b063_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b064\",\n            \"note\": \"Their conflict appears habitual and physically threatening, as she retreats from his raised hand.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_joseph\",\n            \"ent_mr_lockwood\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch03_b021_01\",\n            \"e_wh_ch03_b021_02\",\n            \"e_wh_ch03_b026_01\",\n            \"e_wh_ch03_b059_01\"\n          ],\n          \"status\": \"evidence_only\"\n        }\n      ],\n      \"translator_relevant_facts\": [\n        {\n          \"fact_type\": \"narrator\",\n          \"fact\": \"Lockwood narrates retrospectively in first person with ironic self-consciousness, shifting between observation, dream report, and commentary.\",\n          \"block_evidence\": [\n            \"wh_ch03_b020\",\n            \"wh_ch03_b055\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Joseph’s speech is rendered in heavy Yorkshire dialect and should remain markedly nonstandard relative to Lockwood’s narration.\",\n          \"block_evidence\": [\n            \"wh_ch03_b012\",\n            \"wh_ch03_b014\"\n          ]\n        },\n        {\n          \"fact_type\": \"register\",\n          \"fact\": \"Catherine’s diary voice is childish but vivid, mixing resentment, mockery, and emotional immediacy.\",\n          \"block_evidence\": [\n            \"wh_ch03_b009\",\n            \"wh_ch03_b018\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"The bed is an enclosed oak closet-bed built into the wall/window space, important for staging the dream and window scene.\",\n          \"block_evidence\": [\n            \"wh_ch03_b003\",\n            \"wh_ch03_b027\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"The dream-sermon passage parodies biblical and homiletic rhetoric in inflated, comic form.\",\n          \"block_evidence\": [\n            \"wh_ch03_b022\",\n            \"wh_ch03_b024\",\n            \"wh_ch03_b025\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Heathcliff’s speech swings abruptly from savage command to broken grief, and this emotional volatility is crucial.\",\n          \"block_evidence\": [\n            \"wh_ch03_b052\",\n            \"wh_ch03_b054\",\n            \"wh_ch03_b057\"\n          ]\n        },\n        {\n          \"fact_type\": \"status\",\n          \"fact\": \"Catherine’s diary explicitly marks a household hierarchy in which Hindley has become master and demotes Heathcliff’s place.\",\n          \"block_evidence\": [\n            \"wh_ch03_b011\",\n            \"wh_ch03_b018\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"The chapter depends on storm conditions—snow, wind, moor, and darkness—which shape both the Gothic atmosphere and practical movement.\",\n          \"block_evidence\": [\n            \"wh_ch03_b021\",\n            \"wh_ch03_b027\",\n            \"wh_ch03_b065\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"dry_run_note\": \"This scaffold uses provisional prior groups only for token sizing. They are not identity verdicts and will not be published.\"\n}"
+    }
+  ]
+}

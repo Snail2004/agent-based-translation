@@ -1,0 +1,511 @@
+{
+  "zero_api": true,
+  "scope": "M3_asof_wh_ch04",
+  "chapter_id": "wh_ch04",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 1,
+  "shard_count": 2,
+  "items": [
+    {
+      "atom_id": "atom_m_wh_ch04_b002_02__wh_ch04_b002",
+      "mention_id": "m_wh_ch04_b002_02",
+      "block_id": "wh_ch04_b002",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Dean",
+      "quote_context": "ggle with low spirits and solitude, was finally compelled to strike my colours; and under pretence of gaining information concerning the necessities of my establishment, I desired Mrs. Dean, when she brought in supper, to sit down while I ate it; hoping sincerely she would prove a regular gossip, and either rouse me to animation or lull me to sleep by her ta",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b009_02__wh_ch04_b009",
+      "mention_id": "m_wh_ch04_b009_02",
+      "block_id": "wh_ch04_b009",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Dean",
+      "quote_context": "e to know her history: whether she be a native of the country, or, as is more probable, an exotic that the surly indigenae will not recognise for kin.” With this intention I asked Mrs. Dean why Heathcliff let Thrushcross Grange, and preferred living in a situation and residence so much inferior. “Is he not rich enough to keep the estate in good order?” I inq",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b026_01__wh_ch04_b026",
+      "mention_id": "m_wh_ch04_b026_01",
+      "block_id": "wh_ch04_b026",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Dean",
+      "quote_context": "“Oh dear, I don’t wonder! And how did you like the master?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b027_01__wh_ch04_b027",
+      "mention_id": "m_wh_ch04_b027_01",
+      "block_id": "wh_ch04_b027",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Dean",
+      "quote_context": "“A rough fellow, rather, Mrs. Dean. Is not that his character?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b031_01__wh_ch04_b031",
+      "mention_id": "m_wh_ch04_b031_01",
+      "block_id": "wh_ch04_b031",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Dean",
+      "quote_context": "“Well, Mrs. Dean, it will be a charitable deed to tell me something of my neighbours: I feel I shall not rest if I go to bed; so be good enough to sit and chat an hour.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b004_01__wh_ch04_b004",
+      "mention_id": "m_wh_ch04_b004_01",
+      "block_id": "wh_ch04_b004",
+      "chapter_id": "wh_ch04",
+      "surface": "the mistress",
+      "quote_context": "“Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”",
+      "hint_entity_id": "ent_mrs_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b037_01__wh_ch04_b037",
+      "mention_id": "m_wh_ch04_b037_01",
+      "block_id": "wh_ch04_b037",
+      "chapter_id": "wh_ch04",
+      "surface": "wife",
+      "quote_context": "“And at the end of it to be flighted to death!” he said, opening his great-coat, which he held bundled up in his arms. “See here, wife! I was never so beaten with anything in my life: but you must e’en take it as a gift of God; though it’s as dark almost as if it came from the devil.”",
+      "hint_entity_id": "ent_mrs_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b040_05__wh_ch04_b040",
+      "mention_id": "m_wh_ch04_b040_05",
+      "block_id": "wh_ch04_b040",
+      "chapter_id": "wh_ch04",
+      "surface": "the mistress",
+      "quote_context": "ied in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated him: and to say the truth I did the same; and we plagued and went on with him shamefully: for I wasn’t reasonable enough to feel my injustice, and the mistress never put in a word on his behalf when she saw him wronged.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b004_02__wh_ch04_b004",
+      "mention_id": "m_wh_ch04_b004_02",
+      "block_id": "wh_ch04_b004",
+      "chapter_id": "wh_ch04",
+      "surface": "the master",
+      "quote_context": "“Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”",
+      "hint_entity_id": "ent_mr_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b026_02__wh_ch04_b026",
+      "mention_id": "m_wh_ch04_b026_02",
+      "block_id": "wh_ch04_b026",
+      "chapter_id": "wh_ch04",
+      "surface": "the master",
+      "quote_context": "“Oh dear, I don’t wonder! And how did you like the master?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b036_02__wh_ch04_b036",
+      "mention_id": "m_wh_ch04_b036_02",
+      "block_id": "wh_ch04_b036",
+      "chapter_id": "wh_ch04",
+      "surface": "the master",
+      "quote_context": " Then it grew dark; she would have had them to bed, but they begged sadly to be allowed to stay up; and, just about eleven o’clock, the door-latch was raised quietly, and in stepped the master. He threw himself into a chair, laughing and groaning, and bid them all stand off, for he was nearly killed—he would not have such another walk for the three kingdoms.",
+      "hint_entity_id": "ent_mr_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b038_04__wh_ch04_b038",
+      "mention_id": "m_wh_ch04_b038_04",
+      "block_id": "wh_ch04_b038",
+      "chapter_id": "wh_ch04",
+      "surface": "the master",
+      "quote_context": "up, asking how he could fashion to bring that gipsy brat into the house, when they had their own bairns to feed and fend for? What he meant to do with it, and whether he were mad? The master tried to explain the matter; but he was really half dead with fatigue, and all that I could make out, amongst her scolding, was a tale of his seeing it starving, and hou",
+      "hint_entity_id": "ent_mr_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b039_04__wh_ch04_b039",
+      "mention_id": "m_wh_ch04_b039_04",
+      "block_id": "wh_ch04_b039",
+      "chapter_id": "wh_ch04",
+      "surface": "the master",
+      "quote_context": "promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had lost her whip in attending on the stranger, showed her humour by grinning and spitting at the stupid little thing; earning for her pains a sound blow from her father",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b044_02__wh_ch04_b044",
+      "mention_id": "m_wh_ch04_b044_02",
+      "block_id": "wh_ch04_b044",
+      "chapter_id": "wh_ch04",
+      "surface": "your father",
+      "quote_context": "“You must exchange horses with me: I don’t like mine; and if you won’t I shall tell your father of the three thrashings you’ve given me this week, and show him my arm, which is black to the shoulder.” Hindley put out his tongue, and cuffed him over the ears. “You’d better do it at once,” he persisted, escaping to the porch (they were in the stable): “you wil",
+      "hint_entity_id": "ent_mr_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b044_03__wh_ch04_b044",
+      "mention_id": "m_wh_ch04_b044_03",
+      "block_id": "wh_ch04_b044",
+      "chapter_id": "wh_ch04",
+      "surface": "the master",
+      "quote_context": "tly.” Hindley threw it, hitting him on the breast, and down he fell, but staggered up immediately, breathless and white; and, had not I prevented it, he would have gone just so to the master, and got full revenge by letting his condition plead for him, intimating who had caused it. “Take my colt, Gipsy, then!” said young Earnshaw. “And I pray that he may bre",
+      "hint_entity_id": "ent_mr_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b009_01__wh_ch04_b009",
+      "mention_id": "m_wh_ch04_b009_01",
+      "block_id": "wh_ch04_b009",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "now her history: whether she be a native of the country, or, as is more probable, an exotic that the surly indigenae will not recognise for kin.” With this intention I asked Mrs. Dean why Heathcliff let Thrushcross Grange, and preferred living in a situation and residence so much inferior. “Is he not rich enough to keep the estate in good order?” I inquired.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b022_01__wh_ch04_b022",
+      "mention_id": "m_wh_ch04_b022_01",
+      "block_id": "wh_ch04_b022",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "“Yes; and her husband was her cousin also: one on the mother’s, the other on the father’s side: Heathcliff married Mr. Linton’s sister.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b040_01__wh_ch04_b040",
+      "mention_id": "m_wh_ch04_b040_01",
+      "block_id": "wh_ch04_b040",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "This was Heathcliff’s first introduction to the family. On coming back a few days afterwards (for I did not consider my banishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b040_02__wh_ch04_b040",
+      "mention_id": "m_wh_ch04_b040_02",
+      "block_id": "wh_ch04_b040",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "This was Heathcliff’s first introduction to the family. On coming back a few days afterwards (for I did not consider my banishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b041_03__wh_ch04_b041",
+      "mention_id": "m_wh_ch04_b041_03",
+      "block_id": "wh_ch04_b041",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "self by accident, and nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poor fatherless child, as he called him. He took to Heathcliff strangely, believing all he said (for that matter, he said precious little, and generally the truth), and petting him up far above Cathy, who was too mischievous and way",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b042_03__wh_ch04_b042",
+      "mention_id": "m_wh_ch04_b042_03",
+      "block_id": "wh_ch04_b042",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "n the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sympathised a while; but when the children fell ill o",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b043_02__wh_ch04_b043",
+      "mention_id": "m_wh_ch04_b043_02",
+      "block_id": "wh_ch04_b043",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid his indulgence by any sign of gratitude. He was not i",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b043_06__wh_ch04_b043",
+      "mention_id": "m_wh_ch04_b043_06",
+      "block_id": "wh_ch04_b043",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid his indulgence by any sign of gratitude. He was not i",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b045_01__wh_ch04_b045",
+      "mention_id": "m_wh_ch04_b045_01",
+      "block_id": "wh_ch04_b045",
+      "chapter_id": "wh_ch04",
+      "surface": "Heathcliff",
+      "quote_context": "Heathcliff had gone to loose the beast, and shift it to his own stall; he was passing behind it, when Hindley finished his speech by knocking him under its feet, and without stopping to examine whether his hopes were fulfilled, ran away as fast as he could. I was surprised to witness how coolly the child gathered himself up, and went on with his intention; e",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b013_01__wh_ch04_b013",
+      "mention_id": "m_wh_ch04_b013_01",
+      "block_id": "wh_ch04_b013",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "“And that young lady, Mrs. Heathcliff, is his widow?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b025_01__wh_ch04_b025",
+      "mention_id": "m_wh_ch04_b025_01",
+      "block_id": "wh_ch04_b025",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "“Mrs. Heathcliff? she looked very well, and very handsome; yet, I think, not very happy.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b016_01__wh_ch04_b016",
+      "mention_id": "m_wh_ch04_b016_01",
+      "block_id": "wh_ch04_b016",
+      "chapter_id": "wh_ch04",
+      "surface": "my late master",
+      "quote_context": "“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b016_02__wh_ch04_b016",
+      "mention_id": "m_wh_ch04_b016_02",
+      "block_id": "wh_ch04_b016",
+      "chapter_id": "wh_ch04",
+      "surface": "Catherine Linton",
+      "quote_context": "“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b017_01__wh_ch04_b017",
+      "mention_id": "m_wh_ch04_b017_01",
+      "block_id": "wh_ch04_b017",
+      "chapter_id": "wh_ch04",
+      "surface": "Catherine Linton",
+      "quote_context": "“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b016_03__wh_ch04_b016",
+      "mention_id": "m_wh_ch04_b016_03",
+      "block_id": "wh_ch04_b016",
+      "chapter_id": "wh_ch04",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b019_03__wh_ch04_b019",
+      "mention_id": "m_wh_ch04_b019_03",
+      "block_id": "wh_ch04_b019",
+      "chapter_id": "wh_ch04",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "“And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b017_02__wh_ch04_b017",
+      "mention_id": "m_wh_ch04_b017_02",
+      "block_id": "wh_ch04_b017",
+      "chapter_id": "wh_ch04",
+      "surface": "my ghostly Catherine",
+      "quote_context": "“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”",
+      "hint_entity_id": "ent_catherine",
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b038_02__wh_ch04_b038",
+      "mention_id": "m_wh_ch04_b038_02",
+      "block_id": "wh_ch04_b038",
+      "chapter_id": "wh_ch04",
+      "surface": "Catherine’s",
+      "quote_context": "We crowded round, and over Miss Cathy’s head I had a peep at a dirty, ragged, black-haired child; big enough both to walk and talk: indeed, its face looked older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready t",
+      "hint_entity_id": "ent_catherine",
+      "source_artifact": "lexicon/wb_wh_ch04_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b017_03__wh_ch04_b017",
+      "mention_id": "m_wh_ch04_b017_03",
+      "block_id": "wh_ch04_b017",
+      "chapter_id": "wh_ch04",
+      "surface": "my predecessor’s",
+      "quote_context": "“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b019_01__wh_ch04_b019",
+      "mention_id": "m_wh_ch04_b019_01",
+      "block_id": "wh_ch04_b019",
+      "chapter_id": "wh_ch04",
+      "surface": "Earnshaw",
+      "quote_context": "“And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b023_02__wh_ch04_b023",
+      "mention_id": "m_wh_ch04_b023_02",
+      "block_id": "wh_ch04_b023",
+      "chapter_id": "wh_ch04",
+      "surface": "Earnshaw",
+      "quote_context": "“I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door. Are they an old family?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b041_02__wh_ch04_b041",
+      "mention_id": "m_wh_ch04_b041_02",
+      "block_id": "wh_ch04_b041",
+      "chapter_id": "wh_ch04",
+      "surface": "Earnshaw",
+      "quote_context": "ng or shedding a tear, and my pinches moved him only to draw in a breath and open his eyes, as if he had hurt himself by accident, and nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poor fatherless child, as he called him. He took to Heathcliff strangely, believing all he said (for that matter, he sa",
+      "hint_entity_id": "ent_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b043_03__wh_ch04_b043",
+      "mention_id": "m_wh_ch04_b043_03",
+      "block_id": "wh_ch04_b043",
+      "chapter_id": "wh_ch04",
+      "surface": "my master",
+      "quote_context": "his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid his indulgence by any sign of gratitude. He was not insolent to his benefactor, he was simp",
+      "hint_entity_id": "ent_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch04_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b019_02__wh_ch04_b019",
+      "mention_id": "m_wh_ch04_b019_02",
+      "block_id": "wh_ch04_b019",
+      "chapter_id": "wh_ch04",
+      "surface": "Hareton Earnshaw",
+      "quote_context": "“And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b020_01__wh_ch04_b020",
+      "mention_id": "m_wh_ch04_b020_01",
+      "block_id": "wh_ch04_b020",
+      "chapter_id": "wh_ch04",
+      "surface": "the late Mrs. Linton’s",
+      "quote_context": "“No; he is the late Mrs. Linton’s nephew.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b022_02__wh_ch04_b022",
+      "mention_id": "m_wh_ch04_b022_02",
+      "block_id": "wh_ch04_b022",
+      "chapter_id": "wh_ch04",
+      "surface": "Mr. Linton’s sister",
+      "quote_context": "“Yes; and her husband was her cousin also: one on the mother’s, the other on the father’s side: Heathcliff married Mr. Linton’s sister.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b023_01__wh_ch04_b023",
+      "mention_id": "m_wh_ch04_b023_01",
+      "block_id": "wh_ch04_b023",
+      "chapter_id": "wh_ch04",
+      "surface": "Wuthering Heights",
+      "quote_context": "“I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door. Are they an old family?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b024_01__wh_ch04_b024",
+      "mention_id": "m_wh_ch04_b024_01",
+      "block_id": "wh_ch04_b024",
+      "chapter_id": "wh_ch04",
+      "surface": "Hareton",
+      "quote_context": "“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons. Have you been to Wuthering Heights? I beg pardon for asking; but I should like to hear how she is!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b030_01__wh_ch04_b030",
+      "mention_id": "m_wh_ch04_b030_01",
+      "block_id": "wh_ch04_b030",
+      "chapter_id": "wh_ch04",
+      "surface": "Hareton",
+      "quote_context": "“It’s a cuckoo’s, sir—I know all about it: except where he was born, and who were his parents, and how he got his money at first. And Hareton has been cast out like an unfledged dunnock! The unfortunate lad is the only one in all this parish that does not guess how he has been cheated.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_02__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_02",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "Hareton",
+      "quote_context": "I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set me to. O",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b024_02__wh_ch04_b024",
+      "mention_id": "m_wh_ch04_b024_02",
+      "block_id": "wh_ch04_b024",
+      "chapter_id": "wh_ch04",
+      "surface": "Miss Cathy",
+      "quote_context": "“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons. Have you been to Wuthering Heights? I beg pardon for asking; but I should like to hear how she is!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_10__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_10",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "Miss Cathy",
+      "quote_context": "g you? You may choose what you like: only let it be little, for I shall walk there and back: sixty miles each way, that is a long spell!” Hindley named a fiddle, and then he asked Miss Cathy; she was hardly six years old, but she could ride any horse in the stable, and she chose a whip. He did not forget me; for he had a kind heart, though he was rather seve",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b038_01__wh_ch04_b038",
+      "mention_id": "m_wh_ch04_b038_01",
+      "block_id": "wh_ch04_b038",
+      "chapter_id": "wh_ch04",
+      "surface": "Miss Cathy",
+      "quote_context": "We crowded round, and over Miss Cathy’s head I had a peep at a dirty, ragged, black-haired child; big enough both to walk and talk: indeed, its face looked older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready t",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b040_03__wh_ch04_b040",
+      "mention_id": "m_wh_ch04_b040_03",
+      "block_id": "wh_ch04_b040",
+      "chapter_id": "wh_ch04",
+      "surface": "Miss Cathy",
+      "quote_context": "ishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated him: and to say the truth I did the same; and we plagued and went on with him shamefully: for I wasn’t reasonable enough to",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    }
+  ],
+  "prompt_tokens_est": 13922,
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_identity_partition_v1.\nYou are resolving character identity for one chapter of a long book. Each ATOM is one mention occurrence: {atom_id, block_id, surface, quote_context, hint_entity_id}. PRIOR_GROUPS are identity groups already established in earlier chapters: {entity_id, canonical_surface, referent_kind, member_summary}. IDENTITY_HINTS are statements taken from chapter digests; treat them as leads to check against the quoted text, never as evidence by themselves.\nAssign EVERY listed atom to exactly one group. A group is one real-world referent.\n- An honorific difference (Mr./Mrs./Miss/young/old) is NOT evidence of identity: a wife, a widow and a father-in-law can share one surname; a title like \"the master\" can pass between people inside one chapter.\n- The SAME surface may denote DIFFERENT people in different scenes or narration frames; judge each atom from its own quote_context.\n- To extend a prior group, set reuse_entity_id to its entity_id. Reopen or split a prior group ONLY with a quote contradicting its unity, recorded in evidence with supports=different_identity.\n- Prefer SPLIT when unsure — merging two people is worse than leaving two entities.\n- referent_kind: person | place | group_reference | literary_allusion | unknown. A coordination surface naming two people at once counts as group_reference, never a person.\n- Output JSON only: {\"groups\": [{\"group_key\": string, \"reuse_entity_id\": string or null, \"referent_kind\": string, \"canonical_atom_id\": string, \"member_atom_ids\": [strings], \"status\": \"resolved\" | \"uncertain\" | \"quarantine\", \"alias_bindings\": [{\"surface\": string, \"member_atom_ids\": [strings], \"valid_from_block\": string, \"valid_until_block\": string or null}], \"evidence\": [{\"block_id\": string, \"quote\": string, \"source_atom_ids\": [strings], \"supports\": \"same_identity\" | \"different_identity\"}]}]}\n- Every input atom appears exactly once across all groups. Do NOT invent atom ids, do NOT mint entity ids, do NOT paraphrase quotes — copy them verbatim from the given text. Output nothing but the JSON object."
+    },
+    {
+      "role": "user",
+      "content": "{\n  \"scope\": \"M3_asof_wh_ch04\",\n  \"atoms\": [\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b002_02__wh_ch04_b002\",\n      \"mention_id\": \"m_wh_ch04_b002_02\",\n      \"block_id\": \"wh_ch04_b002\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Dean\",\n      \"quote_context\": \"ggle with low spirits and solitude, was finally compelled to strike my colours; and under pretence of gaining information concerning the necessities of my establishment, I desired Mrs. Dean, when she brought in supper, to sit down while I ate it; hoping sincerely she would prove a regular gossip, and either rouse me to animation or lull me to sleep by her ta\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b009_02__wh_ch04_b009\",\n      \"mention_id\": \"m_wh_ch04_b009_02\",\n      \"block_id\": \"wh_ch04_b009\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Dean\",\n      \"quote_context\": \"e to know her history: whether she be a native of the country, or, as is more probable, an exotic that the surly indigenae will not recognise for kin.” With this intention I asked Mrs. Dean why Heathcliff let Thrushcross Grange, and preferred living in a situation and residence so much inferior. “Is he not rich enough to keep the estate in good order?” I inq\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b026_01__wh_ch04_b026\",\n      \"mention_id\": \"m_wh_ch04_b026_01\",\n      \"block_id\": \"wh_ch04_b026\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Dean\",\n      \"quote_context\": \"“Oh dear, I don’t wonder! And how did you like the master?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b027_01__wh_ch04_b027\",\n      \"mention_id\": \"m_wh_ch04_b027_01\",\n      \"block_id\": \"wh_ch04_b027\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Dean\",\n      \"quote_context\": \"“A rough fellow, rather, Mrs. Dean. Is not that his character?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b031_01__wh_ch04_b031\",\n      \"mention_id\": \"m_wh_ch04_b031_01\",\n      \"block_id\": \"wh_ch04_b031\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Dean\",\n      \"quote_context\": \"“Well, Mrs. Dean, it will be a charitable deed to tell me something of my neighbours: I feel I shall not rest if I go to bed; so be good enough to sit and chat an hour.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b004_01__wh_ch04_b004\",\n      \"mention_id\": \"m_wh_ch04_b004_01\",\n      \"block_id\": \"wh_ch04_b004\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the mistress\",\n      \"quote_context\": \"“Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”\",\n      \"hint_entity_id\": \"ent_mrs_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b037_01__wh_ch04_b037\",\n      \"mention_id\": \"m_wh_ch04_b037_01\",\n      \"block_id\": \"wh_ch04_b037\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"wife\",\n      \"quote_context\": \"“And at the end of it to be flighted to death!” he said, opening his great-coat, which he held bundled up in his arms. “See here, wife! I was never so beaten with anything in my life: but you must e’en take it as a gift of God; though it’s as dark almost as if it came from the devil.”\",\n      \"hint_entity_id\": \"ent_mrs_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b040_05__wh_ch04_b040\",\n      \"mention_id\": \"m_wh_ch04_b040_05\",\n      \"block_id\": \"wh_ch04_b040\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the mistress\",\n      \"quote_context\": \"ied in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated him: and to say the truth I did the same; and we plagued and went on with him shamefully: for I wasn’t reasonable enough to feel my injustice, and the mistress never put in a word on his behalf when she saw him wronged.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b004_02__wh_ch04_b004\",\n      \"mention_id\": \"m_wh_ch04_b004_02\",\n      \"block_id\": \"wh_ch04_b004\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the master\",\n      \"quote_context\": \"“Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”\",\n      \"hint_entity_id\": \"ent_mr_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b026_02__wh_ch04_b026\",\n      \"mention_id\": \"m_wh_ch04_b026_02\",\n      \"block_id\": \"wh_ch04_b026\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the master\",\n      \"quote_context\": \"“Oh dear, I don’t wonder! And how did you like the master?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b036_02__wh_ch04_b036\",\n      \"mention_id\": \"m_wh_ch04_b036_02\",\n      \"block_id\": \"wh_ch04_b036\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the master\",\n      \"quote_context\": \" Then it grew dark; she would have had them to bed, but they begged sadly to be allowed to stay up; and, just about eleven o’clock, the door-latch was raised quietly, and in stepped the master. He threw himself into a chair, laughing and groaning, and bid them all stand off, for he was nearly killed—he would not have such another walk for the three kingdoms.\",\n      \"hint_entity_id\": \"ent_mr_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b038_04__wh_ch04_b038\",\n      \"mention_id\": \"m_wh_ch04_b038_04\",\n      \"block_id\": \"wh_ch04_b038\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the master\",\n      \"quote_context\": \"up, asking how he could fashion to bring that gipsy brat into the house, when they had their own bairns to feed and fend for? What he meant to do with it, and whether he were mad? The master tried to explain the matter; but he was really half dead with fatigue, and all that I could make out, amongst her scolding, was a tale of his seeing it starving, and hou\",\n      \"hint_entity_id\": \"ent_mr_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b039_04__wh_ch04_b039\",\n      \"mention_id\": \"m_wh_ch04_b039_04\",\n      \"block_id\": \"wh_ch04_b039\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the master\",\n      \"quote_context\": \"promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had lost her whip in attending on the stranger, showed her humour by grinning and spitting at the stupid little thing; earning for her pains a sound blow from her father\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b044_02__wh_ch04_b044\",\n      \"mention_id\": \"m_wh_ch04_b044_02\",\n      \"block_id\": \"wh_ch04_b044\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"your father\",\n      \"quote_context\": \"“You must exchange horses with me: I don’t like mine; and if you won’t I shall tell your father of the three thrashings you’ve given me this week, and show him my arm, which is black to the shoulder.” Hindley put out his tongue, and cuffed him over the ears. “You’d better do it at once,” he persisted, escaping to the porch (they were in the stable): “you wil\",\n      \"hint_entity_id\": \"ent_mr_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b044_03__wh_ch04_b044\",\n      \"mention_id\": \"m_wh_ch04_b044_03\",\n      \"block_id\": \"wh_ch04_b044\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the master\",\n      \"quote_context\": \"tly.” Hindley threw it, hitting him on the breast, and down he fell, but staggered up immediately, breathless and white; and, had not I prevented it, he would have gone just so to the master, and got full revenge by letting his condition plead for him, intimating who had caused it. “Take my colt, Gipsy, then!” said young Earnshaw. “And I pray that he may bre\",\n      \"hint_entity_id\": \"ent_mr_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b009_01__wh_ch04_b009\",\n      \"mention_id\": \"m_wh_ch04_b009_01\",\n      \"block_id\": \"wh_ch04_b009\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"now her history: whether she be a native of the country, or, as is more probable, an exotic that the surly indigenae will not recognise for kin.” With this intention I asked Mrs. Dean why Heathcliff let Thrushcross Grange, and preferred living in a situation and residence so much inferior. “Is he not rich enough to keep the estate in good order?” I inquired.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b022_01__wh_ch04_b022\",\n      \"mention_id\": \"m_wh_ch04_b022_01\",\n      \"block_id\": \"wh_ch04_b022\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“Yes; and her husband was her cousin also: one on the mother’s, the other on the father’s side: Heathcliff married Mr. Linton’s sister.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b040_01__wh_ch04_b040\",\n      \"mention_id\": \"m_wh_ch04_b040_01\",\n      \"block_id\": \"wh_ch04_b040\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"This was Heathcliff’s first introduction to the family. On coming back a few days afterwards (for I did not consider my banishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b040_02__wh_ch04_b040\",\n      \"mention_id\": \"m_wh_ch04_b040_02\",\n      \"block_id\": \"wh_ch04_b040\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"This was Heathcliff’s first introduction to the family. On coming back a few days afterwards (for I did not consider my banishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b041_03__wh_ch04_b041\",\n      \"mention_id\": \"m_wh_ch04_b041_03\",\n      \"block_id\": \"wh_ch04_b041\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"self by accident, and nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poor fatherless child, as he called him. He took to Heathcliff strangely, believing all he said (for that matter, he said precious little, and generally the truth), and petting him up far above Cathy, who was too mischievous and way\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b042_03__wh_ch04_b042\",\n      \"mention_id\": \"m_wh_ch04_b042_03\",\n      \"block_id\": \"wh_ch04_b042\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"n the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sympathised a while; but when the children fell ill o\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b043_02__wh_ch04_b043\",\n      \"mention_id\": \"m_wh_ch04_b043_02\",\n      \"block_id\": \"wh_ch04_b043\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid his indulgence by any sign of gratitude. He was not i\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b043_06__wh_ch04_b043\",\n      \"mention_id\": \"m_wh_ch04_b043_06\",\n      \"block_id\": \"wh_ch04_b043\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid his indulgence by any sign of gratitude. He was not i\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b045_01__wh_ch04_b045\",\n      \"mention_id\": \"m_wh_ch04_b045_01\",\n      \"block_id\": \"wh_ch04_b045\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"Heathcliff had gone to loose the beast, and shift it to his own stall; he was passing behind it, when Hindley finished his speech by knocking him under its feet, and without stopping to examine whether his hopes were fulfilled, ran away as fast as he could. I was surprised to witness how coolly the child gathered himself up, and went on with his intention; e\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b013_01__wh_ch04_b013\",\n      \"mention_id\": \"m_wh_ch04_b013_01\",\n      \"block_id\": \"wh_ch04_b013\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"“And that young lady, Mrs. Heathcliff, is his widow?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b025_01__wh_ch04_b025\",\n      \"mention_id\": \"m_wh_ch04_b025_01\",\n      \"block_id\": \"wh_ch04_b025\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"“Mrs. Heathcliff? she looked very well, and very handsome; yet, I think, not very happy.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b016_01__wh_ch04_b016\",\n      \"mention_id\": \"m_wh_ch04_b016_01\",\n      \"block_id\": \"wh_ch04_b016\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"my late master\",\n      \"quote_context\": \"“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b016_02__wh_ch04_b016\",\n      \"mention_id\": \"m_wh_ch04_b016_02\",\n      \"block_id\": \"wh_ch04_b016\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Catherine Linton\",\n      \"quote_context\": \"“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b017_01__wh_ch04_b017\",\n      \"mention_id\": \"m_wh_ch04_b017_01\",\n      \"block_id\": \"wh_ch04_b017\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Catherine Linton\",\n      \"quote_context\": \"“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b016_03__wh_ch04_b016\",\n      \"mention_id\": \"m_wh_ch04_b016_03\",\n      \"block_id\": \"wh_ch04_b016\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b019_03__wh_ch04_b019\",\n      \"mention_id\": \"m_wh_ch04_b019_03\",\n      \"block_id\": \"wh_ch04_b019\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"“And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b017_02__wh_ch04_b017\",\n      \"mention_id\": \"m_wh_ch04_b017_02\",\n      \"block_id\": \"wh_ch04_b017\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"my ghostly Catherine\",\n      \"quote_context\": \"“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”\",\n      \"hint_entity_id\": \"ent_catherine\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b038_02__wh_ch04_b038\",\n      \"mention_id\": \"m_wh_ch04_b038_02\",\n      \"block_id\": \"wh_ch04_b038\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Catherine’s\",\n      \"quote_context\": \"We crowded round, and over Miss Cathy’s head I had a peep at a dirty, ragged, black-haired child; big enough both to walk and talk: indeed, its face looked older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready t\",\n      \"hint_entity_id\": \"ent_catherine\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b017_03__wh_ch04_b017\",\n      \"mention_id\": \"m_wh_ch04_b017_03\",\n      \"block_id\": \"wh_ch04_b017\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"my predecessor’s\",\n      \"quote_context\": \"“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b019_01__wh_ch04_b019\",\n      \"mention_id\": \"m_wh_ch04_b019_01\",\n      \"block_id\": \"wh_ch04_b019\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Earnshaw\",\n      \"quote_context\": \"“And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b023_02__wh_ch04_b023\",\n      \"mention_id\": \"m_wh_ch04_b023_02\",\n      \"block_id\": \"wh_ch04_b023\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Earnshaw\",\n      \"quote_context\": \"“I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door. Are they an old family?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b041_02__wh_ch04_b041\",\n      \"mention_id\": \"m_wh_ch04_b041_02\",\n      \"block_id\": \"wh_ch04_b041\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Earnshaw\",\n      \"quote_context\": \"ng or shedding a tear, and my pinches moved him only to draw in a breath and open his eyes, as if he had hurt himself by accident, and nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poor fatherless child, as he called him. He took to Heathcliff strangely, believing all he said (for that matter, he sa\",\n      \"hint_entity_id\": \"ent_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b043_03__wh_ch04_b043\",\n      \"mention_id\": \"m_wh_ch04_b043_03\",\n      \"block_id\": \"wh_ch04_b043\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"my master\",\n      \"quote_context\": \"his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid his indulgence by any sign of gratitude. He was not insolent to his benefactor, he was simp\",\n      \"hint_entity_id\": \"ent_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b019_02__wh_ch04_b019\",\n      \"mention_id\": \"m_wh_ch04_b019_02\",\n      \"block_id\": \"wh_ch04_b019\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hareton Earnshaw\",\n      \"quote_context\": \"“And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b020_01__wh_ch04_b020\",\n      \"mention_id\": \"m_wh_ch04_b020_01\",\n      \"block_id\": \"wh_ch04_b020\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the late Mrs. Linton’s\",\n      \"quote_context\": \"“No; he is the late Mrs. Linton’s nephew.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b022_02__wh_ch04_b022\",\n      \"mention_id\": \"m_wh_ch04_b022_02\",\n      \"block_id\": \"wh_ch04_b022\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mr. Linton’s sister\",\n      \"quote_context\": \"“Yes; and her husband was her cousin also: one on the mother’s, the other on the father’s side: Heathcliff married Mr. Linton’s sister.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b023_01__wh_ch04_b023\",\n      \"mention_id\": \"m_wh_ch04_b023_01\",\n      \"block_id\": \"wh_ch04_b023\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Wuthering Heights\",\n      \"quote_context\": \"“I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door. Are they an old family?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b024_01__wh_ch04_b024\",\n      \"mention_id\": \"m_wh_ch04_b024_01\",\n      \"block_id\": \"wh_ch04_b024\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hareton\",\n      \"quote_context\": \"“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons. Have you been to Wuthering Heights? I beg pardon for asking; but I should like to hear how she is!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b030_01__wh_ch04_b030\",\n      \"mention_id\": \"m_wh_ch04_b030_01\",\n      \"block_id\": \"wh_ch04_b030\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hareton\",\n      \"quote_context\": \"“It’s a cuckoo’s, sir—I know all about it: except where he was born, and who were his parents, and how he got his money at first. And Hareton has been cast out like an unfledged dunnock! The unfortunate lad is the only one in all this parish that does not guess how he has been cheated.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_02__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_02\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hareton\",\n      \"quote_context\": \"I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set me to. O\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b024_02__wh_ch04_b024\",\n      \"mention_id\": \"m_wh_ch04_b024_02\",\n      \"block_id\": \"wh_ch04_b024\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Miss Cathy\",\n      \"quote_context\": \"“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons. Have you been to Wuthering Heights? I beg pardon for asking; but I should like to hear how she is!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_10__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_10\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Miss Cathy\",\n      \"quote_context\": \"g you? You may choose what you like: only let it be little, for I shall walk there and back: sixty miles each way, that is a long spell!” Hindley named a fiddle, and then he asked Miss Cathy; she was hardly six years old, but she could ride any horse in the stable, and she chose a whip. He did not forget me; for he had a kind heart, though he was rather seve\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b038_01__wh_ch04_b038\",\n      \"mention_id\": \"m_wh_ch04_b038_01\",\n      \"block_id\": \"wh_ch04_b038\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Miss Cathy\",\n      \"quote_context\": \"We crowded round, and over Miss Cathy’s head I had a peep at a dirty, ragged, black-haired child; big enough both to walk and talk: indeed, its face looked older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready t\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b040_03__wh_ch04_b040\",\n      \"mention_id\": \"m_wh_ch04_b040_03\",\n      \"block_id\": \"wh_ch04_b040\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Miss Cathy\",\n      \"quote_context\": \"ishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated him: and to say the truth I did the same; and we plagued and went on with him shamefully: for I wasn’t reasonable enough to\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    }\n  ],\n  \"prior_groups\": [\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b002_01_wh_ch01_b002\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b002_01__wh_ch01_b002\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b003_01_wh_ch01_b003\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b003_01__wh_ch01_b003\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b011_01_wh_ch01_b011\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b011_01__wh_ch01_b011\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b012_01_wh_ch01_b012\",\n      \"canonical_surface\": \"Hareton Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b012_01__wh_ch01_b012\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b014_01_wh_ch01_b014\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b014_01__wh_ch01_b014\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b018_01_wh_ch01_b018\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b018_01__wh_ch01_b018\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b020_01_wh_ch01_b020\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b020_01__wh_ch01_b020\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b026_01_wh_ch01_b026\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b026_01__wh_ch01_b026\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b011_01_wh_ch02_b011\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b011_01__wh_ch02_b011\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b016_01_wh_ch02_b016\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b016_01__wh_ch02_b016\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b029_03_wh_ch02_b029\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b029_03__wh_ch02_b029\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b029_04_wh_ch02_b029\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b029_04__wh_ch02_b029\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b037_02_wh_ch02_b037\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b037_02__wh_ch02_b037\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b040_01_wh_ch02_b040\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b040_01__wh_ch02_b040\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b042_01_wh_ch02_b042\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b042_01__wh_ch02_b042\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b042_01_wh_ch02_b046\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b042_01__wh_ch02_b046\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b046_01_wh_ch02_b046\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b046_01__wh_ch02_b046\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b052_01_wh_ch02_b052\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b052_01__wh_ch02_b052\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b053_01_wh_ch02_b053\",\n      \"canonical_surface\": \"Hareton Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b053_01__wh_ch02_b053\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b058_01_wh_ch02_b058\",\n      \"canonical_surface\": \"Hareton\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b058_01__wh_ch02_b058\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b058_02_wh_ch02_b058\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b058_02__wh_ch02_b058\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b060_02_wh_ch02_b060\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b060_02__wh_ch02_b060\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b066_01_wh_ch02_b066\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b066_01__wh_ch02_b066\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b070_01_wh_ch02_b070\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b070_01__wh_ch02_b070\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b071_01_wh_ch02_b071\",\n      \"canonical_surface\": \"Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b071_01__wh_ch02_b071\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b076_01_wh_ch02_b076\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b076_01__wh_ch02_b076\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b076_02_wh_ch02_b076\",\n      \"canonical_surface\": \"Hareton\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b076_02__wh_ch02_b076\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b079_01_wh_ch02_b079\",\n      \"canonical_surface\": \"Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b079_01__wh_ch02_b079\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b082_01_wh_ch02_b082\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b082_01__wh_ch02_b082\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b083_01_wh_ch02_b083\",\n      \"canonical_surface\": \"Hareton\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b083_01__wh_ch02_b083\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b084_01_wh_ch02_b084\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b084_01__wh_ch02_b084\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b088_01_wh_ch02_b088\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b088_01__wh_ch02_b088\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b088_02_wh_ch02_b088\",\n      \"canonical_surface\": \"Hareton\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b088_02__wh_ch02_b088\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b089_01_wh_ch02_b089\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b089_01__wh_ch02_b089\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b091_01_wh_ch02_b091\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b091_01__wh_ch02_b091\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b004_01_wh_ch03_b004\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b004_01__wh_ch03_b004\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b005_03_wh_ch03_b005\",\n      \"canonical_surface\": \"Catherine Linton\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b005_03__wh_ch03_b005\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b006_02_wh_ch03_b006\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b006_02__wh_ch03_b006\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b008_01_wh_ch03_b008\",\n      \"canonical_surface\": \"Catherine’s\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b008_01__wh_ch03_b008\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b009_02_wh_ch03_b009\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b009_02__wh_ch03_b009\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b014_02_wh_ch03_b014\",\n      \"canonical_surface\": \"Miss Cathy\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b014_02__wh_ch03_b014\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b014_03_wh_ch03_b014\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b014_03__wh_ch03_b014\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b018_02_wh_ch03_b018\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b018_02__wh_ch03_b018\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b031_01_wh_ch03_b031\",\n      \"canonical_surface\": \"Catherine Linton\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b031_01__wh_ch03_b031\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b045_01_wh_ch03_b045\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b045_01__wh_ch03_b045\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b048_02_wh_ch03_b048\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b048_02__wh_ch03_b048\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b049_01_wh_ch03_b049\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b049_01__wh_ch03_b049\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b050_05_wh_ch03_b050\",\n      \"canonical_surface\": \"Catherine Linton\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b050_05__wh_ch03_b050\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b050_06_wh_ch03_b050\",\n      \"canonical_surface\": \"Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b050_06__wh_ch03_b050\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b051_02_wh_ch03_b051\",\n      \"canonical_surface\": \"Catherine’s\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b051_02__wh_ch03_b051\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b052_01_wh_ch03_b052\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b052_01__wh_ch03_b052\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b053_01_wh_ch03_b053\",\n      \"canonical_surface\": \"Catherine Linton\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b053_01__wh_ch03_b053\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b053_02_wh_ch03_b053\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b053_02__wh_ch03_b053\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b056_01_wh_ch03_b056\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b056_01__wh_ch03_b056\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b060_01_wh_ch03_b060\",\n      \"canonical_surface\": \"Hareton Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b060_01__wh_ch03_b060\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b061_02_wh_ch03_b061\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b061_02__wh_ch03_b061\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b061_03_wh_ch03_b061\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b061_03__wh_ch03_b061\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b064_01_wh_ch03_b064\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b064_01__wh_ch03_b064\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b064_02_wh_ch03_b064\",\n      \"canonical_surface\": \"Mrs. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b064_02__wh_ch03_b064\"\n      ]\n    }\n  ],\n  \"identity_hints\": [\n    {\n      \"chapter_id\": \"wh_ch04\",\n      \"narration_frame_segments\": [\n        {\n          \"narrator_ref\": \"ent_mr_lockwood\",\n          \"block_range\": [\n            \"wh_ch04_b002\",\n            \"wh_ch04_b033\"\n          ],\n          \"story_time_label\": \"frame_present\"\n        },\n        {\n          \"narrator_ref\": \"ent_mrs_dean\",\n          \"block_range\": [\n            \"wh_ch04_b035\",\n            \"wh_ch04_b045\"\n          ],\n          \"story_time_label\": \"retrospective_past\"\n        }\n      ],\n      \"relation_event_summary\": [\n        {\n          \"pair\": [\n            \"ent_mr_lockwood\",\n            \"ent_mrs_dean\"\n          ],\n          \"observed_valence_hint\": \"positive\",\n          \"event_ids\": [\n            \"e_wh_ch04_b003_01\",\n            \"e_wh_ch04_b004_01\",\n            \"e_wh_ch04_b007_01\",\n            \"e_wh_ch04_b009_01\",\n            \"e_wh_ch04_b010_01\",\n            \"e_wh_ch04_b011_01\",\n            \"e_wh_ch04_b012_01\",\n            \"e_wh_ch04_b013_01\",\n            \"e_wh_ch04_b014_01\",\n            \"e_wh_ch04_b015_01\",\n            \"e_wh_ch04_b016_01\",\n            \"e_wh_ch04_b017_01\",\n            \"e_wh_ch04_b018_01\",\n            \"e_wh_ch04_b019_01\",\n            \"e_wh_ch04_b020_01\",\n            \"e_wh_ch04_b021_01\",\n            \"e_wh_ch04_b022_01\",\n            \"e_wh_ch04_b023_01\",\n            \"e_wh_ch04_b024_01\",\n            \"e_wh_ch04_b024_02\",\n            \"e_wh_ch04_b024_03\",\n            \"e_wh_ch04_b026_01\",\n            \"e_wh_ch04_b030_01\",\n            \"e_wh_ch04_b032_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b031\",\n            \"note\": \"Lockwood explicitly invites confidence, and Mrs. Dean agrees to become his principal storyteller\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mr_earnshaw\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch04_b038_02\",\n            \"e_wh_ch04_b038_03\",\n            \"e_wh_ch04_b041_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b041\",\n            \"note\": \"Mr. Earnshaw’s attachment hardens into marked favoritism toward Heathcliff\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_hindley\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch04_b040_03\",\n            \"e_wh_ch04_b044_01\",\n            \"e_wh_ch04_b044_02\",\n            \"e_wh_ch04_b044_03\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b040\",\n            \"note\": \"Hindley’s dislike is stated plainly and develops into open violence and rivalry\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_cathy\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch04_b039_02\",\n            \"e_wh_ch04_b040_02\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b040\",\n            \"note\": \"After initial contempt, Cathy quickly becomes closely attached to Heathcliff\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mrs_dean\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch04_b040_04\",\n            \"e_wh_ch04_b042_02\",\n            \"e_wh_ch04_b045_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b042\",\n            \"note\": \"Nelly’s hostility softens after nursing Heathcliff through illness, though not into affection\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mrs_earnshaw\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch04_b040_05\"\n          ],\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_earnshaw\",\n            \"ent_cathy\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch04_b041_02\"\n          ],\n          \"status\": \"evidence_only\"\n        }\n      ],\n      \"translator_relevant_facts\": [\n        {\n          \"fact_type\": \"narrator\",\n          \"fact\": \"The chapter shifts from Lockwood’s first-person frame narration to Mrs. Dean’s extended first-person retrospective account.\",\n          \"block_evidence\": [\n            \"wh_ch04_b002\",\n            \"wh_ch04_b035\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Lockwood’s narration is self-conscious, ironic, and elevated, especially in his opening self-mockery.\",\n          \"block_evidence\": [\n            \"wh_ch04_b002\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Mrs. Dean’s speech mixes standard narration with regional vocabulary such as 'bonny man,' 'bairns,' and 'e’en.'\",\n          \"block_evidence\": [\n            \"wh_ch04_b035\",\n            \"wh_ch04_b037\",\n            \"wh_ch04_b038\"\n          ]\n        },\n        {\n          \"fact_type\": \"register\",\n          \"fact\": \"Mrs. Dean uses strongly judgmental figurative language for Heathcliff and the household history, including bird metaphors like 'cuckoo' and 'dunnock.'\",\n          \"block_evidence\": [\n            \"wh_ch04_b030\"\n          ]\n        },\n        {\n          \"fact_type\": \"status\",\n          \"fact\": \"Mrs. Dean marks social hierarchy through terms like 'master,' 'mistress,' 'young master,' and 'the old master.'\",\n          \"block_evidence\": [\n            \"wh_ch04_b004\",\n            \"wh_ch04_b035\",\n            \"wh_ch04_b042\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"The frame scene is an intimate fireside supper conversation at Thrushcross Grange, with Lockwood chilled and feverish.\",\n          \"block_evidence\": [\n            \"wh_ch04_b002\",\n            \"wh_ch04_b033\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Insults directed at Heathcliff are socially and ethnically charged ('gipsy brat,' 'beggarly interloper,' 'imp of Satan') and should retain their harshness.\",\n          \"block_evidence\": [\n            \"wh_ch04_b038\",\n            \"wh_ch04_b044\"\n          ]\n        },\n        {\n          \"fact_type\": \"narrator\",\n          \"fact\": \"Mrs. Dean openly revises her own earlier judgments, admitting former cruelty toward Heathcliff and partial later softening.\",\n          \"block_evidence\": [\n            \"wh_ch04_b040\",\n            \"wh_ch04_b042\",\n            \"wh_ch04_b043\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"dry_run_note\": \"This scaffold uses provisional prior groups only for token sizing. They are not identity verdicts and will not be published.\"\n}"
+    }
+  ]
+}

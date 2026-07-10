@@ -26,6 +26,10 @@ from pipeline.literary.builder_pilot import (  # noqa: E402
     select_chapters,
     validate_builtin_fixtures,
 )
+from pipeline.literary.story_bible_v2 import (  # noqa: E402
+    estimate_m3_v2,
+    run_m3_v2_dry_run,
+)
 from pipeline.agents.llm_client import LLMClient  # noqa: E402
 from pipeline.agents.llm_config import load_llm_config  # noqa: E402
 
@@ -48,6 +52,8 @@ DEFAULT_GATSBY_EPUB = (
 )
 DEFAULT_OUT = TOOL_ROOT / "data" / "reports" / "literary_l2a0_wh_builder_scaffold"
 DEFAULT_L2A1_OUT = TOOL_ROOT / "data" / "reports" / "literary_l2a1_wh_builder_pilot"
+DEFAULT_M4D_OUT = TOOL_ROOT / "data" / "reports" / "literary_m4d_b4v2_scaffold"
+DEFAULT_M4_FULL_OUT = TOOL_ROOT / "data" / "reports" / "literary_m4_full"
 DEFAULT_DESIGN = REPO_ROOT / "design" / "LITERARY_PROMPT_DESIGN.md"
 
 
@@ -65,8 +71,11 @@ def main() -> int:
     parser.add_argument("--out", default=str(DEFAULT_OUT), help="Artifact directory.")
     parser.add_argument(
         "--milestone",
-        choices=["M1", "M2", "M3"],
-        help="Run an L2A-1 milestone. M1 = B0+B1+B2; M2 = B3 digest; M3 = B4 consolidation.",
+        choices=["M1", "M2", "M3", "M3V2"],
+        help=(
+            "Run a literary milestone. M1 = B0+B1+B2; M2 = B3 digest; "
+            "M3 = legacy B4 pilot; M3V2 = B4 v2 zero-API scaffold only."
+        ),
     )
     parser.add_argument(
         "--chapters",
@@ -127,6 +136,10 @@ def main() -> int:
     parser.add_argument(
         "--m1-dir",
         help="For --milestone M2: directory containing the passed M1 artifacts.",
+    )
+    parser.add_argument(
+        "--m2-dir",
+        help="For --milestone M3V2: directory containing the passed M2 artifacts.",
     )
     parser.add_argument(
         "--digest-context",
@@ -246,13 +259,48 @@ def main() -> int:
 def _run_milestone(args: argparse.Namespace) -> int:
     out_dir = Path(args.out)
     if str(out_dir) == str(DEFAULT_OUT):
-        selected_slug = "_".join(str(chapter).replace("wh_", "") for chapter in args.chapters)
-        out_dir = DEFAULT_L2A1_OUT / f"m1_{selected_slug}"
-    m1_dir = Path(args.m1_dir) if args.m1_dir else out_dir
+        if args.milestone == "M3V2":
+            out_dir = DEFAULT_M4D_OUT
+        else:
+            selected_slug = "_".join(str(chapter).replace("wh_", "") for chapter in args.chapters)
+            out_dir = DEFAULT_L2A1_OUT / f"m1_{selected_slug}"
+    default_input_dir = DEFAULT_M4_FULL_OUT if args.milestone == "M3V2" else out_dir
+    m1_dir = Path(args.m1_dir) if args.m1_dir else default_input_dir
+    m2_dir = Path(args.m2_dir) if args.m2_dir else default_input_dir
     epub_path = _epub_path_for_args(args)
     document, _mapping = _load_document(args.book_id, epub_path)
-    config = load_llm_config(args.config)
+    config_path = Path(args.config)
+    if args.milestone == "M3V2" and str(config_path) == str(TOOL_ROOT / "pipeline" / "configs" / "llm_prepass.yaml"):
+        config_path = TOOL_ROOT / "pipeline" / "configs" / "llm_prepass_m4full_m2_gpt54.yaml"
+    config = load_llm_config(config_path)
     design_doc = Path(args.design_doc)
+
+    if args.milestone == "M3V2":
+        estimate = estimate_m3_v2(
+            document,
+            args.chapters,
+            design_doc=design_doc,
+            config=config,
+            m1_dir=m1_dir,
+            m2_dir=m2_dir,
+        )
+        if args.estimate_only:
+            print(json.dumps(estimate, ensure_ascii=False, indent=2))
+            return 0
+        if not args.dry_run:
+            print(json.dumps(estimate, ensure_ascii=False, indent=2))
+            raise SystemExit("M3V2 is scaffold-only; pass --dry-run. API execution is not wired.")
+        report = run_m3_v2_dry_run(
+            document,
+            args.chapters,
+            out_dir=out_dir,
+            design_doc=design_doc,
+            config=config,
+            m1_dir=m1_dir,
+            m2_dir=m2_dir,
+        )
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0
 
     if args.milestone == "M2":
         digest_context = Path(args.digest_context) if args.digest_context else None

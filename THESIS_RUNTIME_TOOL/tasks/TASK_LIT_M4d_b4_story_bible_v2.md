@@ -214,3 +214,41 @@ checkpoint M3/render prompt THẬT trên ch1-4, nộp rendered prompts + estimat
 KHÔNG gọi API ở pha này. (2) sau duyệt: API run ch1-4 (--confirm, gpt-5.4, trần theo estimator),
 halt nếu technical-retry >10% hoặc bất kỳ semantic gate fail. Acceptance = §R5 rev2 + 2 canary
 mới + canary per-scope cũ. D2L-intact: suite xanh + frozen DB hash + prompt D2L byte-identical.
+
+---
+# GATE PHA 1 (Claude verify độc lập trên artifact, 2026-07-11): **PASS có điều kiện — DUYỆT estimator 10 call; pha 2 phải có APPLY trước API**
+
+Tự verify (không tin số báo cáo):
+- Scope sạch: design doc + builder_pilot.py không bị chạm; file mới đúng khai báo.
+- **As-of no-leak: TỰ KIỂM PASS** — prompt identity ch01 zero block-ref ch2-4; "Hareton" xuất
+  hiện HỢP LỆ (inscription b012 thuộc ch1). Chain 4 hash m1 + 4 hash m2 ghi trong report.
+- **Canary the-master input: PASS** — cả 6 atom "the master" + my/late-master nằm CÙNG shard 01
+  (component union-find theo surface+hint giữ họ surface đi cùng nhau); young master b042 shard 02
+  có hint ent_hindley. LLM nhìn đủ để tách 3 nhóm.
+- **Estimator: số khớp 100%** khi tự tính lại (107.788 prompt / max 13.922 < 14.000 / upper
+  169.228 / 10 call). **DUYỆT 10 call** — shard ch03/ch04 identity ×2 là trung thực, ép về 8 sẽ
+  cắt evidence. daily-cap: 169k upper < 225k safety NHƯNG chỉ còn ~156k quota hôm nay → hoặc chạy
+  ngày quota mới, hoặc chấp nhận upper là trần bảo thủ (thực tế M2 output chỉ ~30% max) — quyết
+  khi chạy, halt-resume đã có.
+- Prompt render: dùng ĐÚNG blockquote loader (marker dòng đầu), atoms kèm quote_context,
+  PRIOR_GROUPS chỉ nhóm linked (bounded), identity_hints = digest chương hiện tại (rationale ghi
+  trong code). Phase: pair chuẩn hoá unordered, replay full history cho affected pairs,
+  RELATION_FACTS + taxonomy trong system, b046 "my daughter-in-law" nằm ĐÚNG pair
+  (heathcliff, mrs_heathcliff) → fact daughter_in_law_of pass được validator subject/object∈pair.
+- Validator response: exact-partition, quote-substring trên source thật, evidence bắt buộc cho
+  nhóm đa-atom, alias_bindings đủ. Tests: 5/5 mới + 365/365 pipeline suite (tự chạy).
+  Frozen DB tự tính lại KHỚP; keyscan sạch; CLI M3V2 từ chối khi thiếu --dry-run.
+
+**ĐIỀU KIỆN PHA 2 (bắt buộc trước khi gọi API):**
+1. **[CHÍNH] Implement APPLY + PUBLISH**: hiện CHƯA có run_m3_v2 executor, chưa có code mint id
+   tất định + stable-ID (reuse/supersedes/tie→halt) + gate battery trên bản sao + publish story
+   bible + checkpoint M3 write. Pha 2 phải implement + **test 0-API bằng response LLM TỔNG HỢP**
+   (synthetic: partition đúng, partition thiếu atom, quote sai, reuse id lạ, tie split) TRƯỚC
+   khi đốt quota — không để response thật rơi vào code chưa test.
+2. Real-run phải BỎ dry_run_note khỏi prompt (hiện đánh dấu rõ — đúng; đừng để lọt vào call thật).
+3. Acceptance daughter-in-law neo bằng **b046** (b042 không vào digest event_ids — chấp nhận,
+   b042 thành optional).
+4. **Watch-item (không blocker):** under-merge xuyên-shard cùng scope — "the old master" b035
+   (shard 02) và component "the master/Mr. Earnshaw" (shard 01) không nhìn thấy nhau → có thể ra
+   2 group cho cùng người; an toàn nhờ thiên hướng SPLIT (nối lại được) + flag review. Ghi số đo
+   trường hợp này ở gate output pha 2; nếu nhiều → cân nhắc pass hợp nhất theo evidence ở scope sau.

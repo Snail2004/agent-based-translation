@@ -1,0 +1,701 @@
+{
+  "zero_api": true,
+  "scope": "M3_asof_wh_ch02",
+  "chapter_id": "wh_ch02",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 1,
+  "shard_count": 1,
+  "items": [
+    {
+      "atom_id": "atom_m_wh_ch02_b004_01__wh_ch02_b004",
+      "mention_id": "m_wh_ch02_b004_01",
+      "block_id": "wh_ch02_b004",
+      "chapter_id": "wh_ch02",
+      "surface": "Joseph",
+      "quote_context": "“Wretched inmates!” I ejaculated, mentally, “you deserve perpetual isolation from your species for your churlish inhospitality. At least, I would not keep my doors barred in the day-time. I don’t care—I will get in!” So resolved, I grasped the latch and shook it vehemently. Vinegar-faced Joseph projected his head from a round window of the barn.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b060_01__wh_ch02_b060",
+      "mention_id": "m_wh_ch02_b060_01",
+      "block_id": "wh_ch02_b060",
+      "chapter_id": "wh_ch02",
+      "surface": "Joseph",
+      "quote_context": "There was no reply to my question; and on looking round I saw only Joseph bringing in a pail of porridge for the dogs, and Mrs. Heathcliff leaning over the fire, diverting herself with burning a bundle of matches which had fallen from the chimney-piece as she restored the tea-canister to its place. The former, when he had deposited his burden, took a critica",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b062_01__wh_ch02_b062",
+      "mention_id": "m_wh_ch02_b062_01",
+      "block_id": "wh_ch02_b062",
+      "chapter_id": "wh_ch02",
+      "surface": "Joseph",
+      "quote_context": "raid of being carried away bodily, whenever you mention the devil’s name? I warn you to refrain from provoking me, or I’ll ask your abduction as a special favour! Stop! look here, Joseph,” she continued, taking a long, dark book from a shelf; “I’ll show you how far I’ve progressed in the Black Art: I shall soon be competent to make a clear house of it. The r",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b065_01__wh_ch02_b065",
+      "mention_id": "m_wh_ch02_b065_01",
+      "block_id": "wh_ch02_b065",
+      "chapter_id": "wh_ch02",
+      "surface": "Joseph",
+      "quote_context": "The little witch put a mock malignity into her beautiful eyes, and Joseph, trembling with sincere horror, hurried out, praying, and ejaculating “wicked” as he went. I thought her conduct must be prompted by a species of dreary fun; and, now that we were alone, I endeavoured to interest her in my distress.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b071_03__wh_ch02_b071",
+      "mention_id": "m_wh_ch02_b071_03",
+      "block_id": "wh_ch02_b071",
+      "chapter_id": "wh_ch02",
+      "surface": "Joseph",
+      "quote_context": "“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b076_03__wh_ch02_b076",
+      "mention_id": "m_wh_ch02_b076_03",
+      "block_id": "wh_ch02_b076",
+      "chapter_id": "wh_ch02",
+      "surface": "Joseph",
+      "quote_context": "“I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b085_01__wh_ch02_b085",
+      "mention_id": "m_wh_ch02_b085_01",
+      "block_id": "wh_ch02_b085",
+      "chapter_id": "wh_ch02",
+      "surface": "Joseph",
+      "quote_context": "“Hearken, hearken, shoo’s cursing on ’em!” muttered Joseph, towards whom I had been steering.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b005_01__wh_ch02_b005",
+      "mention_id": "m_wh_ch02_b005_01",
+      "block_id": "wh_ch02_b005",
+      "chapter_id": "wh_ch02",
+      "surface": "t’ maister’s",
+      "quote_context": "“What are ye for?” he shouted. “T’ maister’s down i’ t’ fowld. Go round by th’ end o’ t’ laith, if ye went to spake to him.”",
+      "hint_entity_id": "ent_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch02_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b049_01__wh_ch02_b049",
+      "mention_id": "m_wh_ch02_b049_01",
+      "block_id": "wh_ch02_b049",
+      "chapter_id": "wh_ch02",
+      "surface": "my host",
+      "quote_context": "“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”",
+      "hint_entity_id": "ent_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch02_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b081_01__wh_ch02_b081",
+      "mention_id": "m_wh_ch02_b081_01",
+      "block_id": "wh_ch02_b081",
+      "chapter_id": "wh_ch02",
+      "surface": "his master",
+      "quote_context": "“You’ll go with him to hell!” exclaimed his master, or whatever relation he bore. “And who is to look after the horses, eh?”",
+      "hint_entity_id": "ent_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch02_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b087_01__wh_ch02_b087",
+      "mention_id": "m_wh_ch02_b087_01",
+      "block_id": "wh_ch02_b087",
+      "chapter_id": "wh_ch02",
+      "surface": "Maister",
+      "quote_context": "“Maister, maister, he’s staling t’ lanthern!” shouted the ancient, pursuing my retreat. “Hey, Gnasher! Hey, dog! Hey Wolf, holld him, holld him!”",
+      "hint_entity_id": "ent_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch02_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b007_01__wh_ch02_b007",
+      "mention_id": "m_wh_ch02_b007_01",
+      "block_id": "wh_ch02_b007",
+      "chapter_id": "wh_ch02",
+      "surface": "t’ missis",
+      "quote_context": "“There’s nobbut t’ missis; and shoo’ll not oppen ’t an ye mak’ yer flaysome dins till neeght.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b011_01__wh_ch02_b011",
+      "mention_id": "m_wh_ch02_b011_01",
+      "block_id": "wh_ch02_b011",
+      "chapter_id": "wh_ch02",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "“Rough weather!” I remarked. “I’m afraid, Mrs. Heathcliff, the door must bear the consequence of your servants’ leisure attendance: I had hard work to make them hear me.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b042_01__wh_ch02_b042",
+      "mention_id": "m_wh_ch02_b042_01",
+      "block_id": "wh_ch02_b042",
+      "chapter_id": "wh_ch02",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "“Mrs. Heathcliff, your wife, I mean.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b042_01__wh_ch02_b046",
+      "mention_id": "m_wh_ch02_b042_01",
+      "block_id": "wh_ch02_b046",
+      "chapter_id": "wh_ch02",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b060_02__wh_ch02_b060",
+      "mention_id": "m_wh_ch02_b060_02",
+      "block_id": "wh_ch02_b060",
+      "chapter_id": "wh_ch02",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "There was no reply to my question; and on looking round I saw only Joseph bringing in a pail of porridge for the dogs, and Mrs. Heathcliff leaning over the fire, diverting herself with burning a bundle of matches which had fallen from the chimney-piece as she restored the tea-canister to its place. The former, when he had deposited his burden, took a critica",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b066_01__wh_ch02_b066",
+      "mention_id": "m_wh_ch02_b066_01",
+      "block_id": "wh_ch02_b066",
+      "chapter_id": "wh_ch02",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "“Mrs. Heathcliff,” I said earnestly, “you must excuse me for troubling you. I presume, because, with that face, I’m sure you cannot help being good-hearted. Do point out some landmarks by which I may know my way home: I have no more idea how to get there than you would have how to get to London!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b082_01__wh_ch02_b082",
+      "mention_id": "m_wh_ch02_b082_01",
+      "block_id": "wh_ch02_b082",
+      "chapter_id": "wh_ch02",
+      "surface": "Mrs. Heathcliff",
+      "quote_context": "“A man’s life is of more consequence than one evening’s neglect of the horses: somebody must go,” murmured Mrs. Heathcliff, more kindly than I expected.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b013_01__wh_ch02_b013",
+      "mention_id": "m_wh_ch02_b013_01",
+      "block_id": "wh_ch02_b013",
+      "chapter_id": "wh_ch02",
+      "surface": "the young man",
+      "quote_context": "“Sit down,” said the young man, gruffly. “He’ll be in soon.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b029_01__wh_ch02_b029",
+      "mention_id": "m_wh_ch02_b029_01",
+      "block_id": "wh_ch02_b029",
+      "chapter_id": "wh_ch02",
+      "surface": "the young man",
+      "quote_context": "Meanwhile, the young man had slung on to his person a decidedly shabby upper garment, and, erecting himself before the blaze, looked down on me from the corner of his eyes, for all the world as if there were some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the su",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b079_02__wh_ch02_b079",
+      "mention_id": "m_wh_ch02_b079_02",
+      "block_id": "wh_ch02_b079",
+      "chapter_id": "wh_ch02",
+      "surface": "the young man",
+      "quote_context": "With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me.",
+      "hint_entity_id": "ent_the_young_man",
+      "source_artifact": "lexicon/wb_wh_ch02_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b014_01__wh_ch02_b014",
+      "mention_id": "m_wh_ch02_b014_01",
+      "block_id": "wh_ch02_b014",
+      "chapter_id": "wh_ch02",
+      "surface": "the villain",
+      "quote_context": "I obeyed; and hemmed, and called the villain Juno, who deigned, at this second interview, to move the extreme tip of her tail, in token of owning my acquaintance.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b016_01__wh_ch02_b016",
+      "mention_id": "m_wh_ch02_b016_01",
+      "block_id": "wh_ch02_b016",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "“They are not mine,” said the amiable hostess, more repellingly than Heathcliff himself could have replied.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b029_04__wh_ch02_b029",
+      "mention_id": "m_wh_ch02_b029_04",
+      "block_id": "wh_ch02_b029",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "al feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common labourer: stil",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b037_02__wh_ch02_b037",
+      "mention_id": "m_wh_ch02_b037_02",
+      "block_id": "wh_ch02_b037",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "“Is he to have any?” she asked, appealing to Heathcliff.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b046_01__wh_ch02_b046",
+      "mention_id": "m_wh_ch02_b046_01",
+      "block_id": "wh_ch02_b046",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b052_01__wh_ch02_b052",
+      "mention_id": "m_wh_ch02_b052_01",
+      "block_id": "wh_ch02_b052",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "Heathcliff smiled again, as if it were rather too bold a jest to attribute the paternity of that bear to him.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b058_02__wh_ch02_b058",
+      "mention_id": "m_wh_ch02_b058_02",
+      "block_id": "wh_ch02_b058",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "“Hareton, drive those dozen sheep into the barn porch. They’ll be covered if left in the fold all night: and put a plank before them,” said Heathcliff.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b076_01__wh_ch02_b076",
+      "mention_id": "m_wh_ch02_b076_01",
+      "block_id": "wh_ch02_b076",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "“I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b088_01__wh_ch02_b088",
+      "mention_id": "m_wh_ch02_b088_01",
+      "block_id": "wh_ch02_b088",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "On opening the little door, two hairy monsters flew at my throat, bearing me down, and extinguishing the light; while a mingled guffaw from Heathcliff and Hareton put the copestone on my rage and humiliation. Fortunately, the beasts seemed more bent on stretching their paws, and yawning, and flourishing their tails, than devouring me alive; but they would su",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b089_01__wh_ch02_b089",
+      "mention_id": "m_wh_ch02_b089_01",
+      "block_id": "wh_ch02_b089",
+      "chapter_id": "wh_ch02",
+      "surface": "Heathcliff",
+      "quote_context": "The vehemence of my agitation brought on a copious bleeding at the nose, and still Heathcliff laughed, and still I scolded. I don’t know what would have concluded the scene, had there not been one person at hand rather more rational than myself, and more benevolent than my entertainer. This was Zillah, the stout housewife; who at length issued forth to inqui",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b029_02__wh_ch02_b029",
+      "mention_id": "m_wh_ch02_b029_02",
+      "block_id": "wh_ch02_b029",
+      "chapter_id": "wh_ch02",
+      "surface": "Mr. and Mrs. Heathcliff",
+      "quote_context": "ere some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common l",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b029_03__wh_ch02_b029",
+      "mention_id": "m_wh_ch02_b029_03",
+      "block_id": "wh_ch02_b029",
+      "chapter_id": "wh_ch02",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "Meanwhile, the young man had slung on to his person a decidedly shabby upper garment, and, erecting himself before the blaze, looked down on me from the corner of his eyes, for all the world as if there were some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the su",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b040_01__wh_ch02_b040",
+      "mention_id": "m_wh_ch02_b040_01",
+      "block_id": "wh_ch02_b040",
+      "chapter_id": "wh_ch02",
+      "surface": "Mr. Heathcliff",
+      "quote_context": " one cup of tea and receiving another—“it is strange how custom can mould our tastes and ideas: many could not imagine the existence of happiness in a life of such complete exile from the world as you spend, Mr. Heathcliff; yet, I’ll venture to say, that, surrounded by your family, and with your amiable lady as the presiding genius over your home and heart—”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b070_01__wh_ch02_b070",
+      "mention_id": "m_wh_ch02_b070_01",
+      "block_id": "wh_ch02_b070",
+      "chapter_id": "wh_ch02",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "“ You ! I should be sorry to ask you to cross the threshold, for my convenience, on such a night,” I cried. “I want you to tell me my way, not to show it: or else to persuade Mr. Heathcliff to give me a guide.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b084_01__wh_ch02_b084",
+      "mention_id": "m_wh_ch02_b084_01",
+      "block_id": "wh_ch02_b084",
+      "chapter_id": "wh_ch02",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "“Then I hope his ghost will haunt you; and I hope Mr. Heathcliff will never get another tenant till the Grange is a ruin,” she answered, sharply.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b091_01__wh_ch02_b091",
+      "mention_id": "m_wh_ch02_b091_01",
+      "block_id": "wh_ch02_b091",
+      "chapter_id": "wh_ch02",
+      "surface": "Mr. Heathcliff",
+      "quote_context": "With these words she suddenly splashed a pint of icy water down my neck, and pulled me into the kitchen. Mr. Heathcliff followed, his accidental merriment expiring quickly in his habitual moroseness.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b036_01__wh_ch02_b036",
+      "mention_id": "m_wh_ch02_b036_01",
+      "block_id": "wh_ch02_b036",
+      "chapter_id": "wh_ch02",
+      "surface": "the shabby coat",
+      "quote_context": "“Are you going to mak’ the tea?” demanded he of the shabby coat, shifting his ferocious gaze from me to the young lady.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b036_02__wh_ch02_b036",
+      "mention_id": "m_wh_ch02_b036_02",
+      "block_id": "wh_ch02_b036",
+      "chapter_id": "wh_ch02",
+      "surface": "the young lady",
+      "quote_context": "“Are you going to mak’ the tea?” demanded he of the shabby coat, shifting his ferocious gaze from me to the young lady.",
+      "hint_entity_id": "ent_zillah",
+      "source_artifact": "lexicon/wb_wh_ch02_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b040_02__wh_ch02_b040",
+      "mention_id": "m_wh_ch02_b040_02",
+      "block_id": "wh_ch02_b040",
+      "chapter_id": "wh_ch02",
+      "surface": "your amiable lady",
+      "quote_context": " one cup of tea and receiving another—“it is strange how custom can mould our tastes and ideas: many could not imagine the existence of happiness in a life of such complete exile from the world as you spend, Mr. Heathcliff; yet, I’ll venture to say, that, surrounded by your family, and with your amiable lady as the presiding genius over your home and heart—”",
+      "hint_entity_id": "ent_zillah",
+      "source_artifact": "lexicon/wb_wh_ch02_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b042_02__wh_ch02_b042",
+      "mention_id": "m_wh_ch02_b042_02",
+      "block_id": "wh_ch02_b042",
+      "chapter_id": "wh_ch02",
+      "surface": "your wife",
+      "quote_context": "“Mrs. Heathcliff, your wife, I mean.”",
+      "hint_entity_id": "ent_mrs_heathcliff",
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b043_01__wh_ch02_b043",
+      "mention_id": "m_wh_ch02_b043_01",
+      "block_id": "wh_ch02_b043",
+      "chapter_id": "wh_ch02",
+      "surface": "my amiable lady",
+      "quote_context": "“Well, yes—oh, you would intimate that her spirit has taken the post of ministering angel, and guards the fortunes of Wuthering Heights, even when her body is gone. Is that it?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b044_01__wh_ch02_b044",
+      "mention_id": "m_wh_ch02_b044_01",
+      "block_id": "wh_ch02_b044",
+      "chapter_id": "wh_ch02",
+      "surface": "the parties",
+      "quote_context": "Perceiving myself in a blunder, I attempted to correct it. I might have seen there was too great a disparity between the ages of the parties to make it likely that they were man and wife. One was about forty: a period of mental vigour at which men seldom cherish the delusion of being married for love by girls: that dream is reserved for the solace of our dec",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b045_01__wh_ch02_b045",
+      "mention_id": "m_wh_ch02_b045_01",
+      "block_id": "wh_ch02_b045",
+      "chapter_id": "wh_ch02",
+      "surface": "The clown at my elbow",
+      "quote_context": "Then it flashed upon me—“The clown at my elbow, who is drinking his tea out of a basin and eating his bread with unwashed hands, may be her husband: Heathcliff junior, of course. Here is the consequence of being buried alive: she has thrown herself away upon that boor from sheer ignorance that better individuals existed! A sad pity—I must beware how I cause ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b045_02__wh_ch02_b045",
+      "mention_id": "m_wh_ch02_b045_02",
+      "block_id": "wh_ch02_b045",
+      "chapter_id": "wh_ch02",
+      "surface": "my neighbour",
+      "quote_context": "e consequence of being buried alive: she has thrown herself away upon that boor from sheer ignorance that better individuals existed! A sad pity—I must beware how I cause her to regret her choice.” The last reflection may seem conceited; it was not. My neighbour struck me as bordering on repulsive; I knew, through experience, that I was tolerably attractive.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b047_01__wh_ch02_b047",
+      "mention_id": "m_wh_ch02_b047_01",
+      "block_id": "wh_ch02_b047",
+      "chapter_id": "wh_ch02",
+      "surface": "my neighbour",
+      "quote_context": "“Ah, certainly—I see now: you are the favoured possessor of the beneficent fairy,” I remarked, turning to my neighbour.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b046_02__wh_ch02_b046",
+      "mention_id": "m_wh_ch02_b046_02",
+      "block_id": "wh_ch02_b046",
+      "chapter_id": "wh_ch02",
+      "surface": "my daughter-in-law",
+      "quote_context": "“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b049_02__wh_ch02_b049",
+      "mention_id": "m_wh_ch02_b049_02",
+      "block_id": "wh_ch02_b049",
+      "chapter_id": "wh_ch02",
+      "surface": "my daughter-in-law",
+      "quote_context": "“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b046_03__wh_ch02_b046",
+      "mention_id": "m_wh_ch02_b046_03",
+      "block_id": "wh_ch02_b046",
+      "chapter_id": "wh_ch02",
+      "surface": "her direction",
+      "quote_context": "“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b048_01__wh_ch02_b048",
+      "mention_id": "m_wh_ch02_b048_01",
+      "block_id": "wh_ch02_b048",
+      "chapter_id": "wh_ch02",
+      "surface": "The youth",
+      "quote_context": "This was worse than before: the youth grew crimson, and clenched his fist, with every appearance of a meditated assault. But he seemed to recollect himself presently, and smothered the storm in a brutal curse, muttered on my behalf: which, however, I took care not to notice.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b049_03__wh_ch02_b049",
+      "mention_id": "m_wh_ch02_b049_03",
+      "block_id": "wh_ch02_b049",
+      "chapter_id": "wh_ch02",
+      "surface": "my son",
+      "quote_context": "“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b051_01__wh_ch02_b051",
+      "mention_id": "m_wh_ch02_b051_01",
+      "block_id": "wh_ch02_b051",
+      "chapter_id": "wh_ch02",
+      "surface": "my son",
+      "quote_context": "“Not my son, assuredly.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b050_01__wh_ch02_b050",
+      "mention_id": "m_wh_ch02_b050_01",
+      "block_id": "wh_ch02_b050",
+      "chapter_id": "wh_ch02",
+      "surface": "this young man",
+      "quote_context": "“And this young man is—”",
+      "hint_entity_id": "ent_hareton_earnshaw",
+      "source_artifact": "lexicon/wb_wh_ch02_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b053_01__wh_ch02_b053",
+      "mention_id": "m_wh_ch02_b053_01",
+      "block_id": "wh_ch02_b053",
+      "chapter_id": "wh_ch02",
+      "surface": "Hareton Earnshaw",
+      "quote_context": "“My name is Hareton Earnshaw,” growled the other; “and I’d counsel you to respect it!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b058_01__wh_ch02_b058",
+      "mention_id": "m_wh_ch02_b058_01",
+      "block_id": "wh_ch02_b058",
+      "chapter_id": "wh_ch02",
+      "surface": "Hareton",
+      "quote_context": "“Hareton, drive those dozen sheep into the barn porch. They’ll be covered if left in the fold all night: and put a plank before them,” said Heathcliff.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b076_02__wh_ch02_b076",
+      "mention_id": "m_wh_ch02_b076_02",
+      "block_id": "wh_ch02_b076",
+      "chapter_id": "wh_ch02",
+      "surface": "Hareton",
+      "quote_context": "“I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b083_01__wh_ch02_b083",
+      "mention_id": "m_wh_ch02_b083_01",
+      "block_id": "wh_ch02_b083",
+      "chapter_id": "wh_ch02",
+      "surface": "Hareton",
+      "quote_context": "“Not at your command!” retorted Hareton. “If you set store on him, you’d better be quiet.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b088_02__wh_ch02_b088",
+      "mention_id": "m_wh_ch02_b088_02",
+      "block_id": "wh_ch02_b088",
+      "chapter_id": "wh_ch02",
+      "surface": "Hareton",
+      "quote_context": "On opening the little door, two hairy monsters flew at my throat, bearing me down, and extinguishing the light; while a mingled guffaw from Heathcliff and Hareton put the copestone on my rage and humiliation. Fortunately, the beasts seemed more bent on stretching their paws, and yawning, and flourishing their tails, than devouring me alive; but they would su",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b061_01__wh_ch02_b061",
+      "mention_id": "m_wh_ch02_b061_01",
+      "block_id": "wh_ch02_b061",
+      "chapter_id": "wh_ch02",
+      "surface": "the aged rascal",
+      "quote_context": "I imagined, for a moment, that this piece of eloquence was addressed to me; and, sufficiently enraged, stepped towards the aged rascal with an intention of kicking him out of the door. Mrs. Heathcliff, however, checked me by her answer.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b063_01__wh_ch02_b063",
+      "mention_id": "m_wh_ch02_b063_01",
+      "block_id": "wh_ch02_b063",
+      "chapter_id": "wh_ch02",
+      "surface": "the elder",
+      "quote_context": "“Oh, wicked, wicked!” gasped the elder; “may the Lord deliver us from evil!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b071_01__wh_ch02_b071",
+      "mention_id": "m_wh_ch02_b071_01",
+      "block_id": "wh_ch02_b071",
+      "chapter_id": "wh_ch02",
+      "surface": "Earnshaw",
+      "quote_context": "“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b079_01__wh_ch02_b079",
+      "mention_id": "m_wh_ch02_b079_01",
+      "block_id": "wh_ch02_b079",
+      "chapter_id": "wh_ch02",
+      "surface": "Earnshaw",
+      "quote_context": "With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b071_02__wh_ch02_b071",
+      "mention_id": "m_wh_ch02_b071_02",
+      "block_id": "wh_ch02_b071",
+      "chapter_id": "wh_ch02",
+      "surface": "Zillah",
+      "quote_context": "“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b089_02__wh_ch02_b089",
+      "mention_id": "m_wh_ch02_b089_02",
+      "block_id": "wh_ch02_b089",
+      "chapter_id": "wh_ch02",
+      "surface": "Zillah",
+      "quote_context": "colded. I don’t know what would have concluded the scene, had there not been one person at hand rather more rational than myself, and more benevolent than my entertainer. This was Zillah, the stout housewife; who at length issued forth to inquire into the nature of the uproar. She thought that some of them had been laying violent hands on me; and, not daring",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b092_01__wh_ch02_b092",
+      "mention_id": "m_wh_ch02_b092_01",
+      "block_id": "wh_ch02_b092",
+      "chapter_id": "wh_ch02",
+      "surface": "Zillah",
+      "quote_context": "I was sick exceedingly, and dizzy, and faint; and thus compelled perforce to accept lodgings under his roof. He told Zillah to give me a glass of brandy, and then passed on to the inner room; while she condoled with me on my sorry predicament, and having obeyed his orders, whereby I was somewhat revived, ushered me to bed.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_013.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b078_01__wh_ch02_b078",
+      "mention_id": "m_wh_ch02_b078_01",
+      "block_id": "wh_ch02_b078",
+      "chapter_id": "wh_ch02",
+      "surface": "the unmannerly wretch",
+      "quote_context": "“No, no! A stranger is a stranger, be he rich or poor: it will not suit me to permit any one the range of the place while I am off guard!” said the unmannerly wretch.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b088_03__wh_ch02_b088",
+      "mention_id": "m_wh_ch02_b088_03",
+      "block_id": "wh_ch02_b088",
+      "chapter_id": "wh_ch02",
+      "surface": "King Lear",
+      "quote_context": " alive; but they would suffer no resurrection, and I was forced to lie till their malignant masters pleased to deliver me: then, hatless and trembling with wrath, I ordered the miscreants to let me out—on their peril to keep me one minute longer—with several incoherent threats of retaliation that, in their indefinite depth of virulency, smacked of King Lear.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch02_b090_01__wh_ch02_b090",
+      "mention_id": "m_wh_ch02_b090_01",
+      "block_id": "wh_ch02_b090",
+      "chapter_id": "wh_ch02",
+      "surface": "Mr. Earnshaw",
+      "quote_context": "“Well, Mr. Earnshaw,” she cried, “I wonder what you’ll have agait next? Are we going to murder folk on our very door-stones? I see this house will never do for me—look at t’ poor lad, he’s fair choking! Wisht, wisht; you mun’n’t go on so. Come in, and I’ll cure that: there now, hold ye still.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch02_012.json"
+    }
+  ],
+  "prompt_tokens_est": 13311,
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_identity_partition_v1.\nYou are resolving character identity for one chapter of a long book. Each ATOM is one mention occurrence: {atom_id, block_id, surface, quote_context, hint_entity_id}. PRIOR_GROUPS are identity groups already established in earlier chapters: {entity_id, canonical_surface, referent_kind, member_summary}. IDENTITY_HINTS are statements taken from chapter digests; treat them as leads to check against the quoted text, never as evidence by themselves.\nAssign EVERY listed atom to exactly one group. A group is one real-world referent.\n- An honorific difference (Mr./Mrs./Miss/young/old) is NOT evidence of identity: a wife, a widow and a father-in-law can share one surname; a title like \"the master\" can pass between people inside one chapter.\n- The SAME surface may denote DIFFERENT people in different scenes or narration frames; judge each atom from its own quote_context.\n- To extend a prior group, set reuse_entity_id to its entity_id. Reopen or split a prior group ONLY with a quote contradicting its unity, recorded in evidence with supports=different_identity.\n- Prefer SPLIT when unsure — merging two people is worse than leaving two entities.\n- referent_kind: person | place | group_reference | literary_allusion | unknown. A coordination surface naming two people at once counts as group_reference, never a person.\n- Output JSON only: {\"groups\": [{\"group_key\": string, \"reuse_entity_id\": string or null, \"referent_kind\": string, \"canonical_atom_id\": string, \"member_atom_ids\": [strings], \"status\": \"resolved\" | \"uncertain\" | \"quarantine\", \"alias_bindings\": [{\"surface\": string, \"member_atom_ids\": [strings], \"valid_from_block\": string, \"valid_until_block\": string or null}], \"evidence\": [{\"block_id\": string, \"quote\": string, \"source_atom_ids\": [strings], \"supports\": \"same_identity\" | \"different_identity\"}]}]}\n- Every input atom appears exactly once across all groups. Do NOT invent atom ids, do NOT mint entity ids, do NOT paraphrase quotes — copy them verbatim from the given text. Output nothing but the JSON object."
+    },
+    {
+      "role": "user",
+      "content": "{\n  \"scope\": \"M3_asof_wh_ch02\",\n  \"atoms\": [\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b004_01__wh_ch02_b004\",\n      \"mention_id\": \"m_wh_ch02_b004_01\",\n      \"block_id\": \"wh_ch02_b004\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"“Wretched inmates!” I ejaculated, mentally, “you deserve perpetual isolation from your species for your churlish inhospitality. At least, I would not keep my doors barred in the day-time. I don’t care—I will get in!” So resolved, I grasped the latch and shook it vehemently. Vinegar-faced Joseph projected his head from a round window of the barn.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b060_01__wh_ch02_b060\",\n      \"mention_id\": \"m_wh_ch02_b060_01\",\n      \"block_id\": \"wh_ch02_b060\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"There was no reply to my question; and on looking round I saw only Joseph bringing in a pail of porridge for the dogs, and Mrs. Heathcliff leaning over the fire, diverting herself with burning a bundle of matches which had fallen from the chimney-piece as she restored the tea-canister to its place. The former, when he had deposited his burden, took a critica\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b062_01__wh_ch02_b062\",\n      \"mention_id\": \"m_wh_ch02_b062_01\",\n      \"block_id\": \"wh_ch02_b062\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"raid of being carried away bodily, whenever you mention the devil’s name? I warn you to refrain from provoking me, or I’ll ask your abduction as a special favour! Stop! look here, Joseph,” she continued, taking a long, dark book from a shelf; “I’ll show you how far I’ve progressed in the Black Art: I shall soon be competent to make a clear house of it. The r\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b065_01__wh_ch02_b065\",\n      \"mention_id\": \"m_wh_ch02_b065_01\",\n      \"block_id\": \"wh_ch02_b065\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"The little witch put a mock malignity into her beautiful eyes, and Joseph, trembling with sincere horror, hurried out, praying, and ejaculating “wicked” as he went. I thought her conduct must be prompted by a species of dreary fun; and, now that we were alone, I endeavoured to interest her in my distress.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b071_03__wh_ch02_b071\",\n      \"mention_id\": \"m_wh_ch02_b071_03\",\n      \"block_id\": \"wh_ch02_b071\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b076_03__wh_ch02_b076\",\n      \"mention_id\": \"m_wh_ch02_b076_03\",\n      \"block_id\": \"wh_ch02_b076\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"“I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b085_01__wh_ch02_b085\",\n      \"mention_id\": \"m_wh_ch02_b085_01\",\n      \"block_id\": \"wh_ch02_b085\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"“Hearken, hearken, shoo’s cursing on ’em!” muttered Joseph, towards whom I had been steering.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b005_01__wh_ch02_b005\",\n      \"mention_id\": \"m_wh_ch02_b005_01\",\n      \"block_id\": \"wh_ch02_b005\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"t’ maister’s\",\n      \"quote_context\": \"“What are ye for?” he shouted. “T’ maister’s down i’ t’ fowld. Go round by th’ end o’ t’ laith, if ye went to spake to him.”\",\n      \"hint_entity_id\": \"ent_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b049_01__wh_ch02_b049\",\n      \"mention_id\": \"m_wh_ch02_b049_01\",\n      \"block_id\": \"wh_ch02_b049\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"my host\",\n      \"quote_context\": \"“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”\",\n      \"hint_entity_id\": \"ent_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b081_01__wh_ch02_b081\",\n      \"mention_id\": \"m_wh_ch02_b081_01\",\n      \"block_id\": \"wh_ch02_b081\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"his master\",\n      \"quote_context\": \"“You’ll go with him to hell!” exclaimed his master, or whatever relation he bore. “And who is to look after the horses, eh?”\",\n      \"hint_entity_id\": \"ent_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b087_01__wh_ch02_b087\",\n      \"mention_id\": \"m_wh_ch02_b087_01\",\n      \"block_id\": \"wh_ch02_b087\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Maister\",\n      \"quote_context\": \"“Maister, maister, he’s staling t’ lanthern!” shouted the ancient, pursuing my retreat. “Hey, Gnasher! Hey, dog! Hey Wolf, holld him, holld him!”\",\n      \"hint_entity_id\": \"ent_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b007_01__wh_ch02_b007\",\n      \"mention_id\": \"m_wh_ch02_b007_01\",\n      \"block_id\": \"wh_ch02_b007\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"t’ missis\",\n      \"quote_context\": \"“There’s nobbut t’ missis; and shoo’ll not oppen ’t an ye mak’ yer flaysome dins till neeght.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b011_01__wh_ch02_b011\",\n      \"mention_id\": \"m_wh_ch02_b011_01\",\n      \"block_id\": \"wh_ch02_b011\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"“Rough weather!” I remarked. “I’m afraid, Mrs. Heathcliff, the door must bear the consequence of your servants’ leisure attendance: I had hard work to make them hear me.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b042_01__wh_ch02_b042\",\n      \"mention_id\": \"m_wh_ch02_b042_01\",\n      \"block_id\": \"wh_ch02_b042\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"“Mrs. Heathcliff, your wife, I mean.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b042_01__wh_ch02_b046\",\n      \"mention_id\": \"m_wh_ch02_b042_01\",\n      \"block_id\": \"wh_ch02_b046\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b060_02__wh_ch02_b060\",\n      \"mention_id\": \"m_wh_ch02_b060_02\",\n      \"block_id\": \"wh_ch02_b060\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"There was no reply to my question; and on looking round I saw only Joseph bringing in a pail of porridge for the dogs, and Mrs. Heathcliff leaning over the fire, diverting herself with burning a bundle of matches which had fallen from the chimney-piece as she restored the tea-canister to its place. The former, when he had deposited his burden, took a critica\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b066_01__wh_ch02_b066\",\n      \"mention_id\": \"m_wh_ch02_b066_01\",\n      \"block_id\": \"wh_ch02_b066\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"“Mrs. Heathcliff,” I said earnestly, “you must excuse me for troubling you. I presume, because, with that face, I’m sure you cannot help being good-hearted. Do point out some landmarks by which I may know my way home: I have no more idea how to get there than you would have how to get to London!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b082_01__wh_ch02_b082\",\n      \"mention_id\": \"m_wh_ch02_b082_01\",\n      \"block_id\": \"wh_ch02_b082\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mrs. Heathcliff\",\n      \"quote_context\": \"“A man’s life is of more consequence than one evening’s neglect of the horses: somebody must go,” murmured Mrs. Heathcliff, more kindly than I expected.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b013_01__wh_ch02_b013\",\n      \"mention_id\": \"m_wh_ch02_b013_01\",\n      \"block_id\": \"wh_ch02_b013\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the young man\",\n      \"quote_context\": \"“Sit down,” said the young man, gruffly. “He’ll be in soon.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b029_01__wh_ch02_b029\",\n      \"mention_id\": \"m_wh_ch02_b029_01\",\n      \"block_id\": \"wh_ch02_b029\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the young man\",\n      \"quote_context\": \"Meanwhile, the young man had slung on to his person a decidedly shabby upper garment, and, erecting himself before the blaze, looked down on me from the corner of his eyes, for all the world as if there were some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the su\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b079_02__wh_ch02_b079\",\n      \"mention_id\": \"m_wh_ch02_b079_02\",\n      \"block_id\": \"wh_ch02_b079\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the young man\",\n      \"quote_context\": \"With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me.\",\n      \"hint_entity_id\": \"ent_the_young_man\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b014_01__wh_ch02_b014\",\n      \"mention_id\": \"m_wh_ch02_b014_01\",\n      \"block_id\": \"wh_ch02_b014\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the villain\",\n      \"quote_context\": \"I obeyed; and hemmed, and called the villain Juno, who deigned, at this second interview, to move the extreme tip of her tail, in token of owning my acquaintance.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b016_01__wh_ch02_b016\",\n      \"mention_id\": \"m_wh_ch02_b016_01\",\n      \"block_id\": \"wh_ch02_b016\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“They are not mine,” said the amiable hostess, more repellingly than Heathcliff himself could have replied.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b029_04__wh_ch02_b029\",\n      \"mention_id\": \"m_wh_ch02_b029_04\",\n      \"block_id\": \"wh_ch02_b029\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"al feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common labourer: stil\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b037_02__wh_ch02_b037\",\n      \"mention_id\": \"m_wh_ch02_b037_02\",\n      \"block_id\": \"wh_ch02_b037\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“Is he to have any?” she asked, appealing to Heathcliff.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b046_01__wh_ch02_b046\",\n      \"mention_id\": \"m_wh_ch02_b046_01\",\n      \"block_id\": \"wh_ch02_b046\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b052_01__wh_ch02_b052\",\n      \"mention_id\": \"m_wh_ch02_b052_01\",\n      \"block_id\": \"wh_ch02_b052\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"Heathcliff smiled again, as if it were rather too bold a jest to attribute the paternity of that bear to him.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b058_02__wh_ch02_b058\",\n      \"mention_id\": \"m_wh_ch02_b058_02\",\n      \"block_id\": \"wh_ch02_b058\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“Hareton, drive those dozen sheep into the barn porch. They’ll be covered if left in the fold all night: and put a plank before them,” said Heathcliff.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b076_01__wh_ch02_b076\",\n      \"mention_id\": \"m_wh_ch02_b076_01\",\n      \"block_id\": \"wh_ch02_b076\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b088_01__wh_ch02_b088\",\n      \"mention_id\": \"m_wh_ch02_b088_01\",\n      \"block_id\": \"wh_ch02_b088\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"On opening the little door, two hairy monsters flew at my throat, bearing me down, and extinguishing the light; while a mingled guffaw from Heathcliff and Hareton put the copestone on my rage and humiliation. Fortunately, the beasts seemed more bent on stretching their paws, and yawning, and flourishing their tails, than devouring me alive; but they would su\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b089_01__wh_ch02_b089\",\n      \"mention_id\": \"m_wh_ch02_b089_01\",\n      \"block_id\": \"wh_ch02_b089\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"The vehemence of my agitation brought on a copious bleeding at the nose, and still Heathcliff laughed, and still I scolded. I don’t know what would have concluded the scene, had there not been one person at hand rather more rational than myself, and more benevolent than my entertainer. This was Zillah, the stout housewife; who at length issued forth to inqui\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b029_02__wh_ch02_b029\",\n      \"mention_id\": \"m_wh_ch02_b029_02\",\n      \"block_id\": \"wh_ch02_b029\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mr. and Mrs. Heathcliff\",\n      \"quote_context\": \"ere some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common l\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b029_03__wh_ch02_b029\",\n      \"mention_id\": \"m_wh_ch02_b029_03\",\n      \"block_id\": \"wh_ch02_b029\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"Meanwhile, the young man had slung on to his person a decidedly shabby upper garment, and, erecting himself before the blaze, looked down on me from the corner of his eyes, for all the world as if there were some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the su\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b040_01__wh_ch02_b040\",\n      \"mention_id\": \"m_wh_ch02_b040_01\",\n      \"block_id\": \"wh_ch02_b040\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \" one cup of tea and receiving another—“it is strange how custom can mould our tastes and ideas: many could not imagine the existence of happiness in a life of such complete exile from the world as you spend, Mr. Heathcliff; yet, I’ll venture to say, that, surrounded by your family, and with your amiable lady as the presiding genius over your home and heart—”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b070_01__wh_ch02_b070\",\n      \"mention_id\": \"m_wh_ch02_b070_01\",\n      \"block_id\": \"wh_ch02_b070\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"“ You ! I should be sorry to ask you to cross the threshold, for my convenience, on such a night,” I cried. “I want you to tell me my way, not to show it: or else to persuade Mr. Heathcliff to give me a guide.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b084_01__wh_ch02_b084\",\n      \"mention_id\": \"m_wh_ch02_b084_01\",\n      \"block_id\": \"wh_ch02_b084\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"“Then I hope his ghost will haunt you; and I hope Mr. Heathcliff will never get another tenant till the Grange is a ruin,” she answered, sharply.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b091_01__wh_ch02_b091\",\n      \"mention_id\": \"m_wh_ch02_b091_01\",\n      \"block_id\": \"wh_ch02_b091\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mr. Heathcliff\",\n      \"quote_context\": \"With these words she suddenly splashed a pint of icy water down my neck, and pulled me into the kitchen. Mr. Heathcliff followed, his accidental merriment expiring quickly in his habitual moroseness.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b036_01__wh_ch02_b036\",\n      \"mention_id\": \"m_wh_ch02_b036_01\",\n      \"block_id\": \"wh_ch02_b036\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the shabby coat\",\n      \"quote_context\": \"“Are you going to mak’ the tea?” demanded he of the shabby coat, shifting his ferocious gaze from me to the young lady.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b036_02__wh_ch02_b036\",\n      \"mention_id\": \"m_wh_ch02_b036_02\",\n      \"block_id\": \"wh_ch02_b036\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the young lady\",\n      \"quote_context\": \"“Are you going to mak’ the tea?” demanded he of the shabby coat, shifting his ferocious gaze from me to the young lady.\",\n      \"hint_entity_id\": \"ent_zillah\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b040_02__wh_ch02_b040\",\n      \"mention_id\": \"m_wh_ch02_b040_02\",\n      \"block_id\": \"wh_ch02_b040\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"your amiable lady\",\n      \"quote_context\": \" one cup of tea and receiving another—“it is strange how custom can mould our tastes and ideas: many could not imagine the existence of happiness in a life of such complete exile from the world as you spend, Mr. Heathcliff; yet, I’ll venture to say, that, surrounded by your family, and with your amiable lady as the presiding genius over your home and heart—”\",\n      \"hint_entity_id\": \"ent_zillah\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b042_02__wh_ch02_b042\",\n      \"mention_id\": \"m_wh_ch02_b042_02\",\n      \"block_id\": \"wh_ch02_b042\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"your wife\",\n      \"quote_context\": \"“Mrs. Heathcliff, your wife, I mean.”\",\n      \"hint_entity_id\": \"ent_mrs_heathcliff\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b043_01__wh_ch02_b043\",\n      \"mention_id\": \"m_wh_ch02_b043_01\",\n      \"block_id\": \"wh_ch02_b043\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"my amiable lady\",\n      \"quote_context\": \"“Well, yes—oh, you would intimate that her spirit has taken the post of ministering angel, and guards the fortunes of Wuthering Heights, even when her body is gone. Is that it?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b044_01__wh_ch02_b044\",\n      \"mention_id\": \"m_wh_ch02_b044_01\",\n      \"block_id\": \"wh_ch02_b044\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the parties\",\n      \"quote_context\": \"Perceiving myself in a blunder, I attempted to correct it. I might have seen there was too great a disparity between the ages of the parties to make it likely that they were man and wife. One was about forty: a period of mental vigour at which men seldom cherish the delusion of being married for love by girls: that dream is reserved for the solace of our dec\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b045_01__wh_ch02_b045\",\n      \"mention_id\": \"m_wh_ch02_b045_01\",\n      \"block_id\": \"wh_ch02_b045\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"The clown at my elbow\",\n      \"quote_context\": \"Then it flashed upon me—“The clown at my elbow, who is drinking his tea out of a basin and eating his bread with unwashed hands, may be her husband: Heathcliff junior, of course. Here is the consequence of being buried alive: she has thrown herself away upon that boor from sheer ignorance that better individuals existed! A sad pity—I must beware how I cause \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b045_02__wh_ch02_b045\",\n      \"mention_id\": \"m_wh_ch02_b045_02\",\n      \"block_id\": \"wh_ch02_b045\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"my neighbour\",\n      \"quote_context\": \"e consequence of being buried alive: she has thrown herself away upon that boor from sheer ignorance that better individuals existed! A sad pity—I must beware how I cause her to regret her choice.” The last reflection may seem conceited; it was not. My neighbour struck me as bordering on repulsive; I knew, through experience, that I was tolerably attractive.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b047_01__wh_ch02_b047\",\n      \"mention_id\": \"m_wh_ch02_b047_01\",\n      \"block_id\": \"wh_ch02_b047\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"my neighbour\",\n      \"quote_context\": \"“Ah, certainly—I see now: you are the favoured possessor of the beneficent fairy,” I remarked, turning to my neighbour.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b046_02__wh_ch02_b046\",\n      \"mention_id\": \"m_wh_ch02_b046_02\",\n      \"block_id\": \"wh_ch02_b046\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"my daughter-in-law\",\n      \"quote_context\": \"“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b049_02__wh_ch02_b049\",\n      \"mention_id\": \"m_wh_ch02_b049_02\",\n      \"block_id\": \"wh_ch02_b049\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"my daughter-in-law\",\n      \"quote_context\": \"“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b046_03__wh_ch02_b046\",\n      \"mention_id\": \"m_wh_ch02_b046_03\",\n      \"block_id\": \"wh_ch02_b046\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"her direction\",\n      \"quote_context\": \"“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b048_01__wh_ch02_b048\",\n      \"mention_id\": \"m_wh_ch02_b048_01\",\n      \"block_id\": \"wh_ch02_b048\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"The youth\",\n      \"quote_context\": \"This was worse than before: the youth grew crimson, and clenched his fist, with every appearance of a meditated assault. But he seemed to recollect himself presently, and smothered the storm in a brutal curse, muttered on my behalf: which, however, I took care not to notice.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b049_03__wh_ch02_b049\",\n      \"mention_id\": \"m_wh_ch02_b049_03\",\n      \"block_id\": \"wh_ch02_b049\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"my son\",\n      \"quote_context\": \"“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b051_01__wh_ch02_b051\",\n      \"mention_id\": \"m_wh_ch02_b051_01\",\n      \"block_id\": \"wh_ch02_b051\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"my son\",\n      \"quote_context\": \"“Not my son, assuredly.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b050_01__wh_ch02_b050\",\n      \"mention_id\": \"m_wh_ch02_b050_01\",\n      \"block_id\": \"wh_ch02_b050\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"this young man\",\n      \"quote_context\": \"“And this young man is—”\",\n      \"hint_entity_id\": \"ent_hareton_earnshaw\",\n      \"source_artifact\": \"lexicon/wb_wh_ch02_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b053_01__wh_ch02_b053\",\n      \"mention_id\": \"m_wh_ch02_b053_01\",\n      \"block_id\": \"wh_ch02_b053\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Hareton Earnshaw\",\n      \"quote_context\": \"“My name is Hareton Earnshaw,” growled the other; “and I’d counsel you to respect it!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b058_01__wh_ch02_b058\",\n      \"mention_id\": \"m_wh_ch02_b058_01\",\n      \"block_id\": \"wh_ch02_b058\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Hareton\",\n      \"quote_context\": \"“Hareton, drive those dozen sheep into the barn porch. They’ll be covered if left in the fold all night: and put a plank before them,” said Heathcliff.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b076_02__wh_ch02_b076\",\n      \"mention_id\": \"m_wh_ch02_b076_02\",\n      \"block_id\": \"wh_ch02_b076\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Hareton\",\n      \"quote_context\": \"“I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b083_01__wh_ch02_b083\",\n      \"mention_id\": \"m_wh_ch02_b083_01\",\n      \"block_id\": \"wh_ch02_b083\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Hareton\",\n      \"quote_context\": \"“Not at your command!” retorted Hareton. “If you set store on him, you’d better be quiet.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b088_02__wh_ch02_b088\",\n      \"mention_id\": \"m_wh_ch02_b088_02\",\n      \"block_id\": \"wh_ch02_b088\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Hareton\",\n      \"quote_context\": \"On opening the little door, two hairy monsters flew at my throat, bearing me down, and extinguishing the light; while a mingled guffaw from Heathcliff and Hareton put the copestone on my rage and humiliation. Fortunately, the beasts seemed more bent on stretching their paws, and yawning, and flourishing their tails, than devouring me alive; but they would su\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b061_01__wh_ch02_b061\",\n      \"mention_id\": \"m_wh_ch02_b061_01\",\n      \"block_id\": \"wh_ch02_b061\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the aged rascal\",\n      \"quote_context\": \"I imagined, for a moment, that this piece of eloquence was addressed to me; and, sufficiently enraged, stepped towards the aged rascal with an intention of kicking him out of the door. Mrs. Heathcliff, however, checked me by her answer.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b063_01__wh_ch02_b063\",\n      \"mention_id\": \"m_wh_ch02_b063_01\",\n      \"block_id\": \"wh_ch02_b063\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the elder\",\n      \"quote_context\": \"“Oh, wicked, wicked!” gasped the elder; “may the Lord deliver us from evil!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b071_01__wh_ch02_b071\",\n      \"mention_id\": \"m_wh_ch02_b071_01\",\n      \"block_id\": \"wh_ch02_b071\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Earnshaw\",\n      \"quote_context\": \"“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b079_01__wh_ch02_b079\",\n      \"mention_id\": \"m_wh_ch02_b079_01\",\n      \"block_id\": \"wh_ch02_b079\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Earnshaw\",\n      \"quote_context\": \"With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b071_02__wh_ch02_b071\",\n      \"mention_id\": \"m_wh_ch02_b071_02\",\n      \"block_id\": \"wh_ch02_b071\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Zillah\",\n      \"quote_context\": \"“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b089_02__wh_ch02_b089\",\n      \"mention_id\": \"m_wh_ch02_b089_02\",\n      \"block_id\": \"wh_ch02_b089\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Zillah\",\n      \"quote_context\": \"colded. I don’t know what would have concluded the scene, had there not been one person at hand rather more rational than myself, and more benevolent than my entertainer. This was Zillah, the stout housewife; who at length issued forth to inquire into the nature of the uproar. She thought that some of them had been laying violent hands on me; and, not daring\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b092_01__wh_ch02_b092\",\n      \"mention_id\": \"m_wh_ch02_b092_01\",\n      \"block_id\": \"wh_ch02_b092\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Zillah\",\n      \"quote_context\": \"I was sick exceedingly, and dizzy, and faint; and thus compelled perforce to accept lodgings under his roof. He told Zillah to give me a glass of brandy, and then passed on to the inner room; while she condoled with me on my sorry predicament, and having obeyed his orders, whereby I was somewhat revived, ushered me to bed.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_013.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b078_01__wh_ch02_b078\",\n      \"mention_id\": \"m_wh_ch02_b078_01\",\n      \"block_id\": \"wh_ch02_b078\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"the unmannerly wretch\",\n      \"quote_context\": \"“No, no! A stranger is a stranger, be he rich or poor: it will not suit me to permit any one the range of the place while I am off guard!” said the unmannerly wretch.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b088_03__wh_ch02_b088\",\n      \"mention_id\": \"m_wh_ch02_b088_03\",\n      \"block_id\": \"wh_ch02_b088\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"King Lear\",\n      \"quote_context\": \" alive; but they would suffer no resurrection, and I was forced to lie till their malignant masters pleased to deliver me: then, hatless and trembling with wrath, I ordered the miscreants to let me out—on their peril to keep me one minute longer—with several incoherent threats of retaliation that, in their indefinite depth of virulency, smacked of King Lear.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch02_b090_01__wh_ch02_b090\",\n      \"mention_id\": \"m_wh_ch02_b090_01\",\n      \"block_id\": \"wh_ch02_b090\",\n      \"chapter_id\": \"wh_ch02\",\n      \"surface\": \"Mr. Earnshaw\",\n      \"quote_context\": \"“Well, Mr. Earnshaw,” she cried, “I wonder what you’ll have agait next? Are we going to murder folk on our very door-stones? I see this house will never do for me—look at t’ poor lad, he’s fair choking! Wisht, wisht; you mun’n’t go on so. Come in, and I’ll cure that: there now, hold ye still.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch02_012.json\"\n    }\n  ],\n  \"prior_groups\": [\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b002_01_wh_ch01_b002\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b002_01__wh_ch01_b002\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b003_01_wh_ch01_b003\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b003_01__wh_ch01_b003\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b008_01_wh_ch01_b008\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b008_01__wh_ch01_b008\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b010_01_wh_ch01_b010\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b010_01__wh_ch01_b010\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b011_01_wh_ch01_b011\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b011_01__wh_ch01_b011\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b012_01_wh_ch01_b012\",\n      \"canonical_surface\": \"Hareton Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b012_01__wh_ch01_b012\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b014_01_wh_ch01_b014\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b014_01__wh_ch01_b014\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b018_01_wh_ch01_b018\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b018_01__wh_ch01_b018\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b019_01_wh_ch01_b019\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b019_01__wh_ch01_b019\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b020_01_wh_ch01_b020\",\n      \"canonical_surface\": \"Mr. Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b020_01__wh_ch01_b020\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b026_01_wh_ch01_b026\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b026_01__wh_ch01_b026\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_ent_mr_heathcliff\",\n      \"canonical_surface\": \"the surly owner\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b012_02__wh_ch01_b012\",\n        \"atom_m_wh_ch01_b017_01__wh_ch01_b017\",\n        \"atom_m_wh_ch01_b019_02__wh_ch01_b019\",\n        \"atom_m_wh_ch01_b020_04__wh_ch01_b020\"\n      ]\n    }\n  ],\n  \"identity_hints\": [\n    {\n      \"chapter_id\": \"wh_ch02\",\n      \"narration_frame_segments\": [\n        {\n          \"narrator_ref\": \"ent_mr_lockwood\",\n          \"block_range\": [\n            \"wh_ch02_b002\",\n            \"wh_ch02_b092\"\n          ],\n          \"story_time_label\": \"frame_present\"\n        }\n      ],\n      \"relation_event_summary\": [\n        {\n          \"pair\": [\n            \"ent_joseph\",\n            \"ent_mr_lockwood\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch02_b005_01\",\n            \"e_wh_ch02_b005_02\",\n            \"e_wh_ch02_b007_01\",\n            \"e_wh_ch02_b008_01\",\n            \"e_wh_ch02_b060_01\"\n          ],\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mr_lockwood\",\n            \"ent_mrs_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch02_b011_01\",\n            \"e_wh_ch02_b015_01\",\n            \"e_wh_ch02_b018_01\",\n            \"e_wh_ch02_b020_01\",\n            \"e_wh_ch02_b022_01\",\n            \"e_wh_ch02_b023_01\",\n            \"e_wh_ch02_b024_01\",\n            \"e_wh_ch02_b026_01\",\n            \"e_wh_ch02_b027_01\",\n            \"e_wh_ch02_b066_01\",\n            \"e_wh_ch02_b067_01\",\n            \"e_wh_ch02_b069_01\",\n            \"e_wh_ch02_b070_01\",\n            \"e_wh_ch02_b071_01\",\n            \"e_wh_ch02_b082_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch02_b082\",\n            \"note\": \"after repeated scorn, she briefly intercedes for his safety\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_the_young_man\",\n            \"ent_mr_lockwood\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch02_b013_01\",\n            \"e_wh_ch02_b029_01\",\n            \"e_wh_ch02_b048_01\"\n          ],\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_heathcliff\",\n            \"ent_mr_lockwood\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch02_b030_01\",\n            \"e_wh_ch02_b031_01\",\n            \"e_wh_ch02_b038_02\",\n            \"e_wh_ch02_b049_01\",\n            \"e_wh_ch02_b076_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch02_b076\",\n            \"note\": \"hostility sharpens when Heathcliff refuses accommodation and safe guidance\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_heathcliff\",\n            \"ent_mrs_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch02_b037_01\",\n            \"e_wh_ch02_b038_01\",\n            \"e_wh_ch02_b046_01\",\n            \"e_wh_ch02_b046_02\"\n          ],\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_hareton_earnshaw\",\n            \"ent_mr_lockwood\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch02_b053_01\",\n            \"e_wh_ch02_b080_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch02_b080\",\n            \"note\": \"after earlier aggression, Hareton momentarily offers to guide Lockwood\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_heathcliff\",\n            \"ent_hareton\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch02_b058_01\",\n            \"e_wh_ch02_b081_01\"\n          ],\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mrs_heathcliff\",\n            \"ent_hareton\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch02_b084_01\"\n          ],\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_zillah\",\n            \"ent_mr_lockwood\"\n          ],\n          \"observed_valence_hint\": \"positive\",\n          \"event_ids\": [\n            \"e_wh_ch02_b091_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch02_b089\",\n            \"note\": \"Zillah emerges as the first practically helpful figure toward Lockwood\"\n          },\n          \"status\": \"evidence_only\"\n        }\n      ],\n      \"translator_relevant_facts\": [\n        {\n          \"fact_type\": \"narrator\",\n          \"fact\": \"The chapter is narrated throughout by Lockwood in first person, with ironic self-regard and frequent retrospective misreadings.\",\n          \"block_evidence\": [\n            \"wh_ch02_b002\",\n            \"wh_ch02_b045\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Joseph speaks in heavy Yorkshire dialect, requiring marked nonstandard rendering distinct from the others' speech.\",\n          \"block_evidence\": [\n            \"wh_ch02_b005\",\n            \"wh_ch02_b007\",\n            \"wh_ch02_b060\",\n            \"wh_ch02_b087\"\n          ]\n        },\n        {\n          \"fact_type\": \"register\",\n          \"fact\": \"Mrs. Heathcliff's speech to Lockwood is clipped, cold, and often contemptuous; her tone shifts only briefly toward practical concern.\",\n          \"block_evidence\": [\n            \"wh_ch02_b016\",\n            \"wh_ch02_b022\",\n            \"wh_ch02_b024\",\n            \"wh_ch02_b082\"\n          ]\n        },\n        {\n          \"fact_type\": \"register\",\n          \"fact\": \"Heathcliff's speech mixes curt command with savage sarcasm, especially in family interactions.\",\n          \"block_evidence\": [\n            \"wh_ch02_b038\",\n            \"wh_ch02_b041\",\n            \"wh_ch02_b076\",\n            \"wh_ch02_b081\"\n          ]\n        },\n        {\n          \"fact_type\": \"status\",\n          \"fact\": \"A key correction of address occurs: the young woman called 'Mrs. Heathcliff' is not Heathcliff's wife but his daughter-in-law, and her husband is dead.\",\n          \"block_evidence\": [\n            \"wh_ch02_b042\",\n            \"wh_ch02_b046\",\n            \"wh_ch02_b049\"\n          ]\n        },\n        {\n          \"fact_type\": \"status\",\n          \"fact\": \"The rough 'young man' is later identified by name as Hareton Earnshaw, not a servant in straightforward terms.\",\n          \"block_evidence\": [\n            \"wh_ch02_b029\",\n            \"wh_ch02_b053\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"The house is physically hard to enter and leave during a snowstorm, reinforcing enclosure and danger in staging and spatial references.\",\n          \"block_evidence\": [\n            \"wh_ch02_b003\",\n            \"wh_ch02_b056\",\n            \"wh_ch02_b088\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Lockwood makes a literary allusion to King Lear to characterize his own furious, incoherent threats.\",\n          \"block_evidence\": [\n            \"wh_ch02_b088\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"dry_run_note\": \"This scaffold uses provisional prior groups only for token sizing. They are not identity verdicts and will not be published.\"\n}"
+    }
+  ]
+}

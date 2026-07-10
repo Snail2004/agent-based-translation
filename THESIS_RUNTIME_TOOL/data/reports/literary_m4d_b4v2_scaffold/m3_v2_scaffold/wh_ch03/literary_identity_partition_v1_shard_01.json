@@ -1,0 +1,611 @@
+{
+  "zero_api": true,
+  "scope": "M3_asof_wh_ch03",
+  "chapter_id": "wh_ch03",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 1,
+  "shard_count": 2,
+  "items": [
+    {
+      "atom_id": "atom_m_wh_ch03_b002_02__wh_ch03_b002",
+      "mention_id": "m_wh_ch03_b002_02",
+      "block_id": "wh_ch03_b002",
+      "chapter_id": "wh_ch03",
+      "surface": "her master",
+      "quote_context": "While leading the way upstairs, she recommended that I should hide the candle, and not make a noise; for her master had an odd notion about the chamber she would put me in, and never let anybody lodge there willingly. I asked the reason. She did not know, she answered: she had only lived there a year or two; and they had so many queer goings on, she could no",
+      "hint_entity_id": "ent_hindley",
+      "source_artifact": "lexicon/wb_wh_ch03_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b004_01__wh_ch03_b004",
+      "mention_id": "m_wh_ch03_b004_01",
+      "block_id": "wh_ch03_b004",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "I slid back the panelled sides, got in with my light, pulled them together again, and felt secure against the vigilance of Heathcliff, and every one else.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b006_02__wh_ch03_b006",
+      "mention_id": "m_wh_ch03_b006_02",
+      "block_id": "wh_ch03_b006",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "In vapid listlessness I leant my head against the window, and continued spelling over Catherine Earnshaw—Heathcliff—Linton, till my eyes closed; but they had not rested five minutes when a glare of white letters started from the dark, as vivid as spectres—the air swarmed with Catherines; and rousing myself to dispel the obtrusive name, I discovered my candle",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b009_02__wh_ch03_b009",
+      "mention_id": "m_wh_ch03_b009_02",
+      "block_id": "wh_ch03_b009",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "“An awful Sunday,” commenced the paragraph beneath. “I wish my father were back again. Hindley is a detestable substitute—his conduct to Heathcliff is atrocious—H. and I are going to rebel—we took our initiatory step this evening.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b014_03__wh_ch03_b014",
+      "mention_id": "m_wh_ch03_b014_03",
+      "block_id": "wh_ch03_b014",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b018_02__wh_ch03_b018",
+      "mention_id": "m_wh_ch03_b018_02",
+      "block_id": "wh_ch03_b018",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "“How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we br",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b045_01__wh_ch03_b045",
+      "mention_id": "m_wh_ch03_b045_01",
+      "block_id": "wh_ch03_b045",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "Heathcliff stood near the entrance, in his shirt and trousers; with a candle dripping over his fingers, and his face as white as the wall behind him. The first creak of the oak startled him like an electric shock: the light leaped from his hold to a distance of some feet, and his agitation was so extreme, that he could hardly pick it up.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b049_01__wh_ch03_b049",
+      "mention_id": "m_wh_ch03_b049_01",
+      "block_id": "wh_ch03_b049",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "“What do you mean?” asked Heathcliff, “and what are you doing? Lie down and finish out the night, since you are here; but, for Heaven’s sake! don’t repeat that horrid noise: nothing could excuse it, unless you were having your throat cut!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b052_01__wh_ch03_b052",
+      "mention_id": "m_wh_ch03_b052_01",
+      "block_id": "wh_ch03_b052",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "“What can you mean by talking in this way to me! ” thundered Heathcliff with savage vehemence. “How—how dare you, under my roof?—God! he’s mad to speak so!” And he struck his forehead with rage.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b053_02__wh_ch03_b053",
+      "mention_id": "m_wh_ch03_b053_02",
+      "block_id": "wh_ch03_b053",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "er heard the appellation of “Catherine Linton” before, but reading it often over produced an impression which personified itself when I had no longer my imagination under control. Heathcliff gradually fell back into the shelter of the bed, as I spoke; finally sitting down almost concealed behind it. I guessed, however, by his irregular and intercepted breath",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b056_01__wh_ch03_b056",
+      "mention_id": "m_wh_ch03_b056_01",
+      "block_id": "wh_ch03_b056",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "“Delightful company!” muttered Heathcliff. “Take the candle, and go where you please. I shall join you directly. Keep out of the yard, though, the dogs are unchained; and the house—Juno mounts sentinel there, and—nay, you can only ramble about the steps and passages. But, away with you! I’ll come in two minutes!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b061_03__wh_ch03_b061",
+      "mention_id": "m_wh_ch03_b061_03",
+      "block_id": "wh_ch03_b061",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "It opened into the house, where the females were already astir; Zillah urging flakes of flame up the chimney with a colossal bellows; and Mrs. Heathcliff, kneeling on the hearth, reading a book by the aid of the blaze. She held her hand interposed between the furnace-heat and her eyes, and seemed absorbed in her occupation; desisting from it only to chide th",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_015.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b064_01__wh_ch03_b064",
+      "mention_id": "m_wh_ch03_b064_01",
+      "block_id": "wh_ch03_b064",
+      "chapter_id": "wh_ch03",
+      "surface": "Heathcliff",
+      "quote_context": "Heathcliff lifted his hand, and the speaker sprang to a safer distance, obviously acquainted with its weight. Having no desire to be entertained by a cat-and-dog combat, I stepped forward briskly, as if eager to partake the warmth of the hearth, and innocent of any knowledge of the interrupted dispute. Each had enough decorum to suspend further hostilities: ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_016.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b005_01__wh_ch03_b005",
+      "mention_id": "m_wh_ch03_b005_01",
+      "block_id": "wh_ch03_b005",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine Earnshaw",
+      "quote_context": "The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b006_01__wh_ch03_b006",
+      "mention_id": "m_wh_ch03_b006_01",
+      "block_id": "wh_ch03_b006",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine Earnshaw",
+      "quote_context": "In vapid listlessness I leant my head against the window, and continued spelling over Catherine Earnshaw—Heathcliff—Linton, till my eyes closed; but they had not rested five minutes when a glare of white letters started from the dark, as vivid as spectres—the air swarmed with Catherines; and rousing myself to dispel the obtrusive name, I discovered my candle",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b007_01__wh_ch03_b007",
+      "mention_id": "m_wh_ch03_b007_01",
+      "block_id": "wh_ch03_b007",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine Earnshaw",
+      "quote_context": "I snuffed it off, and, very ill at ease under the influence of cold and lingering nausea, sat up and spread open the injured tome on my knee. It was a Testament, in lean type, and smelling dreadfully musty: a fly-leaf bore the inscription—“Catherine Earnshaw, her book,” and a date some quarter of a century back.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b005_02__wh_ch03_b005",
+      "mention_id": "m_wh_ch03_b005_02",
+      "block_id": "wh_ch03_b005",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine Heathcliff",
+      "quote_context": "The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b005_03__wh_ch03_b005",
+      "mention_id": "m_wh_ch03_b005_03",
+      "block_id": "wh_ch03_b005",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine Linton",
+      "quote_context": "The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b031_01__wh_ch03_b031",
+      "mention_id": "m_wh_ch03_b031_01",
+      "block_id": "wh_ch03_b031",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine Linton",
+      "quote_context": "“Catherine Linton,” it replied, shiveringly (why did I think of Linton ? I had read Earnshaw twenty times for Linton)—“I’m come home: I’d lost my way on the moor!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b050_05__wh_ch03_b050",
+      "mention_id": "m_wh_ch03_b050_05",
+      "block_id": "wh_ch03_b050",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine Linton",
+      "quote_context": "!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked little soul! She told me she had been walking the earth these twenty years: a just p",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b053_01__wh_ch03_b053",
+      "mention_id": "m_wh_ch03_b053_01",
+      "block_id": "wh_ch03_b053",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine Linton",
+      "quote_context": " resent this language or pursue my explanation; but he seemed so powerfully affected that I took pity and proceeded with my dreams; affirming I had never heard the appellation of “Catherine Linton” before, but reading it often over produced an impression which personified itself when I had no longer my imagination under control. Heathcliff gradually fell bac",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b006_03__wh_ch03_b006",
+      "mention_id": "m_wh_ch03_b006_03",
+      "block_id": "wh_ch03_b006",
+      "chapter_id": "wh_ch03",
+      "surface": "Linton",
+      "quote_context": "In vapid listlessness I leant my head against the window, and continued spelling over Catherine Earnshaw—Heathcliff—Linton, till my eyes closed; but they had not rested five minutes when a glare of white letters started from the dark, as vivid as spectres—the air swarmed with Catherines; and rousing myself to dispel the obtrusive name, I discovered my candle",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_001.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b031_02__wh_ch03_b031",
+      "mention_id": "m_wh_ch03_b031_02",
+      "block_id": "wh_ch03_b031",
+      "chapter_id": "wh_ch03",
+      "surface": "Linton",
+      "quote_context": "“Catherine Linton,” it replied, shiveringly (why did I think of Linton ? I had read Earnshaw twenty times for Linton)—“I’m come home: I’d lost my way on the moor!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b008_01__wh_ch03_b008",
+      "mention_id": "m_wh_ch03_b008_01",
+      "block_id": "wh_ch03_b008",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine’s",
+      "quote_context": "I shut it, and took up another and another, till I had examined all. Catherine’s library was select, and its state of dilapidation proved it to have been well used, though not altogether for a legitimate purpose: scarcely one chapter had escaped a pen-and-ink commentary—at least the appearance of one—covering every morsel of blank that the printer had left. ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b051_02__wh_ch03_b051",
+      "mention_id": "m_wh_ch03_b051_02",
+      "block_id": "wh_ch03_b051",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine’s",
+      "quote_context": "Scarcely were these words uttered when I recollected the association of Heathcliff’s with Catherine’s name in the book, which had completely slipped from my memory, till thus awakened. I blushed at my inconsideration: but, without showing further consciousness of the offence, I hastened to add—“The truth is, sir, I passed the first part of the night in—” Her",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b008_02__wh_ch03_b008",
+      "mention_id": "m_wh_ch03_b008_02",
+      "block_id": "wh_ch03_b008",
+      "chapter_id": "wh_ch03",
+      "surface": "Joseph",
+      "quote_context": "iary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b010_01__wh_ch03_b010",
+      "mention_id": "m_wh_ch03_b010_01",
+      "block_id": "wh_ch03_b010",
+      "chapter_id": "wh_ch03",
+      "surface": "Joseph",
+      "quote_context": "“All day had been flooding with rain; we could not go to church, so Joseph must needs get up a congregation in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b011_03__wh_ch03_b011",
+      "mention_id": "m_wh_ch03_b011_03",
+      "block_id": "wh_ch03_b011",
+      "chapter_id": "wh_ch03",
+      "surface": "Joseph",
+      "quote_context": "ke two babies, kissing and talking nonsense by the hour—foolish palaver that we should be ashamed of. We made ourselves as snug as our means allowed in the arch of the dresser. I had just fastened our pinafores together, and hung them up for a curtain, when in comes Joseph, on an errand from the stables. He tears down my handiwork, boxes my ears, and croaks:",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b021_01__wh_ch03_b021",
+      "mention_id": "m_wh_ch03_b021_01",
+      "block_id": "wh_ch03_b021",
+      "chapter_id": "wh_ch03",
+      "surface": "Joseph",
+      "quote_context": "I began to dream, almost before I ceased to be sensible of my locality. I thought it was morning; and I had set out on my way home, with Joseph for a guide. The snow lay yards deep in our road; and, as we floundered on, my companion wearied me with constant reproaches that I had not brought a pilgrim’s staff: telling me that I could never get into the house ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b023_01__wh_ch03_b023",
+      "mention_id": "m_wh_ch03_b023_01",
+      "block_id": "wh_ch03_b023",
+      "chapter_id": "wh_ch03",
+      "surface": "Joseph",
+      "quote_context": "Oh, how weary I grew. How I writhed, and yawned, and nodded, and revived! How I pinched and pricked myself, and rubbed my eyes, and stood up, and sat down again, and nudged Joseph to inform me if he would ever have done. I was condemned to hear all out: finally, he reached the “ First of the Seventy-First .” At that crisis, a sudden inspiration descended on ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b026_01__wh_ch03_b026",
+      "mention_id": "m_wh_ch03_b026_01",
+      "block_id": "wh_ch03_b026",
+      "chapter_id": "wh_ch03",
+      "surface": "Joseph",
+      "quote_context": "th that concluding word, the whole assembly, exalting their pilgrim’s staves, rushed round me in a body; and I, having no weapon to raise in self-defence, commenced grappling with Joseph, my nearest and most ferocious assailant, for his. In the confluence of the multitude, several clubs crossed; blows, aimed at me, fell on other sconces. Presently the whole ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b059_01__wh_ch03_b059",
+      "mention_id": "m_wh_ch03_b059_01",
+      "block_id": "wh_ch03_b059",
+      "chapter_id": "wh_ch03",
+      "surface": "Joseph",
+      "quote_context": "ircle, nearly enclosed the hearth; on one of these I stretched myself, and Grimalkin mounted the other. We were both of us nodding ere any one invaded our retreat, and then it was Joseph, shuffling down a wooden ladder that vanished in the roof, through a trap: the ascent to his garret, I suppose. He cast a sinister look at the little flame which I had entic",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_014.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b008_03__wh_ch03_b008",
+      "mention_id": "m_wh_ch03_b008_03",
+      "block_id": "wh_ch03_b008",
+      "chapter_id": "wh_ch03",
+      "surface": "the unknown Catherine",
+      "quote_context": "iary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b009_01__wh_ch03_b009",
+      "mention_id": "m_wh_ch03_b009_01",
+      "block_id": "wh_ch03_b009",
+      "chapter_id": "wh_ch03",
+      "surface": "Hindley",
+      "quote_context": "“An awful Sunday,” commenced the paragraph beneath. “I wish my father were back again. Hindley is a detestable substitute—his conduct to Heathcliff is atrocious—H. and I are going to rebel—we took our initiatory step this evening.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_002.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b010_02__wh_ch03_b010",
+      "mention_id": "m_wh_ch03_b010_02",
+      "block_id": "wh_ch03_b010",
+      "chapter_id": "wh_ch03",
+      "surface": "Hindley",
+      "quote_context": "“All day had been flooding with rain; we could not go to church, so Joseph must needs get up a congregation in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b015_01__wh_ch03_b015",
+      "mention_id": "m_wh_ch03_b015_01",
+      "block_id": "wh_ch03_b015",
+      "chapter_id": "wh_ch03",
+      "surface": "Hindley",
+      "quote_context": "“Hindley hurried up from his paradise on the hearth, and seizing one of us by the collar, and the other by the arm, hurled both into the back-kitchen; where, Joseph asseverated, ‘owd Nick’ would fetch us as sure as we were living: and, so comforted, we each sought a separate nook to await his advent. I reached this book, and a pot of ink from a shelf, and pu",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b018_01__wh_ch03_b018",
+      "mention_id": "m_wh_ch03_b018_01",
+      "block_id": "wh_ch03_b018",
+      "chapter_id": "wh_ch03",
+      "surface": "Hindley",
+      "quote_context": "“How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we br",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b018_03__wh_ch03_b018",
+      "mention_id": "m_wh_ch03_b018_03",
+      "block_id": "wh_ch03_b018",
+      "chapter_id": "wh_ch03",
+      "surface": "Hindley",
+      "quote_context": "“How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we br",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b010_03__wh_ch03_b010",
+      "mention_id": "m_wh_ch03_b010_03",
+      "block_id": "wh_ch03_b010",
+      "chapter_id": "wh_ch03",
+      "surface": "the unhappy ploughboy",
+      "quote_context": "tion in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we were ranged in a row, on a sack of corn, groaning and shivering, and hoping that Joseph would shiver to",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b011_01__wh_ch03_b011",
+      "mention_id": "m_wh_ch03_b011_01",
+      "block_id": "wh_ch03_b011",
+      "chapter_id": "wh_ch03",
+      "surface": "the tyrant",
+      "quote_context": "“‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, l",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b011_02__wh_ch03_b011",
+      "mention_id": "m_wh_ch03_b011_02",
+      "block_id": "wh_ch03_b011",
+      "chapter_id": "wh_ch03",
+      "surface": "Frances",
+      "quote_context": "“‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, l",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b012_01__wh_ch03_b012",
+      "mention_id": "m_wh_ch03_b012_01",
+      "block_id": "wh_ch03_b012",
+      "chapter_id": "wh_ch03",
+      "surface": "T’ maister",
+      "quote_context": "“‘T’ maister nobbut just buried, and Sabbath not o’ered, und t’ sound o’ t’ gospel still i’ yer lugs, and ye darr be laiking! Shame on ye! sit ye down, ill childer! there’s good books eneugh if ye’ll read ’em: sit ye down, and think o’ yer sowls!’",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b014_01__wh_ch03_b014",
+      "mention_id": "m_wh_ch03_b014_01",
+      "block_id": "wh_ch03_b014",
+      "chapter_id": "wh_ch03",
+      "surface": "Maister Hindley",
+      "quote_context": "“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b014_02__wh_ch03_b014",
+      "mention_id": "m_wh_ch03_b014_02",
+      "block_id": "wh_ch03_b014",
+      "chapter_id": "wh_ch03",
+      "surface": "Miss Cathy",
+      "quote_context": "“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b014_04__wh_ch03_b014",
+      "mention_id": "m_wh_ch03_b014_04",
+      "block_id": "wh_ch03_b014",
+      "chapter_id": "wh_ch03",
+      "surface": "the owd man",
+      "quote_context": "“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b015_02__wh_ch03_b015",
+      "mention_id": "m_wh_ch03_b015_02",
+      "block_id": "wh_ch03_b015",
+      "chapter_id": "wh_ch03",
+      "surface": "the surly old man",
+      "quote_context": "ve got the time on with writing for twenty minutes; but my companion is impatient, and proposes that we should appropriate the dairywoman’s cloak, and have a scamper on the moors, under its shelter. A pleasant suggestion—and then, if the surly old man come in, he may believe his prophecy verified—we cannot be damper, or colder, in the rain than we are here.”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b017_01__wh_ch03_b017",
+      "mention_id": "m_wh_ch03_b017_01",
+      "block_id": "wh_ch03_b017",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine",
+      "quote_context": "I suppose Catherine fulfilled her project, for the next sentence took up another subject: she waxed lachrymose.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_004.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b057_03__wh_ch03_b057",
+      "mention_id": "m_wh_ch03_b057_03",
+      "block_id": "wh_ch03_b057",
+      "chapter_id": "wh_ch03",
+      "surface": "Catherine",
+      "quote_context": "ursting, as he pulled at it, into an uncontrollable passion of tears. “Come in! come in!” he sobbed. “Cathy, do come. Oh, do— once more! Oh! my heart’s darling! hear me this time, Catherine, at last!” The spectre showed a spectre’s ordinary caprice: it gave no sign of being; but the snow and wind whirled wildly through, even reaching my station, and blowing ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_013.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b018_04__wh_ch03_b018",
+      "mention_id": "m_wh_ch03_b018_04",
+      "block_id": "wh_ch03_b018",
+      "chapter_id": "wh_ch03",
+      "surface": "our father",
+      "quote_context": "’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we break his orders. He has been blaming our father (how dared he?) for treating H. too liberally; and swears he will reduce him to his right place—”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b020_01__wh_ch03_b020",
+      "mention_id": "m_wh_ch03_b020_01",
+      "block_id": "wh_ch03_b020",
+      "chapter_id": "wh_ch03",
+      "surface": "Jabez Branderham",
+      "quote_context": " page: my eye wandered from manuscript to print. I saw a red ornamented title—“Seventy Times Seven, and the First of the Seventy-First. A Pious Discourse delivered by the Reverend Jabez Branderham, in the Chapel of Gimmerden Sough.” And while I was, half-consciously, worrying my brain to guess what Jabez Branderham would make of his subject, I sank back in b",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b021_02__wh_ch03_b021",
+      "mention_id": "m_wh_ch03_b021_02",
+      "block_id": "wh_ch03_b021",
+      "chapter_id": "wh_ch03",
+      "surface": "Jabez Branderham",
+      "quote_context": "t absurd that I should need such a weapon to gain admittance into my own residence. Then a new idea flashed across me. I was not going there: we were journeying to hear the famous Jabez Branderham preach, from the text—“Seventy Times Seven;” and either Joseph, the preacher, or I had committed the “First of the Seventy-First,” and were to be publicly exposed ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b023_02__wh_ch03_b023",
+      "mention_id": "m_wh_ch03_b023_02",
+      "block_id": "wh_ch03_b023",
+      "chapter_id": "wh_ch03",
+      "surface": "Jabez Branderham",
+      "quote_context": "nd rubbed my eyes, and stood up, and sat down again, and nudged Joseph to inform me if he would ever have done. I was condemned to hear all out: finally, he reached the “ First of the Seventy-First .” At that crisis, a sudden inspiration descended on me; I was moved to rise and denounce Jabez Branderham as the sinner of the sin that no Christian need pardon.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b022_01__wh_ch03_b022",
+      "mention_id": "m_wh_ch03_b022_01",
+      "block_id": "wh_ch03_b022",
+      "chapter_id": "wh_ch03",
+      "surface": "the clergyman",
+      "quote_context": "evated hollow, near a swamp, whose peaty moisture is said to answer all the purposes of embalming on the few corpses deposited there. The roof has been kept whole hitherto; but as the clergyman’s stipend is only twenty pounds per annum, and a house with two rooms, threatening speedily to determine into one, no clergyman will undertake the duties of pastor: e",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b022_02__wh_ch03_b022",
+      "mention_id": "m_wh_ch03_b022_02",
+      "block_id": "wh_ch03_b022",
+      "chapter_id": "wh_ch03",
+      "surface": "Jabez",
+      "quote_context": "es of pastor: especially as it is currently reported that his flock would rather let him starve than increase the living by one penny from their own pockets. However, in my dream, Jabez had a full and attentive congregation; and he preached—good God! what a sermon; divided into four hundred and ninety parts, each fully equal to an ordinary address from the p",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b024_01__wh_ch03_b024",
+      "mention_id": "m_wh_ch03_b024_01",
+      "block_id": "wh_ch03_b024",
+      "chapter_id": "wh_ch03",
+      "surface": "Jabez",
+      "quote_context": "“Sir,” I exclaimed, “sitting here within these four walls, at one stretch, I have endured and forgiven the four hundred and ninety heads of your discourse. Seventy times seven times have I plucked up my hat and been about to depart—Seventy times seven times have you preposterously forced me to resume my seat. The four hundred and ninety-first is too much. Fe",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b025_01__wh_ch03_b025",
+      "mention_id": "m_wh_ch03_b025_01",
+      "block_id": "wh_ch03_b025",
+      "chapter_id": "wh_ch03",
+      "surface": "Jabez",
+      "quote_context": "“ Thou art the Man! ” cried Jabez, after a solemn pause, leaning over his cushion. “Seventy times seven times didst thou gapingly contort thy visage—seventy times seven did I take counsel with my soul—Lo, this is human weakness: this also may be absolved! The First of the Seventy-First is come. Brethren, execute upon him the judgment written. Such honour hav",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b022_03__wh_ch03_b022",
+      "mention_id": "m_wh_ch03_b022_03",
+      "block_id": "wh_ch03_b022",
+      "chapter_id": "wh_ch03",
+      "surface": "the brother",
+      "quote_context": " fully equal to an ordinary address from the pulpit, and each discussing a separate sin! Where he searched for them, I cannot tell. He had his private manner of interpreting the phrase, and it seemed necessary the brother should sin different sins on every occasion. They were of the most curious character: odd transgressions that I never imagined previously.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b022_04__wh_ch03_b022",
+      "mention_id": "m_wh_ch03_b022_04",
+      "block_id": "wh_ch03_b022",
+      "chapter_id": "wh_ch03",
+      "surface": "the flock",
+      "quote_context": "We came to the chapel. I have passed it really in my walks, twice or thrice; it lies in a hollow, between two hills: an elevated hollow, near a swamp, whose peaty moisture is said to answer all the purposes of embalming on the few corpses deposited there. The roof has been kept whole hitherto; but as the clergyman’s stipend is only twenty pounds per annum, a",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch03_b026_02__wh_ch03_b026",
+      "mention_id": "m_wh_ch03_b026_02",
+      "block_id": "wh_ch03_b026",
+      "chapter_id": "wh_ch03",
+      "surface": "Branderham",
+      "quote_context": " clubs crossed; blows, aimed at me, fell on other sconces. Presently the whole chapel resounded with rappings and counter rappings: every man’s hand was against his neighbour; and Branderham, unwilling to remain idle, poured forth his zeal in a shower of loud taps on the boards of the pulpit, which responded so smartly that, at last, to my unspeakable relief",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch03_007.json"
+    }
+  ],
+  "prompt_tokens_est": 13881,
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_identity_partition_v1.\nYou are resolving character identity for one chapter of a long book. Each ATOM is one mention occurrence: {atom_id, block_id, surface, quote_context, hint_entity_id}. PRIOR_GROUPS are identity groups already established in earlier chapters: {entity_id, canonical_surface, referent_kind, member_summary}. IDENTITY_HINTS are statements taken from chapter digests; treat them as leads to check against the quoted text, never as evidence by themselves.\nAssign EVERY listed atom to exactly one group. A group is one real-world referent.\n- An honorific difference (Mr./Mrs./Miss/young/old) is NOT evidence of identity: a wife, a widow and a father-in-law can share one surname; a title like \"the master\" can pass between people inside one chapter.\n- The SAME surface may denote DIFFERENT people in different scenes or narration frames; judge each atom from its own quote_context.\n- To extend a prior group, set reuse_entity_id to its entity_id. Reopen or split a prior group ONLY with a quote contradicting its unity, recorded in evidence with supports=different_identity.\n- Prefer SPLIT when unsure — merging two people is worse than leaving two entities.\n- referent_kind: person | place | group_reference | literary_allusion | unknown. A coordination surface naming two people at once counts as group_reference, never a person.\n- Output JSON only: {\"groups\": [{\"group_key\": string, \"reuse_entity_id\": string or null, \"referent_kind\": string, \"canonical_atom_id\": string, \"member_atom_ids\": [strings], \"status\": \"resolved\" | \"uncertain\" | \"quarantine\", \"alias_bindings\": [{\"surface\": string, \"member_atom_ids\": [strings], \"valid_from_block\": string, \"valid_until_block\": string or null}], \"evidence\": [{\"block_id\": string, \"quote\": string, \"source_atom_ids\": [strings], \"supports\": \"same_identity\" | \"different_identity\"}]}]}\n- Every input atom appears exactly once across all groups. Do NOT invent atom ids, do NOT mint entity ids, do NOT paraphrase quotes — copy them verbatim from the given text. Output nothing but the JSON object."
+    },
+    {
+      "role": "user",
+      "content": "{\n  \"scope\": \"M3_asof_wh_ch03\",\n  \"atoms\": [\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b002_02__wh_ch03_b002\",\n      \"mention_id\": \"m_wh_ch03_b002_02\",\n      \"block_id\": \"wh_ch03_b002\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"her master\",\n      \"quote_context\": \"While leading the way upstairs, she recommended that I should hide the candle, and not make a noise; for her master had an odd notion about the chamber she would put me in, and never let anybody lodge there willingly. I asked the reason. She did not know, she answered: she had only lived there a year or two; and they had so many queer goings on, she could no\",\n      \"hint_entity_id\": \"ent_hindley\",\n      \"source_artifact\": \"lexicon/wb_wh_ch03_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b004_01__wh_ch03_b004\",\n      \"mention_id\": \"m_wh_ch03_b004_01\",\n      \"block_id\": \"wh_ch03_b004\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"I slid back the panelled sides, got in with my light, pulled them together again, and felt secure against the vigilance of Heathcliff, and every one else.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b006_02__wh_ch03_b006\",\n      \"mention_id\": \"m_wh_ch03_b006_02\",\n      \"block_id\": \"wh_ch03_b006\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"In vapid listlessness I leant my head against the window, and continued spelling over Catherine Earnshaw—Heathcliff—Linton, till my eyes closed; but they had not rested five minutes when a glare of white letters started from the dark, as vivid as spectres—the air swarmed with Catherines; and rousing myself to dispel the obtrusive name, I discovered my candle\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b009_02__wh_ch03_b009\",\n      \"mention_id\": \"m_wh_ch03_b009_02\",\n      \"block_id\": \"wh_ch03_b009\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“An awful Sunday,” commenced the paragraph beneath. “I wish my father were back again. Hindley is a detestable substitute—his conduct to Heathcliff is atrocious—H. and I are going to rebel—we took our initiatory step this evening.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b014_03__wh_ch03_b014\",\n      \"mention_id\": \"m_wh_ch03_b014_03\",\n      \"block_id\": \"wh_ch03_b014\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b018_02__wh_ch03_b018\",\n      \"mention_id\": \"m_wh_ch03_b018_02\",\n      \"block_id\": \"wh_ch03_b018\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we br\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b045_01__wh_ch03_b045\",\n      \"mention_id\": \"m_wh_ch03_b045_01\",\n      \"block_id\": \"wh_ch03_b045\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"Heathcliff stood near the entrance, in his shirt and trousers; with a candle dripping over his fingers, and his face as white as the wall behind him. The first creak of the oak startled him like an electric shock: the light leaped from his hold to a distance of some feet, and his agitation was so extreme, that he could hardly pick it up.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b049_01__wh_ch03_b049\",\n      \"mention_id\": \"m_wh_ch03_b049_01\",\n      \"block_id\": \"wh_ch03_b049\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“What do you mean?” asked Heathcliff, “and what are you doing? Lie down and finish out the night, since you are here; but, for Heaven’s sake! don’t repeat that horrid noise: nothing could excuse it, unless you were having your throat cut!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b052_01__wh_ch03_b052\",\n      \"mention_id\": \"m_wh_ch03_b052_01\",\n      \"block_id\": \"wh_ch03_b052\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“What can you mean by talking in this way to me! ” thundered Heathcliff with savage vehemence. “How—how dare you, under my roof?—God! he’s mad to speak so!” And he struck his forehead with rage.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b053_02__wh_ch03_b053\",\n      \"mention_id\": \"m_wh_ch03_b053_02\",\n      \"block_id\": \"wh_ch03_b053\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"er heard the appellation of “Catherine Linton” before, but reading it often over produced an impression which personified itself when I had no longer my imagination under control. Heathcliff gradually fell back into the shelter of the bed, as I spoke; finally sitting down almost concealed behind it. I guessed, however, by his irregular and intercepted breath\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b056_01__wh_ch03_b056\",\n      \"mention_id\": \"m_wh_ch03_b056_01\",\n      \"block_id\": \"wh_ch03_b056\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"“Delightful company!” muttered Heathcliff. “Take the candle, and go where you please. I shall join you directly. Keep out of the yard, though, the dogs are unchained; and the house—Juno mounts sentinel there, and—nay, you can only ramble about the steps and passages. But, away with you! I’ll come in two minutes!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b061_03__wh_ch03_b061\",\n      \"mention_id\": \"m_wh_ch03_b061_03\",\n      \"block_id\": \"wh_ch03_b061\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"It opened into the house, where the females were already astir; Zillah urging flakes of flame up the chimney with a colossal bellows; and Mrs. Heathcliff, kneeling on the hearth, reading a book by the aid of the blaze. She held her hand interposed between the furnace-heat and her eyes, and seemed absorbed in her occupation; desisting from it only to chide th\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_015.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b064_01__wh_ch03_b064\",\n      \"mention_id\": \"m_wh_ch03_b064_01\",\n      \"block_id\": \"wh_ch03_b064\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Heathcliff\",\n      \"quote_context\": \"Heathcliff lifted his hand, and the speaker sprang to a safer distance, obviously acquainted with its weight. Having no desire to be entertained by a cat-and-dog combat, I stepped forward briskly, as if eager to partake the warmth of the hearth, and innocent of any knowledge of the interrupted dispute. Each had enough decorum to suspend further hostilities: \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_016.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b005_01__wh_ch03_b005\",\n      \"mention_id\": \"m_wh_ch03_b005_01\",\n      \"block_id\": \"wh_ch03_b005\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine Earnshaw\",\n      \"quote_context\": \"The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b006_01__wh_ch03_b006\",\n      \"mention_id\": \"m_wh_ch03_b006_01\",\n      \"block_id\": \"wh_ch03_b006\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine Earnshaw\",\n      \"quote_context\": \"In vapid listlessness I leant my head against the window, and continued spelling over Catherine Earnshaw—Heathcliff—Linton, till my eyes closed; but they had not rested five minutes when a glare of white letters started from the dark, as vivid as spectres—the air swarmed with Catherines; and rousing myself to dispel the obtrusive name, I discovered my candle\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b007_01__wh_ch03_b007\",\n      \"mention_id\": \"m_wh_ch03_b007_01\",\n      \"block_id\": \"wh_ch03_b007\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine Earnshaw\",\n      \"quote_context\": \"I snuffed it off, and, very ill at ease under the influence of cold and lingering nausea, sat up and spread open the injured tome on my knee. It was a Testament, in lean type, and smelling dreadfully musty: a fly-leaf bore the inscription—“Catherine Earnshaw, her book,” and a date some quarter of a century back.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b005_02__wh_ch03_b005\",\n      \"mention_id\": \"m_wh_ch03_b005_02\",\n      \"block_id\": \"wh_ch03_b005\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine Heathcliff\",\n      \"quote_context\": \"The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b005_03__wh_ch03_b005\",\n      \"mention_id\": \"m_wh_ch03_b005_03\",\n      \"block_id\": \"wh_ch03_b005\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine Linton\",\n      \"quote_context\": \"The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b031_01__wh_ch03_b031\",\n      \"mention_id\": \"m_wh_ch03_b031_01\",\n      \"block_id\": \"wh_ch03_b031\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine Linton\",\n      \"quote_context\": \"“Catherine Linton,” it replied, shiveringly (why did I think of Linton ? I had read Earnshaw twenty times for Linton)—“I’m come home: I’d lost my way on the moor!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b050_05__wh_ch03_b050\",\n      \"mention_id\": \"m_wh_ch03_b050_05\",\n      \"block_id\": \"wh_ch03_b050\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine Linton\",\n      \"quote_context\": \"!” I returned. “I’m not going to endure the persecutions of your hospitable ancestors again. Was not the Reverend Jabez Branderham akin to you on the mother’s side? And that minx, Catherine Linton, or Earnshaw, or however she was called—she must have been a changeling—wicked little soul! She told me she had been walking the earth these twenty years: a just p\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b053_01__wh_ch03_b053\",\n      \"mention_id\": \"m_wh_ch03_b053_01\",\n      \"block_id\": \"wh_ch03_b053\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine Linton\",\n      \"quote_context\": \" resent this language or pursue my explanation; but he seemed so powerfully affected that I took pity and proceeded with my dreams; affirming I had never heard the appellation of “Catherine Linton” before, but reading it often over produced an impression which personified itself when I had no longer my imagination under control. Heathcliff gradually fell bac\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b006_03__wh_ch03_b006\",\n      \"mention_id\": \"m_wh_ch03_b006_03\",\n      \"block_id\": \"wh_ch03_b006\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Linton\",\n      \"quote_context\": \"In vapid listlessness I leant my head against the window, and continued spelling over Catherine Earnshaw—Heathcliff—Linton, till my eyes closed; but they had not rested five minutes when a glare of white letters started from the dark, as vivid as spectres—the air swarmed with Catherines; and rousing myself to dispel the obtrusive name, I discovered my candle\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_001.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b031_02__wh_ch03_b031\",\n      \"mention_id\": \"m_wh_ch03_b031_02\",\n      \"block_id\": \"wh_ch03_b031\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Linton\",\n      \"quote_context\": \"“Catherine Linton,” it replied, shiveringly (why did I think of Linton ? I had read Earnshaw twenty times for Linton)—“I’m come home: I’d lost my way on the moor!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b008_01__wh_ch03_b008\",\n      \"mention_id\": \"m_wh_ch03_b008_01\",\n      \"block_id\": \"wh_ch03_b008\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine’s\",\n      \"quote_context\": \"I shut it, and took up another and another, till I had examined all. Catherine’s library was select, and its state of dilapidation proved it to have been well used, though not altogether for a legitimate purpose: scarcely one chapter had escaped a pen-and-ink commentary—at least the appearance of one—covering every morsel of blank that the printer had left. \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b051_02__wh_ch03_b051\",\n      \"mention_id\": \"m_wh_ch03_b051_02\",\n      \"block_id\": \"wh_ch03_b051\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine’s\",\n      \"quote_context\": \"Scarcely were these words uttered when I recollected the association of Heathcliff’s with Catherine’s name in the book, which had completely slipped from my memory, till thus awakened. I blushed at my inconsideration: but, without showing further consciousness of the offence, I hastened to add—“The truth is, sir, I passed the first part of the night in—” Her\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b008_02__wh_ch03_b008\",\n      \"mention_id\": \"m_wh_ch03_b008_02\",\n      \"block_id\": \"wh_ch03_b008\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"iary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b010_01__wh_ch03_b010\",\n      \"mention_id\": \"m_wh_ch03_b010_01\",\n      \"block_id\": \"wh_ch03_b010\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"“All day had been flooding with rain; we could not go to church, so Joseph must needs get up a congregation in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b011_03__wh_ch03_b011\",\n      \"mention_id\": \"m_wh_ch03_b011_03\",\n      \"block_id\": \"wh_ch03_b011\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"ke two babies, kissing and talking nonsense by the hour—foolish palaver that we should be ashamed of. We made ourselves as snug as our means allowed in the arch of the dresser. I had just fastened our pinafores together, and hung them up for a curtain, when in comes Joseph, on an errand from the stables. He tears down my handiwork, boxes my ears, and croaks:\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b021_01__wh_ch03_b021\",\n      \"mention_id\": \"m_wh_ch03_b021_01\",\n      \"block_id\": \"wh_ch03_b021\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"I began to dream, almost before I ceased to be sensible of my locality. I thought it was morning; and I had set out on my way home, with Joseph for a guide. The snow lay yards deep in our road; and, as we floundered on, my companion wearied me with constant reproaches that I had not brought a pilgrim’s staff: telling me that I could never get into the house \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b023_01__wh_ch03_b023\",\n      \"mention_id\": \"m_wh_ch03_b023_01\",\n      \"block_id\": \"wh_ch03_b023\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"Oh, how weary I grew. How I writhed, and yawned, and nodded, and revived! How I pinched and pricked myself, and rubbed my eyes, and stood up, and sat down again, and nudged Joseph to inform me if he would ever have done. I was condemned to hear all out: finally, he reached the “ First of the Seventy-First .” At that crisis, a sudden inspiration descended on \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b026_01__wh_ch03_b026\",\n      \"mention_id\": \"m_wh_ch03_b026_01\",\n      \"block_id\": \"wh_ch03_b026\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"th that concluding word, the whole assembly, exalting their pilgrim’s staves, rushed round me in a body; and I, having no weapon to raise in self-defence, commenced grappling with Joseph, my nearest and most ferocious assailant, for his. In the confluence of the multitude, several clubs crossed; blows, aimed at me, fell on other sconces. Presently the whole \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b059_01__wh_ch03_b059\",\n      \"mention_id\": \"m_wh_ch03_b059_01\",\n      \"block_id\": \"wh_ch03_b059\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"ircle, nearly enclosed the hearth; on one of these I stretched myself, and Grimalkin mounted the other. We were both of us nodding ere any one invaded our retreat, and then it was Joseph, shuffling down a wooden ladder that vanished in the roof, through a trap: the ascent to his garret, I suppose. He cast a sinister look at the little flame which I had entic\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_014.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b008_03__wh_ch03_b008\",\n      \"mention_id\": \"m_wh_ch03_b008_03\",\n      \"block_id\": \"wh_ch03_b008\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the unknown Catherine\",\n      \"quote_context\": \"iary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b009_01__wh_ch03_b009\",\n      \"mention_id\": \"m_wh_ch03_b009_01\",\n      \"block_id\": \"wh_ch03_b009\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"“An awful Sunday,” commenced the paragraph beneath. “I wish my father were back again. Hindley is a detestable substitute—his conduct to Heathcliff is atrocious—H. and I are going to rebel—we took our initiatory step this evening.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_002.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b010_02__wh_ch03_b010\",\n      \"mention_id\": \"m_wh_ch03_b010_02\",\n      \"block_id\": \"wh_ch03_b010\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"“All day had been flooding with rain; we could not go to church, so Joseph must needs get up a congregation in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b015_01__wh_ch03_b015\",\n      \"mention_id\": \"m_wh_ch03_b015_01\",\n      \"block_id\": \"wh_ch03_b015\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"“Hindley hurried up from his paradise on the hearth, and seizing one of us by the collar, and the other by the arm, hurled both into the back-kitchen; where, Joseph asseverated, ‘owd Nick’ would fetch us as sure as we were living: and, so comforted, we each sought a separate nook to await his advent. I reached this book, and a pot of ink from a shelf, and pu\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b018_01__wh_ch03_b018\",\n      \"mention_id\": \"m_wh_ch03_b018_01\",\n      \"block_id\": \"wh_ch03_b018\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"“How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we br\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b018_03__wh_ch03_b018\",\n      \"mention_id\": \"m_wh_ch03_b018_03\",\n      \"block_id\": \"wh_ch03_b018\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"“How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we br\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b010_03__wh_ch03_b010\",\n      \"mention_id\": \"m_wh_ch03_b010_03\",\n      \"block_id\": \"wh_ch03_b010\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the unhappy ploughboy\",\n      \"quote_context\": \"tion in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we were ranged in a row, on a sack of corn, groaning and shivering, and hoping that Joseph would shiver to\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b011_01__wh_ch03_b011\",\n      \"mention_id\": \"m_wh_ch03_b011_01\",\n      \"block_id\": \"wh_ch03_b011\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the tyrant\",\n      \"quote_context\": \"“‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, l\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b011_02__wh_ch03_b011\",\n      \"mention_id\": \"m_wh_ch03_b011_02\",\n      \"block_id\": \"wh_ch03_b011\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Frances\",\n      \"quote_context\": \"“‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, l\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b012_01__wh_ch03_b012\",\n      \"mention_id\": \"m_wh_ch03_b012_01\",\n      \"block_id\": \"wh_ch03_b012\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"T’ maister\",\n      \"quote_context\": \"“‘T’ maister nobbut just buried, and Sabbath not o’ered, und t’ sound o’ t’ gospel still i’ yer lugs, and ye darr be laiking! Shame on ye! sit ye down, ill childer! there’s good books eneugh if ye’ll read ’em: sit ye down, and think o’ yer sowls!’\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b014_01__wh_ch03_b014\",\n      \"mention_id\": \"m_wh_ch03_b014_01\",\n      \"block_id\": \"wh_ch03_b014\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Maister Hindley\",\n      \"quote_context\": \"“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b014_02__wh_ch03_b014\",\n      \"mention_id\": \"m_wh_ch03_b014_02\",\n      \"block_id\": \"wh_ch03_b014\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Miss Cathy\",\n      \"quote_context\": \"“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b014_04__wh_ch03_b014\",\n      \"mention_id\": \"m_wh_ch03_b014_04\",\n      \"block_id\": \"wh_ch03_b014\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the owd man\",\n      \"quote_context\": \"“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b015_02__wh_ch03_b015\",\n      \"mention_id\": \"m_wh_ch03_b015_02\",\n      \"block_id\": \"wh_ch03_b015\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the surly old man\",\n      \"quote_context\": \"ve got the time on with writing for twenty minutes; but my companion is impatient, and proposes that we should appropriate the dairywoman’s cloak, and have a scamper on the moors, under its shelter. A pleasant suggestion—and then, if the surly old man come in, he may believe his prophecy verified—we cannot be damper, or colder, in the rain than we are here.”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b017_01__wh_ch03_b017\",\n      \"mention_id\": \"m_wh_ch03_b017_01\",\n      \"block_id\": \"wh_ch03_b017\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine\",\n      \"quote_context\": \"I suppose Catherine fulfilled her project, for the next sentence took up another subject: she waxed lachrymose.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_004.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b057_03__wh_ch03_b057\",\n      \"mention_id\": \"m_wh_ch03_b057_03\",\n      \"block_id\": \"wh_ch03_b057\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Catherine\",\n      \"quote_context\": \"ursting, as he pulled at it, into an uncontrollable passion of tears. “Come in! come in!” he sobbed. “Cathy, do come. Oh, do— once more! Oh! my heart’s darling! hear me this time, Catherine, at last!” The spectre showed a spectre’s ordinary caprice: it gave no sign of being; but the snow and wind whirled wildly through, even reaching my station, and blowing \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_013.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b018_04__wh_ch03_b018\",\n      \"mention_id\": \"m_wh_ch03_b018_04\",\n      \"block_id\": \"wh_ch03_b018\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"our father\",\n      \"quote_context\": \"’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we break his orders. He has been blaming our father (how dared he?) for treating H. too liberally; and swears he will reduce him to his right place—”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b020_01__wh_ch03_b020\",\n      \"mention_id\": \"m_wh_ch03_b020_01\",\n      \"block_id\": \"wh_ch03_b020\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Jabez Branderham\",\n      \"quote_context\": \" page: my eye wandered from manuscript to print. I saw a red ornamented title—“Seventy Times Seven, and the First of the Seventy-First. A Pious Discourse delivered by the Reverend Jabez Branderham, in the Chapel of Gimmerden Sough.” And while I was, half-consciously, worrying my brain to guess what Jabez Branderham would make of his subject, I sank back in b\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b021_02__wh_ch03_b021\",\n      \"mention_id\": \"m_wh_ch03_b021_02\",\n      \"block_id\": \"wh_ch03_b021\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Jabez Branderham\",\n      \"quote_context\": \"t absurd that I should need such a weapon to gain admittance into my own residence. Then a new idea flashed across me. I was not going there: we were journeying to hear the famous Jabez Branderham preach, from the text—“Seventy Times Seven;” and either Joseph, the preacher, or I had committed the “First of the Seventy-First,” and were to be publicly exposed \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b023_02__wh_ch03_b023\",\n      \"mention_id\": \"m_wh_ch03_b023_02\",\n      \"block_id\": \"wh_ch03_b023\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Jabez Branderham\",\n      \"quote_context\": \"nd rubbed my eyes, and stood up, and sat down again, and nudged Joseph to inform me if he would ever have done. I was condemned to hear all out: finally, he reached the “ First of the Seventy-First .” At that crisis, a sudden inspiration descended on me; I was moved to rise and denounce Jabez Branderham as the sinner of the sin that no Christian need pardon.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b022_01__wh_ch03_b022\",\n      \"mention_id\": \"m_wh_ch03_b022_01\",\n      \"block_id\": \"wh_ch03_b022\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the clergyman\",\n      \"quote_context\": \"evated hollow, near a swamp, whose peaty moisture is said to answer all the purposes of embalming on the few corpses deposited there. The roof has been kept whole hitherto; but as the clergyman’s stipend is only twenty pounds per annum, and a house with two rooms, threatening speedily to determine into one, no clergyman will undertake the duties of pastor: e\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b022_02__wh_ch03_b022\",\n      \"mention_id\": \"m_wh_ch03_b022_02\",\n      \"block_id\": \"wh_ch03_b022\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Jabez\",\n      \"quote_context\": \"es of pastor: especially as it is currently reported that his flock would rather let him starve than increase the living by one penny from their own pockets. However, in my dream, Jabez had a full and attentive congregation; and he preached—good God! what a sermon; divided into four hundred and ninety parts, each fully equal to an ordinary address from the p\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b024_01__wh_ch03_b024\",\n      \"mention_id\": \"m_wh_ch03_b024_01\",\n      \"block_id\": \"wh_ch03_b024\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Jabez\",\n      \"quote_context\": \"“Sir,” I exclaimed, “sitting here within these four walls, at one stretch, I have endured and forgiven the four hundred and ninety heads of your discourse. Seventy times seven times have I plucked up my hat and been about to depart—Seventy times seven times have you preposterously forced me to resume my seat. The four hundred and ninety-first is too much. Fe\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b025_01__wh_ch03_b025\",\n      \"mention_id\": \"m_wh_ch03_b025_01\",\n      \"block_id\": \"wh_ch03_b025\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Jabez\",\n      \"quote_context\": \"“ Thou art the Man! ” cried Jabez, after a solemn pause, leaning over his cushion. “Seventy times seven times didst thou gapingly contort thy visage—seventy times seven did I take counsel with my soul—Lo, this is human weakness: this also may be absolved! The First of the Seventy-First is come. Brethren, execute upon him the judgment written. Such honour hav\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b022_03__wh_ch03_b022\",\n      \"mention_id\": \"m_wh_ch03_b022_03\",\n      \"block_id\": \"wh_ch03_b022\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the brother\",\n      \"quote_context\": \" fully equal to an ordinary address from the pulpit, and each discussing a separate sin! Where he searched for them, I cannot tell. He had his private manner of interpreting the phrase, and it seemed necessary the brother should sin different sins on every occasion. They were of the most curious character: odd transgressions that I never imagined previously.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b022_04__wh_ch03_b022\",\n      \"mention_id\": \"m_wh_ch03_b022_04\",\n      \"block_id\": \"wh_ch03_b022\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"the flock\",\n      \"quote_context\": \"We came to the chapel. I have passed it really in my walks, twice or thrice; it lies in a hollow, between two hills: an elevated hollow, near a swamp, whose peaty moisture is said to answer all the purposes of embalming on the few corpses deposited there. The roof has been kept whole hitherto; but as the clergyman’s stipend is only twenty pounds per annum, a\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch03_b026_02__wh_ch03_b026\",\n      \"mention_id\": \"m_wh_ch03_b026_02\",\n      \"block_id\": \"wh_ch03_b026\",\n      \"chapter_id\": \"wh_ch03\",\n      \"surface\": \"Branderham\",\n      \"quote_context\": \" clubs crossed; blows, aimed at me, fell on other sconces. Presently the whole chapel resounded with rappings and counter rappings: every man’s hand was against his neighbour; and Branderham, unwilling to remain idle, poured forth his zeal in a shower of loud taps on the boards of the pulpit, which responded so smartly that, at last, to my unspeakable relief\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch03_007.json\"\n    }\n  ],\n  \"prior_groups\": [\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b008_01_wh_ch01_b008\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b008_01__wh_ch01_b008\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b010_01_wh_ch01_b010\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b010_01__wh_ch01_b010\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b019_01_wh_ch01_b019\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b019_01__wh_ch01_b019\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b026_01_wh_ch01_b026\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b026_01__wh_ch01_b026\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b004_01_wh_ch02_b004\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b004_01__wh_ch02_b004\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b016_01_wh_ch02_b016\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b016_01__wh_ch02_b016\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b029_04_wh_ch02_b029\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b029_04__wh_ch02_b029\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b037_02_wh_ch02_b037\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b037_02__wh_ch02_b037\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b046_01_wh_ch02_b046\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b046_01__wh_ch02_b046\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b052_01_wh_ch02_b052\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b052_01__wh_ch02_b052\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b058_02_wh_ch02_b058\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b058_02__wh_ch02_b058\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b060_01_wh_ch02_b060\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b060_01__wh_ch02_b060\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b062_01_wh_ch02_b062\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b062_01__wh_ch02_b062\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b065_01_wh_ch02_b065\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b065_01__wh_ch02_b065\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b071_03_wh_ch02_b071\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b071_03__wh_ch02_b071\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b076_01_wh_ch02_b076\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b076_01__wh_ch02_b076\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b076_03_wh_ch02_b076\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b076_03__wh_ch02_b076\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b085_01_wh_ch02_b085\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b085_01__wh_ch02_b085\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b088_01_wh_ch02_b088\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b088_01__wh_ch02_b088\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b089_01_wh_ch02_b089\",\n      \"canonical_surface\": \"Heathcliff\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b089_01__wh_ch02_b089\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_ent_mr_heathcliff\",\n      \"canonical_surface\": \"the surly owner\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b012_02__wh_ch01_b012\",\n        \"atom_m_wh_ch01_b017_01__wh_ch01_b017\",\n        \"atom_m_wh_ch01_b019_02__wh_ch01_b019\",\n        \"atom_m_wh_ch01_b020_04__wh_ch01_b020\"\n      ]\n    }\n  ],\n  \"identity_hints\": [\n    {\n      \"chapter_id\": \"wh_ch03\",\n      \"narration_frame_segments\": [\n        {\n          \"narrator_ref\": \"ent_mr_lockwood\",\n          \"block_range\": [\n            \"wh_ch03_b002\",\n            \"wh_ch03_b067\"\n          ],\n          \"story_time_label\": \"frame_present\"\n        }\n      ],\n      \"relation_event_summary\": [\n        {\n          \"pair\": [\n            \"ent_hindley\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch03_b009_01\",\n            \"e_wh_ch03_b018_03\",\n            \"e_wh_ch03_b018_04\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b018\",\n            \"note\": \"Catherine’s diary states Hindley is actively reducing Heathcliff’s position in the household and separating him from Catherine.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_catherine_earnshaw\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"positive\",\n          \"event_ids\": [\n            \"e_wh_ch03_b018_02\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b018\",\n            \"note\": \"Diary evidence shows emotional solidarity between Catherine and Heathcliff under Hindley’s oppression.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mr_lockwood\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch03_b046_01\",\n            \"e_wh_ch03_b046_02\",\n            \"e_wh_ch03_b047_01\",\n            \"e_wh_ch03_b047_02\",\n            \"e_wh_ch03_b049_01\",\n            \"e_wh_ch03_b049_02\",\n            \"e_wh_ch03_b049_03\",\n            \"e_wh_ch03_b050_02\",\n            \"e_wh_ch03_b052_01\",\n            \"e_wh_ch03_b052_02\",\n            \"e_wh_ch03_b054_01\",\n            \"e_wh_ch03_b056_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b052\",\n            \"note\": \"Lockwood’s mention of Catherine provokes a sharp emotional rupture and reveals a deeper sensitivity in Heathcliff.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_heathcliff\",\n            \"ent_cathy\"\n          ],\n          \"observed_valence_hint\": \"positive\",\n          \"event_ids\": [\n            \"e_wh_ch03_b057_02\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b057\",\n            \"note\": \"Heathcliff’s anguished appeal at the window exposes an intense unresolved attachment to Cathy/Catherine.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_heathcliff\",\n            \"ent_mrs_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch03_b062_01\",\n            \"e_wh_ch03_b063_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch03_b064\",\n            \"note\": \"Their conflict appears habitual and physically threatening, as she retreats from his raised hand.\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_joseph\",\n            \"ent_mr_lockwood\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch03_b021_01\",\n            \"e_wh_ch03_b021_02\",\n            \"e_wh_ch03_b026_01\",\n            \"e_wh_ch03_b059_01\"\n          ],\n          \"status\": \"evidence_only\"\n        }\n      ],\n      \"translator_relevant_facts\": [\n        {\n          \"fact_type\": \"narrator\",\n          \"fact\": \"Lockwood narrates retrospectively in first person with ironic self-consciousness, shifting between observation, dream report, and commentary.\",\n          \"block_evidence\": [\n            \"wh_ch03_b020\",\n            \"wh_ch03_b055\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Joseph’s speech is rendered in heavy Yorkshire dialect and should remain markedly nonstandard relative to Lockwood’s narration.\",\n          \"block_evidence\": [\n            \"wh_ch03_b012\",\n            \"wh_ch03_b014\"\n          ]\n        },\n        {\n          \"fact_type\": \"register\",\n          \"fact\": \"Catherine’s diary voice is childish but vivid, mixing resentment, mockery, and emotional immediacy.\",\n          \"block_evidence\": [\n            \"wh_ch03_b009\",\n            \"wh_ch03_b018\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"The bed is an enclosed oak closet-bed built into the wall/window space, important for staging the dream and window scene.\",\n          \"block_evidence\": [\n            \"wh_ch03_b003\",\n            \"wh_ch03_b027\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"The dream-sermon passage parodies biblical and homiletic rhetoric in inflated, comic form.\",\n          \"block_evidence\": [\n            \"wh_ch03_b022\",\n            \"wh_ch03_b024\",\n            \"wh_ch03_b025\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Heathcliff’s speech swings abruptly from savage command to broken grief, and this emotional volatility is crucial.\",\n          \"block_evidence\": [\n            \"wh_ch03_b052\",\n            \"wh_ch03_b054\",\n            \"wh_ch03_b057\"\n          ]\n        },\n        {\n          \"fact_type\": \"status\",\n          \"fact\": \"Catherine’s diary explicitly marks a household hierarchy in which Hindley has become master and demotes Heathcliff’s place.\",\n          \"block_evidence\": [\n            \"wh_ch03_b011\",\n            \"wh_ch03_b018\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"The chapter depends on storm conditions—snow, wind, moor, and darkness—which shape both the Gothic atmosphere and practical movement.\",\n          \"block_evidence\": [\n            \"wh_ch03_b021\",\n            \"wh_ch03_b027\",\n            \"wh_ch03_b065\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"dry_run_note\": \"This scaffold uses provisional prior groups only for token sizing. They are not identity verdicts and will not be published.\"\n}"
+    }
+  ]
+}

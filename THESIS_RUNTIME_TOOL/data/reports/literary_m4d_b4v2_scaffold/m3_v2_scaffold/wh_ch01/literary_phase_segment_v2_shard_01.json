@@ -1,0 +1,549 @@
+{
+  "zero_api": true,
+  "scope": "M3_asof_wh_ch01",
+  "chapter_id": "wh_ch01",
+  "mode": "literary_phase_segment_v2",
+  "shard_index": 1,
+  "shard_count": 1,
+  "items": [
+    {
+      "provisional_pair": [
+        "ent_joseph",
+        "ent_mr_heathcliff"
+      ],
+      "history": [
+        {
+          "source_chapter_id": "wh_ch01",
+          "provisional_pair": [
+            "ent_joseph",
+            "ent_mr_heathcliff"
+          ],
+          "event_ids": [
+            "e_wh_ch01_b008_01",
+            "e_wh_ch01_b018_02"
+          ],
+          "events": [
+            {
+              "event_id": "e_wh_ch01_b008_01",
+              "block_id": "wh_ch01_b008",
+              "event_type": "orders",
+              "evidence_quote": "Joseph, take Mr. Lockwood's horse",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_heathcliff"
+                ],
+                "attribution_method": "narrator_inference",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "Joseph",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b018_02",
+              "block_id": "wh_ch01_b018",
+              "event_type": "calls",
+              "evidence_quote": "shouted again, “Joseph!”",
+              "actor": {
+                "surface": "Mr. Heathcliff",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "Joseph",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              }
+            }
+          ],
+          "candidate_transition": null,
+          "observed_valence_hint": "unclear"
+        }
+      ]
+    },
+    {
+      "provisional_pair": [
+        "ent_joseph",
+        "ent_mr_lockwood"
+      ],
+      "history": [
+        {
+          "source_chapter_id": "wh_ch01",
+          "provisional_pair": [
+            "ent_joseph",
+            "ent_mr_lockwood"
+          ],
+          "event_ids": [
+            "e_wh_ch01_b010_01"
+          ],
+          "events": [
+            {
+              "event_id": "e_wh_ch01_b010_01",
+              "block_id": "wh_ch01_b010",
+              "event_type": "speaks",
+              "evidence_quote": "The Lord help us!",
+              "actor": {
+                "surface": "Joseph",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "I",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "narrator_inference",
+                "confidence": "high"
+              }
+            }
+          ],
+          "candidate_transition": null,
+          "observed_valence_hint": "negative"
+        }
+      ]
+    },
+    {
+      "provisional_pair": [
+        "ent_mr_heathcliff",
+        "ent_mr_lockwood"
+      ],
+      "history": [
+        {
+          "source_chapter_id": "wh_ch01",
+          "provisional_pair": [
+            "ent_mr_heathcliff",
+            "ent_mr_lockwood"
+          ],
+          "event_ids": [
+            "e_wh_ch01_b003_01",
+            "e_wh_ch01_b005_01",
+            "e_wh_ch01_b006_01",
+            "e_wh_ch01_b006_02",
+            "e_wh_ch01_b018_01",
+            "e_wh_ch01_b021_01",
+            "e_wh_ch01_b022_01",
+            "e_wh_ch01_b023_03",
+            "e_wh_ch01_b024_01",
+            "e_wh_ch01_b025_01",
+            "e_wh_ch01_b026_01",
+            "e_wh_ch01_b027_01",
+            "e_wh_ch01_b027_02",
+            "e_wh_ch01_b027_03",
+            "e_wh_ch01_b027_04"
+          ],
+          "events": [
+            {
+              "event_id": "e_wh_ch01_b003_01",
+              "block_id": "wh_ch01_b003",
+              "event_type": "addresses",
+              "evidence_quote": "Mr. Heathcliff?",
+              "actor": {
+                "surface": "I",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "narrator_inference",
+                "confidence": "medium"
+              },
+              "target": {
+                "surface": "Mr. Heathcliff",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b005_01",
+              "block_id": "wh_ch01_b005",
+              "event_type": "introduces",
+              "evidence_quote": "Mr. Lockwood, your new tenant",
+              "actor": {
+                "surface": "I",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "narrator_inference",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "sir",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_heathcliff"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "medium"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b006_01",
+              "block_id": "wh_ch01_b006",
+              "event_type": "interrupts",
+              "evidence_quote": "he interrupted",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_heathcliff"
+                ],
+                "attribution_method": "narrator_inference",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "sir",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "medium"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b006_02",
+              "block_id": "wh_ch01_b006",
+              "event_type": "orders",
+              "evidence_quote": "walk in!",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_heathcliff"
+                ],
+                "attribution_method": "narrator_inference",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "sir",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "medium"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b018_01",
+              "block_id": "wh_ch01_b018",
+              "event_type": "warns",
+              "evidence_quote": "You’d better let the dog alone",
+              "actor": {
+                "surface": "Mr. Heathcliff",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "you",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "medium"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b021_01",
+              "block_id": "wh_ch01_b021",
+              "event_type": "asks",
+              "evidence_quote": "What the devil is the matter?",
+              "actor": {
+                "surface": "Mr. Heathcliff",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "I",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "medium"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b022_01",
+              "block_id": "wh_ch01_b022",
+              "event_type": "mocks",
+              "evidence_quote": "The herd of possessed swine",
+              "actor": {
+                "surface": "I",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "medium"
+              },
+              "target": {
+                "surface": "sir",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_heathcliff"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "medium"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b023_03",
+              "block_id": "wh_ch01_b023",
+              "event_type": "offers",
+              "evidence_quote": "Take a glass of wine?",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_heathcliff"
+                ],
+                "attribution_method": "nearby_context",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "I",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b024_01",
+              "block_id": "wh_ch01_b024",
+              "event_type": "refuses",
+              "evidence_quote": "No, thank you",
+              "actor": {
+                "surface": "I",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_heathcliff"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b025_01",
+              "block_id": "wh_ch01_b025",
+              "event_type": "asks",
+              "evidence_quote": "Not bitten, are you?",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_heathcliff"
+                ],
+                "attribution_method": "nearby_context",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "sir",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b026_01",
+              "block_id": "wh_ch01_b026",
+              "event_type": "replies",
+              "evidence_quote": "If I had been",
+              "actor": {
+                "surface": "Heathcliff",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "I",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_mr_lockwood"
+                ],
+                "attribution_method": "turn_alternation",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b027_01",
+              "block_id": "wh_ch01_b027",
+              "event_type": "addresses",
+              "evidence_quote": "you are flurried, Mr. Lockwood",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_heathcliff"
+                ],
+                "attribution_method": "nearby_context",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "Mr. Lockwood",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b027_02",
+              "block_id": "wh_ch01_b027",
+              "event_type": "offers",
+              "evidence_quote": "take a little wine",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_heathcliff"
+                ],
+                "attribution_method": "nearby_context",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "Mr. Lockwood",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b027_03",
+              "block_id": "wh_ch01_b027",
+              "event_type": "remarks",
+              "evidence_quote": "Guests are so exceedingly rare",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_heathcliff"
+                ],
+                "attribution_method": "nearby_context",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "Mr. Lockwood",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              }
+            },
+            {
+              "event_id": "e_wh_ch01_b027_04",
+              "block_id": "wh_ch01_b027",
+              "event_type": "toasts",
+              "evidence_quote": "Your health, sir?",
+              "actor": {
+                "surface": "he",
+                "reference_kind": "person",
+                "resolution_status": "candidate",
+                "candidate_entity_ids": [
+                  "ent_heathcliff"
+                ],
+                "attribution_method": "nearby_context",
+                "confidence": "high"
+              },
+              "target": {
+                "surface": "Mr. Lockwood",
+                "reference_kind": "person",
+                "resolution_status": "named",
+                "candidate_entity_ids": [],
+                "attribution_method": "explicit_tag",
+                "confidence": "high"
+              }
+            }
+          ],
+          "candidate_transition": {
+            "trigger_block": "wh_ch01_b026",
+            "note": "after Lockwood's sharp reply, Heathcliff grins and the exchange becomes briefly more convivial"
+          },
+          "observed_valence_hint": "mixed"
+        }
+      ]
+    }
+  ],
+  "prompt_tokens_est": 5638,
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_phase_segment_v2.\nYou are segmenting one character pair's relationship into ordered phases from an evidence stream, and extracting directed relationship facts. The pair header gives two entity ids, A and B. Read the pair's events in text order.\nPHASES: output a list of NON-OVERLAPPING phases in block order. Each phase: phase_label from EXACTLY this set [allied, friendly, neutral, strained, hostile, estranged, dependent, reconciled]; valid_from_block; valid_until_block (use null + status \"open\" for the last, unclosed phase); trigger_block (the block where this phase begins); trigger_evidence (a short verbatim quote). Open a NEW phase only when a trigger shows a strong change in language or action — a single mocking remark or momentary mood is an event, NOT a new phase. Do NOT invent phases with no event evidence. Prefer FEWER phases when evidence is weak.\nRELATION_FACTS: directed factual relationships between A and B that the evidence states or clearly shows. Each fact: {subject_ref (A or B's entity id), predicate_code from EXACTLY this set [parent_of, child_of, spouse_of, sibling_of, daughter_in_law_of, son_in_law_of, father_in_law_of, mother_in_law_of, grandparent_of, grandchild_of, cousin_of, servant_of, master_of, landlord_of, tenant_of, guest_of, neighbor_of, guardian_of, ward_of, other], object_ref, valid_from_block, evidence_block, evidence_quote (verbatim), predicate_note (free text)}. Direction matters: subject predicate object means the subject IS the predicate of the object. Use predicate_code \"other\" ONLY when nothing in the set fits. Do NOT derive a fact from a title or an honorific alone; every fact needs quoted evidence. Output empty lists when the evidence supports nothing."
+    },
+    {
+      "role": "user",
+      "content": "{\n  \"scope\": \"M3_asof_wh_ch01\",\n  \"predicate_taxonomy_version\": \"literary_predicate_taxonomy_v1\",\n  \"pair_evidence\": [\n    {\n      \"provisional_pair\": [\n        \"ent_joseph\",\n        \"ent_mr_heathcliff\"\n      ],\n      \"history\": [\n        {\n          \"source_chapter_id\": \"wh_ch01\",\n          \"provisional_pair\": [\n            \"ent_joseph\",\n            \"ent_mr_heathcliff\"\n          ],\n          \"event_ids\": [\n            \"e_wh_ch01_b008_01\",\n            \"e_wh_ch01_b018_02\"\n          ],\n          \"events\": [\n            {\n              \"event_id\": \"e_wh_ch01_b008_01\",\n              \"block_id\": \"wh_ch01_b008\",\n              \"event_type\": \"orders\",\n              \"evidence_quote\": \"Joseph, take Mr. Lockwood's horse\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_heathcliff\"\n                ],\n                \"attribution_method\": \"narrator_inference\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"Joseph\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b018_02\",\n              \"block_id\": \"wh_ch01_b018\",\n              \"event_type\": \"calls\",\n              \"evidence_quote\": \"shouted again, “Joseph!”\",\n              \"actor\": {\n                \"surface\": \"Mr. Heathcliff\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"Joseph\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              }\n            }\n          ],\n          \"candidate_transition\": null,\n          \"observed_valence_hint\": \"unclear\"\n        }\n      ]\n    },\n    {\n      \"provisional_pair\": [\n        \"ent_joseph\",\n        \"ent_mr_lockwood\"\n      ],\n      \"history\": [\n        {\n          \"source_chapter_id\": \"wh_ch01\",\n          \"provisional_pair\": [\n            \"ent_joseph\",\n            \"ent_mr_lockwood\"\n          ],\n          \"event_ids\": [\n            \"e_wh_ch01_b010_01\"\n          ],\n          \"events\": [\n            {\n              \"event_id\": \"e_wh_ch01_b010_01\",\n              \"block_id\": \"wh_ch01_b010\",\n              \"event_type\": \"speaks\",\n              \"evidence_quote\": \"The Lord help us!\",\n              \"actor\": {\n                \"surface\": \"Joseph\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"I\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"narrator_inference\",\n                \"confidence\": \"high\"\n              }\n            }\n          ],\n          \"candidate_transition\": null,\n          \"observed_valence_hint\": \"negative\"\n        }\n      ]\n    },\n    {\n      \"provisional_pair\": [\n        \"ent_mr_heathcliff\",\n        \"ent_mr_lockwood\"\n      ],\n      \"history\": [\n        {\n          \"source_chapter_id\": \"wh_ch01\",\n          \"provisional_pair\": [\n            \"ent_mr_heathcliff\",\n            \"ent_mr_lockwood\"\n          ],\n          \"event_ids\": [\n            \"e_wh_ch01_b003_01\",\n            \"e_wh_ch01_b005_01\",\n            \"e_wh_ch01_b006_01\",\n            \"e_wh_ch01_b006_02\",\n            \"e_wh_ch01_b018_01\",\n            \"e_wh_ch01_b021_01\",\n            \"e_wh_ch01_b022_01\",\n            \"e_wh_ch01_b023_03\",\n            \"e_wh_ch01_b024_01\",\n            \"e_wh_ch01_b025_01\",\n            \"e_wh_ch01_b026_01\",\n            \"e_wh_ch01_b027_01\",\n            \"e_wh_ch01_b027_02\",\n            \"e_wh_ch01_b027_03\",\n            \"e_wh_ch01_b027_04\"\n          ],\n          \"events\": [\n            {\n              \"event_id\": \"e_wh_ch01_b003_01\",\n              \"block_id\": \"wh_ch01_b003\",\n              \"event_type\": \"addresses\",\n              \"evidence_quote\": \"Mr. Heathcliff?\",\n              \"actor\": {\n                \"surface\": \"I\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"narrator_inference\",\n                \"confidence\": \"medium\"\n              },\n              \"target\": {\n                \"surface\": \"Mr. Heathcliff\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b005_01\",\n              \"block_id\": \"wh_ch01_b005\",\n              \"event_type\": \"introduces\",\n              \"evidence_quote\": \"Mr. Lockwood, your new tenant\",\n              \"actor\": {\n                \"surface\": \"I\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"narrator_inference\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"sir\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_heathcliff\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"medium\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b006_01\",\n              \"block_id\": \"wh_ch01_b006\",\n              \"event_type\": \"interrupts\",\n              \"evidence_quote\": \"he interrupted\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_heathcliff\"\n                ],\n                \"attribution_method\": \"narrator_inference\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"sir\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"medium\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b006_02\",\n              \"block_id\": \"wh_ch01_b006\",\n              \"event_type\": \"orders\",\n              \"evidence_quote\": \"walk in!\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_heathcliff\"\n                ],\n                \"attribution_method\": \"narrator_inference\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"sir\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"medium\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b018_01\",\n              \"block_id\": \"wh_ch01_b018\",\n              \"event_type\": \"warns\",\n              \"evidence_quote\": \"You’d better let the dog alone\",\n              \"actor\": {\n                \"surface\": \"Mr. Heathcliff\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"you\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"medium\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b021_01\",\n              \"block_id\": \"wh_ch01_b021\",\n              \"event_type\": \"asks\",\n              \"evidence_quote\": \"What the devil is the matter?\",\n              \"actor\": {\n                \"surface\": \"Mr. Heathcliff\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"I\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"medium\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b022_01\",\n              \"block_id\": \"wh_ch01_b022\",\n              \"event_type\": \"mocks\",\n              \"evidence_quote\": \"The herd of possessed swine\",\n              \"actor\": {\n                \"surface\": \"I\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"medium\"\n              },\n              \"target\": {\n                \"surface\": \"sir\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_heathcliff\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"medium\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b023_03\",\n              \"block_id\": \"wh_ch01_b023\",\n              \"event_type\": \"offers\",\n              \"evidence_quote\": \"Take a glass of wine?\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_heathcliff\"\n                ],\n                \"attribution_method\": \"nearby_context\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"I\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b024_01\",\n              \"block_id\": \"wh_ch01_b024\",\n              \"event_type\": \"refuses\",\n              \"evidence_quote\": \"No, thank you\",\n              \"actor\": {\n                \"surface\": \"I\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_heathcliff\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b025_01\",\n              \"block_id\": \"wh_ch01_b025\",\n              \"event_type\": \"asks\",\n              \"evidence_quote\": \"Not bitten, are you?\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_heathcliff\"\n                ],\n                \"attribution_method\": \"nearby_context\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"sir\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b026_01\",\n              \"block_id\": \"wh_ch01_b026\",\n              \"event_type\": \"replies\",\n              \"evidence_quote\": \"If I had been\",\n              \"actor\": {\n                \"surface\": \"Heathcliff\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"I\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_mr_lockwood\"\n                ],\n                \"attribution_method\": \"turn_alternation\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b027_01\",\n              \"block_id\": \"wh_ch01_b027\",\n              \"event_type\": \"addresses\",\n              \"evidence_quote\": \"you are flurried, Mr. Lockwood\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_heathcliff\"\n                ],\n                \"attribution_method\": \"nearby_context\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"Mr. Lockwood\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b027_02\",\n              \"block_id\": \"wh_ch01_b027\",\n              \"event_type\": \"offers\",\n              \"evidence_quote\": \"take a little wine\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_heathcliff\"\n                ],\n                \"attribution_method\": \"nearby_context\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"Mr. Lockwood\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b027_03\",\n              \"block_id\": \"wh_ch01_b027\",\n              \"event_type\": \"remarks\",\n              \"evidence_quote\": \"Guests are so exceedingly rare\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_heathcliff\"\n                ],\n                \"attribution_method\": \"nearby_context\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"Mr. Lockwood\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              }\n            },\n            {\n              \"event_id\": \"e_wh_ch01_b027_04\",\n              \"block_id\": \"wh_ch01_b027\",\n              \"event_type\": \"toasts\",\n              \"evidence_quote\": \"Your health, sir?\",\n              \"actor\": {\n                \"surface\": \"he\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"candidate\",\n                \"candidate_entity_ids\": [\n                  \"ent_heathcliff\"\n                ],\n                \"attribution_method\": \"nearby_context\",\n                \"confidence\": \"high\"\n              },\n              \"target\": {\n                \"surface\": \"Mr. Lockwood\",\n                \"reference_kind\": \"person\",\n                \"resolution_status\": \"named\",\n                \"candidate_entity_ids\": [],\n                \"attribution_method\": \"explicit_tag\",\n                \"confidence\": \"high\"\n              }\n            }\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch01_b026\",\n            \"note\": \"after Lockwood's sharp reply, Heathcliff grins and the exchange becomes briefly more convivial\"\n          },\n          \"observed_valence_hint\": \"mixed\"\n        }\n      ]\n    }\n  ],\n  \"response_envelope\": {\n    \"relation_facts\": \"list\",\n    \"relation_phases\": \"list; every phase must include its pair because this is a batch\"\n  },\n  \"dry_run_note\": \"Pair ids are pre-identity provisional ids for prompt sizing only. A real run remaps evidence to final ids after identity partition before this call.\"\n}"
+    }
+  ]
+}

@@ -1,0 +1,351 @@
+{
+  "zero_api": true,
+  "scope": "M3_asof_wh_ch04",
+  "chapter_id": "wh_ch04",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 2,
+  "shard_count": 2,
+  "items": [
+    {
+      "atom_id": "atom_m_wh_ch04_b024_03__wh_ch04_b024",
+      "mention_id": "m_wh_ch04_b024_03",
+      "block_id": "wh_ch04_b024",
+      "chapter_id": "wh_ch04",
+      "surface": "the Lintons",
+      "quote_context": "“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons. Have you been to Wuthering Heights? I beg pardon for asking; but I should like to hear how she is!”",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_003.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_01__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_01",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "Mr. Hindley Earnshaw",
+      "quote_context": "Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_03__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_03",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "my mother",
+      "quote_context": "Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_04__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_04",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "Mr. Earnshaw",
+      "quote_context": "n errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set me to. One fine summer morning—it was the beginning of harvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b038_06__wh_ch04_b038",
+      "mention_id": "m_wh_ch04_b038_06",
+      "block_id": "wh_ch04_b038",
+      "chapter_id": "wh_ch04",
+      "surface": "Mr. Earnshaw",
+      "quote_context": "nd his money and time being both limited, he thought it better to take it home with him at once, than run into vain expenses there: because he was determined he would not leave it as he found it. Well, the conclusion was, that my mistress grumbled herself calm; and Mr. Earnshaw told me to wash it, and give it clean things, and let it sleep with the children.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b039_05__wh_ch04_b039",
+      "mention_id": "m_wh_ch04_b039_05",
+      "block_id": "wh_ch04_b039",
+      "chapter_id": "wh_ch04",
+      "surface": "Mr. Earnshaw",
+      "quote_context": "heir room; and I had no more sense, so I put it on the landing of the stairs, hoping it might be gone on the morrow. By chance, or else attracted by hearing his voice, it crept to Mr. Earnshaw’s door, and there he found it on quitting his chamber. Inquiries were made as to how it got there; I was obliged to confess, and in recompense for my cowardice and inh",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b043_04__wh_ch04_b043",
+      "mention_id": "m_wh_ch04_b043_04",
+      "block_id": "wh_ch04_b043",
+      "chapter_id": "wh_ch04",
+      "surface": "Mr. Earnshaw",
+      "quote_context": "ble; though knowing perfectly the hold he had on his heart, and conscious he had only to speak and all the house would be obliged to bend to his wishes. As an instance, I remember Mr. Earnshaw once bought a couple of colts at the parish fair, and gave the lads each one. Heathcliff took the handsomest, but it soon fell lame, and when he discovered it, he said",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_05__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_05",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "the old master",
+      "quote_context": " and helped to make hay, and hung about the farm ready for anything that anybody would set me to. One fine summer morning—it was the beginning of harvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating m",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_06__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_06",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "Joseph",
+      "quote_context": "y would set me to. One fine summer morning—it was the beginning of harvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating my porridge with them—and he said, speaking to his son, “Now, my bonny man, I’m ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_07__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_07",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "Hindley",
+      "quote_context": "Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b039_01__wh_ch04_b039",
+      "mention_id": "m_wh_ch04_b039_01",
+      "block_id": "wh_ch04_b039",
+      "chapter_id": "wh_ch04",
+      "surface": "Hindley",
+      "quote_context": "Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b040_04__wh_ch04_b040",
+      "mention_id": "m_wh_ch04_b040_04",
+      "block_id": "wh_ch04_b040",
+      "chapter_id": "wh_ch04",
+      "surface": "Hindley",
+      "quote_context": "ened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated him: and to say the truth I did the same; and we plagued and went on with him shamefully: for I wasn’t reasonable enough to feel my injustice, and the mistress never ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b041_01__wh_ch04_b041",
+      "mention_id": "m_wh_ch04_b041_01",
+      "block_id": "wh_ch04_b041",
+      "chapter_id": "wh_ch04",
+      "surface": "Hindley",
+      "quote_context": "He seemed a sullen, patient child; hardened, perhaps, to ill-treatment: he would stand Hindley’s blows without winking or shedding a tear, and my pinches moved him only to draw in a breath and open his eyes, as if he had hurt himself by accident, and nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poo",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b043_01__wh_ch04_b043",
+      "mention_id": "m_wh_ch04_b043_01",
+      "block_id": "wh_ch04_b043",
+      "chapter_id": "wh_ch04",
+      "surface": "Hindley",
+      "quote_context": " affirmed it was in a great measure owing to me, and praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b043_07__wh_ch04_b043",
+      "mention_id": "m_wh_ch04_b043_07",
+      "block_id": "wh_ch04_b043",
+      "chapter_id": "wh_ch04",
+      "surface": "Hindley",
+      "quote_context": " affirmed it was in a great measure owing to me, and praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b044_01__wh_ch04_b044",
+      "mention_id": "m_wh_ch04_b044_01",
+      "block_id": "wh_ch04_b044",
+      "chapter_id": "wh_ch04",
+      "surface": "Hindley",
+      "quote_context": "rses with me: I don’t like mine; and if you won’t I shall tell your father of the three thrashings you’ve given me this week, and show him my arm, which is black to the shoulder.” Hindley put out his tongue, and cuffed him over the ears. “You’d better do it at once,” he persisted, escaping to the porch (they were in the stable): “you will have to: and if I s",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_011.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b045_02__wh_ch04_b045",
+      "mention_id": "m_wh_ch04_b045_02",
+      "block_id": "wh_ch04_b045",
+      "chapter_id": "wh_ch04",
+      "surface": "Hindley",
+      "quote_context": "Heathcliff had gone to loose the beast, and shift it to his own stall; he was passing behind it, when Hindley finished his speech by knocking him under its feet, and without stopping to examine whether his hopes were fulfilled, ran away as fast as he could. I was surprised to witness how coolly the child gathered himself up, and went on with his intention; e",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_012.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_08__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_08",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "Cathy",
+      "quote_context": "rvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating my porridge with them—and he said, speaking to his son, “Now, my bonny man, I’m going to Liverpool to-day, what shall I bring you? You may choose wha",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b039_02__wh_ch04_b039",
+      "mention_id": "m_wh_ch04_b039_02",
+      "block_id": "wh_ch04_b039",
+      "chapter_id": "wh_ch04",
+      "surface": "Cathy",
+      "quote_context": "Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b041_04__wh_ch04_b041",
+      "mention_id": "m_wh_ch04_b041_04",
+      "block_id": "wh_ch04_b041",
+      "chapter_id": "wh_ch04",
+      "surface": "Cathy",
+      "quote_context": " nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poor fatherless child, as he called him. He took to Heathcliff strangely, believing all he said (for that matter, he said precious little, and generally the truth), and petting him up far above Cathy, who was too mischievous and wayward for a favourite.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b042_04__wh_ch04_b042",
+      "mention_id": "m_wh_ch04_b042_04",
+      "block_id": "wh_ch04_b042",
+      "chapter_id": "wh_ch04",
+      "surface": "Cathy",
+      "quote_context": "r him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_09__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_09",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "my son",
+      "quote_context": "Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_16__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_16",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "my children",
+      "quote_context": "Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b035_18__wh_ch04_b035",
+      "mention_id": "m_wh_ch04_b035_18",
+      "block_id": "wh_ch04_b035",
+      "chapter_id": "wh_ch04",
+      "surface": "his children",
+      "quote_context": "pell!” Hindley named a fiddle, and then he asked Miss Cathy; she was hardly six years old, but she could ride any horse in the stable, and she chose a whip. He did not forget me; for he had a kind heart, though he was rather severe sometimes. He promised to bring me a pocketful of apples and pears, and then he kissed his children, said good-bye, and set off.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_005.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b036_01__wh_ch04_b036",
+      "mention_id": "m_wh_ch04_b036_01",
+      "block_id": "wh_ch04_b036",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Earnshaw",
+      "quote_context": "It seemed a long while to us all—the three days of his absence—and often did little Cathy ask when he would be home. Mrs. Earnshaw expected him by supper-time on the third evening, and she put the meal off hour after hour; there were no signs of his coming, however, and at last the children got tired of running down to the gate to look. Then it grew dark; sh",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_006.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b038_03__wh_ch04_b038",
+      "mention_id": "m_wh_ch04_b038_03",
+      "block_id": "wh_ch04_b038",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Earnshaw",
+      "quote_context": " older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready to fling it out of doors: she did fly up, asking how he could fashion to bring that gipsy brat into the house, when they had their own bairns to feed and fe",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b042_01__wh_ch04_b042",
+      "mention_id": "m_wh_ch04_b042_01",
+      "block_id": "wh_ch04_b042",
+      "chapter_id": "wh_ch04",
+      "surface": "Mrs. Earnshaw",
+      "quote_context": "So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sym",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b038_05__wh_ch04_b038",
+      "mention_id": "m_wh_ch04_b038_05",
+      "block_id": "wh_ch04_b038",
+      "chapter_id": "wh_ch04",
+      "surface": "my mistress",
+      "quote_context": "nd his money and time being both limited, he thought it better to take it home with him at once, than run into vain expenses there: because he was determined he would not leave it as he found it. Well, the conclusion was, that my mistress grumbled herself calm; and Mr. Earnshaw told me to wash it, and give it clean things, and let it sleep with the children.",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_007.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b039_03__wh_ch04_b039",
+      "mention_id": "m_wh_ch04_b039_03",
+      "block_id": "wh_ch04_b039",
+      "chapter_id": "wh_ch04",
+      "surface": "the former",
+      "quote_context": "Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had ",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_008.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b042_02__wh_ch04_b042",
+      "mention_id": "m_wh_ch04_b042_02",
+      "block_id": "wh_ch04_b042",
+      "chapter_id": "wh_ch04",
+      "surface": "the young master",
+      "quote_context": "So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sym",
+      "hint_entity_id": "ent_hindley",
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b042_05__wh_ch04_b042",
+      "mention_id": "m_wh_ch04_b042_05",
+      "block_id": "wh_ch04_b042",
+      "chapter_id": "wh_ch04",
+      "surface": "her brother",
+      "quote_context": "r him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.",
+      "hint_entity_id": "ent_hindley",
+      "source_artifact": "lexicon/wb_wh_ch04_009.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b043_05__wh_ch04_b043",
+      "mention_id": "m_wh_ch04_b043_05",
+      "block_id": "wh_ch04_b043",
+      "chapter_id": "wh_ch04",
+      "surface": "the lads",
+      "quote_context": "knowing perfectly the hold he had on his heart, and conscious he had only to speak and all the house would be obliged to bend to his wishes. As an instance, I remember Mr. Earnshaw once bought a couple of colts at the parish fair, and gave the lads each one. Heathcliff took the handsomest, but it soon fell lame, and when he discovered it, he said to Hindley—",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_010.json"
+    },
+    {
+      "atom_id": "atom_m_wh_ch04_b044_04__wh_ch04_b044",
+      "mention_id": "m_wh_ch04_b044_04",
+      "block_id": "wh_ch04_b044",
+      "chapter_id": "wh_ch04",
+      "surface": "young Earnshaw",
+      "quote_context": "revented it, he would have gone just so to the master, and got full revenge by letting his condition plead for him, intimating who had caused it. “Take my colt, Gipsy, then!” said young Earnshaw. “And I pray that he may break your neck: take him, and be damned, you beggarly interloper! and wheedle my father out of all he has: only afterwards show him what yo",
+      "hint_entity_id": null,
+      "source_artifact": "lexicon/wb_wh_ch04_011.json"
+    }
+  ],
+  "prompt_tokens_est": 10175,
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_identity_partition_v1.\nYou are resolving character identity for one chapter of a long book. Each ATOM is one mention occurrence: {atom_id, block_id, surface, quote_context, hint_entity_id}. PRIOR_GROUPS are identity groups already established in earlier chapters: {entity_id, canonical_surface, referent_kind, member_summary}. IDENTITY_HINTS are statements taken from chapter digests; treat them as leads to check against the quoted text, never as evidence by themselves.\nAssign EVERY listed atom to exactly one group. A group is one real-world referent.\n- An honorific difference (Mr./Mrs./Miss/young/old) is NOT evidence of identity: a wife, a widow and a father-in-law can share one surname; a title like \"the master\" can pass between people inside one chapter.\n- The SAME surface may denote DIFFERENT people in different scenes or narration frames; judge each atom from its own quote_context.\n- To extend a prior group, set reuse_entity_id to its entity_id. Reopen or split a prior group ONLY with a quote contradicting its unity, recorded in evidence with supports=different_identity.\n- Prefer SPLIT when unsure — merging two people is worse than leaving two entities.\n- referent_kind: person | place | group_reference | literary_allusion | unknown. A coordination surface naming two people at once counts as group_reference, never a person.\n- Output JSON only: {\"groups\": [{\"group_key\": string, \"reuse_entity_id\": string or null, \"referent_kind\": string, \"canonical_atom_id\": string, \"member_atom_ids\": [strings], \"status\": \"resolved\" | \"uncertain\" | \"quarantine\", \"alias_bindings\": [{\"surface\": string, \"member_atom_ids\": [strings], \"valid_from_block\": string, \"valid_until_block\": string or null}], \"evidence\": [{\"block_id\": string, \"quote\": string, \"source_atom_ids\": [strings], \"supports\": \"same_identity\" | \"different_identity\"}]}]}\n- Every input atom appears exactly once across all groups. Do NOT invent atom ids, do NOT mint entity ids, do NOT paraphrase quotes — copy them verbatim from the given text. Output nothing but the JSON object."
+    },
+    {
+      "role": "user",
+      "content": "{\n  \"scope\": \"M3_asof_wh_ch04\",\n  \"atoms\": [\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b024_03__wh_ch04_b024\",\n      \"mention_id\": \"m_wh_ch04_b024_03\",\n      \"block_id\": \"wh_ch04_b024\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the Lintons\",\n      \"quote_context\": \"“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons. Have you been to Wuthering Heights? I beg pardon for asking; but I should like to hear how she is!”\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_003.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_01__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_01\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mr. Hindley Earnshaw\",\n      \"quote_context\": \"Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_03__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_03\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"my mother\",\n      \"quote_context\": \"Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_04__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_04\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mr. Earnshaw\",\n      \"quote_context\": \"n errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set me to. One fine summer morning—it was the beginning of harvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b038_06__wh_ch04_b038\",\n      \"mention_id\": \"m_wh_ch04_b038_06\",\n      \"block_id\": \"wh_ch04_b038\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mr. Earnshaw\",\n      \"quote_context\": \"nd his money and time being both limited, he thought it better to take it home with him at once, than run into vain expenses there: because he was determined he would not leave it as he found it. Well, the conclusion was, that my mistress grumbled herself calm; and Mr. Earnshaw told me to wash it, and give it clean things, and let it sleep with the children.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b039_05__wh_ch04_b039\",\n      \"mention_id\": \"m_wh_ch04_b039_05\",\n      \"block_id\": \"wh_ch04_b039\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mr. Earnshaw\",\n      \"quote_context\": \"heir room; and I had no more sense, so I put it on the landing of the stairs, hoping it might be gone on the morrow. By chance, or else attracted by hearing his voice, it crept to Mr. Earnshaw’s door, and there he found it on quitting his chamber. Inquiries were made as to how it got there; I was obliged to confess, and in recompense for my cowardice and inh\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b043_04__wh_ch04_b043\",\n      \"mention_id\": \"m_wh_ch04_b043_04\",\n      \"block_id\": \"wh_ch04_b043\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mr. Earnshaw\",\n      \"quote_context\": \"ble; though knowing perfectly the hold he had on his heart, and conscious he had only to speak and all the house would be obliged to bend to his wishes. As an instance, I remember Mr. Earnshaw once bought a couple of colts at the parish fair, and gave the lads each one. Heathcliff took the handsomest, but it soon fell lame, and when he discovered it, he said\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_05__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_05\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the old master\",\n      \"quote_context\": \" and helped to make hay, and hung about the farm ready for anything that anybody would set me to. One fine summer morning—it was the beginning of harvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating m\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_06__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_06\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Joseph\",\n      \"quote_context\": \"y would set me to. One fine summer morning—it was the beginning of harvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating my porridge with them—and he said, speaking to his son, “Now, my bonny man, I’m \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_07__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_07\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b039_01__wh_ch04_b039\",\n      \"mention_id\": \"m_wh_ch04_b039_01\",\n      \"block_id\": \"wh_ch04_b039\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b040_04__wh_ch04_b040\",\n      \"mention_id\": \"m_wh_ch04_b040_04\",\n      \"block_id\": \"wh_ch04_b040\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"ened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname. Miss Cathy and he were now very thick; but Hindley hated him: and to say the truth I did the same; and we plagued and went on with him shamefully: for I wasn’t reasonable enough to feel my injustice, and the mistress never \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b041_01__wh_ch04_b041\",\n      \"mention_id\": \"m_wh_ch04_b041_01\",\n      \"block_id\": \"wh_ch04_b041\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"He seemed a sullen, patient child; hardened, perhaps, to ill-treatment: he would stand Hindley’s blows without winking or shedding a tear, and my pinches moved him only to draw in a breath and open his eyes, as if he had hurt himself by accident, and nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poo\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b043_01__wh_ch04_b043\",\n      \"mention_id\": \"m_wh_ch04_b043_01\",\n      \"block_id\": \"wh_ch04_b043\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \" affirmed it was in a great measure owing to me, and praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b043_07__wh_ch04_b043\",\n      \"mention_id\": \"m_wh_ch04_b043_07\",\n      \"block_id\": \"wh_ch04_b043\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \" affirmed it was in a great measure owing to me, and praised me for my care. I was vain of his commendations, and softened towards the being by whose means I earned them, and thus Hindley lost his last ally: still I couldn’t dote on Heathcliff, and I wondered often what my master saw to admire so much in the sullen boy; who never, to my recollection, repaid \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b044_01__wh_ch04_b044\",\n      \"mention_id\": \"m_wh_ch04_b044_01\",\n      \"block_id\": \"wh_ch04_b044\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"rses with me: I don’t like mine; and if you won’t I shall tell your father of the three thrashings you’ve given me this week, and show him my arm, which is black to the shoulder.” Hindley put out his tongue, and cuffed him over the ears. “You’d better do it at once,” he persisted, escaping to the porch (they were in the stable): “you will have to: and if I s\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_011.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b045_02__wh_ch04_b045\",\n      \"mention_id\": \"m_wh_ch04_b045_02\",\n      \"block_id\": \"wh_ch04_b045\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Hindley\",\n      \"quote_context\": \"Heathcliff had gone to loose the beast, and shift it to his own stall; he was passing behind it, when Hindley finished his speech by knocking him under its feet, and without stopping to examine whether his hopes were fulfilled, ran away as fast as he could. I was surprised to witness how coolly the child gathered himself up, and went on with his intention; e\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_012.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_08__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_08\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Cathy\",\n      \"quote_context\": \"rvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating my porridge with them—and he said, speaking to his son, “Now, my bonny man, I’m going to Liverpool to-day, what shall I bring you? You may choose wha\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b039_02__wh_ch04_b039\",\n      \"mention_id\": \"m_wh_ch04_b039_02\",\n      \"block_id\": \"wh_ch04_b039\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Cathy\",\n      \"quote_context\": \"Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b041_04__wh_ch04_b041\",\n      \"mention_id\": \"m_wh_ch04_b041_04\",\n      \"block_id\": \"wh_ch04_b041\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Cathy\",\n      \"quote_context\": \" nobody was to blame. This endurance made old Earnshaw furious, when he discovered his son persecuting the poor fatherless child, as he called him. He took to Heathcliff strangely, believing all he said (for that matter, he said precious little, and generally the truth), and petting him up far above Cathy, who was too mischievous and wayward for a favourite.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b042_04__wh_ch04_b042\",\n      \"mention_id\": \"m_wh_ch04_b042_04\",\n      \"block_id\": \"wh_ch04_b042\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Cathy\",\n      \"quote_context\": \"r him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_09__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_09\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"my son\",\n      \"quote_context\": \"Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_16__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_16\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"my children\",\n      \"quote_context\": \"Before I came to live here, she commenced—waiting no farther invitation to her story—I was almost always at Wuthering Heights; because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father, and I got used to playing with the children: I ran errands too, and helped to make hay, and hung about the farm ready for anything that anybody would set m\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b035_18__wh_ch04_b035\",\n      \"mention_id\": \"m_wh_ch04_b035_18\",\n      \"block_id\": \"wh_ch04_b035\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"his children\",\n      \"quote_context\": \"pell!” Hindley named a fiddle, and then he asked Miss Cathy; she was hardly six years old, but she could ride any horse in the stable, and she chose a whip. He did not forget me; for he had a kind heart, though he was rather severe sometimes. He promised to bring me a pocketful of apples and pears, and then he kissed his children, said good-bye, and set off.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_005.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b036_01__wh_ch04_b036\",\n      \"mention_id\": \"m_wh_ch04_b036_01\",\n      \"block_id\": \"wh_ch04_b036\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Earnshaw\",\n      \"quote_context\": \"It seemed a long while to us all—the three days of his absence—and often did little Cathy ask when he would be home. Mrs. Earnshaw expected him by supper-time on the third evening, and she put the meal off hour after hour; there were no signs of his coming, however, and at last the children got tired of running down to the gate to look. Then it grew dark; sh\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_006.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b038_03__wh_ch04_b038\",\n      \"mention_id\": \"m_wh_ch04_b038_03\",\n      \"block_id\": \"wh_ch04_b038\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Earnshaw\",\n      \"quote_context\": \" older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready to fling it out of doors: she did fly up, asking how he could fashion to bring that gipsy brat into the house, when they had their own bairns to feed and fe\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b042_01__wh_ch04_b042\",\n      \"mention_id\": \"m_wh_ch04_b042_01\",\n      \"block_id\": \"wh_ch04_b042\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"Mrs. Earnshaw\",\n      \"quote_context\": \"So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sym\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b038_05__wh_ch04_b038\",\n      \"mention_id\": \"m_wh_ch04_b038_05\",\n      \"block_id\": \"wh_ch04_b038\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"my mistress\",\n      \"quote_context\": \"nd his money and time being both limited, he thought it better to take it home with him at once, than run into vain expenses there: because he was determined he would not leave it as he found it. Well, the conclusion was, that my mistress grumbled herself calm; and Mr. Earnshaw told me to wash it, and give it clean things, and let it sleep with the children.\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_007.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b039_03__wh_ch04_b039\",\n      \"mention_id\": \"m_wh_ch04_b039_03\",\n      \"block_id\": \"wh_ch04_b039\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the former\",\n      \"quote_context\": \"Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had \",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_008.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b042_02__wh_ch04_b042\",\n      \"mention_id\": \"m_wh_ch04_b042_02\",\n      \"block_id\": \"wh_ch04_b042\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the young master\",\n      \"quote_context\": \"So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sym\",\n      \"hint_entity_id\": \"ent_hindley\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b042_05__wh_ch04_b042\",\n      \"mention_id\": \"m_wh_ch04_b042_05\",\n      \"block_id\": \"wh_ch04_b042\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"her brother\",\n      \"quote_context\": \"r him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.\",\n      \"hint_entity_id\": \"ent_hindley\",\n      \"source_artifact\": \"lexicon/wb_wh_ch04_009.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b043_05__wh_ch04_b043\",\n      \"mention_id\": \"m_wh_ch04_b043_05\",\n      \"block_id\": \"wh_ch04_b043\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"the lads\",\n      \"quote_context\": \"knowing perfectly the hold he had on his heart, and conscious he had only to speak and all the house would be obliged to bend to his wishes. As an instance, I remember Mr. Earnshaw once bought a couple of colts at the parish fair, and gave the lads each one. Heathcliff took the handsomest, but it soon fell lame, and when he discovered it, he said to Hindley—\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_010.json\"\n    },\n    {\n      \"atom_id\": \"atom_m_wh_ch04_b044_04__wh_ch04_b044\",\n      \"mention_id\": \"m_wh_ch04_b044_04\",\n      \"block_id\": \"wh_ch04_b044\",\n      \"chapter_id\": \"wh_ch04\",\n      \"surface\": \"young Earnshaw\",\n      \"quote_context\": \"revented it, he would have gone just so to the master, and got full revenge by letting his condition plead for him, intimating who had caused it. “Take my colt, Gipsy, then!” said young Earnshaw. “And I pray that he may break your neck: take him, and be damned, you beggarly interloper! and wheedle my father out of all he has: only afterwards show him what yo\",\n      \"hint_entity_id\": null,\n      \"source_artifact\": \"lexicon/wb_wh_ch04_011.json\"\n    }\n  ],\n  \"prior_groups\": [\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b008_01_wh_ch01_b008\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b008_01__wh_ch01_b008\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b010_01_wh_ch01_b010\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b010_01__wh_ch01_b010\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch01_b019_01_wh_ch01_b019\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch01_b019_01__wh_ch01_b019\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b004_01_wh_ch02_b004\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b004_01__wh_ch02_b004\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b049_03_wh_ch02_b049\",\n      \"canonical_surface\": \"my son\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b049_03__wh_ch02_b049\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b051_01_wh_ch02_b051\",\n      \"canonical_surface\": \"my son\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b051_01__wh_ch02_b051\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b060_01_wh_ch02_b060\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b060_01__wh_ch02_b060\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b062_01_wh_ch02_b062\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b062_01__wh_ch02_b062\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b065_01_wh_ch02_b065\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b065_01__wh_ch02_b065\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b071_03_wh_ch02_b071\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b071_03__wh_ch02_b071\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b076_03_wh_ch02_b076\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b076_03__wh_ch02_b076\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b085_01_wh_ch02_b085\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b085_01__wh_ch02_b085\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch02_b090_01_wh_ch02_b090\",\n      \"canonical_surface\": \"Mr. Earnshaw\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch02_b090_01__wh_ch02_b090\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b008_02_wh_ch03_b008\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b008_02__wh_ch03_b008\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b009_01_wh_ch03_b009\",\n      \"canonical_surface\": \"Hindley\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b009_01__wh_ch03_b009\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b010_01_wh_ch03_b010\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b010_01__wh_ch03_b010\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b010_02_wh_ch03_b010\",\n      \"canonical_surface\": \"Hindley\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b010_02__wh_ch03_b010\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b011_03_wh_ch03_b011\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b011_03__wh_ch03_b011\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b015_01_wh_ch03_b015\",\n      \"canonical_surface\": \"Hindley\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b015_01__wh_ch03_b015\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b018_01_wh_ch03_b018\",\n      \"canonical_surface\": \"Hindley\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b018_01__wh_ch03_b018\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b018_03_wh_ch03_b018\",\n      \"canonical_surface\": \"Hindley\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b018_03__wh_ch03_b018\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b021_01_wh_ch03_b021\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b021_01__wh_ch03_b021\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b023_01_wh_ch03_b023\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b023_01__wh_ch03_b023\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b026_01_wh_ch03_b026\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b026_01__wh_ch03_b026\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b057_02_wh_ch03_b057\",\n      \"canonical_surface\": \"Cathy\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b057_02__wh_ch03_b057\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_atom_atom_m_wh_ch03_b059_01_wh_ch03_b059\",\n      \"canonical_surface\": \"Joseph\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b059_01__wh_ch03_b059\"\n      ]\n    },\n    {\n      \"entity_id\": \"provisional_ent_hindley\",\n      \"canonical_surface\": \"her master\",\n      \"referent_kind\": \"unknown\",\n      \"member_summary\": [\n        \"atom_m_wh_ch03_b002_02__wh_ch03_b002\"\n      ]\n    }\n  ],\n  \"identity_hints\": [\n    {\n      \"chapter_id\": \"wh_ch04\",\n      \"narration_frame_segments\": [\n        {\n          \"narrator_ref\": \"ent_mr_lockwood\",\n          \"block_range\": [\n            \"wh_ch04_b002\",\n            \"wh_ch04_b033\"\n          ],\n          \"story_time_label\": \"frame_present\"\n        },\n        {\n          \"narrator_ref\": \"ent_mrs_dean\",\n          \"block_range\": [\n            \"wh_ch04_b035\",\n            \"wh_ch04_b045\"\n          ],\n          \"story_time_label\": \"retrospective_past\"\n        }\n      ],\n      \"relation_event_summary\": [\n        {\n          \"pair\": [\n            \"ent_mr_lockwood\",\n            \"ent_mrs_dean\"\n          ],\n          \"observed_valence_hint\": \"positive\",\n          \"event_ids\": [\n            \"e_wh_ch04_b003_01\",\n            \"e_wh_ch04_b004_01\",\n            \"e_wh_ch04_b007_01\",\n            \"e_wh_ch04_b009_01\",\n            \"e_wh_ch04_b010_01\",\n            \"e_wh_ch04_b011_01\",\n            \"e_wh_ch04_b012_01\",\n            \"e_wh_ch04_b013_01\",\n            \"e_wh_ch04_b014_01\",\n            \"e_wh_ch04_b015_01\",\n            \"e_wh_ch04_b016_01\",\n            \"e_wh_ch04_b017_01\",\n            \"e_wh_ch04_b018_01\",\n            \"e_wh_ch04_b019_01\",\n            \"e_wh_ch04_b020_01\",\n            \"e_wh_ch04_b021_01\",\n            \"e_wh_ch04_b022_01\",\n            \"e_wh_ch04_b023_01\",\n            \"e_wh_ch04_b024_01\",\n            \"e_wh_ch04_b024_02\",\n            \"e_wh_ch04_b024_03\",\n            \"e_wh_ch04_b026_01\",\n            \"e_wh_ch04_b030_01\",\n            \"e_wh_ch04_b032_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b031\",\n            \"note\": \"Lockwood explicitly invites confidence, and Mrs. Dean agrees to become his principal storyteller\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mr_earnshaw\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch04_b038_02\",\n            \"e_wh_ch04_b038_03\",\n            \"e_wh_ch04_b041_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b041\",\n            \"note\": \"Mr. Earnshaw’s attachment hardens into marked favoritism toward Heathcliff\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_hindley\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch04_b040_03\",\n            \"e_wh_ch04_b044_01\",\n            \"e_wh_ch04_b044_02\",\n            \"e_wh_ch04_b044_03\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b040\",\n            \"note\": \"Hindley’s dislike is stated plainly and develops into open violence and rivalry\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_cathy\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch04_b039_02\",\n            \"e_wh_ch04_b040_02\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b040\",\n            \"note\": \"After initial contempt, Cathy quickly becomes closely attached to Heathcliff\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mrs_dean\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"mixed\",\n          \"event_ids\": [\n            \"e_wh_ch04_b040_04\",\n            \"e_wh_ch04_b042_02\",\n            \"e_wh_ch04_b045_01\"\n          ],\n          \"candidate_transition\": {\n            \"trigger_block\": \"wh_ch04_b042\",\n            \"note\": \"Nelly’s hostility softens after nursing Heathcliff through illness, though not into affection\"\n          },\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_mrs_earnshaw\",\n            \"ent_heathcliff\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch04_b040_05\"\n          ],\n          \"status\": \"evidence_only\"\n        },\n        {\n          \"pair\": [\n            \"ent_earnshaw\",\n            \"ent_cathy\"\n          ],\n          \"observed_valence_hint\": \"negative\",\n          \"event_ids\": [\n            \"e_wh_ch04_b041_02\"\n          ],\n          \"status\": \"evidence_only\"\n        }\n      ],\n      \"translator_relevant_facts\": [\n        {\n          \"fact_type\": \"narrator\",\n          \"fact\": \"The chapter shifts from Lockwood’s first-person frame narration to Mrs. Dean’s extended first-person retrospective account.\",\n          \"block_evidence\": [\n            \"wh_ch04_b002\",\n            \"wh_ch04_b035\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Lockwood’s narration is self-conscious, ironic, and elevated, especially in his opening self-mockery.\",\n          \"block_evidence\": [\n            \"wh_ch04_b002\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Mrs. Dean’s speech mixes standard narration with regional vocabulary such as 'bonny man,' 'bairns,' and 'e’en.'\",\n          \"block_evidence\": [\n            \"wh_ch04_b035\",\n            \"wh_ch04_b037\",\n            \"wh_ch04_b038\"\n          ]\n        },\n        {\n          \"fact_type\": \"register\",\n          \"fact\": \"Mrs. Dean uses strongly judgmental figurative language for Heathcliff and the household history, including bird metaphors like 'cuckoo' and 'dunnock.'\",\n          \"block_evidence\": [\n            \"wh_ch04_b030\"\n          ]\n        },\n        {\n          \"fact_type\": \"status\",\n          \"fact\": \"Mrs. Dean marks social hierarchy through terms like 'master,' 'mistress,' 'young master,' and 'the old master.'\",\n          \"block_evidence\": [\n            \"wh_ch04_b004\",\n            \"wh_ch04_b035\",\n            \"wh_ch04_b042\"\n          ]\n        },\n        {\n          \"fact_type\": \"setting\",\n          \"fact\": \"The frame scene is an intimate fireside supper conversation at Thrushcross Grange, with Lockwood chilled and feverish.\",\n          \"block_evidence\": [\n            \"wh_ch04_b002\",\n            \"wh_ch04_b033\"\n          ]\n        },\n        {\n          \"fact_type\": \"speech_style\",\n          \"fact\": \"Insults directed at Heathcliff are socially and ethnically charged ('gipsy brat,' 'beggarly interloper,' 'imp of Satan') and should retain their harshness.\",\n          \"block_evidence\": [\n            \"wh_ch04_b038\",\n            \"wh_ch04_b044\"\n          ]\n        },\n        {\n          \"fact_type\": \"narrator\",\n          \"fact\": \"Mrs. Dean openly revises her own earlier judgments, admitting former cruelty toward Heathcliff and partial later softening.\",\n          \"block_evidence\": [\n            \"wh_ch04_b040\",\n            \"wh_ch04_b042\",\n            \"wh_ch04_b043\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"dry_run_note\": \"This scaffold uses provisional prior groups only for token sizing. They are not identity verdicts and will not be published.\"\n}"
+    }
+  ]
+}

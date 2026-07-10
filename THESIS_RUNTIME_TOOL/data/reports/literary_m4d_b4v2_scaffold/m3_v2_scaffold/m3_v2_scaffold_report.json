@@ -1,0 +1,322 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_scaffold",
+  "status": "needs_claude_prompt_and_estimate_gate",
+  "zero_api": true,
+  "estimate": {
+    "phase": "L2A-M4d",
+    "milestone": "M3_v2_scaffold",
+    "zero_api": true,
+    "prompt_source": "..\\design\\LITERARY_PROMPT_DESIGN.md",
+    "model": "gpt-5.4",
+    "chapters_selected": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03",
+      "wh_ch04"
+    ],
+    "modes": [
+      "literary_identity_partition_v1",
+      "literary_phase_segment_v2"
+    ],
+    "logical_stages_per_scope": 2,
+    "physical_calls": 10,
+    "call_estimates": [
+      {
+        "scope": "M3_asof_wh_ch01",
+        "chapter_id": "wh_ch01",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 22,
+        "prompt_tokens_est": 5333,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch01",
+        "chapter_id": "wh_ch01",
+        "mode": "literary_phase_segment_v2",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 3,
+        "prompt_tokens_est": 5638,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch02",
+        "chapter_id": "wh_ch02",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 68,
+        "prompt_tokens_est": 13311,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch02",
+        "chapter_id": "wh_ch02",
+        "mode": "literary_phase_segment_v2",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 9,
+        "prompt_tokens_est": 12102,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch03",
+        "chapter_id": "wh_ch03",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 1,
+        "shard_count": 2,
+        "items": 59,
+        "prompt_tokens_est": 13881,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch03",
+        "chapter_id": "wh_ch03",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 2,
+        "shard_count": 2,
+        "items": 27,
+        "prompt_tokens_est": 9131,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch03",
+        "chapter_id": "wh_ch03",
+        "mode": "literary_phase_segment_v2",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 6,
+        "prompt_tokens_est": 11646,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch04",
+        "chapter_id": "wh_ch04",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 1,
+        "shard_count": 2,
+        "items": 49,
+        "prompt_tokens_est": 13922,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch04",
+        "chapter_id": "wh_ch04",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 2,
+        "shard_count": 2,
+        "items": 33,
+        "prompt_tokens_est": 10175,
+        "max_output_tokens": 6144
+      },
+      {
+        "scope": "M3_asof_wh_ch04",
+        "chapter_id": "wh_ch04",
+        "mode": "literary_phase_segment_v2",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 7,
+        "prompt_tokens_est": 12649,
+        "max_output_tokens": 6144
+      }
+    ],
+    "scope_summary": [
+      {
+        "scope": "M3_asof_wh_ch01",
+        "atoms_total_as_of": 22,
+        "frontier_atoms": 22,
+        "prior_groups_for_frontier": 0,
+        "prior_group_injections": 0,
+        "phase_rows_as_of": 3,
+        "identity_shards": 1,
+        "phase_shards": 1,
+        "m1_checkpoint_hash": "d7ce3c3e3a9eca24f19d581f6b9ce5351cc2e108b593a5e9812c01571b4df11c",
+        "m2_checkpoint_hash": "1fbf2503faf3b13f843e5dbd5ac75041136c493b1fa2ee62eae6392d16ab3211"
+      },
+      {
+        "scope": "M3_asof_wh_ch02",
+        "atoms_total_as_of": 90,
+        "frontier_atoms": 68,
+        "prior_groups_for_frontier": 12,
+        "prior_group_injections": 12,
+        "phase_rows_as_of": 9,
+        "identity_shards": 1,
+        "phase_shards": 1,
+        "m1_checkpoint_hash": "9221629ccd53b3a1bf4881b84a445549af000145e90db056d016a1a3460a2761",
+        "m2_checkpoint_hash": "0a94dc2563344c3b154119ec97ef86ea4444193398a2c18faec4c19e8ae02096"
+      },
+      {
+        "scope": "M3_asof_wh_ch03",
+        "atoms_total_as_of": 176,
+        "frontier_atoms": 86,
+        "prior_groups_for_frontier": 50,
+        "prior_group_injections": 51,
+        "phase_rows_as_of": 6,
+        "identity_shards": 2,
+        "phase_shards": 1,
+        "m1_checkpoint_hash": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+        "m2_checkpoint_hash": "6014102e981436addba02a21ba9e51d97125e880cd76ddb7e76d4fe2aec95d37"
+      },
+      {
+        "scope": "M3_asof_wh_ch04",
+        "atoms_total_as_of": 258,
+        "frontier_atoms": 82,
+        "prior_groups_for_frontier": 86,
+        "prior_group_injections": 86,
+        "phase_rows_as_of": 7,
+        "identity_shards": 2,
+        "phase_shards": 1,
+        "m1_checkpoint_hash": "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11",
+        "m2_checkpoint_hash": "53cac6bdfb84eb5a5eb7853122e9641728ed5555ffd20636eb0d927f6b064027"
+      }
+    ],
+    "prompt_tokens_est": 107788,
+    "max_prompt_tokens_est": 13922,
+    "max_output_tokens_per_call": 6144,
+    "total_tokens_upper_bound": 169228,
+    "prompt_token_cap": 14000,
+    "cost_cap_usd": 0.0,
+    "token_growth_halt": false,
+    "scaffold_only": true,
+    "note": "Dry-run phase prompts use B1/B3 provisional hints only to size the second logical stage. They are not B4 decisions and no Story Bible/checkpoint is published."
+  },
+  "m1_dir": "data\\reports\\literary_m4_full",
+  "m2_dir": "data\\reports\\literary_m4_full",
+  "rendered_prompts": [
+    {
+      "mode": "literary_identity_partition_v1",
+      "scope": "M3_asof_wh_ch01",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch01\\literary_identity_partition_v1_shard_01.json"
+    },
+    {
+      "mode": "literary_phase_segment_v2",
+      "scope": "M3_asof_wh_ch01",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch01\\literary_phase_segment_v2_shard_01.json"
+    },
+    {
+      "mode": "literary_identity_partition_v1",
+      "scope": "M3_asof_wh_ch02",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch02\\literary_identity_partition_v1_shard_01.json"
+    },
+    {
+      "mode": "literary_phase_segment_v2",
+      "scope": "M3_asof_wh_ch02",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch02\\literary_phase_segment_v2_shard_01.json"
+    },
+    {
+      "mode": "literary_identity_partition_v1",
+      "scope": "M3_asof_wh_ch03",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch03\\literary_identity_partition_v1_shard_01.json"
+    },
+    {
+      "mode": "literary_identity_partition_v1",
+      "scope": "M3_asof_wh_ch03",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch03\\literary_identity_partition_v1_shard_02.json"
+    },
+    {
+      "mode": "literary_phase_segment_v2",
+      "scope": "M3_asof_wh_ch03",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch03\\literary_phase_segment_v2_shard_01.json"
+    },
+    {
+      "mode": "literary_identity_partition_v1",
+      "scope": "M3_asof_wh_ch04",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch04\\literary_identity_partition_v1_shard_01.json"
+    },
+    {
+      "mode": "literary_identity_partition_v1",
+      "scope": "M3_asof_wh_ch04",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch04\\literary_identity_partition_v1_shard_02.json"
+    },
+    {
+      "mode": "literary_phase_segment_v2",
+      "scope": "M3_asof_wh_ch04",
+      "path": "data\\reports\\literary_m4d_b4v2_scaffold\\m3_v2_scaffold\\wh_ch04\\literary_phase_segment_v2_shard_01.json"
+    }
+  ],
+  "m3_checkpoint_plans": [
+    {
+      "stage": "m3_v2",
+      "chapter_id": "wh_ch01",
+      "schema_version": "literary_m3_v2_checkpoint_v1",
+      "input_m1_checkpoint_hash": "d7ce3c3e3a9eca24f19d581f6b9ce5351cc2e108b593a5e9812c01571b4df11c",
+      "input_m2_checkpoint_hash": "1fbf2503faf3b13f843e5dbd5ac75041136c493b1fa2ee62eae6392d16ab3211",
+      "parent_checkpoint_hash": "assigned_after_prior_scope_passes",
+      "publish_rule": "atomic_after_all_semantic_gates_pass"
+    },
+    {
+      "stage": "m3_v2",
+      "chapter_id": "wh_ch02",
+      "schema_version": "literary_m3_v2_checkpoint_v1",
+      "input_m1_checkpoint_hash": "9221629ccd53b3a1bf4881b84a445549af000145e90db056d016a1a3460a2761",
+      "input_m2_checkpoint_hash": "0a94dc2563344c3b154119ec97ef86ea4444193398a2c18faec4c19e8ae02096",
+      "parent_checkpoint_hash": "assigned_after_prior_scope_passes",
+      "publish_rule": "atomic_after_all_semantic_gates_pass"
+    },
+    {
+      "stage": "m3_v2",
+      "chapter_id": "wh_ch03",
+      "schema_version": "literary_m3_v2_checkpoint_v1",
+      "input_m1_checkpoint_hash": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+      "input_m2_checkpoint_hash": "6014102e981436addba02a21ba9e51d97125e880cd76ddb7e76d4fe2aec95d37",
+      "parent_checkpoint_hash": "assigned_after_prior_scope_passes",
+      "publish_rule": "atomic_after_all_semantic_gates_pass"
+    },
+    {
+      "stage": "m3_v2",
+      "chapter_id": "wh_ch04",
+      "schema_version": "literary_m3_v2_checkpoint_v1",
+      "input_m1_checkpoint_hash": "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11",
+      "input_m2_checkpoint_hash": "53cac6bdfb84eb5a5eb7853122e9641728ed5555ffd20636eb0d927f6b064027",
+      "parent_checkpoint_hash": "assigned_after_prior_scope_passes",
+      "publish_rule": "atomic_after_all_semantic_gates_pass"
+    }
+  ],
+  "gate_battery": {
+    "status": "dry_run_input_ready_only",
+    "checks": {
+      "m1_m2_chain_validated": true,
+      "as_of_atoms_only": true,
+      "the_master_ch04_input": {
+        "status": "ready_for_identity_gate",
+        "surface": "the master",
+        "blocks": [
+          "wh_ch04_b004",
+          "wh_ch04_b026",
+          "wh_ch04_b036",
+          "wh_ch04_b038",
+          "wh_ch04_b039",
+          "wh_ch04_b044"
+        ],
+        "required_distinct_groups_after_api": 3
+      },
+      "the_young_master_ch04_input": {
+        "status": "ready_for_identity_gate",
+        "surface": "the young master",
+        "blocks": [
+          "wh_ch04_b042"
+        ]
+      },
+      "stable_id_ch01_to_ch04": "awaits identity responses; not evaluated in zero-API scaffold",
+      "semantic_gate": "awaits API responses; no synthetic verdict was applied"
+    }
+  },
+  "input_chain": {
+    "m1": [
+      "d7ce3c3e3a9eca24f19d581f6b9ce5351cc2e108b593a5e9812c01571b4df11c",
+      "9221629ccd53b3a1bf4881b84a445549af000145e90db056d016a1a3460a2761",
+      "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
+      "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11"
+    ],
+    "m2": [
+      "1fbf2503faf3b13f843e5dbd5ac75041136c493b1fa2ee62eae6392d16ab3211",
+      "0a94dc2563344c3b154119ec97ef86ea4444193398a2c18faec4c19e8ae02096",
+      "6014102e981436addba02a21ba9e51d97125e880cd76ddb7e76d4fe2aec95d37",
+      "53cac6bdfb84eb5a5eb7853122e9641728ed5555ffd20636eb0d927f6b064027"
+    ]
+  },
+  "stop": "Scaffold complete. No LLM call, M3 checkpoint, or Story Bible was published. Claude must approve rendered prompts and the estimator before API execution."
+}
