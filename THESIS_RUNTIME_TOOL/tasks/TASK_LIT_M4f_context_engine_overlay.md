@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev3, for Sol round 3)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev4, for Sol round 4)
 
-Status: **DRAFT rev3 — awaiting Sol critique round 3. Do NOT implement.**
+Status: **DRAFT rev4 — awaiting Sol critique round 4 + user/GVHD confirmation of production knowledge_mode. Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -232,3 +232,69 @@ Context (verified on repo): architecture lock = "GraphRAG-shaped offline, keyed-
 **R3 — As-of applies to EVERY retrieval channel, vector included (Claude addition):** the Chroma index spans the whole indexed corpus, so `similar_passages` hits can come from FUTURE blocks — a vector query is a future-leak channel by default. Rule: in online_as_of mode, every retrieval channel (exact/graph/FTS/vector) filters hits to `block_id ≤ as_of_block` BEFORE ranking; the Context Audit records pre-filter and post-filter hit lists per channel so leak-by-retrieval is provable/refutable. Offline_reconcile mode may search two-sided under its non-causal label. Vector results are candidates only — never identity authority (cosine similarity never concludes "same person"; adjudication stays with the LLM under §2''').
 
 **R4 — Collection timing:** `translation_memory` only fills at Translator stage (Critic-passed pairs); `narrative_motifs` indexable post-M2; no entity-card collection exists — if B4-style identity retrieval ever needs vector, the path is scene → similar_passages → block_ids → SQLite mentions/endpoints → LLM adjudication, subject to R3.
+
+---
+
+# M4f REV4 DELTA (2026-07-12, after Sol round 3 — ALL 4 BLOCKERs + 5 MAJORs + 1 MINOR accepted; two items resolved by realigning to the GVHD architecture LOCK, flagged for user confirmation. Supersedes conflicting rev1–rev3 text.) Status: **rev4 — for Sol round 4.**
+
+Claude gate notes:
+- **B-architecture CONFIRMED on LOCK:** §0.5 (GVHD, non-negotiable) = "whole-book pre-pass then FREEZE before translating (V1)". Rev3's online_as_of-as-pipeline-mode contradicted the locked production architecture — the as-of work of the last three rounds conflated two axes that must be separate (below). §0.6+§0.1 likewise confirm human = future work, pipeline automatic from zero → rev3's human-only overlay activation violated the LOCK. Both are realignments, not new design: the LOCK wins.
+- **B-B0-scene CONFIRMED by construction:** a mention early in a scene still sits inside a request that saw the scene end; and B0 requests also carry REGISTRY_SO_FAR + neighbor summaries (builder_pilot.py:1191) → provenance must be transitive over every section, not just visible block markers.
+- **B-endpoint-role CONFIRMED on my own rev3 text:** §4-E' schema lacks the role; real artifacts hold TWO role-bearing dicts (actor/target) per event — directional facts cannot remap after split without the role.
+- **M-chroma CONFIRMED on code:** passage metadata = {block_id, doc_id, chapter_id, text} — no canonical order; where-filter pre-ANN is unimplementable today (deferred to vector arm, contract recorded now).
+- Remaining findings accepted on design logic.
+
+## §K'' — Two axes: knowledge_mode × story_validity_as_of (closes B-architecture; supersedes rev3 §2-K'/§4-T' single-axis framing)
+
+- **Axis 1 — knowledge_mode** (what the system knew when deciding): `whole_book_frozen` (production V1 per LOCK §0.5) | `as_of_experiment` (causal canary mode) | `streaming` (future work).
+- **Axis 2 — story_validity_as_of** (what a pack may RENDER at story block X): relation/phase/address/alias validity intervals are ALWAYS filtered by story time, in every knowledge_mode. A ch30 marriage is never rendered active in a ch5 pack; but under whole_book_frozen the system legitimately KNOWS ch30 identity when adjudicating.
+- Production V1 flow: whole-book pre-pass → identity adjudication with full frozen evidence → FREEZE → translate with story-valid packs. **online_as_of (strictly-prior-K etc.) applies to the canary A/B and any future streaming mode; it is NOT the production pipeline mode.**
+- The b004/hint class remains a defect in BOTH modes — not because future knowledge is forbidden in production, but because unadjudicated B1 hints were presented as authority. The fix (cast claims + roster + adjudication protocol) is mode-independent; the EXCLUSION rules of §2'' bind the as_of_experiment mode.
+- Every artifact/report stamps both axes. **USER/GVHD confirmation requested (expected: no change — LOCK already decides production = whole_book_frozen).**
+
+## §O'' — Overlay activation: automatic fail-closed quarantine (closes B-human-dependency; supersedes rev3 human-only activation)
+
+- **Auto-active class 1 (additive):** records that only ADD visibility — alias→entity binding with a unique mechanical witness — activate automatically after mechanical validation.
+- **Auto-active class 2 (destructive proposals → quarantine):** LLM-proposed merge/split/reclassify NEVER rewrite mappings automatically; instead they auto-activate as **quarantine**: affected entities/pairs/views become blocked_for_runtime (excluded from packs, retained in state) — the same fail-closed semantics as the locked §5.4 pair quarantine. Wrong identity is thus never silently used AND never silently rewritten, with zero human in the loop.
+- **Human approval = optional upgrade** (quarantine → applied mapping), explicitly future work per LOCK §0.6. Scale never depends on it; reports carry quarantine counts and the scale gate sets thresholds on them.
+
+## §B0'' — Transitive request lineage (closes B-B0-scene; supersedes rev3 §2-B0' block-marker provenance)
+
+- `input_max_order` of a B0 (or any) call = **max canonical order_index over the transitive lineage of EVERY rendered section**: text blocks + registry snapshot rows (each row carries its own lineage) + neighbor summaries (lineage = their source chapters) + any joined artifact. Computed by code from the rendered request; never model-declared (extends the round-2 trust-the-request rule).
+- In as_of_experiment mode: claims usable at mention M only if `input_max_order ≤ order(M)` — current-scene B0 claims therefore do NOT qualify for early-scene mentions; the identity call's K-prior full blocks carry that local evidence instead (madam: b017 sits within K of b019). Prefix/window B0 snapshots are the upgrade if K-prior proves insufficient — measured, not assumed.
+- In whole_book_frozen mode lineage is still stamped (audit + reproducibility), it just doesn't gate usage.
+
+## §E'' — Endpoint schema completed (closes B-endpoint-role; supersedes rev3 §4-E' row shape)
+
+Ground row key = `(event_or_turn_id, endpoint_role)`, `endpoint_role ∈ actor | target | speaker | addressee`. Row preserves verbatim: `reference_kind, resolution_status, candidate_entity_ids, attribution_method`, base entity binding, `source_artifact_hash`, plus rev3 fields (block_id, surface, source_atom_ids?, resolution_evidence). Directional facts remap through (id, role) after split; a role row without a unique witness → dependents stale/blocked (rev3 rule unchanged).
+
+## §T'' — knowledge_available_from_scope computed, never declared (closes M-self-declared)
+
+`knowledge_available_from_scope` = code-computed canonical **order_index** = max(evidence lineage per §B0'', decision-time scope, approval-time scope). String chapter-id comparison banned; LLM-returned values for this field are ignored by contract.
+
+## §V'' — Overlay dependency stamps per entity/pair (closes M-global-version)
+
+- Timeline/view rows stamp `{overlay_dependency: {entity_ids, pair}, overlay_version_at_build}`; an overlay change invalidates ONLY rows whose dependency intersects the changed records — no global stale.
+- View rebuilds are mechanical (base + overlay). **Phase re-derivation (LLM) triggers only when a row's INPUT set actually changed**, and those calls are priced in the estimator's contingent reserve (M4e E''' carries over). If a global version bump is ever chosen operationally, its full rebuild cost must be declared in the preflight — no silent global invalidation.
+
+## §AB'' — Arm sourcing fixed + held-out generality set (closes M-generality)
+
+- **Arm A regenerates** old-policy context through the SAME new topology (not replayed old artifacts) — the experiment tests the DATA POLICY, not artifact staleness; both arms' raw responses stored content-addressed.
+- Canaries (madam, b004, two Jabez) are **DEV/regression only** — they shaped the intervention ([dont-tune-intervention-on-test] discipline). Before the 34-chapter gate: a **held-out set** untouched by design — at least one unused WH chapter (+ Gatsby ch1 slice when the unit abstraction lands), preregistered occurrence-level ground truth, same three gates.
+
+## §F'' — Frame confirmation protocol + coverage economics (closes M-frame-confirmation)
+
+- Independent confirmation = second call with **independently rendered request**: shuffled evidence/section order, no first-call output visible, same locked prompt version; agreement on `(narrator_ref, story_time_label, block_range)` → verified; disagreement → uncertain (stays unknown in context).
+- New scale metrics: `verified_frame_coverage` (% blocks under verified frame), confirmation call count + cost in preflight; **halt threshold before 34-ch scale** (coverage floor TBD at dry-run — measured, not guessed). This bounds the "everything unknown → phase coverage collapses" risk Sol flagged.
+
+## §U'' — Selection-universe manifest (closes MINOR)
+
+Universe persisted as content-addressed **manifest**: `[{id, source_channel, score/rank, source_row_hash}]` — no full-text dump, but a reviewer can reconstruct exactly which candidates existed at selection time even if the store has since changed.
+
+## §R' — Chroma as-of contract (records M-chroma; defers implementation to vector arm)
+
+Vector metadata gains canonical `order_index` at index-build time; as-of filtering = `where` constraint applied **pre-ANN** (never post-hoc top-k filtering, which lets future hits crowd out valid candidates). Not a canary blocker; contract recorded now to avoid retrofit.
+
+## Round-4 ask to Sol
+
+B1–B4 closed by §K''/§O''/§B0''/§E''; M5–M9 by §T''/§V''/§AB''/§F''+§R'; MINOR by §U''. §K'' and §O'' are LOCK realignments — user/GVHD confirmation of production mode = whole_book_frozen is being requested in parallel (expected: confirm). Verify-only pass; flag residual holes, otherwise LOCK.
