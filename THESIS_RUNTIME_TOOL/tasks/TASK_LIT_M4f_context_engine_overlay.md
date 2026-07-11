@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev8, for Sol round 8)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev9, for Sol round 9)
 
-Status: **DRAFT rev8 — awaiting Sol round 8. LOCK gated on SSE8 full-run error audit + SSZ8 canonical rewrite. User confirmations recorded (whole_book_frozen + zero-human + data-grounded lock). Do NOT implement.**
+Status: **DRAFT rev9 — awaiting Sol round 9; then SSE9 audit (0-API) -> Canonical v1 -> LOCK. User confirmations recorded (whole_book_frozen + zero-human + data-grounded lock). Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -532,3 +532,54 @@ After Sol confirms the round-8 blockers closed AND §E8 shows no uncovered error
 ## Round-8 ask to Sol
 
 Findings 1–5 closed by §D6/§P6/§G6/§W6/§Q6; oracle defined in §M7; §C7 strengthens the atom disposition; §E8 grounds the lock in the full real-run error sweep; §Z8 sequences the canonical rewrite before any implementation. Requested: verify the five closures; if clean, Claude executes §E8 (artifact audit, zero API) → both review the audit → §Z8 canonical rewrite → LOCK on the canonical document.
+
+---
+
+# M4f REV9 DELTA (2026-07-12, after Sol round 8 — ALL 5 BLOCKERs + 2 MAJORs accepted. Supersedes conflicting rev1–rev8 text.) Status: **rev9 — for Sol round 9; then §E9 audit → Canonical v1 → LOCK.**
+
+Claude gate notes:
+- **B-explicit-fact CONFIRMED on artifact:** ch1 `servant_of(ent_joseph → ent_mr_heathcliff)` evidence = "Joseph, take Mr. Lockwood's horse" — a command, never a statement of servitude; the model's own predicate_note says "INDICATING household service". A self-declared explicit/derived kind lets exactly this inference through the disclosure gate.
+- **B-E8-not-exhaustive CONFIRMED on artifact:** ch4 bible carries 203 speaker turns + 163 relation events + 4 chapter digests + relation facts — none of which my §E8 list covered; dropped/validator-rejected items were invisible entirely. "Exhaustive" was not exhaustive.
+- **B-binding-id-protocol CONFIRMED by construction:** a checker barred from seeing call 1 cannot return the same model-minted ID except by luck; and rev8's "exact-cover" contradicts fail-closed (an occurrence with NO binding must be a legal, default state).
+- **B-witness-activation / B-quarantine-scope ACCEPTED:** rev8 §W6 quietly moved whole-book semantic authority from B1 hints to a single B4 adjudication response; §Q6 let closure run on the full self-declared seed after only partial checker agreement — both are the one-call-authority hole in yet another coat.
+- **M-support-sets / M-oracle-kinds ACCEPTED** on design logic.
+
+## §D7 — ID-free two-call protocol, code mints binding_id (supersedes rev8 §D6 matching rule)
+
+- Both independent calls return **semantic tuples without IDs**: `{entity, occurrence_set, valid_range?/frame_ref?}`. Code canonicalizes (sorted occurrence ids, normalized range) and, ON MATCH (set equality), mints `binding_id = hash(entity + canonical_occurrence_set + range/frame)`. No model ever mints or echoes a binding id.
+- Validator semantics corrected: **partial non-overlapping cover** — at most one ACTIVE binding covers an occurrence; occurrences covered by nothing are the LEGAL DEFAULT and render local-surface. Fail-closed is the resting state, not a violation. Only `active` renders (independence ladder §F''' unchanged).
+
+## §P7 — DisclosureSubject union + checked explicit_fact (supersedes rev8 §P6 self-classification)
+
+- `DisclosureSubject = binding_id | item_id` — disclosure events can target ANY envelope item (phase, motif, Brief claim, address inference), closing the §D6-only-bindings gap.
+- The `explicit_fact` vs `derived` classification is itself semantic ⇒ **checker-confirmed or defaulted to derived**. A model's "stated verbatim" claim alone never grants explicit status; code checks only quote location, never "statedness". servant_of is the canonical regression case for this rule.
+
+## §W7 — Adjudication decisions carry the same three states (supersedes rev8 §W6 instant witness)
+
+- Identity decisions: `proposed → corroborated → active` (+ rejected). A **proposed** decision is usable ONLY within its own scope's rendering, flagged provisional, and NEVER mints a witness. **Corroborated** (independent checker, same protocol as §D7 — ID-free tuple match on {occurrence_set, entity}) mints the reusable cross-scope witness. **Active** per the §F''' ladder where the decision opens disclosure-sensitive effects.
+- Checker-call volume is priced in deterministic_base at dry-run; easy-case agreement is cheap by design (roster + cards), and the §M6/M7 gates catch over-conservatism.
+
+## §Q7 — Per-ID checker disposition; closure on the corroborated intersection (supersedes rev8 §Q6 confirm-the-dispute)
+
+The quarantine checker returns a disposition PER disputed ID (`confirmed | not_confirmed | uncertain`). Closure activates only over the **exactly-corroborated subset**; everything else stays `quarantine_proposed` with seed-degrade (local-surface) on its own occurrences only. Call 1 disputing {A,B,C} with checker confirming {A} quarantines A's closure — B and C are never dragged along.
+
+## §G7 — support_sets semantics (supersedes rev8 §G6 flat depends_on)
+
+Envelope dependencies become `support_sets: [[refs...], ...]` — **all_of within a set, any_of across sets**. An item is quarantined only when NO support set survives (every set intersects the confirmed-disputed closure). Independently-double-proven facts survive the loss of one evidence family; the reverse index (§G6) indexes at the (item, support_set) level.
+
+## §M8 — Oracle covers every kind (supersedes rev8 §M7 identity-only schema)
+
+Oracle rows are generic: `{item_kind, item_id | oracle_id, expected_disclosed_from, world_valid_interval, expected_pack_support, evidence}` — phases, motifs, Brief claims, address inferences, relation facts included; identity occurrences are a subtype. Disclosure precision/recall and support metrics compute per kind AND pooled; a system can no longer ace identity while leaking (or over-hiding) through other channels.
+
+## §E9 — Audit contract expanded (supersedes rev8 §E8 scope + taxonomy; still MANDATORY pre-LOCK)
+
+- **Manifest-driven walk of the full lineage:** M1 atoms/endpoints/relation events (raw + validator-dropped) → M2 digests/claims/frames → M3 rows: T2 entities, aliases, **T3 speaker turns (203 in ch4 alone)**, **T3 relation events (163)**, **T4 digests**, relation facts, phases, address policies, quarantined/blocked records → rendered pack lines. BOTH retained and dropped items are audited — an error destroyed before T2 must still be visible in the audit.
+- **Root-cause enum extended:** context_packaging | retrieval_sharding | hint_bias | frame_error | model_slip | consolidation_code | **validator_loss | schema_contract | source_ambiguity | provenance_loss | api_format | other_new_class**. Any `other_new_class` row REOPENS the spec before lock, on evidence.
+- **Second reviewer:** non-obvious `expected_value` rows go to Sol for independent confirmation before they enter the oracle; ambiguous rows are recorded as `source_ambiguity`, not forced into a class.
+
+## Locked sequence to LOCK (per Sol round-8 verdict + user directive)
+
+1. Sol round 9 verifies §D7/§P7/§W7/§Q7 (+§G7/§M8) close the one-call-authority family for good.
+2. Claude runs the **§E9 audit** (0-API, artifacts only) → audit report reviewed by BOTH Sol and user.
+3. Any uncovered error class → evidence-based spec reopen; else **§Z8 Canonical v1 rewrite**.
+4. LOCK on Canonical v1 → prompt authoring (disclosure extractor+checker pair, identity two-step+checker, frame confirmation) → CodeX scaffold behind §T6 fixture + conformance tests.
