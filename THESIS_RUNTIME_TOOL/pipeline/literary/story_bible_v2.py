@@ -47,6 +47,8 @@ from pipeline.literary.checkpoint import (
 IDENTITY_PARTITION_VERSION = "literary_identity_partition_v1"
 PHASE_SEGMENT_VERSION = "literary_phase_segment_v2"
 M3_V2_CHECKPOINT_SCHEMA_VERSION = "literary_m3_v2_checkpoint_v2"
+# Bump this whenever validator/apply semantics change without changing a prompt.
+M3_V2_VALIDATOR_CONTRACT_VERSION = "literary_m3_v2_validator_contract_v1"
 M3_V2_STAGE = "m3_v2"
 IDENTITY_REFERENT_KINDS = {
     "person",
@@ -1139,6 +1141,7 @@ def build_m3_v2_checkpoint(
         "prompt_hashes": _m3_v2_prompt_hashes(design_doc, chapter_id),
         "config_hash": _m3_v2_config_hash(config),
         "schema_version": M3_V2_CHECKPOINT_SCHEMA_VERSION,
+        "validator_contract_version": M3_V2_VALIDATOR_CONTRACT_VERSION,
         "parent_checkpoint_hash": parent_checkpoint_hash,
         "input_m1_checkpoint_hash": input_m1_checkpoint_hash,
         "input_m2_checkpoint_hash": input_m2_checkpoint_hash,
@@ -2011,21 +2014,13 @@ def apply_phase_segment_response(
     valid_payloads: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
     prior_phase_rows = list(working.get("relation_phases") or [])
     prior_fact_rows = list(working.get("relation_facts") or [])
-    for pair, payload in pair_payloads.items():
-        quote_audit: dict[str, int] = {"evidence_quote_punct_normalized": 0}
-        errors = validate_phase_segment_response(
-            payload,
-            entity_ids=entity_ids,
-            source_text_by_block=source_text_by_block,
-            block_ordinals=block_ordinals,
-            allowed_pairs={pair},
-            scope_end_block=scope_end_block,
-            quote_audit=quote_audit,
-        )
-        quote_normalized += int(quote_audit["evidence_quote_punct_normalized"])
-        if not errors:
-            valid_payloads[pair] = payload
-            continue
+
+    def block_pair(
+        pair: tuple[str, str],
+        *,
+        reject_reasons: list[str],
+        payload: dict[str, list[dict[str, Any]]],
+    ) -> None:
         retained_phases = [
             copy.deepcopy(row)
             for row in prior_phase_rows
@@ -2041,7 +2036,7 @@ def apply_phase_segment_response(
             "pair": list(pair),
             "status": "blocked_for_runtime",
             "needs_human_review": True,
-            "reject_reasons": list(errors),
+            "reject_reasons": list(reject_reasons),
             "returned_relation_phases": copy.deepcopy(payload["relation_phases"]),
             "returned_relation_facts": copy.deepcopy(payload["relation_facts"]),
             "prior_history_retained": bool(retained_phases or retained_facts),
@@ -2049,9 +2044,39 @@ def apply_phase_segment_response(
             "retained_relation_facts": retained_facts,
         }
 
-    if pair_payloads and len(blocked_records) == len(pair_payloads):
+    omitted_pairs = affected - set(pair_payloads)
+    for pair in sorted(omitted_pairs):
+        block_pair(
+            pair,
+            reject_reasons=["model_omitted_pair"],
+            payload={"relation_phases": [], "relation_facts": []},
+        )
+
+    for pair, payload in pair_payloads.items():
+        quote_audit: dict[str, int] = {"evidence_quote_punct_normalized": 0}
+        errors = validate_phase_segment_response(
+            payload,
+            entity_ids=entity_ids,
+            source_text_by_block=source_text_by_block,
+            block_ordinals=block_ordinals,
+            allowed_pairs={pair},
+            scope_end_block=scope_end_block,
+            quote_audit=quote_audit,
+        )
+        quote_normalized += int(quote_audit["evidence_quote_punct_normalized"])
+        if not errors:
+            valid_payloads[pair] = payload
+            continue
+        block_pair(pair, reject_reasons=errors, payload=payload)
+
+    if affected and len(blocked_records) == len(affected):
+        code = (
+            "phase_all_pairs_omitted_by_model"
+            if len(omitted_pairs) == len(affected)
+            else "phase_all_pairs_blocked_for_runtime"
+        )
         raise M3V2SemanticGateError(
-            "phase_all_pairs_blocked_for_runtime",
+            code,
             [
                 f"pair={list(pair)}: {'; '.join(record['reject_reasons'])}"
                 for pair, record in sorted(blocked_records.items())
@@ -2098,6 +2123,7 @@ def apply_phase_segment_response(
         "phases_applied": phases_applied,
         "review_only_facts": review_only_facts,
         "pairs_blocked_for_runtime": len(blocked_records),
+        "pairs_omitted_by_model": len(omitted_pairs),
         "blocked_pair_fact_rows": sum(
             len(record["returned_relation_facts"]) for record in blocked_records.values()
         ),
@@ -2676,6 +2702,7 @@ def _m3_v2_prefix(
             "prompt_hashes": _m3_v2_prompt_hashes(design_doc, chapter_id),
             "config_hash": _m3_v2_config_hash(config),
             "schema_version": M3_V2_CHECKPOINT_SCHEMA_VERSION,
+            "validator_contract_version": M3_V2_VALIDATOR_CONTRACT_VERSION,
             "parent_checkpoint_hash": parent_hash,
             "input_m1_checkpoint_hash": str(chain["m1_checkpoints"][index]["checkpoint_hash"]),
             "input_m2_checkpoint_hash": str(chain["m2_checkpoints"][index]["checkpoint_hash"]),
@@ -3737,6 +3764,7 @@ def run_m3_v2_dry_run(
                 "stage": M3_V2_STAGE,
                 "chapter_id": scope["chapter_id"],
                 "schema_version": M3_V2_CHECKPOINT_SCHEMA_VERSION,
+                "validator_contract_version": M3_V2_VALIDATOR_CONTRACT_VERSION,
                 "input_m1_checkpoint_hash": scope["m1_checkpoint_hash"],
                 "input_m2_checkpoint_hash": scope["m2_checkpoint_hash"],
                 "parent_checkpoint_hash": "assigned_after_prior_scope_passes",

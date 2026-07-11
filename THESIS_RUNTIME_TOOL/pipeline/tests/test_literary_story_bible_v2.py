@@ -27,6 +27,7 @@ from pipeline.literary.checkpoint import (
 )
 from pipeline.literary.story_bible_v2 import (
     M3_V2_CHECKPOINT_SCHEMA_VERSION,
+    M3_V2_VALIDATOR_CONTRACT_VERSION,
     M3_V2_STAGE,
     M3V2SemanticGateError,
     M3V2TechnicalGateError,
@@ -48,6 +49,7 @@ from pipeline.literary.story_bible_v2 import (
     _remap_phase_rows_to_final_ids,
     _runtime_identity_shards,
     _runtime_phase_shards,
+    _m3_v2_prefix,
     _scope_payloads,
     normalize_identity_evidence_atom_ids,
     _persist_m3_v2_raw_response,
@@ -862,6 +864,7 @@ def test_m3_v2_checkpoint_contract_binds_m1_m2_and_artifact_manifest(tmp_path: P
         expected={
             "stage": M3_V2_STAGE,
             "schema_version": M3_V2_CHECKPOINT_SCHEMA_VERSION,
+            "validator_contract_version": M3_V2_VALIDATOR_CONTRACT_VERSION,
             "input_m1_checkpoint_hash": "m1hash",
             "input_m2_checkpoint_hash": "m2hash",
         },
@@ -914,8 +917,65 @@ def test_m3_v2_synthetic_apply_publishes_and_resumes_without_api(tmp_path: Path)
             "stage": M3_V2_STAGE,
             "chapter_id": "bk_ch01",
             "schema_version": M3_V2_CHECKPOINT_SCHEMA_VERSION,
+            "validator_contract_version": M3_V2_VALIDATOR_CONTRACT_VERSION,
         },
     ) == []
+
+
+def test_m3_v2_prefix_rejects_stale_validator_contract(tmp_path: Path) -> None:
+    document, m1_dir, m2_dir = _make_chain(tmp_path, include_relation=False)
+    atoms = build_identity_atoms_as_of(
+        document=document,
+        m1_dir=m1_dir,
+        m1_checkpoints=[
+            read_checkpoint(_checkpoint_path(m1_dir, "m1", "bk_ch01"))
+        ],
+    )["atoms"]
+    out_dir = tmp_path / "m3"
+    run_m3_v2_from_responses(
+        document,
+        ["bk_ch01"],
+        out_dir=out_dir,
+        design_doc=DESIGN_DOC,
+        config=_config(),
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+        responses_by_scope={
+            "M3_asof_bk_ch01": {
+                "identity": _valid_identity_response(atoms),
+                "phase": {"relation_facts": [], "relation_phases": []},
+            }
+        },
+    )
+    checkpoint_path = out_dir / "checkpoints" / M3_V2_STAGE / "bk_ch01.json"
+    checkpoint = read_checkpoint(checkpoint_path)
+    stale_payload = {
+        key: copy.deepcopy(value)
+        for key, value in checkpoint.items()
+        if key not in {"checkpoint_hash", "created_at"}
+    }
+    stale_payload["validator_contract_version"] = "literary_m3_v2_validator_contract_stale"
+    write_m3_v2_checkpoint_atomic(out_dir, build_checkpoint(stale_payload))
+
+    chain = load_m3_v2_input_chain(
+        document=document,
+        chapters=["bk_ch01"],
+        m1_dir=m1_dir,
+        m2_dir=m2_dir,
+        design_doc=DESIGN_DOC,
+    )
+    restored, mismatches = _m3_v2_prefix(
+        document=document,
+        chain=chain,
+        out_dir=out_dir,
+        design_doc=DESIGN_DOC,
+        config=_config(),
+    )
+
+    assert restored == []
+    assert mismatches == [
+        {"chapter_id": "bk_ch01", "fields": ["validator_contract_version"]}
+    ]
 
 
 def test_m3_v2_rerender_maps_closed_phase_boundary_from_checkpoint_state(tmp_path: Path) -> None:
@@ -1634,6 +1694,112 @@ def test_m3_v2_pair_quarantine_halts_when_every_returned_pair_is_rejected() -> N
             scope_end_block="bk_ch01_b001",
         )
     assert exc_info.value.code == "phase_all_pairs_blocked_for_runtime"
+
+
+def test_m3_v2_phase_omission_retains_prior_history_and_quarantines_pair() -> None:
+    source = {
+        "bk_ch01_b001": "Mira welcomed Rowan.",
+        "bk_ch01_b002": "Rowan warned Tala.",
+    }
+    state = empty_m3_v2_state()
+    state["entities"] = [
+        {
+            "entity_id": entity_id,
+            "canonical": entity_id.removeprefix("ent_").title(),
+            "referent_kind": "person",
+            "member_atom_ids": [],
+            "aliases": [],
+            "supersedes_entity_ids": [],
+            "status": "resolved",
+        }
+        for entity_id in ["ent_mira", "ent_rowan", "ent_tala"]
+    ]
+    prior_phase = {
+        "pair": ["ent_mira", "ent_rowan"],
+        "phase_label": "friendly",
+        "valid_from_block": "bk_ch01_b001",
+        "valid_until_block": None,
+        "trigger_block": "bk_ch01_b001",
+        "trigger_evidence": "welcomed Rowan",
+        "status": "open",
+    }
+    state["relation_phases"] = [copy.deepcopy(prior_phase)]
+    response = {
+        "relation_facts": [],
+        "relation_phases": [
+            {
+                "pair": ["ent_rowan", "ent_tala"],
+                "phase_label": "strained",
+                "valid_from_block": "bk_ch01_b002",
+                "valid_until_block": None,
+                "trigger_block": "bk_ch01_b002",
+                "trigger_evidence": "warned Tala",
+                "status": "open",
+            }
+        ],
+    }
+
+    applied, audit = apply_phase_segment_response(
+        state,
+        response,
+        allowed_pairs={
+            ("ent_mira", "ent_rowan"),
+            ("ent_rowan", "ent_tala"),
+        },
+        source_text_by_block=source,
+        block_ordinals={block_id: index for index, block_id in enumerate(source)},
+        scope_end_block="bk_ch01_b002",
+    )
+
+    assert prior_phase in applied["relation_phases"]
+    assert audit["pairs_omitted_by_model"] == 1
+    assert audit["pairs_blocked_for_runtime"] == 1
+    omitted = next(
+        row
+        for row in applied["blocked_for_runtime_pairs"]
+        if row["pair"] == ["ent_mira", "ent_rowan"]
+    )
+    assert omitted["reject_reasons"] == ["model_omitted_pair"]
+    assert omitted["prior_history_retained"] is True
+
+
+def test_m3_v2_phase_all_omitted_halts_without_replacing_prior_history() -> None:
+    state = empty_m3_v2_state()
+    state["entities"] = [
+        {
+            "entity_id": entity_id,
+            "canonical": entity_id.removeprefix("ent_").title(),
+            "referent_kind": "person",
+            "member_atom_ids": [],
+            "aliases": [],
+            "supersedes_entity_ids": [],
+            "status": "resolved",
+        }
+        for entity_id in ["ent_mira", "ent_rowan"]
+    ]
+    prior_phase = {
+        "pair": ["ent_mira", "ent_rowan"],
+        "phase_label": "friendly",
+        "valid_from_block": "bk_ch01_b001",
+        "valid_until_block": None,
+        "trigger_block": "bk_ch01_b001",
+        "trigger_evidence": "welcomed Rowan",
+        "status": "open",
+    }
+    state["relation_phases"] = [copy.deepcopy(prior_phase)]
+
+    with pytest.raises(M3V2SemanticGateError) as exc_info:
+        apply_phase_segment_response(
+            state,
+            {"relation_facts": [], "relation_phases": []},
+            allowed_pairs={("ent_mira", "ent_rowan")},
+            source_text_by_block={"bk_ch01_b001": "Mira welcomed Rowan."},
+            block_ordinals={"bk_ch01_b001": 0},
+            scope_end_block="bk_ch01_b001",
+        )
+
+    assert exc_info.value.code == "phase_all_pairs_omitted_by_model"
+    assert state["relation_phases"] == [prior_phase]
 
 
 def test_m3_v2_real_ch4_phase_fixture_quarantines_only_reported_speech_pair(
