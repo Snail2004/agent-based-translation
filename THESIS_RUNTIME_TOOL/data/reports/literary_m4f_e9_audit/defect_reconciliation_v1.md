@@ -55,3 +55,17 @@ Both passes independent (Claude committed before receiving Sol's). Joint verdict
 
 ## Status
 Coverage manifest (reconciled) + defect tables complete. No other_new_class → proceed to Canonical v1 incorporating E1–E6. Run-again acceptance reconciles all ~34 findings.
+
+## F. Sol confirmation of Claude-only rows (2026-07-12) — 2 wording corrections accepted, Claude re-verified
+- **Claude #4,5 hash-mint: CONFIRMED as-is.** Code appends a hash when `ent_<surface>` already exists, with no adjudication (story_bible_v2.py:1263). Real referents: `ent_the_master_5c39e4f4a3` = "the master"@b026 is **Heathcliff**; `ent_my_son_b8bccd0d2e` = b035 is **Hindley**. Both uncertain/review_only (runtime not dirtied) but genuine under-merge. Canonical rule: collision → adjudicate/pending, NEVER auto-merge AND never hash-mint.
+- **Claude #8 door: CONFIRMED but reworded (Claude overstated).** B1 accepted "my chamber door" into character_mentions with validator ok=true (wb_wh_ch03_009:50); B4 later downgraded it to referent_kind=place + review_only — it was NOT published as a runtime person (verified: door in review_only, absent from registry_T2_entities). Correct finding: **a non-person entered the character-mention/identity pipeline** (root cause validator_loss + schema_contract), not "runtime treats a door as a person".
+- **Claude #10 resolved+unknown: NOT confirmed as stated (Sol correct).** resolved and referent_kind are independent axes; no invariant says resolved⇒known-kind. Raw response carries `group_key="grp_juno_dog"` (VERIFIED): the model KNEW "the villain" is Juno the dog, but the taxonomy has no animal type → forced `unknown`; row held in review_only. Real defect = **ontology gap (no animal/nonhuman_character) + unclear status semantics**. Canonical must NOT add "resolved requires known kind"; instead separate THREE axes: (i) identity-resolved-or-not, (ii) referent-kind, (iii) runtime-eligibility.
+- **Claude #14 phase boundary: CONFIRMED fully.** Validator flags overlap only when next_start < prior_end, so equality passes; helper range is inclusive both sides and retrieval uses inclusive-both-sides (context_builder.py:499) → at the boundary block BOTH phases are genuinely active. Canonical: lock [from, until) + a query test exactly at the change-point block.
+
+**Revised Canonical v1 additions (supersede E3/E4 wording in section E):**
+- E3' collision → adjudicate/pending; never auto-merge, never hash-mint a new person.
+- E4' B1 person-rule validator (non-person must not enter character_mentions) + ontology extension (animal/nonhuman_character) + separate identity-resolved / referent-kind / runtime-eligibility (DROP "resolved requires known kind").
+- E5 interval [from, until) + change-point query test — unchanged.
+- E1,E2,E6 (address-term checker, global coverage before context-only drop, retain-history for ALL relation rows) — unchanged.
+
+Both auditors agree: no other_new_class; Canonical v1 cleared to write with the corrected wording above.
