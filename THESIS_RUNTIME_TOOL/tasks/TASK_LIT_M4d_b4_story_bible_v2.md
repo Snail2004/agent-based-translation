@@ -508,3 +508,33 @@ Verified: atom "the young man"@b079 hints `ent_the_young_man`; identity group `g
 **Tests:** real ch3 s1 raw as fixture must fully pass through the ladder with exactly the predicted counters; ambiguous mention-prefix (2 candidate atoms) → reject; claimed id ∉ hints and ≠ mint → reject; duplicate reuse WITH a different_identity link → split-tie halt; partition violated by a repair → reject.
 
 **Acceptance watch-items (recorded now, reviewed at the ch1–3 gate):** (a) atom `m_wh_ch03_b046_01` surface "your guest, sir" placed in the Heathcliff group — referent plausibly Lockwood (one-atom precision case, review not halt); (b) ch2 hint oddity `ent_zillah → [ent_mrs_heathcliff]` (an atom hinting zillah was judged Mrs. Heathcliff; harmless to the ladder because ent_zillah IS an existing entity so rule 2 never fires for it — but review the underlying ch2 assignment); (c) shard-2 `grp_catherine_ghost` (uncertain, 4 atoms) vs shard-1 ent_catherine_earnshaw — the predicted cross-shard under-merge case, goes to the measured under-merge list.
+
+---
+
+## CLAUDE GATE — ch1–3 published bibles (2026-07-11) — VERDICT: PASS with ONE mechanical render defect (Amendment #8) + documented review list
+
+### Acceptance scorecard (all verified on the published artifacts, not reports)
+- **Stable IDs ch1→ch3: PASS** — ent_mr_lockwood / ent_mr_heathcliff / ent_joseph / ent_hareton_earnshaw / ent_mrs_heathcliff identical strings across all three bibles.
+- **As-of no-leak: PASS** — T2 entities 5 → 7 → 13 monotone; ch1 bible knows nothing of ch2+ cast (the M4c leak class is dead).
+- **daughter_in_law_of: PASS** — `ent_mrs_heathcliff daughter_in_law_of ent_mr_heathcliff` + inverse father_in_law_of, both anchored `wh_ch02_b046`, published. This is the exact case the M4c honorific-merge destroyed.
+- **King Lear: PASS** — `ent_king_lear` referent_kind=literary_allusion, review_only, NOT a T2 person.
+- **Two Catherines: PASS** — mother = ent_catherine_earnshaw (T2, 16 diary/ghost atoms, aliases incl. all three surnames); ghost cluster = ent_that_minx (uncertain → review_only, kept OUT of runtime); daughter = ent_mrs_heathcliff distinct.
+- **"The master" early test (ch3): PASS with 1 mis-atom** — model built a DEAD-FATHER entity (ent_t_maister: "T' maister nobbut just buried" b012 + "th' owd man…but he's goan" b014 + "our father" b018) and kept it separate from "Maister Hindley" (b014_01 → ent_hindley). One atom mis-joined: "the surly old man" b015 = Joseph ("he may believe his prophecy" — the prophecy is Joseph's). Review, not halt.
+- **Embedded-cast (B0 criterion): PASS at entity level, GAP at frame level** — diary cast became T2 entities with correct diary-anchored evidence (they ARE story persons; two-Catherine safe). BUT M2/B3 emitted exactly ONE narration_frame_segment (frame_present, whole chapter) — the diary b005–b018 is NOT marked as an embedded frame. Consequence: diary-time phases (catherine↔heathcliff friendly from b018) sit on the same block-timeline as present-time phases with no frame separation → story-time vs block-time tension lands on address-policy later. NOT a B4 defect (bible renders M2 faithfully). → mandatory agenda item for the Sol dual review (guiding question 4).
+- **Counters: all as predicted** — suffix_repaired 4 members + 2 evidence (+4 alias-binding repairs, correctly surfaced separately), hint_normalized=1, mint_equivalent=2, duplicate_unions=2 (second = cross-shard same-entity union of ent_mr_heathcliff — mechanically expected under sharding), provisional_bindings=1.
+
+### AMENDMENT #8 (mechanical, 0 API): valid_to_block render defect
+State rows carry `valid_until_block` CORRECTLY (e.g. joseph–lockwood strained closed at wh_ch03_b021; heathcliff–lockwood strained closed at wh_ch03_b047) but published `entity_relations` emit `valid_to_block: null` — the render never maps `valid_until_block` → `valid_to_block` (design §5.4 output contract is `valid_to_block|null`). Closed phases in the bible currently look open-ended. Fix the mapping (one canonical field), re-render ch1–3 bibles FROM EXISTING CHECKPOINTS (0 API, no resume), test: every status=closed row in a published bible has a non-null end block equal to the state's valid_until_block.
+
+### Review list (documented, NOT blocking; Auditor §5.6 / human-review fodder — note the pattern: epithet-surface atoms are where precision drops)
+1. ent_madam (ch1, T2!) — single atom b019, Lockwood's sarcastic address to the DOG; model marked resolved person. Should have been uncertain. Phantom T2 entity.
+2. "your guest, sir" b046 atom inside ent_mr_heathcliff group (referent plausibly Lockwood).
+3. "the surly old man" b015 atom inside ent_t_maister (= Joseph).
+4. Two Jabez entities (ent_jabez_branderham 9 atoms + ent_the_reverend_jabez_branderham 1 atom) — cross-shard under-merge, safe direction.
+5. ent_cathy provisional bound to ent_that_minx (ghost cluster) not ent_catherine_earnshaw — under-merge; the pair correctly stays out of runtime.
+6. Re-segmentation as-of ch3 dropped ch1's brief heathcliff–lockwood "friendly" beat (model's full-history judgment, consistent with its own "momentary mood ≠ phase" instruction; per-scope bibles preserve each as-of view).
+
+### Next steps (locked order)
+1. CodeX: Amendment #8 render fix + re-render ch1–3 (0 API); then COMMIT the full amendment #5–#8 batch (code + tests + artifacts + raws).
+2. Extend scope to wh_ch04, resume (ch1–3 restore from checkpoints; only ch4 calls fresh — est ~25–35k tokens vs 157,825 headroom). Ch4 carries the OFFICIAL locked "the master = 3 distinct groups" criterion.
+3. Claude full acceptance gate on ch1–4 → Sol (max) dual review with the frame-layer agenda + review list → user decides 34-chapter unlock.
