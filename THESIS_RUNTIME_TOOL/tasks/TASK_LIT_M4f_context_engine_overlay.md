@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev2, for Sol round 2)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev3, for Sol round 3)
 
-Status: **DRAFT rev2 — awaiting Sol critique round 2. Do NOT implement.**
+Status: **DRAFT rev3 — awaiting Sol critique round 3. Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -153,3 +153,68 @@ Add per call: `request_fingerprint` (full canonical API request hash, per M4e ro
 ## Round-2 ask to Sol
 
 The three lock items from your verdict map to §2'/§2'' (B0 claims as-of with provenance + hard exclusion), §4'/§4'' (occurrence-level overlay + conflict/activation semantics), §6' (three-gate A/B). Plus two Claude additions for your check: scene-boundary fallback ±K when no typographic break exists (§2''''), and bypass_cache requirement on replicates (§6'). Flag residual holes; otherwise LOCK so prompt authoring and CodeX phasing start.
+
+---
+
+# M4f REV3 DELTA (2026-07-11, after Sol round 2 — ALL 5 BLOCKERs + 4 MAJORs + 1 MINOR accepted; Claude verification notes inline. Supersedes conflicting rev1/rev2 text.) Status: **rev3 — for Sol round 3.**
+
+Claude gate notes:
+- **B-endpoint CONFIRMED on real artifacts:** event endpoints in M1 narrative output are `{surface: "I"|"he"|"sir", reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}` — **no source_atom_id** (verified on `literary_m4_full` narrative artifacts + `_event_index` builder :531–555, which copies only actor/target dicts). Pronoun endpoints have no atom linkage at all; atom-level partition cannot assign them after a split. Rev2 §4' was incomplete exactly as Sol says.
+- **B-±K ACCEPTED — second own-goal acknowledged:** rev2's scene-bounded "adjacent blocks" (and my symmetric ±K fallback) re-opens future leak under a new name; a CONTEXT_ONLY label does not stop the model from using next-blocks for identity. Same error class as the b004 hint leak I confirmed two rounds ago — I proposed it anyway. Recorded.
+- **B-B0-self-declared ACCEPTED:** `max_source_block` is model-declared output; trust-the-request-not-the-claim is the same principle as the fingerprint rule (M4e round-4 B1). If B0's request contained future blocks, every claim it emits is future-informed regardless of the quoted block.
+- **B-overlay-temporal ACCEPTED:** a ch30 decision applied to a ch5 pack is future leak at the overlay layer — as-of must hold across ALL layers, overlay included.
+- **B-frame-verified ACCEPTED:** LLM self-issued `verified` would launder a wrong frame into ground truth; pilot ch3 is the standing proof that B3 frame output can be wrong.
+- **M-candidate-bound / M-immutable-request / M-AB-topology / M-timeline-pin / MINOR-ablation ACCEPTED** on design logic.
+
+## §2-B0' — B0 causal scope proven by request, not claimed (closes B1; supersedes rev2 §2' provenance trust)
+
+- Context Audit for every B0 call records **b0_input_block_ids / input_max_block from the actual rendered request**.
+- A cast claim is usable in **online-as-of** context ONLY if its whole B0 request satisfied `input_max_block ≤ as_of_block`. Claims from B0 calls whose request saw beyond as_of are **offline-reconciled only** (never delivered to online identity/phase calls, never causal evidence for canaries or as-of Translator packs).
+- Practical consequence: B0-per-scene calls are naturally as-of when scenes are processed in order; the audit proves it per call instead of assuming it.
+
+## §2-K' — Two context modes, no next-tail online (closes B2; supersedes rev2 §2'''' expansion)
+
+- **online_as_of:** full active block + up to K blocks strictly BEFORE the mention (config-hashed K), bounded by scene start. **No next-tail, ever.** CONTEXT_ONLY labels are not an as-of mechanism and are dropped from the online path.
+- **offline_reconcile:** two-sided context allowed; every output carries `knowledge_mode: offline` and is excluded from causal canary evidence and from as-of Translator packs. (Offline mode exists for end-of-book reconciliation reports, not for the online pipeline.)
+
+## §4-E' — Endpoint ground layer (closes B3; supersedes rev2 §4' atom-only partition)
+
+- New immutable ground row per event/turn endpoint: `{endpoint_id, event_id|turn_id, block_id, surface, source_atom_ids?, resolution_evidence}` — written by the migration run for all M1 narrative events (mechanical projection from existing actor/target dicts + block ids; missing atom linkage stays empty, never fabricated).
+- Overlay resolution covers **both atoms and endpoints**. A split's exact partition assigns atoms; endpoints resolve through their `source_atom_ids` witnesses or an explicit LLM/human endpoint-resolution record. **Endpoint without a unique witness → every dependent fact/phase/view goes stale/blocked** — it never silently inherits the pre-split entity.
+
+## §4-T' — Overlay temporal semantics (closes B4; extends rev2 §4'')
+
+- Every overlay record adds `{decided_at_scope, knowledge_available_from_scope}`; every query/pack carries a **query mode**:
+  - **online-as-of:** only records with `knowledge_available_from_scope ≤ scope` apply — a ch30 discovery never rewrites a ch5 pack;
+  - **offline-final:** full retroactive reconciliation, output labeled as such.
+- Translation reports pin **overlay_version + knowledge_cutoff_scope** (both in config_hash).
+
+## §5-F' — Frame verification authority (closes B5; supersedes rev2 §5' status semantics)
+
+- B3 emits frame claims as **proposed/uncertain only** — the model cannot self-issue `verified`.
+- `verified` requires human approval (H1 contract) or an independent confirmation call (two-key, same rule class as destructive verdicts). The mechanical validator may only reject malformed ranges — it never promotes status.
+- Unverified coverage ⇒ identity/phase context receives frame = **unknown**.
+
+## §2-C' — Bounded candidate adjudication (closes M-candidate; extends rev2 §2''')
+
+- If the retrieval union exceeds the dossier cap: adjudicate in **candidate batches** (full cards per batch), then one **bounded comparison call** over per-batch group summaries; no convergence → human. **No silent rank-cut** at any step.
+- Context Audit reports: candidate recall pool (ids + hash), batch coverage map, and the comparison outcome.
+
+## §3-R' — Immutable rendered-request artifacts (closes M-immutable; extends rev2 §3')
+
+- Every call's canonical rendered request body is persisted **append-only, content-addressed** (path + SHA in the checkpoint manifest). Hashes prove equality; the stored body lets a reviewer verify evidence bytes even if referenced files later change.
+- Audit adds the **exact selection-universe hash** (the full pool retrieval selected from), proving which candidates could have been dropped pre-retrieval.
+
+## §6-AB' — Clean causal isolation (closes M-AB; supersedes rev2 §6' arm design)
+
+- **Both arms run the NEW topology** (two-step protocol, same system prompts, validator, model/config). The ONLY difference: Arm A renders context per the OLD data policy (character-slice, B1 hints present, no cast claims); Arm B per the NEW policy. Overlay disabled in both arms.
+- Fresh replicates (bypass_cache, rev2 rule) are **interleaved** across arms to neutralize backend-time drift; occurrence-level ground truth is **preregistered** before any run ([dont-tune-intervention-on-test] discipline).
+- **MINOR adopted — madam ablation ladder:** old-policy → full-block-only → full-block + B0-claims, measuring the marginal value of each context component separately.
+
+## §2-P' — Timeline rows pinned (closes M-timeline; extends rev2 §2''''')
+
+Compact timeline rows carry `{overlay_version, frame_ref, source_event_ids}`; any mismatch with the current view's overlay/frame versions ⇒ the row is blocked and the timeline rebuilt before injection — stale identity/frame data never reaches a phase call.
+
+## Round-3 ask to Sol
+
+The four open root contracts from your verdict are closed as: B0 causal scope proven from rendered requests (§2-B0'), strict no-next-tail online mode (§2-K'), endpoint-level ground layer + witness rule (§4-E'), overlay temporal as-of with knowledge scopes (§4-T'), plus frame verification authority (§5-F'). Verify-only pass requested; flag residual holes, otherwise LOCK — prompt authoring (Claude) and CodeX phasing start at LOCK.
