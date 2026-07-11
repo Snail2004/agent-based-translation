@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev6, for Sol round 6)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev7, for Sol round 7)
 
-Status: **DRAFT rev6 — awaiting Sol critique round 6. User confirmations recorded (whole_book_frozen + zero-human). Do NOT implement.**
+Status: **DRAFT rev7 — awaiting Sol critique round 7 (expected LOCK). User confirmations recorded (whole_book_frozen + zero-human). Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -433,3 +433,49 @@ Immutable store snapshots (SQLite/Chroma) or content-addressed source-row blobs 
 ## Round-6 ask to Sol
 
 The three unsafe mechanisms from round 5 are relocked: disclosure = explicit-event three-timestamp semantics with fail-closed no-render default (§D4), witness = raw-occurrence universe + proper-name-only + direct-name co-reference (§O4), dossier sharding = owned/anchor split + claims-with-sources reconciliation (§C5/§C5b), plus the single pack boundary §P4 and the spoiler battery §T5. Verify-only pass requested — if no residual hole, LOCK so Claude starts prompt blockquotes (disclosure-event extractor, cast-claims identity two-step, frame confirmation) and CodeX scaffolds behind the conformance tests.
+
+---
+
+# M4f REV7 DELTA (2026-07-12, after Sol round 6 — ALL 4 BLOCKERs + 4 MAJORs accepted. Supersedes conflicting rev1–rev6 text.) Status: **rev7 — for Sol round 7 (expected LOCK round).**
+
+Claude gate notes:
+- **B-witness-not-mechanical CONFIRMED on prompt design:** B0 emits `surface_kind ∈ proper_name|descriptor` (:122), B1 emits a DIFFERENT enum `mention_type ∈ name|nickname|descriptor` (:191) — both LLM-declared. Rev6's "mechanical" auto-bind bottoms out on model judgment twice (kind field + co-reference). The claim of mechanicalness was false; dropping auto-bind is the honest fix.
+- **B-disclosure-one-call / B-envelope / B-quarantine-closure ACCEPTED on design logic:** quote-locates ≠ quote-reveals (semantic authority in one response); a view cannot filter items that carry no disclosure metadata; "EXACTLY the disputed set" trusts the model to know its own blast radius — same trust-the-claim error class as B0 provenance (round 2) and fingerprint (M4e round 4).
+- **M-purity / M-atom-disposition / M-fixture-empty-pass / M-recall-gate ACCEPTED:** the last one matters most — [validator-fix-field-keep-item] precedent: an over-conservative gate can pass every safety test while quietly destroying quality; it needs its own denominator.
+
+## §D5 — Disclosure events are two-key (supersedes rev6 §D4 single-call activation)
+
+Disclosure event states: `proposed → corroborated → active` (+ `rejected`). An event becomes **active** only when an independent checker call (independently rendered request, no first-call output visible) agrees on the exact triple `(surface, entity, disclosure_block)`; disagreement ⇒ stays `proposed`, binding stays undisclosed (fail-closed default unchanged: no active event ⇒ occurrence-local rendering forever). Human approval may substitute for the checker (H1, optional). Same two-key protocol class as frame confirmation (§F''') — one LLM response never opens a spoiler channel by itself.
+
+## §P5 — Universal disclosure envelope (closes B-envelope; completes §P4)
+
+EVERY item entering DisclosureFilteredContext carries the same envelope: `{item_id, kind, evidence_refs, world_valid_interval?, disclosed_from, frame_ref?, disclosure_status}` — relation facts, phases, address policies, glossary rows, Narrative Brief claims, motifs, vector snippets included. **An item without an envelope cannot enter the view** (fail-closed at the type level; the view filters on fields every item is guaranteed to have). Migration run stamps envelopes at build time; `disclosed_from` for non-identity items defaults to their evidence block (a fact is disclosed where its evidence sits) unless a disclosure event says later.
+
+## §O5 — Disputed set is a seed; code computes closure (supersedes rev6 §O4b "EXACTLY")
+
+The model's `disputed_*` is the SEED, never the boundary. Code expands it to the **dependency closure** using the already-locked stamps (endpoint bindings, source_event_ids, semantic_input_hash inputs): any fact/phase/view whose lineage intersects the seed is quarantined with it. No replay machinery — closure marking only (transitive stamp lookup, mechanical). The model under-reporting its blast radius can no longer leave a contaminated derived row live.
+
+## §O6 — Auto-bind REMOVED (supersedes rev6 §O4 witness rules)
+
+- Auto-bind is dropped entirely as an unproven optimization built on non-mechanical inputs. **ID reuse happens only on an immutable direct ID witness** (the occurrence is already bound to that id in the ground layer). Every linguistic co-reference — including exact proper-name repeats — goes through the adjudication protocol (§2'''), which is where candidate roster + cards already make the decision cheap for easy cases.
+- Cost impact: more adjudication calls; priced in deterministic_base at dry-run. If measurement later shows a safe fast-path exists, it returns as a MEASURED experiment with its own acceptance, not as a spec assumption.
+
+## §P5b — Renderer purity (closes M-purity; supersedes rev6 import-walk test)
+
+Renderers are **pure functions** `f(DisclosureFilteredContext) -> lines`; their signatures/types carry no connection, path, client, or callback capable of reaching a store. Only the context-view builder reads the frozen store. Conformance = type-level (interface has no IO capability) + the fixture battery (§T6) exercising every renderer through the view. Import-walk demoted to a lint aid.
+
+## §C6 — Owned-atom disposition coverage (closes M-atom-disposition; extends §C5b)
+
+Every `owned_atom_id` in a shard response gets exactly one disposition: `supports_claim(claim_id) | no_identity_signal | unresolved`. Validator checks bijective coverage (same pattern as per-event disposition B'''). `unresolved` forces raw-shard reopen; reopen exceeding budget or still unresolved ⇒ that boundary quarantines (§O5 closure applies). Silent atom skipping is structurally impossible.
+
+## §T6 — Seeded spoiler battery (closes M-fixture-empty-pass; supersedes rev6 §T5 assertions)
+
+The fixture SEEDS future-derived data into EVERY channel at build time: post-reveal gender/relation facts, an address policy shift, a motif referencing the reveal, a glossary row for "Mira", vector snippets from b3. Primary assertion: **no undisclosed item_id / evidence_ref appears in the Narrative/Translator input view at b1** (identity-based, catches paraphrase like "the missing daughter"); string scan ("Mira") is a secondary layer only. A channel found empty at build time fails the fixture setup itself — an empty channel can never green the test.
+
+## §M6 — Disclosure quality gates (closes M-recall-gate; new acceptance axis)
+
+On DEV (ch1–4 lineage), locked BEFORE held-out and never tuned on it: `disclosure_precision` (active events that are true reveals), `disclosure_recall` (true reveals captured as active), `% occurrences still local-only`, `% packs lacking identity support they should have`. A maximally conservative extractor (never discloses) fails the recall/support gates by construction — "no spoilers but no context" is a named, measured failure mode, not a silent equilibrium.
+
+## Round-7 ask to Sol
+
+All four LLM-authority holes are closed by the same doctrine already locked elsewhere: two-key for semantic authority (§D5), typed envelopes for filterability (§P5), code-computed closure for blast radius (§O5), and removal of the pseudo-mechanical fast path (§O6). MAJORs land as scaffold acceptance (§P5b/§C6/§T6/§M6). Verify-only pass; if clean, LOCK — prompt authoring starts with the disclosure-event extractor + checker pair, identity two-step, and frame confirmation blockquotes, all against the §T6 fixture before any WH run.
