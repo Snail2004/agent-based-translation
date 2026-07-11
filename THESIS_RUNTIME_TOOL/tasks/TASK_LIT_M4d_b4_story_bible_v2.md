@@ -589,3 +589,26 @@ User chốt: "bàn luận và thực hiện trước những gì nó ảnh hư�
 - Old-Earnshaw fragmentation is now THREE-way: ent_t_maister (ch3) + ent_the_master + ent_earnshaw (both ch4) — cross-chapter under-merge multiplying on the same person; headline under-merge item for the Sol review + Auditor (§5.6) design. Partition direction vs Heathcliff/Hindley still CORRECT (the-master criterion counts separation, and separation held).
 - ch4 relation_facts = [] despite parent_of evidence in Nelly's tale (model ultra-conservative under "no fact from title/honorific alone") — recall observation.
 - New failure mode catalogued: reported-speech→first-person transposition in "verbatim" quotes — quote discipline slip class for the review list and any future prompt v2 (post-pilot).
+
+---
+
+## CLAUDE ACCEPTANCE GATE ch1–4 (2026-07-11) — VERDICT: **PASS**. Pilot B4 v2 COMPLETE. → Sol dual review (scale-unlock)
+
+All checks performed atom-by-atom on the published bibles + source text (not reports).
+
+### Locked criteria
+1. **"The master" ch4 → 3-way separation: PASS.** b042 "the young master" → ent_hindley (GENUINE cross-chapter reuse of the ch3 entity); b026 (Lockwood asking about Heathcliff) → isolated entity, zero contamination; b035/b036/b038/b039/b043/b044 → old-Earnshaw cluster (ent_the_master). ONE mis-atom in the whole corpus: b004 "the master" = **Edgar Linton** ("after she died, the master retained me" — Nelly re the Grange) joined the Earnshaw cluster. NOTE: Sol's pre-registered ground truth itself mislabeled b004 as Earnshaw — the text says Edgar; hardest atom in the criterion, both reviewer-model and builder-model missed it, in different ways.
+2. **Stable-ID ch1→ch4: PASS.** lockwood/mr_heathcliff/joseph/mrs_heathcliff/hareton_earnshaw/hindley/catherine_earnshaw persist verbatim. **Correction of amendment #9's prediction: the Heathcliff-dup did NOT materialize** — all 11 tale-frame Heathcliff atoms landed in ent_mr_heathcliff. One Heathcliff.
+3. **daughter_in_law_of + father_in_law_of @ wh_ch02_b046: PASS** (cumulative in ch4 bible).
+4. **King Lear literary_allusion: PASS** (ch3, review_only, non-person).
+5. **ch4 narration = 2 segments: PASS** — ent_mr_lockwood frame_present b002–b033 + ent_mrs_dean retrospective_past b035–b045. Frame layer works on narrator switch; the ch3 diary gap stands as M2's known limitation (dual-review agenda).
+6. **As-of no-leak: PASS** — T2 5→7→13→23 monotone.
+7. **Two-Catherine canary under fragmentation: PASS (verified atom-by-atom).** ent_catherine_linton = 3 daughter atoms only (incl. b017 "it was not my ghostly Catherine" kept as separation evidence); ent_cathy = 4 mother-as-child atoms only. No entity mixes the two Catherines anywhere.
+
+### Measured under-merge (the systematic finding for Sol + Auditor design)
+Pattern: **epithet/title surfaces mint fragment entities instead of reusing; named surfaces almost never do.** Fragment clusters (fragments are PURE — one person each): old Earnshaw {ent_t_maister, ent_the_master}; Edgar {ent_my_late_master} (+ the b004 mis-atom above); daughter {ent_mrs_heathcliff, ent_catherine_linton}; mother {ent_catherine_earnshaw, ent_cathy, ent_that_minx(review)}; Hindley {ent_hindley, ent_mr_hindley_earnshaw(1 atom)}; Mrs. Earnshaw {ent_mrs_earnshaw, ent_my_mother(1)}(+ent_the_mistress to adjudicate — b004-area mistress = mother Catherine); Jabez {2 entities}; phantom {ent_madam = the dog}. ≈8 clusters, ≈10 fragment entities, exactly **1 cross-person atom** (b004) + 1 blocked pair (heathcliff↔the_master, amendment #10) in 4 chapters.
+Profile: **separation near-perfect, consolidation weak on epithets** — precisely the §5.6 Auditor's job and the address-policy dilution risk (the blocked pair's history sits on ent_the_master, not unified with ent_t_maister).
+
+### Handoff to Sol dual review (scale-unlock gate, agenda locked)
+(1) validator strictness vs real model behavior across amendments #1–#10; (2) measured under-merge list above — Auditor design implications; (3) frame-layer: ch3 diary unmarked + story-time vs block-time for address-policy; (4) schema gaps for Translator/address-policy; (5) consolidation-unit pre-scale agenda (per-model token budgets — separate section above); (6) 34-chapter extrapolation: cost + the epithet-fragmentation growth rate.
+CodeX: commit the amendment #9–#10 batch + ch4 artifacts + this gate record.
