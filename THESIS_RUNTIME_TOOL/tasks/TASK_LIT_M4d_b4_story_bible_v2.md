@@ -612,3 +612,24 @@ Profile: **separation near-perfect, consolidation weak on epithets** — precise
 ### Handoff to Sol dual review (scale-unlock gate, agenda locked)
 (1) validator strictness vs real model behavior across amendments #1–#10; (2) measured under-merge list above — Auditor design implications; (3) frame-layer: ch3 diary unmarked + story-time vs block-time for address-policy; (4) schema gaps for Translator/address-policy; (5) consolidation-unit pre-scale agenda (per-model token budgets — separate section above); (6) 34-chapter extrapolation: cost + the epithet-fragmentation growth rate.
 CodeX: commit the amendment #9–#10 batch + ch4 artifacts + this gate record.
+
+---
+
+## SOL DUAL REVIEW — Claude independent verification (2026-07-11): verdict **NEEDS-REWORK ACCEPTED**. Scale 34ch NOT unlocked. Claude's own gate claim CORRECTED.
+
+Every citation verified on code + artifacts before accepting:
+
+- **BLOCKER 1 (pair omission wipes history) — VERIFIED on code.** story_bible_v2.py:2061 `replace_pairs = affected - set(blocked_records)`: an input pair the model omits is neither validated nor blocked → its prior timeline is deleted (2062–2071) with nothing re-appended. Empty response bypasses the all-blocked guard entirely (`if pair_payloads and ...` — falsy). Latent (ch1–4 raws never hit it). Fix (code-side, NO prompt change → caches intact): omission → prior history RETAINED + pair marked blocked_for_runtime/needs_review + counter `pairs_omitted_by_model`; ALL pairs omitted → halt. Sol's explicit-disposition schema (updated/no_change/blocked) goes to prompt v2 consideration in the rework spec round, not now.
+- **BLOCKER 2 (published identity errors) — VERIFIED on artifacts; Claude's acceptance claim "exactly 1 cross-person atom" is WRONG and hereby corrected.** ent_the_mistress (T2, resolved) mixes b004 = Catherine ("the mistress was married... after she died") with b037/b040 = Mrs. Earnshaw. Combined with ent_the_master's b004 = Edgar: at least TWO cross-person merges, both at b004. ent_madam (the dog) is published as resolved T2 person. Claude flagged ent_the_mistress "to adjudicate" and then published the headline without completing the adjudication — process failure noted for the thesis log; Sol's independent source-review caught it.
+- **BLOCKER 3 (under-merge fragments timelines) — facts already in Claude's gate record; Sol's severity upgrade ACCEPTED.** Fragmented pairs split relation histories and facts across alias-entities → name-keyed lookups miss known facts. Auditor is REQUIRED before scale, not optional review fodder.
+- **BLOCKER 4 (per-pair history unbounded) — VERIFIED by numbers.** ch4 phase prompt est 12,699/14,000 (91% of cap at chapter 4/34); `_shard_for_cap` hard-fails on a single over-cap item and cannot split one pair's history. Fix: incremental per-pair state or deterministic history sharding + estimator must report `max_single_pair_tokens`.
+- **MAJOR 5 (frame ch3)** — already on agenda; Sol's concrete risk (as-of pack reads childhood register as current) accepted; fix design deferred to spec round (range-join may suffice, no new fields).
+- **MAJOR 6 (validator_contract_version)** — ACCEPTED, mechanical: amendments #9–#10 changed apply/quarantine semantics with no checkpoint contract bump; long resumes could mix states applied under different rules. Add `validator_contract_version` to checkpoint expectation, bump on every normalization/apply/quarantine semantic change, rebuild prefix from cache.
+- **MAJOR 7 (not translator-ready)** — ACCEPTED as a declaration constraint: address_policies runtime_usable=0/42 by design (deferred); Story Bible must NOT be declared translator-ready until identity Auditor + address-policy adjudication.
+
+### Rework plan (order, before any 34-ch scale decision)
+R1 (CodeX now, code-only): pair-coverage fail-closed per BLOCKER 1 + tests (omitted pair w/ prior history retained+flagged; empty response w/ prior history → halt).
+R2 (CodeX now, mechanical): validator_contract_version in checkpoints (MAJOR 6).
+R3 (spec round with Sol — one round, Claude drafts): identity Auditor stage (§5.6) — adjudicate epithet/title-minted resolved persons + person-vs-nonperson + fragment merge/supersession with provenance (§29-style gates: audit-label + no-new-collision + evidence-block), then republish bibles + replay affected pairs from cache; ALSO in the same round: per-pair history bound (BLOCKER 4), frame/story-time join (MAJOR 5), consolidation-unit abstraction (pre-scale agenda), disposition schema question.
+R4: re-run acceptance ch1–4 against corrected ground truth (b004 master=Edgar; b004 mistress=Catherine; b026→Heathcliff unlinked; madam=nonperson) after the Auditor pass.
+Pilot artifacts remain valid AS PILOT EVIDENCE — the pilot's purpose was to surface exactly this list; verdict changes nothing retroactively about the fail-closed run discipline ($0 waste, 10 amendments, all halts diagnostic).
