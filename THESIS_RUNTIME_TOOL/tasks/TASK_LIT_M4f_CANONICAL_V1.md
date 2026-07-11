@@ -1,6 +1,6 @@
 # TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay — CANONICAL v1
 
-Status: **CANONICAL v1 (rev-b, Sol consistency pass 1 applied: 3 contract-conflict BLOCKERs + 4 wording MAJORs + 1 MINOR fixed). Pending Sol mechanical re-read, then LOCK.**
+Status: **CANONICAL v1 (rev-c) — LOCKED 2026-07-12. Sol APPROVE (consistency pass 1: 8 fixes; pass 2: B0/B1/B2 v2 added to sequence). Implementation may begin from this file.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user.
 Supersedes: the rev1–10 delta chain in `TASK_LIT_M4f_context_engine_overlay.md` (now the changelog/appendix — retained for provenance, NOT for implementation).
 Evidence base: real pilot ch1–4 run (`literary_m4d_b4v2`), §E9 dual independent audit (`data/reports/literary_m4f_e9_audit/`, commits f272120 + follow-up). No `other_new_class` found; every locked mechanism below traces to a verified defect.
@@ -82,7 +82,7 @@ Every artifact/report stamps both axes + `overlay_version` + `knowledge_cutoff_s
 - Held-out: ≥1 unused WH chapter (+ Gatsby ch1 slice when unit abstraction lands), preregistered before implementation.
 
 ## 12. Sequence after LOCK
-Prompt authoring (Claude), one blockquote per call in the single call graph: disclosure-event extractor + checker pair, identity retrieval/adjudicator/checker, phase + phase-disposition, address-term checker, frame confirmation checker, B3 v2 frame segmentation — all against the spoiler fixture + conformance tests before any WH run. Then CodeX scaffold behind those tests → payload-ablation → production-mode pilot ch1–4 → reconcile all ~34 findings → held-out → 34-chapter scale decision (user's call). R1+R2 (validator-contract restamp) folds into the first scaffold batch.
+Prompt authoring (Claude), one blockquote per call in the single call graph — the UPSTREAM schema changes come FIRST because B4 consumes their output (skipping them rebuilds a new B4 on old B0/B1/B2 schemas and reproduces the madam / door / witness-less-endpoint gaps): **B0 v2** (scene-local cast claims, §2), **B1 v2** (occurrence-level mentions + `referent_kind_claim`, §4), **B2 v2** (endpoint_id + occurrence-witness schema, §5), **B3 v2** (frame segmentation, §7); THEN disclosure-event extractor + checker pair, identity retrieval/adjudicator/checker, phase + phase-disposition, address-term checker, frame confirmation checker — all against the spoiler fixture + conformance tests before any WH run. Every one of these calls is fingerprinted (§9) and appears in the preflight call graph (§10). Then CodeX scaffold behind those tests → payload-ablation → production-mode pilot ch1–4 → reconcile all ~34 findings → held-out → 34-chapter scale decision (user's call). R1+R2 (validator-contract restamp) folds into the first scaffold batch.
 
 ---
 Changelog rev1–10 + §E9 audit trail: `TASK_LIT_M4f_context_engine_overlay.md` and `data/reports/literary_m4f_e9_audit/`.
