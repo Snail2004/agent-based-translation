@@ -1,4 +1,4 @@
-# TASK_LIT_M4e — B4 v2 REWORK SPEC: Identity Auditor + scale-boundedness (rev1, for Sol critique round)
+# TASK_LIT_M4e — B4 v2 REWORK SPEC: Identity Auditor + scale-boundedness (rev3, for Sol round 3)
 
 Status: **DRAFT rev1 — awaiting Sol (xhigh/max) critique round 1. Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority on scale unlock: user.
@@ -158,3 +158,55 @@ The 190k envelope is **RETRACTED**. Rule: no headline budget before the dry-run 
 "100% T2 adjudicated" → "identity_audit_ledger shows pending_human = 0 and not_audited = 0 over final-scope T2, with per-entity verdict + evidence refs; headline reports all three buckets".
 
 Round-2 ask to Sol: LOCK check only — (L1) does the two-key rule + ledger close B2 to your satisfaction; (L2) any hole in mechanical M1 projection; (L3) confirm frame-boundary phase-splitting semantics (C') don't create spurious phase fragments for Translator; (L4) approve the three-bucket honesty rule as the acceptance headline standard.
+
+---
+
+# REV3 DELTA (2026-07-11, after Sol round 2 — ALL 3 BLOCKERs + 4 MAJORs accepted; Claude verification notes inline). Supersedes conflicting rev1/rev2 text. Status: **rev3 — for Sol round 3.**
+
+Claude gate notes (verified on real artifacts before acceptance, per standing rule):
+- **B-D' (M1 projection) CONFIRMED:** `builder_pilot.py` B0 reads the whole chapter, `seed_entity_ledger_from_chapter_brief` runs BEFORE the window loop, and `registry_context_from_ledger` + `chapter_brief_text` are injected into every B1 window. Artifact `literary_m4_full/lexicon/wb_wh_ch04_001.json`: window = b001–b008 but the rendered prompt references b009…b045 and carries the full seeded cast (`ent_mr_earnshaw` et al., provenance `seeded:chapter_brief_cast`). Rev2's "M1 projected, not rerun" is INVALID for units smaller than a chapter — future-context influence cannot be filtered out of outputs.
+- **B-split CONFIRMED:** ch4 checkpoint `state.m3_state.entities[ent_mr_heathcliff].member_atom_ids` = **61 atoms at ch4/34**; a single targeted full-atom call is both unbounded at 34ch scale and a single-verdict destructive decision — violates the two-key principle rev2 itself established.
+- **B-replay CONFIRMED:** committed phase rows carry keys `{pair, phase_label, status, trigger_block, trigger_evidence, trigger_evidence_block, valid_from_block, valid_until_block}` — NO source event ids. Dependents of a split are not computable from published state; rev2's "replay closure of ALL dependents" was intent without a mechanism.
+- **M-frame CONFIRMED:** ch1–4 bible `narration_frame_segments`: ch3 = one flat `frame_present` b002–b067 despite diary/dream content.
+- **M-E' accepted:** confirmation/split/replay calls depend on Auditor output — a FULL call graph is not renderable pre-run by construction; and per [token-growth-halt] no hand-math substitutes.
+- **M-denominator accepted:** merge/tombstone shrink final-scope T2 → survivor-only headline can reach 100% while hiding destroyed-entity errors.
+
+## A'' — Split & merge confirmation (supersedes A' items 3–4)
+
+1. **Exact partition = destructive decision → two keys apply to the PARTITION itself:** the targeted full-atom call's proposed partition must be confirmed by a second independent call (same atom set, order-shuffled, minimal card context) or human approval. Confirmation compares partitions as **set-of-sets equality**; mismatch → pending_human, no apply.
+2. **Bounded partition at scale:** if member_atom_ids exceeds `max_partition_atoms_per_call` (measured cap, per-model), the partition runs as overlapping shards with shared **anchor atoms** (top-k earliest + top-k latest + all atoms cited in the split_candidate evidence) + a deterministic global reconcile step: shard-local assignments joined on anchors; any atom with conflicting assignments across shards → pending_human. Cap and overlap size are config-hashed.
+3. **Merge verdict comparison is by equivalence class,** not literal direction: A→B and B→A confirm each other; survivor id stays deterministic (earliest first-appearance block) regardless of verdict direction.
+
+## A''' — Dependency ledger & replay closure (supersedes A' item 5)
+
+- **Schema (checkpointed, config-hashed):** `{decision_id, decision_type, depends_on: [decision_id|artifact_ref], source_artifact_hash, produced_row_ids, invalidated_by: decision_id|null}`. Every apply step (identity apply, phase apply, address apply, alias interval write) records produced_row_ids; every consumer records depends_on.
+- **Replay = topological:** invalidating a decision invalidates the transitive closure of dependents; replay order is topo order over the ledger.
+- **Canonical replay source = immutable M1/M2 evidence artifacts** (atom catalog, speaker turns, relation events as extracted), NEVER merged/published state. Split replays every turn/event/fact/phase whose lineage touches the split entity; **mechanical rekey is banned** for split (allowed for merge only where the rev2 merge rules already permit it, recorded in the ledger).
+- **Migration note:** current committed phase rows lack event lineage → the ONE coordinated migration re-run (rev2 §6) must write the ledger from the start; no retrofit of old rows.
+
+## B'' — Per-event disposition (supersedes B' set-equality-only)
+
+`considered_event_ids` set-equality stays as the outer guard, but the unit of proof becomes a **per-event disposition table**: each event id maps to `{disposition ∈ supports_phase | supports_fact | no_state_change | blocked, phase_id?, fact_id?}` (id required when disposition supports one). Validator checks: exact coverage (bijection with the new-event set), every supports_* id exists in the same response, every blocked event carries a reason. `no_change` for the pair is only accepted when ALL its events are individually `no_state_change` — echoing ids without processing no longer validates.
+
+## C'' — Frame boundary = query-time view slice (tightens C')
+
+Frame boundaries **never mint or persist phase rows**. The committed phase row stays ONE row with its full block range; frame-scoped queries slice it at pack/query time (range intersection with the frame segment — pure view logic). If a pack must show a phase continuing across a frame boundary, the view row carries `inherited_from_phase_id` + frame provenance; nothing is written back. Persistent facts remain frame-independent (rev2 C' (ii) unchanged).
+
+## D'' — Unit-local M1 validity (supersedes D' "projected, not rerun")
+
+- **Projection is allowed ONLY when unit == whole author chapter** (byte-identical inputs mean artifacts valid by construction).
+- For units cut inside a chapter: **B0 reruns per unit** (unit-local brief/cast, CONTEXT_ONLY tail per D'), and **B1/B2 rerun for any window whose rendered prompt is not byte-identical** under the unit-local roster/brief. Byte-identity is checked mechanically on rendered prompts (render both, compare); identical means cache replay at $0, different means fresh call.
+- **M1 rerun cost goes back into the estimator** as a per-unit line item (mini-model accounted separately). The ~413k "avoided" figure is RETRACTED as a general claim; it holds only for the chapters that remain whole units.
+- WH ch1–8 (all fit as whole-chapter units) are unaffected; the wall chapters (ch9/10/17/21) and all Gatsby units pay the rerun — priced BEFORE lock, per the declared-before-lock rule in D'.
+
+## E'' — deterministic_base + contingent reserve (supersedes E' "FULL call graph")
+
+Preflight per unit reports two numbers, both rendered not hand-summed: (1) **deterministic_base** — every call known before run (M2, identity partition shards, phase batches) with per-model prompt+completion upper bounds; (2) **worst_case_contingent_reserve** — max confirmations (= destructive-verdict cap per scope x 2 keys), max split shards (from member counts + `max_partition_atoms_per_call`), max replay calls (from dependency-ledger fanout upper bound). **A unit may start only if base + reserve fits under the 225k UTC safety gate**; reserve unspent rolls forward, never borrowed against.
+
+## R4'' — Lineage-cohort denominator (supersedes R4 wording fix)
+
+Audit denominator = **lineage cohort**: every entity that EVER entered T2 within the scope, including those later merged/tombstoned/reclassified. Headline reports: active T2 entities (three buckets as rev2) AND destructive outcomes (each source entity's terminal state + its two-key/human record). "100% adjudicated" is claimable only when every cohort member has a terminal record. Survivor-only accounting is banned.
+
+Deferred with Sol's concurrence: human-review UI, cadence-K tuning, nested frames beyond flat v1, Translator style fields.
+
+Round-3 ask to Sol: verify-only pass — the six rev3 mechanisms above are the locked answers to your round-2 findings (unit-local M1 validity, bounded two-key exact partition, dependency DAG + immutable replay source, per-event disposition, frame query-slice, lineage denominator + contingent reserve). Flag anything still unimplementable or unbounded; otherwise LOCK so prompt authoring (Claude) and implementation phasing (CodeX) can start.
