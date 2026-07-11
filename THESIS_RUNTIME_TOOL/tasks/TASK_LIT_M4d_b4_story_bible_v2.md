@@ -568,3 +568,24 @@ User chốt: "bàn luận và thực hiện trước những gì nó ảnh hư�
 - Budget is PER-MODEL and MEASURED, not guessed (mini degrades earlier than 5.4 — window-500 lesson; ~4–6k/unit for 5.4 digest is a hypothesis to verify at scale). Deterministic + config-hashed.
 - Affected layers: ONLY B0 + M2 swallow whole chapters (M1 windowed, M3 sharded already).
 - Sequencing: finish ch1–4 pilot + dual review AS LOCKED → Sol spec round for unit abstraction (chain migration, budget measurement plan) → implement → THEN 34-ch scale; Gatsby probe rides on it (ch1 as 2–3 units tests cross-unit machinery inside one chapter).
+
+---
+
+## AMENDMENT #10 (2026-07-11, Claude gate) — phase ch4 reject: implement the LOCKED pair-level quarantine (design §5.4), conservative branch; misquote is a REAL model slip, correctly not repaired
+
+**Verified on artifacts:** row[6] pair (ent_mr_heathcliff, ent_the_master) friendly b038→b040, trigger_evidence "take it home with me"; source b038 reads "take it home with him at once" — Nelly's REPORTED speech transposed by the model into first person. Same event, different words → lexical deviation, NOT mechanically repairable (choosing the span the model "meant" would be a judgment; punct-fold correctly refused). The pair's other row [7] (dependent b041→open, "He took to Heathcliff strangely") validates fine. The remaining 8 rows across 7 pairs look clean.
+
+**Decision — implement what design §5.4 already specifies (currently the code halts the whole run on any phase reject):**
+1. Partition response rows by pair. Pairs whose rows ALL validate → publish. Any pair with ≥1 semantically rejected row → quarantine the ENTIRE pair as `blocked_for_runtime` (publishing only its valid rows would fabricate a timeline missing its first beat — the design's "single-phase CHE under-seg" warning). Counted in `#pairs_blocked_for_runtime` (§5.7 metric, already specified). Quarantine record carries ALL the pair's returned rows + reject reasons for human review.
+2. **Conservative deviation, documented:** design permits a single-phase FALLBACK for simple pairs; we do NOT implement it now — a fallback label choice has no mechanical source (observed_valence_hint→label is a judgment). Uniformly blocked_for_runtime until a real case justifies designing a mechanical fallback (measure first).
+3. Prior state protection: a blocked pair's timeline from earlier scopes is RETAINED unchanged and marked needs-review — a rejected response must never delete published history. (This pair has no prior state; rule is for generality.)
+4. Facts referencing a blocked pair → same quarantine (none in ch4: model returned zero relation_facts).
+5. Run halts only if ALL pairs reject, or on technical failure — unchanged otherwise.
+6. Prompt LOCKED untouched → the phase response is cached; resume replays at $0. Expected ch4 outcome: 8 phases published across 7 pairs, `pairs_blocked_for_runtime=1`, publish + checkpoint proceed.
+
+**Tests:** real ch4 raw as fixture → publish with exactly pairs_blocked_for_runtime=1 and 8 phases; synthetic all-pairs-rejected → halt; synthetic pair-with-prior-history rejected → prior timeline retained + flagged; blocked pair excluded from runtime queries/address-policy.
+
+**Acceptance observations (recorded for the ch1–4 gate + dual review, NOT this halt):**
+- Old-Earnshaw fragmentation is now THREE-way: ent_t_maister (ch3) + ent_the_master + ent_earnshaw (both ch4) — cross-chapter under-merge multiplying on the same person; headline under-merge item for the Sol review + Auditor (§5.6) design. Partition direction vs Heathcliff/Hindley still CORRECT (the-master criterion counts separation, and separation held).
+- ch4 relation_facts = [] despite parent_of evidence in Nelly's tale (model ultra-conservative under "no fact from title/honorific alone") — recall observation.
+- New failure mode catalogued: reported-speech→first-person transposition in "verbatim" quotes — quote discipline slip class for the review list and any future prompt v2 (post-pilot).
