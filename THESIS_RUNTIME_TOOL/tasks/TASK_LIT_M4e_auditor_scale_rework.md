@@ -1,6 +1,6 @@
 # TASK_LIT_M4e — B4 v2 REWORK SPEC: Identity Auditor + scale-boundedness (rev4, for Sol round 4)
 
-Status: **DRAFT rev1 — awaiting Sol (xhigh/max) critique round 1. Do NOT implement.**
+Status: **FROZEN at rev4 (2026-07-11) — SUPERSEDED IN PART by TASK_LIT_M4f (context-engine pivot, user decision). Surviving material listed in M4f §1; destructive-auditor machinery recorded as future work. Do NOT implement from this file.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority on scale unlock: user.
 Parent: TASK_LIT_M4d (pilot ch1–4 COMPLETE; Sol dual review verdict NEEDS-REWORK, verified & accepted — see M4d gate records for the evidence chain).
 Prereqs already dispatched (NOT in this spec): R1 pair-coverage fail-closed (code-only), R2 validator_contract_version (both CodeX, no prompt changes, caches intact).
