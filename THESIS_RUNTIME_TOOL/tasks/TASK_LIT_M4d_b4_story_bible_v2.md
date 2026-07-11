@@ -538,3 +538,21 @@ State rows carry `valid_until_block` CORRECTLY (e.g. joseph–lockwood strained 
 1. CodeX: Amendment #8 render fix + re-render ch1–3 (0 API); then COMMIT the full amendment #5–#8 batch (code + tests + artifacts + raws).
 2. Extend scope to wh_ch04, resume (ch1–3 restore from checkpoints; only ch4 calls fresh — est ~25–35k tokens vs 157,825 headroom). Ch4 carries the OFFICIAL locked "the master = 3 distinct groups" criterion.
 3. Claude full acceptance gate on ch1–4 → Sol (max) dual review with the frame-layer agenda + review list → user decides 34-chapter unlock.
+
+---
+
+## AMENDMENT #9 (2026-07-11, Claude gate) — ch4 identity halt: out-of-shard membership is VOID by contract (strip, counted); out-of-enum referent_kind quarantines the group (keep item); both responses cached → replay $0
+
+**Verified on real artifacts:**
+- `groups[17] duplicate atom_m_wh_ch04_b044_01`: surface = "Hindley" @b044 ("Hindley put out his tongue"). Shard 2 (which OWNS the atom — scaffold shard files verified: shard_01 does NOT contain it, shard_02 does) assigned it to ent_hindley: CORRECT. Shard 1's young-Heathcliff group (grp3, 14 members, evidence = the colt-exchange speech) listed it as a MEMBER despite it never being in shard 1's input — the model fabricated a plausible atom id from quote-context (the inverse face of the redundant-ID pathology). 
+- `groups[9] referent_kind invalid:family`: 2-atom group (b019/b023), status already uncertain — semantically a household/group reference, labeled outside the enum.
+
+**Rules (validator/apply-side only; prompt LOCKED; both ch4 identity responses cached → resume replays at $0):**
+1. **Shard jurisdiction:** `member_atom_ids` must be a subset of the shard's input atom set. A member outside it is void ab initio — the model was never given assignment authority over that atom; enforcing this is contract enforcement, not an identity judgment. Strip the foreign member (counter `member_out_of_shard_stripped`, expect 1), KEEP any evidence citation of that atom (evidence legitimately crosses groups AND shards — amendment #2 extended: evidence source atoms validate against the full as-of atom catalog). After stripping, the global exact-partition check must hold via the owning shard's assignment; if the owning shard did NOT claim the atom, partition fails → halt as today (stripping into a void is not allowed).
+2. **Out-of-enum referent_kind:** keep the group, force review_only quarantine, preserve the raw kind string verbatim on the record (`referent_kind_raw`), counter `referent_kind_out_of_enum` (expect 1). NO silent ontology mapping by code (family→group_reference is probably right — that's the reviewer's one-click decision, not code's).
+
+**Tests:** real ch4 shard fixtures pass end-to-end (strip → partition exact; family group lands in review_only with kind preserved); synthetic foreign-member-unclaimed-by-owner → halt; synthetic out-of-enum kind on a resolved person group → still quarantined.
+
+**Acceptance observations recorded for the ch1–4 gate (NOT part of this halt):**
+- Shard 1 grp3 = young Heathcliff in Nelly's tale, reuse=None → will MINT a second Heathcliff entity (ent_heathcliff) alongside ent_mr_heathcliff. This is the predicted "Heathcliff-dup" case (schema-freeze memory) arriving on schedule: code must NOT overrule reuse=None via hints (that would be the M4c sin in reverse). Let it mint; measure at the gate; it is the strongest single piece of evidence for the frame-layer agenda item (story-time vs block-time) in the Sol dual review.
+- b044 quote used as same_identity evidence across shards = amendment #2's cross-group evidence working as designed at shard scale.
