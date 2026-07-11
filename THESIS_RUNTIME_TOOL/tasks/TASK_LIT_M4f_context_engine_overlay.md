@@ -218,3 +218,17 @@ Compact timeline rows carry `{overlay_version, frame_ref, source_event_ids}`; an
 ## Round-3 ask to Sol
 
 The four open root contracts from your verdict are closed as: B0 causal scope proven from rendered requests (§2-B0'), strict no-next-tail online mode (§2-K'), endpoint-level ground layer + witness rule (§4-E'), overlay temporal as-of with knowledge scopes (§4-T'), plus frame verification authority (§5-F'). Verify-only pass requested; flag residual holes, otherwise LOCK — prompt authoring (Claude) and CodeX phasing start at LOCK.
+
+---
+
+# M4f ADDENDUM R (2026-07-11, retrieval-channel scope — agreed Claude+Sol during rev3 wait; folds into the LOCK)
+
+Context (verified on repo): architecture lock = "GraphRAG-shaped offline, keyed-lookup online" + hybrid retrieval (THESIS_ARCHITECTURE_LOCK.md:340, Neo4j rejected :561); Chroma 3 collections (similar_passages / narrative_motifs / translation_memory) implemented + preflighted (TASK_P4_01 DONE) but runtime hybrid retrieval + D6 NOT validated (design/LITERARY_RECONCILE_V1.md matrix); live pack path is SQL-only (`build_context_pack(conn: sqlite3.Connection, ...)`).
+
+**R1 — Staging decision (answers "is it vector time?"):** NO vector in M4f canaries. The A/B (§6-AB') isolates the context-packaging variable; adding a retrieval channel would confound it. Order: (1) M4f graph/keyed as-of retrieval fixed + canaries pass → (2) vector added as a SEPARATE retrieval channel with its own ablation arm → (3) D6 gate (hard recall, low_context, Recall@5/MRR, precision-noise) → (4) only then full hybrid pack for Narrative/Translator. The SQLite temporal store IS the graph — no new DB.
+
+**R2 — Candidate channel provenance in Context Audit (Sol's addendum, adopted):** every candidate/context item records its retrieval channel: `source_channel ∈ exact_alias | graph_neighbor | fts | vector_passage` (+ rank/score per channel, already in §3'). Without this, a wrong verdict cannot be attributed to the failing channel.
+
+**R3 — As-of applies to EVERY retrieval channel, vector included (Claude addition):** the Chroma index spans the whole indexed corpus, so `similar_passages` hits can come from FUTURE blocks — a vector query is a future-leak channel by default. Rule: in online_as_of mode, every retrieval channel (exact/graph/FTS/vector) filters hits to `block_id ≤ as_of_block` BEFORE ranking; the Context Audit records pre-filter and post-filter hit lists per channel so leak-by-retrieval is provable/refutable. Offline_reconcile mode may search two-sided under its non-causal label. Vector results are candidates only — never identity authority (cosine similarity never concludes "same person"; adjudication stays with the LLM under §2''').
+
+**R4 — Collection timing:** `translation_memory` only fills at Translator stage (Critic-passed pairs); `narrative_motifs` indexable post-M2; no entity-card collection exists — if B4-style identity retrieval ever needs vector, the path is scene → similar_passages → block_ids → SQLite mentions/endpoints → LLM adjudication, subject to R3.
