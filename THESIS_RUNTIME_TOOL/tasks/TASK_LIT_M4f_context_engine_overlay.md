@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev5, for Sol round 5)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev6, for Sol round 6)
 
-Status: **DRAFT rev5 — awaiting Sol critique round 5. User confirmations recorded (whole_book_frozen + zero-human). Do NOT implement.**
+Status: **DRAFT rev6 — awaiting Sol critique round 6. User confirmations recorded (whole_book_frozen + zero-human). Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -371,3 +371,65 @@ Selection-universe manifests reference a **pinned immutable store snapshot** (co
 ## Round-5 ask to Sol
 
 B1–B3 closed by §D'''/§O'''/§C''''; M4–M8 by §AB'''/§R''/§V'''/§F'''/§S'''; MINOR by §U'''. The disclosure view (§D''') is the one genuinely new mechanism — please stress it specifically: any channel we missed where whole-book identity can still reach a pack (address policies? phase labels naming entities? glossary lines?). Otherwise LOCK.
+
+---
+
+# M4f REV6 DELTA (2026-07-12, after Sol round 5 — ALL 4 BLOCKERs + 5 MAJORs + 1 MINOR accepted; both artifact claims verified exactly. Supersedes conflicting rev1–rev5 text.) Status: **rev6 — for Sol round 6.**
+
+Claude gate notes:
+- **B-disclosure-timestamp CONFIRMED on artifact:** `ent_the_master.aliases["the master"].valid_from_block = wh_ch04_b004`, and member atom `..._b004_02` IS the known Edgar mis-assignment. Alias intervals record first OCCURRENCE, not reader-known BINDING — rev5 §D''' conflated them; using them as disclosure would render a wrong binding from the wrong block.
+- **B-witness-circularity CONFIRMED on artifact:** counting the whole ch4 T2, exact surface "the master" (kind person) is owned by exactly ONE entity → rev5's uniqueness rule auto-binds b004 into the faulty cluster. Uniqueness computed over the CURRENT PARTITION validates the partition with itself. Own-goal acknowledged: I defined the witness on the wrong universe.
+- **B-pack-boundary CONFIRMED on code:** ContextPack = five string lists (:53), `plan_anchors` matches canonical + ALL aliases with no as-of (:271), relation/address renderer prints canonical names via `_entity_name_map` (:462). Disclosure as an entity-only function leaves every other channel open.
+- **B-soft-constraints ACCEPTED:** gender/person-hood/register can BE the withheld information (a ghost, a disguised character, an intimacy not yet revealed); "safe metadata" is not a category, it is a per-fact disclosure question.
+- **M-exact-cover-contradiction CONFIRMED on my own rev5 text** (one field required to be both a partition and duplicated). Remaining findings accepted on design logic.
+
+## §D4 — Disclosure semantics: three timestamps (supersedes rev5 §D''' alias-interval rule)
+
+Per (entity, surface/binding):
+- `surface_occurs_from` — first occurrence of the surface (what alias intervals actually record today);
+- `binding_disclosed_from` — the story block at which the TEXT reveals that this surface/alias binds to this identity. Set ONLY by an explicit **disclosure event**: LLM-proposed with a verbatim evidence quote that performs the reveal, mechanically validated (quote locates in its block; block ≤ claimed disclosure point). **Fail-closed default: no disclosure event ⇒ binding is never rendered** — the pack shows the occurrence-local surface only.
+- `world_valid_from` — story-world validity (existing interval semantics, unchanged).
+Packs render a binding only at blocks ≥ `binding_disclosed_from`; before that, mentions stay occurrence-local ("the master" renders as "the master", bound to nothing).
+
+## §O4 — Witness universe + direct-name requirement (supersedes rev5 §O''' witness definition)
+
+- Uniqueness is computed over the **raw occurrence universe** (every mention surface in the frozen book, from M1 artifacts) — NEVER over the current entity partition (that is circular validation).
+- **Auto-bind is restricted to proper_name surfaces** (surface_kind from B0/B1 claims). Descriptors/epithets — "the master", "madam", "the old man" — NEVER auto-bind on uniqueness alone, regardless of counts; they always go to adjudication.
+- Direct-name evidence requirement: an auto-bind additionally needs at least one direct-name co-reference witness (the proper name occurring for the same referent), else adjudication.
+
+## §P4 — One typed disclosure boundary for the whole pack (closes B-pack-boundary)
+
+- New single view type: **DisclosureFilteredContext(as_of, disclosure_policy_version)**. EVERY renderer — entity, address, relation/fact, glossary, Narrative Brief, motif, vector-sourced snippets — consumes ONLY this view. Direct reads of the frozen store from any pack/prompt renderer are a contract violation (enforced by interface + a conformance test that walks renderer imports).
+- Declared non-conformant today (implementation items at scaffold): `_entity_items` (:417), `plan_anchors` alias matching (:271), relation/address renderer (:462). Anchor MATCHING may use internal surfaces (finding mentions is internal work); anchor RENDERING passes through the view.
+
+## §D4b — Constraints are disclosures too (closes B-soft-constraints; supersedes rev5 "safe constraint fields")
+
+Every constraint field delivered to the Translator (gender, number, person-vs-nonperson, register class, address hint) carries its own `disclosed_from` + evidence located at-or-before the current block. No qualifying evidence ⇒ the field is withheld and the pack preserves the source's ambiguity. "The source is deliberately ambiguous" is a first-class outcome, not a gap.
+
+## §C5 — Owned vs anchor atoms (closes M-exact-cover; supersedes rev5 §C'''' manifest wording)
+
+Dossier shard manifest has two disjoint fields: `owned_atom_ids` (exact-cover partition — every member atom in exactly one shard) and `context_anchor_ids` (read-only duplicates present in every shard). Validator checks exact cover over owned only; shard outputs may assert membership ONLY over owned atoms; anchors are context, never assignable.
+
+## §C5b — Summaries are claims, not evidence (closes M-reconciliation)
+
+Shard outputs feeding reconciliation are **structured claims with source_atom_ids** (never prose summaries as evidence). The reconciliation step MAY re-open raw shard evidence when claims conflict or a needed atom is unreferenced; if re-opening exceeds budget or still conflicts → that boundary quarantines per §O4b. Prose text carries zero evidentiary weight anywhere in the chain.
+
+## §O4b — Disputed-set schema (closes M-quarantine-gate; extends rev5 §O''' gate)
+
+A destructive proposal must return the machine-readable dispute: `{disputed_atom_ids, disputed_endpoint_ids, disputed_row_ids, incompatible_assignments: [{a, b, evidence_refs}]}`. The evidence gate checks the incompatibility evidence (both sides locate + attach to the disputed items). Quarantine applies to EXACTLY the disputed set — code needs no interpretation to scope it. Proposals without a well-formed disputed set are `proposed_invalid`.
+
+## §V4 — Hash closure over policy (closes M-semantic-hash; extends rev5 §V''')
+
+`semantic_input_hash` additionally covers `disclosure_view_hash`, `quarantine_set_hash`, `context_policy_version`. Reuse of any derived row/pack requires: semantic hash equality AND full request fingerprint equality AND validator contract hash equality. A disclosure-policy change can therefore never silently reuse a pack built under the old policy.
+
+## §T5 — Spoiler acceptance battery (closes M-spoiler-fixture)
+
+Book-neutral synthetic fixture, three blocks: b1 mentions only "the stranger"; b2 neutral; b3 reveals "the stranger is Mira." The whole-book store KNOWS the mapping from build time. Acceptance asserts, over EVERY channel (entity lines, address lines, relation/facts, glossary, Narrative Brief, motif, vector snippets): pack@b1 contains no "Mira", no gender/person-hood constraint, no relation/address clue, no reinterpreted motif; pack@b3 contains the binding. Runs as a permanent regression alongside the three WH canaries; fixture is synthetic so it never contaminates book prompts.
+
+## §U4 — Snapshot storage mandatory (closes MINOR; supersedes rev5 §U''' either/or)
+
+Immutable store snapshots (SQLite/Chroma) or content-addressed source-row blobs are REQUIRED storage; hashes are verification only. "Hash without bytes" is not a compliance option.
+
+## Round-6 ask to Sol
+
+The three unsafe mechanisms from round 5 are relocked: disclosure = explicit-event three-timestamp semantics with fail-closed no-render default (§D4), witness = raw-occurrence universe + proper-name-only + direct-name co-reference (§O4), dossier sharding = owned/anchor split + claims-with-sources reconciliation (§C5/§C5b), plus the single pack boundary §P4 and the spoiler battery §T5. Verify-only pass requested — if no residual hole, LOCK so Claude starts prompt blockquotes (disclosure-event extractor, cast-claims identity two-step, frame confirmation) and CodeX scaffolds behind the conformance tests.
