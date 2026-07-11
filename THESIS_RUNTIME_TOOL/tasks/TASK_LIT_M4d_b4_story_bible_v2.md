@@ -556,3 +556,15 @@ State rows carry `valid_until_block` CORRECTLY (e.g. joseph–lockwood strained 
 **Acceptance observations recorded for the ch1–4 gate (NOT part of this halt):**
 - Shard 1 grp3 = young Heathcliff in Nelly's tale, reuse=None → will MINT a second Heathcliff entity (ent_heathcliff) alongside ent_mr_heathcliff. This is the predicted "Heathcliff-dup" case (schema-freeze memory) arriving on schedule: code must NOT overrule reuse=None via hints (that would be the M4c sin in reverse). Let it mint; measure at the gate; it is the strongest single piece of evidence for the frame-layer agenda item (story-time vs block-time) in the Sol dual review.
 - b044 quote used as same_identity evidence across shards = amendment #2's cross-group evidence working as designed at shard scale.
+
+---
+
+## PRE-SCALE AGENDA (2026-07-11, user-locked) — Consolidation-unit abstraction: bàn với Sol + implement TRƯỚC khi scale WH 34ch
+
+User chốt: "bàn luận và thực hiện trước những gì nó ảnh hưởng để không phải quay lại rerun". Full design note: memory `consolidation-unit-token-budget-design`. Tóm tắt cho vòng Sol:
+- Measured wall: WH ch9/ch10/ch17/ch21 = 129/103/93/119 blocks (8.2–9.4k tok) — hits BEFORE Gatsby (Gatsby ch1 = 153 blocks/8.1k; ch7 = 416/11.9k). Ch3 (67 blocks) already forced 2 identity shards + output cap raise.
+- Memory time-axis is the BLOCK STREAM (valid_from/to_block); "chapter" is only the consolidation cadence → replace `chapter_id` with `unit_id` in the chain (chapter becomes metadata). Answers the advisor's no-chapter question systemically.
+- Cut ladder: author chapter > scene break (typographic only) > block boundary; NEVER mid-block. Budget decides WHEN, structure decides WHERE (cut position quality = measured under-merge cost: ghost-Catherine/two-Jabez).
+- Budget is PER-MODEL and MEASURED, not guessed (mini degrades earlier than 5.4 — window-500 lesson; ~4–6k/unit for 5.4 digest is a hypothesis to verify at scale). Deterministic + config-hashed.
+- Affected layers: ONLY B0 + M2 swallow whole chapters (M1 windowed, M3 sharded already).
+- Sequencing: finish ch1–4 pilot + dual review AS LOCKED → Sol spec round for unit abstraction (chain migration, budget measurement plan) → implement → THEN 34-ch scale; Gatsby probe rides on it (ch1 as 2–3 units tests cross-unit machinery inside one chapter).
