@@ -1,4 +1,4 @@
-# TASK_LIT_M4e — B4 v2 REWORK SPEC: Identity Auditor + scale-boundedness (rev3, for Sol round 3)
+# TASK_LIT_M4e — B4 v2 REWORK SPEC: Identity Auditor + scale-boundedness (rev4, for Sol round 4)
 
 Status: **DRAFT rev1 — awaiting Sol (xhigh/max) critique round 1. Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority on scale unlock: user.
@@ -210,3 +210,55 @@ Audit denominator = **lineage cohort**: every entity that EVER entered T2 within
 Deferred with Sol's concurrence: human-review UI, cadence-K tuning, nested frames beyond flat v1, Translator style fields.
 
 Round-3 ask to Sol: verify-only pass — the six rev3 mechanisms above are the locked answers to your round-2 findings (unit-local M1 validity, bounded two-key exact partition, dependency DAG + immutable replay source, per-event disposition, frame query-slice, lineage denominator + contingent reserve). Flag anything still unimplementable or unbounded; otherwise LOCK so prompt authoring (Claude) and implementation phasing (CodeX) can start.
+
+---
+
+# REV4 DELTA (2026-07-11, after Sol round 3 — ALL 3 BLOCKERs + 4 MAJORs + 1 MINOR accepted; Claude verification notes inline). Supersedes conflicting rev1/rev2/rev3 text. Status: **rev4 — for Sol round 4.**
+
+Claude gate notes (verified before acceptance):
+- **B-fingerprint CONFIRMED:** `builder_pilot.py` chapter loop — `ledger` and `chapter_summaries` are restored from `latest_state` (:2427–2428) and accumulate ACROSS chapters; B0 brief of chapter N receives `roster_from_ledger(ledger)` + neighbor summaries built from prior chapters (:2450–2459). Rebuilding ch9–10 as units changes the state entering ch11 → ch11's rendered prompts change even though ch11 stays a whole chapter. Rev3's "unit == whole chapter ⇒ projection valid by construction" is WRONG as a shortcut; only prompt-level identity proves reuse.
+- **B-global-partition ACCEPTED (design gap, atom fact already verified):** anchors only detect conflicts on the overlap; two same-person groups sharing no anchor can silently become two entities — exactly the under-merge failure mode the pilot already measured cross-shard (ghost-Catherine, two Jabez).
+- **B-DAG-semantics ACCEPTED + M2 derivation VERIFIED:** `build_digest_messages` consumes M1 ledger roster (`roster_from_ledger(m1_checkpoints[i].state.entity_ledger)`), M1 chapter brief, M1 relation events, and neighbor digests (:3008–3031) — M2 is a DERIVED node, not immutable evidence. Rev3 ranking "M1/M2" together as canonical replay source was an error. Also accepted: produced_row_ids rewritable after replay + single `invalidated_by` cannot distinguish revisions; crash mid-closure leaves half-old/half-new state.
+- **M-multi-outcome / M-continuity / M-second-gate / M-revision-stale / MINOR-human-record:** accepted on design logic; continuity is language judgment → LLM/human per code-never-does-language-work; the E'' formula in rev3 was ambiguous about already-spent quota.
+
+## D''' — Reuse by full request fingerprint (supersedes D'' size shortcut)
+
+- The "unit == whole chapter ⇒ project" shortcut is REMOVED. There is ONE reuse rule for every B0/B1/B2 call: **full request fingerprint** = hash over {system+user messages as rendered, model, temperature/seed/response_format, window/tail block ids, upstream checkpoint hashes (ledger state in, neighbor summary sources)}. Rebuild the window map first; a call is a cache hit ONLY when its fingerprint matches — otherwise fresh call, regardless of unit shape.
+- Consequence stated honestly: rerun cost is an OUTPUT of the fingerprint pass, not predictable per-chapter up front ("only wall chapters pay" is RETRACTED — a rebuilt unit ripples forward through ledger/summaries until prompts re-converge). The estimator prices the fingerprint pass itself at $0 (pure render+hash) and reports the resulting fresh-call list per unit before any API run.
+
+## A'''' — Two independent GLOBAL partitions on the sharded path (supersedes A'' item 2)
+
+- When a partition exceeds `max_partition_atoms_per_call`: run **two fully independent sharded pipelines** (different shard seeds/orderings), each producing a complete exact global partition of the SAME atom set (each pipeline does its own shard-local assignment + anchor join).
+- Validator per pipeline: exact atom cover (no atom lost/duplicated), group connectivity through anchors (a group not connectable via anchor evidence → pending_human, NEVER auto-minted as a new person). Then the two-key check compares the two global partitions as set-of-sets; mismatch → pending_human.
+- Anchors remain top-k earliest + top-k latest + all split-evidence atoms; caps and seeds config-hashed.
+
+## A''''' — Append-only versioned DAG + atomic apply (supersedes A''' schema)
+
+- Ledger is **append-only**. Node = {decision_id, decision_revision, decision_type, input_hashes, depends_on, produced_row_ids, status ∈ active | invalidated, superseded_by?}. Nothing is rewritten; a replay writes a NEW revision and flips the old node's status. Acyclicity enforced at write time.
+- **Atomic apply:** after a destructive verdict, build the full mutation plan + transitive replay closure as a STAGED changeset; publish state + checkpoint in one commit — all or nothing. Crash before commit ⇒ state unchanged, staged data discarded on resume.
+- **Evidence hierarchy corrected:** source text + M1 extraction artifacts = ground evidence. **M2 is a derived node** with depends_on = its M1 checkpoint hashes + neighbor digest refs; invalidation of any dependency (identity/frame decisions included, once B3 v2 frame segmentation lands) invalidates M2 → M2 reruns before dependents replay. M2 never serves as canonical replay source.
+
+## B''' — Multi-outcome event disposition (supersedes B'' single enum)
+
+Per event: `{event_id, outcomes: [{kind ∈ phase | fact, id}], blocked_reason?}`. An event may support several outcomes (a durable fact AND a phase transition). `no_state_change` is represented as `outcomes: []` and is only valid without blocked_reason. Pair-level `no_change` requires ALL its events to have `outcomes: []`. Exact event coverage (bijection) and same-response id existence checks unchanged from B''.
+
+## C''' — Explicit frame-continuity authorization (supersedes C'' default)
+
+- **Default deny:** a phase row is visible ONLY in its origin `frame_ref`. An open block range does NOT leak a retrospective-era phase into frame_present.
+- Cross-frame visibility requires an **explicit continuity decision** (LLM in-loop or human — continuity is language judgment, never range algebra): `{phase_id, from_frame, to_frame, decision, evidence_refs}` recorded in the dependency ledger. Only AFTER a continuity grant does pack-time range intersection slice the view; `inherited_from_phase_id` + provenance as in C''.
+
+## E''' — Second budget gate before destructive apply (supersedes E'' single gate)
+
+- Gate 1 (unit start) unchanged, but the formula is explicit: **used_today_per_key + deterministic_base + worst_case_contingent_reserve ≤ 225k**, counting prompt+completion, per API key, per UTC day.
+- **Gate 2 (pre-apply):** after an Auditor verdict, render the ACTUAL mutation plan + replay closure and re-preflight it. If actual fanout exceeds remaining budget → verdict parked as pending_human / deferred_budget; **no partial apply** — apply is all-or-nothing per A''''' atomicity. Mutations are never committed and then abandoned mid-closure.
+
+## R4''' — Revision-bound audit records (supersedes R4'' terminal semantics)
+
+- Every audit verdict binds to `entity_revision_hash` (hash over member_atom_set + referent_kind + alias set). Any change to members/kind/aliases creates a new revision whose audit status starts **not_audited**; the old revision's record is retained as audit history inside the lineage cohort.
+- Headline "100% adjudicated" therefore means: every CURRENT revision of every cohort member has a terminal record. An entity adjudicated at ch10 that gains an epithet at ch20 correctly drops out of "adjudicated" until re-audited.
+
+## H1 — Human-decision contract (MINOR, locked now; UI deferred)
+
+Path-B human approvals are machine-readable artifacts from day one: `{reviewer, timestamp, verdict, evidence_refs, entity_revision_hash, decision_id}` — checkpointed and referenced by the dependency ledger so replay/validation can verify them. Only the UI is deferred.
+
+Round-4 ask to Sol: verify-only — the six mandatory items from your round-3 verdict map to D''' (fingerprint reuse), A'''' (dual global partitions), A''''' (append-only versioned atomic DAG + M2 as derived node), B''' (multi-outcome disposition), C''' (explicit continuity authorization), E'''+R4''' (second gate + revision-bound audit), with H1 covering the MINOR. Flag anything still open; otherwise LOCK.
