@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev1 for Sol round 1)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev2, for Sol round 2)
 
-Status: **DRAFT rev1 — awaiting Sol critique round 1. Do NOT implement.**
+Status: **DRAFT rev2 — awaiting Sol critique round 2. Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -82,3 +82,74 @@ Pass = all three flip from their pilot failures with context as the only changed
 - S3: Hint demotion to neutral candidates — enough to kill anchor bias, or should surface-match candidates be withheld entirely from the first call and only enter at L2?
 - S4: Context Audit schema — anything missing to make engine-vs-model attribution decidable in one artifact?
 - S5: Canary pass criteria — agree that pass requires flip-with-context-only-change, and that a canary passing via pending_human counts as engine success (fail-closed), not failure?
+
+---
+
+# M4f REV2 DELTA (2026-07-11, after Sol round 1 — ALL 4 BLOCKERs + 5 MAJORs accepted; Claude verification notes + 2 independent Claude findings. Supersedes conflicting rev1 text.) Status: **rev2 — for Sol round 2.**
+
+Claude gate notes (verified before acceptance):
+- **B1 (B0 join) CONFIRMED + own-goal acknowledged:** B0 cast surface `the canine mother` (b017) vs atom surface `madam` (b019) share NO exact key — any code join is language work, which rev1 §2 item 3 implicitly required. Rev1 violated the locked code-never-does-language-work principle; Sol caught it. Also confirmed: B0 reads the whole chapter, so `role_hint` provenance is un-scoped (max_source_block unknown) — the join input itself is future-contaminated.
+- **B2 (demote insufficient) ACCEPTED:** anchoring bias operates by presence, not by label; a wrong answer shown "neutrally" still anchors.
+- **B3 (overlay "by construction" overstated) CONFIRMED:** phase rows store no source event ids (verified round M4e-3, render at story_bible_v2.py:2263); facts/phases key on final entity ids → merge collides pairs, split cannot assign children. Rev1's claim that render-time entity mapping removes replay was WRONG at the data level.
+- **M6 (sentence ±N) CONFIRMED on source:** full b019 (1,024 chars) contains "the ruffianly bitch … irritated madam" — the referent-determining clause was IN THE SAME BLOCK, destroyed by the character-slice. Full active block alone disambiguates madam; b017→b018→b019 shows adjacent-block chains matter too. (Side lesson recorded: earlier source grep returned empty because block text lives in `clean_text`, not `text` — empty grep ≠ absence.)
+- **B4, M5, M7, M8, M9, M10 ACCEPTED** on design logic (M10 additionally grounded: pilot ch3 frame is wrong-by-omission, verified in M4e round 2).
+
+## §2' — B0 cast claims with provenance (supersedes §2 item 3 "B0 kind join")
+
+- B0 runs **unit/scene-local** (folds into the B0-per-unit rule from M4e D''). Every cast row becomes a **cast claim**: `{cast_claim_id, surface, surface_kind, role_hint, source_block_ids, scene_range, max_source_block, quote}`.
+- Identity call receives ALL cast claims whose scene_range intersects the mention's scene, presented as **untrusted claims**; the LLM does the madam↔canine-mother linking. **Code never joins surfaces.**
+- As-of validity: a claim enters context only if `max_source_block ≤ as_of_block` (CONTEXT_ONLY-labeled tails excepted).
+
+## §2'' — Future-derived context is EXCLUDED, not demoted (supersedes rev1 hint demotion)
+
+- Any claim/hint with `max_source_block > as_of_block`, unknown provenance, or full-chapter-derived lineage is **excluded entirely** from the rendered context and logged in the Context Audit as `{item, reason}`.
+- Existing B1 `hint_entity_id` values (all minted under the whole-chapter brief) are therefore ALL excluded from identity calls. Candidate surface matches are **recomputed from clean as-of evidence** by mechanical exact/casefold surface-and-alias match against the registry-as-of — no fuzzy matching (that would be language work); non-exact linking happens only inside the LLM call via cast claims + roster.
+
+## §2''' — Two-step identity protocol (supersedes rev1 single-call items 5–6)
+
+1. **Candidate-retrieval call:** local context + lightweight global roster → returns candidate entity IDs (+ "none/new"). Roster over token cap → sharded retrieval, **union** of candidate IDs across shards; never silent truncation.
+2. **Adjudication call:** local scene + FULL candidate cards (two complete dossiers when merge/split is on the table) → verdict.
+- Cost impact goes into deterministic_base (identity calls ×2 worst case); measured, not assumed.
+
+## §2'''' — Context unit = full block, scene-bounded (supersedes sentence ±N)
+
+- Minimum context = the **full active block**. Expansion = adjacent blocks up to scene boundary or token cap, whichever first. Sentence spans are used ONLY to highlight evidence inside the delivered blocks, never to bound what is delivered.
+- **Scene boundary fallback (Claude independent point, needs Sol confirmation):** WH chapters often lack typographic scene breaks; when no scene break exists, the deterministic fallback is a block-neighborhood cap (±K blocks, config-hashed, measured). Detection stays typographic (blank line / asterism / chapter edge) per the locked scene-break rule.
+
+## §2''''' — Bounded phase timeline in phase calls (supersedes "open phases + new events only")
+
+Phase call context includes a **compact committed timeline** for the pair: `[{phase_label, interval, trigger_event_ids}]` — labels/intervals/ids only, no quotes. Reconciliation/recurrence (friend→enemy→friend) stays visible; token cost stays flat.
+
+## §3' — Context Audit v2 (supersedes rev1 schema)
+
+Add per call: `request_fingerprint` (full canonical API request hash, per M4e round-4 B1), `system_prompt_hash`, rendered **section hashes/text refs** with per-section token counts, `source_block_ids` + `max_source_block` per section, `candidate_pool_hash`, retrieval policy id+version, candidate ranks/scores, truncation decisions, output verdict + validator result. `excluded` stores counts + ids/hashes (no unbounded dumps). Attribution rule: engine-vs-model is decided ONLY when the audit proves the evidence bytes were in the rendered request.
+
+## §4' — Occurrence-level overlay (supersedes rev1 entity-level "by construction" claim)
+
+- **Evidence base at occurrence level:** immutable atom/mention/turn/event-endpoint IDs are the ground layer for everything downstream. Facts/phases/views carry event/atom provenance from the migration run onward (M4e A''''' migration note carries over: no retrofit of old rows — the coordinated re-run writes provenance from the start).
+- Overlay **split = exact partition over the entity's atom IDs**; derived pair views remap from event endpoints, not from entity ids. Pair collision after a merge, or provenance too thin to reassign → the affected view rows become **stale/blocked** (excluded from runtime render, kept in state) — never mechanically re-keyed.
+- **No generic DAG**, but two mechanisms stay: overlay-version lineage (each generation knows its parent) and **materialized-view invalidation** (bible/pack renders are stamped with overlay_version; version bump invalidates renders, which rebuild mechanically from base + overlay).
+
+## §4'' — Overlay conflict & activation semantics (new, closes B4)
+
+- Overlay generations form a chain: `{overlay_version, parent_overlay_version, records[]}`. **Only human_approved records are ACTIVE**; LLM proposals live in proposed/rejected and never affect rendering. (`confirmed` status dropped — it was ambiguous.)
+- Per-generation validator: applying active records to the base must yield a **canonical partition** — no cycles, no overlapping subjects (an entity may be subject of at most one active merge/split lineage), merge-after-split and reclassify-over-merge resolve through the partition or the generation is rejected. **Any conflict blocks the WHOLE generation from publishing.**
+- Every translation/render run **pins its overlay_version** in config_hash + report.
+
+## §5' — M2 frame/story-time as versioned claims (new, closes M10)
+
+`narration_frame_segments` become claims: `{segment, source_block_ids, status ∈ verified | uncertain, version}`. Identity/phase context receives frame = **unknown** when the covering claim is uncertain — a wrong frame is never delivered as ground truth (pilot ch3 is the proof case). B3 v2 embedded-document segmentation (diary/dream) remains the upgrade path from uncertain → verified.
+
+## §6' — Causal A/B acceptance (supersedes rev1 canary criteria)
+
+- **Held constant:** system prompt, validator, model, temperature/seed policy, response_format, caps. **Only the context payload changes** between arms.
+- **≥2–3 fresh replicates per arm.** (Claude independent point: replicates MUST use `bypass_cache` — the local replay cache is keyed on the request, so identical replicates would replay one response and measure nothing; replicate cost enters the estimator explicitly.)
+- **Three gates, reported separately:**
+  1. **context-delivery** — audit proves the clean evidence bytes are in the rendered request;
+  2. **safety** — no wrong auto-publish; pending_human COUNTS as pass;
+  3. **resolution-quality** — correct referent; pending_human does NOT count as pass.
+- Only a **stable resolution flip** (consistent across replicates) confirms the root-cause hypothesis. Safety-only success = fail-closed works, context question stays open.
+
+## Round-2 ask to Sol
+
+The three lock items from your verdict map to §2'/§2'' (B0 claims as-of with provenance + hard exclusion), §4'/§4'' (occurrence-level overlay + conflict/activation semantics), §6' (three-gate A/B). Plus two Claude additions for your check: scene-boundary fallback ±K when no typographic break exists (§2''''), and bypass_cache requirement on replicates (§6'). Flag residual holes; otherwise LOCK so prompt authoring and CodeX phasing start.
