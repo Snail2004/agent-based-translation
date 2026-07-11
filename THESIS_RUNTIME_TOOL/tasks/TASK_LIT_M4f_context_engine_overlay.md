@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev7, for Sol round 7)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev8, for Sol round 8)
 
-Status: **DRAFT rev7 — awaiting Sol critique round 7 (expected LOCK). User confirmations recorded (whole_book_frozen + zero-human). Do NOT implement.**
+Status: **DRAFT rev8 — awaiting Sol round 8. LOCK gated on SSE8 full-run error audit + SSZ8 canonical rewrite. User confirmations recorded (whole_book_frozen + zero-human + data-grounded lock). Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -479,3 +479,56 @@ On DEV (ch1–4 lineage), locked BEFORE held-out and never tuned on it: `disclos
 ## Round-7 ask to Sol
 
 All four LLM-authority holes are closed by the same doctrine already locked elsewhere: two-key for semantic authority (§D5), typed envelopes for filterability (§P5), code-computed closure for blast radius (§O5), and removal of the pseudo-mechanical fast path (§O6). MAJORs land as scaffold acceptance (§P5b/§C6/§T6/§M6). Verify-only pass; if clean, LOCK — prompt authoring starts with the disclosure-event extractor + checker pair, identity two-step, and frame confirmation blockquotes, all against the §T6 fixture before any WH run.
+
+---
+
+# M4f REV8 DELTA (2026-07-12, after Sol round 7 — ALL 5 BLOCKERs + 3 MAJORs accepted; user directive folded in: pre-LOCK full audit of the REAL ch1–4 run. Supersedes conflicting rev1–rev7 text.) Status: **rev8 — for Sol round 8; LOCK requires §E8 audit + §Z8 canonical rewrite.**
+
+Claude gate notes:
+- **B-binding-scope CONFIRMED on checkpoint:** atoms `..._b004_02` and `..._b036_02` share surface "the master", both sit in `ent_the_master`, and are two DIFFERENT people (b004 = Edgar — "after she died, the master retained me"; b036 = old Mr. Earnshaw — the Liverpool return scene). The `(surface, entity, block)` triple cannot express which occurrences a disclosure covers.
+- **B-witness-authority CONFIRMED on checkpoint:** the b004 ground atom itself carries `hint_entity_id: ent_mr_earnshaw` — a WRONG future-derived hint sitting in the immutable layer. Immutable means un-edited, not correct; rev7's "immutable direct ID witness" would launder this exact error into ID reuse.
+- **B-closure-computability ACCEPTED:** a hash cannot be traversed backwards; {entity_ids, pair} stamps are too coarse; Brief/motif/glossary/vector items need not have source_event_ids — rev7's closure was declared, not constructible.
+- **B-derived-default / B-quarantine-one-call ACCEPTED:** "has evidence" ≠ "text disclosed this conclusion"; and rev7 §O5 handed closure-scale impact back to a single response — the same one-call authority hole §D5 just closed, reopened one layer up. Consistency demands two-key here too.
+- **M-no-signal-escape / M-oracle-missing / M-seven-layer-spec ACCEPTED:** the last echoes the M4e lesson — an implementer forced to adjudicate "which rev wins" will produce a fourth spec (theirs).
+
+## §D6 — Binding-scoped disclosure (supersedes rev7 §D5 triple)
+
+A disclosure event authorizes a **binding**, not a surface: `{binding_id, entity_id, covered_occurrence_ids, valid_range?, frame_ref?, evidence_refs}`. Checker agreement must match `binding_id + covered_occurrence_ids + valid_range/frame_ref + entity` (set equality on occurrences). Validator enforces exact-cover/no-overlap: an occurrence is covered by at most one active binding of a surface. Same-model checker agreement ⇒ **corroborated**; **active** requires the §F''' independence ladder (independent evidence source, different checker model/prompt, or human) — the runtime contract states which statuses render, per status, in the Context Audit.
+
+## §P6 — disclosed_from is a discriminated union by kind (supersedes rev7 §P5 single default)
+
+- `kind = explicit_fact` (stated verbatim in text): `disclosed_from = max(order(evidence_refs))` — mechanical.
+- `kind = derived` (phase labels, motifs, Brief claims, address inferences, anything concluded ACROSS blocks): `disclosure_basis = derived`, **default undisclosed** — renderable only after its own disclosure event (§D6) or checker confirmation. "The system inferred it" never implies "the text revealed it".
+
+## §G6 — Constructible dependency graph (supersedes rev7 §O5 stamp-lookup closure; updates the rev1 "no DAG" note)
+
+- Every envelope carries `depends_on_item_ids` + `evidence_refs` (atoms/endpoints/events/claims). A content-addressed **reverse index** is built at publish time; quarantine closure = transitive reverse-index walk; cycles rejected at write. This IS a dependency graph — for quarantine marking only, still not a replay DAG; the rev1 §4 "no dependency DAG" wording is corrected in the canonical rewrite (§Z8), not silently contradicted.
+- Items whose dependencies cannot be expressed (no valid refs) do not enter the view (fail-closed, same rule as the envelope).
+
+## §W6 — Witness authority (supersedes rev7 §O6 "immutable direct ID witness")
+
+A direct ID witness is valid ONLY if it points to an **active adjudication decision** (decision_id + revision/hash, clean provenance chain). B0/B1 hints, `candidate_entity_ids`, `hint_entity_id`, and pre-M4f base bindings are **permanently barred** from witness status — they are unadjudicated model output frozen in place (b004's wrong Earnshaw hint is the standing proof). Cold start: chapter-1 has zero valid witnesses; everything routes through adjudication once and becomes witness-bearing afterward.
+
+## §Q6 — Quarantine is two-key too (supersedes rev7 §O5 activation)
+
+First destructive/dispute response ⇒ `quarantine_proposed`: the ONLY immediate effect is degrading the seed occurrences to local-surface rendering (no binding shown) — bounded, reversible, spoiler-safe. An **independent checker** confirming the dispute activates the full closure quarantine (§G6 walk). One false-positive response can no longer blank a protagonist's dependency cone; one confirmed dispute still fails closed.
+
+## §C7 — no_identity_signal must justify itself (extends rev7 §C6; closes M-no-signal-escape)
+
+`no_identity_signal` requires `{quote, reason, referent_kind_guess}` per atom — it is a CLAIM entering the audit denominator, not a discard bin. Per-shard and per-entity `no_signal_rate` is reported; rate above the DEV-locked threshold ⇒ forced raw reopen or boundary quarantine + halt flag. The epithet-heavy atoms that caused pilot under-merge are exactly the ones this branch would otherwise swallow.
+
+## §M7 — Preregistered disclosure oracle (closes M-oracle-missing)
+
+DEV + held-out get a small human-annotated **disclosure oracle** (EVAL-ONLY, per LOCK §0.2 — annotation at the evaluation layer does not violate zero-human production): rows = `{surface occurrence, entity, reveal block/range, evidence quote, expected_pack_support}`. §M6 metrics (disclosure precision/recall, local-only %, missing-support %) compute against THIS oracle, never against the extractor/checker themselves (no circular grading). Oracle rows are frozen before the first engine run; held-out rows stay sealed until the held-out gate.
+
+## §E8 — MANDATORY PRE-LOCK: full-run error audit of ch1–4 (user directive 2026-07-12)
+
+Before LOCK, Claude produces an **exhaustive error audit of the real pilot artifacts** (not just the known canaries): walk every T2 entity, alias row, phase row, address policy, frame segment, and quarantined item of the ch1–4 run; classify every defect found: `{artifact_ref, wrong_value, expected_value_or_uncertain, root_cause ∈ context_packaging | retrieval_sharding | hint_bias | frame_error | model_slip | consolidation_code, mechanism_evidence}`. Purpose: (a) prove the rev8 mechanisms cover EVERY observed error class, not just the three canaries; (b) seed the §M7 oracle and DEV thresholds from real data; (c) any error class found that rev8 does NOT cover reopens the spec BEFORE lock, on evidence instead of another theory round. This is the data-grounding the user mandated: "rà hết các lỗi của run, rà nguồn gốc gây lỗi."
+
+## §Z8 — Canonical rewrite gate (closes M-seven-layer-spec)
+
+After Sol confirms the round-8 blockers closed AND §E8 shows no uncovered error class: Claude rewrites the spec as **M4f Canonical v1** — one self-consistent document (including the §G6 correction of rev1 wording); REV1–REV8 become an appendix changelog. Prompt authoring and CodeX scaffold start ONLY from Canonical v1. No implementer ever adjudicates "which rev wins".
+
+## Round-8 ask to Sol
+
+Findings 1–5 closed by §D6/§P6/§G6/§W6/§Q6; oracle defined in §M7; §C7 strengthens the atom disposition; §E8 grounds the lock in the full real-run error sweep; §Z8 sequences the canonical rewrite before any implementation. Requested: verify the five closures; if clean, Claude executes §E8 (artifact audit, zero API) → both review the audit → §Z8 canonical rewrite → LOCK on the canonical document.
