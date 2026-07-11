@@ -1,0 +1,877 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_gg_ch01_006",
+  "chapter_id": "gg_ch01",
+  "block_ids": [
+    "gg_ch01_b097",
+    "gg_ch01_b098",
+    "gg_ch01_b099",
+    "gg_ch01_b100",
+    "gg_ch01_b101",
+    "gg_ch01_b102",
+    "gg_ch01_b103",
+    "gg_ch01_b104",
+    "gg_ch01_b105",
+    "gg_ch01_b106",
+    "gg_ch01_b107",
+    "gg_ch01_b108",
+    "gg_ch01_b109",
+    "gg_ch01_b110",
+    "gg_ch01_b111",
+    "gg_ch01_b112",
+    "gg_ch01_b113",
+    "gg_ch01_b114",
+    "gg_ch01_b115",
+    "gg_ch01_b116",
+    "gg_ch01_b117",
+    "gg_ch01_b118",
+    "gg_ch01_b119",
+    "gg_ch01_b120"
+  ],
+  "previous_tail_block_ids": [
+    "gg_ch01_b095",
+    "gg_ch01_b096"
+  ],
+  "next_tail_block_ids": [
+    "gg_ch01_b121",
+    "gg_ch01_b122"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. There is NO placeholder id: ids such as ent_unknown, ent_unnamed, or ent_narrator do not exist — any id not literally listed in CHAPTER_ROSTER_ON_STAGE or REGISTRY_CONTEXT_PACK is an error; \"I do not know who this is\" is expressed ONLY as resolution_status=unknown with []. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"gg_ch01_b006\", \"gg_ch01_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_gg_ch01_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"gg_ch01_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_gg_ch01_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"gg_ch01_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | West Egg and East Egg, Long Island | frame_present | few_scenes\nneutral_premise | The narrator recalls his background, moves to West Egg, visits Tom and Daisy Buchanan in East Egg for dinner, meets Jordan Baker, hears conversation interrupted by a phone call, and later sees Gatsby outside his mansion.\ncast | I | narrator | gg_ch01_b001\ncast | my father | parent | gg_ch01_b002\ncast | Gatsby | neighbor | gg_ch01_b015\ncast | Tom Buchanan | host | gg_ch01_b016\ncast | Daisy | hostess | gg_ch01_b016\ncast | Miss Baker | guest | gg_ch01_b028\ncast | Jordan Baker | guest | gg_ch01_b127\ncast | the butler | servant | gg_ch01_b085\nscene | gg_ch01_b001..gg_ch01_b015 | co_present_count=1 | I\nscene | gg_ch01_b016..gg_ch01_b151 | co_present_count=5 | I, Tom Buchanan, Daisy, Miss Baker, the butler\nscene | gg_ch01_b152..gg_ch01_b153 | co_present_count=2 | I, Gatsby\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\ngg_ch01_b097..gg_ch01_b120 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_daisy | Daisy | Daisy\nent_gatsby | Gatsby | Gatsby\nent_jordan_baker | Jordan Baker | seeded:chapter_brief_cast:no_surface_alias\nent_miss_baker | Miss Baker | Miss Baker\nent_new_haven | New Haven | New Haven\nent_the_carraways | The Carraways | The Carraways\nent_the_dukes_of_buccleuch | the Dukes of Buccleuch | the Dukes of Buccleuch\nent_the_tom_buchanans | the Tom Buchanans | the Tom Buchanans\nent_tom | Tom | Tom\nent_tom_buchanan | Tom Buchanan | Tom Buchanan\nent_west_egg | West Egg | West Egg\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_gg_ch01_b099_01 | Miss Baker | name | named | \nm_gg_ch01_b101_01 | Tom | name | named | \nm_gg_ch01_b103_01 | Miss Baker | name | named | \nm_gg_ch01_b105_01 | Tom | name | named | \nm_gg_ch01_b105_02 | Daisy | name | named | \nm_gg_ch01_b106_01 | Daisy | name | named | \nm_gg_ch01_b107_01 | Daisy | name | named | \nm_gg_ch01_b107_02 | Tom | name | named | \nm_gg_ch01_b108_01 | Tom | name | named | \nm_gg_ch01_b109_01 | Daisy | name | named | \nm_gg_ch01_b109_02 | Tom | name | named | \nm_gg_ch01_b109_03 | Miss Baker | name | named | \nm_gg_ch01_b111_01 | Daisy | name | named | \nm_gg_ch01_b112_01 | Nick | nickname | unknown | \nm_gg_ch01_b114_01 | Nick | nickname | unknown | \nm_gg_ch01_b119_01 | Tom | name | named | \n\nCHAPTER_ID\ngg_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b095] Miss Baker and I exchanged a short glance consciously devoid of meaning. I was about to speak when she sat up alertly and said “Sh!” in a warning voice. A subdued impassioned murmur was audible in the room beyond, and Miss Baker leaned forward unashamed, trying to hear. The murmur trembled on the verge of coherence, sank down, mounted excitedly, and then ceased altogether.\n[gg_ch01_b096] “This Mr. Gatsby you spoke of is my neighbour—” I began.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b121] The instant her voice broke off, ceasing to compel my attention, my belief, I felt the basic insincerity of what she had said. It made me uneasy, as though the whole evening had been a trick of some sort to exact a contributory emotion from me. I waited, and sure enough, in a moment she looked at me with an absolute smirk on her lovely face, as if she had asserted her membership in a rather distinguished secret society to which she and Tom belonged.\n[gg_ch01_b122] Inside, the crimson room bloomed with light. Tom and Miss Baker sat at either end of the long couch and she read aloud to him from the Saturday Evening Post—the words, murmurous and uninflected, running together in a soothing tune. The lamplight, bright on his boots and dull on the autumn-leaf yellow of her hair, glinted along the paper as she turned a page with a flutter of slender muscles in her arms.\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[gg_ch01_b097] “Don’t talk. I want to hear what happens.”\n[gg_ch01_b098] “Is something happening?” I inquired innocently.\n[gg_ch01_b099] “You mean to say you don’t know?” said Miss Baker, honestly surprised. “I thought everybody knew.”\n[gg_ch01_b100] “I don’t.”\n[gg_ch01_b101] “Why—” she said hesitantly. “Tom’s got some woman in New York.”\n[gg_ch01_b102] “Got some woman?” I repeated blankly.\n[gg_ch01_b103] Miss Baker nodded.\n[gg_ch01_b104] “She might have the decency not to telephone him at dinner time. Don’t you think?”\n[gg_ch01_b105] Almost before I had grasped her meaning there was the flutter of a dress and the crunch of leather boots, and Tom and Daisy were back at the table.\n[gg_ch01_b106] “It couldn’t be helped!” cried Daisy with tense gaiety.\n[gg_ch01_b107] She sat down, glanced searchingly at Miss Baker and then at me, and continued: “I looked outdoors for a minute, and it’s very romantic outdoors. There’s a bird on the lawn that I think must be a nightingale come over on the Cunard or White Star Line. He’s singing away—” Her voice sang: “It’s romantic, isn’t it, Tom?”\n[gg_ch01_b108] “Very romantic,” he said, and then miserably to me: “If it’s light enough after dinner, I want to take you down to the stables.”\n[gg_ch01_b109] The telephone rang inside, startlingly, and as Daisy shook her head decisively at Tom the subject of the stables, in fact all subjects, vanished into air. Among the broken fragments of the last five minutes at table I remember the candles being lit again, pointlessly, and I was conscious of wanting to look squarely at everyone, and yet to avoid all eyes. I couldn’t guess what Daisy and Tom were thinking, but I doubt if even Miss Baker, who seemed to have mastered a certain hardy scepticism, was able utterly to put this fifth guest’s shrill metallic urgency out of mind. To a certain temperament the situation might have seemed intriguing—my own instinct was to telephone immediately for the police.\n[gg_ch01_b110] The horses, needless to say, were not mentioned again. Tom and Miss Baker, with several feet of twilight between them, strolled back into the library, as if to a vigil beside a perfectly tangible body, while, trying to look pleasantly interested and a little deaf, I followed Daisy around a chain of connecting verandas to the porch in front. In its deep gloom we sat down side by side on a wicker settee.\n[gg_ch01_b111] Daisy took her face in her hands as if feeling its lovely shape, and her eyes moved gradually out into the velvet dusk. I saw that turbulent emotions possessed her, so I asked what I thought would be some sedative questions about her little girl.\n[gg_ch01_b112] “We don’t know each other very well, Nick,” she said suddenly. “Even if we are cousins. You didn’t come to my wedding.”\n[gg_ch01_b113] “I wasn’t back from the war.”\n[gg_ch01_b114] “That’s true.” She hesitated. “Well, I’ve had a very bad time, Nick, and I’m pretty cynical about everything.”\n[gg_ch01_b115] Evidently she had reason to be. I waited but she didn’t say any more, and after a moment I returned rather feebly to the subject of her daughter.\n[gg_ch01_b116] “I suppose she talks, and—eats, and everything.”\n[gg_ch01_b117] “Oh, yes.” She looked at me absently. “Listen, Nick; let me tell you what I said when she was born. Would you like to hear?”\n[gg_ch01_b118] “Very much.”\n[gg_ch01_b119] “It’ll show you how I’ve gotten to feel about—things. Well, she was less than an hour old and Tom was God knows where. I woke up out of the ether with an utterly abandoned feeling, and asked the nurse right away if it was a boy or a girl. She told me it was a girl, and so I turned my head away and wept. ‘All right,’ I said, ‘I’m glad it’s a girl. And I hope she’ll be a fool—that’s the best thing a girl can be in this world, a beautiful little fool.’\n[gg_ch01_b120] “You see I think everything’s terrible anyhow,” she went on in a convinced way. “Everybody thinks so—the most advanced people. And I know. I’ve been everywhere and seen everything and done everything.” Her eyes flashed around her in a defiant way, rather like Tom’s, and she laughed with thrilling scorn. “Sophisticated—God, I’m sophisticated!”"
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "gg_ch01",
+    "window_block_ids": [
+      "gg_ch01_b097",
+      "gg_ch01_b098",
+      "gg_ch01_b099",
+      "gg_ch01_b100",
+      "gg_ch01_b101",
+      "gg_ch01_b102",
+      "gg_ch01_b103",
+      "gg_ch01_b104",
+      "gg_ch01_b105",
+      "gg_ch01_b106",
+      "gg_ch01_b107",
+      "gg_ch01_b108",
+      "gg_ch01_b109",
+      "gg_ch01_b110",
+      "gg_ch01_b111",
+      "gg_ch01_b112",
+      "gg_ch01_b113",
+      "gg_ch01_b114",
+      "gg_ch01_b115",
+      "gg_ch01_b116",
+      "gg_ch01_b117",
+      "gg_ch01_b118",
+      "gg_ch01_b119",
+      "gg_ch01_b120"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_gg_ch01_b099_01",
+        "speaker": {
+          "surface": "Miss Baker",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "You mean to say you don’t know?",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "expresses surprise at his ignorance",
+        "block_id": "gg_ch01_b099"
+      },
+      {
+        "turn_id": "t_gg_ch01_b100_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Miss Baker",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_miss_baker"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I don’t.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says he does not know",
+        "block_id": "gg_ch01_b100"
+      },
+      {
+        "turn_id": "t_gg_ch01_b101_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_miss_baker"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Tom’s got some woman in New York.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "reports Tom has another woman",
+        "block_id": "gg_ch01_b101"
+      },
+      {
+        "turn_id": "t_gg_ch01_b102_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_miss_baker"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Got some woman?",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "repeats the claim in disbelief",
+        "block_id": "gg_ch01_b102"
+      },
+      {
+        "turn_id": "t_gg_ch01_b103_01",
+        "speaker": {
+          "surface": "Miss Baker",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "She might have the decency not to telephone him at dinner time.",
+        "address_term_used": null,
+        "register_cue": "hostile",
+        "utterance_gist": "criticizes the caller",
+        "block_id": "gg_ch01_b103"
+      },
+      {
+        "turn_id": "t_gg_ch01_b104_01",
+        "speaker": {
+          "surface": "you",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "you",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Don’t you think?",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "seeks agreement",
+        "block_id": "gg_ch01_b104"
+      },
+      {
+        "turn_id": "t_gg_ch01_b107_01",
+        "speaker": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Tom",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "It’s romantic, isn’t it, Tom?",
+        "address_term_used": "Tom",
+        "register_cue": "neutral",
+        "utterance_gist": "asks Tom if it is romantic",
+        "block_id": "gg_ch01_b107"
+      },
+      {
+        "turn_id": "t_gg_ch01_b108_01",
+        "speaker": {
+          "surface": "he",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_tom_buchanan"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "me",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Very romantic",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "agrees briefly",
+        "block_id": "gg_ch01_b108"
+      },
+      {
+        "turn_id": "t_gg_ch01_b109_01",
+        "speaker": {
+          "surface": "Daisy",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Tom",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Don’t you think?",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "seeks Tom's agreement",
+        "block_id": "gg_ch01_b109"
+      },
+      {
+        "turn_id": "t_gg_ch01_b110_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Daisy",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I followed Daisy around a chain of connecting verandas",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "describes following Daisy",
+        "block_id": "gg_ch01_b110"
+      },
+      {
+        "turn_id": "t_gg_ch01_b112_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "We don’t know each other very well, Nick",
+        "address_term_used": "Nick",
+        "register_cue": "neutral",
+        "utterance_gist": "remarks that they do not know each other well",
+        "block_id": "gg_ch01_b112"
+      },
+      {
+        "turn_id": "t_gg_ch01_b113_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I wasn’t back from the war.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "gives a reason for not attending",
+        "block_id": "gg_ch01_b113"
+      },
+      {
+        "turn_id": "t_gg_ch01_b114_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I’ve had a very bad time, Nick",
+        "address_term_used": "Nick",
+        "register_cue": "neutral",
+        "utterance_gist": "says she has had a bad time",
+        "block_id": "gg_ch01_b114"
+      },
+      {
+        "turn_id": "t_gg_ch01_b116_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I suppose she talks, and—eats, and everything.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "speaks about her daughter",
+        "block_id": "gg_ch01_b116"
+      },
+      {
+        "turn_id": "t_gg_ch01_b117_01",
+        "speaker": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Listen, Nick; let me tell you",
+        "address_term_used": "Nick",
+        "register_cue": "neutral",
+        "utterance_gist": "asks Nick to listen",
+        "block_id": "gg_ch01_b117"
+      },
+      {
+        "turn_id": "t_gg_ch01_b118_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Very much.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "expresses willingness to hear more",
+        "block_id": "gg_ch01_b118"
+      },
+      {
+        "turn_id": "t_gg_ch01_b119_01",
+        "speaker": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I’m glad it’s a girl.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says she is glad it is a girl",
+        "block_id": "gg_ch01_b119"
+      },
+      {
+        "turn_id": "t_gg_ch01_b120_01",
+        "speaker": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Everybody thinks so—the most advanced people.",
+        "address_term_used": null,
+        "register_cue": "hostile",
+        "utterance_gist": "claims everyone thinks everything is terrible",
+        "block_id": "gg_ch01_b120"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_gg_ch01_b099_01",
+        "actor": {
+          "surface": "Miss Baker",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "questions",
+        "evidence_quote": "You mean to say",
+        "block_id": "gg_ch01_b099"
+      },
+      {
+        "event_id": "e_gg_ch01_b101_01",
+        "actor": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_miss_baker"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "Tom",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "mentions",
+        "evidence_quote": "Tom’s got some woman",
+        "block_id": "gg_ch01_b101"
+      },
+      {
+        "event_id": "e_gg_ch01_b107_01",
+        "actor": {
+          "surface": "Daisy",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Tom",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "asks",
+        "evidence_quote": "isn’t it, Tom?",
+        "block_id": "gg_ch01_b107"
+      },
+      {
+        "event_id": "e_gg_ch01_b108_01",
+        "actor": {
+          "surface": "he",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_tom_buchanan"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "me",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "says",
+        "evidence_quote": "I want to take you down",
+        "block_id": "gg_ch01_b108"
+      },
+      {
+        "event_id": "e_gg_ch01_b109_01",
+        "actor": {
+          "surface": "Daisy",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Tom",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "asks",
+        "evidence_quote": "Don’t you think?",
+        "block_id": "gg_ch01_b109"
+      },
+      {
+        "event_id": "e_gg_ch01_b112_01",
+        "actor": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "addresses",
+        "evidence_quote": "Nick",
+        "block_id": "gg_ch01_b112"
+      },
+      {
+        "event_id": "e_gg_ch01_b117_01",
+        "actor": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "requests",
+        "evidence_quote": "Listen, Nick; let me tell you",
+        "block_id": "gg_ch01_b117"
+      },
+      {
+        "event_id": "e_gg_ch01_b119_01",
+        "actor": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "weeps_over",
+        "evidence_quote": "and wept",
+        "block_id": "gg_ch01_b119"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "speaker_turns[0] dropped because attribution_method used a resolution_status",
+      "speaker_turns[1] dropped because attribution_method used a resolution_status",
+      "speaker_turns[8] dropped because attribution_method used a resolution_status",
+      "relation_events[0] dropped because attribution_method used a resolution_status",
+      "relation_events[1] dropped because attribution_method used a resolution_status",
+      "relation_events[4] dropped because attribution_method used a resolution_status",
+      "relation_events[5] dropped because attribution_method used a resolution_status"
+    ],
+    "counts": {
+      "turns": 18,
+      "events": 8,
+      "phase_leak": 0,
+      "address_term_present": 4,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 22,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 0,
+      "attribution_enum_dropped": 7
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "e6314cb8fd88d8b2c9c6c6e6027fd0cd035a375ba93f870b4ddc384e8180a38c",
+      "latency_ms": 19486,
+      "cost_usd": 0.00996975,
+      "usage": {
+        "prompt_tokens": 3735,
+        "cached_tokens": 0,
+        "completion_tokens": 4518,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": false,
+        "errors": [
+          "speaker_turns[2].speaker.candidate_entity_ids must be empty when named",
+          "speaker_turns[2].addressee.candidate_entity_ids required when candidate",
+          "speaker_turns[3].speaker.candidate_entity_ids required when candidate",
+          "speaker_turns[4].addressee.candidate_entity_ids required when candidate",
+          "speaker_turns[5].speaker.candidate_entity_ids required when candidate",
+          "speaker_turns[6].speaker.candidate_entity_ids must be empty when named",
+          "speaker_turns[6].addressee.candidate_entity_ids required when candidate",
+          "speaker_turns[7].speaker.candidate_entity_ids required when candidate",
+          "speaker_turns[10].addressee.candidate_entity_ids required when candidate",
+          "speaker_turns[11].addressee.candidate_entity_ids required when candidate",
+          "speaker_turns[12].speaker.candidate_entity_ids required when candidate",
+          "speaker_turns[14].speaker.candidate_entity_ids required when candidate",
+          "speaker_turns[16].speaker.candidate_entity_ids required when candidate",
+          "speaker_turns[18].speaker.candidate_entity_ids required when candidate",
+          "speaker_turns[19].speaker.candidate_entity_ids required when candidate",
+          "relation_events[1].actor.candidate_entity_ids must be empty when named",
+          "relation_events[1].target.candidate_entity_ids required when candidate",
+          "relation_events[2].actor.candidate_entity_ids must be empty when named",
+          "relation_events[2].target.candidate_entity_ids required when candidate",
+          "relation_events[5].target.candidate_entity_ids required when candidate",
+          "relation_events[6].actor.candidate_entity_ids required when candidate",
+          "relation_events[10].actor.candidate_entity_ids required when candidate"
+        ],
+        "warnings": [
+          "speaker_turns[0] dropped because attribution_method used a resolution_status",
+          "speaker_turns[1] dropped because attribution_method used a resolution_status",
+          "speaker_turns[8] dropped because attribution_method used a resolution_status",
+          "speaker_turns[13] dropped because attribution_method used a resolution_status",
+          "speaker_turns[15] dropped because attribution_method used a resolution_status",
+          "speaker_turns[17] dropped because attribution_method used a resolution_status",
+          "speaker_turns[20] dropped because attribution_method used a resolution_status",
+          "speaker_turns[21] dropped because attribution_method used a resolution_status",
+          "relation_events[0] dropped because attribution_method used a resolution_status",
+          "relation_events[3] dropped because attribution_method used a resolution_status",
+          "relation_events[7] dropped because attribution_method used a resolution_status",
+          "relation_events[8] dropped because attribution_method used a resolution_status",
+          "relation_events[9] dropped because attribution_method used a resolution_status",
+          "relation_events[11] dropped because attribution_method used a resolution_status"
+        ],
+        "counts": {
+          "turns": 14,
+          "events": 6,
+          "phase_leak": 0,
+          "address_term_present": 1,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 0,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 0,
+          "attribution_enum_dropped": 14
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"gg_ch01\",\"window_block_ids\":[\"gg_ch01_b097\",\"gg_ch01_b098\",\"gg_ch01_b099\",\"gg_ch01_b100\",\"gg_ch01_b101\",\"gg_ch01_b102\",\"gg_ch01_b103\",\"gg_ch01_b104\",\"gg_ch01_b105\",\"gg_ch01_b106\",\"gg_ch01_b107\",\"gg_ch01_b108\",\"gg_ch01_b109\",\"gg_ch01_b110\",\"gg_ch01_b111\",\"gg_ch01_b112\",\"gg_ch01_b113\",\"gg_ch01_b114\",\"gg_ch01_b115\",\"gg_ch01_b116\",\"gg_ch01_b117\",\"gg_ch01_b118\",\"gg_ch01_b119\",\"gg_ch01_b120\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_gg_ch01_b097_01\",\"speaker\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Don’t talk. I want to hear what happens.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"asks others not to talk\",\"block_id\":\"gg_ch01_b097\"},{\"turn_id\":\"t_gg_ch01_b098_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Is something happening?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"asks if anything is happening\",\"block_id\":\"gg_ch01_b098\"},{\"turn_id\":\"t_gg_ch01_b099_01\",\"speaker\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"You mean to say you don’t know?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"expresses surprise at his ignorance\",\"block_id\":\"gg_ch01_b099\"},{\"turn_id\":\"t_gg_ch01_b100_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I don’t.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says he does not know\",\"block_id\":\"gg_ch01_b100\"},{\"turn_id\":\"t_gg_ch01_b101_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Tom’s got some woman in New York.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"reports Tom has another woman\",\"block_id\":\"gg_ch01_b101\"},{\"turn_id\":\"t_gg_ch01_b102_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Got some woman?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"repeats the claim in disbelief\",\"block_id\":\"gg_ch01_b102\"},{\"turn_id\":\"t_gg_ch01_b103_01\",\"speaker\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"She might have the decency not to telephone him at dinner time.\",\"address_term_used\":null,\"register_cue\":\"hostile\",\"utterance_gist\":\"criticizes the caller for phoning at dinner\",\"block_id\":\"gg_ch01_b103\"},{\"turn_id\":\"t_gg_ch01_b104_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Don’t you think?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"asks for agreement\",\"block_id\":\"gg_ch01_b104\"},{\"turn_id\":\"t_gg_ch01_b106_01\",\"speaker\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"It couldn’t be helped!\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says the interruption could not be helped\",\"block_id\":\"gg_ch01_b106\"},{\"turn_id\":\"t_gg_ch01_b107_01\",\"speaker\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom\",\"ent_tom_buchanan\"],\"attribution_method\":\"nearby_context\",\"confidence\":\"medium\"},\"utterance_quote\":\"It’s romantic, isn’t it, Tom?\",\"address_term_used\":\"Tom\",\"register_cue\":\"neutral\",\"utterance_gist\":\"asks Tom if it is romantic\",\"block_id\":\"gg_ch01_b107\"},{\"turn_id\":\"t_gg_ch01_b108_01\",\"speaker\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom\",\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Very romantic\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"agrees it is romantic and speaks to the narrator\",\"block_id\":\"gg_ch01_b108\"},{\"turn_id\":\"t_gg_ch01_b108_02\",\"speaker\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom\",\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I want to take you down to the stables.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"invites the narrator to the stables\",\"block_id\":\"gg_ch01_b108\"},{\"turn_id\":\"t_gg_ch01_b111_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"nearby_context\",\"confidence\":\"medium\"},\"utterance_quote\":\"what I thought would be some sedative questions\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"asks gentle questions about her daughter\",\"block_id\":\"gg_ch01_b111\"},{\"turn_id\":\"t_gg_ch01_b112_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"We don’t know each other very well, Nick\",\"address_term_used\":\"Nick\",\"register_cue\":\"neutral\",\"utterance_gist\":\"remarks that they do not know each other well\",\"block_id\":\"gg_ch01_b112\"},{\"turn_id\":\"t_gg_ch01_b113_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I wasn’t back from the war.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"explains his absence at the wedding\",\"block_id\":\"gg_ch01_b113\"},{\"turn_id\":\"t_gg_ch01_b114_01\",\"speaker\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Well, I’ve had a very bad time, Nick\",\"address_term_used\":\"Nick\",\"register_cue\":\"neutral\",\"utterance_gist\":\"says she has had a very bad time\",\"block_id\":\"gg_ch01_b114\"},{\"turn_id\":\"t_gg_ch01_b116_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I suppose she talks, and—eats, and everything.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"comments on the daughter’s abilities\",\"block_id\":\"gg_ch01_b116\"},{\"turn_id\":\"t_gg_ch01_b117_01\",\"speaker\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Listen, Nick; let me tell you\",\"address_term_used\":\"Nick\",\"register_cue\":\"neutral\",\"utterance_gist\":\"asks him to listen and hear a story\",\"block_id\":\"gg_ch01_b117\"},{\"turn_id\":\"t_gg_ch01_b118_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Very much.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"agrees to hear it\",\"block_id\":\"gg_ch01_b118\"},{\"turn_id\":\"t_gg_ch01_b119_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"All right, I said, “I’m glad it’s a girl.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"quotes what he said when the baby was born\",\"block_id\":\"gg_ch01_b119\"},{\"turn_id\":\"t_gg_ch01_b120_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Everybody thinks so—the most advanced people.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says everyone thinks everything is terrible\",\"block_id\":\"gg_ch01_b120\"},{\"turn_id\":\"t_gg_ch01_b120_02\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Sophisticated—God, I’m sophisticated!\",\"address_term_used\":null,\"register_cue\":\"mocking\",\"utterance_gist\":\"boasts sarcastically about being sophisticated\",\"block_id\":\"gg_ch01_b120\"}],\"relation_events\":[{\"event_id\":\"e_gg_ch01_b098_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"inquires\",\"evidence_quote\":\"Is something happening?\",\"block_id\":\"gg_ch01_b098\"},{\"event_id\":\"e_gg_ch01_b099_01\",\"actor\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"questions\",\"evidence_quote\":\"You mean to say you don’t know?\",\"block_id\":\"gg_ch01_b099\"},{\"event_id\":\"e_gg_ch01_b103_01\",\"actor\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"criticizes\",\"evidence_quote\":\"decency not to telephone him\",\"block_id\":\"gg_ch01_b103\"},{\"event_id\":\"e_gg_ch01_b106_01\",\"actor\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"states\",\"evidence_quote\":\"It couldn’t be helped!\",\"block_id\":\"gg_ch01_b106\"},{\"event_id\":\"e_gg_ch01_b107_01\",\"actor\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom\",\"ent_tom_buchanan\"],\"attribution_method\":\"nearby_context\",\"confidence\":\"medium\"},\"event_type\":\"addresses\",\"evidence_quote\":\"It’s romantic, isn’t it, Tom?\",\"block_id\":\"gg_ch01_b107\"},{\"event_id\":\"e_gg_ch01_b108_01\",\"actor\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom\",\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"invites\",\"evidence_quote\":\"take you down to the stables\",\"block_id\":\"gg_ch01_b108\"},{\"event_id\":\"e_gg_ch01_b111_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"nearby_context\",\"confidence\":\"medium\"},\"event_type\":\"questions\",\"evidence_quote\":\"sedative questions about her little girl\",\"block_id\":\"gg_ch01_b111\"},{\"event_id\":\"e_gg_ch01_b112_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"addresses\",\"evidence_quote\":\"very well, Nick\",\"block_id\":\"gg_ch01_b112\"},{\"event_id\":\"e_gg_ch01_b114_01\",\"actor\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"complains\",\"evidence_quote\":\"I’ve had a very bad time\",\"block_id\":\"gg_ch01_b114\"},{\"event_id\":\"e_gg_ch01_b117_01\",\"actor\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"requests\",\"evidence_quote\":\"Listen, Nick; let me tell you\",\"block_id\":\"gg_ch01_b117\"},{\"event_id\":\"e_gg_ch01_b119_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"quotes\",\"evidence_quote\":\"I’m glad it’s a girl\",\"block_id\":\"gg_ch01_b119\"},{\"event_id\":\"e_gg_ch01_b120_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"states\",\"evidence_quote\":\"Everybody thinks so\",\"block_id\":\"gg_ch01_b120\"}]}"
+    },
+    {
+      "attempt": 2,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "abf498703673342fe42ef781644f129747f8a61d3e4c7f8fd0bac69355e35b94",
+      "latency_ms": 18383,
+      "cost_usd": 0.0089742,
+      "usage": {
+        "prompt_tokens": 4964,
+        "cached_tokens": 3328,
+        "completion_tokens": 4241,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "speaker_turns[0] dropped because attribution_method used a resolution_status",
+          "speaker_turns[1] dropped because attribution_method used a resolution_status",
+          "speaker_turns[8] dropped because attribution_method used a resolution_status",
+          "relation_events[0] dropped because attribution_method used a resolution_status",
+          "relation_events[1] dropped because attribution_method used a resolution_status",
+          "relation_events[4] dropped because attribution_method used a resolution_status",
+          "relation_events[5] dropped because attribution_method used a resolution_status"
+        ],
+        "counts": {
+          "turns": 18,
+          "events": 8,
+          "phase_leak": 0,
+          "address_term_present": 4,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 22,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 0,
+          "attribution_enum_dropped": 7
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"gg_ch01\",\"window_block_ids\":[\"gg_ch01_b097\",\"gg_ch01_b098\",\"gg_ch01_b099\",\"gg_ch01_b100\",\"gg_ch01_b101\",\"gg_ch01_b102\",\"gg_ch01_b103\",\"gg_ch01_b104\",\"gg_ch01_b105\",\"gg_ch01_b106\",\"gg_ch01_b107\",\"gg_ch01_b108\",\"gg_ch01_b109\",\"gg_ch01_b110\",\"gg_ch01_b111\",\"gg_ch01_b112\",\"gg_ch01_b113\",\"gg_ch01_b114\",\"gg_ch01_b115\",\"gg_ch01_b116\",\"gg_ch01_b117\",\"gg_ch01_b118\",\"gg_ch01_b119\",\"gg_ch01_b120\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_gg_ch01_b097_01\",\"speaker\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Don’t talk. I want to hear what happens.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"asks others not to talk\",\"block_id\":\"gg_ch01_b097\"},{\"turn_id\":\"t_gg_ch01_b098_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Is something happening?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"asks if anything is happening\",\"block_id\":\"gg_ch01_b098\"},{\"turn_id\":\"t_gg_ch01_b099_01\",\"speaker\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"You mean to say you don’t know?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"expresses surprise at his ignorance\",\"block_id\":\"gg_ch01_b099\"},{\"turn_id\":\"t_gg_ch01_b100_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I don’t.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says he does not know\",\"block_id\":\"gg_ch01_b100\"},{\"turn_id\":\"t_gg_ch01_b101_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Tom’s got some woman in New York.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"reports Tom has another woman\",\"block_id\":\"gg_ch01_b101\"},{\"turn_id\":\"t_gg_ch01_b102_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Got some woman?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"repeats the claim in disbelief\",\"block_id\":\"gg_ch01_b102\"},{\"turn_id\":\"t_gg_ch01_b103_01\",\"speaker\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"She might have the decency not to telephone him at dinner time.\",\"address_term_used\":null,\"register_cue\":\"hostile\",\"utterance_gist\":\"criticizes the caller\",\"block_id\":\"gg_ch01_b103\"},{\"turn_id\":\"t_gg_ch01_b104_01\",\"speaker\":{\"surface\":\"you\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"you\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Don’t you think?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"seeks agreement\",\"block_id\":\"gg_ch01_b104\"},{\"turn_id\":\"t_gg_ch01_b106_01\",\"speaker\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"It couldn’t be helped!\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says it could not be helped\",\"block_id\":\"gg_ch01_b106\"},{\"turn_id\":\"t_gg_ch01_b107_01\",\"speaker\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"It’s romantic, isn’t it, Tom?\",\"address_term_used\":\"Tom\",\"register_cue\":\"neutral\",\"utterance_gist\":\"asks Tom if it is romantic\",\"block_id\":\"gg_ch01_b107\"},{\"turn_id\":\"t_gg_ch01_b108_01\",\"speaker\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"me\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Very romantic\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"agrees briefly\",\"block_id\":\"gg_ch01_b108\"},{\"turn_id\":\"t_gg_ch01_b109_01\",\"speaker\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Don’t you think?\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"seeks Tom's agreement\",\"block_id\":\"gg_ch01_b109\"},{\"turn_id\":\"t_gg_ch01_b110_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I followed Daisy around a chain of connecting verandas\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"describes following Daisy\",\"block_id\":\"gg_ch01_b110\"},{\"turn_id\":\"t_gg_ch01_b112_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"We don’t know each other very well, Nick\",\"address_term_used\":\"Nick\",\"register_cue\":\"neutral\",\"utterance_gist\":\"remarks that they do not know each other well\",\"block_id\":\"gg_ch01_b112\"},{\"turn_id\":\"t_gg_ch01_b113_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I wasn’t back from the war.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"gives a reason for not attending\",\"block_id\":\"gg_ch01_b113\"},{\"turn_id\":\"t_gg_ch01_b114_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I’ve had a very bad time, Nick\",\"address_term_used\":\"Nick\",\"register_cue\":\"neutral\",\"utterance_gist\":\"says she has had a bad time\",\"block_id\":\"gg_ch01_b114\"},{\"turn_id\":\"t_gg_ch01_b116_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I suppose she talks, and—eats, and everything.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"speaks about her daughter\",\"block_id\":\"gg_ch01_b116\"},{\"turn_id\":\"t_gg_ch01_b117_01\",\"speaker\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Listen, Nick; let me tell you\",\"address_term_used\":\"Nick\",\"register_cue\":\"neutral\",\"utterance_gist\":\"asks Nick to listen\",\"block_id\":\"gg_ch01_b117\"},{\"turn_id\":\"t_gg_ch01_b118_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Very much.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"expresses willingness to hear more\",\"block_id\":\"gg_ch01_b118\"},{\"turn_id\":\"t_gg_ch01_b119_01\",\"speaker\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I’m glad it’s a girl.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says she is glad it is a girl\",\"block_id\":\"gg_ch01_b119\"},{\"turn_id\":\"t_gg_ch01_b120_01\",\"speaker\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Everybody thinks so—the most advanced people.\",\"address_term_used\":null,\"register_cue\":\"hostile\",\"utterance_gist\":\"claims everyone thinks everything is terrible\",\"block_id\":\"gg_ch01_b120\"}],\"relation_events\":[{\"event_id\":\"e_gg_ch01_b097_01\",\"actor\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"orders\",\"evidence_quote\":\"Don’t talk\",\"block_id\":\"gg_ch01_b097\"},{\"event_id\":\"e_gg_ch01_b098_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"asks\",\"evidence_quote\":\"Is something happening?\",\"block_id\":\"gg_ch01_b098\"},{\"event_id\":\"e_gg_ch01_b099_01\",\"actor\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"questions\",\"evidence_quote\":\"You mean to say\",\"block_id\":\"gg_ch01_b099\"},{\"event_id\":\"e_gg_ch01_b101_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"mentions\",\"evidence_quote\":\"Tom’s got some woman\",\"block_id\":\"gg_ch01_b101\"},{\"event_id\":\"e_gg_ch01_b103_01\",\"actor\":{\"surface\":\"Miss Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"criticizes\",\"evidence_quote\":\"have the decency\",\"block_id\":\"gg_ch01_b103\"},{\"event_id\":\"e_gg_ch01_b106_01\",\"actor\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"unknown\",\"reference_kind\":\"unknown\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"explains\",\"evidence_quote\":\"It couldn’t be helped!\",\"block_id\":\"gg_ch01_b106\"},{\"event_id\":\"e_gg_ch01_b107_01\",\"actor\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"asks\",\"evidence_quote\":\"isn’t it, Tom?\",\"block_id\":\"gg_ch01_b107\"},{\"event_id\":\"e_gg_ch01_b108_01\",\"actor\":{\"surface\":\"he\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_tom_buchanan\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"me\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"says\",\"evidence_quote\":\"I want to take you down\",\"block_id\":\"gg_ch01_b108\"},{\"event_id\":\"e_gg_ch01_b109_01\",\"actor\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"asks\",\"evidence_quote\":\"Don’t you think?\",\"block_id\":\"gg_ch01_b109\"},{\"event_id\":\"e_gg_ch01_b112_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"addresses\",\"evidence_quote\":\"Nick\",\"block_id\":\"gg_ch01_b112\"},{\"event_id\":\"e_gg_ch01_b117_01\",\"actor\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"requests\",\"evidence_quote\":\"Listen, Nick; let me tell you\",\"block_id\":\"gg_ch01_b117\"},{\"event_id\":\"e_gg_ch01_b119_01\",\"actor\":{\"surface\":\"She\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Nick\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"weeps_over\",\"evidence_quote\":\"and wept\",\"block_id\":\"gg_ch01_b119\"}]}"
+    }
+  ],
+  "cost_usd": 0.01894395,
+  "prompt_tokens": 8699,
+  "cached_tokens": 3328,
+  "completion_tokens": 8759,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

@@ -1,0 +1,348 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_gg_ch01_020",
+  "chapter_id": "gg_ch01",
+  "block_ids": [
+    "gg_ch01_b122",
+    "gg_ch01_b123",
+    "gg_ch01_b124",
+    "gg_ch01_b125",
+    "gg_ch01_b126",
+    "gg_ch01_b127",
+    "gg_ch01_b128",
+    "gg_ch01_b129"
+  ],
+  "previous_tail_block_ids": [
+    "gg_ch01_b120",
+    "gg_ch01_b121"
+  ],
+  "next_tail_block_ids": [
+    "gg_ch01_b130",
+    "gg_ch01_b131"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: fill only for candidate, copied from CHAPTER_ROSTER_ON_STAGE; else [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you decided — it is the real trust signal, more than confidence.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"bk_ch01_b006\", \"bk_ch01_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_bk_ch01_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"bk_ch01_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_bk_ch01_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"bk_ch01_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | West Egg and East Egg, Long Island | frame_present | few_scenes\nneutral_premise | Nick recalls earlier advice, settles in West Egg, visits Tom and Daisy Buchanan in East Egg for dinner with Jordan Baker present, then returns home and sees Gatsby outside his mansion.\ncast | Nick | traveller | gg_ch01_b002\ncast | his father | parent | gg_ch01_b002\ncast | Gatsby | neighbor | gg_ch01_b005\ncast | the young man | visitor | gg_ch01_b008\ncast | Tom Buchanan | host | gg_ch01_b016\ncast | Daisy | host | gg_ch01_b016\ncast | Miss Baker | guest | gg_ch01_b028\ncast | the butler | servant | gg_ch01_b085\ncast | Jordan Baker | guest | gg_ch01_b127\nscene | gg_ch01_b002..gg_ch01_b015 | co_present_count=1 | Nick\nscene | gg_ch01_b016..gg_ch01_b152 | co_present_count=4 | Nick, Tom Buchanan, Daisy, Miss Baker\nscene | gg_ch01_b152..gg_ch01_b153 | co_present_count=2 | Nick, Gatsby\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\ngg_ch01_b122..gg_ch01_b129 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_daisy | Daisy | Daisy\nent_gatsby | Gatsby | Gatsby\nent_goddard | Goddard | Goddard\nent_jordan | Jordan | Jordan\nent_jordan_baker | Jordan Baker | Jordan Baker\nent_maecenas | Maecenas | Maecenas\nent_midas | Midas | Midas\nent_miss_baker | Miss Baker | Miss Baker\nent_morgan | Morgan | Morgan\nent_mr_gatsby | Mr. Gatsby | Mr. Gatsby\nent_nick | Nick | Nick\nent_the_carraways | the Carraways | the Carraways\nent_the_tom_buchanans | the Tom Buchanans | the Tom Buchanans\nent_tom | Tom | Tom\nent_tom_buchanan | Tom Buchanan | Tom Buchanan\nent_tom_s | Tom’s | Tom’s\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_gg_ch01_b122_01 | Tom | name | candidate | ent_tom\nm_gg_ch01_b122_02 | Miss Baker | name | candidate | ent_miss_baker\nm_gg_ch01_b127_01 | Jordan | name | named | \nm_gg_ch01_b127_02 | Daisy | name | candidate | ent_daisy\nm_gg_ch01_b128_01 | Jordan Baker | name | named | \n\nCHAPTER_ID\ngg_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b120] “You see I think everything’s terrible anyhow,” she went on in a convinced way. “Everybody thinks so—the most advanced people. And I know. I’ve been everywhere and seen everything and done everything.” Her eyes flashed around her in a defiant way, rather like Tom’s, and she laughed with thrilling scorn. “Sophisticated—God, I’m sophisticated!”\n[gg_ch01_b121] The instant her voice broke off, ceasing to compel my attention, my belief, I felt the basic insincerity of what she had said. It made me uneasy, as though the whole evening had been a trick of some sort to exact a contributory emotion from me. I waited, and sure enough, in a moment she looked at me with an absolute smirk on her lovely face, as if she had asserted her membership in a rather distinguished secret society to which she and Tom belonged.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b130] “Good night,” she said softly. “Wake me at eight, won’t you.”\n[gg_ch01_b131] “If you’ll get up.”\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[gg_ch01_b122] Inside, the crimson room bloomed with light. Tom and Miss Baker sat at either end of the long couch and she read aloud to him from the Saturday Evening Post—the words, murmurous and uninflected, running together in a soothing tune. The lamplight, bright on his boots and dull on the autumn-leaf yellow of her hair, glinted along the paper as she turned a page with a flutter of slender muscles in her arms.\n[gg_ch01_b123] When we came in she held us silent for a moment with a lifted hand.\n[gg_ch01_b124] “To be continued,” she said, tossing the magazine on the table, “in our very next issue.”\n[gg_ch01_b125] Her body asserted itself with a restless movement of her knee, and she stood up.\n[gg_ch01_b126] “Ten o’clock,” she remarked, apparently finding the time on the ceiling. “Time for this good girl to go to bed.”\n[gg_ch01_b127] “Jordan’s going to play in the tournament tomorrow,” explained Daisy, “over at Westchester.”\n[gg_ch01_b128] “Oh—you’re Jordan Baker.”\n[gg_ch01_b129] I knew now why her face was familiar—its pleasing contemptuous expression had looked out at me from many rotogravure pictures of the sporting life at Asheville and Hot Springs and Palm Beach. I had heard some story of her too, a critical, unpleasant story, but what it was I had forgotten long ago."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "gg_ch01",
+    "window_block_ids": [
+      "gg_ch01_b122",
+      "gg_ch01_b123",
+      "gg_ch01_b124",
+      "gg_ch01_b125",
+      "gg_ch01_b126",
+      "gg_ch01_b127",
+      "gg_ch01_b128",
+      "gg_ch01_b129"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_gg_ch01_b124_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_miss_baker"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "the room",
+          "reference_kind": "group",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "unknown",
+          "confidence": "low"
+        },
+        "utterance_quote": "To be continued, in our very next issue.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "announces a serial continuation",
+        "block_id": "gg_ch01_b124"
+      },
+      {
+        "turn_id": "t_gg_ch01_b126_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_miss_baker"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "this good girl",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "unknown",
+          "confidence": "low"
+        },
+        "utterance_quote": "Ten o'clock. Time for this good girl to go to bed.",
+        "address_term_used": "this good girl",
+        "register_cue": "mocking",
+        "utterance_gist": "remarks that it is time to go to bed",
+        "block_id": "gg_ch01_b126"
+      },
+      {
+        "turn_id": "t_gg_ch01_b127_01",
+        "speaker": {
+          "surface": "Daisy",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Jordan Baker",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Jordan's going to play in the tournament tomorrow",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "states Jordan will play tomorrow",
+        "block_id": "gg_ch01_b127"
+      },
+      {
+        "turn_id": "t_gg_ch01_b128_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Jordan Baker",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Oh—you're Jordan Baker.",
+        "address_term_used": "Jordan Baker",
+        "register_cue": "neutral",
+        "utterance_gist": "recognizes Jordan Baker",
+        "block_id": "gg_ch01_b128"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_gg_ch01_b124_01",
+        "actor": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_miss_baker"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "the room",
+          "reference_kind": "group",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "unknown",
+          "confidence": "low"
+        },
+        "event_type": "addresses",
+        "evidence_quote": "To be continued",
+        "block_id": "gg_ch01_b124"
+      },
+      {
+        "event_id": "e_gg_ch01_b126_01",
+        "actor": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_miss_baker"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "this good girl",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "unknown",
+          "confidence": "low"
+        },
+        "event_type": "remarks_to",
+        "evidence_quote": "Time for this good girl",
+        "block_id": "gg_ch01_b126"
+      },
+      {
+        "event_id": "e_gg_ch01_b127_01",
+        "actor": {
+          "surface": "Daisy",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Jordan's",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "medium"
+        },
+        "event_type": "states",
+        "evidence_quote": "Jordan's going to play",
+        "block_id": "gg_ch01_b127"
+      },
+      {
+        "event_id": "e_gg_ch01_b128_01",
+        "actor": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Jordan Baker",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "addresses",
+        "evidence_quote": "you're Jordan Baker",
+        "block_id": "gg_ch01_b128"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "relation_events[0] dropped because target.reference_kind is group"
+    ],
+    "counts": {
+      "turns": 4,
+      "events": 3,
+      "phase_leak": 0,
+      "address_term_present": 2,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 4,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 1
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "52abce42de2e6998f4331a2adaae147a37edcef8dd4492a71864420a3f9567b1",
+      "latency_ms": 6668,
+      "cost_usd": 0.00286,
+      "usage": {
+        "prompt_tokens": 2608,
+        "cached_tokens": 0,
+        "completion_tokens": 1104,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": false,
+        "errors": [
+          "speaker_turns[2].speaker.candidate_entity_ids must be empty when named",
+          "speaker_turns[3].addressee.candidate_entity_ids must be empty when named",
+          "relation_events[2].actor.candidate_entity_ids must be empty when named",
+          "relation_events[3].target.candidate_entity_ids must be empty when named"
+        ],
+        "warnings": [
+          "relation_events[0] dropped because target.reference_kind is group"
+        ],
+        "counts": {
+          "turns": 4,
+          "events": 3,
+          "phase_leak": 0,
+          "address_term_present": 2,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 4,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 1
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"gg_ch01\",\"window_block_ids\":[\"gg_ch01_b122\",\"gg_ch01_b123\",\"gg_ch01_b124\",\"gg_ch01_b125\",\"gg_ch01_b126\",\"gg_ch01_b127\",\"gg_ch01_b128\",\"gg_ch01_b129\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_gg_ch01_b124_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"the room\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"To be continued, in our very next issue.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"announces a serial continuation\",\"block_id\":\"gg_ch01_b124\"},{\"turn_id\":\"t_gg_ch01_b126_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"this good girl\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Ten o'clock. Time for this good girl to go to bed.\",\"address_term_used\":\"this good girl\",\"register_cue\":\"mocking\",\"utterance_gist\":\"remarks that it is time to go to bed\",\"block_id\":\"gg_ch01_b126\"},{\"turn_id\":\"t_gg_ch01_b127_01\",\"speaker\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Jordan's\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_jordan_baker\",\"ent_jordan\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"medium\"},\"utterance_quote\":\"Jordan's going to play in the tournament tomorrow\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"states Jordan will play tomorrow\",\"block_id\":\"gg_ch01_b127\"},{\"turn_id\":\"t_gg_ch01_b128_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick\"],\"attribution_method\":\"nearby_context\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Jordan Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_jordan_baker\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Oh—you're Jordan Baker.\",\"address_term_used\":\"Jordan Baker\",\"register_cue\":\"neutral\",\"utterance_gist\":\"recognizes Jordan Baker\",\"block_id\":\"gg_ch01_b128\"}],\"relation_events\":[{\"event_id\":\"e_gg_ch01_b124_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"the room\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"addresses\",\"evidence_quote\":\"To be continued\",\"block_id\":\"gg_ch01_b124\"},{\"event_id\":\"e_gg_ch01_b126_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"this good girl\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"remarks_to\",\"evidence_quote\":\"Time for this good girl\",\"block_id\":\"gg_ch01_b126\"},{\"event_id\":\"e_gg_ch01_b127_01\",\"actor\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Jordan's\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_jordan_baker\",\"ent_jordan\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"medium\"},\"event_type\":\"states\",\"evidence_quote\":\"Jordan's going to play\",\"block_id\":\"gg_ch01_b127\"},{\"event_id\":\"e_gg_ch01_b128_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick\"],\"attribution_method\":\"nearby_context\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Jordan Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[\"ent_jordan_baker\"],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"addresses\",\"evidence_quote\":\"you're Jordan Baker\",\"block_id\":\"gg_ch01_b128\"}]}"
+    },
+    {
+      "attempt": 2,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "eaeb0bbf5d83382e1d057fe62b63b2f29601c811e7ade55fe1c5adaaa7b3896f",
+      "latency_ms": 5256,
+      "cost_usd": 0.00251385,
+      "usage": {
+        "prompt_tokens": 3665,
+        "cached_tokens": 2304,
+        "completion_tokens": 1058,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "relation_events[0] dropped because target.reference_kind is group"
+        ],
+        "counts": {
+          "turns": 4,
+          "events": 3,
+          "phase_leak": 0,
+          "address_term_present": 2,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 4,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 1
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"gg_ch01\",\"window_block_ids\":[\"gg_ch01_b122\",\"gg_ch01_b123\",\"gg_ch01_b124\",\"gg_ch01_b125\",\"gg_ch01_b126\",\"gg_ch01_b127\",\"gg_ch01_b128\",\"gg_ch01_b129\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_gg_ch01_b124_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"the room\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"To be continued, in our very next issue.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"announces a serial continuation\",\"block_id\":\"gg_ch01_b124\"},{\"turn_id\":\"t_gg_ch01_b126_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"this good girl\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"utterance_quote\":\"Ten o'clock. Time for this good girl to go to bed.\",\"address_term_used\":\"this good girl\",\"register_cue\":\"mocking\",\"utterance_gist\":\"remarks that it is time to go to bed\",\"block_id\":\"gg_ch01_b126\"},{\"turn_id\":\"t_gg_ch01_b127_01\",\"speaker\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Jordan Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Jordan's going to play in the tournament tomorrow\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"states Jordan will play tomorrow\",\"block_id\":\"gg_ch01_b127\"},{\"turn_id\":\"t_gg_ch01_b128_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick\"],\"attribution_method\":\"nearby_context\",\"confidence\":\"high\"},\"addressee\":{\"surface\":\"Jordan Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"Oh—you're Jordan Baker.\",\"address_term_used\":\"Jordan Baker\",\"register_cue\":\"neutral\",\"utterance_gist\":\"recognizes Jordan Baker\",\"block_id\":\"gg_ch01_b128\"}],\"relation_events\":[{\"event_id\":\"e_gg_ch01_b124_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"the room\",\"reference_kind\":\"group\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"addresses\",\"evidence_quote\":\"To be continued\",\"block_id\":\"gg_ch01_b124\"},{\"event_id\":\"e_gg_ch01_b126_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_miss_baker\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"this good girl\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"unknown\",\"confidence\":\"low\"},\"event_type\":\"remarks_to\",\"evidence_quote\":\"Time for this good girl\",\"block_id\":\"gg_ch01_b126\"},{\"event_id\":\"e_gg_ch01_b127_01\",\"actor\":{\"surface\":\"Daisy\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Jordan's\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"medium\"},\"event_type\":\"states\",\"evidence_quote\":\"Jordan's going to play\",\"block_id\":\"gg_ch01_b127\"},{\"event_id\":\"e_gg_ch01_b128_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_nick\"],\"attribution_method\":\"nearby_context\",\"confidence\":\"high\"},\"target\":{\"surface\":\"Jordan Baker\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"addresses\",\"evidence_quote\":\"you're Jordan Baker\",\"block_id\":\"gg_ch01_b128\"}]}"
+    }
+  ],
+  "cost_usd": 0.00537385,
+  "prompt_tokens": 6273,
+  "completion_tokens": 2162,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

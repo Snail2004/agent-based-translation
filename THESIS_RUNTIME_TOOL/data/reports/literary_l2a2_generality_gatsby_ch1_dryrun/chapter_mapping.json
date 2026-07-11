@@ -1,0 +1,92 @@
+[
+  {
+    "unit_id": "gg_ch01",
+    "narrative_chapter": 1,
+    "chapter_label": "I",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-0.htm.xhtml",
+    "block_count": 153,
+    "first_block_id": "gg_ch01_b001",
+    "last_block_id": "gg_ch01_b153"
+  },
+  {
+    "unit_id": "gg_ch02",
+    "narrative_chapter": 2,
+    "chapter_label": "II",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-0.htm.xhtml",
+    "block_count": 138,
+    "first_block_id": "gg_ch02_b001",
+    "last_block_id": "gg_ch02_b138"
+  },
+  {
+    "unit_id": "gg_ch03",
+    "narrative_chapter": 3,
+    "chapter_label": "III",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-0.htm.xhtml",
+    "block_count": 172,
+    "first_block_id": "gg_ch03_b001",
+    "last_block_id": "gg_ch03_b172"
+  },
+  {
+    "unit_id": "gg_ch04",
+    "narrative_chapter": 4,
+    "chapter_label": "IV",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-0.htm.xhtml",
+    "block_count": 171,
+    "first_block_id": "gg_ch04_b001",
+    "last_block_id": "gg_ch04_b171"
+  },
+  {
+    "unit_id": "gg_ch05",
+    "narrative_chapter": 5,
+    "chapter_label": "V",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-0.htm.xhtml",
+    "block_count": 154,
+    "first_block_id": "gg_ch05_b001",
+    "last_block_id": "gg_ch05_b154"
+  },
+  {
+    "unit_id": "gg_ch06",
+    "narrative_chapter": 6,
+    "chapter_label": "VI",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-1.htm.xhtml",
+    "block_count": 136,
+    "first_block_id": "gg_ch06_b001",
+    "last_block_id": "gg_ch06_b136"
+  },
+  {
+    "unit_id": "gg_ch07",
+    "narrative_chapter": 7,
+    "chapter_label": "VII",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-1.htm.xhtml",
+    "block_count": 416,
+    "first_block_id": "gg_ch07_b001",
+    "last_block_id": "gg_ch07_b416"
+  },
+  {
+    "unit_id": "gg_ch08",
+    "narrative_chapter": 8,
+    "chapter_label": "VIII",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-1.htm.xhtml",
+    "block_count": 114,
+    "first_block_id": "gg_ch08_b001",
+    "last_block_id": "gg_ch08_b114"
+  },
+  {
+    "unit_id": "gg_ch09",
+    "narrative_chapter": 9,
+    "chapter_label": "IX",
+    "volume": null,
+    "source_href": "OEBPS/4215754387708117514_64317-h-1.htm.xhtml",
+    "block_count": 164,
+    "first_block_id": "gg_ch09_b001",
+    "last_block_id": "gg_ch09_b164"
+  }
+]

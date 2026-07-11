@@ -1,0 +1,383 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_gg_ch01_019",
+  "chapter_id": "gg_ch01",
+  "block_ids": [
+    "gg_ch01_b114",
+    "gg_ch01_b115",
+    "gg_ch01_b116",
+    "gg_ch01_b117",
+    "gg_ch01_b118",
+    "gg_ch01_b119",
+    "gg_ch01_b120",
+    "gg_ch01_b121"
+  ],
+  "previous_tail_block_ids": [
+    "gg_ch01_b112",
+    "gg_ch01_b113"
+  ],
+  "next_tail_block_ids": [
+    "gg_ch01_b122",
+    "gg_ch01_b123"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: fill only for candidate, copied from CHAPTER_ROSTER_ON_STAGE; else [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you decided — it is the real trust signal, more than confidence.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"bk_ch01_b006\", \"bk_ch01_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_bk_ch01_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"bk_ch01_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_bk_ch01_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"bk_ch01_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | West Egg and East Egg, Long Island | frame_present | few_scenes\nneutral_premise | Nick recalls earlier advice, settles in West Egg, visits Tom and Daisy Buchanan in East Egg for dinner with Jordan Baker present, then returns home and sees Gatsby outside his mansion.\ncast | Nick | traveller | gg_ch01_b002\ncast | his father | parent | gg_ch01_b002\ncast | Gatsby | neighbor | gg_ch01_b005\ncast | the young man | visitor | gg_ch01_b008\ncast | Tom Buchanan | host | gg_ch01_b016\ncast | Daisy | host | gg_ch01_b016\ncast | Miss Baker | guest | gg_ch01_b028\ncast | the butler | servant | gg_ch01_b085\ncast | Jordan Baker | guest | gg_ch01_b127\nscene | gg_ch01_b002..gg_ch01_b015 | co_present_count=1 | Nick\nscene | gg_ch01_b016..gg_ch01_b152 | co_present_count=4 | Nick, Tom Buchanan, Daisy, Miss Baker\nscene | gg_ch01_b152..gg_ch01_b153 | co_present_count=2 | Nick, Gatsby\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\ngg_ch01_b114..gg_ch01_b121 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_daisy | Daisy | Daisy\nent_gatsby | Gatsby | Gatsby\nent_goddard | Goddard | Goddard\nent_maecenas | Maecenas | Maecenas\nent_midas | Midas | Midas\nent_miss_baker | Miss Baker | Miss Baker\nent_morgan | Morgan | Morgan\nent_mr_gatsby | Mr. Gatsby | Mr. Gatsby\nent_nick | Nick | Nick\nent_the_carraways | the Carraways | the Carraways\nent_the_tom_buchanans | the Tom Buchanans | the Tom Buchanans\nent_tom | Tom | Tom\nent_tom_buchanan | Tom Buchanan | Tom Buchanan\nent_tom_s | Tom’s | Tom’s\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_gg_ch01_b114_01 | Nick | name | named | \nm_gg_ch01_b115_01 | her daughter | descriptor | unknown | \nm_gg_ch01_b117_01 | Nick | name | named | \nm_gg_ch01_b119_01 | Tom | name | named | \nm_gg_ch01_b119_02 | the nurse | descriptor | unknown | \nm_gg_ch01_b120_01 | Tom’s | name | named | \nm_gg_ch01_b121_01 | Tom | name | named | \n\nCHAPTER_ID\ngg_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b112] “We don’t know each other very well, Nick,” she said suddenly. “Even if we are cousins. You didn’t come to my wedding.”\n[gg_ch01_b113] “I wasn’t back from the war.”\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b122] Inside, the crimson room bloomed with light. Tom and Miss Baker sat at either end of the long couch and she read aloud to him from the Saturday Evening Post—the words, murmurous and uninflected, running together in a soothing tune. The lamplight, bright on his boots and dull on the autumn-leaf yellow of her hair, glinted along the paper as she turned a page with a flutter of slender muscles in her arms.\n[gg_ch01_b123] When we came in she held us silent for a moment with a lifted hand.\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[gg_ch01_b114] “That’s true.” She hesitated. “Well, I’ve had a very bad time, Nick, and I’m pretty cynical about everything.”\n[gg_ch01_b115] Evidently she had reason to be. I waited but she didn’t say any more, and after a moment I returned rather feebly to the subject of her daughter.\n[gg_ch01_b116] “I suppose she talks, and—eats, and everything.”\n[gg_ch01_b117] “Oh, yes.” She looked at me absently. “Listen, Nick; let me tell you what I said when she was born. Would you like to hear?”\n[gg_ch01_b118] “Very much.”\n[gg_ch01_b119] “It’ll show you how I’ve gotten to feel about—things. Well, she was less than an hour old and Tom was God knows where. I woke up out of the ether with an utterly abandoned feeling, and asked the nurse right away if it was a boy or a girl. She told me it was a girl, and so I turned my head away and wept. ‘All right,’ I said, ‘I’m glad it’s a girl. And I hope she’ll be a fool—that’s the best thing a girl can be in this world, a beautiful little fool.’\n[gg_ch01_b120] “You see I think everything’s terrible anyhow,” she went on in a convinced way. “Everybody thinks so—the most advanced people. And I know. I’ve been everywhere and seen everything and done everything.” Her eyes flashed around her in a defiant way, rather like Tom’s, and she laughed with thrilling scorn. “Sophisticated—God, I’m sophisticated!”\n[gg_ch01_b121] The instant her voice broke off, ceasing to compel my attention, my belief, I felt the basic insincerity of what she had said. It made me uneasy, as though the whole evening had been a trick of some sort to exact a contributory emotion from me. I waited, and sure enough, in a moment she looked at me with an absolute smirk on her lovely face, as if she had asserted her membership in a rather distinguished secret society to which she and Tom belonged."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "gg_ch01",
+    "window_block_ids": [
+      "gg_ch01_b114",
+      "gg_ch01_b115",
+      "gg_ch01_b116",
+      "gg_ch01_b117",
+      "gg_ch01_b118",
+      "gg_ch01_b119",
+      "gg_ch01_b120",
+      "gg_ch01_b121"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_gg_ch01_b114_01",
+        "speaker": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "I’ve had a very bad time, Nick",
+        "address_term_used": "Nick",
+        "register_cue": "deferential",
+        "utterance_gist": "says she has had a bad time",
+        "block_id": "gg_ch01_b114"
+      },
+      {
+        "turn_id": "t_gg_ch01_b116_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "I suppose she talks, and—eats, and everything.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "remarks on her daughter",
+        "block_id": "gg_ch01_b116"
+      },
+      {
+        "turn_id": "t_gg_ch01_b117_01",
+        "speaker": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "Listen, Nick; let me tell you",
+        "address_term_used": "Nick",
+        "register_cue": "intimate",
+        "utterance_gist": "asks Nick to listen",
+        "block_id": "gg_ch01_b117"
+      },
+      {
+        "turn_id": "t_gg_ch01_b118_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_nick"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "high"
+        },
+        "utterance_quote": "Very much.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "agrees to hear her",
+        "block_id": "gg_ch01_b118"
+      },
+      {
+        "turn_id": "t_gg_ch01_b119_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "the nurse",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "nearby_context",
+          "confidence": "low"
+        },
+        "utterance_quote": "I’m glad it’s a girl",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says she is glad the baby is a girl",
+        "block_id": "gg_ch01_b119"
+      },
+      {
+        "turn_id": "t_gg_ch01_b120_01",
+        "speaker": {
+          "surface": "Her",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "addressee": {
+          "surface": "myself",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "utterance_quote": "Sophisticated—God, I’m sophisticated!",
+        "address_term_used": null,
+        "register_cue": "hostile",
+        "utterance_gist": "claims sophistication",
+        "block_id": "gg_ch01_b120"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_gg_ch01_b114_01",
+        "actor": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "speaks_to",
+        "evidence_quote": "I’ve had a very bad time, Nick",
+        "block_id": "gg_ch01_b114"
+      },
+      {
+        "event_id": "e_gg_ch01_b117_01",
+        "actor": {
+          "surface": "She",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "Nick",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "addresses",
+        "evidence_quote": "Listen, Nick; let me tell you",
+        "block_id": "gg_ch01_b117"
+      },
+      {
+        "event_id": "e_gg_ch01_b120_01",
+        "actor": {
+          "surface": "Her",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "nearby_context",
+          "confidence": "high"
+        },
+        "target": {
+          "surface": "myself",
+          "reference_kind": "unknown",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "narrator_inference",
+          "confidence": "low"
+        },
+        "event_type": "claims",
+        "evidence_quote": "I’m sophisticated!",
+        "block_id": "gg_ch01_b120"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "relation_events[2] dropped because target.reference_kind is unknown"
+    ],
+    "counts": {
+      "turns": 6,
+      "events": 2,
+      "phase_leak": 0,
+      "address_term_present": 2,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 3,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 1
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "5e7b4fbb88783e9d92e8b4bd7b40a122535ebf5a91101e08f53648872e16b28b",
+      "latency_ms": 9934,
+      "cost_usd": 0.00431275,
+      "usage": {
+        "prompt_tokens": 2707,
+        "cached_tokens": 0,
+        "completion_tokens": 1818,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": false,
+        "errors": [
+          "speaker_turns[0].addressee.candidate_entity_ids must be empty when named",
+          "speaker_turns[1].addressee.candidate_entity_ids must be empty when named",
+          "speaker_turns[2].addressee.candidate_entity_ids must be empty when named",
+          "speaker_turns[5].addressee.candidate_entity_ids must be empty when named",
+          "relation_events[0].target.candidate_entity_ids must be empty when named",
+          "relation_events[1].target.candidate_entity_ids must be empty when named",
+          "relation_events[2].target.candidate_entity_ids must be empty when named"
+        ],
+        "warnings": [],
+        "counts": {
+          "turns": 6,
+          "events": 3,
+          "phase_leak": 0,
+          "address_term_present": 2,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 1,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 0
+        }
+      },
+      "raw_text": "{\n  \"chapter_id\": \"gg_ch01\",\n  \"window_block_ids\": [\"gg_ch01_b114\", \"gg_ch01_b115\", \"gg_ch01_b116\", \"gg_ch01_b117\", \"gg_ch01_b118\", \"gg_ch01_b119\", \"gg_ch01_b120\", \"gg_ch01_b121\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\n      \"turn_id\": \"t_gg_ch01_b114_01\",\n      \"speaker\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"I’ve had a very bad time, Nick\",\n      \"address_term_used\": \"Nick\",\n      \"register_cue\": \"deferential\",\n      \"utterance_gist\": \"says she has had a bad time\",\n      \"block_id\": \"gg_ch01_b114\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b116_01\",\n      \"speaker\": {\n        \"surface\": \"I\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"turn_alternation\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"I suppose she talks, and—eats, and everything.\",\n      \"address_term_used\": null,\n      \"register_cue\": \"neutral\",\n      \"utterance_gist\": \"remarks on her daughter\",\n      \"block_id\": \"gg_ch01_b116\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b117_01\",\n      \"speaker\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"Listen, Nick; let me tell you\",\n      \"address_term_used\": \"Nick\",\n      \"register_cue\": \"intimate\",\n      \"utterance_gist\": \"asks Nick to listen\",\n      \"block_id\": \"gg_ch01_b117\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b118_01\",\n      \"speaker\": {\n        \"surface\": \"I\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"turn_alternation\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"turn_alternation\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"Very much.\",\n      \"address_term_used\": null,\n      \"register_cue\": \"neutral\",\n      \"utterance_gist\": \"agrees to hear her\",\n      \"block_id\": \"gg_ch01_b118\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b119_01\",\n      \"speaker\": {\n        \"surface\": \"she\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"the nurse\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"unknown\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"low\"\n      },\n      \"utterance_quote\": \"I’m glad it’s a girl\",\n      \"address_term_used\": null,\n      \"register_cue\": \"neutral\",\n      \"utterance_gist\": \"speaks about her newborn daughter\",\n      \"block_id\": \"gg_ch01_b119\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b120_01\",\n      \"speaker\": {\n        \"surface\": \"Her\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"I think everything’s terrible anyhow\",\n      \"address_term_used\": null,\n      \"register_cue\": \"hostile\",\n      \"utterance_gist\": \"says everything is terrible\",\n      \"block_id\": \"gg_ch01_b120\"\n    }\n  ],\n  \"relation_events\": [\n    {\n      \"event_id\": \"e_gg_ch01_b114_01\",\n      \"actor\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"target\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"event_type\": \"addresses\",\n      \"evidence_quote\": \"I’ve had a very bad time, Nick\",\n      \"block_id\": \"gg_ch01_b114\"\n    },\n    {\n      \"event_id\": \"e_gg_ch01_b117_01\",\n      \"actor\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"target\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"event_type\": \"addresses\",\n      \"evidence_quote\": \"Listen, Nick\",\n      \"block_id\": \"gg_ch01_b117\"\n    },\n    {\n      \"event_id\": \"e_gg_ch01_b120_01\",\n      \"actor\": {\n        \"surface\": \"Her\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"target\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"event_type\": \"states\",\n      \"evidence_quote\": \"I think everything’s terrible anyhow\",\n      \"block_id\": \"gg_ch01_b120\"\n    }\n  ]\n}"
+    },
+    {
+      "attempt": 2,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "16aa95a5a3a0f80ee1be62eb9a52d824edb1cc8ecc7ccb7caa06bf50bb721eb7",
+      "latency_ms": 8611,
+      "cost_usd": 0.00406035,
+      "usage": {
+        "prompt_tokens": 3923,
+        "cached_tokens": 2304,
+        "completion_tokens": 1799,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "relation_events[2] dropped because target.reference_kind is unknown"
+        ],
+        "counts": {
+          "turns": 6,
+          "events": 2,
+          "phase_leak": 0,
+          "address_term_present": 2,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 3,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 1
+        }
+      },
+      "raw_text": "{\n  \"chapter_id\": \"gg_ch01\",\n  \"window_block_ids\": [\"gg_ch01_b114\", \"gg_ch01_b115\", \"gg_ch01_b116\", \"gg_ch01_b117\", \"gg_ch01_b118\", \"gg_ch01_b119\", \"gg_ch01_b120\", \"gg_ch01_b121\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\n      \"turn_id\": \"t_gg_ch01_b114_01\",\n      \"speaker\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"I’ve had a very bad time, Nick\",\n      \"address_term_used\": \"Nick\",\n      \"register_cue\": \"deferential\",\n      \"utterance_gist\": \"says she has had a bad time\",\n      \"block_id\": \"gg_ch01_b114\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b116_01\",\n      \"speaker\": {\n        \"surface\": \"I\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"turn_alternation\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"I suppose she talks, and—eats, and everything.\",\n      \"address_term_used\": null,\n      \"register_cue\": \"neutral\",\n      \"utterance_gist\": \"remarks on her daughter\",\n      \"block_id\": \"gg_ch01_b116\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b117_01\",\n      \"speaker\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"Listen, Nick; let me tell you\",\n      \"address_term_used\": \"Nick\",\n      \"register_cue\": \"intimate\",\n      \"utterance_gist\": \"asks Nick to listen\",\n      \"block_id\": \"gg_ch01_b117\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b118_01\",\n      \"speaker\": {\n        \"surface\": \"I\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_nick\"],\n        \"attribution_method\": \"turn_alternation\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"turn_alternation\",\n        \"confidence\": \"high\"\n      },\n      \"utterance_quote\": \"Very much.\",\n      \"address_term_used\": null,\n      \"register_cue\": \"neutral\",\n      \"utterance_gist\": \"agrees to hear her\",\n      \"block_id\": \"gg_ch01_b118\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b119_01\",\n      \"speaker\": {\n        \"surface\": \"she\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"the nurse\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"unknown\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"low\"\n      },\n      \"utterance_quote\": \"I’m glad it’s a girl\",\n      \"address_term_used\": null,\n      \"register_cue\": \"neutral\",\n      \"utterance_gist\": \"says she is glad the baby is a girl\",\n      \"block_id\": \"gg_ch01_b119\"\n    },\n    {\n      \"turn_id\": \"t_gg_ch01_b120_01\",\n      \"speaker\": {\n        \"surface\": \"Her\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"addressee\": {\n        \"surface\": \"myself\",\n        \"reference_kind\": \"unknown\",\n        \"resolution_status\": \"unknown\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"narrator_inference\",\n        \"confidence\": \"low\"\n      },\n      \"utterance_quote\": \"Sophisticated—God, I’m sophisticated!\",\n      \"address_term_used\": null,\n      \"register_cue\": \"hostile\",\n      \"utterance_gist\": \"claims sophistication\",\n      \"block_id\": \"gg_ch01_b120\"\n    }\n  ],\n  \"relation_events\": [\n    {\n      \"event_id\": \"e_gg_ch01_b114_01\",\n      \"actor\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"target\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"event_type\": \"speaks_to\",\n      \"evidence_quote\": \"I’ve had a very bad time, Nick\",\n      \"block_id\": \"gg_ch01_b114\"\n    },\n    {\n      \"event_id\": \"e_gg_ch01_b117_01\",\n      \"actor\": {\n        \"surface\": \"She\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"target\": {\n        \"surface\": \"Nick\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"named\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"explicit_tag\",\n        \"confidence\": \"high\"\n      },\n      \"event_type\": \"addresses\",\n      \"evidence_quote\": \"Listen, Nick; let me tell you\",\n      \"block_id\": \"gg_ch01_b117\"\n    },\n    {\n      \"event_id\": \"e_gg_ch01_b120_01\",\n      \"actor\": {\n        \"surface\": \"Her\",\n        \"reference_kind\": \"person\",\n        \"resolution_status\": \"candidate\",\n        \"candidate_entity_ids\": [\"ent_daisy\"],\n        \"attribution_method\": \"nearby_context\",\n        \"confidence\": \"high\"\n      },\n      \"target\": {\n        \"surface\": \"myself\",\n        \"reference_kind\": \"unknown\",\n        \"resolution_status\": \"unknown\",\n        \"candidate_entity_ids\": [],\n        \"attribution_method\": \"narrator_inference\",\n        \"confidence\": \"low\"\n      },\n      \"event_type\": \"claims\",\n      \"evidence_quote\": \"I’m sophisticated!\",\n      \"block_id\": \"gg_ch01_b120\"\n    }\n  ]\n}"
+    }
+  ],
+  "cost_usd": 0.0083731,
+  "prompt_tokens": 6630,
+  "completion_tokens": 3617,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

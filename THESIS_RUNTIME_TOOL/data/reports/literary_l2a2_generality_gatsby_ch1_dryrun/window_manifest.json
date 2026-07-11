@@ -1,0 +1,605 @@
+[
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_001",
+    "block_ids": [
+      "gg_ch01_b001",
+      "gg_ch01_b002",
+      "gg_ch01_b003",
+      "gg_ch01_b004"
+    ],
+    "previous_tail_block_ids": [],
+    "next_tail_block_ids": [
+      "gg_ch01_b005",
+      "gg_ch01_b006"
+    ],
+    "est_src_tokens": 362,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_002",
+    "block_ids": [
+      "gg_ch01_b005",
+      "gg_ch01_b006"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b003",
+      "gg_ch01_b004"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b007",
+      "gg_ch01_b008"
+    ],
+    "est_src_tokens": 445,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_003",
+    "block_ids": [
+      "gg_ch01_b007",
+      "gg_ch01_b008",
+      "gg_ch01_b009",
+      "gg_ch01_b010",
+      "gg_ch01_b011"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b005",
+      "gg_ch01_b006"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b012",
+      "gg_ch01_b013"
+    ],
+    "est_src_tokens": 475,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_004",
+    "block_ids": [
+      "gg_ch01_b012",
+      "gg_ch01_b013",
+      "gg_ch01_b014"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b010",
+      "gg_ch01_b011"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b015",
+      "gg_ch01_b016"
+    ],
+    "est_src_tokens": 452,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_005",
+    "block_ids": [
+      "gg_ch01_b015",
+      "gg_ch01_b016",
+      "gg_ch01_b017"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b013",
+      "gg_ch01_b014"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b018",
+      "gg_ch01_b019"
+    ],
+    "est_src_tokens": 480,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_006",
+    "block_ids": [
+      "gg_ch01_b018",
+      "gg_ch01_b019",
+      "gg_ch01_b020",
+      "gg_ch01_b021"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b016",
+      "gg_ch01_b017"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b022",
+      "gg_ch01_b023"
+    ],
+    "est_src_tokens": 494,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_007",
+    "block_ids": [
+      "gg_ch01_b022",
+      "gg_ch01_b023",
+      "gg_ch01_b024",
+      "gg_ch01_b025",
+      "gg_ch01_b026",
+      "gg_ch01_b027",
+      "gg_ch01_b028"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b020",
+      "gg_ch01_b021"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b029",
+      "gg_ch01_b030"
+    ],
+    "est_src_tokens": 470,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_008",
+    "block_ids": [
+      "gg_ch01_b029",
+      "gg_ch01_b030",
+      "gg_ch01_b031",
+      "gg_ch01_b032",
+      "gg_ch01_b033",
+      "gg_ch01_b034"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b027",
+      "gg_ch01_b028"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b035",
+      "gg_ch01_b036"
+    ],
+    "est_src_tokens": 498,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_009",
+    "block_ids": [
+      "gg_ch01_b035",
+      "gg_ch01_b036",
+      "gg_ch01_b037",
+      "gg_ch01_b038",
+      "gg_ch01_b039",
+      "gg_ch01_b040",
+      "gg_ch01_b041",
+      "gg_ch01_b042"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b033",
+      "gg_ch01_b034"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b043",
+      "gg_ch01_b044"
+    ],
+    "est_src_tokens": 137,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_010",
+    "block_ids": [
+      "gg_ch01_b043",
+      "gg_ch01_b044",
+      "gg_ch01_b045",
+      "gg_ch01_b046",
+      "gg_ch01_b047",
+      "gg_ch01_b048",
+      "gg_ch01_b049",
+      "gg_ch01_b050"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b041",
+      "gg_ch01_b042"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b051",
+      "gg_ch01_b052"
+    ],
+    "est_src_tokens": 70,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_011",
+    "block_ids": [
+      "gg_ch01_b051",
+      "gg_ch01_b052",
+      "gg_ch01_b053",
+      "gg_ch01_b054",
+      "gg_ch01_b055",
+      "gg_ch01_b056",
+      "gg_ch01_b057",
+      "gg_ch01_b058"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b049",
+      "gg_ch01_b050"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b059",
+      "gg_ch01_b060"
+    ],
+    "est_src_tokens": 335,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_012",
+    "block_ids": [
+      "gg_ch01_b059",
+      "gg_ch01_b060",
+      "gg_ch01_b061",
+      "gg_ch01_b062",
+      "gg_ch01_b063",
+      "gg_ch01_b064",
+      "gg_ch01_b065",
+      "gg_ch01_b066"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b057",
+      "gg_ch01_b058"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b067",
+      "gg_ch01_b068"
+    ],
+    "est_src_tokens": 246,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_013",
+    "block_ids": [
+      "gg_ch01_b067",
+      "gg_ch01_b068",
+      "gg_ch01_b069",
+      "gg_ch01_b070",
+      "gg_ch01_b071",
+      "gg_ch01_b072",
+      "gg_ch01_b073",
+      "gg_ch01_b074"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b065",
+      "gg_ch01_b066"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b075",
+      "gg_ch01_b076"
+    ],
+    "est_src_tokens": 296,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_014",
+    "block_ids": [
+      "gg_ch01_b075",
+      "gg_ch01_b076",
+      "gg_ch01_b077",
+      "gg_ch01_b078",
+      "gg_ch01_b079",
+      "gg_ch01_b080",
+      "gg_ch01_b081",
+      "gg_ch01_b082"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b073",
+      "gg_ch01_b074"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b083",
+      "gg_ch01_b084"
+    ],
+    "est_src_tokens": 281,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_015",
+    "block_ids": [
+      "gg_ch01_b083",
+      "gg_ch01_b084",
+      "gg_ch01_b085",
+      "gg_ch01_b086",
+      "gg_ch01_b087",
+      "gg_ch01_b088",
+      "gg_ch01_b089",
+      "gg_ch01_b090"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b081",
+      "gg_ch01_b082"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b091",
+      "gg_ch01_b092"
+    ],
+    "est_src_tokens": 300,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_016",
+    "block_ids": [
+      "gg_ch01_b091",
+      "gg_ch01_b092",
+      "gg_ch01_b093",
+      "gg_ch01_b094",
+      "gg_ch01_b095",
+      "gg_ch01_b096",
+      "gg_ch01_b097",
+      "gg_ch01_b098"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b089",
+      "gg_ch01_b090"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b099",
+      "gg_ch01_b100"
+    ],
+    "est_src_tokens": 373,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_017",
+    "block_ids": [
+      "gg_ch01_b099",
+      "gg_ch01_b100",
+      "gg_ch01_b101",
+      "gg_ch01_b102",
+      "gg_ch01_b103",
+      "gg_ch01_b104",
+      "gg_ch01_b105",
+      "gg_ch01_b106"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b097",
+      "gg_ch01_b098"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b107",
+      "gg_ch01_b108"
+    ],
+    "est_src_tokens": 123,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_018",
+    "block_ids": [
+      "gg_ch01_b107",
+      "gg_ch01_b108",
+      "gg_ch01_b109",
+      "gg_ch01_b110",
+      "gg_ch01_b111",
+      "gg_ch01_b112",
+      "gg_ch01_b113"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b105",
+      "gg_ch01_b106"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b114",
+      "gg_ch01_b115"
+    ],
+    "est_src_tokens": 485,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_019",
+    "block_ids": [
+      "gg_ch01_b114",
+      "gg_ch01_b115",
+      "gg_ch01_b116",
+      "gg_ch01_b117",
+      "gg_ch01_b118",
+      "gg_ch01_b119",
+      "gg_ch01_b120",
+      "gg_ch01_b121"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b112",
+      "gg_ch01_b113"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b122",
+      "gg_ch01_b123"
+    ],
+    "est_src_tokens": 421,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_020",
+    "block_ids": [
+      "gg_ch01_b122",
+      "gg_ch01_b123",
+      "gg_ch01_b124",
+      "gg_ch01_b125",
+      "gg_ch01_b126",
+      "gg_ch01_b127",
+      "gg_ch01_b128",
+      "gg_ch01_b129"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b120",
+      "gg_ch01_b121"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b130",
+      "gg_ch01_b131"
+    ],
+    "est_src_tokens": 290,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_021",
+    "block_ids": [
+      "gg_ch01_b130",
+      "gg_ch01_b131",
+      "gg_ch01_b132",
+      "gg_ch01_b133",
+      "gg_ch01_b134",
+      "gg_ch01_b135",
+      "gg_ch01_b136",
+      "gg_ch01_b137"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b128",
+      "gg_ch01_b129"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b138",
+      "gg_ch01_b139"
+    ],
+    "est_src_tokens": 152,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_022",
+    "block_ids": [
+      "gg_ch01_b138",
+      "gg_ch01_b139",
+      "gg_ch01_b140",
+      "gg_ch01_b141",
+      "gg_ch01_b142",
+      "gg_ch01_b143",
+      "gg_ch01_b144",
+      "gg_ch01_b145"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b136",
+      "gg_ch01_b137"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b146",
+      "gg_ch01_b147"
+    ],
+    "est_src_tokens": 237,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_023",
+    "block_ids": [
+      "gg_ch01_b146",
+      "gg_ch01_b147",
+      "gg_ch01_b148",
+      "gg_ch01_b149",
+      "gg_ch01_b150",
+      "gg_ch01_b151"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b144",
+      "gg_ch01_b145"
+    ],
+    "next_tail_block_ids": [
+      "gg_ch01_b152",
+      "gg_ch01_b153"
+    ],
+    "est_src_tokens": 295,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  },
+  {
+    "chapter_id": "gg_ch01",
+    "window_id": "wb_gg_ch01_024",
+    "block_ids": [
+      "gg_ch01_b152",
+      "gg_ch01_b153"
+    ],
+    "previous_tail_block_ids": [
+      "gg_ch01_b150",
+      "gg_ch01_b151"
+    ],
+    "next_tail_block_ids": [],
+    "est_src_tokens": 373,
+    "mode_calls": [
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ]
+  }
+]

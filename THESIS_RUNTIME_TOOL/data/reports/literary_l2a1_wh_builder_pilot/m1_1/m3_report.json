@@ -1,0 +1,107 @@
+{
+  "phase": "L2A-1",
+  "milestone": "M3",
+  "status": "needs_claude_gate",
+  "m1_report": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\m1_report.json",
+  "digest_dir": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\digest",
+  "chapters_requested": [
+    "1"
+  ],
+  "chapters_selected": [
+    "wh_ch01"
+  ],
+  "modes": [
+    "literary_consolidate_v1"
+  ],
+  "estimate": {
+    "phase": "L2A-1",
+    "milestone": "M3",
+    "zero_api": true,
+    "m1_report": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\m1_report.json",
+    "digest_dir": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\digest",
+    "chapters_requested": [
+      "1"
+    ],
+    "chapters_selected": [
+      "wh_ch01"
+    ],
+    "calls": 0,
+    "modes": [
+      "literary_consolidate_v1"
+    ],
+    "cost_cap_usd": 0.0,
+    "micro_calls": 0,
+    "note": "M3 scaffold is zero-API: candidate refs resolve from B1/B2 evidence, unresolved refs stay unresolved, and relation phases use a generic valence fallback marked needs_human_review."
+  },
+  "actual": {
+    "calls": 0,
+    "cache_hits": 0,
+    "cost_usd": 0.0,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "reasoning_tokens": 0
+  },
+  "validation_counts": {
+    "story_bible_ok": 1,
+    "story_bible_failed": 0,
+    "entities": 4,
+    "aliases_with_valid_range": 5,
+    "phases": 3,
+    "open_intervals": 3,
+    "entity_state_intervals": 0,
+    "address_policies_proposed": 3,
+    "address_dirs_unsupported": 3,
+    "state_changes_dropped_temporary": 1,
+    "canary_pass": 1,
+    "canary_fail": 0
+  },
+  "call_records": [
+    {
+      "mode": "literary_consolidate_v1",
+      "window_id": "wh_ch01",
+      "ok": true,
+      "attempts": 0,
+      "cost_usd": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "entities": 4,
+        "aliases_with_valid_range": 5,
+        "phases": 3,
+        "open_intervals": 3,
+        "entity_state_intervals": 0,
+        "address_policies_proposed": 3,
+        "address_dirs_unsupported": 3
+      }
+    }
+  ],
+  "artifacts": {
+    "story_bible_dir": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\story_bible",
+    "stories": [
+      {
+        "chapter_id": "wh_ch01",
+        "path": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\story_bible\\wh_ch01_story_bible.json",
+        "validation": {
+          "name": "story_bible",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "counts": {
+            "entities": 4,
+            "aliases_with_valid_range": 5,
+            "phases": 3,
+            "open_intervals": 3,
+            "entity_state_intervals": 0,
+            "address_policies_proposed": 3,
+            "address_dirs_unsupported": 3
+          }
+        }
+      }
+    ],
+    "report": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\m3_report.json"
+  },
+  "stop": "M3 complete. Claude must verify Story Bible before M4."
+}

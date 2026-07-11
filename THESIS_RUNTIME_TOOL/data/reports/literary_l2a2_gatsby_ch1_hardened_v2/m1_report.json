@@ -1,0 +1,1760 @@
+{
+  "phase": "L2A-1",
+  "milestone": "M1",
+  "status": "needs_claude_gate",
+  "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+  "model": "gpt-5.4-mini",
+  "chapters_requested": [
+    "1"
+  ],
+  "chapters_selected": [
+    "gg_ch01"
+  ],
+  "modes": [
+    "literary_chapter_brief_v1",
+    "literary_lexicon_v1",
+    "literary_narrative_v1"
+  ],
+  "estimate": {
+    "phase": "L2A-1",
+    "milestone": "M1",
+    "zero_api": true,
+    "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+    "chapters_requested": [
+      "1"
+    ],
+    "chapters_selected": [
+      "gg_ch01"
+    ],
+    "calls": 49,
+    "windows": 24,
+    "modes": [
+      "literary_chapter_brief_v1",
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ],
+    "prompt_tokens_est": 118213,
+    "max_prompt_tokens_est": 9755,
+    "max_output_tokens_per_call": 6144,
+    "total_tokens_upper_bound": 419269,
+    "prompt_token_cap": 12000,
+    "cost_cap_usd": 0.63166525,
+    "call_estimates": [
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "gg_ch01",
+        "mode": "literary_chapter_brief_v1",
+        "prompt_tokens_est": 9755,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_001",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2268,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_001",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2591,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_002",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2629,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_002",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2952,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_003",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2638,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_003",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2961,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_004",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2296,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_004",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2619,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_005",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2637,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_005",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2960,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_006",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2299,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_006",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2622,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_007",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2308,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_007",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2632,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_008",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2295,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_008",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2618,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_009",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1893,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_009",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2216,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_010",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1684,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_010",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2008,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_011",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1869,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_011",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2192,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_012",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1920,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_012",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2244,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_013",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1945,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_013",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2269,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_014",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2038,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_014",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2361,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_015",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1996,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_015",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2320,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_016",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1921,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_016",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2244,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_017",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1746,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_017",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2069,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_018",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2081,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_018",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2405,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_019",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2062,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_019",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2385,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_020",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1996,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_020",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2319,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_021",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1791,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_021",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2114,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_022",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1780,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_022",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2103,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_023",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2220,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_023",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2543,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_024",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2038,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "gg_ch01",
+        "window_id": "wb_gg_ch01_024",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2361,
+        "max_output_tokens": 6144
+      }
+    ],
+    "token_growth_halt": false
+  },
+  "actual": {
+    "calls": 84,
+    "cache_hits": 0,
+    "cost_usd": 0.18020995,
+    "prompt_tokens": 245899,
+    "completion_tokens": 67806,
+    "reasoning_tokens": 0
+  },
+  "validation_counts": {
+    "brief_ok": 1,
+    "brief_failed": 0,
+    "seeded_cast": 4,
+    "seed_skipped_cast": 5,
+    "lexicon_ok": 24,
+    "lexicon_failed": 0,
+    "narrative_ok": 23,
+    "narrative_failed": 1,
+    "parse_fail": 0,
+    "phase_leak": 0,
+    "attribution_enum_dropped": 19,
+    "context_only_used_true": 11,
+    "brief_leak_tokens_dropped": 0,
+    "nonperson_event_dropped": 10
+  },
+  "cast_seed_report": {
+    "chapters": [
+      {
+        "chapter_id": "gg_ch01",
+        "seeded_cast": [
+          {
+            "index": 2,
+            "surface": "Gatsby",
+            "surface_kind": "proper_name",
+            "entity_id": "ent_gatsby",
+            "source": "chapter_brief_cast",
+            "evidence_scope": "chapter_level",
+            "surface_evidence_block": null,
+            "first_seen_block": "gg_ch01_b015"
+          },
+          {
+            "index": 4,
+            "surface": "Tom Buchanan",
+            "surface_kind": "proper_name",
+            "entity_id": "ent_tom_buchanan",
+            "source": "chapter_brief_cast",
+            "evidence_scope": "chapter_level",
+            "surface_evidence_block": null,
+            "first_seen_block": "gg_ch01_b019"
+          },
+          {
+            "index": 5,
+            "surface": "Daisy",
+            "surface_kind": "proper_name",
+            "entity_id": "ent_daisy",
+            "source": "chapter_brief_cast",
+            "evidence_scope": "chapter_level",
+            "surface_evidence_block": null,
+            "first_seen_block": "gg_ch01_b028"
+          },
+          {
+            "index": 8,
+            "surface": "Jordan Baker",
+            "surface_kind": "proper_name",
+            "entity_id": "ent_jordan_baker",
+            "source": "chapter_brief_cast",
+            "evidence_scope": "chapter_level",
+            "surface_evidence_block": null,
+            "first_seen_block": "gg_ch01_b127"
+          }
+        ],
+        "seed_skipped_cast": [
+          {
+            "index": 0,
+            "surface": "I",
+            "surface_kind": "descriptor",
+            "reason": "surface_kind_not_proper_name"
+          },
+          {
+            "index": 1,
+            "surface": "the father",
+            "surface_kind": "descriptor",
+            "reason": "surface_kind_not_proper_name"
+          },
+          {
+            "index": 3,
+            "surface": "the man at the road",
+            "surface_kind": "descriptor",
+            "reason": "surface_kind_not_proper_name"
+          },
+          {
+            "index": 6,
+            "surface": "Miss Baker",
+            "surface_kind": "descriptor",
+            "reason": "surface_kind_not_proper_name"
+          },
+          {
+            "index": 7,
+            "surface": "the butler",
+            "surface_kind": "descriptor",
+            "reason": "surface_kind_not_proper_name"
+          }
+        ]
+      }
+    ]
+  },
+  "entity_ledger_size": 19,
+  "entity_ledger": {
+    "ent_gatsby": {
+      "entity_id": "ent_gatsby",
+      "canonical": "Gatsby",
+      "aliases": [
+        "Gatsby"
+      ],
+      "source": "chapter_brief_cast",
+      "evidence_scope": "chapter_level",
+      "surface_evidence_block": null,
+      "seeded": true
+    },
+    "ent_tom_buchanan": {
+      "entity_id": "ent_tom_buchanan",
+      "canonical": "Tom Buchanan",
+      "aliases": [
+        "Tom Buchanan"
+      ],
+      "source": "chapter_brief_cast",
+      "evidence_scope": "chapter_level",
+      "surface_evidence_block": null,
+      "seeded": true
+    },
+    "ent_daisy": {
+      "entity_id": "ent_daisy",
+      "canonical": "Daisy",
+      "aliases": [
+        "Daisy"
+      ],
+      "source": "chapter_brief_cast",
+      "evidence_scope": "chapter_level",
+      "surface_evidence_block": null,
+      "seeded": true
+    },
+    "ent_jordan_baker": {
+      "entity_id": "ent_jordan_baker",
+      "canonical": "Jordan Baker",
+      "aliases": [
+        "Jordan Baker"
+      ],
+      "source": "chapter_brief_cast",
+      "evidence_scope": "chapter_level",
+      "surface_evidence_block": null,
+      "seeded": true
+    },
+    "ent_the_carraways": {
+      "entity_id": "ent_the_carraways",
+      "canonical": "The Carraways",
+      "aliases": [
+        "The Carraways"
+      ]
+    },
+    "ent_midas": {
+      "entity_id": "ent_midas",
+      "canonical": "Midas",
+      "aliases": [
+        "Midas"
+      ]
+    },
+    "ent_morgan": {
+      "entity_id": "ent_morgan",
+      "canonical": "Morgan",
+      "aliases": [
+        "Morgan"
+      ]
+    },
+    "ent_maecenas": {
+      "entity_id": "ent_maecenas",
+      "canonical": "Maecenas",
+      "aliases": [
+        "Maecenas"
+      ]
+    },
+    "ent_mr_gatsby": {
+      "entity_id": "ent_mr_gatsby",
+      "canonical": "Mr. Gatsby",
+      "aliases": [
+        "Mr. Gatsby"
+      ]
+    },
+    "ent_the_tom_buchanans": {
+      "entity_id": "ent_the_tom_buchanans",
+      "canonical": "the Tom Buchanans",
+      "aliases": [
+        "the Tom Buchanans"
+      ]
+    },
+    "ent_tom": {
+      "entity_id": "ent_tom",
+      "canonical": "Tom",
+      "aliases": [
+        "Tom"
+      ]
+    },
+    "ent_demaine": {
+      "entity_id": "ent_demaine",
+      "canonical": "Demaine",
+      "aliases": [
+        "Demaine"
+      ]
+    },
+    "ent_miss_baker": {
+      "entity_id": "ent_miss_baker",
+      "canonical": "Miss Baker",
+      "aliases": [
+        "Miss Baker"
+      ]
+    },
+    "ent_daisy_s": {
+      "entity_id": "ent_daisy_s",
+      "canonical": "Daisy’s",
+      "aliases": [
+        "Daisy’s"
+      ]
+    },
+    "ent_miss_baker_s": {
+      "entity_id": "ent_miss_baker_s",
+      "canonical": "Miss Baker’s",
+      "aliases": [
+        "Miss Baker’s"
+      ]
+    },
+    "ent_nick": {
+      "entity_id": "ent_nick",
+      "canonical": "Nick",
+      "aliases": [
+        "Nick"
+      ]
+    },
+    "ent_tom_s": {
+      "entity_id": "ent_tom_s",
+      "canonical": "Tom’s",
+      "aliases": [
+        "Tom’s"
+      ]
+    },
+    "ent_tom_and_daisy": {
+      "entity_id": "ent_tom_and_daisy",
+      "canonical": "Tom and Daisy",
+      "aliases": [
+        "Tom and Daisy"
+      ]
+    },
+    "ent_mr_carraway": {
+      "entity_id": "ent_mr_carraway",
+      "canonical": "Mr. Carraway",
+      "aliases": [
+        "Mr. Carraway"
+      ]
+    }
+  },
+  "call_records": [
+    {
+      "mode": "literary_chapter_brief_v1",
+      "window_id": "gg_ch01",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0032145,
+      "prompt_tokens": 9346,
+      "completion_tokens": 439,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "cast_on_stage": 9,
+        "cast_proper_name": 4,
+        "cast_descriptor": 5,
+        "scenes": 3,
+        "cast_dropped": 0,
+        "scene_dropped": 0,
+        "leak_tokens_dropped": 0,
+        "dropped_bad_block": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_001",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0013138,
+      "prompt_tokens": 4884,
+      "completion_tokens": 248,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 1,
+        "named": 0,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_001",
+      "ok": false,
+      "attempts": 2,
+      "cost_usd": 0.00279585,
+      "prompt_tokens": 5897,
+      "completion_tokens": 920,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [
+        "speaker_turns[0].speaker.candidate_entity_ids unknown: ['ent_unknown']",
+        "relation_events[0].actor.candidate_entity_ids unknown: ['ent_unknown']"
+      ],
+      "counts": {
+        "turns": 1,
+        "events": 1,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 2,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_002",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00279985,
+      "prompt_tokens": 5865,
+      "completion_tokens": 926,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 5,
+        "mentions": 4,
+        "named": 3,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_002",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0020929,
+      "prompt_tokens": 6474,
+      "completion_tokens": 554,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 0,
+        "events": 1,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 2,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 1,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_003",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00322135,
+      "prompt_tokens": 6287,
+      "completion_tokens": 1084,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 2,
+        "mentions": 4,
+        "named": 0,
+        "candidate": 0,
+        "unknown": 4,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_003",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00164325,
+      "prompt_tokens": 3101,
+      "completion_tokens": 434,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 1,
+        "events": 2,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 5,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_004",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00178825,
+      "prompt_tokens": 2385,
+      "completion_tokens": 596,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 9,
+        "mentions": 3,
+        "named": 3,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_004",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.001027,
+      "prompt_tokens": 2804,
+      "completion_tokens": 163,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 0,
+        "events": 1,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 2,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_005",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00366435,
+      "prompt_tokens": 6019,
+      "completion_tokens": 1339,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 8,
+        "mentions": 6,
+        "named": 5,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_005",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00361565,
+      "prompt_tokens": 7045,
+      "completion_tokens": 1244,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 0,
+        "events": 4,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 6,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 1,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_006",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00224455,
+      "prompt_tokens": 5239,
+      "completion_tokens": 669,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 2,
+        "mentions": 3,
+        "named": 3,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_006",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00081975,
+      "prompt_tokens": 2815,
+      "completion_tokens": 58,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 0,
+        "events": 0,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_007",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00325635,
+      "prompt_tokens": 5635,
+      "completion_tokens": 1183,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 6,
+        "mentions": 2,
+        "named": 2,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_007",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0046371,
+      "prompt_tokens": 6750,
+      "completion_tokens": 1734,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 3,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 6,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_008",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00117725,
+      "prompt_tokens": 2397,
+      "completion_tokens": 289,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 5,
+        "named": 4,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_008",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00472865,
+      "prompt_tokens": 6881,
+      "completion_tokens": 1821,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 2,
+        "events": 5,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 8,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_009",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00077325,
+      "prompt_tokens": 2085,
+      "completion_tokens": 126,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 1,
+        "named": 1,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_009",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0075266,
+      "prompt_tokens": 6324,
+      "completion_tokens": 3232,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 7,
+        "events": 5,
+        "phase_leak": 0,
+        "address_term_present": 1,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 10,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_010",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00073125,
+      "prompt_tokens": 1909,
+      "completion_tokens": 127,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 1,
+        "named": 1,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_010",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0070468,
+      "prompt_tokens": 5920,
+      "completion_tokens": 2985,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 6,
+        "events": 4,
+        "phase_leak": 0,
+        "address_term_present": 1,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 3,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 1,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_011",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00466955,
+      "prompt_tokens": 5523,
+      "completion_tokens": 1846,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 6,
+        "named": 5,
+        "candidate": 1,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_011",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0082071,
+      "prompt_tokens": 6438,
+      "completion_tokens": 3558,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 6,
+        "events": 5,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 7,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 1,
+        "attribution_enum_dropped": 2
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_012",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0024283,
+      "prompt_tokens": 4686,
+      "completion_tokens": 830,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 6,
+        "named": 5,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_012",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00397775,
+      "prompt_tokens": 2663,
+      "completion_tokens": 1656,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 5,
+        "events": 2,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 1,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 2,
+        "attribution_enum_dropped": 4
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_013",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0022103,
+      "prompt_tokens": 4902,
+      "completion_tokens": 694,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 4,
+        "named": 4,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_013",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0066621,
+      "prompt_tokens": 6418,
+      "completion_tokens": 2788,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 5,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 2,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 4,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 2,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_014",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00145275,
+      "prompt_tokens": 2211,
+      "completion_tokens": 450,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 7,
+        "named": 6,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_014",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00933585,
+      "prompt_tokens": 6785,
+      "completion_tokens": 4079,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 13,
+        "events": 2,
+        "phase_leak": 0,
+        "address_term_present": 4,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_015",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0027648,
+      "prompt_tokens": 5104,
+      "completion_tokens": 946,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 6,
+        "named": 6,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_015",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00768435,
+      "prompt_tokens": 6603,
+      "completion_tokens": 3276,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 8,
+        "events": 4,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 4,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_016",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0026293,
+      "prompt_tokens": 4906,
+      "completion_tokens": 903,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 6,
+        "named": 6,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_016",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0034865,
+      "prompt_tokens": 2658,
+      "completion_tokens": 1411,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 5,
+        "events": 2,
+        "phase_leak": 0,
+        "address_term_present": 1,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 4
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_017",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00196355,
+      "prompt_tokens": 4331,
+      "completion_tokens": 642,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 5,
+        "named": 5,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_017",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00617435,
+      "prompt_tokens": 6203,
+      "completion_tokens": 2571,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 6,
+        "events": 2,
+        "phase_leak": 0,
+        "address_term_present": 1,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 4,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 2,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_018",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0036993,
+      "prompt_tokens": 5546,
+      "completion_tokens": 1358,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 9,
+        "named": 9,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_018",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0078176,
+      "prompt_tokens": 6888,
+      "completion_tokens": 3307,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 6,
+        "events": 6,
+        "phase_leak": 0,
+        "address_term_present": 3,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_019",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00308055,
+      "prompt_tokens": 5311,
+      "completion_tokens": 1078,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 5,
+        "named": 4,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_019",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0062051,
+      "prompt_tokens": 6742,
+      "completion_tokens": 2519,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 5,
+        "events": 0,
+        "phase_leak": 0,
+        "address_term_present": 3,
+        "context_only_used_true": 1,
+        "unknown_with_evidence": 1,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_020",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.00160425,
+      "prompt_tokens": 2177,
+      "completion_tokens": 530,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 6,
+        "mentions": 4,
+        "named": 4,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_020",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.0044465,
+      "prompt_tokens": 2706,
+      "completion_tokens": 1885,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 1,
+        "events": 2,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 2,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 7
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_021",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00212905,
+      "prompt_tokens": 4481,
+      "completion_tokens": 706,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 6,
+        "named": 5,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_021",
+      "ok": true,
+      "attempts": 1,
+      "cost_usd": 0.004758,
+      "prompt_tokens": 2608,
+      "completion_tokens": 2053,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 8,
+        "events": 8,
+        "phase_leak": 0,
+        "address_term_present": 2,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_022",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0032833,
+      "prompt_tokens": 4826,
+      "completion_tokens": 1240,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 1,
+        "mentions": 9,
+        "named": 8,
+        "candidate": 0,
+        "unknown": 1,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 0
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_022",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00655985,
+      "prompt_tokens": 6401,
+      "completion_tokens": 2739,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 6,
+        "events": 4,
+        "phase_leak": 0,
+        "address_term_present": 3,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 1,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_023",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0018638,
+      "prompt_tokens": 5068,
+      "completion_tokens": 500,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 0,
+        "mentions": 4,
+        "named": 4,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_023",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00633115,
+      "prompt_tokens": 6875,
+      "completion_tokens": 2623,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 5,
+        "events": 2,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 2
+      }
+    },
+    {
+      "mode": "literary_lexicon_v1",
+      "window_id": "wb_gg_ch01_024",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.0021823,
+      "prompt_tokens": 4862,
+      "completion_tokens": 685,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "glossary": 2,
+        "mentions": 3,
+        "named": 3,
+        "candidate": 0,
+        "unknown": 0,
+        "dropped_bad_block": 0,
+        "pronoun_dropped": 0,
+        "context_only_used_true": 1
+      }
+    },
+    {
+      "mode": "literary_narrative_v1",
+      "window_id": "wb_gg_ch01_024",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.00248435,
+      "prompt_tokens": 5915,
+      "completion_tokens": 762,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "turns": 0,
+        "events": 3,
+        "phase_leak": 0,
+        "address_term_present": 0,
+        "context_only_used_true": 0,
+        "unknown_with_evidence": 0,
+        "unknown_empty": 0,
+        "nonperson_event_dropped": 0,
+        "attribution_enum_dropped": 0
+      }
+    }
+  ],
+  "artifacts": {
+    "brief_dir": "data\\reports\\literary_l2a2_gatsby_ch1_hardened_v2\\brief",
+    "lexicon_dir": "data\\reports\\literary_l2a2_gatsby_ch1_hardened_v2\\lexicon",
+    "narrative_dir": "data\\reports\\literary_l2a2_gatsby_ch1_hardened_v2\\narrative",
+    "report": "data\\reports\\literary_l2a2_gatsby_ch1_hardened_v2\\m1_report.json"
+  },
+  "stop": "M1 complete. Claude must verify artifacts before M2."
+}

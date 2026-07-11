@@ -1,0 +1,153 @@
+{
+  "phase": "L2A-1",
+  "milestone": "M1",
+  "status": "halted_transport_error",
+  "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+  "model": "gpt-5.4",
+  "chapters_requested": [
+    "1"
+  ],
+  "estimate": {
+    "phase": "L2A-1",
+    "milestone": "M1",
+    "zero_api": true,
+    "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+    "chapters_requested": [
+      "1"
+    ],
+    "chapters_selected": [
+      "wh_ch01"
+    ],
+    "calls": 15,
+    "windows": 7,
+    "modes": [
+      "literary_chapter_brief_v1",
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ],
+    "window_config": {
+      "target_tokens": 500,
+      "max_blocks": 8
+    },
+    "prompt_tokens_est": 41440,
+    "max_prompt_tokens_est": 3876,
+    "max_output_tokens_per_call": 6144,
+    "total_tokens_upper_bound": 133600,
+    "prompt_token_cap": 6000,
+    "cost_cap_usd": 0.0,
+    "call_estimates": [
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wh_ch01",
+        "mode": "literary_chapter_brief_v1",
+        "prompt_tokens_est": 3876,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_001",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2151,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_001",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2443,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_002",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2902,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_002",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 3194,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_003",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2769,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_003",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 3061,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_004",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2636,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_004",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2928,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_005",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 3055,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_005",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 3347,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_006",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2246,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_006",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2538,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_007",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2001,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_007",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2293,
+        "max_output_tokens": 6144
+      }
+    ],
+    "token_growth_halt": false
+  },
+  "error_type": "LLMTransportError",
+  "error": "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}",
+  "artifacts": {
+    "report": "data\\reports\\literary_l2a2_wh_ch1_gpt54\\m1_report.json"
+  },
+  "stop": "M1 did not complete; resolve transport/quota before retry."
+}

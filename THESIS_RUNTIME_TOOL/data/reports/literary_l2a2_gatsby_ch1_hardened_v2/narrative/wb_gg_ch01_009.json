@@ -1,0 +1,458 @@
+{
+  "mode": "literary_narrative_v1",
+  "window_id": "wb_gg_ch01_009",
+  "chapter_id": "gg_ch01",
+  "block_ids": [
+    "gg_ch01_b035",
+    "gg_ch01_b036",
+    "gg_ch01_b037",
+    "gg_ch01_b038",
+    "gg_ch01_b039",
+    "gg_ch01_b040",
+    "gg_ch01_b041",
+    "gg_ch01_b042"
+  ],
+  "previous_tail_block_ids": [
+    "gg_ch01_b033",
+    "gg_ch01_b034"
+  ],
+  "next_tail_block_ids": [
+    "gg_ch01_b043",
+    "gg_ch01_b044"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_narrative_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- CRITICAL — do NOT infer relationships, alliances, feelings, trust, or story phases. Those are decided later from the whole timeline. Report only single, locally observable acts and utterances.\n- event_type MUST be a concrete observable action verb in lower_snake_case (examples: addresses, greets, mocks, strikes, protects, serves, refuses, threatens, embraces, orders, weeps_over, curses). It MUST NOT be a relationship or phase label. Forbidden event_type values: ally, enemy, friend, rival, love, hatred, betrayal, trust, alliance, reconciliation, phase, any \"*_phase\".\n- Do NOT output state_label, valid_from_block, valid_to_block, address policy, or any book-level conclusion in this pass.\n- speaker_turns: one row per direct quoted utterance. Give each a turn_id (t_<block>_<n>). \"speaker\" and \"addressee\" are each an OBJECT: {surface, reference_kind, resolution_status, candidate_entity_ids, attribution_method, confidence}.\n  - reference_kind is one of: person, group, narrator, reader, unknown. Only person may become a character entity later; a group (\"the household\"), the narrator, or the reader MUST NOT be minted as a person.\n  - resolution_status is one of: named (an explicit name or tag identifies them, e.g. \"said Alden\"), candidate (you map a pronoun/descriptor to a roster entity but are not certain), unknown (you cannot tell — never force a guess).\n  - candidate_entity_ids: when resolution_status is candidate it MUST be non-empty — copy the id(s) verbatim from CHAPTER_ROSTER_ON_STAGE. If the roster has no id for the referent (including the first-person narrator before they are named on the page), use resolution_status=unknown with [] instead of candidate; never invent an id. For named/unknown leave [].\n  - attribution_method is one of: explicit_tag, turn_alternation, nearby_context, narrator_inference. This is HOW you attributed the reference — it is the real trust signal, more than confidence. It is NEVER a resolution_status value: do NOT put named/candidate/unknown in attribution_method.\n  - confidence is one of: high, medium, low. Do NOT output a number.\n- If the utterance contains a vocative (address_term_used is not null), the addressee MUST be the specific person that vocative names, not a group. Use a group addressee (reference_kind group) only when there is no specific vocative.\n- A GENERIC honorific used as a vocative (sir, madam, ma'am, my lord, my lady, master, mistress, with no personal name attached) does NOT by itself name a specific person. Resolve it by turn-taking using CHAPTER_BRIEF: if the current scene in scenes_party_size has co_present_count == 2, the addressee is the OTHER co-present person (the one who is not the speaker); set resolution_status=candidate, candidate_entity_ids to that person, attribution_method=turn_alternation, confidence=medium. If co_present_count >= 3 and no other cue points to exactly one person, leave the addressee unknown — never force a guess.\n- The addressee is the person the words are spoken TO, not a person or thing the words are ABOUT. In \"You had better let the dog alone,\" the addressee is the listener being warned, not \"the dog\". Never record a non-person (animal, object) as an addressee: if the only surface available is such a thing, resolve the addressee from turn-taking / scene participants instead, or leave it unknown.\n- utterance_quote = a short verbatim snippet of the spoken words (<=20 words; the whole utterance if short). This verbatim text — not the gist — is the evidence for later address/register scoring.\n- address_term_used = the literal vocative the speaker uses for the addressee in the utterance (\"Mira\", \"Mr. Alden\", \"master\", \"my girl\"), or null. Copy verbatim; do not translate here.\n- register_cue = one short lowercase tone word if visible (neutral, intimate, deferential, paternal, hostile, mocking), else \"neutral\".\n- relation_events: give each an event_id (e_<block>_<n>). \"actor\" and \"target\" are the SAME object shape as speaker/addressee. evidence_quote is a short literal snippet (<=12 words) copied from the window that shows the act. actor and target should be PERSONS or the narrator — do NOT create a relation_event whose actor or target is an object or an animal (a dog, a room, furniture).\n- Do NOT record the narrator's storytelling voice as a speaker_turn. Only record quoted speech by a character in-scene. (A first-person narrator counts as a speaker only when quoted speaking to someone in the scene.)\n- A pronoun or zero-subject MAY be the surface when that is all the text gives: set resolution_status to candidate (if roster + turn order point to someone) or unknown, and record attribution_method. Do NOT drop a turn or event just because its subject is a pronoun.\n- Every block_id MUST be a marker that literally appears in this window.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"...\",\n  \"window_block_ids\": [\"gg_ch01_b006\", \"gg_ch01_b007\"],\n  \"context_only_used\": false,\n  \"speaker_turns\": [\n    {\"turn_id\": \"t_gg_ch01_b006_01\",\n     \"speaker\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"addressee\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"utterance_quote\": \"And what brings you so far north, sir?\",\n     \"address_term_used\": \"sir\", \"register_cue\": \"neutral\", \"utterance_gist\": \"asks the traveller his business\", \"block_id\": \"gg_ch01_b006\"}\n  ],\n  \"relation_events\": [\n    {\"event_id\": \"e_gg_ch01_b006_01\",\n     \"actor\": {\"surface\": \"the innkeeper\", \"reference_kind\": \"person\", \"resolution_status\": \"named\", \"candidate_entity_ids\": [], \"attribution_method\": \"explicit_tag\", \"confidence\": \"high\"},\n     \"target\": {\"surface\": \"sir\", \"reference_kind\": \"person\", \"resolution_status\": \"candidate\", \"candidate_entity_ids\": [\"ent_ravel\"], \"attribution_method\": \"turn_alternation\", \"confidence\": \"medium\"},\n     \"event_type\": \"questions\", \"evidence_quote\": \"what brings you so far north\", \"block_id\": \"gg_ch01_b006\"}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "CHAPTER_BRIEF\nsetting | West Egg and the Buchanan house in East Egg | frame_present | few_scenes\nneutral_premise | The narrator describes his background, settles in West Egg, visits Tom and Daisy Buchanan in East Egg for dinner with Jordan Baker, hears talk of a woman in New York, and later sees Gatsby alone outside his mansion.\ncast | I | narrator | gg_ch01_b001\ncast | the father | parent | gg_ch01_b002\ncast | Gatsby | neighbour | gg_ch01_b015\ncast | the man at the road | traveller | gg_ch01_b009\ncast | Tom Buchanan | host | gg_ch01_b019\ncast | Daisy | host | gg_ch01_b028\ncast | Miss Baker | guest | gg_ch01_b028\ncast | the butler | servant | gg_ch01_b085\ncast | Jordan Baker | guest | gg_ch01_b127\nscene | gg_ch01_b001..gg_ch01_b015 | co_present_count=1 | I\nscene | gg_ch01_b016..gg_ch01_b151 | co_present_count=5 | I, Tom Buchanan, Daisy, Miss Baker, the butler\nscene | gg_ch01_b152..gg_ch01_b153 | co_present_count=2 | I, Gatsby\n\nNEIGHBOR_SUMMARIES_GIST_ONLY\n(none)\n\nACTIVE_NARRATOR_HINTS_BY_BLOCK_RANGE\ngg_ch01_b035..gg_ch01_b042 | unknown\n\nCHAPTER_ROSTER_ON_STAGE\nent_daisy | Daisy | Daisy\nent_daisy_s | Daisy’s | Daisy’s\nent_demaine | Demaine | Demaine\nent_gatsby | Gatsby | Gatsby\nent_jordan_baker | Jordan Baker | seeded:chapter_brief_cast:no_surface_alias\nent_maecenas | Maecenas | Maecenas\nent_midas | Midas | Midas\nent_miss_baker | Miss Baker | Miss Baker\nent_miss_baker_s | Miss Baker’s | Miss Baker’s\nent_morgan | Morgan | Morgan\nent_mr_gatsby | Mr. Gatsby | Mr. Gatsby\nent_the_carraways | The Carraways | The Carraways\nent_the_tom_buchanans | the Tom Buchanans | the Tom Buchanans\nent_tom | Tom | Tom\nent_tom_buchanan | Tom Buchanan | Tom Buchanan\n\nWINDOW_MENTIONS_FROM_LEXICON_PASS\nm_gg_ch01_b038_01 | Tom | name | named | \n\nCHAPTER_ID\ngg_ch01\n\nPREVIOUS_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b033] At any rate, Miss Baker’s lips fluttered, she nodded at me almost imperceptibly, and then quickly tipped her head back again—the object she was balancing had obviously tottered a little and given her something of a fright. Again a sort of apology arose to my lips. Almost any exhibition of complete self-sufficiency draws a stunned tribute from me.\n[gg_ch01_b034] I looked back at my cousin, who began to ask me questions in her low, thrilling voice. It was the kind of voice that the ear follows up and down, as if each speech is an arrangement of notes that will never be played again. Her face was sad and lovely with bright things in it, bright eyes and a bright passionate mouth, but there was an excitement in her voice that men who had cared for her found difficult to forget: a singing compulsion, a whispered “Listen,” a promise that she had done gay, exciting things just a while since and that there were gay, exciting things hovering in the next hour.\n\nNEXT_WINDOW_TAIL_CONTEXT_ONLY\n[gg_ch01_b043] Tom Buchanan, who had been hovering restlessly about the room, stopped and rested his hand on my shoulder.\n[gg_ch01_b044] “What you doing, Nick?”\n\nENGLISH_SOURCE_WINDOW_WITH_BLOCK_MARKERS\n[gg_ch01_b035] I told her how I had stopped off in Chicago for a day on my way East, and how a dozen people had sent their love through me.\n[gg_ch01_b036] “Do they miss me?” she cried ecstatically.\n[gg_ch01_b037] “The whole town is desolate. All the cars have the left rear wheel painted black as a mourning wreath, and there’s a persistent wail all night along the north shore.”\n[gg_ch01_b038] “How gorgeous! Let’s go back, Tom. Tomorrow!” Then she added irrelevantly: “You ought to see the baby.”\n[gg_ch01_b039] “I’d like to.”\n[gg_ch01_b040] “She’s asleep. She’s three years old. Haven’t you ever seen her?”\n[gg_ch01_b041] “Never.”\n[gg_ch01_b042] “Well, you ought to see her. She’s—”"
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "gg_ch01",
+    "window_block_ids": [
+      "gg_ch01_b035",
+      "gg_ch01_b036",
+      "gg_ch01_b037",
+      "gg_ch01_b038",
+      "gg_ch01_b039",
+      "gg_ch01_b040",
+      "gg_ch01_b041",
+      "gg_ch01_b042"
+    ],
+    "context_only_used": false,
+    "speaker_turns": [
+      {
+        "turn_id": "t_gg_ch01_b036_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Do they miss me?",
+        "address_term_used": null,
+        "register_cue": "intimate",
+        "utterance_gist": "asks whether people miss her",
+        "block_id": "gg_ch01_b036"
+      },
+      {
+        "turn_id": "t_gg_ch01_b037_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "The whole town is desolate.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "describes the town as desolate",
+        "block_id": "gg_ch01_b037"
+      },
+      {
+        "turn_id": "t_gg_ch01_b038_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "Tom",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "utterance_quote": "How gorgeous! Let’s go back, Tom.",
+        "address_term_used": "Tom",
+        "register_cue": "intimate",
+        "utterance_gist": "exclaims and urges a return to Tom",
+        "block_id": "gg_ch01_b038"
+      },
+      {
+        "turn_id": "t_gg_ch01_b039_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "I’d like to.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says he would like to",
+        "block_id": "gg_ch01_b039"
+      },
+      {
+        "turn_id": "t_gg_ch01_b040_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "She’s asleep. She’s three years old.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says the baby is asleep and three years old",
+        "block_id": "gg_ch01_b040"
+      },
+      {
+        "turn_id": "t_gg_ch01_b041_01",
+        "speaker": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Never.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says he has never seen her",
+        "block_id": "gg_ch01_b041"
+      },
+      {
+        "turn_id": "t_gg_ch01_b042_01",
+        "speaker": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "addressee": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "utterance_quote": "Well, you ought to see her.",
+        "address_term_used": null,
+        "register_cue": "neutral",
+        "utterance_gist": "says he ought to see the baby",
+        "block_id": "gg_ch01_b042"
+      }
+    ],
+    "relation_events": [
+      {
+        "event_id": "e_gg_ch01_b036_01",
+        "actor": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "asks",
+        "evidence_quote": "Do they miss me?",
+        "block_id": "gg_ch01_b036"
+      },
+      {
+        "event_id": "e_gg_ch01_b037_01",
+        "actor": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "describes",
+        "evidence_quote": "The whole town is desolate",
+        "block_id": "gg_ch01_b037"
+      },
+      {
+        "event_id": "e_gg_ch01_b038_01",
+        "actor": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "Tom",
+          "reference_kind": "person",
+          "resolution_status": "named",
+          "candidate_entity_ids": [],
+          "attribution_method": "explicit_tag",
+          "confidence": "high"
+        },
+        "event_type": "addresses",
+        "evidence_quote": "Let’s go back, Tom",
+        "block_id": "gg_ch01_b038"
+      },
+      {
+        "event_id": "e_gg_ch01_b040_01",
+        "actor": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "states",
+        "evidence_quote": "She’s asleep. She’s three years old",
+        "block_id": "gg_ch01_b040"
+      },
+      {
+        "event_id": "e_gg_ch01_b042_01",
+        "actor": {
+          "surface": "she",
+          "reference_kind": "person",
+          "resolution_status": "candidate",
+          "candidate_entity_ids": [
+            "ent_daisy"
+          ],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "target": {
+          "surface": "I",
+          "reference_kind": "person",
+          "resolution_status": "unknown",
+          "candidate_entity_ids": [],
+          "attribution_method": "turn_alternation",
+          "confidence": "medium"
+        },
+        "event_type": "advises",
+        "evidence_quote": "you ought to see her",
+        "block_id": "gg_ch01_b042"
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "turns": 7,
+      "events": 5,
+      "phase_leak": 0,
+      "address_term_present": 1,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 10,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 0,
+      "attribution_enum_dropped": 0
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "7a67a3f2a10e63e5a7ffc2b3e3ee53c30caebf32bd0c0edbee11995a242553d8",
+      "latency_ms": 7842,
+      "cost_usd": 0.0039285,
+      "usage": {
+        "prompt_tokens": 2538,
+        "cached_tokens": 0,
+        "completion_tokens": 1647,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": false,
+        "errors": [
+          "speaker_turns[0].addressee.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "speaker_turns[1].speaker.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "speaker_turns[2].addressee.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "speaker_turns[3].speaker.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "speaker_turns[4].addressee.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "speaker_turns[5].speaker.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "speaker_turns[6].addressee.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "relation_events[0].target.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "relation_events[1].actor.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "relation_events[3].target.candidate_entity_ids unknown: ['gg_ch01_b001']",
+          "relation_events[4].target.candidate_entity_ids unknown: ['gg_ch01_b001']"
+        ],
+        "warnings": [],
+        "counts": {
+          "turns": 7,
+          "events": 5,
+          "phase_leak": 0,
+          "address_term_present": 1,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 0,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 0,
+          "attribution_enum_dropped": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"gg_ch01\",\"window_block_ids\":[\"gg_ch01_b035\",\"gg_ch01_b036\",\"gg_ch01_b037\",\"gg_ch01_b038\",\"gg_ch01_b039\",\"gg_ch01_b040\",\"gg_ch01_b041\",\"gg_ch01_b042\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_gg_ch01_b036_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Do they miss me?\",\"address_term_used\":null,\"register_cue\":\"intimate\",\"utterance_gist\":\"asks whether people miss her\",\"block_id\":\"gg_ch01_b036\"},{\"turn_id\":\"t_gg_ch01_b037_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"The whole town is desolate.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"describes the town as desolate\",\"block_id\":\"gg_ch01_b037\"},{\"turn_id\":\"t_gg_ch01_b038_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"How gorgeous! Let’s go back, Tom.\",\"address_term_used\":\"Tom\",\"register_cue\":\"intimate\",\"utterance_gist\":\"exclaims and urges a return to Tom\",\"block_id\":\"gg_ch01_b038\"},{\"turn_id\":\"t_gg_ch01_b039_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I’d like to.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says he would like to\",\"block_id\":\"gg_ch01_b039\"},{\"turn_id\":\"t_gg_ch01_b040_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"She’s asleep. She’s three years old.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says the baby is asleep and three years old\",\"block_id\":\"gg_ch01_b040\"},{\"turn_id\":\"t_gg_ch01_b041_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Never.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says he has never seen her\",\"block_id\":\"gg_ch01_b041\"},{\"turn_id\":\"t_gg_ch01_b042_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Well, you ought to see her.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"urges him to see the baby\",\"block_id\":\"gg_ch01_b042\"}],\"relation_events\":[{\"event_id\":\"e_gg_ch01_b036_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"asks\",\"evidence_quote\":\"Do they miss me?\",\"block_id\":\"gg_ch01_b036\"},{\"event_id\":\"e_gg_ch01_b037_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"describes\",\"evidence_quote\":\"The whole town is desolate\",\"block_id\":\"gg_ch01_b037\"},{\"event_id\":\"e_gg_ch01_b038_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"orders\",\"evidence_quote\":\"Let’s go back, Tom\",\"block_id\":\"gg_ch01_b038\"},{\"event_id\":\"e_gg_ch01_b040_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"mentions\",\"evidence_quote\":\"She’s three years old\",\"block_id\":\"gg_ch01_b040\"},{\"event_id\":\"e_gg_ch01_b042_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"gg_ch01_b001\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"urges\",\"evidence_quote\":\"you ought to see her\",\"block_id\":\"gg_ch01_b042\"}]}"
+    },
+    {
+      "attempt": 2,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "dc20f0773981db53937a1a1907a2501b470b849f6209e2ee21e5b41e4321e50b",
+      "latency_ms": 7595,
+      "cost_usd": 0.0035981,
+      "usage": {
+        "prompt_tokens": 3786,
+        "cached_tokens": 2304,
+        "completion_tokens": 1585,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "narrative",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "turns": 7,
+          "events": 5,
+          "phase_leak": 0,
+          "address_term_present": 1,
+          "context_only_used_true": 0,
+          "unknown_with_evidence": 10,
+          "unknown_empty": 0,
+          "nonperson_event_dropped": 0,
+          "attribution_enum_dropped": 0
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"gg_ch01\",\"window_block_ids\":[\"gg_ch01_b035\",\"gg_ch01_b036\",\"gg_ch01_b037\",\"gg_ch01_b038\",\"gg_ch01_b039\",\"gg_ch01_b040\",\"gg_ch01_b041\",\"gg_ch01_b042\"],\"context_only_used\":false,\"speaker_turns\":[{\"turn_id\":\"t_gg_ch01_b036_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Do they miss me?\",\"address_term_used\":null,\"register_cue\":\"intimate\",\"utterance_gist\":\"asks whether people miss her\",\"block_id\":\"gg_ch01_b036\"},{\"turn_id\":\"t_gg_ch01_b037_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"The whole town is desolate.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"describes the town as desolate\",\"block_id\":\"gg_ch01_b037\"},{\"turn_id\":\"t_gg_ch01_b038_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"utterance_quote\":\"How gorgeous! Let’s go back, Tom.\",\"address_term_used\":\"Tom\",\"register_cue\":\"intimate\",\"utterance_gist\":\"exclaims and urges a return to Tom\",\"block_id\":\"gg_ch01_b038\"},{\"turn_id\":\"t_gg_ch01_b039_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"I’d like to.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says he would like to\",\"block_id\":\"gg_ch01_b039\"},{\"turn_id\":\"t_gg_ch01_b040_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"She’s asleep. She’s three years old.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says the baby is asleep and three years old\",\"block_id\":\"gg_ch01_b040\"},{\"turn_id\":\"t_gg_ch01_b041_01\",\"speaker\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Never.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says he has never seen her\",\"block_id\":\"gg_ch01_b041\"},{\"turn_id\":\"t_gg_ch01_b042_01\",\"speaker\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"addressee\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"utterance_quote\":\"Well, you ought to see her.\",\"address_term_used\":null,\"register_cue\":\"neutral\",\"utterance_gist\":\"says he ought to see the baby\",\"block_id\":\"gg_ch01_b042\"}],\"relation_events\":[{\"event_id\":\"e_gg_ch01_b036_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"asks\",\"evidence_quote\":\"Do they miss me?\",\"block_id\":\"gg_ch01_b036\"},{\"event_id\":\"e_gg_ch01_b037_01\",\"actor\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"describes\",\"evidence_quote\":\"The whole town is desolate\",\"block_id\":\"gg_ch01_b037\"},{\"event_id\":\"e_gg_ch01_b038_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"Tom\",\"reference_kind\":\"person\",\"resolution_status\":\"named\",\"candidate_entity_ids\":[],\"attribution_method\":\"explicit_tag\",\"confidence\":\"high\"},\"event_type\":\"addresses\",\"evidence_quote\":\"Let’s go back, Tom\",\"block_id\":\"gg_ch01_b038\"},{\"event_id\":\"e_gg_ch01_b040_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"states\",\"evidence_quote\":\"She’s asleep. She’s three years old\",\"block_id\":\"gg_ch01_b040\"},{\"event_id\":\"e_gg_ch01_b042_01\",\"actor\":{\"surface\":\"she\",\"reference_kind\":\"person\",\"resolution_status\":\"candidate\",\"candidate_entity_ids\":[\"ent_daisy\"],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"target\":{\"surface\":\"I\",\"reference_kind\":\"person\",\"resolution_status\":\"unknown\",\"candidate_entity_ids\":[],\"attribution_method\":\"turn_alternation\",\"confidence\":\"medium\"},\"event_type\":\"advises\",\"evidence_quote\":\"you ought to see her\",\"block_id\":\"gg_ch01_b042\"}]}"
+    }
+  ],
+  "cost_usd": 0.0075266,
+  "prompt_tokens": 6324,
+  "completion_tokens": 3232,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

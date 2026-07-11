@@ -1,0 +1,342 @@
+[
+  {
+    "unit_id": "wh_ch01",
+    "narrative_chapter": 1,
+    "chapter_label": "CHAPTER I",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-1.htm.xhtml",
+    "block_count": 28,
+    "first_block_id": "wh_ch01_b001",
+    "last_block_id": "wh_ch01_b028"
+  },
+  {
+    "unit_id": "wh_ch02",
+    "narrative_chapter": 2,
+    "chapter_label": "CHAPTER II",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-2.htm.xhtml",
+    "block_count": 92,
+    "first_block_id": "wh_ch02_b001",
+    "last_block_id": "wh_ch02_b092"
+  },
+  {
+    "unit_id": "wh_ch03",
+    "narrative_chapter": 3,
+    "chapter_label": "CHAPTER III",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-3.htm.xhtml",
+    "block_count": 67,
+    "first_block_id": "wh_ch03_b001",
+    "last_block_id": "wh_ch03_b067"
+  },
+  {
+    "unit_id": "wh_ch04",
+    "narrative_chapter": 4,
+    "chapter_label": "CHAPTER IV",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-4.htm.xhtml",
+    "block_count": 45,
+    "first_block_id": "wh_ch04_b001",
+    "last_block_id": "wh_ch04_b045"
+  },
+  {
+    "unit_id": "wh_ch05",
+    "narrative_chapter": 5,
+    "chapter_label": "CHAPTER V",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-5.htm.xhtml",
+    "block_count": 9,
+    "first_block_id": "wh_ch05_b001",
+    "last_block_id": "wh_ch05_b009"
+  },
+  {
+    "unit_id": "wh_ch06",
+    "narrative_chapter": 6,
+    "chapter_label": "CHAPTER VI",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-6.htm.xhtml",
+    "block_count": 15,
+    "first_block_id": "wh_ch06_b001",
+    "last_block_id": "wh_ch06_b015"
+  },
+  {
+    "unit_id": "wh_ch07",
+    "narrative_chapter": 7,
+    "chapter_label": "CHAPTER VII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-7.htm.xhtml",
+    "block_count": 61,
+    "first_block_id": "wh_ch07_b001",
+    "last_block_id": "wh_ch07_b061"
+  },
+  {
+    "unit_id": "wh_ch08",
+    "narrative_chapter": 8,
+    "chapter_label": "CHAPTER VIII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-8.htm.xhtml",
+    "block_count": 70,
+    "first_block_id": "wh_ch08_b001",
+    "last_block_id": "wh_ch08_b070"
+  },
+  {
+    "unit_id": "wh_ch09",
+    "narrative_chapter": 9,
+    "chapter_label": "CHAPTER IX",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-9.htm.xhtml",
+    "block_count": 129,
+    "first_block_id": "wh_ch09_b001",
+    "last_block_id": "wh_ch09_b129"
+  },
+  {
+    "unit_id": "wh_ch10",
+    "narrative_chapter": 10,
+    "chapter_label": "CHAPTER X",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-10.htm.xhtml",
+    "block_count": 103,
+    "first_block_id": "wh_ch10_b001",
+    "last_block_id": "wh_ch10_b103"
+  },
+  {
+    "unit_id": "wh_ch11",
+    "narrative_chapter": 11,
+    "chapter_label": "CHAPTER XI",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-11.htm.xhtml",
+    "block_count": 72,
+    "first_block_id": "wh_ch11_b001",
+    "last_block_id": "wh_ch11_b072"
+  },
+  {
+    "unit_id": "wh_ch12",
+    "narrative_chapter": 12,
+    "chapter_label": "CHAPTER XII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-12.htm.xhtml",
+    "block_count": 85,
+    "first_block_id": "wh_ch12_b001",
+    "last_block_id": "wh_ch12_b085"
+  },
+  {
+    "unit_id": "wh_ch13",
+    "narrative_chapter": 13,
+    "chapter_label": "CHAPTER XIII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-13.htm.xhtml",
+    "block_count": 68,
+    "first_block_id": "wh_ch13_b001",
+    "last_block_id": "wh_ch13_b068"
+  },
+  {
+    "unit_id": "wh_ch14",
+    "narrative_chapter": 14,
+    "chapter_label": "CHAPTER XIV",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-14.htm.xhtml",
+    "block_count": 37,
+    "first_block_id": "wh_ch14_b001",
+    "last_block_id": "wh_ch14_b037"
+  },
+  {
+    "unit_id": "wh_ch15",
+    "narrative_chapter": 15,
+    "chapter_label": "CHAPTER XV",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-15.htm.xhtml",
+    "block_count": 51,
+    "first_block_id": "wh_ch15_b001",
+    "last_block_id": "wh_ch15_b051"
+  },
+  {
+    "unit_id": "wh_ch16",
+    "narrative_chapter": 16,
+    "chapter_label": "CHAPTER XVI",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-16.htm.xhtml",
+    "block_count": 21,
+    "first_block_id": "wh_ch16_b001",
+    "last_block_id": "wh_ch16_b021"
+  },
+  {
+    "unit_id": "wh_ch17",
+    "narrative_chapter": 17,
+    "chapter_label": "CHAPTER XVII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-17.htm.xhtml",
+    "block_count": 93,
+    "first_block_id": "wh_ch17_b001",
+    "last_block_id": "wh_ch17_b093"
+  },
+  {
+    "unit_id": "wh_ch18",
+    "narrative_chapter": 18,
+    "chapter_label": "CHAPTER XVIII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-18.htm.xhtml",
+    "block_count": 56,
+    "first_block_id": "wh_ch18_b001",
+    "last_block_id": "wh_ch18_b056"
+  },
+  {
+    "unit_id": "wh_ch19",
+    "narrative_chapter": 19,
+    "chapter_label": "CHAPTER XIX",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-19.htm.xhtml",
+    "block_count": 32,
+    "first_block_id": "wh_ch19_b001",
+    "last_block_id": "wh_ch19_b032"
+  },
+  {
+    "unit_id": "wh_ch20",
+    "narrative_chapter": 20,
+    "chapter_label": "CHAPTER XX",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-20.htm.xhtml",
+    "block_count": 51,
+    "first_block_id": "wh_ch20_b001",
+    "last_block_id": "wh_ch20_b051"
+  },
+  {
+    "unit_id": "wh_ch21",
+    "narrative_chapter": 21,
+    "chapter_label": "CHAPTER XXI",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-21.htm.xhtml",
+    "block_count": 119,
+    "first_block_id": "wh_ch21_b001",
+    "last_block_id": "wh_ch21_b119"
+  },
+  {
+    "unit_id": "wh_ch22",
+    "narrative_chapter": 22,
+    "chapter_label": "CHAPTER XXII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-22.htm.xhtml",
+    "block_count": 35,
+    "first_block_id": "wh_ch22_b001",
+    "last_block_id": "wh_ch22_b035"
+  },
+  {
+    "unit_id": "wh_ch23",
+    "narrative_chapter": 23,
+    "chapter_label": "CHAPTER XXIII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-23.htm.xhtml",
+    "block_count": 79,
+    "first_block_id": "wh_ch23_b001",
+    "last_block_id": "wh_ch23_b079"
+  },
+  {
+    "unit_id": "wh_ch24",
+    "narrative_chapter": 24,
+    "chapter_label": "CHAPTER XXIV",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-24.htm.xhtml",
+    "block_count": 52,
+    "first_block_id": "wh_ch24_b001",
+    "last_block_id": "wh_ch24_b052"
+  },
+  {
+    "unit_id": "wh_ch25",
+    "narrative_chapter": 25,
+    "chapter_label": "CHAPTER XXV",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-25.htm.xhtml",
+    "block_count": 16,
+    "first_block_id": "wh_ch25_b001",
+    "last_block_id": "wh_ch25_b016"
+  },
+  {
+    "unit_id": "wh_ch26",
+    "narrative_chapter": 26,
+    "chapter_label": "CHAPTER XXVI",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-26.htm.xhtml",
+    "block_count": 36,
+    "first_block_id": "wh_ch26_b001",
+    "last_block_id": "wh_ch26_b036"
+  },
+  {
+    "unit_id": "wh_ch27",
+    "narrative_chapter": 27,
+    "chapter_label": "CHAPTER XXVII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-27.htm.xhtml",
+    "block_count": 82,
+    "first_block_id": "wh_ch27_b001",
+    "last_block_id": "wh_ch27_b082"
+  },
+  {
+    "unit_id": "wh_ch28",
+    "narrative_chapter": 28,
+    "chapter_label": "CHAPTER XXVIII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-28.htm.xhtml",
+    "block_count": 38,
+    "first_block_id": "wh_ch28_b001",
+    "last_block_id": "wh_ch28_b038"
+  },
+  {
+    "unit_id": "wh_ch29",
+    "narrative_chapter": 29,
+    "chapter_label": "CHAPTER XXIX",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-29.htm.xhtml",
+    "block_count": 23,
+    "first_block_id": "wh_ch29_b001",
+    "last_block_id": "wh_ch29_b023"
+  },
+  {
+    "unit_id": "wh_ch30",
+    "narrative_chapter": 30,
+    "chapter_label": "CHAPTER XXX",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-30.htm.xhtml",
+    "block_count": 42,
+    "first_block_id": "wh_ch30_b001",
+    "last_block_id": "wh_ch30_b042"
+  },
+  {
+    "unit_id": "wh_ch31",
+    "narrative_chapter": 31,
+    "chapter_label": "CHAPTER XXXI",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-31.htm.xhtml",
+    "block_count": 41,
+    "first_block_id": "wh_ch31_b001",
+    "last_block_id": "wh_ch31_b041"
+  },
+  {
+    "unit_id": "wh_ch32",
+    "narrative_chapter": 32,
+    "chapter_label": "CHAPTER XXXII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-32.htm.xhtml",
+    "block_count": 88,
+    "first_block_id": "wh_ch32_b001",
+    "last_block_id": "wh_ch32_b088"
+  },
+  {
+    "unit_id": "wh_ch33",
+    "narrative_chapter": 33,
+    "chapter_label": "CHAPTER XXXIII",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-33.htm.xhtml",
+    "block_count": 55,
+    "first_block_id": "wh_ch33_b001",
+    "last_block_id": "wh_ch33_b055"
+  },
+  {
+    "unit_id": "wh_ch34",
+    "narrative_chapter": 34,
+    "chapter_label": "CHAPTER XXXIV",
+    "volume": null,
+    "source_href": "OEBPS/3483059210353758884_768-h-34.htm.xhtml",
+    "block_count": 85,
+    "first_block_id": "wh_ch34_b001",
+    "last_block_id": "wh_ch34_b085"
+  }
+]

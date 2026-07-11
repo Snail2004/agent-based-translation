@@ -1,0 +1,149 @@
+{
+  "phase": "L2A-1",
+  "milestone": "M1",
+  "status": "halted_transport_error",
+  "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+  "model": "gpt-5.4-mini",
+  "chapters_requested": [
+    "1"
+  ],
+  "estimate": {
+    "phase": "L2A-1",
+    "milestone": "M1",
+    "zero_api": true,
+    "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+    "chapters_requested": [
+      "1"
+    ],
+    "chapters_selected": [
+      "wh_ch01"
+    ],
+    "calls": 15,
+    "windows": 7,
+    "modes": [
+      "literary_chapter_brief_v1",
+      "literary_lexicon_v1",
+      "literary_narrative_v1"
+    ],
+    "prompt_tokens_est": 38112,
+    "max_prompt_tokens_est": 3702,
+    "max_output_tokens_per_call": 6144,
+    "total_tokens_upper_bound": 130272,
+    "prompt_token_cap": 6000,
+    "cost_cap_usd": 0.193848,
+    "call_estimates": [
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wh_ch01",
+        "mode": "literary_chapter_brief_v1",
+        "prompt_tokens_est": 3702,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_001",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1864,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_001",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2280,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_002",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2615,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_002",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 3030,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_003",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2482,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_003",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2898,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_004",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2349,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_004",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2765,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_005",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 2768,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_005",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 3183,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_006",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1959,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_006",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2374,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_007",
+        "mode": "literary_lexicon_v1",
+        "prompt_tokens_est": 1714,
+        "max_output_tokens": 6144
+      },
+      {
+        "chapter_id": "wh_ch01",
+        "window_id": "wb_wh_ch01_007",
+        "mode": "literary_narrative_v1",
+        "prompt_tokens_est": 2129,
+        "max_output_tokens": 6144
+      }
+    ],
+    "token_growth_halt": false
+  },
+  "error_type": "LLMTransportError",
+  "error": "Error code: 401 - {'error': {'code': '', 'message': 'Invalid token (request id: 202607081821251135659298268d9d69uVlxJPP)', 'type': 'proxy_api_error'}}",
+  "artifacts": {
+    "report": "data\\reports\\literary_l2a2_generality_wh_ch1_api_shopaikey\\m1_report.json"
+  },
+  "stop": "M1 did not complete; resolve transport/quota before retry."
+}

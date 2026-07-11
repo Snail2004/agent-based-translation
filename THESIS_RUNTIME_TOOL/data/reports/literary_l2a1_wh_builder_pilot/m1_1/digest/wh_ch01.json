@@ -1,0 +1,317 @@
+{
+  "mode": "literary_digest_v1",
+  "window_id": "wh_ch01",
+  "chapter_id": "wh_ch01",
+  "block_ids": [
+    "wh_ch01_b001",
+    "wh_ch01_b002",
+    "wh_ch01_b003",
+    "wh_ch01_b004",
+    "wh_ch01_b005",
+    "wh_ch01_b006",
+    "wh_ch01_b007",
+    "wh_ch01_b008",
+    "wh_ch01_b009",
+    "wh_ch01_b010",
+    "wh_ch01_b011",
+    "wh_ch01_b012",
+    "wh_ch01_b013",
+    "wh_ch01_b014",
+    "wh_ch01_b015",
+    "wh_ch01_b016",
+    "wh_ch01_b017",
+    "wh_ch01_b018",
+    "wh_ch01_b019",
+    "wh_ch01_b020",
+    "wh_ch01_b021",
+    "wh_ch01_b022",
+    "wh_ch01_b023",
+    "wh_ch01_b024",
+    "wh_ch01_b025",
+    "wh_ch01_b026",
+    "wh_ch01_b027",
+    "wh_ch01_b028"
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "- Prompt version: literary_digest_v1.\n- Return only valid JSON matching the Required JSON shape. No text outside JSON.\n- narration_frame_segments: split the chapter into CONTIGUOUS block ranges by WHO narrates. This book switches narrator MID-chapter — do not assume one narrator per chapter. story_time_label is one of: frame_present, retrospective_past, embedded_flashback.\n- Do NOT finalize relationship phases and do NOT output valid_from/to intervals. For relations, only aggregate this chapter's observed events per pair; if the text clearly shows a turning point, note a candidate_transition with a trigger block. Every relation_event_summary row has status \"evidence_only\".\n- relation_event_summary.observed_valence_hint is one of: positive, negative, mixed, unclear. It is an EVENT summary, NOT a phase label and NOT a trigger on its own — consolidation still needs event evidence to open a phase.\n- character_state_changes: only changes VISIBLE in this chapter to a character's social_status, alias_or_title, life_status, or residence — each with trigger_block and evidence_quote. observed_scope is \"this_chapter\".\n- unresolved_threads: open questions or pending turning points the chapter raises but does not resolve. kind is one of: mystery, pending_transition, question. Include opened_block.\n- translator_relevant_facts: a curated list, MAX 8 per chapter, of facts a translator needs to render THIS chapter correctly. Not every motif — only what changes how text is rendered. Each has fact_type one of: narrator, register, speech_style, status, setting; and block_evidence.\n- motifs: recurring images/themes, each with block_ids.\n- Prefer entity_id references (ent_*) from CHAPTER_ROSTER where available; else a clean surface. Every block reference MUST be COPIED VERBATIM from the [brackets] in the chapter text (they look like wh_ch04_b012) — never abbreviate or drop the prefix.\n\nRequired JSON shape:\n{\n  \"chapter_id\": \"ch04\",\n  \"chapter_rolling_summary\": \"<=150 English words, for the next chapter's context\",\n  \"narration_frame_segments\": [\n    {\"narrator_ref\": \"ent_lockwood\", \"block_range\": [\"wh_ch04_b001\", \"wh_ch04_b004\"], \"story_time_label\": \"frame_present\"},\n    {\"narrator_ref\": \"ent_nelly\", \"block_range\": [\"wh_ch04_b005\", \"wh_ch04_b040\"], \"story_time_label\": \"retrospective_past\"}\n  ],\n  \"scene_summaries\": [\n    {\"scene_id\": \"s_ch04_01\", \"block_range\": [\"wh_ch04_b005\", \"wh_ch04_b018\"], \"summary\": \"...\", \"key_participants\": [\"ent_earnshaw\", \"ent_heathcliff\", \"ent_hindley\"]}\n  ],\n  \"character_state_changes\": [\n    {\"entity_ref\": \"ent_heathcliff\", \"attribute\": \"social_status\", \"from\": \"orphan_outsider\", \"to\": \"taken_into_household\", \"trigger_block\": \"wh_ch04_b012\", \"evidence_quote\": \"you must e'en take it as a gift of God\", \"observed_scope\": \"this_chapter\"}\n  ],\n  \"relation_event_summary\": [\n    {\"pair\": [\"ent_hindley\", \"ent_heathcliff\"], \"observed_valence_hint\": \"negative\", \"event_ids\": [\"e_wh_ch04_b014_01\"], \"candidate_transition\": {\"trigger_block\": \"wh_ch04_b012\", \"note\": \"arrival sparks Hindley's jealousy\"}, \"status\": \"evidence_only\"}\n  ],\n  \"unresolved_threads\": [\n    {\"thread_id\": \"th_ch04_01\", \"description\": \"Heathcliff's origin and real name unknown\", \"opened_block\": \"wh_ch04_b010\", \"kind\": \"mystery\"},\n    {\"thread_id\": \"th_ch04_02\", \"description\": \"Hindley's resentment likely to escalate\", \"opened_block\": \"wh_ch04_b016\", \"kind\": \"pending_transition\", \"pair\": [\"ent_hindley\", \"ent_heathcliff\"]}\n  ],\n  \"motifs\": [{\"note\": \"the intruder disrupting the household\", \"block_ids\": [\"wh_ch04_b012\"]}],\n  \"translator_relevant_facts\": [\n    {\"fact_type\": \"narrator\", \"fact\": \"Nelly narrates in past tense, addressing Lockwood; her stance to Heathcliff is ambivalent\", \"block_evidence\": [\"wh_ch04_b005\"]},\n    {\"fact_type\": \"register\", \"fact\": \"Mr. Earnshaw uses an affectionate/paternal register to the child\", \"block_evidence\": [\"wh_ch04_b012\"]}\n  ]\n}"
+    },
+    {
+      "role": "user",
+      "content": "PREVIOUS_CHAPTER_ROLLING_SUMMARY\n(none)\n\nCHAPTER_ROSTER\nent_hareton_earnshaw | Hareton Earnshaw | Hareton Earnshaw\nent_heathcliff | Heathcliff | Heathcliff\nent_joseph | Joseph | Joseph\nent_mr_heathcliff | Mr. Heathcliff | Mr. Heathcliff\nent_mr_lockwood | Mr. Lockwood | Mr. Lockwood\n\nCHAPTER_RELATION_EVENTS\nent_mr_lockwood -> Mr. Heathcliff | addresses | wh_ch01_b003 | e_wh_ch01_b004_01 | “Mr. Heathcliff?” I said.\nent_mr_heathcliff -> Mr. Lockwood | interrupts | wh_ch01_b006 | e_wh_ch01_b006_01 | “Thrushcross Grange is my own, sir,” he interrupted\nent_mr_heathcliff -> Joseph | orders | wh_ch01_b008 | e_wh_ch01_b008_01 | “Joseph, take Mr. Lockwood’s horse;\nJoseph -> Mr. Lockwood | exclaims | wh_ch01_b010 | e_wh_ch01_b010_01 | The Lord help us!\nJoseph -> Mr. Lockwood | relieves | wh_ch01_b010 | e_wh_ch01_b010_02 | while relieving me of my horse\nMr. Heathcliff -> a country squire | contrasts | wh_ch01_b014 | e_wh_ch01_b014_01 | Mr. Heathcliff forms a singular contrast\nMr. Heathcliff -> my dear mother | mentions | wh_ch01_b014 | e_wh_ch01_b014_02 | my dear mother used to say\nI -> the canine mother | caresses | wh_ch01_b017 | e_wh_ch01_b017_01 | attempting to caress the canine mother\nMr. Heathcliff -> the dog | orders | wh_ch01_b018 | e_wh_ch01_b018_01 | You’d better let the dog alone\nMr. Heathcliff -> Joseph | addresses | wh_ch01_b018 | e_wh_ch01_b018_02 | he shouted again, “Joseph!”\nJoseph -> ent_mr_heathcliff | descends | wh_ch01_b019 | e_wh_ch01_b019_01 | his master dived down to him\na lusty dame -> the dogs | swings | wh_ch01_b020 | e_wh_ch01_b020_01 | rushed into the midst of us flourishing a frying-pan\nent_mr_heathcliff -> Mr. Lockwood | offers | wh_ch01_b027 | e_wh_ch01_b027_01 | Here, take a little wine\n\nCHAPTER_ID\nwh_ch01\n\nFULL_CHAPTER_TEXT_WITH_BLOCK_MARKERS\n[wh_ch01_b001] CHAPTER I\n[wh_ch01_b002] 1801—I have just returned from a visit to my landlord—the solitary neighbour that I shall be troubled with. This is certainly a beautiful country! In all England, I do not believe that I could have fixed on a situation so completely removed from the stir of society. A perfect misanthropist’s Heaven—and Mr. Heathcliff and I are such a suitable pair to divide the desolation between us. A capital fellow! He little imagined how my heart warmed towards him when I beheld his black eyes withdraw so suspiciously under their brows, as I rode up, and when his fingers sheltered themselves, with a jealous resolution, still further in his waistcoat, as I announced my name.\n[wh_ch01_b003] “Mr. Heathcliff?” I said.\n[wh_ch01_b004] A nod was the answer.\n[wh_ch01_b005] “Mr. Lockwood, your new tenant, sir. I do myself the honour of calling as soon as possible after my arrival, to express the hope that I have not inconvenienced you by my perseverance in soliciting the occupation of Thrushcross Grange: I heard yesterday you had had some thoughts—”\n[wh_ch01_b006] “Thrushcross Grange is my own, sir,” he interrupted, wincing. “I should not allow any one to inconvenience me, if I could hinder it—walk in!”\n[wh_ch01_b007] The “walk in” was uttered with closed teeth, and expressed the sentiment, “Go to the Deuce!” even the gate over which he leant manifested no sympathising movement to the words; and I think that circumstance determined me to accept the invitation: I felt interested in a man who seemed more exaggeratedly reserved than myself.\n[wh_ch01_b008] When he saw my horse’s breast fairly pushing the barrier, he did put out his hand to unchain it, and then sullenly preceded me up the causeway, calling, as we entered the court,—“Joseph, take Mr. Lockwood’s horse; and bring up some wine.”\n[wh_ch01_b009] “Here we have the whole establishment of domestics, I suppose,” was the reflection suggested by this compound order. “No wonder the grass grows up between the flags, and cattle are the only hedge-cutters.”\n[wh_ch01_b010] Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy. “The Lord help us!” he soliloquised in an undertone of peevish displeasure, while relieving me of my horse: looking, meantime, in my face so sourly that I charitably conjectured he must have need of divine aid to digest his dinner, and his pious ejaculation had no reference to my unexpected advent.\n[wh_ch01_b011] Wuthering Heights is the name of Mr. Heathcliff’s dwelling. “Wuthering” being a significant provincial adjective, descriptive of the atmospheric tumult to which its station is exposed in stormy weather. Pure, bracing ventilation they must have up there at all times, indeed: one may guess the power of the north wind, blowing over the edge, by the excessive slant of a few stunted firs at the end of the house; and by a range of gaunt thorns all stretching their limbs one way, as if craving alms of the sun. Happily, the architect had foresight to build it strong: the narrow windows are deeply set in the wall, and the corners defended with large jutting stones.\n[wh_ch01_b012] Before passing the threshold, I paused to admire a quantity of grotesque carving lavished over the front, and especially about the principal door; above which, among a wilderness of crumbling griffins and shameless little boys, I detected the date “1500,” and the name “Hareton Earnshaw.” I would have made a few comments, and requested a short history of the place from the surly owner; but his attitude at the door appeared to demand my speedy entrance, or complete departure, and I had no desire to aggravate his impatience previous to inspecting the penetralium.\n[wh_ch01_b013] One step brought us into the family sitting-room, without any introductory lobby or passage: they call it here “the house” pre-eminently. It includes kitchen and parlour, generally; but I believe at Wuthering Heights the kitchen is forced to retreat altogether into another quarter: at least I distinguished a chatter of tongues, and a clatter of culinary utensils, deep within; and I observed no signs of roasting, boiling, or baking, about the huge fireplace; nor any glitter of copper saucepans and tin cullenders on the walls. One end, indeed, reflected splendidly both light and heat from ranks of immense pewter dishes, interspersed with silver jugs and tankards, towering row after row, on a vast oak dresser, to the very roof. The latter had never been under-drawn: its entire anatomy lay bare to an inquiring eye, except where a frame of wood laden with oatcakes and clusters of legs of beef, mutton, and ham, concealed it. Above the chimney were sundry villainous old guns, and a couple of horse-pistols: and, by way of ornament, three gaudily painted canisters disposed along its ledge. The floor was of smooth, white stone; the chairs, high-backed, primitive structures, painted green: one or two heavy black ones lurking in the shade. In an arch under the dresser reposed a huge, liver-coloured bitch pointer, surrounded by a swarm of squealing puppies; and other dogs haunted other recesses.\n[wh_ch01_b014] The apartment and furniture would have been nothing extraordinary as belonging to a homely, northern farmer, with a stubborn countenance, and stalwart limbs set out to advantage in knee-breeches and gaiters. Such an individual seated in his arm-chair, his mug of ale frothing on the round table before him, is to be seen in any circuit of five or six miles among these hills, if you go at the right time after dinner. But Mr. Heathcliff forms a singular contrast to his abode and style of living. He is a dark-skinned gipsy in aspect, in dress and manners a gentleman: that is, as much a gentleman as many a country squire: rather slovenly, perhaps, yet not looking amiss with his negligence, because he has an erect and handsome figure; and rather morose. Possibly, some people might suspect him of a degree of under-bred pride; I have a sympathetic chord within that tells me it is nothing of the sort: I know, by instinct, his reserve springs from an aversion to showy displays of feeling—to manifestations of mutual kindliness. He’ll love and hate equally under cover, and esteem it a species of impertinence to be loved or hated again. No, I’m running on too fast: I bestow my own attributes over-liberally on him. Mr. Heathcliff may have entirely dissimilar reasons for keeping his hand out of the way when he meets a would-be acquaintance, to those which actuate me. Let me hope my constitution is almost peculiar: my dear mother used to say I should never have a comfortable home; and only last summer I proved myself perfectly unworthy of one.\n[wh_ch01_b015] While enjoying a month of fine weather at the sea-coast, I was thrown into the company of a most fascinating creature: a real goddess in my eyes, as long as she took no notice of me. I “never told my love” vocally; still, if looks have language, the merest idiot might have guessed I was over head and ears: she understood me at last, and looked a return—the sweetest of all imaginable looks. And what did I do? I confess it with shame—shrunk icily into myself, like a snail; at every glance retired colder and farther; till finally the poor innocent was led to doubt her own senses, and, overwhelmed with confusion at her supposed mistake, persuaded her mamma to decamp.\n[wh_ch01_b016] By this curious turn of disposition I have gained the reputation of deliberate heartlessness; how undeserved, I alone can appreciate.\n[wh_ch01_b017] I took a seat at the end of the hearthstone opposite that towards which my landlord advanced, and filled up an interval of silence by attempting to caress the canine mother, who had left her nursery, and was sneaking wolfishly to the back of my legs, her lip curled up, and her white teeth watering for a snatch. My caress provoked a long, guttural gnarl.\n[wh_ch01_b018] “You’d better let the dog alone,” growled Mr. Heathcliff in unison, checking fiercer demonstrations with a punch of his foot. “She’s not accustomed to be spoiled—not kept for a pet.” Then, striding to a side door, he shouted again, “Joseph!”\n[wh_ch01_b019] Joseph mumbled indistinctly in the depths of the cellar, but gave no intimation of ascending; so his master dived down to him, leaving me vis-à-vis the ruffianly bitch and a pair of grim shaggy sheep-dogs, who shared with her a jealous guardianship over all my movements. Not anxious to come in contact with their fangs, I sat still; but, imagining they would scarcely understand tacit insults, I unfortunately indulged in winking and making faces at the trio, and some turn of my physiognomy so irritated madam, that she suddenly broke into a fury and leapt on my knees. I flung her back, and hastened to interpose the table between us. This proceeding aroused the whole hive: half-a-dozen four-footed fiends, of various sizes and ages, issued from hidden dens to the common centre. I felt my heels and coat-laps peculiar subjects of assault; and parrying off the larger combatants as effectually as I could with the poker, I was constrained to demand, aloud, assistance from some of the household in re-establishing peace.\n[wh_ch01_b020] Mr. Heathcliff and his man climbed the cellar steps with vexatious phlegm: I don’t think they moved one second faster than usual, though the hearth was an absolute tempest of worrying and yelping. Happily, an inhabitant of the kitchen made more dispatch; a lusty dame, with tucked-up gown, bare arms, and fire-flushed cheeks, rushed into the midst of us flourishing a frying-pan: and used that weapon, and her tongue, to such purpose, that the storm subsided magically, and she only remained, heaving like a sea after a high wind, when her master entered on the scene.\n[wh_ch01_b021] “What the devil is the matter?” he asked, eyeing me in a manner that I could ill endure after this inhospitable treatment.\n[wh_ch01_b022] “What the devil, indeed!” I muttered. “The herd of possessed swine could have had no worse spirits in them than those animals of yours, sir. You might as well leave a stranger with a brood of tigers!”\n[wh_ch01_b023] “They won’t meddle with persons who touch nothing,” he remarked, putting the bottle before me, and restoring the displaced table. “The dogs do right to be vigilant. Take a glass of wine?”\n[wh_ch01_b024] “No, thank you.”\n[wh_ch01_b025] “Not bitten, are you?”\n[wh_ch01_b026] “If I had been, I would have set my signet on the biter.” Heathcliff’s countenance relaxed into a grin.\n[wh_ch01_b027] “Come, come,” he said, “you are flurried, Mr. Lockwood. Here, take a little wine. Guests are so exceedingly rare in this house that I and my dogs, I am willing to own, hardly know how to receive them. Your health, sir?”\n[wh_ch01_b028] I bowed and returned the pledge; beginning to perceive that it would be foolish to sit sulking for the misbehaviour of a pack of curs; besides, I felt loth to yield the fellow further amusement at my expense; since his humour took that turn. He—probably swayed by prudential consideration of the folly of offending a good tenant—relaxed a little in the laconic style of chipping off his pronouns and auxiliary verbs, and introduced what he supposed would be a subject of interest to me,—a discourse on the advantages and disadvantages of my present place of retirement. I found him very intelligent on the topics we touched; and before I went home, I was encouraged so far as to volunteer another visit to-morrow. He evidently wished no repetition of my intrusion. I shall go, notwithstanding. It is astonishing how sociable I feel myself compared with him."
+    }
+  ],
+  "parsed_json": {
+    "chapter_id": "wh_ch01",
+    "chapter_rolling_summary": "Lockwood visits his landlord Heathcliff at Wuthering Heights and is struck by the house’s isolation, the harsh household, and Heathcliff’s reserved, suspicious manner. After a tense first reception, the dogs attack Lockwood, Joseph and a kitchen servant restore order, and Heathcliff eventually softens enough to offer wine and conversation. Lockwood leaves intrigued, deciding to visit again despite Heathcliff’s obvious dislike of company.",
+    "narration_frame_segments": [
+      {
+        "narrator_ref": "ent_mr_lockwood",
+        "block_range": [
+          "wh_ch01_b001",
+          "wh_ch01_b028"
+        ],
+        "story_time_label": "frame_present"
+      }
+    ],
+    "scene_summaries": [
+      {
+        "scene_id": "s_ch01_01",
+        "block_range": [
+          "wh_ch01_b002",
+          "wh_ch01_b014"
+        ],
+        "summary": "Lockwood arrives at Wuthering Heights, meets Heathcliff, and observes the house, servants, and its severe atmosphere. He notes Heathcliff’s odd mix of gentlemanly appearance and morose reserve.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_mr_heathcliff",
+          "ent_joseph"
+        ]
+      },
+      {
+        "scene_id": "s_ch01_02",
+        "block_range": [
+          "wh_ch01_b015",
+          "wh_ch01_b028"
+        ],
+        "summary": "Lockwood reflects on his own awkwardness, then gets into trouble with the dogs. Heathcliff, Joseph, and a kitchen servant intervene, and Heathcliff ends by offering wine and a grudging civility before Lockwood departs interested enough to return.",
+        "key_participants": [
+          "ent_mr_lockwood",
+          "ent_mr_heathcliff",
+          "ent_joseph"
+        ]
+      }
+    ],
+    "character_state_changes": [
+      {
+        "entity_ref": "ent_mr_lockwood",
+        "attribute": "residence",
+        "from": "new_arrival_at_thrushcross_grange",
+        "to": "visiting_wuthering_heights",
+        "trigger_block": "wh_ch01_b002",
+        "evidence_quote": "I have just returned from a visit to my landlord",
+        "observed_scope": "this_chapter"
+      }
+    ],
+    "relation_event_summary": [
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_mr_heathcliff"
+        ],
+        "observed_valence_hint": "mixed",
+        "event_ids": [
+          "e_wh_ch01_b004_01",
+          "e_wh_ch01_b006_01",
+          "e_wh_ch01_b014_01",
+          "e_wh_ch01_b027_01"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_joseph"
+        ],
+        "observed_valence_hint": "unclear",
+        "event_ids": [
+          "e_wh_ch01_b008_01",
+          "e_wh_ch01_b018_02"
+        ],
+        "status": "evidence_only"
+      },
+      {
+        "pair": [
+          "ent_joseph",
+          "ent_mr_lockwood"
+        ],
+        "observed_valence_hint": "negative",
+        "event_ids": [
+          "e_wh_ch01_b010_01",
+          "e_wh_ch01_b010_02"
+        ],
+        "status": "evidence_only"
+      }
+    ],
+    "unresolved_threads": [
+      {
+        "thread_id": "th_ch01_01",
+        "description": "Why Heathcliff is so guarded and hostile to visitors remains unclear",
+        "opened_block": "wh_ch01_b006",
+        "kind": "mystery"
+      },
+      {
+        "thread_id": "th_ch01_02",
+        "description": "The household’s internal hierarchy and the servants' loyalties are not yet explained",
+        "opened_block": "wh_ch01_b013",
+        "kind": "question"
+      }
+    ],
+    "motifs": [
+      {
+        "note": "isolation and distance from society",
+        "block_ids": [
+          "wh_ch01_b002",
+          "wh_ch01_b011"
+        ]
+      },
+      {
+        "note": "dogs as guardians and threats to hospitality",
+        "block_ids": [
+          "wh_ch01_b013",
+          "wh_ch01_b018",
+          "wh_ch01_b019"
+        ]
+      },
+      {
+        "note": "reserved or obstructed speech",
+        "block_ids": [
+          "wh_ch01_b006",
+          "wh_ch01_b007",
+          "wh_ch01_b028"
+        ]
+      }
+    ],
+    "translator_relevant_facts": [
+      {
+        "fact_type": "narrator",
+        "fact": "Lockwood narrates in first person, with ironic self-regard and evaluative commentary",
+        "block_evidence": [
+          "wh_ch01_b002",
+          "wh_ch01_b028"
+        ]
+      },
+      {
+        "fact_type": "setting",
+        "fact": "Wuthering Heights is explained as a windswept, isolated house on a hill exposed to storms",
+        "block_evidence": [
+          "wh_ch01_b011"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Mr. Heathcliff is the landlord and owner of Thrushcross Grange in Lockwood's account",
+        "block_evidence": [
+          "wh_ch01_b006"
+        ]
+      },
+      {
+        "fact_type": "register",
+        "fact": "Heathcliff speaks in clipped, curt, only lightly polite forms",
+        "block_evidence": [
+          "wh_ch01_b006",
+          "wh_ch01_b023",
+          "wh_ch01_b027"
+        ]
+      },
+      {
+        "fact_type": "speech_style",
+        "fact": "Lockwood’s speech is ceremonious and overly formal when introducing himself",
+        "block_evidence": [
+          "wh_ch01_b005"
+        ]
+      },
+      {
+        "fact_type": "status",
+        "fact": "Joseph is an elderly servant who handles horses and obeys orders from Heathcliff",
+        "block_evidence": [
+          "wh_ch01_b008",
+          "wh_ch01_b010"
+        ]
+      }
+    ]
+  },
+  "json_error": null,
+  "validation": {
+    "name": "digest",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "frame_segments": 1,
+      "scenes": 2,
+      "state_changes": 1,
+      "unresolved_mystery": 1,
+      "unresolved_pending_transition": 0,
+      "unresolved_question": 1,
+      "translator_facts": 6,
+      "motifs": 3
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "03f163c9ab8a120c10ff866c67aac56fd5146cc5cf37ee748ed080a92498c855",
+      "latency_ms": 8736,
+      "cost_usd": 0.00315775,
+      "usage": {
+        "prompt_tokens": 4335,
+        "cached_tokens": 0,
+        "completion_tokens": 1037,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "digest",
+        "ok": false,
+        "errors": [
+          "narration_frame_segments[0] starts at wh_ch01_b002, expected wh_ch01_b001"
+        ],
+        "warnings": [],
+        "counts": {
+          "frame_segments": 1,
+          "scenes": 2,
+          "state_changes": 1,
+          "unresolved_mystery": 1,
+          "unresolved_pending_transition": 0,
+          "unresolved_question": 1,
+          "translator_facts": 6,
+          "motifs": 3
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch01\",\"chapter_rolling_summary\":\"Lockwood visits his landlord Heathcliff at Wuthering Heights and is struck by the house’s isolation, the harsh household, and Heathcliff’s reserved, suspicious manner. After a tense first reception, the dogs attack Lockwood, Joseph and a kitchen servant restore order, and Heathcliff eventually softens enough to offer wine and conversation. Lockwood leaves intrigued, deciding to visit again despite Heathcliff’s obvious dislike of company.\",\"narration_frame_segments\":[{\"narrator_ref\":\"ent_mr_lockwood\",\"block_range\":[\"wh_ch01_b002\",\"wh_ch01_b028\"],\"story_time_label\":\"frame_present\"}],\"scene_summaries\":[{\"scene_id\":\"s_ch01_01\",\"block_range\":[\"wh_ch01_b002\",\"wh_ch01_b014\"],\"summary\":\"Lockwood arrives at Wuthering Heights, meets Heathcliff, and observes the house, servants, and its severe atmosphere. He notes Heathcliff’s odd mix of gentlemanly appearance and morose reserve.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_mr_heathcliff\",\"ent_joseph\"]},{\"scene_id\":\"s_ch01_02\",\"block_range\":[\"wh_ch01_b015\",\"wh_ch01_b028\"],\"summary\":\"Lockwood reflects on his own awkwardness, then gets into trouble with the dogs. Heathcliff, Joseph, and a kitchen servant intervene, and Heathcliff ends by offering wine and a grudging civility before Lockwood departs interested enough to return.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_mr_heathcliff\",\"ent_joseph\"]}],\"character_state_changes\":[{\"entity_ref\":\"ent_mr_lockwood\",\"attribute\":\"residence\",\"from\":\"new_arrival_at_thrushcross_grange\",\"to\":\"visiting_wuthering_heights\",\"trigger_block\":\"wh_ch01_b002\",\"evidence_quote\":\"I have just returned from a visit to my landlord\",\"observed_scope\":\"this_chapter\"}],\"relation_event_summary\":[{\"pair\":[\"ent_mr_lockwood\",\"ent_mr_heathcliff\"],\"observed_valence_hint\":\"mixed\",\"event_ids\":[\"e_wh_ch01_b004_01\",\"e_wh_ch01_b006_01\",\"e_wh_ch01_b014_01\",\"e_wh_ch01_b027_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_joseph\"],\"observed_valence_hint\":\"unclear\",\"event_ids\":[\"e_wh_ch01_b008_01\",\"e_wh_ch01_b018_02\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_joseph\",\"ent_mr_lockwood\"],\"observed_valence_hint\":\"negative\",\"event_ids\":[\"e_wh_ch01_b010_01\",\"e_wh_ch01_b010_02\"],\"status\":\"evidence_only\"}],\"unresolved_threads\":[{\"thread_id\":\"th_ch01_01\",\"description\":\"Why Heathcliff is so guarded and hostile to visitors remains unclear\",\"opened_block\":\"wh_ch01_b006\",\"kind\":\"mystery\"},{\"thread_id\":\"th_ch01_02\",\"description\":\"The household’s internal hierarchy and the servants' loyalties are not yet explained\",\"opened_block\":\"wh_ch01_b013\",\"kind\":\"question\"}],\"motifs\":[{\"note\":\"isolation and distance from society\",\"block_ids\":[\"wh_ch01_b002\",\"wh_ch01_b011\"]},{\"note\":\"dogs as guardians and threats to hospitality\",\"block_ids\":[\"wh_ch01_b013\",\"wh_ch01_b018\",\"wh_ch01_b019\"]},{\"note\":\"reserved or obstructed speech\",\"block_ids\":[\"wh_ch01_b006\",\"wh_ch01_b007\",\"wh_ch01_b028\"]}],\"translator_relevant_facts\":[{\"fact_type\":\"narrator\",\"fact\":\"Lockwood narrates in first person, with ironic self-regard and evaluative commentary\",\"block_evidence\":[\"wh_ch01_b002\",\"wh_ch01_b028\"]},{\"fact_type\":\"setting\",\"fact\":\"Wuthering Heights is explained as a windswept, isolated house on a hill exposed to storms\",\"block_evidence\":[\"wh_ch01_b011\"]},{\"fact_type\":\"status\",\"fact\":\"Mr. Heathcliff is the landlord and owner of Thrushcross Grange in Lockwood's account\",\"block_evidence\":[\"wh_ch01_b006\"]},{\"fact_type\":\"register\",\"fact\":\"Heathcliff speaks in clipped, curt, only lightly polite forms\",\"block_evidence\":[\"wh_ch01_b006\",\"wh_ch01_b023\",\"wh_ch01_b027\"]},{\"fact_type\":\"speech_style\",\"fact\":\"Lockwood’s speech is ceremonious and overly formal when introducing himself\",\"block_evidence\":[\"wh_ch01_b005\"]},{\"fact_type\":\"status\",\"fact\":\"Joseph is an elderly servant who handles horses and obeys orders from Heathcliff\",\"block_evidence\":[\"wh_ch01_b008\",\"wh_ch01_b010\"]}]}"
+    },
+    {
+      "attempt": 2,
+      "model": "gpt-5.4-mini",
+      "system_fingerprint": null,
+      "from_cache": false,
+      "cache_key": "d7ad1d6453370dd60cad2d30b7ddf309180f0ba798f5e96c115dee4b5a43b98b",
+      "latency_ms": 5421,
+      "cost_usd": 0.00256425,
+      "usage": {
+        "prompt_tokens": 5417,
+        "cached_tokens": 3840,
+        "completion_tokens": 1037,
+        "reasoning_tokens": 0
+      },
+      "json_error": null,
+      "validation": {
+        "name": "digest",
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "frame_segments": 1,
+          "scenes": 2,
+          "state_changes": 1,
+          "unresolved_mystery": 1,
+          "unresolved_pending_transition": 0,
+          "unresolved_question": 1,
+          "translator_facts": 6,
+          "motifs": 3
+        }
+      },
+      "raw_text": "{\"chapter_id\":\"wh_ch01\",\"chapter_rolling_summary\":\"Lockwood visits his landlord Heathcliff at Wuthering Heights and is struck by the house’s isolation, the harsh household, and Heathcliff’s reserved, suspicious manner. After a tense first reception, the dogs attack Lockwood, Joseph and a kitchen servant restore order, and Heathcliff eventually softens enough to offer wine and conversation. Lockwood leaves intrigued, deciding to visit again despite Heathcliff’s obvious dislike of company.\",\"narration_frame_segments\":[{\"narrator_ref\":\"ent_mr_lockwood\",\"block_range\":[\"wh_ch01_b001\",\"wh_ch01_b028\"],\"story_time_label\":\"frame_present\"}],\"scene_summaries\":[{\"scene_id\":\"s_ch01_01\",\"block_range\":[\"wh_ch01_b002\",\"wh_ch01_b014\"],\"summary\":\"Lockwood arrives at Wuthering Heights, meets Heathcliff, and observes the house, servants, and its severe atmosphere. He notes Heathcliff’s odd mix of gentlemanly appearance and morose reserve.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_mr_heathcliff\",\"ent_joseph\"]},{\"scene_id\":\"s_ch01_02\",\"block_range\":[\"wh_ch01_b015\",\"wh_ch01_b028\"],\"summary\":\"Lockwood reflects on his own awkwardness, then gets into trouble with the dogs. Heathcliff, Joseph, and a kitchen servant intervene, and Heathcliff ends by offering wine and a grudging civility before Lockwood departs interested enough to return.\",\"key_participants\":[\"ent_mr_lockwood\",\"ent_mr_heathcliff\",\"ent_joseph\"]}],\"character_state_changes\":[{\"entity_ref\":\"ent_mr_lockwood\",\"attribute\":\"residence\",\"from\":\"new_arrival_at_thrushcross_grange\",\"to\":\"visiting_wuthering_heights\",\"trigger_block\":\"wh_ch01_b002\",\"evidence_quote\":\"I have just returned from a visit to my landlord\",\"observed_scope\":\"this_chapter\"}],\"relation_event_summary\":[{\"pair\":[\"ent_mr_lockwood\",\"ent_mr_heathcliff\"],\"observed_valence_hint\":\"mixed\",\"event_ids\":[\"e_wh_ch01_b004_01\",\"e_wh_ch01_b006_01\",\"e_wh_ch01_b014_01\",\"e_wh_ch01_b027_01\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_joseph\"],\"observed_valence_hint\":\"unclear\",\"event_ids\":[\"e_wh_ch01_b008_01\",\"e_wh_ch01_b018_02\"],\"status\":\"evidence_only\"},{\"pair\":[\"ent_joseph\",\"ent_mr_lockwood\"],\"observed_valence_hint\":\"negative\",\"event_ids\":[\"e_wh_ch01_b010_01\",\"e_wh_ch01_b010_02\"],\"status\":\"evidence_only\"}],\"unresolved_threads\":[{\"thread_id\":\"th_ch01_01\",\"description\":\"Why Heathcliff is so guarded and hostile to visitors remains unclear\",\"opened_block\":\"wh_ch01_b006\",\"kind\":\"mystery\"},{\"thread_id\":\"th_ch01_02\",\"description\":\"The household’s internal hierarchy and the servants' loyalties are not yet explained\",\"opened_block\":\"wh_ch01_b013\",\"kind\":\"question\"}],\"motifs\":[{\"note\":\"isolation and distance from society\",\"block_ids\":[\"wh_ch01_b002\",\"wh_ch01_b011\"]},{\"note\":\"dogs as guardians and threats to hospitality\",\"block_ids\":[\"wh_ch01_b013\",\"wh_ch01_b018\",\"wh_ch01_b019\"]},{\"note\":\"reserved or obstructed speech\",\"block_ids\":[\"wh_ch01_b006\",\"wh_ch01_b007\",\"wh_ch01_b028\"]}],\"translator_relevant_facts\":[{\"fact_type\":\"narrator\",\"fact\":\"Lockwood narrates in first person, with ironic self-regard and evaluative commentary\",\"block_evidence\":[\"wh_ch01_b002\",\"wh_ch01_b028\"]},{\"fact_type\":\"setting\",\"fact\":\"Wuthering Heights is explained as a windswept, isolated house on a hill exposed to storms\",\"block_evidence\":[\"wh_ch01_b011\"]},{\"fact_type\":\"status\",\"fact\":\"Mr. Heathcliff is the landlord and owner of Thrushcross Grange in Lockwood's account\",\"block_evidence\":[\"wh_ch01_b006\"]},{\"fact_type\":\"register\",\"fact\":\"Heathcliff speaks in clipped, curt, only lightly polite forms\",\"block_evidence\":[\"wh_ch01_b006\",\"wh_ch01_b023\",\"wh_ch01_b027\"]},{\"fact_type\":\"speech_style\",\"fact\":\"Lockwood’s speech is ceremonious and overly formal when introducing himself\",\"block_evidence\":[\"wh_ch01_b005\"]},{\"fact_type\":\"status\",\"fact\":\"Joseph is an elderly servant who handles horses and obeys orders from Heathcliff\",\"block_evidence\":[\"wh_ch01_b008\",\"wh_ch01_b010\"]}]}"
+    }
+  ],
+  "cost_usd": 0.005722,
+  "prompt_tokens": 9752,
+  "completion_tokens": 2074,
+  "reasoning_tokens": 0,
+  "cache_hits": 0
+}

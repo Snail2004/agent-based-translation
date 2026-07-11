@@ -1,0 +1,97 @@
+{
+  "phase": "L2A-1",
+  "milestone": "M2",
+  "status": "needs_claude_gate",
+  "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+  "m1_report": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\m1_report.json",
+  "model": "gpt-5.4-mini",
+  "chapters_requested": [
+    "1"
+  ],
+  "chapters_selected": [
+    "wh_ch01"
+  ],
+  "modes": [
+    "literary_digest_v1"
+  ],
+  "estimate": {
+    "phase": "L2A-1",
+    "milestone": "M2",
+    "zero_api": true,
+    "prompt_source": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\design\\LITERARY_PROMPT_DESIGN.md",
+    "m1_report": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\m1_report.json",
+    "chapters_requested": [
+      "1"
+    ],
+    "chapters_selected": [
+      "wh_ch01"
+    ],
+    "calls": 1,
+    "modes": [
+      "literary_digest_v1"
+    ],
+    "prompt_tokens_est": 4437,
+    "max_prompt_tokens_est": 4437,
+    "max_output_tokens_per_call": 6144,
+    "total_tokens_upper_bound": 10581,
+    "prompt_token_cap": 6000,
+    "cost_cap_usd": 0.01339725,
+    "call_estimates": [
+      {
+        "chapter_id": "wh_ch01",
+        "mode": "literary_digest_v1",
+        "prompt_tokens_est": 4437,
+        "max_output_tokens": 6144,
+        "relation_event_lines": 13
+      }
+    ],
+    "token_growth_halt": false
+  },
+  "actual": {
+    "calls": 2,
+    "cache_hits": 0,
+    "cost_usd": 0.005722,
+    "prompt_tokens": 9752,
+    "completion_tokens": 2074,
+    "reasoning_tokens": 0
+  },
+  "validation_counts": {
+    "digest_ok": 1,
+    "digest_failed": 0,
+    "parse_fail": 0,
+    "frame_segments": 1,
+    "scenes": 2,
+    "state_changes": 1,
+    "translator_facts": 6,
+    "motifs": 3
+  },
+  "call_records": [
+    {
+      "mode": "literary_digest_v1",
+      "window_id": "wh_ch01",
+      "ok": true,
+      "attempts": 2,
+      "cost_usd": 0.005722,
+      "prompt_tokens": 9752,
+      "completion_tokens": 2074,
+      "reasoning_tokens": 0,
+      "cache_hits": 0,
+      "errors": [],
+      "counts": {
+        "frame_segments": 1,
+        "scenes": 2,
+        "state_changes": 1,
+        "unresolved_mystery": 1,
+        "unresolved_pending_transition": 0,
+        "unresolved_question": 1,
+        "translator_facts": 6,
+        "motifs": 3
+      }
+    }
+  ],
+  "artifacts": {
+    "digest_dir": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\digest",
+    "report": "C:\\Users\\nguye\\OneDrive\\Tài liệu\\Baitap\\DuAnCNTT\\odl-pdf-demo\\research\\agent-based-translation\\THESIS_RUNTIME_TOOL\\data\\reports\\literary_l2a1_wh_builder_pilot\\m1_1\\m2_report.json"
+  },
+  "stop": "M2 complete. Claude must verify digest before M3."
+}

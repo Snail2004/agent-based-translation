@@ -1,0 +1,63 @@
+[
+  {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "turns": 1,
+      "events": 0,
+      "phase_leak": 0,
+      "address_term_present": 0,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 0,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 0
+    }
+  },
+  {
+    "name": "narrative",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "turns": 1,
+      "events": 0,
+      "phase_leak": 0,
+      "address_term_present": 1,
+      "context_only_used_true": 0,
+      "unknown_with_evidence": 0,
+      "unknown_empty": 0,
+      "nonperson_event_dropped": 0
+    }
+  },
+  {
+    "name": "story_bible",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {
+      "entities": 2,
+      "aliases_with_valid_range": 2,
+      "phases": 1,
+      "open_intervals": 1,
+      "entity_state_intervals": 1,
+      "address_policies_proposed": 1,
+      "address_dirs_unsupported": 1
+    }
+  },
+  {
+    "name": "fixture_group_not_person",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {}
+  },
+  {
+    "name": "fixture_vocative_specific_person",
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "counts": {}
+  }
+]
