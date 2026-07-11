@@ -1,6 +1,6 @@
 # TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev10, for Sol round 10)
 
-Status: **DRAFT rev10 — awaiting Sol round 10 (verify-only, near LOCK); then SSE9 audit (0-API) -> Canonical v1 -> LOCK. User confirmations recorded (whole_book_frozen + zero-human + data-grounded lock). Do NOT implement.**
+Status: **DRAFT rev10 — Sol APPROVED for E9 audit (7d25fa3); 5 round-10 clarifications folded into E9 contract; then SSE9 audit (0-API) -> Canonical v1 -> LOCK. User confirmations recorded (whole_book_frozen + zero-human + data-grounded lock). Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -632,3 +632,26 @@ Multiple matches or no confident match → `unmatched` / `ambiguous` buckets (ne
 2. Claude runs §E9 audit (0-API) → emits audit_coverage_manifest + classified defect table → Sol (2nd reviewer) + user review.
 3. `other_new_class` or an error class rev1–10 doesn't cover ⇒ evidence-based reopen; else §Z8 Canonical v1 rewrite.
 4. LOCK on Canonical v1 → prompt authoring → CodeX scaffold behind §T6 fixture + conformance tests.
+
+---
+
+# §E9 AUDIT CONTRACT — FINALIZED (2026-07-12, Sol APPROVE for §E9 audit at 7d25fa3; no architectural BLOCKER remains after 10 rounds). Five round-10 clarifications folded in below (NOT a rev11 — contract detail, per Sol). Goes verbatim into Canonical v1.
+
+**C1 (was M-oracle-signature):** every entity reference in an oracle key = `entity_oracle_signature` (occurrence_set + referent_kind + earliest-proper-name surface), NEVER a run-minted entity ID. Validator resolves identity oracle rows FIRST, then joins phase/fact rows through the resolved signatures. (Amends §M9 keys: phase = signature-pair + label + interval/frame; fact = signature-subject + predicate + signature-object + interval.)
+
+**C2 (was M-cache-recovery):** `recovered_from_cache` counts ONLY when the SQLite entry matches on FULL canonical request fingerprint + model/config + prompt hash + source scope. A bare cache hit is insufficient (the historical cache-key gap omitted cap/verbosity — a hit may be the wrong response). Insufficient evidence ⇒ `not_auditable`, never `recovered`.
+
+**C3 (was MINOR canonical_surface_guess):** `canonical_surface_guess` in §D8 is **advisory-only** — it does NOT participate in signature matching. entity_id depends only on occurrence_set + referent_kind agreement; display surface is chosen mechanically = earliest proper-name occurrence. Code never adopts a model's linguistic surface proposal to decide identity.
+
+**C4 (was MINOR dispute_claim_id):** model returns dispute TUPLES only; code canonicalizes and mints `dispute_claim_id = hash(tuple)`. Consistent with the code-owns-lineage / no-model-minted-id doctrine (§D7/§D8).
+
+**C5 (was MINOR coverage formula):** locked — `coverage = (found_verified + recovered_verified) / expected` per stage; `missing > 0` OR `not_auditable > 0` ⇒ the stage may NOT be labelled exhaustive. The coverage manifest MUST include a final `rendered_pack_lines` stage, not only M1–M3 / raw / drop.
+
+## §E9 execution design — TWO INDEPENDENT AUDITS (user-approved 2026-07-12)
+
+The verify gate is not delegated ([[codex-division-of-labor-and-relay]]: token-saving is on writing, not verifying). Instead, Claude and Sol each run an INDEPENDENT §E9 audit over the same ch1–4 artifacts at 7d25fa3, then reconcile:
+- **Agreement** on a defect + root_cause → high-confidence row, straight into the oracle/defect table.
+- **Disagreement / one-side-only** → that row is exactly where one auditor missed something; it gets joint scrutiny before classification.
+This is strictly stronger than a single pass and preserves the independence that surfaced 10 rounds of blockers. Claude runs script-first (mechanical walk auto-classifies clear cases; human-read tokens spent only on semantically ambiguous rows) to keep it 0-API and token-bounded.
+
+**Sequence to LOCK (Sol-approved):** (1) both run §E9 0-API; (2) Claude submits coverage manifest FIRST, then defect table; (3) Sol + Claude + user review non-obvious rows; (4) no `other_new_class` → write Canonical v1; (5) one consistency pass over Canonical v1 → LOCK. Claude holds until the user signals go.
