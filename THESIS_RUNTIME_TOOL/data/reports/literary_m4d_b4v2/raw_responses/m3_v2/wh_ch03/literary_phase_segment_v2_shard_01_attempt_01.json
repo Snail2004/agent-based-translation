@@ -1,0 +1,151 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch03",
+  "chapter_id": "wh_ch03",
+  "mode": "literary_phase_segment_v2",
+  "shard_index": 1,
+  "shard_count": 1,
+  "attempt_index": 1,
+  "tag": "lit_m3v2_wh_ch03_literary_phase_segment_v2_s01:attempt1",
+  "prompt_sha256": "1d8ba5e52f1b5caae6c8bde556e3aa68b27e4dbe602d82e6c10f5c2cd154e4f7",
+  "prompt_tokens_est": 11640,
+  "bypass_cache": false,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": false,
+  "cache_key": "9841df69501ddcc330f63e6150f4db683196c87a3385fa843d023ab52b04389b",
+  "latency_ms": 5260,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 8857,
+    "cached_tokens": 0,
+    "completion_tokens": 691,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"relation_phases\":[{\"pair\":[\"ent_catherine_earnshaw\",\"ent_mr_heathcliff\"],\"phase_label\":\"friendly\",\"valid_from_block\":\"wh_ch03_b018\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch03_b018\",\"trigger_evidence\":\"Poor Heathcliff!\"},{\"pair\":[\"ent_hindley\",\"ent_mr_heathcliff\"],\"phase_label\":\"hostile\",\"valid_from_block\":\"wh_ch03_b009\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch03_b009\",\"trigger_evidence\":\"his conduct to Heathcliff is atrocious\"},{\"pair\":[\"ent_joseph\",\"ent_mr_lockwood\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch01_b010\",\"valid_until_block\":\"wh_ch03_b021\",\"status\":\"closed\",\"trigger_block\":\"wh_ch01_b010\",\"trigger_evidence\":\"The Lord help us!\"},{\"pair\":[\"ent_joseph\",\"ent_mr_lockwood\"],\"phase_label\":\"hostile\",\"valid_from_block\":\"wh_ch03_b021\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch03_b021\",\"trigger_evidence\":\"flourishing a heavy-headed cudgel\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mr_lockwood\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch02_b030\",\"valid_until_block\":\"wh_ch03_b047\",\"status\":\"closed\",\"trigger_block\":\"wh_ch02_b030\",\"trigger_evidence\":\"I am come, according to promise\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mr_lockwood\"],\"phase_label\":\"hostile\",\"valid_from_block\":\"wh_ch03_b047\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch03_b047\",\"trigger_evidence\":\"God confound you, Mr. Lockwood\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mrs_heathcliff\"],\"phase_label\":\"hostile\",\"valid_from_block\":\"wh_ch02_b038\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch02_b038\",\"trigger_evidence\":\"Get it ready, will you?\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_that_minx\"],\"phase_label\":\"dependent\",\"valid_from_block\":\"wh_ch03_b057\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch03_b057\",\"trigger_evidence\":\"Come in! come in!\"}],\"relation_facts\":[{\"subject_ref\":\"ent_mr_heathcliff\",\"predicate_code\":\"father_in_law_of\",\"object_ref\":\"ent_mrs_heathcliff\",\"valid_from_block\":\"wh_ch02_b046\",\"evidence_block\":\"wh_ch02_b046\",\"evidence_quote\":\"Mrs. Heathcliff is my daughter-in-law\",\"predicate_note\":\"Heathcliff explicitly states she is his daughter-in-law.\"},{\"subject_ref\":\"ent_mrs_heathcliff\",\"predicate_code\":\"daughter_in_law_of\",\"object_ref\":\"ent_mr_heathcliff\",\"valid_from_block\":\"wh_ch02_b046\",\"evidence_block\":\"wh_ch02_b046\",\"evidence_quote\":\"Mrs. Heathcliff is my daughter-in-law\",\"predicate_note\":\"Explicitly stated by Heathcliff.\"}]}",
+  "parsed_json": {
+    "relation_phases": [
+      {
+        "pair": [
+          "ent_catherine_earnshaw",
+          "ent_mr_heathcliff"
+        ],
+        "phase_label": "friendly",
+        "valid_from_block": "wh_ch03_b018",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch03_b018",
+        "trigger_evidence": "Poor Heathcliff!"
+      },
+      {
+        "pair": [
+          "ent_hindley",
+          "ent_mr_heathcliff"
+        ],
+        "phase_label": "hostile",
+        "valid_from_block": "wh_ch03_b009",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch03_b009",
+        "trigger_evidence": "his conduct to Heathcliff is atrocious"
+      },
+      {
+        "pair": [
+          "ent_joseph",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch01_b010",
+        "valid_until_block": "wh_ch03_b021",
+        "status": "closed",
+        "trigger_block": "wh_ch01_b010",
+        "trigger_evidence": "The Lord help us!"
+      },
+      {
+        "pair": [
+          "ent_joseph",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "hostile",
+        "valid_from_block": "wh_ch03_b021",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch03_b021",
+        "trigger_evidence": "flourishing a heavy-headed cudgel"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch02_b030",
+        "valid_until_block": "wh_ch03_b047",
+        "status": "closed",
+        "trigger_block": "wh_ch02_b030",
+        "trigger_evidence": "I am come, according to promise"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "hostile",
+        "valid_from_block": "wh_ch03_b047",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch03_b047",
+        "trigger_evidence": "God confound you, Mr. Lockwood"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mrs_heathcliff"
+        ],
+        "phase_label": "hostile",
+        "valid_from_block": "wh_ch02_b038",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch02_b038",
+        "trigger_evidence": "Get it ready, will you?"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_that_minx"
+        ],
+        "phase_label": "dependent",
+        "valid_from_block": "wh_ch03_b057",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch03_b057",
+        "trigger_evidence": "Come in! come in!"
+      }
+    ],
+    "relation_facts": [
+      {
+        "subject_ref": "ent_mr_heathcliff",
+        "predicate_code": "father_in_law_of",
+        "object_ref": "ent_mrs_heathcliff",
+        "valid_from_block": "wh_ch02_b046",
+        "evidence_block": "wh_ch02_b046",
+        "evidence_quote": "Mrs. Heathcliff is my daughter-in-law",
+        "predicate_note": "Heathcliff explicitly states she is his daughter-in-law."
+      },
+      {
+        "subject_ref": "ent_mrs_heathcliff",
+        "predicate_code": "daughter_in_law_of",
+        "object_ref": "ent_mr_heathcliff",
+        "valid_from_block": "wh_ch02_b046",
+        "evidence_block": "wh_ch02_b046",
+        "evidence_quote": "Mrs. Heathcliff is my daughter-in-law",
+        "predicate_note": "Explicitly stated by Heathcliff."
+      }
+    ]
+  },
+  "technical_error": null,
+  "technical_failure_class": null
+}

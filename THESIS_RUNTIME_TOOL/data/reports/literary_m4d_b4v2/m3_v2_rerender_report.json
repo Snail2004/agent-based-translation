@@ -1,0 +1,47 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_rerender",
+  "zero_api": true,
+  "status": "rerendered",
+  "chapters_selected": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03"
+  ],
+  "scopes": [
+    {
+      "chapter_id": "wh_ch01",
+      "status": "rerendered",
+      "story_bible": "data\\reports\\literary_m4d_b4v2\\story_bible_v2\\wh_ch01_story_bible.json",
+      "checkpoint": "data\\reports\\literary_m4d_b4v2\\checkpoints\\m3_v2\\wh_ch01.json",
+      "previous_checkpoint_hash": "a415cf6a7221bf13e204c0442cf1c2457e9f081a82fe4d079b9f64d7ecb431c7",
+      "checkpoint_hash": "57300b4934e5072a36ec01c17eb75b8b9766764e3300386a6219559ef8013c68"
+    },
+    {
+      "chapter_id": "wh_ch02",
+      "status": "rerendered",
+      "story_bible": "data\\reports\\literary_m4d_b4v2\\story_bible_v2\\wh_ch02_story_bible.json",
+      "checkpoint": "data\\reports\\literary_m4d_b4v2\\checkpoints\\m3_v2\\wh_ch02.json",
+      "previous_checkpoint_hash": "d9000e51baaaaa3910895f33b9269f09ab3ff8cbba553a5640a2e36d52cc1453",
+      "checkpoint_hash": "268216f6802d579fc2290722dd9bb7e7c624ce13b51b2ac093f2e82434022066"
+    },
+    {
+      "chapter_id": "wh_ch03",
+      "status": "rerendered",
+      "story_bible": "data\\reports\\literary_m4d_b4v2\\story_bible_v2\\wh_ch03_story_bible.json",
+      "checkpoint": "data\\reports\\literary_m4d_b4v2\\checkpoints\\m3_v2\\wh_ch03.json",
+      "previous_checkpoint_hash": "d5a3f8225707956807fc0bd4c9fa732182f70bf5346cae08edbcf13023c40f26",
+      "checkpoint_hash": "cfe5f150a5e9febb1dbf975e38f1f46f9b21706750a0e1e8ef051d35ab19562a"
+    }
+  ],
+  "resume": {
+    "validated": [
+      "wh_ch01",
+      "wh_ch02",
+      "wh_ch03"
+    ],
+    "mismatches": [],
+    "lock_took_over_stale": false
+  },
+  "stop": "Re-render complete. No LLM request was prepared or sent."
+}

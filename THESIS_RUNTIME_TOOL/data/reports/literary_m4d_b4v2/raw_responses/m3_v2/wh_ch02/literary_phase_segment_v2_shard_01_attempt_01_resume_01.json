@@ -1,0 +1,151 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch02",
+  "chapter_id": "wh_ch02",
+  "mode": "literary_phase_segment_v2",
+  "shard_index": 1,
+  "shard_count": 1,
+  "attempt_index": 1,
+  "tag": "lit_m3v2_wh_ch02_literary_phase_segment_v2_s01:attempt1",
+  "prompt_sha256": "d0f07ebf3f0a0244bfa5d39e93423c1e4e0367ef4f8f33b61bf9296f7cbae928",
+  "prompt_tokens_est": 12055,
+  "bypass_cache": false,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": true,
+  "cache_key": "5a26048aeb8678b5c8fcdc6c289e38f643c2f1ff5cdd14b39f9034e9dc4af18e",
+  "latency_ms": 5515,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 9169,
+    "cached_tokens": 0,
+    "completion_tokens": 683,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"relation_phases\":[{\"pair\":[\"ent_hareton_earnshaw\",\"ent_mr_heathcliff\"],\"phase_label\":\"dependent\",\"valid_from_block\":\"wh_ch02_b058\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch02_b058\",\"trigger_evidence\":\"Hareton, drive those dozen sheep\"},{\"pair\":[\"ent_hareton_earnshaw\",\"ent_mr_lockwood\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch02_b013\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch02_b013\",\"trigger_evidence\":\"Sit down\"},{\"pair\":[\"ent_hareton_earnshaw\",\"ent_mrs_heathcliff\"],\"phase_label\":\"hostile\",\"valid_from_block\":\"wh_ch02_b084\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch02_b084\",\"trigger_evidence\":\"I hope his ghost will haunt you\"},{\"pair\":[\"ent_joseph\",\"ent_mr_lockwood\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch01_b010\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch01_b010\",\"trigger_evidence\":\"The Lord help us!\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mr_lockwood\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch02_b030\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch02_b030\",\"trigger_evidence\":\"I am come, according to promise\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mrs_heathcliff\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch02_b037\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch02_b037\",\"trigger_evidence\":\"Is he to have any?\"},{\"pair\":[\"ent_mr_lockwood\",\"ent_mrs_heathcliff\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch02_b011\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch02_b011\",\"trigger_evidence\":\"Rough weather!\"},{\"pair\":[\"ent_mr_lockwood\",\"ent_zillah\"],\"phase_label\":\"neutral\",\"valid_from_block\":\"wh_ch02_b091\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch02_b091\",\"trigger_evidence\":\"she suddenly splashed a pint of icy water\"}],\"relation_facts\":[{\"subject_ref\":\"ent_mr_heathcliff\",\"predicate_code\":\"father_in_law_of\",\"object_ref\":\"ent_mrs_heathcliff\",\"valid_from_block\":\"wh_ch02_b046\",\"evidence_block\":\"wh_ch02_b046\",\"evidence_quote\":\"Mrs. Heathcliff is my daughter-in-law\",\"predicate_note\":\"Heathcliff states she is his daughter-in-law.\"},{\"subject_ref\":\"ent_mrs_heathcliff\",\"predicate_code\":\"daughter_in_law_of\",\"object_ref\":\"ent_mr_heathcliff\",\"valid_from_block\":\"wh_ch02_b046\",\"evidence_block\":\"wh_ch02_b046\",\"evidence_quote\":\"Mrs. Heathcliff is my daughter-in-law\",\"predicate_note\":\"Heathcliff states Mrs. Heathcliff is his daughter-in-law.\"}]}",
+  "parsed_json": {
+    "relation_phases": [
+      {
+        "pair": [
+          "ent_hareton_earnshaw",
+          "ent_mr_heathcliff"
+        ],
+        "phase_label": "dependent",
+        "valid_from_block": "wh_ch02_b058",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch02_b058",
+        "trigger_evidence": "Hareton, drive those dozen sheep"
+      },
+      {
+        "pair": [
+          "ent_hareton_earnshaw",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch02_b013",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch02_b013",
+        "trigger_evidence": "Sit down"
+      },
+      {
+        "pair": [
+          "ent_hareton_earnshaw",
+          "ent_mrs_heathcliff"
+        ],
+        "phase_label": "hostile",
+        "valid_from_block": "wh_ch02_b084",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch02_b084",
+        "trigger_evidence": "I hope his ghost will haunt you"
+      },
+      {
+        "pair": [
+          "ent_joseph",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch01_b010",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch01_b010",
+        "trigger_evidence": "The Lord help us!"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch02_b030",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch02_b030",
+        "trigger_evidence": "I am come, according to promise"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mrs_heathcliff"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch02_b037",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch02_b037",
+        "trigger_evidence": "Is he to have any?"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_mrs_heathcliff"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch02_b011",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch02_b011",
+        "trigger_evidence": "Rough weather!"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_zillah"
+        ],
+        "phase_label": "neutral",
+        "valid_from_block": "wh_ch02_b091",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch02_b091",
+        "trigger_evidence": "she suddenly splashed a pint of icy water"
+      }
+    ],
+    "relation_facts": [
+      {
+        "subject_ref": "ent_mr_heathcliff",
+        "predicate_code": "father_in_law_of",
+        "object_ref": "ent_mrs_heathcliff",
+        "valid_from_block": "wh_ch02_b046",
+        "evidence_block": "wh_ch02_b046",
+        "evidence_quote": "Mrs. Heathcliff is my daughter-in-law",
+        "predicate_note": "Heathcliff states she is his daughter-in-law."
+      },
+      {
+        "subject_ref": "ent_mrs_heathcliff",
+        "predicate_code": "daughter_in_law_of",
+        "object_ref": "ent_mr_heathcliff",
+        "valid_from_block": "wh_ch02_b046",
+        "evidence_block": "wh_ch02_b046",
+        "evidence_quote": "Mrs. Heathcliff is my daughter-in-law",
+        "predicate_note": "Heathcliff states Mrs. Heathcliff is his daughter-in-law."
+      }
+    ]
+  },
+  "technical_error": null,
+  "technical_failure_class": null
+}

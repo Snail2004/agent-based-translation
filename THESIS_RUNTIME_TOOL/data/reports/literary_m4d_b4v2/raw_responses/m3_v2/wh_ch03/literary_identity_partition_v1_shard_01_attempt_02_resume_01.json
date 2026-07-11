@@ -1,0 +1,723 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch03",
+  "chapter_id": "wh_ch03",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 1,
+  "shard_count": 2,
+  "attempt_index": 2,
+  "tag": "lit_m3v2_wh_ch03_literary_identity_partition_v1_s01:attempt2",
+  "prompt_sha256": "7ca2d7b0ab1cdc38bdd063c26fd6d14769d723a5aed2fc717cacc18ad48e5249",
+  "prompt_tokens_est": 13867,
+  "bypass_cache": true,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": false,
+  "cache_key": "5103e06b4fcef32c941cd435fce4e3a90a8a1059159721ec5d3bc053b4fcbedc",
+  "latency_ms": 32835,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 14535,
+    "cached_tokens": 14080,
+    "completion_tokens": 6430,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"groups\":[{\"group_key\":\"grp1\",\"reuse_entity_id\":\"ent_heathcliff\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b009_02__wh_ch03_b009\",\"member_atom_ids\":[\"atom_m_wh_ch03_b006_02__wh_ch03_b006\",\"atom_m_wh_ch03_b009_02__wh_ch03_b009\",\"atom_m_wh_ch03_b014_03__wh_ch03_b014\",\"atom_m_wh_ch03_b018_02__wh_ch03_b018\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch03_b006_02__wh_ch03_b006\",\"atom_m_wh_ch03_b009_02__wh_ch03_b009\",\"atom_m_wh_ch03_b014_03__wh_ch03_b014\",\"atom_m_wh_ch03_b018_02__wh_ch03_b018\"],\"valid_from_block\":\"wh_ch03_b006\",\"valid_until_block\":\"wh_ch03_b018\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b009\",\"quote\":\"“An awful Sunday,” commenced the paragraph beneath. “I wish my father were back again. Hindley is a detestable substitute—his conduct to Heathcliff is atrocious—H. and I are going to rebel—we took our initiatory step this evening.\",\"source_atom_ids\":[\"atom_m_wh_ch03_b009_02__wh_ch03_b009\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b018\",\"quote\":\"“How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we br\",\"source_atom_ids\":[\"atom_m_wh_ch03_b018_02__wh_ch03_b018\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp2\",\"reuse_entity_id\":\"ent_mr_heathcliff\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b045_01__wh_ch03_b045\",\"member_atom_ids\":[\"atom_m_wh_ch03_b002_02__wh_ch03_b002\",\"atom_m_wh_ch03_b004_01__wh_ch03_b004\",\"atom_m_wh_ch03_b045_01__wh_ch03_b045\",\"atom_m_wh_ch03_b049_01__wh_ch03_b049\",\"atom_m_wh_ch03_b052_01__wh_ch03_b052\",\"atom_m_wh_ch03_b053_02__wh_ch03_b053\",\"atom_m_wh_ch03_b056_01__wh_ch03_b056\",\"atom_m_wh_ch03_b061_03__wh_ch03_b061\",\"atom_m_wh_ch03_b064_01__wh_ch03_b064\",\"atom_m_wh_ch03_b040_02__wh_ch03_b040\",\"atom_m_wh_ch03_b043_01__wh_ch03_b010\",\"atom_m_wh_ch03_b051_01__wh_ch03_b011\",\"atom_m_wh_ch03_b046_01__wh_ch03_b010\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"her master\",\"member_atom_ids\":[\"atom_m_wh_ch03_b002_02__wh_ch03_b002\"],\"valid_from_block\":\"wh_ch03_b002\",\"valid_until_block\":\"wh_ch03_b002\"},{\"surface\":\"Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch03_b004_01__wh_ch03_b004\",\"atom_m_wh_ch03_b045_01__wh_ch03_b045\",\"atom_m_wh_ch03_b049_01__wh_ch03_b049\",\"atom_m_wh_ch03_b052_01__wh_ch03_b052\",\"atom_m_wh_ch03_b053_02__wh_ch03_b053\",\"atom_m_wh_ch03_b056_01__wh_ch03_b056\",\"atom_m_wh_ch03_b061_03__wh_ch03_b061\",\"atom_m_wh_ch03_b064_01__wh_ch03_b064\"],\"valid_from_block\":\"wh_ch03_b004\",\"valid_until_block\":null},{\"surface\":\"the intruder\",\"member_atom_ids\":[\"atom_m_wh_ch03_b040_02__wh_ch03_b040\"],\"valid_from_block\":\"wh_ch03_b040\",\"valid_until_block\":\"wh_ch03_b040\"},{\"surface\":\"Heathcliff’s\",\"member_atom_ids\":[\"atom_m_wh_ch03_b043_01__wh_ch03_b010\",\"atom_m_wh_ch03_b051_01__wh_ch03_b011\"],\"valid_from_block\":\"wh_ch03_b043\",\"valid_until_block\":\"wh_ch03_b051\"},{\"surface\":\"your guest, sir\",\"member_atom_ids\":[\"atom_m_wh_ch03_b046_01__wh_ch03_b010\"],\"valid_from_block\":\"wh_ch03_b046\",\"valid_until_block\":\"wh_ch03_b046\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b043\",\"quote\":\"I considered it best to confess my presence; for I knew Heathcliff’s accents, and feared he might search further, if I kept quiet.\",\"source_atom_ids\":[\"atom_m_wh_ch03_b043_01__wh_ch03_b010\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b045\",\"quote\":\"Heathcliff stood near the entrance, in his shirt and trousers; with a candle dripping over his fingers, and his face as white as the wall behind him. The first creak of the oak startled him like an electric shock: the light leaped from his hold to a distance of some feet, and his agitation was so extreme, that he could hardly pick it up.\",\"source_atom_ids\":[\"atom_m_wh_ch03_b045_01__wh_ch03_b045\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b046\",\"quote\":\"“It is only your guest, sir,” I called out, desirous to spare him the humiliation of exposing his cowardice further. “I had the misfortune to scream in my sleep, owing to a frightful nightmare. I’m sorry I disturbed you.”\",\"source_atom_ids\":[\"atom_m_wh_ch03_b046_01__wh_ch03_b010\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp3\",\"reuse_entity_id\":\"ent_catherine_earnshaw\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b005_01__wh_ch03_b005\",\"member_atom_ids\":[\"atom_m_wh_ch03_b005_01__wh_ch03_b005\",\"atom_m_wh_ch03_b006_01__wh_ch03_b006\",\"atom_m_wh_ch03_b007_01__wh_ch03_b007\",\"atom_m_wh_ch03_b005_02__wh_ch03_b005\",\"atom_m_wh_ch03_b005_03__wh_ch03_b005\",\"atom_m_wh_ch03_b031_01__wh_ch03_b031\",\"atom_m_wh_ch03_b050_05__wh_ch03_b050\",\"atom_m_wh_ch03_b053_01__wh_ch03_b053\",\"atom_m_wh_ch03_b006_03__wh_ch03_b006\",\"atom_m_wh_ch03_b031_02__wh_ch03_b031\",\"atom_m_wh_ch03_b008_01__wh_ch03_b008\",\"atom_m_wh_ch03_b051_02__wh_ch03_b011\",\"atom_m_wh_ch03_b008_03__wh_ch03_b008\",\"atom_m_wh_ch03_b014_02__wh_ch03_b014\",\"atom_m_wh_ch03_b017_01__wh_ch03_b017\",\"atom_m_wh_ch03_b057_03__wh_ch03_b057\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Catherine Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch03_b005_01__wh_ch03_b005\",\"atom_m_wh_ch03_b006_01__wh_ch03_b006\",\"atom_m_wh_ch03_b007_01__wh_ch03_b007\"],\"valid_from_block\":\"wh_ch03_b005\",\"valid_until_block\":\"wh_ch03_b007\"},{\"surface\":\"Catherine Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch03_b005_02__wh_ch03_b005\"],\"valid_from_block\":\"wh_ch03_b005\",\"valid_until_block\":\"wh_ch03_b005\"},{\"surface\":\"Catherine Linton\",\"member_atom_ids\":[\"atom_m_wh_ch03_b005_03__wh_ch03_b005\",\"atom_m_wh_ch03_b031_01__wh_ch03_b031\",\"atom_m_wh_ch03_b050_05__wh_ch03_b050\",\"atom_m_wh_ch03_b053_01__wh_ch03_b053\"],\"valid_from_block\":\"wh_ch03_b005\",\"valid_until_block\":\"wh_ch03_b053\"},{\"surface\":\"Linton\",\"member_atom_ids\":[\"atom_m_wh_ch03_b006_03__wh_ch03_b006\",\"atom_m_wh_ch03_b031_02__wh_ch03_b031\"],\"valid_from_block\":\"wh_ch03_b006\",\"valid_until_block\":\"wh_ch03_b031\"},{\"surface\":\"Catherine’s\",\"member_atom_ids\":[\"atom_m_wh_ch03_b008_01__wh_ch03_b008\",\"atom_m_wh_ch03_b051_02__wh_ch03_b011\"],\"valid_from_block\":\"wh_ch03_b008\",\"valid_until_block\":\"wh_ch03_b051\"},{\"surface\":\"the unknown Catherine\",\"member_atom_ids\":[\"atom_m_wh_ch03_b008_03__wh_ch03_b008\"],\"valid_from_block\":\"wh_ch03_b008\",\"valid_until_block\":\"wh_ch03_b008\"},{\"surface\":\"Miss Cathy\",\"member_atom_ids\":[\"atom_m_wh_ch03_b014_02__wh_ch03_b014\"],\"valid_from_block\":\"wh_ch03_b014\",\"valid_until_block\":\"wh_ch03_b014\"},{\"surface\":\"Catherine\",\"member_atom_ids\":[\"atom_m_wh_ch03_b017_01__wh_ch03_b017\",\"atom_m_wh_ch03_b057_03__wh_ch03_b057\"],\"valid_from_block\":\"wh_ch03_b017\",\"valid_until_block\":\"wh_ch03_b057\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b005\",\"quote\":\"The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .\",\"source_atom_ids\":[\"atom_m_wh_ch03_b005_01__wh_ch03_b005\",\"atom_m_wh_ch03_b005_02__wh_ch03_b005\",\"atom_m_wh_ch03_b005_03__wh_ch03_b005\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b007\",\"quote\":\"I snuffed it off, and, very ill at ease under the influence of cold and lingering nausea, sat up and spread open the injured tome on my knee. It was a Testament, in lean type, and smelling dreadfully musty: a fly-leaf bore the inscription—“Catherine Earnshaw, her book,” and a date some quarter of a century back.\",\"source_atom_ids\":[\"atom_m_wh_ch03_b007_01__wh_ch03_b007\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b008\",\"quote\":\"iary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.\",\"source_atom_ids\":[\"atom_m_wh_ch03_b008_03__wh_ch03_b008\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp4\",\"reuse_entity_id\":\"ent_joseph\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b008_02__wh_ch03_b008\",\"member_atom_ids\":[\"atom_m_wh_ch03_b008_02__wh_ch03_b008\",\"atom_m_wh_ch03_b010_01__wh_ch03_b010\",\"atom_m_wh_ch03_b011_03__wh_ch03_b011\",\"atom_m_wh_ch03_b021_01__wh_ch03_b021\",\"atom_m_wh_ch03_b023_01__wh_ch03_b023\",\"atom_m_wh_ch03_b026_01__wh_ch03_b026\",\"atom_m_wh_ch03_b059_01__wh_ch03_b059\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Joseph\",\"member_atom_ids\":[\"atom_m_wh_ch03_b008_02__wh_ch03_b008\",\"atom_m_wh_ch03_b010_01__wh_ch03_b010\",\"atom_m_wh_ch03_b011_03__wh_ch03_b011\",\"atom_m_wh_ch03_b021_01__wh_ch03_b021\",\"atom_m_wh_ch03_b023_01__wh_ch03_b023\",\"atom_m_wh_ch03_b026_01__wh_ch03_b026\",\"atom_m_wh_ch03_b059_01__wh_ch03_b059\"],\"valid_from_block\":\"wh_ch03_b008\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch03_b008\",\"quote\":\"iary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.\",\"source_atom_ids\":[\"atom_m_wh_ch03_b008_02__wh_ch03_b008\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b059\",\"quote\":\"ircle, nearly enclosed the hearth; on one of these I stretched myself, and Grimalkin mounted the other. We were both of us nodding ere any one invaded our retreat, and then it was Joseph, shuffling down a wooden ladder that vanished in the roof, through a trap: the ascent to his garret, I suppose. He cast a sinister look at the little flame which I had entic\",\"source_atom_ids\":[\"atom_m_wh_ch03_b059_01__wh_ch03_b059\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp5\",\"reuse_entity_id\":\"ent_hindley\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b009_01__wh_ch03_b009\",\"member_atom_ids\":[\"atom_m_wh_ch03_b009_01__wh_ch03_b009\",\"atom_m_wh_ch03_b010_02__wh_ch03_b010\",\"atom_m_wh_ch03_b015_01__wh_ch03_b015\",\"atom_m_wh_ch03_b018_01__wh_ch03_b018\",\"atom_m_wh_ch03_b018_03__wh_ch03_b018\",\"atom_m_wh_ch03_b011_01__wh_ch03_b011\",\"atom_m_wh_ch03_b014_01__wh_ch03_b014\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Hindley\",\"member_atom_ids\":[\"atom_m_wh_ch03_b009_01__wh_ch03_b009\",\"atom_m_wh_ch03_b010_02__wh_ch03_b010\",\"atom_m_wh_ch03_b015_01__wh_ch03_b015\",\"atom_m_wh_ch03_b018_01__wh_ch03_b018\",\"atom_m_wh_ch03_b018_03__wh_ch03_b018\"],\"valid_from_block\":\"wh_ch03_b009\",\"valid_until_block\":\"wh_ch03_b018\"},{\"surface\":\"the tyrant\",\"member_atom_ids\":[\"atom_m_wh_ch03_b011_01__wh_ch03_b011\"],\"valid_from_block\":\"wh_ch03_b011\",\"valid_until_block\":\"wh_ch03_b011\"},{\"surface\":\"Maister Hindley\",\"member_atom_ids\":[\"atom_m_wh_ch03_b014_01__wh_ch03_b014\"],\"valid_from_block\":\"wh_ch03_b014\",\"valid_until_block\":\"wh_ch03_b014\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b011\",\"quote\":\"“‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, l\",\"source_atom_ids\":[\"atom_m_wh_ch03_b011_01__wh_ch03_b011\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b014\",\"quote\":\"“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’\",\"source_atom_ids\":[\"atom_m_wh_ch03_b014_01__wh_ch03_b014\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp6\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b010_03__wh_ch03_b010\",\"member_atom_ids\":[\"atom_m_wh_ch03_b010_03__wh_ch03_b010\"],\"status\":\"uncertain\",\"alias_bindings\":[{\"surface\":\"the unhappy ploughboy\",\"member_atom_ids\":[\"atom_m_wh_ch03_b010_03__wh_ch03_b010\"],\"valid_from_block\":\"wh_ch03_b010\",\"valid_until_block\":\"wh_ch03_b010\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b010\",\"quote\":\"tion in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we were ranged in a row, on a sack of corn, groaning and shivering, and hoping that Joseph would shiver to\",\"source_atom_ids\":[\"atom_m_wh_ch03_b010_03__wh_ch03_b010\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp7\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b011_02__wh_ch03_b011\",\"member_atom_ids\":[\"atom_m_wh_ch03_b011_02__wh_ch03_b011\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Frances\",\"member_atom_ids\":[\"atom_m_wh_ch03_b011_02__wh_ch03_b011\"],\"valid_from_block\":\"wh_ch03_b011\",\"valid_until_block\":\"wh_ch03_b011\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b011\",\"quote\":\"“‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, l\",\"source_atom_ids\":[\"atom_m_wh_ch03_b011_02__wh_ch03_b011\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp8\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b012_01__wh_ch03_b012\",\"member_atom_ids\":[\"atom_m_wh_ch03_b012_01__wh_ch03_b012\",\"atom_m_wh_ch03_b014_04__wh_ch03_b014\",\"atom_m_wh_ch03_b015_02__wh_ch03_b015\",\"atom_m_wh_ch03_b018_04__wh_ch03_b018\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"T’ maister\",\"member_atom_ids\":[\"atom_m_wh_ch03_b012_01__wh_ch03_b012\"],\"valid_from_block\":\"wh_ch03_b012\",\"valid_until_block\":\"wh_ch03_b012\"},{\"surface\":\"the owd man\",\"member_atom_ids\":[\"atom_m_wh_ch03_b014_04__wh_ch03_b014\"],\"valid_from_block\":\"wh_ch03_b014\",\"valid_until_block\":\"wh_ch03_b014\"},{\"surface\":\"the surly old man\",\"member_atom_ids\":[\"atom_m_wh_ch03_b015_02__wh_ch03_b015\"],\"valid_from_block\":\"wh_ch03_b015\",\"valid_until_block\":\"wh_ch03_b015\"},{\"surface\":\"our father\",\"member_atom_ids\":[\"atom_m_wh_ch03_b018_04__wh_ch03_b018\"],\"valid_from_block\":\"wh_ch03_b018\",\"valid_until_block\":\"wh_ch03_b018\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b014\",\"quote\":\"“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’\",\"source_atom_ids\":[\"atom_m_wh_ch03_b014_04__wh_ch03_b014\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b018\",\"quote\":\"’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we break his orders. He has been blaming our father (how dared he?) for treating H. too liberally; and swears he will reduce him to his right place—”\",\"source_atom_ids\":[\"atom_m_wh_ch03_b018_04__wh_ch03_b018\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp9\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b020_01__wh_ch03_b020\",\"member_atom_ids\":[\"atom_m_wh_ch03_b020_01__wh_ch03_b020\",\"atom_m_wh_ch03_b021_02__wh_ch03_b021\",\"atom_m_wh_ch03_b023_02__wh_ch03_b023\",\"atom_m_wh_ch03_b022_02__wh_ch03_b022\",\"atom_m_wh_ch03_b024_01__wh_ch03_b024\",\"atom_m_wh_ch03_b025_01__wh_ch03_b025\",\"atom_m_wh_ch03_b026_02__wh_ch03_b026\",\"atom_m_wh_ch03_b026_03__wh_ch03_b026\",\"atom_m_wh_ch03_b022_01__wh_ch03_b022\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Jabez Branderham\",\"member_atom_ids\":[\"atom_m_wh_ch03_b020_01__wh_ch03_b020\",\"atom_m_wh_ch03_b021_02__wh_ch03_b021\",\"atom_m_wh_ch03_b023_02__wh_ch03_b023\"],\"valid_from_block\":\"wh_ch03_b020\",\"valid_until_block\":\"wh_ch03_b023\"},{\"surface\":\"Jabez\",\"member_atom_ids\":[\"atom_m_wh_ch03_b022_02__wh_ch03_b022\",\"atom_m_wh_ch03_b024_01__wh_ch03_b024\",\"atom_m_wh_ch03_b025_01__wh_ch03_b025\"],\"valid_from_block\":\"wh_ch03_b022\",\"valid_until_block\":\"wh_ch03_b025\"},{\"surface\":\"Branderham\",\"member_atom_ids\":[\"atom_m_wh_ch03_b026_02__wh_ch03_b026\"],\"valid_from_block\":\"wh_ch03_b026\",\"valid_until_block\":\"wh_ch03_b026\"},{\"surface\":\"Jabez’s\",\"member_atom_ids\":[\"atom_m_wh_ch03_b026_03__wh_ch03_b026\"],\"valid_from_block\":\"wh_ch03_b026\",\"valid_until_block\":\"wh_ch03_b026\"},{\"surface\":\"the clergyman\",\"member_atom_ids\":[\"atom_m_wh_ch03_b022_01__wh_ch03_b022\"],\"valid_from_block\":\"wh_ch03_b022\",\"valid_until_block\":\"wh_ch03_b022\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b020\",\"quote\":\" page: my eye wandered from manuscript to print. I saw a red ornamented title—“Seventy Times Seven, and the First of the Seventy-First. A Pious Discourse delivered by the Reverend Jabez Branderham, in the Chapel of Gimmerden Sough.” And while I was, half-consciously, worrying my brain to guess what Jabez Branderham would make of his subject, I sank back in b\",\"source_atom_ids\":[\"atom_m_wh_ch03_b020_01__wh_ch03_b020\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b022\",\"quote\":\"es of pastor: especially as it is currently reported that his flock would rather let him starve than increase the living by one penny from their own pockets. However, in my dream, Jabez had a full and attentive congregation; and he preached—good God! what a sermon; divided into four hundred and ninety parts, each fully equal to an ordinary address from the p\",\"source_atom_ids\":[\"atom_m_wh_ch03_b022_02__wh_ch03_b022\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch03_b026\",\"quote\":\" clubs crossed; blows, aimed at me, fell on other sconces. Presently the whole chapel resounded with rappings and counter rappings: every man’s hand was against his neighbour; and Branderham, unwilling to remain idle, poured forth his zeal in a shower of loud taps on the boards of the pulpit, which responded so smartly that, at last, to my unspeakable relief\",\"source_atom_ids\":[\"atom_m_wh_ch03_b026_02__wh_ch03_b026\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp10\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch03_b022_03__wh_ch03_b022\",\"member_atom_ids\":[\"atom_m_wh_ch03_b022_03__wh_ch03_b022\"],\"status\":\"uncertain\",\"alias_bindings\":[{\"surface\":\"the brother\",\"member_atom_ids\":[\"atom_m_wh_ch03_b022_03__wh_ch03_b022\"],\"valid_from_block\":\"wh_ch03_b022\",\"valid_until_block\":\"wh_ch03_b022\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b022\",\"quote\":\" fully equal to an ordinary address from the pulpit, and each discussing a separate sin! Where he searched for them, I cannot tell. He had his private manner of interpreting the phrase, and it seemed necessary the brother should sin different sins on every occasion. They were of the most curious character: odd transgressions that I never imagined previously.\",\"source_atom_ids\":[\"atom_m_wh_ch03_b022_03__wh_ch03_b022\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp11\",\"reuse_entity_id\":null,\"referent_kind\":\"group_reference\",\"canonical_atom_id\":\"atom_m_wh_ch03_b022_04__wh_ch03_b022\",\"member_atom_ids\":[\"atom_m_wh_ch03_b022_04__wh_ch03_b022\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"the flock\",\"member_atom_ids\":[\"atom_m_wh_ch03_b022_04__wh_ch03_b022\"],\"valid_from_block\":\"wh_ch03_b022\",\"valid_until_block\":\"wh_ch03_b022\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b022\",\"quote\":\"We came to the chapel. I have passed it really in my walks, twice or thrice; it lies in a hollow, between two hills: an elevated hollow, near a swamp, whose peaty moisture is said to answer all the purposes of embalming on the few corpses deposited there. The roof has been kept whole hitherto; but as the clergyman’s stipend is only twenty pounds per annum, a\",\"source_atom_ids\":[\"atom_m_wh_ch03_b022_04__wh_ch03_b022\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp12\",\"reuse_entity_id\":null,\"referent_kind\":\"place\",\"canonical_atom_id\":\"atom_m_wh_ch03_b040_01__wh_ch03_b040\",\"member_atom_ids\":[\"atom_m_wh_ch03_b040_01__wh_ch03_b040\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"my chamber door\",\"member_atom_ids\":[\"atom_m_wh_ch03_b040_01__wh_ch03_b040\"],\"valid_from_block\":\"wh_ch03_b040\",\"valid_until_block\":\"wh_ch03_b040\"}],\"evidence\":[{\"block_id\":\"wh_ch03_b040\",\"quote\":\"To my confusion, I discovered the yell was not ideal: hasty footsteps approached my chamber door; somebody pushed it open, with a vigorous hand, and a light glimmered through the squares at the top of the bed. I sat shuddering, yet, and wiping the perspiration from my forehead: the intruder appeared to hesitate, and muttered to himself.\",\"source_atom_ids\":[\"atom_m_wh_ch03_b040_01__wh_ch03_b040\"],\"supports\":\"same_identity\"}]}]}",
+  "parsed_json": {
+    "groups": [
+      {
+        "group_key": "grp1",
+        "reuse_entity_id": "ent_heathcliff",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b009_02__wh_ch03_b009",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b006_02__wh_ch03_b006",
+          "atom_m_wh_ch03_b009_02__wh_ch03_b009",
+          "atom_m_wh_ch03_b014_03__wh_ch03_b014",
+          "atom_m_wh_ch03_b018_02__wh_ch03_b018"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b006_02__wh_ch03_b006",
+              "atom_m_wh_ch03_b009_02__wh_ch03_b009",
+              "atom_m_wh_ch03_b014_03__wh_ch03_b014",
+              "atom_m_wh_ch03_b018_02__wh_ch03_b018"
+            ],
+            "valid_from_block": "wh_ch03_b006",
+            "valid_until_block": "wh_ch03_b018"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b009",
+            "quote": "“An awful Sunday,” commenced the paragraph beneath. “I wish my father were back again. Hindley is a detestable substitute—his conduct to Heathcliff is atrocious—H. and I are going to rebel—we took our initiatory step this evening.",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b009_02__wh_ch03_b009"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b018",
+            "quote": "“How little did I dream that Hindley would ever make me cry so!” she wrote. “My head aches, till I cannot keep it on the pillow; and still I can’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we br",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b018_02__wh_ch03_b018"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp2",
+        "reuse_entity_id": "ent_mr_heathcliff",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b045_01__wh_ch03_b045",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b002_02__wh_ch03_b002",
+          "atom_m_wh_ch03_b004_01__wh_ch03_b004",
+          "atom_m_wh_ch03_b045_01__wh_ch03_b045",
+          "atom_m_wh_ch03_b049_01__wh_ch03_b049",
+          "atom_m_wh_ch03_b052_01__wh_ch03_b052",
+          "atom_m_wh_ch03_b053_02__wh_ch03_b053",
+          "atom_m_wh_ch03_b056_01__wh_ch03_b056",
+          "atom_m_wh_ch03_b061_03__wh_ch03_b061",
+          "atom_m_wh_ch03_b064_01__wh_ch03_b064",
+          "atom_m_wh_ch03_b040_02__wh_ch03_b040",
+          "atom_m_wh_ch03_b043_01__wh_ch03_b010",
+          "atom_m_wh_ch03_b051_01__wh_ch03_b011",
+          "atom_m_wh_ch03_b046_01__wh_ch03_b010"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "her master",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b002_02__wh_ch03_b002"
+            ],
+            "valid_from_block": "wh_ch03_b002",
+            "valid_until_block": "wh_ch03_b002"
+          },
+          {
+            "surface": "Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b004_01__wh_ch03_b004",
+              "atom_m_wh_ch03_b045_01__wh_ch03_b045",
+              "atom_m_wh_ch03_b049_01__wh_ch03_b049",
+              "atom_m_wh_ch03_b052_01__wh_ch03_b052",
+              "atom_m_wh_ch03_b053_02__wh_ch03_b053",
+              "atom_m_wh_ch03_b056_01__wh_ch03_b056",
+              "atom_m_wh_ch03_b061_03__wh_ch03_b061",
+              "atom_m_wh_ch03_b064_01__wh_ch03_b064"
+            ],
+            "valid_from_block": "wh_ch03_b004",
+            "valid_until_block": null
+          },
+          {
+            "surface": "the intruder",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b040_02__wh_ch03_b040"
+            ],
+            "valid_from_block": "wh_ch03_b040",
+            "valid_until_block": "wh_ch03_b040"
+          },
+          {
+            "surface": "Heathcliff’s",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b043_01__wh_ch03_b010",
+              "atom_m_wh_ch03_b051_01__wh_ch03_b011"
+            ],
+            "valid_from_block": "wh_ch03_b043",
+            "valid_until_block": "wh_ch03_b051"
+          },
+          {
+            "surface": "your guest, sir",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b046_01__wh_ch03_b010"
+            ],
+            "valid_from_block": "wh_ch03_b046",
+            "valid_until_block": "wh_ch03_b046"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b043",
+            "quote": "I considered it best to confess my presence; for I knew Heathcliff’s accents, and feared he might search further, if I kept quiet.",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b043_01__wh_ch03_b010"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b045",
+            "quote": "Heathcliff stood near the entrance, in his shirt and trousers; with a candle dripping over his fingers, and his face as white as the wall behind him. The first creak of the oak startled him like an electric shock: the light leaped from his hold to a distance of some feet, and his agitation was so extreme, that he could hardly pick it up.",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b045_01__wh_ch03_b045"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b046",
+            "quote": "“It is only your guest, sir,” I called out, desirous to spare him the humiliation of exposing his cowardice further. “I had the misfortune to scream in my sleep, owing to a frightful nightmare. I’m sorry I disturbed you.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b046_01__wh_ch03_b010"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp3",
+        "reuse_entity_id": "ent_catherine_earnshaw",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b005_01__wh_ch03_b005",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b005_01__wh_ch03_b005",
+          "atom_m_wh_ch03_b006_01__wh_ch03_b006",
+          "atom_m_wh_ch03_b007_01__wh_ch03_b007",
+          "atom_m_wh_ch03_b005_02__wh_ch03_b005",
+          "atom_m_wh_ch03_b005_03__wh_ch03_b005",
+          "atom_m_wh_ch03_b031_01__wh_ch03_b031",
+          "atom_m_wh_ch03_b050_05__wh_ch03_b050",
+          "atom_m_wh_ch03_b053_01__wh_ch03_b053",
+          "atom_m_wh_ch03_b006_03__wh_ch03_b006",
+          "atom_m_wh_ch03_b031_02__wh_ch03_b031",
+          "atom_m_wh_ch03_b008_01__wh_ch03_b008",
+          "atom_m_wh_ch03_b051_02__wh_ch03_b011",
+          "atom_m_wh_ch03_b008_03__wh_ch03_b008",
+          "atom_m_wh_ch03_b014_02__wh_ch03_b014",
+          "atom_m_wh_ch03_b017_01__wh_ch03_b017",
+          "atom_m_wh_ch03_b057_03__wh_ch03_b057"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Catherine Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b005_01__wh_ch03_b005",
+              "atom_m_wh_ch03_b006_01__wh_ch03_b006",
+              "atom_m_wh_ch03_b007_01__wh_ch03_b007"
+            ],
+            "valid_from_block": "wh_ch03_b005",
+            "valid_until_block": "wh_ch03_b007"
+          },
+          {
+            "surface": "Catherine Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b005_02__wh_ch03_b005"
+            ],
+            "valid_from_block": "wh_ch03_b005",
+            "valid_until_block": "wh_ch03_b005"
+          },
+          {
+            "surface": "Catherine Linton",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b005_03__wh_ch03_b005",
+              "atom_m_wh_ch03_b031_01__wh_ch03_b031",
+              "atom_m_wh_ch03_b050_05__wh_ch03_b050",
+              "atom_m_wh_ch03_b053_01__wh_ch03_b053"
+            ],
+            "valid_from_block": "wh_ch03_b005",
+            "valid_until_block": "wh_ch03_b053"
+          },
+          {
+            "surface": "Linton",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b006_03__wh_ch03_b006",
+              "atom_m_wh_ch03_b031_02__wh_ch03_b031"
+            ],
+            "valid_from_block": "wh_ch03_b006",
+            "valid_until_block": "wh_ch03_b031"
+          },
+          {
+            "surface": "Catherine’s",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b008_01__wh_ch03_b008",
+              "atom_m_wh_ch03_b051_02__wh_ch03_b011"
+            ],
+            "valid_from_block": "wh_ch03_b008",
+            "valid_until_block": "wh_ch03_b051"
+          },
+          {
+            "surface": "the unknown Catherine",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b008_03__wh_ch03_b008"
+            ],
+            "valid_from_block": "wh_ch03_b008",
+            "valid_until_block": "wh_ch03_b008"
+          },
+          {
+            "surface": "Miss Cathy",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b014_02__wh_ch03_b014"
+            ],
+            "valid_from_block": "wh_ch03_b014",
+            "valid_until_block": "wh_ch03_b014"
+          },
+          {
+            "surface": "Catherine",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b017_01__wh_ch03_b017",
+              "atom_m_wh_ch03_b057_03__wh_ch03_b057"
+            ],
+            "valid_from_block": "wh_ch03_b017",
+            "valid_until_block": "wh_ch03_b057"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b005",
+            "quote": "The ledge, where I placed my candle, had a few mildewed books piled up in one corner; and it was covered with writing scratched on the paint. This writing, however, was nothing but a name repeated in all kinds of characters, large and small— Catherine Earnshaw , here and there varied to Catherine Heathcliff , and then again to Catherine Linton .",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b005_01__wh_ch03_b005",
+              "atom_m_wh_ch03_b005_02__wh_ch03_b005",
+              "atom_m_wh_ch03_b005_03__wh_ch03_b005"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b007",
+            "quote": "I snuffed it off, and, very ill at ease under the influence of cold and lingering nausea, sat up and spread open the injured tome on my knee. It was a Testament, in lean type, and smelling dreadfully musty: a fly-leaf bore the inscription—“Catherine Earnshaw, her book,” and a date some quarter of a century back.",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b007_01__wh_ch03_b007"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b008",
+            "quote": "iary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b008_03__wh_ch03_b008"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp4",
+        "reuse_entity_id": "ent_joseph",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b008_02__wh_ch03_b008",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b008_02__wh_ch03_b008",
+          "atom_m_wh_ch03_b010_01__wh_ch03_b010",
+          "atom_m_wh_ch03_b011_03__wh_ch03_b011",
+          "atom_m_wh_ch03_b021_01__wh_ch03_b021",
+          "atom_m_wh_ch03_b023_01__wh_ch03_b023",
+          "atom_m_wh_ch03_b026_01__wh_ch03_b026",
+          "atom_m_wh_ch03_b059_01__wh_ch03_b059"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Joseph",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b008_02__wh_ch03_b008",
+              "atom_m_wh_ch03_b010_01__wh_ch03_b010",
+              "atom_m_wh_ch03_b011_03__wh_ch03_b011",
+              "atom_m_wh_ch03_b021_01__wh_ch03_b021",
+              "atom_m_wh_ch03_b023_01__wh_ch03_b023",
+              "atom_m_wh_ch03_b026_01__wh_ch03_b026",
+              "atom_m_wh_ch03_b059_01__wh_ch03_b059"
+            ],
+            "valid_from_block": "wh_ch03_b008",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b008",
+            "quote": "iary, scrawled in an unformed, childish hand. At the top of an extra page (quite a treasure, probably, when first lighted on) I was greatly amused to behold an excellent caricature of my friend Joseph,—rudely, yet powerfully sketched. An immediate interest kindled within me for the unknown Catherine, and I began forthwith to decipher her faded hieroglyphics.",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b008_02__wh_ch03_b008"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b059",
+            "quote": "ircle, nearly enclosed the hearth; on one of these I stretched myself, and Grimalkin mounted the other. We were both of us nodding ere any one invaded our retreat, and then it was Joseph, shuffling down a wooden ladder that vanished in the roof, through a trap: the ascent to his garret, I suppose. He cast a sinister look at the little flame which I had entic",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b059_01__wh_ch03_b059"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp5",
+        "reuse_entity_id": "ent_hindley",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b009_01__wh_ch03_b009",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b009_01__wh_ch03_b009",
+          "atom_m_wh_ch03_b010_02__wh_ch03_b010",
+          "atom_m_wh_ch03_b015_01__wh_ch03_b015",
+          "atom_m_wh_ch03_b018_01__wh_ch03_b018",
+          "atom_m_wh_ch03_b018_03__wh_ch03_b018",
+          "atom_m_wh_ch03_b011_01__wh_ch03_b011",
+          "atom_m_wh_ch03_b014_01__wh_ch03_b014"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Hindley",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b009_01__wh_ch03_b009",
+              "atom_m_wh_ch03_b010_02__wh_ch03_b010",
+              "atom_m_wh_ch03_b015_01__wh_ch03_b015",
+              "atom_m_wh_ch03_b018_01__wh_ch03_b018",
+              "atom_m_wh_ch03_b018_03__wh_ch03_b018"
+            ],
+            "valid_from_block": "wh_ch03_b009",
+            "valid_until_block": "wh_ch03_b018"
+          },
+          {
+            "surface": "the tyrant",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b011_01__wh_ch03_b011"
+            ],
+            "valid_from_block": "wh_ch03_b011",
+            "valid_until_block": "wh_ch03_b011"
+          },
+          {
+            "surface": "Maister Hindley",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b014_01__wh_ch03_b014"
+            ],
+            "valid_from_block": "wh_ch03_b014",
+            "valid_until_block": "wh_ch03_b014"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b011",
+            "quote": "“‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, l",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b011_01__wh_ch03_b011"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b014",
+            "quote": "“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b014_01__wh_ch03_b014"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp6",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b010_03__wh_ch03_b010",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b010_03__wh_ch03_b010"
+        ],
+        "status": "uncertain",
+        "alias_bindings": [
+          {
+            "surface": "the unhappy ploughboy",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b010_03__wh_ch03_b010"
+            ],
+            "valid_from_block": "wh_ch03_b010",
+            "valid_until_block": "wh_ch03_b010"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b010",
+            "quote": "tion in the garret; and, while Hindley and his wife basked downstairs before a comfortable fire—doing anything but reading their Bibles, I’ll answer for it—Heathcliff, myself, and the unhappy ploughboy were commanded to take our prayer-books, and mount: we were ranged in a row, on a sack of corn, groaning and shivering, and hoping that Joseph would shiver to",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b010_03__wh_ch03_b010"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp7",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b011_02__wh_ch03_b011",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b011_02__wh_ch03_b011"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Frances",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b011_02__wh_ch03_b011"
+            ],
+            "valid_from_block": "wh_ch03_b011",
+            "valid_until_block": "wh_ch03_b011"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b011",
+            "quote": "“‘You forget you have a master here,’ says the tyrant. ‘I’ll demolish the first who puts me out of temper! I insist on perfect sobriety and silence. Oh, boy! was that you? Frances darling, pull his hair as you go by: I heard him snap his fingers.’ Frances pulled his hair heartily, and then went and seated herself on her husband’s knee, and there they were, l",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b011_02__wh_ch03_b011"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp8",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b012_01__wh_ch03_b012",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b012_01__wh_ch03_b012",
+          "atom_m_wh_ch03_b014_04__wh_ch03_b014",
+          "atom_m_wh_ch03_b015_02__wh_ch03_b015",
+          "atom_m_wh_ch03_b018_04__wh_ch03_b018"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "T’ maister",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b012_01__wh_ch03_b012"
+            ],
+            "valid_from_block": "wh_ch03_b012",
+            "valid_until_block": "wh_ch03_b012"
+          },
+          {
+            "surface": "the owd man",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b014_04__wh_ch03_b014"
+            ],
+            "valid_from_block": "wh_ch03_b014",
+            "valid_until_block": "wh_ch03_b014"
+          },
+          {
+            "surface": "the surly old man",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b015_02__wh_ch03_b015"
+            ],
+            "valid_from_block": "wh_ch03_b015",
+            "valid_until_block": "wh_ch03_b015"
+          },
+          {
+            "surface": "our father",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b018_04__wh_ch03_b018"
+            ],
+            "valid_from_block": "wh_ch03_b018",
+            "valid_until_block": "wh_ch03_b018"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b014",
+            "quote": "“‘Maister Hindley!’ shouted our chaplain. ‘Maister, coom hither! Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!” It’s fair flaysome that ye let ’em go on this gait. Ech! th’ owd man wad ha’ laced ’em properly—but he’s goan!’",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b014_04__wh_ch03_b014"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b018",
+            "quote": "’t give over. Poor Heathcliff! Hindley calls him a vagabond, and won’t let him sit with us, nor eat with us any more; and, he says, he and I must not play together, and threatens to turn him out of the house if we break his orders. He has been blaming our father (how dared he?) for treating H. too liberally; and swears he will reduce him to his right place—”",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b018_04__wh_ch03_b018"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp9",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b020_01__wh_ch03_b020",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b020_01__wh_ch03_b020",
+          "atom_m_wh_ch03_b021_02__wh_ch03_b021",
+          "atom_m_wh_ch03_b023_02__wh_ch03_b023",
+          "atom_m_wh_ch03_b022_02__wh_ch03_b022",
+          "atom_m_wh_ch03_b024_01__wh_ch03_b024",
+          "atom_m_wh_ch03_b025_01__wh_ch03_b025",
+          "atom_m_wh_ch03_b026_02__wh_ch03_b026",
+          "atom_m_wh_ch03_b026_03__wh_ch03_b026",
+          "atom_m_wh_ch03_b022_01__wh_ch03_b022"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Jabez Branderham",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b020_01__wh_ch03_b020",
+              "atom_m_wh_ch03_b021_02__wh_ch03_b021",
+              "atom_m_wh_ch03_b023_02__wh_ch03_b023"
+            ],
+            "valid_from_block": "wh_ch03_b020",
+            "valid_until_block": "wh_ch03_b023"
+          },
+          {
+            "surface": "Jabez",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b022_02__wh_ch03_b022",
+              "atom_m_wh_ch03_b024_01__wh_ch03_b024",
+              "atom_m_wh_ch03_b025_01__wh_ch03_b025"
+            ],
+            "valid_from_block": "wh_ch03_b022",
+            "valid_until_block": "wh_ch03_b025"
+          },
+          {
+            "surface": "Branderham",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b026_02__wh_ch03_b026"
+            ],
+            "valid_from_block": "wh_ch03_b026",
+            "valid_until_block": "wh_ch03_b026"
+          },
+          {
+            "surface": "Jabez’s",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b026_03__wh_ch03_b026"
+            ],
+            "valid_from_block": "wh_ch03_b026",
+            "valid_until_block": "wh_ch03_b026"
+          },
+          {
+            "surface": "the clergyman",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b022_01__wh_ch03_b022"
+            ],
+            "valid_from_block": "wh_ch03_b022",
+            "valid_until_block": "wh_ch03_b022"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b020",
+            "quote": " page: my eye wandered from manuscript to print. I saw a red ornamented title—“Seventy Times Seven, and the First of the Seventy-First. A Pious Discourse delivered by the Reverend Jabez Branderham, in the Chapel of Gimmerden Sough.” And while I was, half-consciously, worrying my brain to guess what Jabez Branderham would make of his subject, I sank back in b",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b020_01__wh_ch03_b020"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b022",
+            "quote": "es of pastor: especially as it is currently reported that his flock would rather let him starve than increase the living by one penny from their own pockets. However, in my dream, Jabez had a full and attentive congregation; and he preached—good God! what a sermon; divided into four hundred and ninety parts, each fully equal to an ordinary address from the p",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b022_02__wh_ch03_b022"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch03_b026",
+            "quote": " clubs crossed; blows, aimed at me, fell on other sconces. Presently the whole chapel resounded with rappings and counter rappings: every man’s hand was against his neighbour; and Branderham, unwilling to remain idle, poured forth his zeal in a shower of loud taps on the boards of the pulpit, which responded so smartly that, at last, to my unspeakable relief",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b026_02__wh_ch03_b026"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp10",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch03_b022_03__wh_ch03_b022",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b022_03__wh_ch03_b022"
+        ],
+        "status": "uncertain",
+        "alias_bindings": [
+          {
+            "surface": "the brother",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b022_03__wh_ch03_b022"
+            ],
+            "valid_from_block": "wh_ch03_b022",
+            "valid_until_block": "wh_ch03_b022"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b022",
+            "quote": " fully equal to an ordinary address from the pulpit, and each discussing a separate sin! Where he searched for them, I cannot tell. He had his private manner of interpreting the phrase, and it seemed necessary the brother should sin different sins on every occasion. They were of the most curious character: odd transgressions that I never imagined previously.",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b022_03__wh_ch03_b022"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp11",
+        "reuse_entity_id": null,
+        "referent_kind": "group_reference",
+        "canonical_atom_id": "atom_m_wh_ch03_b022_04__wh_ch03_b022",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b022_04__wh_ch03_b022"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "the flock",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b022_04__wh_ch03_b022"
+            ],
+            "valid_from_block": "wh_ch03_b022",
+            "valid_until_block": "wh_ch03_b022"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b022",
+            "quote": "We came to the chapel. I have passed it really in my walks, twice or thrice; it lies in a hollow, between two hills: an elevated hollow, near a swamp, whose peaty moisture is said to answer all the purposes of embalming on the few corpses deposited there. The roof has been kept whole hitherto; but as the clergyman’s stipend is only twenty pounds per annum, a",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b022_04__wh_ch03_b022"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp12",
+        "reuse_entity_id": null,
+        "referent_kind": "place",
+        "canonical_atom_id": "atom_m_wh_ch03_b040_01__wh_ch03_b040",
+        "member_atom_ids": [
+          "atom_m_wh_ch03_b040_01__wh_ch03_b040"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "my chamber door",
+            "member_atom_ids": [
+              "atom_m_wh_ch03_b040_01__wh_ch03_b040"
+            ],
+            "valid_from_block": "wh_ch03_b040",
+            "valid_until_block": "wh_ch03_b040"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch03_b040",
+            "quote": "To my confusion, I discovered the yell was not ideal: hasty footsteps approached my chamber door; somebody pushed it open, with a vigorous hand, and a light glimmered through the squares at the top of the bed. I sat shuddering, yet, and wiping the perspiration from my forehead: the intruder appeared to hesitate, and muttered to himself.",
+            "source_atom_ids": [
+              "atom_m_wh_ch03_b040_01__wh_ch03_b040"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      }
+    ]
+  },
+  "technical_error": null,
+  "technical_failure_class": null
+}

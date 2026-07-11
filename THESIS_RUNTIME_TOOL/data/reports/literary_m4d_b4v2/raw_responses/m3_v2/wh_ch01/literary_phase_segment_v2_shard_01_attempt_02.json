@@ -1,0 +1,34 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch01",
+  "chapter_id": "wh_ch01",
+  "mode": "literary_phase_segment_v2",
+  "shard_index": 1,
+  "shard_count": 1,
+  "attempt_index": 2,
+  "tag": "lit_m3v2_wh_ch01_literary_phase_segment_v2_s01:attempt2",
+  "prompt_sha256": "796fc6c53e99de644df1381af845f3d1c27ceea210e32bd0a72cdd7aadc18120",
+  "prompt_tokens_est": 541,
+  "bypass_cache": true,
+  "model": null,
+  "system_fingerprint": null,
+  "from_cache": false,
+  "cache_key": null,
+  "latency_ms": 0,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 0,
+    "cached_tokens": 0,
+    "completion_tokens": 0,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": null,
+  "parsed_json": null,
+  "technical_error": {
+    "type": "LLMTransportError",
+    "message": "Error code: 400 - {'error': {'message': \"'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.\", 'type': 'invalid_request_error', 'param': 'messages', 'code': None}}"
+  }
+}

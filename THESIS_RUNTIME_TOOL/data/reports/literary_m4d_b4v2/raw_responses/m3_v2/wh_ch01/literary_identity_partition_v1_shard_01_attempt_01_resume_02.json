@@ -360,5 +360,6 @@
       }
     ]
   },
-  "technical_error": null
+  "technical_error": null,
+  "technical_failure_class": null
 }

@@ -2,22 +2,7 @@
   "phase": "L2A-M4d",
   "milestone": "M3_v2_apply",
   "zero_api": false,
-  "status": "halted_semantic_gate",
-  "gate_code": "identity_response_rejected",
-  "errors": [
-    "groups[0].evidence[0].source_atom_ids invalid",
-    "groups[0].evidence[1].source_atom_ids invalid",
-    "groups[0].evidence[2].source_atom_ids invalid",
-    "groups[0].evidence[3].source_atom_ids invalid",
-    "groups[0].evidence[4].source_atom_ids invalid",
-    "groups[1].evidence[0].source_atom_ids invalid",
-    "groups[1].evidence[1].source_atom_ids invalid",
-    "groups[1].evidence[2].source_atom_ids invalid",
-    "groups[2].evidence[0].source_atom_ids invalid",
-    "groups[2].evidence[1].source_atom_ids invalid",
-    "groups[2].evidence[2].source_atom_ids invalid",
-    "groups[3].evidence[0].source_atom_ids invalid"
-  ],
+  "status": "needs_claude_gate",
   "estimate": {
     "phase": "L2A-M4d",
     "milestone": "M3_v2_scaffold",
@@ -44,7 +29,7 @@
         "shard_count": 1,
         "items": 22,
         "prompt_tokens_est": 5333,
-        "max_output_tokens": 6144
+        "max_output_tokens": 12288
       },
       {
         "scope": "M3_asof_wh_ch01",
@@ -53,8 +38,8 @@
         "shard_index": 1,
         "shard_count": 1,
         "items": 3,
-        "prompt_tokens_est": 5638,
-        "max_output_tokens": 6144
+        "prompt_tokens_est": 5689,
+        "max_output_tokens": 12288
       },
       {
         "scope": "M3_asof_wh_ch02",
@@ -64,7 +49,7 @@
         "shard_count": 1,
         "items": 68,
         "prompt_tokens_est": 13311,
-        "max_output_tokens": 6144
+        "max_output_tokens": 12288
       },
       {
         "scope": "M3_asof_wh_ch02",
@@ -73,8 +58,8 @@
         "shard_index": 1,
         "shard_count": 1,
         "items": 9,
-        "prompt_tokens_est": 12102,
-        "max_output_tokens": 6144
+        "prompt_tokens_est": 12153,
+        "max_output_tokens": 12288
       },
       {
         "scope": "M3_asof_wh_ch03",
@@ -84,7 +69,7 @@
         "shard_count": 2,
         "items": 59,
         "prompt_tokens_est": 13881,
-        "max_output_tokens": 6144
+        "max_output_tokens": 12288
       },
       {
         "scope": "M3_asof_wh_ch03",
@@ -94,7 +79,7 @@
         "shard_count": 2,
         "items": 27,
         "prompt_tokens_est": 9131,
-        "max_output_tokens": 6144
+        "max_output_tokens": 12288
       },
       {
         "scope": "M3_asof_wh_ch03",
@@ -103,8 +88,8 @@
         "shard_index": 1,
         "shard_count": 1,
         "items": 6,
-        "prompt_tokens_est": 11646,
-        "max_output_tokens": 6144
+        "prompt_tokens_est": 11697,
+        "max_output_tokens": 12288
       }
     ],
     "scope_summary": [
@@ -145,10 +130,10 @@
         "m2_checkpoint_hash": "6014102e981436addba02a21ba9e51d97125e880cd76ddb7e76d4fe2aec95d37"
       }
     ],
-    "prompt_tokens_est": 71042,
+    "prompt_tokens_est": 71195,
     "max_prompt_tokens_est": 13881,
-    "max_output_tokens_per_call": 6144,
-    "total_tokens_upper_bound": 114050,
+    "max_output_tokens_per_call": 12288,
+    "total_tokens_upper_bound": 157211,
     "prompt_token_cap": 14000,
     "cost_cap_usd": 0.0,
     "token_growth_halt": false,
@@ -157,38 +142,134 @@
   },
   "request_accounting": {
     "restored": {
-      "logical_calls": 0,
-      "attempts": 0,
+      "logical_calls": 4,
+      "attempts": 4,
       "technical_retries": 0,
-      "cache_hits": 0,
+      "poisoned_cache_replays": 0,
+      "cache_hits": 4,
       "cost_usd": 0.0,
-      "prompt_tokens": 0,
+      "prompt_tokens": 32360,
       "cached_tokens": 0,
-      "completion_tokens": 0,
+      "completion_tokens": 9417,
       "reasoning_tokens": 0
     },
     "this_attempt": {
-      "logical_calls": 1,
-      "attempts": 1,
+      "logical_calls": 3,
+      "attempts": 3,
       "technical_retries": 0,
-      "cache_hits": 0,
+      "poisoned_cache_replays": 0,
+      "cache_hits": 2,
       "cost_usd": 0.0,
-      "prompt_tokens": 5388,
-      "cached_tokens": 0,
-      "completion_tokens": 2290,
+      "prompt_tokens": 30382,
+      "cached_tokens": 14080,
+      "completion_tokens": 10583,
       "reasoning_tokens": 0
     },
     "combined": {
-      "logical_calls": 1,
-      "attempts": 1,
+      "logical_calls": 7,
+      "attempts": 7,
       "technical_retries": 0,
-      "cache_hits": 0,
+      "poisoned_cache_replays": 0,
+      "cache_hits": 6,
       "cost_usd": 0.0,
-      "prompt_tokens": 5388,
-      "cached_tokens": 0,
-      "completion_tokens": 2290,
+      "prompt_tokens": 62742,
+      "cached_tokens": 14080,
+      "completion_tokens": 20000,
       "reasoning_tokens": 0
     }
   },
-  "stop": "No failed scope was published or checkpointed. Resolve the semantic gate before API."
+  "chapters_selected": [
+    "wh_ch01",
+    "wh_ch02",
+    "wh_ch03"
+  ],
+  "resume": {
+    "enabled": true,
+    "restored": [
+      "wh_ch01",
+      "wh_ch02"
+    ],
+    "mismatches": [
+      {
+        "chapter_id": "wh_ch03",
+        "fields": [
+          "missing"
+        ]
+      }
+    ],
+    "lock_took_over_stale": false
+  },
+  "scopes": [
+    {
+      "scope": "M3_asof_wh_ch03",
+      "chapter_id": "wh_ch03",
+      "status": "published",
+      "identity_audit": {
+        "groups_applied": 21,
+        "entities_minted": 13,
+        "entities_reused": 8,
+        "review_only_groups": 7,
+        "blocked_for_runtime": 0,
+        "supersedes": [],
+        "evidence_atom_id_normalized": 0,
+        "atom_id_suffix_repaired": 6,
+        "atom_id_suffix_repaired_members": 4,
+        "atom_id_suffix_repaired_evidence": 2,
+        "atom_id_suffix_repaired_aliases": 4,
+        "reuse_hint_normalized": 1,
+        "reuse_mint_equivalent": 2,
+        "reuse_duplicate_unions": 2,
+        "evidence_cross_group_source_atoms": 2,
+        "evidence_quote_punct_normalized": 0
+      },
+      "phase_audit": {
+        "provisional_bindings": 1,
+        "provisional_binding_witnesses": [
+          {
+            "provisional_id": "ent_cathy",
+            "final_entity_id": "ent_that_minx",
+            "witnesses": [
+              {
+                "event_id": "e_wh_ch03_b057_02",
+                "block_id": "wh_ch03_b057",
+                "side": "target",
+                "method": "candidate_entity_id",
+                "final_entity_id": "ent_that_minx"
+              }
+            ]
+          }
+        ],
+        "provisional_pair_batches": 6,
+        "final_pairs_sent": 6,
+        "collapsed_pair_batches": 0,
+        "history_rows_sent": 10,
+        "events_sent": 38,
+        "pairs_replayed": 6,
+        "facts_applied": 2,
+        "phases_applied": 8,
+        "review_only_facts": 0,
+        "evidence_quote_punct_normalized": 0
+      },
+      "runtime_request_plan": {
+        "identity_shards": 2,
+        "phase_shards": 1,
+        "dry_run_note_omitted": true
+      },
+      "request_accounting": {
+        "logical_calls": 3,
+        "attempts": 3,
+        "technical_retries": 0,
+        "poisoned_cache_replays": 0,
+        "cache_hits": 2,
+        "cost_usd": 0.0,
+        "prompt_tokens": 30382,
+        "cached_tokens": 14080,
+        "completion_tokens": 10583,
+        "reasoning_tokens": 0
+      },
+      "story_bible": "data\\reports\\literary_m4d_b4v2\\story_bible_v2\\wh_ch03_story_bible.json",
+      "checkpoint": "data\\reports\\literary_m4d_b4v2\\checkpoints\\m3_v2\\wh_ch03.json"
+    }
+  ],
+  "stop": "Apply/publish complete. Claude must approve artifacts before any further API run."
 }

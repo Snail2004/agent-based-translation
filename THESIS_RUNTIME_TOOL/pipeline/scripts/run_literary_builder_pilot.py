@@ -29,6 +29,7 @@ from pipeline.literary.builder_pilot import (  # noqa: E402
 from pipeline.literary.story_bible_v2 import (  # noqa: E402
     estimate_m3_v2,
     make_m3_v2_request_llm,
+    rerender_m3_v2_from_checkpoints,
     run_m3_v2_from_responses,
     run_m3_v2_dry_run,
 )
@@ -114,6 +115,14 @@ def main() -> int:
         "--resume",
         action="store_true",
         help="Resume M1/M2/M3V2 from the longest valid per-chapter checkpoint prefix.",
+    )
+    parser.add_argument(
+        "--rerender-existing",
+        action="store_true",
+        help=(
+            "For --milestone M3V2: rebuild published Story Bible views and checkpoint "
+            "manifests from an existing validated checkpoint chain. No API."
+        ),
     )
     parser.add_argument(
         "--confirm-usd",
@@ -277,7 +286,22 @@ def _run_milestone(args: argparse.Namespace) -> int:
     config = load_llm_config(config_path)
     design_doc = Path(args.design_doc)
 
+    if args.rerender_existing and args.milestone != "M3V2":
+        raise SystemExit("--rerender-existing is only valid with --milestone M3V2")
+
     if args.milestone == "M3V2":
+        if args.rerender_existing:
+            report = rerender_m3_v2_from_checkpoints(
+                document,
+                args.chapters,
+                out_dir=out_dir,
+                design_doc=design_doc,
+                config=config,
+                m1_dir=m1_dir,
+                m2_dir=m2_dir,
+            )
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 0
         estimate = estimate_m3_v2(
             document,
             args.chapters,

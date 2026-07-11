@@ -46,7 +46,7 @@ from pipeline.literary.checkpoint import (
 
 IDENTITY_PARTITION_VERSION = "literary_identity_partition_v1"
 PHASE_SEGMENT_VERSION = "literary_phase_segment_v2"
-M3_V2_CHECKPOINT_SCHEMA_VERSION = "literary_m3_v2_checkpoint_v1"
+M3_V2_CHECKPOINT_SCHEMA_VERSION = "literary_m3_v2_checkpoint_v2"
 M3_V2_STAGE = "m3_v2"
 IDENTITY_REFERENT_KINDS = {
     "person",
@@ -567,12 +567,18 @@ def _phase_rows_as_of(
             if len(pair) != 2 or pair[0] == pair[1]:
                 continue
             event_ids = [str(value) for value in relation.get("event_ids") or [] if str(value)]
+            missing_event_ids = [event_id for event_id in event_ids if event_id not in event_index]
+            if missing_event_ids:
+                raise ValueError(
+                    "M3 v2 phase evidence join missing "
+                    f"for {chapter_id} pair={sorted(pair)}: {sorted(missing_event_ids)}"
+                )
             rows.append(
                 {
                     "source_chapter_id": chapter_id,
                     "provisional_pair": sorted(pair),
                     "event_ids": event_ids,
-                    "events": [event_index[event_id] for event_id in event_ids if event_id in event_index],
+                    "events": [event_index[event_id] for event_id in event_ids],
                     "candidate_transition": relation.get("candidate_transition"),
                     "observed_valence_hint": relation.get("observed_valence_hint"),
                 }
@@ -828,33 +834,88 @@ def _phase_pair_batches(
     ]
 
 
-def _runtime_phase_pair_batches(
+def _merge_mapped_phase_batches(
     *,
     phase_rows: list[dict[str, Any]],
-    chapter_id: str,
-) -> list[dict[str, Any]]:
-    """Batch final-id pair histories after the identity partition has been applied."""
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """Merge model-resolved provisional histories by final pair without interpretation."""
 
-    affected = {
-        tuple(str(value) for value in row.get("pair") or [])
-        for row in phase_rows
-        if str(row.get("source_chapter_id") or "") == chapter_id
-    }
-    by_pair: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for row in phase_rows:
-        pair = tuple(str(value) for value in row.get("pair") or [])
-        if len(pair) != 2 or pair not in affected:
+    grouped: dict[tuple[str, str], list[tuple[str, int, int, dict[str, Any]]]] = {}
+    input_event_ids: set[str] = set()
+    errors: list[str] = []
+
+    for batch_index, row in enumerate(phase_rows):
+        pair = tuple(sorted(str(value) for value in row.get("pair") or [] if str(value)))
+        if len(pair) != 2 or pair[0] == pair[1]:
+            errors.append(f"invalid_final_pair:{list(pair)}")
             continue
-        by_pair.setdefault(pair, []).append(row)
-    return [
-        {"pair": list(pair), "history": history}
-        for pair, history in sorted(by_pair.items())
-    ]
+        history = row.get("history")
+        if not isinstance(history, list) or not history:
+            errors.append(f"empty_history:{list(pair)}")
+            continue
+        for history_index, item in enumerate(history):
+            if not isinstance(item, dict):
+                errors.append(f"invalid_history:{list(pair)}")
+                continue
+            event_ids = [str(value) for value in item.get("event_ids") or [] if str(value)]
+            events = item.get("events")
+            if not event_ids or not isinstance(events, list) or not events:
+                errors.append(f"empty_events:{list(pair)}")
+                continue
+            joined_event_ids = [str(event.get("event_id") or "") for event in events if isinstance(event, dict)]
+            if set(event_ids) != set(joined_event_ids) or len(event_ids) != len(joined_event_ids):
+                errors.append(f"event_join_mismatch:{list(pair)}")
+                continue
+            input_event_ids.update(event_ids)
+            grouped.setdefault(pair, []).append(
+                (
+                    str(item.get("source_chapter_id") or ""),
+                    batch_index,
+                    history_index,
+                    copy.deepcopy(item),
+                )
+            )
+
+    if errors:
+        raise M3V2TechnicalGateError("phase_input_wiring_error", sorted(set(errors)))
+
+    merged: list[dict[str, Any]] = []
+    for pair, rows in sorted(grouped.items()):
+        history = [item for _chapter, _batch, _history, item in sorted(rows)]
+        if not history or not any(item.get("events") for item in history):
+            raise M3V2TechnicalGateError(
+                "phase_input_wiring_error", [f"empty_final_pair:{list(pair)}"]
+            )
+        merged.append({"pair": list(pair), "history": history})
+
+    output_event_ids = {
+        str(event.get("event_id") or "")
+        for batch in merged
+        for history in batch["history"]
+        for event in history.get("events") or []
+        if isinstance(event, dict) and str(event.get("event_id") or "")
+    }
+    if input_event_ids != output_event_ids:
+        raise M3V2TechnicalGateError(
+            "phase_input_wiring_error", ["event_id_set_not_preserved"]
+        )
+
+    return merged, {
+        "provisional_pair_batches": len(phase_rows),
+        "final_pairs_sent": len(merged),
+        "collapsed_pair_batches": len(phase_rows) - len(merged),
+        "history_rows_sent": sum(len(batch["history"]) for batch in merged),
+        "events_sent": sum(
+            len(history.get("events") or [])
+            for batch in merged
+            for history in batch["history"]
+        ),
+    }
 
 
 def _runtime_phase_shards(
     *,
-    phase_rows: list[dict[str, Any]],
+    phase_batches: list[dict[str, Any]],
     design_doc: Path,
     chapter_id: str,
     scope: str,
@@ -862,12 +923,8 @@ def _runtime_phase_shards(
 ) -> list[dict[str, Any]]:
     """Build phase requests after all references point to final identity ids."""
 
-    pair_batches = _runtime_phase_pair_batches(
-        phase_rows=phase_rows,
-        chapter_id=chapter_id,
-    )
     return _shard_for_cap(
-        items=pair_batches,
+        items=phase_batches,
         build_messages=lambda shard: build_phase_messages(
             design_doc=design_doc,
             chapter_id=chapter_id,
@@ -1205,6 +1262,221 @@ def _dedupe_aliases(aliases: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return output
 
 
+def _identity_atom_id_maps(
+    atoms: list[dict[str, Any]],
+) -> tuple[set[str], dict[str, set[str]]]:
+    """Index atom ids by their redundant mention-prefix for mechanical repairs."""
+
+    atom_ids = {str(atom["atom_id"]) for atom in atoms}
+    mention_prefix_to_full: dict[str, set[str]] = {}
+    for atom in atoms:
+        full_id = str(atom["atom_id"])
+        prefixes = {full_id.split("__", 1)[0]}
+        mention_id = str(atom.get("mention_id") or "")
+        if mention_id:
+            prefixes.add(f"atom_{mention_id}")
+        for prefix in prefixes:
+            mention_prefix_to_full.setdefault(prefix, set()).add(full_id)
+    return atom_ids, mention_prefix_to_full
+
+
+def _repair_identity_atom_id(
+    raw_id: Any,
+    *,
+    atom_ids: set[str],
+    mention_prefix_to_full: dict[str, set[str]],
+) -> tuple[Any, str | None]:
+    """Repair only a uniquely resolvable omitted or incorrect block suffix.
+
+    The prefix is the model-visible mention id.  A replacement is therefore
+    bookkeeping only when that prefix names exactly one atom in this shard.
+    """
+
+    value = str(raw_id)
+    if value in atom_ids:
+        return raw_id, None
+    prefix = value.split("__", 1)[0]
+    candidates = mention_prefix_to_full.get(prefix) or set()
+    if len(candidates) != 1:
+        return raw_id, None
+    repaired = next(iter(candidates))
+    return repaired, "suffix" if "__" in value else "short"
+
+
+def _normalize_identity_response_atom_ids(
+    response: dict[str, Any],
+    *,
+    atoms: list[dict[str, Any]],
+) -> tuple[dict[str, Any], dict[str, int]]:
+    """Normalize narrow atom-id copy slips before the partition validator runs."""
+
+    atom_ids, mention_prefix_to_full = _identity_atom_id_maps(atoms)
+    normalized = copy.deepcopy(response)
+    audit = {
+        "evidence_atom_id_normalized": 0,
+        "atom_id_suffix_repaired": 0,
+        "atom_id_suffix_repaired_members": 0,
+        "atom_id_suffix_repaired_evidence": 0,
+        "atom_id_suffix_repaired_aliases": 0,
+    }
+
+    def repair_list(values: Any, *, destination: str) -> Any:
+        if not isinstance(values, list):
+            return values
+        repaired_values: list[Any] = []
+        for raw_id in values:
+            repaired, repair_kind = _repair_identity_atom_id(
+                raw_id,
+                atom_ids=atom_ids,
+                mention_prefix_to_full=mention_prefix_to_full,
+            )
+            repaired_values.append(repaired)
+            if repair_kind == "short":
+                if destination == "evidence":
+                    audit["evidence_atom_id_normalized"] += 1
+            elif repair_kind == "suffix":
+                if destination == "aliases":
+                    # Alias bindings duplicate group membership. Surface the
+                    # repair without inflating the primary member/evidence
+                    # counter used to compare model copy slips across runs.
+                    audit["atom_id_suffix_repaired_aliases"] += 1
+                else:
+                    audit["atom_id_suffix_repaired"] += 1
+                    audit[f"atom_id_suffix_repaired_{destination}"] += 1
+        return repaired_values
+
+    for group in normalized.get("groups") or []:
+        if not isinstance(group, dict):
+            continue
+        group["member_atom_ids"] = repair_list(
+            group.get("member_atom_ids"), destination="members"
+        )
+        for alias in group.get("alias_bindings") or []:
+            if isinstance(alias, dict):
+                alias["member_atom_ids"] = repair_list(
+                    alias.get("member_atom_ids"), destination="aliases"
+                )
+        for evidence in group.get("evidence") or []:
+            if isinstance(evidence, dict):
+                evidence["source_atom_ids"] = repair_list(
+                    evidence.get("source_atom_ids"), destination="evidence"
+                )
+    return normalized, audit
+
+
+def normalize_identity_evidence_atom_ids(
+    response: dict[str, Any],
+    *,
+    atoms: list[dict[str, Any]],
+) -> tuple[dict[str, Any], int]:
+    """Compatibility wrapper for Amendment #1's evidence-only counter."""
+
+    normalized, audit = _normalize_identity_response_atom_ids(response, atoms=atoms)
+    return normalized, audit["evidence_atom_id_normalized"]
+
+
+def _normalize_identity_reuse_ids(
+    response: dict[str, Any],
+    *,
+    atoms_by_id: dict[str, dict[str, Any]],
+    state: dict[str, Any],
+) -> dict[str, int]:
+    """Resolve only recorded hint bindings or a contentless deterministic mint claim."""
+
+    existing_ids = set(_state_entities_by_id(state))
+    occupied_ids = set(existing_ids)
+    hint_to_entities = state.get("hint_to_entities") or {}
+    audit = {"reuse_hint_normalized": 0, "reuse_mint_equivalent": 0}
+
+    for group in response.get("groups") or []:
+        if not isinstance(group, dict):
+            continue
+        canonical_atom = atoms_by_id.get(str(group.get("canonical_atom_id") or ""))
+        reuse = group.get("reuse_entity_id")
+        if reuse is not None:
+            claimed_id = str(reuse)
+            if claimed_id not in existing_ids:
+                hint_targets = [str(item) for item in hint_to_entities.get(claimed_id) or []]
+                if len(hint_targets) == 1 and hint_targets[0] in existing_ids:
+                    group["reuse_entity_id"] = hint_targets[0]
+                    audit["reuse_hint_normalized"] += 1
+                elif canonical_atom is not None:
+                    expected_mint = _mint_entity_id(
+                        canonical_atom=canonical_atom,
+                        occupied_ids=occupied_ids,
+                    )
+                    if claimed_id == expected_mint:
+                        group["reuse_entity_id"] = None
+                        audit["reuse_mint_equivalent"] += 1
+
+        if group.get("reuse_entity_id") is None and canonical_atom is not None:
+            occupied_ids.add(
+                _mint_entity_id(canonical_atom=canonical_atom, occupied_ids=occupied_ids)
+            )
+    return audit
+
+
+def _duplicate_reuse_union_count(response: dict[str, Any]) -> int:
+    """Permit compatible repeated reuse claims; reject an explicit split witness."""
+
+    claims: dict[str, list[dict[str, Any]]] = {}
+    group_by_atom: dict[str, int] = {}
+    for group_index, group in enumerate(response.get("groups") or []):
+        if not isinstance(group, dict):
+            continue
+        reuse = group.get("reuse_entity_id")
+        if reuse is not None:
+            claims.setdefault(str(reuse), []).append(group)
+        for atom_id in group.get("member_atom_ids") or []:
+            group_by_atom[str(atom_id)] = group_index
+
+    unions = 0
+    for entity_id, rows in claims.items():
+        if len(rows) < 2:
+            continue
+        if len({str(row.get("referent_kind") or "") for row in rows}) != 1:
+            raise M3V2SemanticGateError("stable_id_split_tie", [entity_id, "referent_kind"])
+        duplicate_group_indexes = {
+            index
+            for index, group in enumerate(response.get("groups") or [])
+            if isinstance(group, dict) and str(group.get("reuse_entity_id") or "") == entity_id
+        }
+        for group in response.get("groups") or []:
+            if not isinstance(group, dict):
+                continue
+            for evidence in group.get("evidence") or []:
+                if not isinstance(evidence, dict) or evidence.get("supports") != "different_identity":
+                    continue
+                touched_groups = {
+                    group_by_atom[str(atom_id)]
+                    for atom_id in evidence.get("source_atom_ids") or []
+                    if str(atom_id) in group_by_atom
+                }
+                if len(touched_groups & duplicate_group_indexes) > 1:
+                    raise M3V2SemanticGateError("stable_id_split_tie", [entity_id, "different_identity"])
+        unions += len(rows) - 1
+    return unions
+
+
+def count_identity_evidence_cross_group_source_atoms(response: dict[str, Any]) -> int:
+    """Count valid cross-group provenance retained for review in accepted evidence."""
+
+    count = 0
+    for group in response.get("groups") or []:
+        if not isinstance(group, dict):
+            continue
+        members = {str(value) for value in group.get("member_atom_ids") or [] if str(value)}
+        for evidence in group.get("evidence") or []:
+            if not isinstance(evidence, dict) or evidence.get("supports") != "same_identity":
+                continue
+            count += sum(
+                str(atom_id) not in members
+                for atom_id in (evidence.get("source_atom_ids") or [])
+                if str(atom_id)
+            )
+    return count
+
+
 def apply_identity_partition_response(
     state: dict[str, Any],
     response: dict[str, Any],
@@ -1221,28 +1493,32 @@ def apply_identity_partition_response(
 
     working = _copy_state(state)
     entities_by_id = _state_entities_by_id(working)
-    errors = validate_identity_partition_response(
+    normalized_response, atom_id_audit = _normalize_identity_response_atom_ids(
         response,
+        atoms=atoms,
+    )
+    atoms_by_id = {str(atom["atom_id"]): atom for atom in atoms}
+    reuse_normalization_audit = _normalize_identity_reuse_ids(
+        normalized_response,
+        atoms_by_id=atoms_by_id,
+        state=working,
+    )
+    cross_group_source_atom_count = count_identity_evidence_cross_group_source_atoms(
+        normalized_response
+    )
+    quote_audit: dict[str, int] = {"evidence_quote_punct_normalized": 0}
+    errors = validate_identity_partition_response(
+        normalized_response,
         atoms=atoms,
         prior_entity_ids=set(entities_by_id),
         source_text_by_block=source_text_by_block,
+        quote_audit=quote_audit,
     )
     if errors:
         raise M3V2SemanticGateError("identity_response_rejected", errors)
 
-    groups = list(response.get("groups") or [])
-    reuse_claims: dict[str, list[dict[str, Any]]] = {}
-    for group in groups:
-        reuse = group.get("reuse_entity_id")
-        if reuse is not None:
-            reuse_claims.setdefault(str(reuse), []).append(group)
-    duplicate_reuse = [entity_id for entity_id, rows in reuse_claims.items() if len(rows) > 1]
-    if duplicate_reuse:
-        # Frontier prompts do not carry the old canonical atom as an output atom.
-        # Picking a branch here would be code performing an identity judgement.
-        raise M3V2SemanticGateError("stable_id_split_tie", sorted(duplicate_reuse))
-
-    atoms_by_id = {str(atom["atom_id"]): atom for atom in atoms}
+    groups = list(normalized_response.get("groups") or [])
+    duplicate_reuse_unions = _duplicate_reuse_union_count(normalized_response)
     audit = {
         "groups_applied": 0,
         "entities_minted": 0,
@@ -1250,6 +1526,11 @@ def apply_identity_partition_response(
         "review_only_groups": 0,
         "blocked_for_runtime": 0,
         "supersedes": [],
+        **atom_id_audit,
+        **reuse_normalization_audit,
+        "reuse_duplicate_unions": duplicate_reuse_unions,
+        "evidence_cross_group_source_atoms": cross_group_source_atom_count,
+        "evidence_quote_punct_normalized": quote_audit["evidence_quote_punct_normalized"],
     }
     occupied_ids = set(entities_by_id)
     for group in groups:
@@ -1353,11 +1634,106 @@ def _resolve_final_entity_ref(
     return next(iter(matched)) if len(matched) == 1 else None
 
 
+def _derive_provisional_bindings(
+    state: dict[str, Any],
+    phase_rows: list[dict[str, Any]],
+) -> tuple[dict[str, str], list[dict[str, Any]]]:
+    """Compose existing B2 and identity verdicts into scope-local id bindings.
+
+    The routine never compares names or otherwise judges identity. A provisional
+    id can bind only when its own event side resolves through the existing
+    same-block/hint paths, and every usable witness points to the same final id.
+    """
+
+    provisional_ids = sorted(
+        {
+            str(value)
+            for row in phase_rows
+            for value in row.get("provisional_pair") or []
+            if str(value) and _resolve_final_entity_ref(state, str(value)) is None
+        }
+    )
+    bindings: dict[str, str] = {}
+    audit_rows: list[dict[str, Any]] = []
+
+    for provisional_id in provisional_ids:
+        candidate_final_ids: set[str] = set()
+        witnesses: list[dict[str, str]] = []
+        for row in phase_rows:
+            pair = [str(value) for value in row.get("provisional_pair") or []]
+            if len(pair) != 2 or provisional_id not in pair:
+                continue
+            pair_mate = pair[1] if pair[0] == provisional_id else pair[0]
+            pair_mate_final = _resolve_final_entity_ref(state, pair_mate)
+            if pair_mate_final is None:
+                continue
+            for history in row.get("history") or []:
+                for event in history.get("events") or []:
+                    if not isinstance(event, dict):
+                        continue
+                    block_id = str(event.get("block_id") or "")
+                    for side_name, other_side_name in [("actor", "target"), ("target", "actor")]:
+                        side = event.get(side_name) or {}
+                        other_side = event.get(other_side_name) or {}
+                        if not isinstance(side, dict) or not isinstance(other_side, dict):
+                            continue
+                        direct_candidate = [
+                            str(value) for value in side.get("candidate_entity_ids") or [] if str(value)
+                        ] == [provisional_id]
+                        other_final = _resolve_final_entity_ref(
+                            state, other_side, block_id=block_id
+                        )
+                        by_elimination = other_final == pair_mate_final
+                        if not direct_candidate and not by_elimination:
+                            continue
+                        final_id = _resolve_final_entity_ref(state, side, block_id=block_id)
+                        if final_id is None:
+                            continue
+                        candidate_final_ids.add(final_id)
+                        witnesses.append(
+                            {
+                                "event_id": str(event.get("event_id") or ""),
+                                "block_id": block_id,
+                                "side": side_name,
+                                "method": (
+                                    "candidate_entity_id"
+                                    if direct_candidate
+                                    else "pair_mate_elimination"
+                                ),
+                                "final_entity_id": final_id,
+                            }
+                        )
+        if len(candidate_final_ids) != 1:
+            continue
+        final_id = next(iter(candidate_final_ids))
+        bindings[provisional_id] = final_id
+        audit_rows.append(
+            {
+                "provisional_id": provisional_id,
+                "final_entity_id": final_id,
+                "witnesses": sorted(
+                    witnesses,
+                    key=lambda item: (
+                        item["block_id"],
+                        item["event_id"],
+                        item["side"],
+                    ),
+                ),
+            }
+        )
+    return bindings, audit_rows
+
+
 def _remap_phase_rows_to_final_ids(
     state: dict[str, Any],
     phase_rows: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     """Map only unambiguous evidence into the phase stage; preserve residuals for review."""
+
+    provisional_bindings, binding_witnesses = _derive_provisional_bindings(state, phase_rows)
+
+    def resolve(ref: str) -> str | None:
+        return _resolve_final_entity_ref(state, ref) or provisional_bindings.get(ref)
 
     mapped: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
@@ -1367,14 +1743,17 @@ def _remap_phase_rows_to_final_ids(
             unresolved.append({"reason": "invalid_provisional_pair", "row": row})
             continue
         final_pair = [
-            _resolve_final_entity_ref(state, pair[0]),
-            _resolve_final_entity_ref(state, pair[1]),
+            resolve(pair[0]),
+            resolve(pair[1]),
         ]
         if None in final_pair or final_pair[0] == final_pair[1]:
             unresolved.append({"reason": "unresolved_or_collapsed_pair", "row": row})
             continue
         mapped.append({**copy.deepcopy(row), "pair": sorted(str(value) for value in final_pair)})
-    return mapped, unresolved
+    return mapped, unresolved, {
+        "provisional_bindings": len(provisional_bindings),
+        "provisional_binding_witnesses": binding_witnesses,
+    }
 
 
 def apply_phase_segment_response(
@@ -1384,17 +1763,21 @@ def apply_phase_segment_response(
     allowed_pairs: set[tuple[str, str]],
     source_text_by_block: dict[str, str],
     block_ordinals: dict[str, int],
+    scope_end_block: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Replace only affected-pair facts/phases after semantic validation."""
 
     working = _copy_state(state)
     entity_ids = set(_state_entities_by_id(working))
+    quote_audit: dict[str, int] = {"evidence_quote_punct_normalized": 0}
     errors = validate_phase_segment_response(
         response,
         entity_ids=entity_ids,
         source_text_by_block=source_text_by_block,
         block_ordinals=block_ordinals,
         allowed_pairs=allowed_pairs,
+        scope_end_block=scope_end_block,
+        quote_audit=quote_audit,
     )
     if errors:
         raise M3V2SemanticGateError("phase_response_rejected", errors)
@@ -1426,6 +1809,7 @@ def apply_phase_segment_response(
         "facts_applied": len(facts),
         "phases_applied": len(phases),
         "review_only_facts": sum(1 for fact in facts if fact.get("predicate_code") == "other"),
+        "evidence_quote_punct_normalized": quote_audit["evidence_quote_punct_normalized"],
     }
 
 
@@ -1563,11 +1947,15 @@ def build_story_bible_v2(
         and str(row.get("subject_ref") or "") in person_ids
         and str(row.get("object_ref") or "") in person_ids
     ]
-    phases = [
-        copy.deepcopy(row)
-        for row in state.get("relation_phases") or []
-        if set(str(value) for value in row.get("pair") or []).issubset(person_ids)
-    ]
+    phases: list[dict[str, Any]] = []
+    for row in state.get("relation_phases") or []:
+        if not set(str(value) for value in row.get("pair") or []).issubset(person_ids):
+            continue
+        rendered = copy.deepcopy(row)
+        # ``valid_until_block`` is the state/internal interval field. Published
+        # Story Bible artifacts expose one canonical boundary field only.
+        rendered["valid_to_block"] = rendered.pop("valid_until_block", None)
+        phases.append(rendered)
     narration_segments = [
         {"chapter_id": str(digest.get("chapter_id") or ""), **copy.deepcopy(segment)}
         for digest in digests
@@ -1624,6 +2012,13 @@ def validate_story_bible_v2(
         pair = [str(value) for value in phase.get("pair") or []]
         if len(pair) != 2 or pair[0] == pair[1] or any(value not in entity_ids for value in pair):
             errors.append("relation_phase pair invalid")
+        if "valid_until_block" in phase:
+            errors.append("relation_phase leaked internal valid_until_block")
+        valid_to = phase.get("valid_to_block")
+        if phase.get("status") == "closed" and not str(valid_to or ""):
+            errors.append("closed relation_phase missing valid_to_block")
+        if phase.get("status") == "open" and valid_to is not None:
+            errors.append("open relation_phase has valid_to_block")
     if expected_event_count < 0:
         errors.append("event_count invalid")
     return errors
@@ -1655,6 +2050,7 @@ def _empty_m3_v2_request_accounting() -> dict[str, int | float]:
         "logical_calls": 0,
         "attempts": 0,
         "technical_retries": 0,
+        "poisoned_cache_replays": 0,
         "cache_hits": 0,
         "cost_usd": 0.0,
         "prompt_tokens": 0,
@@ -1682,14 +2078,29 @@ def _m3_v2_raw_response_path(
     mode: str,
     shard_index: int,
     attempt_index: int,
+    collision_index: int = 0,
 ) -> Path:
+    """Return a collision-aware raw response path without reusing an old attempt."""
+
+    suffix = "" if collision_index == 0 else f"_resume_{collision_index:02d}"
     return (
         Path(out_dir)
         / "raw_responses"
         / M3_V2_STAGE
         / chapter_id
-        / f"{mode}_shard_{shard_index:02d}_attempt_{attempt_index:02d}.json"
+        / f"{mode}_shard_{shard_index:02d}_attempt_{attempt_index:02d}{suffix}.json"
     )
+
+
+def _append_only_json_write(path: Path, payload: dict[str, Any]) -> None:
+    """Write immutable audit evidence with an exclusive create, never replacement."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    encoded = (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    with path.open("xb") as handle:
+        handle.write(encoded)
+        handle.flush()
+        os.fsync(handle.fileno())
 
 
 def _m3_v2_usage_payload(result: LLMResult | None) -> dict[str, int]:
@@ -1717,16 +2128,10 @@ def _persist_m3_v2_raw_response(
     result: LLMResult | None = None,
     provided_json: dict[str, Any] | None = None,
     technical_error: Exception | None = None,
+    technical_failure_class: str | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """Persist a raw response/usage record before any semantic apply path runs."""
 
-    path = _m3_v2_raw_response_path(
-        out_dir,
-        chapter_id=str(meta["chapter_id"]),
-        mode=str(meta["mode"]),
-        shard_index=int(meta["shard_index"]),
-        attempt_index=int(meta["attempt_index"]),
-    )
     usage = _m3_v2_usage_payload(result)
     payload = {
         "phase": "L2A-M4d",
@@ -1757,8 +2162,24 @@ def _persist_m3_v2_raw_response(
             if technical_error is not None
             else None
         ),
+        "technical_failure_class": technical_failure_class,
     }
-    _atomic_json_write(path, payload)
+    for collision_index in range(10_000):
+        path = _m3_v2_raw_response_path(
+            out_dir,
+            chapter_id=str(meta["chapter_id"]),
+            mode=str(meta["mode"]),
+            shard_index=int(meta["shard_index"]),
+            attempt_index=int(meta["attempt_index"]),
+            collision_index=collision_index,
+        )
+        try:
+            _append_only_json_write(path, payload)
+        except FileExistsError:
+            continue
+        break
+    else:
+        raise RuntimeError("M3 v2 could not allocate an append-only raw response path")
     checkpoint_record = {
         "mode": payload["mode"],
         "scope": payload["scope"],
@@ -1772,6 +2193,7 @@ def _persist_m3_v2_raw_response(
         "cache_key": payload["cache_key"],
         "cost_usd": payload["cost_usd"],
         "usage": usage,
+        "technical_failure_class": payload["technical_failure_class"],
     }
     return path, checkpoint_record
 
@@ -1830,6 +2252,7 @@ def _resolve_m3_v2_response_batch(
         parsed: dict[str, Any] | None = None
         last_error: str | None = None
         for attempt_index in [1, 2]:
+            poisoned_cache_replay = False
             meta = {
                 "scope": scope,
                 "chapter_id": chapter_id,
@@ -1871,12 +2294,19 @@ def _resolve_m3_v2_response_batch(
                     raw_records.append(raw_record)
                     last_error = str(contract_error)
                 else:
+                    parsed_json_ok = (
+                        isinstance(result.parsed_json, dict) and result.json_error is None
+                    )
+                    poisoned_cache_replay = bool(result.from_cache and not parsed_json_ok)
                     raw_path, raw_record = _persist_m3_v2_raw_response(
                         out_dir,
                         messages=shard["messages"],
                         meta=meta,
                         source="request_llm",
                         result=result,
+                        technical_failure_class=(
+                            "poisoned_cache_replay" if poisoned_cache_replay else None
+                        ),
                     )
                     raw_paths.append(raw_path)
                     raw_records.append(raw_record)
@@ -1887,13 +2317,20 @@ def _resolve_m3_v2_response_batch(
                     usage = _m3_v2_usage_payload(result)
                     for key, value in usage.items():
                         accounting[key] = int(accounting[key]) + int(value)
-                    if isinstance(result.parsed_json, dict) and result.json_error is None:
+                    if parsed_json_ok:
                         parsed = result.parsed_json
                         break
                     last_error = result.json_error or "parsed_json_not_object"
+                    if poisoned_cache_replay:
+                        # Cached malformed JSON is free to replay and must not consume
+                        # the fresh-spend retry budget. The forced bypass is still audited.
+                        accounting["poisoned_cache_replays"] = (
+                            int(accounting["poisoned_cache_replays"]) + 1
+                        )
 
             if attempt_index == 1:
-                accounting["technical_retries"] = int(accounting["technical_retries"]) + 1
+                if not poisoned_cache_replay:
+                    accounting["technical_retries"] = int(accounting["technical_retries"]) + 1
                 continue
             raise M3V2TechnicalGateError(
                 "request_llm_parse_or_transport_failed",
@@ -1955,6 +2392,160 @@ def _m3_v2_prefix(
         checkpoints.append(checkpoint)
         parent_hash = str(checkpoint["checkpoint_hash"])
     return checkpoints, mismatches
+
+
+def rerender_m3_v2_from_checkpoints(
+    document: dict[str, Any],
+    chapters: list[str],
+    *,
+    out_dir: Path,
+    design_doc: Path,
+    config: LLMConfig,
+    m1_dir: Path,
+    m2_dir: Path,
+) -> dict[str, Any]:
+    """Rebuild published Story Bible views from an already-valid M3 checkpoint chain.
+
+    This is deliberately not a resume path: it never prepares a model request,
+    mutates consolidation state, or reads an API key.  It exists for mechanical
+    output-contract migrations whose source of truth is the saved M3 state.
+    """
+
+    root = Path(out_dir)
+    chain = load_m3_v2_input_chain(
+        document=document,
+        chapters=chapters,
+        m1_dir=Path(m1_dir),
+        m2_dir=Path(m2_dir),
+        design_doc=Path(design_doc),
+    )
+    existing, mismatches = _m3_v2_prefix(
+        document=document,
+        chain=chain,
+        out_dir=root,
+        design_doc=Path(design_doc),
+        config=config,
+    )
+    if mismatches or len(existing) != len(chain["selected"]):
+        raise ValueError(
+            "M3 v2 re-render requires a complete valid checkpoint prefix: "
+            f"mismatches={mismatches}"
+        )
+
+    plans: list[dict[str, Any]] = []
+    for index, (chapter, checkpoint) in enumerate(zip(chain["selected"], existing, strict=True)):
+        checkpoint_state = copy.deepcopy(checkpoint.get("state") or {})
+        state = _copy_state(checkpoint_state.get("m3_state") or {})
+        if not state:
+            raise ValueError(f"M3 v2 re-render checkpoint has no state: {chapter['chapter_id']}")
+        turns = list(state.get("speaker_turns") or [])
+        events = list(state.get("relation_events") or [])
+        digests = _digest_payloads_as_of(
+            m2_dir=Path(m2_dir),
+            m2_checkpoints=chain["m2_checkpoints"][: index + 1],
+        )
+        story = build_story_bible_v2(
+            chapter=chapter,
+            state=state,
+            m1_dir=Path(m1_dir),
+            m1_checkpoints=chain["m1_checkpoints"][: index + 1],
+            digests=digests,
+        )
+        errors = validate_story_bible_v2(
+            story,
+            expected_turn_count=len(turns),
+            expected_event_count=len(events),
+        )
+        if errors:
+            raise M3V2SemanticGateError("rerender_publish_gate_rejected", errors)
+        story_path = root / "story_bible_v2" / f"{chapter['chapter_id']}_story_bible.json"
+        raw_paths = _manifest_paths(
+            root=root,
+            checkpoints=[checkpoint],
+            directory="raw_responses",
+        )
+        plans.append(
+            {
+                "chapter": chapter,
+                "index": index,
+                "checkpoint": checkpoint,
+                "checkpoint_state": checkpoint_state,
+                "story": story,
+                "story_path": story_path,
+                "raw_paths": raw_paths,
+            }
+        )
+
+    lock = CheckpointLock(root)
+    lock.acquire()
+    scope_reports: list[dict[str, Any]] = []
+    try:
+        parent_hash: str | None = None
+        for plan in plans:
+            chapter = plan["chapter"]
+            index = int(plan["index"])
+            story_path = Path(plan["story_path"])
+            _atomic_json_write(story_path, plan["story"])
+            checkpoint = build_m3_v2_checkpoint(
+                out_dir=root,
+                chapter=chapter,
+                chapter_index=index,
+                chapter_sequence_prefix=[
+                    str(item["chapter_id"]) for item in chain["selected"][: index + 1]
+                ],
+                design_doc=Path(design_doc),
+                config=config,
+                input_m1_checkpoint_hash=str(chain["m1_checkpoints"][index]["checkpoint_hash"]),
+                input_m2_checkpoint_hash=str(chain["m2_checkpoints"][index]["checkpoint_hash"]),
+                parent_checkpoint_hash=parent_hash,
+                state=plan["checkpoint_state"],
+                raw_responses=copy.deepcopy(plan["checkpoint"].get("raw_responses") or []),
+                published_artifacts=[story_path, *plan["raw_paths"]],
+            )
+            checkpoint_path = write_m3_v2_checkpoint_atomic(root, checkpoint)
+            parent_hash = str(checkpoint["checkpoint_hash"])
+            scope_reports.append(
+                {
+                    "chapter_id": str(chapter["chapter_id"]),
+                    "status": "rerendered",
+                    "story_bible": str(story_path),
+                    "checkpoint": str(checkpoint_path),
+                    "previous_checkpoint_hash": str(plan["checkpoint"]["checkpoint_hash"]),
+                    "checkpoint_hash": parent_hash,
+                }
+            )
+
+        verified, verification_mismatches = _m3_v2_prefix(
+            document=document,
+            chain=chain,
+            out_dir=root,
+            design_doc=Path(design_doc),
+            config=config,
+        )
+        if verification_mismatches or len(verified) != len(chain["selected"]):
+            raise RuntimeError(
+                "M3 v2 re-render wrote an invalid checkpoint chain: "
+                f"mismatches={verification_mismatches}"
+            )
+    finally:
+        lock.release()
+
+    report = {
+        "phase": "L2A-M4d",
+        "milestone": "M3_v2_rerender",
+        "zero_api": True,
+        "status": "rerendered",
+        "chapters_selected": [str(item["chapter_id"]) for item in chain["selected"]],
+        "scopes": scope_reports,
+        "resume": {
+            "validated": [str(item["chapter_id"]) for item in verified],
+            "mismatches": [],
+            "lock_took_over_stale": lock.took_over_stale,
+        },
+        "stop": "Re-render complete. No LLM request was prepared or sent.",
+    }
+    _atomic_json_write(root / "m3_v2_rerender_report.json", report)
+    return report
 
 
 def _atomic_json_write(path: Path, payload: dict[str, Any]) -> None:
@@ -2118,17 +2709,22 @@ def run_m3_v2_from_responses(
                 source_text_by_block=source_text,
             )
 
-            mapped_phase_rows, unresolved_phase_rows = _remap_phase_rows_to_final_ids(
-                state, scope["phase_rows"]
-            )
+            (
+                mapped_phase_rows,
+                unresolved_phase_rows,
+                provisional_binding_audit,
+            ) = _remap_phase_rows_to_final_ids(state, scope["phase_rows"])
             if unresolved_phase_rows:
                 raise M3V2SemanticGateError(
                     "blocked_for_runtime_unresolved_relation",
                     [str(row.get("reason") or "") for row in unresolved_phase_rows],
                 )
-            allowed_pairs = {tuple(row["pair"]) for row in mapped_phase_rows}
+            phase_batches, phase_input_audit = _merge_mapped_phase_batches(
+                phase_rows=mapped_phase_rows
+            )
+            allowed_pairs = {tuple(row["pair"]) for row in phase_batches}
             phase_shards = _runtime_phase_shards(
-                phase_rows=mapped_phase_rows,
+                phase_batches=phase_batches,
                 design_doc=Path(design_doc),
                 chapter_id=chapter_id,
                 scope=scope_key,
@@ -2167,13 +2763,19 @@ def run_m3_v2_from_responses(
                     for row in response.get("relation_phases") or []
                 ],
             }
-            state, phase_audit = apply_phase_segment_response(
+            state, phase_model_audit = apply_phase_segment_response(
                 state,
                 phase_payload,
                 allowed_pairs=allowed_pairs,
                 source_text_by_block=source_text,
                 block_ordinals=ordinals,
+                scope_end_block=(str(chapter["blocks"][-1]["block_id"]) if chapter.get("blocks") else None),
             )
+            phase_audit = {
+                **provisional_binding_audit,
+                **phase_input_audit,
+                **phase_model_audit,
+            }
 
             combined_request_accounting = _add_m3_v2_request_accounting(
                 restored_request_accounting,
@@ -2351,17 +2953,210 @@ def _source_text_by_block(document: dict[str, Any]) -> dict[str, str]:
     }
 
 
+_QUOTE_PUNCTUATION_FOLD = str.maketrans({
+    "\u2018": "'",
+    "\u2019": "'",
+    "\u201c": '"',
+    "\u201d": '"',
+    "\u2013": "-",
+    "\u2014": "-",
+})
+
+
+def _fold_quote_punctuation(value: str) -> str:
+    """Normalize only punctuation variants that do not alter lexical content."""
+
+    return str(value).translate(_QUOTE_PUNCTUATION_FOLD)
+
+
+def _quote_offsets(text: str, quote: str) -> list[int]:
+    offsets: list[int] = []
+    start = 0
+    while True:
+        offset = text.find(quote, start)
+        if offset < 0:
+            return offsets
+        offsets.append(offset)
+        start = offset + 1
+
+
+def _locate_quote_in_blocks(
+    quote: str,
+    *,
+    source_text_by_block: dict[str, str],
+    candidate_block_ids: Iterable[str],
+    require_unique_exact: bool,
+) -> tuple[str, str, bool] | None:
+    """Locate source text and only normalize punctuation after exact matching fails."""
+
+    if not quote:
+        return None
+    block_ids = list(
+        dict.fromkeys(
+            str(block_id)
+            for block_id in candidate_block_ids
+            if str(block_id) in source_text_by_block
+        )
+    )
+    exact_matches = [
+        (block_id, offset)
+        for block_id in block_ids
+        for offset in _quote_offsets(str(source_text_by_block[block_id]), quote)
+    ]
+    if exact_matches:
+        if require_unique_exact and len(exact_matches) != 1:
+            return None
+        block_id, offset = exact_matches[0]
+        return block_id, str(source_text_by_block[block_id])[offset : offset + len(quote)], False
+
+    folded_quote = _fold_quote_punctuation(quote)
+    folded_matches = [
+        (block_id, offset)
+        for block_id in block_ids
+        for offset in _quote_offsets(
+            _fold_quote_punctuation(str(source_text_by_block[block_id])),
+            folded_quote,
+        )
+    ]
+    if len(folded_matches) != 1:
+        return None
+    block_id, offset = folded_matches[0]
+    source = str(source_text_by_block[block_id])
+    return block_id, source[offset : offset + len(quote)], True
+
+
+def _default_scope_end_block(block_ordinals: dict[str, int]) -> str:
+    if not block_ordinals:
+        return ""
+    return max(block_ordinals, key=lambda block_id: (block_ordinals[block_id], block_id))
+
+
+def _phase_range_block_ids(
+    *,
+    start_block: str,
+    valid_until_block: Any,
+    scope_end_block: str,
+    block_ordinals: dict[str, int],
+    source_text_by_block: dict[str, str],
+) -> list[str]:
+    if start_block not in block_ordinals:
+        return []
+    end_block = str(valid_until_block) if valid_until_block is not None else scope_end_block
+    if end_block not in block_ordinals:
+        return []
+    start_ordinal = block_ordinals[start_block]
+    end_ordinal = block_ordinals[end_block]
+    if end_ordinal < start_ordinal:
+        return []
+    return [
+        block_id
+        for block_id, _ordinal in sorted(block_ordinals.items(), key=lambda item: (item[1], item[0]))
+        if block_id in source_text_by_block and start_ordinal <= _ordinal <= end_ordinal
+    ]
+
+
+def _normalize_identity_evidence_quotes(
+    response: dict[str, Any],
+    *,
+    source_text_by_block: dict[str, str],
+    quote_audit: dict[str, int],
+) -> None:
+    for group in response.get("groups") or []:
+        if not isinstance(group, dict):
+            continue
+        for evidence in group.get("evidence") or []:
+            if not isinstance(evidence, dict):
+                continue
+            block_id = str(evidence.get("block_id") or "")
+            located = _locate_quote_in_blocks(
+                str(evidence.get("quote") or ""),
+                source_text_by_block=source_text_by_block,
+                candidate_block_ids=[block_id],
+                require_unique_exact=False,
+            )
+            if located is None:
+                continue
+            _located_block, source_quote, punct_normalized = located
+            evidence["quote"] = source_quote
+            if punct_normalized:
+                quote_audit["evidence_quote_punct_normalized"] += 1
+
+
+def _normalize_phase_evidence_quotes(
+    response: dict[str, Any],
+    *,
+    source_text_by_block: dict[str, str],
+    block_ordinals: dict[str, int],
+    scope_end_block: str,
+    quote_audit: dict[str, int],
+) -> None:
+    for phase in response.get("relation_phases") or []:
+        if not isinstance(phase, dict):
+            continue
+        phase.pop("trigger_evidence_block", None)
+        candidate_block_ids = _phase_range_block_ids(
+            start_block=str(phase.get("valid_from_block") or ""),
+            valid_until_block=phase.get("valid_until_block"),
+            scope_end_block=scope_end_block,
+            block_ordinals=block_ordinals,
+            source_text_by_block=source_text_by_block,
+        )
+        quote = str(phase.get("trigger_evidence") or "")
+        trigger_block = str(phase.get("trigger_block") or "")
+        trigger_source = str(source_text_by_block.get(trigger_block) or "")
+        if quote and quote in trigger_source:
+            offset = trigger_source.find(quote)
+            located = (trigger_block, trigger_source[offset : offset + len(quote)], False)
+        else:
+            located = _locate_quote_in_blocks(
+                quote,
+                source_text_by_block=source_text_by_block,
+                candidate_block_ids=candidate_block_ids,
+                require_unique_exact=True,
+            )
+        if located is None:
+            continue
+        located_block, source_quote, punct_normalized = located
+        phase["trigger_evidence"] = source_quote
+        phase["trigger_evidence_block"] = located_block
+        if punct_normalized:
+            quote_audit["evidence_quote_punct_normalized"] += 1
+
+    for fact in response.get("relation_facts") or []:
+        if not isinstance(fact, dict):
+            continue
+        block_id = str(fact.get("evidence_block") or "")
+        located = _locate_quote_in_blocks(
+            str(fact.get("evidence_quote") or ""),
+            source_text_by_block=source_text_by_block,
+            candidate_block_ids=[block_id],
+            require_unique_exact=False,
+        )
+        if located is None:
+            continue
+        _located_block, source_quote, punct_normalized = located
+        fact["evidence_quote"] = source_quote
+        if punct_normalized:
+            quote_audit["evidence_quote_punct_normalized"] += 1
+
+
 def validate_identity_partition_response(
     response: dict[str, Any],
     *,
     atoms: list[dict[str, Any]],
     prior_entity_ids: set[str],
     source_text_by_block: dict[str, str],
+    quote_audit: dict[str, int] | None = None,
 ) -> list[str]:
     """Validate the identity response without applying any linguistic decision."""
 
     errors: list[str] = []
-    groups = response.get("groups") if isinstance(response, dict) else None
+    if not isinstance(response, dict):
+        return ["groups must be a list"]
+    audit = quote_audit if quote_audit is not None else {"evidence_quote_punct_normalized": 0}
+    audit.setdefault("evidence_quote_punct_normalized", 0)
+    _normalize_identity_evidence_quotes(response, source_text_by_block=source_text_by_block, quote_audit=audit)
+    groups = response.get("groups")
     if not isinstance(groups, list):
         return ["groups must be a list"]
     atom_ids = {str(atom["atom_id"]) for atom in atoms}
@@ -2438,10 +3233,6 @@ def validate_identity_partition_response(
                 errors.append(f"{evidence_prefix}.source_atom_ids invalid")
             elif not set(source_atoms) & set(members):
                 errors.append(f"{evidence_prefix}.source_atom_ids must_touch_group")
-            elif row.get("supports") == "same_identity" and any(
-                item not in members for item in source_atoms
-            ):
-                errors.append(f"{evidence_prefix}.same_identity source_atom outside_group")
             if row.get("supports") not in {"same_identity", "different_identity"}:
                 errors.append(f"{evidence_prefix}.supports invalid")
     if seen_atoms != atom_ids:
@@ -2456,12 +3247,26 @@ def validate_phase_segment_response(
     source_text_by_block: dict[str, str],
     block_ordinals: dict[str, int],
     allowed_pairs: set[tuple[str, str]] | None = None,
+    scope_end_block: str | None = None,
+    quote_audit: dict[str, int] | None = None,
 ) -> list[str]:
     """Validate batch phase/fact output before a future apply-to-copy gate."""
 
     errors: list[str] = []
     if not isinstance(response, dict):
         return ["response must be object"]
+    audit = quote_audit if quote_audit is not None else {"evidence_quote_punct_normalized": 0}
+    audit.setdefault("evidence_quote_punct_normalized", 0)
+    effective_scope_end_block = scope_end_block or _default_scope_end_block(block_ordinals)
+    if effective_scope_end_block not in block_ordinals:
+        errors.append("scope_end_block invalid")
+    _normalize_phase_evidence_quotes(
+        response,
+        source_text_by_block=source_text_by_block,
+        block_ordinals=block_ordinals,
+        scope_end_block=effective_scope_end_block,
+        quote_audit=audit,
+    )
     phases = response.get("relation_phases")
     facts = response.get("relation_facts")
     if not isinstance(phases, list):
@@ -2496,8 +3301,6 @@ def validate_phase_segment_response(
             continue
         if block_ordinals[trigger_block] != block_ordinals[start]:
             errors.append(f"{prefix}.trigger_block must_equal_start")
-        if not quote or quote not in source_text_by_block.get(trigger_block, ""):
-            errors.append(f"{prefix}.trigger_evidence not_source_substring")
         start_ordinal = block_ordinals[start]
         if start_ordinal <= last_start_by_pair.get(pair_key, -1):
             errors.append(f"{prefix}.phase order invalid")
@@ -2516,6 +3319,20 @@ def validate_phase_segment_response(
             errors.append(f"{prefix}.valid_until_block invalid")
         else:
             last_end_by_pair[pair_key] = block_ordinals[str(end)]
+        range_block_ids = _phase_range_block_ids(
+            start_block=start,
+            valid_until_block=end,
+            scope_end_block=effective_scope_end_block,
+            block_ordinals=block_ordinals,
+            source_text_by_block=source_text_by_block,
+        )
+        trigger_evidence_block = str(phase.get("trigger_evidence_block") or "")
+        if (
+            not quote
+            or trigger_evidence_block not in range_block_ids
+            or quote not in source_text_by_block.get(trigger_evidence_block, "")
+        ):
+            errors.append(f"{prefix}.trigger_evidence not_source_substring")
     for pair, open_count in open_count_by_pair.items():
         if open_count > 1:
             errors.append(f"relation_phases open_interval duplicate:{pair}")

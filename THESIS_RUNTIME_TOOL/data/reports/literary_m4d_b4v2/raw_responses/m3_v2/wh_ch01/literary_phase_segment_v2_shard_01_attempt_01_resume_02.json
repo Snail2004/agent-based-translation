@@ -1,0 +1,121 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch01",
+  "chapter_id": "wh_ch01",
+  "mode": "literary_phase_segment_v2",
+  "shard_index": 1,
+  "shard_count": 1,
+  "attempt_index": 1,
+  "tag": "lit_m3v2_wh_ch01_literary_phase_segment_v2_s01:attempt1",
+  "prompt_sha256": "649f86fbc49c7c4fb7e720dbaf2aa9d07630bb363c50325237274e4b148640c1",
+  "prompt_tokens_est": 5636,
+  "bypass_cache": false,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": true,
+  "cache_key": "c1adf556c077d4b48d9c14c630dc44a4ab43c300da1fe4e55e791d8e28877af4",
+  "latency_ms": 5034,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 4316,
+    "cached_tokens": 0,
+    "completion_tokens": 577,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"relation_phases\":[{\"pair\":[\"ent_joseph\",\"ent_mr_heathcliff\"],\"phase_label\":\"dependent\",\"valid_from_block\":\"wh_ch01_b008\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch01_b008\",\"trigger_evidence\":\"Joseph, take Mr. Lockwood's horse\"},{\"pair\":[\"ent_joseph\",\"ent_mr_lockwood\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch01_b010\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch01_b010\",\"trigger_evidence\":\"The Lord help us!\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mr_lockwood\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch01_b003\",\"valid_until_block\":\"wh_ch01_b025\",\"status\":\"closed\",\"trigger_block\":\"wh_ch01_b003\",\"trigger_evidence\":\"Mr. Heathcliff?\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mr_lockwood\"],\"phase_label\":\"friendly\",\"valid_from_block\":\"wh_ch01_b026\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch01_b026\",\"trigger_evidence\":\"you are flurried, Mr. Lockwood\"}],\"relation_facts\":[{\"subject_ref\":\"ent_joseph\",\"predicate_code\":\"servant_of\",\"object_ref\":\"ent_mr_heathcliff\",\"valid_from_block\":\"wh_ch01_b008\",\"evidence_block\":\"wh_ch01_b008\",\"evidence_quote\":\"Joseph, take Mr. Lockwood's horse\",\"predicate_note\":\"Heathcliff gives Joseph a work order, indicating household service.\"},{\"subject_ref\":\"ent_mr_heathcliff\",\"predicate_code\":\"master_of\",\"object_ref\":\"ent_joseph\",\"valid_from_block\":\"wh_ch01_b008\",\"evidence_block\":\"wh_ch01_b008\",\"evidence_quote\":\"Joseph, take Mr. Lockwood's horse\",\"predicate_note\":\"Heathcliff directs Joseph in a servant's task.\"},{\"subject_ref\":\"ent_mr_heathcliff\",\"predicate_code\":\"landlord_of\",\"object_ref\":\"ent_mr_lockwood\",\"valid_from_block\":\"wh_ch01_b005\",\"evidence_block\":\"wh_ch01_b005\",\"evidence_quote\":\"Mr. Lockwood, your new tenant\",\"predicate_note\":\"Lockwood explicitly identifies himself as Heathcliff's tenant.\"},{\"subject_ref\":\"ent_mr_lockwood\",\"predicate_code\":\"tenant_of\",\"object_ref\":\"ent_mr_heathcliff\",\"valid_from_block\":\"wh_ch01_b005\",\"evidence_block\":\"wh_ch01_b005\",\"evidence_quote\":\"Mr. Lockwood, your new tenant\",\"predicate_note\":\"Lockwood explicitly says he is Heathcliff's tenant.\"}]}",
+  "parsed_json": {
+    "relation_phases": [
+      {
+        "pair": [
+          "ent_joseph",
+          "ent_mr_heathcliff"
+        ],
+        "phase_label": "dependent",
+        "valid_from_block": "wh_ch01_b008",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch01_b008",
+        "trigger_evidence": "Joseph, take Mr. Lockwood's horse"
+      },
+      {
+        "pair": [
+          "ent_joseph",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch01_b010",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch01_b010",
+        "trigger_evidence": "The Lord help us!"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch01_b003",
+        "valid_until_block": "wh_ch01_b025",
+        "status": "closed",
+        "trigger_block": "wh_ch01_b003",
+        "trigger_evidence": "Mr. Heathcliff?"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mr_lockwood"
+        ],
+        "phase_label": "friendly",
+        "valid_from_block": "wh_ch01_b026",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch01_b026",
+        "trigger_evidence": "you are flurried, Mr. Lockwood"
+      }
+    ],
+    "relation_facts": [
+      {
+        "subject_ref": "ent_joseph",
+        "predicate_code": "servant_of",
+        "object_ref": "ent_mr_heathcliff",
+        "valid_from_block": "wh_ch01_b008",
+        "evidence_block": "wh_ch01_b008",
+        "evidence_quote": "Joseph, take Mr. Lockwood's horse",
+        "predicate_note": "Heathcliff gives Joseph a work order, indicating household service."
+      },
+      {
+        "subject_ref": "ent_mr_heathcliff",
+        "predicate_code": "master_of",
+        "object_ref": "ent_joseph",
+        "valid_from_block": "wh_ch01_b008",
+        "evidence_block": "wh_ch01_b008",
+        "evidence_quote": "Joseph, take Mr. Lockwood's horse",
+        "predicate_note": "Heathcliff directs Joseph in a servant's task."
+      },
+      {
+        "subject_ref": "ent_mr_heathcliff",
+        "predicate_code": "landlord_of",
+        "object_ref": "ent_mr_lockwood",
+        "valid_from_block": "wh_ch01_b005",
+        "evidence_block": "wh_ch01_b005",
+        "evidence_quote": "Mr. Lockwood, your new tenant",
+        "predicate_note": "Lockwood explicitly identifies himself as Heathcliff's tenant."
+      },
+      {
+        "subject_ref": "ent_mr_lockwood",
+        "predicate_code": "tenant_of",
+        "object_ref": "ent_mr_heathcliff",
+        "valid_from_block": "wh_ch01_b005",
+        "evidence_block": "wh_ch01_b005",
+        "evidence_quote": "Mr. Lockwood, your new tenant",
+        "predicate_note": "Lockwood explicitly says he is Heathcliff's tenant."
+      }
+    ]
+  },
+  "technical_error": null,
+  "technical_failure_class": null
+}

@@ -1,0 +1,709 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch02",
+  "chapter_id": "wh_ch02",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 1,
+  "shard_count": 1,
+  "attempt_index": 1,
+  "tag": "lit_m3v2_wh_ch02_literary_identity_partition_v1_s01:attempt1",
+  "prompt_sha256": "f9684c8f30824909768c6f41d41934d3d2f481444c30627a872349e952e191ab",
+  "prompt_tokens_est": 12784,
+  "bypass_cache": false,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": false,
+  "cache_key": "166c43f4593567818a83a3b4abbf41030e90a5455a5a4f73c88749417997ca53",
+  "latency_ms": 27018,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 13487,
+    "cached_tokens": 0,
+    "completion_tokens": 5867,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"groups\":[{\"group_key\":\"grp_ent_joseph\",\"reuse_entity_id\":\"ent_joseph\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch02_b004_01__wh_ch02_b004\",\"member_atom_ids\":[\"atom_m_wh_ch02_b004_01__wh_ch02_b004\",\"atom_m_wh_ch02_b060_01__wh_ch02_b060\",\"atom_m_wh_ch02_b062_01__wh_ch02_b062\",\"atom_m_wh_ch02_b065_01__wh_ch02_b065\",\"atom_m_wh_ch02_b071_03__wh_ch02_b071\",\"atom_m_wh_ch02_b076_03__wh_ch02_b076\",\"atom_m_wh_ch02_b085_01__wh_ch02_b085\",\"atom_m_wh_ch02_b061_01__wh_ch02_b061\",\"atom_m_wh_ch02_b063_01__wh_ch02_b063\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Joseph\",\"member_atom_ids\":[\"atom_m_wh_ch02_b004_01__wh_ch02_b004\",\"atom_m_wh_ch02_b060_01__wh_ch02_b060\",\"atom_m_wh_ch02_b062_01__wh_ch02_b062\",\"atom_m_wh_ch02_b065_01__wh_ch02_b065\",\"atom_m_wh_ch02_b071_03__wh_ch02_b071\",\"atom_m_wh_ch02_b076_03__wh_ch02_b076\",\"atom_m_wh_ch02_b085_01__wh_ch02_b085\"],\"valid_from_block\":\"wh_ch02_b004\",\"valid_until_block\":null},{\"surface\":\"the aged rascal\",\"member_atom_ids\":[\"atom_m_wh_ch02_b061_01__wh_ch02_b061\"],\"valid_from_block\":\"wh_ch02_b061\",\"valid_until_block\":\"wh_ch02_b061\"},{\"surface\":\"the elder\",\"member_atom_ids\":[\"atom_m_wh_ch02_b063_01__wh_ch02_b063\"],\"valid_from_block\":\"wh_ch02_b063\",\"valid_until_block\":\"wh_ch02_b063\"}],\"evidence\":[{\"block_id\":\"wh_ch02_b065\",\"quote\":\"The little witch put a mock malignity into her beautiful eyes, and Joseph, trembling with sincere horror, hurried out, praying, and ejaculating “wicked” as he went.\",\"source_atom_ids\":[\"atom_m_wh_ch02_b062_01__wh_ch02_b062\",\"atom_m_wh_ch02_b065_01__wh_ch02_b065\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b071\",\"quote\":\"“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”\",\"source_atom_ids\":[\"atom_m_wh_ch02_b071_03__wh_ch02_b071\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_ent_mr_heathcliff\",\"reuse_entity_id\":\"ent_mr_heathcliff\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch02_b040_01__wh_ch02_b040\",\"member_atom_ids\":[\"atom_m_wh_ch02_b005_01__wh_ch02_b005\",\"atom_m_wh_ch02_b049_01__wh_ch02_b049\",\"atom_m_wh_ch02_b081_01__wh_ch02_b081\",\"atom_m_wh_ch02_b087_01__wh_ch02_b087\",\"atom_m_wh_ch02_b016_01__wh_ch02_b016\",\"atom_m_wh_ch02_b037_02__wh_ch02_b037\",\"atom_m_wh_ch02_b046_01__wh_ch02_b046\",\"atom_m_wh_ch02_b052_01__wh_ch02_b052\",\"atom_m_wh_ch02_b058_02__wh_ch02_b058\",\"atom_m_wh_ch02_b076_01__wh_ch02_b076\",\"atom_m_wh_ch02_b088_01__wh_ch02_b088\",\"atom_m_wh_ch02_b089_01__wh_ch02_b089\",\"atom_m_wh_ch02_b029_03__wh_ch02_b029\",\"atom_m_wh_ch02_b040_01__wh_ch02_b040\",\"atom_m_wh_ch02_b070_01__wh_ch02_b070\",\"atom_m_wh_ch02_b084_01__wh_ch02_b084\",\"atom_m_wh_ch02_b091_01__wh_ch02_b091\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"t’ maister’s\",\"member_atom_ids\":[\"atom_m_wh_ch02_b005_01__wh_ch02_b005\"],\"valid_from_block\":\"wh_ch02_b005\",\"valid_until_block\":\"wh_ch02_b005\"},{\"surface\":\"my host\",\"member_atom_ids\":[\"atom_m_wh_ch02_b049_01__wh_ch02_b049\"],\"valid_from_block\":\"wh_ch02_b049\",\"valid_until_block\":\"wh_ch02_b049\"},{\"surface\":\"his master\",\"member_atom_ids\":[\"atom_m_wh_ch02_b081_01__wh_ch02_b081\"],\"valid_from_block\":\"wh_ch02_b081\",\"valid_until_block\":\"wh_ch02_b081\"},{\"surface\":\"Maister\",\"member_atom_ids\":[\"atom_m_wh_ch02_b087_01__wh_ch02_b087\"],\"valid_from_block\":\"wh_ch02_b087\",\"valid_until_block\":\"wh_ch02_b087\"},{\"surface\":\"Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch02_b016_01__wh_ch02_b016\",\"atom_m_wh_ch02_b037_02__wh_ch02_b037\",\"atom_m_wh_ch02_b046_01__wh_ch02_b046\",\"atom_m_wh_ch02_b052_01__wh_ch02_b052\",\"atom_m_wh_ch02_b058_02__wh_ch02_b058\",\"atom_m_wh_ch02_b076_01__wh_ch02_b076\",\"atom_m_wh_ch02_b088_01__wh_ch02_b088\",\"atom_m_wh_ch02_b089_01__wh_ch02_b089\"],\"valid_from_block\":\"wh_ch02_b016\",\"valid_until_block\":null},{\"surface\":\"Mr. Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch02_b029_03__wh_ch02_b029\",\"atom_m_wh_ch02_b040_01__wh_ch02_b040\",\"atom_m_wh_ch02_b070_01__wh_ch02_b070\",\"atom_m_wh_ch02_b084_01__wh_ch02_b084\",\"atom_m_wh_ch02_b091_01__wh_ch02_b091\"],\"valid_from_block\":\"wh_ch02_b029\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch02_b046\",\"quote\":\"“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.\",\"source_atom_ids\":[\"atom_m_wh_ch02_b046_01__wh_ch02_b046\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b049\",\"quote\":\"“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”\",\"source_atom_ids\":[\"atom_m_wh_ch02_b049_01__wh_ch02_b049\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b076\",\"quote\":\"“I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”\",\"source_atom_ids\":[\"atom_m_wh_ch02_b076_01__wh_ch02_b076\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_mrs_heathcliff_young_widow\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch02_b011_01__wh_ch02_b011\",\"member_atom_ids\":[\"atom_m_wh_ch02_b007_01__wh_ch02_b007\",\"atom_m_wh_ch02_b011_01__wh_ch02_b011\",\"atom_m_wh_ch02_b042_01__wh_ch02_b042\",\"atom_m_wh_ch02_b042_01__wh_ch02_b046\",\"atom_m_wh_ch02_b060_02__wh_ch02_b060\",\"atom_m_wh_ch02_b066_01__wh_ch02_b066\",\"atom_m_wh_ch02_b082_01__wh_ch02_b082\",\"atom_m_wh_ch02_b036_02__wh_ch02_b036\",\"atom_m_wh_ch02_b040_02__wh_ch02_b040\",\"atom_m_wh_ch02_b042_02__wh_ch02_b042\",\"atom_m_wh_ch02_b043_01__wh_ch02_b043\",\"atom_m_wh_ch02_b046_02__wh_ch02_b046\",\"atom_m_wh_ch02_b049_02__wh_ch02_b049\",\"atom_m_wh_ch02_b046_03__wh_ch02_b046\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"t’ missis\",\"member_atom_ids\":[\"atom_m_wh_ch02_b007_01__wh_ch02_b007\"],\"valid_from_block\":\"wh_ch02_b007\",\"valid_until_block\":\"wh_ch02_b007\"},{\"surface\":\"Mrs. Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch02_b011_01__wh_ch02_b011\",\"atom_m_wh_ch02_b042_01__wh_ch02_b042\",\"atom_m_wh_ch02_b042_01__wh_ch02_b046\",\"atom_m_wh_ch02_b060_02__wh_ch02_b060\",\"atom_m_wh_ch02_b066_01__wh_ch02_b066\",\"atom_m_wh_ch02_b082_01__wh_ch02_b082\"],\"valid_from_block\":\"wh_ch02_b011\",\"valid_until_block\":null},{\"surface\":\"the young lady\",\"member_atom_ids\":[\"atom_m_wh_ch02_b036_02__wh_ch02_b036\"],\"valid_from_block\":\"wh_ch02_b036\",\"valid_until_block\":\"wh_ch02_b036\"},{\"surface\":\"your amiable lady\",\"member_atom_ids\":[\"atom_m_wh_ch02_b040_02__wh_ch02_b040\"],\"valid_from_block\":\"wh_ch02_b040\",\"valid_until_block\":\"wh_ch02_b040\"},{\"surface\":\"your wife\",\"member_atom_ids\":[\"atom_m_wh_ch02_b042_02__wh_ch02_b042\"],\"valid_from_block\":\"wh_ch02_b042\",\"valid_until_block\":\"wh_ch02_b042\"},{\"surface\":\"my amiable lady\",\"member_atom_ids\":[\"atom_m_wh_ch02_b043_01__wh_ch02_b043\"],\"valid_from_block\":\"wh_ch02_b043\",\"valid_until_block\":\"wh_ch02_b043\"},{\"surface\":\"my daughter-in-law\",\"member_atom_ids\":[\"atom_m_wh_ch02_b046_02__wh_ch02_b046\",\"atom_m_wh_ch02_b049_02__wh_ch02_b049\"],\"valid_from_block\":\"wh_ch02_b046\",\"valid_until_block\":null},{\"surface\":\"her direction\",\"member_atom_ids\":[\"atom_m_wh_ch02_b046_03__wh_ch02_b046\"],\"valid_from_block\":\"wh_ch02_b046\",\"valid_until_block\":\"wh_ch02_b046\"}],\"evidence\":[{\"block_id\":\"wh_ch02_b046\",\"quote\":\"“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.\",\"source_atom_ids\":[\"atom_m_wh_ch02_b042_01__wh_ch02_b046\",\"atom_m_wh_ch02_b046_02__wh_ch02_b046\",\"atom_m_wh_ch02_b046_03__wh_ch02_b046\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b049\",\"quote\":\"“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”\",\"source_atom_ids\":[\"atom_m_wh_ch02_b049_02__wh_ch02_b049\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b060\",\"quote\":\"There was no reply to my question; and on looking round I saw only Joseph bringing in a pail of porridge for the dogs, and Mrs. Heathcliff leaning over the fire, diverting herself with burning a bundle of matches which had fallen from the chimney-piece as she restored the tea-canister to its place. The former, when he had deposited his burden, took a critica\",\"source_atom_ids\":[\"atom_m_wh_ch02_b060_02__wh_ch02_b060\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_hareton_earnshaw\",\"reuse_entity_id\":\"ent_hareton_earnshaw\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch02_b053_01__wh_ch02_b053\",\"member_atom_ids\":[\"atom_m_wh_ch02_b013_01__wh_ch02_b013\",\"atom_m_wh_ch02_b029_01__wh_ch02_b029\",\"atom_m_wh_ch02_b079_02__wh_ch02_b079\",\"atom_m_wh_ch02_b045_01__wh_ch02_b045\",\"atom_m_wh_ch02_b045_02__wh_ch02_b045\",\"atom_m_wh_ch02_b047_01__wh_ch02_b047\",\"atom_m_wh_ch02_b048_01__wh_ch02_b048\",\"atom_m_wh_ch02_b050_01__wh_ch02_b050\",\"atom_m_wh_ch02_b053_01__wh_ch02_b053\",\"atom_m_wh_ch02_b058_01__wh_ch02_b058\",\"atom_m_wh_ch02_b076_02__wh_ch02_b076\",\"atom_m_wh_ch02_b083_01__wh_ch02_b083\",\"atom_m_wh_ch02_b088_02__wh_ch02_b088\",\"atom_m_wh_ch02_b071_01__wh_ch02_b071\",\"atom_m_wh_ch02_b079_01__wh_ch02_b079\",\"atom_m_wh_ch02_b090_01__wh_ch02_b090\",\"atom_m_wh_ch02_b036_01__wh_ch02_b036\",\"atom_m_wh_ch02_b078_01__wh_ch02_b078\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"the young man\",\"member_atom_ids\":[\"atom_m_wh_ch02_b013_01__wh_ch02_b013\",\"atom_m_wh_ch02_b029_01__wh_ch02_b029\",\"atom_m_wh_ch02_b079_02__wh_ch02_b079\"],\"valid_from_block\":\"wh_ch02_b013\",\"valid_until_block\":null},{\"surface\":\"The clown at my elbow\",\"member_atom_ids\":[\"atom_m_wh_ch02_b045_01__wh_ch02_b045\"],\"valid_from_block\":\"wh_ch02_b045\",\"valid_until_block\":\"wh_ch02_b045\"},{\"surface\":\"my neighbour\",\"member_atom_ids\":[\"atom_m_wh_ch02_b045_02__wh_ch02_b045\",\"atom_m_wh_ch02_b047_01__wh_ch02_b047\"],\"valid_from_block\":\"wh_ch02_b045\",\"valid_until_block\":\"wh_ch02_b047\"},{\"surface\":\"The youth\",\"member_atom_ids\":[\"atom_m_wh_ch02_b048_01__wh_ch02_b048\"],\"valid_from_block\":\"wh_ch02_b048\",\"valid_until_block\":\"wh_ch02_b048\"},{\"surface\":\"this young man\",\"member_atom_ids\":[\"atom_m_wh_ch02_b050_01__wh_ch02_b050\"],\"valid_from_block\":\"wh_ch02_b050\",\"valid_until_block\":\"wh_ch02_b050\"},{\"surface\":\"Hareton Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch02_b053_01__wh_ch02_b053\"],\"valid_from_block\":\"wh_ch02_b053\",\"valid_until_block\":null},{\"surface\":\"Hareton\",\"member_atom_ids\":[\"atom_m_wh_ch02_b058_01__wh_ch02_b058\",\"atom_m_wh_ch02_b076_02__wh_ch02_b076\",\"atom_m_wh_ch02_b083_01__wh_ch02_b083\",\"atom_m_wh_ch02_b088_02__wh_ch02_b088\"],\"valid_from_block\":\"wh_ch02_b058\",\"valid_until_block\":null},{\"surface\":\"Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch02_b071_01__wh_ch02_b071\",\"atom_m_wh_ch02_b079_01__wh_ch02_b079\"],\"valid_from_block\":\"wh_ch02_b071\",\"valid_until_block\":null},{\"surface\":\"Mr. Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch02_b090_01__wh_ch02_b090\"],\"valid_from_block\":\"wh_ch02_b090\",\"valid_until_block\":\"wh_ch02_b090\"},{\"surface\":\"the shabby coat\",\"member_atom_ids\":[\"atom_m_wh_ch02_b036_01__wh_ch02_b036\"],\"valid_from_block\":\"wh_ch02_b036\",\"valid_until_block\":\"wh_ch02_b036\"},{\"surface\":\"the unmannerly wretch\",\"member_atom_ids\":[\"atom_m_wh_ch02_b078_01__wh_ch02_b078\"],\"valid_from_block\":\"wh_ch02_b078\",\"valid_until_block\":\"wh_ch02_b078\"}],\"evidence\":[{\"block_id\":\"wh_ch02_b053\",\"quote\":\"“My name is Hareton Earnshaw,” growled the other; “and I’d counsel you to respect it!”\",\"source_atom_ids\":[\"atom_m_wh_ch02_b053_01__wh_ch02_b053\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b071\",\"quote\":\"“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”\",\"source_atom_ids\":[\"atom_m_wh_ch02_b071_01__wh_ch02_b071\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b079\",\"quote\":\"With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me.\",\"source_atom_ids\":[\"atom_m_wh_ch02_b079_01__wh_ch02_b079\",\"atom_m_wh_ch02_b079_02__wh_ch02_b079\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_heathcliffs_son_dead\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch02_b049_03__wh_ch02_b049\",\"member_atom_ids\":[\"atom_m_wh_ch02_b029_04__wh_ch02_b029\",\"atom_m_wh_ch02_b051_01__wh_ch02_b051\",\"atom_m_wh_ch02_b049_03__wh_ch02_b049\"],\"status\":\"uncertain\",\"alias_bindings\":[{\"surface\":\"Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch02_b029_04__wh_ch02_b029\"],\"valid_from_block\":\"wh_ch02_b029\",\"valid_until_block\":\"wh_ch02_b029\"},{\"surface\":\"my son\",\"member_atom_ids\":[\"atom_m_wh_ch02_b049_03__wh_ch02_b049\",\"atom_m_wh_ch02_b051_01__wh_ch02_b051\"],\"valid_from_block\":\"wh_ch02_b049\",\"valid_until_block\":\"wh_ch02_b051\"}],\"evidence\":[{\"block_id\":\"wh_ch02_b049\",\"quote\":\"“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”\",\"source_atom_ids\":[\"atom_m_wh_ch02_b049_03__wh_ch02_b049\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b051\",\"quote\":\"“Not my son, assuredly.”\",\"source_atom_ids\":[\"atom_m_wh_ch02_b051_01__wh_ch02_b051\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b029\",\"quote\":\"al feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common labourer: stil\",\"source_atom_ids\":[\"atom_m_wh_ch02_b029_04__wh_ch02_b029\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_juno_dog\",\"reuse_entity_id\":null,\"referent_kind\":\"unknown\",\"canonical_atom_id\":\"atom_m_wh_ch02_b014_01__wh_ch02_b014\",\"member_atom_ids\":[\"atom_m_wh_ch02_b014_01__wh_ch02_b014\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"the villain\",\"member_atom_ids\":[\"atom_m_wh_ch02_b014_01__wh_ch02_b014\"],\"valid_from_block\":\"wh_ch02_b014\",\"valid_until_block\":\"wh_ch02_b014\"}],\"evidence\":[{\"block_id\":\"wh_ch02_b014\",\"quote\":\"I obeyed; and hemmed, and called the villain Juno, who deigned, at this second interview, to move the extreme tip of her tail, in token of owning my acquaintance.\",\"source_atom_ids\":[\"atom_m_wh_ch02_b014_01__wh_ch02_b014\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_mr_and_mrs_heathcliff\",\"reuse_entity_id\":null,\"referent_kind\":\"group_reference\",\"canonical_atom_id\":\"atom_m_wh_ch02_b029_02__wh_ch02_b029\",\"member_atom_ids\":[\"atom_m_wh_ch02_b029_02__wh_ch02_b029\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Mr. and Mrs. Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch02_b029_02__wh_ch02_b029\"],\"valid_from_block\":\"wh_ch02_b029\",\"valid_until_block\":\"wh_ch02_b029\"}],\"evidence\":[{\"block_id\":\"wh_ch02_b029\",\"quote\":\"ere some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common l\",\"source_atom_ids\":[\"atom_m_wh_ch02_b029_02__wh_ch02_b029\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_parties_heathcliff_and_mrs_heathcliff\",\"reuse_entity_id\":null,\"referent_kind\":\"group_reference\",\"canonical_atom_id\":\"atom_m_wh_ch02_b044_01__wh_ch02_b044\",\"member_atom_ids\":[\"atom_m_wh_ch02_b044_01__wh_ch02_b044\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"the parties\",\"member_atom_ids\":[\"atom_m_wh_ch02_b044_01__wh_ch02_b044\"],\"valid_from_block\":\"wh_ch02_b044\",\"valid_until_block\":\"wh_ch02_b044\"}],\"evidence\":[{\"block_id\":\"wh_ch02_b044\",\"quote\":\"Perceiving myself in a blunder, I attempted to correct it. I might have seen there was too great a disparity between the ages of the parties to make it likely that they were man and wife. One was about forty: a period of mental vigour at which men seldom cherish the delusion of being married for love by girls: that dream is reserved for the solace of our dec\",\"source_atom_ids\":[\"atom_m_wh_ch02_b044_01__wh_ch02_b044\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_zillah\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch02_b071_02__wh_ch02_b071\",\"member_atom_ids\":[\"atom_m_wh_ch02_b071_02__wh_ch02_b071\",\"atom_m_wh_ch02_b089_02__wh_ch02_b089\",\"atom_m_wh_ch02_b092_01__wh_ch02_b092\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Zillah\",\"member_atom_ids\":[\"atom_m_wh_ch02_b071_02__wh_ch02_b071\",\"atom_m_wh_ch02_b089_02__wh_ch02_b089\",\"atom_m_wh_ch02_b092_01__wh_ch02_b092\"],\"valid_from_block\":\"wh_ch02_b071\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch02_b089\",\"quote\":\"colded. I don’t know what would have concluded the scene, had there not been one person at hand rather more rational than myself, and more benevolent than my entertainer. This was Zillah, the stout housewife; who at length issued forth to inquire into the nature of the uproar. She thought that some of them had been laying violent hands on me; and, not daring\",\"source_atom_ids\":[\"atom_m_wh_ch02_b089_02__wh_ch02_b089\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch02_b092\",\"quote\":\"I was sick exceedingly, and dizzy, and faint; and thus compelled perforce to accept lodgings under his roof. He told Zillah to give me a glass of brandy, and then passed on to the inner room; while she condoled with me on my sorry predicament, and having obeyed his orders, whereby I was somewhat revived, ushered me to bed.\",\"source_atom_ids\":[\"atom_m_wh_ch02_b092_01__wh_ch02_b092\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_king_lear\",\"reuse_entity_id\":null,\"referent_kind\":\"literary_allusion\",\"canonical_atom_id\":\"atom_m_wh_ch02_b088_03__wh_ch02_b088\",\"member_atom_ids\":[\"atom_m_wh_ch02_b088_03__wh_ch02_b088\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"King Lear\",\"member_atom_ids\":[\"atom_m_wh_ch02_b088_03__wh_ch02_b088\"],\"valid_from_block\":\"wh_ch02_b088\",\"valid_until_block\":\"wh_ch02_b088\"}],\"evidence\":[{\"block_id\":\"wh_ch02_b088\",\"quote\":\" alive; but they would suffer no resurrection, and I was forced to lie till their malignant masters pleased to deliver me: then, hatless and trembling with wrath, I ordered the miscreants to let me out—on their peril to keep me one minute longer—with several incoherent threats of retaliation that, in their indefinite depth of virulency, smacked of King Lear.\",\"source_atom_ids\":[\"atom_m_wh_ch02_b088_03__wh_ch02_b088\"],\"supports\":\"same_identity\"}]}]}",
+  "parsed_json": {
+    "groups": [
+      {
+        "group_key": "grp_ent_joseph",
+        "reuse_entity_id": "ent_joseph",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch02_b004_01__wh_ch02_b004",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b004_01__wh_ch02_b004",
+          "atom_m_wh_ch02_b060_01__wh_ch02_b060",
+          "atom_m_wh_ch02_b062_01__wh_ch02_b062",
+          "atom_m_wh_ch02_b065_01__wh_ch02_b065",
+          "atom_m_wh_ch02_b071_03__wh_ch02_b071",
+          "atom_m_wh_ch02_b076_03__wh_ch02_b076",
+          "atom_m_wh_ch02_b085_01__wh_ch02_b085",
+          "atom_m_wh_ch02_b061_01__wh_ch02_b061",
+          "atom_m_wh_ch02_b063_01__wh_ch02_b063"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Joseph",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b004_01__wh_ch02_b004",
+              "atom_m_wh_ch02_b060_01__wh_ch02_b060",
+              "atom_m_wh_ch02_b062_01__wh_ch02_b062",
+              "atom_m_wh_ch02_b065_01__wh_ch02_b065",
+              "atom_m_wh_ch02_b071_03__wh_ch02_b071",
+              "atom_m_wh_ch02_b076_03__wh_ch02_b076",
+              "atom_m_wh_ch02_b085_01__wh_ch02_b085"
+            ],
+            "valid_from_block": "wh_ch02_b004",
+            "valid_until_block": null
+          },
+          {
+            "surface": "the aged rascal",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b061_01__wh_ch02_b061"
+            ],
+            "valid_from_block": "wh_ch02_b061",
+            "valid_until_block": "wh_ch02_b061"
+          },
+          {
+            "surface": "the elder",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b063_01__wh_ch02_b063"
+            ],
+            "valid_from_block": "wh_ch02_b063",
+            "valid_until_block": "wh_ch02_b063"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b065",
+            "quote": "The little witch put a mock malignity into her beautiful eyes, and Joseph, trembling with sincere horror, hurried out, praying, and ejaculating “wicked” as he went.",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b062_01__wh_ch02_b062",
+              "atom_m_wh_ch02_b065_01__wh_ch02_b065"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b071",
+            "quote": "“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b071_03__wh_ch02_b071"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_ent_mr_heathcliff",
+        "reuse_entity_id": "ent_mr_heathcliff",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch02_b040_01__wh_ch02_b040",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b005_01__wh_ch02_b005",
+          "atom_m_wh_ch02_b049_01__wh_ch02_b049",
+          "atom_m_wh_ch02_b081_01__wh_ch02_b081",
+          "atom_m_wh_ch02_b087_01__wh_ch02_b087",
+          "atom_m_wh_ch02_b016_01__wh_ch02_b016",
+          "atom_m_wh_ch02_b037_02__wh_ch02_b037",
+          "atom_m_wh_ch02_b046_01__wh_ch02_b046",
+          "atom_m_wh_ch02_b052_01__wh_ch02_b052",
+          "atom_m_wh_ch02_b058_02__wh_ch02_b058",
+          "atom_m_wh_ch02_b076_01__wh_ch02_b076",
+          "atom_m_wh_ch02_b088_01__wh_ch02_b088",
+          "atom_m_wh_ch02_b089_01__wh_ch02_b089",
+          "atom_m_wh_ch02_b029_03__wh_ch02_b029",
+          "atom_m_wh_ch02_b040_01__wh_ch02_b040",
+          "atom_m_wh_ch02_b070_01__wh_ch02_b070",
+          "atom_m_wh_ch02_b084_01__wh_ch02_b084",
+          "atom_m_wh_ch02_b091_01__wh_ch02_b091"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "t’ maister’s",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b005_01__wh_ch02_b005"
+            ],
+            "valid_from_block": "wh_ch02_b005",
+            "valid_until_block": "wh_ch02_b005"
+          },
+          {
+            "surface": "my host",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b049_01__wh_ch02_b049"
+            ],
+            "valid_from_block": "wh_ch02_b049",
+            "valid_until_block": "wh_ch02_b049"
+          },
+          {
+            "surface": "his master",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b081_01__wh_ch02_b081"
+            ],
+            "valid_from_block": "wh_ch02_b081",
+            "valid_until_block": "wh_ch02_b081"
+          },
+          {
+            "surface": "Maister",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b087_01__wh_ch02_b087"
+            ],
+            "valid_from_block": "wh_ch02_b087",
+            "valid_until_block": "wh_ch02_b087"
+          },
+          {
+            "surface": "Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b016_01__wh_ch02_b016",
+              "atom_m_wh_ch02_b037_02__wh_ch02_b037",
+              "atom_m_wh_ch02_b046_01__wh_ch02_b046",
+              "atom_m_wh_ch02_b052_01__wh_ch02_b052",
+              "atom_m_wh_ch02_b058_02__wh_ch02_b058",
+              "atom_m_wh_ch02_b076_01__wh_ch02_b076",
+              "atom_m_wh_ch02_b088_01__wh_ch02_b088",
+              "atom_m_wh_ch02_b089_01__wh_ch02_b089"
+            ],
+            "valid_from_block": "wh_ch02_b016",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Mr. Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b029_03__wh_ch02_b029",
+              "atom_m_wh_ch02_b040_01__wh_ch02_b040",
+              "atom_m_wh_ch02_b070_01__wh_ch02_b070",
+              "atom_m_wh_ch02_b084_01__wh_ch02_b084",
+              "atom_m_wh_ch02_b091_01__wh_ch02_b091"
+            ],
+            "valid_from_block": "wh_ch02_b029",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b046",
+            "quote": "“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b046_01__wh_ch02_b046"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b049",
+            "quote": "“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b049_01__wh_ch02_b049"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b076",
+            "quote": "“I hope it will be a lesson to you to make no more rash journeys on these hills,” cried Heathcliff’s stern voice from the kitchen entrance. “As to staying here, I don’t keep accommodations for visitors: you must share a bed with Hareton or Joseph, if you do.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b076_01__wh_ch02_b076"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_mrs_heathcliff_young_widow",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch02_b011_01__wh_ch02_b011",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b007_01__wh_ch02_b007",
+          "atom_m_wh_ch02_b011_01__wh_ch02_b011",
+          "atom_m_wh_ch02_b042_01__wh_ch02_b042",
+          "atom_m_wh_ch02_b042_01__wh_ch02_b046",
+          "atom_m_wh_ch02_b060_02__wh_ch02_b060",
+          "atom_m_wh_ch02_b066_01__wh_ch02_b066",
+          "atom_m_wh_ch02_b082_01__wh_ch02_b082",
+          "atom_m_wh_ch02_b036_02__wh_ch02_b036",
+          "atom_m_wh_ch02_b040_02__wh_ch02_b040",
+          "atom_m_wh_ch02_b042_02__wh_ch02_b042",
+          "atom_m_wh_ch02_b043_01__wh_ch02_b043",
+          "atom_m_wh_ch02_b046_02__wh_ch02_b046",
+          "atom_m_wh_ch02_b049_02__wh_ch02_b049",
+          "atom_m_wh_ch02_b046_03__wh_ch02_b046"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "t’ missis",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b007_01__wh_ch02_b007"
+            ],
+            "valid_from_block": "wh_ch02_b007",
+            "valid_until_block": "wh_ch02_b007"
+          },
+          {
+            "surface": "Mrs. Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b011_01__wh_ch02_b011",
+              "atom_m_wh_ch02_b042_01__wh_ch02_b042",
+              "atom_m_wh_ch02_b042_01__wh_ch02_b046",
+              "atom_m_wh_ch02_b060_02__wh_ch02_b060",
+              "atom_m_wh_ch02_b066_01__wh_ch02_b066",
+              "atom_m_wh_ch02_b082_01__wh_ch02_b082"
+            ],
+            "valid_from_block": "wh_ch02_b011",
+            "valid_until_block": null
+          },
+          {
+            "surface": "the young lady",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b036_02__wh_ch02_b036"
+            ],
+            "valid_from_block": "wh_ch02_b036",
+            "valid_until_block": "wh_ch02_b036"
+          },
+          {
+            "surface": "your amiable lady",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b040_02__wh_ch02_b040"
+            ],
+            "valid_from_block": "wh_ch02_b040",
+            "valid_until_block": "wh_ch02_b040"
+          },
+          {
+            "surface": "your wife",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b042_02__wh_ch02_b042"
+            ],
+            "valid_from_block": "wh_ch02_b042",
+            "valid_until_block": "wh_ch02_b042"
+          },
+          {
+            "surface": "my amiable lady",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b043_01__wh_ch02_b043"
+            ],
+            "valid_from_block": "wh_ch02_b043",
+            "valid_until_block": "wh_ch02_b043"
+          },
+          {
+            "surface": "my daughter-in-law",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b046_02__wh_ch02_b046",
+              "atom_m_wh_ch02_b049_02__wh_ch02_b049"
+            ],
+            "valid_from_block": "wh_ch02_b046",
+            "valid_until_block": null
+          },
+          {
+            "surface": "her direction",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b046_03__wh_ch02_b046"
+            ],
+            "valid_from_block": "wh_ch02_b046",
+            "valid_until_block": "wh_ch02_b046"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b046",
+            "quote": "“Mrs. Heathcliff is my daughter-in-law,” said Heathcliff, corroborating my surmise. He turned, as he spoke, a peculiar look in her direction: a look of hatred; unless he has a most perverse set of facial muscles that will not, like those of other people, interpret the language of his soul.",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b042_01__wh_ch02_b046",
+              "atom_m_wh_ch02_b046_02__wh_ch02_b046",
+              "atom_m_wh_ch02_b046_03__wh_ch02_b046"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b049",
+            "quote": "“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b049_02__wh_ch02_b049"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b060",
+            "quote": "There was no reply to my question; and on looking round I saw only Joseph bringing in a pail of porridge for the dogs, and Mrs. Heathcliff leaning over the fire, diverting herself with burning a bundle of matches which had fallen from the chimney-piece as she restored the tea-canister to its place. The former, when he had deposited his burden, took a critica",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b060_02__wh_ch02_b060"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_hareton_earnshaw",
+        "reuse_entity_id": "ent_hareton_earnshaw",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch02_b053_01__wh_ch02_b053",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b013_01__wh_ch02_b013",
+          "atom_m_wh_ch02_b029_01__wh_ch02_b029",
+          "atom_m_wh_ch02_b079_02__wh_ch02_b079",
+          "atom_m_wh_ch02_b045_01__wh_ch02_b045",
+          "atom_m_wh_ch02_b045_02__wh_ch02_b045",
+          "atom_m_wh_ch02_b047_01__wh_ch02_b047",
+          "atom_m_wh_ch02_b048_01__wh_ch02_b048",
+          "atom_m_wh_ch02_b050_01__wh_ch02_b050",
+          "atom_m_wh_ch02_b053_01__wh_ch02_b053",
+          "atom_m_wh_ch02_b058_01__wh_ch02_b058",
+          "atom_m_wh_ch02_b076_02__wh_ch02_b076",
+          "atom_m_wh_ch02_b083_01__wh_ch02_b083",
+          "atom_m_wh_ch02_b088_02__wh_ch02_b088",
+          "atom_m_wh_ch02_b071_01__wh_ch02_b071",
+          "atom_m_wh_ch02_b079_01__wh_ch02_b079",
+          "atom_m_wh_ch02_b090_01__wh_ch02_b090",
+          "atom_m_wh_ch02_b036_01__wh_ch02_b036",
+          "atom_m_wh_ch02_b078_01__wh_ch02_b078"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "the young man",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b013_01__wh_ch02_b013",
+              "atom_m_wh_ch02_b029_01__wh_ch02_b029",
+              "atom_m_wh_ch02_b079_02__wh_ch02_b079"
+            ],
+            "valid_from_block": "wh_ch02_b013",
+            "valid_until_block": null
+          },
+          {
+            "surface": "The clown at my elbow",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b045_01__wh_ch02_b045"
+            ],
+            "valid_from_block": "wh_ch02_b045",
+            "valid_until_block": "wh_ch02_b045"
+          },
+          {
+            "surface": "my neighbour",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b045_02__wh_ch02_b045",
+              "atom_m_wh_ch02_b047_01__wh_ch02_b047"
+            ],
+            "valid_from_block": "wh_ch02_b045",
+            "valid_until_block": "wh_ch02_b047"
+          },
+          {
+            "surface": "The youth",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b048_01__wh_ch02_b048"
+            ],
+            "valid_from_block": "wh_ch02_b048",
+            "valid_until_block": "wh_ch02_b048"
+          },
+          {
+            "surface": "this young man",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b050_01__wh_ch02_b050"
+            ],
+            "valid_from_block": "wh_ch02_b050",
+            "valid_until_block": "wh_ch02_b050"
+          },
+          {
+            "surface": "Hareton Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b053_01__wh_ch02_b053"
+            ],
+            "valid_from_block": "wh_ch02_b053",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Hareton",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b058_01__wh_ch02_b058",
+              "atom_m_wh_ch02_b076_02__wh_ch02_b076",
+              "atom_m_wh_ch02_b083_01__wh_ch02_b083",
+              "atom_m_wh_ch02_b088_02__wh_ch02_b088"
+            ],
+            "valid_from_block": "wh_ch02_b058",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b071_01__wh_ch02_b071",
+              "atom_m_wh_ch02_b079_01__wh_ch02_b079"
+            ],
+            "valid_from_block": "wh_ch02_b071",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Mr. Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b090_01__wh_ch02_b090"
+            ],
+            "valid_from_block": "wh_ch02_b090",
+            "valid_until_block": "wh_ch02_b090"
+          },
+          {
+            "surface": "the shabby coat",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b036_01__wh_ch02_b036"
+            ],
+            "valid_from_block": "wh_ch02_b036",
+            "valid_until_block": "wh_ch02_b036"
+          },
+          {
+            "surface": "the unmannerly wretch",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b078_01__wh_ch02_b078"
+            ],
+            "valid_from_block": "wh_ch02_b078",
+            "valid_until_block": "wh_ch02_b078"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b053",
+            "quote": "“My name is Hareton Earnshaw,” growled the other; “and I’d counsel you to respect it!”",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b053_01__wh_ch02_b053"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b071",
+            "quote": "“Who? There is himself, Earnshaw, Zillah, Joseph and I. Which would you have?”",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b071_01__wh_ch02_b071"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b079",
+            "quote": "With this insult my patience was at an end. I uttered an expression of disgust, and pushed past him into the yard, running against Earnshaw in my haste. It was so dark that I could not see the means of exit; and, as I wandered round, I heard another specimen of their civil behaviour amongst each other. At first the young man appeared about to befriend me.",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b079_01__wh_ch02_b079",
+              "atom_m_wh_ch02_b079_02__wh_ch02_b079"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_heathcliffs_son_dead",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch02_b049_03__wh_ch02_b049",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b029_04__wh_ch02_b029",
+          "atom_m_wh_ch02_b051_01__wh_ch02_b051",
+          "atom_m_wh_ch02_b049_03__wh_ch02_b049"
+        ],
+        "status": "uncertain",
+        "alias_bindings": [
+          {
+            "surface": "Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b029_04__wh_ch02_b029"
+            ],
+            "valid_from_block": "wh_ch02_b029",
+            "valid_until_block": "wh_ch02_b029"
+          },
+          {
+            "surface": "my son",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b049_03__wh_ch02_b049",
+              "atom_m_wh_ch02_b051_01__wh_ch02_b051"
+            ],
+            "valid_from_block": "wh_ch02_b049",
+            "valid_until_block": "wh_ch02_b051"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b049",
+            "quote": "“Unhappy in your conjectures, sir,” observed my host; “we neither of us have the privilege of owning your good fairy; her mate is dead. I said she was my daughter-in-law: therefore, she must have married my son.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b049_03__wh_ch02_b049"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b051",
+            "quote": "“Not my son, assuredly.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b051_01__wh_ch02_b051"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b029",
+            "quote": "al feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common labourer: stil",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b029_04__wh_ch02_b029"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_juno_dog",
+        "reuse_entity_id": null,
+        "referent_kind": "unknown",
+        "canonical_atom_id": "atom_m_wh_ch02_b014_01__wh_ch02_b014",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b014_01__wh_ch02_b014"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "the villain",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b014_01__wh_ch02_b014"
+            ],
+            "valid_from_block": "wh_ch02_b014",
+            "valid_until_block": "wh_ch02_b014"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b014",
+            "quote": "I obeyed; and hemmed, and called the villain Juno, who deigned, at this second interview, to move the extreme tip of her tail, in token of owning my acquaintance.",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b014_01__wh_ch02_b014"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_mr_and_mrs_heathcliff",
+        "reuse_entity_id": null,
+        "referent_kind": "group_reference",
+        "canonical_atom_id": "atom_m_wh_ch02_b029_02__wh_ch02_b029",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b029_02__wh_ch02_b029"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Mr. and Mrs. Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b029_02__wh_ch02_b029"
+            ],
+            "valid_from_block": "wh_ch02_b029",
+            "valid_until_block": "wh_ch02_b029"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b029",
+            "quote": "ere some mortal feud unavenged between us. I began to doubt whether he were a servant or not: his dress and speech were both rude, entirely devoid of the superiority observable in Mr. and Mrs. Heathcliff; his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common l",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b029_02__wh_ch02_b029"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_parties_heathcliff_and_mrs_heathcliff",
+        "reuse_entity_id": null,
+        "referent_kind": "group_reference",
+        "canonical_atom_id": "atom_m_wh_ch02_b044_01__wh_ch02_b044",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b044_01__wh_ch02_b044"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "the parties",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b044_01__wh_ch02_b044"
+            ],
+            "valid_from_block": "wh_ch02_b044",
+            "valid_until_block": "wh_ch02_b044"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b044",
+            "quote": "Perceiving myself in a blunder, I attempted to correct it. I might have seen there was too great a disparity between the ages of the parties to make it likely that they were man and wife. One was about forty: a period of mental vigour at which men seldom cherish the delusion of being married for love by girls: that dream is reserved for the solace of our dec",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b044_01__wh_ch02_b044"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_zillah",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch02_b071_02__wh_ch02_b071",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b071_02__wh_ch02_b071",
+          "atom_m_wh_ch02_b089_02__wh_ch02_b089",
+          "atom_m_wh_ch02_b092_01__wh_ch02_b092"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Zillah",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b071_02__wh_ch02_b071",
+              "atom_m_wh_ch02_b089_02__wh_ch02_b089",
+              "atom_m_wh_ch02_b092_01__wh_ch02_b092"
+            ],
+            "valid_from_block": "wh_ch02_b071",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b089",
+            "quote": "colded. I don’t know what would have concluded the scene, had there not been one person at hand rather more rational than myself, and more benevolent than my entertainer. This was Zillah, the stout housewife; who at length issued forth to inquire into the nature of the uproar. She thought that some of them had been laying violent hands on me; and, not daring",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b089_02__wh_ch02_b089"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch02_b092",
+            "quote": "I was sick exceedingly, and dizzy, and faint; and thus compelled perforce to accept lodgings under his roof. He told Zillah to give me a glass of brandy, and then passed on to the inner room; while she condoled with me on my sorry predicament, and having obeyed his orders, whereby I was somewhat revived, ushered me to bed.",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b092_01__wh_ch02_b092"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_king_lear",
+        "reuse_entity_id": null,
+        "referent_kind": "literary_allusion",
+        "canonical_atom_id": "atom_m_wh_ch02_b088_03__wh_ch02_b088",
+        "member_atom_ids": [
+          "atom_m_wh_ch02_b088_03__wh_ch02_b088"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "King Lear",
+            "member_atom_ids": [
+              "atom_m_wh_ch02_b088_03__wh_ch02_b088"
+            ],
+            "valid_from_block": "wh_ch02_b088",
+            "valid_until_block": "wh_ch02_b088"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch02_b088",
+            "quote": " alive; but they would suffer no resurrection, and I was forced to lie till their malignant masters pleased to deliver me: then, hatless and trembling with wrath, I ordered the miscreants to let me out—on their peril to keep me one minute longer—with several incoherent threats of retaliation that, in their indefinite depth of virulency, smacked of King Lear.",
+            "source_atom_ids": [
+              "atom_m_wh_ch02_b088_03__wh_ch02_b088"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      }
+    ]
+  },
+  "technical_error": null
+}
