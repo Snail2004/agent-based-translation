@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev4, for Sol round 4)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev5, for Sol round 5)
 
-Status: **DRAFT rev4 — awaiting Sol critique round 4. User confirmations received (whole_book_frozen + zero-human). Do NOT implement.**
+Status: **DRAFT rev5 — awaiting Sol critique round 5. User confirmations recorded (whole_book_frozen + zero-human). Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -304,3 +304,70 @@ B1–B4 closed by §K''/§O''/§B0''/§E''; M5–M9 by §T''/§V''/§AB''/§F''+
 - **knowledge_mode production = whole_book_frozen** per LOCK §0.5 — confirmed, no change.
 - **Zero-human pipeline confirmed as the ideal**; human review = an OPTIONAL app toggle, never a dependency (§O' stands as designed).
 - **User rationale (design-relevant, recorded):** the app's target user is translating a book they have NOT read and may lack literary domain knowledge — they cannot adjudicate identity/continuity questions themselves (same reason the user could not judge D2L term correctness). A human gate therefore has LOW epistemic value for the intended audience; fail-closed quarantine + transparent counters is the correct default, and any human-review UI is a power-user option, not a quality mechanism the architecture may rely on.
+
+---
+
+# M4f REV5 DELTA (2026-07-12, after Sol round 4 — ALL 3 BLOCKERs + 5 MAJORs + 1 MINOR accepted; the three blockers are consequences of the two freshly-confirmed decisions, caught before implementation. Supersedes conflicting rev1–rev4 text.) Status: **rev5 — for Sol round 5.**
+
+Claude gate notes:
+- **B-disclosure CONFIRMED on code:** `_entity_items` (context_builder.py:417–440) renders `canonical_source -> canonical_target (ALL aliases)` with zero as-of filtering — a ch5 pack discloses ch30 identity. Sol's distinction is the missing piece of §K'': knowing ≠ rendering, and rev4 only filtered relations/phases, not the identity VIEW itself.
+- **B-quarantine-DoS ACCEPTED:** rev4's §O'' let ONE unvalidated LLM proposal blank the protagonist (61 atoms at ch4/34 → whole-pair/view fanout) out of every pack. Fail-closed at the wrong granularity is its own failure mode.
+- **B-dossier-growth CONFIRMED (data already on file):** ent_mr_heathcliff = 61 atoms at 4/34 chapters; "FULL candidate cards" is unbounded under whole_book_frozen; rev3 batching only bounds candidate COUNT, not per-candidate evidence.
+- **M-R3-realign ACCEPTED with honesty note:** Addendum R3 was written pre-two-axis and overgeneralized — correct for as_of_experiment mode, wrong as a production rule.
+- Remaining findings accepted on design logic.
+
+## §D''' — Identity disclosure view (closes B-disclosure; extends §K'' axis 2 to identity itself)
+
+- **internal_entity_id ≠ renderable identity.** Internal ids are stable, whole-book, system-only. Packs render `renderable_identity_view(as_of)`:
+  - aliases shown = aliases with `valid_from ≤ as_of` (leverages the locked aliases-own-intervals rule);
+  - display canonical = the canonical form among as-of-known aliases (the identity as the READER knows it at story time), never the whole-book canonical;
+  - future aliases/canonical names appear only when their disclosure interval opens.
+- **Soft internal support without disclosure:** Translator may receive constraint fields (grammatical gender/number, person-vs-nonperson, register class) derived from whole-book knowledge — as CONSTRAINTS, never as names/identity statements. This preserves pronoun/xưng-hô correctness without spoiling.
+- Relation/phase/address/alias rendering rules from §K'' unchanged; this section closes the identity-name channel they missed.
+- context_builder `_entity_items` is thereby declared non-conformant (implementation item, not a design open).
+
+## §O''' — Evidence-gated, minimal-dependency quarantine (closes B-quarantine-DoS; supersedes rev4 §O'' blanket fanout)
+
+- **Evidence gate before ANY quarantine:** a destructive proposal triggers quarantine only if it passes mechanical validation — every evidence quote locates verbatim in its cited block AND cites atoms actually belonging to the subject entity/pair. Proposals failing the gate are recorded as `proposed_invalid`, affect nothing.
+- **Minimal dependency scope:** quarantine covers ONLY the disputed unit — the specific mapping/alias binding/fact/pair rows implicated by the proposal's evidence. Occurrence-local atoms, uncontested canonical facts, and unrelated pairs of the same entity REMAIN renderable. A split proposal on Heathcliff quarantines the contested boundary rows, not Heathcliff.
+- **Closed definition of unique mechanical witness (auto-bind class 1):** unique = exact surface match (casefold/punct-fold) + kind agreement + **no competing entity carries that surface anywhere in the frozen book** (two Catherine Lintons ⇒ not unique ⇒ no auto-bind, goes to adjudication). Surface equality alone is explicitly insufficient.
+
+## §C'''' — Within-dossier evidence sharding (closes B-dossier-growth; extends §2'''/§2-C')
+
+- Per-candidate dossier over `max_dossier_tokens` (per-model, measured) shards its EVIDENCE with an **exact-cover manifest**: every member atom in exactly one shard + shared anchor atoms (earliest/latest/dispute-cited) across shards; validator checks cover exactly.
+- **Bounded reconciliation:** shard-level verdicts join over anchors in ONE reconciliation call fed by shard summaries + anchor rows; non-convergence → quarantine per §O''' (minimal scope). **No silent truncation or rank-cut of evidence anywhere** — every omission is a manifest entry.
+
+## §AB''' — Two experiments, not one (closes M-AB-isolation; supersedes rev4 §AB'' single design)
+
+1. **Payload-ablation (canary):** BOTH arms consume the SAME frozen upstream evidence (the pilot's existing B0/B1 artifacts, content-addressed); arms differ ONLY in pack policy (old character-slice+hints vs new contract). This reproduces the b004 mechanism exactly — nothing upstream regenerates.
+2. **Production-mode pilot:** whole_book_frozen end-to-end on ch1–4-equivalent units under the new engine — validates the mode we actually ship.
+- **Held-out chapter ID is preregistered BEFORE implementation** (not merely before API runs), recorded in the task file at LOCK.
+
+## §R'' — Vector policy realigned to two axes (closes M-R3; supersedes Addendum R3 blanket rule)
+
+- `retrieval_knowledge_mode`: in whole_book_frozen production, vector search MAY retrieve future passages as internal evidence for identity adjudication (legitimate under LOCK §0.5).
+- `render_story_validity`: raw future passages/motifs NEVER flow into Narrative/Translator packs; anything vector-sourced that reaches a pack passes the same disclosure/story-validity filters as §D'''/§K''.
+- as_of_experiment mode keeps the strict pre-ANN `order_index ≤ as_of` filter from R3. Channel provenance + pre/post-filter audit lists unchanged.
+
+## §V''' — semantic_input_hash (closes M-dependency-stamp; extends rev4 §V'')
+
+Every phase/view row stores `semantic_input_hash` = hash over {endpoint bindings, source event ids, frame claim version, active overlay records intersecting the row}. **Reuse permitted only on hash equality** — entity/pair id stability alone proves nothing (witness/frame/disposition can change under stable ids).
+
+## §F''' — corroborated vs verified (closes M-frame-confirmation; supersedes rev4 §F'' status semantics)
+
+- Same-model shuffled-render agreement ⇒ **corroborated** (not verified — correlated failure modes remain).
+- **verified** requires: independent evidence source, OR a different checker model/prompt, OR human.
+- Runtime contract declares explicitly which statuses feed context: v1 = corroborated frames usable for phase/identity context WITH their status label carried into the Context Audit; unverified stays unknown. verified_frame_coverage metric (rev4) now reports per-status.
+
+## §S''' — Scale thresholds locked on DEV, weighted (closes M-threshold)
+
+- Thresholds locked on DEV (ch1–4 lineage) BEFORE held-out runs; never adjusted on held-out ([dont-tune-intervention-on-test]).
+- Metrics are **exposure-weighted**, not raw entity counts: % occurrences quarantined, % dialogue turns affected, % relation events blocked, % packs degraded. One quarantined Heathcliff outweighs ten one-shot allusions by construction.
+
+## §U''' — Immutable store snapshot (closes MINOR; extends §U'')
+
+Selection-universe manifests reference a **pinned immutable store snapshot** (content-addressed source-row blobs or snapshot hash of the frozen SQLite/Chroma state). Rows remain reconstructable after store mutation; manifests stay reference-only.
+
+## Round-5 ask to Sol
+
+B1–B3 closed by §D'''/§O'''/§C''''; M4–M8 by §AB'''/§R''/§V'''/§F'''/§S'''; MINOR by §U'''. The disclosure view (§D''') is the one genuinely new mechanism — please stress it specifically: any channel we missed where whole-book identity can still reach a pack (address policies? phase labels naming entities? glossary lines?). Otherwise LOCK.
