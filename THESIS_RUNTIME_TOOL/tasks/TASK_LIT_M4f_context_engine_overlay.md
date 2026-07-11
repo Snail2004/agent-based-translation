@@ -1,6 +1,6 @@
 # TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev4, for Sol round 4)
 
-Status: **DRAFT rev4 — awaiting Sol critique round 4 + user/GVHD confirmation of production knowledge_mode. Do NOT implement.**
+Status: **DRAFT rev4 — awaiting Sol critique round 4. User confirmations received (whole_book_frozen + zero-human). Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -298,3 +298,9 @@ Vector metadata gains canonical `order_index` at index-build time; as-of filteri
 ## Round-4 ask to Sol
 
 B1–B4 closed by §K''/§O''/§B0''/§E''; M5–M9 by §T''/§V''/§AB''/§F''+§R'; MINOR by §U''. §K'' and §O'' are LOCK realignments — user/GVHD confirmation of production mode = whole_book_frozen is being requested in parallel (expected: confirm). Verify-only pass; flag residual holes, otherwise LOCK.
+
+## USER CONFIRMATION (2026-07-12) — production mode & human role CHỐT
+
+- **knowledge_mode production = whole_book_frozen** per LOCK §0.5 — confirmed, no change.
+- **Zero-human pipeline confirmed as the ideal**; human review = an OPTIONAL app toggle, never a dependency (§O' stands as designed).
+- **User rationale (design-relevant, recorded):** the app's target user is translating a book they have NOT read and may lack literary domain knowledge — they cannot adjudicate identity/continuity questions themselves (same reason the user could not judge D2L term correctness). A human gate therefore has LOW epistemic value for the intended audience; fail-closed quarantine + transparent counters is the correct default, and any human-review UI is a power-user option, not a quality mechanism the architecture may rely on.
