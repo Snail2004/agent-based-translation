@@ -1,6 +1,6 @@
-# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev9, for Sol round 9)
+# TASK_LIT_M4f — Context Engine v2 + non-destructive identity overlay (PIVOT from M4e, rev10, for Sol round 10)
 
-Status: **DRAFT rev9 — awaiting Sol round 9; then SSE9 audit (0-API) -> Canonical v1 -> LOCK. User confirmations recorded (whole_book_frozen + zero-human + data-grounded lock). Do NOT implement.**
+Status: **DRAFT rev10 — awaiting Sol round 10 (verify-only, near LOCK); then SSE9 audit (0-API) -> Canonical v1 -> LOCK. User confirmations recorded (whole_book_frozen + zero-human + data-grounded lock). Do NOT implement.**
 Owner: Claude (spec + prompts + verify gate). Implementer: CodeX (after LOCK). Decision authority: user (pivot decided 2026-07-11).
 Parent: TASK_LIT_M4e (rev4, FROZEN — see §1 for what survives). Grandparent: TASK_LIT_M4d (pilot ch1–4 evidence base).
 
@@ -583,3 +583,52 @@ Oracle rows are generic: `{item_kind, item_id | oracle_id, expected_disclosed_fr
 2. Claude runs the **§E9 audit** (0-API, artifacts only) → audit report reviewed by BOTH Sol and user.
 3. Any uncovered error class → evidence-based spec reopen; else **§Z8 Canonical v1 rewrite**.
 4. LOCK on Canonical v1 → prompt authoring (disclosure extractor+checker pair, identity two-step+checker, frame confirmation) → CodeX scaffold behind §T6 fixture + conformance tests.
+
+---
+
+# M4f REV10 DELTA (2026-07-12, after Sol round 9 — "near LOCK", narrow closing rev. ALL 5 BLOCKERs + 2 MAJORs accepted; no new architecture. Supersedes conflicting rev1–rev9 text.) Status: **rev10 — for Sol round 10 (verify-only); then §E9 audit → Canonical v1 → LOCK.**
+
+Claude gate notes:
+- **B-raw-coverage CONFIRMED on artifacts:** M4d task line 471 records the raw-overwrite finding ("CONFIRMED, fix REQUIRED"); on-disk raws now carry `_resume_NN` suffixes (append-only era), but early attempts were overwritten and survive only in `llm_call_cache`. "Audit all raw + dropped" cannot be assumed feasible — it must be measured and reported.
+- **B-cold-start / B-authority / B-explicit-level / B-dispute-relation / M-support-provenance / M-oracle-matching ACCEPTED** on design/logic; all are the same doctrine (no model-minted ids, only `active` wields authority, code owns lineage) applied to the last corners.
+
+## §D8 — Cold-start entity signature (closes B-cold-start; supersedes rev9 §D7 entity_ref)
+
+`entity_ref = existing_decision_id | new_entity_signature`. For a NEW character the two independent calls return a **signature** — `{occurrence_set, referent_kind, canonical_surface_guess}`, no id. Code mints `entity_id` ONLY after both signatures match (occurrence-set equality + referent_kind agreement). Two distinct new people with disjoint occurrence sets never collapse; a model never mints an entity id. Chapter-1 cold start is now expressible.
+
+## §W8 — Only `active` renders or mints witnesses (closes B-authority; supersedes rev9 §W7 proposed/corroborated powers)
+
+- `proposed` and `corroborated` are used ONLY for candidate ranking and audit — they **never render a binding and never mint a cross-scope witness**. A single response (or two correlated same-model responses) therefore cannot make the Translator misread even within its own scope.
+- `active` (independent evidence source / different checker model or prompt / human, per §F''') is the ONLY state that renders and mints witnesses. Independent-checker cost enters deterministic_base at dry-run.
+
+## §P8 — explicit_fact requires `active` classification (closes B-explicit-level; supersedes rev9 §P7 "checker-confirmed")
+
+A fact is rendered as `explicit_fact` (disclosure-opening) ONLY when its explicit/derived classification reaches **active** per §F'''. Same-model corroboration ⇒ still `derived`/undisclosed. servant_of cannot pass via two correlated same-model errors.
+
+## §Q8 — Dispute is a typed relational claim (closes B-dispute-relation; supersedes rev9 §Q7 per-ID disposition)
+
+The disputing call emits `dispute_claim`s: `{dispute_claim_id, subject, current_assignment, proposed_assignment | incompatibility(a,b), evidence_refs}`. The checker confirms/denies **whole tuples**, not loose ids. Closure activates only for dispute_claims corroborated in their entirety (subject + both assignments + incompatibility); a checker that agrees "A is disputed" but not the specific reassignment does NOT trigger closure. Confirmed claims map to their §G7 support-set impact.
+
+## §G8 — Support sets are code-built from validated dispositions (closes M-support-provenance; supersedes rev9 §G7 model-declared sets)
+
+Support sets are constructed by **code** from the per-event/per-atom dispositions (already validated, §C7/§B''') and the request's selection-universe — NOT declared freely by the model. The model chooses outcomes per atom/event; code derives which evidence families support each derived item. A model cannot hide a disputing source by omitting it from a set, because it does not author the set.
+
+## §M9 — Oracle semantic keys + validated matching (closes M-oracle-matching; supersedes rev9 §M8 freeze problem)
+
+Each oracle row carries an `oracle_semantic_key` per kind, matched one-to-one to run output by a validator:
+- identity binding = `entity_signature + occurrence_set`;
+- phase = `pair + label + interval/frame`;
+- fact = `subject + predicate + object + valid_interval`;
+- motif/Brief = `anchored_span + claim_key`.
+Multiple matches or no confident match → `unmatched` / `ambiguous` buckets (never eyeballed). Precision/recall for every kind is reproducible from keys, independent of run-minted ids.
+
+## §E9' — Audit coverage manifest (closes B-raw-coverage; supersedes rev9 §E9 "exhaustive" claim)
+
+§E9 emits a per-stage `audit_coverage_manifest`: for each stage (M1 atoms/endpoints/events, M2 digests/claims, M3 rows, drops, raws) report counts `expected / found_on_disk / recovered_from_cache / missing / not_auditable`. The word "exhaustive" is earned ONLY where coverage = 100% (found + recovered); any `missing` for a load-bearing artifact ⇒ EITHER the audit claim is narrowed to what is covered, OR that exact slice is re-run later (not now, not at $0). The audit's own coverage is thus itself audited — no false completeness.
+
+## Path to LOCK (unchanged sequence, now unblocked at each step)
+
+1. Sol round 10 verify-only on §D8/§W8/§P8/§Q8/§G8/§M9/§E9'.
+2. Claude runs §E9 audit (0-API) → emits audit_coverage_manifest + classified defect table → Sol (2nd reviewer) + user review.
+3. `other_new_class` or an error class rev1–10 doesn't cover ⇒ evidence-based reopen; else §Z8 Canonical v1 rewrite.
+4. LOCK on Canonical v1 → prompt authoring → CodeX scaffold behind §T6 fixture + conformance tests.
