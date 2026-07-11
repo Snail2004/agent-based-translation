@@ -486,3 +486,25 @@ Verified: atom "the young man"@b079 hints `ent_the_young_man`; identity group `g
 4. **Tests:** (a) config-bump prefix rebuild — synthetic checkpoints with old config_hash + stocked replay cache → rebuild publishes identical state, zero fresh calls; (b) truncated cache replay classified poisoned → bypass retry proceeds; (c) retry-rate fixture where the old accounting would halt at 12.5% now passes with poisoned excluded and still halts on real fresh-call retries over 10%.
 
 **Expected resume:** ch1/ch2 republish from cache ($0, 4 replay hits), ch3 identity s1 fresh (≤12,288 out; prompt ~97% server-cached), s2 + phase ch3 fresh → full ch1–3 published → Claude acceptance gate + Sol dual review (scale-unlock).
+
+---
+
+## AMENDMENT #7 (2026-07-11, Claude gate) — ch3 identity reject: mechanical resolution ladder for unknown reuse ids + wrong-suffix atom repair; the model's semantics are CORRECT (diary-frame Heathcliff, two Catherines kept apart)
+
+**Verified on the fresh parsed response** (`..._attempt_02_resume_01.json`, 6,430 out < new cap; shard 2 fully valid, all 5 reuses correct). Shard 1's rejects decompose into three mechanical classes — none is a judgment error:
+
+**What the model actually did (verified):** grp1 = diary-frame Heathcliff (4 atoms, all in Catherine's diary blocks b006–b018) with reuse `ent_heathcliff`; grp2 = present-day Heathcliff (13 atoms) with reuse `ent_mr_heathcliff`; grp3 = Catherine Earnshaw the mother (16 diary/ghost atoms, canonical surface "Catherine Earnshaw") minted-by-name; grp5 = Hindley ("Hindley"); **the two Catherines stay separated** (mother = new entity; daughter = ent_mrs_heathcliff, reused correctly in shard 2). The digest's provisional vocabulary is exactly where the invented id strings come from.
+
+### Resolution ladder (code, fail-closed, in order):
+
+1. **Wrong-suffix atom-id repair** (extends amendment #1): a full-form atom id not in the atom set, whose mention-prefix maps to exactly ONE real atom → replace with the real id; now applies to `member_atom_ids` AND evidence `source_atom_ids`. Safety net that #1 lacked for members: the exact-partition + no-duplicate checks run AFTER repair — a wrong repair cannot survive them. Verified on real data: the 4 true atoms appear nowhere else (65/65 members unique). Counter `atom_id_suffix_repaired` (expect 4 members + 2 evidence refs).
+2. **Unknown `reuse_entity_id` — hint composition:** claimed id is NOT an existing entity but has a UNIQUE binding in `hint_to_entities` → rewrite to the bound final id. This composes two recorded LLM judgments (ch2: atoms hinting ent_heathcliff = ent_mr_heathcliff; ch3: this group continues ent_heathcliff) — code holds no identity opinion. Verified: ch2 map has `ent_heathcliff → [ent_mr_heathcliff]` unique. Counter `reuse_hint_normalized` (expect 1).
+3. **Unknown reuse — mint-equality:** else, if the claimed id EQUALS the id `_mint_entity_id` would deterministically produce for this group → treat as null+mint (the claim is contentless: the id exists nowhere, and the resulting state is identical to a fresh mint; the model merely pre-computed our mint). Verified: "Catherine Earnshaw" → ent_catherine_earnshaw, "Hindley" → ent_hindley. Mint collision with an existing entity still halts (existing check). Counter `reuse_mint_equivalent` (expect 2).
+4. **Duplicate reuse after normalization — union by the model's own claims:** two groups resolving to the SAME existing entity, with NO `different_identity` evidence linking them (verified: none) and same `referent_kind` (person=person ✓) → mechanical union (members/aliases/evidence concatenated, deduped). This does NOT erase the diary/present distinction — frames live in `narration_frame_segments`, not in entity splits; splitting one person into two entities would contradict ch2's recorded binding. Any conflict (different_identity link, kind mismatch) → `stable_id_split_tie` halt exactly as today. Counter `reuse_duplicate_unions` (expect 1).
+5. Anything left unresolved → reject as today.
+
+**Prompt LOCKED untouched → the parsed response is cached; resume replays ch3 identity at $0.** Remaining fresh spend: ch3 phase only (~11.6k est prompt). Quota headroom 167,373.
+
+**Tests:** real ch3 s1 raw as fixture must fully pass through the ladder with exactly the predicted counters; ambiguous mention-prefix (2 candidate atoms) → reject; claimed id ∉ hints and ≠ mint → reject; duplicate reuse WITH a different_identity link → split-tie halt; partition violated by a repair → reject.
+
+**Acceptance watch-items (recorded now, reviewed at the ch1–3 gate):** (a) atom `m_wh_ch03_b046_01` surface "your guest, sir" placed in the Heathcliff group — referent plausibly Lockwood (one-atom precision case, review not halt); (b) ch2 hint oddity `ent_zillah → [ent_mrs_heathcliff]` (an atom hinting zillah was judged Mrs. Heathcliff; harmless to the ladder because ent_zillah IS an existing entity so rule 2 never fires for it — but review the underlying ch2 assignment); (c) shard-2 `grp_catherine_ghost` (uncertain, 4 atoms) vs shard-1 ent_catherine_earnshaw — the predicted cross-shard under-merge case, goes to the measured under-merge list.
