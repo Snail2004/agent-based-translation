@@ -12,14 +12,15 @@
     "chapters_selected": [
       "wh_ch01",
       "wh_ch02",
-      "wh_ch03"
+      "wh_ch03",
+      "wh_ch04"
     ],
     "modes": [
       "literary_identity_partition_v1",
       "literary_phase_segment_v2"
     ],
     "logical_stages_per_scope": 2,
-    "physical_calls": 7,
+    "physical_calls": 10,
     "call_estimates": [
       {
         "scope": "M3_asof_wh_ch01",
@@ -90,6 +91,36 @@
         "items": 6,
         "prompt_tokens_est": 11697,
         "max_output_tokens": 12288
+      },
+      {
+        "scope": "M3_asof_wh_ch04",
+        "chapter_id": "wh_ch04",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 1,
+        "shard_count": 2,
+        "items": 49,
+        "prompt_tokens_est": 13922,
+        "max_output_tokens": 12288
+      },
+      {
+        "scope": "M3_asof_wh_ch04",
+        "chapter_id": "wh_ch04",
+        "mode": "literary_identity_partition_v1",
+        "shard_index": 2,
+        "shard_count": 2,
+        "items": 33,
+        "prompt_tokens_est": 10175,
+        "max_output_tokens": 12288
+      },
+      {
+        "scope": "M3_asof_wh_ch04",
+        "chapter_id": "wh_ch04",
+        "mode": "literary_phase_segment_v2",
+        "shard_index": 1,
+        "shard_count": 1,
+        "items": 7,
+        "prompt_tokens_est": 12699,
+        "max_output_tokens": 12288
       }
     ],
     "scope_summary": [
@@ -128,12 +159,24 @@
         "phase_shards": 1,
         "m1_checkpoint_hash": "14f0d59e6bd12bdb7c2038f5d7452992c8aaa64fd3e22eb6512a6b0a1e1f8456",
         "m2_checkpoint_hash": "6014102e981436addba02a21ba9e51d97125e880cd76ddb7e76d4fe2aec95d37"
+      },
+      {
+        "scope": "M3_asof_wh_ch04",
+        "atoms_total_as_of": 258,
+        "frontier_atoms": 82,
+        "prior_groups_for_frontier": 86,
+        "prior_group_injections": 86,
+        "phase_rows_as_of": 7,
+        "identity_shards": 2,
+        "phase_shards": 1,
+        "m1_checkpoint_hash": "5aea9ab7c1904f080081a17ef31f49c66ab9d5c7e8fd8b23be3d8667c9186b11",
+        "m2_checkpoint_hash": "53cac6bdfb84eb5a5eb7853122e9641728ed5555ffd20636eb0d927f6b064027"
       }
     ],
-    "prompt_tokens_est": 71195,
-    "max_prompt_tokens_est": 13881,
+    "prompt_tokens_est": 107991,
+    "max_prompt_tokens_est": 13922,
     "max_output_tokens_per_call": 12288,
-    "total_tokens_upper_bound": 157211,
+    "total_tokens_upper_bound": 230871,
     "prompt_token_cap": 14000,
     "cost_cap_usd": 0.0,
     "token_growth_halt": false,
@@ -142,30 +185,6 @@
   },
   "request_accounting": {
     "restored": {
-      "logical_calls": 4,
-      "attempts": 4,
-      "technical_retries": 0,
-      "poisoned_cache_replays": 0,
-      "cache_hits": 4,
-      "cost_usd": 0.0,
-      "prompt_tokens": 32360,
-      "cached_tokens": 0,
-      "completion_tokens": 9417,
-      "reasoning_tokens": 0
-    },
-    "this_attempt": {
-      "logical_calls": 3,
-      "attempts": 3,
-      "technical_retries": 0,
-      "poisoned_cache_replays": 0,
-      "cache_hits": 2,
-      "cost_usd": 0.0,
-      "prompt_tokens": 30382,
-      "cached_tokens": 14080,
-      "completion_tokens": 10583,
-      "reasoning_tokens": 0
-    },
-    "combined": {
       "logical_calls": 7,
       "attempts": 7,
       "technical_retries": 0,
@@ -176,22 +195,48 @@
       "cached_tokens": 14080,
       "completion_tokens": 20000,
       "reasoning_tokens": 0
+    },
+    "this_attempt": {
+      "logical_calls": 3,
+      "attempts": 3,
+      "technical_retries": 0,
+      "poisoned_cache_replays": 0,
+      "cache_hits": 3,
+      "cost_usd": 0.0,
+      "prompt_tokens": 30318,
+      "cached_tokens": 0,
+      "completion_tokens": 9339,
+      "reasoning_tokens": 0
+    },
+    "combined": {
+      "logical_calls": 10,
+      "attempts": 10,
+      "technical_retries": 0,
+      "poisoned_cache_replays": 0,
+      "cache_hits": 9,
+      "cost_usd": 0.0,
+      "prompt_tokens": 93060,
+      "cached_tokens": 14080,
+      "completion_tokens": 29339,
+      "reasoning_tokens": 0
     }
   },
   "chapters_selected": [
     "wh_ch01",
     "wh_ch02",
-    "wh_ch03"
+    "wh_ch03",
+    "wh_ch04"
   ],
   "resume": {
     "enabled": true,
     "restored": [
       "wh_ch01",
-      "wh_ch02"
+      "wh_ch02",
+      "wh_ch03"
     ],
     "mismatches": [
       {
-        "chapter_id": "wh_ch03",
+        "chapter_id": "wh_ch04",
         "fields": [
           "missing"
         ]
@@ -201,53 +246,43 @@
   },
   "scopes": [
     {
-      "scope": "M3_asof_wh_ch03",
-      "chapter_id": "wh_ch03",
+      "scope": "M3_asof_wh_ch04",
+      "chapter_id": "wh_ch04",
       "status": "published",
       "identity_audit": {
-        "groups_applied": 21,
-        "entities_minted": 13,
-        "entities_reused": 8,
-        "review_only_groups": 7,
+        "groups_applied": 22,
+        "entities_minted": 16,
+        "entities_reused": 6,
+        "review_only_groups": 6,
         "blocked_for_runtime": 0,
         "supersedes": [],
         "evidence_atom_id_normalized": 0,
-        "atom_id_suffix_repaired": 6,
-        "atom_id_suffix_repaired_members": 4,
-        "atom_id_suffix_repaired_evidence": 2,
-        "atom_id_suffix_repaired_aliases": 4,
-        "reuse_hint_normalized": 1,
-        "reuse_mint_equivalent": 2,
-        "reuse_duplicate_unions": 2,
-        "evidence_cross_group_source_atoms": 2,
-        "evidence_quote_punct_normalized": 0
+        "atom_id_suffix_repaired": 0,
+        "atom_id_suffix_repaired_members": 0,
+        "atom_id_suffix_repaired_evidence": 0,
+        "atom_id_suffix_repaired_aliases": 0,
+        "referent_kind_out_of_enum": 1,
+        "reuse_hint_normalized": 0,
+        "reuse_mint_equivalent": 0,
+        "reuse_duplicate_unions": 0,
+        "evidence_cross_group_source_atoms": 6,
+        "evidence_quote_punct_normalized": 0,
+        "member_out_of_shard_stripped": 1
       },
       "phase_audit": {
-        "provisional_bindings": 1,
-        "provisional_binding_witnesses": [
-          {
-            "provisional_id": "ent_cathy",
-            "final_entity_id": "ent_that_minx",
-            "witnesses": [
-              {
-                "event_id": "e_wh_ch03_b057_02",
-                "block_id": "wh_ch03_b057",
-                "side": "target",
-                "method": "candidate_entity_id",
-                "final_entity_id": "ent_that_minx"
-              }
-            ]
-          }
-        ],
-        "provisional_pair_batches": 6,
-        "final_pairs_sent": 6,
+        "provisional_bindings": 0,
+        "provisional_binding_witnesses": [],
+        "provisional_pair_batches": 7,
+        "final_pairs_sent": 7,
         "collapsed_pair_batches": 0,
-        "history_rows_sent": 10,
-        "events_sent": 38,
-        "pairs_replayed": 6,
-        "facts_applied": 2,
+        "history_rows_sent": 9,
+        "events_sent": 42,
+        "pairs_replayed": 7,
+        "facts_applied": 0,
         "phases_applied": 8,
         "review_only_facts": 0,
+        "pairs_blocked_for_runtime": 1,
+        "blocked_pair_fact_rows": 0,
         "evidence_quote_punct_normalized": 0
       },
       "runtime_request_plan": {
@@ -260,15 +295,15 @@
         "attempts": 3,
         "technical_retries": 0,
         "poisoned_cache_replays": 0,
-        "cache_hits": 2,
+        "cache_hits": 3,
         "cost_usd": 0.0,
-        "prompt_tokens": 30382,
-        "cached_tokens": 14080,
-        "completion_tokens": 10583,
+        "prompt_tokens": 30318,
+        "cached_tokens": 0,
+        "completion_tokens": 9339,
         "reasoning_tokens": 0
       },
-      "story_bible": "data\\reports\\literary_m4d_b4v2\\story_bible_v2\\wh_ch03_story_bible.json",
-      "checkpoint": "data\\reports\\literary_m4d_b4v2\\checkpoints\\m3_v2\\wh_ch03.json"
+      "story_bible": "data\\reports\\literary_m4d_b4v2\\story_bible_v2\\wh_ch04_story_bible.json",
+      "checkpoint": "data\\reports\\literary_m4d_b4v2\\checkpoints\\m3_v2\\wh_ch04.json"
     }
   ],
   "stop": "Apply/publish complete. Claude must approve artifacts before any further API run."

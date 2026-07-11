@@ -43,6 +43,7 @@ from pipeline.literary.story_bible_v2 import (
     load_m3_v2_input_chain,
     make_m3_v2_request_llm,
     _merge_mapped_phase_batches,
+    _normalize_identity_responses_by_shard,
     _phase_rows_as_of,
     _remap_phase_rows_to_final_ids,
     _runtime_identity_shards,
@@ -345,6 +346,61 @@ def _real_ch3_identity_shard_one_fixture() -> tuple[
     }
     raw = json.loads(raw_path.read_text(encoding="utf-8"))
     return raw["parsed_json"], shards[0]["items"], state, source
+
+
+def _real_ch4_identity_shard_fixtures() -> tuple[
+    list[dict], list[dict], dict, list[dict], dict[str, str]
+]:
+    """Load the two halted ch4 responses with the exact runtime shard plan."""
+
+    root = RUNTIME_ROOT / "data" / "reports" / "literary_m4d_b4v2"
+    raw_dir = root / "raw_responses" / "m3_v2" / "wh_ch04"
+    raw_paths = [
+        raw_dir / f"literary_identity_partition_v1_shard_{index:02d}_attempt_01.json"
+        for index in [1, 2]
+    ]
+    checkpoint_path = root / "checkpoints" / M3_V2_STAGE / "wh_ch03.json"
+    m1_dir = RUNTIME_ROOT / "data" / "reports" / "literary_m4_full"
+    config_path = RUNTIME_ROOT / "pipeline" / "configs" / "llm_prepass_m4full_m2_gpt54.yaml"
+    if not all(path.is_file() for path in [*raw_paths, checkpoint_path, config_path, DEFAULT_EPUB]):
+        pytest.skip("real M3 v2 ch4 shard fixtures are not present")
+
+    document, _mapping = _load_document("wuthering_heights", DEFAULT_EPUB)
+    chapters = ["wh_ch01", "wh_ch02", "wh_ch03", "wh_ch04"]
+    config = load_llm_config(config_path)
+    chain = load_m3_v2_input_chain(
+        document=document,
+        chapters=chapters,
+        m1_dir=m1_dir,
+        m2_dir=m1_dir,
+        design_doc=DESIGN_DOC,
+    )
+    scopes = _scope_payloads(
+        document=document,
+        chain=chain,
+        m1_dir=m1_dir,
+        m2_dir=m1_dir,
+        design_doc=DESIGN_DOC,
+        config=config,
+    )
+    state = _copy_state((read_checkpoint(checkpoint_path).get("state") or {}).get("m3_state") or {})
+    scope = scopes[3]
+    shards = _runtime_identity_shards(
+        frontier_atoms=scope["frontier_atoms"],
+        state=state,
+        design_doc=DESIGN_DOC,
+        chapter_id="wh_ch04",
+        scope=str(scope["scope"]),
+        identity_hints=scope["identity_hints"],
+        prompt_cap=config.prompt_token_cap,
+    )
+    responses = [json.loads(path.read_text(encoding="utf-8"))["parsed_json"] for path in raw_paths]
+    source = {
+        str(block["block_id"]): str(block.get("clean_text") or block.get("source_text") or "")
+        for chapter in document.get("chapters") or []
+        for block in chapter.get("blocks") or []
+    }
+    return responses, shards, state, scope["frontier_atoms"], source
 
 
 def _valid_identity_response(atoms: list[dict]) -> dict:
@@ -1174,6 +1230,85 @@ def test_m3_v2_real_ch3_identity_response_passes_mechanical_resolution_ladder() 
     assert {"ent_mr_heathcliff", "ent_mrs_heathcliff", "ent_catherine_earnshaw", "ent_hindley"} <= entity_ids
 
 
+def test_m3_v2_ch4_shard_jurisdiction_strips_only_foreign_assignment() -> None:
+    responses, shards, state, atoms, source = _real_ch4_identity_shard_fixtures()
+    normalized, shard_audit = _normalize_identity_responses_by_shard(
+        responses,
+        identity_shards=shards,
+    )
+    target = "atom_m_wh_ch04_b044_01__wh_ch04_b044"
+    shard_one_group = next(group for group in normalized[0]["groups"] if group["group_key"] == "grp3")
+    assert target not in shard_one_group["member_atom_ids"]
+    assert any(
+        target in row.get("source_atom_ids", []) for row in shard_one_group["evidence"]
+    )
+    assert shard_audit["member_out_of_shard_stripped"] == 1
+
+    applied, audit = apply_identity_partition_response(
+        state,
+        {"groups": [group for response in normalized for group in response["groups"]]},
+        atoms=atoms,
+        source_text_by_block=source,
+    )
+    assert set(str(atom["atom_id"]) for atom in atoms) <= set(applied["atom_to_entity"])
+    assert applied["atom_to_entity"][target] == "ent_hindley"
+    assert audit["referent_kind_out_of_enum"] == 1
+    family_review = next(
+        row
+        for row in applied["review_only"]
+        if row.get("referent_kind_raw") == "family"
+    )
+    assert family_review["referent_kind"] == "unknown"
+    assert family_review["status"] == "quarantine"
+
+
+def test_m3_v2_shard_foreign_member_halts_when_owner_does_not_claim_it() -> None:
+    atoms = [
+        {"atom_id": "atom_mira", "block_id": "bk_ch01_b001", "surface": "Mira"},
+        {"atom_id": "atom_rowan", "block_id": "bk_ch01_b002", "surface": "Rowan"},
+    ]
+    foreign_claim = _single_atom_group(atoms[0])
+    foreign_claim["member_atom_ids"] = ["atom_mira", "atom_rowan"]
+    foreign_claim["evidence"] = [
+        {
+            "block_id": "bk_ch01_b001",
+            "quote": "Mira",
+            "source_atom_ids": ["atom_mira"],
+            "supports": "same_identity",
+        }
+    ]
+    normalized, audit = _normalize_identity_responses_by_shard(
+        [{"groups": [foreign_claim]}, {"groups": []}],
+        identity_shards=[{"items": [atoms[0]]}, {"items": [atoms[1]]}],
+    )
+    assert audit["member_out_of_shard_stripped"] == 1
+    with pytest.raises(M3V2SemanticGateError, match="identity_response_rejected"):
+        apply_identity_partition_response(
+            empty_m3_v2_state(),
+            {"groups": [group for response in normalized for group in response["groups"]]},
+            atoms=atoms,
+            source_text_by_block={"bk_ch01_b001": "Mira", "bk_ch01_b002": "Rowan"},
+        )
+
+
+def test_m3_v2_out_of_enum_referent_kind_quarantines_even_when_resolved() -> None:
+    atom = {"atom_id": "atom_mira", "block_id": "bk_ch01_b001", "surface": "Mira"}
+    response = _single_atom_group(atom)
+    response["referent_kind"] = "family"
+    response["status"] = "resolved"
+
+    applied, audit = apply_identity_partition_response(
+        empty_m3_v2_state(),
+        {"groups": [response]},
+        atoms=[atom],
+        source_text_by_block={"bk_ch01_b001": "Mira"},
+    )
+    assert audit["referent_kind_out_of_enum"] == 1
+    assert applied["entities"][0]["referent_kind"] == "unknown"
+    assert applied["entities"][0]["status"] == "quarantine"
+    assert applied["review_only"][0]["referent_kind_raw"] == "family"
+
+
 def test_m3_v2_wrong_suffix_repair_remains_strict_when_mention_prefix_is_ambiguous() -> None:
     atoms = [
         {
@@ -1366,6 +1501,201 @@ def test_m3_v2_phase_apply_marks_fact_published_and_real_messages_omit_scaffold_
     )
     assert "dry_run_note" not in identity_messages[1]["content"]
     assert "dry_run_note" not in phase_messages[1]["content"]
+
+
+def test_m3_v2_pair_quarantine_publishes_other_pairs_and_hides_blocked_runtime_pair(
+    tmp_path: Path,
+) -> None:
+    """A bad pair cannot erase a valid pair or leak into runtime policy output."""
+
+    source = {
+        "bk_ch01_b001": "Mira welcomed Rowan.",
+        "bk_ch01_b002": "Mira later distrusted Rowan.",
+        "bk_ch01_b003": "Rowan warned Tala.",
+    }
+    state = empty_m3_v2_state()
+    state["entities"] = [
+        {
+            "entity_id": entity_id,
+            "canonical": entity_id.removeprefix("ent_").title(),
+            "referent_kind": "person",
+            "member_atom_ids": [],
+            "aliases": [],
+            "supersedes_entity_ids": [],
+            "status": "resolved",
+        }
+        for entity_id in ["ent_mira", "ent_rowan", "ent_tala"]
+    ]
+    prior_phase = {
+        "pair": ["ent_mira", "ent_rowan"],
+        "phase_label": "friendly",
+        "valid_from_block": "bk_ch01_b001",
+        "valid_until_block": None,
+        "trigger_block": "bk_ch01_b001",
+        "trigger_evidence": "welcomed Rowan",
+        "status": "open",
+    }
+    state["relation_phases"] = [copy.deepcopy(prior_phase)]
+    response = {
+        "relation_facts": [],
+        "relation_phases": [
+            {
+                "pair": ["ent_mira", "ent_rowan"],
+                "phase_label": "strained",
+                "valid_from_block": "bk_ch01_b002",
+                "valid_until_block": None,
+                "trigger_block": "bk_ch01_b002",
+                "trigger_evidence": "not in the source",
+                "status": "open",
+            },
+            {
+                "pair": ["ent_rowan", "ent_tala"],
+                "phase_label": "strained",
+                "valid_from_block": "bk_ch01_b003",
+                "valid_until_block": None,
+                "trigger_block": "bk_ch01_b003",
+                "trigger_evidence": "warned Tala",
+                "status": "open",
+            },
+        ],
+    }
+
+    applied, audit = apply_phase_segment_response(
+        state,
+        response,
+        allowed_pairs={
+            ("ent_mira", "ent_rowan"),
+            ("ent_rowan", "ent_tala"),
+        },
+        source_text_by_block=source,
+        block_ordinals={block_id: index for index, block_id in enumerate(source)},
+        scope_end_block="bk_ch01_b003",
+    )
+
+    assert audit["pairs_blocked_for_runtime"] == 1
+    assert audit["phases_applied"] == 1
+    assert prior_phase in applied["relation_phases"]
+    assert any(
+        row["pair"] == ["ent_mira", "ent_rowan"]
+        and row["prior_history_retained"] is True
+        and row["needs_human_review"] is True
+        for row in applied["review_only"]
+        if row.get("kind") == "relation_pair_blocked_for_runtime"
+    )
+
+    story = build_story_bible_v2(
+        chapter={"chapter_id": "bk_ch01", "blocks": []},
+        state=applied,
+        m1_dir=tmp_path,
+        m1_checkpoints=[],
+        digests=[{"chapter_id": "bk_ch01", "narration_frame_segments": []}],
+    )
+    blocked_pair = {"ent_mira", "ent_rowan"}
+    assert all(set(row["pair"]) != blocked_pair for row in story["entity_relations"])
+    assert all(set(row["pair"]) != blocked_pair for row in story["address_policies"])
+    assert story["blocked_for_runtime_pairs"][0]["pair"] == ["ent_mira", "ent_rowan"]
+
+
+def test_m3_v2_pair_quarantine_halts_when_every_returned_pair_is_rejected() -> None:
+    state = empty_m3_v2_state()
+    state["entities"] = [
+        {
+            "entity_id": entity_id,
+            "canonical": entity_id.removeprefix("ent_").title(),
+            "referent_kind": "person",
+            "member_atom_ids": [],
+            "aliases": [],
+            "supersedes_entity_ids": [],
+            "status": "resolved",
+        }
+        for entity_id in ["ent_mira", "ent_rowan"]
+    ]
+    response = {
+        "relation_facts": [],
+        "relation_phases": [
+            {
+                "pair": ["ent_mira", "ent_rowan"],
+                "phase_label": "friendly",
+                "valid_from_block": "bk_ch01_b001",
+                "valid_until_block": None,
+                "trigger_block": "bk_ch01_b001",
+                "trigger_evidence": "not in the source",
+                "status": "open",
+            }
+        ],
+    }
+    with pytest.raises(M3V2SemanticGateError) as exc_info:
+        apply_phase_segment_response(
+            state,
+            response,
+            allowed_pairs={("ent_mira", "ent_rowan")},
+            source_text_by_block={"bk_ch01_b001": "Mira welcomed Rowan."},
+            block_ordinals={"bk_ch01_b001": 0},
+            scope_end_block="bk_ch01_b001",
+        )
+    assert exc_info.value.code == "phase_all_pairs_blocked_for_runtime"
+
+
+def test_m3_v2_real_ch4_phase_fixture_quarantines_only_reported_speech_pair(
+    tmp_path: Path,
+) -> None:
+    """The real cached ch4 response is the regression fixture for Amendment #10."""
+
+    root = RUNTIME_ROOT / "data" / "reports" / "literary_m4d_b4v2"
+    raw_path = (
+        root
+        / "raw_responses"
+        / "m3_v2"
+        / "wh_ch04"
+        / "literary_phase_segment_v2_shard_01_attempt_01.json"
+    )
+    if not raw_path.is_file():
+        pytest.skip("real M3 v2 ch4 phase fixture is not present")
+
+    responses, shards, state, atoms, source = _real_ch4_identity_shard_fixtures()
+    responses, _shard_audit = _normalize_identity_responses_by_shard(
+        responses,
+        identity_shards=shards,
+    )
+    state, _identity_audit = apply_identity_partition_response(
+        state,
+        {"groups": [group for response in responses for group in response.get("groups") or []]},
+        atoms=atoms,
+        source_text_by_block=source,
+    )
+    response = json.loads(raw_path.read_text(encoding="utf-8"))["parsed_json"]
+    allowed_pairs = {
+        tuple(sorted(str(value) for value in row["pair"]))
+        for row in response["relation_phases"]
+    }
+    applied, audit = apply_phase_segment_response(
+        state,
+        response,
+        allowed_pairs=allowed_pairs,
+        source_text_by_block=source,
+        block_ordinals={block_id: index for index, block_id in enumerate(source)},
+        scope_end_block="wh_ch04_b044",
+    )
+
+    blocked_pair = {"ent_mr_heathcliff", "ent_the_master"}
+    assert audit["pairs_blocked_for_runtime"] == 1
+    assert audit["phases_applied"] == 8
+    assert any(
+        set(row["pair"]) == blocked_pair
+        and len(row["returned_relation_phases"]) == 2
+        and any("trigger_evidence not_source_substring" in error for error in row["reject_reasons"])
+        for row in applied["review_only"]
+        if row.get("kind") == "relation_pair_blocked_for_runtime"
+    )
+    story = build_story_bible_v2(
+        chapter={"chapter_id": "wh_ch04", "blocks": []},
+        state=applied,
+        m1_dir=tmp_path,
+        m1_checkpoints=[],
+        digests=[{"chapter_id": "wh_ch04", "narration_frame_segments": []}],
+    )
+    assert all(set(row["pair"]) != blocked_pair for row in story["entity_relations"])
+    assert all(set(row["pair"]) != blocked_pair for row in story["address_policies"])
 
 
 def test_m3_v2_request_hook_uses_runtime_prompt_and_persists_raw_usage(tmp_path: Path) -> None:

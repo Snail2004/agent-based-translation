@@ -1,0 +1,156 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch04",
+  "chapter_id": "wh_ch04",
+  "mode": "literary_phase_segment_v2",
+  "shard_index": 1,
+  "shard_count": 1,
+  "attempt_index": 1,
+  "tag": "lit_m3v2_wh_ch04_literary_phase_segment_v2_s01:attempt1",
+  "prompt_sha256": "0b2d0aeba4568bab2b3e8c5bfaee4cca79f108e09e50ece733b202162b5fcbc4",
+  "prompt_tokens_est": 12638,
+  "bypass_cache": false,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": false,
+  "cache_key": "4ec1ed916415a3ca1df16ea38fbc022c8e6ffd164a64c39412daab4b4f045f44",
+  "latency_ms": 4912,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 9608,
+    "cached_tokens": 0,
+    "completion_tokens": 638,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"relation_phases\":[{\"pair\":[\"ent_cathy\",\"ent_earnshaw\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch04_b041\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch04_b041\",\"trigger_evidence\":\"far above Cathy\"},{\"pair\":[\"ent_cathy\",\"ent_mr_heathcliff\"],\"phase_label\":\"friendly\",\"valid_from_block\":\"wh_ch03_b057\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch03_b057\",\"trigger_evidence\":\"Come in! come in!\"},{\"pair\":[\"ent_hindley\",\"ent_mr_heathcliff\"],\"phase_label\":\"hostile\",\"valid_from_block\":\"wh_ch03_b009\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch03_b009\",\"trigger_evidence\":\"his conduct to Heathcliff is atrocious\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mrs_dean\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch04_b040\",\"valid_until_block\":\"wh_ch04_b041\",\"status\":\"closed\",\"trigger_block\":\"wh_ch04_b040\",\"trigger_evidence\":\"I did the same; and we plagued\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mrs_dean\"],\"phase_label\":\"dependent\",\"valid_from_block\":\"wh_ch04_b042\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch04_b042\",\"trigger_evidence\":\"would have me constantly by his pillow\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_mrs_earnshaw\"],\"phase_label\":\"strained\",\"valid_from_block\":\"wh_ch04_b040\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch04_b040\",\"trigger_evidence\":\"the mistress never put in a word\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_the_master\"],\"phase_label\":\"friendly\",\"valid_from_block\":\"wh_ch04_b038\",\"valid_until_block\":\"wh_ch04_b040\",\"status\":\"closed\",\"trigger_block\":\"wh_ch04_b038\",\"trigger_evidence\":\"take it home with me\"},{\"pair\":[\"ent_mr_heathcliff\",\"ent_the_master\"],\"phase_label\":\"dependent\",\"valid_from_block\":\"wh_ch04_b041\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch04_b041\",\"trigger_evidence\":\"He took to Heathcliff strangely\"},{\"pair\":[\"ent_mr_lockwood\",\"ent_mrs_dean\"],\"phase_label\":\"neutral\",\"valid_from_block\":\"wh_ch04_b003\",\"valid_until_block\":\"wh_ch04_b030\",\"status\":\"closed\",\"trigger_block\":\"wh_ch04_b003\",\"trigger_evidence\":\"You have lived here\"},{\"pair\":[\"ent_mr_lockwood\",\"ent_mrs_dean\"],\"phase_label\":\"friendly\",\"valid_from_block\":\"wh_ch04_b032\",\"valid_until_block\":null,\"status\":\"open\",\"trigger_block\":\"wh_ch04_b032\",\"trigger_evidence\":\"Oh, certainly, sir!\"}],\"relation_facts\":[]}",
+  "parsed_json": {
+    "relation_phases": [
+      {
+        "pair": [
+          "ent_cathy",
+          "ent_earnshaw"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch04_b041",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch04_b041",
+        "trigger_evidence": "far above Cathy"
+      },
+      {
+        "pair": [
+          "ent_cathy",
+          "ent_mr_heathcliff"
+        ],
+        "phase_label": "friendly",
+        "valid_from_block": "wh_ch03_b057",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch03_b057",
+        "trigger_evidence": "Come in! come in!"
+      },
+      {
+        "pair": [
+          "ent_hindley",
+          "ent_mr_heathcliff"
+        ],
+        "phase_label": "hostile",
+        "valid_from_block": "wh_ch03_b009",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch03_b009",
+        "trigger_evidence": "his conduct to Heathcliff is atrocious"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mrs_dean"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch04_b040",
+        "valid_until_block": "wh_ch04_b041",
+        "status": "closed",
+        "trigger_block": "wh_ch04_b040",
+        "trigger_evidence": "I did the same; and we plagued"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mrs_dean"
+        ],
+        "phase_label": "dependent",
+        "valid_from_block": "wh_ch04_b042",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch04_b042",
+        "trigger_evidence": "would have me constantly by his pillow"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_mrs_earnshaw"
+        ],
+        "phase_label": "strained",
+        "valid_from_block": "wh_ch04_b040",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch04_b040",
+        "trigger_evidence": "the mistress never put in a word"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_the_master"
+        ],
+        "phase_label": "friendly",
+        "valid_from_block": "wh_ch04_b038",
+        "valid_until_block": "wh_ch04_b040",
+        "status": "closed",
+        "trigger_block": "wh_ch04_b038",
+        "trigger_evidence": "take it home with me"
+      },
+      {
+        "pair": [
+          "ent_mr_heathcliff",
+          "ent_the_master"
+        ],
+        "phase_label": "dependent",
+        "valid_from_block": "wh_ch04_b041",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch04_b041",
+        "trigger_evidence": "He took to Heathcliff strangely"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_mrs_dean"
+        ],
+        "phase_label": "neutral",
+        "valid_from_block": "wh_ch04_b003",
+        "valid_until_block": "wh_ch04_b030",
+        "status": "closed",
+        "trigger_block": "wh_ch04_b003",
+        "trigger_evidence": "You have lived here"
+      },
+      {
+        "pair": [
+          "ent_mr_lockwood",
+          "ent_mrs_dean"
+        ],
+        "phase_label": "friendly",
+        "valid_from_block": "wh_ch04_b032",
+        "valid_until_block": null,
+        "status": "open",
+        "trigger_block": "wh_ch04_b032",
+        "trigger_evidence": "Oh, certainly, sir!"
+      }
+    ],
+    "relation_facts": []
+  },
+  "technical_error": null,
+  "technical_failure_class": null
+}

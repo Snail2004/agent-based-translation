@@ -1,0 +1,330 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch04",
+  "chapter_id": "wh_ch04",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 2,
+  "shard_count": 2,
+  "attempt_index": 1,
+  "tag": "lit_m3v2_wh_ch04_literary_identity_partition_v1_s02:attempt1",
+  "prompt_sha256": "5370c6e174d5cde5bc9bfc46d327d4891414e0462c55e0679730558f54820f2f",
+  "prompt_tokens_est": 7085,
+  "bypass_cache": false,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": false,
+  "cache_key": "4e076f2ba4997a1d2a9cdf26e8675bf9e26ead1e70832ba869b027372e0d4402",
+  "latency_ms": 13430,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 7154,
+    "cached_tokens": 0,
+    "completion_tokens": 2956,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"groups\":[{\"group_key\":\"grp_ent_hindley\",\"reuse_entity_id\":\"ent_hindley\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b035_07__wh_ch04_b035\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_07__wh_ch04_b035\",\"atom_m_wh_ch04_b039_01__wh_ch04_b039\",\"atom_m_wh_ch04_b040_04__wh_ch04_b040\",\"atom_m_wh_ch04_b041_01__wh_ch04_b041\",\"atom_m_wh_ch04_b043_01__wh_ch04_b043\",\"atom_m_wh_ch04_b043_07__wh_ch04_b043\",\"atom_m_wh_ch04_b044_01__wh_ch04_b044\",\"atom_m_wh_ch04_b045_02__wh_ch04_b045\",\"atom_m_wh_ch04_b039_03__wh_ch04_b039\",\"atom_m_wh_ch04_b042_02__wh_ch04_b042\",\"atom_m_wh_ch04_b042_05__wh_ch04_b042\",\"atom_m_wh_ch04_b044_04__wh_ch04_b044\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Hindley\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_07__wh_ch04_b035\",\"atom_m_wh_ch04_b039_01__wh_ch04_b039\",\"atom_m_wh_ch04_b040_04__wh_ch04_b040\",\"atom_m_wh_ch04_b041_01__wh_ch04_b041\",\"atom_m_wh_ch04_b043_01__wh_ch04_b043\",\"atom_m_wh_ch04_b043_07__wh_ch04_b043\",\"atom_m_wh_ch04_b044_01__wh_ch04_b044\",\"atom_m_wh_ch04_b045_02__wh_ch04_b045\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":null},{\"surface\":\"the former\",\"member_atom_ids\":[\"atom_m_wh_ch04_b039_03__wh_ch04_b039\"],\"valid_from_block\":\"wh_ch04_b039\",\"valid_until_block\":\"wh_ch04_b039\"},{\"surface\":\"the young master\",\"member_atom_ids\":[\"atom_m_wh_ch04_b042_02__wh_ch04_b042\"],\"valid_from_block\":\"wh_ch04_b042\",\"valid_until_block\":\"wh_ch04_b042\"},{\"surface\":\"her brother\",\"member_atom_ids\":[\"atom_m_wh_ch04_b042_05__wh_ch04_b042\"],\"valid_from_block\":\"wh_ch04_b042\",\"valid_until_block\":\"wh_ch04_b042\"},{\"surface\":\"young Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch04_b044_04__wh_ch04_b044\"],\"valid_from_block\":\"wh_ch04_b044\",\"valid_until_block\":\"wh_ch04_b044\"}],\"evidence\":[{\"block_id\":\"wh_ch04_b039\",\"quote\":\"Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had \",\"source_atom_ids\":[\"atom_m_wh_ch04_b039_01__wh_ch04_b039\",\"atom_m_wh_ch04_b039_03__wh_ch04_b039\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b042\",\"quote\":\"So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sym\",\"source_atom_ids\":[\"atom_m_wh_ch04_b042_02__wh_ch04_b042\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b042\",\"quote\":\"r him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b042_05__wh_ch04_b042\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b044\",\"quote\":\"revented it, he would have gone just so to the master, and got full revenge by letting his condition plead for him, intimating who had caused it. “Take my colt, Gipsy, then!” said young Earnshaw. “And I pray that he may break your neck: take him, and be damned, you beggarly interloper! and wheedle my father out of all he has: only afterwards show him what yo\",\"source_atom_ids\":[\"atom_m_wh_ch04_b044_04__wh_ch04_b044\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_ent_cathy\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b035_08__wh_ch04_b035\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_08__wh_ch04_b035\",\"atom_m_wh_ch04_b039_02__wh_ch04_b039\",\"atom_m_wh_ch04_b041_04__wh_ch04_b041\",\"atom_m_wh_ch04_b042_04__wh_ch04_b042\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Cathy\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_08__wh_ch04_b035\",\"atom_m_wh_ch04_b039_02__wh_ch04_b039\",\"atom_m_wh_ch04_b041_04__wh_ch04_b041\",\"atom_m_wh_ch04_b042_04__wh_ch04_b042\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b039\",\"quote\":\"Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had \",\"source_atom_ids\":[\"atom_m_wh_ch04_b039_02__wh_ch04_b039\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b042\",\"quote\":\"r him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b042_04__wh_ch04_b042\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_mr_earnshaws_son_hindley\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b035_09__wh_ch04_b035\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_09__wh_ch04_b035\"],\"status\":\"uncertain\",\"alias_bindings\":[{\"surface\":\"my son\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_09__wh_ch04_b035\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":\"wh_ch04_b035\"}],\"evidence\":[{\"block_id\":\"wh_ch04_b035\",\"quote\":\"rvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating my porridge with them—and he said, speaking to his son, “Now, my bonny man, I’m going to Liverpool to-day, what shall I bring you? You may choose wha\",\"source_atom_ids\":[\"atom_m_wh_ch04_b035_08__wh_ch04_b035\",\"atom_m_wh_ch04_b035_09__wh_ch04_b035\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp_earnshaw_children_group\",\"reuse_entity_id\":null,\"referent_kind\":\"group_reference\",\"canonical_atom_id\":\"atom_m_wh_ch04_b035_16__wh_ch04_b035\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_16__wh_ch04_b035\",\"atom_m_wh_ch04_b035_18__wh_ch04_b035\",\"atom_m_wh_ch04_b043_05__wh_ch04_b043\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"my children\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_16__wh_ch04_b035\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":\"wh_ch04_b035\"},{\"surface\":\"his children\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_18__wh_ch04_b035\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":\"wh_ch04_b035\"},{\"surface\":\"the lads\",\"member_atom_ids\":[\"atom_m_wh_ch04_b043_05__wh_ch04_b043\"],\"valid_from_block\":\"wh_ch04_b043\",\"valid_until_block\":\"wh_ch04_b043\"}],\"evidence\":[{\"block_id\":\"wh_ch04_b035\",\"quote\":\"pell!” Hindley named a fiddle, and then he asked Miss Cathy; she was hardly six years old, but she could ride any horse in the stable, and she chose a whip. He did not forget me; for he had a kind heart, though he was rather severe sometimes. He promised to bring me a pocketful of apples and pears, and then he kissed his children, said good-bye, and set off.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b035_18__wh_ch04_b035\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b043\",\"quote\":\"knowing perfectly the hold he had on his heart, and conscious he had only to speak and all the house would be obliged to bend to his wishes. As an instance, I remember Mr. Earnshaw once bought a couple of colts at the parish fair, and gave the lads each one. Heathcliff took the handsomest, but it soon fell lame, and when he discovered it, he said to Hindley—\",\"source_atom_ids\":[\"atom_m_wh_ch04_b043_05__wh_ch04_b043\"],\"supports\":\"different_identity\"}]},{\"group_key\":\"grp_ent_mrs_earnshaw\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b036_01__wh_ch04_b036\",\"member_atom_ids\":[\"atom_m_wh_ch04_b036_01__wh_ch04_b036\",\"atom_m_wh_ch04_b038_03__wh_ch04_b038\",\"atom_m_wh_ch04_b042_01__wh_ch04_b042\",\"atom_m_wh_ch04_b038_05__wh_ch04_b038\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Mrs. Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch04_b036_01__wh_ch04_b036\",\"atom_m_wh_ch04_b038_03__wh_ch04_b038\",\"atom_m_wh_ch04_b042_01__wh_ch04_b042\"],\"valid_from_block\":\"wh_ch04_b036\",\"valid_until_block\":null},{\"surface\":\"my mistress\",\"member_atom_ids\":[\"atom_m_wh_ch04_b038_05__wh_ch04_b038\"],\"valid_from_block\":\"wh_ch04_b038\",\"valid_until_block\":\"wh_ch04_b038\"}],\"evidence\":[{\"block_id\":\"wh_ch04_b038\",\"quote\":\" older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready to fling it out of doors: she did fly up, asking how he could fashion to bring that gipsy brat into the house, when they had their own bairns to feed and fe\",\"source_atom_ids\":[\"atom_m_wh_ch04_b038_03__wh_ch04_b038\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b038\",\"quote\":\"nd his money and time being both limited, he thought it better to take it home with him at once, than run into vain expenses there: because he was determined he would not leave it as he found it. Well, the conclusion was, that my mistress grumbled herself calm; and Mr. Earnshaw told me to wash it, and give it clean things, and let it sleep with the children.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b038_05__wh_ch04_b038\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b042\",\"quote\":\"So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sym\",\"source_atom_ids\":[\"atom_m_wh_ch04_b042_01__wh_ch04_b042\"],\"supports\":\"same_identity\"}]}]}",
+  "parsed_json": {
+    "groups": [
+      {
+        "group_key": "grp_ent_hindley",
+        "reuse_entity_id": "ent_hindley",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b035_07__wh_ch04_b035",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b035_07__wh_ch04_b035",
+          "atom_m_wh_ch04_b039_01__wh_ch04_b039",
+          "atom_m_wh_ch04_b040_04__wh_ch04_b040",
+          "atom_m_wh_ch04_b041_01__wh_ch04_b041",
+          "atom_m_wh_ch04_b043_01__wh_ch04_b043",
+          "atom_m_wh_ch04_b043_07__wh_ch04_b043",
+          "atom_m_wh_ch04_b044_01__wh_ch04_b044",
+          "atom_m_wh_ch04_b045_02__wh_ch04_b045",
+          "atom_m_wh_ch04_b039_03__wh_ch04_b039",
+          "atom_m_wh_ch04_b042_02__wh_ch04_b042",
+          "atom_m_wh_ch04_b042_05__wh_ch04_b042",
+          "atom_m_wh_ch04_b044_04__wh_ch04_b044"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Hindley",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_07__wh_ch04_b035",
+              "atom_m_wh_ch04_b039_01__wh_ch04_b039",
+              "atom_m_wh_ch04_b040_04__wh_ch04_b040",
+              "atom_m_wh_ch04_b041_01__wh_ch04_b041",
+              "atom_m_wh_ch04_b043_01__wh_ch04_b043",
+              "atom_m_wh_ch04_b043_07__wh_ch04_b043",
+              "atom_m_wh_ch04_b044_01__wh_ch04_b044",
+              "atom_m_wh_ch04_b045_02__wh_ch04_b045"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": null
+          },
+          {
+            "surface": "the former",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b039_03__wh_ch04_b039"
+            ],
+            "valid_from_block": "wh_ch04_b039",
+            "valid_until_block": "wh_ch04_b039"
+          },
+          {
+            "surface": "the young master",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b042_02__wh_ch04_b042"
+            ],
+            "valid_from_block": "wh_ch04_b042",
+            "valid_until_block": "wh_ch04_b042"
+          },
+          {
+            "surface": "her brother",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b042_05__wh_ch04_b042"
+            ],
+            "valid_from_block": "wh_ch04_b042",
+            "valid_until_block": "wh_ch04_b042"
+          },
+          {
+            "surface": "young Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b044_04__wh_ch04_b044"
+            ],
+            "valid_from_block": "wh_ch04_b044",
+            "valid_until_block": "wh_ch04_b044"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b039",
+            "quote": "Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had ",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b039_01__wh_ch04_b039",
+              "atom_m_wh_ch04_b039_03__wh_ch04_b039"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b042",
+            "quote": "So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sym",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b042_02__wh_ch04_b042"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b042",
+            "quote": "r him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b042_05__wh_ch04_b042"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b044",
+            "quote": "revented it, he would have gone just so to the master, and got full revenge by letting his condition plead for him, intimating who had caused it. “Take my colt, Gipsy, then!” said young Earnshaw. “And I pray that he may break your neck: take him, and be damned, you beggarly interloper! and wheedle my father out of all he has: only afterwards show him what yo",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b044_04__wh_ch04_b044"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_ent_cathy",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b035_08__wh_ch04_b035",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b035_08__wh_ch04_b035",
+          "atom_m_wh_ch04_b039_02__wh_ch04_b039",
+          "atom_m_wh_ch04_b041_04__wh_ch04_b041",
+          "atom_m_wh_ch04_b042_04__wh_ch04_b042"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Cathy",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_08__wh_ch04_b035",
+              "atom_m_wh_ch04_b039_02__wh_ch04_b039",
+              "atom_m_wh_ch04_b041_04__wh_ch04_b041",
+              "atom_m_wh_ch04_b042_04__wh_ch04_b042"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b039",
+            "quote": "Hindley and Cathy contented themselves with looking and listening till peace was restored: then, both began searching their father’s pockets for the presents he had promised them. The former was a boy of fourteen, but when he drew out what had been a fiddle, crushed to morsels in the great-coat, he blubbered aloud; and Cathy, when she learned the master had ",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b039_02__wh_ch04_b039"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b042",
+            "quote": "r him, and he hadn’t wit to guess that I was compelled to do it. However, I will say this, he was the quietest child that ever nurse watched over. The difference between him and the others forced me to be less partial. Cathy and her brother harassed me terribly: he was as uncomplaining as a lamb; though hardness, not gentleness, made him give little trouble.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b042_04__wh_ch04_b042"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_mr_earnshaws_son_hindley",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b035_09__wh_ch04_b035",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b035_09__wh_ch04_b035"
+        ],
+        "status": "uncertain",
+        "alias_bindings": [
+          {
+            "surface": "my son",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_09__wh_ch04_b035"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": "wh_ch04_b035"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b035",
+            "quote": "rvest, I remember—Mr. Earnshaw, the old master, came downstairs, dressed for a journey; and, after he had told Joseph what was to be done during the day, he turned to Hindley, and Cathy, and me—for I sat eating my porridge with them—and he said, speaking to his son, “Now, my bonny man, I’m going to Liverpool to-day, what shall I bring you? You may choose wha",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b035_08__wh_ch04_b035",
+              "atom_m_wh_ch04_b035_09__wh_ch04_b035"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_earnshaw_children_group",
+        "reuse_entity_id": null,
+        "referent_kind": "group_reference",
+        "canonical_atom_id": "atom_m_wh_ch04_b035_16__wh_ch04_b035",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b035_16__wh_ch04_b035",
+          "atom_m_wh_ch04_b035_18__wh_ch04_b035",
+          "atom_m_wh_ch04_b043_05__wh_ch04_b043"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "my children",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_16__wh_ch04_b035"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": "wh_ch04_b035"
+          },
+          {
+            "surface": "his children",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_18__wh_ch04_b035"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": "wh_ch04_b035"
+          },
+          {
+            "surface": "the lads",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b043_05__wh_ch04_b043"
+            ],
+            "valid_from_block": "wh_ch04_b043",
+            "valid_until_block": "wh_ch04_b043"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b035",
+            "quote": "pell!” Hindley named a fiddle, and then he asked Miss Cathy; she was hardly six years old, but she could ride any horse in the stable, and she chose a whip. He did not forget me; for he had a kind heart, though he was rather severe sometimes. He promised to bring me a pocketful of apples and pears, and then he kissed his children, said good-bye, and set off.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b035_18__wh_ch04_b035"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b043",
+            "quote": "knowing perfectly the hold he had on his heart, and conscious he had only to speak and all the house would be obliged to bend to his wishes. As an instance, I remember Mr. Earnshaw once bought a couple of colts at the parish fair, and gave the lads each one. Heathcliff took the handsomest, but it soon fell lame, and when he discovered it, he said to Hindley—",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b043_05__wh_ch04_b043"
+            ],
+            "supports": "different_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp_ent_mrs_earnshaw",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b036_01__wh_ch04_b036",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b036_01__wh_ch04_b036",
+          "atom_m_wh_ch04_b038_03__wh_ch04_b038",
+          "atom_m_wh_ch04_b042_01__wh_ch04_b042",
+          "atom_m_wh_ch04_b038_05__wh_ch04_b038"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Mrs. Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b036_01__wh_ch04_b036",
+              "atom_m_wh_ch04_b038_03__wh_ch04_b038",
+              "atom_m_wh_ch04_b042_01__wh_ch04_b042"
+            ],
+            "valid_from_block": "wh_ch04_b036",
+            "valid_until_block": null
+          },
+          {
+            "surface": "my mistress",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b038_05__wh_ch04_b038"
+            ],
+            "valid_from_block": "wh_ch04_b038",
+            "valid_until_block": "wh_ch04_b038"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b038",
+            "quote": " older than Catherine’s; yet when it was set on its feet, it only stared round, and repeated over and over again some gibberish that nobody could understand. I was frightened, and Mrs. Earnshaw was ready to fling it out of doors: she did fly up, asking how he could fashion to bring that gipsy brat into the house, when they had their own bairns to feed and fe",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b038_03__wh_ch04_b038"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b038",
+            "quote": "nd his money and time being both limited, he thought it better to take it home with him at once, than run into vain expenses there: because he was determined he would not leave it as he found it. Well, the conclusion was, that my mistress grumbled herself calm; and Mr. Earnshaw told me to wash it, and give it clean things, and let it sleep with the children.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b038_05__wh_ch04_b038"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b042",
+            "quote": "So, from the very beginning, he bred bad feeling in the house; and at Mrs. Earnshaw’s death, which happened in less than two years after, the young master had learned to regard his father as an oppressor rather than a friend, and Heathcliff as a usurper of his parent’s affections and his privileges; and he grew bitter with brooding over these injuries. I sym",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b042_01__wh_ch04_b042"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      }
+    ]
+  },
+  "technical_error": null,
+  "technical_failure_class": null
+}

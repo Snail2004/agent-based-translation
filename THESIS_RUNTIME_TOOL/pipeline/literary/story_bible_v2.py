@@ -1206,6 +1206,7 @@ def empty_m3_v2_state() -> dict[str, Any]:
         "hint_to_entities": {},
         "relation_facts": [],
         "relation_phases": [],
+        "blocked_for_runtime_pairs": [],
         "speaker_turns": [],
         "relation_events": [],
         "review_only": [],
@@ -1225,6 +1226,35 @@ def _state_entities_by_id(state: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if entity_id:
             result[entity_id] = entity
     return result
+
+
+def _canonical_pair(values: Iterable[Any]) -> tuple[str, str] | None:
+    """Return a stable pair key without inferring anything about its members."""
+
+    items = [str(value) for value in values if str(value)]
+    if len(items) != 2 or items[0] == items[1]:
+        return None
+    return tuple(sorted(items))
+
+
+def _phase_row_pair(row: dict[str, Any]) -> tuple[str, str] | None:
+    return _canonical_pair(row.get("pair") or [])
+
+
+def _fact_row_pair(row: dict[str, Any]) -> tuple[str, str] | None:
+    return _canonical_pair([row.get("subject_ref"), row.get("object_ref")])
+
+
+def _blocked_runtime_pair_keys(state: dict[str, Any]) -> set[tuple[str, str]]:
+    """Read persisted pair quarantines while remaining compatible with old checkpoints."""
+
+    return {
+        pair
+        for row in state.get("blocked_for_runtime_pairs") or []
+        if isinstance(row, dict)
+        for pair in [_canonical_pair(row.get("pair") or [])]
+        if pair is not None
+    }
 
 
 def _mint_entity_id(
@@ -1364,6 +1394,101 @@ def _normalize_identity_response_atom_ids(
     return normalized, audit
 
 
+def _normalize_identity_responses_by_shard(
+    responses: list[dict[str, Any]],
+    *,
+    identity_shards: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """Enforce per-shard assignment authority before responses are combined.
+
+    A member atom outside the shard's request is not a competing identity
+    verdict. The model was never authorized to assign it, so the membership is
+    removed while the raw response and any cross-shard evidence remain intact.
+    The later full-scope exact-partition gate proves that the owning shard did
+    actually assign every real atom.
+    """
+
+    if len(responses) != len(identity_shards):
+        raise ValueError(
+            "M3 v2 identity response/shard count mismatch: "
+            f"responses={len(responses)} shards={len(identity_shards)}"
+        )
+
+    normalized_responses: list[dict[str, Any]] = []
+    audit = {
+        "evidence_atom_id_normalized": 0,
+        "atom_id_suffix_repaired": 0,
+        "atom_id_suffix_repaired_members": 0,
+        "atom_id_suffix_repaired_evidence": 0,
+        "atom_id_suffix_repaired_aliases": 0,
+        "member_out_of_shard_stripped": 0,
+    }
+    for response, shard in zip(responses, identity_shards, strict=True):
+        local_atoms = [item for item in shard.get("items") or [] if isinstance(item, dict)]
+        cleaned, local_audit = _normalize_identity_response_atom_ids(response, atoms=local_atoms)
+        for key, value in local_audit.items():
+            audit[key] = int(audit.get(key, 0)) + int(value)
+
+        allowed_atom_ids = {str(atom.get("atom_id") or "") for atom in local_atoms}
+        allowed_atom_ids.discard("")
+        for group in cleaned.get("groups") or []:
+            if not isinstance(group, dict):
+                continue
+            members = [str(value) for value in group.get("member_atom_ids") or [] if str(value)]
+            foreign_members = [atom_id for atom_id in members if atom_id not in allowed_atom_ids]
+            if not foreign_members:
+                continue
+
+            kept_members = [atom_id for atom_id in members if atom_id in allowed_atom_ids]
+            kept_member_ids = set(kept_members)
+            group["member_atom_ids"] = kept_members
+            group["_jurisdiction_stripped_member_atom_ids"] = sorted(set(foreign_members))
+            audit["member_out_of_shard_stripped"] += len(foreign_members)
+
+            # Alias bindings are membership claims too. Drop a binding only
+            # when all of its supporting members were void in this shard;
+            # evidence remains preserved as auditable cross-shard provenance.
+            aliases_raw = group.get("alias_bindings")
+            if not isinstance(aliases_raw, list):
+                continue
+            aliases: list[dict[str, Any]] = []
+            for alias in aliases_raw:
+                if not isinstance(alias, dict):
+                    aliases.append(alias)
+                    continue
+                alias_copy = copy.deepcopy(alias)
+                alias_copy["member_atom_ids"] = [
+                    str(value)
+                    for value in alias_copy.get("member_atom_ids") or []
+                    if str(value) in kept_member_ids
+                ]
+                if alias_copy["member_atom_ids"]:
+                    aliases.append(alias_copy)
+            group["alias_bindings"] = aliases
+        normalized_responses.append(cleaned)
+    return normalized_responses, audit
+
+
+def _quarantine_out_of_enum_referent_kinds(response: dict[str, Any]) -> dict[str, int]:
+    """Keep an ontology miss reviewable without mapping it to an allowed class."""
+
+    audit = {"referent_kind_out_of_enum": 0}
+    for group in response.get("groups") or []:
+        if not isinstance(group, dict):
+            continue
+        raw_kind = str(group.get("referent_kind") or "").strip()
+        if not raw_kind or raw_kind in IDENTITY_REFERENT_KINDS:
+            continue
+        group["referent_kind_raw"] = raw_kind
+        group["referent_kind"] = "unknown"
+        group["status"] = "quarantine"
+        if group.get("reuse_entity_id") is not None:
+            group["reuse_entity_id_raw"] = group["reuse_entity_id"]
+            group["reuse_entity_id"] = None
+        audit["referent_kind_out_of_enum"] += 1
+    return audit
+
+
 def normalize_identity_evidence_atom_ids(
     response: dict[str, Any],
     *,
@@ -1497,6 +1622,7 @@ def apply_identity_partition_response(
         response,
         atoms=atoms,
     )
+    referent_kind_audit = _quarantine_out_of_enum_referent_kinds(normalized_response)
     atoms_by_id = {str(atom["atom_id"]): atom for atom in atoms}
     reuse_normalization_audit = _normalize_identity_reuse_ids(
         normalized_response,
@@ -1527,6 +1653,7 @@ def apply_identity_partition_response(
         "blocked_for_runtime": 0,
         "supersedes": [],
         **atom_id_audit,
+        **referent_kind_audit,
         **reuse_normalization_audit,
         "reuse_duplicate_unions": duplicate_reuse_unions,
         "evidence_cross_group_source_atoms": cross_group_source_atom_count,
@@ -1570,6 +1697,7 @@ def apply_identity_partition_response(
                     "kind": "identity_group",
                     "entity_id": entity_id,
                     "referent_kind": str(group.get("referent_kind") or ""),
+                    "referent_kind_raw": group.get("referent_kind_raw"),
                     "status": str(group.get("status") or ""),
                     "member_atom_ids": member_ids,
                 }
@@ -1756,6 +1884,101 @@ def _remap_phase_rows_to_final_ids(
     }
 
 
+def _partition_phase_response_by_pair(
+    response: dict[str, Any],
+    *,
+    allowed_pairs: set[tuple[str, str]],
+) -> tuple[dict[tuple[str, str], dict[str, list[dict[str, Any]]]], list[str]]:
+    """Group model rows by a declared input pair before pair-local validation.
+
+    A row that cannot be assigned to an input pair remains a whole-scope gate.  It
+    cannot be safely quarantined because doing so would silently accept a model
+    invented relation endpoint.
+    """
+
+    if not isinstance(response, dict):
+        return {}, ["response must be object"]
+    phases = response.get("relation_phases")
+    facts = response.get("relation_facts")
+    errors: list[str] = []
+    if not isinstance(phases, list):
+        errors.append("relation_phases must be list")
+        phases = []
+    if not isinstance(facts, list):
+        errors.append("relation_facts must be list")
+        facts = []
+
+    grouped: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
+
+    def add_row(
+        pair: tuple[str, str],
+        field: str,
+        row: dict[str, Any],
+    ) -> None:
+        grouped.setdefault(pair, {"relation_phases": [], "relation_facts": []})[field].append(
+            copy.deepcopy(row)
+        )
+
+    for index, row in enumerate(phases):
+        prefix = f"relation_phases[{index}]"
+        if not isinstance(row, dict):
+            errors.append(f"{prefix} must be object")
+            continue
+        pair = _phase_row_pair(row)
+        if pair is None:
+            errors.append(f"{prefix}.pair invalid")
+        elif pair not in allowed_pairs:
+            errors.append(f"{prefix}.pair not_in_input_batch")
+        else:
+            add_row(pair, "relation_phases", row)
+    for index, row in enumerate(facts):
+        prefix = f"relation_facts[{index}]"
+        if not isinstance(row, dict):
+            errors.append(f"{prefix} must be object")
+            continue
+        pair = _fact_row_pair(row)
+        if pair is None:
+            errors.append(f"{prefix}.subject_or_object invalid")
+        elif pair not in allowed_pairs:
+            errors.append(f"{prefix}.subject_or_object not_in_input_batch")
+        else:
+            add_row(pair, "relation_facts", row)
+    return grouped, errors
+
+
+def _replace_blocked_runtime_pair_records(
+    state: dict[str, Any],
+    *,
+    cleared_pairs: set[tuple[str, str]],
+    new_records: dict[tuple[str, str], dict[str, Any]],
+) -> None:
+    """Update pair quarantines without changing retained relation history."""
+
+    records = {
+        pair: copy.deepcopy(row)
+        for row in state.get("blocked_for_runtime_pairs") or []
+        if isinstance(row, dict)
+        for pair in [_canonical_pair(row.get("pair") or [])]
+        if pair is not None and pair not in cleared_pairs
+    }
+    records.update(new_records)
+    state["blocked_for_runtime_pairs"] = [
+        records[pair] for pair in sorted(records)
+    ]
+    state["review_only"] = [
+        row
+        for row in state.get("review_only") or []
+        if not (
+            isinstance(row, dict)
+            and row.get("kind") == "relation_pair_blocked_for_runtime"
+            and _canonical_pair(row.get("pair") or []) in cleared_pairs
+        )
+    ]
+    state["review_only"].extend(
+        copy.deepcopy(record) for _pair, record in sorted(new_records.items())
+    )
+
+
 def apply_phase_segment_response(
     state: dict[str, Any],
     response: dict[str, Any],
@@ -1765,51 +1988,120 @@ def apply_phase_segment_response(
     block_ordinals: dict[str, int],
     scope_end_block: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Replace only affected-pair facts/phases after semantic validation."""
+    """Apply valid relation pairs and quarantine only pairs with semantic rejects.
+
+    The model's raw response remains immutable on disk.  This function only
+    applies deterministic validation results: a rejected pair is retained for
+    human review and excluded from runtime materialization, while unrelated
+    pairs in the same response can still publish.
+    """
 
     working = _copy_state(state)
     entity_ids = set(_state_entities_by_id(working))
-    quote_audit: dict[str, int] = {"evidence_quote_punct_normalized": 0}
-    errors = validate_phase_segment_response(
+    affected = {pair for pair in (_canonical_pair(values) for values in allowed_pairs) if pair is not None}
+    pair_payloads, grouping_errors = _partition_phase_response_by_pair(
         response,
-        entity_ids=entity_ids,
-        source_text_by_block=source_text_by_block,
-        block_ordinals=block_ordinals,
-        allowed_pairs=allowed_pairs,
-        scope_end_block=scope_end_block,
-        quote_audit=quote_audit,
+        allowed_pairs=affected,
     )
-    if errors:
-        raise M3V2SemanticGateError("phase_response_rejected", errors)
-    facts = copy.deepcopy(response.get("relation_facts") or [])
-    phases = copy.deepcopy(response.get("relation_phases") or [])
-    affected = set(allowed_pairs)
+    if grouping_errors:
+        raise M3V2SemanticGateError("phase_response_rejected", grouping_errors)
+
+    quote_normalized = 0
+    blocked_records: dict[tuple[str, str], dict[str, Any]] = {}
+    valid_payloads: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
+    prior_phase_rows = list(working.get("relation_phases") or [])
+    prior_fact_rows = list(working.get("relation_facts") or [])
+    for pair, payload in pair_payloads.items():
+        quote_audit: dict[str, int] = {"evidence_quote_punct_normalized": 0}
+        errors = validate_phase_segment_response(
+            payload,
+            entity_ids=entity_ids,
+            source_text_by_block=source_text_by_block,
+            block_ordinals=block_ordinals,
+            allowed_pairs={pair},
+            scope_end_block=scope_end_block,
+            quote_audit=quote_audit,
+        )
+        quote_normalized += int(quote_audit["evidence_quote_punct_normalized"])
+        if not errors:
+            valid_payloads[pair] = payload
+            continue
+        retained_phases = [
+            copy.deepcopy(row)
+            for row in prior_phase_rows
+            if isinstance(row, dict) and _phase_row_pair(row) == pair
+        ]
+        retained_facts = [
+            copy.deepcopy(row)
+            for row in prior_fact_rows
+            if isinstance(row, dict) and _fact_row_pair(row) == pair
+        ]
+        blocked_records[pair] = {
+            "kind": "relation_pair_blocked_for_runtime",
+            "pair": list(pair),
+            "status": "blocked_for_runtime",
+            "needs_human_review": True,
+            "reject_reasons": list(errors),
+            "returned_relation_phases": copy.deepcopy(payload["relation_phases"]),
+            "returned_relation_facts": copy.deepcopy(payload["relation_facts"]),
+            "prior_history_retained": bool(retained_phases or retained_facts),
+            "retained_relation_phases": retained_phases,
+            "retained_relation_facts": retained_facts,
+        }
+
+    if pair_payloads and len(blocked_records) == len(pair_payloads):
+        raise M3V2SemanticGateError(
+            "phase_all_pairs_blocked_for_runtime",
+            [
+                f"pair={list(pair)}: {'; '.join(record['reject_reasons'])}"
+                for pair, record in sorted(blocked_records.items())
+            ],
+        )
+
+    replace_pairs = affected - set(blocked_records)
     working["relation_facts"] = [
         row
         for row in working.get("relation_facts") or []
-        if tuple(sorted([str(row.get("subject_ref") or ""), str(row.get("object_ref") or "")])) not in affected
+        if not isinstance(row, dict) or _fact_row_pair(row) not in replace_pairs
     ]
     working["relation_phases"] = [
         row
         for row in working.get("relation_phases") or []
-        if tuple(sorted(str(value) for value in row.get("pair") or [])) not in affected
+        if not isinstance(row, dict) or _phase_row_pair(row) not in replace_pairs
     ]
-    for fact in facts:
-        if fact.get("predicate_code") == "other":
-            fact["status"] = "review_only"
-            working["review_only"].append({"kind": "relation_fact", **copy.deepcopy(fact)})
-        else:
-            fact["status"] = "published"
-        working["relation_facts"].append(fact)
-    for phase in phases:
-        phase["status"] = str(phase.get("status") or "open")
-        working["relation_phases"].append(phase)
+    facts_applied = 0
+    phases_applied = 0
+    review_only_facts = 0
+    for _pair in sorted(valid_payloads):
+        payload = valid_payloads[_pair]
+        for fact in payload["relation_facts"]:
+            if fact.get("predicate_code") == "other":
+                fact["status"] = "review_only"
+                working["review_only"].append({"kind": "relation_fact", **copy.deepcopy(fact)})
+                review_only_facts += 1
+            else:
+                fact["status"] = "published"
+            working["relation_facts"].append(fact)
+            facts_applied += 1
+        for phase in payload["relation_phases"]:
+            phase["status"] = str(phase.get("status") or "open")
+            working["relation_phases"].append(phase)
+            phases_applied += 1
+    _replace_blocked_runtime_pair_records(
+        working,
+        cleared_pairs=affected,
+        new_records=blocked_records,
+    )
     return working, {
         "pairs_replayed": len(affected),
-        "facts_applied": len(facts),
-        "phases_applied": len(phases),
-        "review_only_facts": sum(1 for fact in facts if fact.get("predicate_code") == "other"),
-        "evidence_quote_punct_normalized": quote_audit["evidence_quote_punct_normalized"],
+        "facts_applied": facts_applied,
+        "phases_applied": phases_applied,
+        "review_only_facts": review_only_facts,
+        "pairs_blocked_for_runtime": len(blocked_records),
+        "blocked_pair_fact_rows": sum(
+            len(record["returned_relation_facts"]) for record in blocked_records.values()
+        ),
+        "evidence_quote_punct_normalized": quote_normalized,
     }
 
 
@@ -1866,10 +2158,11 @@ def _observed_address_policies(state: dict[str, Any]) -> list[dict[str, Any]]:
             observed.setdefault((source, target), [])
             if term not in observed[(source, target)]:
                 observed[(source, target)].append(term)
+    blocked_pairs = _blocked_runtime_pair_keys(state)
     rows: list[dict[str, Any]] = []
     for phase in state.get("relation_phases") or []:
         pair = [str(value) for value in phase.get("pair") or []]
-        if len(pair) != 2:
+        if len(pair) != 2 or _canonical_pair(pair) in blocked_pairs:
             continue
         rows.append(
             {
@@ -1940,16 +2233,21 @@ def build_story_bible_v2(
         if entity.get("referent_kind") == "person" and entity.get("status") == "resolved"
     ]
     person_ids = {str(entity["entity_id"]) for entity in entities}
+    blocked_pairs = _blocked_runtime_pair_keys(state)
     facts = [
         copy.deepcopy(row)
         for row in state.get("relation_facts") or []
         if row.get("status") == "published"
         and str(row.get("subject_ref") or "") in person_ids
         and str(row.get("object_ref") or "") in person_ids
+        and _fact_row_pair(row) not in blocked_pairs
     ]
     phases: list[dict[str, Any]] = []
     for row in state.get("relation_phases") or []:
-        if not set(str(value) for value in row.get("pair") or []).issubset(person_ids):
+        if (
+            not set(str(value) for value in row.get("pair") or []).issubset(person_ids)
+            or _phase_row_pair(row) in blocked_pairs
+        ):
             continue
         rendered = copy.deepcopy(row)
         # ``valid_until_block`` is the state/internal interval field. Published
@@ -1974,6 +2272,7 @@ def build_story_bible_v2(
         "relation_facts": facts,
         "entity_relations": phases,
         "address_policies": _observed_address_policies(state),
+        "blocked_for_runtime_pairs": copy.deepcopy(state.get("blocked_for_runtime_pairs") or []),
         "narration_frame_segments": narration_segments,
         "review_only": copy.deepcopy(state.get("review_only") or []),
         "source_ranges": {"first_block": block_ids[0] if block_ids else "", "last_block": block_ids[-1] if block_ids else ""},
@@ -2695,6 +2994,10 @@ def run_m3_v2_from_responses(
                 this_attempt_request_accounting,
                 identity_request_accounting,
             )
+            identity_responses, identity_shard_audit = _normalize_identity_responses_by_shard(
+                identity_responses,
+                identity_shards=identity_shards,
+            )
             identity_payload = {
                 "groups": [
                     group
@@ -2708,6 +3011,8 @@ def run_m3_v2_from_responses(
                 atoms=scope["frontier_atoms"],
                 source_text_by_block=source_text,
             )
+            for key, value in identity_shard_audit.items():
+                identity_audit[key] = int(identity_audit.get(key, 0)) + int(value)
 
             (
                 mapped_phase_rows,
@@ -3231,7 +3536,14 @@ def validate_identity_partition_response(
             source_atoms = [str(value) for value in row.get("source_atom_ids") or [] if str(value)]
             if not source_atoms or any(item not in atom_ids for item in source_atoms):
                 errors.append(f"{evidence_prefix}.source_atom_ids invalid")
-            elif not set(source_atoms) & set(members):
+            elif not set(source_atoms) & set(members) and not (
+                set(source_atoms)
+                & {
+                    str(value)
+                    for value in group.get("_jurisdiction_stripped_member_atom_ids") or []
+                    if str(value)
+                }
+            ):
                 errors.append(f"{evidence_prefix}.source_atom_ids must_touch_group")
             if row.get("supports") not in {"same_identity", "different_identity"}:
                 errors.append(f"{evidence_prefix}.supports invalid")

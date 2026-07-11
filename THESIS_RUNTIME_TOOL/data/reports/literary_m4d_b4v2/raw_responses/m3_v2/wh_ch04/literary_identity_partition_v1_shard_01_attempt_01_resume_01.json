@@ -1,0 +1,810 @@
+{
+  "phase": "L2A-M4d",
+  "milestone": "M3_v2_request",
+  "source": "request_llm",
+  "scope": "M3_asof_wh_ch04",
+  "chapter_id": "wh_ch04",
+  "mode": "literary_identity_partition_v1",
+  "shard_index": 1,
+  "shard_count": 2,
+  "attempt_index": 1,
+  "tag": "lit_m3v2_wh_ch04_literary_identity_partition_v1_s01:attempt1",
+  "prompt_sha256": "003c7dc59ce594e8c3ad217b1cc53ccb0f34aa5f6abd7df47f4c88bf68580d0c",
+  "prompt_tokens_est": 12657,
+  "bypass_cache": false,
+  "model": "gpt-5.4",
+  "system_fingerprint": null,
+  "from_cache": true,
+  "cache_key": "efc07fdc0e7a1dc2f0e680d697e0f4d319dc77c9ed7f56c467de064b9ab97c4c",
+  "latency_ms": 26293,
+  "cost_usd": 0.0,
+  "usage": {
+    "prompt_tokens": 13556,
+    "cached_tokens": 0,
+    "completion_tokens": 5745,
+    "reasoning_tokens": 0
+  },
+  "json_error": null,
+  "raw_text": "{\"groups\":[{\"group_key\":\"grp1\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b002_02__wh_ch04_b002\",\"member_atom_ids\":[\"atom_m_wh_ch04_b002_02__wh_ch04_b002\",\"atom_m_wh_ch04_b009_02__wh_ch04_b009\",\"atom_m_wh_ch04_b026_01__wh_ch04_b026\",\"atom_m_wh_ch04_b027_01__wh_ch04_b027\",\"atom_m_wh_ch04_b031_01__wh_ch04_b031\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Mrs. Dean\",\"member_atom_ids\":[\"atom_m_wh_ch04_b002_02__wh_ch04_b002\",\"atom_m_wh_ch04_b009_02__wh_ch04_b009\",\"atom_m_wh_ch04_b026_01__wh_ch04_b026\",\"atom_m_wh_ch04_b027_01__wh_ch04_b027\",\"atom_m_wh_ch04_b031_01__wh_ch04_b031\"],\"valid_from_block\":\"wh_ch04_b002\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b002\",\"quote\":\"I desired Mrs. Dean, when she brought in supper, to sit down while I ate it;\",\"source_atom_ids\":[\"atom_m_wh_ch04_b002_02__wh_ch04_b002\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b031\",\"quote\":\"“Well, Mrs. Dean, it will be a charitable deed to tell me something of my neighbours: I feel I shall not rest if I go to bed; so be good enough to sit and chat an hour.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b031_01__wh_ch04_b031\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp2\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b004_01__wh_ch04_b004\",\"member_atom_ids\":[\"atom_m_wh_ch04_b004_01__wh_ch04_b004\",\"atom_m_wh_ch04_b037_01__wh_ch04_b037\",\"atom_m_wh_ch04_b040_05__wh_ch04_b040\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"the mistress\",\"member_atom_ids\":[\"atom_m_wh_ch04_b004_01__wh_ch04_b004\",\"atom_m_wh_ch04_b040_05__wh_ch04_b040\"],\"valid_from_block\":\"wh_ch04_b004\",\"valid_until_block\":null},{\"surface\":\"wife\",\"member_atom_ids\":[\"atom_m_wh_ch04_b037_01__wh_ch04_b037\"],\"valid_from_block\":\"wh_ch04_b037\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b004\",\"quote\":\"“Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b004_01__wh_ch04_b004\",\"atom_m_wh_ch04_b004_02__wh_ch04_b004\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b037\",\"quote\":\"“See here, wife! I was never so beaten with anything in my life: but you must e’en take it as a gift of God; though it’s as dark almost as if it came from the devil.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b037_01__wh_ch04_b037\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp3\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b004_02__wh_ch04_b004\",\"member_atom_ids\":[\"atom_m_wh_ch04_b004_02__wh_ch04_b004\",\"atom_m_wh_ch04_b036_02__wh_ch04_b036\",\"atom_m_wh_ch04_b038_04__wh_ch04_b038\",\"atom_m_wh_ch04_b039_04__wh_ch04_b039\",\"atom_m_wh_ch04_b044_02__wh_ch04_b044\",\"atom_m_wh_ch04_b044_03__wh_ch04_b044\",\"atom_m_wh_ch04_b041_02__wh_ch04_b041\",\"atom_m_wh_ch04_b043_03__wh_ch04_b043\",\"atom_m_wh_ch04_b035_04__wh_ch04_b035\",\"atom_m_wh_ch04_b038_06__wh_ch04_b038\",\"atom_m_wh_ch04_b039_05__wh_ch04_b039\",\"atom_m_wh_ch04_b043_04__wh_ch04_b043\",\"atom_m_wh_ch04_b035_05__wh_ch04_b035\",\"atom_m_wh_ch04_b044_01__wh_ch04_b044\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"the master\",\"member_atom_ids\":[\"atom_m_wh_ch04_b004_02__wh_ch04_b004\",\"atom_m_wh_ch04_b036_02__wh_ch04_b036\",\"atom_m_wh_ch04_b038_04__wh_ch04_b038\",\"atom_m_wh_ch04_b039_04__wh_ch04_b039\",\"atom_m_wh_ch04_b044_03__wh_ch04_b044\"],\"valid_from_block\":\"wh_ch04_b004\",\"valid_until_block\":null},{\"surface\":\"Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch04_b041_02__wh_ch04_b041\"],\"valid_from_block\":\"wh_ch04_b041\",\"valid_until_block\":null},{\"surface\":\"my master\",\"member_atom_ids\":[\"atom_m_wh_ch04_b043_03__wh_ch04_b043\"],\"valid_from_block\":\"wh_ch04_b043\",\"valid_until_block\":null},{\"surface\":\"Mr. Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_04__wh_ch04_b035\",\"atom_m_wh_ch04_b038_06__wh_ch04_b038\",\"atom_m_wh_ch04_b039_05__wh_ch04_b039\",\"atom_m_wh_ch04_b043_04__wh_ch04_b043\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":null},{\"surface\":\"the old master\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_05__wh_ch04_b035\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":null},{\"surface\":\"your father\",\"member_atom_ids\":[\"atom_m_wh_ch04_b044_01__wh_ch04_b044\"],\"valid_from_block\":\"wh_ch04_b044\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b035\",\"quote\":\"Mr. Earnshaw, the old master, came downstairs, dressed for a journey;\",\"source_atom_ids\":[\"atom_m_wh_ch04_b035_04__wh_ch04_b035\",\"atom_m_wh_ch04_b035_05__wh_ch04_b035\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b004\",\"quote\":\"“Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b004_02__wh_ch04_b004\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b044\",\"quote\":\"“You must exchange horses with me: I don’t like mine; and if you won’t I shall tell your father of the three thrashings you’ve given me this week, and show him my arm, which is black to the shoulder.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b044_01__wh_ch04_b044\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp4\",\"reuse_entity_id\":\"ent_mr_heathcliff\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b009_01__wh_ch04_b009\",\"member_atom_ids\":[\"atom_m_wh_ch04_b009_01__wh_ch04_b009\",\"atom_m_wh_ch04_b022_01__wh_ch04_b022\",\"atom_m_wh_ch04_b040_01__wh_ch04_b040\",\"atom_m_wh_ch04_b040_02__wh_ch04_b040\",\"atom_m_wh_ch04_b041_03__wh_ch04_b041\",\"atom_m_wh_ch04_b042_03__wh_ch04_b042\",\"atom_m_wh_ch04_b043_02__wh_ch04_b043\",\"atom_m_wh_ch04_b043_06__wh_ch04_b043\",\"atom_m_wh_ch04_b045_01__wh_ch04_b045\",\"atom_m_wh_ch04_b016_03__wh_ch04_b016\",\"atom_m_wh_ch04_b019_03__wh_ch04_b019\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch04_b009_01__wh_ch04_b009\",\"atom_m_wh_ch04_b022_01__wh_ch04_b022\",\"atom_m_wh_ch04_b040_01__wh_ch04_b040\",\"atom_m_wh_ch04_b040_02__wh_ch04_b040\",\"atom_m_wh_ch04_b041_03__wh_ch04_b041\",\"atom_m_wh_ch04_b042_03__wh_ch04_b042\",\"atom_m_wh_ch04_b043_02__wh_ch04_b043\",\"atom_m_wh_ch04_b043_06__wh_ch04_b043\",\"atom_m_wh_ch04_b045_01__wh_ch04_b045\"],\"valid_from_block\":\"wh_ch04_b009\",\"valid_until_block\":null},{\"surface\":\"Mr. Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch04_b016_03__wh_ch04_b016\",\"atom_m_wh_ch04_b019_03__wh_ch04_b019\"],\"valid_from_block\":\"wh_ch04_b016\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b016\",\"quote\":\"“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b016_03__wh_ch04_b016\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b040\",\"quote\":\"This was Heathcliff’s first introduction to the family. On coming back a few days afterwards (for I did not consider my banishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b040_01__wh_ch04_b040\",\"atom_m_wh_ch04_b040_02__wh_ch04_b040\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp5\",\"reuse_entity_id\":\"ent_mrs_heathcliff\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b013_01__wh_ch04_b013\",\"member_atom_ids\":[\"atom_m_wh_ch04_b013_01__wh_ch04_b013\",\"atom_m_wh_ch04_b025_01__wh_ch04_b025\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Mrs. Heathcliff\",\"member_atom_ids\":[\"atom_m_wh_ch04_b013_01__wh_ch04_b013\",\"atom_m_wh_ch04_b025_01__wh_ch04_b025\"],\"valid_from_block\":\"wh_ch04_b013\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b025\",\"quote\":\"“Mrs. Heathcliff? she looked very well, and very handsome; yet, I think, not very happy.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b025_01__wh_ch04_b025\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp6\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b016_01__wh_ch04_b016\",\"member_atom_ids\":[\"atom_m_wh_ch04_b016_01__wh_ch04_b016\",\"atom_m_wh_ch04_b017_03__wh_ch04_b017\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"my late master\",\"member_atom_ids\":[\"atom_m_wh_ch04_b016_01__wh_ch04_b016\"],\"valid_from_block\":\"wh_ch04_b016\",\"valid_until_block\":null},{\"surface\":\"my predecessor’s\",\"member_atom_ids\":[\"atom_m_wh_ch04_b017_03__wh_ch04_b017\"],\"valid_from_block\":\"wh_ch04_b017\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b017\",\"quote\":\"“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b017_03__wh_ch04_b017\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b016\",\"quote\":\"“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b016_01__wh_ch04_b016\",\"atom_m_wh_ch04_b016_02__wh_ch04_b016\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp7\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b016_02__wh_ch04_b016\",\"member_atom_ids\":[\"atom_m_wh_ch04_b016_02__wh_ch04_b016\",\"atom_m_wh_ch04_b017_01__wh_ch04_b017\",\"atom_m_wh_ch04_b024_02__wh_ch04_b024\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Catherine Linton\",\"member_atom_ids\":[\"atom_m_wh_ch04_b016_02__wh_ch04_b016\",\"atom_m_wh_ch04_b017_01__wh_ch04_b017\"],\"valid_from_block\":\"wh_ch04_b016\",\"valid_until_block\":null},{\"surface\":\"Miss Cathy\",\"member_atom_ids\":[\"atom_m_wh_ch04_b024_02__wh_ch04_b024\"],\"valid_from_block\":\"wh_ch04_b024\",\"valid_until_block\":\"wh_ch04_b024\"}],\"evidence\":[{\"block_id\":\"wh_ch04_b016\",\"quote\":\"“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b016_02__wh_ch04_b016\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b024\",\"quote\":\"“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b024_02__wh_ch04_b024\",\"atom_m_wh_ch04_b024_03__wh_ch04_b024\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp8\",\"reuse_entity_id\":\"ent_catherine_earnshaw\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b017_02__wh_ch04_b017\",\"member_atom_ids\":[\"atom_m_wh_ch04_b017_02__wh_ch04_b017\",\"atom_m_wh_ch04_b038_02__wh_ch04_b038\",\"atom_m_wh_ch04_b035_10__wh_ch04_b035\",\"atom_m_wh_ch04_b038_01__wh_ch04_b038\",\"atom_m_wh_ch04_b040_03__wh_ch04_b040\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"my ghostly Catherine\",\"member_atom_ids\":[\"atom_m_wh_ch04_b017_02__wh_ch04_b017\"],\"valid_from_block\":\"wh_ch04_b017\",\"valid_until_block\":null},{\"surface\":\"Catherine’s\",\"member_atom_ids\":[\"atom_m_wh_ch04_b038_02__wh_ch04_b038\"],\"valid_from_block\":\"wh_ch04_b038\",\"valid_until_block\":null},{\"surface\":\"Miss Cathy\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_10__wh_ch04_b035\",\"atom_m_wh_ch04_b038_01__wh_ch04_b038\",\"atom_m_wh_ch04_b040_03__wh_ch04_b040\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b017\",\"quote\":\"“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b017_02__wh_ch04_b017\",\"atom_m_wh_ch04_b017_01__wh_ch04_b017\"],\"supports\":\"different_identity\"},{\"block_id\":\"wh_ch04_b038\",\"quote\":\"We crowded round, and over Miss Cathy’s head I had a peep at a dirty, ragged, black-haired child; big enough both to walk and talk: indeed, its face looked older than Catherine’s;\",\"source_atom_ids\":[\"atom_m_wh_ch04_b038_01__wh_ch04_b038\",\"atom_m_wh_ch04_b038_02__wh_ch04_b038\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp9\",\"reuse_entity_id\":\"ent_hareton_earnshaw\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b019_02__wh_ch04_b019\",\"member_atom_ids\":[\"atom_m_wh_ch04_b019_02__wh_ch04_b019\",\"atom_m_wh_ch04_b024_01__wh_ch04_b024\",\"atom_m_wh_ch04_b030_01__wh_ch04_b030\",\"atom_m_wh_ch04_b035_02__wh_ch04_b035\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Hareton Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch04_b019_02__wh_ch04_b019\"],\"valid_from_block\":\"wh_ch04_b019\",\"valid_until_block\":null},{\"surface\":\"Hareton\",\"member_atom_ids\":[\"atom_m_wh_ch04_b024_01__wh_ch04_b024\",\"atom_m_wh_ch04_b030_01__wh_ch04_b030\",\"atom_m_wh_ch04_b035_02__wh_ch04_b035\"],\"valid_from_block\":\"wh_ch04_b024\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b019\",\"quote\":\"“And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b019_01__wh_ch04_b019\",\"atom_m_wh_ch04_b019_02__wh_ch04_b019\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b024\",\"quote\":\"“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us\",\"source_atom_ids\":[\"atom_m_wh_ch04_b024_01__wh_ch04_b024\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp10\",\"reuse_entity_id\":null,\"referent_kind\":\"family\",\"canonical_atom_id\":\"atom_m_wh_ch04_b019_01__wh_ch04_b019\",\"member_atom_ids\":[\"atom_m_wh_ch04_b019_01__wh_ch04_b019\",\"atom_m_wh_ch04_b023_02__wh_ch04_b023\"],\"status\":\"uncertain\",\"alias_bindings\":[{\"surface\":\"Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch04_b019_01__wh_ch04_b019\",\"atom_m_wh_ch04_b023_02__wh_ch04_b023\"],\"valid_from_block\":\"wh_ch04_b019\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b023\",\"quote\":\"“I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door. Are they an old family?”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b023_02__wh_ch04_b023\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp11\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b020_01__wh_ch04_b020\",\"member_atom_ids\":[\"atom_m_wh_ch04_b020_01__wh_ch04_b020\",\"atom_m_wh_ch04_b022_02__wh_ch04_b022\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"the late Mrs. Linton’s\",\"member_atom_ids\":[\"atom_m_wh_ch04_b020_01__wh_ch04_b020\"],\"valid_from_block\":\"wh_ch04_b020\",\"valid_until_block\":null},{\"surface\":\"Mr. Linton’s sister\",\"member_atom_ids\":[\"atom_m_wh_ch04_b022_02__wh_ch04_b022\"],\"valid_from_block\":\"wh_ch04_b022\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b022\",\"quote\":\"“Yes; and her husband was her cousin also: one on the mother’s, the other on the father’s side: Heathcliff married Mr. Linton’s sister.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b022_02__wh_ch04_b022\"],\"supports\":\"same_identity\"},{\"block_id\":\"wh_ch04_b020\",\"quote\":\"“No; he is the late Mrs. Linton’s nephew.”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b020_01__wh_ch04_b020\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp12\",\"reuse_entity_id\":null,\"referent_kind\":\"place\",\"canonical_atom_id\":\"atom_m_wh_ch04_b023_01__wh_ch04_b023\",\"member_atom_ids\":[\"atom_m_wh_ch04_b023_01__wh_ch04_b023\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Wuthering Heights\",\"member_atom_ids\":[\"atom_m_wh_ch04_b023_01__wh_ch04_b023\"],\"valid_from_block\":\"wh_ch04_b023\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b023\",\"quote\":\"“I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b023_01__wh_ch04_b023\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp13\",\"reuse_entity_id\":null,\"referent_kind\":\"group_reference\",\"canonical_atom_id\":\"atom_m_wh_ch04_b024_03__wh_ch04_b024\",\"member_atom_ids\":[\"atom_m_wh_ch04_b024_03__wh_ch04_b024\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"the Lintons\",\"member_atom_ids\":[\"atom_m_wh_ch04_b024_03__wh_ch04_b024\"],\"valid_from_block\":\"wh_ch04_b024\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b024\",\"quote\":\"“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons.\",\"source_atom_ids\":[\"atom_m_wh_ch04_b024_03__wh_ch04_b024\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp14\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b035_01__wh_ch04_b035\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_01__wh_ch04_b035\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Mr. Hindley Earnshaw\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_01__wh_ch04_b035\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b035\",\"quote\":\"because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father,\",\"source_atom_ids\":[\"atom_m_wh_ch04_b035_01__wh_ch04_b035\",\"atom_m_wh_ch04_b035_02__wh_ch04_b035\"],\"supports\":\"different_identity\"}]},{\"group_key\":\"grp15\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b035_03__wh_ch04_b035\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_03__wh_ch04_b035\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"my mother\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_03__wh_ch04_b035\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b035\",\"quote\":\"because my mother had nursed Mr. Hindley Earnshaw,\",\"source_atom_ids\":[\"atom_m_wh_ch04_b035_03__wh_ch04_b035\",\"atom_m_wh_ch04_b035_01__wh_ch04_b035\"],\"supports\":\"different_identity\"}]},{\"group_key\":\"grp16\",\"reuse_entity_id\":\"ent_joseph\",\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b035_06__wh_ch04_b035\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_06__wh_ch04_b035\"],\"status\":\"resolved\",\"alias_bindings\":[{\"surface\":\"Joseph\",\"member_atom_ids\":[\"atom_m_wh_ch04_b035_06__wh_ch04_b035\"],\"valid_from_block\":\"wh_ch04_b035\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b035\",\"quote\":\"after he had told Joseph what was to be done during the day,\",\"source_atom_ids\":[\"atom_m_wh_ch04_b035_06__wh_ch04_b035\"],\"supports\":\"same_identity\"}]},{\"group_key\":\"grp17\",\"reuse_entity_id\":null,\"referent_kind\":\"person\",\"canonical_atom_id\":\"atom_m_wh_ch04_b026_02__wh_ch04_b026\",\"member_atom_ids\":[\"atom_m_wh_ch04_b026_02__wh_ch04_b026\"],\"status\":\"uncertain\",\"alias_bindings\":[{\"surface\":\"the master\",\"member_atom_ids\":[\"atom_m_wh_ch04_b026_02__wh_ch04_b026\"],\"valid_from_block\":\"wh_ch04_b026\",\"valid_until_block\":null}],\"evidence\":[{\"block_id\":\"wh_ch04_b026\",\"quote\":\"“Oh dear, I don’t wonder! And how did you like the master?”\",\"source_atom_ids\":[\"atom_m_wh_ch04_b026_01__wh_ch04_b026\",\"atom_m_wh_ch04_b026_02__wh_ch04_b026\"],\"supports\":\"different_identity\"}]}]}",
+  "parsed_json": {
+    "groups": [
+      {
+        "group_key": "grp1",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b002_02__wh_ch04_b002",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b002_02__wh_ch04_b002",
+          "atom_m_wh_ch04_b009_02__wh_ch04_b009",
+          "atom_m_wh_ch04_b026_01__wh_ch04_b026",
+          "atom_m_wh_ch04_b027_01__wh_ch04_b027",
+          "atom_m_wh_ch04_b031_01__wh_ch04_b031"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Mrs. Dean",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b002_02__wh_ch04_b002",
+              "atom_m_wh_ch04_b009_02__wh_ch04_b009",
+              "atom_m_wh_ch04_b026_01__wh_ch04_b026",
+              "atom_m_wh_ch04_b027_01__wh_ch04_b027",
+              "atom_m_wh_ch04_b031_01__wh_ch04_b031"
+            ],
+            "valid_from_block": "wh_ch04_b002",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b002",
+            "quote": "I desired Mrs. Dean, when she brought in supper, to sit down while I ate it;",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b002_02__wh_ch04_b002"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b031",
+            "quote": "“Well, Mrs. Dean, it will be a charitable deed to tell me something of my neighbours: I feel I shall not rest if I go to bed; so be good enough to sit and chat an hour.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b031_01__wh_ch04_b031"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp2",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b004_01__wh_ch04_b004",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b004_01__wh_ch04_b004",
+          "atom_m_wh_ch04_b037_01__wh_ch04_b037",
+          "atom_m_wh_ch04_b040_05__wh_ch04_b040"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "the mistress",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b004_01__wh_ch04_b004",
+              "atom_m_wh_ch04_b040_05__wh_ch04_b040"
+            ],
+            "valid_from_block": "wh_ch04_b004",
+            "valid_until_block": null
+          },
+          {
+            "surface": "wife",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b037_01__wh_ch04_b037"
+            ],
+            "valid_from_block": "wh_ch04_b037",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b004",
+            "quote": "“Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b004_01__wh_ch04_b004",
+              "atom_m_wh_ch04_b004_02__wh_ch04_b004"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b037",
+            "quote": "“See here, wife! I was never so beaten with anything in my life: but you must e’en take it as a gift of God; though it’s as dark almost as if it came from the devil.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b037_01__wh_ch04_b037"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp3",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b004_02__wh_ch04_b004",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b004_02__wh_ch04_b004",
+          "atom_m_wh_ch04_b036_02__wh_ch04_b036",
+          "atom_m_wh_ch04_b038_04__wh_ch04_b038",
+          "atom_m_wh_ch04_b039_04__wh_ch04_b039",
+          "atom_m_wh_ch04_b044_02__wh_ch04_b044",
+          "atom_m_wh_ch04_b044_03__wh_ch04_b044",
+          "atom_m_wh_ch04_b041_02__wh_ch04_b041",
+          "atom_m_wh_ch04_b043_03__wh_ch04_b043",
+          "atom_m_wh_ch04_b035_04__wh_ch04_b035",
+          "atom_m_wh_ch04_b038_06__wh_ch04_b038",
+          "atom_m_wh_ch04_b039_05__wh_ch04_b039",
+          "atom_m_wh_ch04_b043_04__wh_ch04_b043",
+          "atom_m_wh_ch04_b035_05__wh_ch04_b035",
+          "atom_m_wh_ch04_b044_01__wh_ch04_b044"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "the master",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b004_02__wh_ch04_b004",
+              "atom_m_wh_ch04_b036_02__wh_ch04_b036",
+              "atom_m_wh_ch04_b038_04__wh_ch04_b038",
+              "atom_m_wh_ch04_b039_04__wh_ch04_b039",
+              "atom_m_wh_ch04_b044_03__wh_ch04_b044"
+            ],
+            "valid_from_block": "wh_ch04_b004",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b041_02__wh_ch04_b041"
+            ],
+            "valid_from_block": "wh_ch04_b041",
+            "valid_until_block": null
+          },
+          {
+            "surface": "my master",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b043_03__wh_ch04_b043"
+            ],
+            "valid_from_block": "wh_ch04_b043",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Mr. Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_04__wh_ch04_b035",
+              "atom_m_wh_ch04_b038_06__wh_ch04_b038",
+              "atom_m_wh_ch04_b039_05__wh_ch04_b039",
+              "atom_m_wh_ch04_b043_04__wh_ch04_b043"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": null
+          },
+          {
+            "surface": "the old master",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_05__wh_ch04_b035"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": null
+          },
+          {
+            "surface": "your father",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b044_01__wh_ch04_b044"
+            ],
+            "valid_from_block": "wh_ch04_b044",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b035",
+            "quote": "Mr. Earnshaw, the old master, came downstairs, dressed for a journey;",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b035_04__wh_ch04_b035",
+              "atom_m_wh_ch04_b035_05__wh_ch04_b035"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b004",
+            "quote": "“Eighteen, sir: I came when the mistress was married, to wait on her; after she died, the master retained me for his housekeeper.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b004_02__wh_ch04_b004"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b044",
+            "quote": "“You must exchange horses with me: I don’t like mine; and if you won’t I shall tell your father of the three thrashings you’ve given me this week, and show him my arm, which is black to the shoulder.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b044_01__wh_ch04_b044"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp4",
+        "reuse_entity_id": "ent_mr_heathcliff",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b009_01__wh_ch04_b009",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b009_01__wh_ch04_b009",
+          "atom_m_wh_ch04_b022_01__wh_ch04_b022",
+          "atom_m_wh_ch04_b040_01__wh_ch04_b040",
+          "atom_m_wh_ch04_b040_02__wh_ch04_b040",
+          "atom_m_wh_ch04_b041_03__wh_ch04_b041",
+          "atom_m_wh_ch04_b042_03__wh_ch04_b042",
+          "atom_m_wh_ch04_b043_02__wh_ch04_b043",
+          "atom_m_wh_ch04_b043_06__wh_ch04_b043",
+          "atom_m_wh_ch04_b045_01__wh_ch04_b045",
+          "atom_m_wh_ch04_b016_03__wh_ch04_b016",
+          "atom_m_wh_ch04_b019_03__wh_ch04_b019"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b009_01__wh_ch04_b009",
+              "atom_m_wh_ch04_b022_01__wh_ch04_b022",
+              "atom_m_wh_ch04_b040_01__wh_ch04_b040",
+              "atom_m_wh_ch04_b040_02__wh_ch04_b040",
+              "atom_m_wh_ch04_b041_03__wh_ch04_b041",
+              "atom_m_wh_ch04_b042_03__wh_ch04_b042",
+              "atom_m_wh_ch04_b043_02__wh_ch04_b043",
+              "atom_m_wh_ch04_b043_06__wh_ch04_b043",
+              "atom_m_wh_ch04_b045_01__wh_ch04_b045"
+            ],
+            "valid_from_block": "wh_ch04_b009",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Mr. Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b016_03__wh_ch04_b016",
+              "atom_m_wh_ch04_b019_03__wh_ch04_b019"
+            ],
+            "valid_from_block": "wh_ch04_b016",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b016",
+            "quote": "“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name. I nursed her, poor thing! I did wish Mr. Heathcliff would remove here, and then we might have been together again.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b016_03__wh_ch04_b016"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b040",
+            "quote": "This was Heathcliff’s first introduction to the family. On coming back a few days afterwards (for I did not consider my banishment perpetual), I found they had christened him “Heathcliff”: it was the name of a son who died in childhood, and it has served him ever since, both for Christian and surname.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b040_01__wh_ch04_b040",
+              "atom_m_wh_ch04_b040_02__wh_ch04_b040"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp5",
+        "reuse_entity_id": "ent_mrs_heathcliff",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b013_01__wh_ch04_b013",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b013_01__wh_ch04_b013",
+          "atom_m_wh_ch04_b025_01__wh_ch04_b025"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Mrs. Heathcliff",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b013_01__wh_ch04_b013",
+              "atom_m_wh_ch04_b025_01__wh_ch04_b025"
+            ],
+            "valid_from_block": "wh_ch04_b013",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b025",
+            "quote": "“Mrs. Heathcliff? she looked very well, and very handsome; yet, I think, not very happy.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b025_01__wh_ch04_b025"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp6",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b016_01__wh_ch04_b016",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b016_01__wh_ch04_b016",
+          "atom_m_wh_ch04_b017_03__wh_ch04_b017"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "my late master",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b016_01__wh_ch04_b016"
+            ],
+            "valid_from_block": "wh_ch04_b016",
+            "valid_until_block": null
+          },
+          {
+            "surface": "my predecessor’s",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b017_03__wh_ch04_b017"
+            ],
+            "valid_from_block": "wh_ch04_b017",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b017",
+            "quote": "“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine. “Then,” I continued, “my predecessor’s name was Linton?”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b017_03__wh_ch04_b017"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b016",
+            "quote": "“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b016_01__wh_ch04_b016",
+              "atom_m_wh_ch04_b016_02__wh_ch04_b016"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp7",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b016_02__wh_ch04_b016",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b016_02__wh_ch04_b016",
+          "atom_m_wh_ch04_b017_01__wh_ch04_b017",
+          "atom_m_wh_ch04_b024_02__wh_ch04_b024"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Catherine Linton",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b016_02__wh_ch04_b016",
+              "atom_m_wh_ch04_b017_01__wh_ch04_b017"
+            ],
+            "valid_from_block": "wh_ch04_b016",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Miss Cathy",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b024_02__wh_ch04_b024"
+            ],
+            "valid_from_block": "wh_ch04_b024",
+            "valid_until_block": "wh_ch04_b024"
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b016",
+            "quote": "“Why, sir, she is my late master’s daughter: Catherine Linton was her maiden name.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b016_02__wh_ch04_b016"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b024",
+            "quote": "“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b024_02__wh_ch04_b024",
+              "atom_m_wh_ch04_b024_03__wh_ch04_b024"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp8",
+        "reuse_entity_id": "ent_catherine_earnshaw",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b017_02__wh_ch04_b017",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b017_02__wh_ch04_b017",
+          "atom_m_wh_ch04_b038_02__wh_ch04_b038",
+          "atom_m_wh_ch04_b035_10__wh_ch04_b035",
+          "atom_m_wh_ch04_b038_01__wh_ch04_b038",
+          "atom_m_wh_ch04_b040_03__wh_ch04_b040"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "my ghostly Catherine",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b017_02__wh_ch04_b017"
+            ],
+            "valid_from_block": "wh_ch04_b017",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Catherine’s",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b038_02__wh_ch04_b038"
+            ],
+            "valid_from_block": "wh_ch04_b038",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Miss Cathy",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_10__wh_ch04_b035",
+              "atom_m_wh_ch04_b038_01__wh_ch04_b038",
+              "atom_m_wh_ch04_b040_03__wh_ch04_b040"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b017",
+            "quote": "“What! Catherine Linton?” I exclaimed, astonished. But a minute’s reflection convinced me it was not my ghostly Catherine.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b017_02__wh_ch04_b017",
+              "atom_m_wh_ch04_b017_01__wh_ch04_b017"
+            ],
+            "supports": "different_identity"
+          },
+          {
+            "block_id": "wh_ch04_b038",
+            "quote": "We crowded round, and over Miss Cathy’s head I had a peep at a dirty, ragged, black-haired child; big enough both to walk and talk: indeed, its face looked older than Catherine’s;",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b038_01__wh_ch04_b038",
+              "atom_m_wh_ch04_b038_02__wh_ch04_b038"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp9",
+        "reuse_entity_id": "ent_hareton_earnshaw",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b019_02__wh_ch04_b019",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b019_02__wh_ch04_b019",
+          "atom_m_wh_ch04_b024_01__wh_ch04_b024",
+          "atom_m_wh_ch04_b030_01__wh_ch04_b030",
+          "atom_m_wh_ch04_b035_02__wh_ch04_b035"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Hareton Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b019_02__wh_ch04_b019"
+            ],
+            "valid_from_block": "wh_ch04_b019",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Hareton",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b024_01__wh_ch04_b024",
+              "atom_m_wh_ch04_b030_01__wh_ch04_b030",
+              "atom_m_wh_ch04_b035_02__wh_ch04_b035"
+            ],
+            "valid_from_block": "wh_ch04_b024",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b019",
+            "quote": "“And who is that Earnshaw: Hareton Earnshaw, who lives with Mr. Heathcliff? Are they relations?”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b019_01__wh_ch04_b019",
+              "atom_m_wh_ch04_b019_02__wh_ch04_b019"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b024",
+            "quote": "“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b024_01__wh_ch04_b024"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp10",
+        "reuse_entity_id": null,
+        "referent_kind": "family",
+        "canonical_atom_id": "atom_m_wh_ch04_b019_01__wh_ch04_b019",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b019_01__wh_ch04_b019",
+          "atom_m_wh_ch04_b023_02__wh_ch04_b023"
+        ],
+        "status": "uncertain",
+        "alias_bindings": [
+          {
+            "surface": "Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b019_01__wh_ch04_b019",
+              "atom_m_wh_ch04_b023_02__wh_ch04_b023"
+            ],
+            "valid_from_block": "wh_ch04_b019",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b023",
+            "quote": "“I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door. Are they an old family?”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b023_02__wh_ch04_b023"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp11",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b020_01__wh_ch04_b020",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b020_01__wh_ch04_b020",
+          "atom_m_wh_ch04_b022_02__wh_ch04_b022"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "the late Mrs. Linton’s",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b020_01__wh_ch04_b020"
+            ],
+            "valid_from_block": "wh_ch04_b020",
+            "valid_until_block": null
+          },
+          {
+            "surface": "Mr. Linton’s sister",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b022_02__wh_ch04_b022"
+            ],
+            "valid_from_block": "wh_ch04_b022",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b022",
+            "quote": "“Yes; and her husband was her cousin also: one on the mother’s, the other on the father’s side: Heathcliff married Mr. Linton’s sister.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b022_02__wh_ch04_b022"
+            ],
+            "supports": "same_identity"
+          },
+          {
+            "block_id": "wh_ch04_b020",
+            "quote": "“No; he is the late Mrs. Linton’s nephew.”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b020_01__wh_ch04_b020"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp12",
+        "reuse_entity_id": null,
+        "referent_kind": "place",
+        "canonical_atom_id": "atom_m_wh_ch04_b023_01__wh_ch04_b023",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b023_01__wh_ch04_b023"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Wuthering Heights",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b023_01__wh_ch04_b023"
+            ],
+            "valid_from_block": "wh_ch04_b023",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b023",
+            "quote": "“I see the house at Wuthering Heights has ‘Earnshaw’ carved over the front door.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b023_01__wh_ch04_b023"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp13",
+        "reuse_entity_id": null,
+        "referent_kind": "group_reference",
+        "canonical_atom_id": "atom_m_wh_ch04_b024_03__wh_ch04_b024",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b024_03__wh_ch04_b024"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "the Lintons",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b024_03__wh_ch04_b024"
+            ],
+            "valid_from_block": "wh_ch04_b024",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b024",
+            "quote": "“Very old, sir; and Hareton is the last of them, as our Miss Cathy is of us—I mean, of the Lintons.",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b024_03__wh_ch04_b024"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp14",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b035_01__wh_ch04_b035",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b035_01__wh_ch04_b035"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Mr. Hindley Earnshaw",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_01__wh_ch04_b035"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b035",
+            "quote": "because my mother had nursed Mr. Hindley Earnshaw, that was Hareton’s father,",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b035_01__wh_ch04_b035",
+              "atom_m_wh_ch04_b035_02__wh_ch04_b035"
+            ],
+            "supports": "different_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp15",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b035_03__wh_ch04_b035",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b035_03__wh_ch04_b035"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "my mother",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_03__wh_ch04_b035"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b035",
+            "quote": "because my mother had nursed Mr. Hindley Earnshaw,",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b035_03__wh_ch04_b035",
+              "atom_m_wh_ch04_b035_01__wh_ch04_b035"
+            ],
+            "supports": "different_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp16",
+        "reuse_entity_id": "ent_joseph",
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b035_06__wh_ch04_b035",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b035_06__wh_ch04_b035"
+        ],
+        "status": "resolved",
+        "alias_bindings": [
+          {
+            "surface": "Joseph",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b035_06__wh_ch04_b035"
+            ],
+            "valid_from_block": "wh_ch04_b035",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b035",
+            "quote": "after he had told Joseph what was to be done during the day,",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b035_06__wh_ch04_b035"
+            ],
+            "supports": "same_identity"
+          }
+        ]
+      },
+      {
+        "group_key": "grp17",
+        "reuse_entity_id": null,
+        "referent_kind": "person",
+        "canonical_atom_id": "atom_m_wh_ch04_b026_02__wh_ch04_b026",
+        "member_atom_ids": [
+          "atom_m_wh_ch04_b026_02__wh_ch04_b026"
+        ],
+        "status": "uncertain",
+        "alias_bindings": [
+          {
+            "surface": "the master",
+            "member_atom_ids": [
+              "atom_m_wh_ch04_b026_02__wh_ch04_b026"
+            ],
+            "valid_from_block": "wh_ch04_b026",
+            "valid_until_block": null
+          }
+        ],
+        "evidence": [
+          {
+            "block_id": "wh_ch04_b026",
+            "quote": "“Oh dear, I don’t wonder! And how did you like the master?”",
+            "source_atom_ids": [
+              "atom_m_wh_ch04_b026_01__wh_ch04_b026",
+              "atom_m_wh_ch04_b026_02__wh_ch04_b026"
+            ],
+            "supports": "different_identity"
+          }
+        ]
+      }
+    ]
+  },
+  "technical_error": null,
+  "technical_failure_class": null
+}
