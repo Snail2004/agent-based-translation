@@ -633,3 +633,16 @@ R2 (CodeX now, mechanical): validator_contract_version in checkpoints (MAJOR 6).
 R3 (spec round with Sol — one round, Claude drafts): identity Auditor stage (§5.6) — adjudicate epithet/title-minted resolved persons + person-vs-nonperson + fragment merge/supersession with provenance (§29-style gates: audit-label + no-new-collision + evidence-block), then republish bibles + replay affected pairs from cache; ALSO in the same round: per-pair history bound (BLOCKER 4), frame/story-time join (MAJOR 5), consolidation-unit abstraction (pre-scale agenda), disposition schema question.
 R4: re-run acceptance ch1–4 against corrected ground truth (b004 master=Edgar; b004 mistress=Catherine; b026→Heathcliff unlinked; madam=nonperson) after the Auditor pass.
 Pilot artifacts remain valid AS PILOT EVIDENCE — the pilot's purpose was to surface exactly this list; verdict changes nothing retroactively about the fail-closed run discipline ($0 waste, 10 amendments, all halts diagnostic).
+
+---
+
+## CLAUDE GATE — R1+R2 implementation (2026-07-11): **PASS**, with one completing step before commit
+
+Reviewed the uncommitted diff line-by-line + independent test runs (focused 38/38, full pipeline 398/398).
+
+**R1 (pair-coverage fail-closed) — PASS.** Verified mechanics: omitted pairs = affected − returned → routed through the same blocked-record path with reason `model_omitted_pair` → excluded from `replace_pairs` → **prior history is never deleted** (stays in state; test asserts it), while BOTH bible render sites (entity_relations/facts AND address_policies) exclude blocked pairs via `_blocked_runtime_pair_keys` → state retains / runtime quarantines / review record carries returned+retained rows: no blocked-yet-published contradiction. Empty response now halts as `phase_all_pairs_omitted_by_model` with state unchanged (guard keyed on `affected`, the falsy-`pair_payloads` bypass is dead). Counter `pairs_omitted_by_model` surfaced. Recovery path coherent: a pair blocked-for-omission that returns valid next scope publishes normally and its stale record is cleared.
+Semantic note (accepted): omission ⇒ runtime quarantine is HARSHER than flag-only — correct fail-closed reading (the model saw new evidence and said nothing → the old timeline is unverified as current). Phase v3's explicit `no_change` disposition (M4e Area B) restores cheap legitimate no-updates.
+
+**R2 (validator_contract_version) — PASS.** Constant + bump-discipline comment; stamped at all three sites (checkpoint build, prefix expectation, dry-run plan). Old checkpoints lacking the field → prefix mismatch → **rebuild from cache** (test asserts restored==[] + mismatch listed), same recovery pattern as the amendment-#6 config-hash rebuild. STANDING RULE for every future gate: any amendment that changes normalization/apply/quarantine semantics MUST bump this constant — add to the review checklist.
+
+**Completing step (required before commit):** on-disk ch1–4 checkpoints are now stale by design. Run one `--resume` (expected **$0** — prompts unchanged, all responses in local cache) to rebuild + restamp the chain under contract v1, and verify republished bibles are content-identical to the current ones modulo the new stamp fields (mechanical JSON diff, report the field-level differences). Then commit R1+R2 code + tests + restamped artifacts as one batch.
