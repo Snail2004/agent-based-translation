@@ -1,6 +1,6 @@
 # TASK_LIT_M4f_P1S2 — Builder typed schemas + validators + deterministic code-mint (Phase 1, Step 2)
 
-Status: **DRAFT rev2 (Claude → Terra/CodeX), 2026-07-12.** rev2 folds Sol's task review (5 BLOCKER + 2 MAJOR, all verified on source). Task is DRAFT until Sol confirms rev2. Implementer = Terra (CodeX). **Verify gate = Claude, never delegated.**
+Status: **DRAFT rev3 (Claude → Terra/CodeX), 2026-07-12.** rev3 folds Sol's second task review (3 bounded implementation blockers; the earlier 7 landed). Sol: after rev3 + the matching fixtures, GO to hand Terra — no new architecture review needed. Task is DRAFT until Sol confirms rev3. Implementer = Terra (CodeX). **Verify gate = Claude, never delegated.**
 
 Source of truth: `design/LITERARY_BUILDER_SCHEMA_ALLOCATION_V1.md` §8 (rev4 locks) + §2, Canonical §5/§7. **Every shape needed is transcribed IN FULL below — copy from here, not from prose elsewhere.**
 
@@ -40,7 +40,7 @@ Hard constraints: **no LLM/API**, no network, do not touch the frozen D2L DB (`d
 **mint (code only; model emits NO ids):**
 - `mention_id = m_<block_id>_<ordinal>` where **`ordinal` is block-GLOBAL over ALL mention anchors in the block, ranked by the stable tuple `(char_start, char_end, surface)`** — NOT per-surface (per-surface collides: Alice#1 and Bob#1 would both be `_01`).
 - `position_key = (block_order, char_start, local_ordinal)`; `block_order` = index in the chapter's **non-heading** block sequence (`block_type ∈ {paragraph,dialogue}`); `local_ordinal` breaks ties among turns/events sharing `(block, char_start)`: speaker_turns before relation_events, then model array order.
-- `turn_id = t_<block>_<seq>`, `event_id = e_<block>_<seq>` (seq from position_key), `endpoint_id = "<turn_id|event_id>#<role>"`, `address_occurrence_id = "<turn_id>#addr<n>"`.
+- `turn_id = t_<block>_<seq>`, `event_id = e_<block>_<seq>` where **`seq` = 1-based rank computed PER-TYPE (turns ranked separately from events) WITHIN each block, after sorting that type's items by `(char_start, local_ordinal)`, zero-padded to ≥2 digits** (turns and events do NOT share a sequence; rank is per-block, not per-chapter). `endpoint_id = "<turn_id|event_id>#<role>"`, `address_occurrence_id = "<turn_id>#addr<n>"` (n = 1-based index of the address_term within the turn).
 
 ---
 
@@ -63,7 +63,7 @@ Notation: `field: type` — `!` required, `?` optional, `|null` nullable. `[code
 - `neutral_premise: str!` (≤40 words; GIST_ONLY downstream)
 - `[code] input_max_order: int` (call-level, from request topology)
 
-`CastClaim`: `surface: str!`, `surface_kind ∈ {proper_name,descriptor}!`, `referent_kind_claim: RKC!`, `role_hint: str!`, `scene_range: [block_id, block_id]!`, `anchor_text: str!`, `evidence_quote: str!`, `occurrence_hint: int?`, `[code] cast_claim_id: str`, `[code] anchor: SourceAnchor`, `[code] evidence_max_order: int`. (No `max_source_block` — removed; call-level `input_max_order` replaces it.)
+`CastClaim`: `surface: str!`, `surface_kind ∈ {proper_name,descriptor}!`, `referent_kind_claim: RKC!`, `role_hint: str!`, `scene_range: [block_id, block_id]!`, `source_block_ids: [block_id]!` (Canonical §2c — every id MUST lie within `scene_range`; validator checks), `anchor_text: str!`, `evidence_quote: str!`, `occurrence_hint: int?`, `[code] cast_claim_id: str`, `[code] anchor: SourceAnchor`, `[code] evidence_max_order: int`. (No `max_source_block` — removed; call-level `input_max_order` replaces it.)
 
 `Scene`: `block_range: [block_id, block_id]!`, `co_present_count: int!`, `participants: [str]!`. (Untrusted claim; see validator exact-cover.)
 
@@ -87,7 +87,7 @@ Notation: `field: type` — `!` required, `?` optional, `|null` nullable. `[code
 - `chapter_id: str!`, `chapter_rolling_summary: str!`
 - `narration_frame_segments: [FrameSegment]!`, `relation_observations: [RelObs]!`, `character_state_changes: [StateChange]!`, `unresolved_threads: [Thread]!`, `translator_relevant_facts: [Fact]!`
 
-`FrameSegment`: `local_segment_key: str!`, `parent_local_key: str|null!` (null = child of synthetic root), `narrator_surface: str!`, `frame_kind ∈ {primary_narration,embedded_document,letter,diary,dream,vision,tale_told_aloud,quoted_report}!`, `story_time_label ∈ {frame_present,retrospective_past,anterior_past}!`, `block_range: [block_id, block_id]!`, `start_anchor: SourceAnchor?`, `end_anchor: SourceAnchor?` (present when a boundary is mid-block), `status ∈ {proposed,uncertain}!`, `evidence_quote: str!`, `[code] segment_id`, `[code] version`.
+`FrameSegment`: `local_segment_key: str!`, `parent_local_key: str|null!` (null = child of synthetic root), `narrator_surface: str!`, `frame_kind ∈ {primary_narration,embedded_document,letter,diary,dream,vision,tale_told_aloud,quoted_report}!`, `story_time_label ∈ {frame_present,retrospective_past,anterior_past}!`, `block_range: [block_id, block_id]!`, `start_boundary: {anchor_text, evidence_quote, occurrence_hint?}|null!`, `end_boundary: {anchor_text, evidence_quote, occurrence_hint?}|null!` (non-null ONLY when a boundary is mid-block; model emits verbatim text, NOT offsets), `status ∈ {proposed,uncertain}!`, `evidence_quote: str!`, `[code] start_anchor: SourceAnchor|null` (located from start_boundary, else null), `[code] end_anchor: SourceAnchor|null`, `[code] segment_id`, `[code] version`.
 `RelObs`: `event_id!`, `endpoint_refs: [endpoint_id, endpoint_id]!`, `observed_valence_hint ∈ {positive,negative,mixed,unclear}!`, `block_id!`, `evidence_quote!`, `transition_hint: {trigger_event_id, note}?`. (NO `pair`.)
 `StateChange`: `subject_ref: endpoint_id|mention_id!`, `attribute ∈ {social_status,alias_or_title,life_status,residence}!`, `from_value: str!`, `to_value: str!`, `trigger_ref: event_id|block_id!`, `evidence_quote!`.
 `Thread`: `thread_local_id: str!`, `description: str!`, `opened_block: block_id!`, `kind ∈ {mystery,pending_transition,question}!`, `subject_refs: [endpoint_id|mention_id]?`.
@@ -108,10 +108,12 @@ Fixtures (grouped; each group MUST include the listed subcases):
 6. **Two-axis**: invalid `individual+place` → flagged+kept; `narrator+person` → discourse-only tag.
 7. **event_type**: `"enemy"` → `phase_leak`.
 8. **Frame tree**: nested letter-in-narration valid + deepest-leaf render; **missing parent** → fatal; **sibling overlap** → fatal; **leaf coverage gap** → fatal; **cycle** → fatal.
+8b. **Frame mid-block boundary**: `start_boundary` provided → code locates `start_anchor`; missing/ambiguous boundary anchor_text → fail-closed (no guessed anchor).
 9. **Occurrence-grounding**: `StateChange.subject_ref="Heathcliff"` (bare surface) or `ent_*` → fatal.
 10. **Field retirement**: input carrying `confidence`/`utterance_gist`/`termhood`/`resolution_status`/`candidate_entity_ids` → stripped from `payload` (proven via the returned payload).
 11. **Unicode**: a decomposed (NFD) block → `nfc_block_string` yields the render string byte-for-byte; anchors index correctly.
 12. **non-person route-out**: an `Event` with `actor.referent_kind_claim=animal` → captured + tagged route-out, NOT dropped.
+13. **B0 source_block_ids**: a cast_claim appearing in multiple blocks of one scene → all in `source_block_ids`, all within `scene_range`; a `source_block_ids` entry OUTSIDE `scene_range` → fatal.
 
 ---
 
