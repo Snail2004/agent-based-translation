@@ -1,200 +1,123 @@
 # LITERARY_BUILDER_SCHEMA_ALLOCATION_V1 — draft for Sol review
 
-Status: **DRAFT rev2 (Claude), 2026-07-12.** Not LOCKED, NOT yet prompt-write-ready. rev2 folds the CodeX independent review (8 findings, all verified by Claude on artifacts). **Sol's independent pass is still OUTSTANDING (quota) — rev2 needs the Sol reconciliation before LOCK, per the §E9 dual-audit rule; do NOT rewrite prompts off rev2 alone.** Grounded on: v1 prompts (design/LITERARY_PROMPT_DESIGN.md :118/180/265/358), v2 prompts (:507/523/537/551), Story Bible field list (design §5.6), Canonical §2/§4/§5/§7, and the CURRENT runtime (builder_pilot.py, story_bible_v2.py — line-verified). No API calls; no code changed.
+Status: **DRAFT rev3 (Claude), 2026-07-12.** Not LOCKED. rev3 folds **Sol Max round-2** (8 findings — 3 BLOCKER + 4 MAJOR + 1 MINOR — all verified by Claude on artifacts/source). **Not yet prompt-write-ready; needs Sol round-3 to confirm rev3.**
+
+**REFRAME (round-2 consequence):** round-2 proved the leaks live in the **orchestration + as-of topology**, not just field naming — so this is no longer a "prompt rework", it is a **Builder-core rev**. Per Sol's locked sequence, **prompts are the LAST step (step 6)**, after schema/validators/code-mint, after dismantling the old identity-ledger, after the B1→B2/M2/B3 handoff and B4 ingest are rebuilt. Do NOT rewrite prompts off this doc.
+
+Grounded on: v1/v2 prompts (design/LITERARY_PROMPT_DESIGN.md), Story Bible list (design §5.6), Canonical §2/§3/§4/§5/§7, L2A2 spec, and the CURRENT runtime (builder_pilot.py, story_bible_v2.py — line-verified). No API; no code changed.
 
 ---
 
-## 0. Why this document exists (and the rule that generates it)
+## 0. Why this exists + what round-2 changed
 
-The prompt rework surfaced defect classes that are **missing-design**, not wording:
+Original defect classes: **F5** (silent v1 field loss) and **F7** (only the SYSTEM half of each call authored; the user-payload allowlist missing). rev2 fixed the field matrix. **Round-2 showed that is not enough:** the identity-hint contamination and the as-of leak are re-created by the ORCHESTRATION and by whole-chapter call topology, which a field matrix cannot fix. rev3 therefore also specifies (a) mode-dependent call topology, (b) occurrence-grounded downstream observations, (c) the dismantling of the entity-ledger machinery, (d) deterministic code-mint coordinates, (e) typed cross-layer projections. The field matrix (§2) stays but is now one part of a Builder-core contract.
 
-- **F5 (silent v1 field loss):** v2 was rewritten from scratch, dropping v1 fields still consumed downstream.
-- **F7 (half a contract):** only the SYSTEM half of each call was authored; the USER-PAYLOAD allowlist was never written, so old code injects registry/neighbors into B0 (`builder_pilot.py:1174`) while the new B0 prompt says "scene only."
-
-**rev2 lesson (from CodeX F6):** a field is only "retained" if a REAL RUNTIME CONSUMER reads it. rev1 verified the PRODUCER side (v1 prompt has the field) but asserted CONSUMERS without checking the runtime — three fields (`utterance_gist`, `scene_summaries`, `termhood`) turned out to have **no literary consumer**. Consumer claims in §2 are now runtime-verified (grep of `pipeline/`, excluding the producer file and tests). This is the [[green-tests-can-hide-dead-integration]] / [[verify-on-committed-artifacts-not-reports]] discipline applied to schema.
-
-**The generating rule:**
-> A v1 field is **removed** only if EITHER (a) Canonical reassigns its authority to a later stage, OR (b) it has **no real runtime consumer** (verified, not assumed). A field is **RENAME/MIGRATE**, not KEEP, if the runtime currently reads the old name. Everything else is retained verbatim. Home layer, consumers, and each layer's input allowlist are fixed here BEFORE any prompt is rewritten.
-
-Corollary: **v2 = v1 − (identity-decision fields Canonical reassigns) − (consumer-less fields, named) + (Canonical occurrence/witness/frame additions), keeping v1 field NAMES the runtime reads.** Surgical delta, never a rewrite.
+**Two verification lessons now baked into the method:**
+- (rev2/F6) a field is "kept" only if a REAL RUNTIME CONSUMER reads it — verify the consumer side, not just the producer.
+- (rev3/round-2) a "de-identified" field can still ENCODE an identity decision (grouping events under a pair IS identity work); and removing one injection site (B0 registry) does not remove the hint channel if other orchestration paths re-seed it. Verify the *whole data path*, not the field label.
 
 ---
 
-## 1. Target artifact — Story Bible field inventory (design §5.6)
+## 1. B0 call topology & as-of — mode-dependent (NEW, closes round-2 F1)
 
-`scope`, `T1 glossary`, `T2 entities(alias valid_range)`, `T3 speaker_turns`, `T4 chapter_digests`, `entity_relations(phase intervals)`, `entity_state_intervals`, `address_policies(proposal)`, `narration_frame_segments`, `unresolved_threads`. Every Builder field traces to one of these, to the identity/overlay ground layer (Canonical §5), or is retired with a named dead consumer.
+rev2's "B0 reads the chapter, emits surface×scene claims" is safe ONLY in `whole_book_frozen`. It FAILS `as_of_experiment` because (Canonical §3) `input_max_order` = max order over the WHOLE rendered request — so a whole-chapter B0 call stamps EVERY claim with the chapter-end cutoff, regardless of which blocks its evidence sits in. A claim about b002 then illegally carries chapter-end knowledge at an as-of query.
+
+- **Separate two orders:** `input_max_order` (from request topology, code-computed, gates as-of usage) vs `evidence_max_order` (from the claim's own evidence blocks). rev2 conflated them into `max_source_block`.
+- **B0 topology by mode:** `whole_book_frozen` = one whole-chapter call is permitted (final decision, not as-of). `as_of_experiment` = B0 must be scene-local (or its claims are barred from as-of usage), so `input_max_order ≤ order(mention)` can hold.
+- **scenes_party_size is NOT a scene authority.** Verified on real data: Gatsby ch1 has two scenes both containing b152 (overlap), and counts "Miss Baker" and "Jordan Baker" as two people in one scene (`data/reports/literary_l2a2_gatsby_ch1_hardened_v3/brief/gg_ch01.json`). The current validator (builder_pilot.py:~3727) checks only that range endpoints exist — no overlap/gap/participant-consistency check. So: scene ranges must be **exact-cover, non-overlapping** (validated), and **`co_present_count` is an UNTRUSTED claim, never a hard rule** for B2 identity resolution. B2 may use it as one weak signal routed through adjudication, never as "co_present==2 ⇒ the other person."
 
 ---
 
 ## 2. Field → producer → consumer matrix
 
-Legend: `KEEP` = carried verbatim (name unchanged); `DROP-IDENTITY` = Canonical reassigns to B4/overlay; `ADD` = new Canonical requirement; `RESTORE` = in v1, wrongly dropped by first v2 pass; `RETIRE` = no real runtime consumer (verified); `CODE` = code-assembled/minted, model never emits; `MIGRATE` = rename touching runtime read-sites (needs a consumer-code change, not a silent KEEP).
+Legend: `KEEP`/`DROP-IDENTITY`/`ADD`/`RESTORE`/`RETIRE`/`CODE`/`MIGRATE` as rev2. Consumer column now carries a **provenance tag** (round-2 MINOR): `[rt]` current runtime read-site · `[cp]` Canonical-planned (not yet in runtime) · `[audit]` audit/validator only.
 
-### 2.1 B0 — chapter brief (`literary_chapter_brief`)
+### 2.1 B0 — chapter brief
 
-**Scope: chapter text IN; claims OUT at `surface × scene` granularity (reconciles Canonical §2c/§12 scene-local with a single chapter call — see §6-D). NO registry. No prior-chapter summary.**
+Fields as rev2 §2.1 (cast_claims surface×scene, setting, scenes_party_size, neutral_premise; registry DROP-IDENTITY), with round-2 changes:
+- `scenes_party_size[].block_range` — **exact-cover non-overlapping** (validator ADD); `co_present_count` tagged **untrusted claim** `[cp]`, not a B2 hard rule.
+- `cast_claims` carry `evidence_max_order` (code) distinct from the call's `input_max_order`; scene ranges from the exact-cover partition.
 
-| Field | v1→v2 | Consumer (verified) | Note |
-|---|---|---|---|
-| `cast_claims[].surface` | KEEP | B4 adjudicator (§2c) | verbatim |
-| `cast_claims[].surface_kind` | KEEP | B4 | proper_name\|descriptor |
-| `cast_claims[].referent_kind_claim` | ADD (§4 ontology) | B4 kind-routing | person\|animal\|nonhuman_character\|place\|group_reference\|object\|unknown |
-| `cast_claims[].role_hint` | KEEP | B4, audit | OBSERVED role only, never a relationship word |
-| `cast_claims[].scene_range` | ADD (§2c) | B4 as-of, B2 projection | **each claim is scoped to ONE scene**; a surface recurring in 2 scenes = 2 claims, NEVER merged across scenes (prevents cross-scene hint contamination — CodeX F1) |
-| `cast_claims[].source_block_ids` | KEEP | B4, as-of | blocks **within this claim's scene** only |
-| `cast_claims[].quote` | ADD | B4 | one verbatim span in this scene |
-| `cast_claims[].cast_claim_id`, `max_source_block` | CODE (§2c/§3) | B4 witness/as-of | code-minted post-parse |
-| `setting{place,time_frame_hint,scene_shape}` | RESTORE | B2, B3 (both this-chapter) | non-identity; first v2 pass dropped it |
-| `scenes_party_size[]{block_range,co_present_count,participants}` | RESTORE — **LOAD-BEARING** | **B2 vocative resolution**, scene projection | defines scene boundaries (co_present_count==2 → other = addressee). This IS the scene split; no separate segmenter |
-| `neutral_premise` (≤40w) | RESTORE | **B3** (requires B0 brief in B3 allowlist — see §4) | leak-guarded |
-| ~~registry entity_id preference~~ | **DROP-IDENTITY** | — | the pivot removal (the only deliberate B0 removal) |
+### 2.2 B1 — lexicon
 
-### 2.2 B1 — lexicon (`literary_lexicon`)
+Fields as rev2 §2.2 (keep `source_term`; RESTORE proposed_target_vi `[rt]`/category `[rt]`/do_not_translate `[rt]` + fix `_glossary_as_of` drop; RETIRE termhood; DROP-IDENTITY resolution_status/candidate_entity_ids), plus round-2 F6:
+- **Deterministic code-mint needs coordinates.** `character_mentions[]` MUST carry a `source_span` (char offset within block) or an `occurrence_ordinal` (Nth occurrence of this surface in this block) so code can mint `m_<block>_<ordinal>` deterministically — a quote can appear twice in a block. If the model's span/quote+surface does not locate uniquely → **fail-closed** (drop with a counter, never guess an ordinal). Model emits no canonical id.
 
-**Scope: one WINDOW + read-only context-only tail. No registry, no entity ids.**
+### 2.3 B2 — narrative
 
-| Field | v1→v2 | Consumer (verified) | Note |
-|---|---|---|---|
-| `glossary_candidates[].source_term` | KEEP (NOT renamed) | Translator pack; runtime reads `source_term` @ story_bible_v2.py:2224 | rev1 wrongly renamed→surface = a migration; keep the name |
-| `glossary_candidates[].proposed_target_vi` | RESTORE | Translator pack (56 read-sites) | full VN diacritics; propagate through `_glossary_as_of` |
-| `glossary_candidates[].category` | RESTORE | glossary renderer | place\|object\|cultural\|other |
-| `glossary_candidates[].do_not_translate` | RESTORE + **FIX BUG** | Translator (85 read-sites) | real consumer, but currently DROPPED by `_glossary_as_of` @ :2228 — must be propagated |
-| `glossary_candidates[].termhood` | **RETIRE (from literary)** | none — all read-sites are D2L `prepass/*` | D2L-only field; literary Story Bible never keeps it. Lives in D2L separately |
-| `glossary_candidates[].block_ids` | KEEP | as-of | |
-| `character_mentions[].mention_id` | **CODE-MINT** (was model) | B2 mention_ref, B4 | code mints `m_<block>_<n>` from (block, within-block position); model emits at most an untrusted local key for intra-response cross-ref (CodeX B) |
-| `character_mentions[].block_id` | KEEP | as-of, occurrence | one occurrence = one block |
-| `character_mentions[].surface` | KEEP | B4 | verbatim |
-| `character_mentions[].mention_type` | KEEP | B4 | name\|nickname\|descriptor |
-| `character_mentions[].referent_kind_claim` | ADD (§4) | B4 kind-routing | ontology enum |
-| `character_mentions[].quote` | ADD (§4) | B4 | full clause, kind-revealing |
-| ~~`resolution_status`, `candidate_entity_ids`~~ | **DROP-IDENTITY** (§3/§4) | — | future hints excluded; **validator @ :3818 must drop these from `_require_item`** (currently still required) |
-| `context_only_used` | RESTORE | audit | advisory flag |
+Endpoint object — round-2 F4 splits the two axes cleanly:
+- **`reference_scope` = individual | group | narrator | reader | unknown** (REPLACES rev2's `reference_kind=person|group|narrator|reader`). The discourse/scope axis: is this ONE addressable individual, a group, the narrator's voice, the reader, or unknown. A dog is `reference_scope=individual` + `referent_kind_claim=animal`.
+- **`referent_kind_claim` = person | animal | nonhuman_character | place | group_reference | object | unknown** (ontology). **Runtime entity-eligibility reads ontology/checker (is it a person?), NEVER the scope axis.** A locked valid-combination table governs (e.g. narrator/reader scope ⇒ not an entity).
+- `mention_ref`, `attribution_method`, `confidence` KEEP. Endpoint carries its OWN `endpoint_block_id` + `source_position` + `resolution_span` (F3/round-1) — a pronoun or an off-utterance "said X" tag needs its own evidence, not the shared turn quote.
+- `endpoint_id`, `resolution_evidence` = CODE.
 
-### 2.3 B2 — narrative (`literary_narrative`)
+Turn/event:
+- `turn_id`/`event_id` = **CODE-MINT from `position_key=(block_order, within_block_order)`** — the model schema must expose within-block source position so this is deterministic. Validator (currently :3922 presence-only) gains format/unique/order + position_key checks.
+- `addressee` nullable (F8a); `utterance_quote` KEEP; `address_terms[]` turn-embedded list w/ code id + disposition (C); `register_cue` RESTORE `[rt]`; `utterance_gist` **RETIRE** (0 consumer).
+- `event_type` RESTORE lower_snake_case discipline + `#phase_leak` gate (F8b).
+- `actor/target` **ALLOW non-person + route-out** (F8) — capture the animal-acts scene with referent_kind_claim, code routes it out of the human relation-phase layer; never silent-drop.
 
-**Scope: window + context-only tail + B0 CHAPTER_BRIEF (scene-intersecting projection) + B1 WINDOW_MENTIONS. No registry/ids.**
+### 2.4 B3 — digest — **OCCURRENCE-GROUNDED, no identity (round-2 F2, the deepest change)**
 
-Endpoint object (`speaker`/`addressee`/`actor`/`target`) — **TWO kind axes, kept separate (CodeX F3):**
+rev2's "de-identify pair to surfaces" was insufficient: grouping many events under ONE pair still decides "he"="the landlord"="Heathcliff" — identity work before B4, and runtime consumes that pair directly for phase input (story_bible_v2.py:571). rev3:
 
-| Endpoint field | v1→v2 | Note |
-|---|---|---|
-| `surface` | KEEP | verbatim; may be a pronoun (endpoints allow pronouns) |
-| `reference_kind` | **KEEP (do NOT collapse)** | discourse role: person\|group\|narrator\|reader\|unknown; only person → entity later. Canonical §5 ground endpoint keeps this field |
-| `referent_kind_claim` | ADD (§4) | ontology: person\|animal\|…; the animal-detection axis (Juno defect). Distinct from reference_kind |
-| `mention_ref` | ADD (§5 witness) | mention_id from WINDOW_MENTIONS or null |
-| `endpoint_block_id`, `endpoint_position`, `resolution_span` | ADD (CodeX F3) | the endpoint's OWN evidence (the "said X" tag may sit outside the utterance; a pronoun needs its own span) — not the shared turn quote |
-| `attribution_method` | KEEP | explicit_tag\|turn_alternation\|narrator_inference\|vocative |
-| `confidence` | KEEP | low\|med\|high |
-| ~~`resolution_status`, `candidate_entity_ids`~~ | **DROP-IDENTITY** | adjudicated later |
-| `endpoint_id`, `resolution_evidence` | CODE (§5) | endpoint_id=(turn/event_id, role); resolution_evidence bundles mention_ref+attribution+resolution_span |
+- **B3 emits OBSERVATIONS keyed by `event_id` / `endpoint_id` / mention-occurrence, and does NOT canonicalize pairs.** `relation_event_summary` becomes a list of per-event observations referencing B2 `event_id`s; **code groups events into final pairs ONLY AFTER B4 produces active endpoint bindings.**
+- `character_state_changes`, `unresolved_threads`, and character-facts must point to an **occurrence/endpoint reference, never a clean identity surface** (v1 used `entity_ref` — barred).
+- **Nested frame tree — full invariants (round-2 F5):** model emits `local_segment_key` + `parent_local_key`; code validates then remaps to `segment_id`. Locked invariants: synthetic root OR forest; every child block-range **within** its parent; **siblings non-overlapping**; leaves **exact-cover** the narrative blocks; ancestor overlap only via containment; **deepest active leaf decides the rendered frame**; every local key unique, every parent exists, **graph acyclic**. A frame boundary **inside a block** needs a **source position**, not just block range. The current flat-partition validator (:4050) is replaced by this tree validator.
+- **Rolling summary = K=2 SEPARATE prior summaries, not cumulative** (L2A2 spec — rev2's "prev rolling_summary" singular/rewrite was wrong). Consumer = next chapter's B3 `[rt]`, not B0.
+- KEEP `event_ids` name (runtime reads it @ :571); RESTORE motifs `[cp]`, character_state_changes `[rt→L4]`, unresolved_threads `[cp]`; RETIRE scene_summaries (test stub only).
 
-Turn / event level:
+### 2.5 B4 — identity + phase — complete consume-list (round-2 F8)
 
-| Field | v1→v2 | Consumer | Note |
-|---|---|---|---|
-| `speaker_turns[].turn_id`, `relation_events[].event_id` | **CODE-MINT** (CodeX B/F5) | endpoint_id base | code mints from `position_key=(block_order, within_block_order)`; **validator @ :3922 currently checks presence only — a format/unique/order check must be ADDED**. position_key also lets two phase-changes in one block be ordered |
-| `speaker_turns[].addressee` | **ADD nullable** (F8a) | — | monologue/narration-to-reader → null; never invent a listener |
-| `speaker_turns[].utterance_quote` | KEEP | address/register scoring | verbatim ≤20w |
-| `speaker_turns[].address_terms[]` | **scalar→list, turn-embedded** (F2/§6 E1) | address checker, VN xưng-hô | `[{surface, evidence_quote, position, addressee_ref, address_occurrence_id(CODE)}]`; each vocative its own disposition+checker. NOT a top-level bucket (recall lock, v1 line 335) |
-| `speaker_turns[].register_cue` | RESTORE | VN register / address policy | first v2 pass dropped it |
-| ~~`utterance_gist`~~ | **RETIRE** | none (0 real read-sites; 9 grep hits all validator/schema) | no downstream consumer — CodeX E |
-| `relation_events[].event_type` | **RESTORE discipline** (F8b) | phase_leak gate | lower_snake_case observed action; FORBIDDEN relationship/phase labels; validator counts `#phase_leak` |
-| `relation_events[].actor/target` | **ALLOW non-person + route-out** (CodeX F8) | narrative-action stream | do NOT ban animal/nonhuman actor at extraction (silent evidence drop of the Juno-acts scene). Capture with referent_kind_claim; **code routes non-person events OUT of the human relation-phase layer** (Canonical §4 "route out" = capture-then-exclude, not drop) |
-| `relation_events[].evidence_quote` | KEEP | | ≤12w verbatim |
-
-### 2.4 B3 — digest (`literary_digest`)
-
-**Scope: full chapter + B0 brief + B1 roster (surfaces) + B2 events (compact) + prev rolling_summary.**
-
-| Field | v1→v2 | Consumer (verified) | Note |
-|---|---|---|---|
-| `chapter_rolling_summary` | KEEP | **next chapter's B3** (NOT B0 — B0 forbids prior summary; rev1 mislabeled) | spoiler-free w.r.t. unseen chapters |
-| `narration_frame_segments[].local_segment_key` | ADD (model) | code remap → segment_id | **model-local key** (seg_1…) so it can reference a parent BEFORE code mints the canonical id (CodeX F4 chicken-egg) |
-| `...parent_local_key` | ADD (F4b) | nesting tree | references a sibling local key; code validates a well-formed nesting TREE then remaps. **Current validator @ :4050 enforces flat contiguous cover — must be replaced with a nesting-tree validator** |
-| `...segment_id`, `version` | CODE (§7) | frame checker | minted after nesting-tree validation |
-| `...narrator_surface` | KEEP, de-identify | frame view | surface not entity id |
-| `...block_range` | KEEP | | |
-| `...story_time_label` | KEEP | frame view | (§6-A proposes splitting `frame_kind` off — a Canonical §7 change, not done unilaterally) |
-| `...status` (proposed\|uncertain) | RESTORE (Canonical §7) | frame checker | §7 REQUIRES it; first v2 pass dropped it (non-conformance) |
-| `...evidence_quote` | ADD | frame checker | boundary cue |
-| ~~"chapter usually NOT one segment"~~ | **REMOVE prior** (F4) | — | over-segmentation bias + book-neutrality leak (assumes WH structure). Replace: segment only at a cued shift; ambiguous cue → status=uncertain |
-| ~~`scene_summaries`~~ | **RETIRE** (unless named) | none (only a test stub @ test_literary_checkpoint.py:136) | rev1 claimed "Brief/context" — unverified/false. Retire unless a real literary consumer is named — CodeX E |
-| `character_state_changes[]` | RESTORE | **entity_state_intervals (L4)** | design line 480; first v2 pass dropped it |
-| `relation_event_summary[].pair` | KEEP, de-identify | phase input | surfaces not ids |
-| `relation_event_summary[].event_ids` | KEEP (NOT renamed) | phase per-event disposition; runtime reads `event_ids` @ story_bible_v2.py:571 | rev1 wrongly renamed→source_event_ids (0 read-sites) = a migration. Keep the name — this IS the F3 lineage, already present in v1 |
-| `...observed_valence_hint`, `candidate_transition`, `status=evidence_only` | KEEP | phase (evidence, not label) | |
-| `unresolved_threads[]` | RESTORE | transition pointers | design line 88 |
-| `motifs[]` | RESTORE | motif renderer/pack | first v2 pass dropped it |
-| `translator_relevant_facts[].{fact_type,fact,block_evidence}` | KEEP | Translator pack, relation_facts | MAX 8/chapter |
-| `translator_relevant_facts[].inference_basis` | ADD | overlay/disclosure | stated\|derived |
-| `translator_relevant_facts[].event_ids` | ADD | lineage | when a fact derives from a B2 event (same name as relation_event_summary) |
-
-### 2.5 B4 — identity + phase (NOT batch 1; consume/produce contract)
-
-**B4 CONSUMES (rev1 list was incomplete — CodeX F2):** B0 cast_claims (untrusted, scene-scoped) · B1 mentions · B2 endpoints **+ relation_events + register_cue + address occurrences** · B3 **relation_event_summary + character_state_changes + translator_relevant_facts +** frames.
-**B4 PRODUCES (and B0–B3 must NEVER fill):** entity ids, alias valid_range, **phase intervals** (needs B2 events + B3 summaries), **address_policies** (needs B2 address/register), **entity_state_intervals** (needs B3 state changes), overlay/disclosure records. The absence of identity fields in B0–B3 is the design.
+**B4 CONSUMES:** B0 cast_claims (untrusted, scene-scoped) · B1 mentions **+ full glossary (source_term/proposed_target_vi/category/do_not_translate)** · B2 endpoints + relation_events + register_cue + address occurrences · B3 occurrence-grounded observations + character_state_changes + facts + frames **+ motifs + unresolved_threads + the K rolling summaries**. Each item enters via a **universal envelope** (Canonical §6) — no envelope, no entry.
+**B4 PRODUCES (B0–B3 never fill):** entities, alias valid_range, phase intervals, address_policies, entity_state_intervals, overlay/disclosure records — and only here are events grouped into final pairs.
 
 ---
 
-## 3. Fill order & hand-off payloads
+## 3. Fill order & hand-offs (unchanged shape; corrected wiring)
 
-```
-B0 (per chapter)  ─ cast_claims(surface×scene) + scenes_party_size + setting + neutral_premise ─┐
-                                                                                                ▼
-B1 (per window)   ─ WINDOW_MENTIONS (code-minted m_ ids, surface, block) ───────────────────────┤
-                                                                                                ▼
-B2 (per window)   needs B0 brief (scene-intersecting projection: scenes_party_size + cast) + B1 WINDOW_MENTIONS
-                  ─ speaker_turns + relation_events (with mention_ref + own endpoint evidence) ─┐
-                                                                                               ▼
-B3 (per chapter)  needs B0 brief (neutral_premise/setting) + B1 roster + B2 events + prev rolling_summary
-                  ─ frames(nesting tree) + facts + relation_event_summary(event_ids) + state_changes ─┐
-                                                                                                      ▼
-B4 (identity/phase) needs B0 + B1 + B2(events/register/address) + B3(summaries/state/facts/frames)
-                  ─ entities, phases, address_policies, entity_state_intervals, overlay/disclosure ─▶ checkers
-```
-
-Load-bearing hand-offs the first v2 pass broke (now restored): **B0.scenes_party_size → B2 vocative**; **B2.event_id → B3.relation_event_summary.event_ids → phase per-event disposition**; **B0.neutral_premise/setting → B3** (requires B0 brief in B3 allowlist); **B3.rolling_summary → next B3** (not B0).
+B0→B1→B2(needs B0 scene-projection + B1 mentions)→B3(needs B0 typed projection + B1 roster + B2 events + K prior summaries)→B4(needs all, groups pairs). Corrected: rolling_summary→next-B3 (not B0); B3 gets a **typed projection** of B0 (not the full brief — see §4); phase pairs formed post-B4.
 
 ---
 
-## 4. Per-layer INPUT contract — the missing half (closes F7)
+## 4. Per-layer INPUT contract — typed projections + sentinel test (round-2 F7)
 
-Each layer's user payload is an **allowlist**. The conformance test is stronger than a marker grep (CodeX F7): a **typed payload allowlist** + a unique **sentinel injected into every forbidden source** asserted absent from the FULL rendered request + a **lineage-fingerprint** check that no forbidden-source order_index entered the request.
+The conformance test = typed payload allowlist + a unique **sentinel injected into every forbidden source**, asserted absent from the FULL rendered request + a **lineage-fingerprint** that no forbidden-source order_index entered.
 
-| Layer | ALLOWED | FORBIDDEN (sentinel-asserted absent) | tail / as-of |
+| Layer | ALLOWED | FORBIDDEN (sentinel-asserted) | tail/as-of |
 |---|---|---|---|
-| **B0** | this chapter's block text only | REGISTRY_SO_FAR, neighbor summaries, prior-chapter identity/summary | n/a |
-| **B1** | active window + read-only CONTEXT_ONLY tail | registry, entity ids, B0 hints-as-authority | **tail by mode: online_as_of = previous-blocks tail ONLY; whole_book_frozen = ±K both-sided but audited** (Canonical §2/§3). Never cite a context-only block_id |
-| **B2** | active window + tail + B0 brief (scene-intersecting projection) + B1 WINDOW_MENTIONS | entity registry, candidate ids, future windows, non-intersecting scenes' claims | same mode rule |
-| **B3** | full chapter + **B0 brief** + B1 roster (surfaces) + B2 events (compact) + prev rolling_summary | future chapters, entity ids as authority, whole-book vector | chapter-local |
+| B0 | chapter block text only | REGISTRY_SO_FAR, neighbor summaries, prior-chapter identity/summary | mode topology §1 |
+| B1 | active window + read-only tail | registry, entity ids, B0 hints-as-authority | tail by mode (online=prev-only; frozen=±K audited) |
+| B2 | window + tail + B0 **scene projection** + B1 WINDOW_MENTIONS | registry, candidate ids, future windows, non-intersecting scenes | mode |
+| B3 | full chapter + **typed B0 projection (setting + neutral_premise as GIST_ONLY)** + B1 roster + B2 events + K prior summaries | **the full brief renderer** (`render_chapter_brief_for_injection` carries cast/role/participant = the B0→downstream bias M4f removes), future chapters, entity ids | chapter-local |
 
-**Live contradiction to fix (F7):** `builder_pilot.py:1174` injects registry+neighbor into B0 while the B0 prompt says "scene text only." The B0 contract above is authority; the code must change and the sentinel test must assert `REGISTRY_SO_FAR` is absent from the B0 rendered request.
-
----
-
-## 5. Token budget per layer (MEASURED at dry-run per §10, not estimated)
-
-| Layer | Cadence | Dominant payload | Lever |
-|---|---|---|---|
-| B0 | 1 / chapter | chapter text (~8–9.4k tok WH) | one call; cheap |
-| B1 | N windows / ch | window + tail | **window LOCKED 500/8** (1500 fails recall — measured) |
-| B2 | N windows / ch | window + B0 scene projection + WINDOW_MENTIONS | projection = only intersecting scenes (not whole chapter) keeps it small |
-| B3 | 1 / chapter | full chapter + B0 brief + compact roster/events | roster = surfaces only |
+**Two live contradictions to fix:** (1) `builder_pilot.py:1174` injects registry+neighbor into B0. (2) handing B3 the full brief reopens the cast/role hint channel — B3 must get a typed projection where `neutral_premise` is GIST_ONLY (never evidence for a fact/frame/relation) and cast/role are sentinel-tested OUT.
 
 ---
 
-## 6. A–E — reconciled with CodeX (Sol pass still pending)
+## 5. Phase 1 sequence (Sol-locked — prompts LAST)
 
-- **A — split `frame_kind` from `story_time_label`:** AGREE, but it is a **Canonical §7 change** (§7 has only story_time_label) AND the **nesting representation (F4) must be defined first**. Amend §7 + adopt the local-key→remap nesting scheme, then split.
-- **B — occurrence id minting:** **Claude concedes to CodeX** — CODE canonicalizes/mints occurrence ids from position; if the model emits a local key it is an untrusted intra-response cross-ref hint only, and a format/unique/order validator (currently absent, :3818/:3922) must be added. Withdraws rev1's "positional ids stay model-minted."
-- **C — address_terms:** AGREE — per-turn list, each occurrence its own id + disposition, turn-embedded (never a third bucket).
-- **D — B0 scope:** AGREE with CodeX's condition — NOT simple chapter-scope. B0 reads the chapter but emits **surface × scene** claims (never merged across scenes) and B2 receives only the **scene-intersecting projection**. This reconciles the single efficient B0 call with Canonical's scene-local intent.
-- **E — retirement:** **Claude concedes to CodeX (verified):** RETIRE `utterance_gist` (0 consumer), `scene_summaries` (test stub only), `termhood` (D2L-only, no literary consumer). KEEP + propagate `proposed_target_vi`, `category`, `do_not_translate` (real consumers; fix the `_glossary_as_of` drop). "Retire none" (rev1) is withdrawn.
+1. **Lock rev3 schema:** mode-specific B0 topology, source positions (B1 span/ordinal, B2 position_key, in-block frame position), occurrence-grounded B3, nesting-tree invariants.
+2. **Typed schemas + validators + code-mint/remap** written and tested BEFORE any prompt: drop old required fields (:3818/:3922), add id format/unique/order, nesting-tree validator (:4050), scene exact-cover validator (:3727), deterministic mint.
+3. **Dismantle the old identity path:** remove `seed_entity_ledger_from_chapter_brief`, `update_entity_ledger_from_lexicon`, `render_chapter_brief_for_injection` (as an injection source), registry→B1 and roster→B2 injection; replace M1 entity-ledger with occurrence/claim ground state; convert M2 roster to occurrence rows; **bump M1/M2 checkpoint schema**.
+4. **Normalized handoffs:** B1→B2 (code-minted ids in WINDOW_MENTIONS), M2 occurrence roster, B3 tree/event schema.
+5. **B4 ingest/persistence:** full glossary handoff (fix `_glossary_as_of` drop), motifs/threads/T4, universal envelopes.
+6. **THEN** rewrite the four prompts, the token estimator, the sentinel conformance test, and a dry-run rendered-call-graph.
 
-No new `other_new_class` vs §E9 (CodeX concurs) — the fixes are all already-locked; rev1 merely expressed them inconsistently.
+---
+
+## 6. A–E status + round-2 resolutions
+
+- A (split frame_kind/story_time): still a Canonical §7 change; now bundled with the §2.4 nesting-tree spec.
+- B (code-mint ids): confirmed + now needs the source-position coordinates (§2.2/§2.3) to be deterministic.
+- C (address_terms turn-embedded): unchanged, PASS.
+- D (B0 scope): **superseded by §1** — not simple chapter-scope; topology is mode-dependent + scene exact-cover + co_present_count untrusted.
+- E (retirement): 3 fields retired (verified). Consumer provenance now tagged `[rt]/[cp]/[audit]`; **`confidence`** retire unless Context Audit actually persists/reads it (currently no literary read-site, not in Canonical ground endpoint); **`neutral_premise`** kept only as GIST_ONLY to B3 and must prove value beyond a self-created consumer.
+
+No new `other_new_class` vs §E9 (Sol concurs) — findings map to context_packaging / hint_bias / schema_contract / provenance_loss / wiring, all within the locked taxonomy.
 
 ---
 
 ## 7. What this unblocks
 
-Once **Sol's independent pass reconciles with this rev2** (dual-audit, §E9), the prompt rework is mechanical fill-to-contract: rewrite the four blockquotes as v1 − DROP-IDENTITY − RETIRE + ADD/RESTORE per §2 (keeping runtime field names), add the §4 input contracts + validator changes (drop old required fields; add id format/unique/order; nesting-tree frame validator; propagate do_not_translate), then verify via the real loader + book-neutrality grep + the sentinel conformance test. F5/F7 become structurally impossible. **Do not start the rewrite until Sol's pass is folded.**
+rev3 is LOCK-eligible only after **Sol round-3** confirms: mode topology, occurrence-grounded B3, nesting invariants, source-position mint, typed B3 projection, complete B4 list. Then Phase 1 runs steps 1–5 (schema/validators/orchestration) and only step 6 rewrites prompts + sentinel conformance + dry-run. The prompt rewrite is the last 10%, not the first move.
