@@ -1,6 +1,6 @@
 # LITERARY_BUILDER_SCHEMA_ALLOCATION_V1 — draft for Sol review
 
-Status: **DRAFT rev3 (Claude), 2026-07-12.** Not LOCKED. rev3 folds **Sol Max round-2** (8 findings — 3 BLOCKER + 4 MAJOR + 1 MINOR — all verified by Claude on artifacts/source). **Not yet prompt-write-ready; needs Sol round-3 to confirm rev3.**
+Status: **DRAFT rev4 (Claude), 2026-07-12.** Not LOCKED — rev4 adds §8 locking Sol round-3's five implement-blockers; Phase 1 steps 1–2 are GO after a mechanical Sol confirm. rev3 folds **Sol Max round-2** (8 findings — 3 BLOCKER + 4 MAJOR + 1 MINOR — all verified by Claude on artifacts/source). **Not yet prompt-write-ready; needs Sol round-3 to confirm rev3.**
 
 **REFRAME (round-2 consequence):** round-2 proved the leaks live in the **orchestration + as-of topology**, not just field naming — so this is no longer a "prompt rework", it is a **Builder-core rev**. Per Sol's locked sequence, **prompts are the LAST step (step 6)**, after schema/validators/code-mint, after dismantling the old identity-ledger, after the B1→B2/M2/B3 handoff and B4 ingest are rebuilt. Do NOT rewrite prompts off this doc.
 
@@ -48,7 +48,7 @@ Fields as rev2 §2.2 (keep `source_term`; RESTORE proposed_target_vi `[rt]`/cate
 Endpoint object — round-2 F4 splits the two axes cleanly:
 - **`reference_scope` = individual | group | narrator | reader | unknown** (REPLACES rev2's `reference_kind=person|group|narrator|reader`). The discourse/scope axis: is this ONE addressable individual, a group, the narrator's voice, the reader, or unknown. A dog is `reference_scope=individual` + `referent_kind_claim=animal`.
 - **`referent_kind_claim` = person | animal | nonhuman_character | place | group_reference | object | unknown** (ontology). **Runtime entity-eligibility reads ontology/checker (is it a person?), NEVER the scope axis.** A locked valid-combination table governs (e.g. narrator/reader scope ⇒ not an entity).
-- `mention_ref`, `attribution_method`, `confidence` KEEP. Endpoint carries its OWN `endpoint_block_id` + `source_position` + `resolution_span` (F3/round-1) — a pronoun or an off-utterance "said X" tag needs its own evidence, not the shared turn quote.
+- `mention_ref`, `attribution_method` KEEP; `confidence` **RETIRED** (LOCK-3). Endpoint carries its OWN `endpoint_block_id` + `source_position` + `resolution_span` (F3/round-1) — a pronoun or an off-utterance "said X" tag needs its own evidence, not the shared turn quote.
 - `endpoint_id`, `resolution_evidence` = CODE.
 
 Turn/event:
@@ -121,3 +121,51 @@ No new `other_new_class` vs §E9 (Sol concurs) — findings map to context_packa
 ## 7. What this unblocks
 
 rev3 is LOCK-eligible only after **Sol round-3** confirms: mode topology, occurrence-grounded B3, nesting invariants, source-position mint, typed B3 projection, complete B4 list. Then Phase 1 runs steps 1–5 (schema/validators/orchestration) and only step 6 rewrites prompts + sentinel conformance + dry-run. The prompt rewrite is the last 10%, not the first move.
+
+---
+
+## 8. FIVE IMPLEMENTATION LOCKS (rev4 — resolves Sol round-3 NO-GO; GO after this)
+
+Sol round-3 verdict: NO-GO with exactly five BLOCKER-to-implement decisions an implementer would otherwise invent, and **no dependency-order blocker**. Each is now locked to a single choice. After §8, Phase 1 steps 1–2 are GO.
+
+### LOCK-1 — B0 topology & coverage universe (one choice)
+- **B0 is ALWAYS a single whole-chapter call.** It is NOT made scene-local. The as_of problem is resolved not by changing B0's topology but by its **consumption**: B0 cast_claims are `whole_book_frozen`-only. **In `as_of_experiment` mode B0 output is NOT consumed at all** — the canary identity call relies on scene text + as-of-filtered retrieval, and B0 claims are already barred from witness authority (Canonical §4), so excluding them costs nothing and removes the chapter-end `input_max_order` leak by construction. This dissolves the chicken-and-egg (no pre-B0 scene segmenter needed).
+- **Coverage universe for exact-cover = non-heading blocks only** (`block_type ∈ {paragraph, dialogue}`; `heading`/structural excluded). Verified: `block_type` already tags heading/dialogue/paragraph (builder_pilot.py:4284/4313) and frame coverage already filters heading (:4063). Scenes and frame leaves exact-cover this universe.
+- `co_present_count` stays an **untrusted claim** (never a hard B2 rule).
+
+### LOCK-2 — one shared `SourceAnchor` (kills the coordinate divergence)
+Every source coordinate in the Builder uses ONE type:
+- **Shape:** `SourceAnchor = {block_id, char_start, char_end}`.
+- **Canonical source string:** the block's stored `text` field **NFC-normalized**, i.e. the exact string the model is shown. Offsets index THIS string.
+- **Offset unit:** Unicode **code points** (not bytes, not UTF-16). **Half-open `[char_start, char_end)`** — consistent with the §8 interval convention.
+- **Model never emits offsets.** The model emits a **verbatim quote span** (+ an optional `occurrence_hint` = "the Nth time this surface appears in the block"). **Code locates** the span by exact substring search in the NFC block text → `{char_start, char_end}`; if it occurs more than once, code uses `occurrence_hint`, else **fail-closed** (drop with a counter, never guess). This is the deterministic-mint foundation (model does verbatim copy = language; code does the arithmetic = mechanical).
+- **Derived keys (all code-computed from SourceAnchor):** `occurrence_ordinal` = rank of same-surface anchors in the block by `char_start`; `position_key = (block_order, char_start)` where `block_order` = index of the block in the chapter's non-heading sequence; `mention_id = m_<block>_<occurrence_ordinal>`; `turn_id/event_id/endpoint_id` from `position_key` + role. An in-block frame boundary is a `SourceAnchor` too.
+
+### LOCK-3 — endpoint two-axis validity + `confidence` retired
+- **Two orthogonal fields** on every endpoint: `reference_scope ∈ {individual, group, narrator, reader, unknown}` (discourse) and `referent_kind_claim ∈ {person, animal, nonhuman_character, place, group_reference, object, unknown}` (ontology).
+- **Validity/routing rules (the "table", as rules not a 35-cell grid):**
+  - **Entity-eligible (→ person consolidation) IFF** `reference_scope=individual AND referent_kind_claim=person`.
+  - **Captured, routed OUT of person-consolidation:** `individual + {animal, nonhuman_character}` (acting/personified beings); `group + group_reference`.
+  - **Discourse-only, never an entity:** `narrator + {person, unknown}`; `reader + {person, unknown}`.
+  - **`unknown` scope OR `unknown` kind:** allowed with anything (defers that axis; not yet eligible).
+  - **Invalid (validator FLAGS, does not drop — [[validator-fix-field-keep-item-not-drop]]):** `individual + {place, object, group_reference}`; `group + non-group_reference`; `narrator/reader + a kind other than person/unknown`. Flag → route to review, keep the row.
+  - **Runtime eligibility reads the ontology axis + checker, NEVER the word "person" in the scope axis.**
+- **`confidence` is RETIRED** from v2 endpoints. Verified: no literary decision-consumer reads its value (emit + validator-enum only, builder_pilot.py:546/554/562/4443/4475); `attribution_method` is the trust signal (v1's own statement). Resolves the rev3:51↔115 contradiction.
+
+### LOCK-4 — B3 occurrence-grounded typed schema
+B3 emits observations that reference B2 occurrences; **no `pair`, no identity canonicalization** — code groups into final pairs only after B4 active bindings.
+- **`relation_observations[]`** (replaces `relation_event_summary`): required `{event_id (from B2), endpoint_refs: [endpoint_id, endpoint_id], observed_valence_hint ∈ {positive,negative,mixed,unclear}, block_id, evidence_quote}`; optional `transition_hint: {trigger_event_id, note}` (references an event, never a pair; evidence-flag, not a phase).
+- **`character_state_changes[]`**: required `{subject_ref: endpoint_id | mention_id, attribute ∈ {social_status, alias_or_title, life_status, residence}, from_value, to_value, trigger_ref: event_id | block_id, evidence_quote}`. Points to an occurrence, never a clean identity surface.
+- **`unresolved_threads[]`**: required `{thread_local_id, description, opened_block, kind ∈ {mystery, pending_transition, question}}`; optional `subject_refs: [endpoint_id | mention_id]` when about characters.
+- **`translator_relevant_facts[]`**: required `{fact_type ∈ {narrator, register, speech_style, status, setting}, fact, block_evidence, inference_basis ∈ {stated, derived}}`; optional `subject_ref` (occurrence) + `event_ids` for character facts.
+- `chapter_rolling_summary` unchanged; K=2 separate priors on the input side (LOCK not here — §2.4).
+
+### LOCK-5 — frame tree: synthetic root + `frame_kind` split (amends Canonical §7)
+- **Choose SYNTHETIC ROOT** (not forest): one virtual root spanning the whole non-heading chapter; every model segment descends from it (parent defaults to root). Single tree → root coverage = whole chapter; invariants (child⊂parent, siblings non-overlap, leaves exact-cover, deepest active leaf renders, unique local keys, every parent exists, acyclic) are checked against this one tree.
+- **`frame_kind` IS added**, orthogonal to `story_time_label`:
+  - `frame_kind ∈ {primary_narration, embedded_document, letter, diary, dream, vision, tale_told_aloud, quoted_report}`
+  - `story_time_label ∈ {frame_present, retrospective_past, anterior_past}`
+  - A letter read aloud = `frame_kind=letter` + `story_time_label=retrospective_past` (the case rev1-A raised). Both required per segment.
+- **This amends Canonical §7** (which had only `story_time_label`). The §7 text is updated in the same commit so Canonical and this doc do not drift.
+
+**Post-§8 verdict:** the five invent-decisions are closed; per Sol, no other dependency-order blocker. **Phase 1 steps 1–2 (typed schemas + validators + code-mint/remap) are GO.** rev4 status = LOCK-eligible pending a Sol GO-confirm read (mechanical, not a new round).
