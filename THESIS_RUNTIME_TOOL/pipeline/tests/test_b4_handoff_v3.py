@@ -73,6 +73,20 @@ def _chapter(number: int) -> dict[str, Any]:
                 "clean_text": f"{first} and {second} left the room.",
                 "source_text": f"{first} and {second} left the room.",
             },
+            {
+                "block_id": f"{chapter_id}_b003",
+                "block_type": "paragraph",
+                "order_index": number * 100 + 3,
+                "clean_text": "A silent frame-only passage contains no character occurrence.",
+                "source_text": "A silent frame-only passage contains no character occurrence.",
+            },
+            {
+                "block_id": f"{chapter_id}_b004",
+                "block_type": "heading",
+                "order_index": number * 100 + 4,
+                "clean_text": "Cafe\u0301 source heading",
+                "source_text": "Cafe\u0301 source heading",
+            },
         ],
     }
 
@@ -107,6 +121,8 @@ def _script_for_chapter(number: int) -> dict[tuple[str, str, str | None], dict[s
     chapter_id = f"bk_ch{number:02d}"
     block_1 = f"{chapter_id}_b001"
     block_2 = f"{chapter_id}_b002"
+    block_3 = f"{chapter_id}_b003"
+    block_4 = f"{chapter_id}_b004"
     first, second = NAMES[number - 1]
     text = _chapter_text(number)
     dog_clause = "The canine mother, known in this scene as Madam, remained an animal by the hearth."
@@ -143,13 +159,18 @@ def _script_for_chapter(number: int) -> dict[tuple[str, str, str | None], dict[s
                     "block_range": [block_1, block_2],
                     "co_present_count": 3,
                     "participants": [first, second, "Madam"],
-                }
+                },
+                {
+                    "block_range": [block_3, block_3],
+                    "co_present_count": 0,
+                    "participants": [],
+                },
             ],
             "neutral_premise": f"{first} and {second} meet in a room.",
         },
         ("b1", chapter_id, f"w_{chapter_id}_01"): {
             "chapter_id": chapter_id,
-            "window_block_ids": [block_1, block_2],
+            "window_block_ids": [block_1, block_2, block_3, block_4],
             "context_only_used": False,
             "character_mentions": [
                 {
@@ -199,7 +220,7 @@ def _script_for_chapter(number: int) -> dict[tuple[str, str, str | None], dict[s
         },
         ("b2", chapter_id, f"w_{chapter_id}_01"): {
             "chapter_id": chapter_id,
-            "window_block_ids": [block_1, block_2],
+            "window_block_ids": [block_1, block_2, block_3, block_4],
             "context_only_used": False,
             "speaker_turns": [
                 {
@@ -238,7 +259,7 @@ def _script_for_chapter(number: int) -> dict[tuple[str, str, str | None], dict[s
                     "narrator_ref": mention_first,
                     "frame_kind": "primary_narration",
                     "story_time_label": "frame_present",
-                    "block_range": [block_1, block_2],
+                    "block_range": [block_1, block_3],
                     "start_boundary": None,
                     "end_boundary": None,
                     "status": "proposed",
@@ -366,6 +387,63 @@ def test_complete_bundle_contains_all_channels_and_p0_fields(built: dict[str, An
     assert len({row["ground_item_id"] for channel in GROUND_CHANNELS for row in ground[channel]}) == sum(
         len(ground[channel]) for channel in GROUND_CHANNELS
     )
+    catalog = bundle["source_block_catalog"]
+    assert len(catalog) == 12
+    assert {row["block_type"] for row in catalog} == {"paragraph", "heading"}
+    assert {row["block_id"] for row in catalog} == {
+        f"bk_ch{chapter:02d}_b{block:03d}"
+        for chapter in range(1, 4)
+        for block in range(1, 5)
+    }
+    catalog_ids = {row["block_id"] for row in catalog}
+    assert all(
+        ref["ref_id"] in catalog_ids
+        for channel in GROUND_CHANNELS
+        for row in ground[channel]
+        for ref in row["evidence_refs"]
+        if ref["ref_kind"] == "block"
+    )
+    context_ids = {
+        row["block_id"]
+        for card in bundle["occurrence_cards"]
+        if card["chapter_id"] == "bk_ch01"
+        for row in card["context_universe"]["scene_block_candidates"]
+    }
+    assert "bk_ch01_b003" not in context_ids
+    assert "bk_ch01_b004" not in context_ids
+    assert next(row for row in catalog if row["block_id"] == "bk_ch01_b003")["text"] == (
+        "A silent frame-only passage contains no character occurrence."
+    )
+    assert next(row for row in catalog if row["block_id"] == "bk_ch01_b004")["text"] == (
+        "Caf\u00e9 source heading"
+    )
+    frame_only_ref_ids = {
+        ref["ref_id"]
+        for ref in ground["frame_claim_inputs"][0]["evidence_refs"]
+        if ref["ref_kind"] == "block"
+    }
+    assert "bk_ch01_b003" in frame_only_ref_ids
+    assert [
+        [prior["chapter_id"] for prior in row["prior_summaries"]]
+        for row in bundle["summary_lineage"]
+    ] == [[], ["bk_ch01"], ["bk_ch01", "bk_ch02"]]
+    lineage_json = canonical_json(bundle["summary_lineage"])
+    assert "source_m2v3_checkpoint_hash" not in lineage_json
+    assert "chapter_rolling_summary" not in lineage_json
+
+
+def test_block_catalog_is_required_for_every_block_evidence_ref(
+    built: dict[str, Any],
+) -> None:
+    bundle = _assemble(built)
+    ground = deepcopy(bundle["ground_evidence"])
+    ground["frame_claim_inputs"][0]["evidence_refs"].append(
+        {"ref_kind": "block", "ref_id": "bk_ch01_missing", "role": None}
+    )
+    with pytest.raises(B4HandoffError, match="absent from catalog"):
+        handoff._validate_block_resolution(
+            bundle["source_block_catalog"], bundle["occurrence_cards"], ground
+        )
 
 
 @pytest.mark.parametrize("mutation", ["missing", "duplicate"])
@@ -584,6 +662,22 @@ def test_loader_rejects_semantic_mismatch_and_wrong_m1_identity(
 
     monkeypatch.setattr(handoff, "read_state_from_checkpoint", missing_contract)
     with pytest.raises(CheckpointError, match="contract mismatch"):
+        _load(built)
+
+    def stale_summary_identity(
+        checkpoint: dict[str, Any], *, out_dir: Path
+    ) -> dict[str, Any]:
+        state = original(checkpoint, out_dir=out_dir)
+        if checkpoint["stage"] == "m2v3" and checkpoint["chapter_id"] == "bk_ch02":
+            state = deepcopy(state)
+            state["prior_summary_provenance"][0]["source_m2v3_identity_hash"] = "stale"
+            state["semantic_state_hash"] = canonical_hash(
+                handoff._m2_semantic_projection(state)
+            )
+        return state
+
+    monkeypatch.setattr(handoff, "read_state_from_checkpoint", stale_summary_identity)
+    with pytest.raises(CheckpointError, match="prior-summary identity lineage"):
         _load(built)
 
 

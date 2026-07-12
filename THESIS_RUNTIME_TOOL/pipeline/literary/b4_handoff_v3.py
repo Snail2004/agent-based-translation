@@ -169,6 +169,27 @@ def _validate_state(
             raise CheckpointError(f"M2 state has wrong operational M1 checkpoint: {chapter_id}")
 
 
+def _validate_prior_summary_provenance(
+    state: Mapping[str, Any],
+    *,
+    prior_chapters: Sequence[Mapping[str, Any]],
+    summary_k: int,
+) -> None:
+    expected = list(prior_chapters[max(0, len(prior_chapters) - summary_k) :])
+    rows = state.get("prior_summary_provenance") or []
+    expected_ids = [str(row.get("chapter_id") or "") for row in expected]
+    actual_ids = [str(row.get("chapter_id") or "") for row in rows]
+    if actual_ids != expected_ids:
+        raise CheckpointError(
+            f"M2 prior-summary chapter lineage mismatch: {state.get('chapter_id')}"
+        )
+    for actual, prior in zip(rows, expected):
+        if actual.get("source_m2v3_identity_hash") != prior.get("m2v3_identity_hash"):
+            raise CheckpointError(
+                f"M2 prior-summary identity lineage mismatch: {state.get('chapter_id')}"
+            )
+
+
 def _expected_checkpoint(
     *,
     stage: str,
@@ -303,6 +324,11 @@ def load_verified_builder_v3_inputs(
             chapter_id=chapter_id,
             m1_checkpoint=m1,
         )
+        _validate_prior_summary_provenance(
+            m2_state,
+            prior_chapters=verified,
+            summary_k=summary_k,
+        )
         verified.append(
             {
                 "chapter_id": chapter_id,
@@ -408,6 +434,129 @@ def _scene_context(
         "scene_range": [block_id, block_id],
         "source": "active_block_fallback",
     }
+
+
+def _build_source_block_catalog(inputs: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Forward every selected NFC source block exactly once for Step-5 calls."""
+
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for chapter in inputs.get("chapters") or []:
+        chapter_id = str(chapter.get("chapter_id") or "")
+        for block in chapter.get("source_blocks") or []:
+            block_id = str(block.get("block_id") or "")
+            text = str(block.get("text") or "")
+            if not block_id or block_id in seen:
+                raise B4HandoffError(
+                    f"source block catalog has duplicate/empty block id: {block_id!r}"
+                )
+            if unicodedata.normalize("NFC", text) != text:
+                raise B4HandoffError(f"source block catalog text is not NFC: {block_id}")
+            seen.add(block_id)
+            rows.append(
+                {
+                    "chapter_id": chapter_id,
+                    "block_id": block_id,
+                    "order_index": int(block.get("order_index") or 0),
+                    "block_type": str(block.get("block_type") or ""),
+                    "text": text,
+                }
+            )
+    return _clone(rows)
+
+
+def _summary_lineage(inputs: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Preserve deterministic K-summary provenance without operational hashes/prose."""
+
+    result: list[dict[str, Any]] = []
+    for chapter in inputs.get("chapters") or []:
+        prior: list[dict[str, Any]] = []
+        for raw in (chapter.get("m2_state") or {}).get("prior_summary_provenance") or []:
+            row = {
+                "chapter_id": str(raw.get("chapter_id") or ""),
+                "source_m2v3_identity_hash": str(
+                    raw.get("source_m2v3_identity_hash") or ""
+                ),
+                "input_max_order": raw.get("input_max_order"),
+            }
+            if (
+                not row["chapter_id"]
+                or not row["source_m2v3_identity_hash"]
+                or not isinstance(row["input_max_order"], int)
+            ):
+                raise B4HandoffError(
+                    f"prior-summary audit provenance is malformed: {chapter.get('chapter_id')}"
+                )
+            prior.append(row)
+        result.append(
+            {
+                "chapter_id": str(chapter.get("chapter_id") or ""),
+                "prior_summaries": prior,
+            }
+        )
+    return _clone(result)
+
+
+def _validate_block_resolution(
+    catalog: Sequence[Mapping[str, Any]],
+    occurrence_cards: Sequence[Mapping[str, Any]],
+    ground_evidence: Mapping[str, Any],
+) -> None:
+    """Require every block reference/context row to resolve to catalog text."""
+
+    block_map: dict[str, dict[str, Any]] = {}
+    for raw in catalog:
+        row = _clone(raw)
+        block_id = str(row.get("block_id") or "")
+        if not block_id or block_id in block_map:
+            raise B4HandoffError(
+                f"source block catalog is not uniquely addressable: {block_id!r}"
+            )
+        block_map[block_id] = row
+
+    for card in occurrence_cards:
+        block_id = str(card.get("block_id") or "")
+        universe = card.get("context_universe") or {}
+        context_rows = [
+            universe.get("active_block"),
+            *(universe.get("scene_block_candidates") or []),
+        ]
+        if block_id not in block_map:
+            raise B4HandoffError(f"occurrence card block is absent from catalog: {block_id}")
+        for raw_context in context_rows:
+            if not isinstance(raw_context, Mapping):
+                raise B4HandoffError("occurrence context contains a non-object block")
+            context_id = str(raw_context.get("block_id") or "")
+            expected = block_map.get(context_id)
+            comparable = (
+                {
+                    "block_id": expected["block_id"],
+                    "order_index": expected["order_index"],
+                    "block_type": expected["block_type"],
+                    "text": expected["text"],
+                }
+                if expected is not None
+                else None
+            )
+            if comparable != raw_context:
+                raise B4HandoffError(
+                    f"occurrence context disagrees with source catalog: {context_id}"
+                )
+
+    for channel, rows in ground_evidence.items():
+        if channel == "dedupe_counts":
+            continue
+        if not isinstance(rows, list):
+            raise B4HandoffError(f"ground channel is not a list: {channel}")
+        for row in rows:
+            for ref in row.get("evidence_refs") or []:
+                if (
+                    ref.get("ref_kind") == "block"
+                    and str(ref.get("ref_id") or "") not in block_map
+                ):
+                    raise B4HandoffError(
+                        f"ground block reference is absent from catalog: {ref.get('ref_id')}"
+                    )
 
 
 def _register_owner(
@@ -1293,6 +1442,9 @@ def assemble_b4_input_bundle(
     cards = build_occurrence_cards(inputs)
     routing = build_occurrence_routing_view(inputs, cards)
     ground = build_complete_ground_evidence(inputs, cards)
+    source_block_catalog = _build_source_block_catalog(inputs)
+    summary_lineage = _summary_lineage(inputs)
+    _validate_block_resolution(source_block_catalog, cards, ground)
     provenance = [
         {
             "chapter_id": str(row["chapter_id"]),
@@ -1320,6 +1472,8 @@ def assemble_b4_input_bundle(
         "knowledge_cutoff_scope": inputs["knowledge_cutoff_scope"],
         "scope_complete_book": bool(inputs["scope_complete_book"]),
         "input_contract": input_contract,
+        "source_block_catalog": source_block_catalog,
+        "summary_lineage": summary_lineage,
         "occurrence_cards": cards,
         "occurrence_routing": routing,
         "ground_evidence": ground,
