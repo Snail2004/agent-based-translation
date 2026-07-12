@@ -179,11 +179,13 @@ SHAPE_CONTRACTS: dict[str, dict[str, FieldContract]] = {
         "character_state_changes": _field("list"),
         "unresolved_threads": _field("list"),
         "translator_relevant_facts": _field("list"),
+        "motifs": _field("list"),
     },
     "FrameSegment": {
         "local_segment_key": _field("str"),
         "parent_local_key": _field("str", nullable=True),
         "narrator_surface": _field("str"),
+        "narrator_ref": _field("str", nullable=True),
         "frame_kind": _field("str", allowed=FRAME_KINDS),
         "story_time_label": _field("str", allowed=STORY_TIME_LABELS),
         "block_range": _field("pair_str"),
@@ -231,6 +233,11 @@ SHAPE_CONTRACTS: dict[str, dict[str, FieldContract]] = {
         "inference_basis": _field("str", allowed=INFERENCE_BASES),
         "subject_ref": _field("str", required=False),
         "event_ids": _field("list_str", required=False),
+    },
+    "Motif": {
+        "note": _field("str"),
+        "block_ids": _field("list_str_nonempty"),
+        "subject_refs": _field("list_str", required=False),
     },
 }
 
@@ -1160,8 +1167,9 @@ def validate_digest_v3(
     mention_ids: Iterable[str] = (),
     endpoint_ids: Iterable[str] = (),
     event_ids: Iterable[str] = (),
+    event_endpoint_map: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> ValidationResult[dict[str, Any]]:
-    """Validate B3's occurrence-grounded observations and nested frame tree."""
+    """Validate B3's occurrence-grounded observations, event topology, and frame tree."""
 
     counts: Counter[str] = Counter()
     counts["frame_cycle"] = 0
@@ -1186,6 +1194,27 @@ def validate_digest_v3(
     allowed_endpoints = {str(value) for value in endpoint_ids}
     allowed_events = {str(value) for value in event_ids}
     occurrence_refs = allowed_mentions | allowed_endpoints
+    source_events = {
+        str(event_id): dict(value)
+        for event_id, value in (event_endpoint_map or {}).items()
+        if str(event_id)
+    }
+    if set(source_events) != allowed_events:
+        errors.append("event_endpoint_map keys must exactly match event_ids")
+        counts["fatal_event_endpoint_map_key_mismatch"] += 1
+    for event_id, source_event in source_events.items():
+        actor_id = str(source_event.get("actor_endpoint_id") or "")
+        target_id = str(source_event.get("target_endpoint_id") or "")
+        block_id = str(source_event.get("block_id") or "")
+        if (
+            not actor_id
+            or not target_id
+            or actor_id not in allowed_endpoints
+            or target_id not in allowed_endpoints
+            or block_id not in block_map
+        ):
+            errors.append(f"event_endpoint_map[{event_id}] is malformed or foreign")
+            counts["fatal_invalid_event_endpoint_map"] += 1
 
     frame_rows = _require_list(normalized.get("narration_frame_segments"), "narration_frame_segments", errors)
     kept_frames: list[dict[str, Any]] = []
@@ -1206,6 +1235,13 @@ def validate_digest_v3(
             key = str(frame.get("local_segment_key") or "")
             if not key:
                 errors.append(f"frame[{index}].local_segment_key is required")
+                continue
+            narrator_ref = frame.get("narrator_ref")
+            if narrator_ref is not None and not _is_occurrence_reference(
+                narrator_ref, occurrence_refs
+            ):
+                errors.append(f"frame[{index}].narrator_ref is not occurrence-grounded")
+                counts["dropped_invalid_narrator_ref"] += 1
                 continue
             _enum(frame.get("frame_kind"), FRAME_KINDS, f"frame[{index}].frame_kind", errors)
             _enum(frame.get("story_time_label"), STORY_TIME_LABELS, f"frame[{index}].story_time_label", errors)
@@ -1384,7 +1420,8 @@ def validate_digest_v3(
             ):
                 counts["dropped_invalid_relation_observation"] += 1
                 continue
-            if str(relation.get("event_id") or "") not in allowed_events:
+            event_id = str(relation.get("event_id") or "")
+            if event_id not in allowed_events:
                 errors.append(f"relation_observations[{index}].event_id is not occurrence-grounded")
                 continue
             refs = relation.get("endpoint_refs")
@@ -1393,8 +1430,22 @@ def validate_digest_v3(
             ):
                 errors.append(f"relation_observations[{index}].endpoint_refs are not occurrence-grounded")
                 continue
-            if str(relation.get("block_id") or "") not in block_map:
+            block_id = str(relation.get("block_id") or "")
+            if block_id not in block_map:
                 errors.append(f"relation_observations[{index}].block_id outside chapter")
+                continue
+            source_event = source_events.get(event_id)
+            if source_event is None:
+                errors.append(f"relation_observations[{index}].event_id has no topology record")
+                counts["fatal_missing_event_topology"] += 1
+                continue
+            expected_refs = [
+                str(source_event.get("actor_endpoint_id") or ""),
+                str(source_event.get("target_endpoint_id") or ""),
+            ]
+            if refs != expected_refs or block_id != str(source_event.get("block_id") or ""):
+                errors.append(f"relation_observations[{index}] disagrees with its source event topology")
+                counts["fatal_event_topology_mismatch"] += 1
                 continue
             transition_hint = relation.get("transition_hint")
             if transition_hint is not None:
@@ -1500,11 +1551,40 @@ def validate_digest_v3(
             kept_facts.append(fact)
     normalized["translator_relevant_facts"] = kept_facts
 
+    motif_rows = _require_list(normalized.get("motifs"), "motifs", errors)
+    kept_motifs: list[dict[str, Any]] = []
+    if motif_rows is not None:
+        for index, motif_value in enumerate(motif_rows):
+            motif = _require_mapping(motif_value, f"motifs[{index}]", errors)
+            if motif is None:
+                continue
+            if not _shape_ok(
+                "Motif",
+                motif,
+                path=f"motifs[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_motif"] += 1
+                continue
+            if any(str(block_id) not in block_map for block_id in motif.get("block_ids") or []):
+                errors.append(f"motifs[{index}].block_ids outside chapter")
+                continue
+            refs = motif.get("subject_refs")
+            if refs is not None and any(
+                not _is_occurrence_reference(ref, occurrence_refs) for ref in refs
+            ):
+                errors.append(f"motifs[{index}].subject_refs are not occurrence-grounded")
+                continue
+            kept_motifs.append(motif)
+    normalized["motifs"] = kept_motifs
+
     counts["frames"] = len(kept_frames)
     counts["relation_observations"] = len(kept_relations)
     counts["character_state_changes"] = len(kept_states)
     counts["unresolved_threads"] = len(kept_threads)
     counts["translator_relevant_facts"] = len(kept_facts)
+    counts["motifs"] = len(kept_motifs)
     return ValidationResult(normalized, _report("digest_v3", errors, warnings, counts))
 
 
@@ -1534,6 +1614,7 @@ def validate_builder_payload_v3(
     mention_ids: Iterable[str] = (),
     endpoint_ids: Iterable[str] = (),
     event_ids: Iterable[str] = (),
+    event_endpoint_map: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> ValidationResult[dict[str, Any]]:
     """Small offline dispatcher used by fixtures and later orchestration work."""
 
@@ -1550,5 +1631,6 @@ def validate_builder_payload_v3(
             mention_ids=mention_ids,
             endpoint_ids=endpoint_ids,
             event_ids=event_ids,
+            event_endpoint_map=event_endpoint_map,
         )
     raise ValueError(f"unsupported Builder-v3 stage: {stage}")

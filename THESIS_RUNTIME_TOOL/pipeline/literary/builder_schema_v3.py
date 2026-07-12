@@ -196,6 +196,7 @@ class FrameSegment:
     local_segment_key: str
     parent_local_key: str | None
     narrator_surface: str
+    narrator_ref: str | None
     frame_kind: FrameKind
     story_time_label: StoryTimeLabel
     block_range: tuple[str, str]
@@ -256,6 +257,13 @@ class TranslatorRelevantFact:
 
 
 @dataclass(frozen=True)
+class Motif:
+    note: str
+    block_ids: tuple[str, ...]
+    subject_refs: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True)
 class Digest:
     chapter_id: str
     chapter_rolling_summary: str
@@ -264,6 +272,7 @@ class Digest:
     character_state_changes: tuple[StateChange, ...]
     unresolved_threads: tuple[UnresolvedThread, ...]
     translator_relevant_facts: tuple[TranslatorRelevantFact, ...]
+    motifs: tuple[Motif, ...]
 
 
 REFERENT_KIND_CLAIMS = {

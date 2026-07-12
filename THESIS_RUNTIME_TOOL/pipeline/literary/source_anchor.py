@@ -332,6 +332,7 @@ def mint_turn_event_ids(
 
 REFERENCE_FIELD_MAP = {
     "mention_ref": "occurrence_scalar",
+    "narrator_ref": "occurrence_scalar",
     "subject_ref": "occurrence_scalar",
     "event_id": "event_scalar",
     "trigger_event_id": "event_scalar",

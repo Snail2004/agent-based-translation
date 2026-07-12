@@ -182,6 +182,7 @@ def _digest(
                 "local_segment_key": "present",
                 "parent_local_key": None,
                 "narrator_surface": "Narrator",
+                "narrator_ref": None,
                 "frame_kind": "primary_narration",
                 "story_time_label": "frame_present",
                 "block_range": ["bk_ch01_b001", "bk_ch01_b003"],
@@ -205,8 +206,24 @@ def _digest(
         "character_state_changes": [],
         "unresolved_threads": [],
         "translator_relevant_facts": [],
+        "motifs": [],
     }
 
+
+def _event_map(
+    event_id: str,
+    actor_endpoint_id: str,
+    target_endpoint_id: str,
+    *,
+    block_id: str = "bk_ch01_b001",
+) -> dict[str, dict[str, str]]:
+    return {
+        event_id: {
+            "actor_endpoint_id": actor_endpoint_id,
+            "target_endpoint_id": target_endpoint_id,
+            "block_id": block_id,
+        }
+    }
 
 def _narrative_result() -> tuple[list[dict[str, object]], dict[str, object]]:
     lexicon = validate_lexicon_v3(_lexicon(), blocks=_blocks())
@@ -243,16 +260,16 @@ def test_happy_path_per_stage_and_deterministic_code_mint() -> None:
     assert narrative_first.report.ok and narrative_second.report.ok
     assert narrative_first.payload == narrative_second.payload
 
-    endpoints = [
-        narrative_first.payload["speaker_turns"][0]["speaker"]["endpoint_id"],
-        narrative_first.payload["speaker_turns"][0]["addressee"]["endpoint_id"],
-    ]
+    event = narrative_first.payload["relation_events"][0]
+    event_id = event["event_id"]
+    endpoints = [event["actor"]["endpoint_id"], event["target"]["endpoint_id"]]
     digest = validate_digest_v3(
-        _digest(endpoints=endpoints, events=[narrative_first.payload["relation_events"][0]["event_id"]]),
+        _digest(endpoints=endpoints, events=[event_id]),
         blocks=_blocks(),
         mention_ids=[row["mention_id"] for row in first.payload["character_mentions"]],
         endpoint_ids=endpoints,
-        event_ids=[narrative_first.payload["relation_events"][0]["event_id"]],
+        event_ids=[event_id],
+        event_endpoint_map=_event_map(event_id, *endpoints),
     )
     assert digest.report.ok, digest.report.to_dict()
 
@@ -418,6 +435,7 @@ def test_nested_frame_tree_records_deepest_active_leaf() -> None:
             "local_segment_key": "outer",
             "parent_local_key": None,
             "narrator_surface": "Narrator",
+            "narrator_ref": None,
             "frame_kind": "primary_narration",
             "story_time_label": "frame_present",
             "block_range": ["bk_ch01_b001", "bk_ch01_b003"],
@@ -430,6 +448,7 @@ def test_nested_frame_tree_records_deepest_active_leaf() -> None:
             "local_segment_key": "letter",
             "parent_local_key": "outer",
             "narrator_surface": "Mira",
+            "narrator_ref": None,
             "frame_kind": "letter",
             "story_time_label": "retrospective_past",
             "block_range": ["bk_ch01_b002", "bk_ch01_b002"],
@@ -764,6 +783,11 @@ def _shape_samples() -> dict[str, dict[str, object]]:
             "block_evidence": ["bk_ch01_b001"],
             "inference_basis": "stated",
         },
+        "Motif": {
+            "note": "Repeated thresholds mark transitions.",
+            "block_ids": ["bk_ch01_b001", "bk_ch01_b002"],
+            "subject_refs": ["p1"],
+        },
     }
 
 
@@ -803,6 +827,7 @@ def test_shape_contract_fields_cannot_drift_from_typed_dataclasses() -> None:
         "StateChange": "StateChange",
         "Thread": "UnresolvedThread",
         "Fact": "TranslatorRelevantFact",
+        "Motif": "Motif",
     }
     code_filled = {
         "ChapterBrief": {"input_max_order"},
@@ -866,6 +891,7 @@ def test_remap_covers_every_declared_reference_field() -> None:
         "trigger_event_id",
         "trigger_ref",
         "mention_ref",
+        "narrator_ref",
         "subject_ref",
         "subject_refs",
         "endpoint_refs",
@@ -888,6 +914,7 @@ def test_remap_covers_every_declared_reference_field() -> None:
             {"subject_ref": "old_p2", "event_ids": ["old_e1", "old_e2"]}
         ],
         "endpoint": {"mention_ref": "old_m1"},
+        "frame": {"narrator_ref": "old_p1"},
     }
     remapped = remap_references(
         payload,
@@ -909,6 +936,7 @@ def test_remap_covers_every_declared_reference_field() -> None:
         "event_ids": ["new_e1", "new_e2"],
     }
     assert remapped["endpoint"]["mention_ref"] == "new_m1"
+    assert remapped["frame"]["narrator_ref"] == "new_p1"
 
 
 def test_transition_hint_requires_an_existing_event() -> None:
@@ -921,6 +949,7 @@ def test_transition_hint_requires_an_existing_event() -> None:
         blocks=_blocks(),
         endpoint_ids=["p1", "p2"],
         event_ids=["e1"],
+        event_endpoint_map=_event_map("e1", "p1", "p2"),
     )
     assert not result.report.ok
 
@@ -931,9 +960,100 @@ def test_transition_hint_requires_an_existing_event() -> None:
         blocks=_blocks(),
         endpoint_ids=["p1", "p2"],
         event_ids=["e1"],
+        event_endpoint_map=_event_map("e1", "p1", "p2"),
     )
     assert result.report.ok, result.report.to_dict()
 
+
+def test_p0_a_motifs_are_required_and_occurrence_grounded() -> None:
+    missing = _digest()
+    missing.pop("motifs")
+    assert not validate_digest_v3(missing, blocks=_blocks()).report.ok
+
+    valid = _digest()
+    valid["motifs"] = [
+        {
+            "note": "Thresholds recur.",
+            "block_ids": ["bk_ch01_b001", "bk_ch01_b002"],
+            "subject_refs": ["m1"],
+        }
+    ]
+    result = validate_digest_v3(valid, blocks=_blocks(), mention_ids=["m1"])
+    assert result.report.ok, result.report.to_dict()
+    assert result.payload["motifs"] == valid["motifs"]
+    assert result.report.counts["motifs"] == 1
+
+    foreign_block = deepcopy(valid)
+    foreign_block["motifs"][0]["block_ids"] = ["bk_ch01_b999"]
+    assert not validate_digest_v3(
+        foreign_block, blocks=_blocks(), mention_ids=["m1"]
+    ).report.ok
+
+    foreign_ref = deepcopy(valid)
+    foreign_ref["motifs"][0]["subject_refs"] = ["foreign_occurrence"]
+    assert not validate_digest_v3(
+        foreign_ref, blocks=_blocks(), mention_ids=["m1"]
+    ).report.ok
+
+
+def test_p0_b_relation_observation_must_match_directed_event_topology() -> None:
+    topology = {
+        **_event_map("e1", "p1", "p2"),
+        **_event_map("e2", "p3", "p4", block_id="bk_ch01_b002"),
+    }
+    relation = {
+        "event_id": "e1",
+        "endpoint_refs": ["p1", "p2"],
+        "observed_valence_hint": "positive",
+        "block_id": "bk_ch01_b001",
+        "evidence_quote": "Alice greeted Bob.",
+    }
+
+    def validate(row: dict[str, object], *, event_map=topology):
+        digest = _digest()
+        digest["relation_observations"] = [row]
+        return validate_digest_v3(
+            digest,
+            blocks=_blocks(),
+            endpoint_ids=["p1", "p2", "p3", "p4"],
+            event_ids=["e1", "e2"],
+            event_endpoint_map=event_map,
+        )
+
+    assert validate(deepcopy(relation)).report.ok
+    for broken in (
+        {**relation, "endpoint_refs": ["p2", "p1"]},
+        {**relation, "endpoint_refs": ["p3", "p4"]},
+        {**relation, "block_id": "bk_ch01_b002"},
+    ):
+        result = validate(broken)
+        assert not result.report.ok
+        assert result.report.counts["fatal_event_topology_mismatch"] == 1
+
+    missing_map = validate(deepcopy(relation), event_map={})
+    assert not missing_map.report.ok
+    assert missing_map.report.counts["fatal_event_endpoint_map_key_mismatch"] == 1
+
+
+def test_p0_c_narrator_ref_is_nullable_but_foreign_refs_are_fatal() -> None:
+    null_result = validate_digest_v3(_digest(), blocks=_blocks())
+    assert null_result.report.ok, null_result.report.to_dict()
+
+    grounded = _digest()
+    grounded["narration_frame_segments"][0]["narrator_ref"] = "m_narrator"
+    grounded_result = validate_digest_v3(
+        grounded, blocks=_blocks(), mention_ids=["m_narrator"]
+    )
+    assert grounded_result.report.ok, grounded_result.report.to_dict()
+    assert grounded_result.payload["narration_frame_segments"][0]["narrator_ref"] == "m_narrator"
+
+    foreign = deepcopy(grounded)
+    foreign["narration_frame_segments"][0]["narrator_ref"] = "foreign_occurrence"
+    foreign_result = validate_digest_v3(
+        foreign, blocks=_blocks(), mention_ids=["m_narrator"]
+    )
+    assert not foreign_result.report.ok
+    assert foreign_result.report.counts["dropped_invalid_narrator_ref"] == 1
 
 def test_self_overlapping_surface_uses_non_overlapping_occurrences() -> None:
     block = {"block_id": "b1", "clean_text": "aaa", "source_text": "aaa"}

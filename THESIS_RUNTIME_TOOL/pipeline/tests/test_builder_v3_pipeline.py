@@ -24,7 +24,9 @@ from pipeline.literary.checkpoint import CheckpointError, canonical_hash, canoni
 from pipeline.literary.checkpoint_v3 import (
     M1_CHECKPOINT_SCHEMA_VERSION_V3,
     M1_GROUND_STATE_VERSION_V3,
+    VALIDATOR_CONTRACT_VERSION,
     builder_v3_root,
+    contract_versions,
     current_pointer_path,
     publish_generation,
     read_current_checkpoint,
@@ -180,6 +182,7 @@ def _script_for_chapter(number: int, *, all_blocks: int = 3) -> dict[tuple[str, 
                     "local_segment_key": "present",
                     "parent_local_key": None,
                     "narrator_surface": "Narrator",
+                    "narrator_ref": first_mention,
                     "frame_kind": "primary_narration",
                     "story_time_label": "frame_present",
                     "block_range": [block_ids[0], block_ids[-1]],
@@ -201,6 +204,13 @@ def _script_for_chapter(number: int, *, all_blocks: int = 3) -> dict[tuple[str, 
             "character_state_changes": [],
             "unresolved_threads": [],
             "translator_relevant_facts": [],
+            "motifs": [
+                {
+                    "note": "Greetings recur.",
+                    "block_ids": [block_ids[0]],
+                    "subject_refs": [f"{event_id}#actor"],
+                }
+            ],
         },
     }
 
@@ -275,6 +285,7 @@ def _sentinel_scripts() -> dict[tuple[str, str, str | None], dict[str, object]]:
                     "local_segment_key": "present",
                     "parent_local_key": None,
                     "narrator_surface": "Narrator",
+                    "narrator_ref": None,
                     "frame_kind": "primary_narration",
                     "story_time_label": "frame_present",
                     "block_range": [block_ids[0], block_ids[-1]],
@@ -288,6 +299,7 @@ def _sentinel_scripts() -> dict[tuple[str, str, str | None], dict[str, object]]:
             "character_state_changes": [],
             "unresolved_threads": [],
             "translator_relevant_facts": [],
+            "motifs": [],
         },
     }
     for ordinal, block_id in enumerate(block_ids, start=1):
@@ -351,6 +363,16 @@ def test_three_chapter_states_round_trip_and_reference_indexes_are_complete(tmp_
     assert [row["kind"] for row in m2_state["digest_reference_index"]] == [
         "frame_segment"
     ]
+    assert m2_state["digest_payload"]["motifs"] == [
+        {
+            "note": "Greetings recur.",
+            "block_ids": ["bk_ch03_b001"],
+            "subject_refs": ["e_bk_ch03_b001_01#actor"],
+        }
+    ]
+    assert m2_state["digest_payload"]["narration_frame_segments"][0][
+        "narrator_ref"
+    ] == "m_bk_ch03_b001_01"
     assert [row["chapter_id"] for row in m2_state["prior_summary_provenance"]] == [
         "bk_ch01",
         "bk_ch02",
@@ -800,10 +822,57 @@ def test_checkpoint_rejects_execution_mode_and_tampered_state(tmp_path: Path) ->
     assert any(value.startswith("artifact_") for value in errors)
 
 
+def test_p0_contract_version_is_bumped() -> None:
+    assert VALIDATOR_CONTRACT_VERSION == "literary_builder_v3_validator_contract_v2"
+    assert contract_versions()["validator"] == VALIDATOR_CONTRACT_VERSION
+
+
+def test_p0_old_validator_contract_checkpoint_is_rejected(tmp_path: Path) -> None:
+    root = builder_v3_root(tmp_path)
+    audit_file = root / "audit" / "fixture" / "request.json"
+    audit_file.parent.mkdir(parents=True, exist_ok=True)
+    audit_file.write_text("{}", encoding="utf-8")
+    state = {"schema_version": M1_GROUND_STATE_VERSION_V3, "chapter_id": "c1"}
+    old_versions = {
+        **contract_versions(),
+        "validator": "literary_builder_v3_validator_contract_v1",
+    }
+    publish_generation(
+        out_dir=tmp_path,
+        stage="m1v3",
+        chapter_id="c1",
+        state=state,
+        semantic_projection=deepcopy(state),
+        identity_base={
+            "absolute_chapter_index": 0,
+            "chapter_sequence_prefix": ["c1"],
+            "source_hash": "source",
+            "knowledge_mode": "whole_book_frozen",
+            "execution_mode": "synthetic",
+            "contract_versions": old_versions,
+            "request_contract_hashes": {},
+            "request_manifest_hash": "manifest-old",
+            "window_target_tokens": 500,
+            "window_max_blocks": 8,
+            "tail_k": 2,
+            "summary_k": 0,
+            "parent_checkpoint_identity_hash": None,
+        },
+        operational_fields={"parent_checkpoint_hash": None},
+        audit_artifacts=[{"role": "fixture/request", "path": audit_file}],
+    )
+    with pytest.raises(CheckpointError, match="contract_versions"):
+        read_current_checkpoint(
+            out_dir=tmp_path,
+            stage="m1v3",
+            chapter_id="c1",
+            expected={"contract_versions": contract_versions()},
+        )
+
 def test_checkpoint_rejects_each_deterministic_identity_dimension(tmp_path: Path) -> None:
     _run_all(tmp_path)
     m1_cases = {
-        "contract_versions": {"validator": "stale"},
+        "contract_versions": {**contract_versions(), "validator": "literary_builder_v3_validator_contract_v1"},
         "request_manifest_hash": "stale",
         "semantic_state_hash": "stale",
         "window_target_tokens": 999,

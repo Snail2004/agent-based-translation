@@ -22,7 +22,7 @@ from pipeline.literary.checkpoint import (
 BUILDER_SCHEMA_V3 = "v3"
 M1_CHECKPOINT_SCHEMA_VERSION_V3 = "literary_m1_checkpoint_v3"
 M2_CHECKPOINT_SCHEMA_VERSION_V3 = "literary_m2_checkpoint_v3"
-VALIDATOR_CONTRACT_VERSION = "literary_builder_v3_validator_contract_v1"
+VALIDATOR_CONTRACT_VERSION = "literary_builder_v3_validator_contract_v2"
 SOURCE_ANCHOR_VERSION = "literary_source_anchor_v1"
 CONTEXT_POLICY_VERSION = "literary_builder_v3_context_policy_v1"
 REQUEST_CONTRACT_VERSION = "literary_builder_v3_request_contract_v1"

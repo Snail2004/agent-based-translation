@@ -983,6 +983,23 @@ def _b2_events_compact(
     return rows
 
 
+def _event_endpoint_map(events: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, str]]:
+    mapped: dict[str, dict[str, str]] = {}
+    for event in events:
+        event_id = str(event.get("event_id") or "")
+        row = {
+            "actor_endpoint_id": str((event.get("actor") or {}).get("endpoint_id") or ""),
+            "target_endpoint_id": str((event.get("target") or {}).get("endpoint_id") or ""),
+            "block_id": str(event.get("block_id") or ""),
+        }
+        if not event_id or not all(row.values()):
+            raise V3RunHalt(f"B2 event topology is incomplete: {event_id!r}", stage="b3")
+        if event_id in mapped:
+            raise V3RunHalt(f"duplicate B2 event topology id: {event_id}", stage="b3")
+        mapped[event_id] = row
+    return mapped
+
+
 def _reference_record(
     *,
     identifier: str,
@@ -1233,6 +1250,9 @@ def _validate_m1_closure(state: Mapping[str, Any]) -> None:
 
 
 def _digest_reference_values(payload: Mapping[str, Any]) -> Iterable[tuple[str, str]]:
+    for row in payload.get("narration_frame_segments") or []:
+        if row.get("narrator_ref") is not None:
+            yield "occurrence", str(row.get("narrator_ref") or "")
     for row in payload.get("relation_observations") or []:
         yield "event", str(row.get("event_id") or "")
         for value in row.get("endpoint_refs") or []:
@@ -1251,6 +1271,9 @@ def _digest_reference_values(payload: Mapping[str, Any]) -> Iterable[tuple[str, 
             yield "occurrence", str(row.get("subject_ref") or "")
         for value in row.get("event_ids") or []:
             yield "event", str(value)
+    for row in payload.get("motifs") or []:
+        for value in row.get("subject_refs") or []:
+            yield "occurrence", str(value)
 
 
 def _validate_m2_closure(
@@ -2057,6 +2080,7 @@ def run_m2_v3(
                     b2_by_window=m1_state["b2_by_window"],
                 )
                 events = _b2_events_compact(m1_state["b2_by_window"], chapter)
+                event_endpoint_map = _event_endpoint_map(events)
                 b0_projection = _b0_typed_projection(m1_state["b0_payload"])
                 upstream_identity = {
                     "input_m1v3": str(m1_checkpoint["checkpoint_identity_hash"]),
@@ -2112,6 +2136,7 @@ def run_m2_v3(
                         mention_ids=mention_ids,
                         endpoint_ids=endpoint_ids,
                         event_ids=event_ids,
+                        event_endpoint_map=event_endpoint_map,
                     ),
                     stage="b3",
                     chapter_id=chapter_id,
