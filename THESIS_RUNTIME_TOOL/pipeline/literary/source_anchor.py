@@ -57,6 +57,45 @@ class LocateResult:
         return self.anchor is not None
 
 
+@dataclass(frozen=True, order=True)
+class SourcePoint:
+    """A comparable point in the chapter's NFC source coordinate space."""
+
+    block_order: int
+    char_offset: int
+
+    def __post_init__(self) -> None:
+        if self.block_order < 0 or self.char_offset < 0:
+            raise ValueError("SourcePoint coordinates must be non-negative")
+
+    def to_dict(self) -> dict[str, int]:
+        return {"block_order": self.block_order, "char_offset": self.char_offset}
+
+
+@dataclass(frozen=True)
+class SourceInterval:
+    """A half-open interval over chapter-order and Unicode code-point offsets."""
+
+    start: SourcePoint
+    end: SourcePoint
+
+    def __post_init__(self) -> None:
+        if self.end <= self.start:
+            raise ValueError("SourceInterval must be non-empty and half-open")
+
+    def contains_point(self, point: SourcePoint) -> bool:
+        return self.start <= point < self.end
+
+    def contains_interval(self, other: SourceInterval) -> bool:
+        return self.start <= other.start and other.end <= self.end
+
+    def overlaps(self, other: SourceInterval) -> bool:
+        return self.start < other.end and other.start < self.end
+
+    def to_dict(self) -> dict[str, dict[str, int]]:
+        return {"start": self.start.to_dict(), "end": self.end.to_dict()}
+
+
 def _field(block: Mapping[str, Any] | Any, name: str) -> Any:
     if isinstance(block, Mapping):
         return block.get(name)
@@ -84,7 +123,7 @@ def _all_spans(text: str, needle: str) -> list[tuple[int, int]]:
         if index < 0:
             return spans
         spans.append((index, index + len(needle)))
-        start = index + 1
+        start = index + len(needle)
 
 
 def _choose_span(
@@ -291,6 +330,18 @@ def mint_turn_event_ids(
     return turns, events
 
 
+REFERENCE_FIELD_MAP = {
+    "mention_ref": "occurrence_scalar",
+    "subject_ref": "occurrence_scalar",
+    "event_id": "event_scalar",
+    "trigger_event_id": "event_scalar",
+    "trigger_ref": "event_scalar",
+    "subject_refs": "occurrence_list",
+    "endpoint_refs": "occurrence_list",
+    "event_ids": "event_list",
+}
+
+
 def remap_references(
     payload: Mapping[str, Any],
     *,
@@ -303,23 +354,22 @@ def remap_references(
     mention_ids = dict(mention_ids or {})
     endpoint_ids = dict(endpoint_ids or {})
     event_ids = dict(event_ids or {})
-    scalar_maps = {
-        "mention_ref": mention_ids,
-        "subject_ref": {**mention_ids, **endpoint_ids},
-        "trigger_ref": event_ids,
-    }
-    list_maps = {
-        "endpoint_refs": endpoint_ids,
-        "event_ids": event_ids,
+    maps = {
+        "occurrence_scalar": {**mention_ids, **endpoint_ids},
+        "event_scalar": event_ids,
+        "occurrence_list": {**mention_ids, **endpoint_ids},
+        "event_list": event_ids,
     }
 
     def visit(value: Any, field_name: str | None = None) -> Any:
         if isinstance(value, Mapping):
             return {str(key): visit(item, str(key)) for key, item in value.items()}
         if isinstance(value, list):
-            mapping = list_maps.get(field_name or "")
+            field_kind = REFERENCE_FIELD_MAP.get(field_name or "")
+            mapping = maps.get(field_kind or "") if field_kind and field_kind.endswith("_list") else None
             return [mapping.get(item, item) if mapping and isinstance(item, str) else visit(item) for item in value]
-        mapping = scalar_maps.get(field_name or "")
+        field_kind = REFERENCE_FIELD_MAP.get(field_name or "")
+        mapping = maps.get(field_kind or "") if field_kind and field_kind.endswith("_scalar") else None
         if mapping and isinstance(value, str):
             return mapping.get(value, value)
         return deepcopy(value)

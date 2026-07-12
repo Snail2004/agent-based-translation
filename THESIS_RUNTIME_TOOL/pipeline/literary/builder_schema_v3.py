@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pipeline.literary.source_anchor import SourceAnchor
+from pipeline.literary.source_anchor import SourceAnchor, SourceInterval
 
 
 ReferentKindClaim = Literal[
@@ -50,7 +50,7 @@ StateAttribute = Literal["social_status", "alias_or_title", "life_status", "resi
 ThreadKind = Literal["mystery", "pending_transition", "question"]
 FactType = Literal["narrator", "register", "speech_style", "status", "setting"]
 InferenceBasis = Literal["stated", "derived"]
-RuntimeEligibility = Literal["eligible", "discourse_only", "route_out"]
+RuntimeEligibility = Literal["eligible", "discourse_only", "route_out", "deferred", "invalid"]
 
 
 @dataclass(frozen=True)
@@ -207,6 +207,13 @@ class FrameSegment:
     end_anchor: SourceAnchor | None = None
     segment_id: str | None = None
     version: str | None = None
+    source_interval: SourceInterval | None = None
+
+
+@dataclass(frozen=True)
+class TransitionHint:
+    trigger_event_id: str
+    note: str
 
 
 @dataclass(frozen=True)
@@ -216,7 +223,7 @@ class RelationObservation:
     observed_valence_hint: ObservedValenceHint
     block_id: str
     evidence_quote: str
-    transition_hint: tuple[str, str] | None = None
+    transition_hint: TransitionHint | None = None
 
 
 @dataclass(frozen=True)

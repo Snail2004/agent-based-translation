@@ -1,15 +1,25 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import fields
 import unicodedata
 
+from pipeline.literary import builder_schema_v3 as schema_v3
 from pipeline.literary.builder_validators_v3 import (
+    SHAPE_CONTRACTS,
+    deepest_active_segment_at,
     validate_chapter_brief_v3,
     validate_digest_v3,
     validate_lexicon_v3,
     validate_narrative_v3,
+    validate_shape_contract,
 )
-from pipeline.literary.source_anchor import locate_anchor, nfc_block_string
+from pipeline.literary.source_anchor import (
+    REFERENCE_FIELD_MAP,
+    locate_anchor,
+    nfc_block_string,
+    remap_references,
+)
 
 
 def _blocks() -> list[dict[str, object]]:
@@ -347,35 +357,49 @@ def test_scene_overlap_and_gap_are_fatal() -> None:
     assert gap.report.counts["scene_gap"] == 1
 
 
-def test_two_axis_invalid_combinations_are_flagged_but_retained() -> None:
-    payload = {
-        "chapter_id": "bk_ch01",
-        "window_block_ids": ["bk_ch01_b001"],
-        "context_only_used": False,
-        "speaker_turns": [
-            {
-                "speaker": _endpoint("Alice", "Alice greeted Bob.", None, kind="place"),
-                "addressee": _endpoint(
-                    "Bob",
-                    "Alice greeted Bob.",
-                    None,
-                    scope="narrator",
-                    method="nearby_context",
-                ),
-                "utterance_quote": "Alice greeted Bob.",
-                "address_terms": [],
-                "register_cue": "neutral",
-                "block_id": "bk_ch01_b001",
-            }
-        ],
-        "relation_events": [],
-    }
-    result = validate_narrative_v3(payload, blocks=_blocks()[:1])
-    assert result.report.ok, result.report.to_dict()
-    assert result.report.counts["flag_invalid_two_axis"] == 1
-    assert result.payload["speaker_turns"][0]["speaker"]["runtime_eligibility"] == "route_out"
-    assert result.payload["speaker_turns"][0]["addressee"]["runtime_eligibility"] == "discourse_only"
-    assert result.payload["speaker_turns"][0]["addressee"]["attribution_method"] == "nearby_context"
+def test_full_two_axis_table_routes_and_flags_exactly() -> None:
+    cases = [
+        ("individual", "person", "eligible", 0),
+        ("individual", "animal", "route_out", 0),
+        ("individual", "place", "invalid", 1),
+        ("group", "group_reference", "route_out", 0),
+        ("group", "person", "invalid", 1),
+        ("group", "unknown", "deferred", 0),
+        ("narrator", "person", "discourse_only", 0),
+        ("narrator", "animal", "invalid", 1),
+        ("reader", "unknown", "discourse_only", 0),
+        ("unknown", "person", "deferred", 0),
+    ]
+    for scope, kind, expected_eligibility, expected_invalid in cases:
+        payload = {
+            "chapter_id": "bk_ch01",
+            "window_block_ids": ["bk_ch01_b001"],
+            "context_only_used": False,
+            "speaker_turns": [
+                {
+                    "speaker": _endpoint(
+                        "Alice",
+                        "Alice greeted Bob.",
+                        None,
+                        scope=scope,
+                        kind=kind,
+                        method="nearby_context",
+                    ),
+                    "addressee": _endpoint("Bob", "Alice greeted Bob.", None),
+                    "utterance_quote": "Alice greeted Bob.",
+                    "address_terms": [],
+                    "register_cue": "neutral",
+                    "block_id": "bk_ch01_b001",
+                }
+            ],
+            "relation_events": [],
+        }
+        result = validate_narrative_v3(payload, blocks=_blocks()[:1])
+        assert result.report.ok, (scope, kind, result.report.to_dict())
+        speaker = result.payload["speaker_turns"][0]["speaker"]
+        assert speaker["runtime_eligibility"] == expected_eligibility
+        assert result.report.counts.get("flag_invalid_two_axis", 0) == expected_invalid
+        assert speaker["attribution_method"] == "nearby_context"
 
 
 def test_phase_label_cannot_leak_into_event_type() -> None:
@@ -431,6 +455,7 @@ def test_frame_tree_rejects_missing_parent_overlap_gap_and_cycle() -> None:
     result = validate_digest_v3(_digest(frames=[missing_parent]), blocks=_blocks())
     assert not result.report.ok
     assert result.report.counts["frame_missing_parent"] == 1
+    assert result.report.counts["frame_cycle"] == 0
 
     outer = deepcopy(base)
     outer["local_segment_key"] = "outer"
@@ -458,21 +483,96 @@ def test_frame_tree_rejects_missing_parent_overlap_gap_and_cycle() -> None:
 
 
 def test_mid_block_frame_boundary_is_located_or_fails_closed() -> None:
-    frame = _digest()["narration_frame_segments"][0]
-    frame["block_range"] = ["bk_ch01_b001", "bk_ch01_b001"]
-    frame["start_boundary"] = {
+    outer = _digest()["narration_frame_segments"][0]
+    outer["block_range"] = ["bk_ch01_b001", "bk_ch01_b001"]
+    child = deepcopy(outer)
+    child.update(
+        {
+            "local_segment_key": "letter",
+            "parent_local_key": "present",
+            "frame_kind": "letter",
+            "story_time_label": "retrospective_past",
+        }
+    )
+    child["start_boundary"] = {
         "anchor_text": "Mira",
         "evidence_quote": "Mira writes a letter.",
     }
-    result = validate_digest_v3(_digest(frames=[frame]), blocks=_blocks()[:1])
+    result = validate_digest_v3(_digest(frames=[outer, child]), blocks=_blocks()[:1])
     assert result.report.ok, result.report.to_dict()
-    assert result.payload["narration_frame_segments"][0]["start_anchor"]["char_start"] > 0
+    letter = next(
+        frame
+        for frame in result.payload["narration_frame_segments"]
+        if frame["local_segment_key"] == "letter"
+    )
+    assert letter["start_anchor"]["char_start"] > 0
+    assert result.payload["deepest_active_leaf_spans"][-1]["segment_key"] == "letter"
+    assert (
+        deepest_active_segment_at(
+            result.payload,
+            block_id="bk_ch01_b001",
+            char_offset=letter["start_anchor"]["char_start"],
+        )
+        == "letter"
+    )
 
-    broken = deepcopy(frame)
+    broken = deepcopy(child)
     broken["start_boundary"]["anchor_text"] = "Absent"
-    result = validate_digest_v3(_digest(frames=[broken]), blocks=_blocks()[:1])
+    result = validate_digest_v3(_digest(frames=[outer, broken]), blocks=_blocks()[:1])
     assert not result.report.ok
     assert result.report.counts["fail_closed_locate"] == 1
+
+    not_midblock = deepcopy(child)
+    not_midblock["start_boundary"] = {
+        "anchor_text": "Alice",
+        "evidence_quote": "Alice greeted Bob.",
+    }
+    result = validate_digest_v3(_digest(frames=[outer, not_midblock]), blocks=_blocks()[:1])
+    assert not result.report.ok
+    assert result.report.counts["dropped_non_midblock_boundary"] == 1
+
+
+def test_mid_block_siblings_use_source_intervals_for_overlap_and_coverage() -> None:
+    block = {
+        "block_id": "bk_ch01_b001",
+        "block_type": "paragraph",
+        "order_index": 1,
+        "clean_text": "AlphaBetaGamma",
+        "source_text": "AlphaBetaGamma",
+    }
+    base = _digest()["narration_frame_segments"][0]
+    base["block_range"] = ["bk_ch01_b001", "bk_ch01_b001"]
+    first = deepcopy(base)
+    first.update(
+        {
+            "local_segment_key": "first",
+            "end_boundary": {"anchor_text": "Alpha", "evidence_quote": "AlphaBetaGamma"},
+        }
+    )
+    second = deepcopy(base)
+    second.update(
+        {
+            "local_segment_key": "second",
+            "frame_kind": "dream",
+            "story_time_label": "retrospective_past",
+            "start_boundary": {"anchor_text": "Beta", "evidence_quote": "AlphaBetaGamma"},
+        }
+    )
+    result = validate_digest_v3(_digest(frames=[first, second]), blocks=[block])
+    assert result.report.ok, result.report.to_dict()
+    assert [span["segment_key"] for span in result.payload["deepest_active_leaf_spans"]] == [
+        "first",
+        "second",
+    ]
+
+    overlapping = deepcopy(first)
+    overlapping["end_boundary"] = {
+        "anchor_text": "Beta",
+        "evidence_quote": "AlphaBetaGamma",
+    }
+    result = validate_digest_v3(_digest(frames=[overlapping, second]), blocks=[block])
+    assert not result.report.ok
+    assert result.report.counts["frame_sibling_overlap"] == 1
 
 
 def test_digest_rejects_clean_surfaces_and_entity_ids_as_occurrence_refs() -> None:
@@ -576,3 +676,268 @@ def test_cast_claim_source_blocks_are_validated_against_scene_range() -> None:
     result = validate_chapter_brief_v3(outside, blocks=_blocks())
     assert not result.report.ok
     assert result.report.counts["cast_claim_source_outside_scene"] == 1
+
+
+def test_cast_claim_surface_must_match_its_minted_anchor() -> None:
+    payload = _brief()
+    payload["cast_claims"][0]["anchor_text"] = "Bob"
+    result = validate_chapter_brief_v3(payload, blocks=_blocks())
+    assert not result.report.ok
+    assert result.payload["cast_claims"] == []
+    assert result.report.counts["dropped_surface_anchor_mismatch"] == 1
+
+
+def _shape_samples() -> dict[str, dict[str, object]]:
+    brief = _brief()
+    lexicon = _lexicon()
+    endpoint = _endpoint("Alice", "Alice greeted Bob.", None)
+    turn = {
+        "speaker": deepcopy(endpoint),
+        "addressee": deepcopy(endpoint),
+        "utterance_quote": "Alice greeted Bob.",
+        "address_terms": [],
+        "register_cue": "neutral",
+        "block_id": "bk_ch01_b001",
+    }
+    event = {
+        "actor": deepcopy(endpoint),
+        "target": deepcopy(endpoint),
+        "event_type": "greets",
+        "evidence_quote": "Alice greeted Bob.",
+        "block_id": "bk_ch01_b001",
+    }
+    digest = _digest()
+    return {
+        "ChapterBrief": deepcopy(brief),
+        "Setting": deepcopy(brief["setting"]),
+        "CastClaim": deepcopy(brief["cast_claims"][0]),
+        "Scene": deepcopy(brief["scenes_party_size"][0]),
+        "Lexicon": deepcopy(lexicon),
+        "Mention": deepcopy(lexicon["character_mentions"][0]),
+        "Glossary": deepcopy(lexicon["glossary_candidates"][0]),
+        "Narrative": {
+            "chapter_id": "bk_ch01",
+            "window_block_ids": ["bk_ch01_b001"],
+            "context_only_used": False,
+            "speaker_turns": [deepcopy(turn)],
+            "relation_events": [deepcopy(event)],
+        },
+        "Endpoint": deepcopy(endpoint),
+        "Turn": turn,
+        "AddressTerm": {
+            "anchor_text": "Bob",
+            "evidence_quote": "Alice greeted Bob.",
+            "addressee_ref": "addressee",
+        },
+        "Event": event,
+        "Digest": deepcopy(digest),
+        "FrameSegment": deepcopy(digest["narration_frame_segments"][0]),
+        "SourceBoundary": {
+            "anchor_text": "Mira",
+            "evidence_quote": "Mira writes a letter.",
+        },
+        "RelationObservation": {
+            "event_id": "e1",
+            "endpoint_refs": ["p1", "p2"],
+            "observed_valence_hint": "unclear",
+            "block_id": "bk_ch01_b001",
+            "evidence_quote": "Alice greeted Bob.",
+        },
+        "TransitionHint": {"trigger_event_id": "e1", "note": "a change"},
+        "StateChange": {
+            "subject_ref": "p1",
+            "attribute": "residence",
+            "from_value": "outside",
+            "to_value": "inside",
+            "trigger_ref": "e1",
+            "evidence_quote": "Alice greeted Bob.",
+        },
+        "Thread": {
+            "thread_local_id": "thread_1",
+            "description": "A question remains.",
+            "opened_block": "bk_ch01_b001",
+            "kind": "question",
+        },
+        "Fact": {
+            "fact_type": "setting",
+            "fact": "The scene is indoors.",
+            "block_evidence": ["bk_ch01_b001"],
+            "inference_basis": "stated",
+        },
+    }
+
+
+def test_every_shape_rejects_each_missing_required_field() -> None:
+    samples = _shape_samples()
+    assert set(samples) == set(SHAPE_CONTRACTS)
+    for shape_name, contract in SHAPE_CONTRACTS.items():
+        assert validate_shape_contract(shape_name, samples[shape_name]) == []
+        for field_name, field_contract in contract.items():
+            if not field_contract.required:
+                continue
+            broken = deepcopy(samples[shape_name])
+            broken.pop(field_name)
+            errors = validate_shape_contract(shape_name, broken)
+            assert errors, (shape_name, field_name)
+
+
+def test_shape_contract_fields_cannot_drift_from_typed_dataclasses() -> None:
+    type_names = {
+        "ChapterBrief": "ChapterBrief",
+        "Setting": "Setting",
+        "CastClaim": "CastClaim",
+        "Scene": "Scene",
+        "Lexicon": "Lexicon",
+        "Mention": "Mention",
+        "Glossary": "Glossary",
+        "Narrative": "Narrative",
+        "Endpoint": "Endpoint",
+        "Turn": "Turn",
+        "AddressTerm": "AddressTerm",
+        "Event": "Event",
+        "Digest": "Digest",
+        "FrameSegment": "FrameSegment",
+        "SourceBoundary": "SourceBoundary",
+        "RelationObservation": "RelationObservation",
+        "TransitionHint": "TransitionHint",
+        "StateChange": "StateChange",
+        "Thread": "UnresolvedThread",
+        "Fact": "TranslatorRelevantFact",
+    }
+    code_filled = {
+        "ChapterBrief": {"input_max_order"},
+        "CastClaim": {"cast_claim_id", "anchor", "evidence_max_order"},
+        "Mention": {"mention_id", "anchor"},
+        "Endpoint": {"endpoint_id", "anchor", "resolution_evidence", "runtime_eligibility"},
+        "Turn": {"turn_id", "position_key"},
+        "AddressTerm": {"address_occurrence_id", "anchor"},
+        "Event": {"event_id", "position_key"},
+        "FrameSegment": {"start_anchor", "end_anchor", "segment_id", "version", "source_interval"},
+    }
+    for shape_name, type_name in type_names.items():
+        dataclass_fields = {field.name for field in fields(getattr(schema_v3, type_name))}
+        model_fields = dataclass_fields - code_filled.get(shape_name, set())
+        assert set(SHAPE_CONTRACTS[shape_name]) == model_fields, shape_name
+
+
+def test_shape_contract_rejects_wrong_types_and_illegal_nulls() -> None:
+    scene = deepcopy(_shape_samples()["Scene"])
+    scene["co_present_count"] = "two"
+    assert validate_shape_contract("Scene", scene)
+
+    claim = deepcopy(_shape_samples()["CastClaim"])
+    claim["role_hint"] = None
+    assert validate_shape_contract("CastClaim", claim)
+
+    endpoint = deepcopy(_shape_samples()["Endpoint"])
+    endpoint["mention_ref"] = None
+    assert validate_shape_contract("Endpoint", endpoint) == []
+
+
+def test_stage_validators_actually_enforce_nested_shape_contracts() -> None:
+    brief = _brief()
+    brief["cast_claims"][0].pop("role_hint")
+    assert not validate_chapter_brief_v3(brief, blocks=_blocks()).report.ok
+
+    lexicon = _lexicon()
+    lexicon["glossary_candidates"][0].pop("do_not_translate")
+    assert not validate_lexicon_v3(lexicon, blocks=_blocks()).report.ok
+
+    narrative = {
+        "chapter_id": "bk_ch01",
+        "window_block_ids": ["bk_ch01_b001"],
+        "context_only_used": False,
+        "speaker_turns": [deepcopy(_shape_samples()["Turn"])],
+        "relation_events": [],
+    }
+    narrative["speaker_turns"][0].pop("utterance_quote")
+    assert not validate_narrative_v3(narrative, blocks=_blocks()[:1]).report.ok
+
+    digest = _digest()
+    fact = deepcopy(_shape_samples()["Fact"])
+    fact.pop("fact")
+    digest["translator_relevant_facts"] = [fact]
+    assert not validate_digest_v3(digest, blocks=_blocks()).report.ok
+
+
+def test_remap_covers_every_declared_reference_field() -> None:
+    expected_fields = {
+        "event_id",
+        "trigger_event_id",
+        "trigger_ref",
+        "mention_ref",
+        "subject_ref",
+        "subject_refs",
+        "endpoint_refs",
+        "event_ids",
+    }
+    assert set(REFERENCE_FIELD_MAP) == expected_fields
+    payload = {
+        "relation_observations": [
+            {
+                "event_id": "old_e1",
+                "endpoint_refs": ["old_p1", "old_p2"],
+                "transition_hint": {"trigger_event_id": "old_e2", "note": "change"},
+            }
+        ],
+        "character_state_changes": [
+            {"subject_ref": "old_m1", "trigger_ref": "old_e1"}
+        ],
+        "unresolved_threads": [{"subject_refs": ["old_m1", "old_p1"]}],
+        "translator_relevant_facts": [
+            {"subject_ref": "old_p2", "event_ids": ["old_e1", "old_e2"]}
+        ],
+        "endpoint": {"mention_ref": "old_m1"},
+    }
+    remapped = remap_references(
+        payload,
+        mention_ids={"old_m1": "new_m1"},
+        endpoint_ids={"old_p1": "new_p1", "old_p2": "new_p2"},
+        event_ids={"old_e1": "new_e1", "old_e2": "new_e2"},
+    )
+    relation = remapped["relation_observations"][0]
+    assert relation["event_id"] == "new_e1"
+    assert relation["endpoint_refs"] == ["new_p1", "new_p2"]
+    assert relation["transition_hint"]["trigger_event_id"] == "new_e2"
+    assert remapped["character_state_changes"][0] == {
+        "subject_ref": "new_m1",
+        "trigger_ref": "new_e1",
+    }
+    assert remapped["unresolved_threads"][0]["subject_refs"] == ["new_m1", "new_p1"]
+    assert remapped["translator_relevant_facts"][0] == {
+        "subject_ref": "new_p2",
+        "event_ids": ["new_e1", "new_e2"],
+    }
+    assert remapped["endpoint"]["mention_ref"] == "new_m1"
+
+
+def test_transition_hint_requires_an_existing_event() -> None:
+    relation = deepcopy(_shape_samples()["RelationObservation"])
+    relation["transition_hint"] = {"trigger_event_id": "missing", "note": "change"}
+    digest = _digest(endpoints=["p1", "p2"], events=["e1"])
+    digest["relation_observations"] = [relation]
+    result = validate_digest_v3(
+        digest,
+        blocks=_blocks(),
+        endpoint_ids=["p1", "p2"],
+        event_ids=["e1"],
+    )
+    assert not result.report.ok
+
+    relation["transition_hint"]["trigger_event_id"] = "e1"
+    digest["relation_observations"] = [relation]
+    result = validate_digest_v3(
+        digest,
+        blocks=_blocks(),
+        endpoint_ids=["p1", "p2"],
+        event_ids=["e1"],
+    )
+    assert result.report.ok, result.report.to_dict()
+
+
+def test_self_overlapping_surface_uses_non_overlapping_occurrences() -> None:
+    block = {"block_id": "b1", "clean_text": "aaa", "source_text": "aaa"}
+    result = locate_anchor(block, anchor_text="aa", evidence_quote="aaa")
+    assert result.ok
+    assert result.anchor is not None
+    assert (result.anchor.char_start, result.anchor.char_end) == (0, 2)

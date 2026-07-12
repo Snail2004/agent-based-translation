@@ -37,10 +37,13 @@ from pipeline.literary.builder_schema_v3 import (
 )
 from pipeline.literary.source_anchor import (
     SourceAnchor,
+    SourceInterval,
+    SourcePoint,
     block_order_index,
     locate_anchor,
     mint_mention_ids,
     mint_turn_event_ids,
+    nfc_block_string,
     nfc_text,
 )
 
@@ -58,6 +61,251 @@ class ValidationResult(Generic[T]):
 
     payload: T
     report: ValidationReport
+
+
+@dataclass(frozen=True)
+class FieldContract:
+    kind: str
+    required: bool = True
+    nullable: bool = False
+    allowed: frozenset[str] | None = None
+
+
+def _field(
+    kind: str,
+    *,
+    required: bool = True,
+    nullable: bool = False,
+    allowed: set[str] | None = None,
+) -> FieldContract:
+    return FieldContract(kind, required, nullable, frozenset(allowed) if allowed else None)
+
+
+SHAPE_CONTRACTS: dict[str, dict[str, FieldContract]] = {
+    "ChapterBrief": {
+        "chapter_id": _field("str"),
+        "cast_claims": _field("list"),
+        "setting": _field("mapping"),
+        "scenes_party_size": _field("list"),
+        "neutral_premise": _field("str"),
+    },
+    "Setting": {
+        "place": _field("str"),
+        "time_frame_hint": _field("str", allowed=TIME_FRAME_HINTS),
+        "scene_shape": _field("str", allowed=SCENE_SHAPES),
+    },
+    "CastClaim": {
+        "surface": _field("str"),
+        "surface_kind": _field("str", allowed=SURFACE_KINDS),
+        "referent_kind_claim": _field("str", allowed=REFERENT_KIND_CLAIMS),
+        "role_hint": _field("str"),
+        "scene_range": _field("pair_str"),
+        "source_block_ids": _field("list_str_nonempty"),
+        "anchor_text": _field("str"),
+        "evidence_quote": _field("str"),
+        "occurrence_hint": _field("positive_int", required=False),
+    },
+    "Scene": {
+        "block_range": _field("pair_str"),
+        "co_present_count": _field("nonnegative_int"),
+        "participants": _field("list_str"),
+    },
+    "Lexicon": {
+        "chapter_id": _field("str"),
+        "window_block_ids": _field("list_str_nonempty"),
+        "context_only_used": _field("bool"),
+        "character_mentions": _field("list"),
+        "glossary_candidates": _field("list"),
+    },
+    "Mention": {
+        "surface": _field("str"),
+        "mention_type": _field("str", allowed=MENTION_TYPES),
+        "referent_kind_claim": _field("str", allowed=REFERENT_KIND_CLAIMS),
+        "anchor_text": _field("str"),
+        "evidence_quote": _field("str"),
+        "occurrence_hint": _field("positive_int", required=False),
+        "block_id": _field("str"),
+    },
+    "Glossary": {
+        "source_term": _field("str"),
+        "proposed_target_vi": _field("str"),
+        "category": _field("str", allowed=GLOSSARY_CATEGORIES),
+        "do_not_translate": _field("bool"),
+        "block_ids": _field("list_str_nonempty"),
+    },
+    "Narrative": {
+        "chapter_id": _field("str"),
+        "window_block_ids": _field("list_str_nonempty"),
+        "context_only_used": _field("bool"),
+        "speaker_turns": _field("list"),
+        "relation_events": _field("list"),
+    },
+    "Endpoint": {
+        "surface": _field("str"),
+        "reference_scope": _field("str", allowed=REFERENCE_SCOPES),
+        "referent_kind_claim": _field("str", allowed=REFERENT_KIND_CLAIMS),
+        "mention_ref": _field("str", nullable=True),
+        "attribution_method": _field("str", allowed=ATTRIBUTION_METHODS),
+        "anchor_text": _field("str"),
+        "evidence_quote": _field("str"),
+        "occurrence_hint": _field("positive_int", required=False),
+    },
+    "Turn": {
+        "speaker": _field("mapping"),
+        "addressee": _field("mapping", nullable=True),
+        "utterance_quote": _field("str"),
+        "address_terms": _field("list"),
+        "register_cue": _field("str", allowed=REGISTER_CUES),
+        "block_id": _field("str"),
+    },
+    "AddressTerm": {
+        "anchor_text": _field("str"),
+        "evidence_quote": _field("str"),
+        "occurrence_hint": _field("positive_int", required=False),
+        "addressee_ref": _field("str", allowed={"speaker", "addressee"}),
+    },
+    "Event": {
+        "actor": _field("mapping"),
+        "target": _field("mapping"),
+        "event_type": _field("str"),
+        "evidence_quote": _field("str"),
+        "block_id": _field("str"),
+    },
+    "Digest": {
+        "chapter_id": _field("str"),
+        "chapter_rolling_summary": _field("str"),
+        "narration_frame_segments": _field("list"),
+        "relation_observations": _field("list"),
+        "character_state_changes": _field("list"),
+        "unresolved_threads": _field("list"),
+        "translator_relevant_facts": _field("list"),
+    },
+    "FrameSegment": {
+        "local_segment_key": _field("str"),
+        "parent_local_key": _field("str", nullable=True),
+        "narrator_surface": _field("str"),
+        "frame_kind": _field("str", allowed=FRAME_KINDS),
+        "story_time_label": _field("str", allowed=STORY_TIME_LABELS),
+        "block_range": _field("pair_str"),
+        "start_boundary": _field("mapping", nullable=True),
+        "end_boundary": _field("mapping", nullable=True),
+        "status": _field("str", allowed=FRAME_STATUSES),
+        "evidence_quote": _field("str"),
+    },
+    "SourceBoundary": {
+        "anchor_text": _field("str"),
+        "evidence_quote": _field("str"),
+        "occurrence_hint": _field("positive_int", required=False),
+    },
+    "RelationObservation": {
+        "event_id": _field("str"),
+        "endpoint_refs": _field("pair_str"),
+        "observed_valence_hint": _field("str", allowed=VALENCE_HINTS),
+        "block_id": _field("str"),
+        "evidence_quote": _field("str"),
+        "transition_hint": _field("mapping", required=False),
+    },
+    "TransitionHint": {
+        "trigger_event_id": _field("str"),
+        "note": _field("str"),
+    },
+    "StateChange": {
+        "subject_ref": _field("str"),
+        "attribute": _field("str", allowed=STATE_ATTRIBUTES),
+        "from_value": _field("str"),
+        "to_value": _field("str"),
+        "trigger_ref": _field("str"),
+        "evidence_quote": _field("str"),
+    },
+    "Thread": {
+        "thread_local_id": _field("str"),
+        "description": _field("str"),
+        "opened_block": _field("str"),
+        "kind": _field("str", allowed=THREAD_KINDS),
+        "subject_refs": _field("list_str", required=False),
+    },
+    "Fact": {
+        "fact_type": _field("str", allowed=FACT_TYPES),
+        "fact": _field("str"),
+        "block_evidence": _field("list_str_nonempty"),
+        "inference_basis": _field("str", allowed=INFERENCE_BASES),
+        "subject_ref": _field("str", required=False),
+        "event_ids": _field("list_str", required=False),
+    },
+}
+
+
+def _matches_kind(value: Any, kind: str) -> bool:
+    if kind == "str":
+        return isinstance(value, str)
+    if kind == "bool":
+        return isinstance(value, bool)
+    if kind in {"positive_int", "nonnegative_int"}:
+        if not isinstance(value, int) or isinstance(value, bool):
+            return False
+        return value > 0 if kind == "positive_int" else value >= 0
+    if kind == "mapping":
+        return isinstance(value, Mapping)
+    if kind == "list":
+        return isinstance(value, list)
+    if kind in {"list_str", "list_str_nonempty"}:
+        return (
+            isinstance(value, list)
+            and (kind != "list_str_nonempty" or bool(value))
+            and all(isinstance(item, str) for item in value)
+        )
+    if kind == "pair_str":
+        return isinstance(value, list) and len(value) == 2 and all(
+            isinstance(item, str) for item in value
+        )
+    raise ValueError(f"unknown field-contract kind: {kind}")
+
+
+def validate_shape_contract(
+    shape_name: str,
+    value: Any,
+    *,
+    path: str | None = None,
+) -> list[str]:
+    """Validate required/type/nullability/enum without mutating the value."""
+
+    label = path or shape_name
+    if not isinstance(value, Mapping):
+        return [f"{label} must be an object"]
+    contract = SHAPE_CONTRACTS[shape_name]
+    errors: list[str] = []
+    for field_name, field_contract in contract.items():
+        if field_name not in value:
+            if field_contract.required:
+                errors.append(f"{label}.{field_name} is required")
+            continue
+        field_value = value[field_name]
+        if field_value is None:
+            if not field_contract.nullable:
+                errors.append(f"{label}.{field_name} is not nullable")
+            continue
+        if not _matches_kind(field_value, field_contract.kind):
+            errors.append(f"{label}.{field_name} has invalid type/shape")
+            continue
+        if field_contract.allowed is not None and str(field_value) not in field_contract.allowed:
+            errors.append(f"{label}.{field_name} outside enum: {field_value!r}")
+    return errors
+
+
+def _shape_ok(
+    shape_name: str,
+    value: Any,
+    *,
+    path: str,
+    errors: list[str],
+    counts: Counter[str],
+) -> bool:
+    shape_errors = validate_shape_contract(shape_name, value, path=path)
+    errors.extend(shape_errors)
+    if shape_errors:
+        counts["fatal_shape_contract"] += len(shape_errors)
+        return False
+    return True
 
 
 def _report(
@@ -169,16 +417,6 @@ def _require_list(
     return value
 
 
-def _require_fields(
-    payload: Mapping[str, Any],
-    required: Sequence[str],
-    errors: list[str],
-) -> None:
-    for field in required:
-        if field not in payload:
-            errors.append(f"missing required field: {field}")
-
-
 def _anchor_dict(anchor: SourceAnchor) -> dict[str, int | str]:
     return anchor.to_dict()
 
@@ -245,25 +483,54 @@ def _endpoint_eligibility(
         endpoint["runtime_eligibility"] = "route_out"
         return
 
-    if scope == "individual" and kind == "person":
-        endpoint["runtime_eligibility"] = "eligible"
-        return
     if scope in {"narrator", "reader"}:
-        endpoint["runtime_eligibility"] = "discourse_only"
-        counts["flag_discourse_only_endpoint"] += 1
-        warnings.append(f"{label} retained as discourse_only")
+        if kind in {"person", "unknown"}:
+            endpoint["runtime_eligibility"] = "discourse_only"
+            counts["flag_discourse_only_endpoint"] += 1
+            warnings.append(f"{label} retained as discourse_only")
+        else:
+            endpoint["runtime_eligibility"] = "invalid"
+            counts["flag_invalid_two_axis"] += 1
+            warnings.append(f"{label} retained with invalid narrator/reader ontology")
         return
 
-    endpoint["runtime_eligibility"] = "route_out"
-    counts["route_out_endpoint"] += 1
-    invalid_combo = (
-        (scope == "individual" and kind in {"place", "group_reference", "object"})
-        or (scope == "group" and kind != "group_reference")
-        or scope == "unknown"
-    )
-    if invalid_combo:
+    if scope == "individual":
+        if kind == "person":
+            endpoint["runtime_eligibility"] = "eligible"
+        elif kind in {"animal", "nonhuman_character"}:
+            endpoint["runtime_eligibility"] = "route_out"
+            counts["route_out_endpoint"] += 1
+        elif kind == "unknown":
+            endpoint["runtime_eligibility"] = "deferred"
+            counts["deferred_endpoint"] += 1
+        else:
+            endpoint["runtime_eligibility"] = "invalid"
+            counts["flag_invalid_two_axis"] += 1
+            warnings.append(f"{label} retained with invalid individual ontology")
+        return
+
+    if scope == "group":
+        if kind == "group_reference":
+            endpoint["runtime_eligibility"] = "route_out"
+            counts["route_out_endpoint"] += 1
+        elif kind == "unknown":
+            endpoint["runtime_eligibility"] = "deferred"
+            counts["deferred_endpoint"] += 1
+        else:
+            endpoint["runtime_eligibility"] = "invalid"
+            counts["flag_invalid_two_axis"] += 1
+            warnings.append(f"{label} retained with invalid group ontology")
+        return
+
+    if scope == "unknown":
+        endpoint["runtime_eligibility"] = "deferred"
+        counts["deferred_endpoint"] += 1
+        return
+
+    endpoint["runtime_eligibility"] = "invalid"
+    if scope_ok and kind_ok:
         counts["flag_invalid_two_axis"] += 1
-        warnings.append(f"{label} retained but not runtime-eligible")
+        warnings.append(f"{label} retained with invalid two-axis combination")
 
 
 def _normalize_endpoint(
@@ -278,6 +545,15 @@ def _normalize_endpoint(
 ) -> dict[str, Any] | None:
     endpoint = _require_mapping(endpoint_value, label, errors)
     if endpoint is None:
+        return None
+    if not _shape_ok(
+        "Endpoint",
+        endpoint,
+        path=label,
+        errors=errors,
+        counts=counts,
+    ):
+        counts["dropped_invalid_endpoint"] += 1
         return None
     mention_ref = endpoint.get("mention_ref")
     if mention_ref is not None and str(mention_ref) not in mention_ids:
@@ -329,19 +605,24 @@ def validate_chapter_brief_v3(
     block_map = _blocks_by_id(blocks)
     coverage_ids = _coverage_block_ids(blocks)
     coverage_order = {block_id: index for index, block_id in enumerate(coverage_ids)}
-    _require_fields(
+    if not _shape_ok(
+        "ChapterBrief",
         normalized,
-        ("chapter_id", "cast_claims", "setting", "scenes_party_size", "neutral_premise"),
-        errors,
-    )
+        path="chapter_brief",
+        errors=errors,
+        counts=counts,
+    ):
+        return ValidationResult(
+            normalized,
+            _report("chapter_brief_v3", errors, warnings, counts),
+        )
     chapter_id = str(normalized.get("chapter_id") or "")
     if not chapter_id:
         errors.append("chapter_id is required")
 
     setting = _require_mapping(normalized.get("setting"), "setting", errors)
     if setting is not None:
-        _enum(setting.get("time_frame_hint"), TIME_FRAME_HINTS, "setting.time_frame_hint", errors)
-        _enum(setting.get("scene_shape"), SCENE_SHAPES, "setting.scene_shape", errors)
+        _shape_ok("Setting", setting, path="setting", errors=errors, counts=counts)
 
     scenes = _require_list(normalized.get("scenes_party_size"), "scenes_party_size", errors)
     covered: Counter[str] = Counter()
@@ -349,6 +630,15 @@ def validate_chapter_brief_v3(
         for index, scene_value in enumerate(scenes):
             scene = _require_mapping(scene_value, f"scenes_party_size[{index}]", errors)
             if scene is None:
+                continue
+            if not _shape_ok(
+                "Scene",
+                scene,
+                path=f"scenes_party_size[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_scene"] += 1
                 continue
             range_ids = _range_block_ids(scene.get("block_range"), coverage_ids)
             if not range_ids:
@@ -371,13 +661,21 @@ def validate_chapter_brief_v3(
             claim = _require_mapping(claim_value, f"cast_claims[{index}]", errors)
             if claim is None:
                 continue
-            _enum(claim.get("surface_kind"), SURFACE_KINDS, f"cast_claims[{index}].surface_kind", errors)
-            _enum(
-                claim.get("referent_kind_claim"),
-                REFERENT_KIND_CLAIMS,
-                f"cast_claims[{index}].referent_kind_claim",
-                errors,
-            )
+            if not _shape_ok(
+                "CastClaim",
+                claim,
+                path=f"cast_claims[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_cast_claim"] += 1
+                continue
+            if nfc_text(str(claim.get("surface") or "")) != nfc_text(
+                str(claim.get("anchor_text") or "")
+            ):
+                errors.append(f"cast_claims[{index}].surface and anchor_text differ")
+                counts["dropped_surface_anchor_mismatch"] += 1
+                continue
             source_ids = claim.get("source_block_ids")
             if not isinstance(source_ids, list) or not source_ids:
                 errors.append(f"cast_claims[{index}].source_block_ids is required")
@@ -460,17 +758,14 @@ def validate_lexicon_v3(
     if not isinstance(normalized, dict):
         return ValidationResult({}, _report("lexicon_v3", ["payload must be an object"], warnings, counts))
     block_map = _blocks_by_id(blocks)
-    _require_fields(
+    if not _shape_ok(
+        "Lexicon",
         normalized,
-        (
-            "chapter_id",
-            "window_block_ids",
-            "context_only_used",
-            "character_mentions",
-            "glossary_candidates",
-        ),
-        errors,
-    )
+        path="lexicon",
+        errors=errors,
+        counts=counts,
+    ):
+        return ValidationResult(normalized, _report("lexicon_v3", errors, warnings, counts))
     window_ids = {str(value) for value in normalized.get("window_block_ids") or []}
     if not window_ids:
         errors.append("window_block_ids is required")
@@ -481,14 +776,14 @@ def validate_lexicon_v3(
             mention = _require_mapping(mention_value, f"character_mentions[{index}]", errors)
             if mention is None:
                 continue
-            if not _enum(mention.get("mention_type"), MENTION_TYPES, f"mention[{index}].mention_type", errors):
-                continue
-            if not _enum(
-                mention.get("referent_kind_claim"),
-                REFERENT_KIND_CLAIMS,
-                f"mention[{index}].referent_kind_claim",
-                errors,
+            if not _shape_ok(
+                "Mention",
+                mention,
+                path=f"character_mentions[{index}]",
+                errors=errors,
+                counts=counts,
             ):
+                counts["dropped_invalid_mention"] += 1
                 continue
             block_id = str(mention.get("block_id") or "")
             if block_id not in window_ids or block_id not in block_map:
@@ -512,13 +807,25 @@ def validate_lexicon_v3(
     _unique_ids(kept, "mention_id", errors, counts)
 
     glossary_rows = _require_list(normalized.get("glossary_candidates"), "glossary_candidates", errors)
+    kept_glossary: list[dict[str, Any]] = []
     if glossary_rows is not None:
         for index, glossary_value in enumerate(glossary_rows):
             glossary = _require_mapping(glossary_value, f"glossary_candidates[{index}]", errors)
-            if glossary is not None:
-                _enum(glossary.get("category"), GLOSSARY_CATEGORIES, f"glossary[{index}].category", errors)
+            if glossary is None:
+                continue
+            if not _shape_ok(
+                "Glossary",
+                glossary,
+                path=f"glossary_candidates[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_glossary"] += 1
+                continue
+            kept_glossary.append(glossary)
+    normalized["glossary_candidates"] = kept_glossary
     counts["mentions"] = len(kept)
-    counts["glossary_candidates"] = len(normalized.get("glossary_candidates") or [])
+    counts["glossary_candidates"] = len(kept_glossary)
     return ValidationResult(normalized, _report("lexicon_v3", errors, warnings, counts))
 
 
@@ -537,17 +844,14 @@ def validate_narrative_v3(
     if not isinstance(normalized, dict):
         return ValidationResult({}, _report("narrative_v3", ["payload must be an object"], warnings, counts))
     block_map = _blocks_by_id(blocks)
-    _require_fields(
+    if not _shape_ok(
+        "Narrative",
         normalized,
-        (
-            "chapter_id",
-            "window_block_ids",
-            "context_only_used",
-            "speaker_turns",
-            "relation_events",
-        ),
-        errors,
-    )
+        path="narrative",
+        errors=errors,
+        counts=counts,
+    ):
+        return ValidationResult(normalized, _report("narrative_v3", errors, warnings, counts))
     valid_window_ids = {str(value) for value in normalized.get("window_block_ids") or []}
     mention_ids = {
         str(row.get("mention_id"))
@@ -564,6 +868,15 @@ def validate_narrative_v3(
         for index, turn_value in enumerate(turn_rows):
             turn = _require_mapping(turn_value, f"speaker_turns[{index}]", errors)
             if turn is None:
+                continue
+            if not _shape_ok(
+                "Turn",
+                turn,
+                path=f"speaker_turns[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_turn"] += 1
                 continue
             block_id = str(turn.get("block_id") or "")
             if block_id not in valid_window_ids or block_id not in block_map:
@@ -604,8 +917,14 @@ def validate_narrative_v3(
                 term = _require_mapping(term_value, f"turn[{index}].address_terms[{term_index}]", errors)
                 if term is None:
                     continue
-                if str(term.get("addressee_ref") or "") not in {"speaker", "addressee"}:
-                    errors.append(f"turn[{index}].address_terms[{term_index}].addressee_ref invalid")
+                if not _shape_ok(
+                    "AddressTerm",
+                    term,
+                    path=f"speaker_turns[{index}].address_terms[{term_index}]",
+                    errors=errors,
+                    counts=counts,
+                ):
+                    counts["dropped_invalid_address_term"] += 1
                     continue
                 if term.get("addressee_ref") == "addressee" and addressee is None:
                     counts["dropped_address_term_without_addressee"] += 1
@@ -631,6 +950,15 @@ def validate_narrative_v3(
         for index, event_value in enumerate(event_rows):
             event = _require_mapping(event_value, f"relation_events[{index}]", errors)
             if event is None:
+                continue
+            if not _shape_ok(
+                "Event",
+                event,
+                path=f"relation_events[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_event"] += 1
                 continue
             block_id = str(event.get("block_id") or "")
             if block_id not in valid_window_ids or block_id not in block_map:
@@ -730,6 +1058,96 @@ def _frame_depths(frames: Mapping[str, Mapping[str, Any]]) -> dict[str, int]:
     return depths
 
 
+def _frame_source_interval(
+    frame: Mapping[str, Any],
+    *,
+    frame_ids: Sequence[str],
+    order: Mapping[str, int],
+    block_map: Mapping[str, Mapping[str, Any]],
+) -> SourceInterval:
+    start_anchor = frame.get("start_anchor")
+    end_anchor = frame.get("end_anchor")
+    start_offset = (
+        SourceAnchor.from_value(start_anchor).char_start if start_anchor is not None else 0
+    )
+    end_offset = (
+        SourceAnchor.from_value(end_anchor).char_end
+        if end_anchor is not None
+        else len(nfc_block_string(block_map[frame_ids[-1]]))
+    )
+    return SourceInterval(
+        SourcePoint(order[frame_ids[0]], start_offset),
+        SourcePoint(order[frame_ids[-1]], end_offset),
+    )
+
+
+def _source_interval_from_payload(frame: Mapping[str, Any]) -> SourceInterval:
+    value = frame["source_interval"]
+    start = value["start"]
+    end = value["end"]
+    return SourceInterval(
+        SourcePoint(int(start["block_order"]), int(start["char_offset"])),
+        SourcePoint(int(end["block_order"]), int(end["char_offset"])),
+    )
+
+
+def _deepest_active_spans(
+    frames: Mapping[str, Mapping[str, Any]],
+    depths: Mapping[str, int],
+    *,
+    coverage_ids: Sequence[str],
+    order: Mapping[str, int],
+    block_map: Mapping[str, Mapping[str, Any]],
+    errors: list[str],
+    counts: Counter[str],
+) -> list[dict[str, Any]]:
+    intervals = {key: _source_interval_from_payload(frame) for key, frame in frames.items()}
+    spans: list[dict[str, Any]] = []
+    for block_id in coverage_ids:
+        block_index = order[block_id]
+        block_length = len(nfc_block_string(block_map[block_id]))
+        boundaries = {0, block_length}
+        for interval in intervals.values():
+            if interval.start.block_order == block_index:
+                boundaries.add(interval.start.char_offset)
+            if interval.end.block_order == block_index:
+                boundaries.add(interval.end.char_offset)
+        ordered_boundaries = sorted(offset for offset in boundaries if 0 <= offset <= block_length)
+        for char_start, char_end in zip(ordered_boundaries, ordered_boundaries[1:]):
+            if char_start == char_end:
+                continue
+            point = SourcePoint(block_index, char_start)
+            containing = [key for key, interval in intervals.items() if interval.contains_point(point)]
+            if not containing:
+                errors.append(f"frame_leaf_gap: {block_id}:{char_start}-{char_end}")
+                counts["frame_leaf_gap"] += 1
+                continue
+            highest = max(depths[key] for key in containing)
+            deepest = sorted(key for key in containing if depths[key] == highest)
+            if len(deepest) != 1:
+                errors.append(f"frame_ambiguous_deepest: {block_id}:{char_start}-{char_end}")
+                counts["frame_ambiguous_deepest"] += 1
+                continue
+            segment_key = deepest[0]
+            if (
+                spans
+                and spans[-1]["block_id"] == block_id
+                and spans[-1]["segment_key"] == segment_key
+                and spans[-1]["char_end"] == char_start
+            ):
+                spans[-1]["char_end"] = char_end
+            else:
+                spans.append(
+                    {
+                        "block_id": block_id,
+                        "char_start": char_start,
+                        "char_end": char_end,
+                        "segment_key": segment_key,
+                    }
+                )
+    return spans
+
+
 def _is_occurrence_reference(value: Any, allowed: set[str]) -> bool:
     reference = str(value or "")
     return bool(reference) and not reference.startswith("ent_") and reference in allowed
@@ -746,25 +1164,22 @@ def validate_digest_v3(
     """Validate B3's occurrence-grounded observations and nested frame tree."""
 
     counts: Counter[str] = Counter()
+    counts["frame_cycle"] = 0
+    counts["frame_missing_parent"] = 0
     errors: list[str] = []
     warnings: list[str] = []
     normalized = _clone_and_strip_retired(payload, counts)
     if not isinstance(normalized, dict):
         return ValidationResult({}, _report("digest_v3", ["payload must be an object"], warnings, counts))
     block_map = _blocks_by_id(blocks)
-    _require_fields(
+    if not _shape_ok(
+        "Digest",
         normalized,
-        (
-            "chapter_id",
-            "chapter_rolling_summary",
-            "narration_frame_segments",
-            "relation_observations",
-            "character_state_changes",
-            "unresolved_threads",
-            "translator_relevant_facts",
-        ),
-        errors,
-    )
+        path="digest",
+        errors=errors,
+        counts=counts,
+    ):
+        return ValidationResult(normalized, _report("digest_v3", errors, warnings, counts))
     coverage_ids = _coverage_block_ids(blocks)
     order = {block_id: index for index, block_id in enumerate(coverage_ids)}
     allowed_mentions = {str(value) for value in mention_ids}
@@ -778,6 +1193,15 @@ def validate_digest_v3(
         for index, frame_value in enumerate(frame_rows):
             frame = _require_mapping(frame_value, f"narration_frame_segments[{index}]", errors)
             if frame is None:
+                continue
+            if not _shape_ok(
+                "FrameSegment",
+                frame,
+                path=f"narration_frame_segments[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_frame"] += 1
                 continue
             key = str(frame.get("local_segment_key") or "")
             if not key:
@@ -800,6 +1224,15 @@ def validate_digest_v3(
                 if boundary_map is None:
                     boundary_failed = True
                     continue
+                if not _shape_ok(
+                    "SourceBoundary",
+                    boundary_map,
+                    path=f"narration_frame_segments[{index}].{side}_boundary",
+                    errors=errors,
+                    counts=counts,
+                ):
+                    boundary_failed = True
+                    continue
                 located = locate_anchor(
                     block_map[block_id],
                     anchor_text=str(boundary_map.get("anchor_text") or ""),
@@ -818,8 +1251,30 @@ def validate_digest_v3(
                     boundary_failed = True
                 else:
                     frame[f"{side}_anchor"] = _anchor_dict(located.anchor)
+                    block_length = len(nfc_block_string(block_map[block_id]))
+                    if (
+                        (side == "start" and located.anchor.char_start == 0)
+                        or (side == "end" and located.anchor.char_end == block_length)
+                    ):
+                        errors.append(
+                            f"frame[{index}].{side}_boundary is not a mid-block boundary"
+                        )
+                        counts["dropped_non_midblock_boundary"] += 1
+                        boundary_failed = True
             if boundary_failed:
                 continue
+            try:
+                source_interval = _frame_source_interval(
+                    frame,
+                    frame_ids=frame_ids,
+                    order=order,
+                    block_map=block_map,
+                )
+            except ValueError as exc:
+                errors.append(f"frame[{index}].source_interval invalid: {exc}")
+                counts["dropped_invalid_frame_interval"] += 1
+                continue
+            frame["source_interval"] = source_interval.to_dict()
             frame["segment_id"] = f"seg_{normalized.get('chapter_id')}_{key}"
             frame["version"] = "builder_v3"
             kept_frames.append(frame)
@@ -832,70 +1287,82 @@ def validate_digest_v3(
             counts["duplicate_frame_key"] += 1
         else:
             frame_by_key[key] = frame
+    invalid_tree_keys: set[str] = set()
     for key, frame in frame_by_key.items():
         parent = frame.get("parent_local_key")
         if parent is not None and not isinstance(parent, str):
             errors.append(f"frame parent_local_key must be string or null: {key}")
             counts["frame_invalid_parent_key"] += 1
+            invalid_tree_keys.add(key)
             continue
         if parent is not None and str(parent) not in frame_by_key:
             errors.append(f"frame missing parent: {key}->{parent}")
             counts["frame_missing_parent"] += 1
+            invalid_tree_keys.add(key)
+    changed = True
+    while changed:
+        changed = False
+        for key, frame in frame_by_key.items():
+            parent = frame.get("parent_local_key")
+            if key not in invalid_tree_keys and parent in invalid_tree_keys:
+                invalid_tree_keys.add(key)
+                changed = True
+    tree_frames = {
+        key: frame for key, frame in frame_by_key.items() if key not in invalid_tree_keys
+    }
+    cycle_detected = False
     try:
-        depths = _frame_depths(frame_by_key)
-    except (KeyError, ValueError) as exc:
+        depths = _frame_depths(tree_frames)
+    except ValueError as exc:
         errors.append(str(exc))
         counts["frame_cycle"] += 1
         depths = {}
-    for key, frame in frame_by_key.items():
+        cycle_detected = True
+    for key, frame in tree_frames.items():
         parent = frame.get("parent_local_key")
-        if parent is None or str(parent) not in frame_by_key:
+        if parent is None or str(parent) not in tree_frames:
             continue
-        child_range = _range_indices(frame.get("block_range"), order)
-        parent_range = _range_indices(frame_by_key[str(parent)].get("block_range"), order)
-        if child_range is None or parent_range is None:
-            continue
-        if child_range[0] < parent_range[0] or child_range[1] > parent_range[1]:
+        child_interval = _source_interval_from_payload(frame)
+        parent_interval = _source_interval_from_payload(tree_frames[str(parent)])
+        if not parent_interval.contains_interval(child_interval):
             errors.append(f"frame child outside parent: {key}")
             counts["frame_child_outside_parent"] += 1
 
-    siblings: dict[str | None, list[tuple[int, int, str]]] = defaultdict(list)
-    for key, frame in frame_by_key.items():
-        indices = _range_indices(frame.get("block_range"), order)
-        if indices is not None:
-            raw_parent = frame.get("parent_local_key")
-            parent_key = raw_parent if isinstance(raw_parent, str) else None
-            siblings[parent_key].append((indices[0], indices[1], key))
-    for parent, rows in siblings.items():
-        for (_, end, key), (next_start, _, next_key) in zip(
-            sorted(rows), sorted(rows)[1:]
+    siblings: dict[str | None, list[tuple[str, SourceInterval]]] = defaultdict(list)
+    for key, frame in tree_frames.items():
+        raw_parent = frame.get("parent_local_key")
+        parent_key = raw_parent if isinstance(raw_parent, str) else None
+        siblings[parent_key].append((key, _source_interval_from_payload(frame)))
+    for rows in siblings.values():
+        sorted_rows = sorted(rows, key=lambda row: (row[1].start, row[1].end, row[0]))
+        for (key, interval), (next_key, next_interval) in zip(
+            sorted_rows, sorted_rows[1:]
         ):
-            if next_start <= end:
+            if interval.overlaps(next_interval):
                 errors.append(f"frame sibling overlap: {key},{next_key}")
                 counts["frame_sibling_overlap"] += 1
 
+    deepest_spans: list[dict[str, Any]] = []
+    if tree_frames and not cycle_detected:
+        deepest_spans = _deepest_active_spans(
+            tree_frames,
+            depths,
+            coverage_ids=coverage_ids,
+            order=order,
+            block_map=block_map,
+            errors=errors,
+            counts=counts,
+        )
     deepest_active_leaf: dict[str, str] = {}
-    if not errors or frame_by_key:
-        for block_id in coverage_ids:
-            containing: list[str] = []
-            block_index = order[block_id]
-            for key, frame in frame_by_key.items():
-                indices = _range_indices(frame.get("block_range"), order)
-                if indices is not None and indices[0] <= block_index <= indices[1]:
-                    containing.append(key)
-            if not containing:
-                errors.append(f"frame_leaf_gap: {block_id}")
-                counts["frame_leaf_gap"] += 1
-                continue
-            candidate_depths = [(depths.get(key, 0), key) for key in containing]
-            highest = max(depth for depth, _ in candidate_depths)
-            deepest = [key for depth, key in candidate_depths if depth == highest]
-            if len(deepest) != 1:
-                errors.append(f"frame_ambiguous_deepest: {block_id}")
-                counts["frame_ambiguous_deepest"] += 1
-                continue
-            deepest_active_leaf[block_id] = deepest[0]
+    spans_by_block: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for span in deepest_spans:
+        spans_by_block[str(span["block_id"])].append(span)
+    for block_id, spans in spans_by_block.items():
+        segment_keys = {str(span["segment_key"]) for span in spans}
+        if len(segment_keys) == 1:
+            deepest_active_leaf[block_id] = next(iter(segment_keys))
     normalized["narration_frame_segments"] = kept_frames
+    normalized["deepest_active_leaf_spans"] = deepest_spans
     normalized["deepest_active_leaf_by_block"] = deepest_active_leaf
 
     relation_rows = _require_list(normalized.get("relation_observations"), "relation_observations", errors)
@@ -908,6 +1375,15 @@ def validate_digest_v3(
             if "pair" in relation:
                 relation.pop("pair", None)
                 counts["retired_pair_stripped"] += 1
+            if not _shape_ok(
+                "RelationObservation",
+                relation,
+                path=f"relation_observations[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_relation_observation"] += 1
+                continue
             if str(relation.get("event_id") or "") not in allowed_events:
                 errors.append(f"relation_observations[{index}].event_id is not occurrence-grounded")
                 continue
@@ -917,7 +1393,26 @@ def validate_digest_v3(
             ):
                 errors.append(f"relation_observations[{index}].endpoint_refs are not occurrence-grounded")
                 continue
-            _enum(relation.get("observed_valence_hint"), VALENCE_HINTS, f"relation_observations[{index}].observed_valence_hint", errors)
+            if str(relation.get("block_id") or "") not in block_map:
+                errors.append(f"relation_observations[{index}].block_id outside chapter")
+                continue
+            transition_hint = relation.get("transition_hint")
+            if transition_hint is not None:
+                if not _shape_ok(
+                    "TransitionHint",
+                    transition_hint,
+                    path=f"relation_observations[{index}].transition_hint",
+                    errors=errors,
+                    counts=counts,
+                ):
+                    counts["dropped_invalid_transition_hint"] += 1
+                    continue
+                if str(transition_hint.get("trigger_event_id") or "") not in allowed_events:
+                    errors.append(
+                        f"relation_observations[{index}].transition_hint.trigger_event_id "
+                        "is not occurrence-grounded"
+                    )
+                    continue
             kept_relations.append(relation)
     normalized["relation_observations"] = kept_relations
 
@@ -928,6 +1423,15 @@ def validate_digest_v3(
             state = _require_mapping(state_value, f"character_state_changes[{index}]", errors)
             if state is None:
                 continue
+            if not _shape_ok(
+                "StateChange",
+                state,
+                path=f"character_state_changes[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_state_change"] += 1
+                continue
             if not _is_occurrence_reference(state.get("subject_ref"), occurrence_refs):
                 errors.append(f"character_state_changes[{index}].subject_ref is not occurrence-grounded")
                 continue
@@ -935,7 +1439,6 @@ def validate_digest_v3(
             if trigger not in allowed_events and trigger not in block_map:
                 errors.append(f"character_state_changes[{index}].trigger_ref is not grounded")
                 continue
-            _enum(state.get("attribute"), STATE_ATTRIBUTES, f"character_state_changes[{index}].attribute", errors)
             kept_states.append(state)
     normalized["character_state_changes"] = kept_states
 
@@ -946,7 +1449,18 @@ def validate_digest_v3(
             thread = _require_mapping(thread_value, f"unresolved_threads[{index}]", errors)
             if thread is None:
                 continue
-            _enum(thread.get("kind"), THREAD_KINDS, f"unresolved_threads[{index}].kind", errors)
+            if not _shape_ok(
+                "Thread",
+                thread,
+                path=f"unresolved_threads[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_thread"] += 1
+                continue
+            if str(thread.get("opened_block") or "") not in block_map:
+                errors.append(f"unresolved_threads[{index}].opened_block outside chapter")
+                continue
             refs = thread.get("subject_refs")
             if refs is not None and (
                 not isinstance(refs, list)
@@ -964,8 +1478,15 @@ def validate_digest_v3(
             fact = _require_mapping(fact_value, f"translator_relevant_facts[{index}]", errors)
             if fact is None:
                 continue
-            _enum(fact.get("fact_type"), FACT_TYPES, f"translator_relevant_facts[{index}].fact_type", errors)
-            _enum(fact.get("inference_basis"), INFERENCE_BASES, f"translator_relevant_facts[{index}].inference_basis", errors)
+            if not _shape_ok(
+                "Fact",
+                fact,
+                path=f"translator_relevant_facts[{index}]",
+                errors=errors,
+                counts=counts,
+            ):
+                counts["dropped_invalid_fact"] += 1
+                continue
             subject_ref = fact.get("subject_ref")
             if subject_ref is not None and not _is_occurrence_reference(subject_ref, occurrence_refs):
                 errors.append(f"translator_relevant_facts[{index}].subject_ref is not occurrence-grounded")
@@ -985,6 +1506,23 @@ def validate_digest_v3(
     counts["unresolved_threads"] = len(kept_threads)
     counts["translator_relevant_facts"] = len(kept_facts)
     return ValidationResult(normalized, _report("digest_v3", errors, warnings, counts))
+
+
+def deepest_active_segment_at(
+    normalized_digest: Mapping[str, Any],
+    *,
+    block_id: str,
+    char_offset: int,
+) -> str | None:
+    """Resolve a validated digest's deepest frame at one source query point."""
+
+    for span in normalized_digest.get("deepest_active_leaf_spans") or []:
+        if (
+            str(span.get("block_id") or "") == block_id
+            and int(span.get("char_start") or 0) <= char_offset < int(span.get("char_end") or 0)
+        ):
+            return str(span.get("segment_key") or "") or None
+    return None
 
 
 def validate_builder_payload_v3(
