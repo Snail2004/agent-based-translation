@@ -1,6 +1,6 @@
 # TASK_LIT_M4f_P1S3 - Builder v3 orchestration path - Phase 1, Step 3
 
-Status: **DRAFT rev3 (Claude -> Terra/CodeX), 2026-07-12.** rev3 folds the second independent task review: stage-scoped sentinel policy, immutable/auditable executor boundary, separate request contract/fingerprint hashes, JSON-safe state, deterministic checkpoint identity, K=2 resume sourcing, complete reference coverage, and a real atomic generation publish. Builds on Step-2 (ACCEPTED, `main` @ `8edac45`). Implementer = Terra. Verify gate = Claude, adversarial + integration.
+Status: **DRAFT rev4 (Claude -> Terra/CodeX), 2026-07-12.** rev3 folds the second independent task review: stage-scoped sentinel policy, immutable/auditable executor boundary, separate request contract/fingerprint hashes, JSON-safe state, deterministic checkpoint identity, K=2 resume sourcing, complete reference coverage, and a real atomic generation publish. rev4 (Claude, on independent verify of rev3): pins the DETERMINISTIC `window_id` scheme + B2 request-section list order - a determinism gap that would have broken the request fingerprint / checkpoint identity / straight-vs-resume test. Builds on Step-2 (ACCEPTED, `main` @ `8edac45`). Implementer = Terra. Verify gate = Claude, adversarial + integration.
 
 Contract source: `design/LITERARY_BUILDER_SCHEMA_ALLOCATION_V1.md` sections 1-5 and 8; `tasks/TASK_LIT_M4f_CANONICAL_V1.md` sections 2, 3, 9, and 10. This task is the implementation contract for Step 3. If any required wire shape or invariant below remains ambiguous, STOP and ask; do not invent a local policy.
 
@@ -108,6 +108,8 @@ WindowSpec = {
 
 Window specs are ordered by `(first_active_order, window_id)`.
 
+`window_id` is minted **deterministically** as `w_<chapter_id>_<NN>`, where `NN` is the 1-based index of the window in `first_active_order` order within the chapter, zero-padded to >=2 digits. It MUST be identical across straight and resume runs and never derived from a uuid, timestamp, run id, or generation id - it enters the request fingerprint, the checkpoint identity hash, and the SyntheticStageExecutor script key, so a non-deterministic window_id breaks the straight-vs-resume identity equality (H.8) and makes the synthetic fixture unwritable.
+
 ### B.2 B0 -> B2 projection
 
 Select a claim when the inclusive non-heading expansion of its validated `scene_range` intersects the active non-heading block-id set of the window. Never compare block-id strings lexically. Preserve the B0 request lineage: projecting fewer claims does not lower the transitive `input_max_order` of the B2 request.
@@ -138,6 +140,8 @@ WindowMentionView = {
   anchor:SourceAnchorWire,
 }
 ```
+
+**Canonical order of B2 request-section lists (determinism):** `b0_scene_projection` is ordered by `(min order_index over source_block_ids, cast_claim_id)`; `window_mentions` is ordered by `(block_order, anchor.char_start, mention_id)`. Every list placed in `allowlisted_sections` MUST have a pinned canonical order so the request fingerprint is reproducible.
 
 ### B.3 B0/B1/B2 -> B3 projections
 
