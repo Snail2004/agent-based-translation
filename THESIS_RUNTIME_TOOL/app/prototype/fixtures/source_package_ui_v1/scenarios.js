@@ -6,6 +6,7 @@
   const params = new URLSearchParams(window.location.search || "");
   const scenario = params.get("scenario") || "draft";
   const overlayMode = params.get("overlay") || "missing";
+  const previewMode = params.get("preview") || "valid";
   const docId = "source_package_ui_demo";
   const hash = char => String(char).repeat(64);
   const clone = value => JSON.parse(JSON.stringify(value));
@@ -13,6 +14,17 @@
   localStorage.setItem("ailab.doc_id", docId);
   localStorage.setItem("ailab.center_mode", "structure");
   localStorage.setItem("ailab.user", "UI Fixture Reviewer");
+
+  const blockPreviewRows = [
+    { block_id: "demo_ch01_b001", block_type: "heading", source_text: "Preface" },
+    { block_id: "demo_ch01_b002", block_type: "paragraph", source_text: "When Mr. Hiram B. Otis bought Canterville Chase, everyone told him he was doing a very foolish thing." },
+    { block_id: "demo_ch02_b001", block_type: "heading", source_text: "CHAPTER I · Arrival at Canterville Chase" },
+    { block_id: "demo_ch02_b002", block_type: "paragraph", source_text: "The evening was warm and clear as the family approached the old house through the long avenue." },
+    { block_id: "demo_ch02_b003", block_type: "dialogue", source_text: "\u201cThere is no such thing as a ghost, sir,\u201d said the Minister." },
+    { block_id: "demo_ch03_b001", block_type: "heading_candidate", source_text: "A new boundary was detected here, but the printed heading is faint." },
+    { block_id: "demo_ch03_b002", block_type: "paragraph", source_text: "A red stain appeared once more upon the library floor in the morning light." },
+    { block_id: "demo_ch03_b003", block_type: "paragraph", source_text: "The family paused before deciding whether this passage belonged to the next chapter." },
+  ];
 
   const baseUnits = [
     {
@@ -37,7 +49,7 @@
       translation_policy: "translate",
       confidence: 0.91,
       review_required: false,
-      issue_codes: [],
+      issue_codes: ["toc_heading_mismatch"],
     },
     {
       unit_id: "u0003",
@@ -55,13 +67,15 @@
   const parentByUnit = {};
 
   function reportFor(units) {
-    const issue = {
-      issue_id: "amb_fixture_unit_3",
-      code: "unit_low_confidence",
+    const issues = units.flatMap(unit => (Array.isArray(unit.issue_codes) ? unit.issue_codes : []).map(code => ({
+      issue_id: `fixture_${unit.unit_id}_${code}`,
+      code,
       scope: "unit",
-      target_id: "u0003",
-      evidence: ["source_format:pdf", "chapter_id:demo_ch03"],
-    };
+      target_id: unit.unit_id,
+      evidence: code === "toc_heading_mismatch"
+        ? ["toc_title:Chapter I", "candidate_title:Chapter I · Arrival"]
+        : [`source_format:pdf`, `chapter_id:${unit.chapter_id}`],
+    })));
     const outline = units.map(unit => ({
       unit_id: unit.unit_id,
       chapter_id: unit.chapter_id,
@@ -78,7 +92,7 @@
       editable: true,
       inputs: {},
       units,
-      issues: units.some(unit => unit.unit_id === "u0003") ? [issue] : [],
+      issues,
       global_skeleton: {
         schema_version: "draft_structure_global_skeleton_v1",
         doc_id: docId,
@@ -101,13 +115,13 @@
           navigation_unresolved_count: 0,
           navigation_mismatch_ratio: 0,
           candidate_count: 2,
-          issue_count: units.some(unit => unit.unit_id === "u0003") ? 1 : 0,
+          issue_count: issues.length,
         },
-        integrity: { candidate_count: 2, issue_count: 1, payload_sha256: hash("9") },
+        integrity: { candidate_count: 2, issue_count: issues.length, payload_sha256: hash("9") },
       },
       integrity: {
         unit_count: units.length,
-        issue_count: units.some(unit => unit.unit_id === "u0003") ? 1 : 0,
+        issue_count: issues.length,
         payload_sha256: hash("c"),
       },
     };
@@ -173,6 +187,15 @@
   function reviewPayload() {
     const frozen = mode === "managed_run_started_frozen";
     const report = reportFor(clone(units));
+    const currentStatus = statusPayload();
+    const blockPreviews = previewMode === "missing" ? {}
+      : {
+          block_previews: {
+            schema_version: "source_package_block_preview_v1",
+            state_sha256: previewMode === "stale" ? hash("0") : currentStatus.state_sha256,
+            rows: clone(previewMode === "partial" ? blockPreviewRows.slice(0, -1) : blockPreviewRows),
+          },
+        };
     return {
       schema_version: "source_package_review_v1",
       doc_id: docId,
@@ -181,14 +204,15 @@
       authority: "explicit_human_approval_required",
       experimental: { scope: frozen ? "run_started_frozen" : "os_locked_pre_run", load_bearing: frozen },
       expected: {
-        state_sha256: statusPayload().state_sha256,
-        candidate_tree_sha256: statusPayload().candidate.tree_sha256,
+        state_sha256: currentStatus.state_sha256,
+        candidate_tree_sha256: currentStatus.candidate.tree_sha256,
         report_sha256: report.integrity.payload_sha256,
         hierarchy_sha256: revision ? hash("e") : null,
       },
       supported_actions: frozen || mode === "managed_finalized_pre_run" ? [] : ["update_unit", "split_unit", "merge_adjacent_units"],
       supported_hierarchy_actions: frozen || mode === "managed_finalized_pre_run" ? [] : ["set_parent", "clear_parent"],
       report,
+      ...blockPreviews,
     };
   }
 
@@ -286,7 +310,8 @@
         block_id: blockId,
         chapter_id: unit.chapter_id,
         order: index + 1,
-        text: `Fixture source block ${blockId}`,
+        block_type: blockPreviewRows.find(row => row.block_id === blockId)?.block_type || "paragraph",
+        text: blockPreviewRows.find(row => row.block_id === blockId)?.source_text || `Fixture source block ${blockId}`,
       }))),
       project_memory: { glossary_entries: [], entities: [], entity_relations: [], summaries: [] },
       eval_only: { gold_glossary: [], references: [] },

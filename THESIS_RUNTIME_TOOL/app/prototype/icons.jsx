@@ -52,6 +52,7 @@ Ic.sparkle = mk(<path d="M8 2.5l1.3 3.4L12.5 7 9.3 8.1 8 11.5 6.7 8.1 3.5 7l3.2-
 Ic.refresh = mk(<><path d="M12.5 6.5A4.5 4.5 0 1 0 13 9.5" /><path d="M12.5 3v3.5H9" /></>);
 Ic.expand = mk(<><path d="M6.2 3H3v3.2M9.8 3H13v3.2M6.2 13H3V9.8M9.8 13H13V9.8" /><path d="M3.2 6L6 3.2M10 3.2L12.8 6M3.2 10L6 12.8M10 12.8l2.8-2.8" /></>, { w: 1.3 });
 Ic.sliders = mk(<><path d="M3 4h10M3 8h10M3 12h10" /><circle cx="6" cy="4" r="1.2" fill="currentColor" /><circle cx="10" cy="8" r="1.2" fill="currentColor" /><circle cx="7" cy="12" r="1.2" fill="currentColor" /></>, { w: 1.2 });
+Ic.gripVertical = mk(<><circle cx="6" cy="4" r=".8" fill="currentColor" stroke="none" /><circle cx="10" cy="4" r=".8" fill="currentColor" stroke="none" /><circle cx="6" cy="8" r=".8" fill="currentColor" stroke="none" /><circle cx="10" cy="8" r=".8" fill="currentColor" stroke="none" /><circle cx="6" cy="12" r=".8" fill="currentColor" stroke="none" /><circle cx="10" cy="12" r=".8" fill="currentColor" stroke="none" /></>);
 Ic.undo = mk(<><path d="M6.5 4L3.5 7l3 3" /><path d="M4 7h5.5A3.5 3.5 0 1 1 6 10.5" /></>);
 Ic.redo = mk(<><path d="M9.5 4l3 3-3 3" /><path d="M12 7H6.5A3.5 3.5 0 1 0 10 10.5" /></>);
 

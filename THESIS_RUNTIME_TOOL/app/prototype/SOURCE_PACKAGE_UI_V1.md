@@ -21,6 +21,12 @@ PDF. The managed workflow is:
 - `GET /projects/<doc_id>/source-package/review` is authoritative for units,
   issues, outline/navigation/candidate evidence, supported actions, and the
   expected state/tree/report/hierarchy identities.
+- Block text/type is rendered only from an optional `block_previews` relay in
+  that same review response. The relay must use
+  `source_package_block_preview_v1`, carry the exact current
+  `expected.state_sha256`, and provide exact coverage of the review's unique
+  block IDs with `block_id`, `source_text`, and `block_type` rows. Missing,
+  partial, malformed, or stale relays fail closed.
 - The UI renders only fields present in those payloads. It does not infer a
   lifecycle from chapter or block counts and does not calculate quality
   metrics.
@@ -63,19 +69,24 @@ does not synthesize a URL.
 
 ## Review model and controls
 
-- Left: ordered backend report units, classification, block count, and review
-  flags.
-- Center: backend block IDs, issue evidence, global candidate evidence, and
-  TOC/navigation evidence when present.
-- Right: update title/classification and set/clear an earlier parent unit.
-- Split is limited to an existing block boundary supplied by the selected
-  unit. Merge is limited to the immediately following report unit.
-- Full hashes and candidate/run identities stay collapsed under technical
-  details.
+- Left: ordered backend report units, classification, block count, review
+  flags, and explicit merge-pair selectors.
+- Center: backend block IDs plus up to three lines of state-bound source text
+  and block type when the authoritative relay exists. The issue counter starts
+  a previous/next review sequence and moves to each issue target.
+- Right: update title/classification and set/clear an earlier parent unit. At
+  920px and below this surface is a dismissible detail drawer instead of a
+  third stacked column.
+- Split stays disabled until the reviewer selects an existing boundary with
+  its grip control. Merge stays disabled until exactly two adjacent report
+  units are selected.
+- Full hashes, candidate/mechanical signals, and TOC/navigation evidence stay
+  collapsed under technical details.
 
-The review contract currently does not relay block text or a revision history
-list. V1 shows block IDs and the evidence that exists instead of reading a
-parallel preview source or fabricating history.
+The review contract currently does not relay block text/type or a revision
+history list. V1 therefore shows a precise unavailable/stale state instead of
+reading a parallel preview source or fabricating history. The dev fixture owns
+the proposed relay only so the UI can be exercised before backend integration.
 
 ## Guard
 
@@ -90,6 +101,19 @@ parallel preview source or fabricating history.
 
 ## Known gap
 
+Production block previews remain blocked until the normalizer/backend relays
+this exact field in `GET /projects/<doc_id>/source-package/review`:
+
+```json
+"block_previews": {
+  "schema_version": "source_package_block_preview_v1",
+  "state_sha256": "<same as expected.state_sha256>",
+  "rows": [
+    { "block_id": "...", "source_text": "...", "block_type": "paragraph" }
+  ]
+}
+```
+
 Production export remains blocked until an authoritative producer/relay makes
 the exact canonical translation overlay available to App state/API. A backend
 download route is also absent, so publication artifacts are identifiers/paths,
@@ -101,8 +125,10 @@ not clickable downloads. Neither gap is bypassed in frontend code.
 2. Use `source_package_dev.html` for unmanaged, draft, stale, finalized,
    frozen, legacy, and publication fixture states.
 3. Exercise update, split, merge, hierarchy, finalize, prepare, and publication
-   actions. Confirm stale refreshes without retry.
+   actions. Confirm stale correction refreshes without retry. Exercise valid,
+   missing, partial, and stale block-preview relays.
 4. Capture 1440x900, 1024x768 (plus 900px compatibility), and 390x844 views.
-5. Check keyboard focus, modal confirmation, console errors, overlap, and
-   horizontal overflow.
+5. Check issue previous/next focus, explicit split/merge selection, mobile
+   drawer close/Escape focus return, modal confirmation, console errors,
+   overlap, and horizontal overflow.
 6. Run `git diff --check`, secret scan, and exact owned-path scan.
