@@ -2,7 +2,7 @@
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
 const API = window.AILAB_API;
-const UI_VERSION = "0.6.2";
+const UI_VERSION = "0.7.0";
 const STORAGE_DOC = "ailab.doc_id";
 const STORAGE_USER = "ailab.user";
 const STORAGE_CENTER_MODE = "ailab.center_mode";
@@ -781,13 +781,61 @@ function Toasts({ items, onDismiss }) {
 }
 
 function Modal({ title, icon: I, tone, children, onClose, actions, className = "" }) {
+  const dialogRef = React.useRef(null);
+  const closeRef = React.useRef(onClose);
+  const titleId = React.useId();
+
+  closeRef.current = onClose;
+
+  React.useEffect(() => {
+    const dialog = dialogRef.current;
+    const previousFocus = document.activeElement;
+    if (!dialog) return undefined;
+    const focusableSelector = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+    const focusable = () => Array.from(dialog.querySelectorAll(focusableSelector)).filter(element => element.getClientRects().length > 0);
+    (focusable()[0] || dialog).focus();
+
+    function onKeyDown(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeRef.current?.();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      if (!items.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!dialog.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    };
+  }, []);
+
   return (
     <div className="modal-scrim" onMouseDown={onClose}>
-      <div className={`modal${className ? ` ${className}` : ""}`} onMouseDown={e => e.stopPropagation()}>
+      <div ref={dialogRef} className={`modal${className ? ` ${className}` : ""}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} onMouseDown={e => e.stopPropagation()}>
         <div className="modal-head">
           <span className={"modal-ic " + (tone || "")}>{I && <I size={16} />}</span>
-          <span className="modal-title">{title}</span>
-          <button className="modal-x" onClick={onClose}><Ic.x size={13} /></button>
+          <span className="modal-title" id={titleId}>{title}</span>
+          <button className="modal-x" type="button" aria-label="Đóng" onClick={onClose}><Ic.x size={13} /></button>
         </div>
         <div className="modal-body">{children}</div>
         <div className="modal-foot">{actions}</div>
@@ -854,6 +902,7 @@ const WORKSPACE_VIEW_MODES = [
   { id: "block", label: "Block" },
   { id: "chapter", label: "Chapter" },
   { id: "book", label: "Book" },
+  { id: "structure", label: "Cấu trúc" },
   { id: "memory", label: "Memory" },
   { id: "preview", label: "Preview" },
 ];
@@ -894,7 +943,7 @@ function TopProjectPicker({ docId, projects, onSelectProject, onOpenProjectSourc
   );
 }
 
-function WorkspaceModeNav({ mode, onModeChange }) {
+function WorkspaceModeNav({ mode, onModeChange, showStructure = true }) {
   function renderMode(item) {
     return (
       <button key={item.id} className={"top-mode-btn" + (mode === item.id ? " on" : "")}
@@ -906,7 +955,7 @@ function WorkspaceModeNav({ mode, onModeChange }) {
   return (
     <nav className="top-mode-nav" aria-label="Workspace views">
       <div className="top-mode-group" role="tablist" aria-label="Document views">
-        {WORKSPACE_VIEW_MODES.map(renderMode)}
+        {WORKSPACE_VIEW_MODES.filter(item => item.id !== "structure" || showStructure).map(renderMode)}
       </div>
       <span className="top-mode-sep" />
       <div className="top-mode-group run" role="tablist" aria-label="Run views">
@@ -949,10 +998,10 @@ function TopBar({
         </button>
       </div>
 
-      <WorkspaceModeNav mode={mode} onModeChange={onModeChange} />
+      <WorkspaceModeNav mode={mode} onModeChange={onModeChange} showStructure={!isThesisDatasetId(docId)} />
 
       <div className="tb-right">
-        {mode !== "console" && <div className="panel-toggle-group">
+        {!(["console", "structure"].includes(mode)) && <div className="panel-toggle-group">
           <button className={"btn icon-only tip" + (leftPanelOpen ? " is-on" : "")} type="button"
             data-tip={leftPanelOpen ? "Hide chapter navigation" : "Show chapter navigation"}
             aria-label="Toggle chapter navigation" aria-pressed={leftPanelOpen} onClick={onToggleLeftPanel}>
@@ -1125,7 +1174,7 @@ function App() {
   const [editing, setEditing] = useState(false);
   const [centerMode, setCenterModeState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_CENTER_MODE);
-    return ["block", "chapter", "book", "memory", "preview"].includes(saved) ? saved : "chapter";
+    return ["block", "chapter", "book", "structure", "memory", "preview"].includes(saved) ? saved : "chapter";
   });
   const [leftPanelOpen, setLeftPanelOpen] = useState(() => localStorage.getItem(STORAGE_LEFT_PANEL) !== "false");
   const [rightPanelOpen, setRightPanelOpen] = useState(() => localStorage.getItem(STORAGE_RIGHT_PANEL) !== "false");
@@ -1318,7 +1367,10 @@ function App() {
         .catch(() => setAppVersion({ ui_version: UI_VERSION, backend_version: "unknown", git_sha: "unknown" }));
       const list = await refreshProjects();
       const remembered = localStorage.getItem(STORAGE_DOC);
-      const chosen = list.find(p => p.doc_id === remembered && p.status === "available")
+      const savedMode = localStorage.getItem(STORAGE_CENTER_MODE);
+      const rememberedProject = list.find(p => p.doc_id === remembered);
+      const chosen = (savedMode === "structure" && rememberedProject?.source !== "thesis" ? rememberedProject : null)
+        || list.find(p => p.doc_id === remembered && p.status === "available")
         || list.find(p => p.status === "available")
         || list[0];
       if (!chosen) {
@@ -1331,6 +1383,9 @@ function App() {
       if (chosen.source === "thesis") {
         await loadThesisDataset(thesisJobId(chosen.doc_id), { project: chosen });
         navigateView("workspace", { replace: true });
+      } else if (savedMode === "structure") {
+        await openSourcePackage(chosen.doc_id, { replace: true });
+        setLoading(false);
       } else if (chosen.status === "available") {
         await loadDataset(chosen.doc_id);
       } else {
@@ -1810,6 +1865,42 @@ function App() {
   }
   const dismiss = id => setToasts(t => t.filter(x => x.id !== id));
 
+  async function openSourcePackage(docId = activeDocId, { replace = false } = {}) {
+    const targetDocId = String(docId || "");
+    if (!targetDocId || isThesisDatasetId(targetDocId)) return;
+    setActiveDocId(targetDocId);
+    localStorage.setItem(STORAGE_DOC, targetDocId);
+    if (targetDocId !== docInfo?.doc_id || isThesisDatasetId(docInfo?.doc_id)) {
+      let detail = null;
+      try { detail = await API.getProject(targetDocId); } catch (_err) {}
+      const projectRow = projects.find(row => row.doc_id === targetDocId) || {};
+      setDocInfo({
+        doc_id: targetDocId,
+        metadata: detail?.metadata || projectRow.metadata || {},
+        provenance: detail?.provenance || {},
+      });
+      setChapters([]);
+      setBlocks([]);
+      setGlossary([]);
+      setEntities([]);
+      setRelations([]);
+      setSummaries([]);
+      setReferences([]);
+      setEvalOnly({ gold_glossary: [], references: [] });
+      setThesisTranslations({});
+      setThesisObservability(null);
+      setSelectedCallId(null);
+      setSelectedCallDetail(null);
+      setReview({ blocks: {}, references: {}, summaries: {} });
+      setHistoryState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
+      setErrors([]);
+      setSelectedId(null);
+    }
+    setCenterModeState("structure");
+    localStorage.setItem(STORAGE_CENTER_MODE, "structure");
+    navigateView("workspace", { replace });
+  }
+
   function openProjectSource() {
     if (isThesisDatasetId(activeDocId)) {
       navigateView("workspace", { replace: true });
@@ -2235,6 +2326,8 @@ function App() {
     if (thesisId) {
       await loadThesisDataset(thesisId, { project: chosen || null });
       navigateView("workspace");
+    } else if (centerMode === "structure") {
+      await openSourcePackage(docId);
     } else if (chosen?.status === "available") {
       await loadDataset(docId);
       navigateView("workspace");
@@ -2384,6 +2477,40 @@ function App() {
     } catch (err) {
       toast("Upload failed", "bad", errorMessage(err));
       return null;
+    }
+  }
+
+  async function normalizeManagedSourcePackage(docIdOverride = "") {
+    const targetDocId = docIdOverride || activeDocId;
+    if (!targetDocId || isThesisDatasetId(targetDocId)) return null;
+    try {
+      const result = await API.normalizeSourcePackage(targetDocId);
+      await refreshProjects();
+      toast(result?.reused ? "Source package đã được xác nhận lại" : "Đã chuẩn hóa source package", "good", targetDocId);
+      return result;
+    } catch (err) {
+      const detail = firstError(err);
+      toast("Chuẩn hóa thất bại", "bad", [detail.code, errorMessage(err)].filter(Boolean).join(" · "));
+      return null;
+    }
+  }
+
+  async function openPreparedRunControl(preparedRuntime) {
+    const jobId = String(preparedRuntime?.job_id || "");
+    if (!jobId) return;
+    setRunBusy(true);
+    try {
+      const list = await refreshProjects();
+      const project = list.find(row => row.job_id === jobId || row.doc_id === `${THESIS_PREFIX}${jobId}`) || null;
+      await loadThesisDataset(jobId, { project });
+      setCenterModeState("book");
+      localStorage.setItem(STORAGE_CENTER_MODE, "book");
+      navigateView("workspace");
+      setModal({ kind: "dich-run", jobId });
+    } catch (err) {
+      toast("Không mở được Run Control", "bad", errorMessage(err));
+    } finally {
+      setRunBusy(false);
     }
   }
 
@@ -2991,7 +3118,11 @@ function App() {
       onClose={() => setModal(null)}
       onCreateProject={createProject}
       onUploadSource={uploadSource}
-      onExtract={runExtract}
+      onNormalize={normalizeManagedSourcePackage}
+      onOpenStructure={async docId => {
+        setModal(null);
+        await openSourcePackage(docId);
+      }}
       onOpenAdvanced={isThesisDatasetId(activeDocId) ? null : () => {
         setModal(null);
         navigateView("project");
@@ -3013,6 +3144,9 @@ function App() {
 
   const runSurfaceView = view === "console" || view === "report";
   const activeCenterMode = runSurfaceView ? view : centerMode;
+  const sourcePackageOverlay = window.__SOURCE_PACKAGE_UI_DEV__ === true
+    ? window.SOURCE_PACKAGE_UI_FIXTURE?.overlay || null
+    : null;
 
   if (view === "project" && !isThesisDatasetId(activeDocId)) {
     return (
@@ -3031,7 +3165,7 @@ function App() {
           onDeleteProject={deleteProjectById}
           onUploadSource={uploadSource}
           onBack={() => navigateView("workspace")}
-          onExtract={runExtract}
+          onOpenStructure={openSourcePackage}
           readOnly={readOnly}
         />
         <Toasts items={toasts} onDismiss={dismiss} />
@@ -3039,10 +3173,10 @@ function App() {
     );
   }
 
-  if (!block || !docInfo) {
+  if ((!block || !docInfo) && centerMode !== "structure") {
     return (
       <>
-        <StartupState title="Chưa có tài liệu" message="Nhập một file EPUB hoặc TXT để tạo danh sách chương và block."
+        <StartupState title="Chưa có tài liệu" message="Nhập TXT, EPUB, Markdown, HTML hoặc PDF để tạo managed source package."
           action="Nhập tài liệu" onAction={() => setModal({ kind: "quick-import" })}
           secondaryAction="Project / Source" onSecondaryAction={openProjectSource} />
         <Toasts items={toasts} onDismiss={dismiss} />
@@ -3052,22 +3186,33 @@ function App() {
   }
 
   return (
-    <div className={"app" + (runSurfaceView ? " app--console" : "") + (view === "report" ? " app--report" : "")}>
-      {!runSurfaceView && <TopBar docId={docInfo.doc_id} dirty={dirty} lastSaved={lastSaved}
+    <div className={"app" + (runSurfaceView ? " app--console" : "") + (view === "report" ? " app--report" : "") + (activeCenterMode === "structure" ? " app--structure" : "")}>
+      {!runSurfaceView && <TopBar docId={docInfo?.doc_id || activeDocId} dirty={dirty} lastSaved={lastSaved}
         projects={projects} mode={centerMode} onModeChange={setCenterMode}
         onSelectProject={selectProject} onOpenProjectSource={openProjectSource} onQuickImport={() => setModal({ kind: "quick-import" })}
         leftPanelOpen={leftPanelOpen} rightPanelOpen={rightPanelOpen}
         onToggleLeftPanel={toggleLeftPanel} onToggleRightPanel={toggleRightPanel}
         onValidate={runValidate} onExportOption={doExport} onFreeze={doFreeze}
         onUndo={runUndo} onRedo={runRedo} history={historyState}
-        freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={centerMode === "preview" || readOnly} canExportPreview={!!currentPreviewRun?.run}
+        freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={["preview", "structure"].includes(centerMode) || readOnly} canExportPreview={!!currentPreviewRun?.run}
         appVersion={appVersion} />}
-      <div className={["workspace", runSurfaceView ? "workspace--console" : "", view === "report" ? "workspace--report" : "", activeCenterMode === "memory" ? "workspace--memory" : "", !leftPanelOpen ? "workspace--no-left" : "", (!rightPanelOpen || activeCenterMode === "memory") ? "workspace--no-right" : "", rightPanelOpen && rightPanelExpanded && activeCenterMode !== "memory" ? "workspace--right-expanded" : ""].filter(Boolean).join(" ")}>
-        {!runSurfaceView && leftPanelOpen && <LeftSidebar docInfo={docInfo} blocks={visibleBlocks} chapters={chapters} review={review}
+      <div className={["workspace", runSurfaceView ? "workspace--console" : "", view === "report" ? "workspace--report" : "", activeCenterMode === "memory" ? "workspace--memory" : "", activeCenterMode === "structure" ? "workspace--structure" : "", (!leftPanelOpen || activeCenterMode === "structure") ? "workspace--no-left" : "", (!rightPanelOpen || ["memory", "structure"].includes(activeCenterMode)) ? "workspace--no-right" : "", rightPanelOpen && rightPanelExpanded && !["memory", "structure"].includes(activeCenterMode) ? "workspace--right-expanded" : ""].filter(Boolean).join(" ")}>
+        {!runSurfaceView && activeCenterMode !== "structure" && leftPanelOpen && <LeftSidebar docInfo={docInfo} blocks={visibleBlocks} chapters={chapters} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={selectBlock}
           filters={filters} onToggleFilter={toggleFilter} counts={filterCounts} total={blocks.length}
           errors={errors} />}
-        {activeCenterMode === "memory" ? (
+        {activeCenterMode === "structure" ? (
+          <SourcePackageWorkspace
+            docId={activeDocId}
+            user={currentUser()}
+            api={API}
+            publicationOverlay={sourcePackageOverlay}
+            onOpenProjectSource={openProjectSource}
+            onOpenLegacy={() => setCenterMode("book")}
+            onRuntimePrepared={prepared => setProjectRuntime(prepared)}
+            onOpenRunControl={openPreparedRunControl}
+          />
+        ) : activeCenterMode === "memory" ? (
           <MemoryWorkspace docInfo={docInfo}
             profile={readOnly
               ? (docInfo?.metadata?.profile || docInfo?.metadata?.domain || (entities.length || relations.length ? "literary_v1" : "technical_d2l_v1"))
@@ -3129,7 +3274,7 @@ function App() {
           onClearFocus={clearFocusedTerm}
           onFocusJump={jumpFocusedTerm} />
         )}
-        {runSurfaceView || activeCenterMode === "memory" || !rightPanelOpen ? null : activeCenterMode === "preview" ? (
+        {runSurfaceView || ["memory", "structure"].includes(activeCenterMode) || !rightPanelOpen ? null : activeCenterMode === "preview" ? (
           <PreviewRightPanel docInfo={docInfo} block={block} preview={currentPreviewRun} />
         ) : (
           <RightPanel openTabs={rightOpenTabs} onToggleTab={toggleRightTab} counts={rpCounts}

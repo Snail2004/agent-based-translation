@@ -147,6 +147,13 @@
     getProject: (docId) => request(`/projects/${encodeURIComponent(docId)}`),
     getProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime`),
     prepareProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime/prepare`, { method: "POST", body: {} }),
+    getSourcePackageStatus: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package`),
+    normalizeSourcePackage: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/normalize`, { method: "POST", body: {} }),
+    getSourcePackageReview: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/review`),
+    applySourcePackageCorrections: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/corrections`, { method: "POST", body }),
+    applySourcePackageHierarchy: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/hierarchy`, { method: "POST", body }),
+    finalizeSourcePackage: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/finalize`, { method: "POST", body }),
+    publishSourcePackage: (docId, overlay) => request(`/projects/${encodeURIComponent(docId)}/source-package/publications`, { method: "POST", body: overlay }),
     patchProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "PATCH", body: payload }),
     deleteProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "DELETE", body: payload || {} }),
     uploadSource: (docId, file, overwrite) => {

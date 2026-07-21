@@ -1,0 +1,374 @@
+(function () {
+  window.__SOURCE_PACKAGE_UI_DEV__ = true;
+
+  const realApi = window.AILAB_API;
+  const ApiError = realApi.ApiError;
+  const params = new URLSearchParams(window.location.search || "");
+  const scenario = params.get("scenario") || "draft";
+  const overlayMode = params.get("overlay") || "missing";
+  const docId = "source_package_ui_demo";
+  const hash = char => String(char).repeat(64);
+  const clone = value => JSON.parse(JSON.stringify(value));
+
+  localStorage.setItem("ailab.doc_id", docId);
+  localStorage.setItem("ailab.center_mode", "structure");
+  localStorage.setItem("ailab.user", "UI Fixture Reviewer");
+
+  const baseUnits = [
+    {
+      unit_id: "u0001",
+      chapter_id: "demo_ch01",
+      order_index: 0,
+      title: "Preface",
+      block_ids: ["demo_ch01_b001", "demo_ch01_b002"],
+      role: "frontmatter",
+      translation_policy: "preserve",
+      confidence: 0.96,
+      review_required: false,
+      issue_codes: [],
+    },
+    {
+      unit_id: "u0002",
+      chapter_id: "demo_ch02",
+      order_index: 1,
+      title: "Chapter I · Arrival",
+      block_ids: ["demo_ch02_b001", "demo_ch02_b002", "demo_ch02_b003"],
+      role: "body",
+      translation_policy: "translate",
+      confidence: 0.91,
+      review_required: false,
+      issue_codes: [],
+    },
+    {
+      unit_id: "u0003",
+      chapter_id: "demo_ch03",
+      order_index: 2,
+      title: "Untitled boundary",
+      block_ids: ["demo_ch03_b001", "demo_ch03_b002", "demo_ch03_b003"],
+      role: "unknown",
+      translation_policy: "review",
+      confidence: 0.62,
+      review_required: true,
+      issue_codes: ["unit_flagged_review", "unit_low_confidence", "unit_unknown_role"],
+    },
+  ];
+  const parentByUnit = {};
+
+  function reportFor(units) {
+    const issue = {
+      issue_id: "amb_fixture_unit_3",
+      code: "unit_low_confidence",
+      scope: "unit",
+      target_id: "u0003",
+      evidence: ["source_format:pdf", "chapter_id:demo_ch03"],
+    };
+    const outline = units.map(unit => ({
+      unit_id: unit.unit_id,
+      chapter_id: unit.chapter_id,
+      order_index: unit.order_index,
+      title: unit.title,
+      first_block_id: unit.block_ids[0],
+      last_block_id: unit.block_ids[unit.block_ids.length - 1],
+      block_count: unit.block_ids.length,
+      parent_unit_id: parentByUnit[unit.unit_id] || null,
+    }));
+    return {
+      schema_version: "draft_structure_report_v1",
+      doc_id: docId,
+      editable: true,
+      inputs: {},
+      units,
+      issues: units.some(unit => unit.unit_id === "u0003") ? [issue] : [],
+      global_skeleton: {
+        schema_version: "draft_structure_global_skeleton_v1",
+        doc_id: docId,
+        inputs: {},
+        policy: {},
+        outline,
+        navigation: [
+          { entry_id: "nav_01", order_index: 0, title: "Preface", normalized_title: "preface", depth: 0, parent_id: null, target_file: "source.pdf", target_anchor: null, source_mapped_block_id: "demo_ch01_b001", candidate_block_ids: ["demo_ch01_b001"], resolved_block_id: "demo_ch01_b001", resolution_status: "resolved" },
+          { entry_id: "nav_02", order_index: 1, title: "Chapter I", normalized_title: "chapter i", depth: 0, parent_id: null, target_file: "source.pdf", target_anchor: null, source_mapped_block_id: "demo_ch02_b001", candidate_block_ids: ["demo_ch02_b001"], resolved_block_id: "demo_ch02_b001", resolution_status: "resolved" },
+        ],
+        candidates: [
+          { candidate_id: "candidate_heading_02", candidate_kind: "heading", source_signal: "font_geometry", source_ref: "page:4", title: "Chapter I", unit_ids: ["u0002"], block_ids: ["demo_ch02_b001"], at_block_id: "demo_ch02_b001", resolution_status: "accepted", signals: ["font_size_jump", "toc_alignment"], input_identity_sha256: hash("7") },
+          { candidate_id: "candidate_heading_03", candidate_kind: "heading", source_signal: "font_geometry", source_ref: "page:7", title: "Untitled boundary", unit_ids: ["u0003"], block_ids: ["demo_ch03_b001"], at_block_id: "demo_ch03_b001", resolution_status: "review", signals: ["weak_heading_signal"], input_identity_sha256: hash("8") },
+        ],
+        issues: [],
+        statistics: {
+          unit_count: units.length,
+          block_count: units.reduce((total, unit) => total + unit.block_ids.length, 0),
+          navigation_entry_count: 2,
+          navigation_unresolved_count: 0,
+          navigation_mismatch_ratio: 0,
+          candidate_count: 2,
+          issue_count: units.some(unit => unit.unit_id === "u0003") ? 1 : 0,
+        },
+        integrity: { candidate_count: 2, issue_count: 1, payload_sha256: hash("9") },
+      },
+      integrity: {
+        unit_count: units.length,
+        issue_count: units.some(unit => unit.unit_id === "u0003") ? 1 : 0,
+        payload_sha256: hash("c"),
+      },
+    };
+  }
+
+  let units = clone(baseUnits);
+  let revision = 0;
+  let staleOnce = scenario === "stale";
+  let runtime = { project_id: docId, prepared: false };
+  let mode = scenario === "unmanaged"
+    ? "unmanaged_draft"
+    : scenario === "legacy"
+      ? "legacy_only"
+      : scenario === "finalized"
+        ? "managed_finalized_pre_run"
+        : scenario === "frozen"
+          ? "managed_run_started_frozen"
+          : "managed_draft";
+
+  function lifecycleForMode() {
+    if (mode === "managed_finalized_pre_run") return "finalized_pre_run";
+    if (mode === "managed_run_started_frozen") return "run_started_frozen";
+    return "draft";
+  }
+
+  function statusPayload() {
+    if (mode === "legacy_only") {
+      return { schema_version: "source_package_status_v1", doc_id: docId, mode, managed: false, normalize_allowed: false, reason: "legacy_project_evidence_exists", evidence: ["document.json"] };
+    }
+    if (mode === "unmanaged_draft") {
+      return { schema_version: "source_package_status_v1", doc_id: docId, mode, managed: false, normalize_allowed: true, source: { filename: "source.pdf", format: "pdf", sha256: hash("1") }, reason: null };
+    }
+    const lifecycle = lifecycleForMode();
+    return {
+      schema_version: "source_package_status_v1",
+      doc_id: docId,
+      mode,
+      managed: true,
+      normalize_allowed: lifecycle === "draft",
+      corrections_allowed: lifecycle === "draft",
+      hierarchy_allowed: lifecycle === "draft",
+      finalization_allowed: lifecycle === "draft",
+      lifecycle,
+      pipeline_run_count: lifecycle === "run_started_frozen" ? 1 : 0,
+      source: { filename: "source.pdf", format: "pdf", sha256: hash("1") },
+      candidate: { candidate_id: `srcpkg_${hash("2")}`, tree_sha256: hash("2"), relative_path: `working/source_package_candidates/srcpkg_${hash("2")}` },
+      package: { schema_version: "canonical_source_package_v1", sha256: hash("3"), relative_path: "working/source_package_candidates/demo" },
+      draft_structure: { report: { schema_version: "draft_structure_report_v1", sha256: hash(String((revision % 9) + 1)) } },
+      policies: {},
+      state_sha256: hash(String.fromCharCode(97 + (revision % 6))),
+      revision: {
+        latest_decision_sha256: hash("d"),
+        hierarchy: { schema_version: "source_package_hierarchy_overlay_v1", sha256: revision ? hash("e") : null, relative_path: revision ? "working/source_package_hierarchy/demo.json" : null },
+        finalization: { schema_version: "source_package_finalization_v1", sha256: mode === "managed_finalized_pre_run" || mode === "managed_run_started_frozen" ? hash("f") : null, relative_path: null },
+        authority: "os_locked_first_run",
+        load_bearing: lifecycle === "run_started_frozen",
+      },
+      latest_decision: { operation: mode === "managed_finalized_pre_run" ? "finalize_pre_run" : "correction", authority: { kind: "human", identifier: "UI Fixture Reviewer" } },
+      ...(lifecycle === "run_started_frozen" ? { run_start: { schema_version: "source_package_run_start_v1", sha256: hash("6"), run_id: "run_fixture_001", job_id: "job_fixture_001", runtime_manifest_sha256: hash("5") } } : {}),
+    };
+  }
+
+  function reviewPayload() {
+    const frozen = mode === "managed_run_started_frozen";
+    const report = reportFor(clone(units));
+    return {
+      schema_version: "source_package_review_v1",
+      doc_id: docId,
+      lifecycle: lifecycleForMode(),
+      pipeline_run_count: frozen ? 1 : 0,
+      authority: "explicit_human_approval_required",
+      experimental: { scope: frozen ? "run_started_frozen" : "os_locked_pre_run", load_bearing: frozen },
+      expected: {
+        state_sha256: statusPayload().state_sha256,
+        candidate_tree_sha256: statusPayload().candidate.tree_sha256,
+        report_sha256: report.integrity.payload_sha256,
+        hierarchy_sha256: revision ? hash("e") : null,
+      },
+      supported_actions: frozen || mode === "managed_finalized_pre_run" ? [] : ["update_unit", "split_unit", "merge_adjacent_units"],
+      supported_hierarchy_actions: frozen || mode === "managed_finalized_pre_run" ? [] : ["set_parent", "clear_parent"],
+      report,
+    };
+  }
+
+  function apiError(code, message, status) {
+    return new ApiError(message, { ok: false, errors: [{ code, message }] }, status);
+  }
+
+  function assertFresh() {
+    if (!staleOnce) return;
+    staleOnce = false;
+    revision += 1;
+    units[1].title = "Chapter I · Concurrent revision";
+    throw apiError("source_package_correction_stale", "Expected identities differ from the current revision.", 409);
+  }
+
+  function applyCorrectionActions(actions) {
+    for (const action of actions || []) {
+      if (action.action_type === "update_unit") {
+        const unit = units.find(row => row.unit_id === action.unit_id);
+        if (unit && action.new_title !== null) unit.title = action.new_title;
+        if (unit && action.classification !== null) {
+          unit.translation_policy = action.classification;
+          unit.review_required = action.classification === "review";
+        }
+      } else if (action.action_type === "split_unit") {
+        const index = units.findIndex(row => row.unit_id === action.unit_id);
+        const unit = units[index];
+        const boundary = unit?.block_ids.indexOf(action.at_block_id) ?? -1;
+        if (unit && boundary > 0) {
+          units.splice(index, 1,
+            { ...unit, unit_id: `${unit.unit_id}_i`, title: action.left_title, block_ids: unit.block_ids.slice(0, boundary), translation_policy: action.left_classification, review_required: action.left_classification === "review" },
+            { ...unit, unit_id: `${unit.unit_id}_ii`, title: action.right_title, block_ids: unit.block_ids.slice(boundary), translation_policy: action.right_classification, review_required: action.right_classification === "review" });
+        }
+      } else if (action.action_type === "merge_adjacent_units") {
+        const leftIndex = units.findIndex(row => row.unit_id === action.left_unit_id);
+        const right = units[leftIndex + 1];
+        if (leftIndex >= 0 && right?.unit_id === action.right_unit_id) {
+          const left = units[leftIndex];
+          units.splice(leftIndex, 2, { ...left, title: action.new_title, block_ids: [...left.block_ids, ...right.block_ids], translation_policy: action.classification, review_required: action.classification === "review" });
+        }
+      }
+    }
+    units = units.map((unit, index) => ({ ...unit, order_index: index }));
+    revision += 1;
+  }
+
+  const overlay = {
+    schema_version: "canonical_translation_overlay_v1",
+    doc_id: docId,
+    document_sha256: hash("3"),
+    translations: baseUnits.flatMap(unit => unit.block_ids.map(blockId => ({
+      block_id: blockId,
+      text: `Bản dịch fixture ${blockId}`,
+      html: `<p>Bản dịch fixture ${blockId}</p>`,
+      markdown: `Bản dịch fixture ${blockId}`,
+    }))),
+  };
+
+  window.SOURCE_PACKAGE_UI_FIXTURE = {
+    scenario,
+    overlay: overlayMode === "valid" ? overlay : null,
+  };
+
+  window.AILAB_API = {
+    ...realApi,
+    baseUrl: "fixture://source-package-ui-v1",
+    getVersion: async () => ({ backend_version: "fixture-source-package-v1", git_sha: "fixture" }),
+    listProjects: async () => [{ doc_id: docId, status: "source_uploaded", source: "local", note: "Managed source fixture" }],
+    listThesisDatasets: async () => [],
+    listThesisRuns: async () => [],
+    getProject: async () => ({ doc_id: docId, metadata: { title: "Managed Source UI Fixture", domain: "literature", source_format: "pdf" }, provenance: {} }),
+    getThesisDataset: async (jobId) => ({
+      meta: {
+        source: "source_package_ui_fixture",
+        job_id: jobId,
+        counts: { chapters: units.length, blocks: units.reduce((sum, unit) => sum + unit.block_ids.length, 0) },
+        available_runs: [],
+        selected: {},
+      },
+      document: {
+        doc_id: docId,
+        title: "Managed Source UI Fixture",
+        source_filename: "fixture.pdf",
+        source_lang: "en",
+        target_lang: "vi",
+        metadata: { source_format: "pdf" },
+      },
+      chapters: units.map((unit, index) => ({
+        chapter_id: unit.chapter_id,
+        order: index + 1,
+        title: unit.title,
+        block_ids: [...unit.block_ids],
+      })),
+      blocks: units.flatMap(unit => unit.block_ids.map((blockId, index) => ({
+        block_id: blockId,
+        chapter_id: unit.chapter_id,
+        order: index + 1,
+        text: `Fixture source block ${blockId}`,
+      }))),
+      project_memory: { glossary_entries: [], entities: [], entity_relations: [], summaries: [] },
+      eval_only: { gold_glossary: [], references: [] },
+      translations: {},
+    }),
+    getThesisObservability: async (jobId) => ({
+      meta: { source: "source_package_ui_fixture", job_id: jobId, read_only: true },
+      calls: [],
+      usage_daily: [],
+      totals: { overall: { calls: 0, total_quota_tokens: 0, cost_usd: 0 } },
+    }),
+    getThesisRegistryOverlay: async (jobId) => ({
+      meta: { source: "source_package_ui_fixture", job_id: jobId, overlay_mode: "localization" },
+      source: { glossary_by_id: {}, entities_by_id: {} },
+      target_by_config: {},
+    }),
+    getSourcePackageStatus: async () => clone(statusPayload()),
+    getSourcePackageReview: async () => {
+      if (!["managed_draft", "managed_finalized_pre_run", "managed_run_started_frozen"].includes(mode)) {
+        throw apiError("source_package_not_managed", "Normalize the source package before requesting structure review.", 409);
+      }
+      return clone(reviewPayload());
+    },
+    normalizeSourcePackage: async () => {
+      const reused = mode !== "unmanaged_draft";
+      mode = "managed_draft";
+      return { ...clone(statusPayload()), created: !reused, reused };
+    },
+    applySourcePackageCorrections: async (_id, body) => {
+      assertFresh();
+      applyCorrectionActions(body.actions);
+      mode = "managed_draft";
+      return { ...clone(statusPayload()), decision_created: true, decision_reused: false };
+    },
+    applySourcePackageHierarchy: async (_id, body) => {
+      assertFresh();
+      for (const action of body.actions || []) {
+        if (action.action_type === "set_parent") parentByUnit[action.child_unit_id] = action.parent_unit_id;
+        if (action.action_type === "clear_parent") delete parentByUnit[action.child_unit_id];
+      }
+      revision += 1;
+      return { ...clone(statusPayload()), decision_created: true, decision_reused: false };
+    },
+    finalizeSourcePackage: async () => {
+      assertFresh();
+      mode = "managed_finalized_pre_run";
+      revision += 1;
+      return { ...clone(statusPayload()), decision_created: true, decision_reused: false };
+    },
+    getProjectRuntime: async () => clone(runtime),
+    prepareProjectRuntime: async () => {
+      runtime = { contract_version: "project_runtime_source_v2", project_id: docId, job_id: "job_fixture_001", prepared: true, created: true, managed_source: { state_sha256: statusPayload().state_sha256 } };
+      return clone(runtime);
+    },
+    publishSourcePackage: async (_id, body) => {
+      const overlayFields = Object.keys(body || {}).sort().join(",");
+      const translationFieldsValid = Array.isArray(body?.translations) && body.translations.every(row => (
+        Object.keys(row || {}).sort().join(",") === "block_id,html,markdown,text"
+      ));
+      const expectedBlockIds = baseUnits.flatMap(unit => unit.block_ids).sort();
+      const overlayBlockIds = Array.isArray(body?.translations) ? body.translations.map(row => row.block_id).sort() : [];
+      if (
+        body?.schema_version !== "canonical_translation_overlay_v1"
+        || overlayFields !== "doc_id,document_sha256,schema_version,translations"
+        || !/^[0-9a-f]{64}$/.test(body.document_sha256 || "")
+        || !translationFieldsValid
+        || overlayBlockIds.join(",") !== expectedBlockIds.join(",")
+      ) throw apiError("source_package_publication_invalid", "Publication requires one exact canonical_translation_overlay_v1 JSON object.", 400);
+      return {
+        schema_version: "source_package_publication_v1",
+        doc_id: docId,
+        publication_id: `publication_${hash("b")}`,
+        relative_path: `working/source_package_publications/publication_${hash("b")}`,
+        created: true,
+        reused: false,
+        artifacts: {
+          html: { path: "document.html", sha256: hash("4") },
+          markdown: { path: "document.md", sha256: hash("5") },
+        },
+        lifecycle: "run_started_frozen",
+        pipeline_run_count: 1,
+      };
+    },
+  };
+})();

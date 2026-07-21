@@ -25,17 +25,18 @@ function quickImportFileSize(bytes) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const QUICK_IMPORT_SOURCE_RE = /\.(txt|epub|md|markdown|html|htm)$/i;
+const QUICK_IMPORT_SOURCE_RE = /\.(txt|epub|md|markdown|html|htm|pdf)$/i;
 
 function quickImportSourceFormat(filename) {
   const lower = String(filename || "").toLowerCase();
   if (/\.(md|markdown)$/.test(lower)) return "markdown";
   if (/\.(html|htm)$/.test(lower)) return "html";
   if (lower.endsWith(".epub")) return "epub";
+  if (lower.endsWith(".pdf")) return "pdf";
   return "txt";
 }
 
-function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, onExtract, onOpenAdvanced }) {
+function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, onNormalize, onOpenStructure, onOpenAdvanced }) {
   const [step, setStep] = React.useState(1);
   const [file, setFile] = React.useState(null);
   const [profile, setProfile] = React.useState("literary");
@@ -68,7 +69,7 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
     if (!nextFile) return;
     if (!QUICK_IMPORT_SOURCE_RE.test(nextFile.name || "")) {
       setFile(null);
-      setFileError("Hiện tại hệ thống nhận file EPUB, Markdown, HTML hoặc TXT.");
+      setFileError("Hệ thống nhận TXT, EPUB, Markdown, HTML hoặc PDF.");
       return;
     }
     setFile(nextFile);
@@ -116,15 +117,16 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
         setSourceUploaded(true);
       }
 
-      setBusy("extract");
-      const extractResult = await onExtract(false, targetDocId);
-      if (!extractResult) throw new Error("Không thể trích xuất cấu trúc tài liệu.");
+      setBusy("normalize");
+      const normalizeResult = await onNormalize(targetDocId);
+      if (!normalizeResult) throw new Error("Không thể chuẩn hóa source package.");
       setResult({
         docId: targetDocId,
-        chapters: Number(extractResult.document?.chapters || 0),
-        blocks: Number(extractResult.document?.blocks || 0),
+        mode: normalizeResult.mode || "managed_draft",
+        reused: normalizeResult.reused === true,
       });
       setBusy("");
+      if (onOpenStructure) await onOpenStructure(targetDocId);
     } catch (err) {
       setBusy("");
       setError(err?.message || String(err));
@@ -136,10 +138,10 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
     <button className="btn primary" type="button" disabled={!canContinue} onClick={() => setStep(2)}>Tiếp tục <Ic.arrowRight size={13} /></button>
   </> : step === 2 ? <>
     <button className="btn" type="button" onClick={() => setStep(1)}>Quay lại</button>
-    <button className="btn primary" type="button" onClick={runImport}><Ic.play size={13} />Tạo và trích xuất</button>
+    <button className="btn primary" type="button" onClick={runImport}><Ic.sparkle size={13} />Tạo và chuẩn hóa</button>
   </> : result ? <>
     {onOpenAdvanced && <button className="btn" type="button" onClick={onOpenAdvanced}><Ic.folder size={13} />Project / Source</button>}
-    <button className="btn primary" type="button" onClick={close}>Mở danh sách block</button>
+    <button className="btn primary" type="button" onClick={close}>Mở Cấu trúc</button>
   </> : error ? <>
     <button className="btn" type="button" onClick={() => setStep(createdDocId ? 2 : 1)}>
       <Ic.chevRight size={13} style={{ transform: "rotate(180deg)" }} />{createdDocId ? "Xem lại" : "Sửa thông tin"}
@@ -150,7 +152,7 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
   return (
     <Modal title="Nhập tài liệu mới" icon={Ic.upload} className="quick-import-modal" onClose={close} actions={actions}>
       <div className="quick-import-steps" aria-label={`Bước ${step} trên 3`}>
-        {["Nguồn", "Xác nhận", "Trích xuất"].map((label, index) => {
+        {["Nguồn", "Xác nhận", "Chuẩn hóa"].map((label, index) => {
           const number = index + 1;
           const state = number === step ? "active" : number < step ? "done" : "";
           return <div key={label} className={`quick-import-step ${state}`}><span>{number < step ? <Ic.check size={11} /> : number}</span><b>{label}</b></div>;
@@ -160,11 +162,11 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
       {step === 1 && <div className="quick-import-pane">
         <label className={`quick-import-drop${file ? " has-file" : ""}`}
           onDragOver={event => event.preventDefault()} onDrop={handleDrop}>
-          <input type="file" accept=".txt,.epub,.md,.markdown,.html,.htm" onChange={event => selectFile(event.target.files?.[0])} />
+          <input type="file" accept=".txt,.epub,.md,.markdown,.html,.htm,.pdf" onChange={event => selectFile(event.target.files?.[0])} />
           <span className="quick-import-drop-icon"><Ic.upload size={18} /></span>
           <span className="quick-import-drop-copy">
             <b>{file ? file.name : "Chọn hoặc kéo thả tài liệu"}</b>
-            <em>{file ? quickImportFileSize(file.size) : "EPUB, Markdown, HTML hoặc TXT"}</em>
+            <em>{file ? quickImportFileSize(file.size) : "TXT, EPUB, Markdown, HTML hoặc PDF"}</em>
           </span>
           <span className="btn sm">Chọn file</span>
         </label>
@@ -208,8 +210,8 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
         <div className={`quick-import-result${error ? " failed" : result ? " complete" : ""}`}>
           <span className="quick-import-result-icon">{error ? <Ic.xCircle size={22} /> : result ? <Ic.checkCircle size={22} /> : <span className="as-spin" />}</span>
           <div>
-            <b>{error ? "Chưa thể hoàn tất" : result ? "Đã tạo dữ liệu có cấu trúc" : busy === "create" ? "Đang tạo project" : busy === "upload" ? "Đang tải file nguồn" : "Đang tách chương và block"}</b>
-            <p>{error || (result ? `${result.chapters} chương/unit · ${result.blocks} block` : "Không đóng cửa sổ trong khi dữ liệu đang được ghi.")}</p>
+            <b>{error ? "Chưa thể hoàn tất" : result ? "Đã tạo managed source package" : busy === "create" ? "Đang tạo project" : busy === "upload" ? "Đang tải file nguồn" : "Đang chuẩn hóa bằng cấu hình server"}</b>
+            <p>{error || (result ? `${result.mode}${result.reused ? " · reused" : ""}` : "Không đóng cửa sổ trong khi dữ liệu đang được ghi.")}</p>
             {(createdDocId || result?.docId) && <span className="mono">{result?.docId || createdDocId}</span>}
           </div>
         </div>
@@ -222,9 +224,6 @@ function ProjectSourceScreen({
   projects,
   activeDocId,
   docInfo,
-  chapters,
-  blocks,
-  errors,
   onSelectProject,
   onCreateProject,
   onUpdateProject,
@@ -232,28 +231,62 @@ function ProjectSourceScreen({
   onPatchDoc,
   onUploadSource,
   onBack,
-  onExtract,
+  onOpenStructure,
   readOnly,
 }) {
   const [file, setFile] = React.useState(null);
-  const [confirmOverwrite, setConfirmOverwrite] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [newDocId, setNewDocId] = React.useState("");
   const [projectNote, setProjectNote] = React.useState("");
+  const [sourcePackageStatus, setSourcePackageStatus] = React.useState(null);
+  const [sourcePackageLoading, setSourcePackageLoading] = React.useState(false);
+  const [sourcePackageError, setSourcePackageError] = React.useState("");
   const meta = docInfo.metadata || {};
   const prov = docInfo.provenance || {};
-  const extracted = blocks.length > 0;
   const localProjects = (projects || []).filter(project => (
     project?.source !== "thesis" && !String(project?.doc_id || "").startsWith("thesis:")
   ));
   const selectedProject = localProjects.find(p => p.doc_id === activeDocId);
   const protectedProject = activeDocId === "gold_demo_01";
+  const sourceMode = String(sourcePackageStatus?.mode || "");
+  const sourceManaged = sourcePackageStatus?.managed === true;
+  const sourceFrozen = sourceMode === "managed_run_started_frozen";
+  const sourceFinalized = sourceMode === "managed_finalized_pre_run";
+  const sourceLegacy = sourceMode === "legacy_only";
+  const projectEditingLocked = readOnly || sourcePackageLoading || !sourcePackageStatus || sourceFinalized || sourceFrozen;
+  const sourceUploadLocked = readOnly || sourcePackageLoading || !sourcePackageStatus || sourceManaged || sourceLegacy;
+
+  async function refreshSourcePackageStatus() {
+    if (!activeDocId) {
+      setSourcePackageStatus(null);
+      setSourcePackageError("");
+      return;
+    }
+    setSourcePackageLoading(true);
+    try {
+      const nextStatus = await window.AILAB_API.getSourcePackageStatus(activeDocId);
+      setSourcePackageStatus(nextStatus);
+      setSourcePackageError("");
+    } catch (error) {
+      const first = error?.errors?.[0] || error?.payload?.errors?.[0] || {};
+      setSourcePackageStatus(null);
+      setSourcePackageError([first.code, first.message || error?.message].filter(Boolean).join(" · "));
+    } finally {
+      setSourcePackageLoading(false);
+    }
+  }
 
   React.useEffect(() => {
     setProjectNote(selectedProject?.note || "");
   }, [selectedProject?.doc_id, selectedProject?.note]);
 
+  React.useEffect(() => {
+    setFile(null);
+    refreshSourcePackageStatus();
+  }, [activeDocId]);
+
   function patchMetadata(patch) {
+    if (projectEditingLocked) return;
     onPatchDoc({ metadata: patch });
   }
 
@@ -274,18 +307,17 @@ function ProjectSourceScreen({
   }
 
   async function saveProjectSettings() {
-    if (!activeDocId) return;
+    if (!activeDocId || projectEditingLocked) return;
     await onUpdateProject(activeDocId, { note: projectNote });
   }
 
   async function uploadSelected() {
     if (!file) return;
-    await onUploadSource(file, false);
-  }
-
-  function startExtract() {
-    if (extracted) setConfirmOverwrite(true);
-    else onExtract(false);
+    const uploaded = await onUploadSource(file, false);
+    if (uploaded) {
+      setFile(null);
+      await refreshSourcePackageStatus();
+    }
   }
 
   return (
@@ -305,13 +337,14 @@ function ProjectSourceScreen({
         <div className="project-headline">
           <div>
             <div className="project-kicker">Project / Source</div>
-            <h1>Prepare source for the thesis pipeline</h1>
-            <p>Choose a local project, upload a TXT, EPUB, Markdown, or HTML source, record source metadata, then extract it into canonical chapters and blocks. Re-extracting requires confirmation because it can overwrite the current document draft.</p>
+            <h1>Chuẩn bị nguồn cho thesis pipeline</h1>
+            <p>Chọn project, tải TXT, EPUB, Markdown, HTML hoặc PDF, rồi mở workspace Cấu trúc để backend chuẩn hóa, review và chốt source package trước run.</p>
           </div>
           <div className="source-state">
             <div className="srcstat-row"><span className={"ss-dot " + (selectedProject ? "ok" : "bad")} /><span className="ss-label">Project</span><span className="ss-val mono">{activeDocId || "not selected"}</span></div>
-            <div className="srcstat-row"><span className={"ss-dot " + (extracted ? "ok" : "bad")} /><span className="ss-label">Extracted</span><span className="ss-val mono">{extracted ? `${blocks.length} blocks · ${chapters.length} ch` : "not yet"}</span></div>
-            <div className="srcstat-row"><span className={"ss-dot " + (errors.length ? "bad" : "ok")} /><span className="ss-label">Validation</span><span className={"ss-val mono " + (errors.length ? "bad" : "")}>{errors.length ? `${errors.length} issue(s)` : "no report issues"}</span></div>
+            <div className="srcstat-row"><span className={"ss-dot " + (sourcePackageStatus?.source ? "ok" : "bad")} /><span className="ss-label">Source</span><span className="ss-val mono">{sourcePackageLoading ? "loading" : sourcePackageStatus?.source ? `${sourcePackageStatus.source.format} · ${sourcePackageStatus.source.filename}` : "missing"}</span></div>
+            <div className="srcstat-row"><span className={"ss-dot " + (sourceManaged ? "ok" : sourceLegacy ? "bad" : "")} /><span className="ss-label">Lifecycle</span><span className="ss-val mono">{sourceMode || "unavailable"}</span></div>
+            {sourcePackageError && <div className="srcstat-row"><span className="ss-dot bad" /><span className="ss-label">Backend</span><span className="ss-val mono bad">{sourcePackageError}</span></div>}
           </div>
         </div>
 
@@ -348,7 +381,7 @@ function ProjectSourceScreen({
                 <textarea
                     className="project-note"
                     value={projectNote}
-                    disabled={!activeDocId || readOnly}
+                    disabled={!activeDocId || projectEditingLocked}
                     rows={4}
                     placeholder="Short note for task owner, source choice, known issues..."
                     onChange={e => setProjectNote(e.target.value)}
@@ -356,10 +389,10 @@ function ProjectSourceScreen({
                 </FormField>
               </div>
               <div className="project-admin-actions">
-                <button className="btn" disabled={!activeDocId || readOnly} onClick={saveProjectSettings}>
+                <button className="btn" disabled={!activeDocId || projectEditingLocked} onClick={saveProjectSettings}>
                   <Ic.save size={13} />Save project info
                 </button>
-                <button className="btn danger" disabled={!activeDocId || protectedProject || readOnly} onClick={() => setConfirmDelete(true)}>
+                <button className="btn danger" disabled={!activeDocId || protectedProject || projectEditingLocked} onClick={() => setConfirmDelete(true)}>
                   <Ic.trash size={13} />Delete project
                 </button>
               </div>
@@ -375,23 +408,23 @@ function ProjectSourceScreen({
           <section className="project-panel">
             <div className="panel-title"><Ic.doc size={14} />Metadata / provenance</div>
             <div className="project-form">
-              <FormField label="title"><input value={meta.title || ""} disabled={readOnly} onChange={e => patchMetadata({ title: e.target.value })} /></FormField>
-              <FormField label="author"><input value={meta.author || ""} disabled={readOnly} onChange={e => patchMetadata({ author: e.target.value })} /></FormField>
-              <FormField label="domain"><input value={meta.domain || ""} disabled={readOnly} onChange={e => patchMetadata({ domain: e.target.value })} /></FormField>
-              <FormField label="genre"><input value={meta.genre || ""} disabled={readOnly} onChange={e => patchMetadata({ genre: e.target.value })} /></FormField>
+              <FormField label="title"><input value={meta.title || ""} disabled={projectEditingLocked} onChange={e => patchMetadata({ title: e.target.value })} /></FormField>
+              <FormField label="author"><input value={meta.author || ""} disabled={projectEditingLocked} onChange={e => patchMetadata({ author: e.target.value })} /></FormField>
+              <FormField label="domain"><input value={meta.domain || ""} disabled={projectEditingLocked} onChange={e => patchMetadata({ domain: e.target.value })} /></FormField>
+              <FormField label="genre"><input value={meta.genre || ""} disabled={projectEditingLocked} onChange={e => patchMetadata({ genre: e.target.value })} /></FormField>
               <FormField label="source_format">
-                <select value={meta.source_format || "txt"} disabled={readOnly} onChange={e => patchMetadata({ source_format: e.target.value })}>
+                <select value={meta.source_format || "txt"} disabled={projectEditingLocked} onChange={e => patchMetadata({ source_format: e.target.value })}>
                   <option value="txt">txt</option>
                   <option value="epub">epub</option>
                   <option value="markdown">markdown</option>
                   <option value="html">html</option>
-                  <option value="pdf">pdf (not extractable in MVP)</option>
+                  <option value="pdf">pdf</option>
                 </select>
               </FormField>
-              <FormField label="license"><input value={meta.license || ""} disabled={readOnly} onChange={e => patchMetadata({ license: e.target.value })} /></FormField>
-              <FormField label="source_url"><input value={meta.source_url || ""} disabled={readOnly} onChange={e => patchMetadata({ source_url: e.target.value })} /></FormField>
+              <FormField label="license"><input value={meta.license || ""} disabled={projectEditingLocked} onChange={e => patchMetadata({ license: e.target.value })} /></FormField>
+              <FormField label="source_url"><input value={meta.source_url || ""} disabled={projectEditingLocked} onChange={e => patchMetadata({ source_url: e.target.value })} /></FormField>
               <FormField label="contamination_risk">
-                <select value={meta.contamination_risk || ""} disabled={readOnly} onChange={e => patchMetadata({ contamination_risk: e.target.value })}>
+                <select value={meta.contamination_risk || ""} disabled={projectEditingLocked} onChange={e => patchMetadata({ contamination_risk: e.target.value })}>
                   <option value="">not set</option>
                   <option value="low">low</option>
                   <option value="medium">medium</option>
@@ -410,35 +443,30 @@ function ProjectSourceScreen({
             <div className="source-drop">
               <Ic.file size={22} />
               <div>
-                <div className="source-drop-title">TXT / EPUB / Markdown / HTML source</div>
-                <div className="source-drop-sub">Backend rejects PDF/OCR/layout extraction in this MVP.</div>
+                <div className="source-drop-title">TXT / EPUB / Markdown / HTML / PDF</div>
+                <div className="source-drop-sub">Backend Source Package chọn normalizer và giữ source bytes bất biến.</div>
               </div>
-              <input type="file" accept=".txt,.epub,.md,.markdown,.html,.htm" disabled={readOnly} onChange={e => setFile(e.target.files?.[0] || null)} />
+              <input type="file" accept=".txt,.epub,.md,.markdown,.html,.htm,.pdf" disabled={sourceUploadLocked} onChange={e => setFile(e.target.files?.[0] || null)} />
             </div>
             <div className="extract-actions">
-              <button className="btn" onClick={() => setFile(null)}>Clear</button>
-              <button className="btn" disabled={!file || !activeDocId || readOnly} onClick={uploadSelected}><Ic.upload size={13} />Upload source</button>
-              <button className="btn primary" disabled={!activeDocId || readOnly} onClick={startExtract}><Ic.play size={13} />Extract</button>
+              <button className="btn" disabled={!file} onClick={() => setFile(null)}>Bỏ chọn</button>
+              <button className="btn" disabled={!file || !activeDocId || sourceUploadLocked} onClick={uploadSelected}><Ic.upload size={13} />Tải nguồn</button>
+              <button className="btn primary" disabled={!activeDocId || readOnly} onClick={() => onOpenStructure(activeDocId)}><Ic.layers size={13} />Mở Cấu trúc</button>
             </div>
             <div className="extract-note">
-              <Ic.alert size={12} />
-              <span>Extraction creates the canonical chapters and blocks used by both thesis profiles. Re-extracting can discard reviewed edits.</span>
+              {sourceFrozen ? <Ic.lock size={12} /> : <Ic.alert size={12} />}
+              <span>{sourceFrozen
+                ? "Run đầu tiên đã đóng băng source package; source và cấu trúc hiện chỉ đọc."
+                : sourceManaged
+                  ? "Source package đã được quản lý; không thể ghi đè source. Tạo project/revision mới nếu cần thay nguồn."
+                  : sourceLegacy
+                    ? "Project legacy giữ luồng cũ; UI không tự chuyển sang managed normalize."
+                    : "Sau khi tải, dùng Cấu trúc để normalize với body {} và review bằng status backend."}</span>
             </div>
           </section>
 
         </div>
       </div>
-
-      {confirmOverwrite && (
-        <Modal title="Confirm re-extract" icon={Ic.alert} tone="bad" onClose={() => setConfirmOverwrite(false)}
-          actions={<>
-            <button className="btn" onClick={() => setConfirmOverwrite(false)}>Cancel</button>
-            <button className="btn primary" onClick={() => { setConfirmOverwrite(false); onExtract(true); }}>Overwrite draft</button>
-          </>}>
-          <p>Re-extracting can overwrite <span className="mono">document.json</span> and invalidate edited clean text, spans, and review state.</p>
-          <p className="muted">Use this only when the source file or extraction settings changed.</p>
-        </Modal>
-      )}
 
       {confirmDelete && (
         <Modal title="Delete project" icon={Ic.alert} tone="bad" onClose={() => setConfirmDelete(false)}
