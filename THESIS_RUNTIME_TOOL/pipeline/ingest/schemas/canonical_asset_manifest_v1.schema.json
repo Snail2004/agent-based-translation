@@ -1,0 +1,391 @@
+{
+  "$id": "https://thesis.local/schemas/canonical_asset_manifest_v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assets": {
+      "items": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "availability": {
+                  "const": "materialized"
+                }
+              },
+              "required": [
+                "availability"
+              ]
+            },
+            "then": {
+              "properties": {
+                "package_path": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "sha256": {
+                  "pattern": "^[0-9a-f]{64}$",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "availability": {
+                  "enum": [
+                    "source_reference",
+                    "missing"
+                  ]
+                }
+              },
+              "required": [
+                "availability"
+              ]
+            },
+            "then": {
+              "properties": {
+                "package_path": {
+                  "type": "null"
+                },
+                "sha256": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "availability": {
+                  "const": "missing"
+                }
+              },
+              "required": [
+                "availability"
+              ]
+            },
+            "then": {
+              "properties": {
+                "review_required": {
+                  "const": true
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "asset_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "availability": {
+            "enum": [
+              "materialized",
+              "source_reference",
+              "missing"
+            ]
+          },
+          "kind": {
+            "enum": [
+              "image",
+              "table",
+              "equation",
+              "code",
+              "raw_fragment",
+              "embedded_file"
+            ]
+          },
+          "media_type": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "package_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "review_required": {
+            "type": "boolean"
+          },
+          "sha256": {
+            "oneOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_locator": {
+            "minProperties": 1,
+            "type": "object"
+          },
+          "translation_policy": {
+            "enum": [
+              "translate",
+              "preserve",
+              "translate_structured",
+              "exclude",
+              "review"
+            ]
+          }
+        },
+        "required": [
+          "asset_id",
+          "kind",
+          "media_type",
+          "translation_policy",
+          "availability",
+          "package_path",
+          "sha256",
+          "source_locator",
+          "metadata",
+          "review_required"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "assets_root": {
+      "const": "assets"
+    },
+    "block_bindings": {
+      "items": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "render_role": {
+                  "const": "asset"
+                }
+              },
+              "required": [
+                "render_role"
+              ]
+            },
+            "then": {
+              "properties": {
+                "asset_ids": {
+                  "minItems": 1
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "review_required": {
+                  "const": false
+                },
+                "semantic_kind": {
+                  "enum": [
+                    "table",
+                    "image",
+                    "equation",
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "review_required",
+                "semantic_kind"
+              ]
+            },
+            "then": {
+              "properties": {
+                "asset_ids": {
+                  "minItems": 1
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "asset_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "block_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "render_role": {
+            "enum": [
+              "text",
+              "asset",
+              "caption",
+              "placeholder",
+              "structural"
+            ]
+          },
+          "review_required": {
+            "type": "boolean"
+          },
+          "semantic_kind": {
+            "enum": [
+              "text",
+              "caption",
+              "table",
+              "image",
+              "equation",
+              "code",
+              "structural",
+              "unknown"
+            ]
+          },
+          "semantic_subtype": {
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_kind": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "translation_policy": {
+            "enum": [
+              "translate",
+              "preserve",
+              "translate_structured",
+              "exclude",
+              "review"
+            ]
+          }
+        },
+        "required": [
+          "block_id",
+          "source_kind",
+          "semantic_kind",
+          "semantic_subtype",
+          "translation_policy",
+          "asset_ids",
+          "render_role",
+          "review_required"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "doc_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "document": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.5.0"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "integrity": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_count": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "binding_count": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "manifest_payload_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_count",
+        "binding_count",
+        "manifest_payload_sha256"
+      ],
+      "type": "object"
+    },
+    "package_version": {
+      "const": "canonical_source_package_v1"
+    },
+    "schema_version": {
+      "const": "canonical_asset_manifest_v1"
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "enum": [
+            "epub",
+            "html",
+            "markdown",
+            "txt",
+            "pdf"
+          ]
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "format",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "structure": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "sha256"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "package_version",
+    "doc_id",
+    "source",
+    "document",
+    "structure",
+    "assets_root",
+    "assets",
+    "block_bindings",
+    "integrity"
+  ],
+  "title": "Canonical Asset Manifest v1",
+  "type": "object"
+}

@@ -1,0 +1,321 @@
+{
+  "profiles": [
+    {
+      "profile_id": "d2l_shared_backend_fixture_v1",
+      "profile_revision": "v1",
+      "role_bindings": [
+        {
+          "fallback_plan": {"enabled": false, "steps": []},
+          "generation": {
+            "context_window_tokens": 128000,
+            "max_input_tokens": 10000,
+            "max_output_tokens": 4096,
+            "reasoning_effort": "low",
+            "seed": 7,
+            "temperature": 0.2,
+            "top_p": 1.0,
+            "verbosity": "medium"
+          },
+          "limits": {
+            "max_calls": 12,
+            "max_completion_tokens": 12000,
+            "max_cost_usd": 3.0,
+            "max_prompt_tokens": 48000,
+            "max_total_tokens": 60000,
+            "request_timeout_ms": 180000
+          },
+          "namespaces": {
+            "cache": "d2l.builder.candidate_discovery.cache",
+            "checkpoint": "d2l.builder.candidate_discovery.checkpoint",
+            "output": "d2l.builder.candidate_discovery.output"
+          },
+          "preset_id": "d2l.builder.candidate_discovery.contract_fixture_v1",
+          "preset_revision": "v1",
+          "primary": {
+            "capability_id": "local_gateway_gpt55_native_so_v1",
+            "capability_record_sha256": "4dce45f88a698b19a990819762378b1f78c0996bc8f18f2c966619546d57562a",
+            "capability_revision": "probe_20260719_v1",
+            "requested_model_id": "gpt-5.5",
+            "source_id": "local_gpt_gateway_v1",
+            "source_record_sha256": "6589a0c978413ddcd81c93130ff7a289f2b4ad324aeb7c326da2b8938deaf927",
+            "source_revision": "gateway_profile_v1"
+          },
+          "prompt": {
+            "id": "d2l_builder_candidate_prompt_v1",
+            "revision": "v1",
+            "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          },
+          "response_schema": {
+            "id": "d2l_builder_candidate_schema_v1",
+            "revision": "v1",
+            "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "role_id": "d2l.builder.candidate_discovery",
+          "semantic_extension": {
+            "id": "d2l_builder_candidate_extension_v1",
+            "schema_version": "v1",
+            "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+          "structured_output": {
+            "mode": "required",
+            "schema_dialect": "json_schema_2020_12"
+          },
+          "transport_retry": {
+            "backoff_policy": "none",
+            "initial_delay_ms": 0,
+            "max_delay_ms": 0,
+            "max_retries": 0,
+            "retryable_codes": []
+          },
+          "validator": {
+            "id": "shared_llm_fixture_validator_v1",
+            "revision": "v1",
+            "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          "workstream": "d2l"
+        }
+      ],
+      "schema_version": "pipeline_profile_v1",
+      "workstream": "d2l"
+    },
+    {
+      "profile_id": "literary_shared_backend_fixture_v1",
+      "profile_revision": "v1",
+      "role_bindings": [
+        {
+          "fallback_plan": {"enabled": false, "steps": []},
+          "generation": {
+            "context_window_tokens": 300000,
+            "max_input_tokens": 40000,
+            "max_output_tokens": 8000,
+            "reasoning_effort": "high",
+            "seed": null,
+            "temperature": 0.0,
+            "top_p": 1.0,
+            "verbosity": "high"
+          },
+          "limits": {
+            "max_calls": 8,
+            "max_completion_tokens": 24000,
+            "max_cost_usd": 5.0,
+            "max_prompt_tokens": 96000,
+            "max_total_tokens": 120000,
+            "request_timeout_ms": 300000
+          },
+          "namespaces": {
+            "cache": "literary.b2.interaction.cache",
+            "checkpoint": "literary.b2.interaction.checkpoint",
+            "output": "literary.b2.interaction.output"
+          },
+          "preset_id": "literary.b2.interaction.contract_fixture_v1",
+          "preset_revision": "v1",
+          "primary": {
+            "capability_id": "local_gateway_gpt55_native_so_v1",
+            "capability_record_sha256": "4dce45f88a698b19a990819762378b1f78c0996bc8f18f2c966619546d57562a",
+            "capability_revision": "probe_20260719_v1",
+            "requested_model_id": "gpt-5.5",
+            "source_id": "local_gpt_gateway_v1",
+            "source_record_sha256": "6589a0c978413ddcd81c93130ff7a289f2b4ad324aeb7c326da2b8938deaf927",
+            "source_revision": "gateway_profile_v1"
+          },
+          "prompt": {
+            "id": "literary_b2_interaction_prompt_v2",
+            "revision": "v2",
+            "sha256": "abababababababababababababababababababababababababababababababab"
+          },
+          "response_schema": {
+            "id": "literary_b2_interaction_schema_v2",
+            "revision": "v2",
+            "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "role_id": "literary.b2.interaction",
+          "semantic_extension": {
+            "id": "literary_b2_interaction_extension_v2",
+            "schema_version": "v2",
+            "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+          },
+          "semantic_retry": {"max_retries": 1, "retryable_categories": ["pipeline_semantic"]},
+          "structured_output": {
+            "mode": "required",
+            "schema_dialect": "json_schema_2020_12"
+          },
+          "transport_retry": {
+            "backoff_policy": "none",
+            "initial_delay_ms": 0,
+            "max_delay_ms": 0,
+            "max_retries": 0,
+            "retryable_codes": []
+          },
+          "validator": {
+            "id": "shared_llm_fixture_validator_v1",
+            "revision": "v1",
+            "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          "workstream": "literary"
+        }
+      ],
+      "schema_version": "pipeline_profile_v1",
+      "workstream": "literary"
+    },
+    {
+      "profile_id": "input_normalization_shared_backend_fixture_v1",
+      "profile_revision": "v1",
+      "role_bindings": [
+        {
+          "fallback_plan": {"enabled": false, "steps": []},
+          "generation": {
+            "context_window_tokens": 128000,
+            "max_input_tokens": 48000,
+            "max_output_tokens": 6000,
+            "reasoning_effort": "medium",
+            "seed": 11,
+            "temperature": 0.0,
+            "top_p": 1.0,
+            "verbosity": "low"
+          },
+          "limits": {
+            "max_calls": 2,
+            "max_completion_tokens": 12000,
+            "max_cost_usd": 1.0,
+            "max_prompt_tokens": 60000,
+            "max_total_tokens": 72000,
+            "request_timeout_ms": 240000
+          },
+          "namespaces": {
+            "cache": "input_normalization.structure_draft.boundary_repair.cache",
+            "checkpoint": "input_normalization.structure_draft.boundary_repair.checkpoint",
+            "output": "input_normalization.structure_draft.boundary_repair.output"
+          },
+          "preset_id": "input_normalization.structure_draft.boundary_repair.contract_fixture_v1",
+          "preset_revision": "v1",
+          "primary": {
+            "capability_id": "local_gateway_gpt55_native_so_v1",
+            "capability_record_sha256": "4dce45f88a698b19a990819762378b1f78c0996bc8f18f2c966619546d57562a",
+            "capability_revision": "probe_20260719_v1",
+            "requested_model_id": "gpt-5.5",
+            "source_id": "local_gpt_gateway_v1",
+            "source_record_sha256": "6589a0c978413ddcd81c93130ff7a289f2b4ad324aeb7c326da2b8938deaf927",
+            "source_revision": "gateway_profile_v1"
+          },
+          "prompt": {
+            "id": "input_boundary_repair_prompt_v1",
+            "revision": "v1",
+            "sha256": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+          },
+          "response_schema": {
+            "id": "input_boundary_repair_schema_v1",
+            "revision": "v1",
+            "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "role_id": "input_normalization.structure_draft.boundary_repair",
+          "semantic_extension": {
+            "id": "input_boundary_repair_extension_v1",
+            "schema_version": "v1",
+            "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+          },
+          "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+          "structured_output": {
+            "mode": "required",
+            "schema_dialect": "json_schema_2020_12"
+          },
+          "transport_retry": {
+            "backoff_policy": "none",
+            "initial_delay_ms": 0,
+            "max_delay_ms": 0,
+            "max_retries": 0,
+            "retryable_codes": []
+          },
+          "validator": {
+            "id": "shared_llm_fixture_validator_v1",
+            "revision": "v1",
+            "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          "workstream": "input_normalization"
+        }
+      ],
+      "schema_version": "pipeline_profile_v1",
+      "workstream": "input_normalization"
+    },
+    {
+      "profile_id": "evaluation_shared_backend_fixture_v1",
+      "profile_revision": "v1",
+      "role_bindings": [
+        {
+          "fallback_plan": {"enabled": false, "steps": []},
+          "generation": {
+            "context_window_tokens": 64000,
+            "max_input_tokens": 12000,
+            "max_output_tokens": 3000,
+            "reasoning_effort": "low",
+            "seed": 19,
+            "temperature": 0.0,
+            "top_p": 1.0,
+            "verbosity": "medium"
+          },
+          "limits": {
+            "max_calls": 4,
+            "max_completion_tokens": 6000,
+            "max_cost_usd": null,
+            "max_prompt_tokens": 24000,
+            "max_total_tokens": 30000,
+            "request_timeout_ms": 180000
+          },
+          "namespaces": {
+            "cache": "evaluation.sf_bt.semantic_judge.cache",
+            "checkpoint": "evaluation.sf_bt.semantic_judge.checkpoint",
+            "output": "evaluation.sf_bt.semantic_judge.output"
+          },
+          "preset_id": "evaluation.sf_bt.semantic_judge.contract_fixture_v1",
+          "preset_revision": "v1",
+          "primary": {
+            "capability_id": "local_gateway_gpt55_native_so_v1",
+            "capability_record_sha256": "4dce45f88a698b19a990819762378b1f78c0996bc8f18f2c966619546d57562a",
+            "capability_revision": "probe_20260719_v1",
+            "requested_model_id": "gpt-5.5",
+            "source_id": "local_gpt_gateway_v1",
+            "source_record_sha256": "6589a0c978413ddcd81c93130ff7a289f2b4ad324aeb7c326da2b8938deaf927",
+            "source_revision": "gateway_profile_v1"
+          },
+          "prompt": {
+            "id": "evaluation_sfbt_semantic_prompt_v1",
+            "revision": "v1",
+            "sha256": "efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef"
+          },
+          "response_schema": {
+            "id": "evaluation_sfbt_semantic_schema_v1",
+            "revision": "v1",
+            "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "role_id": "evaluation.sf_bt.semantic_judge",
+          "semantic_extension": {
+            "id": "evaluation_sfbt_semantic_extension_v1",
+            "schema_version": "v1",
+            "sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+          },
+          "semantic_retry": {"max_retries": 0, "retryable_categories": []},
+          "structured_output": {
+            "mode": "required",
+            "schema_dialect": "json_schema_2020_12"
+          },
+          "transport_retry": {
+            "backoff_policy": "none",
+            "initial_delay_ms": 0,
+            "max_delay_ms": 0,
+            "max_retries": 0,
+            "retryable_codes": []
+          },
+          "validator": {
+            "id": "shared_llm_fixture_validator_v1",
+            "revision": "v1",
+            "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          },
+          "workstream": "evaluation"
+        }
+      ],
+      "schema_version": "pipeline_profile_v1",
+      "workstream": "evaluation"
+    }
+  ],
+  "schema_version": "llm_backend_phase2a_fixture_v1"
+}

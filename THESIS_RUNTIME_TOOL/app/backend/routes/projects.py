@@ -16,6 +16,20 @@ from services.project_runtime import (
     get_project_runtime_status,
     prepare_project_runtime,
 )
+from services.source_lifecycle import (
+    SourceLifecycleError,
+    apply_managed_source_corrections,
+    apply_managed_source_hierarchy,
+    ensure_legacy_extract_allowed,
+    ensure_legacy_normalizer_allowed,
+    ensure_source_upload_allowed,
+    finalize_managed_source_package,
+    get_source_package_review,
+    get_source_package_status,
+    normalize_managed_source_package,
+    publish_managed_translation,
+    source_lifecycle_mutation_guard,
+)
 from services.workspace import (
     ProjectError,
     create_project_shell,
@@ -138,13 +152,23 @@ def upload_source(doc_id: str):
     try:
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
+        project_path = get_project_path(doc_id)
         if "file" not in request.files:
             return error("missing_file", "Upload field 'file' is required.", 400)
         overwrite = str(request.form.get("overwrite", "")).lower() in {"1", "true", "yes"}
         file = request.files["file"]
         data = file.read()
-        path = save_source_file(get_project_path(doc_id), file.filename or "source.txt", data, overwrite=overwrite)
+        with source_lifecycle_mutation_guard(project_path):
+            ensure_source_upload_allowed(project_path)
+            path = save_source_file(
+                project_path,
+                file.filename or "source.txt",
+                data,
+                overwrite=overwrite,
+            )
         return ok({"filename": path.name, "size": len(data), "path": str(path)}, status=201)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
     except ProjectError as exc:
         return error("source_upload_error", str(exc), 400)
 
@@ -155,14 +179,19 @@ def extract(doc_id: str):
     try:
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
-        job = extract_project(
-            get_project_path(doc_id),
-            doc_id,
-            overwrite=bool(payload.get("overwrite")),
-            force=bool(payload.get("force")),
-            user=str(payload.get("user") or "local"),
-        )
+        project_path = get_project_path(doc_id)
+        with source_lifecycle_mutation_guard(project_path):
+            ensure_legacy_extract_allowed(project_path)
+            job = extract_project(
+                project_path,
+                doc_id,
+                overwrite=bool(payload.get("overwrite")),
+                force=bool(payload.get("force")),
+                user=str(payload.get("user") or "local"),
+            )
         return ok(job, status=201)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
     except ProjectError as exc:
         message = str(exc)
         if "annotations_present" in message:
@@ -174,6 +203,176 @@ def extract(doc_id: str):
         return error(code, str(exc), 400)
 
 
+@bp.get("/projects/<doc_id>/source-package")
+def source_package_status(doc_id: str):
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        return ok(get_source_package_status(get_project_path(doc_id), doc_id))
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("source_package_status_error", str(exc), 400)
+
+
+@bp.post("/projects/<doc_id>/source-package/normalize")
+def source_package_normalize(doc_id: str):
+    if not request.is_json:
+        return error(
+            "source_package_options_invalid",
+            "Request body must be exactly one empty JSON object.",
+            400,
+        )
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return error(
+            "source_package_options_invalid",
+            "Request body must be exactly one empty JSON object.",
+            400,
+        )
+    if payload:
+        return error(
+            "source_package_options_forbidden",
+            "Source-package normalization uses server-owned configuration and accepts no client options.",
+            400,
+        )
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        result = normalize_managed_source_package(get_project_path(doc_id), doc_id)
+        return ok(result, status=201 if result.get("created") else 200)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("source_package_normalize_error", str(exc), 400)
+
+
+@bp.get("/projects/<doc_id>/source-package/review")
+def source_package_review(doc_id: str):
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        return ok(get_source_package_review(get_project_path(doc_id), doc_id))
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("source_package_review_error", str(exc), 400)
+
+
+@bp.post("/projects/<doc_id>/source-package/corrections")
+def source_package_corrections(doc_id: str):
+    if not request.is_json:
+        return error(
+            "source_package_correction_invalid",
+            "Correction request must be a JSON object.",
+            400,
+        )
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return error(
+            "source_package_correction_invalid",
+            "Correction request must be a JSON object.",
+            400,
+        )
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        result = apply_managed_source_corrections(
+            get_project_path(doc_id),
+            doc_id,
+            payload,
+        )
+        return ok(result, status=201 if result.get("decision_created") else 200)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("source_package_correction_error", str(exc), 400)
+
+
+@bp.post("/projects/<doc_id>/source-package/hierarchy")
+def source_package_hierarchy(doc_id: str):
+    if not request.is_json:
+        return error(
+            "source_package_hierarchy_invalid",
+            "Hierarchy request must be a JSON object.",
+            400,
+        )
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return error(
+            "source_package_hierarchy_invalid",
+            "Hierarchy request must be a JSON object.",
+            400,
+        )
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        result = apply_managed_source_hierarchy(
+            get_project_path(doc_id), doc_id, payload
+        )
+        return ok(result, status=201 if result.get("decision_created") else 200)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("source_package_hierarchy_error", str(exc), 400)
+
+
+@bp.post("/projects/<doc_id>/source-package/finalize")
+def source_package_finalize(doc_id: str):
+    if not request.is_json:
+        return error(
+            "source_package_finalization_invalid",
+            "Finalization request must be a JSON object.",
+            400,
+        )
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return error(
+            "source_package_finalization_invalid",
+            "Finalization request must be a JSON object.",
+            400,
+        )
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        result = finalize_managed_source_package(
+            get_project_path(doc_id), doc_id, payload
+        )
+        return ok(result, status=201 if result.get("decision_created") else 200)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("source_package_finalization_error", str(exc), 400)
+
+
+@bp.post("/projects/<doc_id>/source-package/publications")
+def source_package_publish(doc_id: str):
+    if not request.is_json:
+        return error(
+            "source_package_publication_invalid",
+            "Publication request must be a canonical translation overlay JSON object.",
+            400,
+        )
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return error(
+            "source_package_publication_invalid",
+            "Publication request must be a canonical translation overlay JSON object.",
+            400,
+        )
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        result = publish_managed_translation(
+            get_project_path(doc_id), doc_id, payload
+        )
+        return ok(result, status=201 if result.get("created") else 200)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("source_package_publication_error", str(exc), 400)
+
+
 @bp.post("/projects/<doc_id>/normalize/candidate-parts")
 def normalize_candidate_parts(doc_id: str):
     blocked = cockpit_quarantined("structure_normalizer")
@@ -183,10 +382,14 @@ def normalize_candidate_parts(doc_id: str):
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
         project_path = get_project_path(doc_id)
-        candidate = dict(build_project_candidate_parts(project_path, doc_id))
-        candidate["paths"] = normalizer_paths(project_path)
-        candidate["normalizer"] = normalizer_status(project_path)
+        with source_lifecycle_mutation_guard(project_path):
+            ensure_legacy_normalizer_allowed(project_path)
+            candidate = dict(build_project_candidate_parts(project_path, doc_id))
+            candidate["paths"] = normalizer_paths(project_path)
+            candidate["normalizer"] = normalizer_status(project_path)
         return ok(candidate, status=201)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
     except ProjectError as exc:
         return error("normalize_candidate_error", str(exc), 400)
 
@@ -199,7 +402,13 @@ def normalize_agent_plan(doc_id: str):
     try:
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
-        return ok(load_agent_structure_plan(get_project_path(doc_id), doc_id))
+        project_path = get_project_path(doc_id)
+        with source_lifecycle_mutation_guard(project_path):
+            ensure_legacy_normalizer_allowed(project_path)
+            result = load_agent_structure_plan(project_path, doc_id)
+        return ok(result)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
     except ProjectError as exc:
         return error("normalize_agent_plan_error", str(exc), 400)
 
@@ -216,7 +425,10 @@ def normalize_plan(doc_id: str):
     try:
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
-        result = import_structure_plan(get_project_path(doc_id), doc_id, plan)
+        project_path = get_project_path(doc_id)
+        with source_lifecycle_mutation_guard(project_path):
+            ensure_legacy_normalizer_allowed(project_path)
+            result = import_structure_plan(project_path, doc_id, plan)
         if not result.get("ok"):
             validation = result.get("validation", {"errors": [], "warnings": []})
             return jsonify({
@@ -229,6 +441,8 @@ def normalize_plan(doc_id: str):
                 "warnings": validation.get("warnings", []),
             }), 400
         return ok(result, status=201)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
     except ProjectError as exc:
         return error("normalize_plan_error", str(exc), 400)
 
@@ -242,15 +456,20 @@ def normalize_apply(doc_id: str):
     try:
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
-        job = apply_normalized_document(
-            get_project_path(doc_id),
-            doc_id,
-            approved=bool(payload.get("approved")),
-            overwrite=bool(payload.get("overwrite")),
-            force=bool(payload.get("force")),
-            user=str(payload.get("user") or "local"),
-        )
+        project_path = get_project_path(doc_id)
+        with source_lifecycle_mutation_guard(project_path):
+            ensure_legacy_normalizer_allowed(project_path)
+            job = apply_normalized_document(
+                project_path,
+                doc_id,
+                approved=bool(payload.get("approved")),
+                overwrite=bool(payload.get("overwrite")),
+                force=bool(payload.get("force")),
+                user=str(payload.get("user") or "local"),
+            )
         return ok(job, status=201)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
     except ProjectError as exc:
         message = str(exc)
         if "annotations_present" in message:

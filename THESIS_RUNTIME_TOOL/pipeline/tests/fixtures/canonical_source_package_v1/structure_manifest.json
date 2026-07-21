@@ -1,0 +1,70 @@
+{
+  "doc_id": "neutral_fixture",
+  "exact_cover": {
+    "coverage": 1.0,
+    "covered_blocks": 5,
+    "expected_blocks": 5,
+    "missing_count": 0,
+    "overlap_count": 0
+  },
+  "normalizer_version": "fixture-v1",
+  "review_required_chapter_ids": [],
+  "review_required_unit_ids": [],
+  "schema_version": "html_structure_manifest_v1",
+  "source": {
+    "format": "html",
+    "path": "source.html",
+    "sha256": "ff555a09289d86a545a5880093181d57da7adf4cc1ad8fb46d8d77d50db53818"
+  },
+  "source_map": [
+    {
+      "block_id": "neutral_fixture_ch01_b0001",
+      "html_path": "/html/body/h1[1]",
+      "source_block_kind": "heading"
+    },
+    {
+      "block_id": "neutral_fixture_ch01_b0002",
+      "html_path": "/html/body/p[1]",
+      "source_block_kind": "paragraph"
+    },
+    {
+      "block_id": "neutral_fixture_ch01_b0003",
+      "html_path": "/html/body/figure[1]",
+      "source_block_kind": "image"
+    },
+    {
+      "block_id": "neutral_fixture_ch01_b0004",
+      "html_path": "/html/body/table[1]",
+      "source_block_kind": "table"
+    },
+    {
+      "block_id": "neutral_fixture_ch01_b0005",
+      "html_path": "/html/body/p[2]/math[1]",
+      "source_block_kind": "equation"
+    }
+  ],
+  "structure_sha256": "fixture-structure-proof",
+  "translatable_chapter_ids": [
+    "neutral_fixture_ch01"
+  ],
+  "units": [
+    {
+      "block_range": [
+        0,
+        5
+      ],
+      "chapter_id": "neutral_fixture_ch01",
+      "confidence": 1.0,
+      "evidence": [
+        "fixture"
+      ],
+      "order_index": 0,
+      "parent_unit_id": null,
+      "review_required": false,
+      "role": "content_unit",
+      "title": "Section One",
+      "translation_policy": "translate",
+      "unit_id": "u0001_section_one"
+    }
+  ]
+}

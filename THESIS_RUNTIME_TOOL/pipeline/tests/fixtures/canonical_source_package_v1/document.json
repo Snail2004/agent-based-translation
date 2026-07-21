@@ -1,0 +1,93 @@
+{
+  "chapters": [
+    {
+      "blocks": [
+        {
+          "annotations": {},
+          "block_id": "neutral_fixture_ch01_b0001",
+          "block_type": "heading",
+          "clean_text": "Section One",
+          "is_chapter_opening": true,
+          "order_index": 1,
+          "page_ids": [],
+          "quality_flags": [],
+          "sentences": [],
+          "source_text": "Section One"
+        },
+        {
+          "annotations": {},
+          "block_id": "neutral_fixture_ch01_b0002",
+          "block_type": "paragraph",
+          "clean_text": "A method is introduced.",
+          "is_chapter_opening": false,
+          "order_index": 2,
+          "page_ids": [],
+          "quality_flags": [],
+          "sentences": [],
+          "source_text": "A method is introduced."
+        },
+        {
+          "annotations": {},
+          "block_id": "neutral_fixture_ch01_b0003",
+          "block_type": "paragraph",
+          "clean_text": "[Figure: Processing flow]",
+          "is_chapter_opening": false,
+          "order_index": 3,
+          "page_ids": [],
+          "quality_flags": [
+            "source_block_kind:image"
+          ],
+          "sentences": [],
+          "source_text": "[Figure: Processing flow]"
+        },
+        {
+          "annotations": {},
+          "block_id": "neutral_fixture_ch01_b0004",
+          "block_type": "paragraph",
+          "clean_text": "Input | Output\nA | B",
+          "is_chapter_opening": false,
+          "order_index": 4,
+          "page_ids": [],
+          "quality_flags": [
+            "source_block_kind:table"
+          ],
+          "sentences": [],
+          "source_text": "Input | Output\nA | B"
+        },
+        {
+          "annotations": {},
+          "block_id": "neutral_fixture_ch01_b0005",
+          "block_type": "paragraph",
+          "clean_text": "E = mc^2",
+          "is_chapter_opening": false,
+          "order_index": 5,
+          "page_ids": [],
+          "quality_flags": [
+            "source_block_kind:equation"
+          ],
+          "sentences": [],
+          "source_text": "E = mc^2"
+        }
+      ],
+      "chapter_id": "neutral_fixture_ch01",
+      "order_index": 1,
+      "title": "Section One"
+    }
+  ],
+  "doc_id": "neutral_fixture",
+  "metadata": {
+    "author": "",
+    "contamination_risk": "low",
+    "domain": "technical",
+    "extraction_tool": "fixture-v1",
+    "genre": "manual",
+    "license": "test-fixture",
+    "pipeline_version": "fixture-v1",
+    "raw_sha256": "ff555a09289d86a545a5880093181d57da7adf4cc1ad8fb46d8d77d50db53818",
+    "source_format": "html",
+    "source_language": "en",
+    "target_language": "vi",
+    "title": "Neutral Fixture"
+  },
+  "schema_version": "1.5.0"
+}

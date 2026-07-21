@@ -1,0 +1,22 @@
+{
+  "adapter_id": "openai_python_v1",
+  "base_url": "http://localhost:8317/v1",
+  "capability_id": "local_gateway_gpt55_native_so_v1",
+  "capability_kind": "native_structured_output",
+  "capability_revision": "probe_20260719_v1",
+  "evidence_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "local_validator_id": "shared_llm_fixture_validator_v1",
+  "local_validator_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "observed_at_utc": "2026-07-19T00:00:00Z",
+  "observed_model_id": "gpt-5.5",
+  "probe_id": "local_gateway_schema_probe_v1",
+  "protocol": "openai_chat_completions",
+  "requested_model_id": "gpt-5.5",
+  "route_id": "chat_completions_create",
+  "schema_dialect": "json_schema_2020_12",
+  "schema_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "schema_version": "capability_evidence_v1",
+  "source_id": "local_gpt_gateway_v1",
+  "source_revision": "gateway_profile_v1",
+  "verdict": "qualified"
+}

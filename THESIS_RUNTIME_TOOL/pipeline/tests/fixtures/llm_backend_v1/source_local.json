@@ -1,0 +1,15 @@
+{
+  "adapter_id": "openai_python_v1",
+  "base_url": "http://localhost:8317/v1",
+  "credential_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "credential_ref": "credential.local_gpt_gateway_v1",
+  "enabled": true,
+  "endpoint_class": "loopback",
+  "physical_quota_bucket_id": "local-gpt-gateway-v1",
+  "protocol": "openai_chat_completions",
+  "route_id": "chat_completions_create",
+  "schema_version": "api_source_v1",
+  "source_class": "local_endpoint",
+  "source_id": "local_gpt_gateway_v1",
+  "source_revision": "gateway_profile_v1"
+}

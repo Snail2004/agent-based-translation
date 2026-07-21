@@ -1,0 +1,203 @@
+{
+  "fixture_version": "canonical_source_rich_v1",
+  "primary_source": "source.epub",
+  "purpose": "Deterministic book-neutral coverage fixture for Canonical Source Package V1 ingest and preservation.",
+  "source_files": {
+    "source.txt": "8ff6e217609b025971e62edcaae63435288c273a538cea8586d067bfee855ec9",
+    "source.md": "8be5f459e51336c2781c86e09309a9353577ada578339df20710ba57392899eb",
+    "source.html": "0053644175a7a5ceacf9c0c9d0e5bc461988b8b82c8955bc54c0d8c96ee03afb",
+    "source.epub": "4e8ea034655d4a42d3a77f42217e9c322f9980e9bfe9af08425c184da9f546f8",
+    "media/diagram.svg": "9e8a1ff228dfd003e06e8fcff0399173525c8548bee8ca15291e3d448f97161e",
+    "media/chart.svg": "28bc265956b09c5accd6c65fc0f42c2d45fd62319dc45c9296df843e110e4dc9",
+    "media/fixture.css": "0ad077a9dadbda6ae3da4414feaf9801b3023f0f77bb84ff1ffc634cf2297e5f"
+  },
+  "semantic_features": [
+    "front_matter",
+    "two_content_chapters",
+    "back_matter",
+    "heading",
+    "paragraph",
+    "dialogue_or_block_quote",
+    "list",
+    "internal_link",
+    "footnote",
+    "figure",
+    "caption",
+    "chart",
+    "table",
+    "inline_equation",
+    "display_equation",
+    "code",
+    "stylesheet",
+    "altless_image"
+  ],
+  "known_degradations": {
+    "txt": [
+      "Embedded assets and rich semantics degrade to ordinary text because TXT has no native asset container."
+    ],
+    "markdown": [
+      "The current Markdown normalizer keeps the Appendix heading and text but folds them into Chapter II instead of materializing a separate back-matter unit."
+    ],
+    "html": [],
+    "epub": [
+      "Usage-level EPUB alt text remains recoverable from preserved XHTML fragments; OPF-level image inventory does not itself carry usage alt text."
+    ]
+  },
+  "formats": {
+    "txt": {
+      "source": "source.txt",
+      "expected_status": "text_only",
+      "chapter_titles": [
+        "Front matter",
+        "CHAPTER I",
+        "CHAPTER II",
+        "Back matter"
+      ],
+      "block_count": 16,
+      "binding_count": 16,
+      "asset_count": 0,
+      "source_kinds": [
+        "dialogue",
+        "heading",
+        "paragraph"
+      ],
+      "asset_kinds": [],
+      "unit_roles": [
+        "front_matter",
+        "content_unit",
+        "content_unit",
+        "back_matter"
+      ],
+      "unit_policies": [
+        "preserve",
+        "translate",
+        "translate",
+        "preserve"
+      ]
+    },
+    "markdown": {
+      "source": "source.md",
+      "expected_status": "preservation_complete",
+      "chapter_titles": [
+        "Front matter",
+        "Chapter I: Signals at Dawn",
+        "Chapter II: The River Crossing"
+      ],
+      "block_count": 21,
+      "binding_count": 21,
+      "asset_count": 15,
+      "source_kinds": [
+        "block_quote",
+        "code",
+        "footnote",
+        "heading",
+        "image",
+        "list",
+        "math_block",
+        "paragraph",
+        "raw_html",
+        "table"
+      ],
+      "asset_kinds": [
+        "code",
+        "equation",
+        "image",
+        "raw_fragment",
+        "table"
+      ],
+      "unit_roles": [
+        "front_matter",
+        "content_unit",
+        "content_unit"
+      ],
+      "unit_policies": [
+        "preserve",
+        "translate",
+        "translate"
+      ]
+    },
+    "html": {
+      "source": "source.html",
+      "expected_status": "preservation_complete",
+      "chapter_titles": [
+        "Front matter",
+        "Chapter I: Signals at Dawn",
+        "Chapter II: The River Crossing",
+        "Appendix: Preservation Notes"
+      ],
+      "block_count": 24,
+      "binding_count": 24,
+      "asset_count": 24,
+      "source_kinds": [
+        "code",
+        "dialogue",
+        "heading",
+        "image",
+        "list_item",
+        "paragraph",
+        "table"
+      ],
+      "asset_kinds": [
+        "code",
+        "equation",
+        "image",
+        "raw_fragment",
+        "table"
+      ],
+      "unit_roles": [
+        "front_matter",
+        "content_unit",
+        "content_unit",
+        "back_matter"
+      ],
+      "unit_policies": [
+        "preserve",
+        "translate",
+        "translate",
+        "exclude"
+      ]
+    },
+    "epub": {
+      "source": "source.epub",
+      "expected_status": "preservation_complete",
+      "chapter_titles": [
+        "Front Matter",
+        "Chapter I: Signals at Dawn",
+        "Chapter II: The River Crossing",
+        "Appendix: Preservation Notes"
+      ],
+      "block_count": 21,
+      "binding_count": 21,
+      "asset_count": 11,
+      "source_kinds": [
+        "block_quote",
+        "code",
+        "heading",
+        "image",
+        "list_item",
+        "paragraph",
+        "table"
+      ],
+      "asset_kinds": [
+        "code",
+        "embedded_file",
+        "equation",
+        "image",
+        "raw_fragment",
+        "table"
+      ],
+      "unit_roles": [
+        "front_matter",
+        "content_unit",
+        "content_unit",
+        "back_matter"
+      ],
+      "unit_policies": [
+        "preserve",
+        "translate",
+        "translate",
+        "exclude"
+      ]
+    }
+  }
+}

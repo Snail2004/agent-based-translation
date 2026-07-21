@@ -1,0 +1,10 @@
+body {
+  font-family: serif;
+  line-height: 1.4;
+}
+
+figure,
+table,
+pre {
+  break-inside: avoid;
+}

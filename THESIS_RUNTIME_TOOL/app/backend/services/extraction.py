@@ -13,6 +13,8 @@ from xml.etree import ElementTree as ET
 from config import DATASET_FILES, EXTRACTION_TOOL, PIPELINE_VERSION, SCHEMA_VERSION
 from services.audit_log import log_event
 from services.dataset_io import default_review_state, read_json, read_jsonl, write_json_atomic, write_jsonl_atomic
+from services.epub_ingest import normalize_epub_for_project
+from services.structure_manifest import STRUCTURE_MANIFEST_FILENAME
 from services.workspace import ProjectError, ensure_project_dirs, ensure_working_files, find_source_file
 
 
@@ -1510,11 +1512,50 @@ def extract_project(
     write_job(project_path, job)
 
     try:
+        stored_metadata = load_project_metadata(project_path)
+        metadata = default_metadata(doc_id, source_path, stored_metadata, report)
+        structure_manifest: dict[str, Any] | None = None
         if source_path.suffix.lower() == ".txt":
             raw = source_path.read_text(encoding="utf-8", errors="replace")
             chapters_raw = split_txt(raw, report)
         elif source_path.suffix.lower() == ".epub":
-            chapters_raw = split_epub(source_path, report)
+            epub_metadata = dict(metadata)
+            if not stored_metadata.get("title"):
+                epub_metadata.pop("title", None)
+            if not stored_metadata.get("author"):
+                epub_metadata.pop("author", None)
+            document, structure_manifest, normalizer_report = normalize_epub_for_project(
+                source_path,
+                doc_id=doc_id,
+                metadata=epub_metadata,
+            )
+            navigation = normalizer_report["navigation"]
+            report["normalization"] = normalizer_report
+            report["front_matter_metadata"] = bool(
+                normalizer_report["roles"].get("front_matter")
+            )
+            report["toc"] = {
+                "toc_source": navigation.get("source") or "none",
+                "toc_items": int(navigation.get("entry_count") or 0),
+                "chapters_matched": int(navigation.get("mapped_entry_count") or 0),
+                "match_rate": round(
+                    int(navigation.get("mapped_entry_count") or 0)
+                    / max(int(navigation.get("entry_count") or 0), 1),
+                    4,
+                ),
+                "fallback_used": (navigation.get("source") or "none") == "none",
+                "low_confidence": bool(
+                    normalizer_report["review_required_units"]
+                    or navigation.get("unmapped_entry_ids")
+                    or navigation.get("duplicate_titles")
+                    or navigation.get("duplicate_targets")
+                ),
+                "ambiguous_titles": list(navigation.get("duplicate_titles") or []),
+                "ambiguous_count": len(navigation.get("duplicate_titles") or []),
+                "duplicate_targets": list(navigation.get("duplicate_targets") or []),
+                "unresolved_targets": list(navigation.get("unmapped_entry_ids") or []),
+            }
+            chapters_raw = None
         elif source_path.suffix.lower() in {".md", ".markdown"}:
             raw = source_path.read_text(encoding="utf-8-sig", errors="replace")
             chapters_raw = split_markdown(raw, report)
@@ -1523,9 +1564,14 @@ def extract_project(
             chapters_raw = split_html(raw, report)
         else:
             raise ProjectError("Only TXT, EPUB, Markdown, and HTML sources are supported in MVP.")
-        metadata = default_metadata(doc_id, source_path, load_project_metadata(project_path), report)
-        document = chapters_to_document(doc_id, metadata, chapters_raw)
+        if structure_manifest is None:
+            document = chapters_to_document(doc_id, metadata, chapters_raw)
         write_json_atomic(document_path, document)
+        structure_path = dirs["canonical"] / STRUCTURE_MANIFEST_FILENAME
+        if structure_manifest is not None:
+            write_json_atomic(structure_path, structure_manifest)
+        else:
+            structure_path.unlink(missing_ok=True)
         write_empty_sidecars(project_path, overwrite=bool(force and annotation_reasons))
         ensure_working_files(project_path, document)
         _reset_working_after_extract(project_path, document, reset_drafts=bool(force and annotation_reasons))
@@ -1541,6 +1587,14 @@ def extract_project(
                 "path": "working/extraction_report.json",
                 "skipped": len(report.get("skipped", [])),
                 "source_format_mismatch": report.get("source_format_mismatch"),
+                "structure_manifest": (
+                    f"canonical/{STRUCTURE_MANIFEST_FILENAME}"
+                    if structure_manifest is not None
+                    else None
+                ),
+                "translatable_chapters": len(
+                    (structure_manifest or {}).get("translatable_chapter_ids") or []
+                ),
             },
         })
         write_job(project_path, job)

@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -9,12 +10,23 @@ from zipfile import ZipFile
 
 
 class BackendApiSmokeTest(unittest.TestCase):
+    @staticmethod
+    def _reset_backend_modules():
+        for name in list(sys.modules):
+            if (
+                name in {"app", "config", "routes", "services"}
+                or name.startswith("routes.")
+                or name.startswith("services.")
+            ):
+                sys.modules.pop(name, None)
+
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
         os.environ["THESIS_TOOL_PROJECTS_ROOT"] = cls.tmp.name
         backend_root = Path(__file__).resolve().parents[1]
         sys.path.insert(0, str(backend_root))
+        cls._reset_backend_modules()
 
         from app import create_app
 
@@ -24,6 +36,7 @@ class BackendApiSmokeTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.tmp.cleanup()
         os.environ.pop("THESIS_TOOL_PROJECTS_ROOT", None)
+        cls._reset_backend_modules()
 
     def test_health(self):
         response = self.client.get("/api/health")
@@ -2070,7 +2083,7 @@ Bob waited.
             "paragraph",
         )
 
-    def test_epub_ncx_toc_names_chapters_and_skips_non_toc_spine(self):
+    def test_epub_ncx_toc_preserves_non_toc_spine_but_routes_only_content(self):
         doc_id = "extract_epub_ncx_toc"
         self.client.post("/api/projects", json={
             "doc_id": doc_id,
@@ -2106,15 +2119,20 @@ Bob waited.
         extract = self.client.post(f"/api/projects/{doc_id}/extract", json={"overwrite": False})
         self.assertEqual(extract.status_code, 201)
         dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
-        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["Story One", "Story Two"])
+        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["Front matter", "Story One", "Story Two"])
         self._assert_chapter_properties(dataset)
         all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
-        self.assertNotIn("Skip me.", all_text)
+        self.assertIn("Skip me.", all_text)
+        self.assertEqual([chapter["unit_role"] for chapter in dataset["chapters"]], ["front_matter", "content_unit", "content_unit"])
+        self.assertEqual(
+            dataset["structure_manifest"]["translatable_chapter_ids"],
+            [chapter["chapter_id"] for chapter in dataset["chapters"][1:]],
+        )
         report = self._extraction_report(doc_id)
         self._assert_toc_report(report)
         self.assertEqual(report["toc"]["toc_source"], "ncx")
         self.assertFalse(report["toc"]["fallback_used"])
-        self.assertIn({"file": "OPS/ad.xhtml", "reason": "not-in-toc"}, report["skipped"])
+        self.assertEqual(report["normalization"]["exact_cover"]["coverage"], 1.0)
 
     def test_epub_nav_toc_names_chapters(self):
         doc_id = "extract_epub_nav_toc"
@@ -2242,9 +2260,14 @@ Bob waited.
         extract = self.client.post(f"/api/projects/{doc_id}/extract", json={"overwrite": False})
         self.assertEqual(extract.status_code, 201)
         dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
-        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["I", "II", "III"])
+        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["Front matter", "I", "II", "III"])
         all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
-        self.assertNotIn("Table of Contents", all_text)
+        self.assertIn("Table of Contents", all_text)
+        self.assertEqual(dataset["chapters"][0]["unit_role"], "front_matter")
+        self.assertEqual(
+            dataset["structure_manifest"]["translatable_chapter_ids"],
+            [chapter["chapter_id"] for chapter in dataset["chapters"][1:]],
+        )
         report = self._extraction_report(doc_id)
         self.assertFalse(report["toc"]["low_confidence"])
 
@@ -2282,7 +2305,7 @@ Bob waited.
         self.assertEqual(extract.status_code, 201)
         report = self._extraction_report(doc_id)
         self.assertTrue(report["toc"]["low_confidence"])
-        self.assertEqual(report["toc"]["anchor_split_failed"][0]["reason"], "missing-anchor")
+        self.assertTrue(report["toc"]["unresolved_targets"])
 
     def test_epub_first_same_file_toc_entry_can_start_without_anchor(self):
         doc_id = "extract_epub_first_entry_no_anchor"
@@ -2320,6 +2343,7 @@ Bob waited.
         self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["Chapter XXIV", "Walton, in Continuation"])
         report = self._extraction_report(doc_id)
         self.assertFalse(report["toc"]["low_confidence"])
+        self.assertEqual(dataset["structure_manifest"]["review_required_chapter_ids"], [])
 
     def test_epub_nav_duplicate_title_is_low_confidence(self):
         doc_id = "extract_epub_nav_duplicate"
@@ -2357,7 +2381,7 @@ Bob waited.
         self.assertTrue(report["toc"]["low_confidence"])
         self.assertEqual(report["toc"]["ambiguous_titles"], ["Same Title"])
 
-    def test_epub_front_matter_guide_entries_are_skipped(self):
+    def test_epub_front_matter_guide_entries_are_preserved_but_not_translated(self):
         doc_id = "extract_epub_front_matter"
         self.client.post("/api/projects", json={
             "doc_id": doc_id,
@@ -2395,16 +2419,18 @@ Bob waited.
         extract = self.client.post(f"/api/projects/{doc_id}/extract", json={"overwrite": False})
         self.assertEqual(extract.status_code, 201)
         dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
-        self.assertEqual(len(dataset["chapters"]), 1)
-        self.assertEqual(dataset["chapters"][0]["title"], "Chapter One")
+        self.assertEqual(len(dataset["chapters"]), 3)
+        self.assertEqual(dataset["chapters"][-1]["title"], "Chapter One")
+        self.assertEqual([chapter["unit_role"] for chapter in dataset["chapters"]], ["front_matter", "front_matter", "content_unit"])
+        self.assertEqual(dataset["structure_manifest"]["translatable_chapter_ids"], [dataset["chapters"][-1]["chapter_id"]])
         all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
         self.assertIn("Alice arrived.", all_text)
-        self.assertNotIn("Skip me.", all_text)
+        self.assertIn("Skip me.", all_text)
         report = self._extraction_report(doc_id)
         self.assertTrue(report["front_matter_metadata"])
-        self.assertEqual({item["file"] for item in report["skipped"]}, {"OPS/cover.xhtml", "OPS/toc.xhtml"})
+        self.assertEqual(report["normalization"]["exact_cover"]["coverage"], 1.0)
 
-    def test_epub_nav_landmarks_entries_are_skipped(self):
+    def test_epub_nav_landmarks_are_preserved_but_not_translated(self):
         doc_id = "extract_epub_nav_landmarks"
         self.client.post("/api/projects", json={
             "doc_id": doc_id,
@@ -2442,12 +2468,14 @@ Bob waited.
         dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
         all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
         self.assertIn("Alice arrived.", all_text)
-        self.assertNotIn("Skip this title page.", all_text)
+        self.assertIn("Skip this title page.", all_text)
+        self.assertEqual([chapter["unit_role"] for chapter in dataset["chapters"]], ["front_matter", "content_unit"])
+        self.assertEqual(dataset["structure_manifest"]["translatable_chapter_ids"], [dataset["chapters"][1]["chapter_id"]])
         report = self._extraction_report(doc_id)
         self.assertTrue(report["front_matter_metadata"])
-        self.assertEqual(report["skipped"][0]["file"], "OPS/title.xhtml")
+        self.assertEqual(report["normalization"]["exact_cover"]["coverage"], 1.0)
 
-    def test_epub_type_front_back_bodymatter_are_skipped(self):
+    def test_epub_type_front_back_bodymatter_are_routed_without_data_loss(self):
         doc_id = "extract_epub_type_matter"
         self.client.post("/api/projects", json={
             "doc_id": doc_id,
@@ -2489,22 +2517,19 @@ Bob waited.
         extract = self.client.post(f"/api/projects/{doc_id}/extract", json={"overwrite": False})
         self.assertEqual(extract.status_code, 201)
         dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
-        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["Chapter One"])
+        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["Titlepage", "Chapter One", "Colophon"])
+        self.assertEqual([chapter["unit_role"] for chapter in dataset["chapters"]], ["front_matter", "content_unit", "back_matter"])
+        self.assertEqual(dataset["structure_manifest"]["translatable_chapter_ids"], [dataset["chapters"][1]["chapter_id"]])
         all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
         self.assertIn("Alice arrived.", all_text)
-        self.assertNotIn("Skip front.", all_text)
-        self.assertNotIn("Skip back.", all_text)
+        self.assertIn("Skip front.", all_text)
+        self.assertIn("Skip back.", all_text)
         report = self._extraction_report(doc_id)
         self.assertTrue(report["front_matter_metadata"])
-        skipped = {item["file"]: item["reason"] for item in report["skipped"]}
-        self.assertIn("OPS/front.xhtml", skipped)
-        self.assertIn("OPS/back.xhtml", skipped)
-        self.assertIn("epub-type:front-matter:frontmatter", skipped["OPS/front.xhtml"])
-        self.assertIn("epub-type:front-matter:backmatter", skipped["OPS/back.xhtml"])
-        self.assertEqual(report["toc"]["toc_items"], 1)
+        self.assertEqual(report["toc"]["toc_items"], 3)
         self.assertFalse(report["toc"]["low_confidence"])
 
-    def test_epub_gutenberg_body_license_is_trimmed(self):
+    def test_epub_gutenberg_body_license_is_preserved_as_excluded_back_matter(self):
         doc_id = "extract_epub_gutenberg_trim"
         self.client.post("/api/projects", json={
             "doc_id": doc_id,
@@ -2539,12 +2564,10 @@ Bob waited.
         dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
         all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
         self.assertIn("Alice arrived before dawn.", all_text)
-        self.assertNotIn("Redistribution license text", all_text)
-        self.assertNotIn("THE FULL PROJECT GUTENBERG LICENSE", all_text)
-        report = self._extraction_report(doc_id)
-        trims = report["gutenberg"]["epub_body_trimmed"]
-        self.assertEqual(trims[0]["file"], "OPS/chapter1.xhtml")
-        self.assertEqual(trims[0]["blocks_removed"], 2)
+        self.assertIn("Redistribution license text", all_text)
+        self.assertIn("THE FULL PROJECT GUTENBERG LICENSE", all_text)
+        self.assertEqual([chapter["unit_role"] for chapter in dataset["chapters"]], ["content_unit", "back_matter"])
+        self.assertEqual(dataset["structure_manifest"]["translatable_chapter_ids"], [dataset["chapters"][0]["chapter_id"]])
 
     def test_epub_project_gutenberg_prose_is_not_trimmed(self):
         doc_id = "extract_epub_gutenberg_prose"
@@ -2603,6 +2626,7 @@ Bob waited.
         self.assertEqual(blocked.status_code, 400)
         self.assertEqual(blocked.get_json()["errors"][0]["code"], "annotations_present")
 
+    @unittest.skipUnless(shutil.which("pandoc"), "Pandoc is required")
     def test_epub_upload_extract_and_validate(self):
         doc_id = "phase3_epub"
         self.client.post("/api/projects", json={
@@ -2640,6 +2664,13 @@ Bob waited.
         self.assertEqual(extract.status_code, 201)
         dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
         self.assertEqual(len(dataset["chapters"]), 1)
+        self.assertIsNotNone(dataset["structure_manifest"])
+        self.assertEqual(
+            dataset["structure_manifest"]["translatable_chapter_ids"],
+            [dataset["chapters"][0]["chapter_id"]],
+        )
+        self.assertEqual(dataset["chapters"][0]["unit_role"], "content_unit")
+        self.assertEqual(dataset["chapters"][0]["translation_policy"], "translate")
         self.assertTrue(any(block["block_type"] == "dialogue" for block in dataset["blocks"]))
         report = self._extraction_report(doc_id)
         self._assert_toc_report(report)
@@ -2830,7 +2861,7 @@ print("hello")
         self.assertIn("New text.", all_text)
         self.assertNotIn("Old text.", all_text)
 
-    def test_pdf_upload_is_rejected(self):
+    def test_pdf_upload_requires_managed_source_package_route(self):
         doc_id = "phase3_pdf"
         self.client.post("/api/projects", json={"doc_id": doc_id, "metadata": {"license": "public-domain", "contamination_risk": "low"}})
         upload = self.client.post(
@@ -2838,8 +2869,667 @@ print("hello")
             data={"file": (BytesIO(b"%PDF-1.4"), "source.pdf")},
             content_type="multipart/form-data",
         )
-        self.assertEqual(upload.status_code, 400)
-        self.assertIn("PDF logical extraction", upload.get_json()["errors"][0]["message"])
+        self.assertEqual(upload.status_code, 201)
+        status = self.client.get(f"/api/projects/{doc_id}/source-package")
+        self.assertEqual(status.status_code, 200)
+        self.assertEqual(status.get_json()["data"]["source"]["format"], "pdf")
+        extract = self.client.post(f"/api/projects/{doc_id}/extract", json={})
+        self.assertEqual(extract.status_code, 409)
+        self.assertEqual(
+            extract.get_json()["errors"][0]["code"],
+            "pdf_requires_source_package_route",
+        )
+
+    def test_managed_source_package_route_is_idempotent_and_locks_legacy_mutation(self):
+        doc_id = "phase6b1_managed_txt"
+        self._make_unextracted_txt_project(
+            doc_id,
+            b"CHAPTER I\n\nAlice arrived.\n\nBob waited.",
+        )
+        before = self.client.get(f"/api/projects/{doc_id}/source-package")
+        self.assertEqual(before.status_code, 200)
+        self.assertEqual(before.get_json()["data"]["mode"], "unmanaged_draft")
+
+        forbidden_options = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={"pandoc_executable": "client-controlled"},
+        )
+        self.assertEqual(forbidden_options.status_code, 400)
+        self.assertEqual(
+            forbidden_options.get_json()["errors"][0]["code"],
+            "source_package_options_forbidden",
+        )
+
+        first = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(first.status_code, 201, first.get_json())
+        first_data = first.get_json()["data"]
+        self.assertTrue(first_data["created"])
+        self.assertFalse(first_data["reused"])
+        self.assertEqual(first_data["mode"], "managed_draft")
+
+        second = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(second.status_code, 200, second.get_json())
+        second_data = second.get_json()["data"]
+        self.assertFalse(second_data["created"])
+        self.assertTrue(second_data["reused"])
+        self.assertEqual(second_data["candidate"], first_data["candidate"])
+
+        overwrite = self.client.post(
+            f"/api/projects/{doc_id}/source",
+            data={
+                "file": (BytesIO(b"CHAPTER I\n\nChanged."), "source.txt"),
+                "overwrite": "true",
+            },
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(overwrite.status_code, 409)
+        self.assertEqual(
+            overwrite.get_json()["errors"][0]["code"],
+            "managed_source_overwrite_forbidden",
+        )
+        extract = self.client.post(f"/api/projects/{doc_id}/extract", json={})
+        self.assertEqual(extract.status_code, 409)
+        self.assertEqual(
+            extract.get_json()["errors"][0]["code"],
+            "managed_source_legacy_extract_forbidden",
+        )
+
+        legacy_routes = (
+            self.client.post(f"/api/projects/{doc_id}/normalize/candidate-parts"),
+            self.client.get(f"/api/projects/{doc_id}/normalize/agent-plan"),
+            self.client.post(
+                f"/api/projects/{doc_id}/normalize/plan",
+                json={"plan": {}},
+            ),
+            self.client.post(
+                f"/api/projects/{doc_id}/normalize/apply",
+                json={"approved": True, "user": "tester"},
+            ),
+        )
+        for response in legacy_routes:
+            self.assertEqual(response.status_code, 409, response.get_json())
+            self.assertEqual(
+                response.get_json()["errors"][0]["code"],
+                "managed_source_legacy_normalizer_forbidden",
+            )
+        self.assertFalse(
+            self._project_root(doc_id).joinpath("working", "normalized").exists()
+        )
+
+    def test_source_package_normalize_requires_exact_empty_json_object(self):
+        doc_id = "phase6b1_strict_normalize_body"
+        self._make_unextracted_txt_project(doc_id, b"CHAPTER I\n\nAlice arrived.")
+
+        invalid_requests = (
+            self.client.post(f"/api/projects/{doc_id}/source-package/normalize"),
+            self.client.post(
+                f"/api/projects/{doc_id}/source-package/normalize",
+                data=b"",
+                content_type="application/json",
+            ),
+            self.client.post(
+                f"/api/projects/{doc_id}/source-package/normalize",
+                data=b"ignored-non-json-options",
+                content_type="text/plain",
+            ),
+            self.client.post(
+                f"/api/projects/{doc_id}/source-package/normalize",
+                data=b"{malformed",
+                content_type="application/json",
+            ),
+            self.client.post(
+                f"/api/projects/{doc_id}/source-package/normalize",
+                json=[],
+            ),
+            self.client.post(
+                f"/api/projects/{doc_id}/source-package/normalize",
+                json="scalar",
+            ),
+        )
+        for response in invalid_requests:
+            self.assertEqual(response.status_code, 400, response.get_json())
+            self.assertEqual(
+                response.get_json()["errors"][0]["code"],
+                "source_package_options_invalid",
+            )
+
+        forbidden = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={"unexpected": True},
+        )
+        self.assertEqual(forbidden.status_code, 400, forbidden.get_json())
+        self.assertEqual(
+            forbidden.get_json()["errors"][0]["code"],
+            "source_package_options_forbidden",
+        )
+
+        accepted = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(accepted.status_code, 201, accepted.get_json())
+
+    def test_source_package_review_and_correction_routes_are_sealed_and_idempotent(self):
+        doc_id = "phase6b2a_correction_happy"
+        self._make_unextracted_txt_project(
+            doc_id,
+            b"CHAPTER I\n\nAlice arrived.\n\nBob waited.",
+        )
+        normalized = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(normalized.status_code, 201, normalized.get_json())
+        root = self._project_root(doc_id)
+        bootstrap = root.joinpath("working", "source_lifecycle_v1.json").read_bytes()
+
+        review_response = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        )
+        self.assertEqual(review_response.status_code, 200, review_response.get_json())
+        review = review_response.get_json()["data"]
+        unit = review["report"]["units"][0]
+        request_payload = {
+            "expected_state_sha256": review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": review["expected"]["report_sha256"],
+            "approved": True,
+            "user": "reviewer_01",
+            "actions": [
+                {
+                    "action_type": "update_unit",
+                    "unit_id": unit["unit_id"],
+                    "new_title": f"{unit['title']} revised",
+                    "classification": None,
+                }
+            ],
+        }
+        corrected = self.client.post(
+            f"/api/projects/{doc_id}/source-package/corrections",
+            json=request_payload,
+        )
+        self.assertEqual(corrected.status_code, 201, corrected.get_json())
+        corrected_data = corrected.get_json()["data"]
+        self.assertTrue(corrected_data["decision_created"])
+        self.assertFalse(corrected_data["revision"]["load_bearing"])
+        self.assertEqual(
+            root.joinpath("working", "source_lifecycle_v1.json").read_bytes(),
+            bootstrap,
+        )
+
+        repeated = self.client.post(
+            f"/api/projects/{doc_id}/source-package/corrections",
+            json=request_payload,
+        )
+        self.assertEqual(repeated.status_code, 200, repeated.get_json())
+        self.assertTrue(repeated.get_json()["data"]["decision_reused"])
+        refreshed = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        ).get_json()["data"]
+        self.assertTrue(refreshed["report"]["units"][0]["title"].endswith(" revised"))
+
+    def test_source_package_hierarchy_finalize_and_post_finalize_correction(self):
+        doc_id = "phase6b2bc_hierarchy_finalize"
+        self._make_unextracted_txt_project(
+            doc_id,
+            b"CHAPTER I\n\nAlice arrived.\n\nCHAPTER II\n\nBob waited.",
+        )
+        normalized = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(normalized.status_code, 201, normalized.get_json())
+        normalized_data = normalized.get_json()["data"]
+        candidate_tree = normalized_data["candidate"]["tree_sha256"]
+
+        review = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        ).get_json()["data"]
+        units = [row["unit_id"] for row in review["report"]["units"]]
+        self.assertEqual(len(units), 2)
+        hierarchy_request = {
+            "expected_state_sha256": review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": review["expected"]["report_sha256"],
+            "approved": True,
+            "user": "reviewer_01",
+            "actions": [
+                {
+                    "action_type": "set_parent",
+                    "child_unit_id": units[1],
+                    "parent_unit_id": units[0],
+                }
+            ],
+        }
+        hierarchy = self.client.post(
+            f"/api/projects/{doc_id}/source-package/hierarchy",
+            json=hierarchy_request,
+        )
+        self.assertEqual(hierarchy.status_code, 201, hierarchy.get_json())
+        hierarchy_data = hierarchy.get_json()["data"]
+        self.assertEqual(hierarchy_data["mode"], "managed_draft")
+        self.assertEqual(
+            hierarchy_data["candidate"]["tree_sha256"], candidate_tree
+        )
+        self.assertIsNotNone(
+            hierarchy_data["revision"]["hierarchy"]["sha256"]
+        )
+
+        hierarchy_retry = self.client.post(
+            f"/api/projects/{doc_id}/source-package/hierarchy",
+            json=hierarchy_request,
+        )
+        self.assertEqual(hierarchy_retry.status_code, 200, hierarchy_retry.get_json())
+        self.assertTrue(hierarchy_retry.get_json()["data"]["decision_reused"])
+
+        final_review = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        ).get_json()["data"]
+        finalization_request = {
+            "expected_state_sha256": final_review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": final_review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": final_review["expected"]["report_sha256"],
+            "expected_hierarchy_sha256": final_review["expected"][
+                "hierarchy_sha256"
+            ],
+            "approved": True,
+            "user": "reviewer_01",
+        }
+        finalized = self.client.post(
+            f"/api/projects/{doc_id}/source-package/finalize",
+            json=finalization_request,
+        )
+        self.assertEqual(finalized.status_code, 201, finalized.get_json())
+        finalized_data = finalized.get_json()["data"]
+        self.assertEqual(finalized_data["mode"], "managed_finalized_pre_run")
+        self.assertEqual(finalized_data["lifecycle"], "finalized_pre_run")
+        self.assertEqual(finalized_data["pipeline_run_count"], 0)
+        self.assertEqual(
+            finalized_data["candidate"]["tree_sha256"], candidate_tree
+        )
+
+        finalization_retry = self.client.post(
+            f"/api/projects/{doc_id}/source-package/finalize",
+            json=finalization_request,
+        )
+        self.assertEqual(
+            finalization_retry.status_code, 200, finalization_retry.get_json()
+        )
+        self.assertTrue(
+            finalization_retry.get_json()["data"]["decision_reused"]
+        )
+
+        finalized_review = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        ).get_json()["data"]
+        unit = finalized_review["report"]["units"][0]
+        correction_request = {
+            "expected_state_sha256": finalized_review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": finalized_review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": finalized_review["expected"][
+                "report_sha256"
+            ],
+            "approved": True,
+            "user": "reviewer_01",
+            "actions": [
+                {
+                    "action_type": "update_unit",
+                    "unit_id": unit["unit_id"],
+                    "new_title": f"{unit['title']} after finalization",
+                    "classification": None,
+                }
+            ],
+        }
+        corrected = self.client.post(
+            f"/api/projects/{doc_id}/source-package/corrections",
+            json=correction_request,
+        )
+        self.assertEqual(corrected.status_code, 201, corrected.get_json())
+        corrected_data = corrected.get_json()["data"]
+        self.assertEqual(corrected_data["mode"], "managed_draft")
+        self.assertEqual(corrected_data["lifecycle"], "draft")
+        self.assertIsNone(
+            corrected_data["revision"]["finalization"]["sha256"]
+        )
+
+    def test_managed_source_runtime_freeze_and_publication_end_to_end(self):
+        from unittest.mock import patch
+
+        from pipeline.ingest.source_package_exporter import seal_translation_overlay
+        from services import project_runtime, source_lifecycle
+
+        doc_id = "phase6_final_backend_flow"
+        self._make_unextracted_txt_project(
+            doc_id,
+            b"CHAPTER I\n\nAlice arrived.\n\nBob waited.",
+        )
+        normalized = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(normalized.status_code, 201, normalized.get_json())
+        review = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        ).get_json()["data"]
+        finalized = self.client.post(
+            f"/api/projects/{doc_id}/source-package/finalize",
+            json={
+                "expected_state_sha256": review["expected"]["state_sha256"],
+                "expected_candidate_tree_sha256": review["expected"][
+                    "candidate_tree_sha256"
+                ],
+                "expected_report_sha256": review["expected"]["report_sha256"],
+                "expected_hierarchy_sha256": review["expected"][
+                    "hierarchy_sha256"
+                ],
+                "approved": True,
+                "user": "backend_flow_reviewer",
+            },
+        )
+        self.assertEqual(finalized.status_code, 201, finalized.get_json())
+        finalized_data = finalized.get_json()["data"]
+        jobs_root = self._project_root(doc_id) / "runtime_jobs"
+
+        with (
+            patch.object(project_runtime, "THESIS_JOBS_ROOT", jobs_root),
+            patch.object(source_lifecycle, "THESIS_JOBS_ROOT", jobs_root),
+            patch.object(source_lifecycle, "THESIS_PANDOC_EXE", None),
+        ):
+            prepared = self.client.post(
+                f"/api/projects/{doc_id}/runtime/prepare",
+                json={},
+            )
+            self.assertEqual(prepared.status_code, 201, prepared.get_json())
+            prepared_data = prepared.get_json()["data"]
+            self.assertEqual(
+                prepared_data["contract_version"], "project_runtime_source_v2"
+            )
+            self.assertEqual(
+                prepared_data["managed_source"]["state_sha256"],
+                finalized_data["state_sha256"],
+            )
+
+            frozen = project_runtime.freeze_managed_runtime_for_run(
+                prepared_data["job_id"],
+                "run_backend_flow",
+                jobs_root=jobs_root,
+            )
+            self.assertEqual(frozen["lifecycle"], "run_started_frozen")
+            self.assertEqual(frozen["pipeline_run_count"], 1)
+
+            candidate_root = self._project_root(doc_id) / Path(
+                *finalized_data["candidate"]["relative_path"].split("/")
+            )
+            document = json.loads(
+                (candidate_root / "document.json").read_text(encoding="utf-8")
+            )
+            translations = [
+                {
+                    "block_id": block["block_id"],
+                    "text": f"VI::{block['block_id']}",
+                    "html": None,
+                    "markdown": None,
+                }
+                for chapter in document["chapters"]
+                for block in chapter["blocks"]
+            ]
+            overlay = seal_translation_overlay(document, translations)
+            publication = self.client.post(
+                f"/api/projects/{doc_id}/source-package/publications",
+                json=overlay,
+            )
+            self.assertEqual(publication.status_code, 201, publication.get_json())
+            publication_data = publication.get_json()["data"]
+            publication_root = self._project_root(doc_id) / Path(
+                *publication_data["relative_path"].split("/")
+            )
+            self.assertTrue((publication_root / "document.html").is_file())
+            self.assertTrue((publication_root / "document.md").is_file())
+
+            repeated = self.client.post(
+                f"/api/projects/{doc_id}/source-package/publications",
+                json=overlay,
+            )
+            self.assertEqual(repeated.status_code, 200, repeated.get_json())
+            self.assertTrue(repeated.get_json()["data"]["reused"])
+
+            incomplete = seal_translation_overlay(document, translations[:-1])
+            rejected = self.client.post(
+                f"/api/projects/{doc_id}/source-package/publications",
+                json=incomplete,
+            )
+            self.assertEqual(rejected.status_code, 409, rejected.get_json())
+            self.assertEqual(
+                rejected.get_json()["errors"][0]["code"],
+                "source_package_publication_invalid",
+            )
+
+            status = self.client.get(
+                f"/api/projects/{doc_id}/source-package"
+            ).get_json()["data"]
+            self.assertEqual(status["lifecycle"], "run_started_frozen")
+            self.assertEqual(status["pipeline_run_count"], 1)
+
+    def test_source_package_hierarchy_and_finalize_routes_reject_bad_requests(self):
+        doc_id = "phase6b2bc_strict_requests"
+        self._make_unextracted_txt_project(
+            doc_id,
+            b"CHAPTER I\n\nAlice arrived.\n\nCHAPTER II\n\nBob waited.",
+        )
+        normalized = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(normalized.status_code, 201, normalized.get_json())
+
+        for endpoint in ("hierarchy", "finalize"):
+            invalid_requests = (
+                self.client.post(
+                    f"/api/projects/{doc_id}/source-package/{endpoint}"
+                ),
+                self.client.post(
+                    f"/api/projects/{doc_id}/source-package/{endpoint}",
+                    data=b"not-json",
+                    content_type="text/plain",
+                ),
+                self.client.post(
+                    f"/api/projects/{doc_id}/source-package/{endpoint}",
+                    json=[],
+                ),
+            )
+            for response in invalid_requests:
+                self.assertEqual(response.status_code, 400, response.get_json())
+
+        review = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        ).get_json()["data"]
+        stale_finalization = {
+            "expected_state_sha256": review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": "0" * 64,
+            "expected_report_sha256": review["expected"]["report_sha256"],
+            "expected_hierarchy_sha256": review["expected"]["hierarchy_sha256"],
+            "approved": True,
+            "user": "reviewer_01",
+        }
+        rejected = self.client.post(
+            f"/api/projects/{doc_id}/source-package/finalize",
+            json=stale_finalization,
+        )
+        self.assertEqual(rejected.status_code, 409, rejected.get_json())
+        self.assertEqual(
+            rejected.get_json()["errors"][0]["code"],
+            "source_package_finalization_stale",
+        )
+
+    def test_source_package_corrections_reject_untrusted_or_unresolved_requests(self):
+        doc_id = "phase6b2a_correction_rejected"
+        self._make_unextracted_txt_project(doc_id, b"CHAPTER I\n\nAlice arrived.")
+        normalized = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(normalized.status_code, 201, normalized.get_json())
+        review = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        ).get_json()["data"]
+        base = {
+            "expected_state_sha256": review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": review["expected"]["report_sha256"],
+            "approved": True,
+            "user": "reviewer_01",
+            "actions": [
+                {
+                    "action_type": "update_unit",
+                    "unit_id": "unknown_unit",
+                    "new_title": "Foreign",
+                    "classification": None,
+                }
+            ],
+        }
+        malformed = self.client.post(
+            f"/api/projects/{doc_id}/source-package/corrections",
+            data=b"not-json",
+            content_type="text/plain",
+        )
+        self.assertEqual(malformed.status_code, 400, malformed.get_json())
+        with_client_authority = self.client.post(
+            f"/api/projects/{doc_id}/source-package/corrections",
+            json={**base, "plan": {}},
+        )
+        self.assertEqual(
+            with_client_authority.status_code,
+            400,
+            with_client_authority.get_json(),
+        )
+        unresolved = self.client.post(
+            f"/api/projects/{doc_id}/source-package/corrections",
+            json=base,
+        )
+        self.assertEqual(unresolved.status_code, 409, unresolved.get_json())
+        self.assertEqual(
+            unresolved.get_json()["errors"][0]["code"],
+            "source_package_correction_review_required",
+        )
+        self.assertFalse(
+            self._project_root(doc_id)
+            .joinpath("working", "source_lifecycle_v2.json")
+            .exists()
+        )
+
+    def test_partial_canonical_data_blocks_managed_source_package(self):
+        doc_id = "phase6b1_partial_canonical"
+        self._make_unextracted_txt_project(doc_id, b"CHAPTER I\n\nAlice arrived.")
+        canonical = self._project_root(doc_id) / "canonical"
+        canonical.mkdir(parents=True, exist_ok=True)
+        canonical.joinpath("entities.jsonl").write_text(
+            '{"entity_id":"legacy"}\n',
+            encoding="utf-8",
+            newline="\n",
+        )
+
+        status = self.client.get(f"/api/projects/{doc_id}/source-package")
+        self.assertEqual(status.status_code, 200, status.get_json())
+        status_data = status.get_json()["data"]
+        self.assertEqual(status_data["mode"], "legacy_only")
+        self.assertIn("canonical_data", status_data["evidence"])
+
+        blocked = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(blocked.status_code, 409, blocked.get_json())
+        self.assertEqual(
+            blocked.get_json()["errors"][0]["code"],
+            "legacy_project_not_adoptable",
+        )
+
+    def test_legacy_normalizer_first_blocks_managed_source_package(self):
+        doc_id = "phase6b1_legacy_normalizer_first"
+        source = (
+            b"Title.\n\nI\n\nFirst chapter body has enough text for coverage.\n\n"
+            b"II\n\nSecond chapter body has enough text for coverage."
+        )
+        self._make_unextracted_txt_project(doc_id, source)
+
+        candidate_response = self.client.post(
+            f"/api/projects/{doc_id}/normalize/candidate-parts"
+        )
+        self.assertEqual(candidate_response.status_code, 201)
+        candidate = candidate_response.get_json()["data"]
+        plan = self._minimal_structure_plan(doc_id, candidate["source_fingerprint"])
+        preview = self.client.post(
+            f"/api/projects/{doc_id}/normalize/plan",
+            json={"plan": plan},
+        )
+        self.assertEqual(preview.status_code, 201, preview.get_json())
+        applied = self.client.post(
+            f"/api/projects/{doc_id}/normalize/apply",
+            json={"approved": True, "user": "tester"},
+        )
+        self.assertEqual(applied.status_code, 201, applied.get_json())
+
+        blocked = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(blocked.status_code, 409, blocked.get_json())
+        self.assertEqual(
+            blocked.get_json()["errors"][0]["code"],
+            "legacy_project_not_adoptable",
+        )
+        status = self.client.get(f"/api/projects/{doc_id}/source-package")
+        self.assertEqual(status.status_code, 200, status.get_json())
+        self.assertEqual(status.get_json()["data"]["mode"], "legacy_only")
+
+    def test_managed_status_fails_closed_after_out_of_band_canonical_write(self):
+        doc_id = "phase6b1_managed_then_canonical"
+        self._make_unextracted_txt_project(doc_id, b"CHAPTER I\n\nAlice arrived.")
+        created = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(created.status_code, 201, created.get_json())
+
+        canonical = self._project_root(doc_id) / "canonical"
+        canonical.mkdir(parents=True, exist_ok=True)
+        canonical.joinpath("entities.jsonl").write_text(
+            '{"entity_id":"late"}\n',
+            encoding="utf-8",
+            newline="\n",
+        )
+
+        status = self.client.get(f"/api/projects/{doc_id}/source-package")
+        self.assertEqual(status.status_code, 409, status.get_json())
+        self.assertEqual(
+            status.get_json()["errors"][0]["code"],
+            "managed_source_legacy_conflict",
+        )
+        reuse = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(reuse.status_code, 409, reuse.get_json())
+        self.assertEqual(
+            reuse.get_json()["errors"][0]["code"],
+            "managed_source_legacy_conflict",
+        )
 
     def test_reference_lifecycle_and_freeze(self):
         doc_id = "phase4_freeze"

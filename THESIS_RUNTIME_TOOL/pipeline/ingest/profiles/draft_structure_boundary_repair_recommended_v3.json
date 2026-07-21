@@ -1,0 +1,53 @@
+{
+  "schema_version": "input_normalization_llm_preset_v1",
+  "profile_id": "input_normalization_structure_draft_v1",
+  "role_id": "input_normalization.structure_draft.boundary_repair",
+  "preset_id": "input_normalization.structure_draft.boundary_repair.recommended_v3",
+  "preset_revision": "recommended_v3",
+  "requested_model_id": "gpt-5.4-mini",
+  "generation": {
+    "context_window_tokens": 128000,
+    "max_input_tokens": 12000,
+    "max_output_tokens": 8000,
+    "temperature": null,
+    "top_p": null,
+    "seed": null,
+    "reasoning_effort": null,
+    "verbosity": null
+  },
+  "transport_retry": {
+    "max_retries": 0,
+    "backoff_policy": "none",
+    "initial_delay_ms": 0,
+    "max_delay_ms": 0,
+    "retryable_codes": []
+  },
+  "semantic_retry": {
+    "max_retries": 0,
+    "retryable_categories": []
+  },
+  "limits": {
+    "max_calls": 1,
+    "max_prompt_tokens": 12000,
+    "max_completion_tokens": 8000,
+    "max_total_tokens": 20000,
+    "max_cost_usd": null,
+    "request_timeout_ms": 180000
+  },
+  "structured_output": {
+    "mode": "prompt_validated",
+    "schema_dialect": "draft_structure_response_contract_v2"
+  },
+  "namespaces": {
+    "output": "input_normalization.structure_draft.boundary_repair.output",
+    "checkpoint": "input_normalization.structure_draft.boundary_repair.checkpoint",
+    "cache": "input_normalization.structure_draft.boundary_repair.cache"
+  },
+  "preflight": {
+    "max_prompt_utf8_bytes": 24000
+  },
+  "disabled_unbound_role_ids": [
+    "input_normalization.structure_draft.global_boundary_plan",
+    "input_normalization.structure_draft.hierarchy_plan"
+  ]
+}

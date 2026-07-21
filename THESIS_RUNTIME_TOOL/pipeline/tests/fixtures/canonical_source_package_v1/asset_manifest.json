@@ -1,0 +1,132 @@
+{
+  "assets": [
+    {
+      "asset_id": "ast_diagram",
+      "availability": "materialized",
+      "kind": "image",
+      "media_type": "image/svg+xml",
+      "metadata": {
+        "alt_text": "Processing flow"
+      },
+      "package_path": "assets/diagram.svg",
+      "review_required": false,
+      "sha256": "d04b987b97dd428b0aa27f15030c71cd18bdef8107c86153d2f812cc5859929e",
+      "source_locator": {
+        "html_attribute": "src",
+        "html_path": "/html/body/figure[1]/img[1]"
+      },
+      "translation_policy": "preserve"
+    },
+    {
+      "asset_id": "ast_table",
+      "availability": "materialized",
+      "kind": "table",
+      "media_type": "text/html",
+      "metadata": {
+        "column_count": 2
+      },
+      "package_path": "assets/table.html",
+      "review_required": false,
+      "sha256": "2bfc78dbbf9a244be2064f8e0abc6a92d72146c0d3f5edebe6bcfc81203f2101",
+      "source_locator": {
+        "html_path": "/html/body/table[1]"
+      },
+      "translation_policy": "translate_structured"
+    },
+    {
+      "asset_id": "ast_equation",
+      "availability": "materialized",
+      "kind": "equation",
+      "media_type": "application/x-tex",
+      "metadata": {
+        "display": "inline"
+      },
+      "package_path": "assets/equation.tex",
+      "review_required": false,
+      "sha256": "25a23072569c492831da62e024ae9bbb9ef9d10a0f3d6a77bdbf8f56bc33794c",
+      "source_locator": {
+        "html_path": "/html/body/p[2]/math[1]"
+      },
+      "translation_policy": "preserve"
+    }
+  ],
+  "assets_root": "assets",
+  "block_bindings": [
+    {
+      "asset_ids": [],
+      "block_id": "neutral_fixture_ch01_b0001",
+      "render_role": "text",
+      "review_required": false,
+      "semantic_kind": "text",
+      "semantic_subtype": "heading",
+      "source_kind": "heading",
+      "translation_policy": "translate"
+    },
+    {
+      "asset_ids": [],
+      "block_id": "neutral_fixture_ch01_b0002",
+      "render_role": "text",
+      "review_required": false,
+      "semantic_kind": "text",
+      "semantic_subtype": null,
+      "source_kind": "paragraph",
+      "translation_policy": "translate"
+    },
+    {
+      "asset_ids": [
+        "ast_diagram"
+      ],
+      "block_id": "neutral_fixture_ch01_b0003",
+      "render_role": "asset",
+      "review_required": false,
+      "semantic_kind": "image",
+      "semantic_subtype": "diagram",
+      "source_kind": "image",
+      "translation_policy": "preserve"
+    },
+    {
+      "asset_ids": [
+        "ast_table"
+      ],
+      "block_id": "neutral_fixture_ch01_b0004",
+      "render_role": "asset",
+      "review_required": false,
+      "semantic_kind": "table",
+      "semantic_subtype": "html_table",
+      "source_kind": "table",
+      "translation_policy": "translate_structured"
+    },
+    {
+      "asset_ids": [
+        "ast_equation"
+      ],
+      "block_id": "neutral_fixture_ch01_b0005",
+      "render_role": "asset",
+      "review_required": false,
+      "semantic_kind": "equation",
+      "semantic_subtype": "tex",
+      "source_kind": "equation",
+      "translation_policy": "preserve"
+    }
+  ],
+  "doc_id": "neutral_fixture",
+  "document": {
+    "schema_version": "1.5.0",
+    "sha256": "0bf05980088d8c9bb9c163877bd121623b8a5696bc28145b9765c05a5512837d"
+  },
+  "integrity": {
+    "asset_count": 3,
+    "binding_count": 5,
+    "manifest_payload_sha256": "277e49cbeed0905857585538e601db6ae31967fd50389ad7bd8d039988e2917b"
+  },
+  "package_version": "canonical_source_package_v1",
+  "schema_version": "canonical_asset_manifest_v1",
+  "source": {
+    "format": "html",
+    "sha256": "ff555a09289d86a545a5880093181d57da7adf4cc1ad8fb46d8d77d50db53818"
+  },
+  "structure": {
+    "schema_version": "html_structure_manifest_v1",
+    "sha256": "f570b06a7d1b9e50dfa0e0554767df13bfd4b33c9902e51a1105ce3481c97667"
+  }
+}

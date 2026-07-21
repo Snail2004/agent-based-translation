@@ -1,0 +1,15 @@
+{
+  "adapter_id": "openai_python_v1",
+  "base_url": "https://provider.invalid/v1",
+  "credential_commitment": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "credential_ref": "credential.remote_fixture_v1",
+  "enabled": true,
+  "endpoint_class": "remote",
+  "physical_quota_bucket_id": "remote-fixture-v1",
+  "protocol": "openai_responses",
+  "route_id": "responses_create",
+  "schema_version": "api_source_v1",
+  "source_class": "remote_api",
+  "source_id": "remote_fixture_v1",
+  "source_revision": "remote_profile_v1"
+}

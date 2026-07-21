@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from config import DATASET_FILES
+from services.structure_manifest import chapter_routing, read_structure_manifest
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -52,19 +53,25 @@ def write_jsonl_atomic(path: Path, rows: list[dict[str, Any]]) -> None:
     atomic_write_text(path, text)
 
 
-def flatten_document(document: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def flatten_document(
+    document: dict[str, Any],
+    routing: dict[str, dict[str, Any]] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     chapters: list[dict[str, Any]] = []
     blocks: list[dict[str, Any]] = []
+    routing = routing or {}
 
     for chapter in document.get("chapters", []):
         chapter_blocks = chapter.get("blocks", [])
         chapter_id = chapter.get("chapter_id")
-        chapters.append({
+        chapter_row = {
             "chapter_id": chapter_id,
             "order_index": chapter.get("order_index"),
             "title": chapter.get("title"),
             "block_count": len(chapter_blocks),
-        })
+        }
+        chapter_row.update(routing.get(str(chapter_id), {}))
+        chapters.append(chapter_row)
         for block in chapter_blocks:
             item = dict(block)
             item["chapter_id"] = chapter_id
@@ -125,10 +132,12 @@ def read_dataset(project_path: Path) -> dict[str, Any]:
 
     canonical = project_path / "canonical"
     document = read_json(canonical / DATASET_FILES["document"])
-    chapters, blocks = flatten_document(document)
+    structure_manifest = read_structure_manifest(project_path, document)
+    chapters, blocks = flatten_document(document, chapter_routing(structure_manifest))
 
     return {
         "document": document,
+        "structure_manifest": structure_manifest,
         "chapters": chapters,
         "blocks": blocks,
         "glossary": read_jsonl(canonical / DATASET_FILES["glossary"]),

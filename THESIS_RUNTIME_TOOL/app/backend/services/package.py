@@ -8,6 +8,7 @@ from config import DATASET_FILES
 from services.audit_log import log_event
 from services.dataset_io import read_json, read_jsonl, write_json_atomic
 from services.references import REFERENCE_STATUSES, draft_references
+from services.structure_manifest import STRUCTURE_MANIFEST_FILENAME
 from services.validator import run_validator
 
 
@@ -17,6 +18,13 @@ def _now_iso() -> str:
 
 def _canonical(project_path: Path) -> Path:
     return project_path / "canonical"
+
+
+def _canonical_file_names(project_path: Path) -> list[str]:
+    names = list(DATASET_FILES.values())
+    if (_canonical(project_path) / STRUCTURE_MANIFEST_FILENAME).is_file():
+        names.append(STRUCTURE_MANIFEST_FILENAME)
+    return names
 
 
 def _document(project_path: Path) -> dict[str, Any]:
@@ -107,7 +115,7 @@ def _write_zip(project_path: Path, zip_path: Path, include_working: bool, manife
     manifest_path = zip_path.with_name(f"{zip_path.stem}_manifest.json")
     write_json_atomic(manifest_path, manifest)
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for file_name in DATASET_FILES.values():
+        for file_name in _canonical_file_names(project_path):
             path = _canonical(project_path) / file_name
             if path.exists():
                 zf.write(path, f"canonical/{file_name}")
@@ -258,7 +266,7 @@ def export_project(project_path: Path, user: str = "local") -> dict[str, Any]:
         "created_at": _now_iso(),
         "validator_ok": bool(validation.get("ok")),
         "counts": validation.get("counts", {}),
-        "files": list(DATASET_FILES.values()),
+        "files": _canonical_file_names(project_path),
         "qc_report": {"included": True, "path": "QC_REPORT.json"},
         "project_state": {
             "included": True,
@@ -294,7 +302,7 @@ def export_project_with_previews(project_path: Path, user: str = "local") -> dic
         "created_at": _now_iso(),
         "validator_ok": bool(validation.get("ok")),
         "counts": validation.get("counts", {}),
-        "files": list(DATASET_FILES.values()),
+        "files": _canonical_file_names(project_path),
         "qc_report": {"included": True, "path": "QC_REPORT.json"},
         "project_state": {
             "included": True,
@@ -337,7 +345,7 @@ def freeze_project(project_path: Path, user: str = "local") -> dict[str, Any]:
         "created_at": _now_iso(),
         "validator_ok": True,
         "counts": validation.get("counts", {}),
-        "files": list(DATASET_FILES.values()),
+        "files": _canonical_file_names(project_path),
     }
     _write_zip(project_path, zip_path, include_working=False, manifest=manifest)
     log_event(project_path, "freeze", {"version": version, "path": str(zip_path)}, user)

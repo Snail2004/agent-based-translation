@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="240" viewBox="0 0 480 240" role="img" aria-labelledby="title desc">
+  <title id="title">Sample trend chart</title>
+  <desc id="desc">Two deterministic sample series over four observations.</desc>
+  <rect width="480" height="240" fill="white"/>
+  <path d="M50 20 V200 H450" fill="none" stroke="#333" stroke-width="2"/>
+  <polyline points="60,170 170,130 280,110 420,55" fill="none" stroke="#1468a8" stroke-width="4"/>
+  <polyline points="60,185 170,165 280,125 420,105" fill="none" stroke="#b24732" stroke-width="4"/>
+  <text x="240" y="228" text-anchor="middle" font-family="sans-serif" font-size="14">Observation</text>
+  <text x="18" y="115" text-anchor="middle" font-family="sans-serif" font-size="14" transform="rotate(-90 18 115)">Reading</text>
+</svg>

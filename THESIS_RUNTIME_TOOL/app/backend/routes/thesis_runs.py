@@ -17,6 +17,10 @@ from pipeline.eval.full_run_report_v1 import (
     validate_full_run_report,
 )
 from routes.common import error, ok
+from services.project_runtime import (
+    ProjectRuntimeError,
+    freeze_managed_runtime_for_run,
+)
 from services.thesis_runs import (
     RunControlError,
     RunRegistry,
@@ -60,6 +64,103 @@ def set_registry(registry: RunRegistry) -> None:
     _registry = registry
 
 
+def _validate_planned_run_reuse(
+    existing: dict,
+    *,
+    expected: dict,
+) -> None:
+    identity_fields = (
+        "job_id",
+        "script",
+        "argv",
+        "cwd",
+        "config",
+        "configs",
+        "seed",
+        "model",
+        "prompt_version",
+        "cache_path",
+        "experiment",
+        "allow_api",
+        "dry_run_policy",
+        "event_log_path",
+        "run_dir",
+        "manifest_path",
+        "attempt_index",
+        "resumed_from",
+    )
+    mismatches = [
+        field
+        for field in identity_fields
+        if existing.get(field) != expected.get(field)
+    ]
+    if mismatches:
+        raise RunControlError(
+            "planned_run_id_collision",
+            "planned_run_id is already bound to a different run identity: "
+            + ", ".join(mismatches),
+            409,
+        )
+
+
+def _resolve_resume_root(registry: RunRegistry, entry: dict) -> dict:
+    job_id = validate_job_id(entry.get("job_id"), required=True)
+    lineage_fields = ("run_dir", "manifest_path", "event_log_path")
+    lineage_identity = {field: entry.get(field) for field in lineage_fields}
+    current = entry
+    seen: set[str] = set()
+    while True:
+        try:
+            current_id = validate_run_id(current.get("run_id"), required=True)
+        except RunControlError as exc:
+            raise RunControlError(
+                "resume_ancestry_invalid",
+                "Resume ancestry contains an invalid run_id.",
+                409,
+            ) from exc
+        if current_id in seen:
+            raise RunControlError(
+                "resume_ancestry_invalid",
+                "Resume ancestry contains a cycle.",
+                409,
+            )
+        seen.add(current_id)
+        if current.get("script") != "run_one_button" or current.get("job_id") != job_id:
+            raise RunControlError(
+                "resume_ancestry_invalid",
+                "Resume ancestry crosses a job or script boundary.",
+                409,
+            )
+        if any(
+            current.get(field) != lineage_identity[field]
+            for field in lineage_fields
+        ):
+            raise RunControlError(
+                "resume_ancestry_invalid",
+                "Resume ancestry crosses a run-artifact boundary.",
+                409,
+            )
+        parent_id = current.get("resumed_from")
+        if parent_id is None or parent_id == "":
+            return current
+        try:
+            parent_id = validate_run_id(parent_id, required=True)
+        except RunControlError as exc:
+            raise RunControlError(
+                "resume_ancestry_invalid",
+                "Resume ancestry contains an invalid parent run_id.",
+                409,
+            ) from exc
+        parent = registry.get_run(parent_id)
+        if parent is None:
+            raise RunControlError(
+                "resume_ancestry_invalid",
+                "Resume ancestry references a missing parent run.",
+                409,
+            )
+        current = parent
+
+
 @bp.post("/thesis/runs")
 def create_run():
     try:
@@ -101,6 +202,8 @@ def create_run():
             run_dir = paths["run_dir"]
             manifest_path = paths["manifest_path"]
             workdb = workdb or str(paths["workdb"])
+        if job_id and planned_run_id is None:
+            planned_run_id = registry.new_run_id()
 
         argv = build_argv(
             script=script,
@@ -138,6 +241,34 @@ def create_run():
             run_id=planned_run_id,
         )
 
+        expected_run_identity = {
+            "job_id": job_id,
+            "script": script,
+            "argv": argv,
+            "cwd": str(tool_root),
+            "config": body.get("config"),
+            "configs": _body_list(body, "configs"),
+            "seed": body.get("seed"),
+            "model": body.get("model"),
+            "prompt_version": body.get("prompt_version"),
+            "cache_path": body.get("cache"),
+            "experiment": body.get("experiment"),
+            "allow_api": allow_api,
+            "dry_run_policy": (
+                "api_enabled_confirmed"
+                if allow_api
+                else "preflight_only_for_api_scripts_where_available"
+            ),
+            "event_log_path": str(event_log_path) if event_log_path else None,
+            "run_dir": str(run_dir) if run_dir else None,
+            "manifest_path": str(manifest_path) if manifest_path else None,
+            "attempt_index": None,
+            "resumed_from": None,
+        }
+        existing = registry.get_run(planned_run_id) if planned_run_id else None
+        if existing is not None:
+            _validate_planned_run_reuse(existing, expected=expected_run_identity)
+
         consumed_token = validate_api_gate(
             allow_api=allow_api,
             script=script,
@@ -145,6 +276,23 @@ def create_run():
             job_id=job_id,
             argv=argv,
         )
+
+        if job_id and planned_run_id:
+            freeze_managed_runtime_for_run(
+                job_id,
+                planned_run_id,
+                jobs_root=jobs_root,
+            )
+        if existing is not None:
+            return ok(
+                {
+                    "run_id": existing["run_id"],
+                    "status": existing["status"],
+                    "run_dir": existing.get("run_dir"),
+                    "manifest_path": existing.get("manifest_path"),
+                    "reused": True,
+                }
+            )
 
         entry = registry.create_run(
             script=script,
@@ -182,6 +330,8 @@ def create_run():
         )
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
+    except ProjectRuntimeError as exc:
+        return error(exc.code, str(exc), exc.status)
 
 
 @bp.get("/thesis/runs")
@@ -496,12 +646,30 @@ def resume_thesis_run(run_id: str):
                 "Run vẫn đang chạy; hãy Cancel trước rồi Resume.",
                 409,
             )
+        resume_root = _resolve_resume_root(registry, entry)
         manifest_path = _manifest_path_for_entry(entry)
         manifest = {}
         if manifest_path.exists():
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict):
+            raise RunControlError(
+                "resume_manifest_invalid",
+                "Resume manifest must be a JSON object.",
+                409,
+            )
         argv = build_resume_argv_from_entry(entry)
         job_id = validate_job_id(entry.get("job_id"), required=True)
+        pause_path = _pause_file_from_entry(entry)
+        try:
+            manifest_attempt = int(manifest.get("attempt") or 0)
+            entry_attempt = int(entry.get("attempt_index") or 0)
+        except (TypeError, ValueError) as exc:
+            raise RunControlError(
+                "resume_attempt_invalid",
+                "Resume attempt metadata must contain integers.",
+                409,
+            ) from exc
+        attempt_index = max(manifest_attempt, entry_attempt) + 1
         consumed_token = validate_api_gate(
             allow_api=True,
             script="run_one_button",
@@ -509,11 +677,14 @@ def resume_thesis_run(run_id: str):
             job_id=job_id,
             argv=argv,
         )
-        pause_path = _pause_file_from_entry(entry)
+        new_run_id = registry.new_run_id()
+        freeze_managed_runtime_for_run(
+            job_id,
+            resume_root["run_id"],
+            jobs_root=registry.runs_root,
+        )
         if pause_path.exists():
             pause_path.unlink()
-        new_run_id = registry.new_run_id()
-        attempt_index = int(manifest.get("attempt", entry.get("attempt_index") or 0) or 0) + 1
         new_log_path = registry.runs_root / "run_logs" / f"{new_run_id}.log"
         new_entry = registry.create_run(
             script="run_one_button",
@@ -547,6 +718,8 @@ def resume_thesis_run(run_id: str):
         return error("manifest_invalid_json", f"Manifest is not valid JSON: {exc}", 500)
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
+    except ProjectRuntimeError as exc:
+        return error(exc.code, str(exc), exc.status)
 
 
 def _is_pid_alive(pid: object) -> bool:

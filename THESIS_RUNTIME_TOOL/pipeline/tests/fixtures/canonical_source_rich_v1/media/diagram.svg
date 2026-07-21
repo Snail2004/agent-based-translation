@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="160" viewBox="0 0 480 160" role="img" aria-labelledby="title desc">
+  <title id="title">Processing overview</title>
+  <desc id="desc">Source flows through normalization into a canonical package.</desc>
+  <rect x="20" y="50" width="120" height="60" fill="#e7f0ff" stroke="#315a91"/>
+  <rect x="180" y="50" width="120" height="60" fill="#edf7ed" stroke="#3f7145"/>
+  <rect x="340" y="50" width="120" height="60" fill="#fff1dc" stroke="#8c642d"/>
+  <path d="M140 80 H180 M300 80 H340" stroke="#242424" stroke-width="3"/>
+  <text x="80" y="85" text-anchor="middle" font-family="sans-serif" font-size="16">Source</text>
+  <text x="240" y="85" text-anchor="middle" font-family="sans-serif" font-size="16">Normalize</text>
+  <text x="400" y="85" text-anchor="middle" font-family="sans-serif" font-size="16">Package</text>
+</svg>

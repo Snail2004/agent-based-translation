@@ -91,8 +91,16 @@ def _reset_app_modules() -> None:
             sys.modules.pop(name, None)
 
 
-def _create_resumable_one_button_run(tmp_path: Path, registry, *, run_id: str, pid: int | None = None):
-    run_dir = tmp_path / "jobA" / "one_button" / run_id
+def _create_resumable_one_button_run(
+    tmp_path: Path,
+    registry,
+    *,
+    run_id: str,
+    pid: int | None = None,
+    job_id: str = "jobA",
+    resumed_from: str | None = None,
+):
+    run_dir = tmp_path / job_id / "one_button" / run_id
     run_dir.mkdir(parents=True)
     manifest_path = run_dir / "manifest.json"
     manifest_path.write_text(json.dumps({"attempt": 1, "status": "paused"}), encoding="utf-8")
@@ -106,7 +114,7 @@ def _create_resumable_one_button_run(tmp_path: Path, registry, *, run_id: str, p
             "-m",
             "pipeline.scripts.run_one_button",
             "--job-id",
-            "jobA",
+            job_id,
             "--chapters",
             "d2l_mlp",
             "--workdb",
@@ -120,10 +128,11 @@ def _create_resumable_one_button_run(tmp_path: Path, registry, *, run_id: str, p
             "--estimate-only",
         ],
         run_id=run_id,
-        job_id="jobA",
+        job_id=job_id,
         event_log_path=str(event_log),
         run_dir=str(run_dir),
         manifest_path=str(manifest_path),
+        resumed_from=resumed_from,
     )
     registry.update_run(run_id, status="paused", exit_code=0, pid=pid)
     return entry, run_dir
@@ -586,6 +595,173 @@ def test_route_real_snapshot_script_zero_api(tmp_path, monkeypatch):
     assert "Snapshot written" in log["log"]
 
 
+def test_managed_run_freezes_before_registry_and_spawn_and_reuses_exact_run(
+    tmp_path,
+    monkeypatch,
+):
+    db_path = _make_doc_db(tmp_path)
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    routes.set_registry(registry)
+    events: list[str] = []
+    real_create = registry.create_run
+
+    def tracked_create(**kwargs):
+        events.append("registry")
+        return real_create(**kwargs)
+
+    def tracked_freeze(job_id, run_id, *, jobs_root):
+        events.append("freeze")
+        assert job_id == "managed_job"
+        assert run_id == "run_managed"
+        assert jobs_root == tmp_path
+        return {"lifecycle": "run_started_frozen"}
+
+    monkeypatch.setattr(registry, "create_run", tracked_create)
+    monkeypatch.setattr(routes, "freeze_managed_runtime_for_run", tracked_freeze)
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda _registry, run_id: events.append(f"spawn:{run_id}"),
+    )
+    client = app_module.create_app().test_client()
+    request_payload = {
+        "script": "snapshot_runs",
+        "job_id": "managed_job",
+        "planned_run_id": "run_managed",
+        "db": str(db_path),
+        "out": str(tmp_path / "snapshot.json"),
+    }
+
+    created = client.post("/api/thesis/runs", json=request_payload)
+    assert created.status_code == 201
+    assert events == ["freeze", "registry", "spawn:run_managed"]
+
+    reused = client.post("/api/thesis/runs", json=request_payload)
+    assert reused.status_code == 200
+    assert reused.get_json()["data"]["reused"] is True
+    assert events == [
+        "freeze",
+        "registry",
+        "spawn:run_managed",
+        "freeze",
+    ]
+
+
+def test_planned_run_id_collision_rejects_foreign_identity_before_freeze(
+    tmp_path,
+    monkeypatch,
+):
+    db_path = _make_doc_db(tmp_path)
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    registry.create_run(
+        script="snapshot_runs",
+        argv=[sys.executable, "-m", "pipeline.scripts.snapshot_runs"],
+        cwd=str(TOOL_ROOT),
+        job_id="foreign_job",
+        run_id="run_collision",
+    )
+    routes.set_registry(registry)
+    freezes: list[str] = []
+    spawned: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, run_id, **_kwargs: freezes.append(run_id),
+    )
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda _registry, run_id: spawned.append(run_id),
+    )
+    client = app_module.create_app().test_client()
+
+    response = client.post(
+        "/api/thesis/runs",
+        json={
+            "script": "snapshot_runs",
+            "job_id": "managed_job",
+            "planned_run_id": "run_collision",
+            "db": str(db_path),
+            "out": str(tmp_path / "snapshot.json"),
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.get_json()["errors"][0]["code"] == "planned_run_id_collision"
+    assert registry.get_run("run_collision")["job_id"] == "foreign_job"
+    assert len(registry.list_runs()) == 1
+    assert freezes == []
+    assert spawned == []
+
+
+def test_managed_freeze_failure_prevents_registry_and_spawn(tmp_path, monkeypatch):
+    db_path = _make_doc_db(tmp_path)
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.project_runtime import ProjectRuntimeError
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    routes.set_registry(registry)
+    spawned: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            ProjectRuntimeError(
+                "source_package_already_frozen",
+                "Source package belongs to another run.",
+                409,
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda _registry, run_id: spawned.append(run_id),
+    )
+    client = app_module.create_app().test_client()
+
+    response = client.post(
+        "/api/thesis/runs",
+        json={
+            "script": "snapshot_runs",
+            "job_id": "managed_job",
+            "planned_run_id": "run_rejected",
+            "db": str(db_path),
+            "out": str(tmp_path / "snapshot.json"),
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.get_json()["errors"][0]["code"] == "source_package_already_frozen"
+    assert registry.list_runs() == []
+    assert spawned == []
+
+
 def test_route_allow_api_without_token_rejected(tmp_path, monkeypatch):
     db_path = _make_doc_db(tmp_path)
     monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
@@ -949,6 +1125,12 @@ def test_route_one_button_resume_creates_new_registry_run_and_clears_pause(tmp_p
     )
     routes.set_registry(registry)
     spawned: list[str] = []
+    frozen_run_ids: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, frozen_run_id, **_kwargs: frozen_run_ids.append(frozen_run_id),
+    )
     monkeypatch.setattr(routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id))
     client = app_module.create_app().test_client()
 
@@ -961,6 +1143,7 @@ def test_route_one_button_resume_creates_new_registry_run_and_clears_pause(tmp_p
     data = resp.get_json()["data"]
     assert data["resumed_from"] == "run_resume"
     assert data["attempt_index"] == 2
+    assert frozen_run_ids == ["run_resume"]
     assert spawned == [data["run_id"]]
     assert not (run_dir / "PAUSE").exists()
     new_entry = client.get(f"/api/thesis/runs/{data['run_id']}").get_json()["data"]
@@ -970,6 +1153,201 @@ def test_route_one_button_resume_creates_new_registry_run_and_clears_pause(tmp_p
     assert "--estimate-only" not in new_entry["argv"]
     assert "--run-id" not in new_entry["argv"]
     assert new_entry["argv"][-2:] == ["--resume", "run_resume"]
+
+
+def test_route_repeated_resume_validates_original_frozen_run(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import (
+        RunRegistry,
+        build_resume_argv_from_entry,
+        issue_estimate_token_for_argv,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    root, run_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_resume_root",
+    )
+    attempt = registry.create_run(
+        script="run_one_button",
+        argv=build_resume_argv_from_entry(root),
+        cwd=str(TOOL_ROOT),
+        job_id="jobA",
+        event_log_path=root["event_log_path"],
+        run_dir=root["run_dir"],
+        manifest_path=root["manifest_path"],
+        run_id="run_resume_attempt_1",
+        attempt_index=2,
+        resumed_from="run_resume_root",
+    )
+    registry.update_run(attempt["run_id"], status="paused", exit_code=0)
+    (run_dir / "PAUSE").write_text("paused_by_user\n", encoding="utf-8")
+    token = issue_estimate_token_for_argv(
+        job_id="jobA",
+        script="run_one_button",
+        argv=build_resume_argv_from_entry(attempt),
+        preview_kind="resume_estimate_only",
+    )
+    routes.set_registry(registry)
+    frozen_run_ids: list[str] = []
+    spawned: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, frozen_run_id, **_kwargs: frozen_run_ids.append(frozen_run_id),
+    )
+    monkeypatch.setattr(routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id))
+    client = app_module.create_app().test_client()
+
+    response = client.post(
+        "/api/thesis/runs/run_resume_attempt_1/resume",
+        json={"confirm_token": token},
+    )
+
+    assert response.status_code == 201
+    data = response.get_json()["data"]
+    assert data["resumed_from"] == "run_resume_attempt_1"
+    assert data["attempt_index"] == 3
+    assert frozen_run_ids == ["run_resume_root"]
+    assert spawned == [data["run_id"]]
+    assert not (run_dir / "PAUSE").exists()
+
+
+def test_route_resume_rejects_invalid_ancestry_without_mutation(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    stale, stale_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_stale_child",
+        resumed_from="run_missing_parent",
+    )
+    foreign_parent, _foreign_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_foreign_parent",
+        job_id="jobB",
+    )
+    cross_job, cross_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_cross_job_child",
+        resumed_from=foreign_parent["run_id"],
+    )
+    cycle_a, cycle_a_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_cycle_a",
+        resumed_from="run_cycle_b",
+    )
+    _cycle_b, _cycle_b_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_cycle_b",
+        resumed_from=cycle_a["run_id"],
+    )
+    for run_dir in (stale_dir, cross_dir, cycle_a_dir):
+        (run_dir / "PAUSE").write_text("paused_by_user\n", encoding="utf-8")
+    routes.set_registry(registry)
+    freezes: list[str] = []
+    spawned: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, run_id, **_kwargs: freezes.append(run_id),
+    )
+    monkeypatch.setattr(routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id))
+    client = app_module.create_app().test_client()
+    before_run_ids = {row["run_id"] for row in registry.list_runs()}
+
+    for run_id, run_dir in (
+        (stale["run_id"], stale_dir),
+        (cross_job["run_id"], cross_dir),
+        (cycle_a["run_id"], cycle_a_dir),
+    ):
+        response = client.post(
+            f"/api/thesis/runs/{run_id}/resume",
+            json={"confirm_token": "unused"},
+        )
+        assert response.status_code == 409
+        assert response.get_json()["errors"][0]["code"] == "resume_ancestry_invalid"
+        assert (run_dir / "PAUSE").is_file()
+
+    assert {row["run_id"] for row in registry.list_runs()} == before_run_ids
+    assert freezes == []
+    assert spawned == []
+
+
+def test_route_resume_freeze_failure_preserves_pause(tmp_path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.project_runtime import ProjectRuntimeError
+    from services.thesis_runs import (
+        RunRegistry,
+        build_resume_argv_from_entry,
+        issue_estimate_token_for_argv,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    entry, run_dir = _create_resumable_one_button_run(
+        tmp_path,
+        registry,
+        run_id="run_resume_freeze_failure",
+    )
+    (run_dir / "PAUSE").write_text("paused_by_user\n", encoding="utf-8")
+    token = issue_estimate_token_for_argv(
+        job_id="jobA",
+        script="run_one_button",
+        argv=build_resume_argv_from_entry(entry),
+        preview_kind="resume_estimate_only",
+    )
+    routes.set_registry(registry)
+    spawned: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            ProjectRuntimeError(
+                "source_package_already_frozen",
+                "Source package belongs to another run.",
+                409,
+            )
+        ),
+    )
+    monkeypatch.setattr(routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id))
+    client = app_module.create_app().test_client()
+    before_run_ids = {row["run_id"] for row in registry.list_runs()}
+
+    response = client.post(
+        "/api/thesis/runs/run_resume_freeze_failure/resume",
+        json={"confirm_token": token},
+    )
+
+    assert response.status_code == 409
+    assert response.get_json()["errors"][0]["code"] == "source_package_already_frozen"
+    assert (run_dir / "PAUSE").is_file()
+    assert {row["run_id"] for row in registry.list_runs()} == before_run_ids
+    assert spawned == []
 
 
 def test_route_one_button_resume_rejects_live_pid_without_spawning(tmp_path, monkeypatch):

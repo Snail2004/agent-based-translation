@@ -18,6 +18,7 @@ THESIS_JOBS_ROOT = Path(os.environ.get("THESIS_JOBS_ROOT", HANDOFF_ROOT / "data"
 THESIS_REPORTS_ROOT = Path(os.environ.get("THESIS_REPORTS_ROOT", HANDOFF_ROOT / "data" / "reports")).resolve()
 THESIS_TOOL_ROOT = Path(os.environ.get("THESIS_TOOL_ROOT", HANDOFF_ROOT)).resolve()
 THESIS_PYTHON_EXE = os.environ.get("THESIS_PYTHON_EXE", "").strip()
+THESIS_PANDOC_EXE = os.environ.get("THESIS_PANDOC_EXE", "pandoc").strip() or "pandoc"
 THESIS_APP_MODE = os.environ.get("THESIS_APP_MODE", "legacy").strip().lower()
 HOST = os.environ.get("AILAB_BACKEND_HOST", "127.0.0.1")
 PORT = int(os.environ.get("AILAB_BACKEND_PORT", "5000"))
@@ -32,7 +33,7 @@ DATASET_FILES = {
 }
 
 PROJECT_SUBDIRS = ("raw", "canonical", "working", "logs", "exports")
-ALLOWED_SOURCE_EXTENSIONS = {".txt", ".epub", ".md", ".markdown", ".html", ".htm"}
+ALLOWED_SOURCE_EXTENSIONS = {".txt", ".epub", ".md", ".markdown", ".html", ".htm", ".pdf"}
 SCHEMA_VERSION = "1.5.0"
 PIPELINE_VERSION = "0.3.3"
 EXTRACTION_TOOL = "ailab-backend-extractor"

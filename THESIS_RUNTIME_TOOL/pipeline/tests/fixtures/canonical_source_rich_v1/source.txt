@@ -1,0 +1,37 @@
+FRONT MATTER
+
+Canonical Source Rich Fixture is an authored text-only degradation case.
+
+CHAPTER I
+SIGNALS AT DAWN
+
+The observatory records a signal before sunrise.
+
+"Record the first reading," said the coordinator.
+
+Inspection steps:
+1. Inspect the sensor.
+2. Preserve the source order.
+3. Mark uncertain structure for review.
+
+Morning readings:
+Sensor | Reading | Unit
+Alpha  | 12.5   | V
+Beta   | 7.0    | V
+
+Equation: E = mc^2
+
+Code sample:
+def calibrate(value):
+    return value / 2
+
+CHAPTER II
+THE RIVER CROSSING
+
+The pilot compares the morning signal with the river gauge.
+The final observation includes a method note that must remain traceable.
+
+APPENDIX
+PRESERVATION NOTES
+
+The appendix is back matter and remains ordered after the content chapters.
