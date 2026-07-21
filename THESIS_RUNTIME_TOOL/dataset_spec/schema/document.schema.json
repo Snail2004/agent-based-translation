@@ -100,7 +100,7 @@
         "genre": { "type": "string" },
         "source_language": { "const": "en" },
         "target_language": { "const": "vi" },
-        "source_format": { "enum": ["epub", "txt", "pdf", "html"] },
+        "source_format": { "enum": ["epub", "txt", "pdf", "html", "markdown"] },
         "license": { "type": "string", "minLength": 1 },
         "license_url": { "type": "string" },
         "source_url": { "type": "string" },
