@@ -3076,6 +3076,148 @@ print("hello")
         ).get_json()["data"]
         self.assertTrue(refreshed["report"]["units"][0]["title"].endswith(" revised"))
 
+    def test_source_package_review_exposes_bound_blocks_and_stable_issue_queue(self):
+        doc_id = "phase6_ui_authoritative_review"
+        self._make_unextracted_txt_project(
+            doc_id,
+            b"CHAPTER I\n\nAlice arrived.\n\nBob waited.",
+        )
+        normalized = self.client.post(
+            f"/api/projects/{doc_id}/source-package/normalize",
+            json={},
+        )
+        self.assertEqual(normalized.status_code, 201, normalized.get_json())
+
+        review_response = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review"
+        )
+        self.assertEqual(review_response.status_code, 200, review_response.get_json())
+        review = review_response.get_json()["data"]
+        expected = review["expected"]
+        for name in (
+            "state_sha256",
+            "candidate_tree_sha256",
+            "document_sha256",
+            "structure_sha256",
+            "report_sha256",
+        ):
+            self.assertIsInstance(expected[name], str)
+            self.assertTrue(expected[name])
+        queue = review["issue_queue"]
+        self.assertEqual(queue["schema_version"], "source_package_issue_queue_v1")
+        self.assertEqual(queue["inputs"], expected)
+        self.assertEqual(
+            [row["order_index"] for row in queue["rows"]],
+            list(range(len(queue["rows"]))),
+        )
+        self.assertEqual(
+            {row["issue_id"] for row in queue["rows"]},
+            {row["issue_id"] for row in review["report"]["issues"]},
+        )
+        for row in queue["rows"]:
+            self.assertIn("target_unit_id", row)
+            self.assertIn("target_block_id", row)
+            self.assertIn("navigation", row)
+
+        bindings = {
+            name: expected[name]
+            for name in (
+                "state_sha256",
+                "candidate_tree_sha256",
+                "document_sha256",
+                "structure_sha256",
+                "report_sha256",
+            )
+        }
+        unit = review["report"]["units"][0]
+        page_response = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review/units/"
+            f"{unit['unit_id']}/blocks",
+            query_string={**bindings, "offset": 0, "limit": 1},
+        )
+        self.assertEqual(page_response.status_code, 200, page_response.get_json())
+        page = page_response.get_json()["data"]
+        self.assertEqual(page["schema_version"], "source_package_unit_blocks_v1")
+        self.assertEqual(page["expected"], bindings)
+        self.assertEqual(page["unit"]["unit_id"], unit["unit_id"])
+        self.assertEqual(len(page["blocks"]), 1)
+        self.assertEqual(
+            set(page["blocks"][0]),
+            {"block_id", "order_index", "block_type", "source_text"},
+        )
+
+        status = self.client.get(
+            f"/api/projects/{doc_id}/source-package"
+        ).get_json()["data"]
+        candidate = self._project_root(doc_id) / Path(
+            *status["candidate"]["relative_path"].split("/")
+        )
+        document = json.loads(
+            (candidate / "document.json").read_text(encoding="utf-8")
+        )
+        authoritative = document["chapters"][0]["blocks"][0]
+        self.assertEqual(
+            page["blocks"][0],
+            {
+                "block_id": authoritative["block_id"],
+                "order_index": authoritative["order_index"],
+                "block_type": authoritative["block_type"],
+                "source_text": authoritative["source_text"],
+            },
+        )
+
+        missing_binding = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review/units/"
+            f"{unit['unit_id']}/blocks"
+        )
+        self.assertEqual(missing_binding.status_code, 400, missing_binding.get_json())
+        self.assertEqual(
+            missing_binding.get_json()["errors"][0]["code"],
+            "source_package_review_binding_required",
+        )
+        bad_pagination = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review/units/"
+            f"{unit['unit_id']}/blocks",
+            query_string={**bindings, "limit": 0},
+        )
+        self.assertEqual(bad_pagination.status_code, 400, bad_pagination.get_json())
+        self.assertEqual(
+            bad_pagination.get_json()["errors"][0]["code"],
+            "source_package_review_pagination_invalid",
+        )
+
+        corrected = self.client.post(
+            f"/api/projects/{doc_id}/source-package/corrections",
+            json={
+                "expected_state_sha256": expected["state_sha256"],
+                "expected_candidate_tree_sha256": expected[
+                    "candidate_tree_sha256"
+                ],
+                "expected_report_sha256": expected["report_sha256"],
+                "approved": True,
+                "user": "reviewer_01",
+                "actions": [
+                    {
+                        "action_type": "update_unit",
+                        "unit_id": unit["unit_id"],
+                        "new_title": f"{unit['title']} revised",
+                        "classification": None,
+                    }
+                ],
+            },
+        )
+        self.assertEqual(corrected.status_code, 201, corrected.get_json())
+        stale = self.client.get(
+            f"/api/projects/{doc_id}/source-package/review/units/"
+            f"{unit['unit_id']}/blocks",
+            query_string=bindings,
+        )
+        self.assertEqual(stale.status_code, 409, stale.get_json())
+        self.assertEqual(
+            stale.get_json()["errors"][0]["code"],
+            "source_package_review_stale",
+        )
+
     def test_source_package_hierarchy_finalize_and_post_finalize_correction(self):
         doc_id = "phase6b2bc_hierarchy_finalize"
         self._make_unextracted_txt_project(

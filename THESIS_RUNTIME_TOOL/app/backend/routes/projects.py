@@ -17,6 +17,7 @@ from services.project_runtime import (
     prepare_project_runtime,
 )
 from services.source_lifecycle import (
+    SOURCE_PACKAGE_REVIEW_BINDING_FIELDS,
     SourceLifecycleError,
     apply_managed_source_corrections,
     apply_managed_source_hierarchy,
@@ -26,6 +27,7 @@ from services.source_lifecycle import (
     finalize_managed_source_package,
     get_source_package_review,
     get_source_package_status,
+    get_source_package_unit_blocks,
     normalize_managed_source_package,
     publish_managed_translation,
     source_lifecycle_mutation_guard,
@@ -253,6 +255,64 @@ def source_package_review(doc_id: str):
         if not has_project(doc_id):
             return error("missing_project", "Project not found", 404)
         return ok(get_source_package_review(get_project_path(doc_id), doc_id))
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("source_package_review_error", str(exc), 400)
+
+
+@bp.get("/projects/<doc_id>/source-package/review/units/<unit_id>/blocks")
+def source_package_review_unit_blocks(doc_id: str, unit_id: str):
+    allowed_query = {
+        *SOURCE_PACKAGE_REVIEW_BINDING_FIELDS,
+        "offset",
+        "limit",
+    }
+    unknown = sorted(set(request.args) - allowed_query)
+    if unknown:
+        return error(
+            "source_package_review_query_invalid",
+            f"Unsupported review query field: {unknown[0]}",
+            400,
+        )
+    for name in SOURCE_PACKAGE_REVIEW_BINDING_FIELDS:
+        values = request.args.getlist(name)
+        if len(values) != 1 or not values[0].strip():
+            return error(
+                "source_package_review_binding_required",
+                f"Review binding {name} is required exactly once.",
+                400,
+            )
+    try:
+        offset_values = request.args.getlist("offset")
+        limit_values = request.args.getlist("limit")
+        if len(offset_values) > 1 or len(limit_values) > 1:
+            raise ValueError
+        offset = int(offset_values[0]) if offset_values else 0
+        limit = int(limit_values[0]) if limit_values else 200
+    except ValueError:
+        return error(
+            "source_package_review_pagination_invalid",
+            "offset and limit must be decimal integers.",
+            400,
+        )
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        expected = {
+            name: request.args[name]
+            for name in SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+        }
+        return ok(
+            get_source_package_unit_blocks(
+                get_project_path(doc_id),
+                doc_id,
+                unit_id,
+                expected=expected,
+                offset=offset,
+                limit=limit,
+            )
+        )
     except SourceLifecycleError as exc:
         return error(exc.code, str(exc), exc.status)
     except ProjectError as exc:

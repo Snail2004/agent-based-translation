@@ -55,6 +55,16 @@ MANAGED_RUNTIME_BINDING_VERSION = "managed_source_runtime_binding_v1"
 MANAGED_RUNTIME_MANIFEST_VERSION = "project_runtime_source_v2"
 SOURCE_PACKAGE_PUBLICATION_VERSION = "source_package_publication_v1"
 SOURCE_PACKAGE_STATUS_VERSION = "source_package_status_v1"
+SOURCE_PACKAGE_REVIEW_VERSION = "source_package_review_v1"
+SOURCE_PACKAGE_ISSUE_QUEUE_VERSION = "source_package_issue_queue_v1"
+SOURCE_PACKAGE_UNIT_BLOCKS_VERSION = "source_package_unit_blocks_v1"
+SOURCE_PACKAGE_REVIEW_BINDING_FIELDS = (
+    "state_sha256",
+    "candidate_tree_sha256",
+    "document_sha256",
+    "structure_sha256",
+    "report_sha256",
+)
 CANDIDATE_DIRECTORY = "source_package_candidates"
 DECISION_DIRECTORY = "source_package_decisions"
 HIERARCHY_DIRECTORY = "source_package_hierarchy"
@@ -3450,6 +3460,205 @@ def ensure_legacy_normalizer_allowed(project_path: str | Path) -> None:
         )
 
 
+def _source_package_review_expected(
+    status: dict[str, Any],
+    state: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "state_sha256": status["state_sha256"],
+        "candidate_tree_sha256": status["candidate"]["tree_sha256"],
+        "document_sha256": status["package"]["document"]["sha256"],
+        "structure_sha256": status["package"]["structure"]["sha256"],
+        "report_sha256": status["draft_structure"]["report"]["sha256"],
+        "hierarchy_sha256": (state.get("hierarchy") or {}).get("sha256"),
+    }
+
+
+def _review_document_indexes(
+    evidence: dict[str, Any],
+) -> dict[str, Any]:
+    report_units = evidence["report"]["units"]
+    chapters = evidence["document"]["chapters"]
+    chapter_by_id = {chapter["chapter_id"]: chapter for chapter in chapters}
+    unit_by_id = {unit["unit_id"]: unit for unit in report_units}
+    unit_order = {
+        unit["unit_id"]: position for position, unit in enumerate(report_units)
+    }
+    block_by_id: dict[str, dict[str, Any]] = {}
+    block_owner: dict[str, str] = {}
+    block_document_order: dict[str, int] = {}
+    unit_blocks: dict[str, list[str]] = {}
+    for unit in report_units:
+        unit_id = unit["unit_id"]
+        chapter = chapter_by_id[unit["chapter_id"]]
+        block_ids: list[str] = []
+        for block in chapter["blocks"]:
+            block_id = block["block_id"]
+            block_by_id[block_id] = block
+            block_owner[block_id] = unit_id
+            block_document_order[block_id] = len(block_document_order)
+            block_ids.append(block_id)
+        unit_blocks[unit_id] = block_ids
+    return {
+        "chapter_by_id": chapter_by_id,
+        "unit_by_id": unit_by_id,
+        "unit_order": unit_order,
+        "unit_blocks": unit_blocks,
+        "block_by_id": block_by_id,
+        "block_owner": block_owner,
+        "block_document_order": block_document_order,
+    }
+
+
+def _review_issue_queue(
+    evidence: dict[str, Any],
+    expected: dict[str, Any],
+) -> dict[str, Any]:
+    report = evidence["report"]
+    indexes = _review_document_indexes(evidence)
+    unit_by_id = indexes["unit_by_id"]
+    unit_order = indexes["unit_order"]
+    unit_blocks = indexes["unit_blocks"]
+    block_owner = indexes["block_owner"]
+    block_document_order = indexes["block_document_order"]
+
+    review_block_ids = {
+        row["block_id"]
+        for row in evidence["asset_manifest"].get("block_bindings", [])
+        if isinstance(row, dict) and row.get("review_required") is True
+    }
+    review_block_ids.update(
+        row["block_id"]
+        for row in evidence["admitted_projection"].get("rows", [])
+        if isinstance(row, dict) and row.get("channel") == "review_required"
+    )
+    candidates = {
+        row["candidate_id"]: row
+        for row in report["global_skeleton"].get("candidates", [])
+        if isinstance(row, dict) and isinstance(row.get("candidate_id"), str)
+    }
+
+    pending: list[dict[str, Any]] = []
+    for issue in report["issues"]:
+        scope = issue["scope"]
+        target_id = issue["target_id"]
+        target_unit_id = target_id if scope == "unit" and target_id in unit_by_id else None
+        candidate_ids = sorted(
+            {
+                value.split(":", 1)[1]
+                for value in issue["evidence"]
+                if isinstance(value, str)
+                and value.startswith("candidate_id:")
+                and value.split(":", 1)[1] in candidates
+            }
+        )
+        related_unit_ids: set[str] = set()
+        related_block_ids: set[str] = set()
+        for candidate_id in candidate_ids:
+            candidate = candidates[candidate_id]
+            related_unit_ids.update(
+                value
+                for value in candidate.get("unit_ids", [])
+                if value in unit_by_id
+            )
+            related_block_ids.update(
+                value
+                for value in candidate.get("block_ids", [])
+                if value in block_owner
+            )
+            at_block_id = candidate.get("at_block_id")
+            if at_block_id in block_owner:
+                related_block_ids.add(at_block_id)
+        if target_unit_id is not None:
+            related_unit_ids.add(target_unit_id)
+            if issue["code"] == "block_requires_review":
+                related_block_ids.update(
+                    block_id
+                    for block_id in unit_blocks[target_unit_id]
+                    if block_id in review_block_ids
+                )
+        related_unit_ids.update(
+            block_owner[block_id] for block_id in related_block_ids
+        )
+        ordered_units = sorted(related_unit_ids, key=unit_order.__getitem__)
+        ordered_blocks = sorted(
+            related_block_ids,
+            key=block_document_order.__getitem__,
+        )
+        target_block_id = ordered_blocks[0] if ordered_blocks else None
+        navigation_unit_id = (
+            target_unit_id
+            or (ordered_units[0] if ordered_units else None)
+            or (report["units"][0]["unit_id"] if report["units"] else None)
+        )
+        navigation_block_id = target_block_id
+        if navigation_block_id is None and navigation_unit_id is not None:
+            navigation_block_id = next(
+                iter(unit_blocks.get(navigation_unit_id) or []),
+                None,
+            )
+        navigation_unit_order = (
+            unit_order.get(navigation_unit_id) if navigation_unit_id else None
+        )
+        navigation_block_order = (
+            block_document_order.get(navigation_block_id)
+            if navigation_block_id
+            else None
+        )
+        unit_block_position = None
+        if navigation_unit_id and navigation_block_id:
+            unit_block_position = unit_blocks[navigation_unit_id].index(
+                navigation_block_id
+            )
+        pending.append(
+            {
+                "issue_id": issue["issue_id"],
+                "code": issue["code"],
+                "scope": scope,
+                "target_id": target_id,
+                "target_unit_id": target_unit_id,
+                "target_block_id": target_block_id,
+                "related_unit_ids": ordered_units,
+                "related_block_ids": ordered_blocks,
+                "navigation": {
+                    "unit_id": navigation_unit_id,
+                    "block_id": navigation_block_id,
+                    "unit_order_index": navigation_unit_order,
+                    "unit_block_position": unit_block_position,
+                    "document_block_position": navigation_block_order,
+                },
+                "evidence": copy.deepcopy(issue["evidence"]),
+            }
+        )
+    pending.sort(
+        key=lambda row: (
+            row["navigation"]["unit_order_index"]
+            if row["navigation"]["unit_order_index"] is not None
+            else len(unit_order),
+            row["navigation"]["document_block_position"]
+            if row["navigation"]["document_block_position"] is not None
+            else len(block_document_order),
+            row["code"],
+            row["issue_id"],
+        )
+    )
+    rows = [
+        {"order_index": order_index, **row}
+        for order_index, row in enumerate(pending)
+    ]
+    payload: dict[str, Any] = {
+        "schema_version": SOURCE_PACKAGE_ISSUE_QUEUE_VERSION,
+        "doc_id": report["doc_id"],
+        "inputs": copy.deepcopy(expected),
+        "rows": rows,
+    }
+    payload["integrity"] = {
+        "row_count": len(rows),
+        "payload_sha256": canonical_json_sha256(payload),
+    }
+    return payload
+
+
 def get_source_package_review(
     project_path: str | Path,
     doc_id: str,
@@ -3474,8 +3683,9 @@ def get_source_package_review(
             source_sha256=source_sha256,
         )
         editable = status["lifecycle"] != "run_started_frozen"
+        expected = _source_package_review_expected(status, state)
         return {
-            "schema_version": "source_package_review_v1",
+            "schema_version": SOURCE_PACKAGE_REVIEW_VERSION,
             "doc_id": doc_id,
             "lifecycle": status["lifecycle"],
             "pipeline_run_count": status["pipeline_run_count"],
@@ -3486,14 +3696,7 @@ def get_source_package_review(
                 ),
                 "load_bearing": not editable,
             },
-            "expected": {
-                "state_sha256": status["state_sha256"],
-                "candidate_tree_sha256": status["candidate"]["tree_sha256"],
-                "report_sha256": status["draft_structure"]["report"]["sha256"],
-                "hierarchy_sha256": (
-                    state.get("hierarchy") or {}
-                ).get("sha256"),
-            },
+            "expected": expected,
             "supported_actions": (
                 ["update_unit", "split_unit", "merge_adjacent_units"]
                 if editable
@@ -3503,7 +3706,119 @@ def get_source_package_review(
                 ["set_parent", "clear_parent"] if editable else []
             ),
             "report": copy.deepcopy(evidence["report"]),
+            "issue_queue": _review_issue_queue(evidence, expected),
         }
+
+
+def get_source_package_unit_blocks(
+    project_path: str | Path,
+    doc_id: str,
+    unit_id: str,
+    *,
+    expected: dict[str, str],
+    offset: int = 0,
+    limit: int = 200,
+) -> dict[str, Any]:
+    if set(expected) != set(SOURCE_PACKAGE_REVIEW_BINDING_FIELDS) or any(
+        not isinstance(expected.get(name), str) or not expected[name].strip()
+        for name in SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+    ):
+        raise SourceLifecycleError(
+            "source_package_review_binding_required",
+            "Unit block reads require every current review identity.",
+            400,
+        )
+    if (
+        isinstance(offset, bool)
+        or not isinstance(offset, int)
+        or offset < 0
+        or isinstance(limit, bool)
+        or not isinstance(limit, int)
+        or limit < 1
+        or limit > 200
+    ):
+        raise SourceLifecycleError(
+            "source_package_review_pagination_invalid",
+            "offset must be non-negative and limit must be between 1 and 200.",
+            400,
+        )
+    root = _require_project_root(project_path)
+    with _managed_mutation_guard(root):
+        state = _read_authoritative_state(root, doc_id=doc_id)
+        if state is None:
+            raise SourceLifecycleError(
+                "source_package_not_managed",
+                "Normalize the source package before requesting unit blocks.",
+                409,
+            )
+        status = _managed_status(root, doc_id=doc_id, state=state)
+        source_path, source_format, source_sha256 = _server_source(root)
+        _candidate_root, evidence = _validated_candidate_for_state(
+            root,
+            doc_id=doc_id,
+            state=state,
+            source_path=source_path,
+            source_format=source_format,
+            source_sha256=source_sha256,
+        )
+        current_all = _source_package_review_expected(status, state)
+        current = {
+            name: current_all[name]
+            for name in SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+        }
+        if expected != current:
+            raise SourceLifecycleError(
+                "source_package_review_stale",
+                "Review identities changed; reload structure review before reading blocks.",
+                409,
+            )
+        indexes = _review_document_indexes(evidence)
+        unit = indexes["unit_by_id"].get(unit_id)
+        if unit is None:
+            raise SourceLifecycleError(
+                "source_package_review_unit_missing",
+                "The requested unit is not part of the current structure review.",
+                404,
+            )
+        chapter = indexes["chapter_by_id"][unit["chapter_id"]]
+        all_blocks = chapter["blocks"]
+        selected = all_blocks[offset : offset + limit]
+        blocks = [
+            {
+                "block_id": block["block_id"],
+                "order_index": block["order_index"],
+                "block_type": block["block_type"],
+                "source_text": block["source_text"],
+            }
+            for block in selected
+        ]
+        payload: dict[str, Any] = {
+            "schema_version": SOURCE_PACKAGE_UNIT_BLOCKS_VERSION,
+            "doc_id": doc_id,
+            "lifecycle": status["lifecycle"],
+            "pipeline_run_count": status["pipeline_run_count"],
+            "expected": current,
+            "unit": {
+                "unit_id": unit["unit_id"],
+                "chapter_id": unit["chapter_id"],
+                "order_index": unit["order_index"],
+                "title": unit["title"],
+                "block_count": len(all_blocks),
+            },
+            "blocks": blocks,
+            "pagination": {
+                "offset": offset,
+                "limit": limit,
+                "returned": len(blocks),
+                "total": len(all_blocks),
+                "has_more": offset + len(blocks) < len(all_blocks),
+            },
+        }
+        payload["integrity"] = {
+            "block_count": len(blocks),
+            "payload_sha256": canonical_json_sha256(payload),
+        }
+        return payload
 
 
 def _publish_candidate_tree(

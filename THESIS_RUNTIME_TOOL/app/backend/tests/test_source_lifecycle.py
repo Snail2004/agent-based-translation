@@ -49,6 +49,7 @@ ensure_source_upload_allowed = None
 finalize_managed_source_package = None
 get_source_package_review = None
 get_source_package_status = None
+get_source_package_unit_blocks = None
 normalize_managed_source_package = None
 source_lifecycle_mutation_guard = None
 
@@ -64,7 +65,7 @@ def _load_source_lifecycle_after_test_collection():
     global apply_managed_source_corrections, apply_managed_source_hierarchy
     global ensure_legacy_extract_allowed, ensure_source_upload_allowed
     global finalize_managed_source_package
-    global get_source_package_review
+    global get_source_package_review, get_source_package_unit_blocks
     global get_source_package_status, normalize_managed_source_package
     global source_lifecycle_mutation_guard
 
@@ -84,6 +85,7 @@ def _load_source_lifecycle_after_test_collection():
     ensure_source_upload_allowed = module.ensure_source_upload_allowed
     finalize_managed_source_package = module.finalize_managed_source_package
     get_source_package_review = module.get_source_package_review
+    get_source_package_unit_blocks = module.get_source_package_unit_blocks
     get_source_package_status = module.get_source_package_status
     normalize_managed_source_package = module.normalize_managed_source_package
     source_lifecycle_mutation_guard = module.source_lifecycle_mutation_guard
@@ -231,6 +233,37 @@ def _fake_writer(
         "admitted_projection_v1.json": projection,
     }.items():
         _write_json(destination / filename, payload)
+
+
+def _fake_review_writer(
+    result: UnifiedNormalizationResult,
+    output_dir: Path,
+    *,
+    source_override: Path | None = None,
+) -> None:
+    _fake_writer(result, output_dir, source_override=source_override)
+    destination = Path(output_dir)
+    document = json.loads(
+        (destination / "document.json").read_text(encoding="utf-8")
+    )
+    structure = json.loads(
+        (destination / "structure_manifest.json").read_text(encoding="utf-8")
+    )
+    asset_manifest = json.loads(
+        (destination / "asset_manifest.json").read_text(encoding="utf-8")
+    )
+    bindings = copy.deepcopy(asset_manifest["block_bindings"])
+    bindings[0]["review_required"] = True
+    bindings[0]["translation_policy"] = "review"
+    asset_manifest = seal_asset_manifest(
+        document,
+        structure,
+        assets=copy.deepcopy(asset_manifest["assets"]),
+        block_bindings=bindings,
+    )
+    projection = build_admitted_projection(document, structure, asset_manifest)
+    _write_json(destination / "asset_manifest.json", asset_manifest)
+    _write_json(destination / "admitted_projection_v1.json", projection)
 
 
 def _lifecycle(root: Path) -> dict:
@@ -951,6 +984,112 @@ def test_unmanaged_status_does_not_create_lifecycle_state(tmp_path: Path) -> Non
     assert status["mode"] == "unmanaged_draft"
     assert status["source"]["format"] == "html"
     assert not (root / "working" / STATE_FILENAME).exists()
+
+
+def test_review_exposes_sealed_issue_queue_and_authoritative_unit_blocks(
+    tmp_path: Path,
+) -> None:
+    doc_id = "review_authoritative_blocks"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(
+            template_text="CHAPTER I\n\nAlice arrived.\n\nBob waited.\n"
+        ),
+        write_fn=_fake_review_writer,
+    )
+
+    review = get_source_package_review(root, doc_id)
+    expected = review["expected"]
+    assert expected["document_sha256"] == review["report"]["inputs"][
+        "document"
+    ]["sha256"]
+    assert expected["structure_sha256"] == review["report"]["inputs"][
+        "structure"
+    ]["sha256"]
+    queue = review["issue_queue"]
+    assert queue["schema_version"] == "source_package_issue_queue_v1"
+    assert queue["inputs"] == expected
+    assert queue["integrity"]["row_count"] == len(queue["rows"])
+    assert queue["integrity"]["payload_sha256"] == canonical_json_sha256(
+        {key: value for key, value in queue.items() if key != "integrity"}
+    )
+    assert [row["order_index"] for row in queue["rows"]] == list(
+        range(len(queue["rows"]))
+    )
+    assert {row["issue_id"] for row in queue["rows"]} == {
+        row["issue_id"] for row in review["report"]["issues"]
+    }
+    block_issue = next(
+        row for row in queue["rows"] if row["code"] == "block_requires_review"
+    )
+    unit = review["report"]["units"][0]
+    assert block_issue["target_unit_id"] == unit["unit_id"]
+    assert block_issue["target_block_id"] == unit["block_ids"][0]
+    assert block_issue["navigation"]["unit_id"] == unit["unit_id"]
+    assert block_issue["navigation"]["block_id"] == unit["block_ids"][0]
+
+    bindings = {
+        name: expected[name]
+        for name in source_lifecycle.SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+    }
+    page = get_source_package_unit_blocks(
+        root,
+        doc_id,
+        unit["unit_id"],
+        expected=bindings,
+        offset=0,
+        limit=1,
+    )
+    status = get_source_package_status(root, doc_id)
+    candidate = root / Path(*status["candidate"]["relative_path"].split("/"))
+    document = json.loads(
+        (candidate / "document.json").read_text(encoding="utf-8")
+    )
+    authoritative_block = document["chapters"][0]["blocks"][0]
+    assert page["expected"] == bindings
+    assert page["blocks"] == [
+        {
+            "block_id": authoritative_block["block_id"],
+            "order_index": authoritative_block["order_index"],
+            "block_type": authoritative_block["block_type"],
+            "source_text": authoritative_block["source_text"],
+        }
+    ]
+    assert page["pagination"]["returned"] == 1
+    assert page["pagination"]["total"] == len(unit["block_ids"])
+    assert page["integrity"]["payload_sha256"] == canonical_json_sha256(
+        {key: value for key, value in page.items() if key != "integrity"}
+    )
+
+    stale = {**bindings, "report_sha256": "0" * 64}
+    with pytest.raises(SourceLifecycleError) as captured:
+        get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit["unit_id"],
+            expected=stale,
+        )
+    assert captured.value.code == "source_package_review_stale"
+
+    with pytest.raises(SourceLifecycleError) as captured:
+        get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit["unit_id"],
+            expected={"state_sha256": bindings["state_sha256"]},
+        )
+    assert captured.value.code == "source_package_review_binding_required"
+
+    with pytest.raises(SourceLifecycleError) as captured:
+        get_source_package_unit_blocks(
+            root,
+            doc_id,
+            "foreign_unit",
+            expected=bindings,
+        )
+    assert captured.value.code == "source_package_review_unit_missing"
 
 
 def test_review_and_correction_publish_sealed_child_without_mutating_bootstrap(
