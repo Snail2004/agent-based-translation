@@ -34,6 +34,34 @@
     return { "Content-Type": "application/json" };
   }
 
+  const SOURCE_PACKAGE_REVIEW_BINDING_FIELDS = [
+    "state_sha256",
+    "candidate_tree_sha256",
+    "document_sha256",
+    "structure_sha256",
+    "report_sha256",
+  ];
+
+  function sourcePackageUnitBlocksPath(docId, unitId, expected, offset, limit) {
+    const query = new URLSearchParams();
+    for (const field of SOURCE_PACKAGE_REVIEW_BINDING_FIELDS) {
+      const value = expected && expected[field];
+      if (typeof value !== "string" || !value.trim()) {
+        throw new ApiError("Every current structure-review binding is required.", {
+          ok: false,
+          errors: [{
+            code: "source_package_review_binding_required",
+            message: `Review binding ${field} is required exactly once.`,
+          }],
+        }, 0);
+      }
+      query.set(field, value);
+    }
+    query.set("offset", String(offset));
+    query.set("limit", String(limit));
+    return `/projects/${encodeURIComponent(docId)}/source-package/review/units/${encodeURIComponent(unitId)}/blocks?${query.toString()}`;
+  }
+
   async function request(path, options) {
     const opts = options || {};
     const init = {
@@ -150,6 +178,7 @@
     getSourcePackageStatus: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package`),
     normalizeSourcePackage: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/normalize`, { method: "POST", body: {} }),
     getSourcePackageReview: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/review`),
+    getSourcePackageUnitBlocks: (docId, unitId, expected, offset = 0, limit = 200) => request(sourcePackageUnitBlocksPath(docId, unitId, expected, offset, limit)),
     applySourcePackageCorrections: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/corrections`, { method: "POST", body }),
     applySourcePackageHierarchy: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/hierarchy`, { method: "POST", body }),
     finalizeSourcePackage: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/finalize`, { method: "POST", body }),

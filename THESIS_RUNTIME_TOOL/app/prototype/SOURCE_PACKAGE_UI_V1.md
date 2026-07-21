@@ -19,14 +19,18 @@ PDF. The managed workflow is:
 - `GET /projects/<doc_id>/source-package` is authoritative for mode,
   lifecycle, permissions, source identity, and frozen state.
 - `GET /projects/<doc_id>/source-package/review` is authoritative for units,
-  issues, outline/navigation/candidate evidence, supported actions, and the
-  expected state/tree/report/hierarchy identities.
-- Block text/type is rendered only from an optional `block_previews` relay in
-  that same review response. The relay must use
-  `source_package_block_preview_v1`, carry the exact current
-  `expected.state_sha256`, and provide exact coverage of the review's unique
-  block IDs with `block_id`, `source_text`, and `block_type` rows. Missing,
-  partial, malformed, or stale relays fail closed.
+  outline/navigation/candidate evidence, supported actions, the six expected
+  identities, and the ordered `source_package_issue_queue_v1`. Issue
+  navigation comes only from the queue's explicit nullable targets and stable
+  `navigation` object; the UI does not reconstruct targets from issue text.
+- Block text/type is rendered only from
+  `GET /projects/<doc_id>/source-package/review/units/<unit_id>/blocks`. Every
+  page sends the current `state_sha256`, `candidate_tree_sha256`,
+  `document_sha256`, `structure_sha256`, and `report_sha256` exactly once. The
+  UI follows backend pagination up to 200 rows per request and accepts the
+  result only when `source_package_unit_blocks_v1` exactly covers the ordered
+  block IDs of the selected review unit. Missing, partial, malformed, duplicate,
+  or stale pages fail closed.
 - The UI renders only fields present in those payloads. It does not infer a
   lifecycle from chapter or block counts and does not calculate quality
   metrics.
@@ -43,8 +47,9 @@ PDF. The managed workflow is:
   hierarchy hashes. No client-generated hash or path is sent.
 - Every successful mutation invalidates the local review snapshot and triggers
   a fresh status plus review load.
-- A `409` is never retried. The UI refreshes status/review, displays the server
-  error code and message, and asks the user to inspect the new revision.
+- A `409` is never retried with stale identities. This applies to mutations and
+  unit-block reads. The UI refreshes status/review, clears boundary/merge/issue
+  selection, and asks the user to inspect the new revision.
 - `managed_finalized_pre_run` exposes prepare/run only. The stricter App UI
   product gate deliberately does not offer post-finalize correction even
   though the backend can create a new draft revision.
@@ -71,9 +76,10 @@ does not synthesize a URL.
 
 - Left: ordered backend report units, classification, block count, review
   flags, and explicit merge-pair selectors.
-- Center: backend block IDs plus up to three lines of state-bound source text
-  and block type when the authoritative relay exists. The issue counter starts
-  a previous/next review sequence and moves to each issue target.
+- Center: backend block IDs plus up to three lines of source text and block type
+  loaded from the five-bound unit-block endpoint. The issue counter starts a
+  previous/next sequence, selects the queue's navigation unit, and highlights
+  its target block when present.
 - Right: update title/classification and set/clear an earlier parent unit. At
   920px and below this surface is a dismissible detail drawer instead of a
   third stacked column.
@@ -83,10 +89,10 @@ does not synthesize a URL.
 - Full hashes, candidate/mechanical signals, and TOC/navigation evidence stay
   collapsed under technical details.
 
-The review contract currently does not relay block text/type or a revision
-history list. V1 therefore shows a precise unavailable/stale state instead of
-reading a parallel preview source or fabricating history. The dev fixture owns
-the proposed relay only so the UI can be exercised before backend integration.
+The review contract does not expose a revision-history list. V1 therefore does
+not fabricate history. Block content and issue navigation are wired to the
+backend contract implemented at `720ffe08`; the dev fixture mirrors those two
+schemas without being loaded by production.
 
 ## Guard
 
@@ -101,19 +107,6 @@ the proposed relay only so the UI can be exercised before backend integration.
 
 ## Known gap
 
-Production block previews remain blocked until the normalizer/backend relays
-this exact field in `GET /projects/<doc_id>/source-package/review`:
-
-```json
-"block_previews": {
-  "schema_version": "source_package_block_preview_v1",
-  "state_sha256": "<same as expected.state_sha256>",
-  "rows": [
-    { "block_id": "...", "source_text": "...", "block_type": "paragraph" }
-  ]
-}
-```
-
 Production export remains blocked until an authoritative producer/relay makes
 the exact canonical translation overlay available to App state/API. A backend
 download route is also absent, so publication artifacts are identifiers/paths,
@@ -125,8 +118,8 @@ not clickable downloads. Neither gap is bypassed in frontend code.
 2. Use `source_package_dev.html` for unmanaged, draft, stale, finalized,
    frozen, legacy, and publication fixture states.
 3. Exercise update, split, merge, hierarchy, finalize, prepare, and publication
-   actions. Confirm stale correction refreshes without retry. Exercise valid,
-   missing, partial, and stale block-preview relays.
+   actions. Confirm stale correction and stale unit-block reads refresh without
+   retry. Exercise valid, unavailable, partial, and stale unit-block responses.
 4. Capture 1440x900, 1024x768 (plus 900px compatibility), and 390x844 views.
 5. Check issue previous/next focus, explicit split/merge selection, mobile
    drawer close/Escape focus return, modal confirmation, console errors,

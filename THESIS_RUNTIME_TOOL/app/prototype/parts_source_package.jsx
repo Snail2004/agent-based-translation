@@ -15,6 +15,14 @@ const SOURCE_PACKAGE_MODE_META = {
   legacy_only: { vi: "Project legacy", en: "Legacy project", tone: "legacy", step: -1 },
 };
 
+const SOURCE_PACKAGE_REVIEW_BINDING_FIELDS = [
+  "state_sha256",
+  "candidate_tree_sha256",
+  "document_sha256",
+  "structure_sha256",
+  "report_sha256",
+];
+
 function sourcePackageErrorDetail(error) {
   const first = error?.errors?.[0] || error?.payload?.errors?.[0] || {};
   return {
@@ -40,49 +48,130 @@ function sourcePackageClassificationLabel(value) {
   return item ? uiText(item.vi, item.en) : value || uiText("Chưa công bố", "Not reported");
 }
 
-function sourcePackageExpectedReady(review) {
+function sourcePackageReviewBindings(review) {
   const expected = review?.expected;
+  if (!expected || typeof expected !== "object") return null;
+  const bindings = {};
+  for (const field of SOURCE_PACKAGE_REVIEW_BINDING_FIELDS) {
+    const value = expected[field];
+    if (typeof value !== "string" || !value.trim()) return null;
+    bindings[field] = value;
+  }
+  return bindings;
+}
+
+function sourcePackageBindingsMatch(left, right) {
+  return SOURCE_PACKAGE_REVIEW_BINDING_FIELDS.every(field => left?.[field] === right?.[field]);
+}
+
+function sourcePackageIssueQueue(review) {
+  const payload = review?.issue_queue;
+  const bindings = sourcePackageReviewBindings(review);
+  if (!payload) return { state: "missing", rows: [], payloadSha256: "" };
+  if (
+    payload.schema_version !== "source_package_issue_queue_v1"
+    || !bindings
+    || !sourcePackageBindingsMatch(payload.inputs, bindings)
+    || payload.inputs?.hierarchy_sha256 !== review?.expected?.hierarchy_sha256
+    || !Array.isArray(payload.rows)
+    || payload.integrity?.row_count !== payload.rows.length
+    || typeof payload.integrity?.payload_sha256 !== "string"
+    || !payload.integrity.payload_sha256
+  ) return { state: "invalid", rows: [], payloadSha256: "" };
+
+  const seenIssueIds = new Set();
+  for (let index = 0; index < payload.rows.length; index += 1) {
+    const row = payload.rows[index];
+    const navigation = row?.navigation;
+    const nullableString = value => value === null || (typeof value === "string" && !!value);
+    const nullableIndex = value => value === null || (Number.isInteger(value) && value >= 0);
+    if (
+      !row || typeof row !== "object"
+      || typeof row.issue_id !== "string" || !row.issue_id || seenIssueIds.has(row.issue_id)
+      || row.order_index !== index
+      || typeof row.code !== "string" || !row.code
+      || typeof row.scope !== "string" || !row.scope
+      || !nullableString(row.target_id)
+      || !nullableString(row.target_unit_id)
+      || !nullableString(row.target_block_id)
+      || !Array.isArray(row.related_unit_ids)
+      || !row.related_unit_ids.every(value => typeof value === "string" && !!value)
+      || !Array.isArray(row.related_block_ids)
+      || !row.related_block_ids.every(value => typeof value === "string" && !!value)
+      || !navigation || typeof navigation !== "object"
+      || !nullableString(navigation.unit_id)
+      || !nullableString(navigation.block_id)
+      || !nullableIndex(navigation.unit_order_index)
+      || !nullableIndex(navigation.unit_block_position)
+      || !nullableIndex(navigation.document_block_position)
+    ) return { state: "invalid", rows: [], payloadSha256: "" };
+    seenIssueIds.add(row.issue_id);
+  }
+  return { state: "ready", rows: payload.rows, payloadSha256: payload.integrity.payload_sha256 };
+}
+
+function sourcePackageExpectedReady(review, issueQueueState) {
+  const bindings = sourcePackageReviewBindings(review);
   return !!(
-    expected
-    && typeof expected.state_sha256 === "string" && expected.state_sha256.length > 0
-    && typeof expected.candidate_tree_sha256 === "string" && expected.candidate_tree_sha256.length > 0
-    && typeof expected.report_sha256 === "string" && expected.report_sha256.length > 0
+    bindings
     && Array.isArray(review?.report?.units)
+    && issueQueueState === "ready"
   );
 }
 
-function sourcePackageBlockPreviews(review) {
-  const payload = review?.block_previews;
-  const expectedState = String(review?.expected?.state_sha256 || "");
-  const expectedBlockIds = Array.isArray(review?.report?.units)
-    ? review.report.units.flatMap(unit => Array.isArray(unit?.block_ids) ? unit.block_ids : [])
-    : [];
-  const expectedBlockSet = new Set(expectedBlockIds);
-  if (!payload) return { state: "missing", rows: new Map() };
-  if (
-    payload.schema_version !== "source_package_block_preview_v1"
-    || !expectedState
-    || payload.state_sha256 !== expectedState
-    || !Array.isArray(payload.rows)
-    || expectedBlockSet.size !== expectedBlockIds.length
-    || expectedBlockIds.some(blockId => typeof blockId !== "string" || !blockId)
-  ) return { state: "invalid", rows: new Map() };
+function sourcePackageContractError(code, vi, en) {
+  const message = uiText(vi, en);
+  const error = new Error(message);
+  error.errors = [{ code, message }];
+  error.status = 0;
+  return error;
+}
 
-  const rows = new Map();
-  for (const row of payload.rows) {
+function sourcePackageUnitBlocksPage(payload, { docId, unitId, bindings, offset, limit }) {
+  if (
+    !payload || typeof payload !== "object"
+    || payload.schema_version !== "source_package_unit_blocks_v1"
+    || payload.doc_id !== docId
+    || !sourcePackageBindingsMatch(payload.expected, bindings)
+    || payload.unit?.unit_id !== unitId
+    || !Array.isArray(payload.blocks)
+    || payload.pagination?.offset !== offset
+    || payload.pagination?.limit !== limit
+    || payload.pagination?.returned !== payload.blocks.length
+    || !Number.isInteger(payload.pagination?.total) || payload.pagination.total < payload.blocks.length
+    || typeof payload.pagination?.has_more !== "boolean"
+    || payload.unit?.block_count !== payload.pagination.total
+    || payload.pagination.has_more !== (offset + payload.blocks.length < payload.pagination.total)
+    || payload.integrity?.block_count !== payload.blocks.length
+    || typeof payload.integrity?.payload_sha256 !== "string" || !payload.integrity.payload_sha256
+  ) throw sourcePackageContractError(
+    "source_package_unit_blocks_invalid",
+    "Backend trả payload nội dung block không khớp contract hoặc review hiện tại.",
+    "The backend returned a unit-block payload that does not match the contract or current review.",
+  );
+
+  const seenBlockIds = new Set();
+  for (const row of payload.blocks) {
     if (
       !row || typeof row !== "object"
       || typeof row.block_id !== "string" || !row.block_id
+      || seenBlockIds.has(row.block_id)
+      || !Number.isInteger(row.order_index) || row.order_index < 0
       || typeof row.source_text !== "string"
       || typeof row.block_type !== "string" || !row.block_type
-      || rows.has(row.block_id)
-    ) return { state: "invalid", rows: new Map() };
-    rows.set(row.block_id, row);
+    ) throw sourcePackageContractError(
+      "source_package_unit_blocks_invalid",
+      "Backend trả row block không hợp lệ; UI đã khóa nội dung này.",
+      "The backend returned an invalid block row; the UI blocked this content.",
+    );
+    seenBlockIds.add(row.block_id);
   }
-  if (rows.size !== expectedBlockSet.size || expectedBlockIds.some(blockId => !rows.has(blockId))) {
-    return { state: "invalid", rows: new Map() };
-  }
-  return { state: "ready", rows };
+  return {
+    rows: payload.blocks,
+    total: payload.pagination.total,
+    hasMore: payload.pagination.has_more,
+    payloadSha256: payload.integrity.payload_sha256,
+  };
 }
 
 function sourcePackageIssueKey(issue, index = 0) {
@@ -118,6 +207,7 @@ function SourcePackageWorkspace({
   const [mergeSelection, setMergeSelection] = React.useState([]);
   const [issueReviewActive, setIssueReviewActive] = React.useState(false);
   const [activeIssueIndex, setActiveIssueIndex] = React.useState(0);
+  const [unitBlocks, setUnitBlocks] = React.useState({ state: "idle", unitId: "", rows: [], payloadSha256s: [], error: null });
   const [detailDrawerOpen, setDetailDrawerOpen] = React.useState(false);
   const [titleDraft, setTitleDraft] = React.useState("");
   const [classificationDraft, setClassificationDraft] = React.useState("");
@@ -170,27 +260,54 @@ function SourcePackageWorkspace({
     setMergeSelection([]);
     setIssueReviewActive(false);
     setActiveIssueIndex(0);
+    setUnitBlocks({ state: "idle", unitId: "", rows: [], payloadSha256s: [], error: null });
     setDetailDrawerOpen(false);
     load();
   }, [docId, load]);
 
   const units = Array.isArray(review?.report?.units) ? review.report.units : [];
-  const issues = Array.isArray(review?.report?.issues) ? review.report.issues : [];
+  const reviewBindings = React.useMemo(() => sourcePackageReviewBindings(review), [review]);
+  const reviewBindingKey = reviewBindings
+    ? SOURCE_PACKAGE_REVIEW_BINDING_FIELDS.map(field => reviewBindings[field]).join(":")
+    : "";
+  const issueQueue = React.useMemo(() => sourcePackageIssueQueue(review), [review]);
+  const issues = issueQueue.rows;
   const skeleton = review?.report?.global_skeleton && typeof review.report.global_skeleton === "object"
     ? review.report.global_skeleton
     : null;
   const outline = Array.isArray(skeleton?.outline) ? skeleton.outline : [];
   const navigation = Array.isArray(skeleton?.navigation) ? skeleton.navigation : [];
   const candidates = Array.isArray(skeleton?.candidates) ? skeleton.candidates : [];
-  const blockPreviews = React.useMemo(() => sourcePackageBlockPreviews(review), [review]);
   const selectedUnit = units.find(unit => unit.unit_id === selectedUnitId) || units[0] || null;
   const selectedIndex = selectedUnit ? units.findIndex(unit => unit.unit_id === selectedUnit.unit_id) : -1;
   const selectedOutline = outline.find(row => row.unit_id === selectedUnit?.unit_id) || null;
   const currentParentId = String(selectedOutline?.parent_unit_id || "");
   const selectedBlockIds = Array.isArray(selectedUnit?.block_ids) ? selectedUnit.block_ids : [];
-  const selectedIssues = issues.filter(row => row?.scope === "document" || row?.target_id === selectedUnit?.unit_id);
+  const unitBlockRows = unitBlocks.unitId === selectedUnit?.unit_id ? unitBlocks.rows : [];
+  const unitBlocksById = React.useMemo(() => new Map(unitBlockRows.map(row => [row.block_id, row])), [unitBlockRows]);
+  const selectedIssues = issues.filter(row => (
+    row?.target_unit_id === selectedUnit?.unit_id
+    || row?.navigation?.unit_id === selectedUnit?.unit_id
+    || (Array.isArray(row?.related_unit_ids) && row.related_unit_ids.includes(selectedUnit?.unit_id))
+    || (row?.scope === "document" && !row?.navigation?.unit_id)
+  ));
+  const issueCountsByUnit = React.useMemo(() => {
+    const counts = new Map();
+    for (const issue of issues) {
+      const unitIds = new Set([
+        issue?.target_unit_id,
+        issue?.navigation?.unit_id,
+        ...(Array.isArray(issue?.related_unit_ids) ? issue.related_unit_ids : []),
+      ].filter(Boolean));
+      for (const unitId of unitIds) counts.set(unitId, (counts.get(unitId) || 0) + 1);
+    }
+    return counts;
+  }, [issues]);
   const pendingReviewUnits = units.filter(unit => unit?.review_required === true || sourcePackageClassification(unit) === "review");
   const activeIssue = issues[activeIssueIndex] || null;
+  const activeIssueBlockId = issueReviewActive
+    ? String(activeIssue?.navigation?.block_id || activeIssue?.target_block_id || "")
+    : "";
   const visibleIssues = issueReviewActive && activeIssue ? [activeIssue] : selectedIssues;
   const selectedCandidates = candidates.filter(row => {
     const unitIds = Array.isArray(row?.unit_ids) ? row.unit_ids : [];
@@ -207,8 +324,107 @@ function SourcePackageWorkspace({
   }, [units, selectedUnitId]);
 
   React.useEffect(() => {
+    let cancelled = false;
+    if (!selectedUnit) {
+      setUnitBlocks({ state: "idle", unitId: "", rows: [], payloadSha256s: [], error: null });
+      return () => { cancelled = true; };
+    }
+    if (!reviewBindings) {
+      setUnitBlocks({ state: "invalid", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: {
+        code: "source_package_review_binding_required",
+        message: uiText("Review hiện tại thiếu một hoặc nhiều binding bắt buộc để đọc block.", "The current review is missing one or more bindings required to read blocks."),
+        status: 0,
+      } });
+      return () => { cancelled = true; };
+    }
+
+    const expectedBlockIds = Array.isArray(selectedUnit.block_ids) ? [...selectedUnit.block_ids] : [];
+    const expectedBlockSet = new Set(expectedBlockIds);
+    if (
+      expectedBlockSet.size !== expectedBlockIds.length
+      || expectedBlockIds.some(blockId => typeof blockId !== "string" || !blockId)
+    ) {
+      setUnitBlocks({ state: "invalid", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: {
+        code: "source_package_review_blocks_invalid",
+        message: uiText("Danh sách block của unit trong review không hợp lệ.", "The unit block list in the review is invalid."),
+        status: 0,
+      } });
+      return () => { cancelled = true; };
+    }
+
+    setUnitBlocks({ state: "loading", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: null });
+    (async () => {
+      const rows = [];
+      const payloadSha256s = [];
+      const limit = 200;
+      let offset = 0;
+      let total = null;
+      let pageCount = 0;
+      while (true) {
+        const payload = await api.getSourcePackageUnitBlocks(docId, selectedUnit.unit_id, reviewBindings, offset, limit);
+        const page = sourcePackageUnitBlocksPage(payload, {
+          docId,
+          unitId: selectedUnit.unit_id,
+          bindings: reviewBindings,
+          offset,
+          limit,
+        });
+        if (total === null) total = page.total;
+        if (page.total !== total || rows.some(row => page.rows.some(next => next.block_id === row.block_id))) {
+          throw sourcePackageContractError(
+            "source_package_unit_blocks_invalid",
+            "Các trang nội dung block không có cùng identity hoặc chứa block trùng.",
+            "Unit-block pages do not share one identity or contain duplicate blocks.",
+          );
+        }
+        rows.push(...page.rows);
+        payloadSha256s.push(page.payloadSha256);
+        if (!page.hasMore) break;
+        if (!page.rows.length || rows.length >= total || pageCount > 10000) {
+          throw sourcePackageContractError(
+            "source_package_unit_blocks_invalid",
+            "Phân trang nội dung block không tiến triển; UI đã dừng đọc.",
+            "Unit-block pagination did not advance; the UI stopped reading.",
+          );
+        }
+        offset += page.rows.length;
+        pageCount += 1;
+      }
+      if (
+        total !== expectedBlockIds.length
+        || rows.length !== expectedBlockIds.length
+        || rows.some((row, index) => row.block_id !== expectedBlockIds[index])
+      ) throw sourcePackageContractError(
+        "source_package_unit_blocks_invalid",
+        "Nội dung block không phủ chính xác unit của review hiện tại.",
+        "Block content does not exactly cover the unit in the current review.",
+      );
+      if (!cancelled) setUnitBlocks({ state: "ready", unitId: selectedUnit.unit_id, rows, payloadSha256s, error: null });
+    })().catch(async nextError => {
+      if (cancelled) return;
+      const detail = sourcePackageErrorDetail(nextError);
+      if (detail.status === 409 && detail.code === "source_package_review_stale") {
+        setUnitBlocks({ state: "stale", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: detail });
+        setSelectedBoundaryBlockId("");
+        setMergeSelection([]);
+        setIssueReviewActive(false);
+        setNotice({ tone: "warn", text: uiText("Review đã đổi trong lúc đọc block. UI đã tải review mới; hãy xem lại nội dung và vấn đề trước khi thao tác.", "The review changed while blocks were being read. The UI loaded the new review; inspect its content and issues before taking action.") });
+        await load({ silent: true });
+        return;
+      }
+      setUnitBlocks({ state: detail.code.includes("invalid") ? "invalid" : "error", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: detail });
+    });
+    return () => { cancelled = true; };
+  }, [api, docId, load, reviewBindingKey, selectedUnit?.unit_id]);
+
+  React.useEffect(() => {
     setSelectedBoundaryBlockId("");
   }, [selectedUnit?.unit_id]);
+
+  React.useEffect(() => {
+    if (!selectedBoundaryBlockId || selectedBlockIds.includes(selectedBoundaryBlockId)) return;
+    setSelectedBoundaryBlockId("");
+  }, [selectedBlockIds.join("\u0000"), selectedBoundaryBlockId]);
 
   React.useEffect(() => {
     setMergeSelection(current => {
@@ -225,6 +441,13 @@ function SourcePackageWorkspace({
     }
     if (activeIssueIndex >= issues.length) setActiveIssueIndex(issues.length - 1);
   }, [issues, activeIssueIndex]);
+
+  React.useEffect(() => {
+    if (!activeIssueBlockId || unitBlocks.state !== "ready") return;
+    requestAnimationFrame(() => {
+      document.querySelector(`[data-source-block="${CSS.escape(activeIssueBlockId)}"]`)?.scrollIntoView({ block: "nearest" });
+    });
+  }, [activeIssueBlockId, unitBlocks.state, unitBlocks.unitId]);
 
   React.useEffect(() => {
     if (!detailDrawerOpen) return undefined;
@@ -280,12 +503,17 @@ function SourcePackageWorkspace({
   const finalized = mode === "managed_finalized_pre_run" || status?.lifecycle === "finalized_pre_run";
   const managedDraft = mode === "managed_draft" && status?.lifecycle === "draft";
   const legacy = mode === "legacy_only";
-  const reviewReady = status?.managed === true && sourcePackageExpectedReady(review);
+  const reviewReady = status?.managed === true && sourcePackageExpectedReady(review, issueQueue.state);
   const blockingContract = status?.managed === true && !reviewReady;
   const correctionsSupported = Array.isArray(review?.supported_actions) ? review.supported_actions : [];
   const hierarchySupported = Array.isArray(review?.supported_hierarchy_actions) ? review.supported_hierarchy_actions : [];
   const canUpdate = managedDraft && reviewReady && correctionsSupported.includes("update_unit");
-  const splitSupported = managedDraft && reviewReady && correctionsSupported.includes("split_unit") && selectedBlockIds.length > 1;
+  const splitSupported = managedDraft
+    && reviewReady
+    && correctionsSupported.includes("split_unit")
+    && selectedBlockIds.length > 1
+    && unitBlocks.state === "ready"
+    && unitBlocks.unitId === selectedUnit?.unit_id;
   const canSplit = splitSupported && selectedBlockIds.slice(1).includes(selectedBoundaryBlockId);
   const mergeSupported = managedDraft && reviewReady && correctionsSupported.includes("merge_adjacent_units");
   const mergeUnits = mergeSelection.map(unitId => units.find(unit => unit.unit_id === unitId)).filter(Boolean);
@@ -497,11 +725,11 @@ function SourcePackageWorkspace({
   }
 
   function unitForIssue(issue) {
-    const targetId = String(issue?.target_id || "");
-    const direct = units.find(unit => unit.unit_id === targetId);
-    if (direct) return direct;
-    const blockIds = Array.isArray(issue?.block_ids) ? issue.block_ids : [];
-    return units.find(unit => Array.isArray(unit.block_ids) && unit.block_ids.some(blockId => blockIds.includes(blockId))) || null;
+    const navigationUnitId = String(issue?.navigation?.unit_id || "");
+    const targetUnitId = String(issue?.target_unit_id || "");
+    return units.find(unit => unit.unit_id === navigationUnitId)
+      || units.find(unit => unit.unit_id === targetUnitId)
+      || null;
   }
 
   function reviewIssueAt(index) {
@@ -580,7 +808,7 @@ function SourcePackageWorkspace({
 
       {notice && <div className={`sp-banner ${notice.tone}`} role="status"><Ic.checkCircle size={13} /><span>{notice.text}</span></div>}
       {error && <div className="sp-banner bad" role="alert"><Ic.alert size={13} /><span><b className="mono">{error.code}</b>{error.message}</span></div>}
-      {blockingContract && <div className="sp-banner bad" role="alert"><Ic.lock size={13} /><span><b>{uiText("Dữ liệu kiểm tra chưa đầy đủ", "Incomplete review contract")}</b>{uiText("UI đã khóa mutation vì thiếu expected hashes hoặc report.units từ backend.", "Mutations are locked because expected hashes or backend report.units are missing.")}</span></div>}
+      {blockingContract && <div className="sp-banner bad" role="alert"><Ic.lock size={13} /><span><b>{uiText("Dữ liệu kiểm tra chưa đầy đủ", "Incomplete review contract")}</b>{uiText("UI đã khóa mutation vì thiếu năm expected binding, report.units hoặc issue_queue authoritative từ backend.", "Mutations are locked because the five expected bindings, report.units, or the authoritative issue_queue are missing.")}</span></div>}
 
       {loading ? (
         <div className="sp-loading" aria-live="polite"><span className="as-spin" /><b>{uiText("Đang tải trạng thái và dữ liệu kiểm tra từ backend…", "Loading backend status and review…")}</b></div>
@@ -608,11 +836,11 @@ function SourcePackageWorkspace({
           <div className="sp-summaryline">
             {review?.report?.integrity?.unit_count !== undefined && <span><b>{review.report.integrity.unit_count}</b> {uiText("đơn vị", "units")}</span>}
             {skeleton?.statistics?.block_count !== undefined && <span><b>{skeleton.statistics.block_count}</b> block</span>}
-            {review?.report?.integrity?.issue_count !== undefined && (issues.length ? (
+            {issueQueue.state === "ready" && (issues.length ? (
               <button className={`sp-summary-issues${issueReviewActive ? " active" : ""}`} type="button" aria-pressed={issueReviewActive} onClick={() => reviewIssueAt(issueReviewActive ? activeIssueIndex : 0)}>
-                <Ic.flag size={11} /><b>{review.report.integrity.issue_count}</b> {uiText("vấn đề", "issues")}{issueReviewActive && <em>{activeIssueIndex + 1}/{issues.length}</em>}
+                <Ic.flag size={11} /><b>{issues.length}</b> {uiText("vấn đề", "issues")}{issueReviewActive && <em>{activeIssueIndex + 1}/{issues.length}</em>}
               </button>
-            ) : <span><b>{review.report.integrity.issue_count}</b> {uiText("vấn đề", "issues")}</span>)}
+            ) : <span><b>0</b> {uiText("vấn đề", "issues")}</span>)}
             {status?.source?.format && <span><b>{String(status.source.format).toUpperCase()}</b> {uiText("nguồn", "source")}</span>}
             {frozen && <span className="frozen"><Ic.lock size={11} /><b>{uiText("Chỉ đọc tuyệt đối", "Strictly read-only")}</b></span>}
           </div>
@@ -623,7 +851,7 @@ function SourcePackageWorkspace({
               <div className="sp-unit-list" role="list" aria-label={uiText("Đơn vị cấu trúc", "Structure units")}>
                 {units.map((unit, index) => {
                   const classification = sourcePackageClassification(unit);
-                  const unitIssueCount = Array.isArray(unit.issue_codes) ? unit.issue_codes.length : 0;
+                  const unitIssueCount = issueCountsByUnit.get(unit.unit_id) || 0;
                   const mergePicked = mergeSelection.includes(unit.unit_id);
                   return (
                     <div key={unit.unit_id} role="listitem" className={`sp-unit-row${unit.unit_id === selectedUnit?.unit_id ? " selected" : ""}${mergePicked ? " merge-picked" : ""}`}>
@@ -652,26 +880,28 @@ function SourcePackageWorkspace({
                   <div className="sp-section-title"><Ic.list size={13} /><b>{uiText("Ranh giới block", "Block boundaries")}</b><span>{selectedBlockIds.length}</span></div>
                   <div className="sp-block-sequence">
                     {selectedBlockIds.map((blockId, index) => {
-                      const preview = blockPreviews.rows.get(blockId);
+                      const block = unitBlocksById.get(blockId);
                       const boundarySelected = selectedBoundaryBlockId === blockId;
-                      return <div key={blockId} className={boundarySelected ? "boundary-selected" : ""}>
+                      const issueTargeted = activeIssueBlockId === blockId;
+                      return <div key={blockId} data-source-block={blockId} className={`${boundarySelected ? "boundary-selected" : ""}${issueTargeted ? " issue-targeted" : ""}`.trim()}>
                         <span>{index + 1}</span>
                         <div className="sp-block-copy">
-                          <div className="sp-block-meta"><code>{blockId}</code>{preview && <em>{preview.block_type}</em>}</div>
-                          {preview && <p>{preview.source_text || uiText("Block nguồn trống.", "Empty source block.")}</p>}
+                          <div className="sp-block-meta"><code>{blockId}</code>{block && <em>{block.block_type}</em>}</div>
+                          {block && <p>{block.source_text || uiText("Block nguồn trống.", "Empty source block.")}</p>}
                         </div>
                         {index > 0 && splitSupported && <button type="button" className={`sp-boundary-handle tip${boundarySelected ? " active" : ""}`} data-tip={uiText(`Chọn ranh giới trước ${blockId}`, `Select the boundary before ${blockId}`)} aria-label={uiText(`Chọn ranh giới tách trước block ${blockId}`, `Select split boundary before block ${blockId}`)} aria-pressed={boundarySelected} disabled={!!busy} onClick={() => setSelectedBoundaryBlockId(boundarySelected ? "" : blockId)}><Ic.gripVertical size={13} /></button>}
                       </div>;
                     })}
                   </div>
                   {!selectedBlockIds.length && <p className="sp-muted">{uiText("Payload review không công bố block ID cho đơn vị này.", "The review payload does not expose block IDs for this unit.")}</p>}
-                  {!!selectedBlockIds.length && blockPreviews.state !== "ready" && <div className={`sp-block-preview-gap ${blockPreviews.state}`}><Ic.lock size={12} /><span><b>{uiText("Chưa có nội dung block authoritative", "Authoritative block content unavailable")}</b>{blockPreviews.state === "invalid" ? uiText("Preview relay không khớp schema/state hiện tại nên đã bị khóa.", "The preview relay does not match the current schema/state and was blocked.") : uiText("Backend review chưa relay source_text và block_type cùng state_sha256; UI không lấy dữ liệu từ run preview hay project snapshot khác.", "Backend review does not yet relay source_text and block_type with the same state_sha256; the UI will not read a different run preview or project snapshot.")}</span></div>}
+                  {!!selectedBlockIds.length && unitBlocks.state === "loading" && <div className="sp-block-content-gap loading" role="status"><span className="as-spin" /><span><b>{uiText("Đang tải nội dung block authoritative", "Loading authoritative block content")}</b>{uiText("Đọc từ document.json đã revalidate với đúng năm binding của review hiện tại.", "Reading the revalidated document.json with the five exact bindings of the current review.")}</span></div>}
+                  {!!selectedBlockIds.length && !["ready", "loading"].includes(unitBlocks.state) && <div className={`sp-block-content-gap ${unitBlocks.state}`} role="alert"><Ic.lock size={12} /><span><b>{uiText("Chưa thể hiển thị nội dung block authoritative", "Authoritative block content unavailable")}</b><code>{unitBlocks.error?.code || "source_package_unit_blocks_unavailable"}</code>{unitBlocks.error?.message || uiText("UI không đọc fixture, filesystem hoặc preview khác để lấp dữ liệu.", "The UI will not fill this gap from a fixture, filesystem, or another preview.")}</span></div>}
                 </section>
 
                 {!!visibleIssues.length && <section ref={issuePanelRef} className="sp-flat-section" tabIndex={-1} aria-label={uiText("Vấn đề cần kiểm tra", "Issues requiring review")}>
                   <div className="sp-section-title"><Ic.alert size={13} /><b>{uiText("Vấn đề / cờ kiểm tra", "Issues / review flags")}</b>{issueReviewActive ? <div className="sp-issue-nav"><button type="button" className="tip" data-tip={uiText("Vấn đề trước", "Previous issue")} aria-label={uiText("Vấn đề trước", "Previous issue")} disabled={activeIssueIndex <= 0} onClick={() => reviewIssueAt(activeIssueIndex - 1)}><Ic.chevRight size={11} style={{ transform: "rotate(180deg)" }} /></button><span>{activeIssueIndex + 1}/{issues.length}</span><button type="button" className="tip" data-tip={uiText("Vấn đề tiếp theo", "Next issue")} aria-label={uiText("Vấn đề tiếp theo", "Next issue")} disabled={activeIssueIndex >= issues.length - 1} onClick={() => reviewIssueAt(activeIssueIndex + 1)}><Ic.chevRight size={11} /></button><button type="button" className="tip" data-tip={uiText("Thoát chế độ duyệt vấn đề", "Exit issue review")} aria-label={uiText("Thoát chế độ duyệt vấn đề", "Exit issue review")} onClick={stopIssueReview}><Ic.x size={11} /></button></div> : <span>{selectedIssues.length}</span>}</div>
                   <div className="sp-issue-list">{visibleIssues.map((issue, index) => <div key={sourcePackageIssueKey(issue, index)} className={issueReviewActive ? "active" : ""}>
-                    <b className="mono">{issue.code}</b><span>{sourcePackageIssueScopeLabel(issue.scope)}{issue.target_id ? ` · ${issue.target_id}` : ""}</span>
+                    <b className="mono">{issue.code}</b><span>{sourcePackageIssueScopeLabel(issue.scope)}{issue.target_id ? ` · ${issue.target_id}` : ""}{issue.navigation?.block_id ? ` · block ${issue.navigation.block_id}` : ""}</span>
                     {Array.isArray(issue.evidence) && issue.evidence.length ? <ul>{issue.evidence.map(item => <li key={item}>{item}</li>)}</ul> : null}
                   </div>)}</div>
                 </section>}
@@ -713,8 +943,12 @@ function SourcePackageWorkspace({
             <dl>
               {status?.state_sha256 && <><dt>state</dt><dd title={status.state_sha256}>{sourcePackageShortHash(status.state_sha256)}</dd></>}
               {review?.expected?.candidate_tree_sha256 && <><dt>candidate tree</dt><dd title={review.expected.candidate_tree_sha256}>{sourcePackageShortHash(review.expected.candidate_tree_sha256)}</dd></>}
+              {review?.expected?.document_sha256 && <><dt>document</dt><dd title={review.expected.document_sha256}>{sourcePackageShortHash(review.expected.document_sha256)}</dd></>}
+              {review?.expected?.structure_sha256 && <><dt>structure</dt><dd title={review.expected.structure_sha256}>{sourcePackageShortHash(review.expected.structure_sha256)}</dd></>}
               {review?.expected?.report_sha256 && <><dt>review report</dt><dd title={review.expected.report_sha256}>{sourcePackageShortHash(review.expected.report_sha256)}</dd></>}
               {review?.expected && Object.prototype.hasOwnProperty.call(review.expected, "hierarchy_sha256") && <><dt>hierarchy</dt><dd title={review.expected.hierarchy_sha256 || "null"}>{review.expected.hierarchy_sha256 ? sourcePackageShortHash(review.expected.hierarchy_sha256) : "null"}</dd></>}
+              {issueQueue.payloadSha256 && <><dt>issue queue</dt><dd title={issueQueue.payloadSha256}>{sourcePackageShortHash(issueQueue.payloadSha256)}</dd></>}
+              {unitBlocks.payloadSha256s.length > 0 && <><dt>unit blocks</dt><dd title={unitBlocks.payloadSha256s.join("\n")}>{unitBlocks.payloadSha256s.length === 1 ? sourcePackageShortHash(unitBlocks.payloadSha256s[0]) : `${unitBlocks.payloadSha256s.length} pages`}</dd></>}
               {status?.candidate?.candidate_id && <><dt>candidate</dt><dd>{status.candidate.candidate_id}</dd></>}
               {status?.run_start?.run_id && <><dt>{uiText("run đóng băng", "frozen run")}</dt><dd>{status.run_start.run_id}</dd></>}
             </dl>

@@ -122,14 +122,51 @@
       integrity: {
         unit_count: units.length,
         issue_count: issues.length,
-        payload_sha256: hash("c"),
+        payload_sha256: hash(String((revision % 9) + 1)),
       },
+    };
+  }
+
+  function issueQueueFor(report, expected) {
+    const rows = report.issues.map((issue, orderIndex) => {
+      const unit = report.units.find(row => row.unit_id === issue.target_id) || null;
+      const targetBlockId = unit?.block_ids?.[0] || null;
+      const documentBlockPosition = targetBlockId
+        ? report.units.flatMap(row => row.block_ids).indexOf(targetBlockId)
+        : null;
+      return {
+        issue_id: issue.issue_id,
+        order_index: orderIndex,
+        code: issue.code,
+        scope: issue.scope,
+        target_id: issue.target_id ?? null,
+        target_unit_id: unit?.unit_id || null,
+        target_block_id: targetBlockId,
+        related_unit_ids: unit ? [unit.unit_id] : [],
+        related_block_ids: targetBlockId ? [targetBlockId] : [],
+        navigation: {
+          unit_id: unit?.unit_id || report.units[0]?.unit_id || null,
+          block_id: targetBlockId || report.units[0]?.block_ids?.[0] || null,
+          unit_order_index: unit?.order_index ?? report.units[0]?.order_index ?? null,
+          unit_block_position: targetBlockId ? 0 : (report.units[0]?.block_ids?.length ? 0 : null),
+          document_block_position: documentBlockPosition >= 0 ? documentBlockPosition : (report.units[0]?.block_ids?.length ? 0 : null),
+        },
+        evidence: clone(issue.evidence || []),
+      };
+    });
+    return {
+      schema_version: "source_package_issue_queue_v1",
+      doc_id: docId,
+      inputs: clone(expected),
+      rows,
+      integrity: { row_count: rows.length, payload_sha256: hash("9") },
     };
   }
 
   let units = clone(baseUnits);
   let revision = 0;
   let staleOnce = scenario === "stale";
+  let blockStaleOnce = previewMode === "stale";
   let runtime = { project_id: docId, prepared: false };
   let mode = scenario === "unmanaged"
     ? "unmanaged_draft"
@@ -168,7 +205,13 @@
       pipeline_run_count: lifecycle === "run_started_frozen" ? 1 : 0,
       source: { filename: "source.pdf", format: "pdf", sha256: hash("1") },
       candidate: { candidate_id: `srcpkg_${hash("2")}`, tree_sha256: hash("2"), relative_path: `working/source_package_candidates/srcpkg_${hash("2")}` },
-      package: { schema_version: "canonical_source_package_v1", sha256: hash("3"), relative_path: "working/source_package_candidates/demo" },
+      package: {
+        schema_version: "canonical_source_package_v1",
+        sha256: hash("3"),
+        relative_path: "working/source_package_candidates/demo",
+        document: { schema_version: "canonical_document_v1", sha256: hash("4") },
+        structure: { schema_version: "canonical_structure_v1", sha256: hash("5") },
+      },
       draft_structure: { report: { schema_version: "draft_structure_report_v1", sha256: hash(String((revision % 9) + 1)) } },
       policies: {},
       state_sha256: hash(String.fromCharCode(97 + (revision % 6))),
@@ -188,14 +231,14 @@
     const frozen = mode === "managed_run_started_frozen";
     const report = reportFor(clone(units));
     const currentStatus = statusPayload();
-    const blockPreviews = previewMode === "missing" ? {}
-      : {
-          block_previews: {
-            schema_version: "source_package_block_preview_v1",
-            state_sha256: previewMode === "stale" ? hash("0") : currentStatus.state_sha256,
-            rows: clone(previewMode === "partial" ? blockPreviewRows.slice(0, -1) : blockPreviewRows),
-          },
-        };
+    const expected = {
+      state_sha256: currentStatus.state_sha256,
+      candidate_tree_sha256: currentStatus.candidate.tree_sha256,
+      document_sha256: currentStatus.package.document.sha256,
+      structure_sha256: currentStatus.package.structure.sha256,
+      report_sha256: report.integrity.payload_sha256,
+      hierarchy_sha256: revision ? hash("e") : null,
+    };
     return {
       schema_version: "source_package_review_v1",
       doc_id: docId,
@@ -203,16 +246,11 @@
       pipeline_run_count: frozen ? 1 : 0,
       authority: "explicit_human_approval_required",
       experimental: { scope: frozen ? "run_started_frozen" : "os_locked_pre_run", load_bearing: frozen },
-      expected: {
-        state_sha256: currentStatus.state_sha256,
-        candidate_tree_sha256: currentStatus.candidate.tree_sha256,
-        report_sha256: report.integrity.payload_sha256,
-        hierarchy_sha256: revision ? hash("e") : null,
-      },
+      expected,
       supported_actions: frozen || mode === "managed_finalized_pre_run" ? [] : ["update_unit", "split_unit", "merge_adjacent_units"],
       supported_hierarchy_actions: frozen || mode === "managed_finalized_pre_run" ? [] : ["set_parent", "clear_parent"],
       report,
-      ...blockPreviews,
+      issue_queue: issueQueueFor(report, expected),
     };
   }
 
@@ -334,6 +372,60 @@
         throw apiError("source_package_not_managed", "Normalize the source package before requesting structure review.", 409);
       }
       return clone(reviewPayload());
+    },
+    getSourcePackageUnitBlocks: async (_id, unitId, expected, offset = 0, limit = 200) => {
+      if (previewMode === "missing") {
+        throw apiError("source_package_unit_blocks_unavailable", "Authoritative unit blocks are unavailable in this fixture state.", 503);
+      }
+      if (blockStaleOnce) {
+        blockStaleOnce = false;
+        revision += 1;
+        units[1].title = "Chapter I · Refreshed after stale block read";
+        throw apiError("source_package_review_stale", "Review identities changed; reload structure review before reading blocks.", 409);
+      }
+      const currentReview = reviewPayload();
+      const bindingFields = ["state_sha256", "candidate_tree_sha256", "document_sha256", "structure_sha256", "report_sha256"];
+      const currentBindings = Object.fromEntries(bindingFields.map(field => [field, currentReview.expected[field]]));
+      if (bindingFields.some(field => expected?.[field] !== currentBindings[field])) {
+        throw apiError("source_package_review_stale", "Review identities changed; reload structure review before reading blocks.", 409);
+      }
+      const unit = units.find(row => row.unit_id === unitId);
+      if (!unit) throw apiError("source_package_review_unit_missing", "The requested unit is not part of the current structure review.", 404);
+      const allBlocks = unit.block_ids.map((blockId, orderIndex) => {
+        const row = blockPreviewRows.find(item => item.block_id === blockId);
+        return {
+          block_id: blockId,
+          order_index: orderIndex,
+          block_type: row?.block_type || "paragraph",
+          source_text: row?.source_text || `Fixture source block ${blockId}`,
+        };
+      });
+      const selected = allBlocks.slice(offset, offset + limit);
+      const blocks = previewMode === "partial" ? selected.slice(0, -1) : selected;
+      const payload = {
+        schema_version: "source_package_unit_blocks_v1",
+        doc_id: docId,
+        lifecycle: lifecycleForMode(),
+        pipeline_run_count: mode === "managed_run_started_frozen" ? 1 : 0,
+        expected: currentBindings,
+        unit: {
+          unit_id: unit.unit_id,
+          chapter_id: unit.chapter_id,
+          order_index: unit.order_index,
+          title: unit.title,
+          block_count: allBlocks.length,
+        },
+        blocks,
+        pagination: {
+          offset,
+          limit,
+          returned: blocks.length,
+          total: allBlocks.length,
+          has_more: previewMode === "partial" ? false : offset + blocks.length < allBlocks.length,
+        },
+      };
+      payload.integrity = { block_count: blocks.length, payload_sha256: hash("8") };
+      return clone(payload);
     },
     normalizeSourcePackage: async () => {
       const reused = mode !== "unmanaged_draft";
