@@ -47,10 +47,11 @@ def prepare_source(source: str | Path, target: str | Path) -> dict[str, str]:
 
     target_path.parent.mkdir(parents=True, exist_ok=True)
     stripped_text = json.dumps(stripped, ensure_ascii=False, indent=2) + "\n"
-    target_path.write_text(stripped_text, encoding="utf-8")
+    stripped_bytes = stripped_text.encode("utf-8")
+    target_path.write_bytes(stripped_bytes)
 
     original_sha256 = hashlib.sha256(original_bytes).hexdigest()
-    stripped_sha256 = hashlib.sha256(stripped_text.encode("utf-8")).hexdigest()
+    stripped_sha256 = hashlib.sha256(stripped_bytes).hexdigest()
     provenance_path = target_path.with_name("PROVENANCE.md")
     provenance_path.write_text(
         _provenance_text(
