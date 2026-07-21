@@ -49,36 +49,47 @@ function memoryConfidence(item) {
   return Number.isFinite(value) ? value.toFixed(2) : "";
 }
 
+function memoryKindLabel(kind) {
+  const labels = {
+    glossary: ["Thuật ngữ", "Glossary"],
+    entities: ["Thực thể", "Entities"],
+    relations: ["Quan hệ", "Relations"],
+    summaries: ["Tóm tắt", "Summaries"],
+  };
+  const pair = labels[kind] || [kind, kind];
+  return uiText(pair[0], pair[1]);
+}
+
 function memoryEntityLabel(entityId, entityMap) {
   const entity = entityMap.get(entityId);
-  return entity?.canonical_target || entity?.canonical_source || entityId || "unknown entity";
+  return entity?.canonical_target || entity?.canonical_source || entityId || uiText("thực thể chưa rõ", "unknown entity");
 }
 
 function memoryItemTitle(kind, item, entityMap, chapterMap) {
-  if (kind === "glossary") return item.source_term || item.term || item.glossary_id || "Untitled term";
-  if (kind === "entities") return item.canonical_target || item.canonical_source || item.entity_id || "Untitled entity";
+  if (kind === "glossary") return item.source_term || item.term || item.glossary_id || uiText("Thuật ngữ chưa đặt tên", "Untitled term");
+  if (kind === "entities") return item.canonical_target || item.canonical_source || item.entity_id || uiText("Thực thể chưa đặt tên", "Untitled entity");
   if (kind === "relations") {
     return `${memoryEntityLabel(item.source_entity_id, entityMap)} -> ${memoryEntityLabel(item.target_entity_id, entityMap)}`;
   }
   const chapter = chapterMap.get(item.chapter_id);
-  return chapter?.title || chapter?.chapter_title || item.chapter_id || "Untitled summary";
+  return chapter?.title || chapter?.chapter_title || item.chapter_id || uiText("Tóm tắt chưa đặt tên", "Untitled summary");
 }
 
 function memoryItemSubtitle(kind, item) {
   if (kind === "glossary") {
     if (item.expected_target || item.canonical_target) return item.expected_target || item.canonical_target;
     const directives = memoryArray(item.directives);
-    if (directives.length === 1) return directives[0].instruction || directives[0].target_term || "One run directive";
-    if (directives.length > 1) return `${directives.length} persisted run directives`;
-    return "No target form";
+    if (directives.length === 1) return directives[0].instruction || directives[0].target_term || uiText("Một chỉ thị chạy", "One run directive");
+    if (directives.length > 1) return uiText(`${directives.length} chỉ thị chạy đã lưu`, `${directives.length} persisted run directives`);
+    return uiText("Không có dạng đích", "No target form");
   }
   if (kind === "entities") {
     const source = item.canonical_source || "";
     const type = item.entity_type || item.referent_kind || "entity";
     return source ? `${source} | ${type}` : type;
   }
-  if (kind === "relations") return item.relation_type || item.state_label || "Relation";
-  return item.summary_source || item.summary || item.source || "No summary text";
+  if (kind === "relations") return item.relation_type || item.state_label || uiText("Quan hệ", "Relation");
+  return item.summary_source || item.summary || item.source || uiText("Không có nội dung tóm tắt", "No summary text");
 }
 
 function memorySearchText(kind, item, entityMap, chapterMap) {
@@ -142,8 +153,8 @@ function MemoryRecordDetail({ kind, item, entityMap, chapterMap, blockMap, evide
     return (
       <div className="memory-detail-empty wb-empty">
         <Ic.layers size={22} />
-        <b>Select a memory record</b>
-        <span>Its complete fields and source evidence will appear here.</span>
+        <b>{uiText("Chọn một bản ghi bộ nhớ", "Select a memory record")}</b>
+        <span>{uiText("Các trường đầy đủ và bằng chứng nguồn sẽ xuất hiện tại đây.", "Its complete fields and source evidence will appear here.")}</span>
       </div>
     );
   }
@@ -153,10 +164,10 @@ function MemoryRecordDetail({ kind, item, entityMap, chapterMap, blockMap, evide
   const confidence = memoryConfidence(item);
   const isRunContext = item.provenance?.branch === "run_context";
   return (
-    <section className="memory-detail wb-detail" aria-label="Memory record detail">
+    <section className="memory-detail wb-detail" aria-label={uiText("Chi tiết bản ghi bộ nhớ", "Memory record detail")}>
       <div className="memory-detail-head wb-section">
         <div>
-          <span className="memory-kicker">{kind}</span>
+          <span className="memory-kicker">{memoryKindLabel(kind)}</span>
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
@@ -164,54 +175,54 @@ function MemoryRecordDetail({ kind, item, entityMap, chapterMap, blockMap, evide
       </div>
 
       {kind === "glossary" && <>
-        <MemoryField label="Source term" mono>{item.source_term}</MemoryField>
-        <MemoryField label="Expected target">{item.expected_target}</MemoryField>
-        {isRunContext && <MemoryField label="Persisted directives">
+        <MemoryField label={uiText("Thuật ngữ nguồn", "Source term")} mono>{item.source_term}</MemoryField>
+        <MemoryField label={uiText("Đích mong đợi", "Expected target")}>{item.expected_target}</MemoryField>
+        {isRunContext && <MemoryField label={uiText("Chỉ thị đã lưu", "Persisted directives")}>
           <div className="memory-directive-list">
             {memoryArray(item.directives).map((directive, index) => (
               <span key={`${directive.policy || "directive"}:${directive.instruction || index}`}>
-                <b>{directive.policy || "directive"}</b>{directive.instruction || directive.target_term || "No rendered instruction"}
+                <b>{directive.policy || "directive"}</b>{directive.instruction || directive.target_term || uiText("Không có chỉ thị hiển thị", "No rendered instruction")}
               </span>
             ))}
           </div>
         </MemoryField>}
-        <MemoryField label="Allowed variants">{memoryArray(item.allowed_variants).join(", ")}</MemoryField>
-        <MemoryField label="Forbidden variants">{memoryArray(item.forbidden_variants).join(", ")}</MemoryField>
-        <MemoryField label="Scope">{item.scope}</MemoryField>
-        {isRunContext && <MemoryField label="Applied in run" mono>{`${memoryArray(item.usage_block_ids).length} blocks`}</MemoryField>}
+        <MemoryField label={uiText("Biến thể được phép", "Allowed variants")}>{memoryArray(item.allowed_variants).join(", ")}</MemoryField>
+        <MemoryField label={uiText("Biến thể bị cấm", "Forbidden variants")}>{memoryArray(item.forbidden_variants).join(", ")}</MemoryField>
+        <MemoryField label={uiText("Phạm vi", "Scope")}>{item.scope}</MemoryField>
+        {isRunContext && <MemoryField label={uiText("Đã áp dụng trong lần chạy", "Applied in run")} mono>{`${memoryArray(item.usage_block_ids).length} block`}</MemoryField>}
       </>}
 
       {kind === "entities" && <>
-        <MemoryField label="Canonical source">{item.canonical_source}</MemoryField>
-        <MemoryField label="Canonical target">{item.canonical_target}</MemoryField>
-        <MemoryField label="Source aliases">{memoryArray(item.aliases_source).join(", ")}</MemoryField>
-        <MemoryField label="Target aliases">{memoryArray(item.aliases_target).join(", ")}</MemoryField>
-        <MemoryField label="Entity type">{item.entity_type || item.referent_kind}</MemoryField>
-        <MemoryField label="Role">{item.role || item.social_role}</MemoryField>
-        <MemoryField label="Pronoun policy">{item.pronoun_policy}</MemoryField>
+        <MemoryField label={uiText("Nguồn chuẩn", "Canonical source")}>{item.canonical_source}</MemoryField>
+        <MemoryField label={uiText("Đích chuẩn", "Canonical target")}>{item.canonical_target}</MemoryField>
+        <MemoryField label={uiText("Bí danh nguồn", "Source aliases")}>{memoryArray(item.aliases_source).join(", ")}</MemoryField>
+        <MemoryField label={uiText("Bí danh đích", "Target aliases")}>{memoryArray(item.aliases_target).join(", ")}</MemoryField>
+        <MemoryField label={uiText("Loại thực thể", "Entity type")}>{item.entity_type || item.referent_kind}</MemoryField>
+        <MemoryField label={uiText("Vai trò", "Role")}>{item.role || item.social_role}</MemoryField>
+        <MemoryField label={uiText("Quy tắc đại từ", "Pronoun policy")}>{item.pronoun_policy}</MemoryField>
       </>}
 
       {kind === "relations" && <>
-        <MemoryField label="Source entity">{memoryEntityLabel(item.source_entity_id, entityMap)}</MemoryField>
-        <MemoryField label="Target entity">{memoryEntityLabel(item.target_entity_id, entityMap)}</MemoryField>
-        <MemoryField label="Relation type">{item.relation_type}</MemoryField>
-        <MemoryField label="State">{item.state_label}</MemoryField>
-        <MemoryField label="Valid interval" mono>{[item.valid_from_block_id, item.valid_to_block_id || "open"].filter(Boolean).join(" -> ")}</MemoryField>
-        <MemoryField label="Address policy" mono>{item.address_policy ? JSON.stringify(item.address_policy) : ""}</MemoryField>
-        <MemoryField label="Notes">{item.notes}</MemoryField>
+        <MemoryField label={uiText("Thực thể nguồn", "Source entity")}>{memoryEntityLabel(item.source_entity_id, entityMap)}</MemoryField>
+        <MemoryField label={uiText("Thực thể đích", "Target entity")}>{memoryEntityLabel(item.target_entity_id, entityMap)}</MemoryField>
+        <MemoryField label={uiText("Loại quan hệ", "Relation type")}>{item.relation_type}</MemoryField>
+        <MemoryField label={uiText("Trạng thái", "State")}>{item.state_label}</MemoryField>
+        <MemoryField label={uiText("Khoảng hiệu lực", "Valid interval")} mono>{[item.valid_from_block_id, item.valid_to_block_id || "open"].filter(Boolean).join(" -> ")}</MemoryField>
+        <MemoryField label={uiText("Quy tắc xưng hô", "Address policy")} mono>{item.address_policy ? JSON.stringify(item.address_policy) : ""}</MemoryField>
+        <MemoryField label={uiText("Ghi chú", "Notes")}>{item.notes}</MemoryField>
       </>}
 
       {kind === "summaries" && <>
-        <MemoryField label="Chapter" mono>{item.chapter_id}</MemoryField>
-        <MemoryField label="Summary">{item.summary_source || item.summary || item.source}</MemoryField>
+        <MemoryField label={uiText("Chương", "Chapter")} mono>{item.chapter_id}</MemoryField>
+        <MemoryField label={uiText("Tóm tắt", "Summary")}>{item.summary_source || item.summary || item.source}</MemoryField>
       </>}
 
-      {confidence && <MemoryField label="Confidence" mono>{confidence}</MemoryField>}
+      {confidence && <MemoryField label={uiText("Độ tin cậy", "Confidence")} mono>{confidence}</MemoryField>}
 
       <div className="memory-evidence">
         <div className="memory-section-head">
-          <b>{isRunContext ? "Context evidence / use" : "Source evidence"}</b>
-          <span>{evidence.length} block{evidence.length === 1 ? "" : "s"}</span>
+          <b>{isRunContext ? uiText("Bằng chứng / sử dụng trong ngữ cảnh", "Context evidence / use") : uiText("Bằng chứng nguồn", "Source evidence")}</b>
+          <span>{evidence.length} block</span>
         </div>
         {evidence.length ? (
           <div className="memory-evidence-list">
@@ -221,18 +232,18 @@ function MemoryRecordDetail({ kind, item, entityMap, chapterMap, blockMap, evide
                 <button key={blockId} type="button" disabled={!sourceBlock} onClick={() => onJumpToBlock(blockId)}>
                   <Ic.arrowRight size={11} />
                   <span className="mono">{blockId}</span>
-                  <em>{sourceBlock?.chapter_id || "Block unavailable"}</em>
+                  <em>{sourceBlock?.chapter_id || uiText("Block không khả dụng", "Block unavailable")}</em>
                 </button>
               );
             })}
           </div>
         ) : evidenceLoading ? (
-          <p className="memory-muted">Loading the full source-evidence index...</p>
-        ) : <p className="memory-muted">No block-level evidence is available in this dataset.</p>}
+          <p className="memory-muted">{uiText("Đang tải chỉ mục bằng chứng nguồn đầy đủ...", "Loading the full source-evidence index...")}</p>
+        ) : <p className="memory-muted">{uiText("Dataset này không có bằng chứng cấp block.", "No block-level evidence is available in this dataset.")}</p>}
       </div>
 
       <details className="memory-raw">
-        <summary>Complete stored record</summary>
+        <summary>{uiText("Bản ghi lưu đầy đủ", "Complete stored record")}</summary>
         <pre>{JSON.stringify(item, null, 2)}</pre>
       </details>
     </section>
@@ -309,10 +320,10 @@ function MemoryWorkspace({
     ]));
   }, [scope, baseCollections, blockMap, entityChapterMap, chapterId]);
   const descriptors = [
-    { id: "glossary", label: "Glossary", icon: Ic.tag },
-    { id: "entities", label: "Entities", icon: Ic.users },
-    { id: "relations", label: "Relations", icon: Ic.layers },
-    { id: "summaries", label: "Summaries", icon: Ic.doc },
+    { id: "glossary", vi: "Thuật ngữ", en: "Glossary", icon: Ic.tag },
+    { id: "entities", vi: "Thực thể", en: "Entities", icon: Ic.users },
+    { id: "relations", vi: "Quan hệ", en: "Relations", icon: Ic.layers },
+    { id: "summaries", vi: "Tóm tắt", en: "Summaries", icon: Ic.doc },
   ];
   const selectedCollection = collections[kind] || [];
   const scopedRows = selectedCollection;
@@ -331,18 +342,18 @@ function MemoryWorkspace({
   const scopedChapters = runAvailable
     ? memoryArray(chapters).filter(chapter => runChapterIds.has(chapter.chapter_id))
     : memoryArray(chapters);
-  const projectLabel = docInfo?.thesis?.job_id || docInfo?.doc_id || docInfo?.metadata?.title || "Memory workspace";
+  const projectLabel = docInfo?.thesis?.job_id || docInfo?.doc_id || docInfo?.metadata?.title || uiText("Workspace bộ nhớ", "Memory workspace");
   const experimentLabel = memoryArray(runScope.experiment_ids).join(", ");
   const scopeTitle = scope === "book"
-    ? "Full inherited registry"
+    ? uiText("Registry kế thừa đầy đủ", "Full inherited registry")
     : scope === "run"
-      ? "Run context"
+      ? uiText("Ngữ cảnh lần chạy", "Run context")
       : (selectedChapter?.title || selectedChapter?.chapter_title || chapterId);
   const scopeDescription = scope === "book"
-    ? `${registryCollections.glossary.length} baseline terms stored in this work DB; this is not the selected run result.`
+    ? uiText(`${registryCollections.glossary.length} thuật ngữ baseline được lưu trong work DB; đây không phải kết quả của lần chạy đã chọn.`, `${registryCollections.glossary.length} baseline terms stored in this work DB; this is not the selected run result.`)
     : scope === "chapter"
-      ? `${experimentLabel || "Selected run"}: ${collections.glossary.length} persisted context terms in this chapter; run total ${runScope.context_term_count || 0}.`
-      : `${experimentLabel || "Selected run"}: ${runScope.context_term_count || 0} context terms across ${memoryArray(runScope.chapter_ids).length} chapter(s).`;
+      ? uiText(`${experimentLabel || "Lần chạy đã chọn"}: ${collections.glossary.length} thuật ngữ ngữ cảnh đã lưu trong chương này; tổng lần chạy ${runScope.context_term_count || 0}.`, `${experimentLabel || "Selected run"}: ${collections.glossary.length} persisted context terms in this chapter; run total ${runScope.context_term_count || 0}.`)
+      : uiText(`${experimentLabel || "Lần chạy đã chọn"}: ${runScope.context_term_count || 0} thuật ngữ ngữ cảnh trên ${memoryArray(runScope.chapter_ids).length} chương.`, `${experimentLabel || "Selected run"}: ${runScope.context_term_count || 0} context terms across ${memoryArray(runScope.chapter_ids).length} chapter(s).`);
 
   function jumpToBlock(blockId) {
     if (!blockMap.has(blockId)) return;
@@ -354,66 +365,66 @@ function MemoryWorkspace({
     <main className="col col-center memory-workspace wb-operational">
       <header className="memory-header wb-section">
         <div>
-          <span className="memory-kicker">{scope === "book" ? "Registry baseline" : "Persisted run memory"}</span>
+          <span className="memory-kicker">{scope === "book" ? uiText("Registry nền", "Registry baseline") : uiText("Bộ nhớ lần chạy đã lưu", "Persisted run memory")}</span>
           <h1>{projectLabel}</h1>
           <p>{scopeDescription}</p>
         </div>
         <div className="memory-header-counts">
-          <span><b>{collections.glossary.length}</b> terms</span>
-          <span><b>{collections.entities.length}</b> entities</span>
-          <span><b>{collections.relations.length}</b> relations</span>
-          <span><b>{collections.summaries.length}</b> summaries</span>
+          <span><b>{collections.glossary.length}</b> {uiText("thuật ngữ", "terms")}</span>
+          <span><b>{collections.entities.length}</b> {uiText("thực thể", "entities")}</span>
+          <span><b>{collections.relations.length}</b> {uiText("quan hệ", "relations")}</span>
+          <span><b>{collections.summaries.length}</b> {uiText("tóm tắt", "summaries")}</span>
         </div>
       </header>
 
       <div className="memory-controls wb-toolbar">
-        <div className="memory-scope" role="group" aria-label="Memory scope">
-          {(runScopedProject || runAvailable) && <button type="button" className={scope === "run" ? "on" : ""} onClick={() => setScope("run")}>Run context</button>}
+        <div className="memory-scope" role="group" aria-label={uiText("Phạm vi bộ nhớ", "Memory scope")}>
+          {(runScopedProject || runAvailable) && <button type="button" className={scope === "run" ? "on" : ""} onClick={() => setScope("run")}>{uiText("Ngữ cảnh lần chạy", "Run context")}</button>}
           <button type="button" className={scope === "chapter" ? "on" : ""} disabled={evidenceLoading && !runAvailable}
-            title={evidenceLoading && !runAvailable ? "Chapter scope becomes available after source evidence is loaded" : ""}
+            title={evidenceLoading && !runAvailable ? uiText("Phạm vi chương khả dụng sau khi tải bằng chứng nguồn", "Chapter scope becomes available after source evidence is loaded") : ""}
             onClick={() => {
               if (runAvailable && !runChapterIds.has(chapterId)) setChapterId(scopedChapters[0]?.chapter_id || "");
               setScope("chapter");
-            }}>{runScopedProject || runAvailable ? "Run chapter" : "Current chapter"}</button>
-          {!runScopedProject && <button type="button" className={scope === "book" ? "on" : ""} onClick={() => setScope("book")}>Project registry</button>}
+            }}>{runScopedProject || runAvailable ? uiText("Chương của lần chạy", "Run chapter") : uiText("Chương hiện tại", "Current chapter")}</button>
+          {!runScopedProject && <button type="button" className={scope === "book" ? "on" : ""} onClick={() => setScope("book")}>{uiText("Registry dự án", "Project registry")}</button>}
         </div>
         {scope === "chapter" && (
-          <select aria-label="Memory chapter" value={chapterId} onChange={event => setChapterId(event.target.value)}>
+          <select aria-label={uiText("Chương bộ nhớ", "Memory chapter")} value={chapterId} onChange={event => setChapterId(event.target.value)}>
             {scopedChapters.map(chapter => <option key={chapter.chapter_id} value={chapter.chapter_id}>{chapter.title || chapter.chapter_title || chapter.chapter_id}</option>)}
           </select>
         )}
         <label className="memory-search">
           <Ic.search size={13} />
-          <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search memory records" />
+          <input value={query} onChange={event => setQuery(event.target.value)} placeholder={uiText("Tìm bản ghi bộ nhớ", "Search memory records")} />
         </label>
-        <select aria-label="Memory status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
-          <option value="all">All statuses</option>
+        <select aria-label={uiText("Trạng thái bộ nhớ", "Memory status")} value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
+          <option value="all">{uiText("Mọi trạng thái", "All statuses")}</option>
           {statuses.map(status => <option key={status} value={status}>{status}</option>)}
         </select>
-        {evidenceLoading && <span className="memory-sync" role="status"><span />Loading source evidence</span>}
+        {evidenceLoading && <span className="memory-sync" role="status"><span />{uiText("Đang tải bằng chứng nguồn", "Loading source evidence")}</span>}
       </div>
 
       {scope === "book" && runAvailable && (
         <div className="memory-notice memory-notice--info">
           <Ic.alert size={13} />
-          <span><b>Inherited baseline.</b> These rows were copied into the work database; switch to Run context to inspect what was actually sent to the selected translation run.</span>
+          <span><b>{uiText("Baseline kế thừa.", "Inherited baseline.")}</b> {uiText("Các hàng này được sao chép vào work database; chuyển sang Ngữ cảnh lần chạy để xem dữ liệu thực tế đã gửi tới lần dịch được chọn.", "These rows were copied into the work database; switch to Run context to inspect what was actually sent to the selected translation run.")}</span>
         </div>
       )}
 
       {scope === "book" && inferredLiterary && (
         <div className="memory-notice">
           <Ic.alert size={13} />
-          <span><b>Whole-book inspector.</b> This view can expose future-story information; it does not change the as-of context sent to Translator.</span>
+          <span><b>{uiText("Trình kiểm tra toàn sách.", "Whole-book inspector.")}</b> {uiText("Chế độ này có thể lộ thông tin ở phần sau của truyện; nó không thay đổi ngữ cảnh tại thời điểm gửi tới Translator.", "This view can expose future-story information; it does not change the as-of context sent to Translator.")}</span>
         </div>
       )}
 
-      <nav className="memory-tabs wb-toolbar" aria-label="Memory record types">
+      <nav className="memory-tabs wb-toolbar" aria-label={uiText("Loại bản ghi bộ nhớ", "Memory record types")}>
         {descriptors.map(descriptor => {
           const I = descriptor.icon;
           return (
             <button key={descriptor.id} type="button" className={kind === descriptor.id ? "on" : ""} onClick={() => setKind(descriptor.id)}>
               <I size={13} />
-              <span>{descriptor.label}</span>
+              <span>{uiText(descriptor.vi, descriptor.en)}</span>
               <b>{collections[descriptor.id].length}</b>
             </button>
           );
@@ -421,15 +432,15 @@ function MemoryWorkspace({
       </nav>
 
       <div className="memory-body wb-split">
-        <section className="memory-list wb-pane" aria-label={`${kind} memory records`}>
+        <section className="memory-list wb-pane" aria-label={uiText(`Bản ghi bộ nhớ ${memoryKindLabel(kind)}`, `${memoryKindLabel(kind)} memory records`)}>
           <div className="memory-list-head wb-section-title">
             <div>
               <b>{scopeTitle}</b>
-              <span>{filteredRows.length} matching record{filteredRows.length === 1 ? "" : "s"}</span>
+              <span>{uiText(`${filteredRows.length} bản ghi phù hợp`, `${filteredRows.length} matching record${filteredRows.length === 1 ? "" : "s"}`)}</span>
             </div>
-            <span className="mono">showing {Math.min(visibleRows.length, filteredRows.length)} / {filteredRows.length}</span>
+            <span className="mono">{uiText("đang hiện", "showing")} {Math.min(visibleRows.length, filteredRows.length)} / {filteredRows.length}</span>
           </div>
-          <div className="memory-table-head"><span>Record</span><span>Status</span><span>Evidence</span></div>
+          <div className="memory-table-head"><span>{uiText("Bản ghi", "Record")}</span><span>{uiText("Trạng thái", "Status")}</span><span>{uiText("Bằng chứng", "Evidence")}</span></div>
           <div className="memory-rows wb-record-list">
             {visibleRows.map(row => {
               const evidence = memoryEvidenceBlockIds(kind, row.item);
@@ -446,12 +457,12 @@ function MemoryWorkspace({
               );
             })}
             {!visibleRows.length && (
-              <div className="memory-empty wb-empty"><Ic.search size={20} /><b>No matching records</b><span>Change scope, status, or search text.</span></div>
+              <div className="memory-empty wb-empty"><Ic.search size={20} /><b>{uiText("Không có bản ghi phù hợp", "No matching records")}</b><span>{uiText("Hãy đổi phạm vi, trạng thái hoặc nội dung tìm kiếm.", "Change scope, status, or search text.")}</span></div>
             )}
           </div>
           {visibleRows.length < filteredRows.length && (
             <button className="memory-load-more" type="button" onClick={() => setVisibleCount(count => count + MEMORY_PAGE_SIZE)}>
-              Show next {Math.min(MEMORY_PAGE_SIZE, filteredRows.length - visibleRows.length)}
+              {uiText("Hiện thêm", "Show next")} {Math.min(MEMORY_PAGE_SIZE, filteredRows.length - visibleRows.length)}
             </button>
           )}
         </section>

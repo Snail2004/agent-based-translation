@@ -45,11 +45,11 @@ function EditorToolbar({
   const flags = qualityFlags.filter(f => f !== "ok");
   const editableBlock = mode === "block" && !readOnlyPreview;
   const contextTitle = mode === "preview"
-    ? "Translation Results"
+    ? uiText("Kết quả dịch", "Translation Results")
     : mode === "block" ? block.block_id : streamLabel;
   const contextMeta = mode === "block"
     ? `${streamLabel} · ${block.block_type}`
-    : `${streamCount || 0} blocks`;
+    : `${streamCount || 0} block`;
   const provenance = [
     docInfo?.schema_version ? `schema ${docInfo.schema_version}` : "",
     docInfo?.metadata?.pipeline_version ? `pipeline ${docInfo.metadata.pipeline_version}` : "",
@@ -85,7 +85,7 @@ function EditorToolbar({
         {/* chapter opening toggle */}
         {editableBlock && <button className={"tog" + (block.is_chapter_opening ? " on" : "")} onClick={onToggleOpening}>
           <span className="tog-sw"><span className="tog-knob" /></span>
-          <Ic.bolt size={12} />chapter opening
+          <Ic.bolt size={12} />{uiText("mở đầu chương", "chapter opening")}
         </button>}
 
         {/* quality flags */}
@@ -93,7 +93,7 @@ function EditorToolbar({
           <button className="dd-btn flags-btn" onClick={() => { setFlagOpen(o => !o); setTypeOpen(false); setDetailsOpen(false); setLegendOpen(false); }}>
             <Ic.flag size={12} className={flags.length ? "flag-on" : "faint"} />
             {flags.length === 0
-              ? <span className="faint" style={{ fontSize: 12 }}>no flags</span>
+              ? <span className="faint" style={{ fontSize: 12 }}>{uiText("không có cờ", "no flags")}</span>
               : flags.map(f => <span key={f} className="flag-chip">{f}</span>)}
             <Ic.chevDown size={11} className="faint" />
           </button>
@@ -116,7 +116,7 @@ function EditorToolbar({
 
         {readOnly && mode !== "preview" && <div className="dd">
           <button className="dd-btn" onClick={() => { setLegendOpen(open => !open); setDetailsOpen(false); }}>
-            <Ic.layers size={12} />Highlights<Ic.chevDown size={11} className="faint" />
+            <Ic.layers size={12} />{uiText("Đánh dấu", "Highlights")}<Ic.chevDown size={11} className="faint" />
           </button>
           {legendOpen && (<>
             <div className="menu-scrim" onClick={() => setLegendOpen(false)} />
@@ -126,7 +126,7 @@ function EditorToolbar({
 
         <div className="dd">
           <button className="dd-btn context-details-btn" onClick={() => { setDetailsOpen(open => !open); setLegendOpen(false); }}>
-            <Ic.doc size={12} />Details<Ic.chevDown size={11} className="faint" />
+            <Ic.doc size={12} />{uiText("Chi tiết", "Details")}<Ic.chevDown size={11} className="faint" />
           </button>
           {detailsOpen && (<>
             <div className="menu-scrim" onClick={() => setDetailsOpen(false)} />
@@ -134,7 +134,7 @@ function EditorToolbar({
               <div><span>block_id</span><b className="mono">{block.block_id}</b></div>
               <div><span>chapter_id</span><b className="mono">{block.chapter_id}</b></div>
               <div><span>order_index</span><b className="mono">{String(block.order_index)}</b></div>
-              <div><span>provenance</span><b className="mono">{provenance}</b></div>
+              <div><span>{uiText("nguồn gốc", "provenance")}</span><b className="mono">{provenance}</b></div>
             </div>
           </>)}
         </div>
@@ -143,11 +143,11 @@ function EditorToolbar({
       <div className="ed-tb-right">
         {!readOnlyPreview && mode !== "block" && (
           <button className="btn sm" onClick={onNextUnreviewed}>
-            <Ic.arrowRight size={13} />Next unreviewed
+            <Ic.arrowRight size={13} />{uiText("Mục chưa duyệt tiếp theo", "Next unreviewed")}
           </button>
         )}
         {editableBlock && <button className={"btn sm reviewed-btn" + (reviewed ? " is-on" : "")} onClick={onMarkReviewed}>
-          <Ic.checkCircle size={13} />{reviewed ? "Reviewed" : "Mark reviewed"}
+          <Ic.checkCircle size={13} />{reviewed ? uiText("Đã duyệt", "Reviewed") : uiText("Đánh dấu đã duyệt", "Mark reviewed")}
         </button>}
       </div>
     </div>
@@ -166,9 +166,9 @@ function SelectionPopover({ rect, onGlossary, onEntity }) {
       }}
       onClick={e => e.stopPropagation()}
     >
-      <button className="sel-pop-btn" onClick={onGlossary}><Ic.tag size={12} />Add glossary term</button>
+      <button className="sel-pop-btn" onClick={onGlossary}><Ic.tag size={12} />{uiText("Thêm thuật ngữ", "Add glossary term")}</button>
       <div className="sel-pop-div" />
-      <button className="sel-pop-btn" onClick={onEntity}><Ic.users size={12} />Add entity mention</button>
+      <button className="sel-pop-btn" onClick={onEntity}><Ic.users size={12} />{uiText("Thêm lần nhắc thực thể", "Add entity mention")}</button>
     </div>
   );
 }
@@ -228,8 +228,8 @@ function TranslationCompare({
     <div className="translation-compare">
       <div className="tc-head">
         <Ic.eye size={12} />
-        <span>Translation runs</span>
-        <span className="tc-sub">read-only from translation_runs</span>
+        <span>{uiText("Các lần chạy dịch", "Translation runs")}</span>
+        <span className="tc-sub">{uiText("chỉ đọc từ translation_runs", "read-only from translation_runs")}</span>
       </div>
       <div className="tc-grid">
         {entries.map(([key, row]) => (
@@ -280,22 +280,22 @@ function PromptMessage({ title, message }) {
     <div className="obs-message">
       <div className="obs-message-head">
         <span className="mono">{title}</span>
-        <span>{formatInt((message?.content || "").length)} chars</span>
+        <span>{formatInt((message?.content || "").length)} {uiText("ký tự", "chars")}</span>
       </div>
-      <pre>{message?.content || "(empty)"}</pre>
+      <pre>{message?.content || uiText("(trống)", "(empty)")}</pre>
     </div>
   );
 }
 
 function MemoryPackInspector({ detail }) {
   const pack = detail?.memory_pack;
-  if (!detail) return <Empty icon={Ic.eye} text="Select a call to inspect prompt/context." sub="APP-B01 reads cached request_json and memory_packs only." />;
-  if (detail.error) return <Empty icon={Ic.alert} text="Call detail failed to load." sub={detail.error} />;
+  if (!detail) return <Empty icon={Ic.eye} text={uiText("Chọn một lượt gọi để kiểm tra prompt/ngữ cảnh.", "Select a call to inspect prompt/context.")} sub={uiText("APP-B01 chỉ đọc request_json và memory_packs đã cache.", "APP-B01 reads cached request_json and memory_packs only.")} />;
+  if (detail.error) return <Empty icon={Ic.alert} text={uiText("Không tải được chi tiết lượt gọi.", "Call detail failed to load.")} sub={detail.error} />;
   if (!pack) {
     return (
       <div className="obs-card">
         <div className="obs-card-title"><Ic.layers size={13} />Memory pack</div>
-        <p className="muted">No linked memory_pack for this call. This is expected for Builder/Judge calls and for Translator rows without a matching translation_runs window.</p>
+        <p className="muted">{uiText("Lượt gọi này không có memory_pack liên kết. Đây là trạng thái bình thường với lượt gọi Builder/Judge và các hàng Translator không khớp cửa sổ translation_runs.", "No linked memory_pack for this call. This is expected for Builder/Judge calls and for Translator rows without a matching translation_runs window.")}</p>
       </div>
     );
   }
@@ -312,28 +312,28 @@ function MemoryPackInspector({ detail }) {
       </div>
       <div className="obs-pack-audit">
         <div>
-          <span>included</span>
+          <span>{uiText("đã gồm", "included")}</span>
           <b>{formatInt(audit.included_count)}</b>
-          <em>sent to prompt</em>
+          <em>{uiText("đã gửi vào prompt", "sent to prompt")}</em>
         </div>
         <div>
-          <span>excluded</span>
+          <span>{uiText("đã loại", "excluded")}</span>
           <b>{formatInt(audit.excluded_count)}</b>
-          <em>not relevant / filtered</em>
+          <em>{uiText("không liên quan / đã lọc", "not relevant / filtered")}</em>
         </div>
         <div>
-          <span>dropped</span>
+          <span>{uiText("đã bỏ", "dropped")}</span>
           <b>{formatInt(audit.dropped_by_budget_count)}</b>
-          <em>budget pressure</em>
+          <em>{uiText("do giới hạn ngân sách", "budget pressure")}</em>
         </div>
       </div>
       <div className="obs-audit-samples">
         <div>
-          <div className="obs-subhead">included sample</div>
+          <div className="obs-subhead">{uiText("mẫu đã gồm", "included sample")}</div>
           <JsonBlock value={audit.included_sample || []} />
         </div>
         <div>
-          <div className="obs-subhead">excluded sample</div>
+          <div className="obs-subhead">{uiText("mẫu đã loại", "excluded sample")}</div>
           <JsonBlock value={audit.excluded_sample || []} />
         </div>
         <div>
@@ -359,7 +359,7 @@ function MemoryPackInspector({ detail }) {
 
 function RunEventSummary({ event }) {
   if (!event) {
-    return <div className="muted">No sidecar events for this run. Preflight-only and older runs may not emit events.</div>;
+    return <div className="muted">{uiText("Lần chạy này không có sự kiện sidecar. Lần chạy chỉ preflight hoặc phiên bản cũ có thể không phát sự kiện.", "No sidecar events for this run. Preflight-only and older runs may not emit events.")}</div>;
   }
   const usage = event.usage || {};
   const context = event.context_summary || {};
@@ -388,7 +388,7 @@ function RunEventSummary({ event }) {
       )}
       {Object.keys(translations).length > 0 && (
         <div className="run-event-preview">
-          <div className="obs-subhead">uncommitted preview</div>
+          <div className="obs-subhead">{uiText("bản xem trước chưa commit", "uncommitted preview")}</div>
           {Object.entries(translations).slice(0, 3).map(([blockId, row]) => (
             <div key={blockId} className="run-event-preview-row">
               <span className="mono">{blockId}</span>
@@ -420,13 +420,13 @@ function RunControlPanel({ runControl }) {
   return (
     <section className="obs-panel run-panel wb-pane">
       <div className="obs-panel-head wb-section-title">
-        <span><Ic.play size={13} />Run Control</span>
-        <em>{runControl.jobId || "no thesis job"}</em>
+        <span><Ic.play size={13} />{uiText("Điều khiển chạy", "Run Control")}</span>
+        <em>{runControl.jobId || uiText("không có thesis job", "no thesis job")}</em>
       </div>
 
       <div className="run-grid">
         <label>
-          <span>script</span>
+          <span>{uiText("kịch bản", "script")}</span>
           <select value={form.script || "run_translate"} onChange={e => runControl.onFormChange({ script: e.target.value })}>
             {["run_translate", "run_prepass", "snapshot_runs", "score_run", "score_consistency", "build_memory", "build_index", "run_judge"].map(script => (
               <option key={script} value={script}>{script}</option>
@@ -434,19 +434,19 @@ function RunControlPanel({ runControl }) {
           </select>
         </label>
         <label>
-          <span>chapters</span>
+          <span>{uiText("chương", "chapters")}</span>
           <input value={form.chapters || ""} onChange={e => runControl.onFormChange({ chapters: e.target.value })} placeholder="ch02 ch03" />
         </label>
         <label>
-          <span>configs</span>
+          <span>{uiText("cấu hình", "configs")}</span>
           <input value={form.configs || ""} onChange={e => runControl.onFormChange({ configs: e.target.value })} placeholder="S0 S1" />
         </label>
         <label>
-          <span>profile</span>
+          <span>{uiText("hồ sơ", "profile")}</span>
           <input value={form.profile || ""} onChange={e => runControl.onFormChange({ profile: e.target.value })} placeholder="literary_v1" />
         </label>
         <label>
-          <span>experiment</span>
+          <span>{uiText("thí nghiệm", "experiment")}</span>
           <input value={form.experiment || ""} onChange={e => runControl.onFormChange({ experiment: e.target.value })} placeholder="translate_run" />
         </label>
         <label>
@@ -458,16 +458,16 @@ function RunControlPanel({ runControl }) {
       <div className="run-actions">
         <label className="run-check">
           <input type="checkbox" checked={!!form.allow_api} onChange={e => runControl.onFormChange({ allow_api: e.target.checked })} />
-          <span>allow real API after preview token</span>
+          <span>{uiText("cho phép API thật sau token xem trước", "allow real API after preview token")}</span>
         </label>
         <button className="btn sm" disabled={runControl.busy || !runControl.jobId || form.script !== "run_translate"} onClick={runControl.onPreview}>
-          <Ic.eye size={13} />Render prompt preview
+          <Ic.eye size={13} />{uiText("Tạo bản xem trước prompt", "Render prompt preview")}
         </button>
         <button className="btn primary sm" disabled={runControl.busy || (!!form.allow_api && !preview?.confirm_token)} onClick={runControl.onCreateRun}>
-          <Ic.play size={13} />Launch
+          <Ic.play size={13} />{uiText("Khởi chạy", "Launch")}
         </button>
         <button className="btn sm" disabled={runControl.busy} onClick={runControl.onRefreshRuns}>
-          <Ic.refresh size={13} />Refresh
+          <Ic.refresh size={13} />{uiText("Làm mới", "Refresh")}
         </button>
       </div>
 
@@ -478,14 +478,14 @@ function RunControlPanel({ runControl }) {
       {preview && (
         <div className="run-preview">
           <div className="run-preview-head">
-            <span>Prompt preview token issued</span>
-            <em className="mono">{preview.confirm_token?.slice(0, 10)}... / {preview.planned_run_id || "no-run-id"} / {formatInt(rep?.prompt_tokens_est)} prompt tokens</em>
+            <span>{uiText("Đã cấp token xem trước prompt", "Prompt preview token issued")}</span>
+            <em className="mono">{preview.confirm_token?.slice(0, 10)}... / {preview.planned_run_id || "no-run-id"} / {formatInt(rep?.prompt_tokens_est)} token prompt</em>
           </div>
           <div className="obs-breakdown">
-            <div><span>windows</span><b>{formatInt(tokenEstimate.configs?.S1?.windows || tokenEstimate.configs?.S0?.windows)}</b></div>
-            <div><span>max prompt</span><b>{formatInt(tokenEstimate.configs?.S1?.prompt_tokens_max || tokenEstimate.configs?.S0?.prompt_tokens_max)}</b></div>
-            <div><span>upper total</span><b>{formatInt(tokenEstimate.upper_total_all_configs)}</b></div>
-            <div><span>daily cap</span><b>{formatInt(tokenEstimate.daily_token_cap)}</b></div>
+            <div><span>{uiText("cửa sổ", "windows")}</span><b>{formatInt(tokenEstimate.configs?.S1?.windows || tokenEstimate.configs?.S0?.windows)}</b></div>
+            <div><span>{uiText("prompt tối đa", "max prompt")}</span><b>{formatInt(tokenEstimate.configs?.S1?.prompt_tokens_max || tokenEstimate.configs?.S0?.prompt_tokens_max)}</b></div>
+            <div><span>{uiText("tổng trần", "upper total")}</span><b>{formatInt(tokenEstimate.upper_total_all_configs)}</b></div>
+            <div><span>{uiText("giới hạn ngày", "daily cap")}</span><b>{formatInt(tokenEstimate.daily_token_cap)}</b></div>
           </div>
           <div className="obs-debug-grid">
             <PromptMessage title="preview system" message={previewSystem} />
@@ -496,7 +496,7 @@ function RunControlPanel({ runControl }) {
 
       <div className="run-live-grid">
         <div className="run-list">
-          <div className="obs-subhead">run registry</div>
+          <div className="obs-subhead">{uiText("registry lần chạy", "run registry")}</div>
           {runs.length ? runs.slice(0, 12).map(run => (
             <button key={run.run_id} className={"run-row" + (run.run_id === runControl.selectedRunId ? " on" : "")} onClick={() => runControl.onSelectRun(run.run_id)}>
               <span className={"run-status run-status-" + String(run.status || "").toLowerCase()}>{run.status}</span>
@@ -504,12 +504,12 @@ function RunControlPanel({ runControl }) {
               <em className="mono">{run.run_id}</em>
             </button>
           )) : (
-            <div className="muted">No run registry rows yet.</div>
+            <div className="muted">{uiText("Chưa có hàng nào trong registry lần chạy.", "No run registry rows yet.")}</div>
           )}
         </div>
         <div className="run-log-box">
           <div className="obs-subhead">live log tail {selectedRun ? <span className="mono">· {selectedRun.run_id}</span> : null}</div>
-          <pre>{selectedLog.log || "Select or launch a run to tail stdout/stderr."}</pre>
+          <pre>{selectedLog.log || uiText("Chọn hoặc khởi chạy một lần chạy để theo dõi stdout/stderr.", "Select or launch a run to tail stdout/stderr.")}</pre>
         </div>
       </div>
       <div className="run-events-box">
@@ -527,7 +527,7 @@ function RunControlPanel({ runControl }) {
                 <em className="mono">{event.window_id || event.config || ""}</em>
               </div>
             )) : (
-              <div className="muted">No JSONL events tailed yet.</div>
+              <div className="muted">{uiText("Chưa theo dõi được sự kiện JSONL nào.", "No JSONL events tailed yet.")}</div>
             )}
           </div>
         </div>
@@ -544,35 +544,33 @@ function RuntimeEmptyState({ runControl, view }) {
   const blockCount = Number(stats.blocks || 0);
   const projectId = runControl?.sourceProjectId || "project";
   const title = runControl?.sourceTitle || projectId;
-  const destination = view === "report" ? "Report" : view === "observability" ? "Observability" : "Console";
+  const destination = view === "report" ? uiText("Báo cáo", "Report") : view === "observability" ? uiText("Quan sát", "Observability") : "Console";
   return (
-    <section className="runtime-empty" aria-label={`${destination} chưa có run`}>
+    <section className="runtime-empty" aria-label={uiText(`${destination} chưa có lần chạy`, `${destination} has no run`)}>
       <div className="runtime-empty-icon"><Ic.play size={18} /></div>
-      <div className="runtime-empty-kicker">{destination} · chưa có pipeline run</div>
+      <div className="runtime-empty-kicker">{destination} · {uiText("chưa có lần chạy pipeline", "no pipeline run yet")}</div>
       <h2>{title}</h2>
       <p>
-        Project nguồn đã được nhập và chuẩn hóa thành <b>{chapterCount} chương</b> · <b>{blockCount} block</b>,
-        nhưng chưa được gắn với một cấu hình chạy Builder/Translator.
+        {uiText("Dự án nguồn đã được nhập và chuẩn hóa thành", "The source project was imported and normalized into")} <b>{chapterCount} {uiText("chương", "chapters")}</b> · <b>{blockCount} block</b>,
+        {uiText(" nhưng chưa được gắn với một cấu hình chạy Builder/Translator.", " but has not been attached to a Builder/Translator run configuration.")}
       </p>
-      <div className="runtime-empty-flow" aria-label="Trạng thái chuẩn bị run">
-        <span className="done"><Ic.checkCircle size={13} /> Nguồn đã nhập</span>
-        <span className="done"><Ic.checkCircle size={13} /> Block đã trích</span>
-        <span><Ic.clock size={13} /> Chưa cấu hình pipeline</span>
+      <div className="runtime-empty-flow" aria-label={uiText("Trạng thái chuẩn bị lần chạy", "Run preparation status")}>
+        <span className="done"><Ic.checkCircle size={13} /> {uiText("Nguồn đã nhập", "Source imported")}</span>
+        <span className="done"><Ic.checkCircle size={13} /> {uiText("Block đã trích", "Blocks extracted")}</span>
+        <span><Ic.clock size={13} /> {uiText("Chưa cấu hình pipeline", "Pipeline not configured")}</span>
       </div>
       <p className="runtime-empty-note">
-        Khi một run được khởi tạo cho chính project này, Console sẽ hiện tiến trình và log;
-        Report sẽ tổng hợp kết quả đã persisted và bằng chứng theo contract. Project vẫn là nguồn chuẩn;
-        mỗi run chỉ dùng snapshot/index bất biến có hash, không tạo một project chỉnh sửa thứ hai.
+        {uiText("Khi một lần chạy được khởi tạo cho chính dự án này, Console sẽ hiện tiến trình và log; Báo cáo sẽ tổng hợp kết quả đã lưu và bằng chứng theo contract. Dự án vẫn là nguồn chuẩn; mỗi lần chạy chỉ dùng snapshot/index bất biến có hash, không tạo một dự án chỉnh sửa thứ hai.", "When a run is started for this project, Console will show progress and logs; Report will summarize persisted results and contract evidence. The project remains the source of truth; each run uses only an immutable hashed snapshot/index and does not create a second editable project.")}
       </p>
       <div className="runtime-empty-actions">
         {runControl?.onOpenProjectSource && (
           <button className="btn" type="button" onClick={runControl.onOpenProjectSource}>
-            <Ic.folder size={13} /> Mở Project / Source
+            <Ic.folder size={13} /> {uiText("Mở Dự án / Nguồn", "Open Project / Source")}
           </button>
         )}
         {runControl?.onConfigurePipeline && (
           <button className="btn primary" type="button" onClick={runControl.onConfigurePipeline}>
-            <Ic.play size={13} /> Cấu hình pipeline
+            <Ic.play size={13} /> {uiText("Cấu hình pipeline", "Configure pipeline")}
           </button>
         )}
       </div>
@@ -594,9 +592,9 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
         <div className="console-route-empty-head">
           <button className="btn console-back" type="button" onClick={onBack}>&larr; Workspace</button>
           <span className="brand">⬢ AGENT CONSOLE</span>
-          <nav className="run-surface-tabs" aria-label="Run views">
+          <nav className="run-surface-tabs" aria-label={uiText("Các chế độ lần chạy", "Run views")}>
             <span className="run-surface-tab active" aria-current="page">Console</span>
-            {onOpenReport && <button className="run-surface-tab" type="button" onClick={onOpenReport}>Report</button>}
+            {onOpenReport && <button className="run-surface-tab" type="button" onClick={onOpenReport}>{uiText("Báo cáo", "Report")}</button>}
           </nav>
           <span className="mono">{runControl.sourceProjectId || "no project"}</span>
         </div>
@@ -612,7 +610,7 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
     return (
       <div className="agentconsole">
         <div className="console-shell">
-          <div className="artifact-path">Agent Console loading...</div>
+          <div className="artifact-path">{uiText("Đang tải Agent Console...", "Agent Console loading...")}</div>
         </div>
       </div>
     );
@@ -645,7 +643,7 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
       />
       {rawLog && (
         <details className="runtime-raw-log" open={!(sel.events || []).length}>
-          <summary>Raw preflight / process log</summary>
+          <summary>{uiText("Log preflight / tiến trình thô", "Raw preflight / process log")}</summary>
           <pre>{rawLog.slice(-24000)}</pre>
         </details>
       )}
@@ -670,7 +668,7 @@ function AgentReport({ runControl, onBack, onOpenConsole }) {
   if (!ReportView) {
     return (
       <div className="agentreport report-theme-light">
-        <div className="report-loading">Run Report loading...</div>
+        <div className="report-loading">{uiText("Đang tải Báo cáo lần chạy...", "Run Report loading...")}</div>
       </div>
     );
   }
@@ -731,7 +729,7 @@ function LegacyObservabilityView({ observability, runControl, selectedCallId, se
       <div className="obs-head wb-toolbar">
         <div>
           <div className="obs-kicker">ObservabilityReadModel</div>
-          <h2>Prompt / Context / Cache Observability</h2>
+          <h2>{uiText("Quan sát Prompt / Ngữ cảnh / Cache", "Prompt / Context / Cache Observability")}</h2>
         </div>
         <div className="obs-source mono">{observability?.meta?.job_id || "no job"}</div>
       </div>
@@ -746,17 +744,17 @@ function LegacyObservabilityView({ observability, runControl, selectedCallId, se
       )}
 
       <div className="obs-metrics">
-        <div><span>calls</span><b>{formatInt(totals.calls)}</b></div>
-        <div><span>quota tokens</span><b>{formatInt(totals.total_quota_tokens)}</b></div>
-        <div><span>cached input</span><b>{formatInt(totals.cached_tokens)}</b></div>
-        <div><span>cost rows</span><b>{formatCost(totals.cost_usd)}</b></div>
+        <div><span>{uiText("lượt gọi", "calls")}</span><b>{formatInt(totals.calls)}</b></div>
+        <div><span>{uiText("token quota", "quota tokens")}</span><b>{formatInt(totals.total_quota_tokens)}</b></div>
+        <div><span>{uiText("đầu vào cache", "cached input")}</span><b>{formatInt(totals.cached_tokens)}</b></div>
+        <div><span>{uiText("hàng chi phí", "cost rows")}</span><b>{formatCost(totals.cost_usd)}</b></div>
       </div>
 
       <div className="obs-grid wb-split">
         <section className="obs-panel obs-call-list wb-pane">
           <div className="obs-panel-head wb-section-title">
-            <span><Ic.list size={13} />API calls</span>
-            <em>{formatInt(calls.length)} cached result rows</em>
+            <span><Ic.list size={13} />{uiText("Lượt gọi API", "API calls")}</span>
+            <em>{formatInt(calls.length)} {uiText("hàng kết quả cache", "cached result rows")}</em>
           </div>
           <div className="obs-table">
             {calls.map(call => (
@@ -779,8 +777,8 @@ function LegacyObservabilityView({ observability, runControl, selectedCallId, se
 
         <section className="obs-panel obs-detail wb-pane wb-detail">
           <div className="obs-panel-head wb-section-title">
-            <span><Ic.eye size={13} />Prompt / Context Inspector</span>
-            {callDetailLoading ? <em>loading...</em> : <em className="mono">{detail?.call_id || "no call"}</em>}
+            <span><Ic.eye size={13} />{uiText("Trình kiểm tra Prompt / Ngữ cảnh", "Prompt / Context Inspector")}</span>
+            {callDetailLoading ? <em>{uiText("đang tải...", "loading...")}</em> : <em className="mono">{detail?.call_id || uiText("không có lượt gọi", "no call")}</em>}
           </div>
 
           {detail ? (
@@ -809,7 +807,7 @@ function LegacyObservabilityView({ observability, runControl, selectedCallId, se
               <MemoryPackInspector detail={detail} />
 
               <div className="obs-card wb-section">
-                <div className="obs-card-title"><Ic.clock size={13} />Cache / cost semantics</div>
+                <div className="obs-card-title"><Ic.clock size={13} />{uiText("Ngữ nghĩa cache / chi phí", "Cache / cost semantics")}</div>
                 <div className="obs-kv-grid">
                   <span><b>local replay row</b><em>{detail.cache?.local_replay?.stored_result ? "stored" : "n/a"}</em></span>
                   <span><b>replay hit events</b><em>{detail.cache?.local_replay?.hit_events_logged ? "logged" : "not logged"}</em></span>
@@ -819,7 +817,7 @@ function LegacyObservabilityView({ observability, runControl, selectedCallId, se
               </div>
             </>
           ) : (
-            <Empty icon={Ic.eye} text="No observability rows for this job." sub="The pipeline DB is readable, but no cache rows matched this job." />
+            <Empty icon={Ic.eye} text={uiText("Job này không có hàng quan sát nào.", "No observability rows for this job.")} sub={uiText("Có thể đọc pipeline DB nhưng không có hàng cache nào khớp job này.", "The pipeline DB is readable, but no cache rows matched this job.")} />
           )}
         </section>
       </div>
@@ -855,10 +853,10 @@ function statusLabel(span, item) {
 
 function statusDisplayLabel(span, item) {
   const status = statusLabel(span, item);
-  if (status === "localization_mismatch") return "Lệch bản dịch chuẩn";
-  if (status === "localization_source_warning") return "Có bản VI lệch chuẩn";
-  if (status === "localized") return span?.target ? "Khớp bản dịch chuẩn" : "Đã định vị";
-  if (status === "localized_only") return "Đã định vị";
+  if (status === "localization_mismatch") return uiText("Lệch bản dịch chuẩn", "Canonical translation mismatch");
+  if (status === "localization_source_warning") return uiText("Có bản VI lệch chuẩn", "Has a mismatched VI version");
+  if (status === "localized") return span?.target ? uiText("Khớp bản dịch chuẩn", "Matches canonical translation") : uiText("Đã định vị", "Located");
+  if (status === "localized_only") return uiText("Đã định vị", "Located");
   return status;
 }
 
@@ -919,51 +917,51 @@ function HighlightHoverCard({ hover, linkIndex }) {
     return (
       <div className={"hl-card" + (pos.above ? " above" : "")} style={{ top: pos.top, left: pos.left }}>
         <div className="hl-card-head">
-          <span className="hl-card-kind entity"><Ic.users size={12} />{runtime ? "Runtime entity" : "Entity"}</span>
+          <span className="hl-card-kind entity"><Ic.users size={12} />{runtime ? uiText("Thực thể runtime", "Runtime entity") : uiText("Thực thể", "Entity")}</span>
           <span className={"hl-card-status status-" + statusLabel(span, entity)}>{statusDisplayLabel(span, entity)}</span>
         </div>
         <div className="hl-card-title">
           <span>{entity.canonical_source || span.id}</span>
           <span className="hl-card-arrow">-</span>
-          <span>{entity.canonical_target || "target needed"}</span>
+          <span>{entity.canonical_target || uiText("cần bản đích", "target needed")}</span>
         </div>
         <div className="hl-card-grid">
-          <span>type</span><b>{compactList(entity.entity_type || entity.type)}</b>
+          <span>{uiText("loại", "type")}</span><b>{compactList(entity.entity_type || entity.type)}</b>
           {isLocalizationSpan(span) ? (
             <>
-              <span>nguồn</span><b>Localization</b>
-              {span.located_by && <><span>định vị bởi</span><b>{locatedByLabel(span)}</b></>}
-              <span>bề mặt</span><b>{compactList(span.surface || span.matched_form)}</b>
+              <span>{uiText("nguồn", "source")}</span><b>Localization</b>
+              {span.located_by && <><span>{uiText("định vị bởi", "located by")}</span><b>{locatedByLabel(span)}</b></>}
+              <span>{uiText("bề mặt", "surface")}</span><b>{compactList(span.surface || span.matched_form)}</b>
             </>
           ) : runtime ? (
             <>
               <span>forms_used</span><b>{runtimeFormsLabel(span, entity)}</b>
-              {span.located_by && <><span>located by</span><b>{locatedByLabel(span)}</b></>}
-              {markFlagLabel(span) && <><span>flags</span><b>{markFlagLabel(span)}</b></>}
-              <span>provenance</span><b>{entity.provenance?.label || span.provenance || "agent-built"}</b>
-              <span>surface</span><b>{compactList(span.surface || span.matched_form)}</b>
+              {span.located_by && <><span>{uiText("định vị bởi", "located by")}</span><b>{locatedByLabel(span)}</b></>}
+              {markFlagLabel(span) && <><span>{uiText("cờ", "flags")}</span><b>{markFlagLabel(span)}</b></>}
+              <span>{uiText("nguồn gốc", "provenance")}</span><b>{entity.provenance?.label || span.provenance || "agent-built"}</b>
+              <span>{uiText("bề mặt", "surface")}</span><b>{compactList(span.surface || span.matched_form)}</b>
             </>
           ) : (
             <>
-              <span>gender</span><b>{compactList(entity.gender)}</b>
-              <span>aliases</span><b>{compactList(entity.aliases_target)}</b>
-              <span>pronoun</span><b>{compactList(entity.pronoun_policy)}</b>
-              <span>annotator</span><b>{compactList(entity.annotated_by)}</b>
+              <span>{uiText("giới", "gender")}</span><b>{compactList(entity.gender)}</b>
+              <span>{uiText("bí danh", "aliases")}</span><b>{compactList(entity.aliases_target)}</b>
+              <span>{uiText("đại từ", "pronoun")}</span><b>{compactList(entity.pronoun_policy)}</b>
+              <span>{uiText("người chú giải", "annotator")}</span><b>{compactList(entity.annotated_by)}</b>
             </>
           )}
         </div>
-        {span.stale && <div className="hl-card-warning"><Ic.alert size={12} />This span needs re-tag.</div>}
+        {span.stale && <div className="hl-card-warning"><Ic.alert size={12} />{uiText("Span này cần gắn thẻ lại.", "This span needs re-tag.")}</div>}
         <div className="hl-card-section">
-          <div className="hl-card-section-title">Links</div>
+          <div className="hl-card-section-title">{uiText("Liên kết", "Links")}</div>
           <div className="hl-card-links">
-            <span>{currentMentions.length} mention{currentMentions.length === 1 ? "" : "s"} in this block</span>
-            <span>{data.mentions.length} total mention{data.mentions.length === 1 ? "" : "s"}</span>
-            <span>{data.blockIds.length} block{data.blockIds.length === 1 ? "" : "s"}</span>
-            <span>{data.chapters.length} chapter{data.chapters.length === 1 ? "" : "s"}</span>
-            <span>{data.speakerBlocks.length} speaker block{data.speakerBlocks.length === 1 ? "" : "s"}</span>
-            <span>{data.addresseeBlocks.length} addressee block{data.addresseeBlocks.length === 1 ? "" : "s"}</span>
+            <span>{uiText(`${currentMentions.length} lần nhắc trong block này`, `${currentMentions.length} mention${currentMentions.length === 1 ? "" : "s"} in this block`)}</span>
+            <span>{uiText(`${data.mentions.length} tổng lần nhắc`, `${data.mentions.length} total mention${data.mentions.length === 1 ? "" : "s"}`)}</span>
+            <span>{data.blockIds.length} block</span>
+            <span>{data.chapters.length} {uiText("chương", `chapter${data.chapters.length === 1 ? "" : "s"}`)}</span>
+            <span>{data.speakerBlocks.length} {uiText("block người nói", `speaker block${data.speakerBlocks.length === 1 ? "" : "s"}`)}</span>
+            <span>{data.addresseeBlocks.length} {uiText("block người nghe", `addressee block${data.addresseeBlocks.length === 1 ? "" : "s"}`)}</span>
           </div>
-          {chapterLabels.length > 0 && <div className="hl-card-small"><b>chapters</b> {limitItems(chapterLabels)}</div>}
+          {chapterLabels.length > 0 && <div className="hl-card-small"><b>{uiText("chương", "chapters")}</b> {limitItems(chapterLabels)}</div>}
           {summaryLabels.length > 0 && <div className="hl-card-small"><b>characters_present</b> {limitItems(summaryLabels)}</div>}
         </div>
       </div>
@@ -997,59 +995,59 @@ function HighlightHoverCard({ hover, linkIndex }) {
     return (
       <div className={"hl-card" + (pos.above ? " above" : "")} style={{ top: pos.top, left: pos.left }}>
         <div className="hl-card-head">
-          <span className="hl-card-kind glossary"><Ic.tag size={12} />{localization ? "Localization term" : registryOnly ? "Registry term" : runtime ? "Runtime term" : "Glossary"}</span>
+          <span className="hl-card-kind glossary"><Ic.tag size={12} />{localization ? uiText("Thuật ngữ bản địa hóa", "Localization term") : registryOnly ? uiText("Thuật ngữ registry", "Registry term") : runtime ? uiText("Thuật ngữ runtime", "Runtime term") : uiText("Thuật ngữ", "Glossary")}</span>
           <span className={"hl-card-status status-" + statusLabel(span, term)}>{statusDisplayLabel(span, term)}</span>
         </div>
         <div className="hl-card-title">
           <span>{term.source_term || span.id}</span>
           <span className="hl-card-arrow">-</span>
-          <span>{term.expected_target || "target needed"}</span>
+          <span>{term.expected_target || uiText("cần bản đích", "target needed")}</span>
         </div>
         <div className="hl-card-grid">
           {isLocalizationSpan(span) ? (
             <>
-              <span>nguồn</span><b>Localization</b>
-              {span.located_by && <><span>định vị bởi</span><b>{locatedByLabel(span)}</b></>}
-              <span>bề mặt</span><b>{compactList(span.surface || span.matched_form)}</b>
-              {span.accepted_forms?.length > 0 && <><span>bản dịch chuẩn</span><b>{compactList(span.accepted_forms)}</b></>}
-              {span.mismatch_configs?.length > 0 && <><span>bản lệch</span><b>{compactList(span.mismatch_configs)}</b></>}
-              {markFlagLabel(span) && <><span>cờ kiểm tra</span><b>{markFlagLabel(span)}</b></>}
+              <span>{uiText("nguồn", "source")}</span><b>Localization</b>
+              {span.located_by && <><span>{uiText("định vị bởi", "located by")}</span><b>{locatedByLabel(span)}</b></>}
+              <span>{uiText("bề mặt", "surface")}</span><b>{compactList(span.surface || span.matched_form)}</b>
+              {span.accepted_forms?.length > 0 && <><span>{uiText("bản dịch chuẩn", "canonical translation")}</span><b>{compactList(span.accepted_forms)}</b></>}
+              {span.mismatch_configs?.length > 0 && <><span>{uiText("bản lệch", "mismatched versions")}</span><b>{compactList(span.mismatch_configs)}</b></>}
+              {markFlagLabel(span) && <><span>{uiText("cờ kiểm tra", "review flags")}</span><b>{markFlagLabel(span)}</b></>}
             </>
           ) : runtime ? (
             <>
               <span>forms_used</span><b>{runtimeFormsLabel(span, term)}</b>
-              {span.located_by && <><span>located by</span><b>{locatedByLabel(span)}</b></>}
-              {markFlagLabel(span) && <><span>flags</span><b>{markFlagLabel(span)}</b></>}
+              {span.located_by && <><span>{uiText("định vị bởi", "located by")}</span><b>{locatedByLabel(span)}</b></>}
+              {markFlagLabel(span) && <><span>{uiText("cờ", "flags")}</span><b>{markFlagLabel(span)}</b></>}
               <span>tier</span><b>{compactList(span.constraint_strength || term.constraint_strength)}</b>
-              <span>scope</span><b>{compactList(term.chapter_scope)}</b>
-              <span>provenance</span><b>{term.provenance?.label || span.provenance || "agent-built"}</b>
-              <span>surface</span><b>{compactList(span.surface || span.matched_form)}</b>
+              <span>{uiText("phạm vi", "scope")}</span><b>{compactList(term.chapter_scope)}</b>
+              <span>{uiText("nguồn gốc", "provenance")}</span><b>{term.provenance?.label || span.provenance || "agent-built"}</b>
+              <span>{uiText("bề mặt", "surface")}</span><b>{compactList(span.surface || span.matched_form)}</b>
               {span.target && (
                 <>
-                  <span>match</span><b>detected target surface in this block; surface match, not alignment</b>
+                  <span>{uiText("khớp", "match")}</span><b>{uiText("đã phát hiện bề mặt đích trong block này; đây là khớp bề mặt, không phải alignment", "detected target surface in this block; surface match, not alignment")}</b>
                 </>
               )}
             </>
           ) : (
             <>
-              <span>allowed</span><b>{compactList(term.allowed_variants)}</b>
-              <span>forbidden</span><b>{compactList(term.forbidden_variants)}</b>
-              <span>domain</span><b>{compactList(term.domain)}</b>
-              <span>scope</span><b>{compactList(term.chapter_scope)}</b>
-              <span>annotator</span><b>{compactList(term.annotated_by)}</b>
-              <span>confidence</span><b>{confidenceText(term.confidence)}</b>
+              <span>{uiText("được phép", "allowed")}</span><b>{compactList(term.allowed_variants)}</b>
+              <span>{uiText("bị cấm", "forbidden")}</span><b>{compactList(term.forbidden_variants)}</b>
+              <span>{uiText("lĩnh vực", "domain")}</span><b>{compactList(term.domain)}</b>
+              <span>{uiText("phạm vi", "scope")}</span><b>{compactList(term.chapter_scope)}</b>
+              <span>{uiText("người chú giải", "annotator")}</span><b>{compactList(term.annotated_by)}</b>
+              <span>{uiText("độ tin cậy", "confidence")}</span><b>{confidenceText(term.confidence)}</b>
             </>
           )}
         </div>
-        {span.stale && <div className="hl-card-warning"><Ic.alert size={12} />This span needs re-tag.</div>}
-        {registryOnly && <div className="hl-card-warning"><Ic.alert size={12} />Read-only registry record; not included in this run context.</div>}
+        {span.stale && <div className="hl-card-warning"><Ic.alert size={12} />{uiText("Span này cần gắn thẻ lại.", "This span needs re-tag.")}</div>}
+        {registryOnly && <div className="hl-card-warning"><Ic.alert size={12} />{uiText("Bản ghi registry chỉ đọc; không nằm trong ngữ cảnh lần chạy này.", "Read-only registry record; not included in this run context.")}</div>}
         <div className="hl-card-section">
-          <div className="hl-card-section-title">Links</div>
+          <div className="hl-card-section-title">{uiText("Liên kết", "Links")}</div>
           <div className="hl-card-links">
-            <span>{currentOccurrences.length} occurrence{currentOccurrences.length === 1 ? "" : "s"} in this block</span>
-            <span>{totalOccurrences} stored occurrence{totalOccurrences === 1 ? "" : "s"}</span>
-            <span>{blockIds.length} block{blockIds.length === 1 ? "" : "s"} in loaded scope</span>
-            <span>{chapters.length} chapter{chapters.length === 1 ? "" : "s"} in loaded scope</span>
+            <span>{uiText(`${currentOccurrences.length} lần xuất hiện trong block này`, `${currentOccurrences.length} occurrence${currentOccurrences.length === 1 ? "" : "s"} in this block`)}</span>
+            <span>{uiText(`${totalOccurrences} lần xuất hiện đã lưu`, `${totalOccurrences} stored occurrence${totalOccurrences === 1 ? "" : "s"}`)}</span>
+            <span>{uiText(`${blockIds.length} block trong phạm vi đã tải`, `${blockIds.length} block${blockIds.length === 1 ? "" : "s"} in loaded scope`)}</span>
+            <span>{uiText(`${chapters.length} chương trong phạm vi đã tải`, `${chapters.length} chapter${chapters.length === 1 ? "" : "s"} in loaded scope`)}</span>
           </div>
           {chapterLabels.length > 0 && <div className="hl-card-small"><b>chapters</b> {limitItems(chapterLabels)}</div>}
         </div>
@@ -1146,33 +1144,33 @@ function ChapterBlockRow({
         <div className="cbr-meta">
           <span className="mono cbr-id">{block.block_id}</span>
           <span className={"tag tag-" + block.block_type}>{block.block_type}</span>
-          {reviewed && <span className="mini-badge good"><Ic.check size={10} />reviewed</span>}
+          {reviewed && <span className="mini-badge good"><Ic.check size={10} />{uiText("đã duyệt", "reviewed")}</span>}
           {flags.map(f => <span key={f} className="mini-badge bad"><Ic.flag size={10} />{f}</span>)}
           {staleCount > 0 && (
-            <span className="stale-warn tip" data-tip="A glossary/entity span no longer matches this block text. Re-tag this row.">
-              <Ic.alert size={11} />{staleCount} span{staleCount > 1 ? "s" : ""} need re-tag
+            <span className="stale-warn tip" data-tip={uiText("Một span thuật ngữ/thực thể không còn khớp nội dung block. Hãy gắn thẻ lại hàng này.", "A glossary/entity span no longer matches this block text. Re-tag this row.")}>
+              <Ic.alert size={11} />{uiText(`${staleCount} span cần gắn lại`, `${staleCount} span${staleCount > 1 ? "s" : ""} need re-tag`)}
             </span>
           )}
         </div>
         <div className="cbr-actions">
           <button className="btn sm ghost" onClick={e => { e.stopPropagation(); setSourceOpen(v => !v); }}>
-            <Ic.eye size={12} />{sourceOpen ? "Hide source" : "Source"}
+            <Ic.eye size={12} />{sourceOpen ? uiText("Ẩn nguồn", "Hide source") : uiText("Nguồn", "Source")}
           </button>
           {!readOnly && !editing ? (
             <button className="btn sm" onClick={e => { e.stopPropagation(); clearSelection(); setEditing(true); }}>
-              <Ic.pencil size={11} />Edit
+              <Ic.pencil size={11} />{uiText("Sửa", "Edit")}
             </button>
           ) : !readOnly && (
             <>
-              <button className="btn sm" onClick={e => { e.stopPropagation(); setDraft(block.clean_text || ""); setEditing(false); }}>Cancel</button>
+              <button className="btn sm" onClick={e => { e.stopPropagation(); setDraft(block.clean_text || ""); setEditing(false); }}>{uiText("Hủy", "Cancel")}</button>
               <button className="btn sm primary" onClick={e => { e.stopPropagation(); setEditing(false); onCommitClean(block.block_id, draft); }}>
-                <Ic.check size={11} />Save
+                <Ic.check size={11} />{uiText("Lưu", "Save")}
               </button>
             </>
           )}
           {!readOnly && <button className={"btn sm reviewed-btn" + (reviewed ? " is-on" : "")}
             onClick={e => { e.stopPropagation(); onMarkReviewed(block.block_id); }}>
-            <Ic.checkCircle size={13} />{reviewed ? "Reviewed" : "Review"}
+            <Ic.checkCircle size={13} />{reviewed ? uiText("Đã duyệt", "Reviewed") : uiText("Duyệt", "Review")}
           </button>}
         </div>
       </div>
@@ -1180,8 +1178,8 @@ function ChapterBlockRow({
       {sourceOpen && (
         <div className="chapter-source">
           <div className="field-head compact">
-            <span className="fh-title"><Ic.lock size={11} />Source (EN)</span>
-            <span className="fh-meta">read-only · source_text</span>
+            <span className="fh-title"><Ic.lock size={11} />{uiText("Nguồn (EN)", "Source (EN)")}</span>
+            <span className="fh-meta">{uiText("chỉ đọc", "read-only")} · source_text</span>
           </div>
           <div className="src-text compact">{block.source_text || ""}</div>
         </div>
@@ -1264,26 +1262,26 @@ function SingleBlockView({
         <div className="ed-inner">
           <div className="field-block">
             <div className="field-head">
-              <span className="fh-title"><Ic.lock size={11} />Source (EN)</span>
-              <span className="fh-meta">read-only · source_text · extracted</span>
+              <span className="fh-title"><Ic.lock size={11} />{uiText("Nguồn (EN)", "Source (EN)")}</span>
+              <span className="fh-meta">{uiText("chỉ đọc", "read-only")} · source_text · {uiText("đã trích", "extracted")}</span>
             </div>
             <div className="src-text">{block.source_text || ""}</div>
           </div>
 
           <div className="field-block">
             <div className="field-head">
-              <span className="fh-title editable-title"><Ic.pencil size={11} />Clean text</span>
+              <span className="fh-title editable-title"><Ic.pencil size={11} />{uiText("Văn bản sạch", "Clean text")}</span>
               <span className="fh-actions">
                 {staleCount > 0 && !editing && (
-                  <span className="stale-warn tip" data-tip="A glossary/entity span no longer matches the edited text. Re-tag from the right panel.">
-                    <Ic.alert size={11} />{staleCount} span{staleCount > 1 ? "s" : ""} need re-tag
+                  <span className="stale-warn tip" data-tip={uiText("Một span thuật ngữ/thực thể không còn khớp văn bản đã sửa. Hãy gắn thẻ lại từ panel bên phải.", "A glossary/entity span no longer matches the edited text. Re-tag from the right panel.")}>
+                    <Ic.alert size={11} />{uiText(`${staleCount} span cần gắn lại`, `${staleCount} span${staleCount > 1 ? "s" : ""} need re-tag`)}
                   </span>
                 )}
                 {!readOnly && !editing
-                  ? <button className="btn sm" onClick={() => { setSel(null); onEdit(); }}><Ic.pencil size={11} />Edit</button>
+                  ? <button className="btn sm" onClick={() => { setSel(null); onEdit(); }}><Ic.pencil size={11} />{uiText("Sửa", "Edit")}</button>
                   : !readOnly && <>
-                      <button className="btn sm" onClick={() => { setDraft(block.clean_text || ""); onCancelEdit(); }}>Cancel</button>
-                      <button className="btn sm primary" onClick={() => onCommitClean(block.block_id, draft)}><Ic.check size={11} />Save text</button>
+                      <button className="btn sm" onClick={() => { setDraft(block.clean_text || ""); onCancelEdit(); }}>{uiText("Hủy", "Cancel")}</button>
+                      <button className="btn sm primary" onClick={() => onCommitClean(block.block_id, draft)}><Ic.check size={11} />{uiText("Lưu văn bản", "Save text")}</button>
                     </>}
               </span>
             </div>
@@ -1319,8 +1317,8 @@ function SingleBlockView({
 
             {!editing && !readOnly && (
               <div className="clean-hint">
-                <Ic.tag size={11} />Select text to add a glossary occurrence or entity mention.
-                <span className="hint-keys"><span className="kbd">⌘</span><span className="kbd">↵</span> mark reviewed</span>
+                <Ic.tag size={11} />{uiText("Chọn văn bản để thêm lần xuất hiện thuật ngữ hoặc lần nhắc thực thể.", "Select text to add a glossary occurrence or entity mention.")}
+                <span className="hint-keys"><span className="kbd">⌘</span><span className="kbd">↵</span> {uiText("đánh dấu đã duyệt", "mark reviewed")}</span>
               </div>
             )}
           </div>
@@ -1369,7 +1367,7 @@ function ChapterStream({
                 <div className="chapter-divider" data-chapter-id={row.chapter_id}>
                   <span className="chapter-divider-rule" />
                   <span className="chapter-divider-title">{title}</span>
-                  <span className="chapter-divider-meta mono">{row.chapter_id} · {count} blocks</span>
+                  <span className="chapter-divider-meta mono">{row.chapter_id} · {count} block</span>
                 </div>
               )}
               <ChapterBlockRow
@@ -1408,19 +1406,19 @@ function FocusTermChip({ term, index = 0, onJump, onClear }) {
         {term.target && <><span className="focus-chip-arrow">→</span><span>{term.target}</span></>}
       </span>
       <span className="focus-chip-count">{count ? `${Math.min(index + 1, count)}/${count}` : "0/0"}</span>
-      <button className="btn icon-only sm" onClick={() => onJump && onJump(-1)} disabled={!count} aria-label="Previous occurrence">‹</button>
-      <button className="btn icon-only sm" onClick={() => onJump && onJump(1)} disabled={!count} aria-label="Next occurrence"><Ic.chevRight size={12} /></button>
-      <button className="btn icon-only sm" onClick={onClear} aria-label="Clear focus"><Ic.x size={12} /></button>
+      <button className="btn icon-only sm" onClick={() => onJump && onJump(-1)} disabled={!count} aria-label={uiText("Lần xuất hiện trước", "Previous occurrence")}>‹</button>
+      <button className="btn icon-only sm" onClick={() => onJump && onJump(1)} disabled={!count} aria-label={uiText("Lần xuất hiện tiếp theo", "Next occurrence")}><Ic.chevRight size={12} /></button>
+      <button className="btn icon-only sm" onClick={onClear} aria-label={uiText("Bỏ tập trung", "Clear focus")}><Ic.x size={12} /></button>
     </div>
   );
 }
 
 function OverlayLegend() {
   return (
-    <div className="overlay-legend" aria-label="Runtime mark legend">
-      <span><i className="legend-swatch localized" />Xanh: EN đã định vị / VI khớp chuẩn</span>
-      <span><i className="legend-swatch localization-source-warning" />Vàng: EN có ít nhất một bản VI lệch</span>
-      <span><i className="legend-swatch localization-mismatch" />Đỏ: VI lệch bản dịch chuẩn</span>
+    <div className="overlay-legend" aria-label={uiText("Chú giải đánh dấu runtime", "Runtime mark legend")}>
+      <span><i className="legend-swatch localized" />{uiText("Xanh: EN đã định vị / VI khớp chuẩn", "Green: EN located / VI matches canonical")}</span>
+      <span><i className="legend-swatch localization-source-warning" />{uiText("Vàng: EN có ít nhất một bản VI lệch", "Yellow: EN has at least one mismatched VI version")}</span>
+      <span><i className="legend-swatch localization-mismatch" />{uiText("Đỏ: VI lệch bản dịch chuẩn", "Red: VI differs from canonical translation")}</span>
     </div>
   );
 }
@@ -1819,12 +1817,12 @@ function TranslationPreviewView({
       setImportWarnings(warnings);
       await refreshRuns(data.run?.run_id);
       setLoadedRun(data.run || null);
-      setLoopNotice(`Preview run imported: ${data.run?.run_id || "new run"}.`);
+      setLoopNotice(uiText(`Đã nhập lần chạy xem trước: ${data.run?.run_id || "lần chạy mới"}.`, `Preview run imported: ${data.run?.run_id || "new run"}.`));
     } catch (err) {
       if (err instanceof SyntaxError) {
-        setError("Preview JSON is invalid.");
+        setError(uiText("JSON xem trước không hợp lệ.", "Preview JSON is invalid."));
       } else {
-        setError(err?.message || "Cannot import translation preview run.");
+        setError(err?.message || uiText("Không thể nhập lần chạy xem trước bản dịch.", "Cannot import translation preview run."));
       }
     } finally {
       setImporting(false);
@@ -1843,9 +1841,9 @@ function TranslationPreviewView({
       setImportWarnings(warnings);
       await refreshRuns(data.run?.run_id);
       setLoadedRun(data.run || null);
-      setLoopNotice(`Agent preview imported: ${data.run?.run_id || "new run"}.`);
+      setLoopNotice(uiText(`Đã nhập bản xem trước của agent: ${data.run?.run_id || "lần chạy mới"}.`, `Agent preview imported: ${data.run?.run_id || "new run"}.`));
     } catch (err) {
-      setError(err?.message || "Cannot load agent preview output.");
+      setError(err?.message || uiText("Không thể tải đầu ra xem trước của agent.", "Cannot load agent preview output."));
     } finally {
       setImporting(false);
     }
@@ -1868,10 +1866,10 @@ function TranslationPreviewView({
         );
       } else {
         setError("");
-        setLoopNotice(`Loaded preview JSON file: ${file.name}.`);
+        setLoopNotice(uiText(`Đã tải file JSON xem trước: ${file.name}.`, `Loaded preview JSON file: ${file.name}.`));
       }
     } catch (err) {
-      setError(err?.message || "Cannot read preview JSON file.");
+      setError(err?.message || uiText("Không thể đọc file JSON xem trước.", "Cannot read preview JSON file."));
     } finally {
       event.target.value = "";
     }
@@ -1882,7 +1880,7 @@ function TranslationPreviewView({
       <div className="translation-preview">
         <div className="tp-controls">
           <label className="tp-control">
-            <span>Chapter</span>
+            <span>{uiText("Chương", "Chapter")}</span>
             <select value={selectedChapterId} onChange={e => changeChapter(e.target.value)}>
               {chapters.map(ch => (
                 <option key={ch.chapter_id} value={ch.chapter_id}>
@@ -1892,9 +1890,9 @@ function TranslationPreviewView({
             </select>
           </label>
           <label className="tp-control wide">
-            <span>Preview run</span>
+            <span>{uiText("Lần chạy xem trước", "Preview run")}</span>
             <select value={selectedRunId} onChange={e => setSelectedRunId(e.target.value)} disabled={!chapterRuns.length || loadingRuns}>
-              {!chapterRuns.length && <option value="">No preview run for this chapter</option>}
+              {!chapterRuns.length && <option value="">{uiText("Chương này chưa có lần chạy xem trước", "No preview run for this chapter")}</option>}
               {chapterRuns.map(run => <option key={run.run_id} value={run.run_id}>{previewRunLabel(run)}</option>)}
             </select>
           </label>
@@ -1906,24 +1904,24 @@ function TranslationPreviewView({
         <div className="tp-loop-panel">
           <div className="tp-loop-head">
             <div>
-              <b>Preview loop</b>
-              <span>Build an input bundle, run the skill outside the app, then import the preview JSON here.</span>
+              <b>{uiText("Vòng lặp xem trước", "Preview loop")}</b>
+              <span>{uiText("Tạo gói đầu vào, chạy skill bên ngoài ứng dụng, rồi nhập JSON xem trước tại đây.", "Build an input bundle, run the skill outside the app, then import the preview JSON here.")}</span>
             </div>
             <div className="tp-loop-actions">
               <button className="btn" onClick={buildInputBundle} disabled={!selectedChapterId || inputLoading}>
-                <Ic.layers size={13} /> {inputLoading ? "Building..." : "Build input"}
+                <Ic.layers size={13} /> {inputLoading ? uiText("Đang tạo...", "Building...") : uiText("Tạo đầu vào", "Build input")}
               </button>
               <button className="btn" onClick={copyPrompt} disabled={!inputBundle}>
-                <Ic.sparkle size={13} /> Copy prompt
+                <Ic.sparkle size={13} /> {uiText("Sao chép prompt", "Copy prompt")}
               </button>
               <button className="btn" onClick={copyInputPath} disabled={!inputPaths.input || !inputBundle}>
-                <Ic.folder size={13} /> Copy path
+                <Ic.folder size={13} /> {uiText("Sao chép đường dẫn", "Copy path")}
               </button>
               <button className="btn" onClick={copyInputJson} disabled={!inputText}>
-                <Ic.doc size={13} /> Copy JSON
+                <Ic.doc size={13} /> {uiText("Sao chép JSON", "Copy JSON")}
               </button>
               <button className="btn" onClick={downloadInputJson} disabled={!inputBundle}>
-                <Ic.upload size={13} /> Download JSON
+                <Ic.upload size={13} /> {uiText("Tải JSON", "Download JSON")}
               </button>
             </div>
           </div>
@@ -1932,7 +1930,7 @@ function TranslationPreviewView({
               className="tp-json-textarea"
               value={inputText}
               readOnly
-              aria-label="Translation preview input JSON"
+              aria-label={uiText("JSON đầu vào xem trước bản dịch", "Translation preview input JSON")}
             />
           )}
           <div className="tp-import-box">
@@ -1940,15 +1938,15 @@ function TranslationPreviewView({
               className="tp-json-textarea compact"
               value={importText}
               onChange={e => setImportText(e.target.value)}
-              placeholder="Paste translation preview output JSON here..."
-              aria-label="Translation preview output JSON"
+              placeholder={uiText("Dán JSON đầu ra xem trước bản dịch tại đây...", "Paste translation preview output JSON here...")}
+              aria-label={uiText("JSON đầu ra xem trước bản dịch", "Translation preview output JSON")}
             />
             <div className="tp-import-actions">
               <button className="btn" onClick={loadAgentPreviewRun} disabled={!selectedChapterId || importing}>
-                <Ic.sparkle size={13} /> Load agent preview
+                <Ic.sparkle size={13} /> {uiText("Tải bản xem trước agent", "Load agent preview")}
               </button>
               <button className="btn" onClick={() => importFileRef.current?.click()}>
-                <Ic.upload size={13} /> Load preview file
+                <Ic.upload size={13} /> {uiText("Tải file xem trước", "Load preview file")}
               </button>
               <input
                 ref={importFileRef}
@@ -1958,7 +1956,7 @@ function TranslationPreviewView({
                 onChange={loadImportFile}
               />
               <button className="btn primary" onClick={importPreviewRun} disabled={!importText.trim() || importing}>
-                <Ic.checkCircle size={13} /> {importing ? "Importing..." : "Import preview"}
+                <Ic.checkCircle size={13} /> {importing ? uiText("Đang nhập...", "Importing...") : uiText("Nhập bản xem trước", "Import preview")}
               </button>
             </div>
           </div>
@@ -1966,7 +1964,7 @@ function TranslationPreviewView({
           {importWarnings.length > 0 && (
             <div className="tp-loop-note warn">
               <Ic.alert size={12} />
-              <span>{importWarnings.length} warning{importWarnings.length > 1 ? "s" : ""}: {importWarnings.slice(0, 3).map(item => item.code).join(", ")}</span>
+              <span>{uiText(`${importWarnings.length} cảnh báo`, `${importWarnings.length} warning${importWarnings.length > 1 ? "s" : ""}`)}: {importWarnings.slice(0, 3).map(item => item.code).join(", ")}</span>
             </div>
           )}
         </div>
@@ -1976,12 +1974,12 @@ function TranslationPreviewView({
           <div className="tp-warning">
             <Ic.alert size={13} />
             <div>
-              <b>{warnings.length} import warning{warnings.length > 1 ? "s" : ""}</b>
+              <b>{uiText(`${warnings.length} cảnh báo khi nhập`, `${warnings.length} import warning${warnings.length > 1 ? "s" : ""}`)}</b>
               <div className="tp-warning-list">
                 {warnings.slice(0, 4).map((warning, index) => (
                   <span key={index}>{warning.code}: {warning.context_id || warning.relation_id || warning.block_id || warning.message}</span>
                 ))}
-                {warnings.length > 4 && <span>+{warnings.length - 4} more</span>}
+                {warnings.length > 4 && <span>+{warnings.length - 4} {uiText("nữa", "more")}</span>}
               </div>
             </div>
           </div>
@@ -1990,14 +1988,14 @@ function TranslationPreviewView({
         {!loadingRuns && !chapterRuns.length ? (
           <div className="tp-empty">
             <Ic.file size={22} />
-            <div>No translation preview run for {currentChapter.title || selectedChapterId || "this chapter"}.</div>
-            <p>Import a JSON run through the S2 API, then reload this view.</p>
+            <div>{uiText("Không có lần chạy xem trước bản dịch cho", "No translation preview run for")} {currentChapter.title || selectedChapterId || uiText("chương này", "this chapter")}.</div>
+            <p>{uiText("Nhập một lần chạy JSON qua API S2, rồi tải lại chế độ này.", "Import a JSON run through the S2 API, then reload this view.")}</p>
           </div>
         ) : (
           <div className="tp-table">
             <div className="tp-table-head">
-              <span>Source EN</span>
-              <span>Preview VI</span>
+              <span>{uiText("Nguồn EN", "Source EN")}</span>
+              <span>{uiText("Xem trước VI", "Preview VI")}</span>
             </div>
             {chapterRows.map(block => {
               const preview = runByBlock[block.block_id] || null;
@@ -2020,10 +2018,10 @@ function TranslationPreviewView({
                   </div>
                   <div className={"tp-cell tp-target" + (!preview?.target_text ? " missing" : "")}>
                     <div className="tp-target-head">
-                      <span className="mono">{preview ? "matched by block_id" : "missing preview"}</span>
+                      <span className="mono">{preview ? uiText("khớp theo block_id", "matched by block_id") : uiText("thiếu bản xem trước", "missing preview")}</span>
                       {address && <span className="tp-address"><Ic.users size={12} />{address.text}{address.sub ? <em>{address.sub}</em> : null}</span>}
                     </div>
-                    <div className="tp-text">{preview?.target_text ? renderPreviewText(preview.target_text, mentions, "target_surface") : "(not translated in this run)"}</div>
+                    <div className="tp-text">{preview?.target_text ? renderPreviewText(preview.target_text, mentions, "target_surface") : uiText("(chưa dịch trong lần chạy này)", "(not translated in this run)")}</div>
                     {(usedContext.length > 0 || preview?.notes) && (
                       <div className="tp-context">
                         {usedContext.map((id, idx) => {
@@ -2145,7 +2143,7 @@ function TranslationResultsView({
       <div className="translation-preview">
         <div className="tp-controls">
           <label className="tp-control wide">
-            <span>Chapter</span>
+            <span>{uiText("Chương", "Chapter")}</span>
             <select value={selectedChapterId} onChange={event => changeChapter(event.target.value)}>
               {chapters.map(row => (
                 <option key={row.chapter_id} value={row.chapter_id}>
@@ -2156,18 +2154,18 @@ function TranslationResultsView({
           </label>
           {configKeys.length === 1 ? (
             <div className="tp-single-config">
-              <span>Translation</span>
+              <span>{uiText("Bản dịch", "Translation")}</span>
               <b className="mono">{configKeys[0]}</b>
             </div>
           ) : configKeys.length > 1 ? (<>
             <label className="tp-control">
-              <span>Version A</span>
+              <span>{uiText("Phiên bản A", "Version A")}</span>
               <select value={primaryConfig} onChange={event => setPrimaryConfig(event.target.value)}>
                 {configKeys.map(config => <option key={config} value={config}>{config}</option>)}
               </select>
             </label>
             <label className="tp-control">
-              <span>Version B</span>
+              <span>{uiText("Phiên bản B", "Version B")}</span>
               <select value={secondaryConfig} onChange={event => setSecondaryConfig(event.target.value)}>
                 {configKeys.filter(config => config !== primaryConfig).map(config => (
                   <option key={config} value={config}>{config}</option>
@@ -2177,22 +2175,22 @@ function TranslationResultsView({
           </>) : null}
           <div className="tp-run-meta mono">
             {configKeys.length
-              ? `${chapterRows.length} blocks / ${configKeys.length} stored version${configKeys.length > 1 ? "s" : ""}`
-              : "no stored translation"}
+              ? uiText(`${chapterRows.length} block / ${configKeys.length} phiên bản đã lưu`, `${chapterRows.length} blocks / ${configKeys.length} stored version${configKeys.length > 1 ? "s" : ""}`)
+              : uiText("không có bản dịch đã lưu", "no stored translation")}
           </div>
         </div>
 
         {!configKeys.length ? (
           <div className="tp-empty">
             <Ic.file size={22} />
-            <div>No translation result for {currentChapter.title || selectedChapterId || "this chapter"}.</div>
-            <p>Results appear here after the translation pipeline writes this project run.</p>
+            <div>{uiText("Không có kết quả dịch cho", "No translation result for")} {currentChapter.title || selectedChapterId || uiText("chương này", "this chapter")}.</div>
+            <p>{uiText("Kết quả sẽ xuất hiện sau khi pipeline dịch ghi lần chạy của dự án này.", "Results appear here after the translation pipeline writes this project run.")}</p>
           </div>
         ) : (
           <div className="tp-table">
             <div className="tp-table-head" style={{ "--tp-columns": `repeat(${columns}, minmax(0, 1fr))` }}>
-              <span>Source</span>
-              {visibleConfigs.map(config => <span key={config}>Translation {config}</span>)}
+              <span>{uiText("Nguồn", "Source")}</span>
+              {visibleConfigs.map(config => <span key={config}>{uiText("Bản dịch", "Translation")} {config}</span>)}
             </div>
             {chapterRows.map(block => (
               <article
@@ -2216,12 +2214,12 @@ function TranslationResultsView({
                     <div key={config} className={"tp-cell tp-target" + (!text ? " missing" : "")}>
                       <div className="tp-target-head">
                         <span className="tc-label mono">{config}</span>
-                        <span className="mono">{storedTranslationMeta(row) || (row ? "stored result" : "missing")}</span>
+                        <span className="mono">{storedTranslationMeta(row) || (row ? uiText("kết quả đã lưu", "stored result") : uiText("thiếu", "missing"))}</span>
                       </div>
                       <div className="tp-text">
                         {text
                           ? <SpanText text={text} spans={row?.target_spans || []} block={block} />
-                          : "(this block was not translated in this version)"}
+                          : uiText("(block này chưa được dịch trong phiên bản này)", "(this block was not translated in this version)")}
                       </div>
                     </div>
                   );

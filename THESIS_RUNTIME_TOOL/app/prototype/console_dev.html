@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=1280" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Agent Console · dev harness (golden fixture)</title>
 <link rel="icon" href="data:," />
-<link rel="stylesheet" href="console.css" />
+<link rel="stylesheet" href="console.css?v=workspace-i18n-v1.1" />
+<link rel="stylesheet" href="i18n.css" />
 <style>
   html, body { margin: 0; height: 100%; background: #222; }
   #root { height: 100vh; }
-  .dev-note { position: fixed; bottom: 6px; right: 8px; font: 10px monospace; color: #888; z-index: 9; }
+  .dev-note { position: fixed; bottom: 6px; right: 8px; max-width: calc(100vw - 16px); overflow: hidden; color: #888; font: 10px monospace; text-overflow: ellipsis; white-space: nowrap; z-index: 9; }
 </style>
 </head>
 <body>
@@ -20,6 +21,7 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
 
+<script src="i18n.js"></script>
 <script type="text/babel" src="console.jsx"></script>
 <script type="text/babel">
 const FX = "fixtures/one_button_preface_golden/";

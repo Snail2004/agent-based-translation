@@ -4,28 +4,33 @@ function SourceStatus({ docInfo, blocks, chapters, errors, total }) {
   const meta = docInfo?.metadata || {};
   const valid = errors.length === 0;
   const tip = [
-    `Source: ${meta.source_format || "unknown"}`,
-    `${total ?? blocks.length} blocks in ${chapters.length} chapters`,
-    errors.length ? `${errors.length} validation issue(s)` : "No validation issues",
-    meta.extraction_tool ? `Extractor: ${meta.extraction_tool}` : "",
+    `${uiText("Nguồn", "Source")}: ${meta.source_format || uiText("không rõ", "unknown")}`,
+    uiText(
+      `${total ?? blocks.length} block trong ${chapters.length} chương`,
+      `${total ?? blocks.length} blocks in ${chapters.length} chapters`
+    ),
+    errors.length
+      ? uiText(`${errors.length} vấn đề kiểm tra`, `${errors.length} validation issue(s)`)
+      : uiText("Không có vấn đề kiểm tra", "No validation issues"),
+    meta.extraction_tool ? `${uiText("Bộ trích xuất", "Extractor")}: ${meta.extraction_tool}` : "",
   ].filter(Boolean).join(" · ");
   return (
     <div className="source-summary tip" data-tip={tip}>
       <span className={"ss-dot " + (valid ? "ok" : "bad")} />
       <b className="mono">{String(meta.source_format || "source").toUpperCase()}</b>
-      <span>{Number(total ?? blocks.length).toLocaleString()} blocks</span>
-      <span>{chapters.length} chapters</span>
-      {errors.length > 0 && <span className="source-issues">{errors.length} issues</span>}
+      <span>{Number(total ?? blocks.length).toLocaleString()} block</span>
+      <span>{chapters.length} {uiText("chương", "chapters")}</span>
+      {errors.length > 0 && <span className="source-issues">{errors.length} {uiText("vấn đề", "issues")}</span>}
     </div>
   );
 }
 
 const FILTERS = [
-  { id: "unreviewed", label: "Unreviewed" },
-  { id: "dialogue", label: "Dialogue" },
-  { id: "flag", label: "Has flag" },
-  { id: "opening", label: "Chapter opening" },
-  { id: "annotation", label: "Has annotation" },
+  { id: "unreviewed", vi: "Chưa duyệt", en: "Unreviewed" },
+  { id: "dialogue", vi: "Hội thoại", en: "Dialogue" },
+  { id: "flag", vi: "Có cờ", en: "Has flag" },
+  { id: "opening", vi: "Mở đầu chương", en: "Chapter opening" },
+  { id: "annotation", vi: "Có chú giải", en: "Has annotation" },
 ];
 
 function FilterChips({ active, onToggle, counts }) {
@@ -35,7 +40,7 @@ function FilterChips({ active, onToggle, counts }) {
         <button key={f.id}
           className={"chip" + (active.has(f.id) ? " active" : "")}
           onClick={() => onToggle(f.id)}>
-          {f.label}
+          {uiText(f.vi, f.en)}
           <span className="count">{counts[f.id] ?? 0}</span>
         </button>
       ))}
@@ -53,8 +58,8 @@ function RuntimeOverlayBadges({ block, compact = false }) {
   const cls = compact ? "previewrow-ic runtime" : "br-runtime";
   const localizationOnly = block.overlay_mode === "localization";
   const tip = localizationOnly
-    ? `Localization: EN ${source}, VI ${target}, lệch chuẩn ${mismatch}`
-    : `Runtime overlay: source ${source}, target ${target}, drift ${drift}`;
+    ? uiText(`Bản địa hóa: EN ${source}, VI ${target}, lệch chuẩn ${mismatch}`, `Localization: EN ${source}, VI ${target}, mismatch ${mismatch}`)
+    : uiText(`Lớp phủ runtime: nguồn ${source}, đích ${target}, lệch ${drift}`, `Runtime overlay: source ${source}, target ${target}, drift ${drift}`);
   return (
     <>
       {source > 0 && <span className={cls + " tip"} data-tip={tip}><Ic.layers size={11} /></span>}
@@ -69,17 +74,17 @@ function SidebarBlockRow({ block, reviewed, hasAnno, selected, onSelect }) {
   const flagged = (block.quality_flags || []).some(f => f !== "ok");
   return (
     <button className={"blockrow" + (selected ? " sel" : "")} onClick={() => onSelect(block.block_id)}
-      title={block.block_id} aria-label={`Open block ${block.block_id}`}>
+      title={block.block_id} aria-label={uiText(`Mở block ${block.block_id}`, `Open block ${block.block_id}`)}>
       <span className={"br-check" + (reviewed ? " on" : "")}>
         {reviewed ? <Ic.checkSmall size={11} /> : null}
       </span>
       <span className="br-id mono">{block.block_id}</span>
       <span className={"tag tag-" + block.block_type}>{block.block_type}</span>
       <span className="br-spacer" />
-      {hasAnno && <span className="br-anno tip" data-tip="Has glossary / entity annotations"><Ic.tag size={11} /></span>}
+      {hasAnno && <span className="br-anno tip" data-tip={uiText("Có chú giải thuật ngữ / thực thể", "Has glossary / entity annotations")}><Ic.tag size={11} /></span>}
       <RuntimeOverlayBadges block={block} />
       {flagged && <span className="br-flag tip" data-tip={(block.quality_flags || []).join(", ")}><Ic.flag size={11} /></span>}
-      {block.is_chapter_opening && <span className="br-open tip" data-tip="Chapter opening"><Ic.bolt size={11} /></span>}
+      {block.is_chapter_opening && <span className="br-open tip" data-tip={uiText("Mở đầu chương", "Chapter opening")}><Ic.bolt size={11} /></span>}
     </button>
   );
 }
@@ -142,11 +147,11 @@ function LeftSidebar({ docInfo, blocks, chapters, review, annoSet, selectedId, o
       <div className="left-tools">
         <label className="block-search">
           <Ic.search size={12} />
-          <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search chapters or blocks" />
-          {query && <button type="button" aria-label="Clear block search" onClick={() => setQuery("")}><Ic.x size={11} /></button>}
+          <input value={query} onChange={event => setQuery(event.target.value)} placeholder={uiText("Tìm chương hoặc block", "Search chapters or blocks")} />
+          {query && <button type="button" aria-label={uiText("Xóa tìm kiếm block", "Clear block search")} onClick={() => setQuery("")}><Ic.x size={11} /></button>}
         </label>
         <button className={"btn sm icon-only tip" + (filterOpen || activeFilterCount ? " is-on" : "")} type="button"
-          data-tip="Block filters" aria-label="Toggle block filters" aria-expanded={filterOpen} onClick={() => setFilterOpen(open => !open)}>
+          data-tip={uiText("Bộ lọc block", "Block filters")} aria-label={uiText("Bật/tắt bộ lọc block", "Toggle block filters")} aria-expanded={filterOpen} onClick={() => setFilterOpen(open => !open)}>
           <Ic.filter size={12} />
           {activeFilterCount > 0 && <span className="filter-active-count">{activeFilterCount}</span>}
         </button>
@@ -154,13 +159,13 @@ function LeftSidebar({ docInfo, blocks, chapters, review, annoSet, selectedId, o
       {filterOpen && <FilterChips active={filters} onToggle={onToggleFilter} counts={counts} />}
       <div className="divider" />
       <div className="sec-head">
-        <Ic.list size={12} />Blocks
+        <Ic.list size={12} />{uiText("Các block", "Blocks")}
         <span className="sec-count mono">{treeBlocks.length}{treeBlocks.length !== total ? `/${total}` : ""}</span>
       </div>
       <div className="tree-scroll">
         <ChapterTree chapters={chapters} blocks={treeBlocks} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={onSelect} revealMatches={!!normalizedQuery} />
-        {treeBlocks.length === 0 && <div className="tree-empty">No blocks match the current search or filters.</div>}
+        {treeBlocks.length === 0 && <div className="tree-empty">{uiText("Không có block nào khớp tìm kiếm hoặc bộ lọc hiện tại.", "No blocks match the current search or filters.")}</div>}
       </div>
     </div>
   );

@@ -1,0 +1,43 @@
+.thesis-locale-switch {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+}
+
+.thesis-locale-option {
+  min-width: 28px;
+  height: 23px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: 700 9px/1 ui-monospace, "Cascadia Code", Consolas, monospace;
+  letter-spacing: .04em;
+  cursor: pointer;
+  opacity: .62;
+}
+
+.thesis-locale-option:hover,
+.thesis-locale-option:focus-visible {
+  opacity: 1;
+  outline: 2px solid color-mix(in srgb, #376ce4 62%, transparent);
+  outline-offset: 1px;
+}
+
+.thesis-locale-option.active {
+  background: #376ce4;
+  color: #fff;
+  opacity: 1;
+}
+
+.thesis-locale-switch.is-compact .thesis-locale-option {
+  min-width: 25px;
+  height: 21px;
+  padding-inline: 4px;
+}

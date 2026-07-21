@@ -2,15 +2,15 @@
 
 function StatusPill({ status }) {
   const map = {
-    locked: ["Locked", "pill-lock"],
-    proposed: ["Proposed", "pill-amber"],
-    candidate: ["Candidate", "pill-amber"],
-    verified: ["Verified", "pill-green"],
-    human_verified: ["Verified", "pill-green"],
-    reviewed: ["Reviewed", "pill-green"],
-    draft: ["Draft", "pill-amber"],
+    locked: [uiText("Đã khóa", "Locked"), "pill-lock"],
+    proposed: [uiText("Đề xuất", "Proposed"), "pill-amber"],
+    candidate: [uiText("Ứng viên", "Candidate"), "pill-amber"],
+    verified: [uiText("Đã xác minh", "Verified"), "pill-green"],
+    human_verified: [uiText("Đã xác minh", "Verified"), "pill-green"],
+    reviewed: [uiText("Đã duyệt", "Reviewed"), "pill-green"],
+    draft: [uiText("Bản nháp", "Draft"), "pill-amber"],
   };
-  const [label, cls] = map[status] || [status || "Unset", "pill-grey"];
+  const [label, cls] = map[status] || [status || uiText("Chưa đặt", "Unset"), "pill-grey"];
   return <span className={"pill " + cls}>{label}</span>;
 }
 
@@ -62,7 +62,7 @@ function GlossaryTab({ terms, onDeleteTerm, onUpdateTerm, onFocusTerm }) {
   }, [terms, expanded]);
 
   if (!terms.length) {
-    return <Empty icon={Ic.tag} text="No glossary terms for this block." sub="Select text in Clean text -> Add glossary term." />;
+    return <Empty icon={Ic.tag} text={uiText("Block này không có thuật ngữ.", "No glossary terms for this block.")} sub={uiText("Chọn văn bản trong Văn bản sạch -> Thêm thuật ngữ.", "Select text in Clean text -> Add glossary term.")} />;
   }
 
   return (
@@ -76,9 +76,9 @@ function GlossaryTab({ terms, onDeleteTerm, onUpdateTerm, onFocusTerm }) {
               if (onFocusTerm) onFocusTerm(t.term_id, null, { toggle: false });
             }}>
               <Ic.chevRight size={11} className="card-caret" style={{ transform: open ? "rotate(90deg)" : "none" }} />
-              <span className="card-title mono">{t.source_term || "(new term)"}</span>
+              <span className="card-title mono">{t.source_term || uiText("(thuật ngữ mới)", "(new term)")}</span>
               <span className="card-arrow"><Ic.arrowRight size={11} /></span>
-              <span className="card-target">{t.expected_target || "target needed"}</span>
+              <span className="card-target">{t.expected_target || uiText("cần bản đích", "target needed")}</span>
               <span className="card-spacer" />
               <StatusPill status={t.status} />
             </button>
@@ -110,7 +110,7 @@ function GlossaryTab({ terms, onDeleteTerm, onUpdateTerm, onFocusTerm }) {
                   <span className="lockfield"><span className="lf-k"><Ic.lock size={9} />scope</span><span className="lf-v">{t.chapter_scope}</span></span>
                   <span className="lockfield"><span className="lf-k">conf</span><span className="lf-v">{Number(t.confidence || 0).toFixed(2)}</span></span>
                   <span className="lockfield"><span className="lf-k">occ</span><span className="lf-v">{(t.occurrences || []).length}</span></span>
-                  <button className="card-del tip tip-left" data-tip="Delete term" onClick={() => onDeleteTerm(t)}><Ic.trash size={12} /></button>
+                  <button className="card-del tip tip-left" data-tip={uiText("Xóa thuật ngữ", "Delete term")} onClick={() => onDeleteTerm(t)}><Ic.trash size={12} /></button>
                 </div>
               </div>
             )}
@@ -129,7 +129,7 @@ function EntitiesTab({ entities, allEntities, block, onUpdateEntity, onUpdateDis
   }, [entities, expanded]);
 
   if (!entities.length && block.block_type !== "dialogue") {
-    return <Empty icon={Ic.users} text="No entities mentioned in this block." sub="Select text in Clean text -> Add entity mention." />;
+    return <Empty icon={Ic.users} text={uiText("Block này không nhắc tới thực thể nào.", "No entities mentioned in this block.")} sub={uiText("Chọn văn bản trong Văn bản sạch -> Thêm lần nhắc thực thể.", "Select text in Clean text -> Add entity mention.")} />;
   }
 
   const isDialogue = block.block_type === "dialogue";
@@ -137,7 +137,7 @@ function EntitiesTab({ entities, allEntities, block, onUpdateEntity, onUpdateDis
     <div className="tab-body">
       {isDialogue && (
         <div className="discourse">
-          <div className="discourse-head"><Ic.quote size={11} />dialogue · speaker / addressee</div>
+          <div className="discourse-head"><Ic.quote size={11} />{uiText("hội thoại · người nói / người nghe", "dialogue · speaker / addressee")}</div>
           <div className="discourse-row">
             <DiscSelect label="speaker" entities={allEntities} value={block.discourse?.speaker_entity_id || ""}
               onChange={value => onUpdateDiscourse({ speaker_entity_id: value })} />
@@ -147,7 +147,7 @@ function EntitiesTab({ entities, allEntities, block, onUpdateEntity, onUpdateDis
         </div>
       )}
 
-      {!entities.length && <Empty icon={Ic.users} text="No entity mentions in this block yet." sub="Dialogue speaker/addressee can still be set above." />}
+      {!entities.length && <Empty icon={Ic.users} text={uiText("Block này chưa có lần nhắc thực thể.", "No entity mentions in this block yet.")} sub={uiText("Vẫn có thể đặt người nói/người nghe ở phía trên.", "Dialogue speaker/addressee can still be set above.")} />}
 
       {entities.map(e => {
         const open = expanded === e.entity_id;
@@ -157,9 +157,9 @@ function EntitiesTab({ entities, allEntities, block, onUpdateEntity, onUpdateDis
             <button className="card-head" onClick={() => setExpanded(open ? null : e.entity_id)}>
               <Ic.chevRight size={11} className="card-caret" style={{ transform: open ? "rotate(90deg)" : "none" }} />
               <span className={"ent-type ent-" + e.entity_type}>{(e.entity_type || "?")[0]}</span>
-              <span className="card-title">{e.canonical_source || "(new entity)"}</span>
+              <span className="card-title">{e.canonical_source || uiText("(thực thể mới)", "(new entity)")}</span>
               <span className="card-arrow"><Ic.arrowRight size={11} /></span>
-              <span className="card-target">{e.canonical_target || "target needed"}</span>
+              <span className="card-target">{e.canonical_target || uiText("cần bản đích", "target needed")}</span>
               <span className="card-spacer" />
               {mentions.length > 0 && <span className="ment-count mono">{mentions.length}x</span>}
             </button>
@@ -180,7 +180,7 @@ function EntitiesTab({ entities, allEntities, block, onUpdateEntity, onUpdateDis
                   </FormField>
                 </div>
                 {mentions.length > 0 && (
-                  <MiniField label="mentions in this block">
+                  <MiniField label={uiText("lần nhắc trong block này", "mentions in this block")}>
                     {mentions.map((m, i) => <span key={i} className="var mono">"{m.surface}" [{m.span[0]},{m.span[1]}]</span>)}
                   </MiniField>
                 )}
@@ -188,7 +188,7 @@ function EntitiesTab({ entities, allEntities, block, onUpdateEntity, onUpdateDis
                   <span className="lockfield"><span className="lf-k">type</span><span className="lf-v">{e.entity_type || "-"}</span></span>
                   <span className="lockfield"><span className="lf-k">conf</span><span className="lf-v">{Number(e.confidence || 0).toFixed(2)}</span></span>
                   <span className="lockfield"><span className="lf-k">mentions</span><span className="lf-v">{(e.mentions || []).length}</span></span>
-                  <button className="card-del tip tip-left" data-tip="Delete entity" onClick={() => onDeleteEntity(e)}><Ic.trash size={12} /></button>
+                  <button className="card-del tip tip-left" data-tip={uiText("Xóa thực thể", "Delete entity")} onClick={() => onDeleteEntity(e)}><Ic.trash size={12} /></button>
                 </div>
               </div>
             )}
@@ -307,24 +307,24 @@ function RelationEditor({ relation, entities, block, onChange, onSave, onDelete,
         <FormField label="relation_type">
           <input value={safe.relation_type || ""} placeholder="friend / rival / parent / stranger..." onChange={e => update({ relation_type: e.target.value })} />
         </FormField>
-        <FormField label="confidence">
+        <FormField label={uiText("độ tin cậy", "confidence")}>
           <input type="number" min="0" max="1" step="0.01" value={confidenceValue(safe.confidence)}
             onChange={e => update({ confidence: e.target.value === "" ? 0 : Number(e.target.value) })} />
         </FormField>
       </div>
 
-      <MiniField label="address policy">
+      <MiniField label={uiText("quy tắc xưng hô", "address policy")}>
         <div className="form-grid">
-          <FormField label="source self">
+          <FormField label={uiText("nguồn tự xưng", "source self")}>
             <input value={policy.source_to_target?.self_term || ""} placeholder="toi / ta / ong..." onChange={e => updatePolicy("source_to_target", "self_term", e.target.value)} />
           </FormField>
-          <FormField label="source calls target">
+          <FormField label={uiText("nguồn gọi đích", "source calls target")}>
             <input value={policy.source_to_target?.address_term || ""} placeholder="ban / chau / nguoi..." onChange={e => updatePolicy("source_to_target", "address_term", e.target.value)} />
           </FormField>
-          <FormField label="target self">
+          <FormField label={uiText("đích tự xưng", "target self")}>
             <input value={policy.target_to_source?.self_term || ""} placeholder="toi / chau / em..." onChange={e => updatePolicy("target_to_source", "self_term", e.target.value)} />
           </FormField>
-          <FormField label="target calls source">
+          <FormField label={uiText("đích gọi nguồn", "target calls source")}>
             <input value={policy.target_to_source?.address_term || ""} placeholder="ban / ong / anh..." onChange={e => updatePolicy("target_to_source", "address_term", e.target.value)} />
           </FormField>
         </div>
@@ -335,13 +335,13 @@ function RelationEditor({ relation, entities, block, onChange, onSave, onDelete,
           <input value={safe.state_label || ""} placeholder="before_betrayal / default" onChange={e => update({ state_label: e.target.value })} />
         </FormField>
         <FormField label="trigger_event_id">
-          <input value={safe.trigger_event_id || ""} placeholder="optional event label" onChange={e => update({ trigger_event_id: e.target.value })} />
+          <input value={safe.trigger_event_id || ""} placeholder={uiText("nhãn sự kiện tùy chọn", "optional event label")} onChange={e => update({ trigger_event_id: e.target.value })} />
         </FormField>
         <FormField label="valid_from_block_id">
-          <input value={safe.valid_from_block_id || ""} placeholder={block?.block_id || "optional"} onChange={e => update({ valid_from_block_id: e.target.value })} />
+          <input value={safe.valid_from_block_id || ""} placeholder={block?.block_id || uiText("tùy chọn", "optional")} onChange={e => update({ valid_from_block_id: e.target.value })} />
         </FormField>
         <FormField label="valid_to_block_id">
-          <input value={safe.valid_to_block_id || ""} placeholder="optional" onChange={e => update({ valid_to_block_id: e.target.value })} />
+          <input value={safe.valid_to_block_id || ""} placeholder={uiText("tùy chọn", "optional")} onChange={e => update({ valid_to_block_id: e.target.value })} />
         </FormField>
       </div>
 
@@ -354,9 +354,9 @@ function RelationEditor({ relation, entities, block, onChange, onSave, onDelete,
 
       <div className="ref-actions">
         <button className="btn sm primary" disabled={!canSave} onClick={onSave}>
-          {isNew ? "Add relation" : "Save relation"}
+          {isNew ? uiText("Thêm quan hệ", "Add relation") : uiText("Lưu quan hệ", "Save relation")}
         </button>
-        {!isNew && <button className="btn sm danger" onClick={onDelete}><Ic.trash size={12} />Delete</button>}
+        {!isNew && <button className="btn sm danger" onClick={onDelete}><Ic.trash size={12} />{uiText("Xóa", "Delete")}</button>}
       </div>
     </div>
   );
@@ -391,10 +391,10 @@ function RelationsTab({ relations, entities, block, onCreateRelation, onUpdateRe
     <div className="tab-body">
       <div className="ref-explain">
         <Ic.users size={12} />
-        <span><b>Block-scoped view.</b> Relations appear when this block grounds their evidence, phase boundary, or both participants. The underlying relation record remains document-level.</span>
+        <span><b>{uiText("Chế độ theo block.", "Block-scoped view.")}</b> {uiText("Quan hệ xuất hiện khi block này làm bằng chứng, ranh giới giai đoạn hoặc chứa cả hai bên. Bản ghi quan hệ gốc vẫn ở cấp tài liệu.", "Relations appear when this block grounds their evidence, phase boundary, or both participants. The underlying relation record remains document-level.")}</span>
       </div>
 
-      {!safeRelations.length && <Empty icon={Ic.users} text="No entity relations are grounded in this block." sub="Select another block or let Builder populate relation evidence." />}
+      {!safeRelations.length && <Empty icon={Ic.users} text={uiText("Block này không làm bằng chứng cho quan hệ thực thể nào.", "No entity relations are grounded in this block.")} sub={uiText("Chọn block khác hoặc để Builder điền bằng chứng quan hệ.", "Select another block or let Builder populate relation evidence.")} />}
 
       {safeRelations.map(relation => {
         const open = expanded === relation.relation_id;
@@ -421,7 +421,7 @@ function RelationsTab({ relations, entities, block, onCreateRelation, onUpdateRe
               <span className="card-arrow"><Ic.arrowRight size={11} /></span>
               <span className="card-target">{target.label}</span>
               <span className="card-spacer" />
-              {activeForBlock && <span className="pill pill-green">current dialogue</span>}
+              {activeForBlock && <span className="pill pill-green">{uiText("hội thoại hiện tại", "current dialogue")}</span>}
               <span className="pill pill-grey">{relation.relation_type || "relation"}</span>
             </button>
             {open && (
@@ -434,7 +434,7 @@ function RelationsTab({ relations, entities, block, onCreateRelation, onUpdateRe
                 {(source.missing || target.missing) && (
                   <div className="ref-explain">
                     <Ic.alert size={12} />
-                    <span>One side could not be resolved from entities.jsonl; raw entity id is shown.</span>
+                    <span>{uiText("Không phân giải được một phía từ entities.jsonl; đang hiển thị ID thực thể thô.", "One side could not be resolved from entities.jsonl; raw entity id is shown.")}</span>
                   </div>
                 )}
 
@@ -477,7 +477,7 @@ function RelationsTab({ relations, entities, block, onCreateRelation, onUpdateRe
       <div className={"card" + (showAdd ? " open" : "")}>
         <button className="card-head" onClick={() => setShowAdd(value => !value)}>
           <Ic.chevRight size={11} className="card-caret" style={{ transform: showAdd ? "rotate(90deg)" : "none" }} />
-          <span className="card-title">Add relation</span>
+          <span className="card-title">{uiText("Thêm quan hệ", "Add relation")}</span>
           <span className="card-spacer" />
           <span className="pill pill-grey">{(entities || []).length} entities</span>
         </button>
@@ -510,7 +510,7 @@ function SummaryTab({ summary, entities, onUpdateSummary }) {
     <div className="tab-body">
       <div className="ref-explain">
         <Ic.book size={12} />
-        <span><b>Chapter-level.</b> This summary applies to every block in this chapter; it only changes when the active block moves to another chapter.</span>
+        <span><b>{uiText("Cấp chương.", "Chapter-level.")}</b> {uiText("Tóm tắt này áp dụng cho mọi block trong chương; nó chỉ đổi khi block đang chọn chuyển sang chương khác.", "This summary applies to every block in this chapter; it only changes when the active block moves to another chapter.")}</span>
       </div>
       <div className="sum-meta">
         <span className="lockfield"><span className="lf-k">chapter</span><span className="lf-v">{safe.chapter_id || "-"}</span></span>
@@ -555,7 +555,7 @@ function SummaryTab({ summary, entities, onUpdateSummary }) {
       </FormField>
       <div className="entity-pick">
         <div className="form-label">characters_present</div>
-        {!entities.length ? <span className="faint">No entities available yet.</span> : entities.map(e => {
+        {!entities.length ? <span className="faint">{uiText("Chưa có thực thể nào.", "No entities available yet.")}</span> : entities.map(e => {
           const checked = (safe.characters_present || []).includes(e.entity_id);
           return (
             <label key={e.entity_id} className="check-row">
@@ -582,7 +582,7 @@ function NotesTab({ block, onUpdateBlockNotes }) {
     <div className="tab-body">
       <div className="ref-explain">
         <Ic.doc size={12} />
-        <span><b>Block-level soft context.</b> These notes help interpretation and translation review, but they are advisory and not hard links like entities or glossary terms.</span>
+        <span><b>{uiText("Ngữ cảnh mềm cấp block.", "Block-level soft context.")}</b> {uiText("Các ghi chú này hỗ trợ diễn giải và duyệt bản dịch, nhưng chỉ mang tính tư vấn, không phải liên kết cứng như thực thể hoặc thuật ngữ.", "These notes help interpretation and translation review, but they are advisory and not hard links like entities or glossary terms.")}</span>
       </div>
       <div className="sum-meta">
         <span className="lockfield"><span className="lf-k">block</span><span className="lf-v">{block.block_id}</span></span>
@@ -617,12 +617,12 @@ function ReferenceTab({ refs, block, onUpdateReference, onCreateReference, onSav
     <div className="tab-body">
       <div className="ref-explain">
         <Ic.layers size={12} />
-        <span><b>Block-level.</b> Current block: <span className="mono">{block.block_id}</span>. Draft stays in working state; only <b>Reviewed</b> or <b>Locked</b> references are freeze-eligible.</span>
+        <span><b>{uiText("Cấp block.", "Block-level.")}</b> {uiText("Block hiện tại:", "Current block:")} <span className="mono">{block.block_id}</span>. {uiText("Bản nháp giữ ở trạng thái làm việc; chỉ reference", "Draft stays in working state; only")} <b>{uiText("Đã duyệt", "Reviewed")}</b> {uiText("hoặc", "or")} <b>{uiText("Đã khóa", "Locked")}</b> {uiText("mới đủ điều kiện đóng băng.", "references are freeze-eligible.")}</span>
       </div>
       {!blockRef ? (
         <div className="ref-card status-draft">
           <div className="ref-card-head">
-            <span className="ref-stratum mono">new draft</span>
+            <span className="ref-stratum mono">{uiText("bản nháp mới", "new draft")}</span>
             <span className="card-spacer" />
             <StatusPill status="draft" />
           </div>
@@ -642,7 +642,7 @@ function ReferenceTab({ refs, block, onUpdateReference, onCreateReference, onSav
             </FormField>
           </div>
           <div className="ref-actions">
-            <button className="btn sm primary" onClick={() => onCreateReference(block.block_id, newReference)}><Ic.book size={12} />Save draft</button>
+            <button className="btn sm primary" onClick={() => onCreateReference(block.block_id, newReference)}><Ic.book size={12} />{uiText("Lưu bản nháp", "Save draft")}</button>
           </div>
         </div>
       ) : (
@@ -682,9 +682,9 @@ function ReferenceTab({ refs, block, onUpdateReference, onCreateReference, onSav
           </div>
 
           <div className="ref-actions">
-            <button className="btn sm" disabled={blockRef.status === "locked"} onClick={() => onSaveDraft(blockRef.reference_id)}>Save draft</button>
-            <button className="btn sm" disabled={blockRef.status === "locked"} onClick={() => onMarkReviewed(blockRef.reference_id)}><Ic.checkCircle size={12} />Mark reviewed</button>
-            <button className="btn sm primary" disabled={blockRef.status !== "reviewed"} onClick={() => onLockReference(blockRef.reference_id)}><Ic.lock size={12} />Lock</button>
+            <button className="btn sm" disabled={blockRef.status === "locked"} onClick={() => onSaveDraft(blockRef.reference_id)}>{uiText("Lưu bản nháp", "Save draft")}</button>
+            <button className="btn sm" disabled={blockRef.status === "locked"} onClick={() => onMarkReviewed(blockRef.reference_id)}><Ic.checkCircle size={12} />{uiText("Đánh dấu đã duyệt", "Mark reviewed")}</button>
+            <button className="btn sm primary" disabled={blockRef.status !== "reviewed"} onClick={() => onLockReference(blockRef.reference_id)}><Ic.lock size={12} />{uiText("Khóa", "Lock")}</button>
           </div>
         </div>
       )}
@@ -716,9 +716,9 @@ function ValidateTab({ errors, onJump, docInfo, onMigrateSchema, schemaMigrating
       {showMigration && (
         <div className="schema-migrate">
           <div className="schema-migrate-text">
-            <div className="schema-migrate-title"><Ic.layers size={12} />Schema upgrade available</div>
+            <div className="schema-migrate-title"><Ic.layers size={12} />{uiText("Có thể nâng cấp schema", "Schema upgrade available")}</div>
             <div className="schema-migrate-sub">
-              Current project is <span className="mono">{docInfo?.schema_version || "unknown"}</span>. Upgrade writes <span className="mono">schema_version=1.5.0</span> and creates empty <span className="mono">entity_relations.jsonl</span>; it does not re-extract or touch annotations/drafts.
+              {uiText("Dự án hiện tại là", "Current project is")} <span className="mono">{docInfo?.schema_version || uiText("không rõ", "unknown")}</span>. {uiText("Nâng cấp sẽ ghi", "Upgrade writes")} <span className="mono">schema_version=1.5.0</span> {uiText("và tạo file trống", "and creates empty")} <span className="mono">entity_relations.jsonl</span>; {uiText("không trích xuất lại hoặc chạm vào annotation/bản nháp.", "it does not re-extract or touch annotations/drafts.")}
             </div>
           </div>
           <button className="btn primary" disabled={schemaMigrating} onClick={onMigrateSchema}>
@@ -736,7 +736,7 @@ function ValidateTab({ errors, onJump, docInfo, onMigrateSchema, schemaMigrating
                 <span className="val-msg">{e.message}</span>
                 <span className="val-loc mono">{e.block_id || e.chapter_id || "-"} · {e.location}</span>
               </span>
-              {e.block_id && <span className="val-jump">jump <Ic.arrowRight size={11} /></span>}
+              {e.block_id && <span className="val-jump">{uiText("nhảy tới", "jump")} <Ic.arrowRight size={11} /></span>}
             </button>
           ))}
         </div>
@@ -766,13 +766,13 @@ function HistoryList({ history }) {
   return (
     <div className="hist-panel">
       <div className="hist-head">
-        <span><Ic.clock size={12} />History</span>
+        <span><Ic.clock size={12} />{uiText("Lịch sử", "History")}</span>
         <span className="hist-actions mono">
           {history?.can_undo ? "undo ready" : "no undo"} · {history?.can_redo ? "redo ready" : "no redo"}
         </span>
       </div>
       {!recent.length ? (
-        <div className="hist-empty">No undoable changes yet.</div>
+        <div className="hist-empty">{uiText("Chưa có thay đổi nào có thể hoàn tác.", "No undoable changes yet.")}</div>
       ) : recent.map(event => (
         <div key={event.id} className="hist-row">
           <span className="hist-dot" />
@@ -898,13 +898,13 @@ function InspectorRow({ kind, row, index, entityMap, onSelect }) {
     Icon = Ic.tag;
     title = row.source_term || "(unnamed term)";
     target = row.expected_target || "Target needed";
-    meta = `${(row.occurrences || []).length} occurrence${(row.occurrences || []).length === 1 ? "" : "s"}`;
+    meta = uiText(`${(row.occurrences || []).length} lần xuất hiện`, `${(row.occurrences || []).length} occurrence${(row.occurrences || []).length === 1 ? "" : "s"}`);
     status = row.status;
   } else if (kind === "entities") {
     Icon = Ic.users;
-    title = row.canonical_source || "(unnamed entity)";
-    target = row.canonical_target || row.entity_type || "Unresolved";
-    meta = `${(row.mentions || []).length} mention${(row.mentions || []).length === 1 ? "" : "s"}`;
+    title = row.canonical_source || uiText("(thực thể chưa đặt tên)", "(unnamed entity)");
+    target = row.canonical_target || row.entity_type || uiText("Chưa phân giải", "Unresolved");
+    meta = uiText(`${(row.mentions || []).length} lần nhắc`, `${(row.mentions || []).length} mention${(row.mentions || []).length === 1 ? "" : "s"}`);
   } else if (kind === "relations") {
     Icon = Ic.layers;
     title = inspectorEntityLabel(row.source_entity_id, entityMap);
@@ -912,9 +912,9 @@ function InspectorRow({ kind, row, index, entityMap, onSelect }) {
     meta = row.state_label || row.relation_type || "relation";
   } else {
     Icon = Ic.doc;
-    title = row.chapter_title || row.title || row.chapter_id || "Chapter summary";
-    target = row.summary_source || row.summary_target || "Summary not written";
-    meta = row.source || "chapter";
+    title = row.chapter_title || row.title || row.chapter_id || uiText("Tóm tắt chương", "Chapter summary");
+    target = row.summary_source || row.summary_target || uiText("Chưa viết tóm tắt", "Summary not written");
+    meta = row.source || uiText("chương", "chapter");
   }
 
   return (
@@ -947,20 +947,20 @@ function InspectorDetail({ kind, row, entityMap, onBack, onFocusTerm, canManage,
   return (
     <div className="ci-detail wb-detail">
       <div className="ci-detail-head wb-section-title">
-        <button className="btn icon-only tip" type="button" data-tip="Back to records" aria-label="Back to records" onClick={onBack}>
+        <button className="btn icon-only tip" type="button" data-tip={uiText("Về danh sách bản ghi", "Back to records")} aria-label={uiText("Về danh sách bản ghi", "Back to records")} onClick={onBack}>
           <Ic.chevRight size={13} style={{ transform: "rotate(180deg)" }} />
         </button>
         <div>
-          <span>{kind === "glossary" ? "Glossary term" : kind === "entities" ? "Entity" : kind === "relations" ? "Relation" : "Chapter summary"}</span>
+          <span>{kind === "glossary" ? uiText("Thuật ngữ", "Glossary term") : kind === "entities" ? uiText("Thực thể", "Entity") : kind === "relations" ? uiText("Quan hệ", "Relation") : uiText("Tóm tắt chương", "Chapter summary")}</span>
           <b>{kind === "glossary" ? row.source_term : kind === "entities" ? row.canonical_source : kind === "relations" ? row.relation_type || "Relation" : row.chapter_id}</b>
         </div>
         <span className="ci-detail-spacer" />
         {kind === "glossary" && (row.occurrences || []).length > 0 && (
           <button className="btn sm" type="button" onClick={() => onFocusTerm?.(row.term_id, null, { toggle: false })}>
-            <Ic.search size={11} />Locate
+            <Ic.search size={11} />{uiText("Định vị", "Locate")}
           </button>
         )}
-        {canManage && <button className="btn sm" type="button" onClick={onManage}><Ic.pencil size={11} />Manage</button>}
+        {canManage && <button className="btn sm" type="button" onClick={onManage}><Ic.pencil size={11} />{uiText("Quản lý", "Manage")}</button>}
       </div>
 
       <div className="ci-detail-body">
@@ -969,17 +969,17 @@ function InspectorDetail({ kind, row, entityMap, onBack, onFocusTerm, canManage,
             <div className="ci-title-pair">
               <strong className="mono">{row.source_term || "-"}</strong>
               <Ic.arrowRight size={13} />
-              <strong>{row.expected_target || "Target needed"}</strong>
+              <strong>{row.expected_target || uiText("Cần bản đích", "Target needed")}</strong>
             </div>
             <div className="ci-field-grid">
-              <InspectorField label="Status"><StatusPill status={row.status} /></InspectorField>
-              <InspectorField label="Scope">{row.chapter_scope || row.scope || "global"}</InspectorField>
-              <InspectorField label="Confidence">{Number(row.confidence || 0).toFixed(2)}</InspectorField>
-              <InspectorField label="Occurrences">{(row.occurrences || []).length}</InspectorField>
-              <InspectorField label="Allowed variants" wide><InspectorChips values={row.allowed_variants} /></InspectorField>
-              <InspectorField label="Forbidden variants" wide><InspectorChips values={row.forbidden_variants} /></InspectorField>
-              <InspectorField label="Evidence blocks" wide><InspectorChips values={occurrenceBlocks} /></InspectorField>
-              <InspectorField label="Record id" wide><span className="mono">{row.term_id}</span></InspectorField>
+              <InspectorField label={uiText("Trạng thái", "Status")}><StatusPill status={row.status} /></InspectorField>
+              <InspectorField label={uiText("Phạm vi", "Scope")}>{row.chapter_scope || row.scope || "global"}</InspectorField>
+              <InspectorField label={uiText("Độ tin cậy", "Confidence")}>{Number(row.confidence || 0).toFixed(2)}</InspectorField>
+              <InspectorField label={uiText("Lần xuất hiện", "Occurrences")}>{(row.occurrences || []).length}</InspectorField>
+              <InspectorField label={uiText("Biến thể được phép", "Allowed variants")} wide><InspectorChips values={row.allowed_variants} /></InspectorField>
+              <InspectorField label={uiText("Biến thể bị cấm", "Forbidden variants")} wide><InspectorChips values={row.forbidden_variants} /></InspectorField>
+              <InspectorField label={uiText("Block bằng chứng", "Evidence blocks")} wide><InspectorChips values={occurrenceBlocks} /></InspectorField>
+              <InspectorField label={uiText("ID bản ghi", "Record id")} wide><span className="mono">{row.term_id}</span></InspectorField>
             </div>
           </>
         )}
@@ -989,17 +989,17 @@ function InspectorDetail({ kind, row, entityMap, onBack, onFocusTerm, canManage,
             <div className="ci-title-pair">
               <strong>{row.canonical_source || "-"}</strong>
               <Ic.arrowRight size={13} />
-              <strong>{row.canonical_target || "Target needed"}</strong>
+              <strong>{row.canonical_target || uiText("Cần bản đích", "Target needed")}</strong>
             </div>
             <div className="ci-field-grid">
-              <InspectorField label="Type">{row.entity_type || "unknown"}</InspectorField>
-              <InspectorField label="Confidence">{Number(row.confidence || 0).toFixed(2)}</InspectorField>
-              <InspectorField label="Mentions">{(row.mentions || []).length}</InspectorField>
-              <InspectorField label="Pronoun policy">{row.pronoun_policy || "-"}</InspectorField>
-              <InspectorField label="Source aliases" wide><InspectorChips values={row.aliases_source} /></InspectorField>
-              <InspectorField label="Target aliases" wide><InspectorChips values={row.aliases_target} /></InspectorField>
-              <InspectorField label="Mention blocks" wide><InspectorChips values={occurrenceBlocks} /></InspectorField>
-              <InspectorField label="Record id" wide><span className="mono">{row.entity_id}</span></InspectorField>
+              <InspectorField label={uiText("Loại", "Type")}>{row.entity_type || uiText("không rõ", "unknown")}</InspectorField>
+              <InspectorField label={uiText("Độ tin cậy", "Confidence")}>{Number(row.confidence || 0).toFixed(2)}</InspectorField>
+              <InspectorField label={uiText("Lần nhắc", "Mentions")}>{(row.mentions || []).length}</InspectorField>
+              <InspectorField label={uiText("Quy tắc đại từ", "Pronoun policy")}>{row.pronoun_policy || "-"}</InspectorField>
+              <InspectorField label={uiText("Bí danh nguồn", "Source aliases")} wide><InspectorChips values={row.aliases_source} /></InspectorField>
+              <InspectorField label={uiText("Bí danh đích", "Target aliases")} wide><InspectorChips values={row.aliases_target} /></InspectorField>
+              <InspectorField label={uiText("Block có lần nhắc", "Mention blocks")} wide><InspectorChips values={occurrenceBlocks} /></InspectorField>
+              <InspectorField label={uiText("ID bản ghi", "Record id")} wide><span className="mono">{row.entity_id}</span></InspectorField>
             </div>
           </>
         )}
@@ -1012,32 +1012,32 @@ function InspectorDetail({ kind, row, entityMap, onBack, onFocusTerm, canManage,
               <strong>{inspectorEntityLabel(row.target_entity_id, entityMap)}</strong>
             </div>
             <div className="ci-field-grid">
-              <InspectorField label="Relation">{row.relation_type || "-"}</InspectorField>
-              <InspectorField label="State">{row.state_label || "-"}</InspectorField>
-              <InspectorField label="Valid from">{row.valid_from_block_id || "-"}</InspectorField>
-              <InspectorField label="Valid until">{row.valid_to_block_id || "-"}</InspectorField>
-              <InspectorField label="Trigger">{row.trigger_event_id || "-"}</InspectorField>
-              <InspectorField label="Confidence">{Number(row.confidence || 0).toFixed(2)}</InspectorField>
-              <InspectorField label="Evidence blocks" wide><InspectorChips values={evidenceBlocks} /></InspectorField>
-              <InspectorField label="Notes" wide>{row.notes}</InspectorField>
-              <InspectorField label="Record id" wide><span className="mono">{row.relation_id}</span></InspectorField>
+              <InspectorField label={uiText("Quan hệ", "Relation")}>{row.relation_type || "-"}</InspectorField>
+              <InspectorField label={uiText("Trạng thái", "State")}>{row.state_label || "-"}</InspectorField>
+              <InspectorField label={uiText("Hiệu lực từ", "Valid from")}>{row.valid_from_block_id || "-"}</InspectorField>
+              <InspectorField label={uiText("Hiệu lực đến", "Valid until")}>{row.valid_to_block_id || "-"}</InspectorField>
+              <InspectorField label={uiText("Kích hoạt", "Trigger")}>{row.trigger_event_id || "-"}</InspectorField>
+              <InspectorField label={uiText("Độ tin cậy", "Confidence")}>{Number(row.confidence || 0).toFixed(2)}</InspectorField>
+              <InspectorField label={uiText("Block bằng chứng", "Evidence blocks")} wide><InspectorChips values={evidenceBlocks} /></InspectorField>
+              <InspectorField label={uiText("Ghi chú", "Notes")} wide>{row.notes}</InspectorField>
+              <InspectorField label={uiText("ID bản ghi", "Record id")} wide><span className="mono">{row.relation_id}</span></InspectorField>
             </div>
           </>
         )}
 
         {kind === "summaries" && (
           <>
-            <div className="ci-summary-copy">{row.summary_source || "Summary not written."}</div>
+            <div className="ci-summary-copy">{row.summary_source || uiText("Chưa viết tóm tắt.", "Summary not written.")}</div>
             <div className="ci-field-grid">
-              <InspectorField label="Chapter">{row.chapter_id || "-"}</InspectorField>
-              <InspectorField label="Source">{row.source || "-"}</InspectorField>
-              <InspectorField label="Setting">{row.setting || "-"}</InspectorField>
-              <InspectorField label="Tone">{row.emotional_tone || "-"}</InspectorField>
-              <InspectorField label="Motifs" wide><InspectorChips values={row.motifs} /></InspectorField>
-              <InspectorField label="Key events" wide><InspectorChips values={row.key_events} limit={20} /></InspectorField>
-              <InspectorField label="Open threads" wide><InspectorChips values={row.open_threads} limit={20} /></InspectorField>
-              <InspectorField label="Target summary" wide>{row.summary_target}</InspectorField>
-              <InspectorField label="Translation notes" wide>{row.translation_notes}</InspectorField>
+              <InspectorField label={uiText("Chương", "Chapter")}>{row.chapter_id || "-"}</InspectorField>
+              <InspectorField label={uiText("Nguồn", "Source")}>{row.source || "-"}</InspectorField>
+              <InspectorField label={uiText("Bối cảnh", "Setting")}>{row.setting || "-"}</InspectorField>
+              <InspectorField label={uiText("Sắc thái", "Tone")}>{row.emotional_tone || "-"}</InspectorField>
+              <InspectorField label={uiText("Mô-típ", "Motifs")} wide><InspectorChips values={row.motifs} /></InspectorField>
+              <InspectorField label={uiText("Sự kiện chính", "Key events")} wide><InspectorChips values={row.key_events} limit={20} /></InspectorField>
+              <InspectorField label={uiText("Mạch còn mở", "Open threads")} wide><InspectorChips values={row.open_threads} limit={20} /></InspectorField>
+              <InspectorField label={uiText("Tóm tắt đích", "Target summary")} wide>{row.summary_target}</InspectorField>
+              <InspectorField label={uiText("Ghi chú dịch", "Translation notes")} wide>{row.translation_notes}</InspectorField>
             </div>
           </>
         )}
@@ -1050,17 +1050,17 @@ function EvalOnlyTab({ evalOnly }) {
   const gold = evalOnly?.gold_glossary || [];
   const refs = evalOnly?.references || [];
   if (!gold.length && !refs.length) {
-    return <Empty icon={Ic.lock} text="No eval-only records in this DB." sub="This is normal for Treasure Island runtime memory." />;
+    return <Empty icon={Ic.lock} text={uiText("DB này không có bản ghi eval-only.", "No eval-only records in this DB.")} sub={uiText("Đây là trạng thái bình thường với runtime memory của Treasure Island.", "This is normal for Treasure Island runtime memory.")} />;
   }
   return (
     <div className="tab-body">
       <div className="ref-explain">
         <Ic.lock size={12} />
-        <span><b>Eval-only.</b> These rows are readable for audit/scoring but are structurally separate from runtime memory.</span>
+        <span><b>Eval-only.</b> {uiText("Các hàng này có thể đọc để audit/chấm điểm nhưng tách biệt về cấu trúc khỏi runtime memory.", "These rows are readable for audit/scoring but are structurally separate from runtime memory.")}</span>
       </div>
       {!!gold.length && (
         <div className="eval-list">
-          <div className="eval-title">Gold glossary</div>
+          <div className="eval-title">{uiText("Thuật ngữ vàng", "Gold glossary")}</div>
           {gold.slice(0, 80).map(row => (
             <div className="eval-row" key={row.gold_id || `${row.source_term}:${row.target_term}`}>
               <span className="mono">{row.source_term}</span>
@@ -1069,12 +1069,12 @@ function EvalOnlyTab({ evalOnly }) {
               <span className="pill pill-amber">eval-only</span>
             </div>
           ))}
-          {gold.length > 80 && <div className="eval-more mono">+{gold.length - 80} more rows</div>}
+          {gold.length > 80 && <div className="eval-more mono">+{gold.length - 80} {uiText("hàng nữa", "more rows")}</div>}
         </div>
       )}
       {!!refs.length && (
         <div className="eval-list">
-          <div className="eval-title">Manual references</div>
+          <div className="eval-title">{uiText("Reference thủ công", "Manual references")}</div>
           {refs.slice(0, 20).map(row => (
             <div className="eval-ref" key={row.reference_id}>
               <div className="mono">{row.block_id}</div>
@@ -1082,7 +1082,7 @@ function EvalOnlyTab({ evalOnly }) {
               <span className="pill pill-amber">eval-only</span>
             </div>
           ))}
-          {refs.length > 20 && <div className="eval-more mono">+{refs.length - 20} more rows</div>}
+          {refs.length > 20 && <div className="eval-more mono">+{refs.length - 20} {uiText("hàng nữa", "more rows")}</div>}
         </div>
       )}
     </div>
@@ -1090,19 +1090,23 @@ function EvalOnlyTab({ evalOnly }) {
 }
 
 const CONTEXT_TABS = [
-  { id: "glossary", label: "Terms", icon: Ic.tag },
-  { id: "entities", label: "Entities", icon: Ic.users },
-  { id: "relations", label: "Relations", icon: Ic.layers },
-  { id: "summaries", label: "Summary", icon: Ic.doc },
+  { id: "glossary", vi: "Thuật ngữ", en: "Terms", icon: Ic.tag },
+  { id: "entities", vi: "Thực thể", en: "Entities", icon: Ic.users },
+  { id: "relations", vi: "Quan hệ", en: "Relations", icon: Ic.layers },
+  { id: "summaries", vi: "Tóm tắt", en: "Summary", icon: Ic.doc },
 ];
 
 const UTILITY_TABS = [
-  { id: "notes", label: "Notes", icon: Ic.doc },
-  { id: "reference", label: "Reference", icon: Ic.book },
-  { id: "eval_only", label: "Eval-only", icon: Ic.lock },
-  { id: "validate", label: "Validate", icon: Ic.checkCircle },
-  { id: "progress", label: "Progress", icon: Ic.layers },
+  { id: "notes", vi: "Ghi chú", en: "Notes", icon: Ic.doc },
+  { id: "reference", vi: "Reference", en: "Reference", icon: Ic.book },
+  { id: "eval_only", vi: "Chỉ eval", en: "Eval-only", icon: Ic.lock },
+  { id: "validate", vi: "Kiểm tra", en: "Validate", icon: Ic.checkCircle },
+  { id: "progress", vi: "Tiến độ", en: "Progress", icon: Ic.layers },
 ];
+
+function inspectorTabLabel(tab) {
+  return tab ? uiText(tab.vi, tab.en) : "";
+}
 
 function InspectorUtility({ id, ctx }) {
   if (id === "notes") return <NotesTab block={ctx.block} onUpdateBlockNotes={ctx.onUpdateBlockNotes} />;
@@ -1123,10 +1127,10 @@ function InspectorManager({ kind, records, ctx, onBack }) {
   return (
     <div className="ci-manage">
       <div className="ci-subview-head">
-        <button className="btn icon-only tip" type="button" data-tip="Back to inspector" aria-label="Back to inspector" onClick={onBack}>
+        <button className="btn icon-only tip" type="button" data-tip={uiText("Về trình kiểm tra", "Back to inspector")} aria-label={uiText("Về trình kiểm tra", "Back to inspector")} onClick={onBack}>
           <Ic.chevRight size={13} style={{ transform: "rotate(180deg)" }} />
         </button>
-        <div><span>Manage current block</span><b>{kind === "summaries" ? "Summary" : kind[0].toUpperCase() + kind.slice(1)}</b></div>
+        <div><span>{uiText("Quản lý block hiện tại", "Manage current block")}</span><b>{inspectorTabLabel(CONTEXT_TABS.find(tab => tab.id === kind))}</b></div>
       </div>
       <div className="ci-subview-body">
         {kind === "glossary" && <GlossaryTab terms={records} onDeleteTerm={ctx.onDeleteTerm} onUpdateTerm={ctx.onUpdateTerm} onFocusTerm={ctx.onFocusTerm} />}
@@ -1200,10 +1204,10 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
     : records.find((row, index) => inspectorKey(activeKind, row, index) === selectedKey) || null;
   const canManage = !ctx.readOnly && scope === "current" && ctx.currentScopeKind === "block";
   const currentScopeTitle = ctx.currentScopeKind === "chapter"
-    ? "Current chapter"
+    ? uiText("Chương hiện tại", "Current chapter")
     : ctx.currentScopeKind === "book"
-      ? "Current book"
-      : "Current block";
+      ? uiText("Sách hiện tại", "Current book")
+      : uiText("Block hiện tại", "Current block");
   const totals = ctx.memoryTotals || {
     glossary: (projectMemory.glossary || []).length,
     entities: (projectMemory.entities || []).length,
@@ -1231,26 +1235,26 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
     <div className={"col col-right context-inspector wb-operational" + (expanded ? " is-expanded" : "")}>
       <div className="ci-header wb-toolbar">
         <div className="ci-heading">
-          <span>Context inspector</span>
+          <span>{uiText("Trình kiểm tra ngữ cảnh", "Context inspector")}</span>
           <b title={scope === "project" ? (ctx.docInfo?.metadata?.title || ctx.docInfo?.doc_id) : ctx.currentScopeLabel}>
-            {scope === "project" ? "Whole project" : (ctx.currentScopeLabel || currentScopeTitle)}
+            {scope === "project" ? uiText("Toàn dự án", "Whole project") : (ctx.currentScopeLabel || currentScopeTitle)}
           </b>
         </div>
-        <div className="ci-header-counts" aria-label="Project memory totals">
+        <div className="ci-header-counts" aria-label={uiText("Tổng memory dự án", "Project memory totals")}>
           <span><b>{totals.glossary || 0}</b>T</span>
           <span><b>{totals.entities || 0}</b>E</span>
           <span><b>{totals.relations || 0}</b>R</span>
         </div>
         <button className={"btn icon-only tip tip-left" + (toolsOpen || utility ? " is-on" : "")} type="button"
-          data-tip="Context tools" aria-label="Context tools" aria-expanded={toolsOpen} onClick={() => setToolsOpen(open => !open)}>
+          data-tip={uiText("Công cụ ngữ cảnh", "Context tools")} aria-label={uiText("Công cụ ngữ cảnh", "Context tools")} aria-expanded={toolsOpen} onClick={() => setToolsOpen(open => !open)}>
           <Ic.sliders size={13} />
         </button>
-        <button className="btn icon-only tip tip-left" type="button" data-tip="Open full Memory workspace"
-          aria-label="Open full Memory workspace" onClick={() => ctx.onOpenMemory?.(activeKind === "summaries" ? "summary" : activeKind)}>
+        <button className="btn icon-only tip tip-left" type="button" data-tip={uiText("Mở workspace Memory đầy đủ", "Open full Memory workspace")}
+          aria-label={uiText("Mở workspace Memory đầy đủ", "Open full Memory workspace")} onClick={() => ctx.onOpenMemory?.(activeKind === "summaries" ? "summary" : activeKind)}>
           <Ic.book size={13} />
         </button>
         <button className={"btn icon-only tip tip-left" + (expanded ? " is-on" : "")} type="button"
-          data-tip={expanded ? "Restore panel width" : "Expand context panel"} aria-label={expanded ? "Restore panel width" : "Expand context panel"}
+          data-tip={expanded ? uiText("Khôi phục chiều rộng panel", "Restore panel width") : uiText("Mở rộng panel ngữ cảnh", "Expand context panel")} aria-label={expanded ? uiText("Khôi phục chiều rộng panel", "Restore panel width") : uiText("Mở rộng panel ngữ cảnh", "Expand context panel")}
           aria-pressed={!!expanded} onClick={onToggleExpanded}>
           <Ic.expand size={13} />
         </button>
@@ -1263,7 +1267,7 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
             const badge = counts?.[tab.id];
             return (
               <button key={tab.id} type="button" className={utility === tab.id ? "is-active" : ""} onClick={() => openUtility(tab.id)}>
-                <Icon size={12} /><span>{tab.label}</span>
+                <Icon size={12} /><span>{inspectorTabLabel(tab)}</span>
                 {badge?.text && <em className={badge.tone || ""}>{badge.text}</em>}
               </button>
             );
@@ -1274,13 +1278,13 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
       {utility ? (
         <div className="ci-subview">
           <div className="ci-subview-head wb-section-title">
-            <button className="btn icon-only tip" type="button" data-tip="Back to context" aria-label="Back to context"
+            <button className="btn icon-only tip" type="button" data-tip={uiText("Về ngữ cảnh", "Back to context")} aria-label={uiText("Về ngữ cảnh", "Back to context")}
               onClick={() => { setUtility(null); onToggleTab?.(activeKind === "summaries" ? "summary" : activeKind); }}>
               <Ic.chevRight size={13} style={{ transform: "rotate(180deg)" }} />
             </button>
             <div>
-              <span>Context tools</span>
-              <b>{UTILITY_TABS.find(tab => tab.id === utility)?.label}</b>
+              <span>{uiText("Công cụ ngữ cảnh", "Context tools")}</span>
+              <b>{inspectorTabLabel(UTILITY_TABS.find(tab => tab.id === utility))}</b>
             </div>
           </div>
           <div className="ci-subview-body"><InspectorUtility id={utility} ctx={ctx} /></div>
@@ -1289,23 +1293,23 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
         <InspectorManager kind={activeKind} records={records} ctx={ctx} onBack={() => setManage(false)} />
       ) : (
         <>
-          <div className="ci-scope wb-toolbar" role="group" aria-label="Context scope">
+          <div className="ci-scope wb-toolbar" role="group" aria-label={uiText("Phạm vi ngữ cảnh", "Context scope")}>
             <button className={scope === "current" ? "is-active" : ""} type="button" onClick={() => setScope("current")}>
               {currentScopeTitle}<span>{ctx.currentScopeLabel}</span>
             </button>
             <button className={scope === "project" ? "is-active" : ""} type="button" onClick={() => setScope("project")}>
-              Whole project<span>{ctx.docInfo?.metadata?.title || ctx.docInfo?.doc_id}</span>
+              {uiText("Toàn dự án", "Whole project")}<span>{ctx.docInfo?.metadata?.title || ctx.docInfo?.doc_id}</span>
             </button>
           </div>
 
-          <div className="ci-tabs wb-toolbar" role="tablist" aria-label="Context record type">
+          <div className="ci-tabs wb-toolbar" role="tablist" aria-label={uiText("Loại bản ghi ngữ cảnh", "Context record type")}>
             {CONTEXT_TABS.map(tab => {
               const Icon = tab.icon;
               const tabCount = (memory[tab.id] || []).length;
               return (
                 <button key={tab.id} type="button" role="tab" aria-selected={activeKind === tab.id}
                   className={activeKind === tab.id ? "is-active" : ""} onClick={() => selectKind(tab.id)}>
-                  <Icon size={12} /><span>{tab.label}</span><em>{tabCount}</em>
+                  <Icon size={12} /><span>{inspectorTabLabel(tab)}</span><em>{tabCount}</em>
                 </button>
               );
             })}
@@ -1319,22 +1323,22 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
               <div className="ci-toolbar wb-toolbar">
                 <label className="ci-search">
                   <Ic.search size={12} />
-                  <input value={query} onChange={event => setQuery(event.target.value)} placeholder={`Search ${CONTEXT_TABS.find(tab => tab.id === activeKind)?.label.toLowerCase() || "context"}`} />
-                  {query && <button type="button" aria-label="Clear search" onClick={() => setQuery("")}><Ic.x size={10} /></button>}
+                  <input value={query} onChange={event => setQuery(event.target.value)} placeholder={`${uiText("Tìm", "Search")} ${inspectorTabLabel(CONTEXT_TABS.find(tab => tab.id === activeKind)).toLocaleLowerCase() || uiText("ngữ cảnh", "context")}`} />
+                  {query && <button type="button" aria-label={uiText("Xóa tìm kiếm", "Clear search")} onClick={() => setQuery("")}><Ic.x size={10} /></button>}
                 </label>
                 {canManage && (
-                  <button className="btn sm" type="button" onClick={() => setManage(true)}><Ic.pencil size={11} />Manage</button>
+                  <button className="btn sm" type="button" onClick={() => setManage(true)}><Ic.pencil size={11} />{uiText("Quản lý", "Manage")}</button>
                 )}
               </div>
               <div className="ci-list-head wb-section-title">
-                <span>{scope === "project" ? "Whole project" : currentScopeTitle}</span>
-                <b>{filtered.length} record{filtered.length === 1 ? "" : "s"}</b>
+                <span>{scope === "project" ? uiText("Toàn dự án", "Whole project") : currentScopeTitle}</span>
+                <b>{uiText(`${filtered.length} bản ghi`, `${filtered.length} record${filtered.length === 1 ? "" : "s"}`)}</b>
               </div>
               <div className="ci-list wb-record-list">
                 {!filtered.length ? (
                   <Empty icon={CONTEXT_TABS.find(tab => tab.id === activeKind)?.icon || Ic.doc}
-                    text={`No ${CONTEXT_TABS.find(tab => tab.id === activeKind)?.label.toLowerCase() || "context"} records in this scope.`}
-                    sub={scope === "current" ? "Switch to Whole project to inspect every stored record." : "This project has no stored records of this type."} />
+                    text={uiText(`Không có bản ghi ${inspectorTabLabel(CONTEXT_TABS.find(tab => tab.id === activeKind)).toLocaleLowerCase() || "ngữ cảnh"} trong phạm vi này.`, `No ${inspectorTabLabel(CONTEXT_TABS.find(tab => tab.id === activeKind)).toLocaleLowerCase() || "context"} records in this scope.`)}
+                    sub={scope === "current" ? uiText("Chuyển sang Toàn dự án để xem mọi bản ghi đã lưu.", "Switch to Whole project to inspect every stored record.") : uiText("Dự án này không có bản ghi đã lưu thuộc loại này.", "This project has no stored records of this type.")} />
                 ) : (
                   <>
                     {filtered.slice(0, visibleLimit).map((row, index) => (
@@ -1343,7 +1347,7 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
                     ))}
                     {filtered.length > visibleLimit && (
                       <button className="ci-more" type="button" onClick={() => setVisibleLimit(limit => limit + 100)}>
-                        Show next {Math.min(100, filtered.length - visibleLimit)}<span>{visibleLimit} / {filtered.length}</span>
+                        {uiText("Hiện thêm", "Show next")} {Math.min(100, filtered.length - visibleLimit)}<span>{visibleLimit} / {filtered.length}</span>
                       </button>
                     )}
                   </>

@@ -1176,6 +1176,78 @@ body.console-resizing-ledger { cursor: row-resize; }
     margin-left: 0;
   }
 }
+
+@media (max-width: 640px) {
+  .agentconsole {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .agentconsole .console-header {
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 6px 8px;
+  }
+  .agentconsole .console-project {
+    flex: 1 1 72px;
+  }
+  .agentconsole .run-picker {
+    flex: 1 1 150px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .agentconsole .hdr-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    margin-left: 0;
+    overflow: visible;
+  }
+  .agentconsole .replay-controls {
+    grid-template-columns: auto auto minmax(80px, 1fr) auto;
+    gap: 5px;
+    overflow: hidden;
+    padding: 5px 8px;
+  }
+  .agentconsole .replay-range {
+    min-width: 80px;
+  }
+  .agentconsole .console-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .agentconsole .col-left,
+  .agentconsole .col-right,
+  .agentconsole .console-splitter-vertical {
+    display: none !important;
+  }
+  .agentconsole .col-main {
+    grid-column: 1;
+  }
+  .agentconsole .ev-row {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 0 4px;
+  }
+  .agentconsole .ev-body {
+    overflow: hidden;
+  }
+  .agentconsole .ev-src {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .agentconsole .ev-msg,
+  .agentconsole .ev-dur,
+  .agentconsole .ev-seq {
+    display: none;
+  }
+  .agentconsole .memory-delta-head {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .agentconsole .memory-ledger-summary {
+    flex: 1 1 100%;
+    margin-left: 30px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .agentconsole .translation-block-arriving,
   .agentconsole .translation-column-arriving {

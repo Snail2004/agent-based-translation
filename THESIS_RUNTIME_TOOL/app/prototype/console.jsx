@@ -358,6 +358,7 @@ function consoleWriteLayout(layout) {
 }
 
 function consoleReadLocale() {
+  if (typeof window !== "undefined" && window.ThesisI18n) return window.ThesisI18n.getLocale();
   if (typeof window === "undefined" || !window.localStorage) return "vi";
   try {
     const stored = String(window.localStorage.getItem(CONSOLE_LOCALE_STORAGE_KEY) || "").toLowerCase();
@@ -368,6 +369,10 @@ function consoleReadLocale() {
 }
 
 function consoleWriteLocale(locale) {
+  if (typeof window !== "undefined" && window.ThesisI18n) {
+    window.ThesisI18n.setLocale(locale);
+    return;
+  }
   if (typeof window === "undefined" || !window.localStorage || !CONSOLE_UI_LOCALES.has(locale)) return;
   try {
     window.localStorage.setItem(CONSOLE_LOCALE_STORAGE_KEY, locale);
@@ -479,7 +484,7 @@ function ConsoleSkipReason({ reason, locale, stageLabel }) {
       aria-describedby={tooltipId}
       aria-label={`${consoleText(locale, "skippedReason")}: ${rawReason}`}
     >
-      <span>skipped</span>
+      <span>{uiText("đã bỏ qua", "skipped")}</span>
       <span className="stage-skip-mark" aria-hidden="true">?</span>
       <span className="stage-skip-popover" id={tooltipId} role="tooltip">
         <strong>{stageLabel}</strong>
@@ -636,13 +641,13 @@ function consoleDuration(start, end) {
 function consoleSystemLabel(id) {
   const key = String(id || "").trim();
   if (CONSOLE_SYSTEM_LABELS[key]) return CONSOLE_SYSTEM_LABELS[key];
-  return key ? key.replace(/_/g, " ") : "Unknown check";
+  return key ? key.replace(/_/g, " ") : uiText("Kiểm tra chưa rõ", "Unknown check");
 }
 
 function consoleSystemDetail(check) {
-  if (!check) return "Not checked";
+  if (!check) return uiText("Chưa kiểm tra", "Not checked");
   if (check.id === "openai_key" || check.id === "gemini_key") {
-    return check.ok === false ? "Credential missing" : "Credential configured · provider not called";
+    return check.ok === false ? uiText("Thiếu credential", "Credential missing") : uiText("Đã cấu hình credential · chưa gọi provider", "Credential configured · provider not called");
   }
   const matched = Array.isArray(check.matchedModels) && check.matchedModels.length ? check.matchedModels[0] : "";
   const model = matched || check.expectedModel;
@@ -650,14 +655,14 @@ function consoleSystemDetail(check) {
   if (model) return model;
   if (check.module) return `${check.module}${check.python ? " · Python " + check.python : ""}`;
   if (check.endpoint) return check.endpoint;
-  return check.ok === false ? "Preflight failed" : check.ok === true ? "Preflight passed" : "Result unavailable";
+  return check.ok === false ? uiText("Preflight thất bại", "Preflight failed") : check.ok === true ? uiText("Preflight đạt", "Preflight passed") : uiText("Kết quả không khả dụng", "Result unavailable");
 }
 
 function consoleSystemStateLabel(check) {
-  if (!check || check.ok == null) return "UNKNOWN";
-  if (check.id === "openai_key" || check.id === "gemini_key") return check.ok ? "KEY READY" : "MISSING";
-  if (check.id === "cometkiwi_import") return check.ok ? "LOADED" : "FAILED";
-  return check.ok ? "READY" : "FAILED";
+  if (!check || check.ok == null) return uiText("CHƯA RÕ", "UNKNOWN");
+  if (check.id === "openai_key" || check.id === "gemini_key") return check.ok ? uiText("KEY SẴN SÀNG", "KEY READY") : uiText("BỊ THIẾU", "MISSING");
+  if (check.id === "cometkiwi_import") return check.ok ? uiText("ĐÃ TẢI", "LOADED") : uiText("THẤT BẠI", "FAILED");
+  return check.ok ? uiText("SẴN SÀNG", "READY") : uiText("THẤT BẠI", "FAILED");
 }
 
 function consoleSystemTime(ts) {
@@ -1860,20 +1865,20 @@ function ConsoleMemoryLedger({
       : "watchlist · not committed";
 
   return (
-    <section className={"memory-delta-pane" + (open ? "" : " memory-delta-collapsed")} aria-label="Memory ledger">
+    <section className={"memory-delta-pane" + (open ? "" : " memory-delta-collapsed")} aria-label={uiText("Sổ cái bộ nhớ", "Memory ledger")}>
       <div className="memory-delta-head">
         <button
           type="button"
           className="memory-delta-toggle"
-          aria-label={open ? "Collapse memory ledger" : "Expand memory ledger"}
+          aria-label={open ? uiText("Thu gọn sổ cái bộ nhớ", "Collapse memory ledger") : uiText("Mở rộng sổ cái bộ nhớ", "Expand memory ledger")}
           aria-expanded={open}
-          title={open ? "Thu gọn cập nhật bộ nhớ" : "Mở cập nhật bộ nhớ"}
+          title={open ? uiText("Thu gọn cập nhật bộ nhớ", "Collapse memory updates") : uiText("Mở cập nhật bộ nhớ", "Expand memory updates")}
           onClick={toggleLedgerOpen}
         >
           {open ? "⌄" : "⌃"}
         </button>
-        <span className="memory-delta-title">:: run ledger</span>
-        <span className="run-ledger-surfaces" role="tablist" aria-label="Run ledger surfaces">
+        <span className="memory-delta-title">:: {uiText("sổ cái lần chạy", "run ledger")}</span>
+        <span className="run-ledger-surfaces" role="tablist" aria-label={uiText("Các bề mặt sổ cái lần chạy", "Run ledger surfaces")}>
           <button
             type="button"
             role="tab"
@@ -1881,7 +1886,7 @@ function ConsoleMemoryLedger({
             className={"run-ledger-surface" + (surface === "memory" ? " active" : "")}
             onClick={() => chooseLedgerSurface("memory")}
           >
-            Bộ nhớ
+            {uiText("Bộ nhớ", "Memory")}
           </button>
           {previewAvailable && (
             <button
@@ -1891,52 +1896,52 @@ function ConsoleMemoryLedger({
               className={"run-ledger-surface" + (surface === "translation" ? " active" : "")}
               onClick={() => chooseLedgerSurface("translation")}
             >
-              Bản dịch
+              {uiText("Bản dịch", "Translation")}
             </button>
           )}
         </span>
         <span className="memory-delta-total">
           {surface === "translation"
             ? (previewProgressText ? `${previewProgressText} windows` : "0 windows")
-            : `${formatConsoleInt(deltas.length)} committed changes`}
+            : uiText(`${formatConsoleInt(deltas.length)} thay đổi đã commit`, `${formatConsoleInt(deltas.length)} committed changes`)}
         </span>
         {onCenterMode && (
           <button
             type="button"
             className="console-pane-mode-button"
             onClick={() => onCenterMode(centerMode === "ledger" ? "split" : "ledger")}
-            title={centerMode === "ledger" ? "Khôi phục Event Stream và Run Ledger" : "Phóng to Run Ledger"}
-            aria-label={centerMode === "ledger" ? "Restore split Console view" : "Maximize Run Ledger"}
+            title={centerMode === "ledger" ? uiText("Khôi phục Event Stream và Run Ledger", "Restore Event Stream and Run Ledger") : uiText("Phóng to Run Ledger", "Maximize Run Ledger")}
+            aria-label={centerMode === "ledger" ? uiText("Khôi phục Console chia đôi", "Restore split Console view") : uiText("Phóng to Run Ledger", "Maximize Run Ledger")}
           >
             {centerMode === "ledger" ? "↕" : "□"}
           </button>
         )}
-        {surface === "memory" && <span className="memory-ledger-summary" aria-label="Run memory summary">
+        {surface === "memory" && <span className="memory-ledger-summary" aria-label={uiText("Tóm tắt bộ nhớ lần chạy", "Run memory summary")}>
           {packCount != null && (
-            <span className="memory-ledger-chip" title={packWindow ? `Latest context pack: ${packWindow}` : "Latest context pack"}>
+            <span className="memory-ledger-chip" title={packWindow ? uiText(`Gói ngữ cảnh mới nhất: ${packWindow}`, `Latest context pack: ${packWindow}`) : uiText("Gói ngữ cảnh mới nhất", "Latest context pack")}>
               pack {formatConsoleInt(packCount)}
             </span>
           )}
           {consistency && (
-            <span className={"memory-ledger-chip" + (consistency.drift ? " ledger-chip-warn" : " ledger-chip-good")} title="Rendered terminology adherence">
+            <span className={"memory-ledger-chip" + (consistency.drift ? " ledger-chip-warn" : " ledger-chip-good")} title={uiText("Mức tuân thủ thuật ngữ đã render", "Rendered terminology adherence")}>
               adherence {formatConsoleInt(consistency.consistent)}/{formatConsoleInt(consistency.terms)}
             </span>
           )}
           {watchlist.length > 0 && (
-            <span className="memory-ledger-chip ledger-chip-warn" title="Pending or held records; not committed">
+            <span className="memory-ledger-chip ledger-chip-warn" title={uiText("Bản ghi chờ hoặc đang giữ; chưa commit", "Pending or held records; not committed")}>
               held {formatConsoleInt(watchlist.length)}
             </span>
           )}
         </span>}
         {surface === "translation" && (
-          <span className="memory-ledger-summary" aria-label="Translation stream summary">
+          <span className="memory-ledger-summary" aria-label={uiText("Tóm tắt luồng dịch", "Translation stream summary")}>
             <span className="memory-ledger-chip ledger-chip-good">
-              {formatConsoleInt(translationBlockCount)} blocks ready
+              {formatConsoleInt(translationBlockCount)} {uiText("block sẵn sàng", "blocks ready")}
             </span>
             {latestPreview && <span className="memory-ledger-chip">{latestPreview.model || latestPreview.config || "translator"}</span>}
           </span>
         )}
-        {surface === "memory" && <span className="memory-delta-stats" aria-label="Memory delta operation totals">
+        {surface === "memory" && <span className="memory-delta-stats" aria-label={uiText("Tổng thao tác delta bộ nhớ", "Memory delta operation totals")}>
           {[...CONSOLE_MEMORY_OPERATIONS].filter(operation => counts[operation] > 0).map(operation => {
             const meta = CONSOLE_MEMORY_OPERATION_META[operation];
             return (
@@ -1949,11 +1954,11 @@ function ConsoleMemoryLedger({
       </div>
       {open && surface === "memory" && (
         <>
-          <div className="memory-ledger-tabs" role="tablist" aria-label="Memory ledger views">
+          <div className="memory-ledger-tabs" role="tablist" aria-label={uiText("Các chế độ sổ cái bộ nhớ", "Memory ledger views")}>
             {[
-              ["changes", "Thay đổi", deltas.length],
-              ["current", "Hiện có", currentRows.length],
-              ["pending", "Chờ xử lý", watchlist.length],
+              ["changes", uiText("Thay đổi", "Changes"), deltas.length],
+              ["current", uiText("Hiện có", "Current"), currentRows.length],
+              ["pending", uiText("Chờ xử lý", "Pending"), watchlist.length],
             ].map(([key, label, count]) => (
               <button
                 type="button"
@@ -1967,7 +1972,7 @@ function ConsoleMemoryLedger({
               </button>
             ))}
           </div>
-          <div className="memory-delta-toolbar" role="toolbar" aria-label="Filter memory ledger">
+          <div className="memory-delta-toolbar" role="toolbar" aria-label={uiText("Lọc sổ cái bộ nhớ", "Filter memory ledger")}>
             {view !== "pending" && ["all", "term", "entity"].map(collection => (
               <button
                 type="button"
@@ -1976,11 +1981,11 @@ function ConsoleMemoryLedger({
                 aria-pressed={collectionFilter === collection}
                 onClick={() => setCollectionFilter(collection)}
               >
-                {collection === "all" ? "All" : CONSOLE_MEMORY_COLLECTION_LABELS[collection]}
+                {collection === "all" ? uiText("Tất cả", "All") : (collection === "term" ? uiText("Thuật ngữ", "Terms") : uiText("Thực thể", "Entities"))}
                 <span>{formatConsoleInt(filterCounts[collection] || 0)}</span>
               </button>
             ))}
-            {view === "pending" && <span className="memory-ledger-note">Chỉ các mục đang giữ lại để xem xét; không phải thay đổi bộ nhớ.</span>}
+            {view === "pending" && <span className="memory-ledger-note">{uiText("Chỉ các mục đang giữ lại để xem xét; không phải thay đổi bộ nhớ.", "Only records held for review; these are not memory changes.")}</span>}
             <span className="memory-delta-contract">{tabContract}</span>
           </div>
           <div className="memory-delta-feed" ref={memoryFeedRef}>
@@ -2026,8 +2031,8 @@ function ConsoleMemoryLedger({
             }) : (
               <div className="memory-delta-empty">
                 {deltas.length
-                  ? "Không có thay đổi thuộc nhóm đang lọc."
-                  : "Run này chưa phát committed memory_delta_v1. Panel chỉ hiện thay đổi đã ghi bền vững."}
+                  ? uiText("Không có thay đổi thuộc nhóm đang lọc.", "No changes match the active filter.")
+                  : uiText("Lần chạy này chưa phát committed memory_delta_v1. Panel chỉ hiện thay đổi đã ghi bền vững.", "This run has not emitted committed memory_delta_v1. The panel shows only durably persisted changes.")}
               </div>
             ))}
             {view === "current" && (visibleCurrent.length ? visibleCurrent.map(delta => (
@@ -2036,7 +2041,7 @@ function ConsoleMemoryLedger({
                 data-memory-delta-id={delta.deltaId}
                 key={`current:${delta.domain}:${delta.collection}:${delta.recordId}`}
               >
-                <span className="memory-delta-glyph" title="Latest committed revision">◆</span>
+                <span className="memory-delta-glyph" title={uiText("Revision đã commit mới nhất", "Latest committed revision")}>◆</span>
                 <span className="memory-delta-main">
                   <span className="memory-delta-label">
                     <b>{delta.label}</b>
@@ -2045,7 +2050,7 @@ function ConsoleMemoryLedger({
                   <span className="memory-delta-projection"><span>{delta.after || delta.before || "no display projection"}</span></span>
                 </span>
                 <span className="memory-delta-meta">
-                  <span className="memory-lifecycle memory-lifecycle-committed">current</span>
+                  <span className="memory-lifecycle memory-lifecycle-committed">{uiText("hiện tại", "current")}</span>
                   <span>r{delta.revisionAfter} · g{delta.stateGeneration}</span>
                   <span title={`Commit receipt: ${delta.receiptId}`}>receipt</span>
                 </span>
@@ -2053,8 +2058,8 @@ function ConsoleMemoryLedger({
             )) : (
               <div className="memory-delta-empty">
                 {deltas.length
-                  ? "Không có bản ghi hiện hành thuộc nhóm đang lọc."
-                  : "Chưa có committed delta để dựng projection của run này. Đây không phải toàn bộ registry."}
+                  ? uiText("Không có bản ghi hiện hành thuộc nhóm đang lọc.", "No current records match the active filter.")
+                  : uiText("Chưa có committed delta để dựng projection của lần chạy này. Đây không phải toàn bộ registry.", "No committed delta is available to build this run projection. This is not the full registry.")}
               </div>
             ))}
             {view === "pending" && (watchlist.length ? watchlist.map((item, index) => {
@@ -2064,7 +2069,7 @@ function ConsoleMemoryLedger({
               const evidence = consoleWatchEvidenceLine(item);
               return (
                 <div className="memory-pending-row" key={item.entry_id || `${source}:${index}`}>
-                  <span className="memory-delta-glyph delta-pending-glyph" title="Pending or held">!</span>
+                  <span className="memory-delta-glyph delta-pending-glyph" title={uiText("Chờ hoặc đang giữ", "Pending or held")}>!</span>
                   <span className="memory-delta-main">
                     <span className="memory-delta-label">
                       <b>{source}</b><span>watchlist · {consoleWatchReasonLabel(item)}</span>
@@ -2077,50 +2082,50 @@ function ConsoleMemoryLedger({
                     )}
                   </span>
                   <span className="memory-delta-meta">
-                    <span className="memory-lifecycle memory-lifecycle-candidate">held</span>
+                    <span className="memory-lifecycle memory-lifecycle-candidate">{uiText("đang giữ", "held")}</span>
                     <span>{consoleWatchInjectionLabel(item)}</span>
                   </span>
                 </div>
               );
             }) : (
-              <div className="memory-delta-empty">Không có mục pending/held ở thời điểm replay hiện tại.</div>
+              <div className="memory-delta-empty">{uiText("Không có mục chờ/đang giữ ở thời điểm replay hiện tại.", "No pending/held records at the current replay position.")}</div>
             ))}
             {view === "changes" && invalidCount > 0 && (
-              <div className="memory-delta-invalid">Đã bỏ qua {formatConsoleInt(invalidCount)} event sai contract.</div>
+              <div className="memory-delta-invalid">{uiText(`Đã bỏ qua ${formatConsoleInt(invalidCount)} sự kiện sai contract.`, `${formatConsoleInt(invalidCount)} contract-invalid events were skipped.`)}</div>
             )}
           </div>
         </>
       )}
       {open && surface === "translation" && (
-        <div className="translation-stream-pane" role="tabpanel" aria-label="Translation stream">
-          <div className="translation-stream-toolbar" role="toolbar" aria-label="Translation stream controls">
-            <span className="translation-layout-switch" role="group" aria-label="Translation layout">
+        <div className="translation-stream-pane" role="tabpanel" aria-label={uiText("Luồng dịch", "Translation stream")}>
+          <div className="translation-stream-toolbar" role="toolbar" aria-label={uiText("Điều khiển luồng dịch", "Translation stream controls")}>
+            <span className="translation-layout-switch" role="group" aria-label={uiText("Bố cục bản dịch", "Translation layout")}>
               <button
                 type="button"
                 className={effectiveTranslationLayout === "target" ? "active" : ""}
                 aria-pressed={effectiveTranslationLayout === "target"}
                 onClick={() => chooseTranslationLayout("target")}
-              >Đích</button>
+              >{uiText("Đích", "Target")}</button>
               <button
                 type="button"
                 className={effectiveTranslationLayout === "parallel" ? "active" : ""}
                 aria-pressed={effectiveTranslationLayout === "parallel"}
                 onClick={() => chooseTranslationLayout("parallel")}
-              >Song song</button>
+              >{uiText("Song song", "Parallel")}</button>
               {previewArms.length >= 2 && !narrowTranslationView && (
                 <button
                   type="button"
                   className={effectiveTranslationLayout === "triple" ? "active" : ""}
                   aria-pressed={effectiveTranslationLayout === "triple"}
                   onClick={() => chooseTranslationLayout("triple")}
-                  title={`So sánh Nguồn + ${previewArms.join(" + ")}`}
-                >3 cột</button>
+                  title={uiText(`So sánh Nguồn + ${previewArms.join(" + ")}`, `Compare Source + ${previewArms.join(" + ")}`)}
+                >{uiText("3 cột", "3 columns")}</button>
               )}
             </span>
             {previewArms.length > 1 && !tripleLayout && (
               <select
                 className="translation-arm-select"
-                aria-label="Translation arm"
+                aria-label={uiText("Nhánh dịch", "Translation arm")}
                 value={translationArm}
                 onChange={event => setTranslationArm(event.target.value)}
               >
@@ -2128,49 +2133,49 @@ function ConsoleMemoryLedger({
               </select>
             )}
             {tripleLayout && (
-              <span className="translation-comparison-arms" aria-label="Translation comparison arms">
+              <span className="translation-comparison-arms" aria-label={uiText("Các nhánh so sánh bản dịch", "Translation comparison arms")}>
                 {previewArms.join(" + ")}
               </span>
             )}
             <select
               className="translation-pace-select"
-              aria-label="Nhịp hiển thị block dịch"
+              aria-label={uiText("Nhịp hiển thị block dịch", "Translation block display pace")}
               value={presentationPace}
               onChange={event => setPresentationPace(event.target.value)}
-              title="Điều chỉnh nhịp đưa các block đã nhận lên màn hình"
+              title={uiText("Điều chỉnh nhịp đưa các block đã nhận lên màn hình", "Adjust how quickly received blocks appear")}
             >
-              <option value="adaptive">Nhịp tự động</option>
-              <option value="slow">Chậm</option>
-              <option value="fast">Nhanh</option>
-              <option value="instant">Hiện ngay</option>
+              <option value="adaptive">{uiText("Nhịp tự động", "Adaptive")}</option>
+              <option value="slow">{uiText("Chậm", "Slow")}</option>
+              <option value="fast">{uiText("Nhanh", "Fast")}</option>
+              <option value="instant">{uiText("Hiện ngay", "Instant")}</option>
             </select>
             <button
               type="button"
               className={"translation-follow-toggle" + (followTail && !focusedBlockId ? " active" : "")}
               aria-pressed={followTail && !focusedBlockId}
               onClick={() => followTail && !focusedBlockId ? setFollowTail(false) : resumeTranslationFollow()}
-              title={followTail && !focusedBlockId ? "Tắt tự cuộn để giữ vị trí đang đọc" : "Theo dõi block mới nhất"}
+              title={followTail && !focusedBlockId ? uiText("Tắt tự cuộn để giữ vị trí đang đọc", "Disable auto-scroll and keep the reading position") : uiText("Theo dõi block mới nhất", "Follow the latest block")}
             >
-              <span aria-hidden="true">●</span> Theo dõi
+              <span aria-hidden="true">●</span> {uiText("Theo dõi", "Follow")}
             </button>
             <span className="translation-stream-progress">
               {`${formatConsoleInt(translationBlockCount)}/${formatConsoleInt(translationReceivedBlockCount)} block`}
               {tripleLayout
                 ? ` · ${previewProgressText || previewArms.join(" + ")}`
                 : ` · ${translationArm || "translator"} ${formatConsoleInt(selectedPreviewWindow)}${selectedPreviewTotal ? `/${formatConsoleInt(selectedPreviewTotal)}` : ""} window`}
-              {presentationBacklog > 0 ? ` · ${formatConsoleInt(presentationBacklog)} chờ` : ""}
+              {presentationBacklog > 0 ? uiText(` · ${formatConsoleInt(presentationBacklog)} chờ`, ` · ${formatConsoleInt(presentationBacklog)} pending`) : ""}
             </span>
           </div>
           {focusedBlockId && (
             <div className="translation-focus-bar" role="status">
               <button type="button" className="translation-focus-back" onClick={clearTranslationFocus}>
-                ← Quay lại luồng
+                ← {uiText("Quay lại luồng", "Back to stream")}
               </button>
-              <span><b>{focusedBlockId}</b> · đang xem riêng block</span>
-              <span className="translation-focus-hint">Esc để thoát</span>
+              <span><b>{focusedBlockId}</b> · {uiText("đang xem riêng block", "focused block view")}</span>
+              <span className="translation-focus-hint">{uiText("Esc để thoát", "Press Esc to exit")}</span>
               {pendingPreviewCount > 0 && (
                 <button type="button" className="translation-focus-resume" onClick={resumeTranslationFollow}>
-                  {formatConsoleInt(pendingPreviewCount)} cập nhật mới · Theo dõi tiếp
+                  {formatConsoleInt(pendingPreviewCount)} {uiText("cập nhật mới · Theo dõi tiếp", "new updates · Resume following")}
                 </button>
               )}
             </div>
@@ -2189,7 +2194,7 @@ function ConsoleMemoryLedger({
                 >
                   <header className="translation-block-head">
                     <span className="translation-stream-id">{focusedPreviewGroup.block_id || focusedBlockId}</span>
-                    <span className="translation-block-ready">● {focusedReadyArms.length} arm ready</span>
+                    <span className="translation-block-ready">● {focusedReadyArms.length} {uiText("nhánh sẵn sàng", "arm ready")}</span>
                     <span className="translation-stream-model">
                       {Array.from(new Set(focusedReadyArms.map(arm => {
                         const row = focusedPreviewGroup.rowsByArm[arm];
@@ -2200,15 +2205,15 @@ function ConsoleMemoryLedger({
                       type="button"
                       className="translation-focus-button"
                       onClick={clearTranslationFocus}
-                      title="Quay lại luồng block"
-                      aria-label="Exit focused block"
+                      title={uiText("Quay lại luồng block", "Back to block stream")}
+                      aria-label={uiText("Thoát chế độ tập trung block", "Exit focused block")}
                     >×</button>
                   </header>
                   <div className="translation-block-body is-focus">
                     <section className="translation-block-column translation-block-source" aria-label={`Source ${focusedPreviewGroup.block_id || focusedBlockId}`}>
-                      <span className="translation-block-label">Nguồn</span>
+                      <span className="translation-block-label">{uiText("Nguồn", "Source")}</span>
                       <p className={focusedPreviewGroup.sourceFlows ? "translation-source-flow" : ""}>
-                        {focusedPreviewGroup.source_text || "Không có source_text trong preview đã lưu."}
+                        {focusedPreviewGroup.source_text || uiText("Không có source_text trong preview đã lưu.", "No source_text is available in the persisted preview.")}
                       </p>
                     </section>
                     {focusedReadyArms.map(arm => {
@@ -2219,15 +2224,15 @@ function ConsoleMemoryLedger({
                           aria-label={`${arm} translation ${focusedPreviewGroup.block_id || focusedBlockId}`}
                           key={arm}
                         >
-                          <span className="translation-block-label">Bản dịch {arm}</span>
-                          <p>{row.target_text || "Không có target_text trong preview đã lưu."}</p>
+                          <span className="translation-block-label">{uiText("Bản dịch", "Translation")} {arm}</span>
+                          <p>{row.target_text || uiText("Không có target_text trong preview đã lưu.", "No target_text is available in the persisted preview.")}</p>
                         </section>
                       );
                     })}
                   </div>
                 </article>
               ) : (
-                <div className="memory-delta-empty">Block đang focus chưa có preview đã persist.</div>
+                <div className="memory-delta-empty">{uiText("Block đang focus chưa có preview đã lưu.", "The focused block has no persisted preview.")}</div>
               )
             ) : tripleLayout && comparisonRows.length ? comparisonRows.map((group, index) => {
               const isLatest = Boolean(latestPreviewUpdate
@@ -2259,20 +2264,20 @@ function ConsoleMemoryLedger({
                   <header className="translation-block-head">
                     <span className="translation-stream-id">{group.block_id || `block ${index + 1}`}</span>
                     <span>{windows}</span>
-                    <span className="translation-block-ready">● {readyArms.length}/{previewArms.length} ready</span>
+                    <span className="translation-block-ready">● {readyArms.length}/{previewArms.length} {uiText("sẵn sàng", "ready")}</span>
                     <span className="translation-stream-model">{models || "translator"}</span>
                     <button
                       type="button"
                       className="translation-focus-button"
                       onClick={() => focusTranslationBlock(group.block_id)}
-                      title="Mở rộng block"
-                      aria-label={`Focus block ${group.block_id || index + 1}`}
+                      title={uiText("Mở rộng block", "Expand block")}
+                      aria-label={uiText(`Tập trung block ${group.block_id || index + 1}`, `Focus block ${group.block_id || index + 1}`)}
                     >□</button>
                   </header>
                   <div className="translation-block-body is-triple">
                     <section className="translation-block-column translation-block-source" aria-label={`Source ${group.block_id || index + 1}`}>
-                      <span className="translation-block-label">Nguồn</span>
-                      <p className={group.sourceFlows ? "translation-source-flow" : ""}>{group.source_text || "Không có source_text trong preview đã lưu."}</p>
+                      <span className="translation-block-label">{uiText("Nguồn", "Source")}</span>
+                      <p className={group.sourceFlows ? "translation-source-flow" : ""}>{group.source_text || uiText("Không có source_text trong preview đã lưu.", "No source_text is available in the persisted preview.")}</p>
                     </section>
                     {previewArms.map(arm => {
                       const row = group.rowsByArm[arm];
@@ -2286,8 +2291,8 @@ function ConsoleMemoryLedger({
                           aria-label={`${arm} translation ${group.block_id || index + 1}`}
                           key={arm}
                         >
-                          <span className="translation-block-label">Bản dịch {arm}</span>
-                          <p>{row ? (row.target_text || "Không có target_text trong preview đã lưu.") : "Chưa sẵn sàng ở thời điểm replay này."}</p>
+                          <span className="translation-block-label">{uiText("Bản dịch", "Translation")} {arm}</span>
+                          <p>{row ? (row.target_text || uiText("Không có target_text trong preview đã lưu.", "No target_text is available in the persisted preview.")) : uiText("Chưa sẵn sàng ở thời điểm replay này.", "Not ready at this replay position.")}</p>
                         </section>
                       );
                     })}
@@ -2315,37 +2320,37 @@ function ConsoleMemoryLedger({
                   <header className="translation-block-head">
                     <span className="translation-stream-id">{row.block_id || `block ${index + 1}`}</span>
                     <span>{row.window_id || "Translator preview"}</span>
-                    <span className="translation-block-ready">● ready</span>
+                    <span className="translation-block-ready">● {uiText("sẵn sàng", "ready")}</span>
                     <span className="translation-stream-model">{row.model || row.config || "translated"}</span>
                     <button
                       type="button"
                       className="translation-focus-button"
                       onClick={() => focusTranslationBlock(row.block_id)}
-                      title="Mở rộng block"
-                      aria-label={`Focus block ${row.block_id || index + 1}`}
+                      title={uiText("Mở rộng block", "Expand block")}
+                      aria-label={uiText(`Tập trung block ${row.block_id || index + 1}`, `Focus block ${row.block_id || index + 1}`)}
                     >□</button>
                   </header>
                   <div className={"translation-block-body" + (effectiveTranslationLayout === "parallel" ? " is-parallel" : " is-target-only")}>
                     {effectiveTranslationLayout === "parallel" && (
                       <section className="translation-block-column translation-block-source" aria-label={`Source ${row.block_id || index + 1}`}>
-                        <span className="translation-block-label">Nguồn</span>
-                        <p className={sourceFlows ? "translation-source-flow" : ""}>{row.source_text || "Không có source_text trong preview đã lưu."}</p>
+                        <span className="translation-block-label">{uiText("Nguồn", "Source")}</span>
+                        <p className={sourceFlows ? "translation-source-flow" : ""}>{row.source_text || uiText("Không có source_text trong preview đã lưu.", "No source_text is available in the persisted preview.")}</p>
                       </section>
                     )}
                     <section className="translation-block-column translation-block-target" aria-label={`Translation ${row.block_id || index + 1}`}>
-                      <span className="translation-block-label">Bản dịch</span>
-                      <p>{row.target_text || "Không có target_text trong preview đã lưu."}</p>
+                      <span className="translation-block-label">{uiText("Bản dịch", "Translation")}</span>
+                      <p>{row.target_text || uiText("Không có target_text trong preview đã lưu.", "No target_text is available in the persisted preview.")}</p>
                     </section>
                   </div>
                 </article>
               );
             }) : (
-              <div className="memory-delta-empty">Translator đã phát preview, nhưng chưa tải được block đã persist.</div>
+              <div className="memory-delta-empty">{uiText("Translator đã phát preview, nhưng chưa tải được block đã lưu.", "Translator emitted a preview, but no persisted block could be loaded.")}</div>
             )}
           </div>
           {!focusedBlockId && pendingPreviewCount > 0 && (
             <button type="button" className="translation-new-blocks" onClick={resumeTranslationFollow}>
-              {formatConsoleInt(pendingPreviewCount)} cập nhật mới · Theo dõi tiếp
+              {formatConsoleInt(pendingPreviewCount)} {uiText("cập nhật mới · Theo dõi tiếp", "new updates · Resume following")}
             </button>
           )}
         </div>
@@ -2378,7 +2383,7 @@ function AgentConsoleView(props) {
   const [severityFilter, setSeverityFilter] = React.useState("");
   const [heartbeatMode, setHeartbeatMode] = React.useState("grouped");
   const [eventPreset, setEventPreset] = React.useState("important");
-  const [uiLocale, setUiLocale] = React.useState(() => consoleReadLocale());
+  const [uiLocale, setUiLocale] = useThesisLocale();
   const [systemsOpen, setSystemsOpen] = React.useState(false);
   const systemsRef = React.useRef(null);
   const [navigationTarget, setNavigationTarget] = React.useState(null);
@@ -2391,7 +2396,6 @@ function AgentConsoleView(props) {
   const mainColumnRef = React.useRef(null);
   const resizeCleanupRef = React.useRef(null);
   React.useEffect(() => consoleWriteLayout(consoleLayout), [consoleLayout]);
-  React.useEffect(() => consoleWriteLocale(uiLocale), [uiLocale]);
   React.useEffect(() => () => {
     if (resizeCleanupRef.current) resizeCleanupRef.current();
   }, []);
@@ -2743,14 +2747,14 @@ function AgentConsoleView(props) {
       <header className="console-header">
         {onBack && <button className="btn console-back" type="button" onClick={onBack}>&larr; {consoleText(uiLocale, "workspace")}</button>}
         <span className="brand">⬢ AGENT CONSOLE</span>
-        <nav className="run-surface-tabs" aria-label="Run views">
+        <nav className="run-surface-tabs" aria-label={uiText("Các chế độ lần chạy", "Run views")}>
           <span className="run-surface-tab active" aria-current="page">Console</span>
           {onOpenReport && (
-            <button className="run-surface-tab" type="button" onClick={onOpenReport}>Report</button>
+            <button className="run-surface-tab" type="button" onClick={onOpenReport}>{uiText("Báo cáo", "Report")}</button>
           )}
         </nav>
         {projectId && <span className="console-project" title={projectId}>{projectId}</span>}
-        <select className="run-picker" aria-label="Run picker" value={runId || ""} onChange={e => onSelectRun && onSelectRun(e.target.value)}>
+        <select className="run-picker" aria-label={uiText("Chọn lần chạy", "Run picker")} value={runId || ""} onChange={e => onSelectRun && onSelectRun(e.target.value)}>
           {!runId && <option value="">{consoleText(uiLocale, "selectRun")}</option>}
           {runs.slice(0, 40).map(r => {
             const t = r.started_at ? new Date(r.started_at) : null;
@@ -2768,17 +2772,17 @@ function AgentConsoleView(props) {
             aria-expanded={systemsOpen}
             aria-haspopup="dialog"
             onClick={() => setSystemsOpen(open => !open)}
-            title="Trạng thái model, API và dependency từ preflight của run đang chọn"
+            title={uiText("Trạng thái model, API và dependency từ preflight của lần chạy đang chọn", "Model, API, and dependency status from the selected run preflight")}
           >
             <span className="systems-dot" aria-hidden="true">●</span>
-            <span>SYSTEMS</span>
+            <span>{uiText("HỆ THỐNG", "SYSTEMS")}</span>
             <span className="systems-count">{systemsCount}</span>
           </button>
           {systemsOpen && (
-            <span className="systems-popover" role="dialog" aria-label="Model and API preflight status">
+            <span className="systems-popover" role="dialog" aria-label={uiText("Trạng thái preflight của model và API", "Model and API preflight status")}>
               <span className="systems-popover-head">
-                <span>MODEL &amp; API STATUS</span>
-                <span className="systems-popover-summary">{systemChecks.length ? `${readySystems} ready${failedSystems ? ` · ${failedSystems} failed` : ""}` : "not checked"}</span>
+                <span>{uiText("TRẠNG THÁI MODEL & API", "MODEL & API STATUS")}</span>
+                <span className="systems-popover-summary">{systemChecks.length ? uiText(`${readySystems} sẵn sàng${failedSystems ? ` · ${failedSystems} lỗi` : ""}`, `${readySystems} ready${failedSystems ? ` · ${failedSystems} failed` : ""}`) : uiText("chưa kiểm tra", "not checked")}</span>
               </span>
               {systemChecks.length ? systemChecks.map(check => (
                 <span className="systems-row" key={check.id}>
@@ -2793,9 +2797,9 @@ function AgentConsoleView(props) {
                   </span>
                 </span>
               )) : (
-                <span className="systems-empty">Chưa có event health_check ở vị trí replay hiện tại.</span>
+                <span className="systems-empty">{uiText("Chưa có sự kiện health_check ở vị trí replay hiện tại.", "No health_check event is available at the current replay position.")}</span>
               )}
-              <span className="systems-note">Snapshot preflight 0-API · key checks không xác nhận quota/provider</span>
+              <span className="systems-note">{uiText("Snapshot preflight 0-API · kiểm tra key không xác nhận quota/provider", "0-API preflight snapshot · key checks do not confirm quota/provider")}</span>
             </span>
           )}
         </span>
@@ -2807,20 +2811,7 @@ function AgentConsoleView(props) {
           {canResumeRun
             ? <button className="btn btn-accent" type="button" onClick={onResume}>▸ {consoleText(uiLocale, "resume")}</button>
             : <button className="btn btn-danger" type="button" disabled={!isOpenRun || !onCancel} onClick={onCancel}>✕ {consoleText(uiLocale, "cancel")}</button>}
-          <span className="console-locale-switch" role="group" aria-label={consoleText(uiLocale, "uiLanguage")}>
-            {["vi", "en"].map(locale => (
-              <button
-                className={"console-locale-option" + (uiLocale === locale ? " active" : "")}
-                type="button"
-                key={locale}
-                aria-pressed={uiLocale === locale}
-                title={`${consoleText(uiLocale, "uiLanguage")}: ${locale.toUpperCase()}`}
-                onClick={() => setUiLocale(locale)}
-              >
-                {locale.toUpperCase()}
-              </button>
-            ))}
-          </span>
+          <ThesisLocaleSwitch compact locale={uiLocale} onChange={setUiLocale} />
           <button
             className="btn btn-icon"
             type="button"
@@ -2843,14 +2834,14 @@ function AgentConsoleView(props) {
           >
             {playbackState}
           </span>
-          {armsLabel && <span className={"hdr-status " + (isCompareRun ? "hdr-status-good" : "")} title={isCompareRun ? "Chạy cả S0 và S1 (có so sánh)" : "Chỉ S1"}>{armsLabel}</span>}
+          {armsLabel && <span className={"hdr-status " + (isCompareRun ? "hdr-status-good" : "")} title={isCompareRun ? uiText("Chạy cả S0 và S1 (có so sánh)", "Runs both S0 and S1 (comparison)") : uiText("Chỉ S1", "S1 only")}>{armsLabel}</span>}
         </span>
       </header>
 
       {replayAvailable && (
-        <div className="replay-controls" aria-label="Replay timeline controls">
-          <button className="btn btn-icon" type="button" onClick={restartReplay} title="Restart replay" aria-label="Restart replay">|&lt;</button>
-          <button className="btn btn-icon btn-accent" type="button" onClick={toggleReplay} title={replayPlaying ? "Pause replay" : "Play replay"} aria-label={replayPlaying ? "Pause replay" : "Play replay"}>{replayPlaying ? "||" : ">"}</button>
+        <div className="replay-controls" aria-label={uiText("Điều khiển timeline phát lại", "Replay timeline controls")}>
+          <button className="btn btn-icon" type="button" onClick={restartReplay} title={uiText("Phát lại từ đầu", "Restart replay")} aria-label={uiText("Phát lại từ đầu", "Restart replay")}>|&lt;</button>
+          <button className="btn btn-icon btn-accent" type="button" onClick={toggleReplay} title={replayPlaying ? uiText("Tạm dừng phát lại", "Pause replay") : uiText("Phát", "Play replay")} aria-label={replayPlaying ? uiText("Tạm dừng phát lại", "Pause replay") : uiText("Phát", "Play replay")}>{replayPlaying ? "||" : ">"}</button>
           <input
             className="replay-range"
             type="range"
@@ -2859,18 +2850,18 @@ function AgentConsoleView(props) {
             step="1"
             value={replayPosition}
             onChange={event => seekReplay(event.target.value)}
-            aria-label="Replay position"
+            aria-label={uiText("Vị trí phát lại", "Replay position")}
           />
           <span className="replay-count">{formatConsoleInt(replayPosition)} / {formatConsoleInt(events.length)}</span>
           <span className="replay-clock">{replayClock.elapsed} / {replayClock.total}</span>
-          <select className="filter-select replay-mode" value={replayMode} onChange={event => setReplayMode(event.target.value)} aria-label="Replay timing mode">
+          <select className="filter-select replay-mode" value={replayMode} onChange={event => setReplayMode(event.target.value)} aria-label={uiText("Chế độ thời gian phát lại", "Replay timing mode")}>
             <option value="time">timestamp</option>
-            <option value="event">events</option>
+            <option value="event">{uiText("sự kiện", "events")}</option>
           </select>
-          <select className="filter-select replay-speed" value={replaySpeed} onChange={event => setReplaySpeed(Number(event.target.value))} aria-label="Replay speed">
+          <select className="filter-select replay-speed" value={replaySpeed} onChange={event => setReplaySpeed(Number(event.target.value))} aria-label={uiText("Tốc độ phát lại", "Replay speed")}>
             {CONSOLE_REPLAY_SPEEDS.map(speed => <option key={speed} value={speed}>{speed}x</option>)}
           </select>
-          <button className="btn btn-icon" type="button" onClick={finishReplay} title="Jump to end" aria-label="Jump to end">&gt;|</button>
+          <button className="btn btn-icon" type="button" onClick={finishReplay} title={uiText("Nhảy tới cuối", "Jump to end")} aria-label={uiText("Nhảy tới cuối", "Jump to end")}>&gt;|</button>
         </div>
       )}
 
@@ -2887,44 +2878,44 @@ function AgentConsoleView(props) {
             type="button"
             className="console-side-toggle console-side-toggle-left"
             onClick={() => toggleConsoleSide("left")}
-            title={consoleLayout.leftCollapsed ? "Mở Overview" : "Thu gọn Overview"}
-            aria-label={consoleLayout.leftCollapsed ? "Expand Overview panel" : "Collapse Overview panel"}
+            title={consoleLayout.leftCollapsed ? uiText("Mở Tổng quan", "Expand Overview") : uiText("Thu gọn Tổng quan", "Collapse Overview")}
+            aria-label={consoleLayout.leftCollapsed ? uiText("Mở panel Tổng quan", "Expand Overview panel") : uiText("Thu gọn panel Tổng quan", "Collapse Overview panel")}
             aria-expanded={!consoleLayout.leftCollapsed}
           >
             {consoleLayout.leftCollapsed ? "›" : "‹"}
           </button>
           <div className="console-side-content">
-          <div className="section-label">:: overview</div>
+          <div className="section-label">:: {uiText("tổng quan", "overview")}</div>
           <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "mode")}</span><span className="kv-value kv-dim">{consoleMode}</span></div>
           <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "state")}</span><span className={"kv-value " + healthClass}>{playbackState}</span></div>
-          {armsLabel && <div className="kv-row"><span className="kv-label">arms</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
-          <div className="kv-row"><span className="kv-label">stages seen</span><span className="kv-value">{st.stagesSeen} / {CONSOLE_STAGE_PLAN.length}</span></div>
-          <div className="kv-row"><span className="kv-label">events</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
-          <div className="kv-row"><span className="kv-label">stream</span><span className="kv-value kv-dim">{truncated ? "truncated" : partialLine ? "partial line" : isOpenRun ? (running ? "live" : "connecting") : "closed"}</span></div>
+          {armsLabel && <div className="kv-row"><span className="kv-label">{uiText("nhánh", "arms")}</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
+          <div className="kv-row"><span className="kv-label">{uiText("tầng đã thấy", "stages seen")}</span><span className="kv-value">{st.stagesSeen} / {CONSOLE_STAGE_PLAN.length}</span></div>
+          <div className="kv-row"><span className="kv-label">{uiText("sự kiện", "events")}</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
+          <div className="kv-row"><span className="kv-label">{uiText("luồng", "stream")}</span><span className="kv-value kv-dim">{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</span></div>
 
-          <div className="section-label">:: cost &amp; cache</div>
-          <div className="kv-row"><span className="kv-label">cap total</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
-          <div className="kv-row kv-row-bar"><span className="kv-label">cap / budget</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
+          <div className="section-label">:: {uiText("chi phí & cache", "cost & cache")}</div>
+          <div className="kv-row"><span className="kv-label">{uiText("tổng cap", "cap total")}</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
+          <div className="kv-row kv-row-bar"><span className="kv-label">{uiText("cap / ngân sách", "cap / budget")}</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
           <div className="bar"><div className="bar-fill" style={{ width: costPct + "%" }} /></div>
-          <div className="kv-row"><span className="kv-label">llm events</span><span className="kv-value">{formatConsoleInt(st.llmCalls)}</span></div>
+          <div className="kv-row"><span className="kv-label">{uiText("sự kiện LLM", "LLM events")}</span><span className="kv-value">{formatConsoleInt(st.llmCalls)}</span></div>
 
-          <div className="section-label">:: health</div>
-          <div className="kv-row"><span className="kv-label">warnings</span><span className={"kv-value " + (st.warnings ? "kv-warn" : "")}>{formatConsoleInt(st.warnings)}</span></div>
-          <div className="kv-row"><span className="kv-label">errors</span><span className={"kv-value " + (st.errors ? "kv-bad" : "")}>{formatConsoleInt(st.errors)}</span></div>
-          <div className="kv-row"><span className="kv-label">last event</span><span className="kv-value kv-dim">{st.lastTs ? st.lastTs.slice(11, 19) : "—"}</span></div>
+          <div className="section-label">:: {uiText("sức khỏe", "health")}</div>
+          <div className="kv-row"><span className="kv-label">{uiText("cảnh báo", "warnings")}</span><span className={"kv-value " + (st.warnings ? "kv-warn" : "")}>{formatConsoleInt(st.warnings)}</span></div>
+          <div className="kv-row"><span className="kv-label">{uiText("lỗi", "errors")}</span><span className={"kv-value " + (st.errors ? "kv-bad" : "")}>{formatConsoleInt(st.errors)}</span></div>
+          <div className="kv-row"><span className="kv-label">{uiText("sự kiện cuối", "last event")}</span><span className="kv-value kv-dim">{st.lastTs ? st.lastTs.slice(11, 19) : "—"}</span></div>
           </div>
         </aside>
 
         <div
           className="console-splitter console-splitter-vertical"
           role="separator"
-          aria-label="Resize Overview panel"
+          aria-label={uiText("Đổi kích thước panel Tổng quan", "Resize Overview panel")}
           aria-orientation="vertical"
           aria-valuemin={0}
           aria-valuemax={CONSOLE_LAYOUT_LIMITS.leftMax}
           aria-valuenow={consoleLayout.leftCollapsed ? 0 : Math.round(consoleLayout.leftWidth)}
           tabIndex="0"
-          title="Kéo để đổi chiều rộng Overview; nhấp đúp để đặt lại"
+          title={uiText("Kéo để đổi chiều rộng Tổng quan; nhấp đúp để đặt lại", "Drag to resize Overview; double-click to reset")}
           onPointerDown={event => beginConsoleResize("left", event)}
           onKeyDown={event => handleConsoleSplitterKey("left", event)}
           onDoubleClick={() => resetConsoleTrack("left")}
@@ -2939,15 +2930,15 @@ function AgentConsoleView(props) {
           {runStatus === "failed" && (
             <div className="banner banner-red">
               <span className="banner-glyph">✕</span>
-              <span className="banner-msg">Run failed{st.stderrTail.length ? " · " + consoleShort(st.stderrTail[st.stderrTail.length - 1], 70) : ""}</span>
-              {!replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
+              <span className="banner-msg">{uiText("Lần chạy thất bại", "Run failed")}{st.stderrTail.length ? " · " + consoleShort(st.stderrTail[st.stderrTail.length - 1], 70) : ""}</span>
+              {!replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>{uiText("tiếp tục", "resume")}</button></span>}
             </div>
           )}
           {st.paused && !isTerminal && runStatus !== "failed" && (
             <div className="banner banner-amber">
               <span className="banner-glyph">⏸</span>
-              <span className="banner-msg">Đã dừng · {st.pausedReason} — resume để chạy tiếp</span>
-              {!replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
+              <span className="banner-msg">{uiText("Đã dừng", "Paused")} · {st.pausedReason} — {uiText("tiếp tục để chạy tiếp", "resume to continue")}</span>
+              {!replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>{uiText("tiếp tục", "resume")}</button></span>}
             </div>
           )}
           {st.phase1Done && runStatus !== "failed" && (
@@ -2961,13 +2952,13 @@ function AgentConsoleView(props) {
           {stalled && (
             <div className="banner banner-red">
               <span className="banner-glyph badge-stalled">▲</span>
-              <span className="banner-msg">Không có sự kiện {Math.round(consoleAgeSeconds(st.lastTs))}s — có thể treo</span>
-              {onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
+              <span className="banner-msg">{uiText(`Không có sự kiện ${Math.round(consoleAgeSeconds(st.lastTs))}s — có thể treo`, `No event for ${Math.round(consoleAgeSeconds(st.lastTs))}s — possibly stalled`)}</span>
+              {onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>{uiText("tiếp tục", "resume")}</button></span>}
             </div>
           )}
 
-          <section className="console-event-pane" aria-label="Run event stream">
-            <div className="section-label">:: event stream</div>
+          <section className="console-event-pane" aria-label={uiText("Luồng sự kiện lần chạy", "Run event stream")}>
+            <div className="section-label">:: {uiText("luồng sự kiện", "event stream")}</div>
             <div className="filterbar">
               <span className="event-preset" role="group" aria-label={consoleText(uiLocale, "eventPreset")}>
                 {["important", "all"].map(preset => (
@@ -2983,29 +2974,29 @@ function AgentConsoleView(props) {
                 ))}
               </span>
               <select className="filter-select" value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
-                <option value="">stage: all</option>
+                <option value="">{uiText("tầng: tất cả", "stage: all")}</option>
                 {CONSOLE_STAGE_PLAN.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
               <select className="filter-select" value={agentFilter} onChange={e => setAgentFilter(e.target.value)}>
-                <option value="">agent: all</option>
+                <option value="">{uiText("agent: tất cả", "agent: all")}</option>
                 {agents.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
               <select className="filter-select" value={severityFilter} onChange={e => setSeverityFilter(e.target.value)}>
-                <option value="">severity: all</option>
+                <option value="">{uiText("mức độ: tất cả", "severity: all")}</option>
                 {severities.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
-              <select className="filter-select" aria-label="Heartbeat display" value={heartbeatMode} onChange={e => setHeartbeatMode(e.target.value)}>
-                <option value="grouped">heartbeat: gộp</option>
-                <option value="hidden">heartbeat: ẩn</option>
-                <option value="raw">heartbeat: chi tiết</option>
+              <select className="filter-select" aria-label={uiText("Hiển thị heartbeat", "Heartbeat display")} value={heartbeatMode} onChange={e => setHeartbeatMode(e.target.value)}>
+                <option value="grouped">heartbeat: {uiText("gộp", "grouped")}</option>
+                <option value="hidden">heartbeat: {uiText("ẩn", "hidden")}</option>
+                <option value="raw">heartbeat: {uiText("chi tiết", "raw")}</option>
               </select>
-              <span className="filter-count">{formatConsoleInt(rendered.length)} / {formatConsoleInt(filtered.length)} dòng · {formatConsoleInt(filteredRawEventCount)} sự kiện</span>
+              <span className="filter-count">{formatConsoleInt(rendered.length)} / {formatConsoleInt(filtered.length)} {uiText("dòng", "rows")} · {formatConsoleInt(filteredRawEventCount)} {uiText("sự kiện", "events")}</span>
               <button
                 type="button"
                 className="console-pane-mode-button"
                 onClick={() => setConsoleCenterMode(consoleLayout.centerMode === "events" ? "split" : "events")}
-                title={consoleLayout.centerMode === "events" ? "Khôi phục Event Stream và Run Ledger" : "Phóng to Event Stream"}
-                aria-label={consoleLayout.centerMode === "events" ? "Restore split Console view" : "Maximize Event Stream"}
+                title={consoleLayout.centerMode === "events" ? uiText("Khôi phục Event Stream và Run Ledger", "Restore Event Stream and Run Ledger") : uiText("Phóng to Event Stream", "Maximize Event Stream")}
+                aria-label={consoleLayout.centerMode === "events" ? uiText("Khôi phục Console chia đôi", "Restore split Console view") : uiText("Phóng to Event Stream", "Maximize Event Stream")}
               >
                 {consoleLayout.centerMode === "events" ? "↕" : "□"}
               </button>
@@ -3050,9 +3041,9 @@ function AgentConsoleView(props) {
                     <span className="ev-seq">{consoleEventSequenceLabel(r)}</span>
                   </div>
                 );
-              }) : <div className="console-empty">Chọn hoặc replay một run để xem dòng sự kiện.</div>}
+              }) : <div className="console-empty">{uiText("Chọn hoặc phát lại một lần chạy để xem dòng sự kiện.", "Select or replay a run to view its event stream.")}</div>}
               {hiddenOlderEvents > 0 && (
-                <div className="console-empty">... {formatConsoleInt(hiddenOlderEvents)} dòng cũ hơn ẩn - dùng filter để thu hẹp.</div>
+                <div className="console-empty">... {formatConsoleInt(hiddenOlderEvents)} {uiText("dòng cũ hơn bị ẩn - dùng bộ lọc để thu hẹp.", "older rows hidden - use filters to narrow the stream.")}</div>
               )}
             </div>
           </section>
@@ -3060,13 +3051,13 @@ function AgentConsoleView(props) {
           <div
             className="console-splitter console-splitter-horizontal"
             role="separator"
-            aria-label="Resize Event Stream and Run Ledger"
+            aria-label={uiText("Đổi kích thước Event Stream và Run Ledger", "Resize Event Stream and Run Ledger")}
             aria-orientation="horizontal"
             aria-valuemin={CONSOLE_LAYOUT_LIMITS.ledgerMin}
             aria-valuemax={CONSOLE_LAYOUT_LIMITS.ledgerMax}
             aria-valuenow={Math.round(consoleLayout.ledgerPercent)}
             tabIndex="0"
-            title="Kéo để đổi chiều cao Run Ledger; nhấp đúp để đặt lại"
+            title={uiText("Kéo để đổi chiều cao Run Ledger; nhấp đúp để đặt lại", "Drag to resize Run Ledger; double-click to reset")}
             onPointerDown={event => beginConsoleResize("ledger", event)}
             onKeyDown={event => handleConsoleSplitterKey("ledger", event)}
             onDoubleClick={() => resetConsoleTrack("ledger")}
@@ -3105,13 +3096,13 @@ function AgentConsoleView(props) {
         <div
           className="console-splitter console-splitter-vertical"
           role="separator"
-          aria-label="Resize Stages and Results panel"
+          aria-label={uiText("Đổi kích thước panel Tầng và Kết quả", "Resize Stages and Results panel")}
           aria-orientation="vertical"
           aria-valuemin={0}
           aria-valuemax={CONSOLE_LAYOUT_LIMITS.rightMax}
           aria-valuenow={consoleLayout.rightCollapsed ? 0 : Math.round(consoleLayout.rightWidth)}
           tabIndex="0"
-          title="Kéo để đổi chiều rộng Stages/Results; nhấp đúp để đặt lại"
+          title={uiText("Kéo để đổi chiều rộng Tầng/Kết quả; nhấp đúp để đặt lại", "Drag to resize Stages/Results; double-click to reset")}
           onPointerDown={event => beginConsoleResize("right", event)}
           onKeyDown={event => handleConsoleSplitterKey("right", event)}
           onDoubleClick={() => resetConsoleTrack("right")}
@@ -3123,26 +3114,26 @@ function AgentConsoleView(props) {
             type="button"
             className="console-side-toggle console-side-toggle-right"
             onClick={() => toggleConsoleSide("right")}
-            title={consoleLayout.rightCollapsed ? "Mở Stages và Results" : "Thu gọn Stages và Results"}
-            aria-label={consoleLayout.rightCollapsed ? "Expand Stages and Results panel" : "Collapse Stages and Results panel"}
+            title={consoleLayout.rightCollapsed ? uiText("Mở Tầng và Kết quả", "Expand Stages and Results") : uiText("Thu gọn Tầng và Kết quả", "Collapse Stages and Results")}
+            aria-label={consoleLayout.rightCollapsed ? uiText("Mở panel Tầng và Kết quả", "Expand Stages and Results panel") : uiText("Thu gọn panel Tầng và Kết quả", "Collapse Stages and Results panel")}
             aria-expanded={!consoleLayout.rightCollapsed}
           >
             {consoleLayout.rightCollapsed ? "‹" : "›"}
           </button>
           <div className="console-side-content">
-          <div className="section-label">:: stages</div>
+          <div className="section-label">:: {uiText("các tầng", "stages")}</div>
           {CONSOLE_STAGE_PLAN.map((s, i) => {
             const si = st.stageInfo[s.id] || { status: "pending" };
             const stageAvailable = st.normalized.some(row => row.stage === s.id);
             let cls = "stage-pending", dot = "○", prog = "";
-            if (si.status === "done") { cls = "stage-done"; dot = "●"; prog = si.skipped ? "skipped" : "done"; }
+            if (si.status === "done") { cls = "stage-done"; dot = "●"; prog = si.skipped ? uiText("đã bỏ qua", "skipped") : uiText("xong", "done"); }
             else if (si.status === "active") {
               cls = "stage-active";
               dot = "●";
-              prog = s.id === "translator" && si.previews ? (translatorProgressLabel || `${si.previews} win`) : "running";
+              prog = s.id === "translator" && si.previews ? (translatorProgressLabel || `${si.previews} win`) : uiText("đang chạy", "running");
             }
-            else if (si.status === "failed") { cls = "stage-failed"; dot = "✕"; prog = "failed"; }
-            else if (s.optional && isTerminal) { cls = "stage-pending"; dot = "○"; prog = "skipped"; }
+            else if (si.status === "failed") { cls = "stage-failed"; dot = "✕"; prog = uiText("thất bại", "failed"); }
+            else if (s.optional && isTerminal) { cls = "stage-pending"; dot = "○"; prog = uiText("đã bỏ qua", "skipped"); }
             const prev = CONSOLE_STAGE_PLAN[i - 1];
             return (
               <React.Fragment key={s.id}>
@@ -3243,7 +3234,7 @@ function AgentConsoleView(props) {
 }
 
 function uniqueConsole(arr) { return Array.from(new Set(arr)).sort(); }
-function formatConsoleInt(n) { return Number(n || 0).toLocaleString("en-US"); }
+function formatConsoleInt(n) { return Number(n || 0).toLocaleString(ThesisI18n.getLocale() === "en" ? "en-US" : "vi-VN"); }
 
 /* Typewriter reveal for the translation ledger only (one effect, one section).
    Adaptive speed: aims for ~1.4s total regardless of length, floored so short

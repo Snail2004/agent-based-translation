@@ -4,26 +4,26 @@
    publishes an accepted contract; this component never derives new metrics. */
 
 const REPORT_SECTION_DEFS = Object.freeze([
-  { id: "summary", index: "01", label: "Tổng quan", shortLabel: "Summary", owner: "Coordinator + Evaluation" },
-  { id: "coverage", index: "02", label: "Phạm vi", shortLabel: "Coverage", owner: "Input Normalization" },
-  { id: "quality", index: "03", label: "Chất lượng", shortLabel: "Quality", owner: "Evaluation + domain pipelines" },
-  { id: "comparison", index: "04", label: "So sánh", shortLabel: "Comparison", owner: "Evaluation" },
-  { id: "findings", index: "05", label: "Phát hiện", shortLabel: "Findings", owner: "Terminology + Literary" },
-  { id: "execution", index: "06", label: "Bằng chứng chạy", shortLabel: "Execution", owner: "Coordinator" },
-  { id: "provenance", index: "07", label: "Nguồn gốc", shortLabel: "Provenance", owner: "Input Normalization + Coordinator" },
-  { id: "artifacts", index: "08", label: "Artifacts", shortLabel: "Artifacts", owner: "All producers" },
+  { id: "summary", index: "01", vi: "Tổng quan", en: "Summary", shortVi: "Tổng quan", shortEn: "Summary", owner: "Coordinator + Evaluation" },
+  { id: "coverage", index: "02", vi: "Phạm vi", en: "Coverage", shortVi: "Phạm vi", shortEn: "Coverage", owner: "Input Normalization" },
+  { id: "quality", index: "03", vi: "Chất lượng", en: "Quality", shortVi: "Chất lượng", shortEn: "Quality", owner: "Evaluation + domain pipelines" },
+  { id: "comparison", index: "04", vi: "So sánh", en: "Comparison", shortVi: "So sánh", shortEn: "Comparison", owner: "Evaluation" },
+  { id: "findings", index: "05", vi: "Phát hiện", en: "Findings", shortVi: "Phát hiện", shortEn: "Findings", owner: "Terminology + Literary" },
+  { id: "execution", index: "06", vi: "Bằng chứng chạy", en: "Execution evidence", shortVi: "Thực thi", shortEn: "Execution", owner: "Coordinator" },
+  { id: "provenance", index: "07", vi: "Nguồn gốc", en: "Provenance", shortVi: "Nguồn gốc", shortEn: "Provenance", owner: "Input Normalization + Coordinator" },
+  { id: "artifacts", index: "08", vi: "Tệp đầu ra", en: "Artifacts", shortVi: "Đầu ra", shortEn: "Artifacts", owner: "All producers" },
 ]);
 
 const REPORT_TERMINAL_STATUSES = new Set(["done", "failed", "cancelled", "canceled", "error"]);
 const REPORT_ALLOWED_STATES = new Set(["ready", "partial", "pending", "unavailable", "invalid", "one_arm", "empty"]);
 const REPORT_STATUS_META = Object.freeze({
-  ready: { label: "READY", tone: "good", glyph: "●" },
-  partial: { label: "PARTIAL", tone: "warn", glyph: "◐" },
-  pending: { label: "PENDING", tone: "info", glyph: "◌" },
-  unavailable: { label: "UNAVAILABLE", tone: "muted", glyph: "—" },
-  invalid: { label: "INVALID", tone: "bad", glyph: "×" },
-  one_arm: { label: "ONE ARM", tone: "info", glyph: "Ⅰ" },
-  empty: { label: "EMPTY", tone: "muted", glyph: "○" },
+  ready: { vi: "SẴN SÀNG", en: "READY", tone: "good", glyph: "●" },
+  partial: { vi: "MỘT PHẦN", en: "PARTIAL", tone: "warn", glyph: "◐" },
+  pending: { vi: "ĐANG CHỜ", en: "PENDING", tone: "info", glyph: "◌" },
+  unavailable: { vi: "KHÔNG KHẢ DỤNG", en: "UNAVAILABLE", tone: "muted", glyph: "—" },
+  invalid: { vi: "KHÔNG HỢP LỆ", en: "INVALID", tone: "bad", glyph: "×" },
+  one_arm: { vi: "MỘT NHÁNH", en: "ONE ARM", tone: "info", glyph: "Ⅰ" },
+  empty: { vi: "TRỐNG", en: "EMPTY", tone: "muted", glyph: "○" },
 });
 
 function reportIsObject(value) {
@@ -40,7 +40,16 @@ function reportState(value, fallback = "unavailable") {
 }
 
 function reportStatusMeta(state) {
-  return REPORT_STATUS_META[reportState(state)] || REPORT_STATUS_META.unavailable;
+  const meta = REPORT_STATUS_META[reportState(state)] || REPORT_STATUS_META.unavailable;
+  return { ...meta, label: uiText(meta.vi, meta.en) };
+}
+
+function reportSectionLabel(definition) {
+  return uiText(definition.vi, definition.en);
+}
+
+function reportSectionShortLabel(definition) {
+  return uiText(definition.shortVi, definition.shortEn);
 }
 
 function reportTerminal(status) {
@@ -68,7 +77,7 @@ function reportFormatTime(value) {
   if (!value) return "—";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return String(value);
-  return parsed.toLocaleString("vi-VN", {
+  return parsed.toLocaleString(ThesisI18n.getLocale() === "en" ? "en-US" : "vi-VN", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -208,19 +217,19 @@ function reportLegacySummary(raw, context) {
     contractStatus: hasPayload ? "partial" : (reportTerminal(context.runStatus) ? "unavailable" : "pending"),
     contractLabel: hasPayload ? "SUMMARY-ONLY" : "NO REPORT",
     statusMessage: hasPayload
-      ? "Đang hiển thị report-summary đã persisted. Full Run Report contract chưa được nối vào App UI."
+      ? uiText("Đang hiển thị report-summary đã lưu. Contract Báo cáo lần chạy đầy đủ chưa được nối vào App UI.", "Showing the persisted report-summary. The Full Run Report contract is not yet connected to the App UI.")
       : reportTerminal(context.runStatus)
-        ? "Run đã kết thúc nhưng report-summary hiện không có dữ liệu khả dụng."
-        : "Run chưa phát hành report-summary; trang sẽ giữ trạng thái chờ.",
+        ? uiText("Lần chạy đã kết thúc nhưng report-summary hiện không có dữ liệu khả dụng.", "The run finished, but report-summary currently has no available data.")
+        : uiText("Lần chạy chưa phát hành report-summary; trang sẽ giữ trạng thái chờ.", "The run has not published report-summary; this page will remain pending."),
     schemaVersion: "report-summary (legacy read model)",
     generatedAt: "",
     sourceLabel: "report-summary · read-only",
     summary: {
       state: hasPayload ? "partial" : "pending",
-      message: hasPayload ? "Tổng quan giới hạn trong dữ liệu summary hiện có." : "Chờ report-summary.",
+      message: hasPayload ? uiText("Tổng quan giới hạn trong dữ liệu summary hiện có.", "The summary is limited to currently available summary data.") : uiText("Chờ report-summary.", "Waiting for report-summary."),
       verdict,
-      title: "Kết quả run",
-      description: "Snapshot báo cáo cuối đã persisted; không đồng bộ theo replay cursor của Console.",
+      title: uiText("Kết quả lần chạy", "Run results"),
+      description: uiText("Snapshot báo cáo cuối đã lưu; không đồng bộ theo replay cursor của Console.", "The final report snapshot is persisted and does not follow the Console replay cursor."),
       facts: [
         final?.stage_gate?.present ? {
           label: "Stage gate",
@@ -232,32 +241,32 @@ function reportLegacySummary(raw, context) {
         final ? { label: "Final", value: "present", source: reportText(final.report_path) } : null,
       ].filter(Boolean).map(reportNormalizeFact),
     },
-    coverage: reportEmptySection("Chưa có coverage contract được chấp nhận trong report-summary."),
+    coverage: reportEmptySection(uiText("Chưa có coverage contract được chấp nhận trong report-summary.", "No accepted coverage contract is available in report-summary.")),
     quality: {
       state: metrics.length ? "partial" : "unavailable",
       message: metrics.length
-        ? "Giá trị được đọc nguyên trạng từ score report summary; App UI không tính lại metric."
-        : "Chưa có metric được report-summary công bố.",
+        ? uiText("Giá trị được đọc nguyên trạng từ score report summary; App UI không tính lại metric.", "Values are read as reported by the score report summary; the App UI does not recalculate metrics.")
+        : uiText("Chưa có metric được report-summary công bố.", "No metrics have been published by report-summary."),
       metrics,
     },
     comparison: comparison ? {
       state: gapRows.length ? "partial" : "unavailable",
-      message: "Chỉ hiển thị gap do report-summary công bố; App UI không tự tính delta.",
+      message: uiText("Chỉ hiển thị gap do report-summary công bố; App UI không tự tính delta.", "Only gaps published by report-summary are shown; the App UI does not calculate deltas."),
       baseline: reportText(comparison.baseline),
       candidate: reportText(comparison.candidate),
       metrics: gapRows,
-    } : reportEmptySection("Report-summary chưa công bố so sánh nhiều arm."),
+    } : reportEmptySection(uiText("Report-summary chưa công bố so sánh nhiều nhánh.", "Report-summary has not published a multi-arm comparison.")),
     findings: {
       state: findings.length ? "partial" : "unavailable",
       message: findings.length
-        ? "Notable terms từ consistency summary; bằng chứng occurrence-level chờ contract thuật ngữ."
-        : "Chưa có findings contract từ pipeline thuật ngữ hoặc văn học.",
+        ? uiText("Thuật ngữ đáng chú ý từ consistency summary; bằng chứng cấp lần xuất hiện chờ contract thuật ngữ.", "Notable terms come from the consistency summary; occurrence-level evidence awaits the terminology contract.")
+        : uiText("Chưa có contract phát hiện từ pipeline thuật ngữ hoặc văn học.", "No findings contract is available from the terminology or literary pipeline."),
       items: findings,
     },
-    execution: reportEmptySection("Execution Evidence contract chưa được Coordinator phát hành cho Report."),
+    execution: reportEmptySection(uiText("Contract Bằng chứng chạy chưa được Coordinator phát hành cho Báo cáo.", "The Execution Evidence contract has not been published by the Coordinator for Report.")),
     provenance: {
       state: artifacts.length ? "partial" : "unavailable",
-      message: "Chỉ các đường dẫn artifact được report-summary nêu rõ mới được hiển thị.",
+      message: uiText("Chỉ các đường dẫn artifact được report-summary nêu rõ mới được hiển thị.", "Only artifact paths explicitly named by report-summary are displayed."),
       facts: artifacts.map((artifact, index) => reportNormalizeFact({
         id: `provenance-artifact-${index}`,
         label: artifact.label,
@@ -267,7 +276,7 @@ function reportLegacySummary(raw, context) {
     },
     artifacts: {
       state: artifacts.length ? "partial" : "unavailable",
-      message: artifacts.length ? "Artifact paths được relay từ report-summary." : "Chưa có artifact path được report.",
+      message: artifacts.length ? uiText("Đường dẫn artifact được relay từ report-summary.", "Artifact paths are relayed from report-summary.") : uiText("Chưa có đường dẫn artifact được báo cáo.", "No artifact path has been reported."),
       items: artifacts,
     },
     validationErrors: [],
@@ -289,14 +298,14 @@ function reportNormalizeCanonical(raw, context) {
       message: reportText(section.message || section.note),
     };
   };
-  const summary = normalizeSection(raw.summary, "Summary chưa được producer công bố.");
-  const coverage = normalizeSection(raw.coverage, "Coverage chưa được producer công bố.");
-  const quality = normalizeSection(raw.quality, "Quality metrics chưa được producer công bố.");
-  const comparison = normalizeSection(raw.comparison, "Comparison chưa được producer công bố.");
-  const findings = normalizeSection(raw.findings, "Findings chưa được producer công bố.");
-  const execution = normalizeSection(raw.execution_evidence || raw.execution, "Execution Evidence chưa được producer công bố.");
-  const provenance = normalizeSection(raw.provenance, "Provenance chưa được producer công bố.");
-  const artifacts = normalizeSection(raw.artifacts, "Artifacts chưa được producer công bố.");
+  const summary = normalizeSection(raw.summary, uiText("Producer chưa công bố Tổng quan.", "Summary has not been published by its producer."));
+  const coverage = normalizeSection(raw.coverage, uiText("Producer chưa công bố Phạm vi.", "Coverage has not been published by its producer."));
+  const quality = normalizeSection(raw.quality, uiText("Producer chưa công bố chỉ số Chất lượng.", "Quality metrics have not been published by their producer."));
+  const comparison = normalizeSection(raw.comparison, uiText("Producer chưa công bố So sánh.", "Comparison has not been published by its producer."));
+  const findings = normalizeSection(raw.findings, uiText("Producer chưa công bố Phát hiện.", "Findings have not been published by their producer."));
+  const execution = normalizeSection(raw.execution_evidence || raw.execution, uiText("Producer chưa công bố Bằng chứng chạy.", "Execution Evidence has not been published by its producer."));
+  const provenance = normalizeSection(raw.provenance, uiText("Producer chưa công bố Nguồn gốc.", "Provenance has not been published by its producer."));
+  const artifacts = normalizeSection(raw.artifacts, uiText("Producer chưa công bố Artifacts.", "Artifacts have not been published by their producer."));
 
   summary.facts = reportArray(summary.facts).map(reportNormalizeFact);
   coverage.facts = reportArray(coverage.facts).map(reportNormalizeFact);
@@ -310,17 +319,17 @@ function reportNormalizeCanonical(raw, context) {
   const verdictRaw = reportIsObject(summary.verdict) ? summary.verdict : null;
   summary.verdict = verdictRaw ? {
     state: reportText(verdictRaw.state, "not_issued").toLowerCase(),
-    label: reportText(verdictRaw.label, "CHƯA CÓ PHÁN QUYẾT"),
+    label: reportText(verdictRaw.label, uiText("CHƯA CÓ PHÁN QUYẾT", "NO VERDICT")),
     reasons: reportArray(verdictRaw.reasons).map(reason => reportText(reason)).filter(Boolean),
     source: reportText(verdictRaw.source || verdictRaw.artifact_path),
-  } : { state: "not_issued", label: "CHƯA CÓ PHÁN QUYẾT", reasons: [] };
+  } : { state: "not_issued", label: uiText("CHƯA CÓ PHÁN QUYẾT", "NO VERDICT"), reasons: [] };
 
   return {
     contractStatus,
     contractLabel: reportText(raw.contract_label, reportStatusMeta(contractStatus).label),
     statusMessage: reportText(raw.status_message, validationErrors.length
-      ? "Report payload không hợp lệ; UI đã dừng diễn giải các trường không xác minh."
-      : "Các section chỉ phản ánh dữ liệu producer đã công bố."),
+      ? uiText("Payload báo cáo không hợp lệ; UI đã dừng diễn giải các trường không xác minh.", "The report payload is invalid; the UI stopped interpreting unverified fields.")
+      : uiText("Các phần chỉ phản ánh dữ liệu producer đã công bố.", "Sections reflect only data published by producers.")),
     schemaVersion: reportText(raw.schema_version, "not reported"),
     generatedAt: reportText(raw.generated_at),
     sourceLabel: reportText(raw.source_label, context.reportSource || "report contract"),
@@ -345,36 +354,36 @@ function reportNormalizeModel({ report, reportSource, runtimeAvailable, runId, s
     normalized = {
       contractStatus: "unavailable",
       contractLabel: "NO RUNTIME",
-      statusMessage: "Project này chưa được gắn với runtime job; chưa có run report để đọc.",
+      statusMessage: uiText("Dự án này chưa được gắn với runtime job; chưa có báo cáo lần chạy để đọc.", "This project is not attached to a runtime job; there is no run report to read."),
       schemaVersion: "not available",
       generatedAt: "",
       sourceLabel: "none",
-      summary: { ...reportEmptySection("Cấu hình pipeline và khởi tạo run để có báo cáo."), verdict: { state: "not_issued", label: "CHƯA CÓ PHÁN QUYẾT", reasons: [] }, facts: [] },
-      coverage: reportEmptySection("Chưa có run."),
-      quality: reportEmptySection("Chưa có run."),
-      comparison: reportEmptySection("Chưa có run."),
-      findings: reportEmptySection("Chưa có run."),
-      execution: reportEmptySection("Chưa có run."),
-      provenance: reportEmptySection("Chưa có run."),
-      artifacts: reportEmptySection("Chưa có run."),
+      summary: { ...reportEmptySection(uiText("Cấu hình pipeline và khởi tạo lần chạy để có báo cáo.", "Configure the pipeline and start a run to generate a report.")), verdict: { state: "not_issued", label: uiText("CHƯA CÓ PHÁN QUYẾT", "NO VERDICT"), reasons: [] }, facts: [] },
+      coverage: reportEmptySection(uiText("Chưa có lần chạy.", "No run yet.")),
+      quality: reportEmptySection(uiText("Chưa có lần chạy.", "No run yet.")),
+      comparison: reportEmptySection(uiText("Chưa có lần chạy.", "No run yet.")),
+      findings: reportEmptySection(uiText("Chưa có lần chạy.", "No run yet.")),
+      execution: reportEmptySection(uiText("Chưa có lần chạy.", "No run yet.")),
+      provenance: reportEmptySection(uiText("Chưa có lần chạy.", "No run yet.")),
+      artifacts: reportEmptySection(uiText("Chưa có lần chạy.", "No run yet.")),
       validationErrors: [],
     };
   } else if (!runId) {
     normalized = {
       contractStatus: "unavailable",
       contractLabel: "SELECT RUN",
-      statusMessage: "Chọn một run để mở báo cáo tương ứng.",
+      statusMessage: uiText("Chọn một lần chạy để mở báo cáo tương ứng.", "Choose a run to open its report."),
       schemaVersion: "not selected",
       generatedAt: "",
       sourceLabel: "none",
-      summary: { ...reportEmptySection("Chưa chọn run."), verdict: { state: "not_issued", label: "CHƯA CÓ PHÁN QUYẾT", reasons: [] }, facts: [] },
-      coverage: reportEmptySection("Chưa chọn run."),
-      quality: reportEmptySection("Chưa chọn run."),
-      comparison: reportEmptySection("Chưa chọn run."),
-      findings: reportEmptySection("Chưa chọn run."),
-      execution: reportEmptySection("Chưa chọn run."),
-      provenance: reportEmptySection("Chưa chọn run."),
-      artifacts: reportEmptySection("Chưa chọn run."),
+      summary: { ...reportEmptySection(uiText("Chưa chọn lần chạy.", "No run selected.")), verdict: { state: "not_issued", label: uiText("CHƯA CÓ PHÁN QUYẾT", "NO VERDICT"), reasons: [] }, facts: [] },
+      coverage: reportEmptySection(uiText("Chưa chọn lần chạy.", "No run selected.")),
+      quality: reportEmptySection(uiText("Chưa chọn lần chạy.", "No run selected.")),
+      comparison: reportEmptySection(uiText("Chưa chọn lần chạy.", "No run selected.")),
+      findings: reportEmptySection(uiText("Chưa chọn lần chạy.", "No run selected.")),
+      execution: reportEmptySection(uiText("Chưa chọn lần chạy.", "No run selected.")),
+      provenance: reportEmptySection(uiText("Chưa chọn lần chạy.", "No run selected.")),
+      artifacts: reportEmptySection(uiText("Chưa chọn lần chạy.", "No run selected.")),
       validationErrors: [],
     };
   } else if (report !== null && report !== undefined && !reportIsObject(report)) {
@@ -388,19 +397,19 @@ function reportNormalizeModel({ report, reportSource, runtimeAvailable, runId, s
       contractStatus: state,
       contractLabel: state === "pending" ? "WAITING" : "NOT GENERATED",
       statusMessage: state === "pending"
-        ? "Run đang hoạt động hoặc chưa phát hành report artifact."
-        : "Run không có report payload khả dụng ở read model hiện tại.",
+        ? uiText("Lần chạy đang hoạt động hoặc chưa phát hành artifact báo cáo.", "The run is active or has not yet published a report artifact.")
+        : uiText("Lần chạy không có payload báo cáo khả dụng trong read model hiện tại.", "The run has no report payload available in the current read model."),
       schemaVersion: "not reported",
       generatedAt: "",
       sourceLabel: reportSource || "none",
-      summary: { state, message: "Chưa có summary persisted.", verdict: { state: "not_issued", label: "CHƯA CÓ PHÁN QUYẾT", reasons: [] }, facts: [] },
-      coverage: { state, message: "Chờ coverage contract." },
-      quality: { state, message: "Chờ metrics contract." },
-      comparison: { state, message: "Chờ comparison contract." },
-      findings: { state, message: "Chờ findings contract." },
-      execution: { state, message: "Chờ execution evidence contract." },
-      provenance: { state, message: "Chờ provenance contract." },
-      artifacts: { state, message: "Chờ artifact manifest." },
+      summary: { state, message: uiText("Chưa có summary đã lưu.", "No persisted summary is available."), verdict: { state: "not_issued", label: uiText("CHƯA CÓ PHÁN QUYẾT", "NO VERDICT"), reasons: [] }, facts: [] },
+      coverage: { state, message: uiText("Chờ coverage contract.", "Waiting for the coverage contract.") },
+      quality: { state, message: uiText("Chờ metrics contract.", "Waiting for the metrics contract.") },
+      comparison: { state, message: uiText("Chờ comparison contract.", "Waiting for the comparison contract.") },
+      findings: { state, message: uiText("Chờ findings contract.", "Waiting for the findings contract.") },
+      execution: { state, message: uiText("Chờ execution evidence contract.", "Waiting for the execution evidence contract.") },
+      provenance: { state, message: uiText("Chờ provenance contract.", "Waiting for the provenance contract.") },
+      artifacts: { state, message: uiText("Chờ artifact manifest.", "Waiting for the artifact manifest.") },
       validationErrors: [],
     };
   } else {
@@ -430,7 +439,7 @@ function ReportState({ state = "unavailable", message, owner, compact = false })
       <div>
         <strong>{meta.label}</strong>
         {message && <p>{message}</p>}
-        {owner && <small>Nguồn contract: {owner}</small>}
+        {owner && <small>{uiText("Nguồn contract", "Contract source")}: {owner}</small>}
       </div>
     </div>
   );
@@ -443,8 +452,8 @@ function ReportSectionHeader({ definition, state }) {
       <div>
         <span className="report-section-index">{definition.index}</span>
         <div>
-          <span className="report-section-kicker">{definition.shortLabel}</span>
-          <h2>{definition.label}</h2>
+          <span className="report-section-kicker">{reportSectionShortLabel(definition)}</span>
+          <h2>{reportSectionLabel(definition)}</h2>
         </div>
       </div>
       <span className={`report-section-status report-tone-${meta.tone}`}>
@@ -481,13 +490,13 @@ function ReportMetricGrid({ metrics = [] }) {
             {metric.status && <span className={`report-mini-status status-${String(metric.status).toLowerCase()}`}>{metric.status}</span>}
           </div>
           <div className="report-metric-value">{reportFormatValue(metric.value)}</div>
-          <div className="report-metric-unit">{metric.unit || "unit not reported"}</div>
+          <div className="report-metric-unit">{metric.unit || uiText("chưa báo đơn vị", "unit not reported")}</div>
           <h3>{metric.label}</h3>
-          <p>{metric.definition || "Contract được chấp nhận chưa công bố định nghĩa metric này."}</p>
+          <p>{metric.definition || uiText("Contract được chấp nhận chưa công bố định nghĩa metric này.", "The accepted contract does not publish a definition for this metric.")}</p>
           <dl>
-            {metric.scope && <><dt>Scope</dt><dd>{metric.scope}</dd></>}
-            {metric.direction && <><dt>Direction</dt><dd>{metric.direction}</dd></>}
-            {metric.source && <><dt>Source</dt><dd><code>{metric.source}</code></dd></>}
+            {metric.scope && <><dt>{uiText("Phạm vi", "Scope")}</dt><dd>{metric.scope}</dd></>}
+            {metric.direction && <><dt>{uiText("Hướng", "Direction")}</dt><dd>{metric.direction}</dd></>}
+            {metric.source && <><dt>{uiText("Nguồn", "Source")}</dt><dd><code>{metric.source}</code></dd></>}
           </dl>
         </article>
       ))}
@@ -504,16 +513,16 @@ function ReportComparison({ section }) {
     <>
       {section.message && <p className="report-section-note">{section.message}</p>}
       <div className="report-comparison-meta">
-        <span><small>Baseline</small><strong>{section.baseline || "not reported"}</strong></span>
+        <span><small>{uiText("Mốc gốc", "Baseline")}</small><strong>{section.baseline || uiText("chưa báo cáo", "not reported")}</strong></span>
         <span aria-hidden="true">→</span>
-        <span><small>Candidate</small><strong>{section.candidate || "not reported"}</strong></span>
+        <span><small>{uiText("Phương án", "Candidate")}</small><strong>{section.candidate || uiText("chưa báo cáo", "not reported")}</strong></span>
       </div>
-      <div className="report-comparison-table" role="table" aria-label="Reported arm comparison">
+      <div className="report-comparison-table" role="table" aria-label={uiText("So sánh các nhánh đã báo cáo", "Reported arm comparison")}>
         <div className="report-comparison-row head" role="row">
-          <span role="columnheader">Metric</span>
-          <span role="columnheader">{section.baseline || "Baseline"}</span>
-          <span role="columnheader">{section.candidate || "Candidate"}</span>
-          <span role="columnheader">Reported delta</span>
+          <span role="columnheader">{uiText("Chỉ số", "Metric")}</span>
+          <span role="columnheader">{section.baseline || uiText("Mốc gốc", "Baseline")}</span>
+          <span role="columnheader">{section.candidate || uiText("Phương án", "Candidate")}</span>
+          <span role="columnheader">{uiText("Chênh lệch đã báo cáo", "Reported delta")}</span>
         </div>
         {metrics.map((metric, index) => (
           <div className="report-comparison-row" role="row" key={metric.id || `${metric.key}-${index}`}>
@@ -553,14 +562,14 @@ function ReportFindings({ section }) {
     return <ReportState state={section.state} message={section.message} owner="Terminology + Literary" />;
   }
   if (!items.length) {
-    return <ReportState state="empty" message={section.message || "Producer xác nhận không có finding trong scope của report."} owner="Terminology + Literary" />;
+    return <ReportState state="empty" message={section.message || uiText("Producer xác nhận không có phát hiện trong phạm vi báo cáo.", "The producer confirmed that there are no findings in the report scope.")} owner="Terminology + Literary" />;
   }
   const selected = items.find(item => item.id === selectedId) || items[0];
   return (
     <>
       {section.message && <p className="report-section-note">{section.message}</p>}
       <div className="report-findings-layout">
-        <div className="report-findings-list" role="list" aria-label="Reported findings">
+        <div className="report-findings-list" role="list" aria-label={uiText("Các phát hiện đã báo cáo", "Reported findings")}>
           {items.map(item => (
             <button
               type="button"
@@ -574,12 +583,12 @@ function ReportFindings({ section }) {
               <span>
                 <small>{item.category}{item.location ? ` · ${item.location}` : ""}</small>
                 <strong>{item.title}</strong>
-                <em>{item.summary || "No summary reported."}</em>
+                <em>{item.summary || uiText("Không có tóm tắt được báo cáo.", "No summary reported.")}</em>
               </span>
             </button>
           ))}
         </div>
-        <aside className="report-finding-detail" aria-label="Finding detail">
+        <aside className="report-finding-detail" aria-label={uiText("Chi tiết phát hiện", "Finding detail")}>
           <div className="report-finding-detail-head">
             <span>{selected.category}</span>
             <code>{selected.id}</code>
@@ -587,17 +596,17 @@ function ReportFindings({ section }) {
           <h3>{selected.title}</h3>
           {selected.summary && <p>{selected.summary}</p>}
           <dl>
-            {selected.location && <><dt>Location</dt><dd>{selected.location}</dd></>}
-            {selected.owner && <><dt>Owner</dt><dd>{selected.owner}</dd></>}
-            {selected.artifactPath && <><dt>Artifact</dt><dd><code>{selected.artifactPath}</code></dd></>}
+            {selected.location && <><dt>{uiText("Vị trí", "Location")}</dt><dd>{selected.location}</dd></>}
+            {selected.owner && <><dt>{uiText("Phụ trách", "Owner")}</dt><dd>{selected.owner}</dd></>}
+            {selected.artifactPath && <><dt>{uiText("Tệp đầu ra", "Artifact")}</dt><dd><code>{selected.artifactPath}</code></dd></>}
           </dl>
           <div className="report-evidence-block">
-            <span>Persisted evidence</span>
+            <span>{uiText("Bằng chứng đã lưu", "Persisted evidence")}</span>
             <ReportEvidenceValue value={selected.evidence} />
           </div>
           {selected.meta && (
             <div className="report-evidence-block">
-              <span>Reported metadata</span>
+              <span>{uiText("Metadata đã báo cáo", "Reported metadata")}</span>
               <ReportEvidenceValue value={selected.meta} />
             </div>
           )}
@@ -621,7 +630,7 @@ function ReportArtifacts({ section }) {
             <span className="report-artifact-kind">{artifact.kind}</span>
             <div>
               <strong>{artifact.label}</strong>
-              <code>{artifact.path || "path not reported"}</code>
+              <code>{artifact.path || uiText("chưa báo đường dẫn", "path not reported")}</code>
               {artifact.note && <p>{artifact.note}</p>}
             </div>
             <span className="report-artifact-status">{artifact.status}</span>
@@ -651,6 +660,7 @@ function AgentReportView(props) {
     onToggleTheme,
     fixtureOnly = false,
   } = props;
+  const [uiLocale, setUiLocale] = useThesisLocale();
   const scrollRef = React.useRef(null);
   const [activeSection, setActiveSection] = React.useState("summary");
   const model = React.useMemo(() => reportNormalizeModel({
@@ -661,7 +671,7 @@ function AgentReportView(props) {
     selectedRun,
     projectId,
     projectTitle,
-  }), [report, reportSource, runtimeAvailable, runId, selectedRun, projectId, projectTitle]);
+  }), [report, reportSource, runtimeAvailable, runId, selectedRun, projectId, projectTitle, uiLocale]);
   const overallMeta = reportStatusMeta(model.contractStatus);
 
   React.useEffect(() => {
@@ -696,32 +706,33 @@ function AgentReportView(props) {
     artifacts: model.artifacts,
   };
   const identityFacts = [
-    { id: "identity-run", label: "Run ID", value: model.identity.runId || "not selected" },
-    { id: "identity-project", label: "Project", value: model.identity.projectId || "not available" },
-    { id: "identity-state", label: "Run state", value: model.identity.runStatus || "not reported" },
-    { id: "identity-generated", label: "Report generated", value: reportFormatTime(model.generatedAt) },
+    { id: "identity-run", label: uiText("ID lần chạy", "Run ID"), value: model.identity.runId || uiText("chưa chọn", "not selected") },
+    { id: "identity-project", label: uiText("Dự án", "Project"), value: model.identity.projectId || uiText("không khả dụng", "not available") },
+    { id: "identity-state", label: uiText("Trạng thái chạy", "Run state"), value: model.identity.runStatus || uiText("chưa báo cáo", "not reported") },
+    { id: "identity-generated", label: uiText("Thời điểm tạo báo cáo", "Report generated"), value: reportFormatTime(model.generatedAt) },
   ].map(reportNormalizeFact);
 
   return (
     <div className={`agentreport report-theme-${theme === "dark" ? "dark" : "light"}`}>
       <header className="report-header">
-        {onBack && <button className="report-btn report-back" type="button" onClick={onBack}>&larr; Workspace</button>}
-        <span className="report-brand">⬢ RUN REPORT</span>
-        <nav className="run-surface-tabs" aria-label="Run views">
+        {onBack && <button className="report-btn report-back" type="button" onClick={onBack}>&larr; {uiText("Workspace", "Workspace")}</button>}
+        <span className="report-brand">⬢ {uiText("BÁO CÁO LẦN CHẠY", "RUN REPORT")}</span>
+        <nav className="run-surface-tabs" aria-label={uiText("Các chế độ lần chạy", "Run views")}>
           {onOpenConsole && <button className="run-surface-tab" type="button" onClick={onOpenConsole}>Console</button>}
-          <span className="run-surface-tab active" aria-current="page">Report / Báo cáo</span>
+          <span className="run-surface-tab active" aria-current="page">{uiText("Báo cáo", "Report")}</span>
         </nav>
         {projectId && <span className="report-project" title={projectId}>{projectId}</span>}
-        <select className="report-run-picker" aria-label="Run picker" value={runId || ""} onChange={event => onSelectRun?.(event.target.value)}>
-          {!runId && <option value="">Chọn run</option>}
+        <select className="report-run-picker" aria-label={uiText("Chọn lần chạy", "Run picker")} value={runId || ""} onChange={event => onSelectRun?.(event.target.value)}>
+          {!runId && <option value="">{uiText("Chọn lần chạy", "Choose run")}</option>}
           {runs.slice(0, 40).map(run => (
             <option key={run.run_id} value={run.run_id}>{run.run_id}{run.status ? ` · ${run.status}` : ""}</option>
           ))}
         </select>
         <div className="report-header-actions">
           {fixtureOnly && <span className="report-fixture-chip">FIXTURE ONLY</span>}
-          {onRefresh && <button className="report-btn" type="button" onClick={onRefresh}>↻ Làm mới</button>}
-          {onToggleTheme && <button className="report-btn" type="button" onClick={onToggleTheme}>◐ Giao diện</button>}
+          <ThesisLocaleSwitch locale={uiLocale} onChange={setUiLocale} compact />
+          {onRefresh && <button className="report-btn" type="button" onClick={onRefresh}>↻ {uiText("Làm mới", "Refresh")}</button>}
+          {onToggleTheme && <button className="report-btn" type="button" onClick={onToggleTheme}>◐ {uiText("Giao diện", "Theme")}</button>}
           <span className={`report-contract-chip report-tone-${overallMeta.tone}`}>
             <span aria-hidden="true">{overallMeta.glyph}</span>{model.contractLabel || overallMeta.label}
           </span>
@@ -730,14 +741,14 @@ function AgentReportView(props) {
 
       {fixtureOnly && (
         <div className="report-fixture-banner" role="note">
-          FIXTURE-ONLY DEV HARNESS · Mọi giá trị trên trang này chỉ dùng kiểm tra UI, không phải kết quả pipeline.
+          {uiText("FIXTURE-ONLY DEV HARNESS · Mọi giá trị trên trang này chỉ dùng kiểm tra UI, không phải kết quả pipeline.", "FIXTURE-ONLY DEV HARNESS · All values on this page are for UI testing only and are not pipeline results.")}
         </div>
       )}
 
       <div className="report-body">
-        <aside className="report-nav" aria-label="Mục lục báo cáo">
+        <aside className="report-nav" aria-label={uiText("Mục lục báo cáo", "Report contents")}>
           <div className="report-nav-status">
-            <span>REPORT STATUS</span>
+            <span>{uiText("TRẠNG THÁI BÁO CÁO", "REPORT STATUS")}</span>
             <strong className={`report-tone-${overallMeta.tone}`}><i aria-hidden="true">{overallMeta.glyph}</i>{model.contractLabel || overallMeta.label}</strong>
             <p>{model.statusMessage}</p>
           </div>
@@ -754,7 +765,7 @@ function AgentReportView(props) {
                   aria-current={activeSection === section.id ? "location" : undefined}
                 >
                   <span>{section.index}</span>
-                  <b>{section.label}</b>
+                  <b>{reportSectionLabel(section)}</b>
                   <i className={`report-tone-${meta.tone}`} aria-label={meta.label}>{meta.glyph}</i>
                 </button>
               );
@@ -763,11 +774,11 @@ function AgentReportView(props) {
           <div className="report-nav-note">
             <span>READ MODEL</span>
             <code>{model.sourceLabel}</code>
-            <p>Final persisted snapshot · không đi theo replay cursor.</p>
+            <p>{uiText("Snapshot cuối đã lưu · không đi theo replay cursor.", "Final persisted snapshot · does not follow the replay cursor.")}</p>
           </div>
         </aside>
 
-        <main className="report-scroll" ref={scrollRef} tabIndex="0" aria-label="Nội dung Full Run Report">
+        <main className="report-scroll" ref={scrollRef} tabIndex="0" aria-label={uiText("Nội dung Báo cáo lần chạy đầy đủ", "Full Run Report content")}>
           <div className={`report-status-banner report-tone-${overallMeta.tone}`} role="status">
             <span aria-hidden="true">{overallMeta.glyph}</span>
             <div>
@@ -778,7 +789,7 @@ function AgentReportView(props) {
           </div>
           {model.validationErrors.length > 0 && (
             <div className="report-validation-errors" role="alert">
-              <strong>Contract validation failed</strong>
+              <strong>{uiText("Kiểm tra contract thất bại", "Contract validation failed")}</strong>
               <ul>{model.validationErrors.map((error, index) => <li key={`${error}-${index}`}>{error}</li>)}</ul>
             </div>
           )}
@@ -787,13 +798,13 @@ function AgentReportView(props) {
             <ReportSectionHeader definition={REPORT_SECTION_DEFS[0]} state={model.summary.state} />
             <div className="report-hero">
               <div>
-                <span className="report-eyebrow">FULL RUN REPORT</span>
-                <h1>{model.summary.title || projectTitle || "Báo cáo kết quả run"}</h1>
-                <p>{model.summary.description || "Bản đọc tổng hợp các facts và evidence đã được producer persist."}</p>
+                <span className="report-eyebrow">{uiText("BÁO CÁO ĐẦY ĐỦ", "FULL RUN REPORT")}</span>
+                <h1>{model.summary.title || projectTitle || uiText("Báo cáo kết quả lần chạy", "Run results report")}</h1>
+                <p>{model.summary.description || uiText("Bản đọc tổng hợp các fact và bằng chứng đã được producer lưu.", "A consolidated reading of facts and evidence persisted by producers.")}</p>
               </div>
               <div className={`report-verdict verdict-${model.summary.verdict?.state || "not_issued"}`}>
-                <span>VERDICT</span>
-                <strong>{model.summary.verdict?.label || "CHƯA CÓ PHÁN QUYẾT"}</strong>
+                <span>{uiText("PHÁN QUYẾT", "VERDICT")}</span>
+                <strong>{model.summary.verdict?.label || uiText("CHƯA CÓ PHÁN QUYẾT", "NO VERDICT")}</strong>
                 {model.summary.verdict?.source && <code>{model.summary.verdict.source}</code>}
               </div>
             </div>
@@ -851,8 +862,8 @@ function AgentReportView(props) {
           </section>
 
           <footer className="report-footer">
-            <span>RUN REPORT · READ ONLY</span>
-            <p>UI không tính metric, không sửa frozen memory và không suy diễn verdict khi contract thiếu.</p>
+            <span>{uiText("BÁO CÁO LẦN CHẠY · CHỈ ĐỌC", "RUN REPORT · READ ONLY")}</span>
+            <p>{uiText("UI không tính metric, không sửa frozen memory và không suy diễn phán quyết khi thiếu contract.", "The UI does not calculate metrics, modify frozen memory, or infer a verdict when the contract is missing.")}</p>
           </footer>
         </main>
       </div>

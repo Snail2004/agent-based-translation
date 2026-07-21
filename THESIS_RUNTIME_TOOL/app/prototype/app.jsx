@@ -835,7 +835,7 @@ function Modal({ title, icon: I, tone, children, onClose, actions, className = "
         <div className="modal-head">
           <span className={"modal-ic " + (tone || "")}>{I && <I size={16} />}</span>
           <span className="modal-title" id={titleId}>{title}</span>
-          <button className="modal-x" type="button" aria-label="Đóng" onClick={onClose}><Ic.x size={13} /></button>
+          <button className="modal-x" type="button" aria-label={uiText("Đóng", "Close")} onClick={onClose}><Ic.x size={13} /></button>
         </div>
         <div className="modal-body">{children}</div>
         <div className="modal-foot">{actions}</div>
@@ -845,7 +845,7 @@ function Modal({ title, icon: I, tone, children, onClose, actions, className = "
 }
 
 function historyTip(prefix, event) {
-  return event?.label ? `${prefix}: ${event.label}` : `${prefix} unavailable`;
+  return event?.label ? `${prefix}: ${event.label}` : `${prefix} ${uiText("không khả dụng", "unavailable")}`;
 }
 
 function safeFilePart(value) {
@@ -899,16 +899,16 @@ async function writeBlobToHandle(handle, blob) {
 }
 
 const WORKSPACE_VIEW_MODES = [
-  { id: "block", label: "Block" },
-  { id: "chapter", label: "Chapter" },
-  { id: "book", label: "Book" },
-  { id: "structure", label: "Cấu trúc" },
-  { id: "memory", label: "Memory" },
-  { id: "preview", label: "Preview" },
+  { id: "block", vi: "Block", en: "Block" },
+  { id: "chapter", vi: "Chương", en: "Chapter" },
+  { id: "book", vi: "Sách", en: "Book" },
+  { id: "structure", vi: "Cấu trúc", en: "Structure" },
+  { id: "memory", vi: "Bộ nhớ", en: "Memory" },
+  { id: "preview", vi: "Bản dịch", en: "Preview" },
 ];
 const WORKSPACE_RUN_MODES = [
-  { id: "console", label: "Console" },
-  { id: "report", label: "Report" },
+  { id: "console", vi: "Console", en: "Console" },
+  { id: "report", vi: "Báo cáo", en: "Report" },
 ];
 
 function TopProjectPicker({ docId, projects, onSelectProject, onOpenProjectSource }) {
@@ -917,13 +917,13 @@ function TopProjectPicker({ docId, projects, onSelectProject, onOpenProjectSourc
     <div className="tb-project-wrap">
       <button className="tb-project-pick" type="button" onClick={() => setOpen(value => !value)} aria-expanded={open}>
         <Ic.folder size={13} className="faint" />
-        <span className="mono">{docId || "no document"}</span>
+        <span className="mono">{docId || uiText("chưa có tài liệu", "no document")}</span>
         <Ic.chevDown size={11} className="faint" />
       </button>
       {open && (<>
         <div className="menu-scrim" onClick={() => setOpen(false)} />
         <div className="tb-project-menu">
-          <div className="proj-menu-sec">Recent projects</div>
+          <div className="proj-menu-sec">{uiText("Project gần đây", "Recent projects")}</div>
           {(projects || []).map(project => (
             <button key={project.doc_id} className={"proj-menu-item" + (project.doc_id === docId ? " cur" : "")}
               onClick={() => { setOpen(false); onSelectProject(project.doc_id); }}>
@@ -935,7 +935,7 @@ function TopProjectPicker({ docId, projects, onSelectProject, onOpenProjectSourc
           ))}
           <div className="divider" />
           <button className="proj-menu-item" onClick={() => { setOpen(false); onOpenProjectSource(); }}>
-            <Ic.folder size={13} className="faint" /><span>Project / Source</span>
+            <Ic.folder size={13} className="faint" /><span>{uiText("Project / Nguồn", "Project / Source")}</span>
           </button>
         </div>
       </>)}
@@ -948,17 +948,17 @@ function WorkspaceModeNav({ mode, onModeChange, showStructure = true }) {
     return (
       <button key={item.id} className={"top-mode-btn" + (mode === item.id ? " on" : "")}
         type="button" role="tab" aria-selected={mode === item.id} onClick={() => onModeChange(item.id)}>
-        {item.label}
+        {uiText(item.vi, item.en)}
       </button>
     );
   }
   return (
-    <nav className="top-mode-nav" aria-label="Workspace views">
-      <div className="top-mode-group" role="tablist" aria-label="Document views">
+    <nav className="top-mode-nav" aria-label={uiText("Các chế độ workspace", "Workspace views")}>
+      <div className="top-mode-group" role="tablist" aria-label={uiText("Chế độ tài liệu", "Document views")}>
         {WORKSPACE_VIEW_MODES.filter(item => item.id !== "structure" || showStructure).map(renderMode)}
       </div>
       <span className="top-mode-sep" />
-      <div className="top-mode-group run" role="tablist" aria-label="Run views">
+      <div className="top-mode-group run" role="tablist" aria-label={uiText("Chế độ run", "Run views")}>
         {WORKSPACE_RUN_MODES.map(renderMode)}
       </div>
     </nav>
@@ -969,17 +969,24 @@ function TopBar({
   docId, projects, mode, onModeChange, onSelectProject, onOpenProjectSource, onQuickImport,
   leftPanelOpen, rightPanelOpen, onToggleLeftPanel, onToggleRightPanel,
   dirty, lastSaved, onValidate, onExportOption, onFreeze, onUndo, onRedo, history,
-  freezeReady, freezeReasons, previewReadOnly, canExportPreview, appVersion
+  freezeReady, freezeReasons, previewReadOnly, canExportPreview, appVersion,
+  locale, onLocaleChange,
 }) {
   const [exportOpen, setExportOpen] = useState(false);
   const canUndo = !!history?.can_undo && !dirty && !previewReadOnly;
   const canRedo = !!history?.can_redo && !dirty && !previewReadOnly;
-  const readOnlyTip = "Editing is disabled in viewer mode.";
+  const readOnlyTip = uiText("Không thể chỉnh sửa trong chế độ chỉ đọc.", "Editing is disabled in viewer mode.");
   const packageDisabled = false;
   const qcDisabled = false;
   const apiVersion = appVersion?.backend_version || appVersion?.version || "unknown";
   const versionMismatch = apiVersion !== "unknown" && apiVersion !== UI_VERSION;
   const previewDisabled = !canExportPreview;
+  const savedSeconds = Math.max(0, Number(lastSaved) || 0);
+  const savedLabel = savedSeconds < 3
+    ? uiText("vừa xong", "just now")
+    : savedSeconds < 60
+      ? uiText("{count} giây trước", "{count}s ago", { count: savedSeconds })
+      : uiText("{count} phút trước", "{count}m ago", { count: Math.floor(savedSeconds / 60) });
   function chooseExport(kind) {
     setExportOpen(false);
     onExportOption(kind);
@@ -994,7 +1001,7 @@ function TopBar({
         <span className="tb-logo" aria-label="Thesis Runtime Tool">▧</span>
         <TopProjectPicker docId={docId} projects={projects} onSelectProject={onSelectProject} onOpenProjectSource={onOpenProjectSource} />
         <button className="btn sm primary tb-import" type="button" onClick={onQuickImport}>
-          <Ic.upload size={12} />Nhập tài liệu
+          <Ic.upload size={12} />{uiText("Nhập tài liệu", "Import document")}
         </button>
       </div>
 
@@ -1003,31 +1010,32 @@ function TopBar({
       <div className="tb-right">
         {!(["console", "structure"].includes(mode)) && <div className="panel-toggle-group">
           <button className={"btn icon-only tip" + (leftPanelOpen ? " is-on" : "")} type="button"
-            data-tip={leftPanelOpen ? "Hide chapter navigation" : "Show chapter navigation"}
-            aria-label="Toggle chapter navigation" aria-pressed={leftPanelOpen} onClick={onToggleLeftPanel}>
+            data-tip={leftPanelOpen ? uiText("Ẩn điều hướng chương", "Hide chapter navigation") : uiText("Hiện điều hướng chương", "Show chapter navigation")}
+            aria-label={uiText("Bật/tắt điều hướng chương", "Toggle chapter navigation")} aria-pressed={leftPanelOpen} onClick={onToggleLeftPanel}>
             <Ic.list size={13} />
           </button>
           {mode !== "memory" && (
             <button className={"btn icon-only tip" + (rightPanelOpen ? " is-on" : "")} type="button"
-              data-tip={rightPanelOpen ? "Hide context inspector" : "Show context inspector"}
-              aria-label="Toggle context inspector" aria-pressed={rightPanelOpen} onClick={onToggleRightPanel}>
+              data-tip={rightPanelOpen ? uiText("Ẩn bảng ngữ cảnh", "Hide context inspector") : uiText("Hiện bảng ngữ cảnh", "Show context inspector")}
+              aria-label={uiText("Bật/tắt bảng ngữ cảnh", "Toggle context inspector")} aria-pressed={rightPanelOpen} onClick={onToggleRightPanel}>
               <Ic.layers size={13} />
             </button>
           )}
         </div>}
         <span className="autosave">
-          {dirty ? <><span className="as-spin" />saving...</> : <><Ic.check size={12} className="as-ok" />saved {lastSaved}</>}
+          {dirty ? <><span className="as-spin" />{uiText("đang lưu...", "saving...")}</> : <><Ic.check size={12} className="as-ok" />{uiText("đã lưu", "saved")} {savedLabel}</>}
         </span>
         <div className="undo-group">
-          <button className="btn icon-only tip" disabled={!canUndo} data-tip={previewReadOnly ? readOnlyTip : dirty ? "Wait for current save to finish" : historyTip("Undo", history?.undo_top)} onClick={onUndo} aria-label="Undo">
+          <button className="btn icon-only tip" disabled={!canUndo} data-tip={previewReadOnly ? readOnlyTip : dirty ? uiText("Chờ lượt lưu hiện tại hoàn tất", "Wait for current save to finish") : historyTip(uiText("Hoàn tác", "Undo"), history?.undo_top)} onClick={onUndo} aria-label={uiText("Hoàn tác", "Undo")}>
             <Ic.undo size={13} />
           </button>
-          <button className="btn icon-only tip" disabled={!canRedo} data-tip={previewReadOnly ? readOnlyTip : dirty ? "Wait for current save to finish" : historyTip("Redo", history?.redo_top)} onClick={onRedo} aria-label="Redo">
+          <button className="btn icon-only tip" disabled={!canRedo} data-tip={previewReadOnly ? readOnlyTip : dirty ? uiText("Chờ lượt lưu hiện tại hoàn tất", "Wait for current save to finish") : historyTip(uiText("Làm lại", "Redo"), history?.redo_top)} onClick={onRedo} aria-label={uiText("Làm lại", "Redo")}>
             <Ic.redo size={13} />
           </button>
         </div>
+        <ThesisLocaleSwitch compact locale={locale} onChange={onLocaleChange} />
         <div className="export-menu-wrap">
-          <button className="btn icon-only tb-menu-btn" onClick={() => setExportOpen(v => !v)} aria-label="Menu & account">
+          <button className="btn icon-only tb-menu-btn" onClick={() => setExportOpen(v => !v)} aria-label={uiText("Menu và tài khoản", "Menu & account")}>
             <span className="ua">{userInitial}</span><Ic.chevDown size={11} className="faint" />
           </button>
           {exportOpen && (<>
@@ -1035,33 +1043,33 @@ function TopBar({
             <div className="export-menu tb-menu">
               <div className="tb-menu-user">
                 <span className="ua">{userInitial}</span>
-                <div><b>{userName}</b><em>local user</em></div>
+                <div><b>{userName}</b><em>{uiText("người dùng cục bộ", "local user")}</em></div>
               </div>
               <div className="tb-menu-meta">
                 <span>UI {UI_VERSION} · API {apiVersion}</span>
                 {gitSha ? <span>git {gitSha}</span> : null}
-                <span>{previewReadOnly ? "viewer mode" : "working copy · autosaved"}</span>
+                <span>{previewReadOnly ? uiText("chế độ chỉ đọc", "viewer mode") : uiText("bản làm việc · tự động lưu", "working copy · autosaved")}</span>
               </div>
               <div className="tb-menu-div" />
               <button disabled={previewReadOnly} onClick={() => runAction(onValidate)}>
-                <Ic.checkCircle size={13} /><span><b>Validate</b><em>Grouped issues & gates</em></span>
+                <Ic.checkCircle size={13} /><span><b>{uiText("Kiểm tra", "Validate")}</b><em>{uiText("Nhóm lỗi và gate", "Grouped issues & gates")}</em></span>
               </button>
-              <div className="tb-menu-label">Export</div>
+              <div className="tb-menu-label">{uiText("Xuất", "Export")}</div>
               <button disabled={!docId} onClick={() => chooseExport("package")}>
-                <Ic.layers size={13} /><span><b>Dataset package</b><em>Source + dataset + working state + QC</em></span>
+                <Ic.layers size={13} /><span><b>{uiText("Gói dataset", "Dataset package")}</b><em>{uiText("Nguồn + dataset + trạng thái làm việc + QC", "Source + dataset + working state + QC")}</em></span>
               </button>
               <button disabled={!docId} onClick={() => chooseExport("qc")}>
-                <Ic.checkCircle size={13} /><span><b>QC report</b><em>Counts, validation, review, freeze gates</em></span>
+                <Ic.checkCircle size={13} /><span><b>{uiText("Báo cáo QC", "QC report")}</b><em>{uiText("Số lượng, kiểm tra, review và gate đóng băng", "Counts, validation, review, freeze gates")}</em></span>
               </button>
               <button disabled={!docId} onClick={() => chooseExport("dataset-previews")}>
-                <Ic.book size={13} /><span><b>Dataset + all previews</b><em>Package + all translated previews</em></span>
+                <Ic.book size={13} /><span><b>{uiText("Dataset + mọi bản dịch", "Dataset + all previews")}</b><em>{uiText("Gói dữ liệu + toàn bộ bản dịch đã lưu", "Package + all translated previews")}</em></span>
               </button>
               <button disabled={!docId || previewDisabled} onClick={() => chooseExport("preview")}>
-                <Ic.eye size={13} /><span><b>Translation preview</b><em>Current preview run</em></span>
+                <Ic.eye size={13} /><span><b>{uiText("Bản dịch xem trước", "Translation preview")}</b><em>{uiText("Run xem trước hiện tại", "Current preview run")}</em></span>
               </button>
               <div className="tb-menu-div" />
               <button disabled={previewReadOnly || !freezeReady} onClick={() => runAction(onFreeze)}>
-                <Ic.snow size={13} /><span><b>Freeze snapshot</b><em>{freezeReady ? "Versioned snapshot after gates pass" : "Blocked: " + freezeReasons.join(" · ")}</em></span>
+                <Ic.snow size={13} /><span><b>{uiText("Đóng băng snapshot", "Freeze snapshot")}</b><em>{freezeReady ? uiText("Snapshot có phiên bản sau khi qua gate", "Versioned snapshot after gates pass") : uiText("Bị chặn: ", "Blocked: ") + freezeReasons.join(" · ")}</em></span>
               </button>
             </div>
           </>)}
@@ -1074,35 +1082,35 @@ function TopBar({
 function PreviewRightPanel({ docInfo, block, preview }) {
   const run = preview?.run || null;
   const configs = run?.configs || [];
-  const mode = configs.length > 1 ? "comparison" : configs.length === 1 ? "single translation" : "no result";
+  const mode = configs.length > 1 ? uiText("đối chiếu", "comparison") : configs.length === 1 ? uiText("một bản dịch", "single translation") : uiText("chưa có kết quả", "no result");
   return (
     <div className="col col-right preview-info-panel">
       <div className="preview-info-head">
         <Ic.eye size={15} />
         <div>
-          <b>Translation results</b>
+          <b>{uiText("Kết quả dịch", "Translation results")}</b>
         </div>
       </div>
       <div className="preview-info-card">
         <p>{configs.length > 1
-          ? "Stored translation versions are shown side by side."
+          ? uiText("Các phiên bản dịch đã lưu được hiển thị song song.", "Stored translation versions are shown side by side.")
           : configs.length === 1
-            ? "The stored translation is shown beside its source."
-            : "No stored translation is available for this chapter."}</p>
+            ? uiText("Bản dịch đã lưu được hiển thị cạnh nguồn.", "The stored translation is shown beside its source.")
+            : uiText("Chương này chưa có bản dịch đã lưu.", "No stored translation is available for this chapter.")}</p>
       </div>
       <div className="preview-info-list">
-        <div><span>project</span><b className="mono">{docInfo?.doc_id || ""}</b></div>
-        <div><span>chapter</span><b className="mono">{run?.chapter_id || block?.chapter_id || ""}</b></div>
-        <div><span>active block</span><b className="mono">{block?.block_id || ""}</b></div>
-        <div><span>mode</span><b>{mode}</b></div>
-        <div><span>versions</span><b className="mono">{configs.join(" / ") || "none"}</b></div>
-        <div><span>coverage</span><b className="mono">{run ? `${run.translated_block_count || 0}/${run.block_count || 0} blocks` : "0/0 blocks"}</b></div>
+        <div><span>{uiText("dự án", "project")}</span><b className="mono">{docInfo?.doc_id || ""}</b></div>
+        <div><span>{uiText("chương", "chapter")}</span><b className="mono">{run?.chapter_id || block?.chapter_id || ""}</b></div>
+        <div><span>{uiText("block đang chọn", "active block")}</span><b className="mono">{block?.block_id || ""}</b></div>
+        <div><span>{uiText("chế độ", "mode")}</span><b>{mode}</b></div>
+        <div><span>{uiText("phiên bản", "versions")}</span><b className="mono">{configs.join(" / ") || uiText("không có", "none")}</b></div>
+        <div><span>{uiText("độ phủ", "coverage")}</span><b className="mono">{run ? `${run.translated_block_count || 0}/${run.block_count || 0} block` : "0/0 block"}</b></div>
       </div>
     </div>
   );
 }
 
-function StartupState({ title, message, action, onAction, secondary, secondaryAction, onSecondaryAction }) {
+function StartupState({ title, message, action, onAction, secondary, secondaryAction, onSecondaryAction, locale, onLocaleChange }) {
   return (
     <div className="project-screen">
       <div className="project-wrap" style={{ maxWidth: 760 }}>
@@ -1114,6 +1122,7 @@ function StartupState({ title, message, action, onAction, secondary, secondaryAc
             {secondary && <p className="muted">{secondary}</p>}
           </div>
           <div className="startup-actions">
+            <ThesisLocaleSwitch locale={locale} onChange={onLocaleChange} />
             {secondaryAction && <button className="btn" onClick={onSecondaryAction}>{secondaryAction}</button>}
             {action && <button className="btn primary" onClick={onAction}>{action}</button>}
           </div>
@@ -1124,6 +1133,7 @@ function StartupState({ title, message, action, onAction, secondary, secondaryAc
 }
 
 function App() {
+  const [uiLocale, setUiLocale] = useThesisLocale();
   const [view, setView] = useState(viewFromLocation);
   const [projects, setProjects] = useState([]);
   const [docInfo, setDocInfo] = useState(null);
@@ -1184,7 +1194,7 @@ function App() {
   const [dirty, setDirty] = useState(false);
   const [schemaMigrating, setSchemaMigrating] = useState(false);
   const [currentPreviewRun, setCurrentPreviewRun] = useState(null);
-  const [lastSaved, setLastSaved] = useState("just now");
+  const [lastSaved, setLastSaved] = useState(0);
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState(null);
   const [activeDocId, setActiveDocId] = useState(localStorage.getItem(STORAGE_DOC) || "");
@@ -1474,11 +1484,11 @@ function App() {
       };
       const preview = await API.getThesisRunPromptPreview(params);
       setRunPromptPreview(preview);
-      toast("Prompt preview ready", "good", `${preview.representative_prompt?.prompt_tokens_est || 0} estimated prompt tokens`);
+      toast(uiText("Bản xem trước prompt đã sẵn sàng", "Prompt preview ready"), "good", uiText(`${preview.representative_prompt?.prompt_tokens_est || 0} token prompt ước tính`, `${preview.representative_prompt?.prompt_tokens_est || 0} estimated prompt tokens`));
     } catch (err) {
       const msg = errorMessage(err);
       setRunError(msg);
-      toast("Prompt preview failed", "bad", msg);
+      toast(uiText("Xem trước prompt thất bại", "Prompt preview failed"), "bad", msg);
     } finally {
       setRunBusy(false);
     }
@@ -1496,11 +1506,11 @@ function App() {
       setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
       setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status, aggregate: emptyRunEventAggregate() });
       await refreshThesisRuns();
-      toast("Run launched", "good", created.run_id);
+      toast(uiText("Đã khởi chạy lần chạy", "Run launched"), "good", created.run_id);
     } catch (err) {
       const msg = errorMessage(err);
       setRunError(msg);
-      toast("Run launch failed", "bad", msg);
+      toast(uiText("Khởi chạy thất bại", "Run launch failed"), "bad", msg);
     } finally {
       setRunBusy(false);
     }
@@ -1526,9 +1536,9 @@ function App() {
     if (!selectedRunId) return;
     try {
       await API.pauseThesisRun(selectedRunId);
-      toast("Đã đặt cờ tạm dừng", "good", "Run sẽ dừng ở ranh giới stage kế tiếp");
+      toast(uiText("Đã đặt cờ tạm dừng", "Pause requested"), "good", uiText("Lần chạy sẽ dừng ở ranh giới tầng kế tiếp", "The run will pause at the next stage boundary"));
     } catch (err) {
-      toast("Pause thất bại", "bad", errorMessage(err));
+      toast(uiText("Tạm dừng thất bại", "Pause failed"), "bad", errorMessage(err));
     }
   }
 
@@ -1543,10 +1553,10 @@ function App() {
     if (!runId) return;
     try {
       await API.cancelThesisRun(runId);
-      toast("Đã gửi lệnh hủy", "good", runId);
+      toast(uiText("Đã gửi lệnh hủy", "Cancel requested"), "good", runId);
       await refreshThesisRuns();
     } catch (err) {
-      toast("Cancel thất bại", "bad", errorMessage(err));
+      toast(uiText("Hủy thất bại", "Cancel failed"), "bad", errorMessage(err));
     }
   }
 
@@ -1557,7 +1567,7 @@ function App() {
       const estimate = await API.getThesisResumeEstimate(selectedRunId);
       setModal({ kind: "resume-run", runId: selectedRunId, estimate });
     } catch (err) {
-      toast("Không lấy được ước tính resume", "bad", errorMessage(err));
+      toast(uiText("Không lấy được ước tính tiếp tục", "Could not load resume estimate"), "bad", errorMessage(err));
     } finally {
       setRunBusy(false);
     }
@@ -1633,11 +1643,11 @@ function App() {
       setRunReportSummary(null);
       setModal(null);
       setCenterMode("console");
-      toast("Đã khởi chạy kiểm tra pipeline", "good", `${runtime.job_id} · không gọi API`);
+      toast(uiText("Đã khởi chạy kiểm tra pipeline", "Pipeline check launched"), "good", `${runtime.job_id} · ${uiText("không gọi API", "no API calls")}`);
     } catch (err) {
       const message = errorMessage(err);
       setRunError(message);
-      toast("Không thể khởi chạy pipeline", "bad", message);
+      toast(uiText("Không thể khởi chạy pipeline", "Could not launch pipeline"), "bad", message);
     } finally {
       setRunBusy(false);
     }
@@ -1645,7 +1655,7 @@ function App() {
 
   function openDichModal() {
     const jobId = thesisJobId(activeDocId);
-    if (!jobId) { toast("Chưa mở dataset thesis", "bad", "Chọn một dataset thesis trước khi dịch."); return; }
+    if (!jobId) { toast(uiText("Chưa mở dataset khóa luận", "No thesis dataset open"), "bad", uiText("Chọn một dataset khóa luận trước khi dịch.", "Choose a thesis dataset before translating.")); return; }
     setModal({ kind: "dich-run", jobId });
   }
 
@@ -1690,9 +1700,9 @@ function App() {
       setRunReportSummary(null);
       setCenterMode("console");
       await refreshThesisRuns();
-      toast("Đã bắt đầu dịch", "good", created.run_id);
+      toast(uiText("Đã bắt đầu dịch", "Translation started"), "good", created.run_id);
     } catch (err) {
-      toast("Khởi động dịch thất bại", "bad", errorMessage(err));
+      toast(uiText("Khởi động dịch thất bại", "Translation launch failed"), "bad", errorMessage(err));
     } finally {
       setRunBusy(false);
     }
@@ -1705,11 +1715,11 @@ function App() {
     setRunBusy(true);
     try {
       const resumed = await API.resumeThesisRun(pending.runId, { confirm_token: pending.estimate.confirm_token });
-      toast("Đã resume run", "good", `${resumed.run_id} · attempt ${resumed.attempt_index}`);
+      toast(uiText("Đã tiếp tục lần chạy", "Run resumed"), "good", `${resumed.run_id} · attempt ${resumed.attempt_index}`);
       await refreshThesisRuns();
       selectRun(resumed.run_id);
     } catch (err) {
-      toast("Resume thất bại", "bad", errorMessage(err));
+      toast(uiText("Tiếp tục thất bại", "Resume failed"), "bad", errorMessage(err));
     } finally {
       setRunBusy(false);
     }
@@ -1841,19 +1851,19 @@ function App() {
   const touchStart = useCallback(() => {
     setDirty(true);
     savedAt.current = Date.now();
-    setLastSaved("just now");
+    setLastSaved(0);
   }, []);
 
   const touchDone = useCallback(() => {
     savedAt.current = Date.now();
     setDirty(false);
-    setLastSaved("just now");
+    setLastSaved(0);
   }, []);
 
   useEffect(() => {
     const t = setInterval(() => {
       const s = Math.round((Date.now() - savedAt.current) / 1000);
-      setLastSaved(s < 3 ? "just now" : s < 60 ? s + "s ago" : Math.floor(s / 60) + "m ago");
+      setLastSaved(s);
     }, 4000);
     return () => clearInterval(t);
   }, []);
@@ -1913,7 +1923,7 @@ function App() {
   async function mutate(action, { refresh = true, success, fail } = {}) {
     if (!activeDocId) return null;
     if (readOnly) {
-      toast("Read-only thesis view", "info", "Pipeline SQLite data is observable only in APP-A01.");
+      toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Dữ liệu pipeline SQLite chỉ có thể quan sát trong APP-A01.", "Pipeline SQLite data is observable only in APP-A01."));
       return null;
     }
     touchStart();
@@ -1925,14 +1935,14 @@ function App() {
       return result;
     } catch (err) {
       touchDone();
-      toast(fail || "Action failed", "bad", errorMessage(err));
+      toast(fail || uiText("Thao tác thất bại", "Action failed"), "bad", errorMessage(err));
       return null;
     }
   }
 
   function queueSave(key, action) {
     if (readOnly) {
-      toast("Viewer mode", "info", "Workspace editing is disabled for this dataset.");
+      toast(uiText("Chế độ xem", "Viewer mode"), "info", uiText("Workspace không cho sửa dataset này.", "Workspace editing is disabled for this dataset."));
       return;
     }
     touchStart();
@@ -1944,7 +1954,7 @@ function App() {
         touchDone();
       } catch (err) {
         touchDone();
-        toast("Save failed", "bad", errorMessage(err));
+        toast(uiText("Lưu thất bại", "Save failed"), "bad", errorMessage(err));
       }
     }, 650);
   }
@@ -2095,7 +2105,7 @@ function App() {
         setEntities(adapted.entities);
       })
       .catch(err => {
-        if (!cancelled) toast("Registry overlay unavailable", "bad", errorMessage(err));
+        if (!cancelled) toast(uiText("Lớp phủ registry không khả dụng", "Registry overlay unavailable"), "bad", errorMessage(err));
       })
       .finally(() => {
         if (!cancelled && centerMode === "memory") setRegistryOverlayLoading(false);
@@ -2312,9 +2322,9 @@ function App() {
     const next = after || before;
     if (next) {
       selectBlock(next.block_id);
-      toast(`Next unreviewed: ${next.block_id}`, "info");
+      toast(uiText(`Mục chưa duyệt tiếp theo: ${next.block_id}`, `Next unreviewed: ${next.block_id}`), "info");
     } else {
-      toast("All blocks are reviewed", "good");
+      toast(uiText("Tất cả block đã được duyệt", "All blocks are reviewed"), "good");
     }
   }
 
@@ -2355,7 +2365,7 @@ function App() {
 
   function patchDoc(patch) {
     if (readOnly) {
-      toast("Read-only thesis view", "info", "Metadata edits belong to a later write lane with explicit audit logs.");
+      toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Chỉnh metadata thuộc write lane sau với audit log rõ ràng.", "Metadata edits belong to a later write lane with explicit audit logs."));
       return;
     }
     if (patch.metadata) {
@@ -2373,7 +2383,7 @@ function App() {
 
   async function createProject(docId, metadata, options = {}) {
     if (isThesisDatasetId(docId)) {
-      toast("Invalid local project id", "bad", "The thesis: namespace is reserved for read-only runtime datasets.");
+      toast(uiText("ID dự án cục bộ không hợp lệ", "Invalid local project id"), "bad", uiText("Namespace thesis: được dành cho dataset runtime chỉ đọc.", "The thesis: namespace is reserved for read-only runtime datasets."));
       return null;
     }
     try {
@@ -2400,10 +2410,10 @@ function App() {
         setActiveDocId(result.doc_id);
         localStorage.setItem(STORAGE_DOC, result.doc_id);
       }
-      toast("Project created", "good", result.doc_id);
+      toast(uiText("Đã tạo dự án", "Project created"), "good", result.doc_id);
       return result;
     } catch (err) {
-      toast("Create project failed", "bad", errorMessage(err));
+      toast(uiText("Tạo dự án thất bại", "Create project failed"), "bad", errorMessage(err));
       return null;
     }
   }
@@ -2411,16 +2421,16 @@ function App() {
   async function updateProjectSettings(docId, patch) {
     if (!docId) return null;
     if (isThesisDatasetId(docId)) {
-      toast("Read-only thesis dataset", "info", "Project settings can only be changed for local source projects.");
+      toast(uiText("Dataset khóa luận chỉ đọc", "Read-only thesis dataset"), "info", uiText("Chỉ có thể đổi cài đặt của dự án nguồn cục bộ.", "Project settings can only be changed for local source projects."));
       return null;
     }
     try {
       const result = await API.patchProject(docId, { ...patch, user: currentUser() });
       await refreshProjects();
-      toast("Project updated", "good");
+      toast(uiText("Đã cập nhật dự án", "Project updated"), "good");
       return result;
     } catch (err) {
-      toast("Update project failed", "bad", errorMessage(err));
+      toast(uiText("Cập nhật dự án thất bại", "Update project failed"), "bad", errorMessage(err));
       return null;
     }
   }
@@ -2428,7 +2438,7 @@ function App() {
   async function deleteProjectById(docId, confirmDocId) {
     if (!docId) return null;
     if (isThesisDatasetId(docId)) {
-      toast("Read-only thesis dataset", "info", "Thesis runtime datasets cannot be deleted from the source-project screen.");
+      toast(uiText("Dataset khóa luận chỉ đọc", "Read-only thesis dataset"), "info", uiText("Không thể xóa dataset runtime khóa luận từ màn hình dự án nguồn.", "Thesis runtime datasets cannot be deleted from the source-project screen."));
       return null;
     }
     try {
@@ -2454,10 +2464,10 @@ function App() {
         setSelectedCallDetail(null);
         navigateView("project");
       }
-      toast("Project deleted", "good", result.doc_id);
+      toast(uiText("Đã xóa dự án", "Project deleted"), "good", result.doc_id);
       return result;
     } catch (err) {
-      toast("Delete project failed", "bad", errorMessage(err));
+      toast(uiText("Xóa dự án thất bại", "Delete project failed"), "bad", errorMessage(err));
       return null;
     }
   }
@@ -2466,16 +2476,16 @@ function App() {
     const targetDocId = docIdOverride || activeDocId;
     if (!targetDocId || !file) return null;
     if (isThesisDatasetId(targetDocId)) {
-      toast("Upload blocked", "bad", "Create a local project before uploading; thesis datasets are read-only.");
+      toast(uiText("Tải lên bị chặn", "Upload blocked"), "bad", uiText("Hãy tạo dự án cục bộ trước khi tải lên; dataset khóa luận là chỉ đọc.", "Create a local project before uploading; thesis datasets are read-only."));
       return null;
     }
     try {
       const result = await API.uploadSource(targetDocId, file, overwrite);
       await refreshProjects();
-      toast("Source uploaded", "good", result.filename);
+      toast(uiText("Đã tải nguồn", "Source uploaded"), "good", result.filename);
       return result;
     } catch (err) {
-      toast("Upload failed", "bad", errorMessage(err));
+      toast(uiText("Tải lên thất bại", "Upload failed"), "bad", errorMessage(err));
       return null;
     }
   }
@@ -2486,11 +2496,11 @@ function App() {
     try {
       const result = await API.normalizeSourcePackage(targetDocId);
       await refreshProjects();
-      toast(result?.reused ? "Source package đã được xác nhận lại" : "Đã chuẩn hóa source package", "good", targetDocId);
+      toast(result?.reused ? uiText("Source package đã được xác nhận lại", "Source package reconfirmed") : uiText("Đã chuẩn hóa source package", "Source package normalized"), "good", targetDocId);
       return result;
     } catch (err) {
       const detail = firstError(err);
-      toast("Chuẩn hóa thất bại", "bad", [detail.code, errorMessage(err)].filter(Boolean).join(" · "));
+      toast(uiText("Chuẩn hóa thất bại", "Normalization failed"), "bad", [detail.code, errorMessage(err)].filter(Boolean).join(" · "));
       return null;
     }
   }
@@ -2508,7 +2518,7 @@ function App() {
       navigateView("workspace");
       setModal({ kind: "dich-run", jobId });
     } catch (err) {
-      toast("Không mở được Run Control", "bad", errorMessage(err));
+      toast(uiText("Không mở được Điều khiển chạy", "Could not open Run Control"), "bad", errorMessage(err));
     } finally {
       setRunBusy(false);
     }
@@ -2518,7 +2528,7 @@ function App() {
     const targetDocId = docIdOverride || activeDocId;
     if (!targetDocId) return null;
     if (isThesisDatasetId(targetDocId)) {
-      toast("Extraction blocked", "bad", "Extraction can only write to a local source project.");
+      toast(uiText("Trích xuất bị chặn", "Extraction blocked"), "bad", uiText("Chỉ có thể ghi kết quả trích xuất vào dự án nguồn cục bộ.", "Extraction can only write to a local source project."));
       return null;
     }
     try {
@@ -2528,10 +2538,10 @@ function App() {
       setActiveDocId(targetDocId);
       localStorage.setItem(STORAGE_DOC, targetDocId);
       navigateView("workspace");
-      toast("Extraction complete", "good", `${job.document?.blocks || 0} blocks · ${job.document?.chapters || 0} chapters`);
+      toast(uiText("Trích xuất hoàn tất", "Extraction complete"), "good", `${job.document?.blocks || 0} block · ${job.document?.chapters || 0} ${uiText("chương", "chapters")}`);
       return job;
     } catch (err) {
-      toast("Extraction failed", "bad", errorMessage(err));
+      toast(uiText("Trích xuất thất bại", "Extraction failed"), "bad", errorMessage(err));
       return null;
     }
   }
@@ -2541,16 +2551,16 @@ function App() {
   }
 
   function changeType(t, blockId = selectedId) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Block type changes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể đổi loại block trong SQLite read-model.", "Block type changes are disabled for SQLite read-models."));
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
     setBlocks(bs => bs.map(b => b.block_id === target.block_id ? { ...b, block_type: t } : b));
-    mutate(() => API.patchBlock(activeDocId, target.block_id, { block_type: t, user: currentUser() }), { success: `block_type -> ${t}` });
+    mutate(() => API.patchBlock(activeDocId, target.block_id, { block_type: t, user: currentUser() }), { success: uiText(`Đã đổi block_type → ${t}`, `block_type → ${t}`) });
   }
 
   function toggleOpening(blockId = selectedId) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Chapter opening changes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể đổi mở đầu chương trong SQLite read-model.", "Chapter opening changes are disabled for SQLite read-models."));
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -2560,7 +2570,7 @@ function App() {
   }
 
   function toggleFlag(f, blockId = selectedId) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Quality flags are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể đổi cờ chất lượng trong SQLite read-model.", "Quality flags are disabled for SQLite read-models."));
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -2576,18 +2586,18 @@ function App() {
   }
 
   function markReviewed(blockId = selectedId) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Review writes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi trạng thái duyệt trong SQLite read-model.", "Review writes are disabled for SQLite read-models."));
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
     const next = !review.blocks?.[target.block_id]?.reviewed;
     mutate(() => API.patchReview(activeDocId, target.block_id, { reviewed: next, reviewed_by: currentUser(), user: currentUser() }), {
-      success: next ? `${target.block_id} marked reviewed` : `${target.block_id} marked unreviewed`,
+      success: next ? uiText(`${target.block_id} đã duyệt`, `${target.block_id} marked reviewed`) : uiText(`${target.block_id} bỏ trạng thái duyệt`, `${target.block_id} marked unreviewed`),
     });
   }
 
   async function commitClean(blockId, text) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Clean text edits are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể sửa văn bản sạch trong SQLite read-model.", "Clean text edits are disabled for SQLite read-models."));
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -2597,18 +2607,18 @@ function App() {
     const broke = result?.stale_spans?.length || 0;
     const relocated = result?.relocated_count || 0;
     if (broke > 0 && relocated > 0) {
-      toast(`Clean text saved · ${relocated} span${relocated > 1 ? "s" : ""} auto-relocated, ${broke} need re-tag`, "bad", "Re-tag only the highlighted stale span(s).");
+      toast(uiText(`Đã lưu văn bản sạch · ${relocated} span tự định vị lại, ${broke} cần gắn thẻ lại`, `Clean text saved · ${relocated} span${relocated > 1 ? "s" : ""} auto-relocated, ${broke} need re-tag`), "bad", uiText("Chỉ gắn lại các span stale được đánh dấu.", "Re-tag only the highlighted stale span(s)."));
     } else if (broke > 0) {
-      toast(`Clean text saved · ${broke} annotation span${broke > 1 ? "s" : ""} no longer match`, "bad", "Re-tag from the right panel to clear the warning.");
+      toast(uiText(`Đã lưu văn bản sạch · ${broke} span chú giải không còn khớp`, `Clean text saved · ${broke} annotation span${broke > 1 ? "s" : ""} no longer match`), "bad", uiText("Gắn thẻ lại từ panel bên phải để xóa cảnh báo.", "Re-tag from the right panel to clear the warning."));
     } else if (relocated > 0) {
-      toast(`Clean text saved · ${relocated} span${relocated > 1 ? "s" : ""} auto-relocated`, "good");
+      toast(uiText(`Đã lưu văn bản sạch · ${relocated} span tự định vị lại`, `Clean text saved · ${relocated} span${relocated > 1 ? "s" : ""} auto-relocated`), "good");
     } else {
-      toast("Clean text saved", "good");
+      toast(uiText("Đã lưu văn bản sạch", "Clean text saved"), "good");
     }
   }
 
   async function addGlossary(blockId, sel) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Glossary writes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi thuật ngữ trong SQLite read-model.", "Glossary writes are disabled for SQLite read-models."));
     const target = findBlock(blockId);
     if (!target || !sel) return;
     setSelectedId(target.block_id);
@@ -2619,11 +2629,11 @@ function App() {
       end: sel.end,
       source_term: sel.text.trim(),
       user: currentUser(),
-    }), { success: `Added glossary occurrence "${sel.text.trim()}"`, fail: "Add glossary failed" });
-    if (result) toast("Set expected_target in the Glossary tab.", "info");
+    }), { success: uiText(`Đã thêm lần xuất hiện thuật ngữ "${sel.text.trim()}"`, `Added glossary occurrence "${sel.text.trim()}"`), fail: uiText("Thêm thuật ngữ thất bại", "Add glossary failed") });
+    if (result) toast(uiText("Hãy đặt expected_target trong tab Thuật ngữ.", "Set expected_target in the Glossary tab."), "info");
   }
   async function addEntity(blockId, sel) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Entity writes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi thực thể trong SQLite read-model.", "Entity writes are disabled for SQLite read-models."));
     const target = findBlock(blockId);
     if (!target || !sel) return;
     setSelectedId(target.block_id);
@@ -2634,39 +2644,39 @@ function App() {
       end: sel.end,
       surface: sel.text.trim(),
       user: currentUser(),
-    }), { success: `Added entity mention "${sel.text.trim()}"`, fail: "Add entity failed" });
-    if (result) toast("Set canonical_target and pronoun policy.", "info");
+    }), { success: uiText(`Đã thêm lượt nhắc thực thể "${sel.text.trim()}"`, `Added entity mention "${sel.text.trim()}"`), fail: uiText("Thêm thực thể thất bại", "Add entity failed") });
+    if (result) toast(uiText("Hãy đặt canonical_target và quy tắc đại từ.", "Set canonical_target and pronoun policy."), "info");
   }
 
   function updateTerm(termId, patch) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Runtime memory is immutable in APP-A01.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Runtime memory là bất biến trong APP-A01.", "Runtime memory is immutable in APP-A01."));
     setGlossary(gs => gs.map(t => t.term_id === termId ? { ...t, ...patch } : t));
     queueSave(`term:${termId}:${Object.keys(patch).join(",")}`, () => API.patchGlossary(activeDocId, termId, { ...patch, user: currentUser() }));
   }
   function updateEntity(entityId, patch) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Runtime memory is immutable in APP-A01.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Runtime memory là bất biến trong APP-A01.", "Runtime memory is immutable in APP-A01."));
     setEntities(es => es.map(e => e.entity_id === entityId ? { ...e, ...patch } : e));
     queueSave(`entity:${entityId}:${Object.keys(patch).join(",")}`, () => API.patchEntity(activeDocId, entityId, { ...patch, user: currentUser() }));
   }
   async function createRelation(payload) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Relation writes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi quan hệ trong SQLite read-model.", "Relation writes are disabled for SQLite read-models."));
     if (!activeDocId) return null;
     openRightTab("relations");
     const result = await mutate(() => API.createRelation(activeDocId, { ...payload, user: currentUser() }), {
-      success: "Relation added",
-      fail: "Add relation failed",
+      success: uiText("Đã thêm quan hệ", "Relation added"),
+      fail: uiText("Thêm quan hệ thất bại", "Add relation failed"),
     });
     return result;
   }
   function updateRelation(relationId, patch) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Relation writes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi quan hệ trong SQLite read-model.", "Relation writes are disabled for SQLite read-models."));
     const { relation_id, doc_id, ...apiPatch } = patch || {};
     setRelations(rs => rs.map(r => r.relation_id === relationId ? { ...r, ...apiPatch } : r));
     const fields = Object.keys(apiPatch).join(",") || "save";
     queueSave(`relation:${relationId}:${fields}`, () => API.patchRelation(activeDocId, relationId, { ...apiPatch, user: currentUser() }));
   }
   function updateSummary(chapterId, patch) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Summary writes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi tóm tắt trong SQLite read-model.", "Summary writes are disabled for SQLite read-models."));
     if (!chapterId) return;
     setSummaries(ss => {
       const exists = ss.some(s => s.chapter_id === chapterId);
@@ -2676,7 +2686,7 @@ function App() {
     queueSave(`summary:${chapterId}:${Object.keys(patch).join(",")}`, () => API.patchSummary(activeDocId, chapterId, { ...patch, user: currentUser() }));
   }
   function updateBlockNotes(blockId, patch) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Block notes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi chú block trong SQLite read-model.", "Block notes are disabled for SQLite read-models."));
     const target = findBlock(blockId);
     if (!target) return;
     setSelectedId(target.block_id);
@@ -2687,15 +2697,15 @@ function App() {
     queueSave(`block-notes:${blockId}:${Object.keys(patch).join(",")}`, () => API.patchBlockNotes(activeDocId, blockId, { ...patch, user: currentUser() }));
   }
   function updateReference(referenceId, patch) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Reference writes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi reference trong SQLite read-model.", "Reference writes are disabled for SQLite read-models."));
     setReferences(rs => rs.map(r => r.reference_id === referenceId ? { ...r, ...patch, canonical: false } : r));
   }
   function updateDiscourse(patch) {
-    if (readOnly) return toast("Read-only thesis view", "info", "Discourse writes are disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể ghi discourse trong SQLite read-model.", "Discourse writes are disabled for SQLite read-models."));
     if (!block) return;
     const discourse = { ...(block.discourse || {}), ...patch };
     setBlocks(bs => bs.map(b => b.block_id === block.block_id ? { ...b, discourse } : b));
-    mutate(() => API.patchBlock(activeDocId, block.block_id, { discourse, user: currentUser() }), { success: "Discourse saved" });
+    mutate(() => API.patchBlock(activeDocId, block.block_id, { discourse, user: currentUser() }), { success: uiText("Đã lưu discourse", "Discourse saved") });
   }
   function saveDraft(referenceId) {
     const r = references.find(x => x.reference_id === referenceId);
@@ -2711,7 +2721,7 @@ function App() {
       prompt_id: r.prompt_id || "",
       notes: r.notes || "",
       user: currentUser(),
-    }), { success: "Reference draft saved" });
+    }), { success: uiText("Đã lưu bản nháp reference", "Reference draft saved") });
   }
   function createReferenceDraft(blockId, payload) {
     mutate(() => API.saveReferenceDraft(activeDocId, {
@@ -2722,7 +2732,7 @@ function App() {
       translated_by: currentUser(),
       ai_model: payload.ai_model || "",
       user: currentUser(),
-    }), { success: "Reference draft saved", fail: "Reference draft failed" });
+    }), { success: uiText("Đã lưu bản nháp reference", "Reference draft saved"), fail: uiText("Lưu bản nháp reference thất bại", "Reference draft failed") });
   }
   function markReviewedReference(referenceId) {
     const r = references.find(x => x.reference_id === referenceId);
@@ -2734,10 +2744,10 @@ function App() {
       ai_model: r.ai_model || "",
       prompt_id: r.prompt_id || "",
       user: currentUser(),
-    }), { success: "Reference marked reviewed", fail: "Reference cannot be reviewed" });
+    }), { success: uiText("Đã đánh dấu reference là đã duyệt", "Reference marked reviewed"), fail: uiText("Không thể duyệt reference", "Reference cannot be reviewed") });
   }
   function lockReference(referenceId) {
-    mutate(() => API.lockReference(activeDocId, referenceId, { user: currentUser() }), { success: "Reference locked", fail: "Only reviewed references can be locked" });
+    mutate(() => API.lockReference(activeDocId, referenceId, { user: currentUser() }), { success: uiText("Đã khóa reference", "Reference locked"), fail: uiText("Chỉ có thể khóa reference đã duyệt", "Only reviewed references can be locked") });
   }
 
   function deleteTerm(t) {
@@ -2761,12 +2771,12 @@ function App() {
       await loadDataset(activeDocId, { silent: true });
       touchDone();
       setModal(null);
-      toast(`Deleted term "${term.source_term}"`, "good", `${result.removed_occurrences || 0} occurrence(s) removed`);
+      toast(uiText(`Đã xóa thuật ngữ "${term.source_term}"`, `Deleted term "${term.source_term}"`), "good", uiText(`Đã xóa ${result.removed_occurrences || 0} lần xuất hiện`, `${result.removed_occurrences || 0} occurrence(s) removed`));
     } catch (err) {
       touchDone();
       const first = firstError(err);
-      setModal({ kind: "delete-blocked", title: "Cannot delete term", message: errorMessage(err), references: first.references || [] });
-      toast("Cannot delete term", "bad", errorMessage(err));
+      setModal({ kind: "delete-blocked", title: uiText("Không thể xóa thuật ngữ", "Cannot delete term"), message: errorMessage(err), references: first.references || [] });
+      toast(uiText("Không thể xóa thuật ngữ", "Cannot delete term"), "bad", errorMessage(err));
     }
   }
 
@@ -2779,12 +2789,12 @@ function App() {
       await loadDataset(activeDocId, { silent: true });
       touchDone();
       setModal(null);
-      toast(`Deleted entity "${entity.canonical_source || entity.entity_id}"`, "good", `${result.removed_mentions || 0} mention(s) removed`);
+      toast(uiText(`Đã xóa thực thể "${entity.canonical_source || entity.entity_id}"`, `Deleted entity "${entity.canonical_source || entity.entity_id}"`), "good", uiText(`Đã xóa ${result.removed_mentions || 0} lượt nhắc`, `${result.removed_mentions || 0} mention(s) removed`));
     } catch (err) {
       touchDone();
       const first = firstError(err);
-      setModal({ kind: "delete-blocked", title: "Cannot delete entity", message: errorMessage(err), references: first.references || [] });
-      toast("Cannot delete entity", "bad", errorMessage(err));
+      setModal({ kind: "delete-blocked", title: uiText("Không thể xóa thực thể", "Cannot delete entity"), message: errorMessage(err), references: first.references || [] });
+      toast(uiText("Không thể xóa thực thể", "Cannot delete entity"), "bad", errorMessage(err));
     }
   }
 
@@ -2797,30 +2807,30 @@ function App() {
       await loadDataset(activeDocId, { silent: true });
       touchDone();
       setModal(null);
-      toast(`Deleted relation ${relation.relation_id}`, "good");
+      toast(uiText(`Đã xóa quan hệ ${relation.relation_id}`, `Deleted relation ${relation.relation_id}`), "good");
     } catch (err) {
       touchDone();
-      setModal({ kind: "delete-blocked", title: "Cannot delete relation", message: errorMessage(err), references: [] });
-      toast("Cannot delete relation", "bad", errorMessage(err));
+      setModal({ kind: "delete-blocked", title: uiText("Không thể xóa quan hệ", "Cannot delete relation"), message: errorMessage(err), references: [] });
+      toast(uiText("Không thể xóa quan hệ", "Cannot delete relation"), "bad", errorMessage(err));
     }
   }
 
   async function runValidate() {
-    if (readOnly) return toast("Read-only thesis view", "info", "Validation is for AI-LAB JSONL workspaces; scoring/reporting is APP-D01.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Validate dành cho workspace JSONL AI-LAB; chấm điểm/báo cáo thuộc APP-D01.", "Validation is for AI-LAB JSONL workspaces; scoring/reporting is APP-D01."));
     openRightTab("validate");
     try {
       const report = await API.validate(activeDocId, { user: currentUser() });
       const items = normalizeErrors(report);
       setErrors(items);
-      toast(`Validation: ${report.errors?.length || 0} error${(report.errors?.length || 0) !== 1 ? "s" : ""}, ${report.warnings?.length || 0} warning`, report.ok ? "good" : "bad");
+      toast(uiText(`Validate: ${report.errors?.length || 0} lỗi, ${report.warnings?.length || 0} cảnh báo`, `Validation: ${report.errors?.length || 0} error${(report.errors?.length || 0) !== 1 ? "s" : ""}, ${report.warnings?.length || 0} warning${(report.warnings?.length || 0) !== 1 ? "s" : ""}`), report.ok ? "good" : "bad");
     } catch (err) {
       setErrors((err.errors || []).map(e => ({ severity: "error", ...e })));
-      toast("Validation failed", "bad", errorMessage(err));
+      toast(uiText("Validate thất bại", "Validation failed"), "bad", errorMessage(err));
     }
   }
 
   async function migrateSchema() {
-    if (readOnly) return toast("Read-only thesis view", "info", "Schema migration is disabled for SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể nâng schema cho SQLite read-model.", "Schema migration is disabled for SQLite read-models."));
     if (!activeDocId || schemaMigrating) return;
     openRightTab("validate");
     setSchemaMigrating(true);
@@ -2832,17 +2842,17 @@ function App() {
       touchDone();
       const ok = result.validation?.ok !== false;
       const actions = (result.actions || []).join(" · ");
-      toast(ok ? "Schema migrated to 1.5" : "Schema migrated with validation issues", ok ? "good" : "bad", actions || "Project files updated.");
+      toast(ok ? uiText("Đã nâng schema lên 1.5", "Schema migrated to 1.5") : uiText("Đã nâng schema nhưng còn lỗi validate", "Schema migrated with validation issues"), ok ? "good" : "bad", actions || uiText("Đã cập nhật file dự án.", "Project files updated."));
     } catch (err) {
       setErrors((err.errors || []).map(e => ({ severity: "error", ...e })));
       touchDone();
-      toast("Schema migration failed", "bad", errorMessage(err));
+      toast(uiText("Nâng schema thất bại", "Schema migration failed"), "bad", errorMessage(err));
     } finally {
       setSchemaMigrating(false);
     }
   }
 
-  function jumpTo(e) { if (e.block_id) { selectBlock(e.block_id); toast(`Jumped to ${e.block_id}`, "info"); } }
+  function jumpTo(e) { if (e.block_id) { selectBlock(e.block_id); toast(uiText(`Đã chuyển tới ${e.block_id}`, `Jumped to ${e.block_id}`), "info"); } }
 
   const focusedTermMeta = useMemo(() => {
     if (!focusedTermId) return null;
@@ -2957,12 +2967,12 @@ function App() {
   function exportQcReport() {
     const report = buildQcExport();
     downloadAppJsonFile(`${safeFilePart(report.doc_id)}_qc_report.json`, report);
-    toast("QC report exported", "good", `${safeFilePart(report.doc_id)}_qc_report.json`);
+    toast(uiText("Đã xuất báo cáo QC", "QC report exported"), "good", `${safeFilePart(report.doc_id)}_qc_report.json`);
   }
   function exportPreviewRun() {
     const run = currentPreviewRun?.run;
     if (!run) {
-      toast("No preview run loaded", "bad", "Open Preview and select a run first.");
+      toast(uiText("Chưa tải bản chạy xem trước", "No preview run loaded"), "bad", uiText("Mở Xem trước và chọn một lần chạy trước.", "Open Preview and select a run first."));
       return;
     }
     const chapterId = run.chapter_id || currentPreviewRun.chapter_id || "chapter";
@@ -2974,13 +2984,13 @@ function App() {
     };
     const filename = `${safeFilePart(run.doc_id || docInfo?.doc_id)}_${safeFilePart(chapterId)}_${safeFilePart(run.run_id)}_preview.json`;
     downloadAppJsonFile(filename, payload);
-    toast("Translation preview exported", "good", filename);
+    toast(uiText("Đã xuất bản dịch xem trước", "Translation preview exported"), "good", filename);
   }
   async function exportDatasetPackage() {
     const suggestedName = `${safeFilePart(docInfo?.doc_id || activeDocId)}_dataset_package.zip`;
     const saveHandle = await pickZipSaveHandle(suggestedName);
     if (saveHandle === "aborted") {
-      toast("Export cancelled", "info");
+      toast(uiText("Đã hủy xuất", "Export cancelled"), "info");
       return;
     }
     touchStart();
@@ -2994,17 +3004,17 @@ function App() {
         downloadBlobFile(filename, blob);
       }
       touchDone();
-      toast("Exported dataset package", "good", `${filename} · saved in project exports · QC included`);
+      toast(uiText("Đã xuất gói dataset", "Exported dataset package"), "good", uiText(`${filename} · đã lưu trong exports của dự án · kèm QC`, `${filename} · saved in project exports · QC included`));
     } catch (err) {
       touchDone();
-      toast("Dataset package export failed", "bad", errorMessage(err));
+      toast(uiText("Xuất gói dataset thất bại", "Dataset package export failed"), "bad", errorMessage(err));
     }
   }
   async function exportDatasetWithPreviews() {
     const suggestedName = `${safeFilePart(docInfo?.doc_id || activeDocId)}_dataset_plus_previews.zip`;
     const saveHandle = await pickZipSaveHandle(suggestedName);
     if (saveHandle === "aborted") {
-      toast("Export cancelled", "info");
+      toast(uiText("Đã hủy xuất", "Export cancelled"), "info");
       return;
     }
     touchStart();
@@ -3020,18 +3030,18 @@ function App() {
       touchDone();
       const counts = result.manifest_data?.translation_preview?.counts || {};
       toast(
-        "Exported dataset + previews",
+        uiText("Đã xuất dataset + bản xem trước", "Exported dataset + previews"),
         "good",
-        `${filename} · saved in project exports · runs ${counts.runs || 0}, inputs ${counts.inputs || 0}`
+        uiText(`${filename} · đã lưu trong exports của dự án · ${counts.runs || 0} lần chạy, ${counts.inputs || 0} input`, `${filename} · saved in project exports · runs ${counts.runs || 0}, inputs ${counts.inputs || 0}`)
       );
     } catch (err) {
       touchDone();
-      toast("Dataset + preview export failed", "bad", errorMessage(err));
+      toast(uiText("Xuất dataset + bản xem trước thất bại", "Dataset + preview export failed"), "bad", errorMessage(err));
     }
   }
   function doExport(kind = "package") {
     if (readOnly && kind !== "qc") {
-      return toast("Read-only thesis view", "info", "Dataset package export stays on the AI-LAB lane; use QC export for this read-model.");
+      return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Xuất gói dataset thuộc nhánh AI-LAB; hãy dùng xuất QC cho read-model này.", "Dataset package export stays on the AI-LAB lane; use QC export for this read-model."));
     }
     if (kind === "qc") return exportQcReport();
     if (kind === "preview") return exportPreviewRun();
@@ -3039,28 +3049,28 @@ function App() {
     return exportDatasetPackage();
   }
   function doFreeze() {
-    if (readOnly) return toast("Read-only thesis view", "info", "Freeze is disabled for pipeline SQLite read-models.");
+    if (readOnly) return toast(uiText("Chế độ khóa luận chỉ đọc", "Read-only thesis view"), "info", uiText("Không thể đóng băng pipeline SQLite read-model.", "Freeze is disabled for pipeline SQLite read-models."));
     setModal({ kind: "freeze" });
   }
 
   async function runUndo() {
     if (!historyState.can_undo || dirty) return;
-    const result = await mutate(() => API.undo(activeDocId, { user: currentUser() }), { refresh: false, fail: "Undo failed" });
+    const result = await mutate(() => API.undo(activeDocId, { user: currentUser() }), { refresh: false, fail: uiText("Hoàn tác thất bại", "Undo failed") });
     if (!result) return;
     await loadDataset(activeDocId, { silent: true });
     const target = result.event?.target || {};
     if (target.block_id) setSelectedId(target.block_id);
-    toast(`Undo: ${result.event?.label || "last change"}`, "good");
+    toast(uiText(`Hoàn tác: ${result.event?.label || "thay đổi gần nhất"}`, `Undo: ${result.event?.label || "last change"}`), "good");
   }
 
   async function runRedo() {
     if (!historyState.can_redo || dirty) return;
-    const result = await mutate(() => API.redo(activeDocId, { user: currentUser() }), { refresh: false, fail: "Redo failed" });
+    const result = await mutate(() => API.redo(activeDocId, { user: currentUser() }), { refresh: false, fail: uiText("Làm lại thất bại", "Redo failed") });
     if (!result) return;
     await loadDataset(activeDocId, { silent: true });
     const target = result.event?.target || {};
     if (target.block_id) setSelectedId(target.block_id);
-    toast(`Redo: ${result.event?.label || "last undone change"}`, "good");
+    toast(uiText(`Làm lại: ${result.event?.label || "thay đổi vừa hoàn tác"}`, `Redo: ${result.event?.label || "last undone change"}`), "good");
   }
 
   function isNativeTextUndoTarget(target) {
@@ -3073,7 +3083,7 @@ function App() {
     const result = await mutate(() => API.exportProject(activeDocId, { user: currentUser() }), { refresh: false });
     if (result) {
       setModal(null);
-      toast("Exported current package", "good", result.zip || result.path || "Export created.");
+      toast(uiText("Đã xuất gói hiện tại", "Exported current package"), "good", result.zip || result.path || uiText("Đã tạo bản xuất.", "Export created."));
     }
   }
   async function confirmFreeze() {
@@ -3081,11 +3091,11 @@ function App() {
       const result = await API.freezeProject(activeDocId, { user: currentUser() });
       setModal(null);
       await loadDataset(activeDocId, { silent: true });
-      toast("Dataset snapshot frozen", "good", `${result.version || "versioned"} · ${result.zip || ""}`);
+      toast(uiText("Đã đóng băng snapshot dataset", "Dataset snapshot frozen"), "good", `${result.version || uiText("đã đánh phiên bản", "versioned")} · ${result.zip || ""}`);
     } catch (err) {
       const first = err.errors?.[0] || {};
       setModal({ kind: "freeze", serverReasons: first.reasons || [errorMessage(err)] });
-      toast("Freeze blocked", "bad", (first.reasons || []).join("; ") || errorMessage(err));
+      toast(uiText("Không thể đóng băng", "Freeze blocked"), "bad", (first.reasons || []).join("; ") || errorMessage(err));
     }
   }
 
@@ -3131,12 +3141,12 @@ function App() {
   );
 
   if (loading) {
-    return <StartupState title="Loading backend dataset" message={`Connecting to ${API.baseUrl}...`} />;
+    return <StartupState locale={uiLocale} onLocaleChange={setUiLocale} title={uiText("Đang tải dữ liệu backend", "Loading backend dataset")} message={uiText("Đang kết nối tới {url}...", "Connecting to {url}...", { url: API.baseUrl })} />;
   }
   if (bootError) {
     return (
       <>
-        <StartupState title="Backend offline" message="The UI could not reach the Flask backend. Start the backend on port 5000, then retry." secondary={bootError} action="Retry" onAction={boot} />
+        <StartupState locale={uiLocale} onLocaleChange={setUiLocale} title={uiText("Backend đang ngoại tuyến", "Backend offline")} message={uiText("UI không thể kết nối Flask backend. Hãy chạy backend ở port 5000 rồi thử lại.", "The UI could not reach the Flask backend. Start the backend on port 5000, then retry.")} secondary={bootError} action={uiText("Thử lại", "Retry")} onAction={boot} />
         <Toasts items={toasts} onDismiss={dismiss} />
       </>
     );
@@ -3167,6 +3177,8 @@ function App() {
           onBack={() => navigateView("workspace")}
           onOpenStructure={openSourcePackage}
           readOnly={readOnly}
+          locale={uiLocale}
+          onLocaleChange={setUiLocale}
         />
         <Toasts items={toasts} onDismiss={dismiss} />
       </>
@@ -3176,9 +3188,9 @@ function App() {
   if ((!block || !docInfo) && centerMode !== "structure") {
     return (
       <>
-        <StartupState title="Chưa có tài liệu" message="Nhập TXT, EPUB, Markdown, HTML hoặc PDF để tạo managed source package."
-          action="Nhập tài liệu" onAction={() => setModal({ kind: "quick-import" })}
-          secondaryAction="Project / Source" onSecondaryAction={openProjectSource} />
+        <StartupState locale={uiLocale} onLocaleChange={setUiLocale} title={uiText("Chưa có tài liệu", "No document yet")} message={uiText("Nhập TXT, EPUB, Markdown, HTML hoặc PDF để tạo managed source package.", "Import TXT, EPUB, Markdown, HTML, or PDF to create a managed source package.")}
+          action={uiText("Nhập tài liệu", "Import document")} onAction={() => setModal({ kind: "quick-import" })}
+          secondaryAction={uiText("Project / Nguồn", "Project / Source")} onSecondaryAction={openProjectSource} />
         <Toasts items={toasts} onDismiss={dismiss} />
         {quickImportDialog}
       </>
@@ -3195,7 +3207,7 @@ function App() {
         onValidate={runValidate} onExportOption={doExport} onFreeze={doFreeze}
         onUndo={runUndo} onRedo={runRedo} history={historyState}
         freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={["preview", "structure"].includes(centerMode) || readOnly} canExportPreview={!!currentPreviewRun?.run}
-        appVersion={appVersion} />}
+        appVersion={appVersion} locale={uiLocale} onLocaleChange={setUiLocale} />}
       <div className={["workspace", runSurfaceView ? "workspace--console" : "", view === "report" ? "workspace--report" : "", activeCenterMode === "memory" ? "workspace--memory" : "", activeCenterMode === "structure" ? "workspace--structure" : "", (!leftPanelOpen || activeCenterMode === "structure") ? "workspace--no-left" : "", (!rightPanelOpen || ["memory", "structure"].includes(activeCenterMode)) ? "workspace--no-right" : "", rightPanelOpen && rightPanelExpanded && !["memory", "structure"].includes(activeCenterMode) ? "workspace--right-expanded" : ""].filter(Boolean).join(" ")}>
         {!runSurfaceView && activeCenterMode !== "structure" && leftPanelOpen && <LeftSidebar docInfo={docInfo} blocks={visibleBlocks} chapters={chapters} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={selectBlock}
@@ -3261,8 +3273,10 @@ function App() {
             onPause: pauseRun,
             onCancel: cancelRun,
             onResume: resumeRun,
-            onDich: thesisJobId(activeDocId) ? openDichModal : openProjectPipelineModal,
-          }}
+             onDich: thesisJobId(activeDocId) ? openDichModal : openProjectPipelineModal,
+             locale: uiLocale,
+             onLocaleChange: setUiLocale,
+           }}
           selectedCallId={selectedCallId}
           selectedCallDetail={selectedCallDetail}
           callDetailLoading={callDetailLoading}
@@ -3295,32 +3309,31 @@ function App() {
       {quickImportDialog}
 
       {modal?.kind === "project-pipeline" && (
-        <Modal title="Cấu hình pipeline" icon={Ic.layers} className="pipeline-modal" onClose={() => !runBusy && setModal(null)}
-          actions={<><button className="btn" disabled={runBusy} onClick={() => setModal(null)}>Hủy</button>
+        <Modal title={uiText("Cấu hình pipeline", "Configure pipeline")} icon={Ic.layers} className="pipeline-modal" onClose={() => !runBusy && setModal(null)}
+          actions={<><button className="btn" disabled={runBusy} onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
             <button className="btn primary" disabled={runBusy || !(modal.chapters || []).length} onClick={confirmProjectPreflight}>
-              {runBusy ? <span className="as-spin" /> : <Ic.play size={12} />} Chạy kiểm tra 0-API
+              {runBusy ? <span className="as-spin" /> : <Ic.play size={12} />} {uiText("Chạy kiểm tra 0-API", "Run 0-API check")}
             </button></>}>
           <p>
-            Chọn nhánh xử lý cho <b>{docInfo?.metadata?.title || activeDocId}</b>. Hệ thống tạo một snapshot/index bất biến có hash,
-            sau đó chạy preflight thật và đưa log vào Console. Bước này <b>không gọi LLM/API</b>.
+            {uiText("Chọn nhánh xử lý cho", "Choose a processing profile for")} <b>{docInfo?.metadata?.title || activeDocId}</b>. {uiText("Hệ thống tạo một snapshot/index bất biến có hash, sau đó chạy preflight thật và đưa log vào Console. Bước này", "The system creates an immutable hashed snapshot/index, runs the real preflight, and streams logs to Console. This step")} <b>{uiText("không gọi LLM/API", "does not call LLM/API")}</b>.
           </p>
-          <div className="quick-import-profile pipeline-profile" role="group" aria-label="Chọn profile pipeline">
+          <div className="quick-import-profile pipeline-profile" role="group" aria-label={uiText("Chọn profile pipeline", "Choose pipeline profile")}>
             <button type="button" className={modal.profile === "technical_d2l_v1" ? "active" : ""}
               aria-pressed={modal.profile === "technical_d2l_v1"}
               onClick={() => setModal(current => ({ ...current, profile: "technical_d2l_v1" }))}>
-              <Ic.layers size={14} /><span><b>Tài liệu kỹ thuật</b><em>technical_d2l_v1 · thuật ngữ</em></span>
+              <Ic.layers size={14} /><span><b>{uiText("Tài liệu kỹ thuật", "Technical document")}</b><em>technical_d2l_v1 · {uiText("thuật ngữ", "terminology")}</em></span>
             </button>
             <button type="button" className={modal.profile === "literary_v1" ? "active" : ""}
               aria-pressed={modal.profile === "literary_v1"}
               onClick={() => setModal(current => ({ ...current, profile: "literary_v1" }))}>
-              <Ic.book size={14} /><span><b>Văn học</b><em>literary_v1 · nhân vật và mạch kể</em></span>
+              <Ic.book size={14} /><span><b>{uiText("Văn học", "Literary")}</b><em>literary_v1 · {uiText("nhân vật và mạch kể", "characters and narrative flow")}</em></span>
             </button>
           </div>
           <div className="pipeline-section-head">
-            <span>Chương / unit sẽ kiểm tra</span>
+            <span>{uiText("Chương / đơn vị sẽ kiểm tra", "Chapters / units to check")}</span>
             <span>
-              <button type="button" onClick={() => setModal(current => ({ ...current, chapters: chapters.map(chapter => chapter.chapter_id).filter(Boolean) }))}>Chọn tất cả</button>
-              <button type="button" onClick={() => setModal(current => ({ ...current, chapters: [] }))}>Bỏ chọn</button>
+              <button type="button" onClick={() => setModal(current => ({ ...current, chapters: chapters.map(chapter => chapter.chapter_id).filter(Boolean) }))}>{uiText("Chọn tất cả", "Select all")}</button>
+              <button type="button" onClick={() => setModal(current => ({ ...current, chapters: [] }))}>{uiText("Bỏ chọn", "Clear")}</button>
             </span>
           </div>
           <div className="pipeline-chapters">
@@ -3336,62 +3349,61 @@ function App() {
             })}
           </div>
           <div className="quick-import-note pipeline-snapshot-note">
-            <Ic.lock size={12} /> Project vẫn là nguồn chuẩn. Runtime chỉ giữ snapshot đã bỏ annotation và SQLite index riêng;
-            sửa nguồn sau này sẽ tạo job_id mới thay vì ghi đè run cũ.
+            <Ic.lock size={12} /> {uiText("Dự án vẫn là nguồn chuẩn. Runtime chỉ giữ snapshot đã bỏ annotation và SQLite index riêng; sửa nguồn sau này sẽ tạo job_id mới thay vì ghi đè lần chạy cũ.", "The project remains the source of truth. Runtime keeps only an annotation-free snapshot and a separate SQLite index; later source edits create a new job_id instead of overwriting an old run.")}
           </div>
         </Modal>
       )}
 
       {modal?.kind === "export" && (
-        <Modal title="Export dataset" icon={Ic.upload} onClose={() => setModal(null)}
-          actions={<><button className="btn" onClick={() => setModal(null)}>Cancel</button>
-            <button className="btn primary" onClick={confirmExport}>Export package</button></>}>
-          <p>Exports the current dataset package. It may still be a working package if validation or review gates are not clear.</p>
+        <Modal title={uiText("Xuất dataset", "Export dataset")} icon={Ic.upload} onClose={() => setModal(null)}
+          actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
+            <button className="btn primary" onClick={confirmExport}>{uiText("Xuất gói", "Export package")}</button></>}>
+          <p>{uiText("Xuất gói dataset hiện tại. Đây có thể vẫn là gói làm việc nếu các gate kiểm tra hoặc duyệt chưa rõ ràng.", "Exports the current dataset package. It may still be a working package if validation or review gates are not clear.")}</p>
           <ul className="file-list">
             {["document.json","glossary.jsonl","entities.jsonl","entity_relations.jsonl","chapter_summaries.jsonl","manual_reference_subset.jsonl"].map(f =>
               <li key={f}><Ic.file size={12} /><span className="mono">{f}</span></li>)}
           </ul>
-          <p className="muted">{errorCount > 0 ? <><Ic.alert size={11} /> {errorCount} validation error(s) present.</> : "No validation errors in the current report."}</p>
+          <p className="muted">{errorCount > 0 ? <><Ic.alert size={11} /> {uiText(`Có ${errorCount} lỗi kiểm tra.`, `${errorCount} validation error(s) present.`)}</> : uiText("Báo cáo hiện tại không có lỗi kiểm tra.", "No validation errors in the current report.")}</p>
         </Modal>
       )}
 
       {modal?.kind === "freeze" && (
-        <Modal title="Freeze dataset" icon={Ic.snow} onClose={() => setModal(null)}
-          actions={<><button className="btn" onClick={() => setModal(null)}>Close</button>
-            <button className="btn primary" disabled={!freezeReady && !modal.serverReasons} onClick={confirmFreeze}><Ic.snow size={12} />Freeze snapshot</button></>}>
-          <p>Freeze creates a validated, versioned snapshot. It is blocked until validation, review, references, spans, summaries, and provenance gates are clear.</p>
+        <Modal title={uiText("Đóng băng dataset", "Freeze dataset")} icon={Ic.snow} onClose={() => setModal(null)}
+          actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Đóng", "Close")}</button>
+            <button className="btn primary" disabled={!freezeReady && !modal.serverReasons} onClick={confirmFreeze}><Ic.snow size={12} />{uiText("Đóng băng snapshot", "Freeze snapshot")}</button></>}>
+          <p>{uiText("Đóng băng tạo một snapshot có phiên bản và đã kiểm tra. Thao tác bị chặn cho tới khi các gate kiểm tra, duyệt, reference, span, tóm tắt và nguồn gốc đều rõ ràng.", "Freeze creates a validated, versioned snapshot. It is blocked until validation, review, references, spans, summaries, and provenance gates are clear.")}</p>
           <div className="freeze-checks">
             {(modal.serverReasons || freezeReasons).length ? (modal.serverReasons || freezeReasons).map(reason => (
               <div key={reason} className="fc-row bad"><Ic.xCircle size={13} />{reason}</div>
-            )) : <div className="fc-row ok"><Ic.checkCircle size={13} />All freeze gates are clear.</div>}
+            )) : <div className="fc-row ok"><Ic.checkCircle size={13} />{uiText("Mọi gate đóng băng đều đạt.", "All freeze gates are clear.")}</div>}
           </div>
         </Modal>
       )}
 
       {modal?.kind === "dich-run" && (
-        <Modal title="Dịch — one-button" icon={Ic.play} onClose={() => setModal(null)}
-          actions={<><button className="btn" onClick={() => setModal(null)}>Huỷ</button>
-            <button className="btn primary" disabled={runBusy || !(dichForm.chapters || "").trim()} onClick={confirmDich}><Ic.play size={12} />Bắt đầu dịch (API thật)</button></>}>
-          <p>Chạy toàn bộ pipeline một-phát (Builder → Auditor → Translator → chấm điểm → report) cho dataset <span className="mono">{modal.jobId}</span>. Tiến trình hiện live ở tab Console; có thể Pause/Resume/Cancel bất kỳ lúc nào.</p>
+        <Modal title={uiText("Dịch — một nút", "Translate — one button")} icon={Ic.play} onClose={() => setModal(null)}
+          actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
+            <button className="btn primary" disabled={runBusy || !(dichForm.chapters || "").trim()} onClick={confirmDich}><Ic.play size={12} />{uiText("Bắt đầu dịch (API thật)", "Start translation (real API)")}</button></>}>
+          <p>{uiText("Chạy toàn bộ pipeline một lượt (Builder → Auditor → Translator → chấm điểm → báo cáo) cho dataset", "Runs the full pipeline in one pass (Builder → Auditor → Translator → scoring → report) for dataset")} <span className="mono">{modal.jobId}</span>. {uiText("Tiến trình hiện trực tiếp trong Console; có thể Tạm dừng/Tiếp tục/Hủy bất kỳ lúc nào.", "Progress appears live in Console; you can Pause/Resume/Cancel at any time.")}</p>
           <div className="run-grid">
-            <label><span>chapters</span><input value={dichForm.chapters} onChange={e => setDichForm(f => ({ ...f, chapters: e.target.value }))} placeholder="d2l_preface" /></label>
-            <label><span>profile</span><input value={dichForm.profile} onChange={e => setDichForm(f => ({ ...f, profile: e.target.value }))} placeholder="technical_d2l_v1" /></label>
-            <label><span>db nguồn (frozen, đọc mode=ro)</span><input value={dichForm.db} onChange={e => setDichForm(f => ({ ...f, db: e.target.value }))} placeholder="data/jobs/d2l_p1/memory.sqlite3" /></label>
-            <label><span>budget cap ($)</span><input type="number" step="0.1" min="0.01" value={dichForm.budget_cap_usd} onChange={e => setDichForm(f => ({ ...f, budget_cap_usd: e.target.value }))} /></label>
+            <label><span>{uiText("chương", "chapters")}</span><input value={dichForm.chapters} onChange={e => setDichForm(f => ({ ...f, chapters: e.target.value }))} placeholder="d2l_preface" /></label>
+            <label><span>{uiText("hồ sơ", "profile")}</span><input value={dichForm.profile} onChange={e => setDichForm(f => ({ ...f, profile: e.target.value }))} placeholder="technical_d2l_v1" /></label>
+            <label><span>{uiText("db nguồn (đã đóng băng, đọc mode=ro)", "source DB (frozen, read mode=ro)")}</span><input value={dichForm.db} onChange={e => setDichForm(f => ({ ...f, db: e.target.value }))} placeholder="data/jobs/d2l_p1/memory.sqlite3" /></label>
+            <label><span>{uiText("trần ngân sách ($)", "budget cap ($)")}</span><input type="number" step="0.1" min="0.01" value={dichForm.budget_cap_usd} onChange={e => setDichForm(f => ({ ...f, budget_cap_usd: e.target.value }))} /></label>
           </div>
           <label style={{display:"flex",alignItems:"center",gap:"8px",marginTop:"6px",cursor:"pointer"}}>
             <input type="checkbox" checked={!!dichForm.with_s0} onChange={e => setDichForm(f => ({ ...f, with_s0: e.target.checked }))} />
-            <span>Kèm baseline <span className="mono">S0</span> (chạy S0+S1 để có so sánh S0↔S1 — tốn thêm API)</span>
+            <span>{uiText("Kèm baseline", "Include baseline")} <span className="mono">S0</span> {uiText("(chạy S0+S1 để so sánh S0↔S1 — tốn thêm API)", "(run S0+S1 for an S0↔S1 comparison — uses additional API)")}</span>
           </label>
-          <p className="muted"><Ic.alert size={11} /> Chạy API thật. Gate ngân sách sẽ tự pause nếu ước tính luỹ kế vượt <span className="mono">${Number(dichForm.budget_cap_usd || 1.5).toFixed(2)}</span>. Con số cost trong Console là TRẦN trên — thực tế thường thấp hơn nhiều (cascade T3 chạy Gemma local ~$0).</p>
+          <p className="muted"><Ic.alert size={11} /> {uiText("Chạy API thật. Gate ngân sách sẽ tự tạm dừng nếu ước tính lũy kế vượt", "Uses the real API. The budget gate pauses automatically if the cumulative estimate exceeds")} <span className="mono">${Number(dichForm.budget_cap_usd || 1.5).toFixed(2)}</span>. {uiText("Chi phí trong Console là TRẦN trên — thực tế thường thấp hơn nhiều (cascade T3 chạy Gemma local ~$0).", "Console cost is an UPPER BOUND — actual cost is usually much lower (cascade T3 runs local Gemma at ~$0).")}</p>
         </Modal>
       )}
 
       {modal?.kind === "cancel-run" && (
-        <Modal title="Hủy run" icon={Ic.alert} tone="bad" onClose={() => setModal(null)}
-          actions={<><button className="btn" onClick={() => setModal(null)}>Không hủy</button>
-            <button className="btn primary" onClick={confirmCancelRun}><Ic.alert size={12} />Hủy run</button></>}>
-          <p>Dừng cứng tiến trình đang chạy (taskkill toàn bộ cây tiến trình). Các stage đã hoàn tất vẫn được giữ trong manifest — có thể resume lại từ checkpoint sau này.</p>
+        <Modal title={uiText("Hủy lần chạy", "Cancel run")} icon={Ic.alert} tone="bad" onClose={() => setModal(null)}
+          actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Không hủy", "Keep run")}</button>
+            <button className="btn primary" onClick={confirmCancelRun}><Ic.alert size={12} />{uiText("Hủy lần chạy", "Cancel run")}</button></>}>
+          <p>{uiText("Dừng cứng tiến trình đang chạy (taskkill toàn bộ cây tiến trình). Các tầng đã hoàn tất vẫn được giữ trong manifest — có thể tiếp tục lại từ checkpoint sau này.", "Force-stops the running process (taskkill on the full process tree). Completed stages remain in the manifest and the run can later resume from a checkpoint.")}</p>
           <p className="mono">{modal.runId}</p>
         </Modal>
       )}
@@ -3403,10 +3415,10 @@ function App() {
           return typeof v === "number" ? `$${v.toFixed(4)}` : "";
         };
         return (
-          <Modal title="Resume run" icon={Ic.play} onClose={() => setModal(null)}
-            actions={<><button className="btn" onClick={() => setModal(null)}>Không</button>
-              <button className="btn primary" onClick={confirmResumeRun}><Ic.play size={12} />Resume (chạy API thật)</button></>}>
-            <p>Chạy tiếp từ stage đã checkpoint bằng argv gốc (bỏ <span className="mono">--estimate-only</span>, thêm <span className="mono">--resume</span>). Xác nhận này gắn với đúng argv digest của run.</p>
+          <Modal title={uiText("Tiếp tục lần chạy", "Resume run")} icon={Ic.play} onClose={() => setModal(null)}
+            actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Không", "No")}</button>
+              <button className="btn primary" onClick={confirmResumeRun}><Ic.play size={12} />{uiText("Tiếp tục (API thật)", "Resume (real API)")}</button></>}>
+            <p>{uiText("Chạy tiếp từ tầng đã checkpoint bằng argv gốc (bỏ", "Continues from the checkpointed stage using the original argv (removes")} <span className="mono">--estimate-only</span>, {uiText("thêm", "adds")} <span className="mono">--resume</span>). {uiText("Xác nhận này gắn với đúng argv digest của lần chạy.", "This confirmation is bound to the run's exact argv digest.")}</p>
             {stages.length ? (
               <ul className="file-list">
                 {stages.map((s, i) => (
@@ -3414,7 +3426,7 @@ function App() {
                 ))}
               </ul>
             ) : (
-              <p className="muted">Manifest chưa có ước tính theo stage; orchestrator vẫn áp budget gate nội bộ khi chạy.</p>
+              <p className="muted">{uiText("Manifest chưa có ước tính theo tầng; orchestrator vẫn áp budget gate nội bộ khi chạy.", "The manifest has no per-stage estimate; the orchestrator still applies its internal budget gate during the run.")}</p>
             )}
             <p className="mono">{modal.runId}</p>
           </Modal>
@@ -3427,15 +3439,15 @@ function App() {
         const occCount = (term?.occurrences || []).length;
         const blockCount = new Set((term?.occurrences || []).map(o => o.block_id)).size;
         return (
-          <Modal title="Delete glossary term" icon={Ic.trash} tone="bad" onClose={() => setModal(null)}
-            actions={<><button className="btn" onClick={() => setModal(null)}>Cancel</button>
-              <button className="btn danger" disabled={locked} onClick={confirmDeleteTerm}>Delete term</button></>}>
+          <Modal title={uiText("Xóa thuật ngữ", "Delete glossary term")} icon={Ic.trash} tone="bad" onClose={() => setModal(null)}
+            actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
+              <button className="btn danger" disabled={locked} onClick={confirmDeleteTerm}>{uiText("Xóa thuật ngữ", "Delete term")}</button></>}>
             {locked ? (
-              <p><b>{term.source_term}</b> is {term.status}. Unlock or downgrade it before deleting.</p>
+              <p><b>{term.source_term}</b> {uiText(`đang ở trạng thái ${term.status}. Hãy mở khóa hoặc hạ trạng thái trước khi xóa.`, `is ${term.status}. Unlock or downgrade it before deleting.`)}</p>
             ) : (
               <>
-                <p>Delete <b>{term.source_term}</b> and remove its annotation footprint from the document?</p>
-                <p className="muted">{occCount} occurrence(s) across {blockCount || 0} block(s) will be removed. This is undoable.</p>
+                <p>{uiText("Xóa", "Delete")} <b>{term.source_term}</b> {uiText("và gỡ toàn bộ dấu vết chú giải của nó khỏi tài liệu?", "and remove its annotation footprint from the document?")}</p>
+                <p className="muted">{uiText(`Sẽ xóa ${occCount} lần xuất hiện trên ${blockCount || 0} block. Có thể hoàn tác.`, `${occCount} occurrence(s) across ${blockCount || 0} block(s) will be removed. This is undoable.`)}</p>
               </>
             )}
           </Modal>
@@ -3447,12 +3459,12 @@ function App() {
         const mentionCount = (entity?.mentions || []).length;
         const blockCount = new Set((entity?.mentions || []).map(m => m.block_id)).size;
         return (
-          <Modal title="Delete entity" icon={Ic.trash} tone="bad" onClose={() => setModal(null)}
-            actions={<><button className="btn" onClick={() => setModal(null)}>Cancel</button>
-              <button className="btn danger" onClick={confirmDeleteEntity}>Delete entity</button></>}>
-            <p>Delete <b>{entity.canonical_source || entity.entity_id}</b> and remove its own mention footprint from the document?</p>
-            <p className="muted">{mentionCount} mention(s) across {blockCount || 0} block(s) will be removed. This is undoable.</p>
-            <p className="muted">If this entity is used by discourse, chapter summary, or relation, deletion will be blocked and those references must be removed first.</p>
+          <Modal title={uiText("Xóa thực thể", "Delete entity")} icon={Ic.trash} tone="bad" onClose={() => setModal(null)}
+            actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
+              <button className="btn danger" onClick={confirmDeleteEntity}>{uiText("Xóa thực thể", "Delete entity")}</button></>}>
+            <p>{uiText("Xóa", "Delete")} <b>{entity.canonical_source || entity.entity_id}</b> {uiText("và gỡ dấu vết lần nhắc của nó khỏi tài liệu?", "and remove its own mention footprint from the document?")}</p>
+            <p className="muted">{uiText(`Sẽ xóa ${mentionCount} lần nhắc trên ${blockCount || 0} block. Có thể hoàn tác.`, `${mentionCount} mention(s) across ${blockCount || 0} block(s) will be removed. This is undoable.`)}</p>
+            <p className="muted">{uiText("Nếu thực thể được dùng trong discourse, tóm tắt chương hoặc quan hệ, thao tác xóa sẽ bị chặn và phải gỡ các reference đó trước.", "If this entity is used by discourse, chapter summary, or relation, deletion will be blocked and those references must be removed first.")}</p>
           </Modal>
         );
       })()}
@@ -3460,24 +3472,24 @@ function App() {
       {modal?.kind === "delete-relation" && (() => {
         const relation = modal.relation;
         return (
-          <Modal title="Delete entity relation" icon={Ic.trash} tone="bad" onClose={() => setModal(null)}
-            actions={<><button className="btn" onClick={() => setModal(null)}>Cancel</button>
-              <button className="btn danger" onClick={confirmDeleteRelation}>Delete relation</button></>}>
-            <p>Delete relation <b>{relation.relation_id}</b>?</p>
-            <p className="muted">This removes only the document-level address-policy relation. Entity mentions, glossary, discourse, and summaries are kept. This is undoable.</p>
+          <Modal title={uiText("Xóa quan hệ thực thể", "Delete entity relation")} icon={Ic.trash} tone="bad" onClose={() => setModal(null)}
+            actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
+              <button className="btn danger" onClick={confirmDeleteRelation}>{uiText("Xóa quan hệ", "Delete relation")}</button></>}>
+            <p>{uiText("Xóa quan hệ", "Delete relation")} <b>{relation.relation_id}</b>?</p>
+            <p className="muted">{uiText("Thao tác chỉ xóa quan hệ address-policy cấp tài liệu. Các lần nhắc thực thể, thuật ngữ, discourse và tóm tắt được giữ lại. Có thể hoàn tác.", "This removes only the document-level address-policy relation. Entity mentions, glossary, discourse, and summaries are kept. This is undoable.")}</p>
           </Modal>
         );
       })()}
 
       {modal?.kind === "delete-blocked" && (
-        <Modal title={modal.title || "Delete blocked"} icon={Ic.alert} tone="bad" onClose={() => setModal(null)}
-          actions={<button className="btn" onClick={() => setModal(null)}>Close</button>}>
-          <p>{modal.message || "This item is still referenced."}</p>
+        <Modal title={modal.title || uiText("Không thể xóa", "Delete blocked")} icon={Ic.alert} tone="bad" onClose={() => setModal(null)}
+          actions={<button className="btn" onClick={() => setModal(null)}>{uiText("Đóng", "Close")}</button>}>
+          <p>{modal.message || uiText("Mục này vẫn đang được tham chiếu.", "This item is still referenced.")}</p>
           {(modal.references || []).length ? (
             <ul className="file-list">
               {modal.references.map((ref, index) => <li key={index}><Ic.link size={12} /><span className="mono">{describeExternalRef(ref)}</span></li>)}
             </ul>
-          ) : <p className="muted">Remove related references first, then try again.</p>}
+          ) : <p className="muted">{uiText("Hãy gỡ các reference liên quan trước rồi thử lại.", "Remove related references first, then try again.")}</p>}
         </Modal>
       )}
     </div>

@@ -6,6 +6,7 @@
 <title>Run Report · fixture-only dev harness</title>
 <link rel="icon" href="data:," />
 <link rel="stylesheet" href="report.css" />
+<link rel="stylesheet" href="i18n.css" />
 <style>
   html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #fff; }
   body { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -37,10 +38,12 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="i18n.js"></script>
 <script src="fixtures/report_shell_v1/scenarios.js"></script>
 <script type="text/babel" src="report.jsx"></script>
 <script type="text/babel">
 function ReportDevHarness() {
+  const [uiLocale] = useThesisLocale();
   const scenarios = window.REPORT_DEV_SCENARIOS || [];
   const requested = new URLSearchParams(window.location.search).get("scenario");
   const initial = scenarios.find(row => row.id === requested) || scenarios.find(row => row.id === "comparison") || scenarios[0];
@@ -57,7 +60,7 @@ function ReportDevHarness() {
   }
 
   if (!scenario) {
-    return <div style={{ padding: 20, font: "12px monospace" }}>No fixture scenarios found.</div>;
+    return <div style={{ padding: 20, font: "12px monospace" }}>{uiText("Không tìm thấy kịch bản fixture.", "No fixture scenarios found.")}</div>;
   }
 
   return (
@@ -65,13 +68,13 @@ function ReportDevHarness() {
       <div className="report-dev-toolbar">
         <strong>REPORT DEV · FIXTURE ONLY</strong>
         <label>
-          Scenario
-          <select aria-label="Fixture scenario" value={scenarioId} onChange={event => chooseScenario(event.target.value)}>
+          {uiText("Kịch bản", "Scenario")}
+          <select aria-label={uiText("Kịch bản fixture", "Fixture scenario")} value={scenarioId} onChange={event => chooseScenario(event.target.value)}>
             {scenarios.map(row => <option key={row.id} value={row.id}>{row.label}</option>)}
           </select>
         </label>
-        <button type="button" onClick={() => setTheme(value => value === "light" ? "dark" : "light")}>Toggle theme</button>
-        <span>{theme === "light" ? "LIGHT = WHITE BACKGROUND" : "DARK = CONSOLE FAMILY"} · refresh probe {refreshCount}</span>
+        <button type="button" onClick={() => setTheme(value => value === "light" ? "dark" : "light")}>{uiText("Đổi giao diện", "Toggle theme")}</button>
+        <span>{theme === "light" ? uiText("SÁNG = NỀN TRẮNG", "LIGHT = WHITE BACKGROUND") : uiText("TỐI = CÙNG HỌ CONSOLE", "DARK = CONSOLE FAMILY")} · {uiText("lượt làm mới", "refresh probe")} {refreshCount}</span>
       </div>
       <div className="report-dev-stage">
         <AgentReportView
