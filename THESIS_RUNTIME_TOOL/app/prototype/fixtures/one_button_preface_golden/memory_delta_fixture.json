@@ -1,0 +1,369 @@
+{
+  "fixture_contract": "memory_delta_ui_fixture_v1",
+  "status": "prototype_only",
+  "scope": {
+    "lifecycle": "committed_only",
+    "terminology_collections": [
+      "term"
+    ],
+    "literary_collections": [
+      "entity",
+      "term"
+    ],
+    "excluded": [
+      "relation",
+      "summary",
+      "evaluation",
+      "historical_reconstruction"
+    ]
+  },
+  "events": [
+    {
+      "after_seq": 16,
+      "event": {
+        "agent": "Builder",
+        "attempt_id": 1,
+        "event": "memory_delta",
+        "event_id": "fixture:memory:term:1",
+        "payload": {
+          "contract": "memory_delta_v1",
+          "domain": "terminology",
+          "collection": "term",
+          "operation": "added",
+          "lifecycle": "committed",
+          "delta_id": "mdv1_8dabe3e612609cbb480720ea",
+          "record_id": "term_activation_function",
+          "label": "activation function",
+          "revision_before": null,
+          "revision_after": 1,
+          "record_hash_before": null,
+          "record_hash_after": "f2b90cedf6b963154a17b369f4ad1b930b31b939baaf4107bbe2c6f18e82d05d",
+          "before": null,
+          "after": {
+            "target": "hàm kích hoạt",
+            "status": "candidate"
+          },
+          "evidence_delta": 2,
+          "source_refs": [
+            {
+              "chapter_id": "tech_demo_ch01",
+              "block_id": "tech_demo_ch01_b013"
+            }
+          ],
+          "reason_code": "new_term_committed",
+          "commit_receipt": {
+            "receipt_id": "receipt_tech_demo_g01",
+            "state_generation": 1,
+            "committed_at": "2026-07-18T03:01:00Z"
+          }
+        },
+        "run_id": "memory_delta_ui_demo_v1",
+        "schema": "console_fixture_event_v1",
+        "seq": "16.d1",
+        "severity": "info",
+        "stage": "builder_memory_commit",
+        "ts": "2026-07-18T03:01:00Z"
+      }
+    },
+    {
+      "after_seq": 16,
+      "event": {
+        "agent": "LiteraryBuilder",
+        "attempt_id": 1,
+        "event": "memory_delta",
+        "event_id": "fixture:memory:entity:1",
+        "payload": {
+          "contract": "memory_delta_v1",
+          "domain": "literary",
+          "collection": "entity",
+          "operation": "added",
+          "lifecycle": "committed",
+          "delta_id": "mdv1_708bf13608a3d818ba5c628c",
+          "record_id": "entity_mira_vale",
+          "label": "Mira Vale",
+          "revision_before": null,
+          "revision_after": 1,
+          "record_hash_before": null,
+          "record_hash_after": "3ffb9b9790f8d7a0f3a2e22c4f4b94f1596506974b25ecefdf8437f02faf494c",
+          "before": null,
+          "after": {
+            "canonical": "Mira Vale",
+            "status": "active"
+          },
+          "evidence_delta": 3,
+          "source_refs": [
+            {
+              "chapter_id": "story_demo_ch01",
+              "block_id": "story_demo_ch01_b006"
+            }
+          ],
+          "reason_code": "new_entity_committed",
+          "commit_receipt": {
+            "receipt_id": "receipt_story_demo_g01",
+            "state_generation": 1,
+            "committed_at": "2026-07-18T03:01:02Z"
+          }
+        },
+        "run_id": "memory_delta_ui_demo_v1",
+        "schema": "console_fixture_event_v1",
+        "seq": "16.d2",
+        "severity": "info",
+        "stage": "literary_registry_commit",
+        "ts": "2026-07-18T03:01:02Z"
+      }
+    },
+    {
+      "after_seq": 22,
+      "delivery_count": 2,
+      "event": {
+        "agent": "Auditor",
+        "attempt_id": 1,
+        "event": "memory_delta",
+        "event_id": "fixture:memory:term:2",
+        "payload": {
+          "contract": "memory_delta_v1",
+          "domain": "terminology",
+          "collection": "term",
+          "operation": "reinforced",
+          "lifecycle": "committed",
+          "delta_id": "mdv1_381fdceb140eb02198b56b9e",
+          "record_id": "term_tensor",
+          "label": "tensor",
+          "revision_before": 1,
+          "revision_after": 2,
+          "record_hash_before": "5b5d2281ec9f27f13d07027817ea9a92f307788007e52993bc378e6a0d52342d",
+          "record_hash_after": "708b66c928d6dcc60cd55c13e1420fd6bd4374620da3a2014a433cad022fe774",
+          "before": {
+            "target": "tensor",
+            "status": "preserve"
+          },
+          "after": {
+            "target": "tensor",
+            "status": "preserve"
+          },
+          "evidence_delta": 4,
+          "source_refs": [
+            {
+              "chapter_id": "tech_demo_ch01",
+              "block_id": "tech_demo_ch01_b018"
+            }
+          ],
+          "reason_code": "evidence_reinforced",
+          "commit_receipt": {
+            "receipt_id": "receipt_tech_demo_g02",
+            "state_generation": 2,
+            "committed_at": "2026-07-18T03:03:00Z"
+          }
+        },
+        "run_id": "memory_delta_ui_demo_v1",
+        "schema": "console_fixture_event_v1",
+        "seq": "22.d1",
+        "severity": "info",
+        "stage": "auditor_memory_commit",
+        "ts": "2026-07-18T03:03:00Z"
+      }
+    },
+    {
+      "after_seq": 22,
+      "event": {
+        "agent": "LiteraryAuditor",
+        "attempt_id": 1,
+        "event": "memory_delta",
+        "event_id": "fixture:memory:entity:2",
+        "payload": {
+          "contract": "memory_delta_v1",
+          "domain": "literary",
+          "collection": "entity",
+          "operation": "reinforced",
+          "lifecycle": "committed",
+          "delta_id": "mdv1_de90ae6edc32351c625474b2",
+          "record_id": "entity_ravel_thorne",
+          "label": "Ravel Thorne",
+          "revision_before": 1,
+          "revision_after": 2,
+          "record_hash_before": "1cbd812e715b667acbbd782df7713de7aa863cadd6310704d56348480348a0f9",
+          "record_hash_after": "3f7ad1f026e79754834e66829db5a1ae4ddb1dee5408f9064a338c945237dbe2",
+          "before": {
+            "canonical": "Ravel Thorne",
+            "status": "active"
+          },
+          "after": {
+            "canonical": "Ravel Thorne",
+            "status": "active"
+          },
+          "evidence_delta": 2,
+          "source_refs": [
+            {
+              "chapter_id": "story_demo_ch01",
+              "block_id": "story_demo_ch01_b017"
+            }
+          ],
+          "reason_code": "identity_evidence_reinforced",
+          "commit_receipt": {
+            "receipt_id": "receipt_story_demo_g02",
+            "state_generation": 2,
+            "committed_at": "2026-07-18T03:03:02Z"
+          }
+        },
+        "run_id": "memory_delta_ui_demo_v1",
+        "schema": "console_fixture_event_v1",
+        "seq": "22.d2",
+        "severity": "info",
+        "stage": "literary_registry_commit",
+        "ts": "2026-07-18T03:03:02Z"
+      }
+    },
+    {
+      "after_seq": 33,
+      "event": {
+        "agent": "ReElection",
+        "attempt_id": 1,
+        "event": "memory_delta",
+        "event_id": "fixture:memory:term:3",
+        "payload": {
+          "contract": "memory_delta_v1",
+          "domain": "terminology",
+          "collection": "term",
+          "operation": "revised",
+          "lifecycle": "committed",
+          "delta_id": "mdv1_6e5bfbce31bd559fd9fdad5a",
+          "record_id": "term_regularization",
+          "label": "regularization",
+          "revision_before": 1,
+          "revision_after": 2,
+          "record_hash_before": "78e52a38a1342a862c5a303392c9b83310272e0b17253ab622b9da4e7cd996c0",
+          "record_hash_after": "44c1824d59c44d466ce2d0aa72fb533b22b4362b50d20642ee1cd1fd1b34a56e",
+          "before": {
+            "target": "chuẩn hóa",
+            "status": "context_sensitive"
+          },
+          "after": {
+            "target": "điều chuẩn",
+            "status": "mandatory"
+          },
+          "evidence_delta": 3,
+          "source_refs": [
+            {
+              "chapter_id": "tech_demo_ch01",
+              "block_id": "tech_demo_ch01_b028"
+            },
+            {
+              "chapter_id": "tech_demo_ch01",
+              "block_id": "tech_demo_ch01_b029"
+            }
+          ],
+          "reason_code": "evidence_gated_revision",
+          "commit_receipt": {
+            "receipt_id": "receipt_tech_demo_g03",
+            "state_generation": 3,
+            "committed_at": "2026-07-18T03:05:00Z"
+          }
+        },
+        "run_id": "memory_delta_ui_demo_v1",
+        "schema": "console_fixture_event_v1",
+        "seq": "33.d1",
+        "severity": "info",
+        "stage": "reelection_memory_commit",
+        "ts": "2026-07-18T03:05:00Z"
+      }
+    },
+    {
+      "after_seq": 33,
+      "event": {
+        "agent": "LiteraryAuditor",
+        "attempt_id": 1,
+        "event": "memory_delta",
+        "event_id": "fixture:memory:entity:3",
+        "payload": {
+          "contract": "memory_delta_v1",
+          "domain": "literary",
+          "collection": "entity",
+          "operation": "revised",
+          "lifecycle": "committed",
+          "delta_id": "mdv1_6ec1228182a6be807a405bc5",
+          "record_id": "entity_mira_vale",
+          "label": "Mira Vale",
+          "revision_before": 1,
+          "revision_after": 2,
+          "record_hash_before": "3ffb9b9790f8d7a0f3a2e22c4f4b94f1596506974b25ecefdf8437f02faf494c",
+          "record_hash_after": "ea12ebf3006558148780b855230837d36f6c4e96a1b3b02fae38ada34a6e11c8",
+          "before": {
+            "canonical": "Mira Vale",
+            "status": "active"
+          },
+          "after": {
+            "canonical": "Mira Vale",
+            "aliases": "the physician",
+            "status": "active"
+          },
+          "evidence_delta": 2,
+          "source_refs": [
+            {
+              "chapter_id": "story_demo_ch02",
+              "block_id": "story_demo_ch02_b009"
+            }
+          ],
+          "reason_code": "alias_added_with_evidence",
+          "commit_receipt": {
+            "receipt_id": "receipt_story_demo_g03",
+            "state_generation": 3,
+            "committed_at": "2026-07-18T03:05:02Z"
+          }
+        },
+        "run_id": "memory_delta_ui_demo_v1",
+        "schema": "console_fixture_event_v1",
+        "seq": "33.d2",
+        "severity": "info",
+        "stage": "literary_registry_commit",
+        "ts": "2026-07-18T03:05:02Z"
+      }
+    },
+    {
+      "after_seq": 33,
+      "event": {
+        "agent": "LiteraryBuilder",
+        "attempt_id": 1,
+        "event": "memory_delta",
+        "event_id": "fixture:memory:literary-term:1",
+        "payload": {
+          "contract": "memory_delta_v1",
+          "domain": "literary",
+          "collection": "term",
+          "operation": "added",
+          "lifecycle": "committed",
+          "delta_id": "mdv1_43cda0270269bc5952a999ec",
+          "record_id": "literary_term_north_gallery",
+          "label": "north gallery",
+          "revision_before": null,
+          "revision_after": 1,
+          "record_hash_before": null,
+          "record_hash_after": "414f89b59ceb1de275198c0e343b378131ca6070b7f13aed1ba9d34f412369dd",
+          "before": null,
+          "after": {
+            "target": "hành lang phía bắc",
+            "status": "active"
+          },
+          "evidence_delta": 1,
+          "source_refs": [
+            {
+              "chapter_id": "story_demo_ch02",
+              "block_id": "story_demo_ch02_b014"
+            }
+          ],
+          "reason_code": "story_term_committed",
+          "commit_receipt": {
+            "receipt_id": "receipt_story_demo_g04",
+            "state_generation": 4,
+            "committed_at": "2026-07-18T03:05:04Z"
+          }
+        },
+        "run_id": "memory_delta_ui_demo_v1",
+        "schema": "console_fixture_event_v1",
+        "seq": "33.d3",
+        "severity": "info",
+        "stage": "literary_registry_commit",
+        "ts": "2026-07-18T03:05:04Z"
+      }
+    }
+  ]
+}

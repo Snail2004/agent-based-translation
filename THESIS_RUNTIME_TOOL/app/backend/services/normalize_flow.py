@@ -13,6 +13,7 @@ from services.extraction import (
     _reset_working_after_extract,
     default_metadata,
     now_iso,
+    source_format_for_path,
     write_empty_sidecars,
     write_job,
 )
@@ -143,7 +144,7 @@ def normalizer_status(project_path: Path) -> dict[str, Any]:
 def _source_for_project(project_path: Path) -> Path:
     source_path = find_source_file(project_path)
     if source_path is None:
-        raise ProjectError("No TXT/EPUB source file found in raw/.")
+        raise ProjectError("No TXT, EPUB, Markdown, or HTML source file found in raw/.")
     return source_path
 
 
@@ -370,7 +371,7 @@ def apply_normalized_document(
             "dataset_schema_version": SCHEMA_VERSION,
             "pipeline_version": PIPELINE_VERSION,
             "source_file": source_path.name,
-            "source_format": source_path.suffix.lower().lstrip(".") or "txt",
+            "source_format": source_format_for_path(source_path),
             "generated_at": now_iso(),
             "normalized_structure": True,
             "normalization_report": "working/normalized/normalization_report.json",

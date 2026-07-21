@@ -2,11 +2,17 @@
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
 const API = window.AILAB_API;
-const UI_VERSION = "0.6.0";
+const UI_VERSION = "0.6.2";
 const STORAGE_DOC = "ailab.doc_id";
 const STORAGE_USER = "ailab.user";
 const STORAGE_CENTER_MODE = "ailab.center_mode";
+const STORAGE_LEFT_PANEL = "thesis.left_panel_open";
+const STORAGE_RIGHT_PANEL = "thesis.right_panel_open";
+const STORAGE_RIGHT_PANEL_EXPANDED = "thesis.right_panel_expanded";
 const THESIS_PREFIX = "thesis:";
+const PROJECT_ROUTE_HASH = "#project";
+const CONSOLE_ROUTE_HASH = "#console";
+const REPORT_ROUTE_HASH = "#report";
 const DEFAULT_USER = "U2 · Mai";
 const EDITABLE_META = new Set(["title", "author", "domain", "genre", "source_format", "license", "source_url", "contamination_risk"]);
 const RUN_TERMINAL_STATUSES = new Set(["done", "failed", "cancelled", "canceled", "error"]);
@@ -104,6 +110,17 @@ function currentUser() {
 function errorMessage(err) {
   const first = err?.errors?.[0] || err?.payload?.errors?.[0];
   return first?.message || err?.message || "Request failed.";
+}
+
+function isThesisDatasetId(docId) {
+  return String(docId || "").startsWith(THESIS_PREFIX);
+}
+
+function viewFromLocation() {
+  if (window.location.hash === PROJECT_ROUTE_HASH) return "project";
+  if (window.location.hash === CONSOLE_ROUTE_HASH) return "console";
+  if (window.location.hash === REPORT_ROUTE_HASH) return "report";
+  return "workspace";
 }
 
 function firstError(err) {
@@ -219,9 +236,32 @@ function thesisJobId(docId) {
   return value.startsWith(THESIS_PREFIX) ? value.slice(THESIS_PREFIX.length) : "";
 }
 
+function runsForJob(rows, jobId) {
+  if (!jobId) return [];
+  return (rows || []).filter(row => String(row?.job_id || "") === String(jobId));
+}
+
+function emptyThesisObservability(jobId, loadError = "") {
+  return {
+    meta: { source: "thesis_observability_readmodel", job_id: jobId, read_only: true, load_error: loadError },
+    calls: [],
+    usage_daily: [],
+    totals: { overall: { calls: 0, total_quota_tokens: 0, cost_usd: 0 } },
+  };
+}
+
 function adaptThesisReadModel(model) {
   const meta = model.meta || {};
   const document = model.document || {};
+  const selectedExperimentId = String(meta.selected?.experiment_id || "");
+  const memoryScope = String(meta.memory_scope || (selectedExperimentId ? "selected_run" : "project"));
+  const memorySource = model.project_memory || (memoryScope === "selected_run" ? model.run_memory : model.runtime_memory) || {};
+  const projectMemory = {
+    glossary: memorySource.glossary_entries || [],
+    entities: memorySource.entities || [],
+    relations: memorySource.entity_relations || [],
+    summaries: memorySource.summaries || [],
+  };
   const metadata = {
     ...(document.metadata || {}),
     title: document.title || document.metadata?.title || document.doc_id,
@@ -257,18 +297,28 @@ function adaptThesisReadModel(model) {
         document_doc_id: document.doc_id,
         available_runs: meta.available_runs || [],
         counts: meta.counts || {},
+        selected: meta.selected || {},
+        memory_scope: memoryScope,
       },
       read_only: true,
     },
     chapters: model.chapters || [],
     blocks,
-    glossary: model.runtime_memory?.glossary_entries || [],
-    entities: model.runtime_memory?.entities || [],
-    relations: model.runtime_memory?.entity_relations || [],
-    summaries: [],
+    glossary: projectMemory.glossary,
+    entities: projectMemory.entities,
+    relations: projectMemory.relations,
+    summaries: projectMemory.summaries,
     references: [],
     evalOnly: model.eval_only || { gold_glossary: [], references: [] },
     translations: model.translations || {},
+    runMemory: {
+      scope: model.run_memory?.scope || {},
+      glossary: model.run_memory?.glossary_entries || [],
+      entities: model.run_memory?.entities || [],
+      relations: model.run_memory?.entity_relations || [],
+      summaries: model.run_memory?.summaries || [],
+    },
+    registryGlossary: model.runtime_memory?.glossary_entries || [],
     review: { blocks: {}, references: {}, summaries: {} },
     jobs: meta.available_runs || [],
     history: { can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] },
@@ -277,7 +327,7 @@ function adaptThesisReadModel(model) {
 }
 
 function worstOverlayStatus(statuses) {
-  const order = ["drift", "low_coverage", "undetected", "consistent", "unscored"];
+  const order = ["localization_mismatch", "localization_source_warning", "drift", "low_coverage", "undetected", "localized_only", "localized", "consistent", "unscored"];
   const values = (statuses || []).filter(Boolean);
   return order.find(status => values.includes(status)) || values[0] || "unscored";
 }
@@ -305,22 +355,166 @@ function overlayTargetGroups(groupsByConfig, itemId, bucketName) {
   return result;
 }
 
-function targetSpansForBlock(blockId, translations, overlay) {
+function normalizedGlossarySource(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .trim()
+    .replace(/\s+/gu, " ")
+    .toLocaleLowerCase("en-US");
+}
+
+function localizationTermDetail(termId, sourceTerm, item) {
+  const acceptedForms = item?.accepted_forms || [];
+  return {
+    term_id: termId,
+    source_term: item?.source_term || sourceTerm || termId,
+    expected_target: item?.accepted_form || acceptedForms[0] || "",
+    allowed_variants: acceptedForms,
+    provenance: { branch: "localization", label: "Localization" },
+  };
+}
+
+function glossarySourceFromOverlayRow(row) {
+  const canonicalSource = String(row?.source_term || "").trim();
+  if (canonicalSource) return canonicalSource;
+  const candidates = (row?.occurrences || [])
+    .map(item => item?.source_term)
+    .map(value => String(value || "").trim())
+    .filter(Boolean);
+  const byKey = new Map();
+  candidates.forEach(value => byKey.set(normalizedGlossarySource(value), value));
+  return byKey.size === 1 ? [...byKey.values()][0] : "";
+}
+
+function buildGlossaryOverlayBridge(glossary, registryGlossary, overlay) {
+  const activeIds = new Set();
+  const activeIdsBySource = new Map();
+  (glossary || []).forEach(term => {
+    const termId = String(term?.term_id || term?.glossary_id || "");
+    const sourceKey = normalizedGlossarySource(term?.source_term);
+    if (!termId) return;
+    activeIds.add(termId);
+    if (!sourceKey) return;
+    const ids = activeIdsBySource.get(sourceKey) || [];
+    ids.push(termId);
+    activeIdsBySource.set(sourceKey, ids);
+  });
+
+  const registryById = new Map();
+  const registryBySource = new Map();
+  (registryGlossary || []).forEach(term => {
+    const termId = String(term?.term_id || term?.glossary_id || "");
+    const sourceKey = normalizedGlossarySource(term?.source_term);
+    if (termId) registryById.set(termId, term);
+    if (!sourceKey) return;
+    const rows = registryBySource.get(sourceKey) || [];
+    rows.push(term);
+    registryBySource.set(sourceKey, rows);
+  });
+
+  const activeIdByOverlayId = {};
+  const sourceTermByOverlayId = {};
+  const registryTermByOverlayId = {};
+  const sourceOccurrencesByOverlayId = {};
+  Object.entries(overlay?.source?.glossary_by_id || {}).forEach(([overlayId, row]) => {
+    sourceOccurrencesByOverlayId[overlayId] = row?.occurrences || [];
+    const sourceTerm = glossarySourceFromOverlayRow(row);
+    const sourceKey = normalizedGlossarySource(sourceTerm);
+    if (sourceTerm) sourceTermByOverlayId[overlayId] = sourceTerm;
+    if (activeIds.has(overlayId)) {
+      activeIdByOverlayId[overlayId] = overlayId;
+      return;
+    }
+    const exactRegistryTerm = registryById.get(overlayId);
+    if (!sourceKey) {
+      if (exactRegistryTerm) registryTermByOverlayId[overlayId] = exactRegistryTerm;
+      return;
+    }
+    const matchingActiveIds = [...new Set(activeIdsBySource.get(sourceKey) || [])];
+    if (matchingActiveIds.length === 1) {
+      activeIdByOverlayId[overlayId] = matchingActiveIds[0];
+      return;
+    }
+    const sourceMatches = registryBySource.get(sourceKey) || [];
+    const registryTerm = exactRegistryTerm || (sourceMatches.length === 1 ? sourceMatches[0] : null);
+    if (registryTerm) registryTermByOverlayId[overlayId] = registryTerm;
+  });
+  const overlayIdsByActiveId = {};
+  Object.entries(activeIdByOverlayId).forEach(([overlayId, activeId]) => {
+    if (!overlayIdsByActiveId[activeId]) overlayIdsByActiveId[activeId] = [];
+    overlayIdsByActiveId[activeId].push(overlayId);
+  });
+  Object.values(overlayIdsByActiveId).forEach(ids => ids.sort());
+  return {
+    activeIdByOverlayId,
+    overlayIdsByActiveId,
+    sourceTermByOverlayId,
+    registryTermByOverlayId,
+    sourceOccurrencesByOverlayId,
+  };
+}
+
+function overlayRowsForActiveId(bucket, activeId, glossaryBridge) {
+  const overlayIds = glossaryBridge?.overlayIdsByActiveId?.[activeId] || [];
+  const ids = overlayIds.length ? overlayIds : [activeId];
+  return ids.map(id => bucket?.[id]).filter(Boolean);
+}
+
+function overlayStatusByConfigForActiveId(groupsByConfig, activeId, bucketName, glossaryBridge) {
+  const result = {};
+  Object.entries(groupsByConfig || {}).forEach(([config, cfg]) => {
+    const rows = overlayRowsForActiveId(cfg?.[bucketName] || {}, activeId, glossaryBridge);
+    const spans = rows.flatMap(row => row?.occurrences || row?.mentions || []);
+    const cascadeSpans = spans.filter(item => String(item.mark_source || "").startsWith("cascade_"));
+    const statuses = (cascadeSpans.length ? cascadeSpans : spans).map(item => item.status).filter(Boolean);
+    if (statuses.length) result[config] = worstOverlayStatus(statuses);
+  });
+  return result;
+}
+
+function overlayTargetGroupsForActiveId(groupsByConfig, activeId, bucketName, glossaryBridge) {
+  const result = {};
+  Object.entries(groupsByConfig || {}).forEach(([config, cfg]) => {
+    const rows = overlayRowsForActiveId(cfg?.[bucketName] || {}, activeId, glossaryBridge);
+    if (!rows.length) return;
+    result[config] = {
+      occurrences: rows.flatMap(row => row?.occurrences || []),
+      mentions: rows.flatMap(row => row?.mentions || []),
+    };
+  });
+  return result;
+}
+
+function targetSpansForBlock(blockId, translations, overlay, glossaryBridge) {
   const spansByConfig = {};
   Object.entries(translations || {}).forEach(([config]) => {
     const cfg = overlay?.target_by_config?.[config] || {};
     const spans = [];
     Object.entries(cfg.glossary_by_id || {}).forEach(([termId, row]) => {
+      const linkedActiveTermId = glossaryBridge?.activeIdByOverlayId?.[termId];
+      const activeTermId = linkedActiveTermId || termId;
+      const sourceTerm = glossaryBridge?.sourceTermByOverlayId?.[termId] || "";
+      const registryTerm = glossaryBridge?.registryTermByOverlayId?.[termId];
+      const sourceOccurrences = glossaryBridge?.sourceOccurrencesByOverlayId?.[termId] || [];
       (row.occurrences || []).forEach(item => {
         if (item.block_id !== blockId) return;
         spans.push({
           start: item.span?.[0] || 0,
           end: item.span?.[1] || 0,
           kind: "glossary",
-          id: termId,
+          id: activeTermId,
+          registry_id: activeTermId === termId ? undefined : termId,
+          source_term: item.source_term || sourceTerm || undefined,
+          registry_only: !linkedActiveTermId && !!registryTerm,
+          term_detail: registryTerm || localizationTermDetail(activeTermId, sourceTerm, item),
+          detail_occurrences: sourceOccurrences,
           status: item.status || "unscored",
           display_status: item.display_status,
           localization_status: item.localization_status,
+          reference_status: item.reference_status,
+          adherence_label: item.adherence_label,
+          accepted_forms: item.accepted_forms || [],
+          accepted_form: item.accepted_form,
           constraint_strength: item.constraint_strength,
           label: `${item.surface || item.matched_form || termId}`,
           surface: item.surface,
@@ -374,21 +568,75 @@ function targetSpansForBlock(blockId, translations, overlay) {
   return spansByConfig;
 }
 
+function sourceSpansForBlock(blockId, sourceGlossary, glossaryBridge) {
+  const spans = [];
+  Object.entries(sourceGlossary || {}).forEach(([termId, row]) => {
+    const linkedActiveTermId = glossaryBridge?.activeIdByOverlayId?.[termId];
+    const activeTermId = linkedActiveTermId || termId;
+    const sourceTerm = glossaryBridge?.sourceTermByOverlayId?.[termId] || "";
+    const registryTerm = glossaryBridge?.registryTermByOverlayId?.[termId];
+    const sourceOccurrences = row?.occurrences || [];
+    sourceOccurrences.forEach(item => {
+      if (item.block_id !== blockId) return;
+      spans.push({
+        start: item.span?.[0] || 0,
+        end: item.span?.[1] || 0,
+        kind: "glossary",
+        id: activeTermId,
+        registry_id: activeTermId === termId ? undefined : termId,
+        source_term: item.source_term || sourceTerm || undefined,
+        registry_only: !linkedActiveTermId && !!registryTerm,
+        term_detail: registryTerm || localizationTermDetail(activeTermId, sourceTerm, item),
+        detail_occurrences: sourceOccurrences,
+        status: item.status || "localized",
+        display_status: item.display_status,
+        localization_status: item.localization_status,
+        reference_status: item.reference_status,
+        accepted_forms: item.accepted_forms || [],
+        accepted_form: item.accepted_form,
+        mismatch_configs: item.mismatch_configs || [],
+        label: `${item.surface || item.source_term || sourceTerm || termId}`,
+        surface: item.surface,
+        provenance: item.provenance,
+        mark_source: item.mark_source,
+        located_by: item.located_by,
+        occ_id: item.occ_id,
+        configs: item.configs || [],
+        target: false,
+      });
+    });
+  });
+  return spans;
+}
+
 function applyRegistryOverlay(adapted, overlay) {
   if (!overlay) return adapted;
+  const localizationOnly = overlay.meta?.overlay_mode === "localization";
   const sourceGlossary = overlay.source?.glossary_by_id || {};
   const sourceEntities = overlay.source?.entities_by_id || {};
   const targetByConfig = overlay.target_by_config || {};
+  const glossaryBridge = buildGlossaryOverlayBridge(
+    adapted.glossary,
+    adapted.registryGlossary,
+    overlay,
+  );
   const glossary = (adapted.glossary || []).map(term => {
     const id = term.term_id || term.glossary_id;
-    const source = sourceGlossary[id] || {};
-    const statusByConfig = overlayStatusByConfig(targetByConfig, id, "glossary_by_id");
+    const sourceRows = overlayRowsForActiveId(sourceGlossary, id, glossaryBridge);
+    const sourceOccurrences = sourceRows.flatMap(row => row?.occurrences || []);
+    const statusByConfig = localizationOnly
+      ? overlayStatusByConfigForActiveId(targetByConfig, id, "glossary_by_id", glossaryBridge)
+      : overlayStatusByConfig(targetByConfig, id, "glossary_by_id");
     return {
       ...term,
-      occurrences: source.occurrences || term.occurrences || [],
-      target_occurrences_by_config: overlayTargetGroups(targetByConfig, id, "glossary_by_id"),
+      occurrences: localizationOnly ? sourceOccurrences : (sourceOccurrences.length ? sourceOccurrences : term.occurrences || []),
+      target_occurrences_by_config: localizationOnly
+        ? overlayTargetGroupsForActiveId(targetByConfig, id, "glossary_by_id", glossaryBridge)
+        : overlayTargetGroups(targetByConfig, id, "glossary_by_id"),
       overlay_status_by_config: statusByConfig,
-      overlay_status: worstOverlayStatus(Object.values(statusByConfig)),
+      overlay_status: localizationOnly
+        ? (Object.keys(statusByConfig).length ? worstOverlayStatus(Object.values(statusByConfig)) : "")
+        : worstOverlayStatus(Object.values(statusByConfig)),
       overlay_provenance: overlay.meta,
     };
   });
@@ -398,15 +646,22 @@ function applyRegistryOverlay(adapted, overlay) {
     const statusByConfig = overlayStatusByConfig(targetByConfig, id, "entities_by_id");
     return {
       ...entity,
-      mentions: source.mentions || entity.mentions || [],
+      mentions: localizationOnly ? (source.mentions || []) : (source.mentions || entity.mentions || []),
       target_mentions_by_config: overlayTargetGroups(targetByConfig, id, "entities_by_id"),
       overlay_status_by_config: statusByConfig,
-      overlay_status: worstOverlayStatus(Object.values(statusByConfig)),
+      overlay_status: localizationOnly
+        ? (Object.keys(statusByConfig).length ? worstOverlayStatus(Object.values(statusByConfig)) : "")
+        : worstOverlayStatus(Object.values(statusByConfig)),
       overlay_provenance: overlay.meta,
     };
   });
   const blocks = (adapted.blocks || []).map(block => {
-    const targetSpans = targetSpansForBlock(block.block_id, block.translations, overlay);
+    const targetSpans = targetSpansForBlock(
+      block.block_id,
+      block.translations,
+      overlay,
+      glossaryBridge,
+    );
     const translations = {};
     Object.entries(block.translations || {}).forEach(([config, row]) => {
       translations[config] = {
@@ -415,21 +670,31 @@ function applyRegistryOverlay(adapted, overlay) {
       };
     });
     const allTargetSpans = Object.values(targetSpans).flat();
-    const sourceSpans = [
-      ...Object.values(sourceGlossary).flatMap(row => (row.occurrences || []).filter(item => item.block_id === block.block_id)),
-      ...Object.values(sourceEntities).flatMap(row => (row.mentions || []).filter(item => item.block_id === block.block_id)),
-    ];
+    const localizationSourceSpans = sourceSpansForBlock(block.block_id, sourceGlossary, glossaryBridge);
+    const sourceSpans = localizationOnly
+      ? localizationSourceSpans
+      : [
+          ...Object.values(sourceGlossary).flatMap(row => (row.occurrences || []).filter(item => item.block_id === block.block_id)),
+          ...Object.values(sourceEntities).flatMap(row => (row.mentions || []).filter(item => item.block_id === block.block_id)),
+        ];
     const sourceStatuses = sourceSpans.map(item => item.status);
     const targetStatuses = allTargetSpans.map(item => item.status);
     const statuses = [...sourceStatuses, ...targetStatuses].filter(Boolean);
     return {
       ...block,
       translations,
-      overlay_status: worstOverlayStatus(statuses),
+      overlay_mode: localizationOnly ? "localization" : undefined,
+      source_overlay_spans: localizationOnly ? localizationSourceSpans : undefined,
+      overlay_status: localizationOnly
+        ? (statuses.length ? worstOverlayStatus(statuses) : "")
+        : worstOverlayStatus(statuses),
       overlay_counts: {
         source: sourceSpans.length,
         target: allTargetSpans.length,
-        drift: statuses.filter(status => status === "drift" || status === "low_coverage").length,
+        mismatch: statuses.filter(status => status === "localization_mismatch").length,
+        drift: localizationOnly
+          ? 0
+          : statuses.filter(status => status === "drift" || status === "low_coverage").length,
       },
     };
   });
@@ -440,8 +705,21 @@ function applyRegistryOverlay(adapted, overlay) {
 function buildSpans(block, glossary, entities) {
   if (!block) return [];
   const spans = [];
-  glossary.forEach(t => (t.occurrences || []).forEach(o => {
+  const sourceOverlaySpans = block.overlay_mode === "localization" && Array.isArray(block.source_overlay_spans)
+    ? block.source_overlay_spans
+    : null;
+  if (sourceOverlaySpans) {
+    sourceOverlaySpans.forEach(item => {
+      if (!Number.isInteger(item.start) || !Number.isInteger(item.end) || item.end <= item.start) return;
+      const cur = block.clean_text.slice(item.start, item.end);
+      spans.push({
+        ...item,
+        stale: cur.toLowerCase() !== String(item.surface || item.source_term || "").toLowerCase(),
+      });
+    });
+  } else glossary.forEach(t => (t.occurrences || []).forEach(o => {
     if (o.block_id !== block.block_id) return;
+    if (!Array.isArray(o.span) || o.span.length < 2) return;
     const cur = block.clean_text.slice(o.span[0], o.span[1]);
     const status = o.status || t.overlay_status || "unscored";
     spans.push({
@@ -451,13 +729,26 @@ function buildSpans(block, glossary, entities) {
       label: `${t.source_term} -> ${t.expected_target || "target needed"}`,
       id: t.term_id,
       status,
+      display_status: o.display_status,
+      localization_status: o.localization_status,
       status_by_config: t.overlay_status_by_config || {},
-      provenance: t.provenance?.label || "agent-built",
+      provenance: o.provenance || t.provenance?.label || "agent-built",
+      mark_source: o.mark_source,
+      located_by: o.located_by,
+      surface: o.surface,
+      source_term: o.source_term || t.source_term,
+      occ_id: o.occ_id,
+      configs: o.configs || [],
+      reference_status: o.reference_status,
+      accepted_forms: o.accepted_forms || [],
+      accepted_form: o.accepted_form,
+      mismatch_configs: o.mismatch_configs || [],
       stale: cur.toLowerCase() !== String(o.surface || t.source_term || "").toLowerCase(),
     });
   }));
   entities.forEach(e => (e.mentions || []).forEach(m => {
     if (m.block_id !== block.block_id) return;
+    if (!Array.isArray(m.span) || m.span.length < 2) return;
     const cur = block.clean_text.slice(m.span[0], m.span[1]);
     const status = m.status || e.overlay_status || "unscored";
     spans.push({
@@ -489,10 +780,10 @@ function Toasts({ items, onDismiss }) {
   );
 }
 
-function Modal({ title, icon: I, tone, children, onClose, actions }) {
+function Modal({ title, icon: I, tone, children, onClose, actions, className = "" }) {
   return (
     <div className="modal-scrim" onMouseDown={onClose}>
-      <div className="modal" onMouseDown={e => e.stopPropagation()}>
+      <div className={`modal${className ? ` ${className}` : ""}`} onMouseDown={e => e.stopPropagation()}>
         <div className="modal-head">
           <span className={"modal-ic " + (tone || "")}>{I && <I size={16} />}</span>
           <span className="modal-title">{title}</span>
@@ -507,12 +798,6 @@ function Modal({ title, icon: I, tone, children, onClose, actions }) {
 
 function historyTip(prefix, event) {
   return event?.label ? `${prefix}: ${event.label}` : `${prefix} unavailable`;
-}
-
-function joinLocalPath(root, ...parts) {
-  if (!root) return "";
-  const sep = root.includes("\\") ? "\\" : "/";
-  return [root.replace(/[\\/]+$/, ""), ...parts].filter(Boolean).join(sep);
 }
 
 function safeFilePart(value) {
@@ -565,11 +850,82 @@ async function writeBlobToHandle(handle, blob) {
   await writable.close();
 }
 
-function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze, onUndo, onRedo, history, freezeReady, freezeReasons, previewReadOnly, canExportPreview, appVersion }) {
+const WORKSPACE_VIEW_MODES = [
+  { id: "block", label: "Block" },
+  { id: "chapter", label: "Chapter" },
+  { id: "book", label: "Book" },
+  { id: "memory", label: "Memory" },
+  { id: "preview", label: "Preview" },
+];
+const WORKSPACE_RUN_MODES = [
+  { id: "console", label: "Console" },
+  { id: "report", label: "Report" },
+];
+
+function TopProjectPicker({ docId, projects, onSelectProject, onOpenProjectSource }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="tb-project-wrap">
+      <button className="tb-project-pick" type="button" onClick={() => setOpen(value => !value)} aria-expanded={open}>
+        <Ic.folder size={13} className="faint" />
+        <span className="mono">{docId || "no document"}</span>
+        <Ic.chevDown size={11} className="faint" />
+      </button>
+      {open && (<>
+        <div className="menu-scrim" onClick={() => setOpen(false)} />
+        <div className="tb-project-menu">
+          <div className="proj-menu-sec">Recent projects</div>
+          {(projects || []).map(project => (
+            <button key={project.doc_id} className={"proj-menu-item" + (project.doc_id === docId ? " cur" : "")}
+              onClick={() => { setOpen(false); onSelectProject(project.doc_id); }}>
+              <Ic.doc size={13} className="faint" />
+              <span className="pm-id mono">{project.doc_id}</span>
+              <span className="pm-meta">{project.status}</span>
+              {project.doc_id === docId && <Ic.check size={13} className="pm-cur-ic" />}
+            </button>
+          ))}
+          <div className="divider" />
+          <button className="proj-menu-item" onClick={() => { setOpen(false); onOpenProjectSource(); }}>
+            <Ic.folder size={13} className="faint" /><span>Project / Source</span>
+          </button>
+        </div>
+      </>)}
+    </div>
+  );
+}
+
+function WorkspaceModeNav({ mode, onModeChange }) {
+  function renderMode(item) {
+    return (
+      <button key={item.id} className={"top-mode-btn" + (mode === item.id ? " on" : "")}
+        type="button" role="tab" aria-selected={mode === item.id} onClick={() => onModeChange(item.id)}>
+        {item.label}
+      </button>
+    );
+  }
+  return (
+    <nav className="top-mode-nav" aria-label="Workspace views">
+      <div className="top-mode-group" role="tablist" aria-label="Document views">
+        {WORKSPACE_VIEW_MODES.map(renderMode)}
+      </div>
+      <span className="top-mode-sep" />
+      <div className="top-mode-group run" role="tablist" aria-label="Run views">
+        {WORKSPACE_RUN_MODES.map(renderMode)}
+      </div>
+    </nav>
+  );
+}
+
+function TopBar({
+  docId, projects, mode, onModeChange, onSelectProject, onOpenProjectSource, onQuickImport,
+  leftPanelOpen, rightPanelOpen, onToggleLeftPanel, onToggleRightPanel,
+  dirty, lastSaved, onValidate, onExportOption, onFreeze, onUndo, onRedo, history,
+  freezeReady, freezeReasons, previewReadOnly, canExportPreview, appVersion
+}) {
   const [exportOpen, setExportOpen] = useState(false);
   const canUndo = !!history?.can_undo && !dirty && !previewReadOnly;
   const canRedo = !!history?.can_redo && !dirty && !previewReadOnly;
-  const readOnlyTip = "Disabled in Translation Preview read-only view.";
+  const readOnlyTip = "Editing is disabled in viewer mode.";
   const packageDisabled = false;
   const qcDisabled = false;
   const apiVersion = appVersion?.backend_version || appVersion?.version || "unknown";
@@ -586,13 +942,30 @@ function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze,
   return (
     <div className="topbar">
       <div className="tb-left">
-        <span className="tb-logo" aria-label="AILAB">▧</span>
-        <span className="tb-doc tip" data-tip="Active document · one local project folder per doc_id">
-          <Ic.doc size={13} className="faint" /><span className="mono">{docId || "no document"}</span>
-        </span>
+        <span className="tb-logo" aria-label="Thesis Runtime Tool">▧</span>
+        <TopProjectPicker docId={docId} projects={projects} onSelectProject={onSelectProject} onOpenProjectSource={onOpenProjectSource} />
+        <button className="btn sm primary tb-import" type="button" onClick={onQuickImport}>
+          <Ic.upload size={12} />Nhập tài liệu
+        </button>
       </div>
 
+      <WorkspaceModeNav mode={mode} onModeChange={onModeChange} />
+
       <div className="tb-right">
+        {mode !== "console" && <div className="panel-toggle-group">
+          <button className={"btn icon-only tip" + (leftPanelOpen ? " is-on" : "")} type="button"
+            data-tip={leftPanelOpen ? "Hide chapter navigation" : "Show chapter navigation"}
+            aria-label="Toggle chapter navigation" aria-pressed={leftPanelOpen} onClick={onToggleLeftPanel}>
+            <Ic.list size={13} />
+          </button>
+          {mode !== "memory" && (
+            <button className={"btn icon-only tip" + (rightPanelOpen ? " is-on" : "")} type="button"
+              data-tip={rightPanelOpen ? "Hide context inspector" : "Show context inspector"}
+              aria-label="Toggle context inspector" aria-pressed={rightPanelOpen} onClick={onToggleRightPanel}>
+              <Ic.layers size={13} />
+            </button>
+          )}
+        </div>}
         <span className="autosave">
           {dirty ? <><span className="as-spin" />saving...</> : <><Ic.check size={12} className="as-ok" />saved {lastSaved}</>}
         </span>
@@ -618,7 +991,7 @@ function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze,
               <div className="tb-menu-meta">
                 <span>UI {UI_VERSION} · API {apiVersion}</span>
                 {gitSha ? <span>git {gitSha}</span> : null}
-                <span>{previewReadOnly ? "preview · read-only view" : "working copy · autosaved"}</span>
+                <span>{previewReadOnly ? "viewer mode" : "working copy · autosaved"}</span>
               </div>
               <div className="tb-menu-div" />
               <button disabled={previewReadOnly} onClick={() => runAction(onValidate)}>
@@ -635,7 +1008,7 @@ function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze,
                 <Ic.book size={13} /><span><b>Dataset + all previews</b><em>Package + all translated previews</em></span>
               </button>
               <button disabled={!docId || previewDisabled} onClick={() => chooseExport("preview")}>
-                <Ic.eye size={13} /><span><b>Translation preview</b><em>Current preview run only, not gold</em></span>
+                <Ic.eye size={13} /><span><b>Translation preview</b><em>Current preview run</em></span>
               </button>
               <div className="tb-menu-div" />
               <button disabled={previewReadOnly || !freezeReady} onClick={() => runAction(onFreeze)}>
@@ -649,41 +1022,52 @@ function TopBar({ docId, dirty, lastSaved, onValidate, onExportOption, onFreeze,
   );
 }
 
-function PreviewRightPanel({ docInfo, block }) {
+function PreviewRightPanel({ docInfo, block, preview }) {
+  const run = preview?.run || null;
+  const configs = run?.configs || [];
+  const mode = configs.length > 1 ? "comparison" : configs.length === 1 ? "single translation" : "no result";
   return (
     <div className="col col-right preview-info-panel">
       <div className="preview-info-head">
         <Ic.eye size={15} />
         <div>
-          <b>Translation Preview</b>
-          <span>read-only · not gold</span>
+          <b>Translation results</b>
         </div>
       </div>
       <div className="preview-info-card">
-        <p>This view only compares source blocks with a stored preview run.</p>
-        <p>No annotation, reference, freeze, or review action is available here. Export is limited to preview-safe downloads.</p>
+        <p>{configs.length > 1
+          ? "Stored translation versions are shown side by side."
+          : configs.length === 1
+            ? "The stored translation is shown beside its source."
+            : "No stored translation is available for this chapter."}</p>
       </div>
       <div className="preview-info-list">
-        <div><span>doc_id</span><b className="mono">{docInfo?.doc_id || ""}</b></div>
+        <div><span>project</span><b className="mono">{docInfo?.doc_id || ""}</b></div>
+        <div><span>chapter</span><b className="mono">{run?.chapter_id || block?.chapter_id || ""}</b></div>
         <div><span>active block</span><b className="mono">{block?.block_id || ""}</b></div>
-        <div><span>storage</span><b className="mono">working/translation_preview</b></div>
+        <div><span>mode</span><b>{mode}</b></div>
+        <div><span>versions</span><b className="mono">{configs.join(" / ") || "none"}</b></div>
+        <div><span>coverage</span><b className="mono">{run ? `${run.translated_block_count || 0}/${run.block_count || 0} blocks` : "0/0 blocks"}</b></div>
       </div>
     </div>
   );
 }
 
-function StartupState({ title, message, action, onAction, secondary }) {
+function StartupState({ title, message, action, onAction, secondary, secondaryAction, onSecondaryAction }) {
   return (
     <div className="project-screen">
       <div className="project-wrap" style={{ maxWidth: 760 }}>
         <div className="project-headline">
           <div>
-            <div className="project-kicker">AILAB Dataset Tool</div>
+            <div className="project-kicker">Thesis Runtime Tool</div>
             <h1>{title}</h1>
             <p>{message}</p>
             {secondary && <p className="muted">{secondary}</p>}
           </div>
-          {action && <button className="btn primary" onClick={onAction}>{action}</button>}
+          <div className="startup-actions">
+            {secondaryAction && <button className="btn" onClick={onSecondaryAction}>{secondaryAction}</button>}
+            {action && <button className="btn primary" onClick={onAction}>{action}</button>}
+          </div>
         </div>
       </div>
     </div>
@@ -691,7 +1075,7 @@ function StartupState({ title, message, action, onAction, secondary }) {
 }
 
 function App() {
-  const [view, setView] = useState(() => window.location.hash === "#project" ? "project" : "workspace");
+  const [view, setView] = useState(viewFromLocation);
   const [projects, setProjects] = useState([]);
   const [docInfo, setDocInfo] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -705,6 +1089,7 @@ function App() {
   const [thesisTranslations, setThesisTranslations] = useState({});
   const [thesisObservability, setThesisObservability] = useState(null);
   const [thesisBaseDataset, setThesisBaseDataset] = useState(null);
+  const [projectRuntime, setProjectRuntime] = useState(null);
   const [appVersion, setAppVersion] = useState({ ui_version: UI_VERSION, backend_version: "unknown", git_sha: "unknown" });
   const [thesisRuns, setThesisRuns] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
@@ -735,11 +1120,16 @@ function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [filters, setFilters] = useState(new Set());
   const [rightOpenTabs, setRightOpenTabs] = useState(["glossary"]);
+  const [memoryFocusKind, setMemoryFocusKind] = useState("glossary");
+  const [registryOverlayLoading, setRegistryOverlayLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [centerMode, setCenterModeState] = useState(() => {
     const saved = localStorage.getItem(STORAGE_CENTER_MODE);
-    return ["block", "chapter", "book", "preview", "cockpit", "console"].includes(saved) ? saved : "chapter";
+    return ["block", "chapter", "book", "memory", "preview"].includes(saved) ? saved : "chapter";
   });
+  const [leftPanelOpen, setLeftPanelOpen] = useState(() => localStorage.getItem(STORAGE_LEFT_PANEL) !== "false");
+  const [rightPanelOpen, setRightPanelOpen] = useState(() => localStorage.getItem(STORAGE_RIGHT_PANEL) !== "false");
+  const [rightPanelExpanded, setRightPanelExpanded] = useState(() => localStorage.getItem(STORAGE_RIGHT_PANEL_EXPANDED) === "true");
   const [toasts, setToasts] = useState([]);
   const [modal, setModal] = useState(null);
   const [dirty, setDirty] = useState(false);
@@ -757,12 +1147,57 @@ function App() {
   const saveTimers = useRef({});
   const runLogOffsetRef = useRef(0);
   const runEventOffsetRef = useRef(0);
+  const fullRegistryOverlayCacheRef = useRef(new Map());
+
+  const navigateView = useCallback((nextView, { replace = false } = {}) => {
+    const targetView = nextView === "project"
+      ? "project"
+      : nextView === "console"
+        ? "console"
+        : nextView === "report"
+          ? "report"
+          : "workspace";
+    const baseUrl = `${window.location.pathname}${window.location.search}`;
+    const targetUrl = targetView === "project"
+      ? `${baseUrl}${PROJECT_ROUTE_HASH}`
+      : targetView === "console"
+        ? `${baseUrl}${CONSOLE_ROUTE_HASH}`
+        : targetView === "report"
+          ? `${baseUrl}${REPORT_ROUTE_HASH}`
+        : baseUrl;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (currentUrl !== targetUrl) {
+      window.history[replace ? "replaceState" : "pushState"]({ view: targetView }, "", targetUrl);
+    }
+    setView(targetView);
+  }, []);
+
+  useEffect(() => {
+    const syncViewFromLocation = () => setView(viewFromLocation());
+    window.addEventListener("popstate", syncViewFromLocation);
+    window.addEventListener("hashchange", syncViewFromLocation);
+    return () => {
+      window.removeEventListener("popstate", syncViewFromLocation);
+      window.removeEventListener("hashchange", syncViewFromLocation);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (view === "project" && isThesisDatasetId(activeDocId)) {
+      navigateView("workspace", { replace: true });
+    }
+  }, [activeDocId, navigateView, view]);
 
   const refreshProjects = useCallback(async () => {
-    const [legacy, thesis] = await Promise.all([
-      API.listProjects().catch(() => []),
-      API.listThesisDatasets().catch(() => []),
+    const [legacyResult, thesisResult] = await Promise.allSettled([
+      API.listProjects(),
+      API.listThesisDatasets(),
     ]);
+    if (legacyResult.status === "rejected" && thesisResult.status === "rejected") {
+      throw new Error(`Could not load projects from ${API.baseUrl}.`);
+    }
+    const legacy = legacyResult.status === "fulfilled" ? legacyResult.value : [];
+    const thesis = thesisResult.status === "fulfilled" ? thesisResult.value : [];
     const thesisRows = (thesis || []).map(row => ({
       ...row,
       doc_id: `${THESIS_PREFIX}${row.job_id}`,
@@ -779,7 +1214,14 @@ function App() {
   const loadDataset = useCallback(async (docId, opts = {}) => {
     if (!docId) return null;
     if (!opts.silent) setLoading(true);
-    const dataset = await API.getDataset(docId);
+    const [dataset, runtime] = await Promise.all([
+      API.getDataset(docId),
+      API.getProjectRuntime(docId).catch(err => ({
+        project_id: docId,
+        prepared: false,
+        load_error: errorMessage(err),
+      })),
+    ]);
     const adapted = adaptDataset(dataset);
     setDocInfo(adapted.docInfo);
     setChapters(adapted.chapters);
@@ -791,9 +1233,18 @@ function App() {
     setReferences(adapted.references);
     setEvalOnly({ gold_glossary: [], references: [] });
     setThesisTranslations({});
-    setThesisObservability(null);
+    setProjectRuntime(runtime);
+    let runtimeObservability = null;
+    let runtimeRuns = [];
+    if (runtime?.prepared && runtime?.job_id) {
+      [runtimeObservability, runtimeRuns] = await Promise.all([
+        API.getThesisObservability(runtime.job_id).catch(err => emptyThesisObservability(runtime.job_id, errorMessage(err))),
+        API.listThesisRuns().then(rows => runsForJob(rows, runtime.job_id)).catch(() => []),
+      ]);
+    }
+    setThesisObservability(runtimeObservability);
     setThesisBaseDataset(null);
-    setThesisRuns([]);
+    setThesisRuns(runtimeRuns);
     setSelectedRunId(null);
     setSelectedRunLog({ run_id: null, log: "", offset: 0, running: false, status: "" });
     setSelectedRunEvents({ run_id: null, events: [], offset: 0, running: false, status: "", aggregate: emptyRunEventAggregate() });
@@ -826,12 +1277,7 @@ function App() {
     const thesisParams = thesisRuntimeParams(jobId, { project });
     const [dataset, observability] = await Promise.all([
       API.getThesisDataset(jobId, thesisParams),
-      API.getThesisObservability(jobId).catch(err => ({
-        meta: { source: "thesis_observability_readmodel", job_id: jobId, read_only: true, load_error: errorMessage(err) },
-        calls: [],
-        usage_daily: [],
-        totals: { overall: { calls: 0, total_quota_tokens: 0, cost_usd: 0 } },
-      })),
+      API.getThesisObservability(jobId).catch(err => emptyThesisObservability(jobId, errorMessage(err))),
     ]);
     const adapted = adaptThesisReadModel(dataset);
     setThesisBaseDataset(adapted);
@@ -846,8 +1292,9 @@ function App() {
     setEvalOnly(adapted.evalOnly);
     setThesisTranslations(adapted.translations);
     setThesisObservability(observability);
+    setProjectRuntime(null);
     API.listThesisRuns()
-      .then(rows => setThesisRuns(rows || []))
+      .then(rows => setThesisRuns(runsForJob(rows, jobId)))
       .catch(() => setThesisRuns([]));
     setSelectedCallId(observability.calls?.[0]?.call_id || null);
     setSelectedCallDetail(null);
@@ -876,18 +1323,19 @@ function App() {
         || list[0];
       if (!chosen) {
         setDocInfo({ doc_id: "", metadata: {}, provenance: {} });
-        setView("project");
+        navigateView("project", { replace: true });
         setLoading(false);
         return;
       }
       setActiveDocId(chosen.doc_id);
       if (chosen.source === "thesis") {
         await loadThesisDataset(thesisJobId(chosen.doc_id), { project: chosen });
+        navigateView("workspace", { replace: true });
       } else if (chosen.status === "available") {
         await loadDataset(chosen.doc_id);
       } else {
         setDocInfo({ doc_id: chosen.doc_id, metadata: {}, provenance: {} });
-        setView("project");
+        navigateView("project", { replace: true });
         setLoading(false);
       }
     } catch (err) {
@@ -900,21 +1348,18 @@ function App() {
 
   const block = blocks.find(b => b.block_id === selectedId) || blocks[0] || null;
   const readOnly = !!docInfo?.read_only || String(activeDocId || "").startsWith(THESIS_PREFIX);
+  const runtimeJobId = thesisJobId(activeDocId)
+    || (projectRuntime?.prepared && projectRuntime?.project_id === activeDocId ? projectRuntime.job_id : "");
 
   useEffect(() => {
-    if (!readOnly && (centerMode === "cockpit" || centerMode === "console")) setCenterMode("block");
-  }, [readOnly, centerMode]);
-
-  useEffect(() => {
-    const jobId = thesisJobId(activeDocId);
-    if (!readOnly || !jobId || !selectedCallId) {
+    if (!runtimeJobId || !selectedCallId) {
       setSelectedCallDetail(null);
       setCallDetailLoading(false);
       return;
     }
     let cancelled = false;
     setCallDetailLoading(true);
-    API.getThesisObservabilityCall(jobId, selectedCallId)
+    API.getThesisObservabilityCall(runtimeJobId, selectedCallId)
       .then(detail => {
         if (!cancelled) setSelectedCallDetail(detail);
       })
@@ -925,22 +1370,22 @@ function App() {
       })
       .finally(() => {
         if (!cancelled) setCallDetailLoading(false);
-      });
+    });
     return () => { cancelled = true; };
-  }, [activeDocId, selectedCallId, readOnly]);
+  }, [runtimeJobId, selectedCallId]);
 
   const refreshThesisRuns = useCallback(async () => {
-    if (!readOnly) return [];
+    if (!runtimeJobId) return [];
     const rows = await API.listThesisRuns();
-    setThesisRuns(rows || []);
-    return rows || [];
-  }, [readOnly]);
+    const scoped = runsForJob(rows, runtimeJobId);
+    setThesisRuns(scoped);
+    return scoped;
+  }, [runtimeJobId]);
 
   function runFormPayload(includeToken = false) {
-    const jobId = thesisJobId(activeDocId);
     const payload = {
       script: runForm.script || "run_translate",
-      job_id: jobId || undefined,
+      job_id: runtimeJobId || undefined,
       chapters: splitWords(runForm.chapters),
       configs: splitWords(runForm.configs),
       profile: runForm.profile || undefined,
@@ -958,14 +1403,13 @@ function App() {
   }
 
   async function previewThesisRun() {
-    const jobId = thesisJobId(activeDocId);
-    if (!jobId) return;
+    if (!runtimeJobId) return;
     setRunBusy(true);
     setRunError("");
     setRunPromptPreview(null);
     try {
       const params = {
-        job_id: jobId,
+        job_id: runtimeJobId,
         script: runForm.script || "run_translate",
         chapters: splitWords(runForm.chapters).join(" "),
         configs: splitWords(runForm.configs).join(" "),
@@ -1064,6 +1508,86 @@ function App() {
     }
   }
 
+  function openProjectPipelineModal() {
+    if (thesisJobId(activeDocId)) {
+      openDichModal();
+      return;
+    }
+    const domain = String(docInfo?.metadata?.domain || "").toLowerCase();
+    const defaultProfile = domain === "technical" || domain === "d2l" ? "technical_d2l_v1" : "literary_v1";
+    setModal({
+      kind: "project-pipeline",
+      profile: projectRuntime?.selected_profile || defaultProfile,
+      chapters: chapters.map(chapter => chapter.chapter_id).filter(Boolean),
+    });
+  }
+
+  function toggleProjectPipelineChapter(chapterId) {
+    setModal(current => {
+      if (current?.kind !== "project-pipeline") return current;
+      const selected = new Set(current.chapters || []);
+      if (selected.has(chapterId)) selected.delete(chapterId);
+      else selected.add(chapterId);
+      return { ...current, chapters: chapters.map(chapter => chapter.chapter_id).filter(id => selected.has(id)) };
+    });
+  }
+
+  async function confirmProjectPreflight() {
+    const pending = modal;
+    if (pending?.kind !== "project-pipeline" || !(pending.chapters || []).length) return;
+    setRunBusy(true);
+    setRunError("");
+    try {
+      const runtime = await API.prepareProjectRuntime(activeDocId);
+      const profile = pending.profile || "literary_v1";
+      const selectedChapters = pending.chapters || [];
+      const payload = {
+        script: "run_translate",
+        job_id: runtime.job_id,
+        chapters: selectedChapters,
+        configs: ["S0"],
+        profile,
+        experiment: "imported_project_preflight",
+        allow_api: false,
+      };
+      const created = await API.createThesisRun(payload);
+      const [observability, rows] = await Promise.all([
+        API.getThesisObservability(runtime.job_id).catch(err => emptyThesisObservability(runtime.job_id, errorMessage(err))),
+        API.listThesisRuns().catch(() => []),
+      ]);
+      setProjectRuntime({ ...runtime, selected_profile: profile });
+      setThesisObservability(observability);
+      setThesisRuns(runsForJob(rows, runtime.job_id));
+      setRunForm({
+        script: "run_translate",
+        chapters: selectedChapters.join(" "),
+        configs: "S0",
+        profile,
+        experiment: "imported_project_preflight",
+        cache: "",
+        allow_api: false,
+      });
+      setRunPromptPreview(null);
+      setSelectedRunId(created.run_id);
+      runLogOffsetRef.current = 0;
+      runEventOffsetRef.current = 0;
+      setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
+      setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status, aggregate: emptyRunEventAggregate() });
+      setRunBlockPreview([]);
+      setRunWatchlist([]);
+      setRunReportSummary(null);
+      setModal(null);
+      setCenterMode("console");
+      toast("Đã khởi chạy kiểm tra pipeline", "good", `${runtime.job_id} · không gọi API`);
+    } catch (err) {
+      const message = errorMessage(err);
+      setRunError(message);
+      toast("Không thể khởi chạy pipeline", "bad", message);
+    } finally {
+      setRunBusy(false);
+    }
+  }
+
   function openDichModal() {
     const jobId = thesisJobId(activeDocId);
     if (!jobId) { toast("Chưa mở dataset thesis", "bad", "Chọn một dataset thesis trước khi dịch."); return; }
@@ -1147,7 +1671,7 @@ function App() {
         const [result, eventResult, previewResult, watchResult, reportResult] = await Promise.all([
           API.getThesisRunLog(selectedRunId, currentOffset),
           API.getThesisRunEvents(selectedRunId, currentEventOffset, 262144).catch(() => null),
-          API.getThesisRunBlockPreview(selectedRunId, 12).catch(() => null),
+          API.getThesisRunBlockPreview(selectedRunId).catch(() => null),
           API.getThesisRunWatchlist(selectedRunId).catch(() => null),
           API.getThesisRunReportSummary(selectedRunId).catch(() => null),
         ]);
@@ -1205,28 +1729,58 @@ function App() {
     };
   }, [selectedRunId, refreshThesisRuns]);
 
-  // Entering Console with nothing selected: auto-pick the newest run so the view
-  // opens populated instead of idle-empty (registry list is newest-first).
+  // Entering a run surface with nothing selected: auto-pick the newest run so
+  // Console and Report share the same current run (registry list is newest-first).
   useEffect(() => {
-    if (centerMode !== "console" || selectedRunId || !thesisRuns.length) return;
+    if (!["console", "report"].includes(view) || selectedRunId || !thesisRuns.length) return;
     selectRun(thesisRuns[0].run_id);
-  }, [centerMode, selectedRunId, thesisRuns]);
+  }, [view, selectedRunId, thesisRuns]);
 
   function setCenterMode(mode) {
+    if (["console", "report"].includes(mode)) {
+      navigateView(mode);
+      return;
+    }
     setCenterModeState(mode);
     localStorage.setItem(STORAGE_CENTER_MODE, mode);
   }
 
+  function toggleLeftPanel() {
+    setLeftPanelOpen(open => {
+      const next = !open;
+      localStorage.setItem(STORAGE_LEFT_PANEL, String(next));
+      return next;
+    });
+  }
+
+  function toggleRightPanel() {
+    setRightPanelOpen(open => {
+      const next = !open;
+      localStorage.setItem(STORAGE_RIGHT_PANEL, String(next));
+      return next;
+    });
+  }
+
   function toggleRightTab(tabId) {
-    setRightOpenTabs(tabs => (
-      tabs.includes(tabId)
-        ? tabs.filter(id => id !== tabId)
-        : [...tabs, tabId]
-    ));
+    setRightOpenTabs([tabId]);
   }
 
   function openRightTab(tabId) {
-    setRightOpenTabs(tabs => tabs.includes(tabId) ? tabs : [...tabs, tabId]);
+    setRightOpenTabs([tabId]);
+  }
+
+  function toggleRightPanelExpanded() {
+    setRightPanelExpanded(expanded => {
+      const next = !expanded;
+      localStorage.setItem(STORAGE_RIGHT_PANEL_EXPANDED, String(next));
+      return next;
+    });
+  }
+
+  function openMemory(kind) {
+    const requested = kind || rightOpenTabs.find(tabId => ["glossary", "entities", "relations", "summary"].includes(tabId));
+    setMemoryFocusKind(requested === "summary" ? "summaries" : (requested || "glossary"));
+    setCenterMode("memory");
   }
 
   const touchStart = useCallback(() => {
@@ -1256,6 +1810,15 @@ function App() {
   }
   const dismiss = id => setToasts(t => t.filter(x => x.id !== id));
 
+  function openProjectSource() {
+    if (isThesisDatasetId(activeDocId)) {
+      navigateView("workspace", { replace: true });
+      setModal({ kind: "quick-import" });
+      return;
+    }
+    navigateView("project");
+  }
+
   async function mutate(action, { refresh = true, success, fail } = {}) {
     if (!activeDocId) return null;
     if (readOnly) {
@@ -1278,7 +1841,7 @@ function App() {
 
   function queueSave(key, action) {
     if (readOnly) {
-      toast("Read-only thesis view", "info", "No workspace write is available for thesis DB data.");
+      toast("Viewer mode", "info", "Workspace editing is disabled for this dataset.");
       return;
     }
     touchStart();
@@ -1399,17 +1962,42 @@ function App() {
 
   useEffect(() => {
     const jobId = thesisJobId(activeDocId);
-    if (!readOnly || !jobId || !thesisBaseDataset || !selectedId) return undefined;
+    if (!readOnly || !jobId || !thesisBaseDataset || !selectedId) {
+      setRegistryOverlayLoading(false);
+      return undefined;
+    }
     const baseBlock = (thesisBaseDataset.blocks || []).find(row => row.block_id === selectedId) || thesisBaseDataset.blocks?.[0];
-    if (!baseBlock) return undefined;
-    const params = (centerMode === "chapter" || centerMode === "book")
-      ? { chapter_id: baseBlock.chapter_id }
-      : { block_id: baseBlock.block_id };
-    Object.assign(params, thesisRuntimeParams(jobId, { includeCascade: true, project: thesisProjectForJob(jobId) }));
+    if (!baseBlock) {
+      setRegistryOverlayLoading(false);
+      return undefined;
+    }
+    const params = centerMode === "memory"
+      ? {}
+      : (centerMode === "chapter" || centerMode === "book")
+        ? { chapter_id: baseBlock.chapter_id }
+        : { block_id: baseBlock.block_id };
+    Object.assign(params, thesisRuntimeParams(jobId, { project: thesisProjectForJob(jobId) }));
+    params.overlay_mode = "localization";
+    const cacheKey = `${jobId}:${JSON.stringify(params)}`;
+    if (centerMode === "memory") {
+      const cachedOverlay = fullRegistryOverlayCacheRef.current.get(cacheKey);
+      if (cachedOverlay) {
+        const adapted = applyRegistryOverlay(thesisBaseDataset, cachedOverlay);
+        setBlocks(adapted.blocks);
+        setGlossary(adapted.glossary);
+        setEntities(adapted.entities);
+        setRegistryOverlayLoading(false);
+        return undefined;
+      }
+      setRegistryOverlayLoading(true);
+    } else {
+      setRegistryOverlayLoading(false);
+    }
     let cancelled = false;
     API.getThesisRegistryOverlay(jobId, params)
       .then(overlay => {
         if (cancelled) return;
+        if (centerMode === "memory") fullRegistryOverlayCacheRef.current.set(cacheKey, overlay);
         const adapted = applyRegistryOverlay(thesisBaseDataset, overlay);
         setBlocks(adapted.blocks);
         setGlossary(adapted.glossary);
@@ -1417,14 +2005,130 @@ function App() {
       })
       .catch(err => {
         if (!cancelled) toast("Registry overlay unavailable", "bad", errorMessage(err));
+      })
+      .finally(() => {
+        if (!cancelled && centerMode === "memory") setRegistryOverlayLoading(false);
       });
     return () => { cancelled = true; };
   }, [readOnly, activeDocId, thesisBaseDataset, selectedId, centerMode, thesisProjectForJob]);
 
-  const blockTerms = useMemo(() => block ? (readOnly ? glossary : glossary.filter(t => (t.occurrences || []).some(o => o.block_id === block.block_id))) : [], [glossary, block, readOnly]);
-  const blockEntities = useMemo(() => block ? (readOnly ? entities : entities.filter(e => (e.mentions || []).some(m => m.block_id === block.block_id)
-    || (block.discourse && [block.discourse.speaker_entity_id, block.discourse.addressee_entity_id].includes(e.entity_id)))) : [], [entities, block, readOnly]);
+  const blockTerms = useMemo(() => block
+    ? glossary.filter(term => (term.occurrences || []).some(occurrence => occurrence.block_id === block.block_id))
+    : [], [glossary, block]);
+  const directBlockEntityIds = useMemo(() => {
+    if (!block) return new Set();
+    const ids = new Set([
+      block.discourse?.speaker_entity_id,
+      block.discourse?.addressee_entity_id,
+    ].filter(Boolean));
+    entities.forEach(entity => {
+      const hasMention = (entity.mentions || []).some(mention => mention.block_id === block.block_id);
+      const isBoundaryOccurrence = entity.first_block_id === block.block_id || entity.latest_block_id === block.block_id;
+      if (hasMention || isBoundaryOccurrence) ids.add(entity.entity_id);
+    });
+    return ids;
+  }, [entities, block]);
+  const blockRelations = useMemo(() => {
+    if (!block) return [];
+    return relations.filter(relation => {
+      const hasBlockEvidence = (relation.evidence || []).some(evidence => [
+        evidence.block_id,
+        evidence.trigger_block_id,
+        evidence.source_block_id,
+      ].includes(block.block_id));
+      const isPhaseBoundary = relation.valid_from_block_id === block.block_id
+        || relation.valid_to_block_id === block.block_id;
+      const hasGroundedPair = directBlockEntityIds.has(relation.source_entity_id)
+        && directBlockEntityIds.has(relation.target_entity_id);
+      return hasBlockEvidence || isPhaseBoundary || hasGroundedPair;
+    });
+  }, [relations, block, directBlockEntityIds]);
+  const blockEntities = useMemo(() => {
+    const ids = new Set(directBlockEntityIds);
+    blockRelations.forEach(relation => {
+      if (relation.source_entity_id) ids.add(relation.source_entity_id);
+      if (relation.target_entity_id) ids.add(relation.target_entity_id);
+    });
+    return entities.filter(entity => ids.has(entity.entity_id));
+  }, [entities, directBlockEntityIds, blockRelations]);
   const summary = useMemo(() => block ? (summaries.find(s => s.chapter_id === block.chapter_id) || { doc_id: docInfo?.doc_id, chapter_id: block.chapter_id, summary_source: "", source: "" }) : null, [summaries, block, docInfo]);
+  const contextScope = useMemo(() => {
+    if (!block) return { kind: "block", label: "Current block", blockIds: new Set() };
+    if (centerMode === "book") {
+      return {
+        kind: "book",
+        label: "Current book",
+        blockIds: new Set(blocks.map(row => row.block_id)),
+      };
+    }
+    if (centerMode === "chapter") {
+      const title = activeChapter?.title || activeChapter?.chapter_title || block.chapter_id;
+      return {
+        kind: "chapter",
+        label: title || "Current chapter",
+        blockIds: new Set(chapterBlocks.map(row => row.block_id)),
+      };
+    }
+    return {
+      kind: "block",
+      label: block.block_id,
+      blockIds: new Set([block.block_id]),
+    };
+  }, [block, centerMode, blocks, activeChapter, chapterBlocks]);
+  const contextTerms = useMemo(() => glossary.filter(term => (
+    (term.occurrences || []).some(occurrence => contextScope.blockIds.has(occurrence.block_id))
+  )), [glossary, contextScope]);
+  const directContextEntityIds = useMemo(() => {
+    const ids = new Set();
+    blocks.forEach(row => {
+      if (!contextScope.blockIds.has(row.block_id)) return;
+      if (row.discourse?.speaker_entity_id) ids.add(row.discourse.speaker_entity_id);
+      if (row.discourse?.addressee_entity_id) ids.add(row.discourse.addressee_entity_id);
+    });
+    entities.forEach(entity => {
+      const hasMention = (entity.mentions || []).some(mention => contextScope.blockIds.has(mention.block_id));
+      const hasBoundary = contextScope.blockIds.has(entity.first_block_id) || contextScope.blockIds.has(entity.latest_block_id);
+      if (hasMention || hasBoundary) ids.add(entity.entity_id);
+    });
+    return ids;
+  }, [blocks, entities, contextScope]);
+  const contextRelations = useMemo(() => relations.filter(relation => {
+    const hasEvidence = (relation.evidence || []).some(evidence => (
+      contextScope.blockIds.has(evidence.block_id)
+      || contextScope.blockIds.has(evidence.trigger_block_id)
+      || contextScope.blockIds.has(evidence.source_block_id)
+    ));
+    const hasBoundary = contextScope.blockIds.has(relation.valid_from_block_id)
+      || contextScope.blockIds.has(relation.valid_to_block_id);
+    const hasGroundedPair = directContextEntityIds.has(relation.source_entity_id)
+      && directContextEntityIds.has(relation.target_entity_id);
+    return hasEvidence || hasBoundary || hasGroundedPair;
+  }), [relations, contextScope, directContextEntityIds]);
+  const contextEntities = useMemo(() => {
+    const ids = new Set(directContextEntityIds);
+    contextRelations.forEach(relation => {
+      if (relation.source_entity_id) ids.add(relation.source_entity_id);
+      if (relation.target_entity_id) ids.add(relation.target_entity_id);
+    });
+    return entities.filter(entity => ids.has(entity.entity_id));
+  }, [entities, directContextEntityIds, contextRelations]);
+  const contextSummaries = useMemo(() => {
+    if (!block) return [];
+    if (contextScope.kind === "book") return summaries;
+    return summaries.filter(item => item.chapter_id === block.chapter_id);
+  }, [summaries, block, contextScope]);
+  const currentMemory = useMemo(() => ({
+    glossary: contextTerms,
+    entities: contextEntities,
+    relations: contextRelations,
+    summaries: contextSummaries,
+  }), [contextTerms, contextEntities, contextRelations, contextSummaries]);
+  const projectMemory = useMemo(() => ({
+    glossary,
+    entities,
+    relations,
+    summaries,
+  }), [glossary, entities, relations, summaries]);
 
   const filterCounts = useMemo(() => ({
     unreviewed: blocks.filter(b => !review.blocks?.[b.block_id]?.reviewed).length,
@@ -1494,11 +2198,12 @@ function App() {
   }, [centerMode]);
 
   const refForBlock = block ? references.find(r => r.block_id === block.block_id) : null;
+  const scopedCount = (localCount, totalCount) => totalCount ? `${localCount}/${totalCount}` : null;
   const rpCounts = {
-    glossary: { text: blockTerms.length || null },
-    entities: { text: blockEntities.length || null },
-    relations: { text: relations.length || null },
-    summary: { text: summary?.summary_source ? null : "empty", tone: summary?.summary_source ? "" : "warn" },
+    glossary: { text: scopedCount(contextTerms.length, glossary.length) },
+    entities: { text: scopedCount(contextEntities.length, entities.length) },
+    relations: { text: scopedCount(contextRelations.length, relations.length) },
+    summary: { text: contextSummaries.some(item => item.summary_source) ? null : "empty", tone: contextSummaries.some(item => item.summary_source) ? "" : "warn" },
     notes: { text: block?.annotations && (block.annotations.implicit_meaning || block.annotations.narrative_note || block.annotations.tone || (block.annotations.motifs || []).length) ? "set" : null },
     reference: { text: refForBlock?.status || null, tone: refForBlock?.status === "draft" ? "warn" : "" },
     eval_only: { text: (evalOnly.gold_glossary?.length || evalOnly.references?.length) || null, tone: "warn" },
@@ -1526,12 +2231,13 @@ function App() {
     const chosen = projects.find(p => p.doc_id === docId);
     setActiveDocId(docId);
     localStorage.setItem(STORAGE_DOC, docId);
-    if (chosen?.source === "thesis") {
-      await loadThesisDataset(thesisJobId(docId), { project: chosen });
-      setView("workspace");
+    const thesisId = thesisJobId(docId);
+    if (thesisId) {
+      await loadThesisDataset(thesisId, { project: chosen || null });
+      navigateView("workspace");
     } else if (chosen?.status === "available") {
       await loadDataset(docId);
-      setView("workspace");
+      navigateView("workspace");
     } else {
       setDocInfo({ doc_id: docId, metadata: {}, provenance: {} });
       setChapters([]);
@@ -1550,7 +2256,7 @@ function App() {
       setHistoryState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
       setErrors([]);
       setSelectedId(null);
-      setView("project");
+      navigateView("project");
     }
   }
 
@@ -1572,29 +2278,35 @@ function App() {
     }
   }
 
-  async function createProject(docId, metadata) {
+  async function createProject(docId, metadata, options = {}) {
+    if (isThesisDatasetId(docId)) {
+      toast("Invalid local project id", "bad", "The thesis: namespace is reserved for read-only runtime datasets.");
+      return null;
+    }
     try {
       const result = await API.createProject({ doc_id: docId, metadata });
       await refreshProjects();
-      setDocInfo({ doc_id: result.doc_id, metadata: metadata || {}, provenance: {} });
-      setChapters([]);
-      setBlocks([]);
-      setGlossary([]);
-      setEntities([]);
-      setRelations([]);
-      setSummaries([]);
-      setReferences([]);
-      setEvalOnly({ gold_glossary: [], references: [] });
-      setThesisTranslations({});
-      setThesisObservability(null);
-      setSelectedCallId(null);
-      setSelectedCallDetail(null);
-      setReview({ blocks: {}, references: {}, summaries: {} });
-      setHistoryState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
-      setErrors([]);
-      setSelectedId(null);
-      setActiveDocId(result.doc_id);
-      localStorage.setItem(STORAGE_DOC, result.doc_id);
+      if (options.activate !== false) {
+        setDocInfo({ doc_id: result.doc_id, metadata: metadata || {}, provenance: {} });
+        setChapters([]);
+        setBlocks([]);
+        setGlossary([]);
+        setEntities([]);
+        setRelations([]);
+        setSummaries([]);
+        setReferences([]);
+        setEvalOnly({ gold_glossary: [], references: [] });
+        setThesisTranslations({});
+        setThesisObservability(null);
+        setSelectedCallId(null);
+        setSelectedCallDetail(null);
+        setReview({ blocks: {}, references: {}, summaries: {} });
+        setHistoryState({ can_undo: false, can_redo: false, undo_top: null, redo_top: null, recent: [] });
+        setErrors([]);
+        setSelectedId(null);
+        setActiveDocId(result.doc_id);
+        localStorage.setItem(STORAGE_DOC, result.doc_id);
+      }
       toast("Project created", "good", result.doc_id);
       return result;
     } catch (err) {
@@ -1605,6 +2317,10 @@ function App() {
 
   async function updateProjectSettings(docId, patch) {
     if (!docId) return null;
+    if (isThesisDatasetId(docId)) {
+      toast("Read-only thesis dataset", "info", "Project settings can only be changed for local source projects.");
+      return null;
+    }
     try {
       const result = await API.patchProject(docId, { ...patch, user: currentUser() });
       await refreshProjects();
@@ -1618,6 +2334,10 @@ function App() {
 
   async function deleteProjectById(docId, confirmDocId) {
     if (!docId) return null;
+    if (isThesisDatasetId(docId)) {
+      toast("Read-only thesis dataset", "info", "Thesis runtime datasets cannot be deleted from the source-project screen.");
+      return null;
+    }
     try {
       const result = await API.deleteProject(docId, { confirm_doc_id: confirmDocId, user: currentUser() });
       const list = await refreshProjects();
@@ -1639,7 +2359,7 @@ function App() {
         setThesisObservability(null);
         setSelectedCallId(null);
         setSelectedCallDetail(null);
-        setView("project");
+        navigateView("project");
       }
       toast("Project deleted", "good", result.doc_id);
       return result;
@@ -1649,10 +2369,15 @@ function App() {
     }
   }
 
-  async function uploadSource(file, overwrite) {
-    if (!activeDocId || !file) return null;
+  async function uploadSource(file, overwrite, docIdOverride = "") {
+    const targetDocId = docIdOverride || activeDocId;
+    if (!targetDocId || !file) return null;
+    if (isThesisDatasetId(targetDocId)) {
+      toast("Upload blocked", "bad", "Create a local project before uploading; thesis datasets are read-only.");
+      return null;
+    }
     try {
-      const result = await API.uploadSource(activeDocId, file, overwrite);
+      const result = await API.uploadSource(targetDocId, file, overwrite);
       await refreshProjects();
       toast("Source uploaded", "good", result.filename);
       return result;
@@ -1662,169 +2387,24 @@ function App() {
     }
   }
 
-  async function runExtract(overwrite) {
-    if (!activeDocId) return null;
+  async function runExtract(overwrite, docIdOverride = "") {
+    const targetDocId = docIdOverride || activeDocId;
+    if (!targetDocId) return null;
+    if (isThesisDatasetId(targetDocId)) {
+      toast("Extraction blocked", "bad", "Extraction can only write to a local source project.");
+      return null;
+    }
     try {
-      const job = await API.extract(activeDocId, { overwrite: !!overwrite, user: currentUser() });
+      const job = await API.extract(targetDocId, { overwrite: !!overwrite, user: currentUser() });
       await refreshProjects();
-      await loadDataset(activeDocId, { silent: true });
-      setView("workspace");
+      await loadDataset(targetDocId, { silent: true });
+      setActiveDocId(targetDocId);
+      localStorage.setItem(STORAGE_DOC, targetDocId);
+      navigateView("workspace");
       toast("Extraction complete", "good", `${job.document?.blocks || 0} blocks · ${job.document?.chapters || 0} chapters`);
       return job;
     } catch (err) {
       toast("Extraction failed", "bad", errorMessage(err));
-      return null;
-    }
-  }
-
-  async function buildNormalizeCandidate() {
-    if (!activeDocId) return null;
-    try {
-      const candidate = await API.normalizeCandidateParts(activeDocId);
-      if (!candidate.paths?.candidate_parts || !candidate.paths?.agent_structure_plan) {
-        try {
-          const project = await API.getProject(activeDocId);
-          const projectRoot = project.root || project.path || "";
-          candidate.paths = {
-            ...(candidate.paths || {}),
-            project_root: projectRoot,
-            candidate_parts: joinLocalPath(projectRoot, "working", "normalized", "candidate_parts.json"),
-            agent_structure_plan: joinLocalPath(projectRoot, "working", "normalized", "agent_structure_plan.json"),
-          };
-        } catch (pathErr) {
-          candidate.paths = {
-            ...(candidate.paths || {}),
-            project_root: `ailab_projects/${activeDocId}`,
-            candidate_parts: `ailab_projects/${activeDocId}/working/normalized/candidate_parts.json`,
-            agent_structure_plan: `ailab_projects/${activeDocId}/working/normalized/agent_structure_plan.json`,
-          };
-        }
-      }
-      await refreshProjects();
-      toast("Candidate parts built", "good", `${candidate.parts?.length || 0} parts · ${candidate.source_fingerprint || ""}`);
-      return candidate;
-    } catch (err) {
-      toast("Build candidate failed", "bad", errorMessage(err));
-      return null;
-    }
-  }
-
-  async function loadNormalizeAgentPlan() {
-    if (!activeDocId) return null;
-    try {
-      const result = await API.getNormalizeAgentPlan(activeDocId);
-      toast("Agent StructurePlan loaded", "good", result.path || "working/normalized/agent_structure_plan.json");
-      return result;
-    } catch (err) {
-      toast("Load agent StructurePlan failed", "bad", errorMessage(err));
-      return null;
-    }
-  }
-
-  async function importNormalizePlan(plan) {
-    if (!activeDocId) return null;
-    try {
-      const result = await API.importStructurePlan(activeDocId, { plan, user: currentUser() });
-      const preview = result.preview || {};
-      await refreshProjects();
-      toast("StructurePlan valid", preview.low_confidence || preview.needs_human_check ? "info" : "good",
-        `${preview.chapters?.length || 0} chapters · body ${preview.body_coverage || "n/a"}`);
-      return result;
-    } catch (err) {
-      toast("StructurePlan invalid", "bad", errorMessage(err));
-      return {
-        ok: false,
-        errors: err.errors || [],
-        warnings: err.warnings || [],
-        validation: err.payload?.data?.validation || null,
-        source_fingerprint: err.payload?.data?.source_fingerprint || null,
-      };
-    }
-  }
-
-  async function applyNormalizePlan(options = {}) {
-    if (!activeDocId) return null;
-    try {
-      const job = await API.applyNormalizedStructure(activeDocId, {
-        approved: true,
-        overwrite: !!options.overwrite,
-        force: !!options.force,
-        user: currentUser(),
-      });
-      await refreshProjects();
-      await loadDataset(activeDocId, { silent: true });
-      setView("workspace");
-      toast("Normalized structure applied", "good", `${job.document?.blocks || 0} blocks · ${job.document?.chapters || 0} chapters`);
-      return job;
-    } catch (err) {
-      toast("Apply normalized structure failed", "bad", errorMessage(err));
-      return null;
-    }
-  }
-
-  async function buildAnnotationInput(chapterId) {
-    if (!activeDocId || !chapterId) return null;
-    try {
-      const input = await API.buildAnnotationInput(activeDocId, {
-        chapter_id: chapterId,
-        user: currentUser(),
-      });
-      toast("Annotation input built", "good", `${input.blocks?.length || 0} blocks`);
-      return input;
-    } catch (err) {
-      toast("Build annotation input failed", "bad", errorMessage(err));
-      return null;
-    }
-  }
-
-  async function resolveAnnotationCandidate(candidate) {
-    if (!activeDocId) return null;
-    try {
-      const result = await API.resolveAnnotationCandidate(activeDocId, {
-        candidate,
-        user: currentUser(),
-      });
-      const okEntities = (result.entities || []).filter(item => item.status === "ok").length;
-      const okTerms = (result.glossary || []).filter(item => item.status === "ok").length;
-      toast("Annotation candidate resolved", "good", `${okEntities} entities · ${okTerms} terms`);
-      return result;
-    } catch (err) {
-      toast("Resolve annotation candidate failed", "bad", errorMessage(err));
-      return {
-        ok: false,
-        errors: err.errors || [],
-        warnings: err.warnings || [],
-      };
-    }
-  }
-
-  async function loadAnnotationAgentCandidate(chapterId) {
-    if (!activeDocId || !chapterId) return null;
-    try {
-      const result = await API.getAnnotationAgentCandidate(activeDocId, chapterId);
-      toast("Agent candidate loaded", "good", result.path || chapterId);
-      return result;
-    } catch (err) {
-      toast("Load agent candidate failed", "bad", errorMessage(err));
-      return null;
-    }
-  }
-
-  async function applyAnnotationCandidate(chapterId) {
-    if (!activeDocId || !chapterId) return null;
-    try {
-      const result = await API.applyAnnotationCandidate(activeDocId, {
-        chapter_id: chapterId,
-        approved: true,
-        accept_all_resolved: true,
-        user: currentUser(),
-      });
-      await loadDataset(activeDocId, { silent: true });
-      const counts = result.counts || {};
-      toast("Annotation candidate applied", "good", `${counts.entities || 0} entities · ${counts.glossary || 0} terms`);
-      return result;
-    } catch (err) {
-      toast("Apply annotation candidate failed", "bad", errorMessage(err));
       return null;
     }
   }
@@ -2262,7 +2842,7 @@ function App() {
     const payload = {
       kind: "translation_preview_export",
       exported_at: new Date().toISOString(),
-      notice: "Preview only. This is not gold and must not be promoted into manual_reference_subset.",
+      notice: "Preview artifact. Promotion into manual_reference_subset is disabled.",
       run,
     };
     const filename = `${safeFilePart(run.doc_id || docInfo?.doc_id)}_${safeFilePart(chapterId)}_${safeFilePart(run.run_id)}_preview.json`;
@@ -2287,7 +2867,7 @@ function App() {
         downloadBlobFile(filename, blob);
       }
       touchDone();
-      toast("Exported dataset package", "good", `${filename} Â· saved in project exports Â· QC included`);
+      toast("Exported dataset package", "good", `${filename} · saved in project exports · QC included`);
     } catch (err) {
       touchDone();
       toast("Dataset package export failed", "bad", errorMessage(err));
@@ -2405,6 +2985,20 @@ function App() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  const quickImportDialog = modal?.kind === "quick-import" && (
+    <QuickImportModal
+      projects={projects}
+      onClose={() => setModal(null)}
+      onCreateProject={createProject}
+      onUploadSource={uploadSource}
+      onExtract={runExtract}
+      onOpenAdvanced={isThesisDatasetId(activeDocId) ? null : () => {
+        setModal(null);
+        navigateView("project");
+      }}
+    />
+  );
+
   if (loading) {
     return <StartupState title="Loading backend dataset" message={`Connecting to ${API.baseUrl}...`} />;
   }
@@ -2417,7 +3011,10 @@ function App() {
     );
   }
 
-  if (view === "project") {
+  const runSurfaceView = view === "console" || view === "report";
+  const activeCenterMode = runSurfaceView ? view : centerMode;
+
+  if (view === "project" && !isThesisDatasetId(activeDocId)) {
     return (
       <>
         <ProjectSourceScreen
@@ -2433,16 +3030,8 @@ function App() {
           onUpdateProject={updateProjectSettings}
           onDeleteProject={deleteProjectById}
           onUploadSource={uploadSource}
-          onBack={() => setView("workspace")}
+          onBack={() => navigateView("workspace")}
           onExtract={runExtract}
-          onBuildNormalizeCandidate={buildNormalizeCandidate}
-          onLoadNormalizeAgentPlan={loadNormalizeAgentPlan}
-          onImportNormalizePlan={importNormalizePlan}
-          onApplyNormalizePlan={applyNormalizePlan}
-          onBuildAnnotationInput={buildAnnotationInput}
-          onLoadAnnotationAgentCandidate={loadAnnotationAgentCandidate}
-          onResolveAnnotationCandidate={resolveAnnotationCandidate}
-          onApplyAnnotationCandidate={applyAnnotationCandidate}
           readOnly={readOnly}
         />
         <Toasts items={toasts} onDismiss={dismiss} />
@@ -2453,36 +3042,59 @@ function App() {
   if (!block || !docInfo) {
     return (
       <>
-        <StartupState title="No extracted document" message="Open Project / Source, upload a TXT or EPUB file, then run Extract." action="Open Project / Source" onAction={() => setView("project")} />
+        <StartupState title="Chưa có tài liệu" message="Nhập một file EPUB hoặc TXT để tạo danh sách chương và block."
+          action="Nhập tài liệu" onAction={() => setModal({ kind: "quick-import" })}
+          secondaryAction="Project / Source" onSecondaryAction={openProjectSource} />
         <Toasts items={toasts} onDismiss={dismiss} />
+        {quickImportDialog}
       </>
     );
   }
 
   return (
-    <div className="app">
-      <TopBar docId={docInfo.doc_id} dirty={dirty} lastSaved={lastSaved}
+    <div className={"app" + (runSurfaceView ? " app--console" : "") + (view === "report" ? " app--report" : "")}>
+      {!runSurfaceView && <TopBar docId={docInfo.doc_id} dirty={dirty} lastSaved={lastSaved}
+        projects={projects} mode={centerMode} onModeChange={setCenterMode}
+        onSelectProject={selectProject} onOpenProjectSource={openProjectSource} onQuickImport={() => setModal({ kind: "quick-import" })}
+        leftPanelOpen={leftPanelOpen} rightPanelOpen={rightPanelOpen}
+        onToggleLeftPanel={toggleLeftPanel} onToggleRightPanel={toggleRightPanel}
         onValidate={runValidate} onExportOption={doExport} onFreeze={doFreeze}
         onUndo={runUndo} onRedo={runRedo} history={historyState}
         freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={centerMode === "preview" || readOnly} canExportPreview={!!currentPreviewRun?.run}
-        appVersion={appVersion} />
-      <div className={"workspace" + (centerMode === "console" ? " workspace--console" : "")}>
-        {centerMode !== "console" && <LeftSidebar docInfo={docInfo} projects={projects} blocks={visibleBlocks} chapters={chapters} review={review}
+        appVersion={appVersion} />}
+      <div className={["workspace", runSurfaceView ? "workspace--console" : "", view === "report" ? "workspace--report" : "", activeCenterMode === "memory" ? "workspace--memory" : "", !leftPanelOpen ? "workspace--no-left" : "", (!rightPanelOpen || activeCenterMode === "memory") ? "workspace--no-right" : "", rightPanelOpen && rightPanelExpanded && activeCenterMode !== "memory" ? "workspace--right-expanded" : ""].filter(Boolean).join(" ")}>
+        {!runSurfaceView && leftPanelOpen && <LeftSidebar docInfo={docInfo} blocks={visibleBlocks} chapters={chapters} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={selectBlock}
-          onSelectProject={selectProject}
           filters={filters} onToggleFilter={toggleFilter} counts={filterCounts} total={blocks.length}
-          errors={errors}
-          onOpenProjectSource={() => setView("project")} />}
+          errors={errors} />}
+        {activeCenterMode === "memory" ? (
+          <MemoryWorkspace docInfo={docInfo}
+            profile={readOnly
+              ? (docInfo?.metadata?.profile || docInfo?.metadata?.domain || (entities.length || relations.length ? "literary_v1" : "technical_d2l_v1"))
+              : (projectRuntime?.selected_profile || docInfo?.metadata?.profile || docInfo?.metadata?.domain || (entities.length || relations.length ? "literary_v1" : "technical_d2l_v1"))}
+            glossary={glossary} entities={entities} relations={relations} summaries={summaries}
+            runMemory={thesisBaseDataset?.runMemory || null}
+            blocks={blocks} chapters={chapters} activeBlock={block} initialKind={memoryFocusKind}
+            evidenceLoading={registryOverlayLoading}
+            onSelectBlock={selectBlock} onModeChange={setCenterMode} />
+        ) : (
         <CenterEditor block={block} docInfo={docInfo} reviewed={!!review.blocks?.[selectedId]?.reviewed} spans={spans}
-          editing={editing} mode={centerMode} onModeChange={setCenterMode}
+          editing={editing} mode={activeCenterMode}
           chapter={activeChapter} chapters={chapters} chapterBlocks={chapterBlocks} allBlocks={blocks} review={review} selectedId={selectedId}
           getSpansForBlock={getSpansForBlock} linkIndex={linkIndex} onSelectBlock={selectBlock} onNextUnreviewed={nextUnreviewedBlock}
           onEdit={() => setEditing(true)} onCommitClean={commitClean} onCancelEdit={() => setEditing(false)}
           onChangeType={changeType} onToggleOpening={() => toggleOpening(selectedId)} onToggleFlag={(flag) => toggleFlag(flag, selectedId)} onMarkReviewed={markReviewed}
           onAddGlossary={addGlossary} onAddEntity={addEntity} onPreviewRunChange={setCurrentPreviewRun} readOnly={readOnly}
           observability={thesisObservability}
+          onConsoleBack={() => navigateView("workspace")}
+          onOpenConsole={() => navigateView("console")}
+          onOpenReport={() => navigateView("report")}
           runControl={{
-            jobId: thesisJobId(activeDocId),
+            runtimeAvailable: !!runtimeJobId,
+            sourceProjectId: activeDocId,
+            sourceTitle: docInfo?.metadata?.title || docInfo?.doc_id || activeDocId,
+            sourceStats: { chapters: chapters.length, blocks: blocks.length },
+            jobId: runtimeJobId,
             runs: thesisRuns,
             selectedRunId,
             selectedRunLog,
@@ -2499,10 +3111,12 @@ function App() {
             onCreateRun: createThesisRun,
             onSelectRun: selectRun,
             onRefreshRuns: refreshThesisRuns,
+            onOpenProjectSource: openProjectSource,
+            onConfigurePipeline: openProjectPipelineModal,
             onPause: pauseRun,
             onCancel: cancelRun,
             onResume: resumeRun,
-            onDich: openDichModal,
+            onDich: thesisJobId(activeDocId) ? openDichModal : openProjectPipelineModal,
           }}
           selectedCallId={selectedCallId}
           selectedCallDetail={selectedCallDetail}
@@ -2514,11 +3128,15 @@ function App() {
           onFocusSpan={focusSpan}
           onClearFocus={clearFocusedTerm}
           onFocusJump={jumpFocusedTerm} />
-        {centerMode === "console" ? null : centerMode === "preview" ? (
-          <PreviewRightPanel docInfo={docInfo} block={block} />
+        )}
+        {runSurfaceView || activeCenterMode === "memory" || !rightPanelOpen ? null : activeCenterMode === "preview" ? (
+          <PreviewRightPanel docInfo={docInfo} block={block} preview={currentPreviewRun} />
         ) : (
           <RightPanel openTabs={rightOpenTabs} onToggleTab={toggleRightTab} counts={rpCounts}
-            ctx={{ docInfo, terms: blockTerms, entities: blockEntities, allEntities: entities, relations, block, summary, references, evalOnly, thesisTranslations, readOnly, errors, stats, freezeReasons,
+            expanded={rightPanelExpanded} onToggleExpanded={toggleRightPanelExpanded}
+            ctx={{ docInfo, terms: blockTerms, entities: blockEntities, allEntities: entities, relations: blockRelations, block, summary, references, evalOnly, thesisTranslations, readOnly, errors, stats, freezeReasons,
+              currentMemory, projectMemory, currentScopeKind: contextScope.kind, currentScopeLabel: contextScope.label,
+              memoryTotals: { glossary: glossary.length, entities: entities.length, relations: relations.length }, onOpenMemory: openMemory,
               schemaMigrating, onMigrateSchema: migrateSchema,
               onDeleteTerm: deleteTerm, onDeleteEntity: deleteEntity, onUpdateTerm: updateTerm, onUpdateEntity: updateEntity, onUpdateSummary: updateSummary,
               onCreateRelation: createRelation, onUpdateRelation: updateRelation, onDeleteRelation: deleteRelation,
@@ -2529,6 +3147,55 @@ function App() {
       </div>
 
       <Toasts items={toasts} onDismiss={dismiss} />
+      {quickImportDialog}
+
+      {modal?.kind === "project-pipeline" && (
+        <Modal title="Cấu hình pipeline" icon={Ic.layers} className="pipeline-modal" onClose={() => !runBusy && setModal(null)}
+          actions={<><button className="btn" disabled={runBusy} onClick={() => setModal(null)}>Hủy</button>
+            <button className="btn primary" disabled={runBusy || !(modal.chapters || []).length} onClick={confirmProjectPreflight}>
+              {runBusy ? <span className="as-spin" /> : <Ic.play size={12} />} Chạy kiểm tra 0-API
+            </button></>}>
+          <p>
+            Chọn nhánh xử lý cho <b>{docInfo?.metadata?.title || activeDocId}</b>. Hệ thống tạo một snapshot/index bất biến có hash,
+            sau đó chạy preflight thật và đưa log vào Console. Bước này <b>không gọi LLM/API</b>.
+          </p>
+          <div className="quick-import-profile pipeline-profile" role="group" aria-label="Chọn profile pipeline">
+            <button type="button" className={modal.profile === "technical_d2l_v1" ? "active" : ""}
+              aria-pressed={modal.profile === "technical_d2l_v1"}
+              onClick={() => setModal(current => ({ ...current, profile: "technical_d2l_v1" }))}>
+              <Ic.layers size={14} /><span><b>Tài liệu kỹ thuật</b><em>technical_d2l_v1 · thuật ngữ</em></span>
+            </button>
+            <button type="button" className={modal.profile === "literary_v1" ? "active" : ""}
+              aria-pressed={modal.profile === "literary_v1"}
+              onClick={() => setModal(current => ({ ...current, profile: "literary_v1" }))}>
+              <Ic.book size={14} /><span><b>Văn học</b><em>literary_v1 · nhân vật và mạch kể</em></span>
+            </button>
+          </div>
+          <div className="pipeline-section-head">
+            <span>Chương / unit sẽ kiểm tra</span>
+            <span>
+              <button type="button" onClick={() => setModal(current => ({ ...current, chapters: chapters.map(chapter => chapter.chapter_id).filter(Boolean) }))}>Chọn tất cả</button>
+              <button type="button" onClick={() => setModal(current => ({ ...current, chapters: [] }))}>Bỏ chọn</button>
+            </span>
+          </div>
+          <div className="pipeline-chapters">
+            {chapters.map(chapter => {
+              const checked = (modal.chapters || []).includes(chapter.chapter_id);
+              const blockCount = blocks.filter(block => block.chapter_id === chapter.chapter_id).length;
+              return (
+                <label key={chapter.chapter_id} className={checked ? "selected" : ""}>
+                  <input type="checkbox" checked={checked} onChange={() => toggleProjectPipelineChapter(chapter.chapter_id)} />
+                  <span><b>{chapter.title || chapter.chapter_id}</b><em className="mono">{chapter.chapter_id} · {blockCount} block</em></span>
+                </label>
+              );
+            })}
+          </div>
+          <div className="quick-import-note pipeline-snapshot-note">
+            <Ic.lock size={12} /> Project vẫn là nguồn chuẩn. Runtime chỉ giữ snapshot đã bỏ annotation và SQLite index riêng;
+            sửa nguồn sau này sẽ tạo job_id mới thay vì ghi đè run cũ.
+          </div>
+        </Modal>
+      )}
 
       {modal?.kind === "export" && (
         <Modal title="Export dataset" icon={Ic.upload} onClose={() => setModal(null)}

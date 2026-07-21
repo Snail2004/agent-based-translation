@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Workbench Foundation Fixture</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="workbench.css" />
+<style>
+  body { min-height: 100%; }
+  .fixture-shell { display: flex; min-height: 100%; flex-direction: column; }
+  .fixture-main { flex: 1; min-height: 0; }
+  .fixture-list { max-height: 520px; }
+  .fixture-record { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+  .fixture-record-copy { min-width: 0; }
+  .fixture-record-copy strong,
+  .fixture-record-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fixture-record-copy span { margin-top: 2px; color: var(--wb-text-muted); font-size: 10.5px; }
+  .fixture-detail { padding-bottom: 24px; }
+  .fixture-table { padding: 12px; }
+</style>
+</head>
+<body>
+<main class="fixture-shell wb-operational">
+  <header class="wb-toolbar">
+    <strong>Workbench Foundation</strong>
+    <span class="wb-status is-success">contract valid</span>
+    <span class="wb-status is-warning">2 pending</span>
+    <span class="wb-toolbar-spacer"></span>
+    <label for="fixture-search">Records</label>
+    <input id="fixture-search" type="search" placeholder="Search records" />
+    <button type="button">Refresh</button>
+  </header>
+
+  <section class="fixture-main wb-split">
+    <div class="wb-pane">
+      <div class="wb-section-title">
+        <span>Registry records</span>
+        <span class="mono">4 / 128</span>
+      </div>
+      <div class="fixture-list wb-record-list">
+        <button class="fixture-record wb-record-row selected" type="button" aria-selected="true">
+          <span class="fixture-record-copy">
+            <strong>absolute error</strong>
+            <span>sai so tuyet doi</span>
+          </span>
+          <span class="wb-status is-success">approved</span>
+        </button>
+        <button class="fixture-record wb-record-row" type="button">
+          <span class="fixture-record-copy">
+            <strong>activation function</strong>
+            <span>ham kich hoat</span>
+          </span>
+          <span class="wb-status is-info">mandatory</span>
+        </button>
+        <button class="fixture-record wb-record-row" type="button">
+          <span class="fixture-record-copy">
+            <strong>canonical collision</strong>
+            <span>requires adjudication</span>
+          </span>
+          <span class="wb-status is-warning">pending</span>
+        </button>
+        <button class="fixture-record wb-record-row" type="button">
+          <span class="fixture-record-copy">
+            <strong>invalid source anchor</strong>
+            <span>no unique source span</span>
+          </span>
+          <span class="wb-status is-danger">invalid</span>
+        </button>
+      </div>
+    </div>
+
+    <article class="fixture-detail wb-detail">
+      <div class="wb-section-title">
+        <span>Selected record</span>
+        <span class="mono">term_0038</span>
+      </div>
+      <dl class="wb-kv-list">
+        <div class="wb-kv-row"><dt>Source term</dt><dd>absolute error</dd></div>
+        <div class="wb-kv-row"><dt>Expected target</dt><dd>sai so tuyet doi</dd></div>
+        <div class="wb-kv-row"><dt>Scope</dt><dd class="mono">global</dd></div>
+        <div class="wb-kv-row"><dt>Provenance</dt><dd class="mono">d2l_preliminaries_b047</dd></div>
+      </dl>
+      <section class="fixture-table wb-section">
+        <div class="wb-section-title"><span>Evidence</span><span>2 blocks</span></div>
+        <table class="wb-table">
+          <thead><tr><th>Block</th><th>Decision</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">b047</td><td>localized occurrence</td><td>consistent</td></tr>
+            <tr><td class="mono">b119</td><td>registry occurrence</td><td>consistent</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <div class="wb-empty">
+        <div><strong>No additional issues</strong><span>Warnings and conflicts appear here when present.</span></div>
+      </div>
+    </article>
+  </section>
+</main>
+</body>
+</html>

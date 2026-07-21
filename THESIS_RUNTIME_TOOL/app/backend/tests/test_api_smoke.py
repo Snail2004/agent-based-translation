@@ -2648,6 +2648,188 @@ Bob waited.
         validate = self.client.post(f"/api/projects/{doc_id}/validate").get_json()
         self.assertTrue(validate["data"]["ok"])
 
+    def test_markdown_upload_extract_uses_heading_hierarchy_and_ignores_fenced_headings(self):
+        doc_id = "phase3_markdown"
+        self.client.post("/api/projects", json={
+            "doc_id": doc_id,
+            "metadata": {
+                "title": "Markdown sample",
+                "author": "Tester",
+                "source_format": "markdown",
+                "license": "public-domain",
+                "contamination_risk": "low",
+            },
+        })
+        source = b'''# Sample Book
+
+## Chapter One
+
+Alice arrived.
+
+```python
+# not a chapter
+print("hello")
+```
+
+## Chapter Two
+
+"Good morning," Bob said.
+'''
+        upload = self.client.post(
+            f"/api/projects/{doc_id}/source",
+            data={"file": (BytesIO(source), "source.md")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(upload.status_code, 201)
+        extract = self.client.post(f"/api/projects/{doc_id}/extract", json={"overwrite": False})
+        self.assertEqual(extract.status_code, 201)
+        dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
+
+        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["Chapter One", "Chapter Two"])
+        self.assertEqual(dataset["document"]["metadata"]["source_format"], "markdown")
+        all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
+        self.assertIn("# not a chapter", all_text)
+        self.assertFalse(any(chapter["title"] == "not a chapter" for chapter in dataset["chapters"]))
+        self.assertTrue(any(block["block_type"] == "dialogue" for block in dataset["blocks"]))
+        report = self._extraction_report(doc_id)
+        self.assertEqual(report["structure"]["chapter_boundary_level"], 2)
+        self.assertEqual(report["toc"]["toc_source"], "markdown_headings")
+        self._assert_project_valid(doc_id)
+
+    def test_markdown_alias_without_headings_falls_back_to_one_unit(self):
+        doc_id = "phase3_markdown_alias"
+        self.client.post("/api/projects", json={
+            "doc_id": doc_id,
+            "metadata": {
+                "title": "Heading-free notes",
+                "source_format": "markdown",
+                "license": "public-domain",
+                "contamination_risk": "low",
+            },
+        })
+        upload = self.client.post(
+            f"/api/projects/{doc_id}/source",
+            data={"file": (BytesIO(b"First paragraph.\n\nSecond paragraph."), "notes.markdown")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(upload.status_code, 201)
+        extract = self.client.post(f"/api/projects/{doc_id}/extract", json={"overwrite": False})
+        self.assertEqual(extract.status_code, 201)
+        dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
+        self.assertEqual(len(dataset["chapters"]), 1)
+        self.assertEqual(dataset["chapters"][0]["title"], "Document")
+        self.assertEqual(dataset["document"]["metadata"]["source_format"], "markdown")
+        self._assert_project_valid(doc_id)
+
+    def test_markdown_structure_plan_apply_keeps_canonical_source_format(self):
+        doc_id = "normalize_markdown"
+        create = self.client.post("/api/projects", json={
+            "doc_id": doc_id,
+            "metadata": {
+                "title": "Markdown normalizer",
+                "source_format": "markdown",
+                "license": "public-domain",
+                "contamination_risk": "low",
+            },
+        })
+        self.assertEqual(create.status_code, 201)
+        upload = self.client.post(
+            f"/api/projects/{doc_id}/source",
+            data={"file": (BytesIO(b"# Book\n\n## One\n\nFirst body.\n\n## Two\n\nSecond body."), "source.md")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(upload.status_code, 201)
+
+        candidate_response = self.client.post(f"/api/projects/{doc_id}/normalize/candidate-parts")
+        self.assertEqual(candidate_response.status_code, 201)
+        candidate = candidate_response.get_json()["data"]
+        self.assertEqual(candidate["source_format"], "markdown")
+        plan = self._minimal_structure_plan(doc_id, candidate["source_fingerprint"])
+        preview = self.client.post(f"/api/projects/{doc_id}/normalize/plan", json={"plan": plan})
+        self.assertEqual(preview.status_code, 201)
+        apply_response = self.client.post(f"/api/projects/{doc_id}/normalize/apply", json={
+            "approved": True,
+            "user": "tester",
+        })
+        self.assertEqual(apply_response.status_code, 201)
+
+        dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
+        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["One", "Two"])
+        self.assertEqual(dataset["document"]["metadata"]["source_format"], "markdown")
+        self.assertEqual(self._extraction_report(doc_id)["source_format"], "markdown")
+        self._assert_project_valid(doc_id)
+
+    def test_html_alias_extracts_main_content_without_executable_or_navigation_text(self):
+        doc_id = "phase3_html"
+        self.client.post("/api/projects", json={
+            "doc_id": doc_id,
+            "metadata": {
+                "title": "HTML sample",
+                "source_format": "html",
+                "license": "public-domain",
+                "contamination_risk": "low",
+            },
+        })
+        source = b'''<!doctype html><html><head><title>Sample Book</title><style>.hidden{display:none}</style></head>
+<body><nav><img src="menu.png" alt="Menu" />Navigation noise</nav><header><h1>Site banner</h1></header>
+<main><h1>Sample Book</h1><h2>Part One</h2><p>Alice arrived.</p>
+<script>dangerousCall()</script><h2>Part Two</h2><blockquote>"Wait," Bob said.</blockquote></main>
+<footer>Footer noise</footer></body></html>'''
+        upload = self.client.post(
+            f"/api/projects/{doc_id}/source",
+            data={"file": (BytesIO(source), "source.htm")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(upload.status_code, 201)
+        extract = self.client.post(f"/api/projects/{doc_id}/extract", json={"overwrite": False})
+        self.assertEqual(extract.status_code, 201)
+        dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
+
+        self.assertEqual([chapter["title"] for chapter in dataset["chapters"]], ["Part One", "Part Two"])
+        self.assertEqual(dataset["document"]["metadata"]["source_format"], "html")
+        all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
+        self.assertIn("Alice arrived.", all_text)
+        self.assertNotIn("Navigation noise", all_text)
+        self.assertNotIn("Footer noise", all_text)
+        self.assertNotIn("dangerousCall", all_text)
+        self.assertNotIn("Site banner", all_text)
+        report = self._extraction_report(doc_id)
+        self.assertEqual(report["html_parser"]["content_scope"], "main_or_article")
+        self.assertGreaterEqual(report["html_parser"]["ignored_sections"], 3)
+        self._assert_project_valid(doc_id)
+
+    def test_cross_format_source_overwrite_removes_stale_source(self):
+        doc_id = "phase3_source_replace"
+        self.client.post("/api/projects", json={
+            "doc_id": doc_id,
+            "metadata": {
+                "title": "Replace source",
+                "source_format": "txt",
+                "license": "public-domain",
+                "contamination_risk": "low",
+            },
+        })
+        first = self.client.post(
+            f"/api/projects/{doc_id}/source",
+            data={"file": (BytesIO(b"Chapter 1\n\nOld text."), "source.txt")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(first.status_code, 201)
+        replacement = self.client.post(
+            f"/api/projects/{doc_id}/source",
+            data={"file": (BytesIO(b"<main><h1>New source</h1><p>New text.</p></main>"), "source.html"), "overwrite": "true"},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(replacement.status_code, 201)
+        raw_files = sorted(path.name for path in (self._project_root(doc_id) / "raw").iterdir())
+        self.assertEqual(raw_files, ["source.html"])
+        extract = self.client.post(f"/api/projects/{doc_id}/extract", json={"overwrite": False})
+        self.assertEqual(extract.status_code, 201)
+        dataset = self.client.get(f"/api/projects/{doc_id}/dataset").get_json()["data"]
+        all_text = "\n".join(block["clean_text"] for block in dataset["blocks"])
+        self.assertIn("New text.", all_text)
+        self.assertNotIn("Old text.", all_text)
+
     def test_pdf_upload_is_rejected(self):
         doc_id = "phase3_pdf"
         self.client.post("/api/projects", json={"doc_id": doc_id, "metadata": {"license": "public-domain", "contamination_risk": "low"}})

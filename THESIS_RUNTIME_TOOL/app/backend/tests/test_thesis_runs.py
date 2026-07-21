@@ -17,6 +17,9 @@ from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 TOOL_ROOT = BACKEND_ROOT.parents[1]
+EVALUATION_FIXTURE_ROOT = (
+    TOOL_ROOT / "pipeline" / "tests" / "fixtures" / "evaluation_v1"
+)
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 if str(TOOL_ROOT) not in sys.path:
@@ -124,6 +127,88 @@ def _create_resumable_one_button_run(tmp_path: Path, registry, *, run_id: str, p
     )
     registry.update_run(run_id, status="paused", exit_code=0, pid=pid)
     return entry, run_dir
+
+
+def _full_run_report(
+    *,
+    fixture_name: str = "full_run_one_arm.json",
+    project_id: str = "jobA",
+    logical_run_id: str = "run_report",
+    attempt_run_ids: list[str] | None = None,
+) -> dict:
+    from pipeline.eval.full_run_report_v1 import seal_full_run_report
+
+    attempt_run_ids = attempt_run_ids or [logical_run_id]
+    report = json.loads(
+        (EVALUATION_FIXTURE_ROOT / fixture_name).read_text(encoding="utf-8")
+    )
+    report["identity"].update(
+        {
+            "project_id": project_id,
+            "logical_run_id": logical_run_id,
+            "attempt_run_ids": attempt_run_ids,
+        }
+    )
+    for stage in report["stages"]:
+        if stage["attempt_run_id"] is not None:
+            stage["attempt_run_id"] = attempt_run_ids[-1]
+    return seal_full_run_report(report)
+
+
+def _reseal_full_run_report(report: dict) -> dict:
+    from pipeline.eval.contracts_v1 import canonical_sha256
+    from pipeline.eval.full_run_report_v1 import (
+        FULL_RUN_CANONICAL_POLICY,
+        seal_full_run_report,
+    )
+
+    report["integrity"]["artifact_set_sha256"] = canonical_sha256(
+        {"artifacts": report["artifacts"]},
+        policy=FULL_RUN_CANONICAL_POLICY,
+    )
+    return seal_full_run_report(report)
+
+
+def _prepare_full_report_route(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv("THESIS_TOOL_PROJECTS_ROOT", str(tmp_path / "projects"))
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    service = importlib.import_module("services.thesis_runs")
+    registry = service.RunRegistry(runs_root=tmp_path)
+    routes.set_registry(registry)
+    return app_module.create_app().test_client(), routes, registry
+
+
+def _register_full_report_run(
+    registry,
+    tmp_path: Path,
+    *,
+    run_id: str = "run_report",
+    job_id: str = "jobA",
+    run_dir: Path | None = None,
+) -> Path:
+    run_dir = run_dir or (tmp_path / job_id / "one_button" / "run_report")
+    run_dir.mkdir(parents=True, exist_ok=True)
+    registry.create_run(
+        script="run_one_button",
+        argv=[sys.executable, "-c", "pass"],
+        run_id=run_id,
+        job_id=job_id,
+        run_dir=str(run_dir),
+        manifest_path=str(run_dir / "manifest.json"),
+    )
+    return run_dir
+
+
+def _write_full_run_report(run_dir: Path, report: dict) -> Path:
+    report_path = run_dir / "reports" / "full_run_report_v1.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    _write_json(report_path, report)
+    return report_path
 
 
 def test_build_argv_uses_real_module_invocation_and_no_job_arg(tmp_path):
@@ -1448,6 +1533,322 @@ def test_route_one_button_report_summary_missing_reports_returns_empty(tmp_path,
     assert data["phase_1"]["present"] is False
     assert data["final"]["present"] is False
     assert data["compare"] == {"present": False, "gap": None}
+
+
+def test_report_full_relays_persisted_projection_unchanged_and_read_only(tmp_path, monkeypatch):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    run_dir = _register_full_report_run(registry, tmp_path)
+    report = _full_run_report(fixture_name="full_run_s0_s1.json")
+    report_path = _write_full_run_report(run_dir, report)
+    misleading = run_dir / "reports" / "score_run_final.json"
+    _write_json(
+        misleading,
+        {
+            "verdict": "NOT_BETTER",
+            "delta": -999,
+            "cost_usd": 123456,
+        },
+    )
+    raw_cache = run_dir / "cache.sqlite3"
+    raw_cache.write_bytes(b"not a real sqlite database")
+    before = {
+        path.relative_to(run_dir).as_posix(): path.read_bytes()
+        for path in run_dir.rglob("*")
+        if path.is_file()
+    }
+    monkeypatch.setattr(
+        routes.sqlite3,
+        "connect",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("report-full must not open SQLite")
+        ),
+    )
+
+    response = client.get("/api/thesis/runs/run_report/report-full")
+
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data == {
+        "availability": "available",
+        "schema_id": "FullRunReportV1",
+        "schema_version": "1.0.0",
+        "report": report,
+    }
+    assert [arm["arm_id"] for arm in data["report"]["arms"]] == ["s1", "s0"]
+    assert data["report"]["metrics"][0]["comparison"]["delta"] == 12.0
+    assert data["report"]["claim"]["verdict"] == "BETTER"
+    assert report_path.read_bytes() == before["reports/full_run_report_v1.json"]
+    after = {
+        path.relative_to(run_dir).as_posix(): path.read_bytes()
+        for path in run_dir.rglob("*")
+        if path.is_file()
+    }
+    assert after == before
+    route_source = Path(routes.__file__).read_text(encoding="utf-8")
+    assert "from pipeline.eval.full_run_report_v1 import" in route_source
+    assert "def _validate_full_run_report(" not in route_source
+
+
+def test_report_full_missing_projection_is_not_generated_without_fallback(tmp_path, monkeypatch):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    run_dir = _register_full_report_run(registry, tmp_path)
+    _write_json(run_dir / "score_run_final.json", {"verdict": "BETTER"})
+    (run_dir / "reports").mkdir(parents=True, exist_ok=True)
+    _write_json(run_dir / "reports" / "legacy.json", {"schema_id": "legacy"})
+    (run_dir / "workdb.sqlite3").write_bytes(b"raw sqlite sentinel")
+    monkeypatch.setattr(
+        routes.sqlite3,
+        "connect",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("missing report must not scan SQLite")
+        ),
+    )
+
+    response = client.get("/api/thesis/runs/run_report/report-full")
+
+    assert response.status_code == 200
+    assert response.get_json()["data"] == {
+        "availability": "not_generated",
+        "schema_id": "FullRunReportV1",
+        "schema_version": "1.0.0",
+        "report": None,
+    }
+
+
+def test_report_full_malformed_or_unsupported_schema_fails_closed(tmp_path, monkeypatch):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    run_dir = _register_full_report_run(registry, tmp_path)
+    report_path = run_dir / "reports" / "full_run_report_v1.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text("{not-json", encoding="utf-8")
+
+    malformed = client.get("/api/thesis/runs/run_report/report-full")
+    assert malformed.status_code == 500
+    assert malformed.get_json()["errors"][0]["code"] == "full_run_report_invalid_json"
+
+    unsupported = _full_run_report()
+    unsupported["schema_version"] = "2.0.0"
+    _write_full_run_report(run_dir, _reseal_full_run_report(unsupported))
+    response = client.get("/api/thesis/runs/run_report/report-full")
+    assert response.status_code == 409
+    assert (
+        response.get_json()["errors"][0]["code"]
+        == "full_run_report_schema_unsupported"
+    )
+
+
+def test_report_full_shape_identity_reference_and_path_errors_fail_closed(tmp_path, monkeypatch):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    run_dir = _register_full_report_run(registry, tmp_path)
+
+    invalid_cases: list[tuple[dict, str]] = []
+
+    missing_required = _full_run_report()
+    del missing_required["claim"]
+    invalid_cases.append((missing_required, "full_run_report_contract_invalid"))
+
+    identity_mismatch = _full_run_report(project_id="other-job")
+    invalid_cases.append((identity_mismatch, "full_run_report_identity_mismatch"))
+
+    unknown_arm = _full_run_report()
+    unknown_arm["metrics"][0]["arm_values"][0]["arm_id"] = "missing-arm"
+    invalid_cases.append(
+        (_reseal_full_run_report(unknown_arm), "full_run_report_contract_invalid")
+    )
+
+    unknown_artifact = _full_run_report()
+    unknown_artifact["metrics"][0]["source_artifact_ids"] = ["missing-artifact"]
+    invalid_cases.append(
+        (_reseal_full_run_report(unknown_artifact), "full_run_report_contract_invalid")
+    )
+
+    unknown_attempt = _full_run_report()
+    unknown_attempt["stages"][0]["attempt_run_id"] = "missing-attempt"
+    invalid_cases.append(
+        (_reseal_full_run_report(unknown_attempt), "full_run_report_contract_invalid")
+    )
+
+    unsafe_path = _full_run_report()
+    unsafe_path["artifacts"][0]["relative_path"] = "../other-run/translation.json"
+    invalid_cases.append(
+        (_reseal_full_run_report(unsafe_path), "full_run_report_contract_invalid")
+    )
+
+    for report, expected_code in invalid_cases:
+        _write_full_run_report(run_dir, report)
+        response = client.get("/api/thesis/runs/run_report/report-full")
+        assert response.status_code == 500
+        assert response.get_json()["errors"][0]["code"] == expected_code
+
+
+def test_report_full_rejects_evaluation_adversarial_payloads(tmp_path, monkeypatch):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    run_dir = _register_full_report_run(registry, tmp_path)
+
+    unknown_root_key = _full_run_report()
+    unknown_root_key["unexpected_root_key"] = True
+    unknown_root_key = _reseal_full_run_report(unknown_root_key)
+
+    fabricated_comparison = _full_run_report()
+    fabricated_comparison["metrics"][0]["comparison"].update(
+        {
+            "status": "available",
+            "baseline_arm_id": "final",
+            "candidate_arm_id": "final",
+            "delta": 0.0,
+            "wins": 1,
+            "ties": 0,
+            "losses": 0,
+        }
+    )
+    fabricated_comparison["claim"].update(
+        {
+            "status": "available",
+            "verdict": "BETTER",
+            "reason_codes": ["fabricated_comparison"],
+        }
+    )
+    fabricated_comparison = _reseal_full_run_report(fabricated_comparison)
+
+    non_finite_metric = _full_run_report()
+    non_finite_metric["metrics"][0]["arm_values"][0]["value"] = float("nan")
+
+    missing_report_hash = _full_run_report()
+    del missing_report_hash["integrity"]["report_sha256"]
+
+    for report in (
+        unknown_root_key,
+        fabricated_comparison,
+        non_finite_metric,
+        missing_report_hash,
+    ):
+        _write_full_run_report(run_dir, report)
+        response = client.get("/api/thesis/runs/run_report/report-full")
+        assert response.status_code == 500
+        assert (
+            response.get_json()["errors"][0]["code"]
+            == "full_run_report_contract_invalid"
+        )
+
+
+def test_report_full_rejects_registered_run_dir_outside_jobs_root(tmp_path, monkeypatch):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    outside_run_dir = tmp_path.parent / f"{tmp_path.name}-outside" / "run_report"
+    _register_full_report_run(
+        registry,
+        tmp_path,
+        run_dir=outside_run_dir,
+    )
+
+    response = client.get("/api/thesis/runs/run_report/report-full")
+
+    assert response.status_code == 500
+    assert response.get_json()["errors"][0]["code"] == "full_run_report_path_unsafe"
+
+
+def test_report_full_one_arm_does_not_fabricate_comparison(tmp_path, monkeypatch):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    run_dir = _register_full_report_run(registry, tmp_path)
+    report = _full_run_report()
+    _write_full_run_report(run_dir, report)
+
+    response = client.get("/api/thesis/runs/run_report/report-full")
+
+    persisted = response.get_json()["data"]["report"]
+    assert response.status_code == 200
+    assert [arm["arm_id"] for arm in persisted["arms"]] == ["final"]
+    assert persisted["metrics"][0]["comparison"] == {
+        "status": "not_applicable",
+        "baseline_arm_id": None,
+        "candidate_arm_id": None,
+        "delta": None,
+        "wins": None,
+        "ties": None,
+        "losses": None,
+    }
+    assert persisted["claim"]["verdict"] == "NOT_APPLICABLE"
+
+
+def test_report_full_s0_s1_delta_and_verdict_are_relayed_exactly(tmp_path, monkeypatch):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    run_dir = _register_full_report_run(registry, tmp_path)
+    report = _full_run_report(fixture_name="full_run_s0_s1.json")
+    _write_full_run_report(run_dir, report)
+
+    response = client.get("/api/thesis/runs/run_report/report-full")
+
+    persisted = response.get_json()["data"]["report"]
+    assert response.status_code == 200
+    assert [arm["arm_id"] for arm in persisted["arms"]] == ["s1", "s0"]
+    assert persisted["metrics"][0]["comparison"]["delta"] == 12.0
+    assert persisted["claim"]["verdict"] == "BETTER"
+
+
+def test_report_full_preserves_persisted_null_usage_facts(tmp_path, monkeypatch):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    run_dir = _register_full_report_run(registry, tmp_path)
+    report = _full_run_report()
+    _write_full_run_report(run_dir, report)
+
+    response = client.get("/api/thesis/runs/run_report/report-full")
+
+    usage = response.get_json()["data"]["report"]["usage"]
+    assert response.status_code == 200
+    assert usage["status"] == "unavailable"
+    assert all(value is None for value in usage["totals"].values())
+
+
+def test_report_full_isolated_by_project_logical_run_and_resume_attempt(tmp_path, monkeypatch):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    shared_run_dir = tmp_path / "jobA" / "one_button" / "shared-report"
+    _register_full_report_run(
+        registry,
+        tmp_path,
+        run_id="run_logical",
+        job_id="jobA",
+        run_dir=shared_run_dir,
+    )
+    _register_full_report_run(
+        registry,
+        tmp_path,
+        run_id="run_attempt",
+        job_id="jobA",
+        run_dir=shared_run_dir,
+    )
+    _register_full_report_run(
+        registry,
+        tmp_path,
+        run_id="run_outsider",
+        job_id="jobA",
+        run_dir=shared_run_dir,
+    )
+    _register_full_report_run(
+        registry,
+        tmp_path,
+        run_id="run_other_project",
+        job_id="jobB",
+        run_dir=shared_run_dir,
+    )
+    report = _full_run_report(
+        logical_run_id="run_logical",
+        attempt_run_ids=["run_logical", "run_attempt"],
+    )
+    _write_full_run_report(shared_run_dir, report)
+
+    assert client.get("/api/thesis/runs/run_logical/report-full").status_code == 200
+    assert client.get("/api/thesis/runs/run_attempt/report-full").status_code == 200
+
+    outsider = client.get("/api/thesis/runs/run_outsider/report-full")
+    assert outsider.status_code == 500
+    assert outsider.get_json()["errors"][0]["code"] == "full_run_report_identity_mismatch"
+
+    wrong_project = client.get("/api/thesis/runs/run_other_project/report-full")
+    assert wrong_project.status_code == 500
+    assert wrong_project.get_json()["errors"][0]["code"] == "full_run_report_identity_mismatch"
+
+    unknown = client.get("/api/thesis/runs/run_unknown/report-full")
+    assert unknown.status_code == 404
+    assert unknown.get_json()["errors"][0]["code"] == "run_not_found"
 
 
 def test_runs_endpoint_refreshes_registry_written_by_replay_process(tmp_path, monkeypatch):

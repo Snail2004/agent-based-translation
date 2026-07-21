@@ -20,6 +20,8 @@ from services.extraction import (
     clean_gutenberg_text,
     normalize_anchor,
     normalize_text,
+    parse_html_blocks,
+    parse_markdown_blocks,
 )
 
 
@@ -181,6 +183,56 @@ def _epub_candidate_parts(source_path: Path, doc_id: str) -> dict[str, Any]:
     )
 
 
+def _markdown_candidate_parts(source_path: Path, doc_id: str) -> dict[str, Any]:
+    raw = source_path.read_text(encoding="utf-8-sig", errors="replace")
+    parsed = parse_markdown_blocks(raw)
+    parts: list[dict[str, Any]] = []
+    for index, block in enumerate(parsed):
+        text = str(block.get("text") or "")
+        parts.append({
+            "index": index,
+            "source_ref": {
+                "line_start": int(block.get("line_start") or 1),
+                "line_end": int(block.get("line_end") or block.get("line_start") or 1),
+            },
+            "heading_level": block.get("heading_level"),
+            "tag": block.get("tag"),
+            "text": text,
+            "hash": _part_hash(text),
+            "n_lines": max(1, text.count("\n") + 1),
+            "is_heading_candidate": bool(block.get("heading_level")),
+        })
+    return _candidate_input(
+        doc_id,
+        "markdown",
+        source_path,
+        parts,
+        {"parser": "markdown", "parsed_blocks": len(parts)},
+    )
+
+
+def _html_candidate_parts(source_path: Path, doc_id: str) -> dict[str, Any]:
+    raw = source_path.read_text(encoding="utf-8-sig", errors="replace")
+    parsed, parser_report = parse_html_blocks(raw)
+    parts: list[dict[str, Any]] = []
+    for index, block in enumerate(parsed):
+        text = str(block.get("text") or "")
+        parts.append({
+            "index": index,
+            "source_ref": {
+                "local_index": index,
+                "content_scope": parser_report.get("content_scope"),
+            },
+            "heading_level": block.get("heading_level"),
+            "tag": block.get("tag"),
+            "text": text,
+            "hash": _part_hash(text),
+            "n_lines": max(1, text.count("\n") + 1),
+            "is_heading_candidate": bool(block.get("heading_level")),
+        })
+    return _candidate_input(doc_id, "html", source_path, parts, parser_report)
+
+
 def _candidate_input(
     doc_id: str,
     source_format: str,
@@ -207,6 +259,10 @@ def build_candidate_parts(source: str | Path, doc_id: str | None = None) -> dict
         return _txt_candidate_parts(source_path, resolved_doc_id)
     if suffix == ".epub":
         return _epub_candidate_parts(source_path, resolved_doc_id)
+    if suffix in {".md", ".markdown"}:
+        return _markdown_candidate_parts(source_path, resolved_doc_id)
+    if suffix in {".html", ".htm"}:
+        return _html_candidate_parts(source_path, resolved_doc_id)
     raise StructurePlanError(f"Unsupported source format for normalizer: {source_path.suffix}")
 
 

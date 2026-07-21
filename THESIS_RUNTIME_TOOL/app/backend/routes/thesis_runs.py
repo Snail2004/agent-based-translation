@@ -10,6 +10,12 @@ from pathlib import Path
 
 from flask import Blueprint, request
 
+from pipeline.eval.contracts_v1 import ContractValidationError
+from pipeline.eval.full_run_report_v1 import (
+    SCHEMA_ID as _FULL_RUN_REPORT_SCHEMA_ID,
+    SCHEMA_VERSION as _FULL_RUN_REPORT_SCHEMA_VERSION,
+    validate_full_run_report,
+)
 from routes.common import error, ok
 from services.thesis_runs import (
     RunControlError,
@@ -33,6 +39,8 @@ from services.thesis_runs import (
 
 
 bp = Blueprint("thesis_runs", __name__)
+
+_FULL_RUN_REPORT_FILENAME = "full_run_report_v1.json"
 
 _registry: RunRegistry | None = None
 
@@ -418,6 +426,62 @@ def run_report_summary(run_id: str):
         return error(exc.code, exc.message, exc.status)
 
 
+@bp.get("/thesis/runs/<run_id>/report-full")
+def run_full_report(run_id: str):
+    """Relay an Evaluation-owned FullRunReportV1 projection without deriving facts."""
+    try:
+        entry = _run_entry(run_id)
+        report_path = _full_run_report_path_from_entry(entry)
+        if report_path is None or not report_path.exists():
+            return ok(_full_run_report_unavailable())
+        try:
+            raw_report = report_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise RunControlError(
+                "full_run_report_read_failed",
+                f"Could not read FullRunReportV1: {exc}",
+                500,
+            ) from exc
+        try:
+            report = json.loads(raw_report)
+        except json.JSONDecodeError as exc:
+            raise RunControlError(
+                "full_run_report_invalid_json",
+                f"FullRunReportV1 is not valid JSON: {exc}",
+                500,
+            ) from exc
+        try:
+            validate_full_run_report(report)
+        except ContractValidationError as exc:
+            if exc.code == "enum" and exc.path in {"$.schema_id", "$.schema_version"}:
+                raise RunControlError(
+                    "full_run_report_schema_unsupported",
+                    f"Unsupported FullRunReportV1 schema: {exc}",
+                    409,
+                ) from exc
+            raise RunControlError(
+                "full_run_report_contract_invalid",
+                f"FullRunReportV1 contract validation failed: {exc}",
+                500,
+            ) from exc
+        _validate_full_report_transport(
+            report,
+            entry=entry,
+            route_run_id=run_id,
+            run_dir=report_path.parent.parent,
+        )
+        return ok(
+            {
+                "availability": "available",
+                "schema_id": _FULL_RUN_REPORT_SCHEMA_ID,
+                "schema_version": _FULL_RUN_REPORT_SCHEMA_VERSION,
+                "report": report,
+            }
+        )
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+
+
 @bp.post("/thesis/runs/<run_id>/resume")
 def resume_thesis_run(run_id: str):
     try:
@@ -650,6 +714,95 @@ def _reports_dir_from_entry(entry: dict) -> Path | None:
     if run_dir is None:
         return None
     return _path_under_jobs(run_dir / "reports", "reports_path")
+
+
+def _full_run_report_path_from_entry(entry: dict) -> Path | None:
+    try:
+        run_dir = _run_dir_from_entry(entry)
+    except RunControlError as exc:
+        raise RunControlError(
+            "full_run_report_path_unsafe",
+            "Registered run_dir is outside THESIS_JOBS_ROOT.",
+            500,
+        ) from exc
+    if run_dir is None:
+        return None
+    try:
+        return _path_under_jobs(
+            run_dir / "reports" / _FULL_RUN_REPORT_FILENAME,
+            "full_run_report_path",
+        )
+    except RunControlError as exc:
+        raise RunControlError(
+            "full_run_report_path_unsafe",
+            "FullRunReportV1 path is outside THESIS_JOBS_ROOT.",
+            500,
+        ) from exc
+
+
+def _full_run_report_unavailable() -> dict:
+    return {
+        "availability": "not_generated",
+        "schema_id": _FULL_RUN_REPORT_SCHEMA_ID,
+        "schema_version": _FULL_RUN_REPORT_SCHEMA_VERSION,
+        "report": None,
+    }
+
+
+def _validate_full_report_transport(
+    report: dict,
+    *,
+    entry: dict,
+    route_run_id: str,
+    run_dir: Path,
+) -> None:
+    # The shared Evaluation validator has already established this closed shape.
+    root = report
+    identity = root["identity"]
+
+    registered_project_id = str(entry.get("job_id") or "")
+    if not registered_project_id or identity["project_id"] != registered_project_id:
+        raise RunControlError(
+            "full_run_report_identity_mismatch",
+            "Report project_id does not match the registered run.",
+            500,
+        )
+
+    attempt_run_ids = identity["attempt_run_ids"]
+    if (
+        route_run_id != identity["logical_run_id"]
+        and route_run_id not in attempt_run_ids
+    ):
+        raise RunControlError(
+            "full_run_report_identity_mismatch",
+            "Route run_id is not the report logical run or a registered report attempt.",
+            500,
+        )
+
+    for index, artifact in enumerate(root["artifacts"]):
+        relative_path = artifact["relative_path"]
+        if relative_path is not None:
+            _validate_full_report_run_root_path(
+                relative_path,
+                run_dir,
+                f"artifacts[{index}].relative_path",
+            )
+
+
+def _validate_full_report_run_root_path(
+    relative_path: str,
+    run_dir: Path,
+    field_path: str,
+) -> None:
+    resolved = (run_dir / Path(relative_path)).resolve()
+    try:
+        resolved.relative_to(run_dir.resolve())
+    except ValueError as exc:
+        raise RunControlError(
+            "full_run_report_path_unsafe",
+            f"{field_path} escapes the registered run directory.",
+            500,
+        ) from exc
 
 
 def _workdb_path_from_entry(entry: dict) -> Path | None:

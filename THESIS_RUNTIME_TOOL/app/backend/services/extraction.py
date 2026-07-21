@@ -154,6 +154,155 @@ class BlockHTMLParser(HTMLParser):
         super().close()
 
 
+class StandaloneHTMLBlockParser(HTMLParser):
+    """Extract inert text blocks from a standalone HTML document.
+
+    When a semantic main/article container exists, blocks outside it are excluded.
+    Script, style, navigation, form, and template content is never emitted.
+    """
+
+    block_tags = {
+        "h1", "h2", "h3", "h4", "h5", "h6",
+        "p", "li", "blockquote", "pre", "dt", "dd", "figcaption", "table",
+    }
+    ignored_tags = {"script", "style", "nav", "template", "noscript", "svg", "canvas", "form", "button"}
+    main_tags = {"main", "article"}
+    void_tags = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.blocks: list[dict[str, Any]] = []
+        self.title = ""
+        self.ignored_sections = 0
+        self._ignored_depth = 0
+        self._main_depth = 0
+        self._main_seen = False
+        self._current_tag: str | None = None
+        self._current_scope = "body"
+        self._chunks: list[str] = []
+        self._loose_chunks: list[str] = []
+        self._loose_scope = "body"
+        self._title_chunks: list[str] = []
+        self._in_title = False
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+        if self._ignored_depth:
+            if tag not in self.void_tags:
+                self._ignored_depth += 1
+            return
+        if tag in self.ignored_tags:
+            self._flush()
+            self._flush_loose()
+            self._ignored_depth = 1
+            self.ignored_sections += 1
+            return
+        if tag in self.main_tags:
+            self._flush()
+            self._flush_loose()
+            self._main_seen = True
+            self._main_depth += 1
+        if tag == "title":
+            self._in_title = True
+            self._title_chunks = []
+        if tag == "br":
+            if self._current_tag:
+                self._chunks.append("\n")
+            else:
+                if not self._loose_chunks:
+                    self._loose_scope = "main" if self._main_depth else "body"
+                self._loose_chunks.append("\n")
+            return
+        if tag in self.block_tags:
+            self._flush()
+            self._flush_loose()
+            self._current_tag = tag
+            self._current_scope = "main" if self._main_depth else "body"
+            self._chunks = []
+
+    def handle_startendtag(self, tag, attrs):
+        if self._ignored_depth:
+            return
+        self.handle_starttag(tag, attrs)
+        self.handle_endtag(tag)
+
+    def handle_endtag(self, tag):
+        tag = tag.lower()
+        if self._ignored_depth:
+            self._ignored_depth -= 1
+            return
+        if self._current_tag == tag:
+            self._flush()
+        if tag == "title":
+            self._in_title = False
+            self.title = normalize_text(" ".join(self._title_chunks))
+            self._title_chunks = []
+        if tag in self.main_tags and self._main_depth:
+            self._flush()
+            self._flush_loose()
+            self._main_depth -= 1
+
+    def handle_data(self, data):
+        if self._ignored_depth:
+            return
+        if self._in_title:
+            self._title_chunks.append(data)
+            return
+        if self._current_tag:
+            self._chunks.append(data)
+            return
+        scope = "main" if self._main_depth else "body"
+        if self._loose_chunks and self._loose_scope != scope:
+            self._flush_loose()
+        self._loose_scope = scope
+        self._loose_chunks.append(data)
+
+    def _flush(self):
+        if not self._current_tag:
+            return
+        if self._current_tag == "pre":
+            text = unicodedata.normalize("NFC", html.unescape("".join(self._chunks))).strip()
+        else:
+            text = normalize_text(" ".join(self._chunks))
+        if text:
+            heading_level = int(self._current_tag[1]) if re.fullmatch(r"h[1-6]", self._current_tag) else None
+            self.blocks.append({
+                "tag": self._current_tag,
+                "text": text,
+                "heading_level": heading_level,
+                "btype": "heading" if heading_level else block_type_for(text),
+                "scope": self._current_scope,
+            })
+        self._current_tag = None
+        self._current_scope = "body"
+        self._chunks = []
+
+    def _flush_loose(self):
+        text = normalize_text(" ".join(self._loose_chunks))
+        if text:
+            self.blocks.append({
+                "tag": "p",
+                "text": text,
+                "heading_level": None,
+                "btype": block_type_for(text),
+                "scope": self._loose_scope,
+            })
+        self._loose_chunks = []
+        self._loose_scope = "main" if self._main_depth else "body"
+
+    def selected_blocks(self) -> list[dict[str, Any]]:
+        self._flush_loose()
+        main_blocks = [block for block in self.blocks if block.get("scope") == "main"]
+        if self._main_seen:
+            return main_blocks
+        return list(self.blocks)
+
+    def close(self):
+        self._flush()
+        self._flush_loose()
+        super().close()
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
@@ -234,7 +383,7 @@ def default_metadata(
     report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     meta = dict(metadata or {})
-    source_format = source_path.suffix.lower().lstrip(".") or "txt"
+    source_format = source_format_for_path(source_path)
     declared_format = str(meta.get("source_format") or "").strip().lower()
     if report is not None and declared_format and declared_format != source_format:
         report["source_format_mismatch"] = {
@@ -330,6 +479,219 @@ def block_type_for(text: str, tag: str | None = None) -> str:
     if _is_dialogue_like(text):
         return "dialogue"
     return "paragraph"
+
+
+MARKDOWN_ATX_HEADING_RE = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.+?)\s*$")
+MARKDOWN_SETEXT_RE = re.compile(r"^ {0,3}(=+|-+)\s*$")
+MARKDOWN_FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+
+
+def source_format_for_path(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix in {".md", ".markdown"}:
+        return "markdown"
+    if suffix in {".html", ".htm"}:
+        return "html"
+    return suffix.lstrip(".") or "txt"
+
+
+def parse_markdown_blocks(raw: str) -> list[dict[str, Any]]:
+    """Parse structural Markdown blocks without interpreting natural language."""
+
+    lines = raw.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    blocks: list[dict[str, Any]] = []
+    paragraph: list[str] = []
+    paragraph_start = 1
+
+    def flush_paragraph(end_line: int) -> None:
+        nonlocal paragraph, paragraph_start
+        text = normalize_text("\n".join(paragraph))
+        if text:
+            blocks.append({
+                "tag": "p",
+                "text": text,
+                "heading_level": None,
+                "btype": block_type_for(text),
+                "line_start": paragraph_start,
+                "line_end": end_line,
+            })
+        paragraph = []
+
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        stripped = line.strip()
+        fence = MARKDOWN_FENCE_RE.match(line)
+        if fence:
+            flush_paragraph(index)
+            marker = fence.group(1)
+            fence_char = marker[0]
+            fence_len = len(marker)
+            start = index
+            code_lines = [line]
+            index += 1
+            while index < len(lines):
+                code_line = lines[index]
+                code_lines.append(code_line)
+                closing = code_line.strip()
+                if closing and set(closing) == {fence_char} and len(closing) >= fence_len:
+                    index += 1
+                    break
+                index += 1
+            text = unicodedata.normalize("NFC", "\n".join(code_lines).strip())
+            if text:
+                blocks.append({
+                    "tag": "pre",
+                    "text": text,
+                    "heading_level": None,
+                    "btype": "paragraph",
+                    "line_start": start + 1,
+                    "line_end": index,
+                })
+            continue
+
+        atx = MARKDOWN_ATX_HEADING_RE.match(line)
+        if atx:
+            flush_paragraph(index)
+            heading_text = re.sub(r"[ \t]+#+[ \t]*$", "", atx.group(2)).strip()
+            heading_text = normalize_text(heading_text)
+            if heading_text:
+                level = len(atx.group(1))
+                blocks.append({
+                    "tag": f"h{level}",
+                    "text": heading_text,
+                    "heading_level": level,
+                    "btype": "heading",
+                    "line_start": index + 1,
+                    "line_end": index + 1,
+                })
+            index += 1
+            continue
+
+        if stripped and index + 1 < len(lines):
+            setext = MARKDOWN_SETEXT_RE.match(lines[index + 1])
+            if setext:
+                flush_paragraph(index)
+                level = 1 if setext.group(1).startswith("=") else 2
+                blocks.append({
+                    "tag": f"h{level}",
+                    "text": normalize_text(line),
+                    "heading_level": level,
+                    "btype": "heading",
+                    "line_start": index + 1,
+                    "line_end": index + 2,
+                })
+                index += 2
+                continue
+
+        if not stripped:
+            flush_paragraph(index)
+            index += 1
+            paragraph_start = index + 1
+            continue
+        if not paragraph:
+            paragraph_start = index + 1
+        paragraph.append(line)
+        index += 1
+
+    flush_paragraph(len(lines))
+    return blocks
+
+
+def parse_html_blocks(raw: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    parser = StandaloneHTMLBlockParser()
+    parser.feed(raw)
+    parser.close()
+    selected = parser.selected_blocks()
+    return selected, {
+        "content_scope": "main_or_article" if any(block.get("scope") == "main" for block in parser.blocks) else "document",
+        "ignored_sections": parser.ignored_sections,
+        "title": parser.title,
+        "parsed_blocks": len(parser.blocks),
+        "selected_blocks": len(selected),
+    }
+
+
+def _structured_blocks_to_chapters(
+    blocks: list[dict[str, Any]],
+    report: dict[str, Any] | None,
+    parser_name: str,
+    fallback_title: str,
+) -> list[dict[str, Any]]:
+    if not blocks:
+        raise ProjectError(f"No readable text blocks found in {parser_name.upper()} source.")
+
+    heading_counts: dict[int, int] = {}
+    for block in blocks:
+        level = block.get("heading_level")
+        if isinstance(level, int):
+            heading_counts[level] = heading_counts.get(level, 0) + 1
+    repeated_levels = sorted(level for level, count in heading_counts.items() if count >= 2)
+    boundary_level = repeated_levels[0] if repeated_levels else (min(heading_counts) if heading_counts else None)
+    boundary_indices = [
+        index for index, block in enumerate(blocks)
+        if boundary_level is not None and block.get("heading_level") == boundary_level
+    ]
+
+    if report is not None:
+        report["structure"] = {
+            "parser": parser_name,
+            "heading_counts": {str(level): count for level, count in sorted(heading_counts.items())},
+            "chapter_boundary_level": boundary_level,
+            "fallback_used": not bool(boundary_indices),
+        }
+
+    def items_for(source_blocks: list[dict[str, Any]], title: str) -> list[tuple[str, str]]:
+        items = [(str(block.get("btype") or "paragraph"), str(block.get("text") or "")) for block in source_blocks]
+        items = [(btype, text) for btype, text in items if text]
+        if not any(btype == "heading" for btype, _ in items):
+            items.insert(0, ("heading", title))
+        return items
+
+    if not boundary_indices:
+        if report is not None:
+            set_toc_report(report, "none", 0, 0, True, False)
+        return [{"title": fallback_title, "items": items_for(blocks, fallback_title)}]
+
+    if report is not None:
+        set_toc_report(
+            report,
+            f"{parser_name}_headings",
+            len(boundary_indices),
+            len(boundary_indices),
+            False,
+            False,
+            extra={"chapter_boundary_level": boundary_level},
+        )
+
+    chapters: list[dict[str, Any]] = []
+    prefix = blocks[:boundary_indices[0]]
+    prefix_has_body = any(block.get("btype") != "heading" for block in prefix)
+    if prefix and prefix_has_body:
+        title = next((str(block["text"]) for block in prefix if block.get("btype") == "heading"), "Front matter")
+        chapters.append({"title": title, "items": items_for(prefix, title)})
+
+    for position, start in enumerate(boundary_indices):
+        end = boundary_indices[position + 1] if position + 1 < len(boundary_indices) else len(blocks)
+        chapter_blocks = blocks[start:end]
+        if position == 0 and prefix and not prefix_has_body:
+            chapter_blocks = [*prefix, *chapter_blocks]
+        title = str(blocks[start].get("text") or f"Chapter {len(chapters) + 1}")
+        chapters.append({"title": title, "items": items_for(chapter_blocks, title)})
+    return chapters
+
+
+def split_markdown(raw: str, report: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    blocks = parse_markdown_blocks(raw)
+    return _structured_blocks_to_chapters(blocks, report, "markdown", "Document")
+
+
+def split_html(raw: str, report: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    blocks, parser_report = parse_html_blocks(raw)
+    if report is not None:
+        report["html_parser"] = parser_report
+    fallback_title = str(parser_report.get("title") or "Document")
+    return _structured_blocks_to_chapters(blocks, report, "html", fallback_title)
 
 
 def make_block(doc_id: str, chapter_id: str, index: int, text: str, btype: str, opening: bool) -> dict[str, Any]:
@@ -1105,7 +1467,7 @@ def extract_project(
     ensure_working_files(project_path)
     source_path = find_source_file(project_path)
     if source_path is None:
-        raise ProjectError("No TXT/EPUB source file found in raw/.")
+        raise ProjectError("No TXT, EPUB, Markdown, or HTML source file found in raw/.")
     document_path = dirs["canonical"] / DATASET_FILES["document"]
     if document_path.exists() and not overwrite:
         raise ProjectError("Re-extracting can overwrite current document draft. Confirm overwrite first.")
@@ -1117,7 +1479,7 @@ def extract_project(
         )
 
     job_id = f"extract_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    source_format = source_path.suffix.lower().lstrip(".") or "txt"
+    source_format = source_format_for_path(source_path)
     report: dict[str, Any] = {
         "schema_version": "1.0",
         "dataset_schema_version": SCHEMA_VERSION,
@@ -1153,8 +1515,14 @@ def extract_project(
             chapters_raw = split_txt(raw, report)
         elif source_path.suffix.lower() == ".epub":
             chapters_raw = split_epub(source_path, report)
+        elif source_path.suffix.lower() in {".md", ".markdown"}:
+            raw = source_path.read_text(encoding="utf-8-sig", errors="replace")
+            chapters_raw = split_markdown(raw, report)
+        elif source_path.suffix.lower() in {".html", ".htm"}:
+            raw = source_path.read_text(encoding="utf-8-sig", errors="replace")
+            chapters_raw = split_html(raw, report)
         else:
-            raise ProjectError("Only .txt and .epub sources are supported in MVP.")
+            raise ProjectError("Only TXT, EPUB, Markdown, and HTML sources are supported in MVP.")
         metadata = default_metadata(doc_id, source_path, load_project_metadata(project_path), report)
         document = chapters_to_document(doc_id, metadata, chapters_raw)
         write_json_atomic(document_path, document)

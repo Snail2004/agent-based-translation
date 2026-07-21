@@ -258,6 +258,56 @@ class StructureNormalizerTest(unittest.TestCase):
         refs = [block["source_part_refs"][0] for block in result["normalized_document"]["chapters"][0]["blocks"]]
         self.assertEqual(refs, [0, 1])
 
+    def test_markdown_candidate_preserves_fenced_code_as_one_non_heading_part(self):
+        from services.structure_normalizer import build_candidate_parts
+
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "sample.md"
+            source.write_text(
+                "# Book\n\n## One\n\nText.\n\n```python\n# not a heading\nprint('ok')\n```\n\n## Two\n\nMore.",
+                encoding="utf-8",
+            )
+            candidate = build_candidate_parts(source, doc_id="sample")
+
+        self.assertEqual(candidate["source_format"], "markdown")
+        headings = [part for part in candidate["parts"] if part["is_heading_candidate"]]
+        self.assertEqual([part["text"] for part in headings], ["Book", "One", "Two"])
+        code_part = next(part for part in candidate["parts"] if "print('ok')" in part["text"])
+        self.assertFalse(code_part["is_heading_candidate"])
+        self.assertIn("# not a heading", code_part["text"])
+
+    def test_html_candidate_uses_main_and_ignores_navigation_and_script(self):
+        from services.structure_normalizer import build_candidate_parts
+
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "sample.html"
+            source.write_text(
+                "<html><body><nav><img src='menu.png'>Noise</nav><main><h1>One</h1><p>Body.</p><script>bad()</script></main></body></html>",
+                encoding="utf-8",
+            )
+            candidate = build_candidate_parts(source, doc_id="sample")
+
+        self.assertEqual(candidate["source_format"], "html")
+        self.assertEqual(candidate["parser_report"]["content_scope"], "main_or_article")
+        text = "\n".join(part["text"] for part in candidate["parts"])
+        self.assertIn("Body.", text)
+        self.assertNotIn("Noise", text)
+        self.assertNotIn("bad()", text)
+
+    def test_html_candidate_preserves_bare_inline_main_text(self):
+        from services.structure_normalizer import build_candidate_parts
+
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "bare.htm"
+            source.write_text(
+                "<html><body><header><h1>Outside</h1></header><main>Hello <strong>world</strong></main></body></html>",
+                encoding="utf-8",
+            )
+            candidate = build_candidate_parts(source, doc_id="bare")
+
+        self.assertEqual(candidate["source_format"], "html")
+        self.assertEqual([part["text"] for part in candidate["parts"]], ["Hello world"])
+
     def test_epub_role_precedence_drops_spine_before_part_rules(self):
         from services.structure_normalizer import apply_plan
 

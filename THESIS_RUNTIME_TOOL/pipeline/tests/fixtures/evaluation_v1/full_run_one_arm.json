@@ -1,0 +1,202 @@
+{
+  "schema_id": "FullRunReportV1",
+  "schema_version": "1.0.0",
+  "report_id": "report-one-arm",
+  "generated_at": "2026-07-17T01:00:00Z",
+  "producer": {
+    "workstream": "evaluation",
+    "component": "full_run_report_writer",
+    "component_version": "1.0.0",
+    "code_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "report_method": {
+    "method_id": "full_run_report",
+    "method_version": "1.0.0",
+    "policy_profile_id": null
+  },
+  "identity": {
+    "project_id": "project-one",
+    "logical_run_id": "run-one",
+    "attempt_run_ids": [
+      "attempt-one"
+    ],
+    "document_id": "document-one",
+    "profile_id": "literary_v1",
+    "input_manifest_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "integrity": {
+    "evaluation_config_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "artifact_set_sha256": "35fdf506a7c39ea6405e7cadc8a54393c0442123c69fa86e23ada6a68e5745eb",
+    "source_usage_artifact_ids": [],
+    "report_sha256": "293d9054cc35d3b26172e068b26207bca093510e63dff84b1b3fb15edf818f60"
+  },
+  "report_state": "complete",
+  "arms": [
+    {
+      "arm_id": "final",
+      "role": "candidate",
+      "kind": "system",
+      "label": "Final translation",
+      "translation_artifact_id": "artifact-translation",
+      "translation_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+    }
+  ],
+  "metrics": [
+    {
+      "metric_id": "sf_qe",
+      "display_name": "Semantic fidelity QE",
+      "profile_scope": "common",
+      "status": "available",
+      "unit": "score_0_100",
+      "direction": "higher_is_better",
+      "method": {
+        "method_id": "sf_qe",
+        "method_version": "1.0.0",
+        "implementation_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "prompt_version": null,
+        "model_id": null
+      },
+      "arm_values": [
+        {
+          "arm_id": "final",
+          "value": 82.0,
+          "numerator": null,
+          "denominator": null,
+          "interval_low": null,
+          "interval_high": null,
+          "interval_level": null
+        }
+      ],
+      "comparison": {
+        "status": "not_applicable",
+        "baseline_arm_id": null,
+        "candidate_arm_id": null,
+        "delta": null,
+        "wins": null,
+        "ties": null,
+        "losses": null
+      },
+      "source_artifact_ids": [
+        "artifact-metric"
+      ],
+      "caveats": [
+        "No comparison arm was supplied."
+      ]
+    }
+  ],
+  "claim": {
+    "status": "not_applicable",
+    "verdict": "NOT_APPLICABLE",
+    "method_id": "claim_gate",
+    "method_version": "1.0.0",
+    "reason_codes": [
+      "single_arm"
+    ],
+    "source_metric_ids": [
+      "sf_qe"
+    ]
+  },
+  "usage": {
+    "status": "unavailable",
+    "accounting_basis": "unavailable",
+    "totals": {
+      "request_count": null,
+      "successful_request_count": null,
+      "failed_request_count": null,
+      "input_tokens": null,
+      "cached_input_tokens": null,
+      "output_tokens": null,
+      "reasoning_tokens": null,
+      "thought_tokens": null,
+      "total_tokens": null,
+      "cost_usd": null,
+      "currency": null
+    },
+    "unknown_attempt_count": 1,
+    "by_stage": [
+      {
+        "stage_id": "sf_qe",
+        "provider": null,
+        "model_id": null,
+        "quota_bucket_id": null,
+        "credential_family": null,
+        "accounting_basis": "unavailable",
+        "status": "unavailable",
+        "request_count": null,
+        "successful_request_count": null,
+        "failed_request_count": null,
+        "input_tokens": null,
+        "cached_input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "thought_tokens": null,
+        "total_tokens": null,
+        "cost_usd": null,
+        "currency": null
+      }
+    ],
+    "notes": [
+      "Provider usage metadata was not available."
+    ],
+    "source_artifact_ids": []
+  },
+  "stages": [
+    {
+      "stage_id": "sf_qe",
+      "status": "complete",
+      "started_at": "2026-07-17T00:59:00Z",
+      "ended_at": "2026-07-17T01:00:00Z",
+      "duration_ms": 60000,
+      "attempt_run_id": "attempt-one",
+      "artifact_ids": [
+        "artifact-metric"
+      ],
+      "error_code": null
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact-input",
+      "kind": "evaluation_input",
+      "requirement": "required",
+      "status": "present",
+      "relative_path": "input/evaluation_input.json",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "producer_method_id": "input_adapter",
+      "error_code": null
+    },
+    {
+      "artifact_id": "artifact-translation",
+      "kind": "translation",
+      "requirement": "required",
+      "status": "present",
+      "relative_path": "translations/final.json",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "producer_method_id": null,
+      "error_code": null
+    },
+    {
+      "artifact_id": "artifact-metric",
+      "kind": "metric_report",
+      "requirement": "required",
+      "status": "present",
+      "relative_path": "metrics/sf_qe.json",
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "producer_method_id": "sf_qe",
+      "error_code": null
+    },
+    {
+      "artifact_id": "artifact-judge-optional",
+      "kind": "judge_report",
+      "requirement": "optional",
+      "status": "missing",
+      "relative_path": null,
+      "sha256": null,
+      "producer_method_id": "pj",
+      "error_code": "not_run"
+    }
+  ],
+  "caveats": [
+    "This report supports per-arm inspection only."
+  ]
+}

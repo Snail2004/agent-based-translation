@@ -1,0 +1,221 @@
+{
+  "schema_id": "FullRunReportV1",
+  "schema_version": "1.0.0",
+  "report_id": "report-s0-s1",
+  "generated_at": "2026-07-17T02:00:00Z",
+  "producer": {
+    "workstream": "evaluation",
+    "component": "full_run_report_writer",
+    "component_version": "1.0.0",
+    "code_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "report_method": {
+    "method_id": "full_run_report",
+    "method_version": "1.0.0",
+    "policy_profile_id": "d2l_v1"
+  },
+  "identity": {
+    "project_id": "project-two",
+    "logical_run_id": "run-two",
+    "attempt_run_ids": [
+      "attempt-two-a",
+      "attempt-two-b"
+    ],
+    "document_id": "d2l-en",
+    "profile_id": "technical_d2l_v1",
+    "input_manifest_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "integrity": {
+    "evaluation_config_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "artifact_set_sha256": "436607d2a835ac3fda52122ec15887e57e1136b9f2ed26b3908f5b46274dbeda",
+    "source_usage_artifact_ids": [
+      "artifact-usage"
+    ],
+    "report_sha256": "c78cf6dcd4aff3ed510a5403c7ccce73fec06b61edede81c2a43f0636b0eaedf"
+  },
+  "report_state": "complete",
+  "arms": [
+    {
+      "arm_id": "s1",
+      "role": "candidate",
+      "kind": "system",
+      "label": "S1 full memory",
+      "translation_artifact_id": "artifact-s1",
+      "translation_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    {
+      "arm_id": "s0",
+      "role": "baseline",
+      "kind": "system",
+      "label": "S0 no memory",
+      "translation_artifact_id": "artifact-s0",
+      "translation_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+    }
+  ],
+  "metrics": [
+    {
+      "metric_id": "sf_qe",
+      "display_name": "Semantic fidelity QE",
+      "profile_scope": "common",
+      "status": "available",
+      "unit": "score_0_100",
+      "direction": "higher_is_better",
+      "method": {
+        "method_id": "sf_qe",
+        "method_version": "1.0.0",
+        "implementation_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "prompt_version": null,
+        "model_id": null
+      },
+      "arm_values": [
+        {
+          "arm_id": "s1",
+          "value": 82.0,
+          "numerator": null,
+          "denominator": null,
+          "interval_low": null,
+          "interval_high": null,
+          "interval_level": null
+        },
+        {
+          "arm_id": "s0",
+          "value": 70.0,
+          "numerator": null,
+          "denominator": null,
+          "interval_low": null,
+          "interval_high": null,
+          "interval_level": null
+        }
+      ],
+      "comparison": {
+        "status": "available",
+        "baseline_arm_id": "s0",
+        "candidate_arm_id": "s1",
+        "delta": 12.0,
+        "wins": 8,
+        "ties": 1,
+        "losses": 3
+      },
+      "source_artifact_ids": [
+        "artifact-metric"
+      ],
+      "caveats": []
+    }
+  ],
+  "claim": {
+    "status": "available",
+    "verdict": "BETTER",
+    "method_id": "claim_gate",
+    "method_version": "1.0.0",
+    "reason_codes": [
+      "candidate_higher"
+    ],
+    "source_metric_ids": [
+      "sf_qe"
+    ]
+  },
+  "usage": {
+    "status": "partial",
+    "accounting_basis": "provider_reported",
+    "totals": {
+      "request_count": 2,
+      "successful_request_count": 2,
+      "failed_request_count": 0,
+      "input_tokens": 1000,
+      "cached_input_tokens": null,
+      "output_tokens": 200,
+      "reasoning_tokens": null,
+      "thought_tokens": null,
+      "total_tokens": 1200,
+      "cost_usd": 0.12,
+      "currency": "USD"
+    },
+    "unknown_attempt_count": 0,
+    "by_stage": [
+      {
+        "stage_id": "sf_qe",
+        "provider": "fixture-provider",
+        "model_id": "fixture-model",
+        "quota_bucket_id": "masked-eval-fixture",
+        "credential_family": "fixture",
+        "accounting_basis": "provider_reported",
+        "status": "partial",
+        "request_count": 2,
+        "successful_request_count": 2,
+        "failed_request_count": 0,
+        "input_tokens": 1000,
+        "cached_input_tokens": null,
+        "output_tokens": 200,
+        "reasoning_tokens": null,
+        "thought_tokens": null,
+        "total_tokens": 1200,
+        "cost_usd": 0.12,
+        "currency": "USD"
+      }
+    ],
+    "notes": [
+      "Cached and reasoning token counts were not supplied."
+    ],
+    "source_artifact_ids": [
+      "artifact-usage"
+    ]
+  },
+  "stages": [
+    {
+      "stage_id": "sf_qe",
+      "status": "complete",
+      "started_at": "2026-07-17T01:58:00Z",
+      "ended_at": "2026-07-17T02:00:00Z",
+      "duration_ms": 120000,
+      "attempt_run_id": "attempt-two-b",
+      "artifact_ids": [
+        "artifact-metric",
+        "artifact-usage"
+      ],
+      "error_code": null
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact-s1",
+      "kind": "translation",
+      "requirement": "required",
+      "status": "present",
+      "relative_path": "translations/s1.json",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "producer_method_id": null,
+      "error_code": null
+    },
+    {
+      "artifact_id": "artifact-s0",
+      "kind": "translation",
+      "requirement": "required",
+      "status": "present",
+      "relative_path": "translations/s0.json",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "producer_method_id": null,
+      "error_code": null
+    },
+    {
+      "artifact_id": "artifact-metric",
+      "kind": "metric_report",
+      "requirement": "required",
+      "status": "present",
+      "relative_path": "metrics/sf_qe.json",
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "producer_method_id": "sf_qe",
+      "error_code": null
+    },
+    {
+      "artifact_id": "artifact-usage",
+      "kind": "usage_ledger",
+      "requirement": "required",
+      "status": "present",
+      "relative_path": "usage/provider.json",
+      "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "producer_method_id": null,
+      "error_code": null
+    }
+  ],
+  "caveats": []
+}

@@ -40,6 +40,7 @@ def load_registry_overlay(
     jobs_root: Path | None = None,
     reports_root: Path | None = None,
     prefer_materialized: bool = True,
+    overlay_mode: str = "registry",
 ) -> dict[str, Any]:
     """Build runtime registry overlay spans.
 
@@ -47,10 +48,30 @@ def load_registry_overlay(
     It never recomputes metrics; score status/forms are copied from reports only.
     """
 
+    normalized_mode = str(overlay_mode or "registry").strip().casefold()
+    if normalized_mode not in {"registry", "localization"}:
+        raise ThesisReadModelError(
+            "invalid_overlay_mode",
+            f"Unsupported overlay mode: {overlay_mode}",
+            400,
+        )
+
     effective_experiment_id = experiment_id or resolve_experiment_id_for_job(
         job_id,
         reports_root=reports_root or THESIS_REPORTS_ROOT,
     )
+
+    if normalized_mode == "localization":
+        return _load_localization_overlay(
+            job_id,
+            experiment_id=effective_experiment_id,
+            stage=stage,
+            block_id=block_id,
+            chapter_id=chapter_id,
+            cascade_report=cascade_report,
+            jobs_root=jobs_root,
+            reports_root=reports_root,
+        )
 
     if prefer_materialized and effective_experiment_id:
         overlay_report = resolve_experiment_artifact_path(
@@ -125,6 +146,105 @@ def load_registry_overlay(
         },
         "source": source,
         "target_by_config": target,
+    }
+
+
+def _load_localization_overlay(
+    job_id: str,
+    *,
+    experiment_id: str | None,
+    stage: str | None,
+    block_id: str | None,
+    chapter_id: str | None,
+    cascade_report: str | Path | None,
+    jobs_root: Path | None,
+    reports_root: Path | None,
+) -> dict[str, Any]:
+    """Build a display overlay exclusively from persisted Localization output.
+
+    No score report, registry surface scan, or cross-run fallback is allowed in
+    this mode. Missing Localization evidence therefore produces no marks.
+    """
+
+    blocks, glossary, _entities = _load_overlay_inputs(
+        job_id,
+        experiment_id=experiment_id,
+        stage=stage,
+        block_id=block_id,
+        chapter_id=chapter_id,
+        jobs_root=jobs_root,
+    )
+    target = _empty_target_overlay(blocks)
+    source = {"glossary_by_id": {}, "entities_by_id": {}}
+
+    effective_chapter_id = chapter_id
+    if not effective_chapter_id and block_id:
+        chapter_ids = {
+            str(block.get("chapter_id") or "").strip()
+            for block in blocks
+            if str(block.get("chapter_id") or "").strip()
+        }
+        if len(chapter_ids) == 1:
+            effective_chapter_id = next(iter(chapter_ids))
+
+    if not cascade_report and experiment_id:
+        cascade_report = resolve_experiment_artifact_path(
+            experiment_id,
+            "cascade",
+            chapter_id=effective_chapter_id,
+            reports_root=reports_root or THESIS_REPORTS_ROOT,
+        )
+
+    localization_status = "unavailable:not_registered"
+    localization_audit: dict[str, Any] = {}
+    if cascade_report:
+        localization_result = _merge_cascade_marks(
+            target,
+            blocks,
+            glossary,
+            cascade_report,
+        )
+        localization_status = str(localization_result.get("status") or "unknown")
+        localization_audit = dict(localization_result.get("audit") or {})
+        source = _build_localization_source_overlay(
+            blocks,
+            localization_result.get("marks") or [],
+        )
+
+    return {
+        "meta": {
+            "source": "localization_artifact",
+            "overlay_mode": "localization",
+            "job_id": job_id,
+            "read_only": True,
+            "localization_status": localization_status,
+            "localization_audit": localization_audit,
+            "selected": {
+                "experiment_id": experiment_id,
+                "stage": stage,
+                "block_id": block_id,
+                "chapter_id": effective_chapter_id,
+                "localization_report": str(cascade_report) if cascade_report else None,
+            },
+            "note": (
+                "Display marks come only from the persisted Localization artifact "
+                "for this run. Missing evidence remains unmarked."
+            ),
+        },
+        "source": source,
+        "target_by_config": target,
+    }
+
+
+def _empty_target_overlay(blocks: list[dict[str, Any]]) -> dict[str, Any]:
+    configs = sorted({
+        str(config)
+        for block in blocks
+        for config in (block.get("translations") or {})
+    })
+    return {
+        config: {"glossary_by_id": {}, "entities_by_id": {}}
+        for config in configs
     }
 
 
@@ -541,6 +661,7 @@ def _merge_cascade_marks(
         "cross_term_overlaps": 0,
         "by_mark_source": {},
         "by_located_by": {},
+        "by_reference_status": {},
         "notes": {
             "gpt_fallback": "Counts rendered overlay marks only; fallback calls that concluded not_rendered have no span to display.",
         },
@@ -567,6 +688,8 @@ def _merge_cascade_marks(
         audit["by_mark_source"][mark_source] = audit["by_mark_source"].get(mark_source, 0) + 1
         located_by = str(mark.get("located_by") or "")
         audit["by_located_by"][located_by] = audit["by_located_by"].get(located_by, 0) + 1
+        reference_status = str(mark.get("reference_status") or "unknown")
+        audit["by_reference_status"][reference_status] = audit["by_reference_status"].get(reference_status, 0) + 1
 
     _flag_cross_term_cascade_overlaps(cascade_marks, audit)
 
@@ -594,7 +717,126 @@ def _merge_cascade_marks(
             key=lambda item: (str(item.get("block_id") or ""), int((item.get("span") or [0, 0])[0]), int((item.get("span") or [0, 0])[1])),
         )
         added += 1
-    return {"status": f"loaded:{added}:skipped:{audit['skipped']}", "audit": audit}
+    return {
+        "status": f"loaded:{added}:skipped:{audit['skipped']}",
+        "audit": audit,
+        "marks": cascade_marks,
+    }
+
+
+def _build_localization_source_overlay(
+    blocks: list[dict[str, Any]],
+    target_marks: list[dict[str, Any]],
+) -> dict[str, Any]:
+    block_texts = {
+        str(block.get("block_id") or ""): str(block.get("clean_text") or block.get("source_text") or "")
+        for block in blocks
+    }
+    grouped: dict[str, dict[tuple[str, int, int], dict[str, Any]]] = defaultdict(dict)
+
+    for mark in target_marks:
+        term_id = str(mark.get("id") or "")
+        block_id = str(mark.get("block_id") or "")
+        text = block_texts.get(block_id, "")
+        located = _locate_localization_source(mark, text)
+        if not term_id or located is None:
+            continue
+        start, end = located
+        key = (block_id, start, end)
+        existing = grouped[term_id].get(key)
+        config = str(mark.get("config") or "")
+        occ_id = str(mark.get("occ_id") or "")
+        accepted_forms = _dedupe_forms(
+            [*(mark.get("accepted_forms") or []), mark.get("accepted_form")]
+        )
+        if existing is None:
+            existing = {
+                "id": term_id,
+                "block_id": block_id,
+                "span": [start, end],
+                "surface": text[start:end],
+                "source_term": mark.get("source_term"),
+                "status": "localized",
+                "display_status": "localized",
+                "localization_status": mark.get("localization_status"),
+                "provenance": "localization_artifact",
+                "mark_source": "localization_source",
+                "located_by": "code_exact",
+                "configs": [],
+                "occ_ids": [],
+                "accepted_forms": [],
+                "mismatch_configs": [],
+            }
+            grouped[term_id][key] = existing
+        if config and config not in existing["configs"]:
+            existing["configs"].append(config)
+        if occ_id and occ_id not in existing["occ_ids"]:
+            existing["occ_ids"].append(occ_id)
+        for accepted_form in accepted_forms:
+            if accepted_form not in existing["accepted_forms"]:
+                existing["accepted_forms"].append(accepted_form)
+        is_mismatch = (
+            str(mark.get("reference_status") or "") == "mismatch"
+            or str(mark.get("status") or "") == "localization_mismatch"
+        )
+        if is_mismatch and config and config not in existing["mismatch_configs"]:
+            existing["mismatch_configs"].append(config)
+
+    glossary_by_id: dict[str, Any] = {}
+    for term_id, keyed_rows in sorted(grouped.items()):
+        occurrences = sorted(
+            keyed_rows.values(),
+            key=lambda item: (item["block_id"], item["span"][0], item["span"][1]),
+        )
+        for occurrence in occurrences:
+            occurrence["configs"].sort()
+            occurrence["occ_ids"].sort()
+            occurrence["accepted_forms"].sort(key=str.casefold)
+            occurrence["mismatch_configs"].sort()
+            if occurrence["mismatch_configs"]:
+                occurrence["status"] = "localization_source_warning"
+                occurrence["display_status"] = "localization_source_warning"
+                occurrence["reference_status"] = "mismatch_any"
+            else:
+                occurrence["reference_status"] = "match"
+        glossary_by_id[term_id] = {
+            "occurrences": occurrences,
+            "source": "localization_artifact",
+        }
+    return {"glossary_by_id": glossary_by_id, "entities_by_id": {}}
+
+
+def _locate_localization_source(mark: dict[str, Any], text: str) -> tuple[int, int] | None:
+    if not text:
+        return None
+    source_start = mark.get("source_start")
+    source_end = mark.get("source_end")
+    source_surface = str(mark.get("source_surface") or "")
+    if _has_int_span(source_start, source_end):
+        start = int(source_start)
+        end = int(source_end)
+        if 0 <= start < end <= len(text):
+            actual = text[start:end]
+            if not source_surface or actual == source_surface:
+                return start, end
+
+    needle = source_surface or str(mark.get("source_term") or "")
+    matches = _find_matches(text, needle, language="en") if needle else []
+    if len(matches) == 1:
+        return matches[0][0], matches[0][1]
+
+    occurrence_index = _occurrence_index(mark.get("occ_id"))
+    if occurrence_index is not None and 0 <= occurrence_index < len(matches):
+        return matches[occurrence_index][0], matches[occurrence_index][1]
+    return None
+
+
+def _occurrence_index(occ_id: Any) -> int | None:
+    tail = str(occ_id or "").rsplit(":", 1)[-1]
+    try:
+        return int(tail)
+    except (TypeError, ValueError):
+        return None
 
 
 def _increment_cascade_skip(audit: dict[str, Any], reason: str) -> None:
@@ -739,6 +981,7 @@ def _cascade_mark_from_decision(
     term = glossary_lookup.get(_norm_key(source_term)) or {}
     term_id = str(term.get("term_id") or term.get("glossary_id") or decision.get("term_id") or source_term)
     surface = target_text[span[0]:span[1]]
+    display_status, reference_status, adherence_label = _localization_reference_status(decision)
     return {
         "id": term_id,
         "block_id": block_id,
@@ -746,8 +989,13 @@ def _cascade_mark_from_decision(
         "span": [span[0], span[1]],
         "surface": surface,
         "matched_form": str(decision.get("matched_form_rank") or decision.get("accepted_form") or ""),
-        "status": str(decision.get("decision") or "localized"),
-        "display_status": "cascade",
+        "status": display_status,
+        "display_status": display_status,
+        "localization_status": str(decision.get("decision") or "localized"),
+        "reference_status": reference_status,
+        "adherence_label": adherence_label,
+        "accepted_forms": _dedupe_forms(decision.get("accepted_forms") or []),
+        "accepted_form": str((decision.get("t3_code_score") or {}).get("accepted_form") or ""),
         "constraint_strength": None,
         "forms_used": {},
         "forms_source": "cascade_report",
@@ -757,11 +1005,28 @@ def _cascade_mark_from_decision(
         "located_by": located_by,
         "provenance": "cascade_report",
         "source_term": source_term,
+        "source_start": decision.get("source_start"),
+        "source_end": decision.get("source_end"),
+        "source_surface": decision.get("source_surface"),
         "occ_id": decision.get("occ_id"),
         "masquerade_suspect": bool(decision.get("masquerade_suspect")),
         "clean_text_fallback": bool(decision.get("clean_text_fallback")),
         "gpt_fallback": bool(decision.get("t3_fallback_cache_key") or decision.get("t3_fallback_usage")),
     }
+
+
+def _localization_reference_status(decision: dict[str, Any]) -> tuple[str, str, str]:
+    """Classify only from evidence persisted in the Localization artifact."""
+
+    adherence_label = str((decision.get("t3_code_score") or {}).get("adherence_label") or "").strip().casefold()
+    if adherence_label == "off_glossary":
+        return "localization_mismatch", "mismatch", adherence_label
+    if adherence_label == "adherent":
+        return "localized", "match", adherence_label
+    if str(decision.get("decision") or "").strip().casefold() == "rendered":
+        # Tier-2 emits rendered only after matching one of accepted_forms.
+        return "localized", "match", "accepted_form_match"
+    return "localized_only", "unknown", adherence_label
 
 
 def _skip_cascade_decision(decision: dict[str, Any], reason: str) -> None:

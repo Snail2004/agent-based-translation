@@ -391,10 +391,10 @@ function RelationsTab({ relations, entities, block, onCreateRelation, onUpdateRe
     <div className="tab-body">
       <div className="ref-explain">
         <Ic.users size={12} />
-        <span><b>Document-level.</b> Relations connect two entities for Vietnamese address policy. They are not limited to the current block.</span>
+        <span><b>Block-scoped view.</b> Relations appear when this block grounds their evidence, phase boundary, or both participants. The underlying relation record remains document-level.</span>
       </div>
 
-      {!safeRelations.length && <Empty icon={Ic.users} text="No entity relations in this document yet." sub="Use Add relation below or apply an annotation drafter candidate." />}
+      {!safeRelations.length && <Empty icon={Ic.users} text="No entity relations are grounded in this block." sub="Select another block or let Builder populate relation evidence." />}
 
       {safeRelations.map(relation => {
         const open = expanded === relation.relation_id;
@@ -453,7 +453,7 @@ function RelationsTab({ relations, entities, block, onCreateRelation, onUpdateRe
                   <MiniField label="evidence">
                     {evidence.map((item, index) => (
                       <span key={index} className="var mono">
-                        {item.block_id}{item.surface ? `: "${item.surface}"` : ""}
+                        {item.block_id || item.trigger_block_id || item.source_block_id || "unresolved block"}{item.surface ? `: "${item.surface}"` : ""}
                       </span>
                     ))}
                   </MiniField>
@@ -815,16 +815,232 @@ function Empty({ icon: I, text, sub, good }) {
   );
 }
 
-function ProvenanceBanner({ ctx }) {
-  if (!ctx?.readOnly) return null;
-  const counts = ctx.docInfo?.thesis?.counts || {};
+function InspectorField({ label, children, wide }) {
+  if (children == null || children === "" || (Array.isArray(children) && !children.length)) return null;
   return (
-    <div className="provenance-banner">
-      <div className="prov-head"><Ic.lock size={13} />Thesis DatasetReadModel</div>
-      <div className="prov-line">runtime_memory = agent-built SQLite tables</div>
-      <div className="prov-line">eval_only = gold/reference evidence, never injectable</div>
-      <div className="prov-counts mono">
-        {counts.runtime_glossary || 0} terms / {counts.runtime_entities || 0} entities / {counts.translation_rows || 0} translations
+    <div className={"ci-field" + (wide ? " wide" : "")}>
+      <span>{label}</span>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function InspectorChips({ values, limit = 16 }) {
+  const rows = (values || []).filter(Boolean);
+  if (!rows.length) return null;
+  return (
+    <div className="ci-chips">
+      {rows.slice(0, limit).map((value, index) => <span className="ci-chip mono" key={`${value}:${index}`}>{value}</span>)}
+      {rows.length > limit && <span className="ci-chip muted">+{rows.length - limit}</span>}
+    </div>
+  );
+}
+
+function inspectorKey(kind, row, index = 0) {
+  if (kind === "glossary") return row.term_id || `${row.source_term || "term"}:${index}`;
+  if (kind === "entities") return row.entity_id || `${row.canonical_source || "entity"}:${index}`;
+  if (kind === "relations") return row.relation_id || `${row.source_entity_id || "source"}:${row.target_entity_id || "target"}:${index}`;
+  return row.chapter_id || `summary:${index}`;
+}
+
+function inspectorEntityLabel(entityId, entityMap) {
+  const entity = entityMap[entityId];
+  return entity?.canonical_source || entity?.canonical_target || entityId || "Unknown";
+}
+
+function inspectorSearchText(kind, row, entityMap) {
+  if (kind === "glossary") {
+    return [
+      row.source_term,
+      row.expected_target,
+      ...(row.allowed_variants || []),
+      ...(row.forbidden_variants || []),
+      row.status,
+    ].filter(Boolean).join(" ");
+  }
+  if (kind === "entities") {
+    return [
+      row.canonical_source,
+      row.canonical_target,
+      row.entity_type,
+      ...(row.aliases_source || []),
+      ...(row.aliases_target || []),
+    ].filter(Boolean).join(" ");
+  }
+  if (kind === "relations") {
+    return [
+      inspectorEntityLabel(row.source_entity_id, entityMap),
+      inspectorEntityLabel(row.target_entity_id, entityMap),
+      row.relation_type,
+      row.state_label,
+      row.notes,
+    ].filter(Boolean).join(" ");
+  }
+  return [
+    row.chapter_id,
+    row.summary_source,
+    row.summary_target,
+    row.setting,
+    row.emotional_tone,
+    ...(row.motifs || []),
+    ...(row.key_events || []),
+  ].filter(Boolean).join(" ");
+}
+
+function InspectorRow({ kind, row, index, entityMap, onSelect }) {
+  let title = "";
+  let target = "";
+  let meta = "";
+  let status = null;
+  let Icon = Ic.doc;
+
+  if (kind === "glossary") {
+    Icon = Ic.tag;
+    title = row.source_term || "(unnamed term)";
+    target = row.expected_target || "Target needed";
+    meta = `${(row.occurrences || []).length} occurrence${(row.occurrences || []).length === 1 ? "" : "s"}`;
+    status = row.status;
+  } else if (kind === "entities") {
+    Icon = Ic.users;
+    title = row.canonical_source || "(unnamed entity)";
+    target = row.canonical_target || row.entity_type || "Unresolved";
+    meta = `${(row.mentions || []).length} mention${(row.mentions || []).length === 1 ? "" : "s"}`;
+  } else if (kind === "relations") {
+    Icon = Ic.layers;
+    title = inspectorEntityLabel(row.source_entity_id, entityMap);
+    target = inspectorEntityLabel(row.target_entity_id, entityMap);
+    meta = row.state_label || row.relation_type || "relation";
+  } else {
+    Icon = Ic.doc;
+    title = row.chapter_title || row.title || row.chapter_id || "Chapter summary";
+    target = row.summary_source || row.summary_target || "Summary not written";
+    meta = row.source || "chapter";
+  }
+
+  return (
+    <button className="ci-row wb-record-row" type="button" onClick={() => onSelect(inspectorKey(kind, row, index))}>
+      <span className="ci-row-icon"><Icon size={13} /></span>
+      <span className="ci-row-main">
+        <b className={kind === "glossary" ? "mono" : ""}>{title}</b>
+        <span>{kind === "relations" && <Ic.arrowRight size={10} />}{target}</span>
+      </span>
+      <span className="ci-row-side">
+        {status ? <StatusPill status={status} /> : <em>{meta}</em>}
+        {status && <em>{meta}</em>}
+      </span>
+      <Ic.chevRight size={11} className="ci-row-caret" />
+    </button>
+  );
+}
+
+function InspectorDetail({ kind, row, entityMap, onBack, onFocusTerm, canManage, onManage }) {
+  if (!row) return null;
+  const occurrenceBlocks = kind === "glossary"
+    ? (row.occurrences || []).map(item => item.block_id)
+    : kind === "entities"
+      ? (row.mentions || []).map(item => item.block_id)
+      : [];
+  const evidenceBlocks = kind === "relations"
+    ? (row.evidence || []).map(item => item.block_id || item.trigger_block_id || item.source_block_id)
+    : [];
+
+  return (
+    <div className="ci-detail wb-detail">
+      <div className="ci-detail-head wb-section-title">
+        <button className="btn icon-only tip" type="button" data-tip="Back to records" aria-label="Back to records" onClick={onBack}>
+          <Ic.chevRight size={13} style={{ transform: "rotate(180deg)" }} />
+        </button>
+        <div>
+          <span>{kind === "glossary" ? "Glossary term" : kind === "entities" ? "Entity" : kind === "relations" ? "Relation" : "Chapter summary"}</span>
+          <b>{kind === "glossary" ? row.source_term : kind === "entities" ? row.canonical_source : kind === "relations" ? row.relation_type || "Relation" : row.chapter_id}</b>
+        </div>
+        <span className="ci-detail-spacer" />
+        {kind === "glossary" && (row.occurrences || []).length > 0 && (
+          <button className="btn sm" type="button" onClick={() => onFocusTerm?.(row.term_id, null, { toggle: false })}>
+            <Ic.search size={11} />Locate
+          </button>
+        )}
+        {canManage && <button className="btn sm" type="button" onClick={onManage}><Ic.pencil size={11} />Manage</button>}
+      </div>
+
+      <div className="ci-detail-body">
+        {kind === "glossary" && (
+          <>
+            <div className="ci-title-pair">
+              <strong className="mono">{row.source_term || "-"}</strong>
+              <Ic.arrowRight size={13} />
+              <strong>{row.expected_target || "Target needed"}</strong>
+            </div>
+            <div className="ci-field-grid">
+              <InspectorField label="Status"><StatusPill status={row.status} /></InspectorField>
+              <InspectorField label="Scope">{row.chapter_scope || row.scope || "global"}</InspectorField>
+              <InspectorField label="Confidence">{Number(row.confidence || 0).toFixed(2)}</InspectorField>
+              <InspectorField label="Occurrences">{(row.occurrences || []).length}</InspectorField>
+              <InspectorField label="Allowed variants" wide><InspectorChips values={row.allowed_variants} /></InspectorField>
+              <InspectorField label="Forbidden variants" wide><InspectorChips values={row.forbidden_variants} /></InspectorField>
+              <InspectorField label="Evidence blocks" wide><InspectorChips values={occurrenceBlocks} /></InspectorField>
+              <InspectorField label="Record id" wide><span className="mono">{row.term_id}</span></InspectorField>
+            </div>
+          </>
+        )}
+
+        {kind === "entities" && (
+          <>
+            <div className="ci-title-pair">
+              <strong>{row.canonical_source || "-"}</strong>
+              <Ic.arrowRight size={13} />
+              <strong>{row.canonical_target || "Target needed"}</strong>
+            </div>
+            <div className="ci-field-grid">
+              <InspectorField label="Type">{row.entity_type || "unknown"}</InspectorField>
+              <InspectorField label="Confidence">{Number(row.confidence || 0).toFixed(2)}</InspectorField>
+              <InspectorField label="Mentions">{(row.mentions || []).length}</InspectorField>
+              <InspectorField label="Pronoun policy">{row.pronoun_policy || "-"}</InspectorField>
+              <InspectorField label="Source aliases" wide><InspectorChips values={row.aliases_source} /></InspectorField>
+              <InspectorField label="Target aliases" wide><InspectorChips values={row.aliases_target} /></InspectorField>
+              <InspectorField label="Mention blocks" wide><InspectorChips values={occurrenceBlocks} /></InspectorField>
+              <InspectorField label="Record id" wide><span className="mono">{row.entity_id}</span></InspectorField>
+            </div>
+          </>
+        )}
+
+        {kind === "relations" && (
+          <>
+            <div className="ci-title-pair">
+              <strong>{inspectorEntityLabel(row.source_entity_id, entityMap)}</strong>
+              <Ic.arrowRight size={13} />
+              <strong>{inspectorEntityLabel(row.target_entity_id, entityMap)}</strong>
+            </div>
+            <div className="ci-field-grid">
+              <InspectorField label="Relation">{row.relation_type || "-"}</InspectorField>
+              <InspectorField label="State">{row.state_label || "-"}</InspectorField>
+              <InspectorField label="Valid from">{row.valid_from_block_id || "-"}</InspectorField>
+              <InspectorField label="Valid until">{row.valid_to_block_id || "-"}</InspectorField>
+              <InspectorField label="Trigger">{row.trigger_event_id || "-"}</InspectorField>
+              <InspectorField label="Confidence">{Number(row.confidence || 0).toFixed(2)}</InspectorField>
+              <InspectorField label="Evidence blocks" wide><InspectorChips values={evidenceBlocks} /></InspectorField>
+              <InspectorField label="Notes" wide>{row.notes}</InspectorField>
+              <InspectorField label="Record id" wide><span className="mono">{row.relation_id}</span></InspectorField>
+            </div>
+          </>
+        )}
+
+        {kind === "summaries" && (
+          <>
+            <div className="ci-summary-copy">{row.summary_source || "Summary not written."}</div>
+            <div className="ci-field-grid">
+              <InspectorField label="Chapter">{row.chapter_id || "-"}</InspectorField>
+              <InspectorField label="Source">{row.source || "-"}</InspectorField>
+              <InspectorField label="Setting">{row.setting || "-"}</InspectorField>
+              <InspectorField label="Tone">{row.emotional_tone || "-"}</InspectorField>
+              <InspectorField label="Motifs" wide><InspectorChips values={row.motifs} /></InspectorField>
+              <InspectorField label="Key events" wide><InspectorChips values={row.key_events} limit={20} /></InspectorField>
+              <InspectorField label="Open threads" wide><InspectorChips values={row.open_threads} limit={20} /></InspectorField>
+              <InspectorField label="Target summary" wide>{row.summary_target}</InspectorField>
+              <InspectorField label="Translation notes" wide>{row.translation_notes}</InspectorField>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -873,11 +1089,14 @@ function EvalOnlyTab({ evalOnly }) {
   );
 }
 
-const TABS = [
-  { id: "glossary", label: "Glossary", icon: Ic.tag },
+const CONTEXT_TABS = [
+  { id: "glossary", label: "Terms", icon: Ic.tag },
   { id: "entities", label: "Entities", icon: Ic.users },
-  { id: "relations", label: "Relations", icon: Ic.users },
-  { id: "summary", label: "Summary", icon: Ic.doc },
+  { id: "relations", label: "Relations", icon: Ic.layers },
+  { id: "summaries", label: "Summary", icon: Ic.doc },
+];
+
+const UTILITY_TABS = [
   { id: "notes", label: "Notes", icon: Ic.doc },
   { id: "reference", label: "Reference", icon: Ic.book },
   { id: "eval_only", label: "Eval-only", icon: Ic.lock },
@@ -885,46 +1104,256 @@ const TABS = [
   { id: "progress", label: "Progress", icon: Ic.layers },
 ];
 
-function RightPanel({ openTabs, onToggleTab, counts, ctx }) {
-  const openSet = new Set(openTabs || []);
+function InspectorUtility({ id, ctx }) {
+  if (id === "notes") return <NotesTab block={ctx.block} onUpdateBlockNotes={ctx.onUpdateBlockNotes} />;
+  if (id === "reference") {
+    return <ReferenceTab key={ctx.block.block_id} refs={ctx.references} block={ctx.block} onUpdateReference={ctx.onUpdateReference}
+      onCreateReference={ctx.onCreateReference} onSaveDraft={ctx.onSaveDraft} onMarkReviewed={ctx.onMarkReviewedReference}
+      onLockReference={ctx.onLockReference} />;
+  }
+  if (id === "eval_only") return <EvalOnlyTab evalOnly={ctx.evalOnly} />;
+  if (id === "validate") {
+    return <ValidateTab errors={ctx.errors} docInfo={ctx.docInfo} schemaMigrating={ctx.schemaMigrating}
+      onMigrateSchema={ctx.onMigrateSchema} onJump={ctx.onJump} />;
+  }
+  return <ProgressTab stats={ctx.stats} freezeReasons={ctx.freezeReasons} history={ctx.history} />;
+}
+
+function InspectorManager({ kind, records, ctx, onBack }) {
   return (
-    <div className="col col-right">
-      <ProvenanceBanner ctx={ctx} />
-      <div className="rp-accordion">
-        {TABS.map(t => {
-          const open = openSet.has(t.id);
-          const I = t.icon;
-          const badge = counts[t.id];
-          return (
-            <div key={t.id} className={"rp-sec" + (open ? " open" : "")}>
-              <button className="rp-head" onClick={() => onToggleTab(t.id)} aria-expanded={open}>
-                <Ic.chevRight size={12} className="rp-caret" style={{ transform: open ? "rotate(90deg)" : "none" }} />
-                <I size={13} className="rp-ic" />
-                <span className="rp-label">{t.label}</span>
-                <span className="rp-spacer" />
-                {badge != null && badge.text && (
-                  <span className={"rp-badge" + (badge.tone ? " " + badge.tone : "")}>{badge.text}</span>
-                )}
-              </button>
-              {open && (
-                <div className="rp-content">
-                  {t.id === "glossary" && <GlossaryTab terms={ctx.terms} onDeleteTerm={ctx.onDeleteTerm} onUpdateTerm={ctx.onUpdateTerm} onFocusTerm={ctx.onFocusTerm} />}
-                  {t.id === "entities" && <EntitiesTab entities={ctx.entities} allEntities={ctx.allEntities} block={ctx.block} onUpdateEntity={ctx.onUpdateEntity} onUpdateDiscourse={ctx.onUpdateDiscourse} onDeleteEntity={ctx.onDeleteEntity} />}
-                  {t.id === "relations" && <RelationsTab relations={ctx.relations} entities={ctx.allEntities} block={ctx.block}
-                    onCreateRelation={ctx.onCreateRelation} onUpdateRelation={ctx.onUpdateRelation} onDeleteRelation={ctx.onDeleteRelation} />}
-                  {t.id === "summary" && <SummaryTab summary={ctx.summary} entities={ctx.allEntities} onUpdateSummary={ctx.onUpdateSummary} />}
-                  {t.id === "notes" && <NotesTab block={ctx.block} onUpdateBlockNotes={ctx.onUpdateBlockNotes} />}
-                  {t.id === "reference" && <ReferenceTab key={ctx.block.block_id} refs={ctx.references} block={ctx.block} onUpdateReference={ctx.onUpdateReference} onCreateReference={ctx.onCreateReference} onSaveDraft={ctx.onSaveDraft} onMarkReviewed={ctx.onMarkReviewedReference} onLockReference={ctx.onLockReference} />}
-                  {t.id === "eval_only" && <EvalOnlyTab evalOnly={ctx.evalOnly} />}
-                  {t.id === "validate" && <ValidateTab errors={ctx.errors} docInfo={ctx.docInfo} schemaMigrating={ctx.schemaMigrating} onMigrateSchema={ctx.onMigrateSchema} onJump={ctx.onJump} />}
-                  {t.id === "progress" && <ProgressTab stats={ctx.stats} freezeReasons={ctx.freezeReasons} history={ctx.history} />}
-                </div>
-              )}
-            </div>
-          );
-        })}
+    <div className="ci-manage">
+      <div className="ci-subview-head">
+        <button className="btn icon-only tip" type="button" data-tip="Back to inspector" aria-label="Back to inspector" onClick={onBack}>
+          <Ic.chevRight size={13} style={{ transform: "rotate(180deg)" }} />
+        </button>
+        <div><span>Manage current block</span><b>{kind === "summaries" ? "Summary" : kind[0].toUpperCase() + kind.slice(1)}</b></div>
+      </div>
+      <div className="ci-subview-body">
+        {kind === "glossary" && <GlossaryTab terms={records} onDeleteTerm={ctx.onDeleteTerm} onUpdateTerm={ctx.onUpdateTerm} onFocusTerm={ctx.onFocusTerm} />}
+        {kind === "entities" && <EntitiesTab entities={records} allEntities={ctx.allEntities} block={ctx.block} onUpdateEntity={ctx.onUpdateEntity}
+          onUpdateDiscourse={ctx.onUpdateDiscourse} onDeleteEntity={ctx.onDeleteEntity} />}
+        {kind === "relations" && <RelationsTab relations={records} entities={ctx.allEntities} block={ctx.block}
+          onCreateRelation={ctx.onCreateRelation} onUpdateRelation={ctx.onUpdateRelation} onDeleteRelation={ctx.onDeleteRelation} />}
+        {kind === "summaries" && <SummaryTab summary={records[0] || ctx.summary} entities={ctx.allEntities} onUpdateSummary={ctx.onUpdateSummary} />}
       </div>
     </div>
+  );
+}
+
+function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpanded }) {
+  const safeOpenTabs = openTabs || [];
+  const requestedTab = safeOpenTabs[safeOpenTabs.length - 1] || "glossary";
+  const normalizedRequested = requestedTab === "summary" ? "summaries" : requestedTab;
+  const requestedIsContext = CONTEXT_TABS.some(tab => tab.id === normalizedRequested);
+  const requestedIsUtility = UTILITY_TABS.some(tab => tab.id === normalizedRequested);
+  const [scope, setScope] = React.useState("current");
+  const [activeKind, setActiveKind] = React.useState(requestedIsContext ? normalizedRequested : "glossary");
+  const [utility, setUtility] = React.useState(requestedIsUtility ? normalizedRequested : null);
+  const [toolsOpen, setToolsOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
+  const [selectedKey, setSelectedKey] = React.useState(null);
+  const [manage, setManage] = React.useState(false);
+  const [visibleLimit, setVisibleLimit] = React.useState(100);
+
+  React.useEffect(() => {
+    if (requestedIsContext) {
+      setActiveKind(normalizedRequested);
+      setUtility(null);
+      setManage(false);
+    } else if (requestedIsUtility) {
+      setUtility(normalizedRequested);
+      setManage(false);
+    }
+  }, [normalizedRequested, requestedIsContext, requestedIsUtility]);
+
+  React.useEffect(() => {
+    setSelectedKey(null);
+    setManage(false);
+    setVisibleLimit(100);
+  }, [scope, activeKind, ctx.block?.block_id, ctx.currentScopeKind]);
+
+  React.useEffect(() => {
+    setVisibleLimit(100);
+  }, [query]);
+
+  const currentMemory = ctx.currentMemory || {
+    glossary: ctx.terms || [],
+    entities: ctx.entities || [],
+    relations: ctx.relations || [],
+    summaries: ctx.summary ? [ctx.summary] : [],
+  };
+  const projectMemory = ctx.projectMemory || currentMemory;
+  const memory = scope === "project" ? projectMemory : currentMemory;
+  const records = memory[activeKind] || [];
+  const entityMap = React.useMemo(() => {
+    const map = {};
+    (projectMemory.entities || []).forEach(entity => { map[entity.entity_id] = entity; });
+    return map;
+  }, [projectMemory.entities]);
+  const filtered = React.useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase();
+    if (!needle) return records;
+    return records.filter(row => inspectorSearchText(activeKind, row, entityMap).toLocaleLowerCase().includes(needle));
+  }, [records, query, activeKind, entityMap]);
+  const selected = selectedKey == null
+    ? null
+    : records.find((row, index) => inspectorKey(activeKind, row, index) === selectedKey) || null;
+  const canManage = !ctx.readOnly && scope === "current" && ctx.currentScopeKind === "block";
+  const currentScopeTitle = ctx.currentScopeKind === "chapter"
+    ? "Current chapter"
+    : ctx.currentScopeKind === "book"
+      ? "Current book"
+      : "Current block";
+  const totals = ctx.memoryTotals || {
+    glossary: (projectMemory.glossary || []).length,
+    entities: (projectMemory.entities || []).length,
+    relations: (projectMemory.relations || []).length,
+  };
+
+  function selectKind(kind) {
+    setActiveKind(kind);
+    setUtility(null);
+    setToolsOpen(false);
+    setSelectedKey(null);
+    setManage(false);
+    onToggleTab?.(kind === "summaries" ? "summary" : kind);
+  }
+
+  function openUtility(id) {
+    setUtility(id);
+    setToolsOpen(false);
+    setSelectedKey(null);
+    setManage(false);
+    onToggleTab?.(id);
+  }
+
+  return (
+    <div className={"col col-right context-inspector wb-operational" + (expanded ? " is-expanded" : "")}>
+      <div className="ci-header wb-toolbar">
+        <div className="ci-heading">
+          <span>Context inspector</span>
+          <b title={scope === "project" ? (ctx.docInfo?.metadata?.title || ctx.docInfo?.doc_id) : ctx.currentScopeLabel}>
+            {scope === "project" ? "Whole project" : (ctx.currentScopeLabel || currentScopeTitle)}
+          </b>
+        </div>
+        <div className="ci-header-counts" aria-label="Project memory totals">
+          <span><b>{totals.glossary || 0}</b>T</span>
+          <span><b>{totals.entities || 0}</b>E</span>
+          <span><b>{totals.relations || 0}</b>R</span>
+        </div>
+        <button className={"btn icon-only tip tip-left" + (toolsOpen || utility ? " is-on" : "")} type="button"
+          data-tip="Context tools" aria-label="Context tools" aria-expanded={toolsOpen} onClick={() => setToolsOpen(open => !open)}>
+          <Ic.sliders size={13} />
+        </button>
+        <button className="btn icon-only tip tip-left" type="button" data-tip="Open full Memory workspace"
+          aria-label="Open full Memory workspace" onClick={() => ctx.onOpenMemory?.(activeKind === "summaries" ? "summary" : activeKind)}>
+          <Ic.book size={13} />
+        </button>
+        <button className={"btn icon-only tip tip-left" + (expanded ? " is-on" : "")} type="button"
+          data-tip={expanded ? "Restore panel width" : "Expand context panel"} aria-label={expanded ? "Restore panel width" : "Expand context panel"}
+          aria-pressed={!!expanded} onClick={onToggleExpanded}>
+          <Ic.expand size={13} />
+        </button>
+      </div>
+
+      {toolsOpen && (
+        <div className="ci-tools wb-toolbar">
+          {UTILITY_TABS.map(tab => {
+            const Icon = tab.icon;
+            const badge = counts?.[tab.id];
+            return (
+              <button key={tab.id} type="button" className={utility === tab.id ? "is-active" : ""} onClick={() => openUtility(tab.id)}>
+                <Icon size={12} /><span>{tab.label}</span>
+                {badge?.text && <em className={badge.tone || ""}>{badge.text}</em>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {utility ? (
+        <div className="ci-subview">
+          <div className="ci-subview-head wb-section-title">
+            <button className="btn icon-only tip" type="button" data-tip="Back to context" aria-label="Back to context"
+              onClick={() => { setUtility(null); onToggleTab?.(activeKind === "summaries" ? "summary" : activeKind); }}>
+              <Ic.chevRight size={13} style={{ transform: "rotate(180deg)" }} />
+            </button>
+            <div>
+              <span>Context tools</span>
+              <b>{UTILITY_TABS.find(tab => tab.id === utility)?.label}</b>
+            </div>
+          </div>
+          <div className="ci-subview-body"><InspectorUtility id={utility} ctx={ctx} /></div>
+        </div>
+      ) : manage ? (
+        <InspectorManager kind={activeKind} records={records} ctx={ctx} onBack={() => setManage(false)} />
+      ) : (
+        <>
+          <div className="ci-scope wb-toolbar" role="group" aria-label="Context scope">
+            <button className={scope === "current" ? "is-active" : ""} type="button" onClick={() => setScope("current")}>
+              {currentScopeTitle}<span>{ctx.currentScopeLabel}</span>
+            </button>
+            <button className={scope === "project" ? "is-active" : ""} type="button" onClick={() => setScope("project")}>
+              Whole project<span>{ctx.docInfo?.metadata?.title || ctx.docInfo?.doc_id}</span>
+            </button>
+          </div>
+
+          <div className="ci-tabs wb-toolbar" role="tablist" aria-label="Context record type">
+            {CONTEXT_TABS.map(tab => {
+              const Icon = tab.icon;
+              const tabCount = (memory[tab.id] || []).length;
+              return (
+                <button key={tab.id} type="button" role="tab" aria-selected={activeKind === tab.id}
+                  className={activeKind === tab.id ? "is-active" : ""} onClick={() => selectKind(tab.id)}>
+                  <Icon size={12} /><span>{tab.label}</span><em>{tabCount}</em>
+                </button>
+              );
+            })}
+          </div>
+
+          {selected ? (
+            <InspectorDetail kind={activeKind} row={selected} entityMap={entityMap} onBack={() => setSelectedKey(null)}
+              onFocusTerm={ctx.onFocusTerm} canManage={canManage} onManage={() => setManage(true)} />
+          ) : (
+            <>
+              <div className="ci-toolbar wb-toolbar">
+                <label className="ci-search">
+                  <Ic.search size={12} />
+                  <input value={query} onChange={event => setQuery(event.target.value)} placeholder={`Search ${CONTEXT_TABS.find(tab => tab.id === activeKind)?.label.toLowerCase() || "context"}`} />
+                  {query && <button type="button" aria-label="Clear search" onClick={() => setQuery("")}><Ic.x size={10} /></button>}
+                </label>
+                {canManage && (
+                  <button className="btn sm" type="button" onClick={() => setManage(true)}><Ic.pencil size={11} />Manage</button>
+                )}
+              </div>
+              <div className="ci-list-head wb-section-title">
+                <span>{scope === "project" ? "Whole project" : currentScopeTitle}</span>
+                <b>{filtered.length} record{filtered.length === 1 ? "" : "s"}</b>
+              </div>
+              <div className="ci-list wb-record-list">
+                {!filtered.length ? (
+                  <Empty icon={CONTEXT_TABS.find(tab => tab.id === activeKind)?.icon || Ic.doc}
+                    text={`No ${CONTEXT_TABS.find(tab => tab.id === activeKind)?.label.toLowerCase() || "context"} records in this scope.`}
+                    sub={scope === "current" ? "Switch to Whole project to inspect every stored record." : "This project has no stored records of this type."} />
+                ) : (
+                  <>
+                    {filtered.slice(0, visibleLimit).map((row, index) => (
+                      <InspectorRow key={inspectorKey(activeKind, row, index)} kind={activeKind} row={row} index={index}
+                        entityMap={entityMap} onSelect={setSelectedKey} />
+                    ))}
+                    {filtered.length > visibleLimit && (
+                      <button className="ci-more" type="button" onClick={() => setVisibleLimit(limit => limit + 100)}>
+                        Show next {Math.min(100, filtered.length - visibleLimit)}<span>{visibleLimit} / {filtered.length}</span>
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </>
+      )}
+      </div>
   );
 }
 

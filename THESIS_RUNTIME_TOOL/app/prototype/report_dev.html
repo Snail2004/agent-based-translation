@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Run Report · fixture-only dev harness</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="report.css" />
+<style>
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #fff; }
+  body { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  #root { width: 100%; height: 100%; }
+  .report-dev-shell { width: 100%; height: 100%; display: grid; grid-template-rows: 36px minmax(0, 1fr); overflow: hidden; }
+  .report-dev-toolbar {
+    min-width: 0; display: flex; align-items: center; gap: 10px; padding: 5px 10px;
+    border-bottom: 1px solid #30343a; background: #202328; color: #d8dce3;
+    font: 10px "Cascadia Code", Consolas, monospace;
+  }
+  .report-dev-toolbar strong { color: #d9a441; letter-spacing: .08em; white-space: nowrap; }
+  .report-dev-toolbar label { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+  .report-dev-toolbar select,
+  .report-dev-toolbar button { height: 25px; border: 1px solid #4b5059; border-radius: 0; background: #181a1e; color: #d8dce3; font: inherit; }
+  .report-dev-toolbar select { min-width: 155px; padding: 1px 6px; }
+  .report-dev-toolbar button { padding: 1px 8px; cursor: pointer; }
+  .report-dev-toolbar span { margin-left: auto; overflow: hidden; color: #8b919d; text-overflow: ellipsis; white-space: nowrap; }
+  .report-dev-stage { min-width: 0; min-height: 0; overflow: hidden; }
+  @media (max-width: 640px) {
+    .report-dev-shell { grid-template-rows: 62px minmax(0, 1fr); }
+    .report-dev-toolbar { align-content: center; align-items: center; flex-wrap: wrap; gap: 4px 7px; padding: 4px 7px; }
+    .report-dev-toolbar span { width: 100%; margin-left: 0; font-size: 8px; }
+  }
+</style>
+</head>
+<body>
+<div id="root">loading report fixtures…</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="fixtures/report_shell_v1/scenarios.js"></script>
+<script type="text/babel" src="report.jsx"></script>
+<script type="text/babel">
+function ReportDevHarness() {
+  const scenarios = window.REPORT_DEV_SCENARIOS || [];
+  const requested = new URLSearchParams(window.location.search).get("scenario");
+  const initial = scenarios.find(row => row.id === requested) || scenarios.find(row => row.id === "comparison") || scenarios[0];
+  const [scenarioId, setScenarioId] = React.useState(initial?.id || "");
+  const [theme, setTheme] = React.useState("light");
+  const [refreshCount, setRefreshCount] = React.useState(0);
+  const scenario = scenarios.find(row => row.id === scenarioId) || initial;
+
+  function chooseScenario(nextId) {
+    setScenarioId(nextId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("scenario", nextId);
+    window.history.replaceState({}, "", url);
+  }
+
+  if (!scenario) {
+    return <div style={{ padding: 20, font: "12px monospace" }}>No fixture scenarios found.</div>;
+  }
+
+  return (
+    <div className="report-dev-shell">
+      <div className="report-dev-toolbar">
+        <strong>REPORT DEV · FIXTURE ONLY</strong>
+        <label>
+          Scenario
+          <select aria-label="Fixture scenario" value={scenarioId} onChange={event => chooseScenario(event.target.value)}>
+            {scenarios.map(row => <option key={row.id} value={row.id}>{row.label}</option>)}
+          </select>
+        </label>
+        <button type="button" onClick={() => setTheme(value => value === "light" ? "dark" : "light")}>Toggle theme</button>
+        <span>{theme === "light" ? "LIGHT = WHITE BACKGROUND" : "DARK = CONSOLE FAMILY"} · refresh probe {refreshCount}</span>
+      </div>
+      <div className="report-dev-stage">
+        <AgentReportView
+          runId={scenario.run.run_id}
+          runs={scenarios.map(row => row.run)}
+          selectedRun={scenario.run}
+          onSelectRun={runId => {
+            const target = scenarios.find(row => row.run.run_id === runId);
+            if (target) chooseScenario(target.id);
+          }}
+          report={scenario.report}
+          reportSource="fixture"
+          runtimeAvailable={true}
+          projectId="fixture:report-shell-project"
+          projectTitle="Full Run Report UI fixture"
+          onBack={() => { window.location.href = "index.html"; }}
+          onOpenConsole={() => { window.location.href = "console_dev.html"; }}
+          onRefresh={() => setRefreshCount(count => count + 1)}
+          theme={theme}
+          onToggleTheme={() => setTheme(value => value === "light" ? "dark" : "light")}
+          fixtureOnly={true}
+        />
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<ReportDevHarness />);
+</script>
+</body>
+</html>

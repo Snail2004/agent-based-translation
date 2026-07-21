@@ -1,5 +1,223 @@
 /* ===== PROJECT / SOURCE SCREEN: project selection, upload, metadata, extract ===== */
 
+function quickImportStem(filename) {
+  return String(filename || "document").replace(/\.[^.]+$/, "").trim() || "document";
+}
+
+function quickImportDocId(filename, projects) {
+  const stem = quickImportStem(filename)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]+/g, "_")
+    .replace(/^[_.-]+|[_.-]+$/g, "") || "document";
+  const existing = new Set((projects || []).map(project => project.doc_id));
+  if (!existing.has(stem)) return stem;
+  let suffix = 2;
+  while (existing.has(`${stem}_${suffix}`)) suffix += 1;
+  return `${stem}_${suffix}`;
+}
+
+function quickImportFileSize(bytes) {
+  const size = Number(bytes || 0);
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const QUICK_IMPORT_SOURCE_RE = /\.(txt|epub|md|markdown|html|htm)$/i;
+
+function quickImportSourceFormat(filename) {
+  const lower = String(filename || "").toLowerCase();
+  if (/\.(md|markdown)$/.test(lower)) return "markdown";
+  if (/\.(html|htm)$/.test(lower)) return "html";
+  if (lower.endsWith(".epub")) return "epub";
+  return "txt";
+}
+
+function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, onExtract, onOpenAdvanced }) {
+  const [step, setStep] = React.useState(1);
+  const [file, setFile] = React.useState(null);
+  const [profile, setProfile] = React.useState("literary");
+  const [docId, setDocId] = React.useState("");
+  const [title, setTitle] = React.useState("");
+  const [idTouched, setIdTouched] = React.useState(false);
+  const [titleTouched, setTitleTouched] = React.useState(false);
+  const [fileError, setFileError] = React.useState("");
+  const [busy, setBusy] = React.useState("");
+  const [error, setError] = React.useState("");
+  const [createdDocId, setCreatedDocId] = React.useState("");
+  const [sourceUploaded, setSourceUploaded] = React.useState(false);
+  const [result, setResult] = React.useState(null);
+
+  const supportedFile = file && QUICK_IMPORT_SOURCE_RE.test(file.name || "");
+  const validDocId = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(docId.trim());
+  const duplicateDocId = (projects || []).some(project => project.doc_id === docId.trim());
+  const canContinue = !!supportedFile && validDocId && !duplicateDocId && !!title.trim();
+  const close = () => { if (!busy) onClose(); };
+
+  React.useEffect(() => {
+    function onKey(event) {
+      if (event.key === "Escape" && !busy) close();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy]);
+
+  function selectFile(nextFile) {
+    if (!nextFile) return;
+    if (!QUICK_IMPORT_SOURCE_RE.test(nextFile.name || "")) {
+      setFile(null);
+      setFileError("Hiện tại hệ thống nhận file EPUB, Markdown, HTML hoặc TXT.");
+      return;
+    }
+    setFile(nextFile);
+    setFileError("");
+    if (!idTouched) setDocId(quickImportDocId(nextFile.name, projects));
+    if (!titleTouched) setTitle(quickImportStem(nextFile.name));
+  }
+
+  function handleDrop(event) {
+    event.preventDefault();
+    selectFile(event.dataTransfer?.files?.[0]);
+  }
+
+  async function runImport() {
+    if (!canContinue && !createdDocId) return;
+    setStep(3);
+    setError("");
+    let targetDocId = createdDocId;
+    let uploaded = sourceUploaded;
+    try {
+      if (!targetDocId) {
+        setBusy("create");
+        const sourceFormat = quickImportSourceFormat(file.name);
+        const metadata = {
+          title: title.trim(),
+          author: "",
+          domain: profile === "technical" ? "technical" : "literature",
+          genre: profile === "technical" ? "technical" : "novel",
+          source_format: sourceFormat,
+          license: "",
+          source_url: "",
+          contamination_risk: "low",
+        };
+        const created = await onCreateProject(docId.trim(), metadata, { activate: false });
+        if (!created?.doc_id) throw new Error("Không thể tạo project mới.");
+        targetDocId = created.doc_id;
+        setCreatedDocId(targetDocId);
+      }
+
+      if (!uploaded) {
+        setBusy("upload");
+        const uploadedResult = await onUploadSource(file, false, targetDocId);
+        if (!uploadedResult) throw new Error("Không thể tải file nguồn lên project.");
+        uploaded = true;
+        setSourceUploaded(true);
+      }
+
+      setBusy("extract");
+      const extractResult = await onExtract(false, targetDocId);
+      if (!extractResult) throw new Error("Không thể trích xuất cấu trúc tài liệu.");
+      setResult({
+        docId: targetDocId,
+        chapters: Number(extractResult.document?.chapters || 0),
+        blocks: Number(extractResult.document?.blocks || 0),
+      });
+      setBusy("");
+    } catch (err) {
+      setBusy("");
+      setError(err?.message || String(err));
+    }
+  }
+
+  const actions = step === 1 ? <>
+    <button className="btn" type="button" onClick={close}>Hủy</button>
+    <button className="btn primary" type="button" disabled={!canContinue} onClick={() => setStep(2)}>Tiếp tục <Ic.arrowRight size={13} /></button>
+  </> : step === 2 ? <>
+    <button className="btn" type="button" onClick={() => setStep(1)}>Quay lại</button>
+    <button className="btn primary" type="button" onClick={runImport}><Ic.play size={13} />Tạo và trích xuất</button>
+  </> : result ? <>
+    {onOpenAdvanced && <button className="btn" type="button" onClick={onOpenAdvanced}><Ic.folder size={13} />Project / Source</button>}
+    <button className="btn primary" type="button" onClick={close}>Mở danh sách block</button>
+  </> : error ? <>
+    <button className="btn" type="button" onClick={() => setStep(createdDocId ? 2 : 1)}>
+      <Ic.chevRight size={13} style={{ transform: "rotate(180deg)" }} />{createdDocId ? "Xem lại" : "Sửa thông tin"}
+    </button>
+    <button className="btn primary" type="button" onClick={runImport}><Ic.refresh size={13} />Thử lại</button>
+  </> : <button className="btn primary" type="button" disabled><span className="as-spin" />Đang xử lý</button>;
+
+  return (
+    <Modal title="Nhập tài liệu mới" icon={Ic.upload} className="quick-import-modal" onClose={close} actions={actions}>
+      <div className="quick-import-steps" aria-label={`Bước ${step} trên 3`}>
+        {["Nguồn", "Xác nhận", "Trích xuất"].map((label, index) => {
+          const number = index + 1;
+          const state = number === step ? "active" : number < step ? "done" : "";
+          return <div key={label} className={`quick-import-step ${state}`}><span>{number < step ? <Ic.check size={11} /> : number}</span><b>{label}</b></div>;
+        })}
+      </div>
+
+      {step === 1 && <div className="quick-import-pane">
+        <label className={`quick-import-drop${file ? " has-file" : ""}`}
+          onDragOver={event => event.preventDefault()} onDrop={handleDrop}>
+          <input type="file" accept=".txt,.epub,.md,.markdown,.html,.htm" onChange={event => selectFile(event.target.files?.[0])} />
+          <span className="quick-import-drop-icon"><Ic.upload size={18} /></span>
+          <span className="quick-import-drop-copy">
+            <b>{file ? file.name : "Chọn hoặc kéo thả tài liệu"}</b>
+            <em>{file ? quickImportFileSize(file.size) : "EPUB, Markdown, HTML hoặc TXT"}</em>
+          </span>
+          <span className="btn sm">Chọn file</span>
+        </label>
+        {fileError && <div className="quick-import-error"><Ic.alert size={12} />{fileError}</div>}
+
+        <div className="form-grid quick-import-fields">
+          <label className="form-field">
+            <span className="form-label">Tên tài liệu</span>
+            <input value={title} onChange={event => { setTitleTouched(true); setTitle(event.target.value); }} placeholder="Tên hiển thị" />
+          </label>
+          <label className="form-field">
+            <span className="form-label">Project ID</span>
+            <input className="mono" value={docId} onChange={event => { setIdTouched(true); setDocId(event.target.value); }} placeholder="document_id" />
+            {docId && !validDocId && <span className="field-error">Chỉ dùng chữ, số, dấu chấm, gạch ngang hoặc gạch dưới.</span>}
+            {validDocId && duplicateDocId && <span className="field-error">Project ID này đã tồn tại.</span>}
+          </label>
+        </div>
+
+        <div className="quick-import-profile-label">Profile xử lý</div>
+        <div className="quick-import-profile" role="group" aria-label="Chọn profile xử lý">
+          <button type="button" className={profile === "technical" ? "active" : ""} aria-pressed={profile === "technical"} onClick={() => setProfile("technical")}>
+            <Ic.layers size={14} /><span><b>Kỹ thuật</b><em>Thuật ngữ và cấu trúc tài liệu</em></span>
+          </button>
+          <button type="button" className={profile === "literary" ? "active" : ""} aria-pressed={profile === "literary"} onClick={() => setProfile("literary")}>
+            <Ic.book size={14} /><span><b>Văn học</b><em>Nhân vật và mạch kể chuyện</em></span>
+          </button>
+        </div>
+        <div className="quick-import-note"><Ic.lock size={12} />Tài liệu được tạo thành project mới; dataset đang mở không bị thay đổi.</div>
+      </div>}
+
+      {step === 2 && <div className="quick-import-pane">
+        <div className="quick-import-summary">
+          <div><span>File nguồn</span><b>{file?.name}</b><em>{quickImportFileSize(file?.size)}</em></div>
+          <div><span>Project</span><b className="mono">{docId}</b><em>{title}</em></div>
+          <div><span>Profile</span><b>{profile === "technical" ? "Kỹ thuật" : "Văn học"}</b><em>{profile === "technical" ? "technical" : "literature"}</em></div>
+        </div>
+        <div className="quick-import-note"><Ic.alert size={12} />Nếu tài liệu có cấu trúc không rõ, dùng Project / Source sau khi nhập để kiểm tra và chuẩn hóa.</div>
+      </div>}
+
+      {step === 3 && <div className="quick-import-pane">
+        <div className={`quick-import-result${error ? " failed" : result ? " complete" : ""}`}>
+          <span className="quick-import-result-icon">{error ? <Ic.xCircle size={22} /> : result ? <Ic.checkCircle size={22} /> : <span className="as-spin" />}</span>
+          <div>
+            <b>{error ? "Chưa thể hoàn tất" : result ? "Đã tạo dữ liệu có cấu trúc" : busy === "create" ? "Đang tạo project" : busy === "upload" ? "Đang tải file nguồn" : "Đang tách chương và block"}</b>
+            <p>{error || (result ? `${result.chapters} chương/unit · ${result.blocks} block` : "Không đóng cửa sổ trong khi dữ liệu đang được ghi.")}</p>
+            {(createdDocId || result?.docId) && <span className="mono">{result?.docId || createdDocId}</span>}
+          </div>
+        </div>
+      </div>}
+    </Modal>
+  );
+}
+
 function ProjectSourceScreen({
   projects,
   activeDocId,
@@ -15,88 +233,25 @@ function ProjectSourceScreen({
   onUploadSource,
   onBack,
   onExtract,
-  onBuildNormalizeCandidate,
-  onLoadNormalizeAgentPlan,
-  onImportNormalizePlan,
-  onApplyNormalizePlan,
-  onBuildAnnotationInput,
-  onLoadAnnotationAgentCandidate,
-  onResolveAnnotationCandidate,
-  onApplyAnnotationCandidate,
   readOnly,
 }) {
   const [file, setFile] = React.useState(null);
   const [confirmOverwrite, setConfirmOverwrite] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
-  const [confirmNormalizeApply, setConfirmNormalizeApply] = React.useState(false);
   const [newDocId, setNewDocId] = React.useState("");
   const [projectNote, setProjectNote] = React.useState("");
-  const [normalizeCandidate, setNormalizeCandidate] = React.useState(null);
-  const [normalizePlanText, setNormalizePlanText] = React.useState("");
-  const [normalizeResult, setNormalizeResult] = React.useState(null);
-  const [normalizeBusy, setNormalizeBusy] = React.useState("");
-  const [normalizeReviewed, setNormalizeReviewed] = React.useState(false);
-  const [annotationChapterId, setAnnotationChapterId] = React.useState("");
-  const [annotationInput, setAnnotationInput] = React.useState(null);
-  const [annotationCandidateText, setAnnotationCandidateText] = React.useState("");
-  const [annotationResolved, setAnnotationResolved] = React.useState(null);
-  const [annotationBusy, setAnnotationBusy] = React.useState("");
   const meta = docInfo.metadata || {};
   const prov = docInfo.provenance || {};
   const extracted = blocks.length > 0;
-  const selectedProject = projects.find(p => p.doc_id === activeDocId);
+  const localProjects = (projects || []).filter(project => (
+    project?.source !== "thesis" && !String(project?.doc_id || "").startsWith("thesis:")
+  ));
+  const selectedProject = localProjects.find(p => p.doc_id === activeDocId);
   const protectedProject = activeDocId === "gold_demo_01";
-  const normalizerState = selectedProject?.normalizer || {};
-  const normalizerHistory = Array.isArray(normalizerState.history)
-    ? normalizerState.history.slice().reverse().slice(0, 6)
-    : [];
-
-  function normalizerStateLabel() {
-    if (normalizerState.applied) return "normalized";
-    if (normalizerState.normalized_preview_available) return "preview ready";
-    if (normalizerState.agent_plan_available) return "agent plan ready";
-    if (normalizerState.candidate_built) return "candidate built";
-    return "not normalized";
-  }
-
-  function normalizerStateTone() {
-    if (normalizerState.low_confidence || normalizerState.needs_human_check) return "warn";
-    if (normalizerState.applied) return "done";
-    if (normalizerState.normalized_preview_available || normalizerState.agent_plan_available || normalizerState.candidate_built) return "info";
-    return "";
-  }
-
-  function normalizerEventLabel(event) {
-    const labels = {
-      candidate_built: "Built candidate",
-      plan_imported: "Imported plan",
-      applied: "Applied normalized structure",
-    };
-    return labels[event] || event || "Normalizer event";
-  }
 
   React.useEffect(() => {
     setProjectNote(selectedProject?.note || "");
-    setNormalizeCandidate(null);
-    setNormalizePlanText("");
-    setNormalizeResult(null);
-    setNormalizeBusy("");
-    setNormalizeReviewed(false);
-    setAnnotationInput(null);
-    setAnnotationCandidateText("");
-    setAnnotationResolved(null);
-    setAnnotationBusy("");
   }, [selectedProject?.doc_id, selectedProject?.note]);
-
-  React.useEffect(() => {
-    if (!chapters.length) {
-      setAnnotationChapterId("");
-      return;
-    }
-    if (!annotationChapterId || !chapters.some(ch => ch.chapter_id === annotationChapterId)) {
-      setAnnotationChapterId(chapters[0].chapter_id);
-    }
-  }, [chapters, annotationChapterId]);
 
   function patchMetadata(patch) {
     onPatchDoc({ metadata: patch });
@@ -133,337 +288,16 @@ function ProjectSourceScreen({
     else onExtract(false);
   }
 
-  function normalizeWarnings(preview) {
-    if (!preview) return [];
-    const warnings = [];
-    if (preview.low_confidence) warnings.push("low_confidence");
-    if (preview.needs_human_check) warnings.push("needs_human_check");
-    (preview.flags || []).forEach(flag => warnings.push(flag.reason || flag.flag || "flag"));
-    return [...new Set(warnings)];
-  }
-
-  async function buildCandidate() {
-    if (!activeDocId || !onBuildNormalizeCandidate) return;
-    setNormalizeBusy("candidate");
-    const candidate = await onBuildNormalizeCandidate();
-    if (candidate) {
-      setNormalizeCandidate(candidate);
-      setNormalizeResult(null);
-      setNormalizeReviewed(false);
-    }
-    setNormalizeBusy("");
-  }
-
-  function candidateJson() {
-    return normalizeCandidate ? JSON.stringify(normalizeCandidate, null, 2) : "";
-  }
-
-  function normalizerPaths() {
-    if (!normalizeCandidate) return {};
-    const docId = normalizeCandidate.doc_id || activeDocId || "";
-    const fallbackRoot = docId ? `ailab_projects/${docId}` : "";
-    return {
-      ...(normalizeCandidate.paths || {}),
-      project_root: normalizeCandidate.paths?.project_root || fallbackRoot,
-      candidate_parts: normalizeCandidate.paths?.candidate_parts || (fallbackRoot ? `${fallbackRoot}/working/normalized/candidate_parts.json` : ""),
-      agent_structure_plan: normalizeCandidate.paths?.agent_structure_plan || (fallbackRoot ? `${fallbackRoot}/working/normalized/agent_structure_plan.json` : ""),
-    };
-  }
-
-  function candidatePath() {
-    return normalizerPaths().candidate_parts || "";
-  }
-
-  function normalizerPrompt() {
-    if (!normalizeCandidate) return "";
-    const paths = normalizerPaths();
-    return [
-      "Bạn là Source Structure Normalizer Agent cho dự án AI-LAB.",
-      "",
-      "Mục tiêu: từ candidate_parts JSON của một nguồn TXT/EPUB, sinh StructurePlan JSON để chuẩn hóa cấu trúc chương/đoạn trước khi đưa vào extractor.",
-      "",
-      "Trước khi làm, hãy đọc:",
-      "1. skills/source-structure-normalizer/SKILL.md",
-      "2. skills/source-structure-normalizer/references/STRUCTURE_PLAN_CONTRACT.md",
-      "3. Nếu cần ví dụ: skills/source-structure-normalizer/references/CANTERVILLE_EXAMPLE.md",
-      "",
-      "Nguồn đang xử lý:",
-      `- doc_id: ${normalizeCandidate.doc_id || activeDocId || ""}`,
-      `- source_format: ${normalizeCandidate.source_format || ""}`,
-      `- source_fingerprint: ${normalizeCandidate.source_fingerprint || ""}`,
-      `- project folder: ${paths.project_root || ""}`,
-      `- candidate_parts: ${paths.candidate_parts || ""}`,
-      `- agent_structure_plan: ${paths.agent_structure_plan || ""}`,
-      "",
-      "Yêu cầu:",
-      "- Chỉ dùng đúng candidate_parts đã đưa.",
-      "- Echo chính xác `doc_id` và `source_fingerprint`.",
-      "- Không dùng plan của TXT cho EPUB hoặc ngược lại.",
-      "- Không dịch.",
-      "- Không annotate glossary/entity/summary/reference/discourse/block_type.",
-      "- Không rewrite, paraphrase, sửa chữ, hoặc tự ý xóa body text.",
-      "- Chỉ quyết định bằng `part_index` / `spine_index`.",
-      "- Drop front/back matter rõ ràng: title page, author/illustrator credit, TOC lặp, imprint, copyright, Gutenberg license, colophon, publisher ads.",
-      "- Chọn chapter heading thật nếu có.",
-      "- Không dùng book title, author line, cover, title page, hoặc front matter làm chapter heading.",
-      "- Nếu nguồn là truyện một phần không có heading chương thật: để `chapter_headings: []`, đặt confidence thấp hơn và flag `needs_human_check`; backend sẽ fallback thành một chương.",
-      "- Nếu title page dính chung body text trong cùng part: không drop part đó, giữ lại và flag.",
-      "- Merge chỉ khi các part liền nhau rõ ràng là cùng một đoạn bị tách cơ học.",
-      "- Nếu không chắc, giữ part và flag `needs_human_check`, không đoán bừa.",
-      "",
-      "Output:",
-      "- Nếu có quyền ghi file, hãy ghi đúng một JSON object vào `agent_structure_plan` ở trên.",
-      "- Nếu không thể ghi file, trả về đúng một JSON object theo StructurePlan contract.",
-      "- JSON phải theo StructurePlan contract.",
-      "- Không bọc markdown code block.",
-      "- Không giải thích ngoài JSON.",
-      "",
-      "Self-check trước khi trả:",
-      "- `source_fingerprint` khớp candidate.",
-      "- Mọi `part_index` / `spine_index` đều tồn tại.",
-      "- Không part nào vừa drop vừa là heading.",
-      "- Heading theo đúng thứ tự đọc.",
-      "- Không trộn candidate của TXT và EPUB.",
-      "- Body text chính không bị drop.",
-      "- `confidence` phản ánh độ chắc chắn.",
-    ].join("\n");
-  }
-
-  async function copyCandidate() {
-    const text = candidateJson();
-    if (!text) return;
-    await navigator.clipboard.writeText(text);
-  }
-
-  async function copyCandidatePath() {
-    const text = candidatePath();
-    if (!text) return;
-    await navigator.clipboard.writeText(text);
-  }
-
-  async function copyNormalizerPrompt() {
-    const text = normalizerPrompt();
-    if (!text) return;
-    await navigator.clipboard.writeText(text);
-  }
-
-  function downloadCandidate() {
-    const text = candidateJson();
-    if (!text) return;
-    const blob = new Blob([text], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${activeDocId || "project"}_candidate_parts.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  async function loadPlanFile(event) {
-    const selected = event.target.files?.[0];
-    if (!selected) return;
-    const text = await selected.text();
-    setNormalizePlanText(text);
-    setNormalizeResult(null);
-    setNormalizeReviewed(false);
-    event.target.value = "";
-  }
-
-  async function loadAgentPlanFromWorking() {
-    if (!onLoadNormalizeAgentPlan) return;
-    setNormalizeBusy("load-agent-plan");
-    const result = await onLoadNormalizeAgentPlan();
-    if (result?.plan) {
-      setNormalizePlanText(JSON.stringify(result.plan, null, 2));
-      setNormalizeResult(null);
-      setNormalizeReviewed(false);
-    }
-    setNormalizeBusy("");
-  }
-
-  async function validatePlan() {
-    if (!normalizePlanText.trim() || !onImportNormalizePlan) return;
-    let plan;
-    try {
-      plan = JSON.parse(normalizePlanText);
-    } catch (err) {
-      setNormalizeResult({
-        ok: false,
-        errors: [{ location: "StructurePlan JSON", message: err.message || String(err), severity: "error" }],
-        warnings: [],
-      });
-      return;
-    }
-    setNormalizeBusy("plan");
-    const result = await onImportNormalizePlan(plan);
-    setNormalizeResult(result);
-    setNormalizeReviewed(false);
-    setNormalizeBusy("");
-  }
-
-  function startNormalizeApply() {
-    if (extracted) setConfirmNormalizeApply(true);
-    else applyNormalized(false);
-  }
-
-  async function applyNormalized(overwrite) {
-    if (!onApplyNormalizePlan) return;
-    setNormalizeBusy("apply");
-    await onApplyNormalizePlan({ overwrite: !!overwrite });
-    setConfirmNormalizeApply(false);
-    setNormalizeBusy("");
-  }
-
-  function annotationPaths() {
-    if (!annotationInput) return {};
-    const docId = annotationInput.doc_id || activeDocId || "";
-    const safeChapter = (annotationInput.chapter_id || annotationChapterId || "").replace(/[^A-Za-z0-9_-]/g, "_");
-    const root = annotationInput.paths?.project_root || `ailab_projects/${docId}`;
-    return {
-      project_root: root,
-      input: annotationInput.paths?.input || `${root}/working/annotation/${safeChapter}_input.json`,
-      candidate: annotationInput.paths?.candidate || `${root}/working/annotation/${safeChapter}_candidate.json`,
-      resolved: annotationInput.paths?.resolved || `${root}/working/annotation/${safeChapter}_resolved.json`,
-    };
-  }
-
-  function annotationPrompt() {
-    if (!annotationInput) return "";
-    const paths = annotationPaths();
-    return [
-      "You are the AI-LAB Dataset Annotation Drafter Agent.",
-      "",
-      "Goal: read one chapter annotation input JSON and return one AnnotationCandidate JSON.",
-      "",
-      "Read first:",
-      "1. skills/dataset-annotation-drafter/SKILL.md",
-      "2. skills/dataset-annotation-drafter/references/ANNOTATION_CANDIDATE_CONTRACT.md",
-      "3. skills/dataset-annotation-drafter/references/ENTITY_GLOSSARY_DECISION_RULES.md",
-      "4. skills/dataset-annotation-drafter/references/LINKAGE_RULES.md",
-      "",
-      "Current source:",
-      `- doc_id: ${annotationInput.doc_id || activeDocId || ""}`,
-      `- chapter_id: ${annotationInput.chapter_id || annotationChapterId || ""}`,
-      `- project folder: ${paths.project_root || ""}`,
-      `- annotation_input: ${paths.input || ""}`,
-      `- candidate_output_suggested: ${paths.candidate || ""}`,
-      "",
-      "Hard rules:",
-      "- Use only the provided annotation_input JSON.",
-      "- Echo doc_id and chapter_id exactly.",
-      "- Do not emit spans, start, or end offsets.",
-      "- Mention surfaces must be verbatim substrings of clean_text.",
-      "- Use left_context/right_context to disambiguate duplicate surfaces.",
-      "- Use entity_key consistently; discourse and characters_present_refs must reference entity_key or existing_entity_id.",
-      "- Read known_relations if present. Reuse existing_relation_id when a pair already has a relation; otherwise draft relation_candidates only when clear person-person relationship evidence exists.",
-      "- Relation candidates must include source_ref, target_ref, relation_type, suggested_address_policy, and evidence. Do not create all-pairs relations.",
-      "- Entity has no status. Glossary status is assigned by backend, not by you.",
-      "- Do not translate full blocks or create reference_vi/draft_vi.",
-      "- Do not annotate references. Do not rewrite source text.",
-      "- Avoid dual-tagging a proper-name/place surface as both entity and glossary.",
-      "- characters_present_refs should contain person entities only.",
-      "",
-      "Output:",
-      "- If you can write files, write exactly one JSON object to candidate_output_suggested.",
-      "- If you cannot write files, return exactly one JSON object.",
-      "- No markdown fence and no explanation outside JSON.",
-    ].join("\n");
-  }
-
-  async function buildAnnotationInput() {
-    if (!annotationChapterId || !onBuildAnnotationInput) return;
-    setAnnotationBusy("input");
-    const result = await onBuildAnnotationInput(annotationChapterId);
-    if (result) {
-      setAnnotationInput(result);
-      setAnnotationResolved(null);
-      setAnnotationCandidateText("");
-    }
-    setAnnotationBusy("");
-  }
-
-  async function copyAnnotationInput() {
-    if (!annotationInput) return;
-    await navigator.clipboard.writeText(JSON.stringify(annotationInput, null, 2));
-  }
-
-  async function copyAnnotationPrompt() {
-    const text = annotationPrompt();
-    if (!text) return;
-    await navigator.clipboard.writeText(text);
-  }
-
-  async function loadAnnotationCandidateFile(event) {
-    const selected = event.target.files?.[0];
-    if (!selected) return;
-    const text = await selected.text();
-    setAnnotationCandidateText(text);
-    setAnnotationResolved(null);
-    event.target.value = "";
-  }
-
-  async function loadAnnotationAgentCandidate() {
-    if (!annotationChapterId || !onLoadAnnotationAgentCandidate) return;
-    setAnnotationBusy("load-agent-candidate");
-    const result = await onLoadAnnotationAgentCandidate(annotationChapterId);
-    if (result?.candidate) {
-      setAnnotationCandidateText(JSON.stringify(result.candidate, null, 2));
-      setAnnotationResolved(null);
-    }
-    setAnnotationBusy("");
-  }
-
-  async function resolveAnnotationCandidate() {
-    if (!annotationCandidateText.trim() || !onResolveAnnotationCandidate) return;
-    let candidate;
-    try {
-      candidate = JSON.parse(annotationCandidateText);
-    } catch (err) {
-      setAnnotationResolved({
-        ok: false,
-        errors: [{ message: err.message || String(err) }],
-      });
-      return;
-    }
-    setAnnotationBusy("resolve");
-    const result = await onResolveAnnotationCandidate(candidate);
-    setAnnotationResolved(result);
-    setAnnotationBusy("");
-  }
-
-  async function applyAnnotationCandidate() {
-    if (!annotationChapterId || !onApplyAnnotationCandidate) return;
-    setAnnotationBusy("apply");
-    await onApplyAnnotationCandidate(annotationChapterId);
-    setAnnotationBusy("");
-  }
-
-  function annotationStatusCounts(items) {
-    const rows = Array.isArray(items) ? items : [];
-    return {
-      ok: rows.filter(item => item.status === "ok").length,
-      review: rows.filter(item => item.status && item.status !== "ok").length,
-      total: rows.length,
-    };
-  }
-
-  const normalizePreview = normalizeResult?.preview || null;
-  const normalizeInvalid = normalizeResult && normalizeResult.ok === false;
-  const reviewRequired = normalizeWarnings(normalizePreview).length > 0;
-  const canApplyNormalize = !!normalizePreview && (!reviewRequired || normalizeReviewed);
-
   return (
     <div className="project-screen">
       <div className="project-topbar">
         <div className="tb-left">
-          <span className="tb-app"><span className="tb-logo">▧</span>AILAB <span className="tb-app-sub">Dataset Tool</span></span>
+          <span className="tb-app"><span className="tb-logo">▧</span>Thesis <span className="tb-app-sub">Runtime Tool</span></span>
           <span className="tb-sep" />
           <span className="tb-doc"><Ic.folder size={13} className="faint" /><span className="mono">{activeDocId || "no_project"}</span></span>
         </div>
         <div className="tb-right">
-          <button className="btn" onClick={onBack} disabled={!extracted}><Ic.arrowRight size={13} style={{ transform: "rotate(180deg)" }} />Back to workspace</button>
+          <button className="btn" onClick={onBack}><Ic.arrowRight size={13} style={{ transform: "rotate(180deg)" }} />Back to workspace</button>
         </div>
       </div>
 
@@ -471,8 +305,8 @@ function ProjectSourceScreen({
         <div className="project-headline">
           <div>
             <div className="project-kicker">Project / Source</div>
-            <h1>Prepare source metadata before annotation</h1>
-            <p>Choose a local project, upload a TXT/EPUB source, record source metadata, then run extraction. Re-extracting requires confirmation because it can overwrite the current document draft.</p>
+            <h1>Prepare source for the thesis pipeline</h1>
+            <p>Choose a local project, upload a TXT, EPUB, Markdown, or HTML source, record source metadata, then extract it into canonical chapters and blocks. Re-extracting requires confirmation because it can overwrite the current document draft.</p>
           </div>
           <div className="source-state">
             <div className="srcstat-row"><span className={"ss-dot " + (selectedProject ? "ok" : "bad")} /><span className="ss-label">Project</span><span className="ss-val mono">{activeDocId || "not selected"}</span></div>
@@ -489,7 +323,8 @@ function ProjectSourceScreen({
                 <div className="project-section-title">Open existing</div>
                 <FormField label="open project">
                 <select value={activeDocId || ""} onChange={e => onSelectProject(e.target.value)}>
-                  {projects.map(p => <option key={p.doc_id} value={p.doc_id}>{p.doc_id} · {p.status}</option>)}
+                  {!localProjects.length && <option value="">No local projects yet</option>}
+                  {localProjects.map(p => <option key={p.doc_id} value={p.doc_id}>{p.doc_id} · {p.status}</option>)}
                 </select>
                 </FormField>
               </div>
@@ -548,6 +383,7 @@ function ProjectSourceScreen({
                 <select value={meta.source_format || "txt"} disabled={readOnly} onChange={e => patchMetadata({ source_format: e.target.value })}>
                   <option value="txt">txt</option>
                   <option value="epub">epub</option>
+                  <option value="markdown">markdown</option>
                   <option value="html">html</option>
                   <option value="pdf">pdf (not extractable in MVP)</option>
                 </select>
@@ -574,10 +410,10 @@ function ProjectSourceScreen({
             <div className="source-drop">
               <Ic.file size={22} />
               <div>
-                <div className="source-drop-title">TXT / EPUB source</div>
+                <div className="source-drop-title">TXT / EPUB / Markdown / HTML source</div>
                 <div className="source-drop-sub">Backend rejects PDF/OCR/layout extraction in this MVP.</div>
               </div>
-              <input type="file" accept=".txt,.epub" disabled={readOnly} onChange={e => setFile(e.target.files?.[0] || null)} />
+              <input type="file" accept=".txt,.epub,.md,.markdown,.html,.htm" disabled={readOnly} onChange={e => setFile(e.target.files?.[0] || null)} />
             </div>
             <div className="extract-actions">
               <button className="btn" onClick={() => setFile(null)}>Clear</button>
@@ -586,280 +422,10 @@ function ProjectSourceScreen({
             </div>
             <div className="extract-note">
               <Ic.alert size={12} />
-              <span>Extract only lives here, not in the annotation workspace. Re-extracting can discard reviewed edits.</span>
+              <span>Extraction creates the canonical chapters and blocks used by both thesis profiles. Re-extracting can discard reviewed edits.</span>
             </div>
           </section>
 
-          {!readOnly && <>
-          <section className="project-panel normalizer-panel">
-            <div className="panel-title"><Ic.layers size={14} />Structure normalizer</div>
-            <p className="normalizer-intro">
-              Optional pre-extract step for sources with weak chapter structure. The tool only validates and applies an imported StructurePlan; it does not call an LLM.
-            </p>
-            <div className="normalizer-status-card">
-              <div className="normalizer-status-main">
-                <span className={"normalizer-state-pill " + normalizerStateTone()}>{normalizerStateLabel()}</span>
-                {normalizerState.source_format && <span><b>{normalizerState.source_format}</b> source</span>}
-                {normalizerState.source_fingerprint && <span className="mono">{normalizerState.source_fingerprint}</span>}
-                {normalizerState.applied && <span><b>{normalizerState.chapters || 0}</b> ch · <b>{normalizerState.blocks || 0}</b> blocks</span>}
-                {normalizerState.last_event_at && <span className="faint">{normalizerState.last_event_at}</span>}
-              </div>
-              {normalizerHistory.length > 0 && (
-                <details className="normalizer-history">
-                  <summary>Normalization history</summary>
-                  {normalizerHistory.map((event, idx) => (
-                    <div className="normalizer-history-row" key={`${event.ts || "event"}-${idx}`}>
-                      <span className="mono">{event.ts || ""}</span>
-                      <span>{normalizerEventLabel(event.event)}</span>
-                      <span className="faint">
-                        {event.chapters ? `${event.chapters} ch` : ""}
-                        {event.blocks ? ` · ${event.blocks} blocks` : ""}
-                        {event.parts ? `${event.parts} parts` : ""}
-                      </span>
-                    </div>
-                  ))}
-                </details>
-              )}
-            </div>
-            <div className="normalizer-steps">
-              <div className="normalizer-step">
-                <div className="normalizer-step-head">
-                  <span className="step-num">1</span>
-                  <div>
-                    <div className="step-title">Build candidate parts</div>
-                    <div className="step-sub">Use this JSON with the source-structure-normalizer skill.</div>
-                  </div>
-                </div>
-                <div className="normalizer-actions">
-                  <button className="btn" disabled={!activeDocId || normalizeBusy === "candidate"} onClick={buildCandidate}>
-                    <Ic.layers size={13} />{normalizeBusy === "candidate" ? "Building..." : "Build candidate"}
-                  </button>
-                  <button className="btn" disabled={!normalizeCandidate} onClick={copyCandidate}><Ic.doc size={13} />Copy JSON</button>
-                  <button className="btn" disabled={!candidatePath()} onClick={copyCandidatePath}><Ic.folder size={13} />Copy path</button>
-                  <button className="btn" disabled={!normalizeCandidate} onClick={copyNormalizerPrompt}><Ic.sparkle size={13} />Copy prompt</button>
-                  <button className="btn" disabled={!normalizeCandidate} onClick={downloadCandidate}><Ic.upload size={13} />Download JSON</button>
-                </div>
-                {normalizeCandidate && (
-                  <div className="normalizer-stats">
-                    <span><b>{normalizeCandidate.parts?.length || 0}</b> parts</span>
-                    <span><b>{normalizeCandidate.source_format}</b> format</span>
-                    <span className="mono">{normalizeCandidate.source_fingerprint}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="normalizer-step">
-                <div className="normalizer-step-head">
-                  <span className="step-num">2</span>
-                  <div>
-                    <div className="step-title">Import StructurePlan</div>
-                    <div className="step-sub">Paste/upload JSON, or load the agent-written plan from working/normalized.</div>
-                  </div>
-                </div>
-                <textarea
-                  className="json-textarea"
-                  value={normalizePlanText}
-                  placeholder='{"doc_id":"...","source_fingerprint":"...","chapter_headings":[...]}'
-                  rows={7}
-                  onChange={e => { setNormalizePlanText(e.target.value); setNormalizeResult(null); setNormalizeReviewed(false); }}
-                />
-                <div className="normalizer-actions">
-                  <button className="btn" disabled={!activeDocId || normalizeBusy === "load-agent-plan"} onClick={loadAgentPlanFromWorking}>
-                    <Ic.sparkle size={13} />{normalizeBusy === "load-agent-plan" ? "Loading..." : "Load agent plan"}
-                  </button>
-                  <label className="btn">
-                    <Ic.file size={13} />Load plan file
-                    <input className="hidden-file" type="file" accept=".json,application/json" onChange={loadPlanFile} />
-                  </label>
-                  <button className="btn primary" disabled={!normalizePlanText.trim() || normalizeBusy === "plan"} onClick={validatePlan}>
-                    <Ic.checkCircle size={13} />{normalizeBusy === "plan" ? "Validating..." : "Validate plan"}
-                  </button>
-                </div>
-              </div>
-
-              {(normalizeInvalid || normalizePreview) && (
-                <div className={"normalizer-preview " + (normalizeInvalid ? "bad" : "")}>
-                  <div className="normalizer-preview-head">
-                    <span>{normalizeInvalid ? "Plan blocked" : "Preview"}</span>
-                    {normalizePreview && <span className="mono">{normalizePreview.body_coverage || "body n/a"}</span>}
-                  </div>
-                  {normalizeInvalid && (
-                    <div className="normalizer-errors">
-                      {(normalizeResult.errors || normalizeResult.validation?.errors || []).map((err, idx) => (
-                        <div key={idx} className="normalizer-error"><Ic.xCircle size={12} />{err.location ? `${err.location}: ` : ""}{err.message}</div>
-                      ))}
-                    </div>
-                  )}
-                  {normalizePreview && (
-                    <>
-                      <div className="normalizer-summary-grid">
-                        <span><b>{normalizePreview.chapters?.length || 0}</b> chapters</span>
-                        <span><b>{normalizePreview.dropped?.length || 0}</b> dropped</span>
-                        <span><b>{normalizePreview.drop_fraction}</b> drop fraction</span>
-                        <span><b>{normalizePreview.content_invariance_ok ? "ok" : "check"}</b> content</span>
-                      </div>
-                      <div className="normalizer-chapters">
-                        {(normalizePreview.chapters || []).slice(0, 12).map(ch => (
-                          <div key={ch.order_index} className="normalizer-chapter">
-                            <span className="mono">{ch.order_index}</span>
-                            <span>{ch.title}</span>
-                            <span className="faint">{ch.n_blocks} blocks</span>
-                          </div>
-                        ))}
-                        {(normalizePreview.chapters || []).length > 12 && <div className="muted">+ {(normalizePreview.chapters || []).length - 12} more chapter(s)</div>}
-                      </div>
-                      {(normalizePreview.dropped || []).length > 0 && (
-                        <details className="normalizer-dropped">
-                          <summary>Dropped parts</summary>
-                          {(normalizePreview.dropped || []).slice(0, 8).map(item => (
-                            <div key={item.part_index} className="normalizer-drop">
-                              <span className="mono">#{item.part_index}</span>
-                              <span>{item.reason}</span>
-                              <span className="faint">{item.snippet}</span>
-                            </div>
-                          ))}
-                        </details>
-                      )}
-                      {reviewRequired && (
-                        <label className="normalizer-review">
-                          <input type="checkbox" checked={normalizeReviewed} onChange={e => setNormalizeReviewed(e.target.checked)} />
-                          <span>I reviewed low-confidence flags: {normalizeWarnings(normalizePreview).join(", ")}</span>
-                        </label>
-                      )}
-                      <div className="normalizer-actions end">
-                        <button className="btn primary" disabled={!canApplyNormalize || normalizeBusy === "apply"} onClick={startNormalizeApply}>
-                          <Ic.play size={13} />{normalizeBusy === "apply" ? "Applying..." : "Approve & extract normalized"}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="project-panel normalizer-panel">
-            <div className="panel-title"><Ic.sparkle size={14} />Annotation drafter</div>
-            <p className="normalizer-intro">
-              Optional AI-assist step for one chapter. The backend only builds input, resolves spans, and applies resolved candidates; it does not call an LLM.
-            </p>
-            <div className="normalizer-steps">
-              <div className="normalizer-step">
-                <div className="normalizer-step-head">
-                  <span className="step-num">1</span>
-                  <div>
-                    <div className="step-title">Build annotation input</div>
-                    <div className="step-sub">Send this chapter JSON to the dataset-annotation-drafter skill.</div>
-                  </div>
-                </div>
-                <FormField label="chapter">
-                  <select value={annotationChapterId} disabled={!chapters.length} onChange={e => setAnnotationChapterId(e.target.value)}>
-                    {chapters.map(ch => <option key={ch.chapter_id} value={ch.chapter_id}>{ch.title || ch.chapter_id} · {ch.block_count || 0} blocks</option>)}
-                  </select>
-                </FormField>
-                <div className="normalizer-actions">
-                  <button className="btn" disabled={!annotationChapterId || annotationBusy === "input"} onClick={buildAnnotationInput}>
-                    <Ic.layers size={13} />{annotationBusy === "input" ? "Building..." : "Build input"}
-                  </button>
-                  <button className="btn" disabled={!annotationInput} onClick={copyAnnotationInput}><Ic.doc size={13} />Copy input</button>
-                  <button className="btn" disabled={!annotationInput} onClick={copyAnnotationPrompt}><Ic.sparkle size={13} />Copy prompt</button>
-                </div>
-                {annotationInput && (
-                  <div className="normalizer-stats">
-                    <span><b>{annotationInput.blocks?.length || 0}</b> blocks</span>
-                    <span><b>{annotationInput.known_entities?.length || 0}</b> known entities</span>
-                    <span><b>{annotationInput.known_terms?.length || 0}</b> known terms</span>
-                    <span><b>{annotationInput.known_relations?.length || 0}</b> known relations</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="normalizer-step">
-                <div className="normalizer-step-head">
-                  <span className="step-num">2</span>
-                  <div>
-                    <div className="step-title">Resolve AnnotationCandidate</div>
-                    <div className="step-sub">Paste/upload the JSON returned by the skill. Ambiguous or conflicting items will not auto-apply.</div>
-                  </div>
-                </div>
-                <textarea
-                  className="json-textarea"
-                  value={annotationCandidateText}
-                  placeholder='{"doc_id":"...","chapter_id":"...","entity_candidates":[...],"glossary_candidates":[...],"relation_candidates":[...],"discourse_candidates":[...],"summary_candidate":{...}}'
-                  rows={7}
-                  onChange={e => { setAnnotationCandidateText(e.target.value); setAnnotationResolved(null); }}
-                />
-                <div className="normalizer-actions">
-                  <button className="btn" disabled={!annotationChapterId || annotationBusy === "load-agent-candidate"} onClick={loadAnnotationAgentCandidate}>
-                    <Ic.sparkle size={13} />{annotationBusy === "load-agent-candidate" ? "Loading..." : "Load agent candidate"}
-                  </button>
-                  <label className="btn">
-                    <Ic.file size={13} />Load candidate file
-                    <input className="hidden-file" type="file" accept=".json,application/json" onChange={loadAnnotationCandidateFile} />
-                  </label>
-                  <button className="btn primary" disabled={!annotationCandidateText.trim() || annotationBusy === "resolve"} onClick={resolveAnnotationCandidate}>
-                    <Ic.checkCircle size={13} />{annotationBusy === "resolve" ? "Resolving..." : "Resolve candidate"}
-                  </button>
-                </div>
-              </div>
-
-              {annotationResolved && (
-                <div className={"normalizer-preview " + (annotationResolved.ok === false ? "bad" : "")}>
-                  <div className="normalizer-preview-head">
-                    <span>{annotationResolved.ok === false ? "Candidate blocked" : "Resolved preview"}</span>
-                    {annotationResolved.meta && <span className="mono">{annotationResolved.meta.block_text_hash}</span>}
-                  </div>
-                  {annotationResolved.ok === false ? (
-                    <div className="normalizer-errors">
-                      {(annotationResolved.errors || []).map((err, idx) => (
-                        <div key={idx} className="normalizer-error"><Ic.xCircle size={12} />{err.message || String(err)}</div>
-                      ))}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="normalizer-summary-grid">
-                        {(() => {
-                          const e = annotationStatusCounts(annotationResolved.entities);
-                          const g = annotationStatusCounts(annotationResolved.glossary);
-                          const d = annotationStatusCounts(annotationResolved.discourse);
-                          const s = annotationResolved.summary ? annotationStatusCounts([annotationResolved.summary]) : { ok: 0, review: 0, total: 0 };
-                          return (
-                            <>
-                              <span><b>{e.ok}/{e.total}</b> entities ok</span>
-                              <span><b>{g.ok}/{g.total}</b> terms ok</span>
-                              <span><b>{d.ok}/{d.total}</b> discourse ok</span>
-                              <span><b>{s.ok}/{s.total}</b> summary ok</span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                      <div className="normalizer-chapters">
-                        {(annotationResolved.entities || []).slice(0, 8).map(item => (
-                          <div key={item.entity_id} className="normalizer-chapter">
-                            <span className="mono">{item.entity_id}</span>
-                            <span>{item.canonical_source}</span>
-                            <span className={item.status === "ok" ? "faint" : "bad"}>{item.status}</span>
-                          </div>
-                        ))}
-                        {(annotationResolved.glossary || []).slice(0, 8).map(item => (
-                          <div key={item.term_id} className="normalizer-chapter">
-                            <span className="mono">{item.term_id}</span>
-                            <span>{item.source_term}</span>
-                            <span className={item.status === "ok" ? "faint" : "bad"}>{item.status}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="normalizer-actions end">
-                        <button className="btn primary" disabled={annotationBusy === "apply"} onClick={applyAnnotationCandidate}>
-                          <Ic.play size={13} />{annotationBusy === "apply" ? "Applying..." : "Apply resolved OK items"}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </section></>}
         </div>
       </div>
 
@@ -887,18 +453,9 @@ function ProjectSourceScreen({
         </Modal>
       )}
 
-      {confirmNormalizeApply && (
-        <Modal title="Apply normalized structure" icon={Ic.alert} tone="bad" onClose={() => setConfirmNormalizeApply(false)}
-          actions={<>
-            <button className="btn" onClick={() => setConfirmNormalizeApply(false)}>Cancel</button>
-            <button className="btn primary" onClick={() => applyNormalized(true)}>Overwrite document</button>
-          </>}>
-          <p>Applying this normalized structure can overwrite <span className="mono">document.json</span> and reset review state for this project.</p>
-          <p className="muted">Use this only before annotation, or after exporting any work you need to keep.</p>
-        </Modal>
-      )}
     </div>
   );
 }
 
 window.ProjectSourceScreen = ProjectSourceScreen;
+window.QuickImportModal = QuickImportModal;

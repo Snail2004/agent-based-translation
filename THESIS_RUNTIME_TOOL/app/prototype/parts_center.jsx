@@ -30,56 +30,41 @@ function segmentize(text, spans) {
   return segs;
 }
 
-function ModeToggle({ mode, onModeChange, readOnly }) {
-  const items = [
-    { id: "block", label: "Block" },
-    { id: "chapter", label: "Chapter" },
-    { id: "book", label: "Book" },
-    { id: "preview", label: "Preview" },
-  ];
-  if (readOnly) {
-    items.push({ id: "console", label: "Console" });
-    items.push({ id: "cockpit", label: "Cockpit" });
-  }
-  return (
-    <div className="mode-toggle" role="group" aria-label="Center view mode">
-      {items.map(item => (
-        <button
-          key={item.id}
-          className={"mode-btn" + (mode === item.id ? " on" : "")}
-          onClick={() => onModeChange(item.id)}
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 function EditorToolbar({
-  block, reviewed, mode, onModeChange, streamLabel, streamCount, onNextUnreviewed,
+  block, docInfo, reviewed, mode, streamLabel, streamCount, onNextUnreviewed,
   onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed, readOnly
 }) {
   const [typeOpen, setTypeOpen] = React.useState(false);
   const [flagOpen, setFlagOpen] = React.useState(false);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+  const [legendOpen, setLegendOpen] = React.useState(false);
   const readOnlyPreview = mode === "preview" || readOnly;
-  const consoleLike = mode === "console" || mode === "cockpit";
+  const consoleLike = mode === "console" || mode === "report";
+  if (consoleLike) return null;
   const qualityFlags = block.quality_flags || [];
   const flags = qualityFlags.filter(f => f !== "ok");
+  const editableBlock = mode === "block" && !readOnlyPreview;
+  const contextTitle = mode === "preview"
+    ? "Translation Results"
+    : mode === "block" ? block.block_id : streamLabel;
+  const contextMeta = mode === "block"
+    ? `${streamLabel} · ${block.block_type}`
+    : `${streamCount || 0} blocks`;
+  const provenance = [
+    docInfo?.schema_version ? `schema ${docInfo.schema_version}` : "",
+    docInfo?.metadata?.pipeline_version ? `pipeline ${docInfo.metadata.pipeline_version}` : "",
+  ].filter(Boolean).join(" / ") || "extracted";
   return (
     <div className="ed-toolbar">
       <div className="ed-tb-left">
-        <ModeToggle mode={mode} onModeChange={onModeChange} readOnly={readOnly} />
-
-        {!consoleLike && <span className="toolbar-chapter-meta">
-          {readOnly ? "Thesis DB · read-only"
-            : mode === "preview" ? "Translation Preview · read-only"
-            : mode === "block" ? block.block_id : `${streamLabel} · ${streamCount || 0} blocks`}
-        </span>}
+        <span className="ed-context">
+          <b>{contextTitle}</b>
+          <span>{contextMeta}</span>
+        </span>
 
         {/* block_type dropdown */}
-        {!readOnlyPreview && <div className="dd">
-          <button className="dd-btn" onClick={() => { setTypeOpen(o => !o); setFlagOpen(false); }}>
+        {editableBlock && <div className="dd">
+          <button className="dd-btn" onClick={() => { setTypeOpen(o => !o); setFlagOpen(false); setDetailsOpen(false); setLegendOpen(false); }}>
             <span className={"tag tag-" + block.block_type}>{block.block_type}</span>
             <Ic.chevDown size={11} className="faint" />
           </button>
@@ -98,14 +83,14 @@ function EditorToolbar({
         </div>}
 
         {/* chapter opening toggle */}
-        {!readOnlyPreview && <button className={"tog" + (block.is_chapter_opening ? " on" : "")} onClick={onToggleOpening}>
+        {editableBlock && <button className={"tog" + (block.is_chapter_opening ? " on" : "")} onClick={onToggleOpening}>
           <span className="tog-sw"><span className="tog-knob" /></span>
           <Ic.bolt size={12} />chapter opening
         </button>}
 
         {/* quality flags */}
-        {!readOnlyPreview && <div className="dd">
-          <button className="dd-btn flags-btn" onClick={() => { setFlagOpen(o => !o); setTypeOpen(false); }}>
+        {editableBlock && <div className="dd">
+          <button className="dd-btn flags-btn" onClick={() => { setFlagOpen(o => !o); setTypeOpen(false); setDetailsOpen(false); setLegendOpen(false); }}>
             <Ic.flag size={12} className={flags.length ? "flag-on" : "faint"} />
             {flags.length === 0
               ? <span className="faint" style={{ fontSize: 12 }}>no flags</span>
@@ -129,44 +114,42 @@ function EditorToolbar({
           </>)}
         </div>}
 
-        {readOnlyPreview && !consoleLike && (
-          <span className="mini-badge warn"><Ic.eye size={11} />preview only · not gold</span>
-        )}
+        {readOnly && mode !== "preview" && <div className="dd">
+          <button className="dd-btn" onClick={() => { setLegendOpen(open => !open); setDetailsOpen(false); }}>
+            <Ic.layers size={12} />Highlights<Ic.chevDown size={11} className="faint" />
+          </button>
+          {legendOpen && (<>
+            <div className="menu-scrim" onClick={() => setLegendOpen(false)} />
+            <div className="dd-menu context-legend-menu"><OverlayLegend /></div>
+          </>)}
+        </div>}
+
+        <div className="dd">
+          <button className="dd-btn context-details-btn" onClick={() => { setDetailsOpen(open => !open); setLegendOpen(false); }}>
+            <Ic.doc size={12} />Details<Ic.chevDown size={11} className="faint" />
+          </button>
+          {detailsOpen && (<>
+            <div className="menu-scrim" onClick={() => setDetailsOpen(false)} />
+            <div className="dd-menu wide context-details-menu">
+              <div><span>block_id</span><b className="mono">{block.block_id}</b></div>
+              <div><span>chapter_id</span><b className="mono">{block.chapter_id}</b></div>
+              <div><span>order_index</span><b className="mono">{String(block.order_index)}</b></div>
+              <div><span>provenance</span><b className="mono">{provenance}</b></div>
+            </div>
+          </>)}
+        </div>
       </div>
 
       <div className="ed-tb-right">
-        {readOnlyPreview ? (
-          consoleLike ? null : <span className="preview-toolbar-note"><Ic.lock size={12} />Read-only cockpit/viewer. No save, review, or promote actions in this view.</span>
-        ) : mode !== "block" && (
+        {!readOnlyPreview && mode !== "block" && (
           <button className="btn sm" onClick={onNextUnreviewed}>
             <Ic.arrowRight size={13} />Next unreviewed
           </button>
         )}
-        {!readOnlyPreview && <button className={"btn sm reviewed-btn" + (reviewed ? " is-on" : "")} onClick={onMarkReviewed}>
+        {editableBlock && <button className={"btn sm reviewed-btn" + (reviewed ? " is-on" : "")} onClick={onMarkReviewed}>
           <Ic.checkCircle size={13} />{reviewed ? "Reviewed" : "Mark reviewed"}
         </button>}
       </div>
-    </div>
-  );
-}
-
-function MetaBar({ block, docInfo }) {
-  const schemaVersion = docInfo?.schema_version ? `schema ${docInfo.schema_version}` : "";
-  const pipelineVersion = docInfo?.metadata?.pipeline_version ? `pipeline ${docInfo.metadata.pipeline_version}` : "";
-  const items = [
-    ["block_id", block.block_id],
-    ["chapter_id", block.chapter_id],
-    ["order_index", String(block.order_index)],
-    ["provenance", [schemaVersion, pipelineVersion].filter(Boolean).join(" / ") || "extracted"],
-  ];
-  return (
-    <div className="metabar">
-      {items.map(([k, v]) => (
-        <span key={k} className="lockfield tip" data-tip={"Read-only · set by extraction pipeline"}>
-          <span className="lf-k"><Ic.lock size={10} />{k}</span>
-          <span className="lf-v">{v}</span>
-        </span>
-      ))}
     </div>
   );
 }
@@ -218,6 +201,8 @@ function SpanText({
               data-focus-id={focusId || undefined}
               data-focus-target={seg.span.target ? "1" : undefined}
               data-focus-surface={seg.span.surface || seg.text || undefined}
+              data-registry-only={seg.span.registry_only ? "1" : undefined}
+              data-term-detail={seg.span.term_detail ? "1" : undefined}
               onMouseEnter={e => onHoverSpan && onHoverSpan(seg.span, block, e.currentTarget.getBoundingClientRect())}
               onMouseLeave={() => onLeaveSpan && onLeaveSpan()}
               onClick={e => {
@@ -433,8 +418,8 @@ function RunControlPanel({ runControl }) {
   const selectedRun = runs.find(row => row.run_id === runControl.selectedRunId);
 
   return (
-    <section className="obs-panel run-panel">
-      <div className="obs-panel-head">
+    <section className="obs-panel run-panel wb-pane">
+      <div className="obs-panel-head wb-section-title">
         <span><Ic.play size={13} />Run Control</span>
         <em>{runControl.jobId || "no thesis job"}</em>
       </div>
@@ -553,14 +538,74 @@ function RunControlPanel({ runControl }) {
 
 const AGENT_CONSOLE_STAGES = ["builder", "auditor", "translator", "cascade", "sf_qe", "sf_bt", "pj", "report"];
 
-function AgentConsole({ runControl }) {
+function RuntimeEmptyState({ runControl, view }) {
+  const stats = runControl?.sourceStats || {};
+  const chapterCount = Number(stats.chapters || 0);
+  const blockCount = Number(stats.blocks || 0);
+  const projectId = runControl?.sourceProjectId || "project";
+  const title = runControl?.sourceTitle || projectId;
+  const destination = view === "report" ? "Report" : view === "observability" ? "Observability" : "Console";
+  return (
+    <section className="runtime-empty" aria-label={`${destination} chưa có run`}>
+      <div className="runtime-empty-icon"><Ic.play size={18} /></div>
+      <div className="runtime-empty-kicker">{destination} · chưa có pipeline run</div>
+      <h2>{title}</h2>
+      <p>
+        Project nguồn đã được nhập và chuẩn hóa thành <b>{chapterCount} chương</b> · <b>{blockCount} block</b>,
+        nhưng chưa được gắn với một cấu hình chạy Builder/Translator.
+      </p>
+      <div className="runtime-empty-flow" aria-label="Trạng thái chuẩn bị run">
+        <span className="done"><Ic.checkCircle size={13} /> Nguồn đã nhập</span>
+        <span className="done"><Ic.checkCircle size={13} /> Block đã trích</span>
+        <span><Ic.clock size={13} /> Chưa cấu hình pipeline</span>
+      </div>
+      <p className="runtime-empty-note">
+        Khi một run được khởi tạo cho chính project này, Console sẽ hiện tiến trình và log;
+        Report sẽ tổng hợp kết quả đã persisted và bằng chứng theo contract. Project vẫn là nguồn chuẩn;
+        mỗi run chỉ dùng snapshot/index bất biến có hash, không tạo một project chỉnh sửa thứ hai.
+      </p>
+      <div className="runtime-empty-actions">
+        {runControl?.onOpenProjectSource && (
+          <button className="btn" type="button" onClick={runControl.onOpenProjectSource}>
+            <Ic.folder size={13} /> Mở Project / Source
+          </button>
+        )}
+        {runControl?.onConfigurePipeline && (
+          <button className="btn primary" type="button" onClick={runControl.onConfigurePipeline}>
+            <Ic.play size={13} /> Cấu hình pipeline
+          </button>
+        )}
+      </div>
+      <div className="runtime-empty-id mono">project_id: {projectId}</div>
+    </section>
+  );
+}
+
+function AgentConsole({ runControl, onBack, onOpenReport }) {
   // Thin adapter: maps runControl -> AgentConsoleView (console.jsx, skin ported from Claude Design).
   const [consoleTheme, setConsoleTheme] = React.useState(() => (localStorage.getItem("ailab.console_theme") === "dark" ? "dark" : "paper"));
   function toggleConsoleTheme() {
     setConsoleTheme(prev => { const next = prev === "paper" ? "dark" : "paper"; localStorage.setItem("ailab.console_theme", next); return next; });
   }
   if (!runControl) return null;
+  if (!runControl.runtimeAvailable) {
+    return (
+      <div className={"console-route-empty agentconsole console-theme-" + consoleTheme}>
+        <div className="console-route-empty-head">
+          <button className="btn console-back" type="button" onClick={onBack}>&larr; Workspace</button>
+          <span className="brand">⬢ AGENT CONSOLE</span>
+          <nav className="run-surface-tabs" aria-label="Run views">
+            <span className="run-surface-tab active" aria-current="page">Console</span>
+            {onOpenReport && <button className="run-surface-tab" type="button" onClick={onOpenReport}>Report</button>}
+          </nav>
+          <span className="mono">{runControl.sourceProjectId || "no project"}</span>
+        </div>
+        <RuntimeEmptyState runControl={runControl} view="console" />
+      </div>
+    );
+  }
   const sel = runControl.selectedRunEvents || {};
+  const rawLog = String(runControl.selectedRunLog?.log || "").trim();
   const selectedRun = (runControl.runs || []).find(r => r.run_id === runControl.selectedRunId) || null;
   const ConsoleView = typeof window !== "undefined" ? window.AgentConsoleView : null;
   if (!ConsoleView) {
@@ -573,26 +618,78 @@ function AgentConsole({ runControl }) {
     );
   }
   return (
-    <ConsoleView
-      runId={runControl.selectedRunId}
+    <div className="runtime-console-wrap">
+      <ConsoleView
+        runId={runControl.selectedRunId}
+        runs={runControl.runs || []}
+        onSelectRun={runControl.onSelectRun}
+        events={sel.events || []}
+        running={!!sel.running}
+        status={(selectedRun && selectedRun.status) || sel.status || ""}
+        truncated={!!sel.truncated}
+        partialLine={!!sel.partial_line}
+        blockPreview={runControl.blockPreview || sel.blockPreview || []}
+        watchlist={runControl.watchlist || sel.watchlist || []}
+        reportSummary={runControl.reportSummary || sel.reportSummary || null}
+        projectId={runControl.sourceProjectId || ""}
+        onBack={onBack}
+        onOpenReport={onOpenReport}
+        theme={consoleTheme}
+        onToggleTheme={toggleConsoleTheme}
+        onRefresh={runControl.onRefreshRuns}
+        busy={runControl.busy}
+        onPause={runControl.onPause}
+        onCancel={runControl.onCancel}
+        onResume={runControl.onResume}
+        onDich={runControl.onDich}
+      />
+      {rawLog && (
+        <details className="runtime-raw-log" open={!(sel.events || []).length}>
+          <summary>Raw preflight / process log</summary>
+          <pre>{rawLog.slice(-24000)}</pre>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function AgentReport({ runControl, onBack, onOpenConsole }) {
+  const [reportTheme, setReportTheme] = React.useState(() => (
+    localStorage.getItem("ailab.console_theme") === "dark" ? "dark" : "light"
+  ));
+  function toggleReportTheme() {
+    setReportTheme(previous => {
+      const next = previous === "dark" ? "light" : "dark";
+      localStorage.setItem("ailab.console_theme", next === "dark" ? "dark" : "paper");
+      return next;
+    });
+  }
+  if (!runControl) return null;
+  const selectedRun = (runControl.runs || []).find(run => run.run_id === runControl.selectedRunId) || null;
+  const ReportView = typeof window !== "undefined" ? window.AgentReportView : null;
+  if (!ReportView) {
+    return (
+      <div className="agentreport report-theme-light">
+        <div className="report-loading">Run Report loading...</div>
+      </div>
+    );
+  }
+  return (
+    <ReportView
+      runId={runControl.selectedRunId || ""}
       runs={runControl.runs || []}
+      selectedRun={selectedRun}
       onSelectRun={runControl.onSelectRun}
-      events={sel.events || []}
-      running={!!sel.running}
-      status={(selectedRun && selectedRun.status) || sel.status || ""}
-      truncated={!!sel.truncated}
-      partialLine={!!sel.partial_line}
-      blockPreview={runControl.blockPreview || sel.blockPreview || []}
-      watchlist={runControl.watchlist || sel.watchlist || []}
-      reportSummary={runControl.reportSummary || sel.reportSummary || null}
-      theme={consoleTheme}
-      onToggleTheme={toggleConsoleTheme}
+      report={runControl.reportSummary || null}
+      reportSource="report-summary"
+      runtimeAvailable={!!runControl.runtimeAvailable}
+      projectId={runControl.sourceProjectId || ""}
+      projectTitle={runControl.sourceTitle || ""}
+      onBack={onBack}
+      onOpenConsole={onOpenConsole}
       onRefresh={runControl.onRefreshRuns}
-      busy={runControl.busy}
-      onPause={runControl.onPause}
-      onCancel={runControl.onCancel}
-      onResume={runControl.onResume}
-      onDich={runControl.onDich}
+      theme={reportTheme}
+      onToggleTheme={toggleReportTheme}
     />
   );
 }
@@ -619,7 +716,8 @@ function ageSeconds(ts) {
   return Math.max(0, Math.floor((Date.now() - value) / 1000));
 }
 
-function ObservabilityCockpit({ observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall }) {
+function LegacyObservabilityView({ observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall }) {
+  if (!runControl?.runtimeAvailable) return <RuntimeEmptyState runControl={runControl} view="observability" />;
   const calls = observability?.calls || [];
   const totals = observability?.totals?.overall || {};
   const detail = selectedCallDetail || calls.find(call => call.call_id === selectedCallId) || calls[0] || null;
@@ -629,11 +727,11 @@ function ObservabilityCockpit({ observability, runControl, selectedCallId, selec
   const breakdown = detail?.token_breakdown || {};
 
   return (
-    <div className="obs-view">
-      <div className="obs-head">
+    <div className="obs-view wb-operational">
+      <div className="obs-head wb-toolbar">
         <div>
           <div className="obs-kicker">ObservabilityReadModel</div>
-          <h2>Prompt / Context / Cache Cockpit</h2>
+          <h2>Prompt / Context / Cache Observability</h2>
         </div>
         <div className="obs-source mono">{observability?.meta?.job_id || "no job"}</div>
       </div>
@@ -654,9 +752,9 @@ function ObservabilityCockpit({ observability, runControl, selectedCallId, selec
         <div><span>cost rows</span><b>{formatCost(totals.cost_usd)}</b></div>
       </div>
 
-      <div className="obs-grid">
-        <section className="obs-panel obs-call-list">
-          <div className="obs-panel-head">
+      <div className="obs-grid wb-split">
+        <section className="obs-panel obs-call-list wb-pane">
+          <div className="obs-panel-head wb-section-title">
             <span><Ic.list size={13} />API calls</span>
             <em>{formatInt(calls.length)} cached result rows</em>
           </div>
@@ -664,7 +762,8 @@ function ObservabilityCockpit({ observability, runControl, selectedCallId, selec
             {calls.map(call => (
               <button
                 key={call.call_id}
-                className={"obs-row" + (call.call_id === selectedCallId ? " on" : "")}
+                aria-selected={call.call_id === selectedCallId}
+                className={"obs-row wb-record-row" + (call.call_id === selectedCallId ? " on" : "")}
                 onClick={() => onSelectCall(call.call_id)}
               >
                 <span className={"obs-agent obs-agent-" + String(call.agent || "LLM").toLowerCase()}>{call.agent}</span>
@@ -678,8 +777,8 @@ function ObservabilityCockpit({ observability, runControl, selectedCallId, selec
           </div>
         </section>
 
-        <section className="obs-panel obs-detail">
-          <div className="obs-panel-head">
+        <section className="obs-panel obs-detail wb-pane wb-detail">
+          <div className="obs-panel-head wb-section-title">
             <span><Ic.eye size={13} />Prompt / Context Inspector</span>
             {callDetailLoading ? <em>loading...</em> : <em className="mono">{detail?.call_id || "no call"}</em>}
           </div>
@@ -709,7 +808,7 @@ function ObservabilityCockpit({ observability, runControl, selectedCallId, selec
 
               <MemoryPackInspector detail={detail} />
 
-              <div className="obs-card">
+              <div className="obs-card wb-section">
                 <div className="obs-card-title"><Ic.clock size={13} />Cache / cost semantics</div>
                 <div className="obs-kv-grid">
                   <span><b>local replay row</b><em>{detail.cache?.local_replay?.stored_result ? "stored" : "n/a"}</em></span>
@@ -752,6 +851,20 @@ function confidenceText(value) {
 
 function statusLabel(span, item) {
   return span?.display_status || span?.status || item?.overlay_status || item?.status || "unscored";
+}
+
+function statusDisplayLabel(span, item) {
+  const status = statusLabel(span, item);
+  if (status === "localization_mismatch") return "Lệch bản dịch chuẩn";
+  if (status === "localization_source_warning") return "Có bản VI lệch chuẩn";
+  if (status === "localized") return span?.target ? "Khớp bản dịch chuẩn" : "Đã định vị";
+  if (status === "localized_only") return "Đã định vị";
+  return status;
+}
+
+function isLocalizationSpan(span) {
+  const source = String(span?.mark_source || "");
+  return source === "localization_source" || source.startsWith("cascade_");
 }
 
 function runtimeFormsLabel(span, item) {
@@ -807,7 +920,7 @@ function HighlightHoverCard({ hover, linkIndex }) {
       <div className={"hl-card" + (pos.above ? " above" : "")} style={{ top: pos.top, left: pos.left }}>
         <div className="hl-card-head">
           <span className="hl-card-kind entity"><Ic.users size={12} />{runtime ? "Runtime entity" : "Entity"}</span>
-          <span className={"hl-card-status status-" + statusLabel(span, entity)}>{statusLabel(span, entity)}</span>
+          <span className={"hl-card-status status-" + statusLabel(span, entity)}>{statusDisplayLabel(span, entity)}</span>
         </div>
         <div className="hl-card-title">
           <span>{entity.canonical_source || span.id}</span>
@@ -816,7 +929,13 @@ function HighlightHoverCard({ hover, linkIndex }) {
         </div>
         <div className="hl-card-grid">
           <span>type</span><b>{compactList(entity.entity_type || entity.type)}</b>
-          {runtime ? (
+          {isLocalizationSpan(span) ? (
+            <>
+              <span>nguồn</span><b>Localization</b>
+              {span.located_by && <><span>định vị bởi</span><b>{locatedByLabel(span)}</b></>}
+              <span>bề mặt</span><b>{compactList(span.surface || span.matched_form)}</b>
+            </>
+          ) : runtime ? (
             <>
               <span>forms_used</span><b>{runtimeFormsLabel(span, entity)}</b>
               {span.located_by && <><span>located by</span><b>{locatedByLabel(span)}</b></>}
@@ -853,16 +972,33 @@ function HighlightHoverCard({ hover, linkIndex }) {
 
   if (span.kind === "glossary") {
     const data = linkIndex?.glossary?.[span.id];
-    const term = data?.item;
+    const term = data?.item || span.term_detail;
     if (!term) return null;
-    const currentOccurrences = data.occurrencesByBlock?.[block.block_id] || [];
-    const chapterLabels = (data.chapters || []).map(ch => ch.title || ch.chapter_id);
-    const runtime = term.provenance?.branch === "runtime_memory" || span.provenance;
+    const detailOccurrences = span.detail_occurrences || [];
+    const occurrences = data?.occurrences || detailOccurrences;
+    const currentOccurrences = data?.occurrencesByBlock?.[block.block_id]
+      || detailOccurrences.filter(item => item.block_id === block.block_id);
+    const blockIds = data?.blockIds
+      || [...new Set(detailOccurrences.map(item => item.block_id).filter(Boolean))];
+    const chapters = data?.chapters || [...new Set(blockIds
+      .map(blockId => linkIndex?.blockById?.[blockId]?.chapter_id)
+      .filter(Boolean))]
+      .map(chapterId => ({
+        chapter_id: chapterId,
+        title: linkIndex?.chapterById?.[chapterId]?.title || chapterId,
+      }));
+    const chapterLabels = chapters.map(ch => ch.title || ch.chapter_id);
+    const registryOnly = !!span.registry_only && !data;
+    const runtime = !registryOnly && (term.provenance?.branch === "runtime_memory" || span.provenance);
+    const localization = isLocalizationSpan(span);
+    const totalOccurrences = registryOnly
+      ? Number(term.occurrences_count || occurrences.length)
+      : occurrences.length;
     return (
       <div className={"hl-card" + (pos.above ? " above" : "")} style={{ top: pos.top, left: pos.left }}>
         <div className="hl-card-head">
-          <span className="hl-card-kind glossary"><Ic.tag size={12} />{runtime ? "Runtime term" : "Glossary"}</span>
-          <span className={"hl-card-status status-" + statusLabel(span, term)}>{statusLabel(span, term)}</span>
+          <span className="hl-card-kind glossary"><Ic.tag size={12} />{localization ? "Localization term" : registryOnly ? "Registry term" : runtime ? "Runtime term" : "Glossary"}</span>
+          <span className={"hl-card-status status-" + statusLabel(span, term)}>{statusDisplayLabel(span, term)}</span>
         </div>
         <div className="hl-card-title">
           <span>{term.source_term || span.id}</span>
@@ -870,7 +1006,16 @@ function HighlightHoverCard({ hover, linkIndex }) {
           <span>{term.expected_target || "target needed"}</span>
         </div>
         <div className="hl-card-grid">
-          {runtime ? (
+          {isLocalizationSpan(span) ? (
+            <>
+              <span>nguồn</span><b>Localization</b>
+              {span.located_by && <><span>định vị bởi</span><b>{locatedByLabel(span)}</b></>}
+              <span>bề mặt</span><b>{compactList(span.surface || span.matched_form)}</b>
+              {span.accepted_forms?.length > 0 && <><span>bản dịch chuẩn</span><b>{compactList(span.accepted_forms)}</b></>}
+              {span.mismatch_configs?.length > 0 && <><span>bản lệch</span><b>{compactList(span.mismatch_configs)}</b></>}
+              {markFlagLabel(span) && <><span>cờ kiểm tra</span><b>{markFlagLabel(span)}</b></>}
+            </>
+          ) : runtime ? (
             <>
               <span>forms_used</span><b>{runtimeFormsLabel(span, term)}</b>
               {span.located_by && <><span>located by</span><b>{locatedByLabel(span)}</b></>}
@@ -897,13 +1042,14 @@ function HighlightHoverCard({ hover, linkIndex }) {
           )}
         </div>
         {span.stale && <div className="hl-card-warning"><Ic.alert size={12} />This span needs re-tag.</div>}
+        {registryOnly && <div className="hl-card-warning"><Ic.alert size={12} />Read-only registry record; not included in this run context.</div>}
         <div className="hl-card-section">
           <div className="hl-card-section-title">Links</div>
           <div className="hl-card-links">
             <span>{currentOccurrences.length} occurrence{currentOccurrences.length === 1 ? "" : "s"} in this block</span>
-            <span>{data.occurrences.length} total occurrence{data.occurrences.length === 1 ? "" : "s"}</span>
-            <span>{data.blockIds.length} block{data.blockIds.length === 1 ? "" : "s"}</span>
-            <span>{data.chapters.length} chapter{data.chapters.length === 1 ? "" : "s"}</span>
+            <span>{totalOccurrences} stored occurrence{totalOccurrences === 1 ? "" : "s"}</span>
+            <span>{blockIds.length} block{blockIds.length === 1 ? "" : "s"} in loaded scope</span>
+            <span>{chapters.length} chapter{chapters.length === 1 ? "" : "s"} in loaded scope</span>
           </div>
           {chapterLabels.length > 0 && <div className="hl-card-small"><b>chapters</b> {limitItems(chapterLabels)}</div>}
         </div>
@@ -925,7 +1071,11 @@ function CleanTextSurface({
     );
   }
   return (
-    <div className="clean-text" ref={cleanRef} onMouseUp={onMouseUp}>
+    <div
+      className={"clean-text" + (block.block_type === "prose" ? " clean-text-flow" : "")}
+      ref={cleanRef}
+      onMouseUp={onMouseUp}
+    >
       <SpanText
         text={block.clean_text || ""}
         spans={spans}
@@ -1110,7 +1260,6 @@ function SingleBlockView({
 
   return (
     <>
-      <MetaBar block={block} docInfo={docInfo} />
       <div className="ed-scroll" onMouseDown={() => sel && setSel(null)}>
         <div className="ed-inner">
           <div className="field-block">
@@ -1248,25 +1397,6 @@ function ChapterStream({
   );
 }
 
-function previewRunLabel(run) {
-  if (!run) return "preview run";
-  const model = run.model ? ` · ${run.model}` : "";
-  const warnings = run.warning_count ? ` · ${run.warning_count} warn` : "";
-  return `${run.run_id || "run"} · ${run.block_count || 0} blocks${model}${warnings}`;
-}
-
-function contextChip(id, linkIndex) {
-  const value = String(id || "");
-  const entity = linkIndex?.entities?.[value]?.item;
-  if (entity) return { kind: "entity", label: entity.canonical_source || value, title: value };
-  const term = linkIndex?.glossary?.[value]?.item;
-  if (term) return { kind: "term", label: term.source_term || value, title: value };
-  const chapter = linkIndex?.chapterById?.[value];
-  if (chapter) return { kind: "chapter", label: chapter.title || chapter.chapter_title || value, title: value };
-  if (value.toLowerCase().startsWith("rel")) return { kind: "relation", label: value, title: value };
-  return { kind: "unknown", label: value, title: value };
-}
-
 function FocusTermChip({ term, index = 0, onJump, onClear }) {
   if (!term?.id) return null;
   const count = Number(term.count || 0);
@@ -1275,7 +1405,7 @@ function FocusTermChip({ term, index = 0, onJump, onClear }) {
       <span className="focus-chip-title">
         <Ic.tag size={12} />
         <b>{term.source || term.id}</b>
-        {term.target && <><span className="focus-chip-arrow">-></span><span>{term.target}</span></>}
+        {term.target && <><span className="focus-chip-arrow">→</span><span>{term.target}</span></>}
       </span>
       <span className="focus-chip-count">{count ? `${Math.min(index + 1, count)}/${count}` : "0/0"}</span>
       <button className="btn icon-only sm" onClick={() => onJump && onJump(-1)} disabled={!count} aria-label="Previous occurrence">‹</button>
@@ -1288,10 +1418,9 @@ function FocusTermChip({ term, index = 0, onJump, onClear }) {
 function OverlayLegend() {
   return (
     <div className="overlay-legend" aria-label="Runtime mark legend">
-      <span><i className="legend-swatch consistent" />consistent</span>
-      <span><i className="legend-swatch drift" />drift</span>
-      <span><i className="legend-swatch localized" />localized only</span>
-      <span><i className="legend-swatch unscored" />unscored</span>
+      <span><i className="legend-swatch localized" />Xanh: EN đã định vị / VI khớp chuẩn</span>
+      <span><i className="legend-swatch localization-source-warning" />Vàng: EN có ít nhất một bản VI lệch</span>
+      <span><i className="legend-swatch localization-mismatch" />Đỏ: VI lệch bản dịch chuẩn</span>
     </div>
   );
 }
@@ -1751,11 +1880,6 @@ function TranslationPreviewView({
   return (
     <div className="ed-scroll">
       <div className="translation-preview">
-        <div className="tp-banner">
-          <div className="tp-banner-title"><Ic.shield size={14} />Translation Preview</div>
-          <div className="tp-banner-copy">Read-only preview. This is not gold data and cannot be saved, promoted, locked, or frozen from this view.</div>
-        </div>
-
         <div className="tp-controls">
           <label className="tp-control">
             <span>Chapter</span>
@@ -1892,7 +2016,7 @@ function TranslationPreviewView({
                       <span className="mono">{block.block_id}</span>
                       <span className={"tag tag-" + block.block_type}>{block.block_type}</span>
                     </div>
-                    <div className="tp-text">{renderPreviewText(block.clean_text || "", mentions, "source_surface")}</div>
+                    <div className={"tp-text" + (block.block_type === "prose" ? " tp-text-flow" : "")}>{renderPreviewText(block.clean_text || "", mentions, "source_surface")}</div>
                   </div>
                   <div className={"tp-cell tp-target" + (!preview?.target_text ? " missing" : "")}>
                     <div className="tp-target-head">
@@ -1920,13 +2044,205 @@ function TranslationPreviewView({
   );
 }
 
+function storedTranslationText(row) {
+  return String(row?.target_text || row?.output_text || "");
+}
+
+function storedTranslationMeta(row) {
+  return [row?.model, row?.prompt_version || row?.stage].filter(Boolean).join(" / ");
+}
+
+function TranslationResultsView({
+  docInfo, chapters = [], allBlocks = [], chapter, selectedId, onSelectBlock, onPreviewRunChange
+}) {
+  const [selectedChapterId, setSelectedChapterId] = React.useState(chapter?.chapter_id || chapters[0]?.chapter_id || "");
+  const [primaryConfig, setPrimaryConfig] = React.useState("");
+  const [secondaryConfig, setSecondaryConfig] = React.useState("");
+
+  React.useEffect(() => {
+    setSelectedChapterId(chapter?.chapter_id || chapters[0]?.chapter_id || "");
+  }, [chapter?.chapter_id, chapters.length]);
+
+  const chapterRows = React.useMemo(
+    () => (allBlocks || []).filter(block => block.chapter_id === selectedChapterId),
+    [allBlocks, selectedChapterId]
+  );
+
+  const configRows = React.useMemo(() => {
+    const byConfig = new Map();
+    chapterRows.forEach(block => {
+      Object.entries(block.translations || {}).forEach(([config, row]) => {
+        if (!row) return;
+        const current = byConfig.get(config) || { config, translated: 0, sample: row };
+        if (storedTranslationText(row)) current.translated += 1;
+        byConfig.set(config, current);
+      });
+    });
+    return [...byConfig.values()].sort((a, b) => a.config.localeCompare(b.config));
+  }, [chapterRows]);
+
+  const configKeys = React.useMemo(() => configRows.map(row => row.config), [configRows]);
+  const configSignature = configKeys.join("\u0000");
+
+  React.useEffect(() => {
+    setPrimaryConfig(current => configKeys.includes(current) ? current : (configKeys[0] || ""));
+  }, [configSignature]);
+
+  React.useEffect(() => {
+    if (configKeys.length < 2) {
+      setSecondaryConfig("");
+      return;
+    }
+    setSecondaryConfig(current => (
+      current && current !== primaryConfig && configKeys.includes(current)
+        ? current
+        : (configKeys.find(config => config !== primaryConfig) || "")
+    ));
+  }, [configSignature, primaryConfig]);
+
+  const visibleConfigs = React.useMemo(
+    () => [primaryConfig, secondaryConfig].filter((value, index, rows) => value && rows.indexOf(value) === index),
+    [primaryConfig, secondaryConfig]
+  );
+  const visibleSignature = visibleConfigs.join("\u0000");
+
+  React.useEffect(() => {
+    if (typeof onPreviewRunChange !== "function") return;
+    if (!visibleConfigs.length) {
+      onPreviewRunChange(null);
+      return;
+    }
+    const exportedBlocks = chapterRows.map(block => ({
+      block_id: block.block_id,
+      source_text: block.clean_text || block.source_text || "",
+      translations: Object.fromEntries(visibleConfigs.map(config => [config, block.translations?.[config] || null])),
+    }));
+    onPreviewRunChange({
+      chapter_id: selectedChapterId,
+      run: {
+        run_id: visibleConfigs.join("_vs_"),
+        doc_id: docInfo?.doc_id || "",
+        chapter_id: selectedChapterId,
+        configs: visibleConfigs,
+        block_count: chapterRows.length,
+        translated_block_count: exportedBlocks.filter(block => Object.values(block.translations).some(row => storedTranslationText(row))).length,
+        blocks: exportedBlocks,
+      },
+    });
+  }, [docInfo?.doc_id, selectedChapterId, chapterRows, visibleSignature, onPreviewRunChange]);
+
+  function changeChapter(chapterId) {
+    setSelectedChapterId(chapterId);
+    const first = (allBlocks || []).find(block => block.chapter_id === chapterId);
+    if (first) onSelectBlock(first.block_id);
+  }
+
+  const currentChapter = chapters.find(ch => ch.chapter_id === selectedChapterId) || {};
+  const columns = Math.max(2, 1 + visibleConfigs.length);
+
+  return (
+    <div className="ed-scroll">
+      <div className="translation-preview">
+        <div className="tp-controls">
+          <label className="tp-control wide">
+            <span>Chapter</span>
+            <select value={selectedChapterId} onChange={event => changeChapter(event.target.value)}>
+              {chapters.map(row => (
+                <option key={row.chapter_id} value={row.chapter_id}>
+                  {row.title || row.chapter_title || row.chapter_id}
+                </option>
+              ))}
+            </select>
+          </label>
+          {configKeys.length === 1 ? (
+            <div className="tp-single-config">
+              <span>Translation</span>
+              <b className="mono">{configKeys[0]}</b>
+            </div>
+          ) : configKeys.length > 1 ? (<>
+            <label className="tp-control">
+              <span>Version A</span>
+              <select value={primaryConfig} onChange={event => setPrimaryConfig(event.target.value)}>
+                {configKeys.map(config => <option key={config} value={config}>{config}</option>)}
+              </select>
+            </label>
+            <label className="tp-control">
+              <span>Version B</span>
+              <select value={secondaryConfig} onChange={event => setSecondaryConfig(event.target.value)}>
+                {configKeys.filter(config => config !== primaryConfig).map(config => (
+                  <option key={config} value={config}>{config}</option>
+                ))}
+              </select>
+            </label>
+          </>) : null}
+          <div className="tp-run-meta mono">
+            {configKeys.length
+              ? `${chapterRows.length} blocks / ${configKeys.length} stored version${configKeys.length > 1 ? "s" : ""}`
+              : "no stored translation"}
+          </div>
+        </div>
+
+        {!configKeys.length ? (
+          <div className="tp-empty">
+            <Ic.file size={22} />
+            <div>No translation result for {currentChapter.title || selectedChapterId || "this chapter"}.</div>
+            <p>Results appear here after the translation pipeline writes this project run.</p>
+          </div>
+        ) : (
+          <div className="tp-table">
+            <div className="tp-table-head" style={{ "--tp-columns": `repeat(${columns}, minmax(0, 1fr))` }}>
+              <span>Source</span>
+              {visibleConfigs.map(config => <span key={config}>Translation {config}</span>)}
+            </div>
+            {chapterRows.map(block => (
+              <article
+                key={block.block_id}
+                className={"tp-row" + (selectedId === block.block_id ? " active" : "")}
+                style={{ "--tp-columns": `repeat(${columns}, minmax(0, 1fr))` }}
+                data-block-id={block.block_id}
+                onMouseDown={() => onSelectBlock(block.block_id)}
+              >
+                <div className="tp-cell tp-source">
+                  <div className="tp-block-meta">
+                    <span className="mono">{block.block_id}</span>
+                    <span className={"tag tag-" + block.block_type}>{block.block_type}</span>
+                  </div>
+                  <div className={"tp-text" + (block.block_type === "prose" ? " tp-text-flow" : "")}>{block.clean_text || block.source_text || ""}</div>
+                </div>
+                {visibleConfigs.map(config => {
+                  const row = block.translations?.[config] || null;
+                  const text = storedTranslationText(row);
+                  return (
+                    <div key={config} className={"tp-cell tp-target" + (!text ? " missing" : "")}>
+                      <div className="tp-target-head">
+                        <span className="tc-label mono">{config}</span>
+                        <span className="mono">{storedTranslationMeta(row) || (row ? "stored result" : "missing")}</span>
+                      </div>
+                      <div className="tp-text">
+                        {text
+                          ? <SpanText text={text} spans={row?.target_spans || []} block={block} />
+                          : "(this block was not translated in this version)"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CenterEditor({
-  block, docInfo, reviewed, spans, editing, mode, onModeChange, chapter, chapters, chapterBlocks, allBlocks,
+  block, docInfo, reviewed, spans, editing, mode, chapter, chapters, chapterBlocks, allBlocks,
   review, selectedId, getSpansForBlock, linkIndex, onSelectBlock, onNextUnreviewed,
   onEdit, onCommitClean, onCancelEdit,
   onChangeType, onToggleOpening, onToggleFlag, onMarkReviewed,
   onAddGlossary, onAddEntity, onPreviewRunChange, readOnly,
   observability, runControl, selectedCallId, selectedCallDetail, callDetailLoading, onSelectCall,
+  onConsoleBack, onOpenConsole, onOpenReport,
   focusTerm, focusedTermId, focusedTermIndex, onFocusSpan, onClearFocus, onFocusJump,
 }) {
   const [hoverInfo, setHoverInfo] = React.useState(null);
@@ -1942,33 +2258,24 @@ function CenterEditor({
 
   return (
     <div className="col col-center">
-      <EditorToolbar block={block} reviewed={reviewed} mode={mode} onModeChange={onModeChange}
+      <EditorToolbar block={block} docInfo={docInfo} reviewed={reviewed} mode={mode}
         streamLabel={streamLabel} streamCount={streamCount} onNextUnreviewed={onNextUnreviewed}
         onChangeType={onChangeType} onToggleOpening={onToggleOpening}
         onToggleFlag={onToggleFlag} onMarkReviewed={() => onMarkReviewed(block.block_id)} readOnly={readOnly} />
-      <FocusTermChip term={focusTerm} index={focusedTermIndex} onJump={onFocusJump} onClear={onClearFocus} />
-      {readOnly && mode !== "console" && mode !== "cockpit" && <OverlayLegend />}
+      {!["console", "report"].includes(mode) && <FocusTermChip term={focusTerm} index={focusedTermIndex} onJump={onFocusJump} onClear={onClearFocus} />}
 
       {mode === "console" ? (
-        <AgentConsole runControl={runControl} />
-      ) : mode === "cockpit" ? (
-        <ObservabilityCockpit
-          observability={observability}
-          runControl={runControl}
-          selectedCallId={selectedCallId}
-          selectedCallDetail={selectedCallDetail}
-          callDetailLoading={callDetailLoading}
-          onSelectCall={onSelectCall}
-        />
+        <AgentConsole runControl={runControl} onBack={onConsoleBack} onOpenReport={onOpenReport} />
+      ) : mode === "report" ? (
+        <AgentReport runControl={runControl} onBack={onConsoleBack} onOpenConsole={onOpenConsole} />
       ) : mode === "preview" ? (
-        <TranslationPreviewView
+        <TranslationResultsView
           docInfo={docInfo}
           chapters={chapters}
           allBlocks={allBlocks}
           chapter={chapter}
           selectedId={selectedId}
           onSelectBlock={onSelectBlock}
-          linkIndex={linkIndex}
           onPreviewRunChange={onPreviewRunChange}
         />
       ) : mode !== "block" ? (

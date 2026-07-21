@@ -11,6 +11,11 @@ from services.normalize_flow import (
     normalizer_paths,
     normalizer_status,
 )
+from services.project_runtime import (
+    ProjectRuntimeError,
+    get_project_runtime_status,
+    prepare_project_runtime,
+)
 from services.workspace import (
     ProjectError,
     create_project_shell,
@@ -79,6 +84,31 @@ def project_detail(doc_id: str):
         return ok(state)
     except ProjectError as exc:
         return error("invalid_project", str(exc), 400)
+
+
+@bp.get("/projects/<doc_id>/runtime")
+def project_runtime_status(doc_id: str):
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        return ok(get_project_runtime_status(doc_id))
+    except ProjectRuntimeError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("project_runtime_error", str(exc), 400)
+
+
+@bp.post("/projects/<doc_id>/runtime/prepare")
+def project_runtime_prepare(doc_id: str):
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        result = prepare_project_runtime(doc_id)
+        return ok(result, status=201 if result.get("created") else 200)
+    except ProjectRuntimeError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("project_runtime_error", str(exc), 400)
 
 
 @bp.patch("/projects/<doc_id>")

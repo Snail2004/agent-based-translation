@@ -188,6 +188,382 @@ def test_registry_overlay_adds_display_only_cascade_marks(tmp_path):
     assert overlay["meta"]["cascade_audit"]["by_mark_source"] == {"cascade_t2": 1}
 
 
+def test_localization_overlay_uses_only_persisted_localization_pairs(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    reports_root = tmp_path / "reports"
+    reports_root.mkdir()
+    cascade_report = tmp_path / "cascade.json"
+    cascade_report.write_text(
+        json.dumps(
+            {
+                "decisions": [
+                    {
+                        "occ_id": "S0:b001:g-runtime:0",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "agent",
+                        "term_id": "g-runtime",
+                        "source_start": 0,
+                        "source_end": 5,
+                        "source_surface": "Agent",
+                        "resolved_by": "t2_credit",
+                        "decision": "rendered",
+                        "target_start": 6,
+                        "target_end": 15,
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        experiment_id="exp_fixture",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+        cascade_report=cascade_report,
+        overlay_mode="localization",
+    )
+
+    assert overlay["meta"]["overlay_mode"] == "localization"
+    assert overlay["meta"]["source"] == "localization_artifact"
+    assert "score_status" not in overlay["meta"]
+    assert overlay["meta"]["localization_status"] == "loaded:1:skipped:0"
+
+    source = overlay["source"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert source == [
+        {
+            "id": "g-runtime",
+            "block_id": "b001",
+            "span": [0, 5],
+            "surface": "Agent",
+            "source_term": "agent",
+            "status": "localized",
+            "display_status": "localized",
+            "localization_status": "rendered",
+            "provenance": "localization_artifact",
+            "mark_source": "localization_source",
+            "located_by": "code_exact",
+            "configs": ["S0"],
+            "occ_ids": ["S0:b001:g-runtime:0"],
+            "accepted_forms": [],
+            "mismatch_configs": [],
+            "reference_status": "match",
+        }
+    ]
+
+    target = overlay["target_by_config"]["S0"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert len(target) == 1
+    assert target[0]["status"] == "localized"
+    assert target[0]["display_status"] == "localized"
+    assert target[0]["localization_status"] == "rendered"
+    assert target[0]["mark_source"] == "cascade_t2"
+
+
+def test_localization_overlay_fails_closed_without_run_artifact(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    reports_root = tmp_path / "reports"
+    reports_root.mkdir()
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        experiment_id="exp_fixture",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+        overlay_mode="localization",
+    )
+
+    assert overlay["meta"]["localization_status"] == "unavailable:not_registered"
+    assert overlay["source"] == {"glossary_by_id": {}, "entities_by_id": {}}
+    assert overlay["target_by_config"] == {
+        "S0": {"glossary_by_id": {}, "entities_by_id": {}},
+        "S1": {"glossary_by_id": {}, "entities_by_id": {}},
+    }
+
+
+def test_localization_block_scope_resolves_the_chapter_artifact(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    reports_root = tmp_path / "reports"
+    exp_root = reports_root / "exp_fixture"
+    exp_root.mkdir(parents=True)
+    (exp_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "thesis_report_manifest_v1",
+                "experiment_id": "exp_fixture",
+                "job_id": "d2l_p1",
+                "domain": "d2l",
+                "chapters": {
+                    "ch01": {
+                        "reports": {
+                            "cascade": "cascade_ch01.json",
+                        }
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (exp_root / "cascade_ch01.json").write_text(
+        json.dumps(
+            {
+                "decisions": [
+                    {
+                        "occ_id": "S0:b001:g-runtime:0",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "agent",
+                        "term_id": "g-runtime",
+                        "source_start": 0,
+                        "source_end": 5,
+                        "source_surface": "Agent",
+                        "resolved_by": "t2_credit",
+                        "decision": "rendered",
+                        "target_start": 6,
+                        "target_end": 15,
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        experiment_id="exp_fixture",
+        block_id="b001",
+        jobs_root=tmp_path,
+        reports_root=reports_root,
+        overlay_mode="localization",
+    )
+
+    assert overlay["meta"]["selected"]["chapter_id"] == "ch01"
+    assert overlay["meta"]["localization_status"] == "loaded:1:skipped:0"
+    source = overlay["source"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert [(row["block_id"], row["surface"]) for row in source] == [("b001", "Agent")]
+
+
+def test_localization_overlay_marks_only_the_off_reference_occurrence_as_mismatch(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    with sqlite3.connect(tmp_path / "d2l_p1" / "memory.sqlite3") as con:
+        con.execute(
+            "UPDATE blocks SET text=?, original_text=? WHERE block_id=?",
+            ("Example and example.", "Example and example.", "b001"),
+        )
+        con.execute(
+            "UPDATE translation_runs SET output_text=? WHERE config=? AND block_id=?",
+            ("mẫu và ví dụ", "S0", "b001"),
+        )
+        con.execute(
+            "UPDATE translation_runs SET output_text=? WHERE config=? AND block_id=?",
+            ("sample and sample", "S1", "b001"),
+        )
+    cascade_report = tmp_path / "cascade-reference-status.json"
+    cascade_report.write_text(
+        json.dumps(
+            {
+                "decisions": [
+                    {
+                        "occ_id": "S0:b001:g-runtime:0",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "example",
+                        "term_id": "g-runtime",
+                        "source_start": 0,
+                        "source_end": 7,
+                        "source_surface": "Example",
+                        "resolved_by": "t3_llm",
+                        "decision": "localized",
+                        "target_start": 0,
+                        "target_end": 3,
+                        "target_quote": "mẫu",
+                        "accepted_forms": ["mẫu"],
+                        "t3_code_score": {
+                            "adherence_label": "adherent",
+                            "accepted_form": "mẫu",
+                        },
+                    },
+                    {
+                        "occ_id": "S0:b001:g-runtime:1",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "example",
+                        "term_id": "g-runtime",
+                        "source_start": 12,
+                        "source_end": 19,
+                        "source_surface": "example",
+                        "resolved_by": "t3_llm",
+                        "decision": "localized",
+                        "target_start": 7,
+                        "target_end": 12,
+                        "target_quote": "ví dụ",
+                        "accepted_forms": ["mẫu"],
+                        "t3_code_score": {
+                            "adherence_label": "off_glossary",
+                            "accepted_form": "",
+                        },
+                    },
+                    {
+                        "occ_id": "S1:b001:g-runtime:1",
+                        "config": "S1",
+                        "block_id": "b001",
+                        "source_term": "example",
+                        "term_id": "g-runtime",
+                        "source_start": 12,
+                        "source_end": 19,
+                        "source_surface": "example",
+                        "resolved_by": "t2_code",
+                        "decision": "rendered",
+                        "target_start": 11,
+                        "target_end": 17,
+                        "target_quote": "sample",
+                        "accepted_forms": ["sample"],
+                        "t3_code_score": {
+                            "adherence_label": "adherent",
+                            "accepted_form": "sample",
+                        },
+                    },
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        experiment_id="exp_fixture",
+        jobs_root=tmp_path,
+        reports_root=tmp_path / "reports",
+        cascade_report=cascade_report,
+        overlay_mode="localization",
+    )
+
+    target = overlay["target_by_config"]["S0"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert [(row["surface"], row["status"], row["reference_status"]) for row in target] == [
+        ("mẫu", "localized", "match"),
+        ("ví dụ", "localization_mismatch", "mismatch"),
+    ]
+    assert all(row["accepted_forms"] == ["mẫu"] for row in target)
+    target_s1 = overlay["target_by_config"]["S1"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert [(row["surface"], row["status"], row["reference_status"]) for row in target_s1] == [
+        ("sample", "localized", "match"),
+    ]
+    source = overlay["source"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert [row["status"] for row in source] == ["localized", "localization_source_warning"]
+    assert source[0]["mismatch_configs"] == []
+    assert source[1]["configs"] == ["S0", "S1"]
+    assert source[1]["mismatch_configs"] == ["S0"]
+    assert source[1]["reference_status"] == "mismatch_any"
+    assert overlay["meta"]["localization_audit"]["by_reference_status"] == {
+        "match": 2,
+        "mismatch": 1,
+    }
+
+
+def test_localization_source_pairing_recovers_unique_surface_from_noncanonical_offsets(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    cascade_report = tmp_path / "cascade-unique-source.json"
+    cascade_report.write_text(
+        json.dumps(
+            {
+                "decisions": [
+                    {
+                        "occ_id": "opaque-occurrence",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "agent",
+                        "term_id": "g-runtime",
+                        "source_start": 100,
+                        "source_end": 105,
+                        "source_surface": "Agent",
+                        "resolved_by": "t2_credit",
+                        "decision": "rendered",
+                        "target_start": 6,
+                        "target_end": 15,
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        experiment_id="exp_fixture",
+        jobs_root=tmp_path,
+        reports_root=tmp_path / "reports",
+        cascade_report=cascade_report,
+        overlay_mode="localization",
+    )
+
+    source = overlay["source"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert [(row["span"], row["surface"]) for row in source] == [([0, 5], "Agent")]
+
+
+def test_localization_source_pairing_does_not_guess_ambiguous_surface(tmp_path):
+    from services.thesis_overlay import load_registry_overlay
+
+    create_fixture_db(tmp_path, job_id="d2l_p1")
+    with sqlite3.connect(tmp_path / "d2l_p1" / "memory.sqlite3") as con:
+        con.execute(
+            "UPDATE blocks SET text=?, original_text=? WHERE block_id=?",
+            ("Agent and Agent appear.", "Agent and Agent appear.", "b001"),
+        )
+    cascade_report = tmp_path / "cascade-ambiguous-source.json"
+    cascade_report.write_text(
+        json.dumps(
+            {
+                "decisions": [
+                    {
+                        "occ_id": "opaque-occurrence",
+                        "config": "S0",
+                        "block_id": "b001",
+                        "source_term": "agent",
+                        "term_id": "g-runtime",
+                        "source_start": 100,
+                        "source_end": 105,
+                        "source_surface": "Agent",
+                        "resolved_by": "t2_credit",
+                        "decision": "rendered",
+                        "target_start": 6,
+                        "target_end": 15,
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    overlay = load_registry_overlay(
+        "d2l_p1",
+        experiment_id="exp_fixture",
+        jobs_root=tmp_path,
+        reports_root=tmp_path / "reports",
+        cascade_report=cascade_report,
+        overlay_mode="localization",
+    )
+
+    assert overlay["source"] == {"glossary_by_id": {}, "entities_by_id": {}}
+    target = overlay["target_by_config"]["S0"]["glossary_by_id"]["g-runtime"]["occurrences"]
+    assert len(target) == 1
+
+
 def test_registry_overlay_ignores_summary_sample_marks_and_counts_skip_reasons(tmp_path):
     from services.thesis_overlay import load_registry_overlay
 

@@ -137,6 +137,19 @@ def create_fixture_db(jobs_root: Path, job_id: str = "fixture_job") -> Path:
           created_at TEXT,
           window_id TEXT
         );
+        CREATE TABLE memory_packs (
+          pack_id TEXT PRIMARY KEY,
+          doc_id TEXT,
+          block_id TEXT,
+          pack_hash TEXT,
+          prompt_version TEXT,
+          estimated_tokens INTEGER,
+          payload_json TEXT,
+          memory_refs_json TEXT,
+          retrieval_debug_json TEXT,
+          created_at TEXT,
+          config TEXT
+        );
         CREATE TABLE eval_glossary_gold (
           gold_id TEXT PRIMARY KEY,
           doc_id TEXT,
@@ -198,7 +211,23 @@ def create_fixture_db(jobs_root: Path, job_id: str = "fixture_job") -> Path:
     )
     con.execute(
         "INSERT INTO translation_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        ("run-s1", "exp_fixture", "doc_fixture", "b001", "S1", "translate", None, None, "Tác nhân xuất hiện.", "gpt-test", "p1", 0.3, 1, "fp", 0.0, 10, "2026-06-15", "w1"),
+        ("run-s1", "exp_fixture", "doc_fixture", "b001", "S1", "translate", None, "pk-s1", "Tác nhân xuất hiện.", "gpt-test", "p1", 0.3, 1, "fp", 0.0, 10, "2026-06-15", "w1"),
+    )
+    con.execute(
+        "INSERT INTO memory_packs VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "pk-s1",
+            "doc_fixture",
+            "b001",
+            "pack-hash",
+            "s1-test",
+            20,
+            '{"block_ids":["b001"],"context_pack":{"glossary_lines":["agent -> tác nhân"],"preserve_lines":["CUDA (keep unchanged)"],"context_sensitive_lines":[],"anchors":{"term_block_ids":{"g-runtime":["b001"],"CUDA":["b001"]}}}}',
+            "[]",
+            "{}",
+            "2026-06-15",
+            "S1",
+        ),
     )
     con.execute(
         "INSERT INTO eval_glossary_gold VALUES (?,?,?,?,?,?,?,?,?,?)",
@@ -271,6 +300,21 @@ def test_list_thesis_datasets_attaches_experiment_manifest_metadata(tmp_path, mo
     assert fixture["has_overlay_manifest"] is True
 
 
+def test_list_thesis_datasets_infers_unique_persisted_run_without_manifest(tmp_path, monkeypatch):
+    import services.thesis_readmodel as readmodel
+
+    create_fixture_db(tmp_path)
+    reports_root = tmp_path / "reports"
+    reports_root.mkdir()
+    monkeypatch.setattr(readmodel, "THESIS_REPORTS_ROOT", reports_root)
+
+    rows = readmodel.list_thesis_datasets(jobs_root=tmp_path)
+    fixture = next(row for row in rows if row["job_id"] == "fixture_job")
+
+    assert fixture["experiment_id"] == "exp_fixture"
+    assert fixture["experiment_id_source"] == "translation_runs"
+
+
 def test_readmodel_translations_are_keyed_by_config_and_attached_to_blocks(tmp_path):
     from services.thesis_readmodel import load_thesis_dataset
 
@@ -283,6 +327,106 @@ def test_readmodel_translations_are_keyed_by_config_and_attached_to_blocks(tmp_p
     assert data["blocks"][0]["translations"]["S0"]["target_text"] == "Agent xuất hiện."
     assert data["blocks"][0]["translations"]["S1"]["target_text"] == "Tác nhân xuất hiện."
     assert data["meta"]["available_runs"][0]["config"] == "S0"
+
+
+def test_readmodel_separates_run_context_from_inherited_registry(tmp_path):
+    from services.thesis_readmodel import load_thesis_dataset
+
+    create_fixture_db(tmp_path)
+    data = load_thesis_dataset("fixture_job", experiment_id="exp_fixture", jobs_root=tmp_path)
+
+    assert len(data["runtime_memory"]["glossary_entries"]) == 1
+    assert data["meta"]["memory_scope"] == "selected_run"
+    assert data["project_memory"] == {
+        "glossary_entries": data["run_memory"]["glossary_entries"],
+        "entities": [],
+        "entity_relations": [],
+        "summaries": [],
+    }
+    assert data["meta"]["counts"]["run_context_glossary"] == 2
+    assert data["run_memory"]["scope"]["experiment_ids"] == ["exp_fixture"]
+    assert data["run_memory"]["scope"]["chapter_ids"] == ["ch01"]
+    assert data["run_memory"]["scope"]["block_ids"] == ["b001"]
+
+    terms = {row["source_term"]: row for row in data["run_memory"]["glossary_entries"]}
+    assert terms["agent"]["expected_target"] == "tác nhân"
+    assert terms["agent"]["status"] == "mandatory"
+    assert terms["agent"]["occurrences"] == [{
+        "block_id": "b001",
+        "span": [0, 5],
+        "surface": "Agent",
+        "evidence_kind": "source_anchor",
+    }]
+    assert terms["CUDA"]["status"] == "preserve"
+    assert terms["CUDA"]["occurrences"] == [{
+        "block_id": "b001",
+        "evidence_kind": "source_anchor_unlocalized",
+    }]
+    assert terms["CUDA"]["provenance"]["source"] == "memory_packs.context_pack"
+
+
+def test_selected_unrun_experiment_has_empty_project_memory(tmp_path):
+    from services.thesis_readmodel import load_thesis_dataset
+
+    create_fixture_db(tmp_path)
+    data = load_thesis_dataset("fixture_job", experiment_id="not_run", jobs_root=tmp_path)
+
+    assert len(data["runtime_memory"]["glossary_entries"]) == 1
+    assert data["meta"]["memory_scope"] == "selected_run"
+    assert data["project_memory"] == {
+        "glossary_entries": [],
+        "entities": [],
+        "entity_relations": [],
+        "summaries": [],
+    }
+    assert data["run_memory"]["scope"]["available"] is False
+
+
+def test_run_context_keeps_conflicting_targets_visible():
+    from services.thesis_readmodel import _run_context_memory
+
+    translation_rows = [
+        {"experiment_id": "exp", "config": "S1", "stage": "draft", "block_id": "b001", "pack_id": "p1"},
+        {"experiment_id": "exp", "config": "S1", "stage": "draft", "block_id": "b002", "pack_id": "p2"},
+    ]
+    packs = [
+        {"pack_id": "p1", "payload_json": '{"block_ids":["b001"],"context_pack":{"glossary_lines":["model -> mô hình"],"anchors":{"term_block_ids":{"model":["b001"]}}}}'},
+        {"pack_id": "p2", "payload_json": '{"block_ids":["b002"],"context_pack":{"glossary_lines":["model -> kiểu"],"anchors":{"term_block_ids":{"model":["b002"]}}}}'},
+    ]
+    blocks = {
+        "b001": {"block_id": "b001", "chapter_id": "ch01"},
+        "b002": {"block_id": "b002", "chapter_id": "ch01"},
+    }
+
+    run_memory = _run_context_memory(translation_rows, packs, [], blocks)
+
+    assert len(run_memory["glossary_entries"]) == 1
+    record = run_memory["glossary_entries"][0]
+    assert record["status"] == "target_conflict"
+    assert record["expected_target"] == ""
+    assert {row["target_term"] for row in record["directives"]} == {"mô hình", "kiểu"}
+
+
+def test_run_context_rejects_malformed_context_lists_without_crashing():
+    from services.thesis_readmodel import _run_context_memory
+
+    translation_rows = [
+        {"experiment_id": "exp", "config": "S1", "stage": "draft", "block_id": "b001", "pack_id": "p1"},
+    ]
+    packs = [
+        {
+            "pack_id": "p1",
+            "payload_json": '{"block_ids":"b001","context_pack":{"glossary_lines":["model -> mô hình"],"preserve_lines":[],"anchors":{"term_block_ids":{"model":"b001"}}}}',
+        },
+    ]
+    blocks = {"b001": {"block_id": "b001", "chapter_id": "ch01"}}
+
+    run_memory = _run_context_memory(translation_rows, packs, [], blocks)
+
+    assert len(run_memory["glossary_entries"]) == 1
+    assert run_memory["glossary_entries"][0]["occurrences"] == []
+    assert "invalid_context_list:p1:block_ids" in run_memory["scope"]["warnings"]
+    assert "invalid_context_list:p1:term_block_ids:model" in run_memory["scope"]["warnings"]
 
 
 def test_routes_load_fixture_and_quarantine_gold_authoring(tmp_path, monkeypatch):

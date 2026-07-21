@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sqlite3
@@ -8,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from config import THESIS_JOBS_ROOT, THESIS_REPORTS_ROOT
+from pipeline.eval.surface_match import SurfaceOwner, allocate_spans
 
 
 JOB_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -250,6 +252,273 @@ def _available_runs(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(result, key=lambda r: (str(r.get("experiment_id") or ""), str(r.get("config") or ""), str(r.get("stage") or "")))
 
 
+def _normalized_term(value: Any) -> str:
+    return " ".join(str(value or "").casefold().split())
+
+
+def _parse_context_term_line(line: Any, policy: str) -> tuple[str, str]:
+    value = str(line or "").strip()
+    if policy == "preserve":
+        suffix = " (keep unchanged)"
+        source = value[:-len(suffix)] if value.endswith(suffix) else value
+        return source.strip(), source.strip()
+
+    source, separator, target = value.partition(" -> ")
+    if not separator:
+        return value, ""
+    if policy == "context_sensitive":
+        suffix = " (context-sensitive; do not force)"
+        if target.endswith(suffix):
+            target = target[:-len(suffix)]
+    return source.strip(), target.strip()
+
+
+def _run_context_memory(
+    translation_rows: list[dict[str, Any]],
+    memory_pack_rows: list[dict[str, Any]],
+    glossary_rows: list[dict[str, Any]],
+    block_by_id: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Reconstruct only the memory directives actually persisted in selected packs."""
+
+    selected_pack_ids = {
+        str(row.get("pack_id") or "")
+        for row in translation_rows
+        if row.get("pack_id")
+    }
+    packs_by_id = {
+        str(row.get("pack_id") or ""): row
+        for row in memory_pack_rows
+        if row.get("pack_id")
+    }
+    source_by_glossary_id = {
+        str(row.get("glossary_id") or ""): str(row.get("source_term") or "")
+        for row in glossary_rows
+        if row.get("glossary_id")
+    }
+
+    records: dict[str, dict[str, Any]] = {}
+    context_pack_ids: set[str] = set()
+    warnings: list[str] = []
+    category_policy = {
+        "glossary_lines": "mandatory",
+        "preserve_lines": "preserve",
+        "context_sensitive_lines": "context_sensitive",
+    }
+
+    def list_value(value: Any, warning_ref: str) -> list[Any]:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            warnings.append(f"invalid_context_list:{warning_ref}")
+            return []
+        return value
+
+    for pack_id in sorted(selected_pack_ids):
+        pack = packs_by_id.get(pack_id)
+        if not pack:
+            warnings.append(f"missing_memory_pack:{pack_id}")
+            continue
+        payload = _json_load(pack.get("payload_json"), {})
+        context_pack = payload.get("context_pack") if isinstance(payload, dict) else None
+        if not isinstance(context_pack, dict):
+            continue
+
+        context_lines = {
+            field: list_value(context_pack.get(field), f"{pack_id}:{field}")
+            for field in category_policy
+        }
+        rendered_lines = sum(len(lines) for lines in context_lines.values())
+        if not rendered_lines:
+            continue
+        context_pack_ids.add(pack_id)
+
+        applied_block_ids = [
+            str(block_id)
+            for block_id in list_value(payload.get("block_ids"), f"{pack_id}:block_ids")
+            if str(block_id) in block_by_id
+        ]
+        anchors = context_pack.get("anchors") or {}
+        raw_term_blocks = anchors.get("term_block_ids") or {}
+        anchor_blocks_by_source: dict[str, set[str]] = defaultdict(set)
+        if isinstance(raw_term_blocks, dict):
+            for term_ref, block_ids in raw_term_blocks.items():
+                source = source_by_glossary_id.get(str(term_ref), str(term_ref))
+                source_key = _normalized_term(source)
+                for block_id in list_value(block_ids, f"{pack_id}:term_block_ids:{term_ref}"):
+                    if str(block_id) in block_by_id:
+                        anchor_blocks_by_source[source_key].add(str(block_id))
+
+        for field, policy in category_policy.items():
+            for raw_line in context_lines[field]:
+                source, target = _parse_context_term_line(raw_line, policy)
+                source_key = _normalized_term(source)
+                if not source_key:
+                    warnings.append(f"empty_context_term:{pack_id}:{field}")
+                    continue
+                record = records.setdefault(source_key, {
+                    "source_term": source,
+                    "directives": {},
+                    "source_anchor_block_ids": set(),
+                    "usage_block_ids": set(),
+                })
+                record["source_anchor_block_ids"].update(anchor_blocks_by_source.get(source_key, set()))
+                record["usage_block_ids"].update(applied_block_ids)
+                directive_key = (policy, target, str(raw_line))
+                directive = record["directives"].setdefault(directive_key, {
+                    "policy": policy,
+                    "target_term": target,
+                    "instruction": str(raw_line),
+                    "pack_ids": set(),
+                    "block_ids": set(),
+                })
+                directive["pack_ids"].add(pack_id)
+                directive["block_ids"].update(applied_block_ids)
+
+    glossary: list[dict[str, Any]] = []
+    for source_key in sorted(records):
+        record = records[source_key]
+        directives = []
+        for directive in sorted(
+            record["directives"].values(),
+            key=lambda row: (row["policy"], row["target_term"], row["instruction"]),
+        ):
+            directives.append({
+                **directive,
+                "pack_ids": sorted(directive["pack_ids"]),
+                "block_ids": sorted(directive["block_ids"]),
+            })
+        targets = sorted({row["target_term"] for row in directives if row["target_term"]})
+        policies = sorted({row["policy"] for row in directives if row["policy"]})
+        if len(targets) > 1:
+            status = "target_conflict"
+        elif len(policies) > 1:
+            status = "mixed_policy"
+        else:
+            status = policies[0] if policies else "unclassified"
+
+        source_anchor_blocks = sorted(record["source_anchor_block_ids"])
+        usage_blocks = sorted(record["usage_block_ids"])
+        evidence_blocks = source_anchor_blocks or usage_blocks
+        chapter_ids = sorted({
+            str(block_by_id[block_id].get("chapter_id") or "")
+            for block_id in usage_blocks
+            if block_id in block_by_id and block_by_id[block_id].get("chapter_id")
+        })
+        stable_id = hashlib.sha256(source_key.encode("utf-8")).hexdigest()[:20]
+        glossary.append({
+            "glossary_id": f"run_context_{stable_id}",
+            "term_id": f"run_context_{stable_id}",
+            "source_term": record["source_term"],
+            "target_term": targets[0] if len(targets) == 1 else "",
+            "expected_target": targets[0] if len(targets) == 1 else "",
+            "allowed_variants": [],
+            "forbidden_variants": [],
+            "scope": "selected_run",
+            "status": status,
+            "injection_policy": policies[0] if len(policies) == 1 else "mixed",
+            "directive_count": len(directives),
+            "directives": directives,
+            "source_anchor_block_ids": source_anchor_blocks,
+            "usage_block_ids": usage_blocks,
+            "chapter_ids": chapter_ids,
+            "occurrences": [
+                {
+                    "block_id": block_id,
+                    "evidence_kind": "source_anchor" if source_anchor_blocks else "context_applied",
+                }
+                for block_id in evidence_blocks
+            ],
+            "provenance": {
+                "branch": "run_context",
+                "source": "memory_packs.context_pack",
+                "label": "persisted translator context",
+            },
+            "read_only": True,
+        })
+
+    _localize_run_context_glossary(glossary, block_by_id)
+
+    run_block_ids = sorted({
+        str(row.get("block_id") or "")
+        for row in translation_rows
+        if row.get("block_id") in block_by_id
+    })
+    run_chapter_ids = sorted({
+        str(block_by_id[block_id].get("chapter_id") or "")
+        for block_id in run_block_ids
+        if block_by_id[block_id].get("chapter_id")
+    })
+    return {
+        "scope": {
+            "available": bool(translation_rows),
+            "experiment_ids": sorted({str(row.get("experiment_id")) for row in translation_rows if row.get("experiment_id")}),
+            "configs": sorted({str(row.get("config")) for row in translation_rows if row.get("config")}),
+            "stages": sorted({str(row.get("stage")) for row in translation_rows if row.get("stage")}),
+            "translation_rows": len(translation_rows),
+            "block_ids": run_block_ids,
+            "chapter_ids": run_chapter_ids,
+            "referenced_pack_count": len(selected_pack_ids),
+            "context_pack_count": len(context_pack_ids),
+            "context_term_count": len(glossary),
+            "warnings": warnings,
+        },
+        "glossary_entries": glossary,
+        "entities": [],
+        "entity_relations": [],
+        "summaries": [],
+    }
+
+
+def _localize_run_context_glossary(
+    glossary: list[dict[str, Any]],
+    block_by_id: dict[str, dict[str, Any]],
+) -> None:
+    """Attach source spans using only persisted run directives and source blocks."""
+
+    owners_by_block: dict[str, list[SurfaceOwner]] = defaultdict(list)
+    candidate_blocks_by_id: dict[str, list[str]] = {}
+    for term in glossary:
+        term_id = str(term.get("term_id") or term.get("glossary_id") or "")
+        source_term = str(term.get("source_term") or "").strip()
+        candidate_blocks = list(term.get("source_anchor_block_ids") or term.get("usage_block_ids") or [])
+        candidate_blocks = [block_id for block_id in candidate_blocks if block_id in block_by_id]
+        candidate_blocks_by_id[term_id] = candidate_blocks
+        if not term_id or not source_term:
+            continue
+        for block_id in candidate_blocks:
+            owners_by_block[block_id].append(SurfaceOwner(term_id, source_term, False))
+
+    occurrences_by_id: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    localized_blocks_by_id: dict[str, set[str]] = defaultdict(set)
+    for block_id, owners in owners_by_block.items():
+        block = block_by_id[block_id]
+        text = str(block.get("clean_text") or block.get("source_text") or block.get("text") or "")
+        for term_id, spans in allocate_spans(text, owners, language="en").items():
+            for span in spans:
+                occurrences_by_id[term_id].append({
+                    "block_id": block_id,
+                    "span": [span.start, span.end],
+                    "surface": span.surface,
+                    "evidence_kind": "source_anchor",
+                })
+                localized_blocks_by_id[term_id].add(block_id)
+
+    for term in glossary:
+        term_id = str(term.get("term_id") or term.get("glossary_id") or "")
+        occurrences = occurrences_by_id[term_id]
+        for block_id in candidate_blocks_by_id.get(term_id, []):
+            if block_id not in localized_blocks_by_id[term_id]:
+                occurrences.append({
+                    "block_id": block_id,
+                    "evidence_kind": "source_anchor_unlocalized",
+                })
+        term["occurrences"] = sorted(
+            occurrences,
+            key=lambda row: (str(row.get("block_id") or ""), list(row.get("span") or [])),
+        )
+
+
 def _experiment_manifest_for_job(job_id: str, reports_root: Path | None = None) -> tuple[str | None, dict[str, Any]]:
     root = (reports_root or THESIS_REPORTS_ROOT).resolve()
     if not root.exists():
@@ -276,6 +545,17 @@ def list_thesis_datasets(jobs_root: Path | None = None) -> list[dict[str, Any]]:
         job_id = db_path.parent.name
         if job_id.startswith("_") or not JOB_ID_RE.match(job_id):
             continue
+        source_manifest = db_path.parent / "source_manifest.json"
+        if source_manifest.is_file():
+            try:
+                source_contract = json.loads(source_manifest.read_text(encoding="utf-8")).get("contract_version")
+            except (OSError, json.JSONDecodeError):
+                source_contract = None
+            if source_contract == "project_runtime_source_v1":
+                # This DB is an execution index owned by an imported project. It is
+                # reachable through that project and must not appear as a duplicate
+                # top-level thesis dataset in the project picker.
+                continue
         item = {
             "job_id": job_id,
             "doc_id": f"thesis:{job_id}",
@@ -293,6 +573,15 @@ def list_thesis_datasets(jobs_root: Path | None = None) -> list[dict[str, Any]]:
             with _connect_readonly(db_path) as con:
                 doc_rows = _rows(con, "documents")
                 doc = _document_from_row(doc_rows[0] if doc_rows else None, job_id)
+                translation_rows = _rows(con, "translation_runs")
+                run_experiment_ids = sorted({
+                    str(row.get("experiment_id") or "")
+                    for row in translation_rows
+                    if row.get("experiment_id")
+                })
+                if not item.get("experiment_id") and len(run_experiment_ids) == 1:
+                    item["experiment_id"] = run_experiment_ids[0]
+                    item["experiment_id_source"] = "translation_runs"
                 item.update({
                     "title": doc.get("title"),
                     "document_doc_id": doc.get("doc_id"),
@@ -336,7 +625,8 @@ def load_thesis_dataset(
             for index, chapter_id in enumerate(chapter_ids)
         ]
 
-        glossary = [_glossary_to_runtime(row) for row in _rows(con, "glossary_entries", "source_term")]
+        glossary_rows = _rows(con, "glossary_entries", "source_term")
+        glossary = [_glossary_to_runtime(row) for row in glossary_rows]
         entities = [_entity_to_runtime(row) for row in _rows(con, "entities", "entity_id")]
         relations = [_relation_to_runtime(row) for row in _rows(con, "entity_relations", "relation_id")]
         gold_glossary = [_gold_to_eval(row) for row in _rows(con, "eval_glossary_gold", "source_term")]
@@ -358,6 +648,13 @@ def load_thesis_dataset(
             if block is not None:
                 block.setdefault("translations", {})[key] = item
 
+        run_memory = _run_context_memory(
+            translation_rows,
+            _rows(con, "memory_packs", "pack_id"),
+            glossary_rows,
+            block_by_id,
+        )
+
         counts = {
             "blocks": len(blocks),
             "chapters": len(chapters),
@@ -365,9 +662,27 @@ def load_thesis_dataset(
             "runtime_entities": len(entities),
             "runtime_relations": len(relations),
             "translation_rows": len(translation_rows),
+            "run_context_glossary": len(run_memory["glossary_entries"]),
+            "run_scope_blocks": len(run_memory["scope"]["block_ids"]),
+            "run_scope_chapters": len(run_memory["scope"]["chapter_ids"]),
             "eval_gold_glossary": len(gold_glossary),
             "eval_references": len(references),
         }
+
+        runtime_memory = {
+            "glossary_entries": glossary,
+            "entities": entities,
+            "entity_relations": relations,
+            "summaries": [],
+        }
+        selected_run_memory = {
+            "glossary_entries": run_memory["glossary_entries"],
+            "entities": run_memory["entities"],
+            "entity_relations": run_memory["entity_relations"],
+            "summaries": run_memory["summaries"],
+        }
+        memory_scope = "selected_run" if experiment_id else "project"
+        project_memory = selected_run_memory if experiment_id else runtime_memory
 
         return {
             "meta": {
@@ -380,6 +695,7 @@ def load_thesis_dataset(
                     "experiment_id": experiment_id,
                     "stage": stage,
                 },
+                "memory_scope": memory_scope,
                 "available_runs": _available_runs(all_translation_rows),
                 "counts": counts,
                 "provenance": {
@@ -391,11 +707,9 @@ def load_thesis_dataset(
             "document": document,
             "chapters": chapters,
             "blocks": blocks,
-            "runtime_memory": {
-                "glossary_entries": glossary,
-                "entities": entities,
-                "entity_relations": relations,
-            },
+            "runtime_memory": runtime_memory,
+            "project_memory": project_memory,
+            "run_memory": run_memory,
             "eval_only": {
                 "gold_glossary": gold_glossary,
                 "references": references,

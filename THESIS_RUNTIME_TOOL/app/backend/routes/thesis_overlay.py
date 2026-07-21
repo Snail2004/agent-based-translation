@@ -18,6 +18,7 @@ def thesis_overlay(job_id: str):
             block_id=request.args.get("block_id") or None,
             chapter_id=request.args.get("chapter_id") or None,
             cascade_report=request.args.get("cascade_report") or None,
+            overlay_mode=request.args.get("overlay_mode") or "registry",
         ))
     except ThesisReadModelError as exc:
         return error(exc.code, exc.message, exc.status)

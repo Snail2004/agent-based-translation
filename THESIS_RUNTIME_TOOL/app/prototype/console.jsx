@@ -26,12 +26,472 @@ const CONSOLE_STAGE_PLAN = [
 const CONSOLE_SEVERITY_GLYPH = { info: "├", warning: "▲", error: "✕", context: "⊙" };
 const CONSOLE_TERMINAL_STATUSES = new Set(["done", "failed", "cancelled", "canceled", "error"]);
 const CONSOLE_RENDER_CAP = 2000;
+const CONSOLE_REPLAY_SPEEDS = [0.25, 0.5, 1, 2, 4];
+const CONSOLE_REPLAY_EVENT_STEP_MS = 260;
+const CONSOLE_REPLAY_MIN_GAP_MS = 80;
+const CONSOLE_REPLAY_MAX_GAP_MS = 2000;
+const CONSOLE_HEARTBEAT_MODES = new Set(["grouped", "hidden", "raw"]);
 const CONSOLE_INJECTED_TIERS = ["hard", "soft", "preserve"];
 const CONSOLE_TIER_LABELS = {
   hard: "mandatory (hard)",
   soft: "soft",
   preserve: "preserve",
 };
+const CONSOLE_SYSTEM_ORDER = ["openai_key", "gemini_key", "lmstudio_gemma", "lmstudio_bge", "cometkiwi_import"];
+const CONSOLE_SYSTEM_LABELS = {
+  openai_key: "OpenAI",
+  gemini_key: "Gemini",
+  lmstudio_gemma: "LM Studio · Gemma",
+  lmstudio_bge: "LM Studio · BGE",
+  cometkiwi_import: "COMETKiwi",
+};
+const CONSOLE_MEMORY_COLLECTIONS = new Set(["term", "entity"]);
+const CONSOLE_MEMORY_OPERATIONS = new Set(["added", "reinforced", "revised"]);
+const CONSOLE_MEMORY_LIFECYCLES = new Set(["committed"]);
+const CONSOLE_MEMORY_DOMAIN_COLLECTIONS = {
+  terminology: new Set(["term"]),
+  literary: new Set(["term", "entity"]),
+};
+const CONSOLE_MEMORY_COLLECTION_LABELS = {
+  term: "Terms",
+  entity: "Entities",
+};
+const CONSOLE_MEMORY_DOMAIN_LABELS = {
+  terminology: "D2L",
+  literary: "Literary",
+};
+const CONSOLE_MEMORY_OPERATION_META = {
+  added: { glyph: "+", label: "added" },
+  reinforced: { glyph: "↑", label: "reinforced" },
+  revised: { glyph: "~", label: "revised" },
+};
+const CONSOLE_LAYOUT_STORAGE_KEY = "thesis.agentconsole.layout.v1";
+const CONSOLE_LAYOUT_DEFAULTS = Object.freeze({
+  leftWidth: 220,
+  rightWidth: 260,
+  ledgerPercent: 34,
+  leftCollapsed: false,
+  rightCollapsed: false,
+  centerMode: "split",
+  ledgerOpen: true,
+  ledgerSurface: "translation",
+  ledgerView: "changes",
+  translationLayout: "target",
+});
+const CONSOLE_LAYOUT_LIMITS = Object.freeze({
+  leftMin: 176,
+  leftMax: 380,
+  rightMin: 220,
+  rightMax: 480,
+  ledgerMin: 20,
+  ledgerMax: 74,
+});
+const CONSOLE_LOCALE_STORAGE_KEY = "thesis.agentconsole.locale.v1";
+const CONSOLE_UI_LOCALES = new Set(["vi", "en"]);
+const CONSOLE_UI_TEXT = Object.freeze({
+  vi: Object.freeze({
+    workspace: "Workspace",
+    selectRun: "Chọn run",
+    translate: "Dịch",
+    replay: "Phát lại",
+    play: "Phát",
+    pause: "Tạm dừng",
+    refresh: "Làm mới",
+    pauseAfterStage: "Dừng sau tầng",
+    resume: "Tiếp tục",
+    cancel: "Hủy",
+    theme: "Giao diện",
+    resetLayout: "Đặt lại bố cục",
+    uiLanguage: "Ngôn ngữ giao diện",
+    latestArtifact: "artifact mới nhất",
+    results: "kết quả",
+    noneYet: "chưa có",
+    gates: "gates",
+    noScores: "Chưa có điểm — kết quả sẽ hiện sau khi tầng chấm điểm hoàn tất.",
+    gateFail: "Gate FAIL",
+    gatePass: "Gate PASS",
+    seeReport: "xem báo cáo",
+    metricHelp: "Chú thích thang điểm",
+    definition: "Ý nghĩa",
+    direction: "Chiều tốt",
+    scope: "Phạm vi",
+    unit: "Đơn vị",
+    artifactSource: "Nguồn artifact",
+    higherBetter: "Càng cao càng tốt",
+    lowerBetter: "Càng thấp càng tốt",
+    descriptiveOnly: "Chỉ số mô tả",
+    unverifiedDefinition: "Chưa có định nghĩa đã xác minh cho metric này trong hợp đồng hiện tại.",
+    unverifiedValue: "Chưa xác minh",
+    gap: "Chênh lệch",
+    importantEvents: "Quan trọng",
+    allEvents: "Tất cả",
+    eventPreset: "Mức sự kiện",
+    mode: "Chế độ",
+    state: "Trạng thái",
+    phaseReady: "Phase 1 đã sẵn sàng",
+    replayCursorAt: "Replay hiện ở",
+    liveCursorAt: "Live hiện ở",
+    recordedCursorAt: "Bản ghi hiện ở",
+    skippedReason: "Lý do bỏ qua",
+    rawReason: "Mã gốc",
+    resumeDigestMatchExplanation: "Đầu vào khớp checkpoint đã lưu, nên tầng này dùng lại kết quả cũ thay vì chạy lại.",
+    unknownSkipReason: "Runtime đã bỏ qua tầng này; chưa có diễn giải thân thiện cho mã lý do này.",
+    navigationBlockReady: "Đã mở block tại replay cursor hiện tại",
+    navigationMemoryReady: "Đã mở thay đổi bộ nhớ đã commit",
+    navigationArtifactReady: "Đã chọn artifact đã xuất hiện",
+    navigationStageFilter: "Đang lọc Event Stream theo tầng",
+    navigationTargetUnavailable: "Đích chưa khả dụng tại replay cursor hiện tại",
+    clearNavigation: "Bỏ chọn",
+  }),
+  en: Object.freeze({
+    workspace: "Workspace",
+    selectRun: "Select run",
+    translate: "Translate",
+    replay: "Replay",
+    play: "Play",
+    pause: "Pause",
+    refresh: "Refresh",
+    pauseAfterStage: "Pause after stage",
+    resume: "Resume",
+    cancel: "Cancel",
+    theme: "Theme",
+    resetLayout: "Reset layout",
+    uiLanguage: "Interface language",
+    latestArtifact: "latest artifact",
+    results: "results",
+    noneYet: "none yet",
+    gates: "gates",
+    noScores: "No scores yet — results appear after the scoring stage completes.",
+    gateFail: "Gate FAIL",
+    gatePass: "Gate PASS",
+    seeReport: "see report",
+    metricHelp: "Metric explanation",
+    definition: "Meaning",
+    direction: "Preferred direction",
+    scope: "Scope",
+    unit: "Unit",
+    artifactSource: "Artifact source",
+    higherBetter: "Higher is better",
+    lowerBetter: "Lower is better",
+    descriptiveOnly: "Descriptive metric",
+    unverifiedDefinition: "No verified definition is registered for this metric in the current contract.",
+    unverifiedValue: "Unverified",
+    gap: "Gap",
+    importantEvents: "Important",
+    allEvents: "All",
+    eventPreset: "Event level",
+    mode: "Mode",
+    state: "State",
+    phaseReady: "Phase 1 ready",
+    replayCursorAt: "Replay cursor at",
+    liveCursorAt: "Live cursor at",
+    recordedCursorAt: "Recorded cursor at",
+    skippedReason: "Skip reason",
+    rawReason: "Raw code",
+    resumeDigestMatchExplanation: "The input matches the saved checkpoint, so the persisted result is reused instead of rerunning the stage.",
+    unknownSkipReason: "The runtime skipped this stage; no friendly explanation is registered for this reason code.",
+    navigationBlockReady: "Opened the block at the current replay cursor",
+    navigationMemoryReady: "Opened the committed memory change",
+    navigationArtifactReady: "Selected an artifact already emitted",
+    navigationStageFilter: "Event Stream filtered by stage",
+    navigationTargetUnavailable: "Target is not available at the current replay cursor",
+    clearNavigation: "Clear selection",
+  }),
+});
+const CONSOLE_METRIC_GLOSSARY = Object.freeze({
+  TC: Object.freeze({
+    shortCode: "TC",
+    canonicalName: "Term Consistency",
+    explanation: Object.freeze({
+      vi: "Đo mức một thuật ngữ được dịch nhất quán xuyên suốt các lần xuất hiện; không đánh giá bản dịch đó có đúng chuẩn từ điển hay không.",
+      en: "Measures whether the same term is rendered consistently across its occurrences; it does not judge whether that rendering matches an external standard.",
+    }),
+    direction: "higher",
+    scope: "block-level aggregate",
+    unit: "ratio [0, 1]",
+    artifactSource: "score report",
+  }),
+  TA: Object.freeze({
+    shortCode: "TA",
+    canonicalName: "Term Adherence",
+    explanation: Object.freeze({
+      vi: "Đo mức bản dịch thuật ngữ khớp với các dạng được chấp nhận trong chuẩn đối chiếu của run.",
+      en: "Measures how often term renderings match accepted forms in the run's reference standard.",
+    }),
+    direction: "higher",
+    scope: "occurrence-weighted aggregate",
+    unit: "ratio [0, 1]",
+    artifactSource: "score report",
+  }),
+  TA_REGISTRY: Object.freeze({
+    shortCode: "TA-Registry",
+    canonicalName: "Registry Adherence",
+    explanation: Object.freeze({
+      vi: "Đo mức bản dịch tuân thủ các chỉ dẫn thuật ngữ đã được đưa vào registry/context của chính run.",
+      en: "Measures how closely the translation follows terminology directives persisted in the run registry or context.",
+    }),
+    direction: "higher",
+    scope: "run registry",
+    unit: "ratio [0, 1]",
+    artifactSource: "score report",
+  }),
+  TC_OCC: Object.freeze({
+    shortCode: "TC-Occ",
+    canonicalName: "Term Consistency at Occurrence Level",
+    explanation: Object.freeze({
+      vi: "Tính theo từng lần xuất hiện đã định vị: tỷ lệ occurrence dùng cách dịch chiếm đa số của chính thuật ngữ đó.",
+      en: "Occurrence-level consistency: the share of localized occurrences using that term's majority rendering.",
+    }),
+    direction: "higher",
+    scope: "localized occurrences",
+    unit: "ratio [0, 1]",
+    artifactSource: "occurrence localization report",
+  }),
+  TA_OCC: Object.freeze({
+    shortCode: "TA-Occ",
+    canonicalName: "Term Adherence at Occurrence Level",
+    explanation: Object.freeze({
+      vi: "Tính theo từng lần xuất hiện đã định vị: tỷ lệ occurrence rơi vào một dạng dịch được chấp nhận.",
+      en: "Occurrence-level adherence: the share of localized occurrences landing on an accepted rendering.",
+    }),
+    direction: "higher",
+    scope: "localized occurrences",
+    unit: "ratio [0, 1]",
+    artifactSource: "occurrence localization report",
+  }),
+  SF_QE: Object.freeze({
+    shortCode: "SF-QE",
+    canonicalName: "Semantic Fidelity — Quality Estimation",
+    explanation: Object.freeze({
+      vi: "Ước lượng độ trung thành ngữ nghĩa bằng mô hình Quality Estimation không cần bản dịch tham chiếu; đây là bằng chứng hội tụ, không phải phán quyết duy nhất.",
+      en: "Reference-free quality-estimation evidence for semantic fidelity; it is convergent evidence, not a sole judge.",
+    }),
+    direction: "higher",
+    scope: "translated segments",
+    unit: "model score",
+    artifactSource: "SF-QE report",
+  }),
+  SF_BT: Object.freeze({
+    shortCode: "SF-BT",
+    canonicalName: "Semantic Fidelity — Back Translation",
+    explanation: Object.freeze({
+      vi: "Đánh giá độ trung thành qua bản dịch ngược. Hệ thống giữ các thành phần con riêng, không tự gộp thành một điểm tổng.",
+      en: "Back-translation evidence for semantic fidelity. Component scores remain separate rather than being collapsed into one composite.",
+    }),
+    direction: "higher",
+    scope: "translated segments",
+    unit: "component score",
+    artifactSource: "SF-BT report",
+  }),
+  SF_BT_COS: Object.freeze({
+    shortCode: "SF-BT-cos",
+    canonicalName: "Back-Translation Cosine Similarity",
+    explanation: Object.freeze({
+      vi: "Độ tương đồng cosine giữa nguồn và nội dung dịch ngược trong không gian biểu diễn.",
+      en: "Cosine similarity between the source and back-translated content in representation space.",
+    }),
+    direction: "higher",
+    scope: "translated segments",
+    unit: "similarity [0, 1]",
+    artifactSource: "SF-BT report",
+  }),
+  SF_BT_LLM: Object.freeze({
+    shortCode: "SF-BT-llm",
+    canonicalName: "Back-Translation LLM Judgment",
+    explanation: Object.freeze({
+      vi: "Phán đoán của LLM về mức bảo toàn ý nghĩa giữa nguồn và bản dịch ngược.",
+      en: "LLM judgment of semantic preservation between the source and back translation.",
+    }),
+    direction: "higher",
+    scope: "translated segments",
+    unit: "model score",
+    artifactSource: "SF-BT report",
+  }),
+});
+
+function consoleClamp(value, min, max, fallback = min) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? Math.min(max, Math.max(min, numeric)) : fallback;
+}
+
+function consoleReadLayout() {
+  if (typeof window === "undefined" || !window.localStorage) return { ...CONSOLE_LAYOUT_DEFAULTS };
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(CONSOLE_LAYOUT_STORAGE_KEY) || "null");
+    if (!raw || typeof raw !== "object") return { ...CONSOLE_LAYOUT_DEFAULTS };
+    const centerMode = ["split", "events", "ledger"].includes(raw.centerMode)
+      ? raw.centerMode
+      : CONSOLE_LAYOUT_DEFAULTS.centerMode;
+    const ledgerSurface = ["memory", "translation"].includes(raw.ledgerSurface)
+      ? raw.ledgerSurface
+      : CONSOLE_LAYOUT_DEFAULTS.ledgerSurface;
+    const ledgerView = ["changes", "current", "pending"].includes(raw.ledgerView)
+      ? raw.ledgerView
+      : CONSOLE_LAYOUT_DEFAULTS.ledgerView;
+    const translationLayout = ["target", "parallel", "triple"].includes(raw.translationLayout)
+      ? raw.translationLayout
+      : CONSOLE_LAYOUT_DEFAULTS.translationLayout;
+    return {
+      leftWidth: consoleClamp(raw.leftWidth, CONSOLE_LAYOUT_LIMITS.leftMin, CONSOLE_LAYOUT_LIMITS.leftMax, CONSOLE_LAYOUT_DEFAULTS.leftWidth),
+      rightWidth: consoleClamp(raw.rightWidth, CONSOLE_LAYOUT_LIMITS.rightMin, CONSOLE_LAYOUT_LIMITS.rightMax, CONSOLE_LAYOUT_DEFAULTS.rightWidth),
+      ledgerPercent: consoleClamp(raw.ledgerPercent, CONSOLE_LAYOUT_LIMITS.ledgerMin, CONSOLE_LAYOUT_LIMITS.ledgerMax, CONSOLE_LAYOUT_DEFAULTS.ledgerPercent),
+      leftCollapsed: raw.leftCollapsed === true,
+      rightCollapsed: raw.rightCollapsed === true,
+      centerMode,
+      ledgerOpen: raw.ledgerOpen !== false,
+      ledgerSurface,
+      ledgerView,
+      translationLayout,
+    };
+  } catch (_) {
+    return { ...CONSOLE_LAYOUT_DEFAULTS };
+  }
+}
+
+function consoleWriteLayout(layout) {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  try {
+    window.localStorage.setItem(CONSOLE_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+  } catch (_) {
+    // Layout persistence is optional; storage restrictions must not break Console.
+  }
+}
+
+function consoleReadLocale() {
+  if (typeof window === "undefined" || !window.localStorage) return "vi";
+  try {
+    const stored = String(window.localStorage.getItem(CONSOLE_LOCALE_STORAGE_KEY) || "").toLowerCase();
+    return CONSOLE_UI_LOCALES.has(stored) ? stored : "vi";
+  } catch (_) {
+    return "vi";
+  }
+}
+
+function consoleWriteLocale(locale) {
+  if (typeof window === "undefined" || !window.localStorage || !CONSOLE_UI_LOCALES.has(locale)) return;
+  try {
+    window.localStorage.setItem(CONSOLE_LOCALE_STORAGE_KEY, locale);
+  } catch (_) {
+    // Locale persistence is optional; storage restrictions must not break Console.
+  }
+}
+
+function consoleText(locale, key) {
+  const table = CONSOLE_UI_TEXT[CONSOLE_UI_LOCALES.has(locale) ? locale : "vi"];
+  return table[key] || CONSOLE_UI_TEXT.en[key] || key;
+}
+
+const CONSOLE_IMPORTANT_EVENTS = new Set([
+  "run_start", "run_resumed", "run_done", "run_failed", "run_cancelled",
+  "stage_start", "stage_done", "stage_failed", "stage_skipped",
+  "checkpoint", "run_committed", "artifact_created", "health_check",
+  "window_preview_available", "block_done", "memory_delta", "retry",
+  "warning", "error",
+]);
+
+function consoleIsImportantEvent(row) {
+  const event = String(row?.event || "");
+  return row?.severity === "warning"
+    || row?.severity === "error"
+    || CONSOLE_IMPORTANT_EVENTS.has(event)
+    || event.startsWith("gate_")
+    || event.includes("commit");
+}
+
+function consoleCurrentStageId(rows) {
+  const stageIds = new Set(CONSOLE_STAGE_PLAN.map(stage => stage.id));
+  for (let index = rows.length - 1; index >= 0; index -= 1) {
+    const stage = String(rows[index]?.stage || "");
+    if (stageIds.has(stage)) return stage;
+  }
+  return "";
+}
+
+function consoleSkipReasonExplanation(reason, locale) {
+  return String(reason || "") === "resume_digest_match"
+    ? consoleText(locale, "resumeDigestMatchExplanation")
+    : consoleText(locale, "unknownSkipReason");
+}
+
+function consoleMetricDescriptor(metricKey) {
+  const rawKey = String(metricKey || "").trim();
+  const armMatch = rawKey.match(/_(S0|S1)$/i);
+  const arm = armMatch ? armMatch[1].toUpperCase() : "";
+  const baseKey = armMatch ? rawKey.slice(0, -armMatch[0].length) : rawKey;
+  const normalizedKey = baseKey.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  return {
+    rawKey,
+    arm,
+    normalizedKey,
+    meta: CONSOLE_METRIC_GLOSSARY[normalizedKey] || null,
+  };
+}
+
+function ConsoleMetricLabel({ metricKey, locale, fallbackLabel = "", prefix = "", suffix = "", idSuffix = "" }) {
+  const descriptor = consoleMetricDescriptor(metricKey);
+  const meta = descriptor.meta;
+  const code = meta ? meta.shortCode : (descriptor.rawKey || fallbackLabel || "?");
+  const canonicalName = meta ? meta.canonicalName : "";
+  const visibleFallback = !meta && fallbackLabel ? fallbackLabel : "";
+  const tooltipId = `console-metric-${String(metricKey || "unknown").replace(/[^a-z0-9]+/gi, "-")}-${String(idSuffix || "value").replace(/[^a-z0-9]+/gi, "-")}`;
+  const direction = meta
+    ? consoleText(locale, meta.direction === "higher" ? "higherBetter" : meta.direction === "lower" ? "lowerBetter" : "descriptiveOnly")
+    : consoleText(locale, "unverifiedValue");
+
+  return (
+    <button
+      className="metric-help"
+      type="button"
+      aria-describedby={tooltipId}
+      aria-label={`${consoleText(locale, "metricHelp")}: ${canonicalName || visibleFallback || code}`}
+    >
+      {prefix && <span className="metric-prefix">{prefix}</span>}
+      {descriptor.arm && <span className="metric-arm">{descriptor.arm}</span>}
+      <span className="metric-code">{visibleFallback || code}</span>
+      {canonicalName && <span className="metric-canonical">· {canonicalName}</span>}
+      {suffix && <span className="metric-suffix">{suffix}</span>}
+      <span className="metric-popover" id={tooltipId} role="tooltip">
+        <span className="metric-popover-title">
+          <span className="metric-popover-code">{code}</span>
+          <span>{canonicalName || visibleFallback || descriptor.rawKey}</span>
+        </span>
+        <span className="metric-popover-definition">
+          {meta ? meta.explanation[locale] || meta.explanation.en : consoleText(locale, "unverifiedDefinition")}
+        </span>
+        <span className="metric-popover-grid">
+          <span>{consoleText(locale, "direction")}</span><strong>{direction}</strong>
+          <span>{consoleText(locale, "scope")}</span><strong>{meta ? meta.scope : consoleText(locale, "unverifiedValue")}</strong>
+          <span>{consoleText(locale, "unit")}</span><strong>{meta ? meta.unit : consoleText(locale, "unverifiedValue")}</strong>
+          <span>{consoleText(locale, "artifactSource")}</span><strong>{meta ? meta.artifactSource : consoleText(locale, "unverifiedValue")}</strong>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function ConsoleSkipReason({ reason, locale, stageLabel }) {
+  const rawReason = String(reason || "");
+  const tooltipId = `console-skip-${String(stageLabel || "stage").replace(/[^a-z0-9]+/gi, "-")}-${rawReason.replace(/[^a-z0-9]+/gi, "-") || "unknown"}`;
+  return (
+    <button
+      className="stage-skip-help"
+      type="button"
+      aria-describedby={tooltipId}
+      aria-label={`${consoleText(locale, "skippedReason")}: ${rawReason}`}
+    >
+      <span>skipped</span>
+      <span className="stage-skip-mark" aria-hidden="true">?</span>
+      <span className="stage-skip-popover" id={tooltipId} role="tooltip">
+        <strong>{stageLabel}</strong>
+        <span>{consoleSkipReasonExplanation(rawReason, locale)}</span>
+        <span className="stage-skip-code">
+          <span>{consoleText(locale, "rawReason")}</span>
+          <code>{rawReason}</code>
+        </span>
+      </span>
+    </button>
+  );
+}
 
 function consoleIsTerminalStatus(status) {
   return CONSOLE_TERMINAL_STATUSES.has(String(status || "").toLowerCase());
@@ -50,6 +510,112 @@ function consoleShort(value, n = 46) {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
+function consoleMemoryProjection(value) {
+  if (value == null) return "";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return consoleShort(value, 120);
+  }
+  if (typeof value !== "object" || Array.isArray(value)) return "";
+  const preferred = ["display", "canonical", "target", "aliases", "value", "label", "status"];
+  const compact = preferred
+    .filter(key => value[key] != null && ["string", "number", "boolean"].includes(typeof value[key]))
+    .map(key => `${key}: ${value[key]}`);
+  if (compact.length) return consoleShort(compact.join(" · "), 120);
+  const scalar = Object.entries(value)
+    .filter(([, item]) => item == null || ["string", "number", "boolean"].includes(typeof item))
+    .slice(0, 4)
+    .map(([key, item]) => `${key}: ${item == null ? "null" : item}`);
+  return consoleShort(scalar.join(" · "), 120);
+}
+
+/* memory_delta_v1 is a small, read-only UI event. The console deliberately
+   refuses unknown enum values and never infers deltas by diffing registries or
+   interpreting raw model output. */
+function consoleMemoryDelta(raw, payload) {
+  if (!payload || payload.contract !== "memory_delta_v1") return null;
+  const domain = String(payload.domain || "");
+  const collection = String(payload.collection || "");
+  const operation = String(payload.operation || "");
+  const lifecycle = String(payload.lifecycle || "");
+  const recordId = String(payload.record_id || "").trim();
+  const label = String(payload.label || "").trim();
+  const deltaId = String(payload.delta_id || "").trim();
+  const revisionBefore = payload.revision_before == null ? null : Number(payload.revision_before);
+  const revisionAfter = Number(payload.revision_after);
+  const recordHashBefore = payload.record_hash_before == null
+    ? null
+    : String(payload.record_hash_before || "").trim();
+  const recordHashAfter = String(payload.record_hash_after || "").trim();
+  const receipt = payload.commit_receipt && typeof payload.commit_receipt === "object"
+    ? payload.commit_receipt
+    : null;
+  const receiptId = String((receipt && receipt.receipt_id) || "").trim();
+  const stateGeneration = Number(receipt && receipt.state_generation);
+  const domainCollections = CONSOLE_MEMORY_DOMAIN_COLLECTIONS[domain];
+  const sha256Pattern = /^[0-9a-f]{64}$/i;
+  if (!["terminology", "literary"].includes(domain)
+      || !domainCollections
+      || !domainCollections.has(collection)
+      || !CONSOLE_MEMORY_COLLECTIONS.has(collection)
+      || !CONSOLE_MEMORY_OPERATIONS.has(operation)
+      || !CONSOLE_MEMORY_LIFECYCLES.has(lifecycle)
+      || !recordId
+      || !label
+      || !deltaId
+      || !Number.isInteger(revisionAfter)
+      || revisionAfter < 1
+      || !sha256Pattern.test(recordHashAfter)
+      || !receiptId
+      || !Number.isInteger(stateGeneration)
+      || stateGeneration < 1) return null;
+
+  if (operation === "added") {
+    if (revisionBefore != null || recordHashBefore != null) return null;
+  } else if (!Number.isInteger(revisionBefore)
+      || revisionBefore < 1
+      || revisionBefore >= revisionAfter
+      || !sha256Pattern.test(recordHashBefore || "")) {
+    return null;
+  }
+
+  const refs = Array.isArray(payload.source_refs)
+    ? payload.source_refs.slice(0, 4).map(ref => ({
+      chapterId: String((ref && ref.chapter_id) || ""),
+      blockId: String((ref && ref.block_id) || ""),
+    })).filter(ref => ref.chapterId && ref.blockId)
+    : [];
+  if (!refs.length) return null;
+  const evidenceDelta = Number(payload.evidence_delta);
+  return {
+    key: deltaId,
+    ts: String(raw.ts || ""),
+    stage: String(raw.stage || ""),
+    agent: String(raw.agent || ""),
+    domain,
+    collection,
+    operation,
+    lifecycle,
+    deltaId,
+    recordId,
+    revisionBefore,
+    revisionAfter,
+    receiptId,
+    stateGeneration,
+    label: consoleShort(label, 80),
+    before: consoleMemoryProjection(payload.before),
+    after: consoleMemoryProjection(payload.after),
+    evidenceDelta: Number.isFinite(evidenceDelta) ? evidenceDelta : null,
+    reasonCode: consoleShort(payload.reason_code || "", 60),
+    sourceRefs: refs,
+  };
+}
+
+function consoleMemoryDeltaMessage(delta) {
+  if (!delta) return "invalid memory delta";
+  const meta = CONSOLE_MEMORY_OPERATION_META[delta.operation] || { label: delta.operation };
+  return `${delta.collection} · ${meta.label} · ${delta.label}`;
+}
+
 function consoleBaseName(p) {
   if (!p) return "";
   const s = String(p).replace(/\\/g, "/");
@@ -65,6 +631,161 @@ function consoleDuration(start, end) {
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   return `${minutes}m${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function consoleSystemLabel(id) {
+  const key = String(id || "").trim();
+  if (CONSOLE_SYSTEM_LABELS[key]) return CONSOLE_SYSTEM_LABELS[key];
+  return key ? key.replace(/_/g, " ") : "Unknown check";
+}
+
+function consoleSystemDetail(check) {
+  if (!check) return "Not checked";
+  if (check.id === "openai_key" || check.id === "gemini_key") {
+    return check.ok === false ? "Credential missing" : "Credential configured · provider not called";
+  }
+  const matched = Array.isArray(check.matchedModels) && check.matchedModels.length ? check.matchedModels[0] : "";
+  const model = matched || check.expectedModel;
+  if (model && check.endpoint) return `${model} · ${check.endpoint}`;
+  if (model) return model;
+  if (check.module) return `${check.module}${check.python ? " · Python " + check.python : ""}`;
+  if (check.endpoint) return check.endpoint;
+  return check.ok === false ? "Preflight failed" : check.ok === true ? "Preflight passed" : "Result unavailable";
+}
+
+function consoleSystemStateLabel(check) {
+  if (!check || check.ok == null) return "UNKNOWN";
+  if (check.id === "openai_key" || check.id === "gemini_key") return check.ok ? "KEY READY" : "MISSING";
+  if (check.id === "cometkiwi_import") return check.ok ? "LOADED" : "FAILED";
+  return check.ok ? "READY" : "FAILED";
+}
+
+function consoleSystemTime(ts) {
+  const parsed = Date.parse(String(ts || ""));
+  if (!Number.isFinite(parsed)) return "";
+  const date = new Date(parsed);
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+}
+
+function consoleSystemChecks(checks) {
+  return Object.values(checks || {}).sort((a, b) => {
+    const ai = CONSOLE_SYSTEM_ORDER.indexOf(a.id);
+    const bi = CONSOLE_SYSTEM_ORDER.indexOf(b.id);
+    if (ai !== -1 || bi !== -1) return (ai === -1 ? CONSOLE_SYSTEM_ORDER.length : ai) - (bi === -1 ? CONSOLE_SYSTEM_ORDER.length : bi);
+    return consoleSystemLabel(a.id).localeCompare(consoleSystemLabel(b.id));
+  });
+}
+
+function consoleReplayTimestampMs(event) {
+  const parsed = Date.parse(event && event.ts ? event.ts : "");
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function consoleReplayDelay(events, cursor, mode, speed) {
+  const factor = Number(speed) > 0 ? Number(speed) : 1;
+  if (mode !== "time" || cursor <= 0) return CONSOLE_REPLAY_EVENT_STEP_MS / factor;
+  const previous = consoleReplayTimestampMs(events[cursor - 1]);
+  const next = consoleReplayTimestampMs(events[cursor]);
+  if (previous == null || next == null || next < previous) return CONSOLE_REPLAY_EVENT_STEP_MS / factor;
+  const bounded = Math.min(CONSOLE_REPLAY_MAX_GAP_MS, Math.max(CONSOLE_REPLAY_MIN_GAP_MS, next - previous));
+  return bounded / factor;
+}
+
+function consoleReplayClock(events, cursor) {
+  if (!events.length) return { elapsed: "0:00", total: "0:00" };
+  const first = consoleReplayTimestampMs(events[0]);
+  const last = consoleReplayTimestampMs(events[events.length - 1]);
+  const currentIndex = Math.max(0, Math.min(events.length - 1, Number(cursor || 0) - 1));
+  const current = consoleReplayTimestampMs(events[currentIndex]);
+  const format = ms => {
+    const seconds = Math.max(0, Math.round(Number(ms || 0) / 1000));
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+  };
+  if (first == null || last == null || current == null || last < first) {
+    return {
+      elapsed: format(Number(cursor || 0) * CONSOLE_REPLAY_EVENT_STEP_MS),
+      total: format(events.length * CONSOLE_REPLAY_EVENT_STEP_MS),
+    };
+  }
+  return { elapsed: format(current - first), total: format(last - first) };
+}
+
+function consoleHeartbeatGroupKey(row) {
+  if (!row || row.event !== "heartbeat") return "";
+  return [
+    row.attempt == null ? "" : row.attempt,
+    row.stage || "",
+    row.agent || "",
+    row.heartbeatPid == null ? "" : row.heartbeatPid,
+    row.heartbeatBaseMessage || row.message || "",
+  ].join("|");
+}
+
+/* Display-only compaction. Raw events remain untouched for replay, health state,
+   event counts, export, and audit. Only consecutive equivalent heartbeats fold. */
+function consoleHeartbeatRows(rows, mode = "grouped") {
+  const resolvedMode = CONSOLE_HEARTBEAT_MODES.has(mode) ? mode : "grouped";
+  if (resolvedMode === "raw") return rows;
+  if (resolvedMode === "hidden") return rows.filter(row => row.event !== "heartbeat");
+
+  const result = [];
+  rows.forEach(row => {
+    if (row.event !== "heartbeat") {
+      result.push(row);
+      return;
+    }
+
+    const groupKey = consoleHeartbeatGroupKey(row);
+    const previous = result[result.length - 1];
+    if (!previous || previous.event !== "heartbeat" || previous.heartbeatGroupKey !== groupKey) {
+      result.push({
+        ...row,
+        heartbeatGroupKey: groupKey,
+        heartbeatCount: 1,
+        heartbeatFirstTs: row.ts,
+        heartbeatLastTs: row.ts,
+        heartbeatFirstLineNo: row.lineNo,
+        heartbeatLastLineNo: row.lineNo,
+        heartbeatFirstSeq: row.seq,
+        heartbeatLastSeq: row.seq,
+        rawEventCount: 1,
+      });
+      return;
+    }
+
+    const count = Number(previous.heartbeatCount || 1) + 1;
+    const duration = consoleDuration(previous.heartbeatFirstTs, row.ts);
+    result[result.length - 1] = {
+      ...previous,
+      key: previous.key,
+      ts: row.ts,
+      seq: row.seq,
+      lineNo: row.lineNo,
+      heartbeatCount: count,
+      heartbeatLastTs: row.ts,
+      heartbeatLastLineNo: row.lineNo,
+      heartbeatLastSeq: row.seq,
+      rawEventCount: count,
+      message: `${previous.heartbeatBaseMessage || previous.message}${duration ? ` · ${duration} elapsed` : ""}`,
+    };
+  });
+  return result;
+}
+
+function consoleEventSequenceLabel(row) {
+  const firstLine = row.heartbeatFirstLineNo;
+  const lastLine = row.heartbeatLastLineNo;
+  const line = firstLine != null && lastLine != null && firstLine !== lastLine
+    ? `#${firstLine}-${lastLine}`
+    : `#${row.lineNo != null ? row.lineNo : "-"}`;
+  if (row.attempt == null || row.seq == null) return line;
+  const firstSeq = row.heartbeatFirstSeq;
+  const lastSeq = row.heartbeatLastSeq;
+  const seq = firstSeq != null && lastSeq != null && firstSeq !== lastSeq
+    ? `${firstSeq}-${lastSeq}`
+    : row.seq;
+  return `${line} · a${row.attempt}/${seq}`;
 }
 
 function formatConsoleMetric(value, unit) {
@@ -112,41 +833,6 @@ function consolePackMessage(summary, ctx) {
   return parts.join(" ");
 }
 
-function consolePackContentRows(summary) {
-  const sample = summary && typeof summary.sample === "object" && summary.sample ? summary.sample : {};
-  const more = summary && typeof summary.more === "object" && summary.more ? summary.more : {};
-  const buckets = [
-    ["mandatory", "MAND"],
-    ["soft", "SOFT"],
-    ["preserve", "KEEP"],
-    ["address", "ADDR"],
-    ["quarantine", "QUAR"],
-  ];
-  const rows = [];
-  buckets.forEach(([key, label]) => {
-    const values = Array.isArray(sample[key]) ? sample[key].slice(0, 6) : [];
-    values.forEach((line, index) => rows.push({ key: `${key}:${index}`, label, line: String(line) }));
-    if (more[key]) rows.push({ key: `${key}:more`, label, line: `+${more[key]} more` });
-  });
-  return rows;
-}
-
-function consoleTierCount(row) {
-  if (!row || !Number(row.terms)) return null;
-  return `${Number(row.consistent_terms || 0)}/${Number(row.terms || 0)}`;
-}
-
-function consoleTierIsComplete(row) {
-  return !!row && Number(row.terms || 0) > 0 && Number(row.consistent_terms || 0) === Number(row.terms || 0);
-}
-
-function consoleFormsSummary(forms, limit = 3) {
-  const entries = Object.entries(forms || {})
-    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0) || String(a[0]).localeCompare(String(b[0])));
-  if (!entries.length) return "none";
-  return entries.slice(0, limit).map(([form, count]) => `"${form}" x${count}`).join(" / ");
-}
-
 function consoleConsistencyTierRows(consistency) {
   if (!consistency || !consistency.present) return [];
   const configs = consistency.configs || [];
@@ -161,16 +847,6 @@ function consoleConsistencyTierRows(consistency) {
     if (!s0 && !s1 && !fallback) return null;
     return { tier, s0, s1, fallbackCfg, fallback, fixedCount };
   }).filter(Boolean);
-}
-
-function consoleConsistencyTierText(row) {
-  if (row.s0 && row.s1) {
-    const suffix = row.fixedCount ? ` (+${row.fixedCount} memory-fixed)` : "";
-    return `${consoleTierCount(row.s0)} -> ${consoleTierCount(row.s1)}${consoleTierIsComplete(row.s1) ? " ✓" : ""}${suffix}`;
-  }
-  const single = row.s1 || row.s0 || row.fallback;
-  const prefix = row.fallbackCfg ? row.fallbackCfg + " " : "";
-  return `${prefix}${consoleTierCount(single) || "—"}`;
 }
 
 function consoleWatchReasonLabel(item) {
@@ -261,6 +937,7 @@ function consoleMessageFor(row, ctx) {
     case "block_done": return `dịch xong ${p.block_id || ""}`;
     case "llm_call": return `LLM ${p.model || ""}${p.cache_hit ? " · cache hit" : ""}`;
     case "artifact_created": return consoleBaseName(p.artifact_path) || "artifact";
+    case "memory_delta": return consoleMemoryDeltaMessage(consoleMemoryDelta(row, p));
     case "warning": return consoleShort(p.message || p.reason, 60);
     case "error": return consoleShort(p.error || p.message, 60);
     case "retry": return `retry ${p.attempt || ""} · ${p.reason || ""}`;
@@ -273,6 +950,9 @@ function deriveConsoleState(events) {
   const stageInfo = {};
   CONSOLE_STAGE_PLAN.forEach(s => { stageInfo[s.id] = { status: "pending", start: null, end: null, exit: null, previews: 0 }; });
   let winCounter = 0;
+  const translatorWindowCounters = {};
+  const previewWindowsByArm = {};
+  const translatorTotalsByArm = {};
   let cumulativeCost = null;
   let budgetCap = null;
   let warnings = 0, errors = 0;
@@ -280,21 +960,40 @@ function deriveConsoleState(events) {
   let runStatus = "";
   let latestArtifact = null;
   let latestPreviewWin = null;
+  let latestPreviewArm = "";
   let translatorTotal = null;
   let stderrTail = [];
   let paused = false, pausedReason = "";
   let latestPackSummary = null;
   let latestPackWindow = null;
+  const memoryDeltas = [];
+  const memoryDeltaIds = new Set();
+  let invalidMemoryDeltaCount = 0;
+  const systemChecks = {};
   const normalized = [];
 
   events.forEach((raw, idx) => {
     const payload = raw && typeof raw.payload === "object" && raw.payload ? raw.payload : {};
     const stage = raw.stage || "";
     const event = raw.event || raw.event_type || "";
-    // per-window counter (translator lifecycle) for readable messages
-    if (event === "window_started") winCounter += 1;
+    let memoryDelta = null;
+    const eventArm = String(payload.config || payload.arm || payload.variant || "translation");
+    const payloadWindowOrdinal = consolePreviewWindowOrdinal(payload.window_id);
+    // Keep the global count for old events, but label lifecycle events by their
+    // own arm/window. S0 window 7 and S1 window 1 are different cursors.
+    if (event === "window_started") {
+      winCounter += 1;
+      const nextArmWindow = Number(translatorWindowCounters[eventArm] || 0) + 1;
+      translatorWindowCounters[eventArm] = Math.max(nextArmWindow, Number(payloadWindowOrdinal || 0));
+    }
+    const eventWindow = payloadWindowOrdinal
+      || Number(translatorWindowCounters[eventArm] || 0)
+      || Math.max(winCounter, 1);
     const ctxPlan = CONSOLE_STAGE_PLAN.find(s => s.id === stage);
-    const ctx = { label: ctxPlan ? ctxPlan.label : stage, win: event.startsWith("window") || ["prompt_built", "request_sent", "response_received", "json_parsed", "persist_buffered"].includes(event) ? Math.max(winCounter, 1) : null };
+    const ctx = {
+      label: ctxPlan ? ctxPlan.label : stage,
+      win: event.startsWith("window") || ["prompt_built", "request_sent", "response_received", "json_parsed", "persist_buffered"].includes(event) ? eventWindow : null,
+    };
     const severity = consoleEventSeverity(raw);
     if (severity === "warning") warnings += 1;
     if (severity === "error") errors += 1;
@@ -303,7 +1002,12 @@ function deriveConsoleState(events) {
       const si = stageInfo[stage];
       if (event === "stage_start") { si.status = "active"; si.start = raw.ts; }
       else if (event === "stage_done") { si.status = payload.exit_code === 0 ? "done" : "failed"; si.end = raw.ts; si.exit = payload.exit_code; }
-      else if (event === "stage_skipped") { si.status = "done"; si.skipped = true; }
+      else if (event === "stage_skipped") {
+        si.status = "done";
+        si.skipped = true;
+        si.end = raw.ts;
+        si.skipReason = String(payload.reason || "");
+      }
       else if (event === "window_preview_available") { si.previews += 1; }
       if (severity === "error") si.status = "failed";
     }
@@ -312,7 +1016,16 @@ function deriveConsoleState(events) {
     if (stage === "translator" && payloadTotal != null && Number.isFinite(Number(payloadTotal))) {
       translatorTotal = Math.max(Number(translatorTotal || 0), Number(payloadTotal));
     }
-    if (event === "window_preview_available") latestPreviewWin = Math.max(winCounter, 1);
+    const payloadArmTotal = payload.arm_total_windows ?? payload.config_total_windows;
+    if (stage === "translator" && payloadArmTotal != null && Number.isFinite(Number(payloadArmTotal))) {
+      translatorTotalsByArm[eventArm] = Math.max(Number(translatorTotalsByArm[eventArm] || 0), Number(payloadArmTotal));
+    }
+    if (event === "window_preview_available") {
+      const previewWindow = Math.max(Number(eventWindow || 0), 1);
+      previewWindowsByArm[eventArm] = Math.max(Number(previewWindowsByArm[eventArm] || 0), previewWindow);
+      latestPreviewWin = previewWindow;
+      latestPreviewArm = eventArm;
+    }
     if ((event === "prompt_built" || event === "pack_built") && payload.pack_summary) {
       latestPackSummary = payload.pack_summary;
       latestPackWindow = payload.window_id || (ctx.win ? `window ${ctx.win}` : "");
@@ -331,10 +1044,33 @@ function deriveConsoleState(events) {
     }
     if (event === "artifact_created" && payload.artifact_path) latestArtifact = payload.artifact_path;
     if (event === "stage_done" && payload.artifact_path) latestArtifact = payload.artifact_path;
+    if (event === "health_check") {
+      const id = String(payload.id || "unknown_check").trim() || "unknown_check";
+      systemChecks[id] = {
+        id,
+        ok: payload.ok === true ? true : payload.ok === false ? false : null,
+        ts: raw.ts || "",
+        endpoint: String(payload.endpoint || ""),
+        expectedModel: String(payload.expected_model || ""),
+        matchedModels: Array.isArray(payload.matched_models) ? payload.matched_models.map(String) : [],
+        module: String(payload.module || ""),
+        python: String(payload.python || ""),
+      };
+    }
+    if (event === "memory_delta") {
+      memoryDelta = consoleMemoryDelta(raw, payload);
+      if (memoryDelta) {
+        if (!memoryDeltaIds.has(memoryDelta.deltaId)) {
+          memoryDeltaIds.add(memoryDelta.deltaId);
+          memoryDeltas.push(memoryDelta);
+        }
+      } else invalidMemoryDeltaCount += 1;
+    }
     if (event === "run_done") runStatus = payload.status || "done";
     if (event === "run_failed") { runStatus = "failed"; if (payload.error) stderrTail = String(payload.error).split("\n").slice(-4); }
     if (event === "error" && payload.error) stderrTail = String(payload.error).split("\n").slice(-4);
 
+    const message = consoleMessageFor(raw, ctx);
     normalized.push({
       key: raw.event_id || `${raw.seq}:${idx}`,
       ts: raw.ts || "",
@@ -349,7 +1085,14 @@ function deriveConsoleState(events) {
       isCost: event === "cost_snapshot",
       isContext: event === "gate_pause",
       dur: payload.duration_s || payload.latency_s || null,
-      message: consoleMessageFor(raw, ctx),
+      message,
+      heartbeatPid: event === "heartbeat" ? payload.active_child_pid : null,
+      heartbeatBaseMessage: event === "heartbeat" ? message : "",
+      skipReason: event === "stage_skipped" ? String(payload.reason || "") : "",
+      blockId: String(payload.block_id || ""),
+      artifactPath: String(payload.artifact_path || ""),
+      memoryDeltaId: memoryDelta ? memoryDelta.deltaId : "",
+      rawEventCount: 1,
     });
   });
 
@@ -360,11 +1103,1255 @@ function deriveConsoleState(events) {
 
   return {
     normalized, stageInfo, stagesSeen, cumulativeCost, budgetCap,
-    warnings, errors, phase1Done, runStatus, latestArtifact, latestPreviewWin,
+    warnings, errors, phase1Done, runStatus, latestArtifact, latestPreviewWin, latestPreviewArm,
     stderrTail, paused, pausedReason, lastTs, llmCalls,
-    translatorTotal, latestPackSummary, latestPackWindow,
+    translatorTotal, translatorTotalsByArm, previewWindowsByArm, latestPackSummary, latestPackWindow,
+    memoryDeltas, invalidMemoryDeltaCount,
+    systemChecks: consoleSystemChecks(systemChecks),
     totalEvents: normalized.length,
   };
+}
+
+function consoleCurrentMemoryRows(deltas) {
+  const rows = new Map();
+  deltas.forEach(delta => {
+    const key = `${delta.domain}:${delta.collection}:${delta.recordId}`;
+    rows.set(key, delta);
+  });
+  return Array.from(rows.values()).sort((a, b) =>
+    String(a.domain).localeCompare(String(b.domain))
+    || String(a.collection).localeCompare(String(b.collection))
+    || String(a.label).localeCompare(String(b.label)));
+}
+
+function consolePackInjectedCount(summary) {
+  if (!summary || typeof summary !== "object") return null;
+  const direct = summary.injected ?? summary.injected_count ?? summary.included ?? summary.included_count;
+  if (direct != null && Number.isFinite(Number(direct))) return Number(direct);
+  const buckets = ["mandatory", "soft", "preserve", "address", "quarantine"];
+  const values = buckets.map(key => Number(summary[key])).filter(Number.isFinite);
+  return values.length ? values.reduce((sum, value) => sum + value, 0) : null;
+}
+
+function consoleCompactConsistency(tierRows) {
+  let terms = 0;
+  let consistent = 0;
+  tierRows.forEach(row => {
+    const selected = [row.s1, row.fallback, row.s0]
+      .find(item => item && Number(item.terms || 0) > 0);
+    if (!selected) return;
+    terms += Number(selected.terms || 0);
+    consistent += Number(selected.consistent_terms || 0);
+  });
+  return terms ? { terms, consistent, drift: Math.max(0, terms - consistent) } : null;
+}
+
+function consolePreviewWindowOrdinal(windowId) {
+  const match = String(windowId || "").match(/(\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
+function consolePreviewBlockOrdinal(blockId) {
+  const match = String(blockId || "").match(/(?:^|_)b(\d+)$/i);
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+}
+
+function consolePreviewArm(row) {
+  return String(row && (row.config || row.arm || row.variant) || "translation");
+}
+
+function consolePreviewAbsoluteOrder(row) {
+  const value = row && (row.order_index ?? row.block_order ?? row.source_order);
+  return value != null && Number.isFinite(Number(value)) ? Number(value) : null;
+}
+
+function consolePreviewSourceFlows(row) {
+  const blockType = String(row && (row.block_type || row.source_block_type) || "").trim().toLowerCase();
+  if (blockType) return blockType === "prose" || blockType === "paragraph";
+  const source = String(row && row.source_text || "");
+  if (/^(?: {4}|\t)/u.test(source)) return false;
+  const leading = source.trimStart();
+  return !/^(?:#{1,6}\s|```|~~~|\$\$|\\\[|[-*+]\s|\d+[.)]\s|\|)/u.test(leading);
+}
+
+function consolePreviewArmTotals(rows) {
+  const totals = {};
+  (Array.isArray(rows) ? rows : []).forEach(row => {
+    if (!row || typeof row !== "object") return;
+    const arm = consolePreviewArm(row);
+    const ordinal = consolePreviewWindowOrdinal(row.window_id);
+    if (ordinal != null) totals[arm] = Math.max(Number(totals[arm] || 0), ordinal);
+  });
+  return totals;
+}
+
+function consolePreviewProgressLabel(progressByArm, totalsByArm) {
+  const progress = progressByArm && typeof progressByArm === "object" ? progressByArm : {};
+  const totals = totalsByArm && typeof totalsByArm === "object" ? totalsByArm : {};
+  const arms = Array.from(new Set([...Object.keys(totals), ...Object.keys(progress)]))
+    .filter(Boolean)
+    .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+  return arms.map(arm => {
+    const current = Number(progress[arm] || 0);
+    const total = Number(totals[arm] || 0);
+    return `${arm} ${formatConsoleInt(current)}${total ? `/${formatConsoleInt(total)}` : ""}`;
+  }).join(" · ");
+}
+
+function consolePreviewRowsThroughProgress(rows, progressByArm) {
+  const safeRows = Array.isArray(rows) ? rows.filter(row => row && typeof row === "object") : [];
+  const progress = progressByArm && typeof progressByArm === "object" ? progressByArm : {};
+  if (!safeRows.length || !Object.keys(progress).length) return [];
+  const explicitArms = Object.keys(progress).filter(arm => arm !== "translation");
+  const visibleRows = safeRows.filter(row => {
+    const arm = consolePreviewArm(row);
+    const cursor = progress[arm] != null
+      ? Number(progress[arm])
+      : explicitArms.length === 0 && progress.translation != null
+        ? Number(progress.translation)
+        : 0;
+    if (!cursor) return false;
+    const rowWindow = consolePreviewWindowOrdinal(row.window_id);
+    return rowWindow == null || rowWindow <= cursor;
+  });
+  const deduped = new Map();
+  visibleRows.forEach((row, index) => {
+    const stableId = row.block_id || `${row.window_id || "window"}:${index}`;
+    deduped.set(`${consolePreviewArm(row)}:${stableId}`, row);
+  });
+  return Array.from(deduped.values()).sort((a, b) => {
+    const absoluteA = consolePreviewAbsoluteOrder(a);
+    const absoluteB = consolePreviewAbsoluteOrder(b);
+    if (absoluteA != null || absoluteB != null) {
+      if (absoluteA == null) return 1;
+      if (absoluteB == null) return -1;
+      if (absoluteA !== absoluteB) return absoluteA - absoluteB;
+    }
+    return Number(consolePreviewWindowOrdinal(a.window_id) || 0) - Number(consolePreviewWindowOrdinal(b.window_id) || 0)
+      || consolePreviewBlockOrdinal(a.block_id) - consolePreviewBlockOrdinal(b.block_id)
+      || String(a.block_id || "").localeCompare(String(b.block_id || ""));
+  });
+}
+
+function consolePreviewComparisonArms(arms) {
+  const rank = arm => {
+    const value = String(arm || "").toUpperCase();
+    if (value === "S0") return 0;
+    if (value === "S1") return 1;
+    return 2;
+  };
+  return Array.from(new Set((Array.isArray(arms) ? arms : []).filter(Boolean)))
+    .sort((a, b) => rank(a) - rank(b)
+      || String(a).localeCompare(String(b), undefined, { numeric: true }))
+    .slice(0, 2);
+}
+
+function consolePreviewComparisonRows(rows, arms) {
+  const comparisonArms = consolePreviewComparisonArms(arms);
+  const groups = new Map();
+  (Array.isArray(rows) ? rows : []).forEach((row, index) => {
+    if (!row || typeof row !== "object") return;
+    const arm = consolePreviewArm(row);
+    if (!comparisonArms.includes(arm)) return;
+    const stableId = String(row.block_id || `${row.window_id || "window"}:${index}`);
+    const current = groups.get(stableId) || {
+      block_id: row.block_id || stableId,
+      source_text: row.source_text || "",
+      sourceFlows: consolePreviewSourceFlows(row),
+      absoluteOrder: consolePreviewAbsoluteOrder(row),
+      blockOrder: consolePreviewBlockOrdinal(row.block_id),
+      rowsByArm: {},
+    };
+    current.rowsByArm[arm] = row;
+    if (!current.source_text && row.source_text) {
+      current.source_text = row.source_text;
+      current.sourceFlows = consolePreviewSourceFlows(row);
+    }
+    const absoluteOrder = consolePreviewAbsoluteOrder(row);
+    if (absoluteOrder != null && (current.absoluteOrder == null || absoluteOrder < current.absoluteOrder)) {
+      current.absoluteOrder = absoluteOrder;
+    }
+    groups.set(stableId, current);
+  });
+  return Array.from(groups.values()).sort((a, b) => {
+    if (a.absoluteOrder != null || b.absoluteOrder != null) {
+      if (a.absoluteOrder == null) return 1;
+      if (b.absoluteOrder == null) return -1;
+      if (a.absoluteOrder !== b.absoluteOrder) return a.absoluteOrder - b.absoluteOrder;
+    }
+    return a.blockOrder - b.blockOrder
+      || String(a.block_id || "").localeCompare(String(b.block_id || ""));
+  });
+}
+
+function consoleLatestPreviewUpdate(rows, arm, progressByArm = {}) {
+  const selectedArm = String(arm || "");
+  if (!selectedArm) return null;
+  const candidates = (Array.isArray(rows) ? rows : [])
+    .filter(row => consolePreviewArm(row) === selectedArm);
+  if (!candidates.length) return null;
+  const currentWindow = Number(progressByArm[selectedArm] || 0);
+  const currentRows = currentWindow > 0
+    ? candidates.filter(row => Number(consolePreviewWindowOrdinal(row.window_id) || 0) === currentWindow)
+    : [];
+  const pool = currentRows.length ? currentRows : candidates;
+  return pool[pool.length - 1] || null;
+}
+
+function consolePreviewRecordKey(row, index = 0) {
+  if (!row || typeof row !== "object") return `preview:${index}`;
+  return [
+    consolePreviewArm(row) || "translation",
+    row.window_id || "window",
+    row.block_id || `block:${index}`,
+  ].join(":");
+}
+
+function consolePreviewPresentationDelay(pace, backlog) {
+  if (pace === "instant") return 0;
+  if (pace === "slow") return 560;
+  if (pace === "fast") return 90;
+  if (backlog > 16) return 40;
+  if (backlog > 8) return 80;
+  if (backlog > 4) return 150;
+  return 280;
+}
+
+function ConsoleMemoryLedger({
+  deltas = [],
+  invalidCount = 0,
+  watchlist = [],
+  packSummary = null,
+  packWindow = "",
+  consistencyTierRows = [],
+  runKey = "",
+  previews = [],
+  previewAvailable = false,
+  previewProgress = {},
+  previewTotals = {},
+  latestPreviewArm = "",
+  centerMode = "split",
+  onCenterMode,
+  layoutPreferences = CONSOLE_LAYOUT_DEFAULTS,
+  onLayoutPreferences,
+  navigationTarget = null,
+  onNavigationResult,
+}) {
+  const [open, setOpen] = React.useState(layoutPreferences.ledgerOpen !== false);
+  const [surface, setSurface] = React.useState(layoutPreferences.ledgerSurface || "translation");
+  const [view, setView] = React.useState(layoutPreferences.ledgerView || "changes");
+  const [collectionFilter, setCollectionFilter] = React.useState("all");
+  const [translationLayout, setTranslationLayout] = React.useState(layoutPreferences.translationLayout || "target");
+  const [translationArm, setTranslationArm] = React.useState(latestPreviewArm || "");
+  const [followTail, setFollowTail] = React.useState(true);
+  const [focusedBlockId, setFocusedBlockId] = React.useState("");
+  const [pendingPreviewCount, setPendingPreviewCount] = React.useState(0);
+  const [narrowTranslationView, setNarrowTranslationView] = React.useState(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia("(max-width: 1180px)").matches
+      : false);
+  const [presentationPace, setPresentationPace] = React.useState("adaptive");
+  const [presentedPreviewKeys, setPresentedPreviewKeys] = React.useState(() => new Set());
+  const [arrivingPreviewKeys, setArrivingPreviewKeys] = React.useState(() => new Set());
+  const [lastPresentedKey, setLastPresentedKey] = React.useState("");
+  const [presentationBacklog, setPresentationBacklog] = React.useState(0);
+  const [selectedBlockId, setSelectedBlockId] = React.useState("");
+  const [selectedDeltaId, setSelectedDeltaId] = React.useState("");
+  const translationFeedRef = React.useRef(null);
+  const memoryFeedRef = React.useRef(null);
+  const pendingPreviewTargetRef = React.useRef(null);
+  const pendingMemoryTargetRef = React.useRef("");
+  const lastNavigationTokenRef = React.useRef(null);
+  const programmaticPreviewScrollRef = React.useRef(false);
+  const presentationInitializedRef = React.useRef(false);
+  const presentationRunRef = React.useRef(runKey);
+  const presentationKnownKeysRef = React.useRef(new Set());
+  const presentationQueueRef = React.useRef([]);
+  const presentationTimerRef = React.useRef(null);
+  const arrivalTimersRef = React.useRef(new Map());
+  const sawDeltaRef = React.useRef(deltas.length > 0);
+  const sawPreviewRef = React.useRef(previewAvailable);
+  const runKeyRef = React.useRef(runKey);
+  const latestPreviewArmRef = React.useRef(latestPreviewArm);
+  React.useEffect(() => {
+    setOpen(layoutPreferences.ledgerOpen !== false);
+  }, [layoutPreferences.ledgerOpen]);
+  React.useEffect(() => {
+    setSurface(layoutPreferences.ledgerSurface || "translation");
+  }, [layoutPreferences.ledgerSurface]);
+  React.useEffect(() => {
+    setView(layoutPreferences.ledgerView || "changes");
+  }, [layoutPreferences.ledgerView]);
+  React.useEffect(() => {
+    setTranslationLayout(layoutPreferences.translationLayout || "target");
+  }, [layoutPreferences.translationLayout]);
+  React.useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
+    const query = window.matchMedia("(max-width: 1180px)");
+    const sync = event => setNarrowTranslationView(Boolean(event.matches));
+    setNarrowTranslationView(query.matches);
+    if (typeof query.addEventListener === "function") query.addEventListener("change", sync);
+    else query.addListener(sync);
+    return () => {
+      if (typeof query.removeEventListener === "function") query.removeEventListener("change", sync);
+      else query.removeListener(sync);
+    };
+  }, []);
+
+  function updateLedgerPreference(key, value) {
+    onLayoutPreferences?.({ [key]: value });
+  }
+
+  function chooseLedgerSurface(nextSurface) {
+    setSurface(nextSurface);
+    updateLedgerPreference("ledgerSurface", nextSurface);
+  }
+
+  function chooseLedgerView(nextView) {
+    setView(nextView);
+    updateLedgerPreference("ledgerView", nextView);
+  }
+
+  function chooseTranslationLayout(nextLayout) {
+    setTranslationLayout(nextLayout);
+    updateLedgerPreference("translationLayout", nextLayout);
+  }
+
+  function toggleLedgerOpen() {
+    setOpen(current => {
+      const next = !current;
+      updateLedgerPreference("ledgerOpen", next);
+      return next;
+    });
+  }
+  React.useEffect(() => {
+    if (!sawDeltaRef.current && deltas.length > 0) {
+      sawDeltaRef.current = true;
+      setOpen(true);
+    }
+  }, [deltas.length]);
+  React.useEffect(() => {
+    const runChanged = runKeyRef.current !== runKey;
+    if (runChanged) {
+      runKeyRef.current = runKey;
+      latestPreviewArmRef.current = latestPreviewArm;
+      sawDeltaRef.current = deltas.length > 0;
+      sawPreviewRef.current = previewAvailable;
+      setOpen(layoutPreferences.ledgerOpen !== false);
+      setSurface(previewAvailable && layoutPreferences.ledgerSurface === "translation" ? "translation" : "memory");
+      setTranslationArm(latestPreviewArm || "");
+      setFocusedBlockId("");
+      setSelectedBlockId("");
+      setSelectedDeltaId("");
+      lastNavigationTokenRef.current = null;
+      return;
+    }
+    if (!previewAvailable) {
+      sawPreviewRef.current = false;
+      setSurface("memory");
+      return;
+    }
+    if (!sawPreviewRef.current) {
+      sawPreviewRef.current = true;
+      if (layoutPreferences.ledgerSurface === "translation") setSurface("translation");
+      setOpen(true);
+    }
+  }, [previewAvailable, runKey, layoutPreferences.ledgerOpen, layoutPreferences.ledgerSurface]);
+  const counts = React.useMemo(() => {
+    const next = { all: deltas.length };
+    CONSOLE_MEMORY_COLLECTIONS.forEach(key => { next[key] = 0; });
+    CONSOLE_MEMORY_OPERATIONS.forEach(key => { next[key] = 0; });
+    deltas.forEach(delta => {
+      next[delta.collection] = Number(next[delta.collection] || 0) + 1;
+      next[delta.operation] = Number(next[delta.operation] || 0) + 1;
+    });
+    return next;
+  }, [deltas]);
+  const visibleChanges = React.useMemo(() => {
+    const matching = deltas.filter(delta => collectionFilter === "all" || delta.collection === collectionFilter);
+    const tail = matching.slice(-120);
+    if (selectedDeltaId && !tail.some(delta => delta.deltaId === selectedDeltaId)) {
+      const selected = matching.find(delta => delta.deltaId === selectedDeltaId);
+      if (selected) tail.push(selected);
+    }
+    return tail.reverse();
+  }, [deltas, collectionFilter, selectedDeltaId]);
+  const currentRows = React.useMemo(() => consoleCurrentMemoryRows(deltas), [deltas]);
+  const currentCounts = React.useMemo(() => {
+    const next = { all: currentRows.length, term: 0, entity: 0 };
+    currentRows.forEach(row => { next[row.collection] += 1; });
+    return next;
+  }, [currentRows]);
+  const visibleCurrent = React.useMemo(() => currentRows
+    .filter(row => collectionFilter === "all" || row.collection === collectionFilter), [currentRows, collectionFilter]);
+  const filterCounts = view === "current" ? currentCounts : counts;
+  const packCount = consolePackInjectedCount(packSummary);
+  const consistency = consoleCompactConsistency(consistencyTierRows);
+  const previewArms = React.useMemo(() => consolePreviewComparisonArms([
+    ...Object.keys(previewTotals || {}),
+    ...previews.map(consolePreviewArm),
+  ]), [previews, previewTotals]);
+  React.useEffect(() => {
+    if (!previewArms.length) {
+      setTranslationArm("");
+      return;
+    }
+    if (!previewArms.includes(translationArm)) {
+      setTranslationArm(previewArms[0]);
+    }
+  }, [previewArms.join("|"), translationArm]);
+  React.useEffect(() => {
+    if (!latestPreviewArm || latestPreviewArmRef.current === latestPreviewArm) return;
+    latestPreviewArmRef.current = latestPreviewArm;
+  }, [latestPreviewArm]);
+  const previewSignature = React.useMemo(() => previews
+    .map((row, index) => consolePreviewRecordKey(row, index))
+    .join("|"), [previews]);
+  const presentedPreviews = React.useMemo(() => previews.filter((row, index) =>
+    presentedPreviewKeys.has(consolePreviewRecordKey(row, index))),
+  [previews, presentedPreviewKeys]);
+  const visiblePreviews = React.useMemo(() => presentedPreviews.filter(row =>
+    !translationArm || consolePreviewArm(row) === translationArm), [presentedPreviews, translationArm]);
+  const receivedVisiblePreviews = React.useMemo(() => previews.filter(row =>
+    !translationArm || consolePreviewArm(row) === translationArm), [previews, translationArm]);
+  const comparisonRows = React.useMemo(() =>
+    consolePreviewComparisonRows(presentedPreviews, previewArms), [presentedPreviews, previewArms.join("|")]);
+  const receivedComparisonRows = React.useMemo(() =>
+    consolePreviewComparisonRows(previews, previewArms), [previews, previewArms.join("|")]);
+  const effectiveTranslationLayout = translationLayout === "triple"
+    && (previewArms.length < 2 || narrowTranslationView)
+    ? "parallel"
+    : translationLayout;
+  const tripleLayout = effectiveTranslationLayout === "triple" && previewArms.length >= 2;
+  const translationBlockCount = tripleLayout ? comparisonRows.length : visiblePreviews.length;
+  const translationReceivedBlockCount = tripleLayout ? receivedComparisonRows.length : receivedVisiblePreviews.length;
+  const focusedPreviewGroup = React.useMemo(() => {
+    if (!focusedBlockId) return null;
+    return receivedComparisonRows.find(group =>
+      String(group.block_id || "") === String(focusedBlockId)) || null;
+  }, [focusedBlockId, receivedComparisonRows]);
+  const focusedReadyArms = focusedPreviewGroup
+    ? consolePreviewComparisonArms(previewArms).filter(arm => focusedPreviewGroup.rowsByArm[arm])
+    : [];
+  const lastPresentedPreview = React.useMemo(() => previews.find((row, index) =>
+    consolePreviewRecordKey(row, index) === lastPresentedKey) || null,
+  [previews, lastPresentedKey]);
+  const activeLatestArm = lastPresentedPreview
+    ? consolePreviewArm(lastPresentedPreview)
+    : translationArm || previewArms[0] || "";
+  const latestPreviewUpdate = lastPresentedPreview || consoleLatestPreviewUpdate(presentedPreviews, activeLatestArm, {});
+  const latestSelectedPreview = React.useMemo(() =>
+    consoleLatestPreviewUpdate(presentedPreviews, translationArm, {}),
+  [presentedPreviews, translationArm]);
+  const latestPreview = tripleLayout ? latestPreviewUpdate : latestSelectedPreview;
+  // Switching from S0 to S1 is presentation progress, not a new stream.
+  // Keep the reader's follow choice stable while the queue crosses arms.
+  const previewStreamKey = runKey;
+  const previewProgressText = consolePreviewProgressLabel(previewProgress, previewTotals);
+  const selectedPreviewWindow = Number(previewProgress[translationArm] || 0);
+  const selectedPreviewTotal = Number(previewTotals[translationArm] || 0);
+
+  function scrollTranslationToEnd() {
+    const feed = translationFeedRef.current;
+    if (!feed) return;
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  function scrollTranslationToPreview(row) {
+    const feed = translationFeedRef.current;
+    if (!feed || !row || !row.block_id) {
+      scrollTranslationToEnd();
+      return;
+    }
+    const target = Array.from(feed.querySelectorAll("[data-preview-block-id]"))
+      .find(node => node.dataset.previewBlockId === String(row.block_id));
+    if (!target) {
+      scrollTranslationToEnd();
+      return;
+    }
+    const feedRect = feed.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const targetTop = feed.scrollTop + targetRect.top - feedRect.top;
+    const bottomPadding = 12;
+    feed.scrollTop = Math.max(
+      0,
+      targetTop - Math.max(bottomPadding, feed.clientHeight - targetRect.height - bottomPadding),
+    );
+  }
+
+  function queueTranslationScroll(row) {
+    programmaticPreviewScrollRef.current = true;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollTranslationToPreview(row);
+        requestAnimationFrame(() => {
+          programmaticPreviewScrollRef.current = false;
+        });
+      });
+    });
+  }
+
+  function scrollMemoryToDelta(deltaId) {
+    const feed = memoryFeedRef.current;
+    if (!feed || !deltaId) return;
+    const target = Array.from(feed.querySelectorAll("[data-memory-delta-id]"))
+      .find(node => node.dataset.memoryDeltaId === String(deltaId));
+    if (!target) return;
+    target.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
+  function queueMemoryScroll(deltaId) {
+    pendingMemoryTargetRef.current = deltaId;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (pendingMemoryTargetRef.current !== deltaId) return;
+        scrollMemoryToDelta(deltaId);
+        pendingMemoryTargetRef.current = "";
+      });
+    });
+  }
+
+  function focusTranslationBlock(blockId) {
+    if (!blockId) return;
+    setFocusedBlockId(String(blockId));
+    setSelectedBlockId(String(blockId));
+    setFollowTail(false);
+  }
+
+  function clearTranslationFocus() {
+    setFocusedBlockId("");
+    setSelectedBlockId("");
+  }
+
+  React.useEffect(() => {
+    if (!focusedBlockId) return undefined;
+    const handleKeyDown = event => {
+      if (event.key === "Escape") clearTranslationFocus();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [focusedBlockId]);
+
+  React.useEffect(() => {
+    if (!navigationTarget || navigationTarget.token == null) return;
+    if (lastNavigationTokenRef.current === navigationTarget.token) return;
+    lastNavigationTokenRef.current = navigationTarget.token;
+
+    if (navigationTarget.kind === "block") {
+      const row = previews.find(preview => String(preview.block_id || "") === String(navigationTarget.id || ""));
+      if (!row) {
+        onNavigationResult?.({ ok: false, kind: "block", id: navigationTarget.id, reason: "not_visible" });
+        return;
+      }
+      setOpen(true);
+      chooseLedgerSurface("translation");
+      setPresentedPreviewKeys(current => {
+        const next = new Set(current);
+        previews.forEach((preview, index) => {
+          if (String(preview.block_id || "") === String(navigationTarget.id || "")) {
+            next.add(consolePreviewRecordKey(preview, index));
+          }
+        });
+        return next;
+      });
+      const arm = consolePreviewArm(row);
+      if (arm && effectiveTranslationLayout !== "triple") setTranslationArm(arm);
+      focusTranslationBlock(navigationTarget.id);
+      onNavigationResult?.({ ok: true, kind: "block", id: navigationTarget.id });
+      return;
+    }
+
+    if (navigationTarget.kind === "memory") {
+      const delta = deltas.find(item => item.deltaId === navigationTarget.id);
+      if (!delta) {
+        onNavigationResult?.({ ok: false, kind: "memory", id: navigationTarget.id, reason: "not_visible" });
+        return;
+      }
+      setOpen(true);
+      chooseLedgerSurface("memory");
+      chooseLedgerView("changes");
+      setCollectionFilter(delta.collection || "all");
+      setSelectedDeltaId(delta.deltaId);
+      queueMemoryScroll(delta.deltaId);
+      onNavigationResult?.({ ok: true, kind: "memory", id: delta.deltaId });
+    }
+  }, [navigationTarget?.token, previews, deltas, effectiveTranslationLayout]);
+
+  React.useEffect(() => {
+    if (navigationTarget) return;
+    setSelectedBlockId("");
+    setSelectedDeltaId("");
+  }, [navigationTarget]);
+
+  function resumeTranslationFollow() {
+    const target = latestPreview;
+    if (!tripleLayout && activeLatestArm && previewArms.includes(activeLatestArm)) {
+      setTranslationArm(activeLatestArm);
+    }
+    pendingPreviewTargetRef.current = null;
+    clearTranslationFocus();
+    setFollowTail(true);
+    setPendingPreviewCount(0);
+    if (!presentationBacklog) queueTranslationScroll(target);
+  }
+
+  function handleTranslationScroll(event) {
+    if (programmaticPreviewScrollRef.current) return;
+    if (focusedBlockId) return;
+    const feed = event.currentTarget;
+    const atTail = feed.scrollHeight - feed.scrollTop - feed.clientHeight <= 40;
+    if (atTail) {
+      setFollowTail(true);
+      setPendingPreviewCount(0);
+      pendingPreviewTargetRef.current = null;
+    } else {
+      setFollowTail(false);
+    }
+  }
+
+  React.useEffect(() => {
+    const rows = previews.map((row, index) => ({
+      key: consolePreviewRecordKey(row, index),
+      row,
+      arm: consolePreviewArm(row),
+    }));
+    const currentKeys = new Set(rows.map(item => item.key));
+    const runChanged = presentationRunRef.current !== runKey;
+
+    function resetPresentation(seedRows) {
+      if (presentationTimerRef.current) {
+        clearTimeout(presentationTimerRef.current);
+        presentationTimerRef.current = null;
+      }
+      arrivalTimersRef.current.forEach(timer => clearTimeout(timer));
+      arrivalTimersRef.current.clear();
+      presentationQueueRef.current = [];
+      presentationKnownKeysRef.current = new Set(seedRows.map(item => item.key));
+      setPresentedPreviewKeys(new Set(seedRows.map(item => item.key)));
+      setArrivingPreviewKeys(new Set());
+      setLastPresentedKey(seedRows.length ? seedRows[seedRows.length - 1].key : "");
+      setPresentationBacklog(0);
+      setPendingPreviewCount(0);
+      pendingPreviewTargetRef.current = null;
+    }
+
+    if (!presentationInitializedRef.current || runChanged) {
+      presentationInitializedRef.current = true;
+      presentationRunRef.current = runKey;
+      resetPresentation(rows);
+      return;
+    }
+
+    const rewind = Array.from(presentationKnownKeysRef.current)
+      .some(key => !currentKeys.has(key));
+    if (rewind) {
+      resetPresentation(rows);
+      return;
+    }
+
+    const additions = rows.filter(item => !presentationKnownKeysRef.current.has(item.key));
+    if (!additions.length) return;
+    additions.forEach(item => presentationKnownKeysRef.current.add(item.key));
+    presentationQueueRef.current.push(...additions);
+    pendingPreviewTargetRef.current = additions[additions.length - 1].row;
+    setPresentationBacklog(presentationQueueRef.current.length);
+  }, [runKey, previewSignature]);
+
+  React.useEffect(() => {
+    if (presentationTimerRef.current) {
+      clearTimeout(presentationTimerRef.current);
+      presentationTimerRef.current = null;
+    }
+    if (!followTail || focusedBlockId || !presentationQueueRef.current.length) return undefined;
+
+    const backlog = presentationQueueRef.current.length;
+    const delay = consolePreviewPresentationDelay(presentationPace, backlog);
+    presentationTimerRef.current = setTimeout(() => {
+      presentationTimerRef.current = null;
+      const revealCount = presentationPace === "instant"
+        ? presentationQueueRef.current.length
+        : 1;
+      const revealed = presentationQueueRef.current.splice(0, revealCount);
+      if (!revealed.length) {
+        setPresentationBacklog(0);
+        return;
+      }
+
+      const revealedKeys = revealed.map(item => item.key);
+      const last = revealed[revealed.length - 1];
+      setPresentedPreviewKeys(previous => {
+        const next = new Set(previous);
+        revealedKeys.forEach(key => next.add(key));
+        return next;
+      });
+      setArrivingPreviewKeys(previous => {
+        const next = new Set(previous);
+        revealedKeys.forEach(key => next.add(key));
+        return next;
+      });
+      revealedKeys.forEach(key => {
+        const existing = arrivalTimersRef.current.get(key);
+        if (existing) clearTimeout(existing);
+        const timer = setTimeout(() => {
+          arrivalTimersRef.current.delete(key);
+          setArrivingPreviewKeys(previous => {
+            if (!previous.has(key)) return previous;
+            const next = new Set(previous);
+            next.delete(key);
+            return next;
+          });
+        }, 720);
+        arrivalTimersRef.current.set(key, timer);
+      });
+
+      setLastPresentedKey(last.key);
+      pendingPreviewTargetRef.current = last.row;
+      if (!tripleLayout && last.arm && previewArms.includes(last.arm)) {
+        setTranslationArm(last.arm);
+      }
+      setPresentationBacklog(presentationQueueRef.current.length);
+      queueTranslationScroll(last.row);
+    }, delay);
+
+    return () => {
+      if (presentationTimerRef.current) {
+        clearTimeout(presentationTimerRef.current);
+        presentationTimerRef.current = null;
+      }
+    };
+  }, [
+    followTail,
+    presentationBacklog,
+    presentationPace,
+    tripleLayout,
+    focusedBlockId,
+    previewArms.join("|"),
+  ]);
+
+  React.useEffect(() => {
+    setPendingPreviewCount(followTail && !focusedBlockId ? 0 : presentationBacklog);
+  }, [followTail, focusedBlockId, presentationBacklog]);
+
+  React.useEffect(() => () => {
+    if (presentationTimerRef.current) clearTimeout(presentationTimerRef.current);
+    arrivalTimersRef.current.forEach(timer => clearTimeout(timer));
+    arrivalTimersRef.current.clear();
+  }, []);
+
+  React.useEffect(() => {
+    pendingPreviewTargetRef.current = null;
+    setFocusedBlockId("");
+    setSelectedBlockId("");
+    setFollowTail(true);
+    setPendingPreviewCount(0);
+    if (!presentationBacklog) queueTranslationScroll(latestPreview);
+  }, [previewStreamKey]);
+
+  React.useEffect(() => {
+    if (open && surface === "translation" && followTail && !focusedBlockId && !presentationBacklog) {
+      queueTranslationScroll(latestPreview);
+    }
+  }, [open, surface, followTail, focusedBlockId]);
+
+  const tabContract = view === "changes"
+    ? "memory_delta_v1 · committed only"
+    : view === "current"
+      ? "run-local projection · not full registry"
+      : "watchlist · not committed";
+
+  return (
+    <section className={"memory-delta-pane" + (open ? "" : " memory-delta-collapsed")} aria-label="Memory ledger">
+      <div className="memory-delta-head">
+        <button
+          type="button"
+          className="memory-delta-toggle"
+          aria-label={open ? "Collapse memory ledger" : "Expand memory ledger"}
+          aria-expanded={open}
+          title={open ? "Thu gọn cập nhật bộ nhớ" : "Mở cập nhật bộ nhớ"}
+          onClick={toggleLedgerOpen}
+        >
+          {open ? "⌄" : "⌃"}
+        </button>
+        <span className="memory-delta-title">:: run ledger</span>
+        <span className="run-ledger-surfaces" role="tablist" aria-label="Run ledger surfaces">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={surface === "memory"}
+            className={"run-ledger-surface" + (surface === "memory" ? " active" : "")}
+            onClick={() => chooseLedgerSurface("memory")}
+          >
+            Bộ nhớ
+          </button>
+          {previewAvailable && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={surface === "translation"}
+              className={"run-ledger-surface" + (surface === "translation" ? " active" : "")}
+              onClick={() => chooseLedgerSurface("translation")}
+            >
+              Bản dịch
+            </button>
+          )}
+        </span>
+        <span className="memory-delta-total">
+          {surface === "translation"
+            ? (previewProgressText ? `${previewProgressText} windows` : "0 windows")
+            : `${formatConsoleInt(deltas.length)} committed changes`}
+        </span>
+        {onCenterMode && (
+          <button
+            type="button"
+            className="console-pane-mode-button"
+            onClick={() => onCenterMode(centerMode === "ledger" ? "split" : "ledger")}
+            title={centerMode === "ledger" ? "Khôi phục Event Stream và Run Ledger" : "Phóng to Run Ledger"}
+            aria-label={centerMode === "ledger" ? "Restore split Console view" : "Maximize Run Ledger"}
+          >
+            {centerMode === "ledger" ? "↕" : "□"}
+          </button>
+        )}
+        {surface === "memory" && <span className="memory-ledger-summary" aria-label="Run memory summary">
+          {packCount != null && (
+            <span className="memory-ledger-chip" title={packWindow ? `Latest context pack: ${packWindow}` : "Latest context pack"}>
+              pack {formatConsoleInt(packCount)}
+            </span>
+          )}
+          {consistency && (
+            <span className={"memory-ledger-chip" + (consistency.drift ? " ledger-chip-warn" : " ledger-chip-good")} title="Rendered terminology adherence">
+              adherence {formatConsoleInt(consistency.consistent)}/{formatConsoleInt(consistency.terms)}
+            </span>
+          )}
+          {watchlist.length > 0 && (
+            <span className="memory-ledger-chip ledger-chip-warn" title="Pending or held records; not committed">
+              held {formatConsoleInt(watchlist.length)}
+            </span>
+          )}
+        </span>}
+        {surface === "translation" && (
+          <span className="memory-ledger-summary" aria-label="Translation stream summary">
+            <span className="memory-ledger-chip ledger-chip-good">
+              {formatConsoleInt(translationBlockCount)} blocks ready
+            </span>
+            {latestPreview && <span className="memory-ledger-chip">{latestPreview.model || latestPreview.config || "translator"}</span>}
+          </span>
+        )}
+        {surface === "memory" && <span className="memory-delta-stats" aria-label="Memory delta operation totals">
+          {[...CONSOLE_MEMORY_OPERATIONS].filter(operation => counts[operation] > 0).map(operation => {
+            const meta = CONSOLE_MEMORY_OPERATION_META[operation];
+            return (
+              <span className={`memory-delta-stat delta-op-${operation}`} key={operation} title={meta.label}>
+                {meta.glyph}{formatConsoleInt(counts[operation] || 0)}
+              </span>
+            );
+          })}
+        </span>}
+      </div>
+      {open && surface === "memory" && (
+        <>
+          <div className="memory-ledger-tabs" role="tablist" aria-label="Memory ledger views">
+            {[
+              ["changes", "Thay đổi", deltas.length],
+              ["current", "Hiện có", currentRows.length],
+              ["pending", "Chờ xử lý", watchlist.length],
+            ].map(([key, label, count]) => (
+              <button
+                type="button"
+                role="tab"
+                key={key}
+                aria-selected={view === key}
+                className={"memory-ledger-tab" + (view === key ? " active" : "")}
+                onClick={() => chooseLedgerView(key)}
+              >
+                {label}<span>{formatConsoleInt(count)}</span>
+              </button>
+            ))}
+          </div>
+          <div className="memory-delta-toolbar" role="toolbar" aria-label="Filter memory ledger">
+            {view !== "pending" && ["all", "term", "entity"].map(collection => (
+              <button
+                type="button"
+                key={collection}
+                className={"memory-delta-filter" + (collectionFilter === collection ? " active" : "")}
+                aria-pressed={collectionFilter === collection}
+                onClick={() => setCollectionFilter(collection)}
+              >
+                {collection === "all" ? "All" : CONSOLE_MEMORY_COLLECTION_LABELS[collection]}
+                <span>{formatConsoleInt(filterCounts[collection] || 0)}</span>
+              </button>
+            ))}
+            {view === "pending" && <span className="memory-ledger-note">Chỉ các mục đang giữ lại để xem xét; không phải thay đổi bộ nhớ.</span>}
+            <span className="memory-delta-contract">{tabContract}</span>
+          </div>
+          <div className="memory-delta-feed" ref={memoryFeedRef}>
+            {view === "changes" && (visibleChanges.length ? visibleChanges.map(delta => {
+              const meta = CONSOLE_MEMORY_OPERATION_META[delta.operation];
+              const projection = delta.before && delta.after
+                ? <><span>{delta.before}</span><b aria-hidden="true">→</b><span>{delta.after}</span></>
+                : <span>{delta.after || delta.before || delta.reasonCode || "no display projection"}</span>;
+              return (
+                <div
+                  className={`memory-delta-row delta-op-${delta.operation}` + (selectedDeltaId === delta.deltaId ? " memory-targeted" : "")}
+                  data-memory-delta-id={delta.deltaId}
+                  key={delta.key}
+                >
+                  <span className="memory-delta-time">{delta.ts ? delta.ts.slice(11, 19) : "--:--:--"}</span>
+                  <span className="memory-delta-glyph" title={meta.label}>{meta.glyph}</span>
+                  <span className="memory-delta-main">
+                    <span className="memory-delta-label">
+                      <b>{delta.label}</b>
+                      <span>
+                        {CONSOLE_MEMORY_DOMAIN_LABELS[delta.domain]} · {CONSOLE_MEMORY_COLLECTION_LABELS[delta.collection]} · {delta.stage || delta.agent || "unknown stage"}
+                      </span>
+                    </span>
+                    <span className="memory-delta-projection">{projection}</span>
+                  </span>
+                  <span className="memory-delta-meta">
+                    <span className={`memory-lifecycle memory-lifecycle-${delta.lifecycle}`}>{delta.lifecycle}</span>
+                    <span title={`Revision ${delta.revisionAfter}; state generation ${delta.stateGeneration}`}>
+                      r{delta.revisionAfter} · g{delta.stateGeneration}
+                    </span>
+                    {delta.evidenceDelta != null && delta.evidenceDelta !== 0 && (
+                      <span title="Evidence delta">{delta.evidenceDelta > 0 ? "+" : ""}{delta.evidenceDelta} ev</span>
+                    )}
+                    {delta.sourceRefs.length > 0 && (
+                      <span title={delta.sourceRefs.map(ref => [ref.chapterId, ref.blockId].filter(Boolean).join("/")).join(", ")}>
+                        {delta.sourceRefs.length} ref
+                      </span>
+                    )}
+                    <span title={`Commit receipt: ${delta.receiptId}`}>receipt</span>
+                  </span>
+                </div>
+              );
+            }) : (
+              <div className="memory-delta-empty">
+                {deltas.length
+                  ? "Không có thay đổi thuộc nhóm đang lọc."
+                  : "Run này chưa phát committed memory_delta_v1. Panel chỉ hiện thay đổi đã ghi bền vững."}
+              </div>
+            ))}
+            {view === "current" && (visibleCurrent.length ? visibleCurrent.map(delta => (
+              <div
+                className={"memory-delta-row memory-current-row" + (selectedDeltaId === delta.deltaId ? " memory-targeted" : "")}
+                data-memory-delta-id={delta.deltaId}
+                key={`current:${delta.domain}:${delta.collection}:${delta.recordId}`}
+              >
+                <span className="memory-delta-glyph" title="Latest committed revision">◆</span>
+                <span className="memory-delta-main">
+                  <span className="memory-delta-label">
+                    <b>{delta.label}</b>
+                    <span>{CONSOLE_MEMORY_DOMAIN_LABELS[delta.domain]} · {CONSOLE_MEMORY_COLLECTION_LABELS[delta.collection]}</span>
+                  </span>
+                  <span className="memory-delta-projection"><span>{delta.after || delta.before || "no display projection"}</span></span>
+                </span>
+                <span className="memory-delta-meta">
+                  <span className="memory-lifecycle memory-lifecycle-committed">current</span>
+                  <span>r{delta.revisionAfter} · g{delta.stateGeneration}</span>
+                  <span title={`Commit receipt: ${delta.receiptId}`}>receipt</span>
+                </span>
+              </div>
+            )) : (
+              <div className="memory-delta-empty">
+                {deltas.length
+                  ? "Không có bản ghi hiện hành thuộc nhóm đang lọc."
+                  : "Chưa có committed delta để dựng projection của run này. Đây không phải toàn bộ registry."}
+              </div>
+            ))}
+            {view === "pending" && (watchlist.length ? watchlist.map((item, index) => {
+              const source = item.term || item.source_term || item.surface || item.source || "record";
+              const target = item.vi || item.canonical_target_vi || item.target || item.canonical || "?";
+              const candidates = consoleWatchCandidatesLine(item);
+              const evidence = consoleWatchEvidenceLine(item);
+              return (
+                <div className="memory-pending-row" key={item.entry_id || `${source}:${index}`}>
+                  <span className="memory-delta-glyph delta-pending-glyph" title="Pending or held">!</span>
+                  <span className="memory-delta-main">
+                    <span className="memory-delta-label">
+                      <b>{source}</b><span>watchlist · {consoleWatchReasonLabel(item)}</span>
+                    </span>
+                    <span className="memory-delta-projection"><span>{target}</span></span>
+                    {(candidates || evidence) && (
+                      <span className="memory-pending-detail">
+                        {[candidates && `candidates: ${candidates}`, evidence && `evidence: ${evidence}`].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </span>
+                  <span className="memory-delta-meta">
+                    <span className="memory-lifecycle memory-lifecycle-candidate">held</span>
+                    <span>{consoleWatchInjectionLabel(item)}</span>
+                  </span>
+                </div>
+              );
+            }) : (
+              <div className="memory-delta-empty">Không có mục pending/held ở thời điểm replay hiện tại.</div>
+            ))}
+            {view === "changes" && invalidCount > 0 && (
+              <div className="memory-delta-invalid">Đã bỏ qua {formatConsoleInt(invalidCount)} event sai contract.</div>
+            )}
+          </div>
+        </>
+      )}
+      {open && surface === "translation" && (
+        <div className="translation-stream-pane" role="tabpanel" aria-label="Translation stream">
+          <div className="translation-stream-toolbar" role="toolbar" aria-label="Translation stream controls">
+            <span className="translation-layout-switch" role="group" aria-label="Translation layout">
+              <button
+                type="button"
+                className={effectiveTranslationLayout === "target" ? "active" : ""}
+                aria-pressed={effectiveTranslationLayout === "target"}
+                onClick={() => chooseTranslationLayout("target")}
+              >Đích</button>
+              <button
+                type="button"
+                className={effectiveTranslationLayout === "parallel" ? "active" : ""}
+                aria-pressed={effectiveTranslationLayout === "parallel"}
+                onClick={() => chooseTranslationLayout("parallel")}
+              >Song song</button>
+              {previewArms.length >= 2 && !narrowTranslationView && (
+                <button
+                  type="button"
+                  className={effectiveTranslationLayout === "triple" ? "active" : ""}
+                  aria-pressed={effectiveTranslationLayout === "triple"}
+                  onClick={() => chooseTranslationLayout("triple")}
+                  title={`So sánh Nguồn + ${previewArms.join(" + ")}`}
+                >3 cột</button>
+              )}
+            </span>
+            {previewArms.length > 1 && !tripleLayout && (
+              <select
+                className="translation-arm-select"
+                aria-label="Translation arm"
+                value={translationArm}
+                onChange={event => setTranslationArm(event.target.value)}
+              >
+                {previewArms.map(arm => <option key={arm} value={arm}>{arm}</option>)}
+              </select>
+            )}
+            {tripleLayout && (
+              <span className="translation-comparison-arms" aria-label="Translation comparison arms">
+                {previewArms.join(" + ")}
+              </span>
+            )}
+            <select
+              className="translation-pace-select"
+              aria-label="Nhịp hiển thị block dịch"
+              value={presentationPace}
+              onChange={event => setPresentationPace(event.target.value)}
+              title="Điều chỉnh nhịp đưa các block đã nhận lên màn hình"
+            >
+              <option value="adaptive">Nhịp tự động</option>
+              <option value="slow">Chậm</option>
+              <option value="fast">Nhanh</option>
+              <option value="instant">Hiện ngay</option>
+            </select>
+            <button
+              type="button"
+              className={"translation-follow-toggle" + (followTail && !focusedBlockId ? " active" : "")}
+              aria-pressed={followTail && !focusedBlockId}
+              onClick={() => followTail && !focusedBlockId ? setFollowTail(false) : resumeTranslationFollow()}
+              title={followTail && !focusedBlockId ? "Tắt tự cuộn để giữ vị trí đang đọc" : "Theo dõi block mới nhất"}
+            >
+              <span aria-hidden="true">●</span> Theo dõi
+            </button>
+            <span className="translation-stream-progress">
+              {`${formatConsoleInt(translationBlockCount)}/${formatConsoleInt(translationReceivedBlockCount)} block`}
+              {tripleLayout
+                ? ` · ${previewProgressText || previewArms.join(" + ")}`
+                : ` · ${translationArm || "translator"} ${formatConsoleInt(selectedPreviewWindow)}${selectedPreviewTotal ? `/${formatConsoleInt(selectedPreviewTotal)}` : ""} window`}
+              {presentationBacklog > 0 ? ` · ${formatConsoleInt(presentationBacklog)} chờ` : ""}
+            </span>
+          </div>
+          {focusedBlockId && (
+            <div className="translation-focus-bar" role="status">
+              <button type="button" className="translation-focus-back" onClick={clearTranslationFocus}>
+                ← Quay lại luồng
+              </button>
+              <span><b>{focusedBlockId}</b> · đang xem riêng block</span>
+              <span className="translation-focus-hint">Esc để thoát</span>
+              {pendingPreviewCount > 0 && (
+                <button type="button" className="translation-focus-resume" onClick={resumeTranslationFollow}>
+                  {formatConsoleInt(pendingPreviewCount)} cập nhật mới · Theo dõi tiếp
+                </button>
+              )}
+            </div>
+          )}
+          <div
+            className="translation-stream-feed"
+            ref={translationFeedRef}
+            onScroll={handleTranslationScroll}
+          >
+            {focusedBlockId ? (
+              focusedPreviewGroup ? (
+                <article
+                  className="translation-block-row translation-block-focus translation-targeted"
+                  data-preview-block-id={focusedPreviewGroup.block_id || ""}
+                  key={`focus:${focusedPreviewGroup.block_id || focusedBlockId}`}
+                >
+                  <header className="translation-block-head">
+                    <span className="translation-stream-id">{focusedPreviewGroup.block_id || focusedBlockId}</span>
+                    <span className="translation-block-ready">● {focusedReadyArms.length} arm ready</span>
+                    <span className="translation-stream-model">
+                      {Array.from(new Set(focusedReadyArms.map(arm => {
+                        const row = focusedPreviewGroup.rowsByArm[arm];
+                        return row?.model || row?.config || arm;
+                      }).filter(Boolean))).join(" + ") || "translator"}
+                    </span>
+                    <button
+                      type="button"
+                      className="translation-focus-button"
+                      onClick={clearTranslationFocus}
+                      title="Quay lại luồng block"
+                      aria-label="Exit focused block"
+                    >×</button>
+                  </header>
+                  <div className="translation-block-body is-focus">
+                    <section className="translation-block-column translation-block-source" aria-label={`Source ${focusedPreviewGroup.block_id || focusedBlockId}`}>
+                      <span className="translation-block-label">Nguồn</span>
+                      <p className={focusedPreviewGroup.sourceFlows ? "translation-source-flow" : ""}>
+                        {focusedPreviewGroup.source_text || "Không có source_text trong preview đã lưu."}
+                      </p>
+                    </section>
+                    {focusedReadyArms.map(arm => {
+                      const row = focusedPreviewGroup.rowsByArm[arm];
+                      return (
+                        <section
+                          className="translation-block-column translation-block-target"
+                          aria-label={`${arm} translation ${focusedPreviewGroup.block_id || focusedBlockId}`}
+                          key={arm}
+                        >
+                          <span className="translation-block-label">Bản dịch {arm}</span>
+                          <p>{row.target_text || "Không có target_text trong preview đã lưu."}</p>
+                        </section>
+                      );
+                    })}
+                  </div>
+                </article>
+              ) : (
+                <div className="memory-delta-empty">Block đang focus chưa có preview đã persist.</div>
+              )
+            ) : tripleLayout && comparisonRows.length ? comparisonRows.map((group, index) => {
+              const isLatest = Boolean(latestPreviewUpdate
+                && String(group.block_id || "") === String(latestPreviewUpdate.block_id || ""));
+              const readyArms = previewArms.filter(arm => group.rowsByArm[arm]);
+              const windows = previewArms.map(arm => {
+                const row = group.rowsByArm[arm];
+                return row ? `${arm} ${row.window_id || "ready"}` : `${arm} pending`;
+              }).join(" · ");
+              const models = Array.from(new Set(readyArms.map(arm => {
+                const row = group.rowsByArm[arm];
+                return row.model || row.config || arm;
+              }).filter(Boolean))).join(" + ");
+              const arrivingArms = readyArms.filter(arm => {
+                const row = group.rowsByArm[arm];
+                return row && arrivingPreviewKeys.has(consolePreviewRecordKey(row));
+              });
+              const isArriving = arrivingArms.length > 0;
+              return (
+                <article
+                  className={"translation-block-row"
+                    + (isLatest ? " translation-block-latest" : "")
+                    + (isArriving ? " translation-block-arriving" : "")
+                    + (selectedBlockId === String(group.block_id || "") ? " translation-targeted" : "")}
+                  data-preview-block-id={group.block_id || ""}
+                  data-preview-arm={activeLatestArm}
+                  key={`triple:${group.block_id || index}`}
+                >
+                  <header className="translation-block-head">
+                    <span className="translation-stream-id">{group.block_id || `block ${index + 1}`}</span>
+                    <span>{windows}</span>
+                    <span className="translation-block-ready">● {readyArms.length}/{previewArms.length} ready</span>
+                    <span className="translation-stream-model">{models || "translator"}</span>
+                    <button
+                      type="button"
+                      className="translation-focus-button"
+                      onClick={() => focusTranslationBlock(group.block_id)}
+                      title="Mở rộng block"
+                      aria-label={`Focus block ${group.block_id || index + 1}`}
+                    >□</button>
+                  </header>
+                  <div className="translation-block-body is-triple">
+                    <section className="translation-block-column translation-block-source" aria-label={`Source ${group.block_id || index + 1}`}>
+                      <span className="translation-block-label">Nguồn</span>
+                      <p className={group.sourceFlows ? "translation-source-flow" : ""}>{group.source_text || "Không có source_text trong preview đã lưu."}</p>
+                    </section>
+                    {previewArms.map(arm => {
+                      const row = group.rowsByArm[arm];
+                      const isColumnArriving = row
+                        && arrivingPreviewKeys.has(consolePreviewRecordKey(row));
+                      return (
+                        <section
+                          className={"translation-block-column translation-block-target"
+                            + (row ? "" : " translation-block-pending")
+                            + (isColumnArriving ? " translation-column-arriving" : "")}
+                          aria-label={`${arm} translation ${group.block_id || index + 1}`}
+                          key={arm}
+                        >
+                          <span className="translation-block-label">Bản dịch {arm}</span>
+                          <p>{row ? (row.target_text || "Không có target_text trong preview đã lưu.") : "Chưa sẵn sàng ở thời điểm replay này."}</p>
+                        </section>
+                      );
+                    })}
+                  </div>
+                </article>
+              );
+            }) : !tripleLayout && visiblePreviews.length ? visiblePreviews.map((row, index) => {
+              const isLatest = Boolean(latestSelectedPreview
+                && consolePreviewArm(row) === consolePreviewArm(latestSelectedPreview)
+                && String(row.block_id || "") === String(latestSelectedPreview.block_id || ""));
+              const sourceFlows = consolePreviewSourceFlows(row);
+              const rowKey = consolePreviewRecordKey(row, index);
+              const isArriving = arrivingPreviewKeys.has(rowKey);
+              return (
+                <article
+                  className={"translation-block-row"
+                    + (isLatest ? " translation-block-latest" : "")
+                    + (isArriving ? " translation-block-arriving" : "")
+                    + (selectedBlockId === String(row.block_id || "") ? " translation-targeted" : "")}
+                  data-preview-block-id={row.block_id || ""}
+                  data-preview-arm={consolePreviewArm(row)}
+                  data-preview-key={rowKey}
+                  key={rowKey}
+                >
+                  <header className="translation-block-head">
+                    <span className="translation-stream-id">{row.block_id || `block ${index + 1}`}</span>
+                    <span>{row.window_id || "Translator preview"}</span>
+                    <span className="translation-block-ready">● ready</span>
+                    <span className="translation-stream-model">{row.model || row.config || "translated"}</span>
+                    <button
+                      type="button"
+                      className="translation-focus-button"
+                      onClick={() => focusTranslationBlock(row.block_id)}
+                      title="Mở rộng block"
+                      aria-label={`Focus block ${row.block_id || index + 1}`}
+                    >□</button>
+                  </header>
+                  <div className={"translation-block-body" + (effectiveTranslationLayout === "parallel" ? " is-parallel" : " is-target-only")}>
+                    {effectiveTranslationLayout === "parallel" && (
+                      <section className="translation-block-column translation-block-source" aria-label={`Source ${row.block_id || index + 1}`}>
+                        <span className="translation-block-label">Nguồn</span>
+                        <p className={sourceFlows ? "translation-source-flow" : ""}>{row.source_text || "Không có source_text trong preview đã lưu."}</p>
+                      </section>
+                    )}
+                    <section className="translation-block-column translation-block-target" aria-label={`Translation ${row.block_id || index + 1}`}>
+                      <span className="translation-block-label">Bản dịch</span>
+                      <p>{row.target_text || "Không có target_text trong preview đã lưu."}</p>
+                    </section>
+                  </div>
+                </article>
+              );
+            }) : (
+              <div className="memory-delta-empty">Translator đã phát preview, nhưng chưa tải được block đã persist.</div>
+            )}
+          </div>
+          {!focusedBlockId && pendingPreviewCount > 0 && (
+            <button type="button" className="translation-new-blocks" onClick={resumeTranslationFollow}>
+              {formatConsoleInt(pendingPreviewCount)} cập nhật mới · Theo dõi tiếp
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function consoleAgeSeconds(ts) {
@@ -381,6 +2368,7 @@ function AgentConsoleView(props) {
     truncated = false, partialLine = false,
     blockPreview = [], watchlist = [],
     reportSummary = null,
+    projectId = "", onBack, onOpenReport,
     theme = "paper", onToggleTheme,
     onRefresh, onPause, onCancel, onResume, onDich, busy = false,
   } = props;
@@ -388,78 +2376,382 @@ function AgentConsoleView(props) {
   const [stageFilter, setStageFilter] = React.useState("");
   const [agentFilter, setAgentFilter] = React.useState("");
   const [severityFilter, setSeverityFilter] = React.useState("");
-  // Client-side replay: reveal saved events over time so a finished run animates
-  // (stages progress, cost climbs, typewriter fires). No backend, no new run — the
-  // real block-preview/watchlist stay attached to this same run.
-  const [replayN, setReplayN] = React.useState(null);
-  const replayTimer = React.useRef(null);
-  const stopReplay = React.useCallback(() => {
-    if (replayTimer.current) { clearInterval(replayTimer.current); replayTimer.current = null; }
+  const [heartbeatMode, setHeartbeatMode] = React.useState("grouped");
+  const [eventPreset, setEventPreset] = React.useState("important");
+  const [uiLocale, setUiLocale] = React.useState(() => consoleReadLocale());
+  const [systemsOpen, setSystemsOpen] = React.useState(false);
+  const systemsRef = React.useRef(null);
+  const [navigationTarget, setNavigationTarget] = React.useState(null);
+  const [navigationNotice, setNavigationNotice] = React.useState(null);
+  const [highlightedStage, setHighlightedStage] = React.useState("");
+  const [selectedArtifact, setSelectedArtifact] = React.useState("");
+  const [selectedEventKey, setSelectedEventKey] = React.useState("");
+  const navigationTokenRef = React.useRef(0);
+  const [consoleLayout, setConsoleLayout] = React.useState(() => consoleReadLayout());
+  const mainColumnRef = React.useRef(null);
+  const resizeCleanupRef = React.useRef(null);
+  React.useEffect(() => consoleWriteLayout(consoleLayout), [consoleLayout]);
+  React.useEffect(() => consoleWriteLocale(uiLocale), [uiLocale]);
+  React.useEffect(() => () => {
+    if (resizeCleanupRef.current) resizeCleanupRef.current();
   }, []);
-  React.useEffect(() => () => stopReplay(), [stopReplay]);
-  React.useEffect(() => { setReplayN(null); stopReplay(); }, [runId, stopReplay]);
-  function startReplay() {
-    if (!events.length) return;
-    stopReplay();
-    let i = 0;
-    const step = Math.max(1, Math.round(events.length / 60));
-    setReplayN(0);
-    replayTimer.current = setInterval(() => {
-      i += step;
-      if (i >= events.length) { setReplayN(null); stopReplay(); }
-      else setReplayN(i);
-    }, 220);
+
+  function setConsoleCenterMode(centerMode) {
+    setConsoleLayout(layout => ({ ...layout, centerMode }));
   }
-  const replaying = replayN != null;
-  const shownEvents = replaying ? events.slice(0, replayN) : events;
+
+  function updateConsolePreferences(patch) {
+    setConsoleLayout(layout => ({ ...layout, ...patch }));
+  }
+
+  function resetConsoleLayout() {
+    setConsoleLayout({ ...CONSOLE_LAYOUT_DEFAULTS });
+  }
+
+  function toggleConsoleSide(side) {
+    const key = side === "left" ? "leftCollapsed" : "rightCollapsed";
+    setConsoleLayout(layout => ({ ...layout, [key]: !layout[key] }));
+  }
+
+  function resetConsoleTrack(track) {
+    setConsoleLayout(layout => {
+      if (track === "left") return { ...layout, leftWidth: CONSOLE_LAYOUT_DEFAULTS.leftWidth, leftCollapsed: false };
+      if (track === "right") return { ...layout, rightWidth: CONSOLE_LAYOUT_DEFAULTS.rightWidth, rightCollapsed: false };
+      return { ...layout, ledgerPercent: CONSOLE_LAYOUT_DEFAULTS.ledgerPercent, centerMode: "split" };
+    });
+  }
+
+  function beginConsoleResize(track, event) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    if (resizeCleanupRef.current) resizeCleanupRef.current();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startLayout = { ...consoleLayout };
+    const mainHeight = Math.max(1, mainColumnRef.current?.getBoundingClientRect().height || 1);
+    if (track === "left" && startLayout.leftCollapsed) setConsoleLayout(layout => ({ ...layout, leftCollapsed: false }));
+    if (track === "right" && startLayout.rightCollapsed) setConsoleLayout(layout => ({ ...layout, rightCollapsed: false }));
+    document.body.classList.add("console-resizing", `console-resizing-${track}`);
+
+    const onPointerMove = moveEvent => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = moveEvent.clientY - startY;
+      setConsoleLayout(layout => {
+        if (track === "left") {
+          return {
+            ...layout,
+            leftCollapsed: false,
+            leftWidth: consoleClamp(startLayout.leftWidth + deltaX, CONSOLE_LAYOUT_LIMITS.leftMin, CONSOLE_LAYOUT_LIMITS.leftMax),
+          };
+        }
+        if (track === "right") {
+          return {
+            ...layout,
+            rightCollapsed: false,
+            rightWidth: consoleClamp(startLayout.rightWidth - deltaX, CONSOLE_LAYOUT_LIMITS.rightMin, CONSOLE_LAYOUT_LIMITS.rightMax),
+          };
+        }
+        return {
+          ...layout,
+          centerMode: "split",
+          ledgerPercent: consoleClamp(startLayout.ledgerPercent - (deltaY / mainHeight) * 100, CONSOLE_LAYOUT_LIMITS.ledgerMin, CONSOLE_LAYOUT_LIMITS.ledgerMax),
+        };
+      });
+    };
+    const stop = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", stop);
+      document.removeEventListener("pointercancel", stop);
+      document.body.classList.remove("console-resizing", `console-resizing-${track}`);
+      if (resizeCleanupRef.current === stop) resizeCleanupRef.current = null;
+    };
+    resizeCleanupRef.current = stop;
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", stop);
+    document.addEventListener("pointercancel", stop);
+  }
+
+  function handleConsoleSplitterKey(track, event) {
+    if (!event.key.startsWith("Arrow")) return;
+    event.preventDefault();
+    setConsoleLayout(layout => {
+      if (track === "left" && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+        const delta = event.key === "ArrowRight" ? 12 : -12;
+        return { ...layout, leftCollapsed: false, leftWidth: consoleClamp(layout.leftWidth + delta, CONSOLE_LAYOUT_LIMITS.leftMin, CONSOLE_LAYOUT_LIMITS.leftMax) };
+      }
+      if (track === "right" && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+        const delta = event.key === "ArrowLeft" ? 12 : -12;
+        return { ...layout, rightCollapsed: false, rightWidth: consoleClamp(layout.rightWidth + delta, CONSOLE_LAYOUT_LIMITS.rightMin, CONSOLE_LAYOUT_LIMITS.rightMax) };
+      }
+      if (track === "ledger" && ["ArrowUp", "ArrowDown"].includes(event.key)) {
+        const delta = event.key === "ArrowUp" ? 4 : -4;
+        return { ...layout, centerMode: "split", ledgerPercent: consoleClamp(layout.ledgerPercent + delta, CONSOLE_LAYOUT_LIMITS.ledgerMin, CONSOLE_LAYOUT_LIMITS.ledgerMax) };
+      }
+      return layout;
+    });
+  }
+  // Client-side replay only: seeking recomputes the visible state from saved events.
+  // It never calls the backend or mutates the persisted run.
+  const [replayCursor, setReplayCursor] = React.useState(null);
+  const [replayPlaying, setReplayPlaying] = React.useState(false);
+  const [replaySpeed, setReplaySpeed] = React.useState(1);
+  const [replayMode, setReplayMode] = React.useState("time");
+  const replayTimer = React.useRef(null);
+  const stopReplayTimer = React.useCallback(() => {
+    if (replayTimer.current) { clearTimeout(replayTimer.current); replayTimer.current = null; }
+  }, []);
+  React.useEffect(() => () => stopReplayTimer(), [stopReplayTimer]);
+  React.useEffect(() => {
+    setReplayCursor(null);
+    setReplayPlaying(false);
+    setSystemsOpen(false);
+    setNavigationTarget(null);
+    setNavigationNotice(null);
+    setHighlightedStage("");
+    setSelectedArtifact("");
+    setSelectedEventKey("");
+    stopReplayTimer();
+  }, [runId, stopReplayTimer]);
+  React.useEffect(() => {
+    if (!systemsOpen) return undefined;
+    function closeOnPointerDown(event) {
+      if (systemsRef.current && !systemsRef.current.contains(event.target)) setSystemsOpen(false);
+    }
+    function closeOnEscape(event) {
+      if (event.key === "Escape") setSystemsOpen(false);
+    }
+    document.addEventListener("pointerdown", closeOnPointerDown);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnPointerDown);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [systemsOpen]);
+  React.useEffect(() => {
+    stopReplayTimer();
+    if (!replayPlaying || replayCursor == null) return undefined;
+    if (replayCursor >= events.length) {
+      setReplayPlaying(false);
+      return undefined;
+    }
+    replayTimer.current = setTimeout(() => {
+      setReplayCursor(current => Math.min(events.length, Number(current || 0) + 1));
+    }, consoleReplayDelay(events, replayCursor, replayMode, replaySpeed));
+    return stopReplayTimer;
+  }, [events, replayCursor, replayPlaying, replayMode, replaySpeed, stopReplayTimer]);
+
+  function toggleReplay() {
+    if (!events.length) return;
+    if (replayPlaying) {
+      setReplayPlaying(false);
+      return;
+    }
+    if (replayCursor == null || replayCursor >= events.length) setReplayCursor(0);
+    setReplayPlaying(true);
+  }
+
+  function seekReplay(value) {
+    const next = Math.max(0, Math.min(events.length, Number(value)));
+    setReplayCursor(next);
+    if (next >= events.length) setReplayPlaying(false);
+  }
+
+  function restartReplay() {
+    setReplayCursor(0);
+    setReplayPlaying(true);
+  }
+
+  function finishReplay() {
+    setReplayCursor(events.length);
+    setReplayPlaying(false);
+  }
+
+  const replayActive = replayCursor != null;
+  const replayPosition = replayActive ? replayCursor : events.length;
+  const shownEvents = replayActive ? events.slice(0, replayPosition) : events;
+  const fullState = React.useMemo(() => deriveConsoleState(events), [events]);
 
   const st = React.useMemo(() => deriveConsoleState(shownEvents), [shownEvents]);
-  const runStatus = st.runStatus || status || (running ? "running" : "idle");
+  const sourceRunStatus = fullState.runStatus || status || (running ? "running" : "idle");
+  const sourceIsTerminal = !!runId && consoleIsTerminalStatus(sourceRunStatus);
+  const replayAvailable = events.length > 0 && sourceIsTerminal;
+  const replayComplete = replayActive && replayPosition >= events.length;
+  const runStatus = replayActive
+    ? (st.runStatus || (replayComplete ? sourceRunStatus : "running"))
+    : sourceRunStatus;
   const hasRun = !!runId;
   const isTerminal = hasRun && consoleIsTerminalStatus(runStatus);
-  const isOpenRun = hasRun && !isTerminal;
-  const stalled = isOpenRun && running && consoleAgeSeconds(st.lastTs) > 90;
-  const canResumeRun = !!onResume && (runStatus === "failed" || st.paused || stalled);
+  const isOpenRun = hasRun && !sourceIsTerminal;
+  const stalled = !replayActive && isOpenRun && running && consoleAgeSeconds(st.lastTs) > 90;
+  const consoleMode = replayActive ? "REPLAY" : isOpenRun ? "LIVE" : hasRun ? "RECORDED" : "IDLE";
+  const playbackState = replayActive
+    ? (replayComplete
+      ? sourceRunStatus === "failed" ? "FAILED"
+        : sourceRunStatus === "cancelled" ? "CANCELLED"
+        : "DONE"
+      : replayPlaying ? "PLAYING" : "PAUSED")
+    : stalled ? "STALLED"
+      : st.paused ? "PAUSED"
+        : isOpenRun && !running ? "CONNECTING"
+          : String(runStatus || "idle").toUpperCase();
+  const canResumeRun = !replayActive && !!onResume && (runStatus === "failed" || st.paused || stalled);
+  const replayClock = consoleReplayClock(events, replayPosition);
+  const systemChecks = st.systemChecks || [];
+  const readySystems = systemChecks.filter(check => check.ok === true).length;
+  const failedSystems = systemChecks.filter(check => check.ok === false).length;
+  const unknownSystems = systemChecks.length - readySystems - failedSystems;
+  const preflightDone = st.stageInfo.preflight_check.status === "done";
+  const systemsTone = failedSystems ? "bad" : unknownSystems || (systemChecks.length && !preflightDone) ? "warn" : systemChecks.length ? "good" : "dim";
+  const systemsCount = systemChecks.length
+    ? (preflightDone ? `${readySystems}/${systemChecks.length}` : `${readySystems} ready`)
+    : "—";
 
+  const displayRows = React.useMemo(() => consoleHeartbeatRows(st.normalized, heartbeatMode), [st.normalized, heartbeatMode]);
   const agents = uniqueConsole(st.normalized.map(r => r.agent).filter(Boolean));
   const severities = uniqueConsole(st.normalized.map(r => r.severity).filter(Boolean));
-  const filtered = st.normalized.filter(r =>
+  const presetRows = displayRows.filter(r => eventPreset === "all" || consoleIsImportantEvent(r));
+  const filtered = presetRows.filter(r =>
     (!stageFilter || r.stage === stageFilter)
     && (!agentFilter || r.agent === agentFilter)
     && (!severityFilter || r.severity === severityFilter));
+  const filteredRawEventCount = filtered.reduce((sum, row) => sum + Number(row.rawEventCount || 1), 0);
   const hiddenOlderEvents = Math.max(0, filtered.length - CONSOLE_RENDER_CAP);
   const rendered = filtered.slice(-CONSOLE_RENDER_CAP).reverse();
-  const memoryRows = consolePackContentRows(st.latestPackSummary);
-
   const costPct = st.budgetCap ? Math.min(100, Math.round((st.cumulativeCost / st.budgetCap) * 100)) : 0;
-  const healthLabel = stalled ? "stalled" : running ? "running" : isTerminal ? runStatus : isOpenRun ? (runStatus || "connecting") : "quiet";
-  const healthClass = stalled || runStatus === "failed" ? "kv-bad" : running ? "kv-good" : isOpenRun ? "kv-warn" : "kv-dim";
-  const statusChipClass = runStatus === "failed" ? "hdr-status-bad" : runStatus === "done" ? "hdr-status-good" : stalled || st.paused || (isOpenRun && !running) ? "hdr-status-warn" : running ? "hdr-status-good" : "";
-  const reportCfgs = (reportSummary && reportSummary.phase_1 && reportSummary.phase_1.configs) || [];
-  const isCompareRun = reportCfgs.includes("S0") || !!(reportSummary && reportSummary.compare && reportSummary.compare.present);
+  const healthClass = ["FAILED", "STALLED"].includes(playbackState) ? "kv-bad"
+    : ["PLAYING", "PAUSED", "CONNECTING"].includes(playbackState) ? "kv-warn"
+      : ["RUNNING", "DONE"].includes(playbackState) ? "kv-good" : "kv-dim";
+  const statusChipClass = ["FAILED", "STALLED"].includes(playbackState) ? "hdr-status-bad"
+    : ["PLAYING", "PAUSED", "CONNECTING"].includes(playbackState) ? "hdr-status-warn"
+      : ["RUNNING", "DONE"].includes(playbackState) ? "hdr-status-good" : "";
+  const reportReached = !replayActive
+    || st.stageInfo.score_run_phase_1.status === "done"
+    || st.stageInfo.score_run_final.status === "done"
+    || !!st.runStatus;
+  const visibleReportSummary = reportReached ? reportSummary : null;
+  const visibleWatchlist = !replayActive || st.stageInfo.reelection_watchlist.status === "done" ? watchlist : [];
+  const reportCfgs = (visibleReportSummary && visibleReportSummary.phase_1 && visibleReportSummary.phase_1.configs) || [];
+  const isCompareRun = reportCfgs.includes("S0") || !!(visibleReportSummary && visibleReportSummary.compare && visibleReportSummary.compare.present);
   const armsLabel = reportCfgs.length ? (isCompareRun ? "S0+S1" : reportCfgs.join("+")) : (isCompareRun ? "S0+S1" : null);
-  const compareGap = reportSummary && reportSummary.compare && reportSummary.compare.present ? (reportSummary.compare.gap || {}) : null;
-  const finalGate = reportSummary && reportSummary.final && reportSummary.final.stage_gate && reportSummary.final.stage_gate.present ? reportSummary.final.stage_gate : null;
+  const compareGap = visibleReportSummary && visibleReportSummary.compare && visibleReportSummary.compare.present ? (visibleReportSummary.compare.gap || {}) : null;
+  const finalGate = visibleReportSummary && visibleReportSummary.final && visibleReportSummary.final.stage_gate && visibleReportSummary.final.stage_gate.present ? visibleReportSummary.final.stage_gate : null;
   const finalGateText = formatConsoleGate(finalGate);
-  const consistencySummary = reportSummary && reportSummary.consistency && reportSummary.consistency.present ? reportSummary.consistency : null;
+  const consistencySummary = visibleReportSummary && visibleReportSummary.consistency && visibleReportSummary.consistency.present ? visibleReportSummary.consistency : null;
   const consistencyTierRows = consoleConsistencyTierRows(consistencySummary);
-  const consistencyNotable = (consistencySummary && consistencySummary.notable_terms) || [];
-  const consistencyFixedTerms = consistencyNotable.filter(item => item.fixed_by_injection);
-  const consistencyResidualDrift = consistencyNotable.filter(item => {
-    const s1 = item.by_config && item.by_config.S1;
-    return s1 && s1.status && s1.status !== "consistent" && !item.fixed_by_injection;
-  });
 
-  // latest translated window preview (text lives in blockPreview prop, not events)
-  const previewIdx = st.latestPreviewWin ? Math.min(st.latestPreviewWin, blockPreview.length) - 1 : blockPreview.length - 1;
-  const preview = previewIdx >= 0 ? blockPreview[previewIdx] : null;
+  // Stored rows provide text and final per-arm totals. Replay-visible events
+  // alone advance each arm, so S1 cannot appear while only S0 has run.
+  const previewProgress = st.previewWindowsByArm || {};
+  const previewTotals = consolePreviewArmTotals(blockPreview);
+  Object.entries(st.translatorTotalsByArm || {}).forEach(([arm, total]) => {
+    previewTotals[arm] = Math.max(Number(previewTotals[arm] || 0), Number(total || 0));
+  });
+  const previewAvailable = Object.values(previewProgress).some(value => Number(value) > 0);
+  const previews = consolePreviewRowsThroughProgress(blockPreview, previewProgress);
+  const translatorProgressLabel = consolePreviewProgressLabel(previewProgress, previewTotals);
+  const currentStageId = consoleCurrentStageId(st.normalized);
+  const currentStageMeta = CONSOLE_STAGE_PLAN.find(stage => stage.id === currentStageId);
+  const currentStageLabel = currentStageMeta?.label || consoleText(uiLocale, "noneYet");
+  const cursorTextKey = consoleMode === "REPLAY"
+    ? "replayCursorAt"
+    : consoleMode === "LIVE" ? "liveCursorAt" : "recordedCursorAt";
+
+  function nextNavigationTarget(kind, id) {
+    navigationTokenRef.current += 1;
+    const target = { kind, id: String(id || ""), token: navigationTokenRef.current };
+    setNavigationTarget(target);
+    return target;
+  }
+
+  function handleNavigationResult(result) {
+    if (!result?.ok) {
+      setNavigationNotice({ tone: "warn", text: consoleText(uiLocale, "navigationTargetUnavailable") });
+      return;
+    }
+    const textKey = result.kind === "memory" ? "navigationMemoryReady" : "navigationBlockReady";
+    setNavigationNotice({ tone: "ok", text: consoleText(uiLocale, textKey) });
+  }
+
+  function navigateToStage(stageId) {
+    const available = st.normalized.some(row => row.stage === stageId);
+    if (!available) {
+      setNavigationNotice({ tone: "warn", text: consoleText(uiLocale, "navigationTargetUnavailable") });
+      return;
+    }
+    setStageFilter(stageId);
+    setHighlightedStage(stageId);
+    setSelectedEventKey("");
+    nextNavigationTarget("stage", stageId);
+    setNavigationNotice({ tone: "ok", text: `${consoleText(uiLocale, "navigationStageFilter")}: ${stageId}` });
+  }
+
+  function navigateFromEvent(row) {
+    const hasTarget = Boolean(row.memoryDeltaId || row.blockId || row.artifactPath || row.stage);
+    if (!hasTarget) return;
+    setSelectedEventKey(row.key);
+    if (row.stage) setHighlightedStage(row.stage);
+    if (row.memoryDeltaId) {
+      setSelectedArtifact("");
+      nextNavigationTarget("memory", row.memoryDeltaId);
+      return;
+    }
+    if (row.blockId) {
+      setSelectedArtifact("");
+      nextNavigationTarget("block", row.blockId);
+      return;
+    }
+    if (row.artifactPath) {
+      setSelectedArtifact(row.artifactPath);
+      nextNavigationTarget("artifact", row.artifactPath);
+      setNavigationNotice({ tone: "ok", text: consoleText(uiLocale, "navigationArtifactReady") });
+      return;
+    }
+    navigateToStage(row.stage);
+  }
+
+  function clearConsoleNavigation() {
+    setNavigationTarget(null);
+    setNavigationNotice(null);
+    setHighlightedStage("");
+    setSelectedArtifact("");
+    setSelectedEventKey("");
+    setStageFilter("");
+  }
+
+  React.useEffect(() => {
+    if (!navigationTarget) return;
+    let available = false;
+    if (navigationTarget.kind === "block") {
+      available = previews.some(row => String(row.block_id || "") === navigationTarget.id);
+    } else if (navigationTarget.kind === "memory") {
+      available = st.memoryDeltas.some(delta => delta.deltaId === navigationTarget.id);
+    } else if (navigationTarget.kind === "artifact") {
+      available = st.normalized.some(row => row.artifactPath === navigationTarget.id);
+    } else if (navigationTarget.kind === "stage") {
+      available = st.normalized.some(row => row.stage === navigationTarget.id);
+    }
+    if (available) return;
+    setNavigationTarget(null);
+    setSelectedEventKey("");
+    setSelectedArtifact("");
+    setHighlightedStage("");
+    setNavigationNotice({ tone: "warn", text: consoleText(uiLocale, "navigationTargetUnavailable") });
+  }, [navigationTarget, previews, st.memoryDeltas, st.normalized, uiLocale]);
 
   return (
     <div className={"agentconsole console-theme-" + theme}>
       <header className="console-header">
+        {onBack && <button className="btn console-back" type="button" onClick={onBack}>&larr; {consoleText(uiLocale, "workspace")}</button>}
         <span className="brand">⬢ AGENT CONSOLE</span>
+        <nav className="run-surface-tabs" aria-label="Run views">
+          <span className="run-surface-tab active" aria-current="page">Console</span>
+          {onOpenReport && (
+            <button className="run-surface-tab" type="button" onClick={onOpenReport}>Report</button>
+          )}
+        </nav>
+        {projectId && <span className="console-project" title={projectId}>{projectId}</span>}
         <select className="run-picker" aria-label="Run picker" value={runId || ""} onChange={e => onSelectRun && onSelectRun(e.target.value)}>
-          {!runId && <option value="">select run</option>}
+          {!runId && <option value="">{consoleText(uiLocale, "selectRun")}</option>}
           {runs.slice(0, 40).map(r => {
             const t = r.started_at ? new Date(r.started_at) : null;
             const stamp = t && !isNaN(t.getTime())
@@ -469,25 +2761,142 @@ function AgentConsoleView(props) {
             return <option key={r.run_id} value={r.run_id}>{r.run_id}{r.status ? " · " + r.status : ""}{stamp}</option>;
           })}
         </select>
+        <span className="systems-health" ref={systemsRef}>
+          <button
+            className={`systems-trigger systems-${systemsTone}`}
+            type="button"
+            aria-expanded={systemsOpen}
+            aria-haspopup="dialog"
+            onClick={() => setSystemsOpen(open => !open)}
+            title="Trạng thái model, API và dependency từ preflight của run đang chọn"
+          >
+            <span className="systems-dot" aria-hidden="true">●</span>
+            <span>SYSTEMS</span>
+            <span className="systems-count">{systemsCount}</span>
+          </button>
+          {systemsOpen && (
+            <span className="systems-popover" role="dialog" aria-label="Model and API preflight status">
+              <span className="systems-popover-head">
+                <span>MODEL &amp; API STATUS</span>
+                <span className="systems-popover-summary">{systemChecks.length ? `${readySystems} ready${failedSystems ? ` · ${failedSystems} failed` : ""}` : "not checked"}</span>
+              </span>
+              {systemChecks.length ? systemChecks.map(check => (
+                <span className="systems-row" key={check.id}>
+                  <span className={`systems-row-dot systems-${check.ok === true ? "good" : check.ok === false ? "bad" : "warn"}`} aria-hidden="true">●</span>
+                  <span className="systems-row-copy">
+                    <span className="systems-row-title">{consoleSystemLabel(check.id)}</span>
+                    <span className="systems-row-detail">{consoleSystemDetail(check)}</span>
+                  </span>
+                  <span className={`systems-row-state systems-${check.ok === true ? "good" : check.ok === false ? "bad" : "warn"}`}>
+                    {consoleSystemStateLabel(check)}
+                    {consoleSystemTime(check.ts) && <span className="systems-row-time">{consoleSystemTime(check.ts)}</span>}
+                  </span>
+                </span>
+              )) : (
+                <span className="systems-empty">Chưa có event health_check ở vị trí replay hiện tại.</span>
+              )}
+              <span className="systems-note">Snapshot preflight 0-API · key checks không xác nhận quota/provider</span>
+            </span>
+          )}
+        </span>
         <span className="hdr-actions">
-          {onDich && <button className="btn btn-accent" type="button" disabled={busy || isOpenRun} onClick={onDich} title="Chạy toàn bộ pipeline one-button cho dataset đang mở">▸ DỊCH</button>}
-          {events.length > 0 && !isOpenRun && <button className="btn" type="button" onClick={startReplay} title="Phát lại event stream theo thời gian (client-side, $0)">{replaying ? "▶ replaying…" : "▶ replay"}</button>}
-          <button className="btn" type="button" disabled={busy} onClick={onRefresh}>↻ refresh</button>
-          <button className="btn" type="button" disabled={!isOpenRun || !onPause} onClick={onPause}>⏸ pause after stage</button>
+          {onDich && <button className="btn btn-accent" type="button" disabled={busy || isOpenRun} onClick={onDich} title={consoleText(uiLocale, "translate")}>▸ {consoleText(uiLocale, "translate").toUpperCase()}</button>}
+          {replayAvailable && <button className="btn" type="button" onClick={toggleReplay} title={consoleText(uiLocale, replayPlaying ? "pause" : replayActive && !replayComplete ? "play" : "replay")}>{consoleText(uiLocale, replayPlaying ? "pause" : replayActive && !replayComplete ? "play" : "replay")}</button>}
+          <button className="btn" type="button" disabled={busy} onClick={onRefresh}>↻ {consoleText(uiLocale, "refresh")}</button>
+          <button className="btn" type="button" disabled={!isOpenRun || !onPause} onClick={onPause}>⏸ {consoleText(uiLocale, "pauseAfterStage")}</button>
           {canResumeRun
-            ? <button className="btn btn-accent" type="button" onClick={onResume}>▸ resume</button>
-            : <button className="btn btn-danger" type="button" disabled={!isOpenRun || !onCancel} onClick={onCancel}>✕ cancel</button>}
-          <button className="btn" type="button" onClick={onToggleTheme}>◐ theme</button>
-          <span className={"hdr-status " + statusChipClass}>{stalled ? "stalled" : runStatus}</span>
+            ? <button className="btn btn-accent" type="button" onClick={onResume}>▸ {consoleText(uiLocale, "resume")}</button>
+            : <button className="btn btn-danger" type="button" disabled={!isOpenRun || !onCancel} onClick={onCancel}>✕ {consoleText(uiLocale, "cancel")}</button>}
+          <span className="console-locale-switch" role="group" aria-label={consoleText(uiLocale, "uiLanguage")}>
+            {["vi", "en"].map(locale => (
+              <button
+                className={"console-locale-option" + (uiLocale === locale ? " active" : "")}
+                type="button"
+                key={locale}
+                aria-pressed={uiLocale === locale}
+                title={`${consoleText(uiLocale, "uiLanguage")}: ${locale.toUpperCase()}`}
+                onClick={() => setUiLocale(locale)}
+              >
+                {locale.toUpperCase()}
+              </button>
+            ))}
+          </span>
+          <button
+            className="btn btn-icon"
+            type="button"
+            onClick={resetConsoleLayout}
+            title={consoleText(uiLocale, "resetLayout")}
+            aria-label={consoleText(uiLocale, "resetLayout")}
+          >
+            ↺
+          </button>
+          <button className="btn" type="button" onClick={onToggleTheme}>◐ {consoleText(uiLocale, "theme")}</button>
+          <span
+            className="hdr-status hdr-status-mode"
+            title={`${consoleText(uiLocale, "mode")}: ${consoleMode}`}
+          >
+            {consoleMode}
+          </span>
+          <span
+            className={"hdr-status " + statusChipClass}
+            title={`${consoleText(uiLocale, "state")}: ${playbackState}`}
+          >
+            {playbackState}
+          </span>
           {armsLabel && <span className={"hdr-status " + (isCompareRun ? "hdr-status-good" : "")} title={isCompareRun ? "Chạy cả S0 và S1 (có so sánh)" : "Chỉ S1"}>{armsLabel}</span>}
         </span>
       </header>
 
-      <div className="console-body">
+      {replayAvailable && (
+        <div className="replay-controls" aria-label="Replay timeline controls">
+          <button className="btn btn-icon" type="button" onClick={restartReplay} title="Restart replay" aria-label="Restart replay">|&lt;</button>
+          <button className="btn btn-icon btn-accent" type="button" onClick={toggleReplay} title={replayPlaying ? "Pause replay" : "Play replay"} aria-label={replayPlaying ? "Pause replay" : "Play replay"}>{replayPlaying ? "||" : ">"}</button>
+          <input
+            className="replay-range"
+            type="range"
+            min="0"
+            max={events.length}
+            step="1"
+            value={replayPosition}
+            onChange={event => seekReplay(event.target.value)}
+            aria-label="Replay position"
+          />
+          <span className="replay-count">{formatConsoleInt(replayPosition)} / {formatConsoleInt(events.length)}</span>
+          <span className="replay-clock">{replayClock.elapsed} / {replayClock.total}</span>
+          <select className="filter-select replay-mode" value={replayMode} onChange={event => setReplayMode(event.target.value)} aria-label="Replay timing mode">
+            <option value="time">timestamp</option>
+            <option value="event">events</option>
+          </select>
+          <select className="filter-select replay-speed" value={replaySpeed} onChange={event => setReplaySpeed(Number(event.target.value))} aria-label="Replay speed">
+            {CONSOLE_REPLAY_SPEEDS.map(speed => <option key={speed} value={speed}>{speed}x</option>)}
+          </select>
+          <button className="btn btn-icon" type="button" onClick={finishReplay} title="Jump to end" aria-label="Jump to end">&gt;|</button>
+        </div>
+      )}
+
+      <div
+        className="console-body"
+        style={{
+          "--console-left-width": `${consoleLayout.leftCollapsed ? 34 : consoleLayout.leftWidth}px`,
+          "--console-right-width": `${consoleLayout.rightCollapsed ? 34 : consoleLayout.rightWidth}px`,
+        }}
+      >
         {/* ---------------- LEFT ---------------- */}
-        <aside className="col col-left">
+        <aside className={"col col-left" + (consoleLayout.leftCollapsed ? " console-side-collapsed" : "")}>
+          <button
+            type="button"
+            className="console-side-toggle console-side-toggle-left"
+            onClick={() => toggleConsoleSide("left")}
+            title={consoleLayout.leftCollapsed ? "Mở Overview" : "Thu gọn Overview"}
+            aria-label={consoleLayout.leftCollapsed ? "Expand Overview panel" : "Collapse Overview panel"}
+            aria-expanded={!consoleLayout.leftCollapsed}
+          >
+            {consoleLayout.leftCollapsed ? "›" : "‹"}
+          </button>
+          <div className="console-side-content">
           <div className="section-label">:: overview</div>
-          <div className="kv-row"><span className="kv-label">status</span><span className={"kv-value " + (runStatus === "failed" ? "kv-bad" : runStatus === "done" ? "kv-good" : "")}>{runStatus}</span></div>
+          <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "mode")}</span><span className="kv-value kv-dim">{consoleMode}</span></div>
+          <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "state")}</span><span className={"kv-value " + healthClass}>{playbackState}</span></div>
           {armsLabel && <div className="kv-row"><span className="kv-label">arms</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
           <div className="kv-row"><span className="kv-label">stages seen</span><span className="kv-value">{st.stagesSeen} / {CONSOLE_STAGE_PLAN.length}</span></div>
           <div className="kv-row"><span className="kv-label">events</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
@@ -500,32 +2909,53 @@ function AgentConsoleView(props) {
           <div className="kv-row"><span className="kv-label">llm events</span><span className="kv-value">{formatConsoleInt(st.llmCalls)}</span></div>
 
           <div className="section-label">:: health</div>
-          <div className="kv-row"><span className="kv-label">state</span><span className={"kv-value " + healthClass}>{healthLabel}</span></div>
           <div className="kv-row"><span className="kv-label">warnings</span><span className={"kv-value " + (st.warnings ? "kv-warn" : "")}>{formatConsoleInt(st.warnings)}</span></div>
           <div className="kv-row"><span className="kv-label">errors</span><span className={"kv-value " + (st.errors ? "kv-bad" : "")}>{formatConsoleInt(st.errors)}</span></div>
           <div className="kv-row"><span className="kv-label">last event</span><span className="kv-value kv-dim">{st.lastTs ? st.lastTs.slice(11, 19) : "—"}</span></div>
+          </div>
         </aside>
 
+        <div
+          className="console-splitter console-splitter-vertical"
+          role="separator"
+          aria-label="Resize Overview panel"
+          aria-orientation="vertical"
+          aria-valuemin={0}
+          aria-valuemax={CONSOLE_LAYOUT_LIMITS.leftMax}
+          aria-valuenow={consoleLayout.leftCollapsed ? 0 : Math.round(consoleLayout.leftWidth)}
+          tabIndex="0"
+          title="Kéo để đổi chiều rộng Overview; nhấp đúp để đặt lại"
+          onPointerDown={event => beginConsoleResize("left", event)}
+          onKeyDown={event => handleConsoleSplitterKey("left", event)}
+          onDoubleClick={() => resetConsoleTrack("left")}
+        />
+
         {/* ---------------- MAIN ---------------- */}
-        <main className="col col-main">
+        <main
+          ref={mainColumnRef}
+          className={`col col-main console-main-${consoleLayout.centerMode}`}
+          style={{ "--console-ledger-height": `${consoleLayout.ledgerPercent}%` }}
+        >
           {runStatus === "failed" && (
             <div className="banner banner-red">
               <span className="banner-glyph">✕</span>
               <span className="banner-msg">Run failed{st.stderrTail.length ? " · " + consoleShort(st.stderrTail[st.stderrTail.length - 1], 70) : ""}</span>
-              {onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
+              {!replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
             </div>
           )}
           {st.paused && !isTerminal && runStatus !== "failed" && (
             <div className="banner banner-amber">
               <span className="banner-glyph">⏸</span>
               <span className="banner-msg">Đã dừng · {st.pausedReason} — resume để chạy tiếp</span>
-              {onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
+              {!replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>resume</button></span>}
             </div>
           )}
-          {st.phase1Done && !isTerminal && !st.paused && (
+          {st.phase1Done && runStatus !== "failed" && (
             <div className="banner banner-green">
               <span className="banner-glyph">●</span>
-              <span className="banner-msg">Phase 1 xong — bản dịch + báo cáo nhanh đã sẵn sàng</span>
+              <span className="banner-msg">
+                {consoleText(uiLocale, "phaseReady")} · {consoleText(uiLocale, cursorTextKey)}: {currentStageLabel}
+              </span>
             </div>
           )}
           {stalled && (
@@ -536,41 +2966,132 @@ function AgentConsoleView(props) {
             </div>
           )}
 
-          <div className="section-label">:: event stream</div>
-          <div className="filterbar">
-            <select className="filter-select" value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
-              <option value="">stage: all</option>
-              {CONSOLE_STAGE_PLAN.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
-            <select className="filter-select" value={agentFilter} onChange={e => setAgentFilter(e.target.value)}>
-              <option value="">agent: all</option>
-              {agents.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-            <select className="filter-select" value={severityFilter} onChange={e => setSeverityFilter(e.target.value)}>
-              <option value="">severity: all</option>
-              {severities.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <span className="filter-count">{formatConsoleInt(rendered.length)} / {formatConsoleInt(filtered.length)} shown</span>
-          </div>
+          <section className="console-event-pane" aria-label="Run event stream">
+            <div className="section-label">:: event stream</div>
+            <div className="filterbar">
+              <span className="event-preset" role="group" aria-label={consoleText(uiLocale, "eventPreset")}>
+                {["important", "all"].map(preset => (
+                  <button
+                    type="button"
+                    className={"event-preset-option" + (eventPreset === preset ? " active" : "")}
+                    aria-pressed={eventPreset === preset}
+                    onClick={() => setEventPreset(preset)}
+                    key={preset}
+                  >
+                    {consoleText(uiLocale, preset === "important" ? "importantEvents" : "allEvents")}
+                  </button>
+                ))}
+              </span>
+              <select className="filter-select" value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
+                <option value="">stage: all</option>
+                {CONSOLE_STAGE_PLAN.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+              <select className="filter-select" value={agentFilter} onChange={e => setAgentFilter(e.target.value)}>
+                <option value="">agent: all</option>
+                {agents.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+              <select className="filter-select" value={severityFilter} onChange={e => setSeverityFilter(e.target.value)}>
+                <option value="">severity: all</option>
+                {severities.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <select className="filter-select" aria-label="Heartbeat display" value={heartbeatMode} onChange={e => setHeartbeatMode(e.target.value)}>
+                <option value="grouped">heartbeat: gộp</option>
+                <option value="hidden">heartbeat: ẩn</option>
+                <option value="raw">heartbeat: chi tiết</option>
+              </select>
+              <span className="filter-count">{formatConsoleInt(rendered.length)} / {formatConsoleInt(filtered.length)} dòng · {formatConsoleInt(filteredRawEventCount)} sự kiện</span>
+              <button
+                type="button"
+                className="console-pane-mode-button"
+                onClick={() => setConsoleCenterMode(consoleLayout.centerMode === "events" ? "split" : "events")}
+                title={consoleLayout.centerMode === "events" ? "Khôi phục Event Stream và Run Ledger" : "Phóng to Event Stream"}
+                aria-label={consoleLayout.centerMode === "events" ? "Restore split Console view" : "Maximize Event Stream"}
+              >
+                {consoleLayout.centerMode === "events" ? "↕" : "□"}
+              </button>
+            </div>
 
-          <div className="event-feed">
-            {rendered.length ? rendered.map(r => (
-              <div key={r.key} className={"ev-row ev-" + r.severity + (r.isCost ? " ev-cost" : "") + (r.isContext ? " ev-context" : "")}>
-                <span className="ev-time">{r.ts ? r.ts.slice(11, 19) : "--:--:--"}</span>
-                <span className="ev-glyph">{r.glyph}</span>
-                <span className="ev-body">
-                  <b className="ev-type">{r.event}</b>
-                  <span className="ev-src">{r.stage || "-"}{r.agent ? " · " + r.agent : ""}</span>
-                  <span className="ev-msg">{r.message}</span>
-                  {r.dur != null && <span className="ev-dur">({r.dur}s)</span>}
-                </span>
-                <span className="ev-seq">#{r.lineNo != null ? r.lineNo : "-"}{r.attempt != null && r.seq != null ? ` · a${r.attempt}/${r.seq}` : ""}</span>
+            {navigationNotice && (
+              <div className={`console-navigation-notice notice-${navigationNotice.tone || "ok"}`} role="status">
+                <span>{navigationNotice.text}</span>
+                <button type="button" onClick={clearConsoleNavigation}>{consoleText(uiLocale, "clearNavigation")}</button>
               </div>
-            )) : <div className="console-empty">Chọn hoặc replay một run để xem dòng sự kiện.</div>}
-            {hiddenOlderEvents > 0 && (
-              <div className="console-empty">... {formatConsoleInt(hiddenOlderEvents)} dòng cũ hơn ẩn - dùng filter để thu hẹp.</div>
             )}
-          </div>
+
+            <div className="event-feed">
+              {rendered.length ? rendered.map(r => {
+                const navigable = Boolean(r.memoryDeltaId || r.blockId || r.artifactPath || r.stage);
+                return (
+                  <div
+                    key={r.key}
+                    className={"ev-row ev-" + r.severity
+                      + (r.isCost ? " ev-cost" : "")
+                      + (r.isContext ? " ev-context" : "")
+                      + (navigable ? " ev-navigable" : "")
+                      + (selectedEventKey === r.key ? " ev-navigation-selected" : "")}
+                    role={navigable ? "button" : undefined}
+                    tabIndex={navigable ? 0 : undefined}
+                    onClick={navigable ? () => navigateFromEvent(r) : undefined}
+                    onKeyDown={navigable ? event => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigateFromEvent(r);
+                      }
+                    } : undefined}
+                  >
+                    <span className="ev-time">{r.ts ? r.ts.slice(11, 19) : "--:--:--"}</span>
+                    <span className="ev-glyph">{r.glyph}</span>
+                    <span className="ev-body">
+                      <b className="ev-type">{r.event}{r.heartbeatCount > 1 ? ` ×${r.heartbeatCount}` : ""}</b>
+                      <span className="ev-src">{r.stage || "-"}{r.agent ? " · " + r.agent : ""}</span>
+                      <span className="ev-msg">{r.message}</span>
+                      {r.dur != null && <span className="ev-dur">({r.dur}s)</span>}
+                    </span>
+                    <span className="ev-seq">{consoleEventSequenceLabel(r)}</span>
+                  </div>
+                );
+              }) : <div className="console-empty">Chọn hoặc replay một run để xem dòng sự kiện.</div>}
+              {hiddenOlderEvents > 0 && (
+                <div className="console-empty">... {formatConsoleInt(hiddenOlderEvents)} dòng cũ hơn ẩn - dùng filter để thu hẹp.</div>
+              )}
+            </div>
+          </section>
+
+          <div
+            className="console-splitter console-splitter-horizontal"
+            role="separator"
+            aria-label="Resize Event Stream and Run Ledger"
+            aria-orientation="horizontal"
+            aria-valuemin={CONSOLE_LAYOUT_LIMITS.ledgerMin}
+            aria-valuemax={CONSOLE_LAYOUT_LIMITS.ledgerMax}
+            aria-valuenow={Math.round(consoleLayout.ledgerPercent)}
+            tabIndex="0"
+            title="Kéo để đổi chiều cao Run Ledger; nhấp đúp để đặt lại"
+            onPointerDown={event => beginConsoleResize("ledger", event)}
+            onKeyDown={event => handleConsoleSplitterKey("ledger", event)}
+            onDoubleClick={() => resetConsoleTrack("ledger")}
+          />
+
+          <ConsoleMemoryLedger
+            deltas={st.memoryDeltas}
+            invalidCount={st.invalidMemoryDeltaCount}
+            watchlist={visibleWatchlist}
+            packSummary={st.latestPackSummary}
+            packWindow={st.latestPackWindow}
+            consistencyTierRows={consistencyTierRows}
+            runKey={runId || ""}
+            previews={previews}
+            previewAvailable={previewAvailable}
+            previewProgress={previewProgress}
+            previewTotals={previewTotals}
+            latestPreviewArm={st.latestPreviewArm}
+            centerMode={consoleLayout.centerMode}
+            onCenterMode={setConsoleCenterMode}
+            layoutPreferences={consoleLayout}
+            onLayoutPreferences={updateConsolePreferences}
+            navigationTarget={navigationTarget}
+            onNavigationResult={handleNavigationResult}
+          />
 
           {st.stderrTail.length > 0 && (
             <div className="stderr-panel">
@@ -579,31 +3100,46 @@ function AgentConsoleView(props) {
             </div>
           )}
 
-          <div className="latest-block">
-            <div className="latest-block-head">
-              <span className="latest-block-id">latest block · {preview ? preview.block_id : (st.latestPreviewWin ? "window " + st.latestPreviewWin : "—")}</span>
-              <span className="latest-block-tag">{preview ? (preview.model || "translated") : "no preview"}</span>
-            </div>
-            <div className="typewriter-target">
-              {preview
-                ? <ConsoleTypewriter text={consoleShort(preview.target_text, 220)} />
-                : <p className="kv-dim">Bản dịch preview lấy theo block_id (translation_runs.output_text) khi có.</p>}
-            </div>
-          </div>
         </main>
 
+        <div
+          className="console-splitter console-splitter-vertical"
+          role="separator"
+          aria-label="Resize Stages and Results panel"
+          aria-orientation="vertical"
+          aria-valuemin={0}
+          aria-valuemax={CONSOLE_LAYOUT_LIMITS.rightMax}
+          aria-valuenow={consoleLayout.rightCollapsed ? 0 : Math.round(consoleLayout.rightWidth)}
+          tabIndex="0"
+          title="Kéo để đổi chiều rộng Stages/Results; nhấp đúp để đặt lại"
+          onPointerDown={event => beginConsoleResize("right", event)}
+          onKeyDown={event => handleConsoleSplitterKey("right", event)}
+          onDoubleClick={() => resetConsoleTrack("right")}
+        />
+
         {/* ---------------- RIGHT ---------------- */}
-        <aside className="col col-right">
+        <aside className={"col col-right" + (consoleLayout.rightCollapsed ? " console-side-collapsed" : "")}>
+          <button
+            type="button"
+            className="console-side-toggle console-side-toggle-right"
+            onClick={() => toggleConsoleSide("right")}
+            title={consoleLayout.rightCollapsed ? "Mở Stages và Results" : "Thu gọn Stages và Results"}
+            aria-label={consoleLayout.rightCollapsed ? "Expand Stages and Results panel" : "Collapse Stages and Results panel"}
+            aria-expanded={!consoleLayout.rightCollapsed}
+          >
+            {consoleLayout.rightCollapsed ? "‹" : "›"}
+          </button>
+          <div className="console-side-content">
           <div className="section-label">:: stages</div>
           {CONSOLE_STAGE_PLAN.map((s, i) => {
             const si = st.stageInfo[s.id] || { status: "pending" };
+            const stageAvailable = st.normalized.some(row => row.stage === s.id);
             let cls = "stage-pending", dot = "○", prog = "";
             if (si.status === "done") { cls = "stage-done"; dot = "●"; prog = si.skipped ? "skipped" : "done"; }
             else if (si.status === "active") {
               cls = "stage-active";
               dot = "●";
-              const total = st.translatorTotal || blockPreview.length || null;
-              prog = s.id === "translator" && si.previews ? si.previews + "/" + (total || "?") + " win" : "running";
+              prog = s.id === "translator" && si.previews ? (translatorProgressLabel || `${si.previews} win`) : "running";
             }
             else if (si.status === "failed") { cls = "stage-failed"; dot = "✕"; prog = "failed"; }
             else if (s.optional && isTerminal) { cls = "stage-pending"; dot = "○"; prog = "skipped"; }
@@ -613,34 +3149,47 @@ function AgentConsoleView(props) {
                 {prev && prev.phaseEnd && (
                   <div className="phase-divider"><span className={st.phase1Done ? "phase-ok" : ""}>PHASE 1{st.phase1Done ? " ✓" : ""}</span><span className="phase-line" /><span>PHASE 2</span></div>
                 )}
-                <div className={"stage-row " + cls}>
-                  <span className="stage-dot">{dot}</span>
-                  <span className="stage-name">{s.label}</span>
-                  <span className="stage-progress">{prog}</span>
+                <div className={"stage-row " + cls + (highlightedStage === s.id ? " stage-targeted" : "")}>
+                  <button
+                    type="button"
+                    className="stage-target-button"
+                    disabled={!stageAvailable}
+                    onClick={() => navigateToStage(s.id)}
+                    title={stageAvailable ? `${consoleText(uiLocale, "navigationStageFilter")}: ${s.label}` : consoleText(uiLocale, "navigationTargetUnavailable")}
+                  >
+                    <span className="stage-dot">{dot}</span>
+                    <span className="stage-name">{s.label}</span>
+                  </button>
+                  {si.skipped && si.skipReason
+                    ? <ConsoleSkipReason reason={si.skipReason} locale={uiLocale} stageLabel={s.label} />
+                    : <span className="stage-progress">{prog}</span>}
                   <span className="stage-eta">{consoleDuration(si.start, si.end)}</span>
                 </div>
               </React.Fragment>
             );
           })}
 
-          <div className="section-label">:: latest artifact</div>
-          <div className="artifact-path">{st.latestArtifact ? consoleBaseName(st.latestArtifact) : "none yet"}</div>
+          <div className="section-label">:: {consoleText(uiLocale, "latestArtifact")}</div>
+          <div
+            className={"artifact-path" + (selectedArtifact ? " artifact-targeted" : "")}
+            title={selectedArtifact || st.latestArtifact || ""}
+          >
+            {(selectedArtifact || st.latestArtifact)
+              ? consoleBaseName(selectedArtifact || st.latestArtifact)
+              : consoleText(uiLocale, "noneYet")}
+          </div>
 
-          <div className="section-label">:: memory content{st.latestPackWindow ? " · " + st.latestPackWindow : ""}</div>
-          {memoryRows.length ? memoryRows.map(row => (
-            <div className="watch-row" key={row.key}>
-              <span className="watch-term">{row.label}</span>
-              <span className="watch-arrow">·</span>
-              <span className="watch-vi">{consoleShort(row.line, 46)}</span>
-            </div>
-          )) : <div className="artifact-path kv-dim">Chưa có pack sample trong event.</div>}
-
-          <div className="section-label">:: results</div>
-          {reportSummary && (reportSummary.final?.present || reportSummary.phase_1?.present) ? (
+          <div className="section-label">:: {consoleText(uiLocale, "results")}</div>
+          {visibleReportSummary && (visibleReportSummary.final?.present || visibleReportSummary.phase_1?.present) ? (
             <>
-              {((reportSummary.final?.present ? reportSummary.final.metrics : reportSummary.phase_1?.metrics) || []).map(m => (
+              {((visibleReportSummary.final?.present ? visibleReportSummary.final.metrics : visibleReportSummary.phase_1?.metrics) || []).map(m => (
                 <div className="kv-row" key={m.key}>
-                  <span className="kv-label">{m.label || m.key}</span>
+                  <ConsoleMetricLabel
+                    metricKey={m.key}
+                    fallbackLabel={m.label || m.key}
+                    locale={uiLocale}
+                    idSuffix={`result-${m.key}`}
+                  />
                   <span className={"kv-value " + (m.status === "good" ? "kv-good" : m.status === "warn" ? "kv-warn" : m.status === "bad" ? "kv-bad" : "")}>
                     {formatConsoleMetric(m.value, m.unit)}
                   </span>
@@ -648,116 +3197,45 @@ function AgentConsoleView(props) {
               ))}
               {finalGateText && (
                 <div className="kv-row">
-                  <span className="kv-label">gates</span>
+                  <span className="kv-label">{consoleText(uiLocale, "gates")}</span>
                   <span className={"kv-value " + (finalGate.all_ok === false ? "kv-bad" : "kv-good")}>{finalGateText}</span>
                 </div>
               )}
               {compareGap && (
                 <>
                   <div className="kv-row">
-                    <span className="kv-label">gap TC (S1-S0)</span>
+                    <ConsoleMetricLabel
+                      metricKey="TC"
+                      locale={uiLocale}
+                      prefix={`${consoleText(uiLocale, "gap")} `}
+                      suffix="(S1-S0)"
+                      idSuffix="gap-tc"
+                    />
                     <span className={"kv-value " + (Number(compareGap.TC) >= 0 ? "kv-good" : "kv-bad")}>{formatConsoleSignedRatio(compareGap.TC)}</span>
                   </div>
                   <div className="kv-row">
-                    <span className="kv-label">gap TA (S1-S0)</span>
+                    <ConsoleMetricLabel
+                      metricKey="TA"
+                      locale={uiLocale}
+                      prefix={`${consoleText(uiLocale, "gap")} `}
+                      suffix="(S1-S0)"
+                      idSuffix="gap-ta"
+                    />
                     <span className={"kv-value " + (Number(compareGap.TA) >= 0 ? "kv-good" : "kv-warn")}>{formatConsoleSignedRatio(compareGap.TA)}</span>
                   </div>
                 </>
               )}
-              {reportSummary.final?.present && reportSummary.final.verdict && typeof reportSummary.final.verdict.pass === "boolean" && (
-                <div className={"banner " + (reportSummary.final.verdict.pass === false ? "banner-red" : "banner-green")}>
-                  <span className="banner-glyph">{reportSummary.final.verdict.pass === false ? "✕" : "●"}</span>
-                  <span className="banner-msg">{reportSummary.final.verdict.pass === false ? ("Gate FAIL · " + ((reportSummary.final.verdict.reasons || []).join(", ") || "see report")) : "Gate PASS"}</span>
+              {visibleReportSummary.final?.present && visibleReportSummary.final.verdict && typeof visibleReportSummary.final.verdict.pass === "boolean" && (
+                <div className={"banner " + (visibleReportSummary.final.verdict.pass === false ? "banner-red" : "banner-green")}>
+                  <span className="banner-glyph">{visibleReportSummary.final.verdict.pass === false ? "✕" : "●"}</span>
+                  <span className="banner-msg">{visibleReportSummary.final.verdict.pass === false ? (consoleText(uiLocale, "gateFail") + " · " + ((visibleReportSummary.final.verdict.reasons || []).join(", ") || consoleText(uiLocale, "seeReport"))) : consoleText(uiLocale, "gatePass")}</span>
                 </div>
               )}
-              {reportSummary.final?.report_path && <div className="artifact-path">{reportSummary.final.report_path}</div>}
+              {visibleReportSummary.final?.report_path && <div className="artifact-path">{visibleReportSummary.final.report_path}</div>}
             </>
-          ) : <div className="artifact-path kv-dim">Chưa có điểm — hiện sau khi score chạy xong.</div>}
+          ) : <div className="artifact-path kv-dim">{consoleText(uiLocale, "noScores")}</div>}
 
-          {consistencySummary && (
-            <>
-              <div className="section-label">:: consistency (memory -&gt; render)</div>
-              {consistencyTierRows.length ? consistencyTierRows.map(row => {
-                const s1Complete = row.s1 ? consoleTierIsComplete(row.s1) : consoleTierIsComplete(row.fallback);
-                return (
-                  <div className="kv-row" key={row.tier}>
-                    <span className="kv-label">{CONSOLE_TIER_LABELS[row.tier] || row.tier}</span>
-                    <span className={"kv-value " + (s1Complete ? "kv-good" : "kv-warn")}>{consoleConsistencyTierText(row)}</span>
-                  </div>
-                );
-              }) : <div className="artifact-path kv-dim">Không có tier injection trong báo cáo.</div>}
-
-              {consistencyFixedTerms.length > 0 && (
-                <>
-                  <div className="artifact-path kv-good">memory-fixed</div>
-                  {consistencyFixedTerms.slice(0, 6).map(item => {
-                    const s0 = item.by_config && item.by_config.S0;
-                    const s1 = item.by_config && item.by_config.S1;
-                    return (
-                      <div className="watch-row" key={"fixed:" + item.source_term}>
-                        <span className="watch-term">{consoleShort(item.source_term, 26)}</span>
-                        <span className="watch-arrow">→</span>
-                        <span className="watch-vi">{consoleShort(`S0: ${consoleFormsSummary(s0 && s0.forms)} -> S1: ${consoleFormsSummary(s1 && s1.forms)} ✓`, 64)}</span>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-
-              {consistencyResidualDrift.length > 0 && (
-                <>
-                  <div className="artifact-path kv-dim">residual drift</div>
-                  {consistencyResidualDrift.slice(0, 6).map(item => {
-                    const s1 = item.by_config && item.by_config.S1;
-                    const soft = item.tier === "soft";
-                    return (
-                      <div className="watch-row" key={"residual:" + item.source_term}>
-                        <span className="watch-term">{consoleShort(item.source_term, 22)} [{item.tier}]</span>
-                        <span className="watch-arrow">→</span>
-                        <span className={"watch-vi " + (soft ? "kv-warn" : "kv-bad")}>{consoleShort(`${soft ? "lệch được phép (do-not-force)" : "cần xem"}: ${consoleFormsSummary(s1 && s1.forms)}`, 56)}</span>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-            </>
-          )}
-
-          <div className="section-label">:: watchlist §36{watchlist.length ? " · " + watchlist.length + " pending / held" : ""}</div>
-          {watchlist.length ? watchlist.slice(0, 8).map((w, i) => {
-            const source = w.term || w.source_term || w.surface || w.source || "term";
-            const target = w.vi || w.canonical_target_vi || w.target || w.canonical || "?";
-            const candidatesLine = consoleWatchCandidatesLine(w);
-            const evidenceLine = consoleWatchEvidenceLine(w);
-            return (
-              <React.Fragment key={w.entry_id || source || i}>
-                <div className="watch-row">
-                  <span className="watch-term">{consoleShort(source, 28)}</span>
-                  <span className="watch-arrow">→</span>
-                  <span className="watch-vi">{consoleShort(target, 28)}</span>
-                </div>
-                <div className="watch-row">
-                  <span className="watch-term kv-warn">{consoleShort(consoleWatchReasonLabel(w), 24)}</span>
-                  <span className="watch-arrow">·</span>
-                  <span className="watch-vi kv-dim">{consoleShort(consoleWatchInjectionLabel(w), 34)}</span>
-                </div>
-                {candidatesLine && (
-                  <div className="watch-row">
-                    <span className="watch-term kv-dim">candidates</span>
-                    <span className="watch-arrow">·</span>
-                    <span className="watch-vi">{consoleShort(candidatesLine, 70)}</span>
-                  </div>
-                )}
-                {evidenceLine && (
-                  <div className="watch-row">
-                    <span className="watch-term kv-dim">evidence</span>
-                    <span className="watch-arrow">·</span>
-                    <span className="watch-vi kv-dim">{evidenceLine}</span>
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          }) : <div className="artifact-path kv-dim">trống — nối sau bước re-election</div>}
+          </div>
         </aside>
       </div>
     </div>
@@ -767,7 +3245,7 @@ function AgentConsoleView(props) {
 function uniqueConsole(arr) { return Array.from(new Set(arr)).sort(); }
 function formatConsoleInt(n) { return Number(n || 0).toLocaleString("en-US"); }
 
-/* Typewriter reveal for the latest-block preview only (one effect, one section).
+/* Typewriter reveal for the translation ledger only (one effect, one section).
    Adaptive speed: aims for ~1.4s total regardless of length, floored so short
    lines still feel typed. Honors prefers-reduced-motion (shows full text). */
 function useConsoleTypewriter(text) {

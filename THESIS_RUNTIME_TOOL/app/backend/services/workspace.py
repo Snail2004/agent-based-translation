@@ -3,7 +3,14 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from config import DATASET_FILES, PROJECT_SUBDIRS, PROJECTS_ROOT, SAMPLE_ROOT, TRANSLATION_REVIEW_TEMPLATE
+from config import (
+    ALLOWED_SOURCE_EXTENSIONS,
+    DATASET_FILES,
+    PROJECT_SUBDIRS,
+    PROJECTS_ROOT,
+    SAMPLE_ROOT,
+    TRANSLATION_REVIEW_TEMPLATE,
+)
 from services.dataset_io import atomic_write_bytes, default_review_state, read_json, write_json_atomic
 
 
@@ -217,21 +224,29 @@ def find_source_file(project_path: Path) -> Path | None:
     if not raw.exists():
         return None
     for path in sorted(raw.iterdir()):
-        if path.is_file() and path.suffix.lower() in {".txt", ".epub"}:
+        if path.is_file() and path.suffix.lower() in ALLOWED_SOURCE_EXTENSIONS:
             return path
     return None
 
 
 def save_source_file(project_path: Path, filename: str, data: bytes, overwrite: bool = False) -> Path:
     suffix = Path(filename).suffix.lower()
-    if suffix not in {".txt", ".epub"}:
+    if suffix not in ALLOWED_SOURCE_EXTENSIONS:
         if suffix == ".pdf":
             raise ProjectError("PDF logical extraction is not supported in MVP.")
-        raise ProjectError("Only .txt and .epub sources are supported in MVP.")
+        raise ProjectError("Only TXT, EPUB, Markdown, and HTML sources are supported in MVP.")
     raw = project_path / "raw"
     raw.mkdir(parents=True, exist_ok=True)
     target = raw / f"source{suffix}"
-    if target.exists() and not overwrite:
+    existing = [
+        path
+        for path in raw.iterdir()
+        if path.is_file() and path.suffix.lower() in ALLOWED_SOURCE_EXTENSIONS
+    ]
+    if existing and not overwrite:
         raise ProjectError("Source already exists. Confirm overwrite before replacing it.")
     atomic_write_bytes(target, data)
+    for stale in existing:
+        if stale != target:
+            stale.unlink()
     return target

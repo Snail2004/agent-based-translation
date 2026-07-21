@@ -285,7 +285,7 @@ Local file-based, **không** worker queue/DB.
 ## 9. MVP (6 module bắt buộc) vs Stretch
 **MVP bắt buộc:**
 1. Project + upload (M1)
-2. Extraction TXT/EPUB → document.json (M2)
+2. Extraction TXT/EPUB/Markdown/HTML → document.json (M2)
 3. Block browser + clean editor (M3+M4)
 4. Glossary + Entity editor bằng text-selection (M5+M6)
 5. Summary + Reference editor (M7+M8)
@@ -309,7 +309,7 @@ Tất cả trên **một repo/folder, một format dữ liệu, một backend**.
 ---
 
 ## 11. Tech stack & setup
-- **Backend:** Python + **Flask** (đơn giản hơn FastAPI cho nhóm), gọi `validate.py` qua subprocess (`--json`); extraction TXT/EPUB dùng stdlib (`zipfile`, `xml.etree`, `html.parser`, `re`) để tránh dependency nặng/licensing, (stretch) PyMuPDF cho PDF born-digital.
+- **Backend:** Python + **Flask** (đơn giản hơn FastAPI cho nhóm), gọi `validate.py` qua subprocess (`--json`); extraction TXT/EPUB/Markdown/HTML dùng stdlib (`zipfile`, `xml.etree`, `html.parser`, `re`) để tránh dependency nặng/licensing, (stretch) PyMuPDF cho PDF born-digital.
 - **Frontend:** **vanilla HTML/CSS/JS** (thỏa yêu cầu "ngôn ngữ web cơ bản"); fetch REST; không framework nặng.
 - **Run:** `pip install -r requirements.txt` → `python backend/server.py` → mở `http://127.0.0.1:5000`.
 - **Data:** repo công cụ ignore `ailab_projects/`; dataset thật được version-control trong repo/thư mục dataset riêng theo ranh giới §3.
@@ -317,7 +317,7 @@ Tất cả trên **một repo/folder, một format dữ liệu, một backend**.
 ---
 
 ## 12. Definition of Done (cho app)
-- [ ] Tạo project + upload TXT/EPUB → extract → `document.json` validate pass.
+- [ ] Tạo project + upload TXT/EPUB/Markdown/HTML → extract → `document.json` validate pass.
 - [ ] Sửa block (clean_text/type/flags), span qua text-selection, không sửa được field read-only.
 - [ ] Glossary/Entity/Summary/Reference editor hoạt động + ghi đúng canonical/working.
 - [ ] Glossary/entity tag bằng selection ghi đồng bộ sidecar + block annotations; canonical không chứa record dở dang.

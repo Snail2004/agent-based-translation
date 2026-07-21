@@ -22,7 +22,7 @@ Không phải app dịch, không phải app OCR, không phải PDF layout editor
 | Module | Trách nhiệm |
 |---|---|
 | Project manager | tạo/mở project, upload source, provenance |
-| Extraction backend | TXT/EPUB -> `document.json` |
+| Extraction backend | TXT/EPUB/Markdown/HTML -> `document.json` |
 | Block UI | chapter/block browser, clean editor |
 | Annotation UI | glossary/entity/summary/reference |
 | Validation/export | validate, error view, freeze/export |

@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=1280" />
 <title>Agent Console · dev harness (golden fixture)</title>
+<link rel="icon" href="data:," />
 <link rel="stylesheet" href="console.css" />
 <style>
   html, body { margin: 0; height: 100%; background: #222; }
@@ -13,7 +14,7 @@
 </head>
 <body>
 <div id="root">loading golden fixture…</div>
-<div class="dev-note">console_dev · golden preface fixture · not the production app</div>
+<div class="dev-note">console_dev · committed memory-delta fixture · not the production app</div>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
@@ -24,13 +25,68 @@
 const FX = "fixtures/one_button_preface_golden/";
 
 async function loadFixture() {
-  const [rawEvents, blockPreview, watchRaw, reportSummary] = await Promise.all([
+  const [rawEvents, memoryDeltaFixture, blockPreview, watchRaw, reportSummary] = await Promise.all([
     fetch(FX + "events.jsonl").then(r => r.text()),
+    fetch(FX + "memory_delta_fixture.json").then(r => r.json()).catch(() => []),
     fetch(FX + "block_preview_sample.json").then(r => r.json()).catch(() => []),
     fetch(FX + "reports/watchlist.json").then(r => r.json()).catch(() => null),
     fetch(FX + "report_summary.json").then(r => r.json()).catch(() => null),
   ]);
-  const events = rawEvents.split("\n").filter(l => l.trim()).map(l => JSON.parse(l));
+  const baseEvents = rawEvents.split("\n").filter(l => l.trim()).map(l => JSON.parse(l));
+  // memory_delta_fixture.json is a UI-only sidecar. Keep the historical golden
+  // event log byte-for-byte intact while placing synthetic delta events at
+  // deterministic replay positions.
+  const inserts = new Map();
+  const deltaItems = Array.isArray(memoryDeltaFixture)
+    ? memoryDeltaFixture
+    : (Array.isArray(memoryDeltaFixture.events) ? memoryDeltaFixture.events : []);
+  deltaItems.forEach(item => {
+    if (!item || !item.event) return;
+    const afterSeq = String(item.after_seq);
+    const bucket = inserts.get(afterSeq) || [];
+    const deliveryCount = Math.max(1, Math.min(2, Number(item.delivery_count) || 1));
+    for (let delivery = 0; delivery < deliveryCount; delivery += 1) {
+      bucket.push(delivery === 0
+        ? item.event
+        : { ...item.event, event_id: `${item.event.event_id}:retry:${delivery}` });
+    }
+    inserts.set(afterSeq, bucket);
+  });
+  const events = [];
+  baseEvents.forEach(event => {
+    events.push(event);
+    const bucket = inserts.get(String(event.seq)) || [];
+    bucket.forEach(delta => events.push(delta));
+    inserts.delete(String(event.seq));
+  });
+  inserts.forEach(bucket => bucket.forEach(delta => events.push(delta)));
+  // The historical event log predates block-addressable console events. Add
+  // one dev-only navigation target from the persisted preview fixture so the
+  // replay harness can exercise block selection and rewind fail-closed logic
+  // without changing the golden log or inventing semantic content.
+  const firstPreview = Array.isArray(blockPreview) ? blockPreview.find(row => row && row.block_id) : null;
+  if (firstPreview) {
+    const anchorIndex = events.findIndex(event => event && event.event === "window_preview_available");
+    const anchor = anchorIndex >= 0 ? events[anchorIndex] : events[events.length - 1];
+    const navigationEvent = {
+      schema: "console_fixture_event_v1",
+      run_id: "replay_preface",
+      attempt_id: 1,
+      event_id: "fixture:navigation:block:1",
+      seq: `${anchor && anchor.seq ? anchor.seq : events.length}.nav1`,
+      ts: anchor && anchor.ts ? anchor.ts : "2026-07-18T03:06:00Z",
+      stage: "translator",
+      agent: "Translator",
+      event: "block_done",
+      severity: "info",
+      payload: {
+        block_id: firstPreview.block_id,
+        window_id: firstPreview.window_id || "",
+        fixture_only: true,
+      },
+    };
+    events.splice(Math.max(anchorIndex + 1, 0), 0, navigationEvent);
+  }
   // Preserve raw watchlist entries so the depth panel can render reasons/candidates.
   // Keep a guard for older string-only fixtures.
   let watchlist = [];

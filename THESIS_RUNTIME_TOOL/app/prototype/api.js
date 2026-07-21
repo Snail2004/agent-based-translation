@@ -14,7 +14,20 @@
   }
 
   function baseUrl() {
-    return localStorage.getItem(STORAGE_BASE) || DEFAULT_BASE;
+    const configured = localStorage.getItem(STORAGE_BASE);
+    if (!configured) return DEFAULT_BASE;
+    try {
+      const url = new URL(configured);
+      const loopback = url.hostname === "127.0.0.1" || url.hostname === "localhost" || url.hostname === "::1";
+      if (loopback && configured !== DEFAULT_BASE) {
+        localStorage.removeItem(STORAGE_BASE);
+        return DEFAULT_BASE;
+      }
+      return configured;
+    } catch (_err) {
+      localStorage.removeItem(STORAGE_BASE);
+      return DEFAULT_BASE;
+    }
   }
 
   function jsonHeaders() {
@@ -118,7 +131,7 @@
       return request(`/thesis/runs/prompt-preview?${query.toString()}`);
     },
     getThesisRunManifest: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/manifest`),
-    getThesisRunBlockPreview: (runId, limit) => request(`/thesis/runs/${encodeURIComponent(runId)}/block-preview?limit=${encodeURIComponent(limit || 12)}`),
+    getThesisRunBlockPreview: (runId, limit = 100) => request(`/thesis/runs/${encodeURIComponent(runId)}/block-preview?limit=${encodeURIComponent(limit)}`),
     getThesisRunWatchlist: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/watchlist`),
     getThesisRunReportSummary: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/report-summary`),
     pauseThesisRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/pause`, { method: "POST", body: {} }),
@@ -132,6 +145,8 @@
     resumeThesisRun: (runId, payload) => request(`/thesis/runs/${encodeURIComponent(runId)}/resume`, { method: "POST", body: payload || {} }),
     createProject: (payload) => request("/projects", { method: "POST", body: payload }),
     getProject: (docId) => request(`/projects/${encodeURIComponent(docId)}`),
+    getProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime`),
+    prepareProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime/prepare`, { method: "POST", body: {} }),
     patchProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "PATCH", body: payload }),
     deleteProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "DELETE", body: payload || {} }),
     uploadSource: (docId, file, overwrite) => {
@@ -141,14 +156,6 @@
       return request(`/projects/${encodeURIComponent(docId)}/source`, { method: "POST", formData: form });
     },
     extract: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/extract`, { method: "POST", body: payload || {} }),
-    normalizeCandidateParts: (docId) => request(`/projects/${encodeURIComponent(docId)}/normalize/candidate-parts`, { method: "POST", body: {} }),
-    getNormalizeAgentPlan: (docId) => request(`/projects/${encodeURIComponent(docId)}/normalize/agent-plan`),
-    importStructurePlan: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/normalize/plan`, { method: "POST", body: payload || {} }),
-    applyNormalizedStructure: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/normalize/apply`, { method: "POST", body: payload || {} }),
-    buildAnnotationInput: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/annotate/input`, { method: "POST", body: payload || {} }),
-    getAnnotationAgentCandidate: (docId, chapterId) => request(`/projects/${encodeURIComponent(docId)}/annotate/candidate?chapter_id=${encodeURIComponent(chapterId)}`),
-    resolveAnnotationCandidate: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/annotate/resolve`, { method: "POST", body: payload || {} }),
-    applyAnnotationCandidate: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/annotate/apply`, { method: "POST", body: payload || {} }),
     getTranslationPreviewInput: (docId, chapterId) => request(`/projects/${encodeURIComponent(docId)}/translation-preview/input?chapter_id=${encodeURIComponent(chapterId)}`),
     getSavedTranslationPreviewInput: (docId, chapterId) => request(`/projects/${encodeURIComponent(docId)}/translation-preview/input/saved?chapter_id=${encodeURIComponent(chapterId)}`),
     importTranslationPreviewRun: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/translation-preview/runs`, { method: "POST", body: payload || {} }),
