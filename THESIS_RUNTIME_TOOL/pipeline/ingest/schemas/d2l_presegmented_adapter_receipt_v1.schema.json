@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ailab.local/schema/d2l_presegmented_adapter_receipt_v1.schema.json",
+  "title": "D2L Presegmented Adapter Receipt V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "adapter_version",
+    "conversion_policy",
+    "document_id",
+    "upstream",
+    "output"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "d2l_presegmented_adapter_receipt_v1"
+    },
+    "adapter_version": {
+      "const": "d2l_presegmented_adapter_v1"
+    },
+    "conversion_policy": {
+      "const": "d2l_marked_capture_mechanical_v1"
+    },
+    "document_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "legacy_manifest",
+        "legacy_block_map",
+        "marked_source",
+        "source_db_sha256"
+      ],
+      "properties": {
+        "legacy_manifest": {
+          "$ref": "#/$defs/schema_artifact"
+        },
+        "legacy_block_map": {
+          "$ref": "#/$defs/schema_artifact"
+        },
+        "marked_source": {
+          "$ref": "#/$defs/artifact"
+        },
+        "source_db_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest",
+        "block_map",
+        "marked_source",
+        "document_id",
+        "block_count",
+        "chapter_count",
+        "bundle_identity_sha256"
+      ],
+      "properties": {
+        "manifest": {
+          "$ref": "#/$defs/schema_artifact"
+        },
+        "block_map": {
+          "$ref": "#/$defs/schema_artifact"
+        },
+        "marked_source": {
+          "$ref": "#/$defs/artifact"
+        },
+        "document_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+        },
+        "block_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "chapter_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bundle_identity_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "file_name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\]+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "utf8_bytes"
+      ],
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/file_name"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "utf8_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "schema_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "utf8_bytes",
+        "schema_version"
+      ],
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/file_name"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "utf8_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "schema_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
