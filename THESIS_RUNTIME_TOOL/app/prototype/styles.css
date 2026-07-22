@@ -1436,18 +1436,18 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .toast-x:hover { color: #eef0f2; background: rgba(255,255,255,.1); }
 
 .modal-scrim { position: fixed; inset: 0; z-index: 90; background: rgba(22,25,29,.32); display: grid; place-items: center; animation: fade-in .12s ease; backdrop-filter: blur(1px); }
-.modal { width: 440px; max-width: calc(100vw - 32px); background: var(--panel); border-radius: var(--r-lg); box-shadow: var(--shadow-pop); animation: pop-in .14s ease; overflow: hidden; }
-.modal-head { display: flex; align-items: center; gap: 9px; padding: 14px 16px 10px; }
+.modal { width: 440px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; background: var(--panel); border-radius: var(--r-lg); box-shadow: var(--shadow-pop); animation: pop-in .14s ease; overflow: hidden; }
+.modal-head { flex: 0 0 auto; display: flex; align-items: center; gap: 9px; padding: 14px 16px 10px; }
 .modal-ic { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; background: var(--panel-3); color: var(--ink-2); flex: 0 0 auto; }
 .modal-ic.bad { background: var(--red-weak); color: var(--red); }
 .modal-title { font-size: 14px; font-weight: 650; }
 .modal-x { margin-left: auto; background: none; border: 0; color: var(--ink-4); padding: 4px; border-radius: 5px; }
 .modal-x:hover { background: var(--panel-3); color: var(--ink); }
-.modal-body { padding: 2px 16px 14px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.modal-body { min-height: 0; padding: 2px 16px 14px; overflow-y: auto; overscroll-behavior: contain; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
 .modal-body p { margin: 0 0 9px; }
 .modal-body p:last-child { margin-bottom: 0; }
 .modal-body b { color: var(--ink); }
-.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--panel-2); }
+.modal-foot { flex: 0 0 auto; display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--panel-2); }
 .startup-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .quick-import-modal { width: 620px; }
 .quick-import-modal .modal-body { max-height: calc(92vh - 118px); overflow-y: auto; padding-top: 4px; }
