@@ -337,6 +337,39 @@ def test_managed_runtime_status_rejects_resealed_candidate_identity_drift(
     assert captured.value.code in {"source_lifecycle_invalid", "source_lifecycle_stale"}
 
 
+def test_managed_runtime_status_rejects_pre_run_database_tamper(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    doc_id = "managed_runtime_database_tamper"
+    root, jobs, project_runtime, source_lifecycle = _managed_project(
+        tmp_path, monkeypatch, doc_id
+    )
+    review = source_lifecycle.get_source_package_review(root, doc_id)
+    source_lifecycle.finalize_managed_source_package(
+        root,
+        doc_id,
+        {
+            "expected_state_sha256": review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": review["expected"]["report_sha256"],
+            "expected_hierarchy_sha256": review["expected"]["hierarchy_sha256"],
+            "approved": True,
+            "user": "runtime_reviewer",
+        },
+    )
+    prepared = project_runtime.prepare_project_runtime(doc_id, jobs_root=jobs)
+    database = jobs / prepared["job_id"] / "memory.sqlite3"
+    with database.open("ab") as handle:
+        handle.write(b"tampered")
+
+    with pytest.raises(project_runtime.ProjectRuntimeError) as captured:
+        project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)
+    assert captured.value.code == "runtime_db_tampered"
+
+
 def test_managed_runtime_status_rejects_legacy_occupancy_after_publication(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

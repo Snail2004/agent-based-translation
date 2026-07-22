@@ -846,6 +846,16 @@ def _validated_managed_status_manifest(
             409,
         )
 
+    if (
+        context["lifecycle"] != "run_started_frozen"
+        and _sha256_file(db_path) != manifest.get("initial_runtime_db_sha256")
+    ):
+        raise ProjectRuntimeError(
+            "runtime_db_tampered",
+            "Managed runtime database differs from its initial manifest hash.",
+            409,
+        )
+
     snapshot = manifest.get("source_package_snapshot")
     candidate = context["managed_source"]["candidate"]
     if (
