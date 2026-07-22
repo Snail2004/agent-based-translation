@@ -32,6 +32,7 @@ _RICH_KINDS = {"table", "image", "equation", "code"}
 _TEXT_KINDS = {
     "caption",
     "paragraph",
+    "prose",
     "dialogue",
     "block_quote",
     "list",
@@ -42,7 +43,7 @@ _TEXT_KINDS = {
     "verse",
     "preformatted",
 }
-_STRUCTURAL_KINDS = {"separator", "directive", "footer", "header"}
+_STRUCTURAL_KINDS = {"separator", "directive", "footer", "header", "label"}
 _VOID_TAGS = {
     "area",
     "base",
@@ -537,7 +538,12 @@ def _semantic_shape(source_kind: str) -> tuple[str, str | None, str]:
     return "unknown", source_kind or None, "placeholder"
 
 
-def _line_fragment(source: Path, row: dict[str, Any]) -> bytes | None:
+def _line_fragment(
+    source: Path,
+    row: dict[str, Any],
+    *,
+    lines: list[str] | None = None,
+) -> bytes | None:
     line_range = row.get("line_range")
     if (
         not isinstance(line_range, list)
@@ -548,13 +554,14 @@ def _line_fragment(source: Path, row: dict[str, Any]) -> bytes | None:
     start, end = line_range
     if start < 1 or end < start:
         return None
-    with source.open(
-        "r",
-        encoding="utf-8-sig",
-        errors="replace",
-        newline="",
-    ) as stream:
-        lines = stream.readlines()
+    if lines is None:
+        with source.open(
+            "r",
+            encoding="utf-8-sig",
+            errors="replace",
+            newline="",
+        ) as stream:
+            lines = stream.readlines()
     if end > len(lines):
         return None
     return "".join(lines[start - 1 : end]).encode("utf-8")
@@ -704,8 +711,9 @@ def _markdown_assets(
     source_kind: str,
     policy: str,
     semantic_kind: str,
+    source_lines: list[str],
 ) -> tuple[list[str], bool, bool]:
-    fragment = _line_fragment(source, row)
+    fragment = _line_fragment(source, row, lines=source_lines)
     locator = _source_locator("markdown", row, block_id=block_id)
     asset_ids: list[str] = []
     review_required = False
@@ -1661,6 +1669,15 @@ def materialize_source_package(
         )
 
     collector = _AssetCollector(package_root)
+    markdown_lines: list[str] | None = None
+    if source_format == "markdown":
+        with source.open(
+            "r",
+            encoding="utf-8-sig",
+            errors="replace",
+            newline="",
+        ) as stream:
+            markdown_lines = stream.readlines()
     html_context = _HtmlContext(source) if source_format == "html" else None
     if html_context is not None:
         _materialize_html_inventory(
@@ -1701,6 +1718,7 @@ def materialize_source_package(
             mixed_structured = False
 
             if source_format == "markdown":
+                assert markdown_lines is not None
                 asset_ids, asset_review, mixed_structured = _markdown_assets(
                     collector,
                     source=source,
@@ -1709,6 +1727,7 @@ def materialize_source_package(
                     source_kind=source_kind,
                     policy=policy,
                     semantic_kind=semantic_kind,
+                    source_lines=markdown_lines,
                 )
                 review_required = review_required or asset_review
             elif source_format == "html" and html_context is not None:

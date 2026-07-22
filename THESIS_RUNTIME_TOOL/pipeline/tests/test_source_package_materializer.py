@@ -19,6 +19,7 @@ from pipeline.ingest.markdown_normalizer import (
     normalize_markdown,
     write_markdown_normalization,
 )
+from pipeline.ingest.source_package_materializer import materialize_source_package
 from pipeline.ingest.txt_normalizer import normalize_txt, write_txt_normalization
 
 
@@ -516,3 +517,110 @@ def test_materializer_is_book_neutral() -> None:
         "d2l",
     ]
     assert not any(name in source for name in forbidden)
+
+
+def test_label_is_preserve_only_structural_content(tmp_path: Path) -> None:
+    source = tmp_path / "source.md"
+    source.write_text(":label: chapter_one\n", encoding="utf-8", newline="\n")
+    source_sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
+    document = {
+        "schema_version": "1.5.0",
+        "doc_id": "label_fixture",
+        "metadata": {
+            "title": "Label fixture",
+            "author": "",
+            "domain": "technical",
+            "genre": "technical_book",
+            "source_language": "en",
+            "target_language": "vi",
+            "source_format": "markdown",
+            "license": "unknown",
+            "raw_sha256": source_sha256,
+            "extraction_tool": "test",
+            "pipeline_version": "test",
+            "contamination_risk": "low",
+        },
+        "chapters": [
+            {
+                "chapter_id": "chapter_one",
+                "order_index": 0,
+                "title": "Chapter One",
+                "blocks": [
+                    {
+                        "block_id": "label_b001",
+                        "order_index": 0,
+                        "page_ids": [],
+                        "block_type": "paragraph",
+                        "is_chapter_opening": True,
+                        "source_text": ":label: chapter_one",
+                        "clean_text": ":label: chapter_one",
+                        "sentences": [],
+                        "quality_flags": [],
+                        "annotations": {},
+                    }
+                ],
+            }
+        ],
+    }
+    structure = {
+        "schema_version": "test_structure_v1",
+        "normalizer_version": "test",
+        "doc_id": "label_fixture",
+        "source": {"path": str(source), "sha256": source_sha256, "format": "markdown"},
+        "units": [
+            {
+                "unit_id": "chapter_one",
+                "chapter_id": "chapter_one",
+                "order_index": 0,
+                "title": "Chapter One",
+                "block_range": [0, 1],
+                "role": "content_unit",
+                "translation_policy": "translate",
+                "confidence": 1.0,
+                "evidence": ["test"],
+                "review_required": False,
+            }
+        ],
+        "translatable_chapter_ids": ["chapter_one"],
+        "review_required_unit_ids": [],
+        "review_required_chapter_ids": [],
+        "exact_cover": {
+            "expected_blocks": 1,
+            "covered_blocks": 1,
+            "overlap_count": 0,
+            "missing_count": 0,
+            "coverage": 1.0,
+        },
+        "source_map": [
+            {
+                "block_id": "label_b001",
+                "source_path": source.name,
+                "line_range": [1, 1],
+                "source_block_kind": "label",
+                "provenance_precision": "test",
+            }
+        ],
+        "block_policies": [
+            {"block_id": "label_b001", "translation_policy": "preserve"}
+        ],
+        "structure_sha256": "0" * 64,
+    }
+    materialize_source_package(document, structure, tmp_path / "package")
+    manifest = json.loads(
+        (tmp_path / "package" / "asset_manifest.json").read_text(encoding="utf-8")
+    )
+    projection = json.loads(
+        (tmp_path / "package" / "admitted_projection_v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert manifest["block_bindings"][0]["semantic_kind"] == "structural"
+    assert manifest["block_bindings"][0]["render_role"] == "structural"
+    assert manifest["block_bindings"][0]["asset_ids"] == []
+    assert projection["rows"] == [
+        {
+            "chapter_id": "chapter_one",
+            "block_id": "label_b001",
+            "channel": "preserve_only",
+        }
+    ]

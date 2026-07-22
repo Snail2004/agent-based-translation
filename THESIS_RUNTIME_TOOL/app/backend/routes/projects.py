@@ -28,6 +28,7 @@ from services.source_lifecycle import (
     get_source_package_review,
     get_source_package_status,
     get_source_package_unit_blocks,
+    import_d2l_presegmented_source_package,
     normalize_managed_source_package,
     publish_managed_translation,
     source_lifecycle_mutation_guard,
@@ -247,6 +248,52 @@ def source_package_normalize(doc_id: str):
         return error(exc.code, str(exc), exc.status)
     except ProjectError as exc:
         return error("source_package_normalize_error", str(exc), 400)
+
+
+@bp.post("/projects/<doc_id>/source-package/import-d2l-presegmented")
+def source_package_import_d2l_presegmented(doc_id: str):
+    expected_files = {
+        "source": "d2l_full_book_en_marked_v1.md",
+        "block_map": "block_map.json",
+        "manifest": "manifest.json",
+    }
+    if request.args or request.mimetype != "multipart/form-data" or request.form:
+        return error(
+            "d2l_presegmented_multipart_invalid",
+            "Request must be multipart/form-data with files only and no options.",
+            400,
+        )
+    if set(request.files) != set(expected_files):
+        return error(
+            "d2l_presegmented_multipart_invalid",
+            "Upload exactly one source, block_map, and manifest file.",
+            400,
+        )
+    uploads = {}
+    for field, expected_name in expected_files.items():
+        values = request.files.getlist(field)
+        if len(values) != 1 or values[0].filename != expected_name:
+            return error(
+                "d2l_presegmented_multipart_invalid",
+                f"Field {field} must contain exactly one file named {expected_name}.",
+                400,
+            )
+        uploads[field] = values[0].read()
+    try:
+        if not has_project(doc_id):
+            return error("missing_project", "Project not found", 404)
+        result = import_d2l_presegmented_source_package(
+            get_project_path(doc_id),
+            doc_id,
+            source_bytes=uploads["source"],
+            block_map_bytes=uploads["block_map"],
+            manifest_bytes=uploads["manifest"],
+        )
+        return ok(result, status=201 if result.get("created") else 200)
+    except SourceLifecycleError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except ProjectError as exc:
+        return error("d2l_presegmented_import_error", str(exc), 400)
 
 
 @bp.get("/projects/<doc_id>/source-package/review")
