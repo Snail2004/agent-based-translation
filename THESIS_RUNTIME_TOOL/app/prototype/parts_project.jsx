@@ -51,7 +51,7 @@ function quickImportSourceFormat(filename) {
   return "txt";
 }
 
-function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, onNormalize, onImportD2LPresegmented, onOpenStructure, onOpenAdvanced }) {
+function QuickImportModal({ projects, activeDocId, onClose, onCreateProject, onUploadSource, onNormalize, onImportD2LPresegmented, onOpenStructure, onOpenAdvanced }) {
   const [step, setStep] = React.useState(1);
   const [mode, setMode] = React.useState("standard");
   const [file, setFile] = React.useState(null);
@@ -71,12 +71,15 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
 
   const supportedFile = file && QUICK_IMPORT_SOURCE_RE.test(file.name || "");
   const validDocId = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(docId.trim());
-  const duplicateDocId = (projects || []).some(project => project.doc_id === docId.trim());
+  const existingProject = (projects || []).find(project => project.doc_id === docId.trim());
+  const activeReusableProject = (projects || []).find(project => project.doc_id === activeDocId && project.status === "created");
+  const reuseExisting = mode === "d2l-presegmented" && existingProject?.status === "created";
+  const duplicateDocId = !!existingProject;
   const d2lFilesComplete = QUICK_IMPORT_D2L_FILES.every(item => !!d2lFiles[item.field]);
   const d2lFilesUnique = new Set(Object.values(d2lFiles).filter(Boolean).map(item => `${item.name}:${item.size}:${item.lastModified}`)).size === 3;
   const d2lReady = d2lFilesComplete && d2lFilesUnique && Object.values(d2lFileErrors).every(value => !value);
   const canContinue = mode === "d2l-presegmented"
-    ? d2lReady && validDocId && !duplicateDocId && !!title.trim()
+    ? d2lReady && validDocId && (!duplicateDocId || reuseExisting) && !!title.trim()
     : !!supportedFile && validDocId && !duplicateDocId && !!title.trim();
   const close = () => { if (!busy) onClose(); };
 
@@ -87,6 +90,12 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [busy]);
+
+  React.useEffect(() => {
+    if (mode !== "d2l-presegmented" || idTouched || !activeReusableProject) return;
+    setDocId(activeReusableProject.doc_id);
+    if (!titleTouched) setTitle(activeReusableProject.title || activeReusableProject.metadata?.title || activeReusableProject.doc_id);
+  }, [mode, idTouched, titleTouched, activeReusableProject?.doc_id, activeReusableProject?.title, activeReusableProject?.metadata?.title]);
 
   function selectFile(nextFile) {
     if (!nextFile) return;
@@ -127,8 +136,8 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
     setD2lFiles(current => ({ ...current, [field]: nextFile }));
     setD2lFileErrors(nextErrors);
     if (field === "source") {
-      if (!idTouched) setDocId(quickImportDocId(nextFile.name, projects));
-      if (!titleTouched) setTitle(quickImportStem(nextFile.name));
+      if (!idTouched) setDocId(activeReusableProject?.doc_id || quickImportDocId(nextFile.name, projects));
+      if (!titleTouched) setTitle(activeReusableProject?.title || activeReusableProject?.metadata?.title || quickImportStem(nextFile.name));
     }
   }
 
@@ -146,7 +155,7 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
     if (!canContinue && !createdDocId) return;
     setStep(3);
     setError(null);
-    let targetDocId = createdDocId;
+    let targetDocId = createdDocId || (mode === "d2l-presegmented" && reuseExisting ? docId.trim() : "");
     let uploaded = sourceUploaded;
     try {
       if (mode === "d2l-presegmented") {
@@ -166,6 +175,7 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
           targetDocId = created.doc_id;
           setCreatedDocId(targetDocId);
         }
+        if (!createdDocId && targetDocId) setCreatedDocId(targetDocId);
         setBusy("import-d2l");
         const imported = await onImportD2LPresegmented(targetDocId, d2lFiles);
         if (!imported) throw new Error(uiText("Backend không trả kết quả import.", "The backend did not return an import result."));
@@ -301,7 +311,8 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
             <span className="form-label">Project ID</span>
             <input className="mono" value={docId} onChange={event => { setIdTouched(true); setDocId(event.target.value); }} placeholder="document_id" />
             {docId && !validDocId && <span className="field-error">{uiText("Chỉ dùng chữ, số, dấu chấm, gạch ngang hoặc gạch dưới.", "Use only letters, numbers, periods, hyphens, or underscores.")}</span>}
-            {validDocId && duplicateDocId && <span className="field-error">{uiText("Project ID này đã tồn tại.", "This project ID already exists.")}</span>}
+            {validDocId && duplicateDocId && !reuseExisting && <span className="field-error">{uiText("Project ID này đã tồn tại và không ở trạng thái có thể thử nhập lại.", "This project ID already exists and is not in a state eligible for another import attempt.")}</span>}
+            {validDocId && reuseExisting && <span className="field-hint">{uiText("Project đã tạo nhưng chưa hoàn tất sẽ được dùng lại; backend vẫn kiểm tra source package, runtime và run trước khi ghi.", "The created but incomplete project will be reused; the backend still validates its source package, runtime, and runs before writing.")}</span>}
           </label>
         </div>
 
@@ -316,7 +327,9 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
             </button>
           </div>
           <div className="quick-import-note"><Ic.lock size={12} />{uiText("Tài liệu được tạo thành project mới; dataset đang mở không bị thay đổi.", "The document is created as a new project; the open dataset is not changed.")}</div>
-        </> : <div className="quick-import-note"><Ic.lock size={12} />{uiText("Project phải mới và chưa có source package, runtime hoặc run cũ.", "The project must be new and have no existing source package, runtime, or run.")}</div>}
+        </> : <div className="quick-import-note"><Ic.lock size={12} />{reuseExisting
+          ? uiText("Có thể thử tiếp tục project đã tạo nhưng chưa hoàn tất; backend quyết định có thể reuse hay phải chặn.", "A created but incomplete project can be retried; the backend decides whether it can be reused or must be blocked.")
+          : uiText("Project phải mới và chưa có source package, runtime hoặc run cũ.", "The project must be new and have no existing source package, runtime, or run.")}</div>}
       </div>}
 
       {step === 2 && <div className="quick-import-pane">
@@ -356,6 +369,7 @@ function ProjectSourceScreen({
   onDeleteProject,
   onPatchDoc,
   onUploadSource,
+  onImportD2LPresegmented,
   onBack,
   onOpenStructure,
   readOnly,
@@ -369,6 +383,11 @@ function ProjectSourceScreen({
   const [sourcePackageStatus, setSourcePackageStatus] = React.useState(null);
   const [sourcePackageLoading, setSourcePackageLoading] = React.useState(false);
   const [sourcePackageError, setSourcePackageError] = React.useState("");
+  const [d2lRecoveryFiles, setD2lRecoveryFiles] = React.useState({ source: null, block_map: null, manifest: null });
+  const [d2lRecoveryErrors, setD2lRecoveryErrors] = React.useState({});
+  const [d2lRecoveryBusy, setD2lRecoveryBusy] = React.useState(false);
+  const [d2lRecoveryError, setD2lRecoveryError] = React.useState("");
+  const [d2lRecoveryResult, setD2lRecoveryResult] = React.useState(null);
   const meta = docInfo.metadata || {};
   const prov = docInfo.provenance || {};
   const localProjects = (projects || []).filter(project => (
@@ -383,6 +402,19 @@ function ProjectSourceScreen({
   const sourceLegacy = sourceMode === "legacy_only";
   const projectEditingLocked = readOnly || sourcePackageLoading || !sourcePackageStatus || sourceFinalized || sourceFrozen;
   const sourceUploadLocked = readOnly || sourcePackageLoading || !sourcePackageStatus || sourceManaged || sourceLegacy;
+  const d2lRecoveryVisible = !!activeDocId
+    && sourcePackageStatus?.mode === "unmanaged_draft"
+    && !sourcePackageStatus?.source;
+  const d2lRecoveryComplete = QUICK_IMPORT_D2L_FILES.every(item => !!d2lRecoveryFiles[item.field]);
+  const d2lRecoveryUnique = new Set(Object.values(d2lRecoveryFiles).filter(Boolean).map(item => `${item.name}:${item.size}:${item.lastModified}`)).size === 3;
+  const d2lRecoveryReady = d2lRecoveryVisible
+    && !readOnly
+    && !sourcePackageLoading
+    && !d2lRecoveryBusy
+    && !!onImportD2LPresegmented
+    && d2lRecoveryComplete
+    && d2lRecoveryUnique
+    && Object.values(d2lRecoveryErrors).every(value => !value);
 
   async function refreshSourcePackageStatus() {
     if (!activeDocId) {
@@ -410,6 +442,10 @@ function ProjectSourceScreen({
 
   React.useEffect(() => {
     setFile(null);
+    setD2lRecoveryFiles({ source: null, block_map: null, manifest: null });
+    setD2lRecoveryErrors({});
+    setD2lRecoveryError("");
+    setD2lRecoveryResult(null);
     refreshSourcePackageStatus();
   }, [activeDocId]);
 
@@ -448,6 +484,55 @@ function ProjectSourceScreen({
     }
   }
 
+  function selectD2LRecoveryFile(field, nextFile) {
+    const descriptor = QUICK_IMPORT_D2L_FILES.find(item => item.field === field);
+    if (!descriptor || !nextFile) return;
+    const nextErrors = { ...d2lRecoveryErrors };
+    if (nextFile.name !== descriptor.filename) {
+      setD2lRecoveryFiles(current => ({ ...current, [field]: null }));
+      nextErrors[field] = uiText(`Tên file phải chính xác là ${descriptor.filename}.`, `The filename must be exactly ${descriptor.filename}.`);
+      setD2lRecoveryErrors(nextErrors);
+      setD2lRecoveryError("");
+      return;
+    }
+    const duplicate = Object.entries(d2lRecoveryFiles).some(([otherField, otherFile]) => (
+      otherField !== field && otherFile && (
+        otherFile === nextFile
+        || (otherFile.name === nextFile.name && otherFile.size === nextFile.size && otherFile.lastModified === nextFile.lastModified)
+      )
+    ));
+    if (duplicate) {
+      setD2lRecoveryFiles(current => ({ ...current, [field]: null }));
+      nextErrors[field] = uiText("Không thể dùng cùng một file cho hai trường.", "The same file cannot be used for two fields.");
+      setD2lRecoveryErrors(nextErrors);
+      setD2lRecoveryError("");
+      return;
+    }
+    delete nextErrors[field];
+    setD2lRecoveryFiles(current => ({ ...current, [field]: nextFile }));
+    setD2lRecoveryErrors(nextErrors);
+    setD2lRecoveryError("");
+  }
+
+  async function importD2LRecovery() {
+    if (!d2lRecoveryReady) return;
+    setD2lRecoveryBusy(true);
+    setD2lRecoveryError("");
+    setD2lRecoveryResult(null);
+    try {
+      const result = await onImportD2LPresegmented(activeDocId, d2lRecoveryFiles);
+      setD2lRecoveryResult({ reused: result?.reused === true });
+      setD2lRecoveryFiles({ source: null, block_map: null, manifest: null });
+      await refreshSourcePackageStatus();
+      if (onOpenStructure) await onOpenStructure(activeDocId, { reload: true });
+    } catch (error) {
+      const first = error?.errors?.[0] || error?.payload?.errors?.[0] || {};
+      setD2lRecoveryError([first.code, first.message || error?.message].filter(Boolean).join(" · "));
+    } finally {
+      setD2lRecoveryBusy(false);
+    }
+  }
+
   return (
     <div className="project-screen">
       <div className="project-topbar">
@@ -471,9 +556,10 @@ function ProjectSourceScreen({
           </div>
           <div className="source-state">
             <div className="srcstat-row"><span className={"ss-dot " + (selectedProject ? "ok" : "bad")} /><span className="ss-label">{uiText("Dự án", "Project")}</span><span className="ss-val mono">{activeDocId || uiText("chưa chọn", "not selected")}</span></div>
-            <div className="srcstat-row"><span className={"ss-dot " + (sourcePackageStatus?.source ? "ok" : "bad")} /><span className="ss-label">{uiText("Nguồn", "Source")}</span><span className="ss-val mono">{sourcePackageLoading ? uiText("đang tải", "loading") : sourcePackageStatus?.source ? `${sourcePackageStatus.source.format} · ${sourcePackageStatus.source.filename}` : uiText("thiếu", "missing")}</span></div>
+            <div className="srcstat-row"><span className={"ss-dot " + (sourcePackageStatus?.source ? "ok" : "bad")} /><span className="ss-label">{uiText("Nguồn", "Source")}</span><span className="ss-val mono">{sourcePackageLoading ? uiText("đang tải", "loading") : sourcePackageError ? uiText("chưa xác định", "unknown") : sourcePackageStatus?.source ? `${sourcePackageStatus.source.format} · ${sourcePackageStatus.source.filename}` : uiText("thiếu", "missing")}</span></div>
             <div className="srcstat-row"><span className={"ss-dot " + (sourceManaged ? "ok" : sourceLegacy ? "bad" : "")} /><span className="ss-label">{uiText("Vòng đời", "Lifecycle")}</span><span className="ss-val mono">{sourceMode || uiText("không khả dụng", "unavailable")}</span></div>
             {sourcePackageError && <div className="srcstat-row"><span className="ss-dot bad" /><span className="ss-label">Backend</span><span className="ss-val mono bad">{sourcePackageError}</span></div>}
+            {sourcePackageError && <div className="source-state-actions"><button className="btn sm" type="button" disabled={sourcePackageLoading} onClick={refreshSourcePackageStatus}><Ic.refresh size={11} />{uiText("Tải lại trạng thái", "Reload status")}</button></div>}
           </div>
         </div>
 
@@ -590,8 +676,38 @@ function ProjectSourceScreen({
                   ? uiText("Source package đã được quản lý; không thể ghi đè nguồn. Tạo dự án/revision mới nếu cần thay nguồn.", "The source package is managed and its source cannot be overwritten. Create a new project/revision to replace the source.")
                   : sourceLegacy
                     ? uiText("Dự án legacy giữ luồng cũ; UI không tự chuyển sang managed normalize.", "Legacy projects keep their existing flow; the UI does not automatically convert them to managed normalization.")
-                    : uiText("Sau khi tải, dùng Cấu trúc để chuẩn hóa với body {} và kiểm tra theo trạng thái backend.", "After upload, use Structure to normalize with body {} and review using backend status.")}</span>
+                     : uiText("Sau khi tải, dùng Cấu trúc để chuẩn hóa với body {} và kiểm tra theo trạng thái backend.", "After upload, use Structure to normalize with body {} and review using backend status.")}</span>
             </div>
+            {d2lRecoveryVisible && <div className="project-d2l-recovery" data-testid="project-d2l-recovery">
+              <div className="project-d2l-recovery-head">
+                <div>
+                  <b>{uiText("Khôi phục nhập gói D2L", "Recover D2L bundle import")}</b>
+                  <span>{uiText("Project này đã tồn tại nhưng chưa có source. Chọn lại đúng ba file để tiếp tục, không cần tạo project mới.", "This project exists but has no source. Select the exact three files to continue; no new project is needed.")}</span>
+                </div>
+                <span className="mono">source_missing</span>
+              </div>
+              <div className="quick-import-d2l-intro"><Ic.lock size={12} /><span>{uiText("Request chạy đồng bộ; UI không đọc fixture/filesystem và không giả lập phần trăm tiến độ.", "The request is synchronous; the UI does not read fixtures/filesystem or simulate percentage progress.")}</span></div>
+              <div className="quick-import-d2l-files" aria-label={uiText("Ba file D2L để khôi phục", "Three D2L recovery files")}>
+                {QUICK_IMPORT_D2L_FILES.map(item => {
+                  const selected = d2lRecoveryFiles[item.field];
+                  const fieldError = d2lRecoveryErrors[item.field];
+                  return <div key={item.field} className={`quick-import-file-pick${selected ? " has-file" : ""}${fieldError ? " has-error" : ""}`}>
+                    <label>
+                      <input type="file" accept={item.accept} data-testid={`project-d2l-${item.field}`} disabled={d2lRecoveryBusy} onChange={event => selectD2LRecoveryFile(item.field, event.target.files?.[0])} />
+                      <span className="quick-import-drop-icon"><Ic.file size={17} /></span>
+                      <span className="quick-import-drop-copy"><b>{selected ? selected.name : uiText(item.vi, item.en)}</b><em>{selected ? quickImportFileSize(selected.size) : item.filename}</em></span>
+                      <span className="btn sm">{uiText("Chọn file", "Choose file")}</span>
+                    </label>
+                    {fieldError && <div className="quick-import-error"><Ic.alert size={12} />{fieldError}</div>}
+                  </div>;
+                })}
+              </div>
+              {d2lRecoveryError && <div className="quick-import-error" role="alert"><Ic.alert size={12} /><span>{d2lRecoveryError}</span></div>}
+              {d2lRecoveryResult && <div className="quick-import-note" role="status"><Ic.checkCircle size={12} /><span>{d2lRecoveryResult.reused ? uiText("Backend đã xác nhận lại đúng package trước đó.", "The backend reconfirmed the exact previous package.") : uiText("Đã nhập package vào project này.", "The package was imported into this project.")}</span></div>}
+              <div className="extract-actions project-d2l-recovery-actions">
+                <button className="btn primary" type="button" data-testid="project-d2l-import" disabled={!d2lRecoveryReady} onClick={importD2LRecovery}><Ic.upload size={13} />{d2lRecoveryBusy ? uiText("Đang nhập gói…", "Importing bundle…") : uiText("Nhập gói D2L vào project này", "Import D2L into this project")}</button>
+              </div>
+            </div>}
           </section>
 
         </div>

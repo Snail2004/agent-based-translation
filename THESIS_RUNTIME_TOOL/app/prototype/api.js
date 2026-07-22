@@ -68,6 +68,17 @@
       method: opts.method || "GET",
       headers: opts.headers || {},
     };
+    const timeoutMs = Number.isFinite(opts.timeoutMs) && opts.timeoutMs > 0
+      ? opts.timeoutMs
+      : 0;
+    const controller = timeoutMs > 0 && typeof AbortController !== "undefined"
+      ? new AbortController()
+      : null;
+    let timeoutId = null;
+    if (controller) {
+      init.signal = controller.signal;
+      timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    }
     if (opts.formData) {
       init.body = opts.formData;
     } else if (opts.body !== undefined) {
@@ -79,10 +90,21 @@
     try {
       response = await fetch(baseUrl() + path, init);
     } catch (err) {
+      if (controller?.signal.aborted) {
+        throw new ApiError("Backend did not return status in time. Retry after checking the backend process.", {
+          ok: false,
+          errors: [{
+            code: "request_timeout",
+            message: `Backend did not respond within ${Math.ceil(timeoutMs / 1000)} seconds.`,
+          }],
+        }, 0);
+      }
       throw new ApiError("Backend offline or unreachable.", {
         ok: false,
         errors: [{ code: "network_error", message: err.message || String(err) }],
       }, 0);
+    } finally {
+      if (timeoutId !== null) clearTimeout(timeoutId);
     }
 
     let payload;
@@ -173,12 +195,12 @@
     resumeThesisRun: (runId, payload) => request(`/thesis/runs/${encodeURIComponent(runId)}/resume`, { method: "POST", body: payload || {} }),
     createProject: (payload) => request("/projects", { method: "POST", body: payload }),
     getProject: (docId) => request(`/projects/${encodeURIComponent(docId)}`),
-    getProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime`),
+    getProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime`, { timeoutMs: 30000 }),
     prepareProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime/prepare`, { method: "POST", body: {} }),
-    getSourcePackageStatus: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package`),
+    getSourcePackageStatus: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package`, { timeoutMs: 30000 }),
     normalizeSourcePackage: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/normalize`, { method: "POST", body: {} }),
-    getSourcePackageReview: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/review`),
-    getSourcePackageUnitBlocks: (docId, unitId, expected, offset = 0, limit = 200) => request(sourcePackageUnitBlocksPath(docId, unitId, expected, offset, limit)),
+    getSourcePackageReview: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/review`, { timeoutMs: 60000 }),
+    getSourcePackageUnitBlocks: (docId, unitId, expected, offset = 0, limit = 200) => request(sourcePackageUnitBlocksPath(docId, unitId, expected, offset, limit), { timeoutMs: 60000 }),
     applySourcePackageCorrections: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/corrections`, { method: "POST", body }),
     applySourcePackageHierarchy: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/hierarchy`, { method: "POST", body }),
     finalizeSourcePackage: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/finalize`, { method: "POST", body }),

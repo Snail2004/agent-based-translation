@@ -3139,6 +3139,7 @@ function App() {
   const quickImportDialog = modal?.kind === "quick-import" && (
     <QuickImportModal
       projects={projects}
+      activeDocId={activeDocId}
       onClose={() => setModal(null)}
       onCreateProject={createProject}
       onUploadSource={uploadSource}
@@ -3189,6 +3190,7 @@ function App() {
           onUpdateProject={updateProjectSettings}
           onDeleteProject={deleteProjectById}
           onUploadSource={uploadSource}
+          onImportD2LPresegmented={importD2LPresegmentedSourcePackage}
           onBack={() => navigateView("workspace")}
           onOpenStructure={openSourcePackage}
           readOnly={readOnly}

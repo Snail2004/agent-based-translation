@@ -813,6 +813,16 @@ function SourcePackageWorkspace({
 
       {loading ? (
         <div className="sp-loading" aria-live="polite"><span className="as-spin" /><b>{uiText("Đang tải trạng thái và dữ liệu kiểm tra từ backend…", "Loading backend status and review…")}</b></div>
+      ) : error && !status ? (
+        <div className="sp-empty">
+          <Ic.alert size={24} />
+          <h2>{uiText("Không thể xác định trạng thái source package", "Could not determine source-package status")}</h2>
+          <p>{uiText("UI không suy đoán project đang trống hay đã nhập dở. Hãy kiểm tra backend rồi tải lại trạng thái; dữ liệu hiện có không bị UI tự xóa hoặc ghi đè.", "The UI will not guess whether this project is empty or partially imported. Check the backend and reload status; existing data is not deleted or overwritten by the UI.")}</p>
+          <div>
+            <button className="btn" type="button" disabled={!!busy} onClick={() => load()}><Ic.refresh size={13} />{uiText("Tải lại trạng thái", "Reload status")}</button>
+            <button className="btn" type="button" onClick={onOpenProjectSource}><Ic.upload size={13} />{uiText("Project / Nguồn", "Project / Source")}</button>
+          </div>
+        </div>
       ) : legacy ? (
         <div className="sp-empty legacy">
           <Ic.clock size={24} />
@@ -826,7 +836,9 @@ function SourcePackageWorkspace({
           <h2>{status?.source ? uiText("Nguồn đã sẵn sàng để chuẩn hóa", "Source is ready for normalization") : uiText("Chưa có tệp nguồn", "No source file")}</h2>
           <p>{status?.source
             ? `${status.source.filename || uiText("Tệp nguồn", "Source file")} · ${String(status.source.format || "").toUpperCase()}`
-            : uiText("Tải TXT, EPUB, Markdown, HTML hoặc PDF trong Project / Nguồn trước khi chuẩn hóa.", "Upload TXT, EPUB, Markdown, HTML, or PDF in Project / Source before normalization.")}</p>
+            : status?.reason === "source_missing"
+              ? uiText("Project đã tạo nhưng chưa có nguồn. Mở Project / Nguồn để nhập lại file thường hoặc khôi phục gói D2L.", "The project exists but has no source. Open Project / Source to upload a standard file or recover a D2L bundle.")
+              : uiText("Tải TXT, EPUB, Markdown, HTML hoặc PDF trong Project / Nguồn trước khi chuẩn hóa.", "Upload TXT, EPUB, Markdown, HTML, or PDF in Project / Source before normalization.")}</p>
           <div>
             <button className="btn" type="button" onClick={onOpenProjectSource}><Ic.upload size={13} />{uiText("Project / Nguồn", "Project / Source")}</button>
             {status?.normalize_allowed === true && <button className="btn primary" type="button" disabled={!!busy} onClick={normalize}><Ic.sparkle size={13} />{uiText("Chuẩn hóa", "Normalize")}</button>}

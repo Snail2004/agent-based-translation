@@ -1509,7 +1509,9 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .quick-import-file-pick .quick-import-error { margin-top: 0; }
 .quick-import-error-code { display: block; margin-top: 4px; color: var(--red); font-family: var(--mono); font-size: 10px; overflow-wrap: anywhere; }
 .quick-import-fields { gap: 10px; }
-.field-error { color: var(--red); font-size: 10.5px; line-height: 1.35; }
+.field-error, .field-hint { display: block; font-size: 10.5px; line-height: 1.35; }
+.field-error { color: var(--red); }
+.field-hint { color: var(--green); }
 .quick-import-error, .quick-import-note {
   display: flex; align-items: flex-start; gap: 7px; padding: 8px 9px;
   border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--panel-2);
@@ -1729,6 +1731,22 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
   background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 9px 11px;
 }
 .extract-note svg { color: var(--amber); flex: 0 0 auto; margin-top: 1px; }
+.project-d2l-recovery {
+  display: flex; flex-direction: column; gap: 9px; margin-top: 14px; padding-top: 13px;
+  border-top: 1px solid var(--border);
+}
+.source-state-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+.project-d2l-recovery-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.project-d2l-recovery-head > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.project-d2l-recovery-head b { color: var(--ink); font-size: 12.5px; }
+.project-d2l-recovery-head span:not(.mono) { color: var(--ink-3); font-size: 11px; line-height: 1.45; }
+.project-d2l-recovery-head > .mono { flex: 0 0 auto; color: var(--amber); font-size: 10px; }
+.project-d2l-recovery-actions { margin-top: 0; }
+.project-d2l-recovery-actions .btn { width: 100%; justify-content: center; }
 
 .hidden-file { display: none !important; }
 
@@ -2442,6 +2460,8 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
   .source-drop { grid-template-columns: 28px minmax(0, 1fr); padding: 12px; }
   .extract-actions { justify-content: flex-start; flex-wrap: wrap; }
   .extract-actions .btn { flex: 1 1 120px; justify-content: center; }
+  .project-d2l-recovery-head { flex-direction: column; gap: 5px; }
+  .project-d2l-recovery-head > .mono { align-self: flex-start; }
   .app--structure .topbar { height: 88px; flex-basis: 88px; grid-template-rows: 44px 40px; }
   .app--structure .tb-import,
   .app--structure .autosave,
