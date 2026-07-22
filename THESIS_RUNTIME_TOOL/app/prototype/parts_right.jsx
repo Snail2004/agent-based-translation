@@ -1235,15 +1235,18 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
     <div className={"col col-right context-inspector wb-operational" + (expanded ? " is-expanded" : "")}>
       <div className="ci-header wb-toolbar">
         <div className="ci-heading">
-          <span>{uiText("Trình kiểm tra ngữ cảnh", "Context inspector")}</span>
-          <b title={scope === "project" ? (ctx.docInfo?.metadata?.title || ctx.docInfo?.doc_id) : ctx.currentScopeLabel}>
-            {scope === "project" ? uiText("Toàn dự án", "Whole project") : (ctx.currentScopeLabel || currentScopeTitle)}
-          </b>
+          <span title={uiText("Trình kiểm tra ngữ cảnh", "Context inspector")}>{uiText("Ngữ cảnh", "Context")}</span>
         </div>
         <div className="ci-header-counts" aria-label={uiText("Tổng memory dự án", "Project memory totals")}>
-          <span><b>{totals.glossary || 0}</b>T</span>
-          <span><b>{totals.entities || 0}</b>E</span>
-          <span><b>{totals.relations || 0}</b>R</span>
+          <span title={uiText(`${totals.glossary || 0} thuật ngữ trong dự án`, `${totals.glossary || 0} project terms`)}>
+            <b>{totals.glossary || 0}</b><em>T</em>
+          </span>
+          <span title={uiText(`${totals.entities || 0} thực thể trong dự án`, `${totals.entities || 0} project entities`)}>
+            <b>{totals.entities || 0}</b><em>E</em>
+          </span>
+          <span title={uiText(`${totals.relations || 0} quan hệ trong dự án`, `${totals.relations || 0} project relations`)}>
+            <b>{totals.relations || 0}</b><em>R</em>
+          </span>
         </div>
         <button className={"btn icon-only tip tip-left" + (toolsOpen || utility ? " is-on" : "")} type="button"
           data-tip={uiText("Công cụ ngữ cảnh", "Context tools")} aria-label={uiText("Công cụ ngữ cảnh", "Context tools")} aria-expanded={toolsOpen} onClick={() => setToolsOpen(open => !open)}>
@@ -1298,7 +1301,7 @@ function RightPanel({ openTabs, onToggleTab, counts, ctx, expanded, onToggleExpa
               {currentScopeTitle}<span>{ctx.currentScopeLabel}</span>
             </button>
             <button className={scope === "project" ? "is-active" : ""} type="button" onClick={() => setScope("project")}>
-              {uiText("Toàn dự án", "Whole project")}<span>{ctx.docInfo?.metadata?.title || ctx.docInfo?.doc_id}</span>
+              {uiText("Toàn dự án", "Whole project")}<span>{uiText("Mọi chương", "All chapters")}</span>
             </button>
           </div>
 
