@@ -10,6 +10,7 @@ import stat
 import tempfile
 import threading
 import time
+from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterator
@@ -95,6 +96,16 @@ REQUIRED_PACKAGE_FILES = {
     "admitted_projection_v1.json",
     REPORT_FILENAME,
 }
+
+_CANDIDATE_VALIDATION_CACHE_MAX_ENTRIES = 8
+_candidate_validation_cache_lock = threading.RLock()
+_candidate_validation_cache: OrderedDict[
+    tuple[str, str, str, str, str, str], dict[str, Any]
+] = OrderedDict()
+_candidate_validation_inflight: dict[
+    tuple[str, str, str, str, str, str], threading.Event
+] = {}
+_candidate_validation_request_local = threading.local()
 
 _STATE_FIELDS = {
     "schema_version",
@@ -1116,7 +1127,94 @@ def _tree_identity(candidate_root: Path, asset_manifest: dict[str, Any]) -> dict
     }
 
 
-def _validate_candidate(
+def _candidate_validation_state_scope(state: dict[str, Any]) -> str:
+    return canonical_json_sha256(
+        {
+            "schema_version": state.get("schema_version"),
+            "state_sha256": (state.get("integrity") or {}).get("payload_sha256"),
+            "candidate": state.get("candidate"),
+            "package": state.get("package"),
+            "draft_structure": state.get("draft_structure"),
+            "policies": state.get("policies"),
+        }
+    )
+
+
+def _candidate_validation_cache_key(
+    candidate_root: Path,
+    *,
+    source_path: Path,
+    source_format: str,
+    source_sha256: str,
+    doc_id: str,
+    validation_scope: str | None,
+) -> tuple[str, str, str, str, str, str]:
+    return (
+        os.path.normcase(str(candidate_root.resolve(strict=False))),
+        os.path.normcase(str(source_path.resolve(strict=False))),
+        source_format,
+        source_sha256,
+        doc_id,
+        validation_scope or "unscoped",
+    )
+
+
+def _candidate_validation_cache_base(
+    key: tuple[str, str, str, str, str, str],
+) -> tuple[str, str, str, str, str]:
+    return key[:5]
+
+
+def _candidate_validation_cache_forget(
+    key: tuple[str, str, str, str, str, str],
+    entry: dict[str, Any],
+) -> None:
+    with _candidate_validation_cache_lock:
+        if _candidate_validation_cache.get(key) is entry:
+            _candidate_validation_cache.pop(key, None)
+
+
+def _candidate_validation_cache_remember(
+    key: tuple[str, str, str, str, str, str],
+    evidence: dict[str, Any],
+) -> None:
+    with _candidate_validation_cache_lock:
+        _candidate_validation_cache[key] = {"evidence": evidence}
+        _candidate_validation_cache.move_to_end(key)
+        while len(_candidate_validation_cache) > _CANDIDATE_VALIDATION_CACHE_MAX_ENTRIES:
+            _candidate_validation_cache.popitem(last=False)
+
+
+def _candidate_validation_cache_entry(
+    key: tuple[str, str, str, str, str, str],
+) -> tuple[tuple[str, str, str, str, str, str], dict[str, Any]] | None:
+    with _candidate_validation_cache_lock:
+        entry = _candidate_validation_cache.get(key)
+        if entry is None:
+            return None
+        _candidate_validation_cache.move_to_end(key)
+        return key, entry
+
+
+def _candidate_validation_cache_clear() -> None:
+    with _candidate_validation_cache_lock:
+        _candidate_validation_cache.clear()
+
+
+@contextmanager
+def _candidate_validation_request_scope() -> Iterator[None]:
+    current = getattr(_candidate_validation_request_local, "evidence", None)
+    if current is not None:
+        yield
+        return
+    _candidate_validation_request_local.evidence = {}
+    try:
+        yield
+    finally:
+        del _candidate_validation_request_local.evidence
+
+
+def _validate_candidate_uncached(
     candidate_root: Path,
     *,
     source_path: Path,
@@ -1195,6 +1293,84 @@ def _validate_candidate(
         "package_identities": package_identities,
         "policies": policies,
     }
+
+
+def _validate_candidate(
+    candidate_root: Path,
+    *,
+    source_path: Path,
+    source_format: str,
+    source_sha256: str,
+    doc_id: str,
+    validation_scope: str | None = None,
+) -> dict[str, Any]:
+    key = _candidate_validation_cache_key(
+        candidate_root,
+        source_path=source_path,
+        source_format=source_format,
+        source_sha256=source_sha256,
+        doc_id=doc_id,
+        validation_scope=validation_scope,
+    )
+    base = _candidate_validation_cache_base(key)
+    request_evidence = getattr(_candidate_validation_request_local, "evidence", None)
+    if request_evidence is not None and base in request_evidence:
+        evidence = request_evidence[base]
+        _candidate_validation_cache_remember(key, evidence)
+        return evidence
+
+    while True:
+        cached = _candidate_validation_cache_entry(key)
+        if cached is not None:
+            matched_key, entry = cached
+            evidence = entry["evidence"]
+            try:
+                current_tree = _tree_identity(
+                    candidate_root,
+                    evidence["asset_manifest"],
+                )
+            except SourceLifecycleError:
+                _candidate_validation_cache_forget(matched_key, entry)
+                raise
+            if current_tree == evidence["tree"]:
+                if matched_key != key:
+                    _candidate_validation_cache_remember(key, evidence)
+                if request_evidence is not None:
+                    request_evidence[base] = evidence
+                return evidence
+            _candidate_validation_cache_forget(matched_key, entry)
+
+        with _candidate_validation_cache_lock:
+            if _candidate_validation_cache_entry(key) is not None:
+                continue
+            waiter = _candidate_validation_inflight.get(key)
+            if waiter is None:
+                waiter = threading.Event()
+                _candidate_validation_inflight[key] = waiter
+                owns_validation = True
+            else:
+                owns_validation = False
+        if owns_validation:
+            break
+        waiter.wait()
+
+    try:
+        evidence = _validate_candidate_uncached(
+            candidate_root,
+            source_path=source_path,
+            source_format=source_format,
+            source_sha256=source_sha256,
+            doc_id=doc_id,
+        )
+        _candidate_validation_cache_remember(key, evidence)
+        if request_evidence is not None:
+            request_evidence[base] = evidence
+        return evidence
+    finally:
+        with _candidate_validation_cache_lock:
+            completed = _candidate_validation_inflight.pop(key, None)
+            if completed is not None:
+                completed.set()
 
 
 def _files_byte_identical(left: Path, right: Path) -> bool:
@@ -2258,6 +2434,7 @@ def _validated_candidate_for_state(
         source_format=source_format,
         source_sha256=source_sha256,
         doc_id=doc_id,
+        validation_scope=_candidate_validation_state_scope(state),
     )
     expected = _child_binding(
         project_path=project_path,
@@ -3356,6 +3533,7 @@ def _managed_status(
         source_format=source_format,
         source_sha256=source_sha256,
         doc_id=doc_id,
+        validation_scope=_candidate_validation_state_scope(state),
     )
     expected_state = _state_payload(
         project_path=project_path,
@@ -3392,44 +3570,45 @@ def _managed_status(
 
 def get_source_package_status(project_path: str | Path, doc_id: str) -> dict[str, Any]:
     root = _require_project_root(project_path)
-    state = _read_authoritative_state(root, doc_id=doc_id)
-    if state is not None:
-        return _managed_status(root, doc_id=doc_id, state=state)
-    evidence = _legacy_occupancy(root, doc_id=doc_id)
-    if evidence:
+    with _candidate_validation_request_scope():
+        state = _read_authoritative_state(root, doc_id=doc_id)
+        if state is not None:
+            return _managed_status(root, doc_id=doc_id, state=state)
+        evidence = _legacy_occupancy(root, doc_id=doc_id)
+        if evidence:
+            return {
+                "schema_version": SOURCE_PACKAGE_STATUS_VERSION,
+                "doc_id": doc_id,
+                "mode": "legacy_only",
+                "managed": False,
+                "normalize_allowed": False,
+                "reason": "legacy_project_evidence_exists",
+                "evidence": evidence,
+            }
+        try:
+            source_path, source_format, source_sha256 = _server_source(root)
+            source = {
+                "filename": source_path.name,
+                "format": source_format,
+                "sha256": source_sha256,
+            }
+            allowed = True
+            reason = None
+        except SourceLifecycleError as exc:
+            if exc.code != "source_missing":
+                raise
+            source = None
+            allowed = False
+            reason = "source_missing"
         return {
             "schema_version": SOURCE_PACKAGE_STATUS_VERSION,
             "doc_id": doc_id,
-            "mode": "legacy_only",
+            "mode": "unmanaged_draft",
             "managed": False,
-            "normalize_allowed": False,
-            "reason": "legacy_project_evidence_exists",
-            "evidence": evidence,
+            "normalize_allowed": allowed,
+            "source": source,
+            "reason": reason,
         }
-    try:
-        source_path, source_format, source_sha256 = _server_source(root)
-        source = {
-            "filename": source_path.name,
-            "format": source_format,
-            "sha256": source_sha256,
-        }
-        allowed = True
-        reason = None
-    except SourceLifecycleError as exc:
-        if exc.code != "source_missing":
-            raise
-        source = None
-        allowed = False
-        reason = "source_missing"
-    return {
-        "schema_version": SOURCE_PACKAGE_STATUS_VERSION,
-        "doc_id": doc_id,
-        "mode": "unmanaged_draft",
-        "managed": False,
-        "normalize_allowed": allowed,
-        "source": source,
-        "reason": reason,
-    }
 
 
 def ensure_source_upload_allowed(project_path: str | Path) -> None:
@@ -3678,7 +3857,7 @@ def get_source_package_review(
     doc_id: str,
 ) -> dict[str, Any]:
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_mutation_guard(root), _candidate_validation_request_scope():
         state = _read_authoritative_state(root, doc_id=doc_id)
         if state is None:
             raise SourceLifecycleError(
@@ -3757,7 +3936,7 @@ def get_source_package_unit_blocks(
             400,
         )
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_mutation_guard(root), _candidate_validation_request_scope():
         state = _read_authoritative_state(root, doc_id=doc_id)
         if state is None:
             raise SourceLifecycleError(

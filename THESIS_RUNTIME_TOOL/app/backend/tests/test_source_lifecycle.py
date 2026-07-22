@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -540,6 +541,233 @@ def test_candidate_tamper_fails_closed_in_status_and_reuse(tmp_path: Path) -> No
     }
     with pytest.raises(SourceLifecycleError):
         normalize_managed_source_package(root, "tampered")
+
+
+def test_validation_cache_reuses_evidence_and_hashes_tree_once_per_request(
+    tmp_path: Path,
+) -> None:
+    doc_id = "validation_cache_reuse"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(
+            template_text="CHAPTER I\n\nAlice arrived.\n\nBob waited.\n"
+        ),
+        write_fn=_fake_review_writer,
+    )
+    source_lifecycle._candidate_validation_cache_clear()
+
+    original_uncached = source_lifecycle._validate_candidate_uncached
+    original_tree_identity = source_lifecycle._tree_identity
+    with (
+        patch.object(
+            source_lifecycle,
+            "_validate_candidate_uncached",
+            wraps=original_uncached,
+        ) as uncached,
+        patch.object(
+            source_lifecycle,
+            "_tree_identity",
+            wraps=original_tree_identity,
+        ) as tree_identity,
+    ):
+        status = get_source_package_status(root, doc_id)
+        review = get_source_package_review(root, doc_id)
+        expected = {
+            name: review["expected"][name]
+            for name in source_lifecycle.SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+        }
+        page = get_source_package_unit_blocks(
+            root,
+            doc_id,
+            review["report"]["units"][0]["unit_id"],
+            expected=expected,
+            limit=1,
+        )
+
+    assert (
+        status["candidate"]["tree_sha256"]
+        == review["expected"]["candidate_tree_sha256"]
+    )
+    assert page["pagination"]["returned"] == 1
+    assert uncached.call_count == 1
+    assert tree_identity.call_count == 3
+
+
+def test_validation_cache_hashes_bytes_and_does_not_cache_failure(
+    tmp_path: Path,
+) -> None:
+    doc_id = "validation_cache_same_size_tamper"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    status = normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(),
+        write_fn=_fake_writer,
+    )
+    get_source_package_status(root, doc_id)
+    candidate = root / Path(*status["candidate"]["relative_path"].split("/"))
+    document_path = candidate / "document.json"
+    original = document_path.read_bytes()
+    changed = original.replace(b"Story text.", b"St0ry text.", 1)
+    assert len(changed) == len(original)
+    assert changed != original
+    before = document_path.stat()
+    document_path.write_bytes(changed)
+    os.utime(document_path, ns=(before.st_atime_ns, before.st_mtime_ns))
+    after = document_path.stat()
+    assert after.st_size == before.st_size
+    assert after.st_mtime_ns == before.st_mtime_ns
+
+    original_uncached = source_lifecycle._validate_candidate_uncached
+    with patch.object(
+        source_lifecycle,
+        "_validate_candidate_uncached",
+        wraps=original_uncached,
+    ) as uncached:
+        for _attempt in range(2):
+            with pytest.raises(SourceLifecycleError) as captured:
+                get_source_package_status(root, doc_id)
+            assert captured.value.status == 409
+        assert uncached.call_count == 2
+
+
+@pytest.mark.parametrize("mutation", ("add", "delete", "replace"))
+def test_validation_cache_rejects_candidate_file_set_drift(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    doc_id = f"validation_cache_{mutation}"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    status = normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(),
+        write_fn=_fake_writer,
+    )
+    get_source_package_status(root, doc_id)
+    candidate = root / Path(*status["candidate"]["relative_path"].split("/"))
+    if mutation == "add":
+        (candidate / "unexpected.bin").write_bytes(b"unexpected")
+    elif mutation == "delete":
+        (candidate / "draft_structure_report.json").unlink()
+    else:
+        document_path = candidate / "document.json"
+        replacement_path = candidate / "document.replacement"
+        original = document_path.read_bytes()
+        changed = original.replace(b"Story text.", b"St0ry text.", 1)
+        assert changed != original
+        replacement_path.write_bytes(changed)
+        os.replace(replacement_path, document_path)
+
+    with pytest.raises(SourceLifecycleError) as captured:
+        get_source_package_status(root, doc_id)
+    assert captured.value.status == 409
+    assert captured.value.code in {
+        "source_package_file_set_invalid",
+        "source_package_incomplete",
+        "source_package_invalid",
+        "draft_structure_report_stale",
+    }
+
+
+def test_validation_cache_isolated_by_project_source_and_state(tmp_path: Path) -> None:
+    projects: list[tuple[Path, Path, str]] = []
+    for suffix in ("a", "b"):
+        doc_id = f"validation_cache_isolation_{suffix}"
+        root, source = _project(tmp_path, doc_id, "txt")
+        normalize_managed_source_package(
+            root,
+            doc_id,
+            normalize_fn=_fake_normalizer(),
+            write_fn=_fake_writer,
+        )
+        projects.append((root, source, doc_id))
+    source_lifecycle._candidate_validation_cache_clear()
+
+    original_uncached = source_lifecycle._validate_candidate_uncached
+    with patch.object(
+        source_lifecycle,
+        "_validate_candidate_uncached",
+        wraps=original_uncached,
+    ) as uncached:
+        for root, _source, doc_id in projects:
+            get_source_package_status(root, doc_id)
+        for root, _source, doc_id in projects:
+            get_source_package_status(root, doc_id)
+        assert uncached.call_count == 2
+
+        root, source, doc_id = projects[0]
+        state = _lifecycle(root)
+        state["package"]["document"]["sha256"] = "0" * 64
+        _reseal_lifecycle(state)
+        _write_json(root / "working" / STATE_FILENAME, state)
+        with pytest.raises(SourceLifecycleError) as state_error:
+            get_source_package_status(root, doc_id)
+        assert state_error.value.code == "source_lifecycle_stale"
+        assert uncached.call_count == 3
+
+        source.write_bytes(source.read_bytes() + b"changed")
+        with pytest.raises(SourceLifecycleError) as source_error:
+            get_source_package_status(root, doc_id)
+        assert source_error.value.code == "source_package_source_changed"
+        assert uncached.call_count == 3
+
+
+def test_validation_cache_is_bounded_and_deduplicates_concurrent_cold_reads(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(source_lifecycle, "_CANDIDATE_VALIDATION_CACHE_MAX_ENTRIES", 2)
+    roots: list[tuple[Path, str]] = []
+    for index in range(3):
+        doc_id = f"validation_cache_bound_{index}"
+        root, _source = _project(tmp_path, doc_id, "txt")
+        normalize_managed_source_package(
+            root,
+            doc_id,
+            normalize_fn=_fake_normalizer(),
+            write_fn=_fake_writer,
+        )
+        roots.append((root, doc_id))
+    assert len(source_lifecycle._candidate_validation_cache) <= 2
+
+    root, doc_id = roots[-1]
+    source_lifecycle._candidate_validation_cache_clear()
+    original_uncached = source_lifecycle._validate_candidate_uncached
+    entered = threading.Event()
+
+    def slow_uncached(*args, **kwargs):
+        entered.set()
+        time.sleep(0.1)
+        return original_uncached(*args, **kwargs)
+
+    results: list[dict] = []
+    failures: list[BaseException] = []
+
+    def read_status() -> None:
+        try:
+            results.append(get_source_package_status(root, doc_id))
+        except BaseException as exc:  # pragma: no cover - asserted below
+            failures.append(exc)
+
+    with patch.object(
+        source_lifecycle,
+        "_validate_candidate_uncached",
+        side_effect=slow_uncached,
+    ) as uncached:
+        threads = [threading.Thread(target=read_status) for _ in range(4)]
+        for thread in threads:
+            thread.start()
+        assert entered.wait(timeout=2)
+        for thread in threads:
+            thread.join(timeout=5)
+
+    assert failures == []
+    assert len(results) == 4
+    assert all(not thread.is_alive() for thread in threads)
+    assert uncached.call_count == 1
 
 
 def test_resealed_foreign_candidate_path_is_rejected(tmp_path: Path) -> None:
