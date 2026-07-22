@@ -257,10 +257,12 @@ function buildProjectPickerRows(projects) {
   const runtimeRows = rows.filter(isRuntimeProject);
   const localIds = new Set(localRows.map(project => String(project.doc_id || "")));
   const runtimeBySource = new Map();
+  const runtimeCountBySource = new Map();
   runtimeRows.forEach(runtime => {
     const sourceId = sourceDocIdForRuntimeProject(runtime);
-    if (!sourceId || runtimeBySource.has(sourceId)) return;
-    runtimeBySource.set(sourceId, runtime);
+    if (!sourceId) return;
+    runtimeCountBySource.set(sourceId, (runtimeCountBySource.get(sourceId) || 0) + 1);
+    if (!runtimeBySource.has(sourceId)) runtimeBySource.set(sourceId, runtime);
   });
 
   const visibleLocalRows = localRows.map(project => {
@@ -278,13 +280,15 @@ function buildProjectPickerRows(projects) {
 
   const runtimeOnlyRows = runtimeRows
     .filter(runtime => !localIds.has(sourceDocIdForRuntimeProject(runtime)))
-    .map(runtime => ({
-      ...runtime,
-      // Keep the persisted runtime project name for historical runs.  The
-      // source document id is only used to pair a runtime with its source
-      // project; it must not replace the runtime row's visible label.
-      display_doc_id: runtime.doc_id,
-    }));
+    .map(runtime => {
+      const sourceId = sourceDocIdForRuntimeProject(runtime);
+      return {
+        ...runtime,
+        // A document with one historical runtime is one logical project. Keep
+        // the full runtime id only when multiple runs need disambiguation.
+        display_doc_id: runtimeCountBySource.get(sourceId) === 1 ? sourceId : runtime.doc_id,
+      };
+    });
   return [...visibleLocalRows, ...runtimeOnlyRows];
 }
 
