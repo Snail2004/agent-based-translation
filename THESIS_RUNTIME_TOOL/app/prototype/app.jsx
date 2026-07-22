@@ -280,7 +280,10 @@ function buildProjectPickerRows(projects) {
     .filter(runtime => !localIds.has(sourceDocIdForRuntimeProject(runtime)))
     .map(runtime => ({
       ...runtime,
-      display_doc_id: sourceDocIdForRuntimeProject(runtime) || runtime.display_doc_id || runtime.doc_id,
+      // Keep the persisted runtime project name for historical runs.  The
+      // source document id is only used to pair a runtime with its source
+      // project; it must not replace the runtime row's visible label.
+      display_doc_id: runtime.doc_id,
     }));
   return [...visibleLocalRows, ...runtimeOnlyRows];
 }
