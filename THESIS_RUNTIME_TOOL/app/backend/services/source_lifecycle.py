@@ -3557,6 +3557,8 @@ def _managed_status(
         "managed": True,
         "normalize_allowed": True,
         "corrections_allowed": True,
+        "hierarchy_allowed": True,
+        "finalization_allowed": True,
         "lifecycle": "draft",
         "pipeline_run_count": 0,
         "source": copy.deepcopy(state["source"]),

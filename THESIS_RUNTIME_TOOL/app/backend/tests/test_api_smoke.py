@@ -75,7 +75,14 @@ class BackendApiSmokeTest(unittest.TestCase):
     def test_d2l_presegmented_route_requires_exact_multipart_fields(self):
         doc_id = "api_d2l_exact_fields"
         self._create_d2l_import_project(doc_id)
-        fake_result = {"created": True, "candidate": {"tree_sha256": "a" * 64}}
+        fake_result = {
+            "created": True,
+            "candidate": {"tree_sha256": "a" * 64},
+            "lifecycle": "draft",
+            "pipeline_run_count": 0,
+            "hierarchy_allowed": True,
+            "finalization_allowed": True,
+        }
         with patch(
             "routes.projects.import_d2l_presegmented_source_package",
             return_value=fake_result,
@@ -86,11 +93,24 @@ class BackendApiSmokeTest(unittest.TestCase):
                 content_type="multipart/form-data",
             )
         self.assertEqual(response.status_code, 201)
+        response_data = response.get_json()["data"]
+        self.assertTrue(response_data["hierarchy_allowed"])
+        self.assertTrue(response_data["finalization_allowed"])
         imported.assert_called_once()
         kwargs = imported.call_args.kwargs
         self.assertEqual(kwargs["source_bytes"], b"[[B0001]]\n# Chapter One\n")
         self.assertEqual(kwargs["block_map_bytes"], b"{}")
         self.assertEqual(kwargs["manifest_bytes"], b"{}")
+
+        with patch(
+            "routes.projects.get_source_package_status",
+            return_value=fake_result,
+        ):
+            status = self.client.get(f"/api/projects/{doc_id}/source-package")
+        self.assertEqual(status.status_code, 200)
+        status_data = status.get_json()["data"]
+        self.assertTrue(status_data["hierarchy_allowed"])
+        self.assertTrue(status_data["finalization_allowed"])
 
     def test_d2l_presegmented_route_rejects_extra_or_wrong_file_names(self):
         doc_id = "api_d2l_invalid_fields"

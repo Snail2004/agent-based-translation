@@ -2414,6 +2414,10 @@ def test_d2l_presegmented_import_preserves_upstream_identity_and_reuses(
         manifest_bytes=manifest,
     )
     assert first["created"] is True
+    assert first["lifecycle"] == "draft"
+    assert first["pipeline_run_count"] == 0
+    assert first["hierarchy_allowed"] is True
+    assert first["finalization_allowed"] is True
     candidate = root / Path(*Path(first["candidate"]["relative_path"]).parts)
     document = json.loads((candidate / "document.json").read_text("utf-8"))
     structure = json.loads((candidate / "structure_manifest.json").read_text("utf-8"))
