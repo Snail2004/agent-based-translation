@@ -50,6 +50,7 @@ finalize_managed_source_package = None
 get_source_package_review = None
 get_source_package_status = None
 get_source_package_unit_blocks = None
+import_d2l_presegmented_source_package = None
 normalize_managed_source_package = None
 source_lifecycle_mutation_guard = None
 
@@ -66,7 +67,8 @@ def _load_source_lifecycle_after_test_collection():
     global ensure_legacy_extract_allowed, ensure_source_upload_allowed
     global finalize_managed_source_package
     global get_source_package_review, get_source_package_unit_blocks
-    global get_source_package_status, normalize_managed_source_package
+    global get_source_package_status, import_d2l_presegmented_source_package
+    global normalize_managed_source_package
     global source_lifecycle_mutation_guard
 
     from services import source_lifecycle as module
@@ -87,6 +89,9 @@ def _load_source_lifecycle_after_test_collection():
     get_source_package_review = module.get_source_package_review
     get_source_package_unit_blocks = module.get_source_package_unit_blocks
     get_source_package_status = module.get_source_package_status
+    import_d2l_presegmented_source_package = (
+        module.import_d2l_presegmented_source_package
+    )
     normalize_managed_source_package = module.normalize_managed_source_package
     source_lifecycle_mutation_guard = module.source_lifecycle_mutation_guard
     try:
@@ -178,6 +183,95 @@ def _write_json(path: Path, payload: dict) -> None:
         encoding="utf-8",
         newline="\n",
     )
+
+
+def _json_bytes(payload: object) -> bytes:
+    return (
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
+
+
+def _d2l_upload_payloads(monkeypatch: pytest.MonkeyPatch) -> tuple[bytes, bytes, bytes]:
+    from pipeline.ingest import d2l_presegmented_adapter as adapter
+    from pipeline.ingest.d2l_presegmented_adapter import D2lCaptureSeal
+
+    texts = [
+        "# Chapter One",
+        "First prose.",
+        ":label:chapter_one",
+        "# Chapter Two",
+        "$$x + y$$",
+    ]
+    kinds = ["heading", "prose", "label", "heading", "math_block"]
+    chapters = ["d2l_ch1", "d2l_ch1", "d2l_ch1", "d2l_ch2", "d2l_ch2"]
+    rows = []
+    for index, (text, kind, chapter_id) in enumerate(
+        zip(texts, kinds, chapters, strict=True)
+    ):
+        encoded = text.encode("utf-8")
+        rows.append(
+            {
+                "marker": f"B{index + 1:04d}",
+                "block_id": f"{chapter_id}_b{index + 1:03d}",
+                "chapter_id": chapter_id,
+                "order_index": index,
+                "block_type": kind,
+                "source_sha256": hashlib.sha256(encoded).hexdigest(),
+                "source_utf8_bytes": len(encoded),
+            }
+        )
+    source = (
+        "\n\n".join(
+            f"[[B{index + 1:04d}]]\n{text}" for index, text in enumerate(texts)
+        )
+        + "\n"
+    ).encode("utf-8")
+    block_map = {
+        "schema_version": adapter.LEGACY_BLOCK_MAP_SCHEMA_VERSION,
+        "document_id": "d2l",
+        "rows": rows,
+    }
+    block_map_bytes = _json_bytes(block_map)
+    manifest = {
+        "block_count": len(rows),
+        "block_map_file": "block_map.json",
+        "block_map_sha256": hashlib.sha256(block_map_bytes).hexdigest(),
+        "chapter_count": 2,
+        "created_at": "2026-07-22T00:00:00Z",
+        "document_id": "d2l",
+        "encoding": "UTF-8 without BOM",
+        "intended_mode": "chatgpt_web_single_chat_single_prompt_no_continue",
+        "line_endings": "LF",
+        "prompt_file": "prompt.txt",
+        "prompt_sha256": "1" * 64,
+        "schema_version": adapter.LEGACY_MANIFEST_SCHEMA_VERSION,
+        "source_db_path": r"C:\evidence\memory.sqlite3",
+        "source_db_sha256": "2" * 64,
+        "source_text_utf8_bytes": sum(row["source_utf8_bytes"] for row in rows),
+        "upload_file": "d2l_full_book_en_marked_v1.md",
+        "upload_file_sha256": hashlib.sha256(source).hexdigest(),
+        "upload_file_utf8_bytes": len(source),
+    }
+    manifest_bytes = _json_bytes(manifest)
+    monkeypatch.setattr(
+        adapter,
+        "AUTHORITATIVE_D2L_CAPTURE",
+        D2lCaptureSeal(
+            document_id="d2l",
+            source_file="d2l_full_book_en_marked_v1.md",
+            source_sha256=hashlib.sha256(source).hexdigest(),
+            source_utf8_bytes=len(source),
+            source_text_utf8_bytes=manifest["source_text_utf8_bytes"],
+            block_map_sha256=hashlib.sha256(block_map_bytes).hexdigest(),
+            block_map_utf8_bytes=len(block_map_bytes),
+            manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+            manifest_utf8_bytes=len(manifest_bytes),
+            source_db_sha256=manifest["source_db_sha256"],
+            block_count=len(rows),
+            chapter_count=2,
+        ),
+    )
+    return source, block_map_bytes, manifest_bytes
 
 
 def _fake_writer(
@@ -2072,3 +2166,141 @@ def test_hierarchy_pointer_failure_reuses_orphan_artifacts(tmp_path: Path) -> No
     recovered = apply_managed_source_hierarchy(root, doc_id, request)
     assert recovered["hierarchy_reused"] is True
     assert recovered["decision_reused"] is True
+
+
+def test_d2l_presegmented_import_preserves_upstream_identity_and_reuses(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    doc_id = "project_d2l_import"
+    root = tmp_path / doc_id
+    for name in ("raw", "canonical", "working", "logs", "exports"):
+        (root / name).mkdir(parents=True, exist_ok=True)
+    source, block_map, manifest = _d2l_upload_payloads(monkeypatch)
+
+    first = import_d2l_presegmented_source_package(
+        root,
+        doc_id,
+        source_bytes=source,
+        block_map_bytes=block_map,
+        manifest_bytes=manifest,
+    )
+    assert first["created"] is True
+    candidate = root / Path(*Path(first["candidate"]["relative_path"]).parts)
+    document = json.loads((candidate / "document.json").read_text("utf-8"))
+    structure = json.loads((candidate / "structure_manifest.json").read_text("utf-8"))
+    assets = json.loads((candidate / "asset_manifest.json").read_text("utf-8"))
+    projection = json.loads(
+        (candidate / "admitted_projection_v1.json").read_text("utf-8")
+    )
+    assert document["doc_id"] == doc_id
+    assert len(document["chapters"]) == 2
+    assert [
+        block["block_id"]
+        for chapter in document["chapters"]
+        for block in chapter["blocks"]
+    ] == [
+        "d2l_ch1_b001",
+        "d2l_ch1_b002",
+        "d2l_ch1_b003",
+        "d2l_ch2_b004",
+        "d2l_ch2_b005",
+    ]
+    provenance = structure["source"]["provenance"]
+    assert provenance["upstream_document_id"] == "d2l"
+    assert provenance["upstream_source_db_sha256"] == "2" * 64
+    assert provenance["capture_relative_path"].startswith(
+        "working/source_package_captures/d2lps_"
+    )
+    label_asset = next(
+        row
+        for row in assets["block_bindings"]
+        if row["block_id"] == "d2l_ch1_b003"
+    )
+    label_projection = next(
+        row for row in projection["rows"] if row["block_id"] == "d2l_ch1_b003"
+    )
+    assert label_asset["semantic_kind"] == "structural"
+    assert label_projection["channel"] == "preserve_only"
+
+    first_tree = {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
+    }
+    second = import_d2l_presegmented_source_package(
+        root,
+        doc_id,
+        source_bytes=source,
+        block_map_bytes=block_map,
+        manifest_bytes=manifest,
+    )
+    assert second["created"] is False
+    assert second["reused"] is True
+    assert {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
+    } == first_tree
+
+
+def test_d2l_presegmented_invalid_upload_leaves_no_partial_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    doc_id = "project_d2l_invalid"
+    root = tmp_path / doc_id
+    for name in ("raw", "canonical", "working", "logs", "exports"):
+        (root / name).mkdir(parents=True, exist_ok=True)
+    source, block_map, manifest = _d2l_upload_payloads(monkeypatch)
+
+    with pytest.raises(SourceLifecycleError) as captured:
+        import_d2l_presegmented_source_package(
+            root,
+            doc_id,
+            source_bytes=source,
+            block_map_bytes=block_map + b" ",
+            manifest_bytes=manifest,
+        )
+    assert captured.value.code == "d2l_presegmented_bundle_invalid"
+    assert list((root / "raw").iterdir()) == []
+    assert not (root / "working" / STATE_FILENAME).exists()
+    assert not (root / "working" / STATE_V2_FILENAME).exists()
+    assert not (root / "working" / "source_package_captures").exists()
+    assert not (root / "working" / CANDIDATE_DIRECTORY).exists()
+
+
+def test_d2l_presegmented_reuse_rejects_stale_source_without_repair(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    doc_id = "project_d2l_stale"
+    root = tmp_path / doc_id
+    for name in ("raw", "canonical", "working", "logs", "exports"):
+        (root / name).mkdir(parents=True, exist_ok=True)
+    source, block_map, manifest = _d2l_upload_payloads(monkeypatch)
+    imported = import_d2l_presegmented_source_package(
+        root,
+        doc_id,
+        source_bytes=source,
+        block_map_bytes=block_map,
+        manifest_bytes=manifest,
+    )
+    state_before = (root / "working" / STATE_FILENAME).read_bytes()
+    candidate_before = imported["candidate"]["tree_sha256"]
+    (root / "raw" / "source.md").write_bytes(source + b"stale")
+
+    with pytest.raises(SourceLifecycleError) as captured:
+        import_d2l_presegmented_source_package(
+            root,
+            doc_id,
+            source_bytes=source,
+            block_map_bytes=block_map,
+            manifest_bytes=manifest,
+        )
+    assert captured.value.code in {
+        "source_package_source_changed",
+        "source_lifecycle_stale",
+    }
+    assert (root / "working" / STATE_FILENAME).read_bytes() == state_before
+    assert json.loads(state_before)["candidate"]["tree_sha256"] == candidate_before

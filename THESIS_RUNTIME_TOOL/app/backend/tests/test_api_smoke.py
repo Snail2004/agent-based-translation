@@ -6,6 +6,7 @@ import unittest
 import json
 from io import BytesIO
 from pathlib import Path
+from unittest.mock import patch
 from zipfile import ZipFile
 
 
@@ -42,6 +43,92 @@ class BackendApiSmokeTest(unittest.TestCase):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.get_json()["ok"])
+
+    def _create_d2l_import_project(self, doc_id: str) -> None:
+        response = self.client.post(
+            "/api/projects",
+            json={
+                "doc_id": doc_id,
+                "metadata": {
+                    "title": doc_id,
+                    "source_format": "markdown",
+                    "license": "public-domain",
+                    "contamination_risk": "low",
+                },
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def _d2l_multipart(self, *, extra: bool = False, wrong_name: bool = False):
+        data = {
+            "source": (
+                BytesIO(b"[[B0001]]\n# Chapter One\n"),
+                "wrong.md" if wrong_name else "d2l_full_book_en_marked_v1.md",
+            ),
+            "block_map": (BytesIO(b"{}"), "block_map.json"),
+            "manifest": (BytesIO(b"{}"), "manifest.json"),
+        }
+        if extra:
+            data["zip"] = (BytesIO(b"PK"), "bundle.zip")
+        return data
+
+    def test_d2l_presegmented_route_requires_exact_multipart_fields(self):
+        doc_id = "api_d2l_exact_fields"
+        self._create_d2l_import_project(doc_id)
+        fake_result = {"created": True, "candidate": {"tree_sha256": "a" * 64}}
+        with patch(
+            "routes.projects.import_d2l_presegmented_source_package",
+            return_value=fake_result,
+        ) as imported:
+            response = self.client.post(
+                f"/api/projects/{doc_id}/source-package/import-d2l-presegmented",
+                data=self._d2l_multipart(),
+                content_type="multipart/form-data",
+            )
+        self.assertEqual(response.status_code, 201)
+        imported.assert_called_once()
+        kwargs = imported.call_args.kwargs
+        self.assertEqual(kwargs["source_bytes"], b"[[B0001]]\n# Chapter One\n")
+        self.assertEqual(kwargs["block_map_bytes"], b"{}")
+        self.assertEqual(kwargs["manifest_bytes"], b"{}")
+
+    def test_d2l_presegmented_route_rejects_extra_or_wrong_file_names(self):
+        doc_id = "api_d2l_invalid_fields"
+        self._create_d2l_import_project(doc_id)
+        for payload in (
+            self._d2l_multipart(extra=True),
+            self._d2l_multipart(wrong_name=True),
+        ):
+            with patch("routes.projects.import_d2l_presegmented_source_package") as imported:
+                response = self.client.post(
+                    f"/api/projects/{doc_id}/source-package/import-d2l-presegmented",
+                    data=payload,
+                    content_type="multipart/form-data",
+                )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(
+                response.get_json()["errors"][0]["code"],
+                "d2l_presegmented_multipart_invalid",
+            )
+            imported.assert_not_called()
+
+    def test_d2l_presegmented_route_rejects_form_options_and_query(self):
+        doc_id = "api_d2l_forbidden_options"
+        self._create_d2l_import_project(doc_id)
+        with patch("routes.projects.import_d2l_presegmented_source_package") as imported:
+            form_response = self.client.post(
+                f"/api/projects/{doc_id}/source-package/import-d2l-presegmented",
+                data={**self._d2l_multipart(), "mode": "zip"},
+                content_type="multipart/form-data",
+            )
+            query_response = self.client.post(
+                f"/api/projects/{doc_id}/source-package/import-d2l-presegmented?path=x",
+                data=self._d2l_multipart(),
+                content_type="multipart/form-data",
+            )
+        self.assertEqual(form_response.status_code, 400)
+        self.assertEqual(query_response.status_code, 400)
+        imported.assert_not_called()
 
     def _split_txt_direct(self, source: str) -> tuple[list[dict], dict]:
         from services.extraction import split_txt

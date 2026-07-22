@@ -31,6 +31,15 @@ from pipeline.ingest.draft_structure import (
     build_hierarchy_plan,
     validate_draft_structure_report_shape,
 )
+from pipeline.ingest.d2l_presegmented_adapter import (
+    AUTHORITATIVE_D2L_CAPTURE,
+    D2lPresegmentedAdapterError,
+    convert_d2l_presegmented_capture,
+    validate_d2l_presegmented_output,
+)
+from pipeline.ingest.presegmented_source_normalizer import (
+    normalize_presegmented_source,
+)
 from pipeline.ingest.source_package_materializer import materialize_source_package
 from pipeline.ingest.source_package_exporter import (
     OVERLAY_VERSION,
@@ -71,6 +80,7 @@ HIERARCHY_DIRECTORY = "source_package_hierarchy"
 FINALIZATION_DIRECTORY = "source_package_finalizations"
 RUN_START_DIRECTORY = "source_package_run_starts"
 PUBLICATION_DIRECTORY = "source_package_publications"
+PRESEGMENTED_CAPTURE_DIRECTORY = "source_package_captures"
 STATE_FILENAME = "source_lifecycle_v1.json"
 STATE_V2_FILENAME = "source_lifecycle_v2.json"
 REPORT_FILENAME = "draft_structure_report.json"
@@ -267,6 +277,10 @@ def _state_v2_path(project_path: Path) -> Path:
 
 def _candidate_parent(project_path: Path) -> Path:
     return project_path / "working" / CANDIDATE_DIRECTORY
+
+
+def _presegmented_capture_parent(project_path: Path) -> Path:
+    return project_path / "working" / PRESEGMENTED_CAPTURE_DIRECTORY
 
 
 def _decision_parent(project_path: Path) -> Path:
@@ -4826,6 +4840,456 @@ def _apply_managed_source_corrections_locked(
             shutil.rmtree(temporary_root, ignore_errors=True)
 
 
+def _write_atomic_bytes(path: Path, payload: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _require_plain_path(path.parent, owner=f"{path.name} parent")
+    handle, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        dir=path.parent,
+    )
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if _path_exists(path):
+            raise SourceLifecycleError(
+                "d2l_presegmented_source_collision",
+                f"{path.name} appeared while the import was being published.",
+                409,
+            )
+        os.replace(temporary_name, path)
+    except Exception:
+        try:
+            os.unlink(temporary_name)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def _stage_d2l_presegmented_capture(
+    root: Path,
+    *,
+    source_bytes: bytes,
+    block_map_bytes: bytes,
+    manifest_bytes: bytes,
+) -> tuple[Path, Any]:
+    for name, payload in {
+        "source": source_bytes,
+        "block_map": block_map_bytes,
+        "manifest": manifest_bytes,
+    }.items():
+        if not isinstance(payload, bytes) or not payload:
+            raise SourceLifecycleError(
+                "d2l_presegmented_bundle_invalid",
+                f"Uploaded {name} must contain non-empty bytes.",
+                400,
+            )
+    working = root / "working"
+    if _path_exists(working):
+        _require_plain_path(working, owner="working directory")
+        if not working.is_dir():
+            raise SourceLifecycleError(
+                "source_package_path_unsafe",
+                "working must be a directory.",
+                409,
+            )
+    else:
+        working.mkdir(parents=True)
+    staging = Path(tempfile.mkdtemp(prefix=".d2l-presegmented-", dir=working))
+    legacy = staging / "legacy"
+    legacy.mkdir()
+    try:
+        _write_atomic_bytes(
+            legacy / AUTHORITATIVE_D2L_CAPTURE.source_file,
+            source_bytes,
+        )
+        _write_atomic_bytes(legacy / "block_map.json", block_map_bytes)
+        _write_atomic_bytes(legacy / "manifest.json", manifest_bytes)
+        result = convert_d2l_presegmented_capture(legacy, staging / "bundle")
+        return staging, result
+    except D2lPresegmentedAdapterError as exc:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise SourceLifecycleError(
+            "d2l_presegmented_bundle_invalid",
+            str(exc),
+            422,
+        ) from exc
+    except Exception:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+
+
+def _capture_relative_path(adapter_identity_sha256: str) -> str:
+    return (
+        f"working/{PRESEGMENTED_CAPTURE_DIRECTORY}/"
+        f"d2lps_{adapter_identity_sha256}"
+    )
+
+
+def _validate_existing_capture(
+    root: Path,
+    *,
+    staged_root: Path,
+    receipt_sha256: str,
+    adapter_identity_sha256: str,
+) -> Path:
+    relative_path = _capture_relative_path(adapter_identity_sha256)
+    capture = root / Path(*PurePosixPath(relative_path).parts)
+    capture = _require_confined_existing(
+        capture,
+        root,
+        owner="D2L pre-segmented capture",
+    )
+    if not capture.is_dir():
+        raise SourceLifecycleError(
+            "d2l_presegmented_capture_invalid",
+            "D2L pre-segmented capture must be a directory.",
+            409,
+        )
+    try:
+        validated = validate_d2l_presegmented_output(
+            capture,
+            expected_receipt_sha256=receipt_sha256,
+        )
+    except D2lPresegmentedAdapterError as exc:
+        raise SourceLifecycleError(
+            "d2l_presegmented_capture_invalid",
+            str(exc),
+            409,
+        ) from exc
+    if validated.adapter_identity_sha256 != adapter_identity_sha256:
+        raise SourceLifecycleError(
+            "d2l_presegmented_capture_invalid",
+            "D2L pre-segmented capture identity differs.",
+            409,
+        )
+    if not _files_byte_identical(staged_root, capture):
+        raise SourceLifecycleError(
+            "d2l_presegmented_capture_collision",
+            "Existing D2L pre-segmented capture differs from the upload.",
+            409,
+        )
+    return capture
+
+
+def _publish_d2l_presegmented_capture(
+    root: Path,
+    *,
+    staged_root: Path,
+    receipt_sha256: str,
+    adapter_identity_sha256: str,
+) -> tuple[Path, bool]:
+    parent = _presegmented_capture_parent(root)
+    if _path_exists(parent):
+        _require_plain_path(parent, owner="D2L capture parent")
+        if not parent.is_dir():
+            raise SourceLifecycleError(
+                "source_package_path_unsafe",
+                "D2L capture parent must be a directory.",
+                409,
+            )
+    else:
+        parent.mkdir(parents=True)
+    final = parent / f"d2lps_{adapter_identity_sha256}"
+    if _path_exists(final):
+        return (
+            _validate_existing_capture(
+                root,
+                staged_root=staged_root,
+                receipt_sha256=receipt_sha256,
+                adapter_identity_sha256=adapter_identity_sha256,
+            ),
+            False,
+        )
+    try:
+        os.replace(staged_root, final)
+    except OSError:
+        if not _path_exists(final):
+            raise
+        return (
+            _validate_existing_capture(
+                root,
+                staged_root=staged_root,
+                receipt_sha256=receipt_sha256,
+                adapter_identity_sha256=adapter_identity_sha256,
+            ),
+            False,
+        )
+    try:
+        validated = validate_d2l_presegmented_output(
+            final,
+            expected_receipt_sha256=receipt_sha256,
+        )
+    except D2lPresegmentedAdapterError as exc:
+        raise SourceLifecycleError(
+            "d2l_presegmented_capture_invalid",
+            str(exc),
+            409,
+        ) from exc
+    if validated.adapter_identity_sha256 != adapter_identity_sha256:
+        raise SourceLifecycleError(
+            "d2l_presegmented_capture_invalid",
+            "Published D2L pre-segmented capture identity differs.",
+            409,
+        )
+    return final, True
+
+
+def _ensure_d2l_presegmented_source(
+    root: Path,
+    source_bytes: bytes,
+) -> tuple[Path, bool]:
+    raw = root / "raw"
+    if _path_exists(raw):
+        _require_plain_path(raw, owner="raw source directory")
+        if not raw.is_dir():
+            raise SourceLifecycleError(
+                "source_package_path_unsafe",
+                "raw must be a directory.",
+                409,
+            )
+    else:
+        raw.mkdir(parents=True)
+    entries = sorted(raw.iterdir(), key=lambda item: item.name.casefold())
+    for entry in entries:
+        _require_plain_path(entry, owner=f"raw source entry {entry.name}")
+    source = raw / "source.md"
+    if entries:
+        if len(entries) != 1 or entries[0].name != source.name or not source.is_file():
+            raise SourceLifecycleError(
+                "d2l_presegmented_source_collision",
+                "Raw source storage is not empty or does not contain the exact managed source.md.",
+                409,
+            )
+        if source.read_bytes() != source_bytes:
+            raise SourceLifecycleError(
+                "d2l_presegmented_source_collision",
+                "Existing managed source bytes differ from the D2L upload.",
+                409,
+            )
+        return source.resolve(strict=True), False
+    _write_atomic_bytes(source, source_bytes)
+    if source.read_bytes() != source_bytes:
+        raise SourceLifecycleError(
+            "d2l_presegmented_source_collision",
+            "Managed source differs after publication.",
+            409,
+        )
+    return source.resolve(strict=True), True
+
+
+def _validate_d2l_presegmented_reuse(
+    root: Path,
+    doc_id: str,
+    *,
+    state: dict[str, Any],
+    staged_root: Path,
+    receipt_sha256: str,
+    adapter_identity_sha256: str,
+    source_bytes: bytes,
+) -> dict[str, Any]:
+    if state.get("schema_version") != SOURCE_LIFECYCLE_VERSION:
+        raise SourceLifecycleError(
+            "d2l_presegmented_import_stale",
+            "D2L pre-segmented import cannot replace a revised or finalized package.",
+            409,
+        )
+    _require_pre_run_editable(state)
+    status = _managed_status(root, doc_id=doc_id, state=state)
+    source_path, source_format, source_sha256 = _server_source(root)
+    if source_format != "markdown" or source_path.read_bytes() != source_bytes:
+        raise SourceLifecycleError(
+            "d2l_presegmented_import_stale",
+            "Managed source differs from the D2L pre-segmented upload.",
+            409,
+        )
+    capture = _validate_existing_capture(
+        root,
+        staged_root=staged_root,
+        receipt_sha256=receipt_sha256,
+        adapter_identity_sha256=adapter_identity_sha256,
+    )
+    normalized = normalize_presegmented_source(
+        source_path,
+        bundle_root=capture,
+        doc_id=doc_id,
+        source_language="en",
+        target_language="vi",
+        capture_relative_path=_capture_relative_path(adapter_identity_sha256),
+    )
+    # _managed_status has already validated the complete candidate and its
+    # lifecycle binding. Reuse that evidence instead of running the complete
+    # candidate validator a second time; the deterministic producer comparison
+    # below is the additional D2L-specific check for this retry.
+    candidate_root = _candidate_root_from_state(root, state)
+    expected = {
+        "document": normalized.document,
+        "structure": normalized.structure_manifest,
+        "normalization_receipt": normalized.receipt,
+    }
+    candidate_files = {
+        "document": "document.json",
+        "structure": "structure_manifest.json",
+        "normalization_receipt": "normalization_receipt.json",
+    }
+    actual = {
+        name: _read_json_object(
+            candidate_root / candidate_files[name],
+            owner=f"managed {name}",
+        )
+        for name in expected
+    }
+    if actual != expected:
+        raise SourceLifecycleError(
+            "d2l_presegmented_import_stale",
+            "Managed package was not deterministically produced from this D2L capture.",
+            409,
+        )
+    return {**status, "created": False, "reused": True}
+
+
+def import_d2l_presegmented_source_package(
+    project_path: str | Path,
+    doc_id: str,
+    *,
+    source_bytes: bytes,
+    block_map_bytes: bytes,
+    manifest_bytes: bytes,
+) -> dict[str, Any]:
+    """Import the sealed D2L marked-source capture without Markdown re-segmentation."""
+
+    root = _require_project_root(project_path)
+    with _managed_mutation_guard(root):
+        staging, staged = _stage_d2l_presegmented_capture(
+            root,
+            source_bytes=source_bytes,
+            block_map_bytes=block_map_bytes,
+            manifest_bytes=manifest_bytes,
+        )
+        state_existed = _managed_state_exists(root)
+        source_created = False
+        capture_created = False
+        capture: Path | None = None
+        expected_capture = root / Path(
+            *PurePosixPath(
+                _capture_relative_path(staged.adapter_identity_sha256)
+            ).parts
+        )
+        capture_existed_before = _path_exists(expected_capture)
+        candidate_parent = _candidate_parent(root)
+        if _path_exists(candidate_parent):
+            _require_plain_path(candidate_parent, owner="candidate parent")
+            if not candidate_parent.is_dir():
+                raise SourceLifecycleError(
+                    "source_package_path_unsafe",
+                    "Candidate parent must be a directory.",
+                    409,
+                )
+        candidate_entries_before = (
+            {entry.name for entry in candidate_parent.iterdir()}
+            if candidate_parent.is_dir()
+            else set()
+        )
+
+        def rollback_new_artifacts() -> None:
+            if state_existed:
+                return
+            for state_path in (_state_v2_path(root), _state_path(root)):
+                if _path_exists(state_path) and not _is_reparse_point(state_path):
+                    state_path.unlink()
+            if candidate_parent.is_dir() and not _is_reparse_point(candidate_parent):
+                for entry in list(candidate_parent.iterdir()):
+                    if entry.name not in candidate_entries_before:
+                        if entry.is_dir() and not _is_reparse_point(entry):
+                            shutil.rmtree(entry, ignore_errors=True)
+                        elif entry.is_file() and not _is_reparse_point(entry):
+                            entry.unlink(missing_ok=True)
+            if (
+                not capture_existed_before
+                and expected_capture.is_dir()
+                and not _is_reparse_point(expected_capture)
+            ):
+                shutil.rmtree(expected_capture, ignore_errors=True)
+            if source_created:
+                source = root / "raw" / "source.md"
+                if source.is_file() and not _is_reparse_point(source):
+                    source.unlink()
+
+        try:
+            state = _read_authoritative_state(root, doc_id=doc_id)
+            if state is not None:
+                return _validate_d2l_presegmented_reuse(
+                    root,
+                    doc_id,
+                    state=state,
+                    staged_root=staged.output_root,
+                    receipt_sha256=staged.receipt_sha256,
+                    adapter_identity_sha256=staged.adapter_identity_sha256,
+                    source_bytes=source_bytes,
+                )
+            _require_no_legacy_occupancy(root, doc_id=doc_id)
+            source_path, source_created = _ensure_d2l_presegmented_source(
+                root,
+                source_bytes,
+            )
+            capture, capture_created = _publish_d2l_presegmented_capture(
+                root,
+                staged_root=staged.output_root,
+                receipt_sha256=staged.receipt_sha256,
+                adapter_identity_sha256=staged.adapter_identity_sha256,
+            )
+
+            def producer(path: str | Path, **options: Any) -> Any:
+                return normalize_presegmented_source(
+                    path,
+                    bundle_root=capture,
+                    doc_id=options["doc_id"],
+                    source_language=options["source_language"],
+                    target_language=options["target_language"],
+                    capture_relative_path=_capture_relative_path(
+                        staged.adapter_identity_sha256
+                    ),
+                    pandoc_executable=options.get("pandoc_executable"),
+                    pdf_formula_detector_mode=options.get(
+                        "pdf_formula_detector_mode", "disabled"
+                    ),
+                )
+
+            result = _normalize_managed_source_package_locked(
+                root,
+                doc_id,
+                normalize_fn=producer,
+                write_fn=None,
+            )
+            state = _read_authoritative_state(root, doc_id=doc_id)
+            if state is None:
+                raise SourceLifecycleError(
+                    "d2l_presegmented_import_failed",
+                    "Managed lifecycle state was not published.",
+                    409,
+                )
+            return {
+                **result,
+                "created": result["created"],
+                "reused": result["reused"],
+            }
+        except SourceLifecycleError:
+            rollback_new_artifacts()
+            raise
+        except (D2lPresegmentedAdapterError, OSError, ValueError) as exc:
+            rollback_new_artifacts()
+            raise SourceLifecycleError(
+                "d2l_presegmented_import_failed",
+                str(exc),
+                422,
+            ) from exc
+        finally:
+            if staging.exists():
+                shutil.rmtree(staging, ignore_errors=True)
+
+
 def normalize_managed_source_package(
     project_path: str | Path,
     doc_id: str,
@@ -5019,6 +5483,7 @@ __all__ = [
     "get_managed_runtime_context",
     "get_source_package_review",
     "get_source_package_status",
+    "import_d2l_presegmented_source_package",
     "normalize_managed_source_package",
     "publish_managed_translation",
     "source_lifecycle_mutation_guard",
