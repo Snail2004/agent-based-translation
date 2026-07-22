@@ -20,6 +20,7 @@ from services.source_lifecycle import (
     SourceLifecycleError,
     freeze_managed_source_for_run,
     get_managed_runtime_context,
+    get_managed_runtime_status_context,
     get_source_package_status,
     source_lifecycle_mutation_guard,
 )
@@ -62,12 +63,17 @@ def get_project_runtime_status(
     *,
     jobs_root: str | Path | None = None,
 ) -> dict[str, Any]:
-    managed_status = _managed_project_status(doc_id)
-    if managed_status is None:
+    try:
+        status_context = get_managed_runtime_status_context(
+            get_project_path(doc_id), doc_id
+        )
+    except SourceLifecycleError as exc:
+        raise _translate_lifecycle_error(exc) from exc
+    if status_context is None:
         return _get_legacy_project_runtime_status(doc_id, jobs_root=jobs_root)
-    return _get_managed_project_runtime_status(
+    return _get_managed_project_runtime_status_summary(
         doc_id,
-        managed_status=managed_status,
+        status_context=status_context,
         jobs_root=jobs_root,
     )
 
@@ -254,6 +260,45 @@ def _get_managed_project_runtime_status(
             )
         return base
     manifest = _validated_managed_manifest(job_dir, context=context)
+    return {
+        **base,
+        **manifest,
+        "prepared": True,
+        "runtime_db": str(job_dir / "memory.sqlite3"),
+        "manifest_path": str(job_dir / "source_manifest.json"),
+    }
+
+
+def _get_managed_project_runtime_status_summary(
+    doc_id: str,
+    *,
+    status_context: dict[str, Any],
+    jobs_root: str | Path | None,
+) -> dict[str, Any]:
+    managed_source = status_context.get("managed_source")
+    if managed_source is None:
+        return _managed_base(
+            doc_id=doc_id,
+            managed_status=status_context,
+            context=None,
+        )
+    base = _managed_base(
+        doc_id=doc_id,
+        managed_status=status_context,
+        context=status_context,
+    )
+    root = Path(jobs_root or THESIS_JOBS_ROOT).resolve()
+    job_dir = _job_dir(root, base["job_id"])
+    if not job_dir.exists():
+        if status_context["lifecycle"] == "run_started_frozen":
+            raise ProjectRuntimeError(
+                "managed_runtime_missing_after_freeze",
+                "Frozen managed runtime cannot be recreated after the first run.",
+                409,
+            )
+        return base
+
+    manifest = _validated_managed_status_manifest(job_dir, context=status_context)
     return {
         **base,
         **manifest,
@@ -723,6 +768,172 @@ def _validated_managed_manifest(
             409,
         )
     return manifest
+
+
+def _validated_managed_status_manifest(
+    job_dir: Path,
+    *,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate sealed runtime status evidence without walking package bytes."""
+
+    manifest_path = job_dir / "source_manifest.json"
+    db_path = job_dir / "memory.sqlite3"
+    package_snapshot = job_dir / "source_package_snapshot"
+    lifecycle_snapshot = job_dir / "lifecycle_snapshot"
+    if not manifest_path.is_file():
+        raise ProjectRuntimeError(
+            "source_package_runtime_missing",
+            "Managed runtime manifest is unavailable.",
+            409,
+        )
+    required = [
+        db_path,
+        package_snapshot / "document.json",
+        package_snapshot / "structure_manifest.json",
+        package_snapshot / "asset_manifest.json",
+        package_snapshot / "admitted_projection_v1.json",
+        package_snapshot / "normalization_receipt.json",
+        package_snapshot / "draft_structure_report.json",
+        lifecycle_snapshot / "source_lifecycle_v2.json",
+        lifecycle_snapshot / "finalization.json",
+    ]
+    if any(not path.is_file() for path in required):
+        raise ProjectRuntimeError(
+            "managed_runtime_incomplete",
+            "Managed runtime snapshot is incomplete.",
+            409,
+        )
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ProjectRuntimeError(
+            "runtime_manifest_invalid", f"Invalid managed runtime manifest: {exc}", 409
+        ) from exc
+    if not isinstance(manifest, dict):
+        raise ProjectRuntimeError(
+            "runtime_manifest_invalid", "Managed runtime manifest must be an object.", 409
+        )
+
+    job_id, identity = _managed_job_identity(
+        context["doc_id"], context["managed_source"]
+    )
+    expected = {
+        "contract_version": PROJECT_RUNTIME_MANAGED_CONTRACT_VERSION,
+        "job_id": job_id,
+        "project_id": context["doc_id"],
+        "source_identity_sha256": identity,
+        "managed_source": context["managed_source"],
+    }
+    for key, value in expected.items():
+        if manifest.get(key) != value:
+            raise ProjectRuntimeError(
+                "runtime_manifest_mismatch",
+                f"Managed runtime manifest {key} differs from the finalized package.",
+                409,
+            )
+    payload_hash = manifest.get("manifest_payload_sha256")
+    if payload_hash != canonical_json_sha256(
+        {
+            key: value
+            for key, value in manifest.items()
+            if key != "manifest_payload_sha256"
+        }
+    ):
+        raise ProjectRuntimeError(
+            "runtime_manifest_tampered",
+            "Managed runtime manifest payload hash differs.",
+            409,
+        )
+
+    snapshot = manifest.get("source_package_snapshot")
+    candidate = context["managed_source"]["candidate"]
+    if (
+        not isinstance(snapshot, dict)
+        or snapshot.get("path") != "source_package_snapshot"
+        or snapshot.get("tree_sha256") != candidate["tree_sha256"]
+        or snapshot.get("file_count") != candidate["file_count"]
+        or not isinstance(snapshot.get("rows"), list)
+        or len(snapshot["rows"]) != candidate["file_count"]
+    ):
+        raise ProjectRuntimeError(
+            "managed_runtime_snapshot_mismatch",
+            "Managed source-package snapshot identity differs from the finalized candidate.",
+            409,
+        )
+
+    snapshot_checks = {
+        "lifecycle_snapshot": (
+            lifecycle_snapshot / "source_lifecycle_v2.json",
+            context["managed_source"]["state_sha256"],
+        ),
+        "finalization_snapshot": (
+            lifecycle_snapshot / "finalization.json",
+            context["managed_source"]["finalization"]["sha256"],
+        ),
+    }
+    hierarchy_sha = context["managed_source"]["hierarchy"]["sha256"]
+    if hierarchy_sha is None:
+        if manifest.get("hierarchy_snapshot") is not None:
+            raise ProjectRuntimeError(
+                "runtime_hierarchy_mismatch",
+                "Managed runtime unexpectedly contains a hierarchy snapshot.",
+                409,
+            )
+    else:
+        hierarchy_path = lifecycle_snapshot / "hierarchy_overlay.json"
+        if not hierarchy_path.is_file():
+            raise ProjectRuntimeError(
+                "runtime_hierarchy_incomplete",
+                "Managed hierarchy snapshot is unavailable.",
+                409,
+            )
+        snapshot_checks["hierarchy_snapshot"] = (hierarchy_path, hierarchy_sha)
+    for name, (path, payload_sha) in snapshot_checks.items():
+        row = manifest.get(name)
+        expected_path = {
+            "lifecycle_snapshot": "lifecycle_snapshot/source_lifecycle_v2.json",
+            "finalization_snapshot": "lifecycle_snapshot/finalization.json",
+            "hierarchy_snapshot": "lifecycle_snapshot/hierarchy_overlay.json",
+        }[name]
+        if not isinstance(row, dict) or row != {
+            "path": expected_path,
+            "sha256": _sha256_file(path),
+            "payload_sha256": payload_sha,
+        }:
+            raise ProjectRuntimeError(
+                "managed_runtime_lineage_tampered",
+                f"Managed runtime {name} differs from its finalized identity.",
+                409,
+            )
+
+    profiles = manifest.get("profiles")
+    chapter_count = manifest.get("chapter_count")
+    block_count = manifest.get("block_count")
+    if (
+        not isinstance(profiles, list)
+        or any(not isinstance(value, str) or not value for value in profiles)
+        or isinstance(chapter_count, bool)
+        or not isinstance(chapter_count, int)
+        or chapter_count < 0
+        or isinstance(block_count, bool)
+        or not isinstance(block_count, int)
+        or block_count < 0
+    ):
+        raise ProjectRuntimeError(
+            "runtime_manifest_invalid",
+            "Managed runtime status fields are invalid.",
+            409,
+        )
+    return {
+        "contract_version": manifest["contract_version"],
+        "project_id": manifest["project_id"],
+        "job_id": manifest["job_id"],
+        "source_identity_sha256": manifest["source_identity_sha256"],
+        "profiles": copy.deepcopy(profiles),
+        "chapter_count": chapter_count,
+        "block_count": block_count,
+    }
 
 
 def freeze_managed_runtime_for_run(

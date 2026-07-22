@@ -241,6 +241,102 @@ def test_managed_runtime_requires_finalization_and_snapshots_complete_identity(
     assert source_status["lifecycle"] == "finalized_pre_run"
 
 
+def test_managed_runtime_status_is_compact_and_skips_candidate_tree_validation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    doc_id = "managed_runtime_compact_status"
+    root, jobs, project_runtime, source_lifecycle = _managed_project(
+        tmp_path, monkeypatch, doc_id
+    )
+    review = source_lifecycle.get_source_package_review(root, doc_id)
+    source_lifecycle.finalize_managed_source_package(
+        root,
+        doc_id,
+        {
+            "expected_state_sha256": review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": review["expected"]["report_sha256"],
+            "expected_hierarchy_sha256": review["expected"]["hierarchy_sha256"],
+            "approved": True,
+            "user": "runtime_reviewer",
+        },
+    )
+    prepared = project_runtime.prepare_project_runtime(doc_id, jobs_root=jobs)
+
+    def unexpected_full_validation(*_args, **_kwargs):
+        raise AssertionError("runtime status must not scan or replay the full package")
+
+    monkeypatch.setattr(project_runtime, "_file_tree", unexpected_full_validation)
+    monkeypatch.setattr(
+        project_runtime, "_validated_managed_manifest", unexpected_full_validation
+    )
+    monkeypatch.setattr(source_lifecycle, "_validate_candidate", unexpected_full_validation)
+    monkeypatch.setattr(
+        source_lifecycle, "_validate_decision_lineage", unexpected_full_validation
+    )
+
+    first = project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)
+    second = project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)
+
+    assert first == second
+    assert first["prepared"] is True
+    assert first["job_id"] == prepared["job_id"]
+    assert first["chapter_count"] == 1
+    assert first["block_count"] == 3
+    assert "source_package_snapshot" not in first
+    assert "chapters" not in first
+    assert "load_report" not in first
+    assert len(json.dumps(first, ensure_ascii=False).encode("utf-8")) < 16_384
+
+
+def test_managed_runtime_status_rejects_resealed_candidate_identity_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    doc_id = "managed_runtime_status_drift"
+    root, jobs, project_runtime, source_lifecycle = _managed_project(
+        tmp_path, monkeypatch, doc_id
+    )
+    review = source_lifecycle.get_source_package_review(root, doc_id)
+    source_lifecycle.finalize_managed_source_package(
+        root,
+        doc_id,
+        {
+            "expected_state_sha256": review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": review["expected"]["report_sha256"],
+            "expected_hierarchy_sha256": review["expected"]["hierarchy_sha256"],
+            "approved": True,
+            "user": "runtime_reviewer",
+        },
+    )
+    project_runtime.prepare_project_runtime(doc_id, jobs_root=jobs)
+    assert project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)[
+        "prepared"
+    ] is True
+
+    state_path = root / "working" / "source_lifecycle_v2.json"
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state["candidate"]["tree_sha256"] = "f" * 64
+    state["integrity"]["payload_sha256"] = _canonical_hash(
+        {key: value for key, value in state.items() if key != "integrity"}
+    )
+    state_path.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(project_runtime.ProjectRuntimeError) as captured:
+        project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)
+    assert captured.value.code in {"source_lifecycle_invalid", "source_lifecycle_stale"}
+
+
 def test_managed_runtime_first_run_freeze_is_idempotent_and_permanent(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

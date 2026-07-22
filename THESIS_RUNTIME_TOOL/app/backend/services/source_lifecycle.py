@@ -4540,6 +4540,216 @@ def get_managed_runtime_context(
         }
 
 
+def get_managed_runtime_status_context(
+    project_path: str | Path,
+    doc_id: str,
+) -> dict[str, Any] | None:
+    """Read sealed runtime-status identities without walking candidate bytes.
+
+    Full candidate validation remains mandatory for prepare, freeze,
+    publication, and source-package review operations.
+    """
+
+    root = _require_project_root(project_path)
+    with _managed_mutation_guard(root):
+        state = _read_authoritative_state(root, doc_id=doc_id)
+        if state is None:
+            return None
+
+        source_path, source_format, source_sha256 = _server_source(root)
+        expected_source = {
+            "filename": source_path.name,
+            "format": source_format,
+            "sha256": source_sha256,
+        }
+        if state.get("source") != expected_source:
+            raise SourceLifecycleError(
+                "source_package_source_changed",
+                "Uploaded source differs from the managed lifecycle state.",
+                409,
+            )
+
+        if state.get("schema_version") == SOURCE_LIFECYCLE_VERSION:
+            return {
+                "doc_id": doc_id,
+                "project_path": str(root),
+                "lifecycle": "draft",
+                "pipeline_run_count": 0,
+                "managed_source": None,
+                "state_sha256": state["integrity"]["payload_sha256"],
+                "run_start": None,
+            }
+
+        state_v1 = _read_managed_state(root, doc_id=doc_id)
+        if state_v1 is None or state.get("bootstrap") != _bootstrap_identity(root, state_v1):
+            raise SourceLifecycleError(
+                "source_lifecycle_invalid",
+                "Lifecycle v2 bootstrap identity differs from source_lifecycle_v1.json.",
+                409,
+            )
+
+        decision = _read_decision(
+            root,
+            doc_id=doc_id,
+            decision_sha256=state["latest_decision"]["sha256"],
+        )
+        expected_child = {
+            name: copy.deepcopy(state[name])
+            for name in ("candidate", "package", "draft_structure", "policies")
+        }
+        if (
+            state["latest_decision"]["schema_version"]
+            != decision.get("schema_version")
+            or decision.get("source") != expected_source
+            or decision.get("bootstrap") != state["bootstrap"]
+            or decision.get("child") != expected_child
+            or decision.get("hierarchy") != state["hierarchy"]
+            or decision.get("finalization") != state["finalization"]
+        ):
+            raise SourceLifecycleError(
+                "source_lifecycle_stale",
+                "Source lifecycle differs from its latest sealed decision.",
+                409,
+            )
+
+        hierarchy_sha = state["hierarchy"]["sha256"]
+        if hierarchy_sha is not None:
+            _read_hierarchy_artifact(
+                root,
+                prefix="hoverlay",
+                payload_sha256=hierarchy_sha,
+            )
+
+        finalization_sha = state["finalization"]["sha256"]
+        if finalization_sha is not None:
+            finalization = _read_finalization_record(
+                root,
+                doc_id=doc_id,
+                finalization_sha256=finalization_sha,
+            )
+            for name, expected in {
+                "source": expected_source,
+                "bootstrap": state["bootstrap"],
+                "candidate": state["candidate"],
+                "package": state["package"],
+                "draft_structure": state["draft_structure"],
+                "policies": state["policies"],
+                "hierarchy": state["hierarchy"],
+            }.items():
+                if finalization.get(name) != expected:
+                    raise SourceLifecycleError(
+                        "source_package_finalization_invalid",
+                        f"Finalization {name} differs from the managed lifecycle.",
+                        409,
+                    )
+
+        run_start = None
+        if state["lifecycle"] == "run_started_frozen":
+            run_start_sha = state["run_start"]["sha256"]
+            run_start_path = _require_confined_existing(
+                _run_start_path(root, run_start_sha),
+                root,
+                owner="run-start evidence",
+            )
+            run_start = _read_json_object(run_start_path, owner="run-start evidence")
+            _require_exact_fields(
+                run_start,
+                _RUN_START_EVENT_FIELDS,
+                owner="run-start evidence",
+            )
+            parent = run_start.get("parent")
+            runtime = run_start.get("runtime")
+            integrity = run_start.get("integrity")
+            if not isinstance(parent, dict) or not isinstance(runtime, dict):
+                raise SourceLifecycleError(
+                    "source_package_run_start_invalid",
+                    "Run-start parent and runtime bindings must be objects.",
+                    409,
+                )
+            _require_exact_fields(parent, _RUN_START_PARENT_FIELDS, owner="run-start parent")
+            _require_exact_fields(runtime, _RUN_START_RUNTIME_FIELDS, owner="run-start runtime")
+            managed_source = runtime.get("managed_source")
+            if not isinstance(managed_source, dict):
+                raise SourceLifecycleError(
+                    "source_package_run_start_invalid",
+                    "Run-start managed source binding must be an object.",
+                    409,
+                )
+            _require_exact_fields(
+                managed_source,
+                _MANAGED_RUNTIME_BINDING_FIELDS,
+                owner="managed runtime binding",
+            )
+            expected_parent = {
+                "state_sha256": managed_source.get("state_sha256"),
+                "candidate_tree_sha256": state["candidate"]["tree_sha256"],
+                "latest_decision_sha256": state["latest_decision"]["sha256"],
+                "hierarchy_sha256": hierarchy_sha,
+                "finalization_sha256": finalization_sha,
+            }
+            expected_binding_fields = {
+                "candidate": state["candidate"],
+                "package": state["package"],
+                "latest_decision": state["latest_decision"],
+                "hierarchy": state["hierarchy"],
+                "finalization": state["finalization"],
+            }
+            expected_run_start_sha = canonical_json_sha256(
+                {
+                    key: copy.deepcopy(value)
+                    for key, value in run_start.items()
+                    if key != "integrity"
+                }
+            )
+            if (
+                run_start.get("schema_version") != SOURCE_PACKAGE_RUN_START_VERSION
+                or run_start.get("doc_id") != doc_id
+                or parent != expected_parent
+                or runtime.get("manifest_schema_version")
+                != MANAGED_RUNTIME_MANIFEST_VERSION
+                or any(
+                    managed_source.get(name) != expected
+                    for name, expected in expected_binding_fields.items()
+                )
+                or not isinstance(integrity, dict)
+                or set(integrity) != _INTEGRITY_FIELDS
+                or integrity.get("payload_sha256") != expected_run_start_sha
+                or expected_run_start_sha != run_start_sha
+            ):
+                raise SourceLifecycleError(
+                    "source_package_run_start_invalid",
+                    "Run-start evidence differs from the frozen managed source.",
+                    409,
+                )
+            job_id = _require_safe_runtime_identifier(
+                run_start.get("job_id"), owner="job_id"
+            )
+            _require_safe_runtime_identifier(run_start.get("run_id"), owner="run_id")
+            if runtime.get("manifest_relative_path") != f"{job_id}/source_manifest.json":
+                raise SourceLifecycleError(
+                    "source_package_run_start_invalid",
+                    "Run-start runtime path differs from its job identity.",
+                    409,
+                )
+            _require_sha256(
+                runtime.get("manifest_sha256"), owner="run-start manifest sha256"
+            )
+        elif state["lifecycle"] == "finalized_pre_run":
+            managed_source = _managed_runtime_binding(state)
+        else:
+            managed_source = None
+
+        return {
+            "doc_id": doc_id,
+            "project_path": str(root),
+            "lifecycle": state["lifecycle"],
+            "pipeline_run_count": state["pipeline_run_count"],
+            "managed_source": copy.deepcopy(managed_source),
+            "state_sha256": state["integrity"]["payload_sha256"],
+            "run_start": copy.deepcopy(run_start),
+        }
+
+
 def freeze_managed_source_for_run(
     project_path: str | Path,
     doc_id: str,
@@ -5662,6 +5872,7 @@ __all__ = [
     "finalize_managed_source_package",
     "freeze_managed_source_for_run",
     "get_managed_runtime_context",
+    "get_managed_runtime_status_context",
     "get_source_package_review",
     "get_source_package_status",
     "import_d2l_presegmented_source_package",
