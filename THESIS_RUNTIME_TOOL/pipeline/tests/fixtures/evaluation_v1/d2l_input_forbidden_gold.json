@@ -1,0 +1,44 @@
+{
+  "schema_id": "D2LEvaluationInputV1",
+  "schema_version": "1.0.0",
+  "package_id": "d2l_eval_forbidden_fixture",
+  "created_at": "2026-07-17T00:00:00Z",
+  "producer": {
+    "workstream": "d2l",
+    "component": "fixture_exporter",
+    "component_version": "1.0.0",
+    "code_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "identity": {
+    "project_id": "project-d2l",
+    "logical_run_id": "run-d2l-1",
+    "document_id": "d2l-en",
+    "profile_id": "technical_d2l_v1",
+    "experiment_id": "exp-s0s1",
+    "selected_chapter_ids": ["chapter-intro"],
+    "source_db_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "runtime_manifest_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "source_manifest_artifact_id": "artifact-source"
+  },
+  "runtime_profile": {
+    "profile_id": "technical_d2l_v1",
+    "profile_version": "1.0.0",
+    "source_language": "en",
+    "target_language": "vi",
+    "domain": "deep_learning",
+    "source_artifact_id": "artifact-profile",
+    "nested_metadata": {
+      "gold_label": "must never cross the runtime boundary"
+    }
+  },
+  "arms": [],
+  "blocks": [],
+  "translations": [],
+  "runtime_terms": [],
+  "injection_rows": [],
+  "artifacts": [],
+  "integrity": {
+    "artifact_set_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "package_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}

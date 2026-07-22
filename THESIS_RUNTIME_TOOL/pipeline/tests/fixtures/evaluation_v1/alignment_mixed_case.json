@@ -1,0 +1,114 @@
+{
+  "source_blocks": [
+    {"block_id": "b01", "chapter_id": "ch1", "order_index": 0, "text": "Source one."},
+    {"block_id": "b02", "chapter_id": "ch1", "order_index": 1, "text": "Source two."},
+    {"block_id": "b03", "chapter_id": "ch1", "order_index": 2, "text": "Source three."},
+    {"block_id": "b04", "chapter_id": "ch1", "order_index": 3, "text": "Source four."},
+    {"block_id": "b05", "chapter_id": "ch1", "order_index": 4, "text": "Source five."},
+    {"block_id": "b06", "chapter_id": "ch1", "order_index": 5, "text": "Source six."},
+    {"block_id": "b07", "chapter_id": "ch1", "order_index": 6, "text": "Source seven."},
+    {"block_id": "b08", "chapter_id": "ch1", "order_index": 7, "text": "Source eight."},
+    {"block_id": "b09", "chapter_id": "ch1", "order_index": 8, "text": "Source nine."}
+  ],
+  "target_segments": [
+    {"segment_id": "h01", "chapter_id": "ch1", "order_index": 0, "text": "Target one."},
+    {"segment_id": "h02", "chapter_id": "ch1", "order_index": 1, "text": "Target two A."},
+    {"segment_id": "h03", "chapter_id": "ch1", "order_index": 2, "text": "Target two B."},
+    {"segment_id": "h04", "chapter_id": "ch1", "order_index": 3, "text": "Target three and four."},
+    {"segment_id": "h05", "chapter_id": "ch1", "order_index": 4, "text": "Target five."},
+    {"segment_id": "h06", "chapter_id": "ch1", "order_index": 5, "text": "Target six."},
+    {"segment_id": "h07", "chapter_id": "ch1", "order_index": 6, "text": "Added target text."},
+    {"segment_id": "h08", "chapter_id": "ch1", "order_index": 7, "text": "Target under review."},
+    {"segment_id": "h09", "chapter_id": "ch1", "order_index": 8, "text": "Ambiguous target."}
+  ],
+  "mappings": [
+    {
+      "mapping_id": "m01",
+      "chapter_id": "ch1",
+      "mapping_kind": "1:1",
+      "decision_state": "exact_id",
+      "confidence": 1.0,
+      "source_block_ids": ["b01"],
+      "target_segment_ids": ["h01"],
+      "decision_artifact_id": null,
+      "decision_artifact_sha256": null
+    },
+    {
+      "mapping_id": "m02",
+      "chapter_id": "ch1",
+      "mapping_kind": "1:N",
+      "decision_state": "auto_accepted",
+      "confidence": 0.95,
+      "source_block_ids": ["b02"],
+      "target_segment_ids": ["h02", "h03"],
+      "decision_artifact_id": null,
+      "decision_artifact_sha256": null
+    },
+    {
+      "mapping_id": "m03",
+      "chapter_id": "ch1",
+      "mapping_kind": "N:1",
+      "decision_state": "reviewed",
+      "confidence": null,
+      "source_block_ids": ["b03", "b04"],
+      "target_segment_ids": ["h04"],
+      "decision_artifact_id": "review-m03",
+      "decision_artifact_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    {
+      "mapping_id": "m04",
+      "chapter_id": "ch1",
+      "mapping_kind": "N:M",
+      "decision_state": "auto_accepted",
+      "confidence": 0.91,
+      "source_block_ids": ["b05", "b06"],
+      "target_segment_ids": ["h05", "h06"],
+      "decision_artifact_id": null,
+      "decision_artifact_sha256": null
+    },
+    {
+      "mapping_id": "m05",
+      "chapter_id": "ch1",
+      "mapping_kind": "missing",
+      "decision_state": "missing",
+      "confidence": null,
+      "source_block_ids": ["b07"],
+      "target_segment_ids": [],
+      "decision_artifact_id": null,
+      "decision_artifact_sha256": null
+    },
+    {
+      "mapping_id": "m06",
+      "chapter_id": "ch1",
+      "mapping_kind": "added",
+      "decision_state": "added",
+      "confidence": null,
+      "source_block_ids": [],
+      "target_segment_ids": ["h07"],
+      "decision_artifact_id": null,
+      "decision_artifact_sha256": null
+    },
+    {
+      "mapping_id": "m07",
+      "chapter_id": "ch1",
+      "mapping_kind": "1:1",
+      "decision_state": "review_required",
+      "confidence": 0.53,
+      "source_block_ids": ["b08"],
+      "target_segment_ids": ["h08"],
+      "decision_artifact_id": null,
+      "decision_artifact_sha256": null
+    },
+    {
+      "mapping_id": "m08",
+      "chapter_id": "ch1",
+      "mapping_kind": "ambiguous",
+      "decision_state": "ambiguous",
+      "confidence": 0.42,
+      "source_block_ids": ["b09"],
+      "target_segment_ids": ["h09"],
+      "decision_artifact_id": null,
+      "decision_artifact_sha256": null
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "schema_id": "D2LEvaluationInputV1",
+  "schema_version": "1.0.0",
+  "package_id": "d2l_eval_fixture",
+  "created_at": "2026-07-17T00:00:00Z",
+  "producer": {
+    "workstream": "d2l",
+    "component": "fixture_exporter",
+    "component_version": "1.0.0",
+    "code_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "identity": {
+    "project_id": "project-d2l",
+    "logical_run_id": "run-d2l-1",
+    "document_id": "d2l-en",
+    "profile_id": "technical_d2l_v1",
+    "experiment_id": "exp-s0s1",
+    "selected_chapter_ids": [
+      "chapter-intro"
+    ],
+    "source_db_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "runtime_manifest_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "source_manifest_artifact_id": "artifact-source"
+  },
+  "runtime_profile": {
+    "profile_id": "technical_d2l_v1",
+    "profile_version": "1.0.0",
+    "source_language": "en",
+    "target_language": "vi",
+    "domain": "deep_learning",
+    "source_artifact_id": "artifact-profile"
+  },
+  "arms": [
+    {
+      "arm_id": "s1",
+      "role": "candidate",
+      "label": "S1 full memory",
+      "translation_artifact_id": "artifact-s1",
+      "translation_sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+    }
+  ],
+  "blocks": [
+    {
+      "block_id": "b001",
+      "chapter_id": "chapter-intro",
+      "order_index": 0,
+      "block_type": "paragraph",
+      "source_text": "A tensor stores numerical data.",
+      "admission": "translate"
+    },
+    {
+      "block_id": "b002",
+      "chapter_id": "chapter-intro",
+      "order_index": 1,
+      "block_type": "code",
+      "source_text": "tensor.shape",
+      "admission": "preserve"
+    }
+  ],
+  "translations": [
+    {
+      "arm_id": "s1",
+      "block_id": "b002",
+      "status": "passthrough",
+      "target_text": "tensor.shape",
+      "error_code": null,
+      "source_artifact_id": "artifact-s1"
+    },
+    {
+      "arm_id": "s1",
+      "block_id": "b001",
+      "status": "translated",
+      "target_text": "Tensor lưu trữ dữ liệu số.",
+      "error_code": null,
+      "source_artifact_id": "artifact-s1"
+    }
+  ],
+  "runtime_terms": [
+    {
+      "term_id": "term-tensor",
+      "source_term": "tensor",
+      "target_term": "tensor",
+      "accepted_variants": [
+        "ten-xo",
+        "tensor"
+      ],
+      "constraint_strength": "preserve",
+      "status": "active",
+      "source_block_ids": [
+        "b001"
+      ],
+      "provenance_artifact_ids": [
+        "artifact-glossary"
+      ]
+    }
+  ],
+  "injection_rows": [
+    {
+      "arm_id": "s1",
+      "block_id": "b001",
+      "term_id": "term-tensor",
+      "action": "injected",
+      "reason_code": "surface_present",
+      "source_artifact_ids": [
+        "artifact-injection"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact-source",
+      "kind": "source_manifest",
+      "relative_path": "input/source_manifest.json",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "size_bytes": 100
+    },
+    {
+      "artifact_id": "artifact-profile",
+      "kind": "runtime_profile",
+      "relative_path": "input/runtime_profile.json",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "size_bytes": 50
+    },
+    {
+      "artifact_id": "artifact-s1",
+      "kind": "translation",
+      "relative_path": "translations/s1.json",
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "size_bytes": 200
+    },
+    {
+      "artifact_id": "artifact-glossary",
+      "kind": "runtime_glossary",
+      "relative_path": "input/runtime_glossary.json",
+      "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "size_bytes": 80
+    },
+    {
+      "artifact_id": "artifact-injection",
+      "kind": "injection_manifest",
+      "relative_path": "input/injection_manifest.json",
+      "sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+      "size_bytes": 90
+    }
+  ],
+  "integrity": {
+    "artifact_set_sha256": "290ef7274d26d4792ccf5346c2da869ba426d7004aae4acb000f3bb92d7ac12b",
+    "package_sha256": "5b62b79efdcdb9b2706dcca80a5a6964aa1bc77f112fbc8950938f7ef12e5f50"
+  }
+}

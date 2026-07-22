@@ -1,0 +1,62 @@
+{
+  "schema_id": "EvaluationRunConfigV1",
+  "schema_version": "1.0.0",
+  "config_id": "evaluation-config-fixture",
+  "created_at": "2026-07-17T00:00:00Z",
+  "producer": {
+    "workstream": "evaluation",
+    "component": "offline_orchestrator_fixture",
+    "component_version": "1.0.0",
+    "code_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "input_binding": {
+    "source_schema_id": "D2LEvaluationInputV1",
+    "source_schema_version": "1.0.0",
+    "source_binding": {
+      "binding_kind": "legacy_d2l",
+      "project_id": "project-d2l",
+      "document_id": "d2l-en",
+      "source_db_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "runtime_manifest_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    "arm_artifacts": [
+      {
+        "arm_id": "s1",
+        "translation_artifact_id": "translation-s1",
+        "translation_artifact_sha256": "e202dcc458902182e27c211a65fc538a87876c17e1e1b10f59b0a155b3303da6",
+        "logical_run_id": "logical-s1",
+        "attempt_run_id": "attempt-s1",
+        "profile_id": "technical_d2l_v1",
+        "profile_config_sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+      }
+    ]
+  },
+  "methods": [
+    {
+      "method_id": "sf_qe",
+      "method_version": "1.0.0",
+      "scorer_kind": "unary",
+      "profile_scope": "common",
+      "eligible_admissions": [
+        "translate",
+        "translate_structured"
+      ]
+    }
+  ],
+  "comparison_pairs": [],
+  "unit_policy": {
+    "unit_kind": "block",
+    "context_before_blocks": 1,
+    "context_after_blocks": 1
+  },
+  "blinding": {
+    "mode": "opaque_counterbalanced",
+    "seed": "fixture-seed-v1"
+  },
+  "retry_policy": {
+    "max_transport_attempts": 2
+  },
+  "integrity": {
+    "config_sha256": "1b3abc821ba39eb8f2ac471f864aa39b15eeaeded30873ebe5fc755ce8c79b66"
+  }
+}

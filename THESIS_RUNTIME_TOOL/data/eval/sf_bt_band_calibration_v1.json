@@ -1,0 +1,150 @@
+{
+  "schema_id": "SFBTBandCalibrationFixtureV1",
+  "schema_version": "1.0.0",
+  "fixture_set_id": "sf_bt_band_calibration_v1",
+  "review_status": "approved_independent_semantic_review",
+  "book_neutral": true,
+  "runtime_admission": "forbidden",
+  "judge_contract": {
+    "candidate_id": "sf_bt_semantic_judge_v3_candidate",
+    "prompt_sha256": "64d4f9c9fb63b190afc4ff54f6fd1ab9ced26d47f7653d9227003ab63b689753",
+    "allowed_scores": [0, 25, 50, 75, 100]
+  },
+  "cases": [
+    {
+      "case_id": "schedule_100",
+      "ladder_id": "experiment_schedule",
+      "expected_score": 100,
+      "reference_passage": "The team trained the model for 20 epochs on Dataset A and evaluated it on Dataset B.",
+      "candidate_passage": "Using Dataset A, the team trained the model for twenty epochs before evaluating it on Dataset B.",
+      "expected_primary_reason": "semantic_equivalence",
+      "author_note": "All entities, numbers, order, and relations are preserved through paraphrase."
+    },
+    {
+      "case_id": "schedule_075",
+      "ladder_id": "experiment_schedule",
+      "expected_score": 75,
+      "reference_passage": "The team trained the model for 20 epochs on Dataset A and evaluated it on Dataset B.",
+      "candidate_passage": "The team trained the model for about 20 epochs on Dataset A and evaluated it on Dataset B.",
+      "expected_primary_reason": "minor_specificity_drift",
+      "author_note": "The exact epoch count becomes approximate while every other claim remains stable."
+    },
+    {
+      "case_id": "schedule_050",
+      "ladder_id": "experiment_schedule",
+      "expected_score": 50,
+      "reference_passage": "The team trained the model for 20 epochs on Dataset A and evaluated it on Dataset B.",
+      "candidate_passage": "The team trained the model for 12 epochs on Dataset A and evaluated it on Dataset B.",
+      "expected_primary_reason": "noticeable_fact_or_relation_drift",
+      "author_note": "One explicit numeric fact changes, while the experiment structure is preserved."
+    },
+    {
+      "case_id": "schedule_025",
+      "ladder_id": "experiment_schedule",
+      "expected_score": 25,
+      "reference_passage": "The team trained the model for 20 epochs on Dataset A and evaluated it on Dataset B.",
+      "candidate_passage": "The team prepared Dataset A and documented the experiment results.",
+      "expected_primary_reason": "substantial_claim_loss_or_divergence",
+      "author_note": "The key training duration and evaluation-on-Dataset-B claims are absent."
+    },
+    {
+      "case_id": "schedule_000",
+      "ladder_id": "experiment_schedule",
+      "expected_score": 0,
+      "reference_passage": "The team trained the model for 20 epochs on Dataset A and evaluated it on Dataset B.",
+      "candidate_passage": "The team did not train or evaluate any model.",
+      "expected_primary_reason": "contradiction_or_unrelated",
+      "author_note": "The candidate directly contradicts both central actions in the reference."
+    },
+    {
+      "case_id": "procedure_100",
+      "ladder_id": "laboratory_procedure",
+      "expected_score": 100,
+      "reference_passage": "Heat the solution to 80 degrees Celsius for 10 minutes, then cool it before adding the reagent.",
+      "candidate_passage": "Keep the solution at 80 degrees Celsius for ten minutes and let it cool before the reagent is added.",
+      "expected_primary_reason": "semantic_equivalence",
+      "author_note": "Temperature, duration, order, and condition before reagent addition are preserved."
+    },
+    {
+      "case_id": "procedure_075",
+      "ladder_id": "laboratory_procedure",
+      "expected_score": 75,
+      "reference_passage": "Heat the solution to 80 degrees Celsius for 10 minutes, then cool it before adding the reagent.",
+      "candidate_passage": "Heat the solution to about 80 degrees Celsius for 10 minutes, then cool it before adding the reagent.",
+      "expected_primary_reason": "minor_specificity_drift",
+      "author_note": "Only the exact temperature becomes approximate."
+    },
+    {
+      "case_id": "procedure_050",
+      "ladder_id": "laboratory_procedure",
+      "expected_score": 50,
+      "reference_passage": "Heat the solution to 80 degrees Celsius for 10 minutes, then cool it before adding the reagent.",
+      "candidate_passage": "Heat the solution to 60 degrees Celsius for 10 minutes, then cool it before adding the reagent.",
+      "expected_primary_reason": "noticeable_fact_or_relation_drift",
+      "author_note": "One operational numeric fact changes while the rest of the procedure remains stable."
+    },
+    {
+      "case_id": "procedure_025",
+      "ladder_id": "laboratory_procedure",
+      "expected_score": 25,
+      "reference_passage": "Heat the solution to 80 degrees Celsius for 10 minutes, then cool it before adding the reagent.",
+      "candidate_passage": "Add the reagent while the solution is still hot, and cool the mixture afterward.",
+      "expected_primary_reason": "substantial_claim_loss_or_divergence",
+      "author_note": "The key operation order differs and both numeric conditions are absent."
+    },
+    {
+      "case_id": "procedure_000",
+      "ladder_id": "laboratory_procedure",
+      "expected_score": 0,
+      "reference_passage": "Heat the solution to 80 degrees Celsius for 10 minutes, then cool it before adding the reagent.",
+      "candidate_passage": "Store the empty flask at room temperature and discard the reagent.",
+      "expected_primary_reason": "contradiction_or_unrelated",
+      "author_note": "The candidate describes a different procedure and rejects a required material."
+    },
+    {
+      "case_id": "travel_100",
+      "ladder_id": "travel_schedule",
+      "expected_score": 100,
+      "reference_passage": "The train leaves Platform 4 at 08:30 and arrives in Brighton at 10:15.",
+      "candidate_passage": "Departure is from Platform 4 at 08:30, with the train reaching Brighton at 10:15.",
+      "expected_primary_reason": "semantic_equivalence",
+      "author_note": "Vehicle, platform, times, destination, and temporal relation are preserved."
+    },
+    {
+      "case_id": "travel_075",
+      "ladder_id": "travel_schedule",
+      "expected_score": 75,
+      "reference_passage": "The train leaves Platform 4 at 08:30 and arrives in Brighton at 10:15.",
+      "candidate_passage": "The train leaves Platform 4 around 08:30 and arrives in Brighton at 10:15.",
+      "expected_primary_reason": "minor_specificity_drift",
+      "author_note": "Only the exact departure time becomes approximate."
+    },
+    {
+      "case_id": "travel_050",
+      "ladder_id": "travel_schedule",
+      "expected_score": 50,
+      "reference_passage": "The train leaves Platform 4 at 08:30 and arrives in Brighton at 10:15.",
+      "candidate_passage": "The train leaves Platform 4 at 09:30 and arrives in Brighton at 10:15.",
+      "expected_primary_reason": "noticeable_fact_or_relation_drift",
+      "author_note": "The departure time changes by one hour while the route and arrival remain stable."
+    },
+    {
+      "case_id": "travel_025",
+      "ladder_id": "travel_schedule",
+      "expected_score": 25,
+      "reference_passage": "The train leaves Platform 4 at 08:30 and arrives in Brighton at 10:15.",
+      "candidate_passage": "The service leaves in the morning and terminates in London at 10:15.",
+      "expected_primary_reason": "substantial_claim_loss_or_divergence",
+      "author_note": "The destination differs and the precise departure details are absent."
+    },
+    {
+      "case_id": "travel_000",
+      "ladder_id": "travel_schedule",
+      "expected_score": 0,
+      "reference_passage": "The train leaves Platform 4 at 08:30 and arrives in Brighton at 10:15.",
+      "candidate_passage": "All rail services were cancelled, so no train departed that day.",
+      "expected_primary_reason": "contradiction_or_unrelated",
+      "author_note": "The candidate contradicts the existence and departure of the scheduled train."
+    }
+  ]
+}
