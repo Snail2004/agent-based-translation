@@ -1199,6 +1199,7 @@ function App() {
   const [bootError, setBootError] = useState(null);
   const [activeDocId, setActiveDocId] = useState(localStorage.getItem(STORAGE_DOC) || "");
   const [sourcePackageReloadKey, setSourcePackageReloadKey] = useState(0);
+  const [sourcePackageStatusSnapshot, setSourcePackageStatusSnapshot] = useState(null);
   const [focusedTermId, setFocusedTermId] = useState(null);
   const [focusedTermIndex, setFocusedTermIndex] = useState(0);
   const [focusedTermCount, setFocusedTermCount] = useState(0);
@@ -1885,6 +1886,8 @@ function App() {
       let detail = null;
       try { detail = await API.getProject(targetDocId); } catch (_err) {}
       const projectRow = projects.find(row => row.doc_id === targetDocId) || {};
+      setProjectRuntime(null);
+      setSourcePackageStatusSnapshot(null);
       setDocInfo({
         doc_id: targetDocId,
         metadata: detail?.metadata || projectRow.metadata || {},
@@ -3173,6 +3176,24 @@ function App() {
   const sourcePackageOverlay = window.__SOURCE_PACKAGE_UI_DEV__ === true
     ? window.SOURCE_PACKAGE_UI_FIXTURE?.overlay || null
     : null;
+  const activeSourcePackageStatus = sourcePackageStatusSnapshot?.docId === activeDocId
+    ? sourcePackageStatusSnapshot.status
+    : null;
+  const managedSourceLifecycle = activeSourcePackageStatus?.managed === true
+    ? String(activeSourcePackageStatus.lifecycle || "")
+    : "";
+  const managedSourceForActiveProject = !!(
+    activeDocId
+    && !isThesisDatasetId(activeDocId)
+    && ["draft", "finalized_pre_run", "run_started_frozen"].includes(managedSourceLifecycle)
+  );
+  const managedRuntimeForActiveProject = projectRuntime?.project_id === activeDocId
+    ? projectRuntime
+    : null;
+  const managedRuntimeReady = !!(
+    managedRuntimeForActiveProject?.prepared
+    && managedRuntimeForActiveProject?.job_id
+  );
 
   if (view === "project" && !isThesisDatasetId(activeDocId)) {
     return (
@@ -3203,6 +3224,29 @@ function App() {
   }
 
   if ((!block || !docInfo) && centerMode !== "structure") {
+    if (managedSourceForActiveProject) {
+      const finalizedWithoutRuntime = managedSourceLifecycle === "finalized_pre_run" && !managedRuntimeReady;
+      const title = managedRuntimeReady
+        ? uiText("Runtime đã sẵn sàng", "Runtime is ready")
+        : finalizedWithoutRuntime
+          ? uiText("Cần chuẩn bị runtime", "Runtime preparation required")
+          : uiText("Tài liệu đang ở bước Cấu trúc", "The document is in Structure");
+      const message = managedRuntimeReady
+        ? uiText("Mở Điều khiển chạy để chuyển sang dataset runtime trước khi xem Block, Chương hoặc Sách.", "Open Run Control to switch to the runtime dataset before viewing Block, Chapter, or Book.")
+        : finalizedWithoutRuntime
+          ? uiText("Cấu trúc đã được chốt an toàn. Quay lại Cấu trúc và chọn Chuẩn bị runtime; dữ liệu nguồn không bị mất.", "The structure is safely finalized. Return to Structure and choose Prepare runtime; the source data has not been lost.")
+          : uiText("Nguồn đang được quản lý trong workspace Cấu trúc. Hoàn tất kiểm tra và chốt cấu trúc trước khi mở các workspace nội dung.", "The source is managed in the Structure workspace. Complete review and finalization before opening the content workspaces.");
+      return (
+        <>
+          <StartupState locale={uiLocale} onLocaleChange={setUiLocale} title={title} message={message}
+            secondary={activeDocId}
+            action={managedRuntimeReady ? uiText("Mở Điều khiển chạy", "Open Run Control") : uiText("Mở Cấu trúc", "Open Structure")}
+            onAction={() => managedRuntimeReady ? openPreparedRunControl(managedRuntimeForActiveProject) : openSourcePackage(activeDocId, { reload: true })}
+            secondaryAction={uiText("Project / Nguồn", "Project / Source")} onSecondaryAction={openProjectSource} />
+          <Toasts items={toasts} onDismiss={dismiss} />
+        </>
+      );
+    }
     return (
       <>
         <StartupState locale={uiLocale} onLocaleChange={setUiLocale} title={uiText("Chưa có tài liệu", "No document yet")} message={uiText("Nhập TXT, EPUB, Markdown, HTML hoặc PDF để tạo managed source package.", "Import TXT, EPUB, Markdown, HTML, or PDF to create a managed source package.")}
@@ -3239,7 +3283,8 @@ function App() {
             publicationOverlay={sourcePackageOverlay}
             onOpenProjectSource={openProjectSource}
             onOpenLegacy={() => setCenterMode("book")}
-            onRuntimePrepared={prepared => setProjectRuntime(prepared)}
+            onStatusChange={setSourcePackageStatusSnapshot}
+            onRuntimeStatusChange={setProjectRuntime}
             onOpenRunControl={openPreparedRunControl}
           />
         ) : activeCenterMode === "memory" ? (

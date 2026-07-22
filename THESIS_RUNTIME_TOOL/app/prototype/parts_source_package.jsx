@@ -193,7 +193,8 @@ function SourcePackageWorkspace({
   publicationOverlay,
   onOpenProjectSource,
   onOpenLegacy,
-  onRuntimePrepared,
+  onStatusChange,
+  onRuntimeStatusChange,
   onOpenRunControl,
 }) {
   const [status, setStatus] = React.useState(null);
@@ -227,31 +228,38 @@ function SourcePackageWorkspace({
       setStatus(null);
       setReview(null);
       setRuntime(null);
+      if (onStatusChange) onStatusChange(null);
+      if (onRuntimeStatusChange) onRuntimeStatusChange(null);
       setLoading(false);
       return null;
     }
     if (!silent) setLoading(true);
     try {
       const nextStatus = await api.getSourcePackageStatus(docId);
+      setStatus(nextStatus);
+      if (onStatusChange) onStatusChange({ docId, status: nextStatus });
       let nextReview = null;
       if (nextStatus?.managed === true) {
         nextReview = await api.getSourcePackageReview(docId);
       }
       const nextRuntime = await api.getProjectRuntime(docId).catch(() => null);
-      setStatus(nextStatus);
       setReview(nextReview);
-      setRuntime(nextRuntime);
+      if (nextRuntime) {
+        setRuntime(nextRuntime);
+        if (onRuntimeStatusChange) onRuntimeStatusChange(nextRuntime);
+      }
       setError(null);
       return { status: nextStatus, review: nextReview, runtime: nextRuntime };
     } catch (nextError) {
       setError(sourcePackageErrorDetail(nextError));
       setStatus(null);
       setReview(null);
+      if (onStatusChange) onStatusChange(null);
       return null;
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [api, docId]);
+  }, [api, docId, onRuntimeStatusChange, onStatusChange]);
 
   React.useEffect(() => {
     setPublication(null);
@@ -663,7 +671,7 @@ function SourcePackageWorkspace({
     try {
       const prepared = await api.prepareProjectRuntime(docId);
       setRuntime(prepared);
-      if (onRuntimePrepared) onRuntimePrepared(prepared);
+      if (onRuntimeStatusChange) onRuntimeStatusChange(prepared);
       await load({ silent: true });
       setNotice({ tone: "good", text: uiText("Runtime đã sẵn sàng{job}.", "Runtime is ready{job}.", { job: prepared?.job_id ? ` · ${prepared.job_id}` : "" }) });
     } catch (nextError) {
@@ -775,7 +783,7 @@ function SourcePackageWorkspace({
     : [];
 
   return (
-    <section className="source-package-workspace" aria-label={uiText("Cấu trúc source package", "Source package structure")}>
+    <section className="source-package-workspace" aria-label={uiText("Cấu trúc source package", "Source package structure")} aria-busy={!!busy}>
       <header className="sp-commandbar">
         <div className="sp-command-title">
           <span className="sp-command-icon"><Ic.layers size={16} /></span>
@@ -790,7 +798,10 @@ function SourcePackageWorkspace({
           <button className="btn" type="button" disabled={!canSplit || !!busy} title={!canSplit ? (splitSupported ? uiText("Chọn một ranh giới bằng biểu tượng kéo trong danh sách block.", "Select a boundary with the grip control in the block list.") : uiText("Chọn đơn vị có ít nhất hai block và được backend hỗ trợ tách.", "Select a unit with at least two blocks and backend split support.")) : ""} onClick={openSplit}><Ic.sliders size={13} />{uiText("Tách", "Split")}</button>
           <button className="btn" type="button" disabled={!canMerge || !!busy} title={!canMerge ? (mergeSelection.length === 2 ? uiText("Hai đơn vị đã chọn phải liền kề.", "The two selected units must be adjacent.") : uiText("Chọn đúng hai đơn vị liền kề bằng control gộp trong dàn ý.", "Select exactly two adjacent units with the merge controls in the outline.")) : ""} onClick={openMerge}><Ic.layers size={13} />{uiText("Gộp", "Merge")}{mergeSupported && <span className="sp-action-count">{mergeSelection.length}/2</span>}</button>
           <button className="btn primary" type="button" disabled={!canFinalize || !!busy} onClick={() => setModal({ kind: "finalize" })}><Ic.checkCircle size={13} />{uiText("Chốt cấu trúc", "Finalize structure")}</button>
-          {finalized && <button className="btn primary" type="button" disabled={!!busy} onClick={prepareRuntime}><Ic.bolt size={13} />{uiText("Chuẩn bị runtime", "Prepare runtime")}</button>}
+          {finalized && <button className="btn primary" type="button" disabled={!!busy} aria-busy={busy === "prepare"} onClick={prepareRuntime}>
+            {busy === "prepare" ? <span className="as-spin" aria-hidden="true" /> : <Ic.bolt size={13} />}
+            {busy === "prepare" ? uiText("Đang chuẩn bị runtime…", "Preparing runtime…") : uiText("Chuẩn bị runtime", "Prepare runtime")}
+          </button>}
           {runtime?.prepared && <button className="btn" type="button" disabled={!!busy || !onOpenRunControl} onClick={() => onOpenRunControl(runtime)}><Ic.play size={13} />{uiText("Điều khiển chạy", "Run Control")}</button>}
           <button className="btn" type="button" disabled={!frozen || !overlayReady || !!busy} title={exportReason} onClick={() => setModal({ kind: "publication" })}><Ic.upload size={13} />{uiText("Xuất tài liệu", "Export document")}</button>
         </div>
@@ -809,6 +820,10 @@ function SourcePackageWorkspace({
 
       {notice && <div className={`sp-banner ${notice.tone}`} role="status"><Ic.checkCircle size={13} /><span>{notice.text}</span></div>}
       {error && <div className="sp-banner bad" role="alert"><Ic.alert size={13} /><span><b className="mono">{error.code}</b>{error.message}</span></div>}
+      {busy === "prepare" && <div className="sp-banner warn" role="status" aria-live="polite">
+        <span className="as-spin" aria-hidden="true" />
+        <span><b>{uiText("Backend đang chuẩn bị runtime", "Backend is preparing the runtime")}</b>{uiText("Gói lớn có thể mất vài phút. Backend chưa cung cấp phần trăm; UI sẽ tự mở khóa và hiện Điều khiển chạy khi hoàn tất. Không bấm lại hoặc tải lại trang.", "Large packages can take several minutes. The backend does not expose a percentage; the UI will unlock and show Run Control when it finishes. Do not submit again or reload the page.")}</span>
+      </div>}
       {blockingContract && <div className="sp-banner bad" role="alert"><Ic.lock size={13} /><span><b>{uiText("Dữ liệu kiểm tra chưa đầy đủ", "Incomplete review contract")}</b>{uiText("UI đã khóa mutation vì thiếu năm expected binding, report.units hoặc issue_queue authoritative từ backend.", "Mutations are locked because the five expected bindings, report.units, or the authoritative issue_queue are missing.")}</span></div>}
 
       {loading ? (
