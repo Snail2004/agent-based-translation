@@ -812,7 +812,7 @@ function SourcePackageWorkspace({
       {blockingContract && <div className="sp-banner bad" role="alert"><Ic.lock size={13} /><span><b>{uiText("Dữ liệu kiểm tra chưa đầy đủ", "Incomplete review contract")}</b>{uiText("UI đã khóa mutation vì thiếu năm expected binding, report.units hoặc issue_queue authoritative từ backend.", "Mutations are locked because the five expected bindings, report.units, or the authoritative issue_queue are missing.")}</span></div>}
 
       {loading ? (
-        <div className="sp-loading" aria-live="polite"><span className="as-spin" /><b>{uiText("Đang tải trạng thái và dữ liệu kiểm tra từ backend…", "Loading backend status and review…")}</b></div>
+        <div className="sp-loading" aria-live="polite"><span className="as-spin" /><b>{uiText("Đang xác minh trạng thái và dữ liệu kiểm tra từ backend… Gói lớn có thể mất 2–5 phút; không bấm tải lại.", "Validating backend status and review… Large packages can take 2–5 minutes; do not reload.")}</b></div>
       ) : error && !status ? (
         <div className="sp-empty">
           <Ic.alert size={24} />
