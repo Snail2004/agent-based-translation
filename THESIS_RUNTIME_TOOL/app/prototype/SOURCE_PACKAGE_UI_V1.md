@@ -14,6 +14,34 @@ PDF. The managed workflow is:
 
 `legacy_only` remains on the legacy path and is never normalized implicitly.
 
+## D2L pre-segmented import
+
+The quick-import modal exposes **D2L pre-segmented bundle** as a distinct
+managed-source path. It is wired to backend candidate `1f6e2c6f` and must not
+fall back to the generic Markdown upload/normalization path.
+
+- The UI first creates a new local project, then sends one synchronous
+  `multipart/form-data` request to
+  `POST /projects/<doc_id>/source-package/import-d2l-presegmented`.
+- The request contains exactly one file for each field: `source` named
+  `d2l_full_book_en_marked_v1.md`, `block_map` named `block_map.json`, and
+  `manifest` named `manifest.json`. It sends no query parameters, options,
+  aliases, ZIP, duplicate, or extra form fields.
+- Filename, completeness, and duplicate-file checks run before submission.
+  The submit action stays disabled until the three-file bundle and new project
+  metadata are valid. While the synchronous request is active, the modal is
+  locked and shows an indeterminate busy state; it never fabricates percentage
+  progress.
+- Backend error `code`, `message`, and HTTP status are shown without rewriting
+  the request or attempting generic import. On success, the App reloads source
+  status, opens **Structure**, and loads the authoritative review payload.
+- Production never reads the D2L bundle from a fixture or client filesystem
+  path after upload. Unit content continues to come only from the bound review
+  unit-block endpoint described below.
+
+The backend candidate is not copied into this UI branch. Promotion and
+integration of backend commit `1f6e2c6f` are separate coordination work.
+
 ## Data-source policy
 
 - `GET /projects/<doc_id>/source-package` is authoritative for mode,
@@ -115,13 +143,16 @@ not clickable downloads. Neither gap is bypassed in frontend code.
 ## Test plan
 
 1. Compile modified JSX with esbuild.
-2. Use `source_package_dev.html` for unmanaged, draft, stale, finalized,
+2. Against backend candidate `1f6e2c6f`, import the real three-file D2L bundle
+   and confirm the request is sent once with the exact endpoint and fields,
+   then confirm the App reloads source status/review in Structure.
+3. Use `source_package_dev.html` for unmanaged, draft, stale, finalized,
    frozen, legacy, and publication fixture states.
-3. Exercise update, split, merge, hierarchy, finalize, prepare, and publication
+4. Exercise update, split, merge, hierarchy, finalize, prepare, and publication
    actions. Confirm stale correction and stale unit-block reads refresh without
    retry. Exercise valid, unavailable, partial, and stale unit-block responses.
-4. Capture 1440x900, 1024x768 (plus 900px compatibility), and 390x844 views.
-5. Check issue previous/next focus, explicit split/merge selection, mobile
+5. Capture 1440x900, 1024x768 (plus 900px compatibility), and 390x844 views.
+6. Check issue previous/next focus, explicit split/merge selection, mobile
    drawer close/Escape focus return, modal confirmation, console errors,
    overlap, and horizontal overflow.
-6. Run `git diff --check`, secret scan, and exact owned-path scan.
+7. Run `git diff --check`, secret scan, and exact owned-path scan.

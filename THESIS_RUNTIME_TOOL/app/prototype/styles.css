@@ -1470,6 +1470,18 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .quick-import-step.done { color: var(--green); }
 .quick-import-step.done > span { border-color: #badfc8; background: var(--green-weak); color: var(--green); }
 .quick-import-pane { display: flex; flex-direction: column; gap: 12px; }
+.quick-import-mode-label { color: var(--ink-4); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.quick-import-mode { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--border-2); border-radius: var(--r-md); overflow: hidden; }
+.quick-import-mode button { min-width: 0; display: flex; align-items: flex-start; gap: 9px; padding: 10px 11px; border: 0; border-right: 1px solid var(--border-2); background: var(--panel); color: var(--ink-2); text-align: left; cursor: pointer; }
+.quick-import-mode button:last-child { border-right: 0; }
+.quick-import-mode button:hover { background: var(--panel-2); }
+.quick-import-mode button.active { background: var(--accent-weak); color: var(--accent-ink); box-shadow: inset 0 0 0 1px var(--accent-line); }
+.quick-import-mode button > svg { flex: 0 0 auto; margin-top: 1px; }
+.quick-import-mode button > span { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.quick-import-mode b, .quick-import-mode em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quick-import-mode b { font-size: 12px; }
+.quick-import-mode em { color: var(--ink-3); font-size: 10.5px; font-style: normal; font-weight: 400; }
+.quick-import-mode button.active em { color: var(--accent-ink); opacity: .82; }
 .quick-import-drop {
   min-height: 78px; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px;
   align-items: center; padding: 12px; border: 1px dashed var(--border-2); border-radius: var(--r-md);
@@ -1483,6 +1495,19 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .quick-import-drop-copy b, .quick-import-drop-copy em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .quick-import-drop-copy b { color: var(--ink); font-size: 12.5px; }
 .quick-import-drop-copy em { color: var(--ink-3); font-size: 11px; font-style: normal; }
+.quick-import-d2l-intro { display: flex; align-items: flex-start; gap: 7px; padding: 9px 10px; border: 1px solid var(--accent-line); border-radius: var(--r-sm); background: var(--accent-weak); color: var(--accent-ink); font-size: 11px; line-height: 1.4; }
+.quick-import-d2l-intro svg { flex: 0 0 auto; margin-top: 1px; }
+.quick-import-d2l-files { display: flex; flex-direction: column; gap: 8px; }
+.quick-import-file-pick { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.quick-import-file-pick > label { min-width: 0; display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 9px 10px; border: 1px dashed var(--border-2); border-radius: var(--r-sm); background: var(--panel-2); cursor: pointer; }
+.quick-import-file-pick > label:hover { border-color: var(--accent-line); background: var(--accent-weak); }
+.quick-import-file-pick.has-file > label { border-style: solid; border-color: #badfc8; background: var(--green-weak); }
+.quick-import-file-pick.has-error > label { border-color: #eecac6; background: var(--red-weak); }
+.quick-import-file-pick input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.quick-import-file-pick .quick-import-drop-copy b { font-size: 12px; }
+.quick-import-file-pick .quick-import-drop-copy em { font-family: var(--mono); font-size: 10px; }
+.quick-import-file-pick .quick-import-error { margin-top: 0; }
+.quick-import-error-code { display: block; margin-top: 4px; color: var(--red); font-family: var(--mono); font-size: 10px; overflow-wrap: anywhere; }
 .quick-import-fields { gap: 10px; }
 .field-error { color: var(--red); font-size: 10.5px; line-height: 1.35; }
 .quick-import-error, .quick-import-note {
@@ -1512,6 +1537,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .quick-import-summary span { color: var(--ink-4); font-size: 10px; font-weight: 700; text-transform: uppercase; }
 .quick-import-summary b { margin-top: 3px; color: var(--ink); font-size: 12px; }
 .quick-import-summary em { color: var(--ink-3); font-size: 10.5px; font-style: normal; }
+.quick-import-d2l-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .quick-import-result { display: flex; align-items: flex-start; gap: 12px; min-height: 100px; padding: 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--panel-2); }
 .quick-import-result.complete { border-color: #badfc8; background: var(--green-weak); }
 .quick-import-result.failed { border-color: #eecac6; background: var(--red-weak); }
@@ -1988,8 +2014,13 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
   .quick-import-modal .modal-body { max-height: calc(100vh - 126px); }
   .quick-import-step { gap: 4px; }
   .quick-import-step b { font-size: 10.5px; }
+  .quick-import-mode { grid-template-columns: 1fr; }
+  .quick-import-mode button { border-right: 0; border-bottom: 1px solid var(--border-2); }
+  .quick-import-mode button:last-child { border-bottom: 0; }
   .quick-import-drop { grid-template-columns: 32px minmax(0, 1fr); }
   .quick-import-drop > .btn { grid-column: 1 / -1; width: 100%; }
+  .quick-import-file-pick > label { grid-template-columns: 32px minmax(0, 1fr); }
+  .quick-import-file-pick > label > .btn { grid-column: 1 / -1; width: 100%; }
   .quick-import-fields, .quick-import-profile, .quick-import-summary { grid-template-columns: 1fr; }
   .quick-import-profile button { border-right: 0; border-bottom: 1px solid var(--border-2); }
   .quick-import-profile button:last-child { border-bottom: 0; }

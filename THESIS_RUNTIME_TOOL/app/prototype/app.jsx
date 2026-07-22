@@ -1198,6 +1198,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState(null);
   const [activeDocId, setActiveDocId] = useState(localStorage.getItem(STORAGE_DOC) || "");
+  const [sourcePackageReloadKey, setSourcePackageReloadKey] = useState(0);
   const [focusedTermId, setFocusedTermId] = useState(null);
   const [focusedTermIndex, setFocusedTermIndex] = useState(0);
   const [focusedTermCount, setFocusedTermCount] = useState(0);
@@ -1875,7 +1876,7 @@ function App() {
   }
   const dismiss = id => setToasts(t => t.filter(x => x.id !== id));
 
-  async function openSourcePackage(docId = activeDocId, { replace = false } = {}) {
+  async function openSourcePackage(docId = activeDocId, { replace = false, reload = false } = {}) {
     const targetDocId = String(docId || "");
     if (!targetDocId || isThesisDatasetId(targetDocId)) return;
     setActiveDocId(targetDocId);
@@ -1908,6 +1909,7 @@ function App() {
     }
     setCenterModeState("structure");
     localStorage.setItem(STORAGE_CENTER_MODE, "structure");
+    if (reload) setSourcePackageReloadKey(value => value + 1);
     navigateView("workspace", { replace });
   }
 
@@ -2413,6 +2415,7 @@ function App() {
       toast(uiText("Đã tạo dự án", "Project created"), "good", result.doc_id);
       return result;
     } catch (err) {
+      if (options.throwOnError) throw err;
       toast(uiText("Tạo dự án thất bại", "Create project failed"), "bad", errorMessage(err));
       return null;
     }
@@ -2503,6 +2506,17 @@ function App() {
       toast(uiText("Chuẩn hóa thất bại", "Normalization failed"), "bad", [detail.code, errorMessage(err)].filter(Boolean).join(" · "));
       return null;
     }
+  }
+
+  async function importD2LPresegmentedSourcePackage(docId, files) {
+    if (!docId || isThesisDatasetId(docId)) {
+      const error = new Error(uiText("Project cục bộ là bắt buộc cho gói D2L.", "A local project is required for a D2L bundle."));
+      error.errors = [{ code: "d2l_presegmented_project_required", message: error.message }];
+      throw error;
+    }
+    const result = await API.importD2LPresegmentedSourcePackage(docId, files);
+    await refreshProjects();
+    return result;
   }
 
   async function openPreparedRunControl(preparedRuntime) {
@@ -3129,9 +3143,10 @@ function App() {
       onCreateProject={createProject}
       onUploadSource={uploadSource}
       onNormalize={normalizeManagedSourcePackage}
-      onOpenStructure={async docId => {
+      onImportD2LPresegmented={importD2LPresegmentedSourcePackage}
+      onOpenStructure={async (docId, options = {}) => {
         setModal(null);
-        await openSourcePackage(docId);
+        await openSourcePackage(docId, { reload: options.reload !== false });
       }}
       onOpenAdvanced={isThesisDatasetId(activeDocId) ? null : () => {
         setModal(null);
@@ -3216,6 +3231,7 @@ function App() {
         {activeCenterMode === "structure" ? (
           <SourcePackageWorkspace
             docId={activeDocId}
+            reloadKey={sourcePackageReloadKey}
             user={currentUser()}
             api={API}
             publicationOverlay={sourcePackageOverlay}

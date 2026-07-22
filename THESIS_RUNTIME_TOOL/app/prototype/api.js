@@ -191,6 +191,31 @@
       if (overwrite) form.append("overwrite", "true");
       return request(`/projects/${encodeURIComponent(docId)}/source`, { method: "POST", formData: form });
     },
+    importD2LPresegmentedSourcePackage: (docId, files) => {
+      const expected = {
+        source: "d2l_full_book_en_marked_v1.md",
+        block_map: "block_map.json",
+        manifest: "manifest.json",
+      };
+      const form = new FormData();
+      for (const [field, filename] of Object.entries(expected)) {
+        const file = files?.[field];
+        if (!file || file.name !== filename) {
+          throw new ApiError(`Field ${field} must contain ${filename}.`, {
+            ok: false,
+            errors: [{
+              code: "d2l_presegmented_filename_invalid",
+              message: `Field ${field} must contain exactly one file named ${filename}.`,
+            }],
+          }, 0);
+        }
+        form.append(field, file, filename);
+      }
+      return request(`/projects/${encodeURIComponent(docId)}/source-package/import-d2l-presegmented`, {
+        method: "POST",
+        formData: form,
+      });
+    },
     extract: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/extract`, { method: "POST", body: payload || {} }),
     getTranslationPreviewInput: (docId, chapterId) => request(`/projects/${encodeURIComponent(docId)}/translation-preview/input?chapter_id=${encodeURIComponent(chapterId)}`),
     getSavedTranslationPreviewInput: (docId, chapterId) => request(`/projects/${encodeURIComponent(docId)}/translation-preview/input/saved?chapter_id=${encodeURIComponent(chapterId)}`),

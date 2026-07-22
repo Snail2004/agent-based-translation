@@ -27,6 +27,21 @@ function quickImportFileSize(bytes) {
 
 const QUICK_IMPORT_SOURCE_RE = /\.(txt|epub|md|markdown|html|htm|pdf)$/i;
 
+const QUICK_IMPORT_D2L_FILES = [
+  { field: "source", vi: "Nguồn đã đánh dấu", en: "Marked source", filename: "d2l_full_book_en_marked_v1.md", accept: ".md" },
+  { field: "block_map", vi: "Bản đồ block", en: "Block map", filename: "block_map.json", accept: ".json" },
+  { field: "manifest", vi: "Manifest", en: "Manifest", filename: "manifest.json", accept: ".json" },
+];
+
+function quickImportErrorDetail(error) {
+  const first = error?.errors?.[0] || error?.payload?.errors?.[0] || {};
+  return {
+    code: String(first.code || "request_failed"),
+    message: String(first.message || error?.message || uiText("Yêu cầu thất bại.", "Request failed.")),
+    status: Number(error?.status || 0),
+  };
+}
+
 function quickImportSourceFormat(filename) {
   const lower = String(filename || "").toLowerCase();
   if (/\.(md|markdown)$/.test(lower)) return "markdown";
@@ -36,9 +51,12 @@ function quickImportSourceFormat(filename) {
   return "txt";
 }
 
-function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, onNormalize, onOpenStructure, onOpenAdvanced }) {
+function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, onNormalize, onImportD2LPresegmented, onOpenStructure, onOpenAdvanced }) {
   const [step, setStep] = React.useState(1);
+  const [mode, setMode] = React.useState("standard");
   const [file, setFile] = React.useState(null);
+  const [d2lFiles, setD2lFiles] = React.useState({ source: null, block_map: null, manifest: null });
+  const [d2lFileErrors, setD2lFileErrors] = React.useState({});
   const [profile, setProfile] = React.useState("literary");
   const [docId, setDocId] = React.useState("");
   const [title, setTitle] = React.useState("");
@@ -46,7 +64,7 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
   const [titleTouched, setTitleTouched] = React.useState(false);
   const [fileError, setFileError] = React.useState("");
   const [busy, setBusy] = React.useState("");
-  const [error, setError] = React.useState("");
+  const [error, setError] = React.useState(null);
   const [createdDocId, setCreatedDocId] = React.useState("");
   const [sourceUploaded, setSourceUploaded] = React.useState(false);
   const [result, setResult] = React.useState(null);
@@ -54,7 +72,12 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
   const supportedFile = file && QUICK_IMPORT_SOURCE_RE.test(file.name || "");
   const validDocId = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(docId.trim());
   const duplicateDocId = (projects || []).some(project => project.doc_id === docId.trim());
-  const canContinue = !!supportedFile && validDocId && !duplicateDocId && !!title.trim();
+  const d2lFilesComplete = QUICK_IMPORT_D2L_FILES.every(item => !!d2lFiles[item.field]);
+  const d2lFilesUnique = new Set(Object.values(d2lFiles).filter(Boolean).map(item => `${item.name}:${item.size}:${item.lastModified}`)).size === 3;
+  const d2lReady = d2lFilesComplete && d2lFilesUnique && Object.values(d2lFileErrors).every(value => !value);
+  const canContinue = mode === "d2l-presegmented"
+    ? d2lReady && validDocId && !duplicateDocId && !!title.trim()
+    : !!supportedFile && validDocId && !duplicateDocId && !!title.trim();
   const close = () => { if (!busy) onClose(); };
 
   React.useEffect(() => {
@@ -78,6 +101,42 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
     if (!titleTouched) setTitle(quickImportStem(nextFile.name));
   }
 
+  function selectD2LFile(field, nextFile) {
+    const descriptor = QUICK_IMPORT_D2L_FILES.find(item => item.field === field);
+    if (!descriptor || !nextFile) return;
+    const nextErrors = { ...d2lFileErrors };
+    if (nextFile.name !== descriptor.filename) {
+      setD2lFiles(current => ({ ...current, [field]: null }));
+      nextErrors[field] = uiText(`Tên file phải chính xác là ${descriptor.filename}.`, `The filename must be exactly ${descriptor.filename}.`);
+      setD2lFileErrors(nextErrors);
+      return;
+    }
+    const duplicate = Object.entries(d2lFiles).some(([otherField, otherFile]) => (
+      otherField !== field && otherFile && (
+        otherFile === nextFile
+        || (otherFile.name === nextFile.name && otherFile.size === nextFile.size && otherFile.lastModified === nextFile.lastModified)
+      )
+    ));
+    if (duplicate) {
+      setD2lFiles(current => ({ ...current, [field]: null }));
+      nextErrors[field] = uiText("Không thể dùng cùng một file cho hai trường.", "The same file cannot be used for two fields.");
+      setD2lFileErrors(nextErrors);
+      return;
+    }
+    delete nextErrors[field];
+    setD2lFiles(current => ({ ...current, [field]: nextFile }));
+    setD2lFileErrors(nextErrors);
+    if (field === "source") {
+      if (!idTouched) setDocId(quickImportDocId(nextFile.name, projects));
+      if (!titleTouched) setTitle(quickImportStem(nextFile.name));
+    }
+  }
+
+  function handleD2LDrop(field, event) {
+    event.preventDefault();
+    selectD2LFile(field, event.dataTransfer?.files?.[0]);
+  }
+
   function handleDrop(event) {
     event.preventDefault();
     selectFile(event.dataTransfer?.files?.[0]);
@@ -86,10 +145,39 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
   async function runImport() {
     if (!canContinue && !createdDocId) return;
     setStep(3);
-    setError("");
+    setError(null);
     let targetDocId = createdDocId;
     let uploaded = sourceUploaded;
     try {
+      if (mode === "d2l-presegmented") {
+        if (!targetDocId) {
+          setBusy("create");
+          const created = await onCreateProject(docId.trim(), {
+            title: title.trim(),
+            author: "",
+            domain: "technical",
+            genre: "technical",
+            source_format: "markdown",
+            license: "",
+            source_url: "",
+            contamination_risk: "low",
+          }, { activate: false, throwOnError: true });
+          if (!created?.doc_id) throw new Error(uiText("Không thể tạo project mới.", "Could not create the new project."));
+          targetDocId = created.doc_id;
+          setCreatedDocId(targetDocId);
+        }
+        setBusy("import-d2l");
+        const imported = await onImportD2LPresegmented(targetDocId, d2lFiles);
+        if (!imported) throw new Error(uiText("Backend không trả kết quả import.", "The backend did not return an import result."));
+        setResult({
+          docId: targetDocId,
+          mode: "d2l_presegmented",
+          reused: imported.reused === true,
+        });
+        setBusy("");
+        if (onOpenStructure) await onOpenStructure(targetDocId, { reload: true });
+        return;
+      }
       if (!targetDocId) {
         setBusy("create");
         const sourceFormat = quickImportSourceFormat(file.name);
@@ -129,7 +217,7 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
       if (onOpenStructure) await onOpenStructure(targetDocId);
     } catch (err) {
       setBusy("");
-      setError(err?.message || String(err));
+      setError(quickImportErrorDetail(err));
     }
   }
 
@@ -138,7 +226,7 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
     <button className="btn primary" type="button" disabled={!canContinue} onClick={() => setStep(2)}>{uiText("Tiếp tục", "Continue")} <Ic.arrowRight size={13} /></button>
   </> : step === 2 ? <>
     <button className="btn" type="button" onClick={() => setStep(1)}>{uiText("Quay lại", "Back")}</button>
-    <button className="btn primary" type="button" onClick={runImport}><Ic.sparkle size={13} />{uiText("Tạo và chuẩn hóa", "Create and normalize")}</button>
+    <button className="btn primary" type="button" onClick={runImport}><Ic.sparkle size={13} />{mode === "d2l-presegmented" ? uiText("Nhập gói D2L", "Import D2L bundle") : uiText("Tạo và chuẩn hóa", "Create and normalize")}</button>
   </> : result ? <>
     {onOpenAdvanced && <button className="btn" type="button" onClick={onOpenAdvanced}><Ic.folder size={13} />{uiText("Dự án / Nguồn", "Project / Source")}</button>}
     <button className="btn primary" type="button" onClick={close}>{uiText("Mở Cấu trúc", "Open Structure")}</button>
@@ -152,7 +240,7 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
   return (
     <Modal title={uiText("Nhập tài liệu mới", "Import new document")} icon={Ic.upload} className="quick-import-modal" onClose={close} actions={actions}>
       <div className="quick-import-steps" aria-label={uiText(`Bước ${step} trên 3`, `Step ${step} of 3`)}>
-        {[["Nguồn", "Source"], ["Xác nhận", "Confirm"], ["Chuẩn hóa", "Normalize"]].map(([vi, en], index) => {
+        {[["Nguồn", "Source"], ["Xác nhận", "Confirm"], mode === "d2l-presegmented" ? ["Nhập gói", "Import"] : ["Chuẩn hóa", "Normalize"]].map(([vi, en], index) => {
           const number = index + 1;
           const state = number === step ? "active" : number < step ? "done" : "";
           return <div key={en} className={`quick-import-step ${state}`}><span>{number < step ? <Ic.check size={11} /> : number}</span><b>{uiText(vi, en)}</b></div>;
@@ -160,17 +248,49 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
       </div>
 
       {step === 1 && <div className="quick-import-pane">
-        <label className={`quick-import-drop${file ? " has-file" : ""}`}
-          onDragOver={event => event.preventDefault()} onDrop={handleDrop}>
-          <input type="file" accept=".txt,.epub,.md,.markdown,.html,.htm,.pdf" onChange={event => selectFile(event.target.files?.[0])} />
-          <span className="quick-import-drop-icon"><Ic.upload size={18} /></span>
-          <span className="quick-import-drop-copy">
-            <b>{file ? file.name : uiText("Chọn hoặc kéo thả tài liệu", "Choose or drop a document")}</b>
-            <em>{file ? quickImportFileSize(file.size) : "TXT, EPUB, Markdown, HTML hoặc PDF"}</em>
-          </span>
-          <span className="btn sm">{uiText("Chọn file", "Choose file")}</span>
-        </label>
-        {fileError && <div className="quick-import-error"><Ic.alert size={12} />{fileError}</div>}
+        <div className="quick-import-mode-label">{uiText("Cách nhập", "Import method")}</div>
+        <div className="quick-import-mode" role="group" aria-label={uiText("Chọn cách nhập", "Choose import method")}>
+          <button type="button" data-testid="quick-import-standard" className={mode === "standard" ? "active" : ""} aria-pressed={mode === "standard"} onClick={() => { setMode("standard"); setError(null); }}>
+            <Ic.upload size={14} /><span><b>{uiText("Tài liệu thông thường", "Standard document")}</b><em>{uiText("TXT, EPUB, Markdown, HTML hoặc PDF", "TXT, EPUB, Markdown, HTML, or PDF")}</em></span>
+          </button>
+          <button type="button" data-testid="quick-import-d2l" className={mode === "d2l-presegmented" ? "active" : ""} aria-pressed={mode === "d2l-presegmented"} onClick={() => { setMode("d2l-presegmented"); setError(null); }}>
+            <Ic.layers size={14} /><span><b>{uiText("Gói D2L đã phân đoạn", "D2L pre-segmented bundle")}</b><em>{uiText("Giữ nguyên chapter, block ID và thứ tự nguồn", "Preserves chapters, block IDs, and source order")}</em></span>
+          </button>
+        </div>
+
+        {mode === "standard" ? <>
+          <label className={`quick-import-drop${file ? " has-file" : ""}`}
+            onDragOver={event => event.preventDefault()} onDrop={handleDrop}>
+            <input type="file" accept=".txt,.epub,.md,.markdown,.html,.htm,.pdf" onChange={event => selectFile(event.target.files?.[0])} />
+            <span className="quick-import-drop-icon"><Ic.upload size={18} /></span>
+            <span className="quick-import-drop-copy">
+              <b>{file ? file.name : uiText("Chọn hoặc kéo thả tài liệu", "Choose or drop a document")}</b>
+              <em>{file ? quickImportFileSize(file.size) : "TXT, EPUB, Markdown, HTML hoặc PDF"}</em>
+            </span>
+            <span className="btn sm">{uiText("Chọn file", "Choose file")}</span>
+          </label>
+          {fileError && <div className="quick-import-error"><Ic.alert size={12} />{fileError}</div>}
+        </> : <>
+          <div className="quick-import-d2l-intro"><Ic.lock size={12} /><span>{uiText("Backend sẽ giữ nguyên 22 chương, block_id và order_index; UI không gửi options hoặc ZIP.", "The backend preserves the 22 chapters, block IDs, and order indexes; the UI sends no options or ZIP.")}</span></div>
+          <div className="quick-import-d2l-files" aria-label={uiText("Ba file của gói D2L", "Three D2L bundle files")}>
+            {QUICK_IMPORT_D2L_FILES.map(item => {
+              const selected = d2lFiles[item.field];
+              const fieldError = d2lFileErrors[item.field];
+              return <div key={item.field} className={`quick-import-file-pick${selected ? " has-file" : ""}${fieldError ? " has-error" : ""}`}>
+                <label onDragOver={event => event.preventDefault()} onDrop={event => handleD2LDrop(item.field, event)}>
+                  <input type="file" accept={item.accept} data-testid={`quick-import-d2l-${item.field}`} onChange={event => selectD2LFile(item.field, event.target.files?.[0])} />
+                  <span className="quick-import-drop-icon"><Ic.file size={17} /></span>
+                  <span className="quick-import-drop-copy">
+                    <b>{selected ? selected.name : uiText(item.vi, item.en)}</b>
+                    <em>{selected ? quickImportFileSize(selected.size) : item.filename}</em>
+                  </span>
+                  <span className="btn sm">{uiText("Chọn file", "Choose file")}</span>
+                </label>
+                {fieldError && <div className="quick-import-error"><Ic.alert size={12} />{fieldError}</div>}
+              </div>;
+            })}
+          </div>
+        </>}
 
         <div className="form-grid quick-import-fields">
           <label className="form-field">
@@ -185,33 +305,39 @@ function QuickImportModal({ projects, onClose, onCreateProject, onUploadSource, 
           </label>
         </div>
 
-        <div className="quick-import-profile-label">{uiText("Hồ sơ xử lý", "Processing profile")}</div>
-        <div className="quick-import-profile" role="group" aria-label={uiText("Chọn hồ sơ xử lý", "Choose a processing profile")}>
-          <button type="button" className={profile === "technical" ? "active" : ""} aria-pressed={profile === "technical"} onClick={() => setProfile("technical")}>
-            <Ic.layers size={14} /><span><b>{uiText("Kỹ thuật", "Technical")}</b><em>{uiText("Thuật ngữ và cấu trúc tài liệu", "Terminology and document structure")}</em></span>
-          </button>
-          <button type="button" className={profile === "literary" ? "active" : ""} aria-pressed={profile === "literary"} onClick={() => setProfile("literary")}>
-            <Ic.book size={14} /><span><b>{uiText("Văn học", "Literary")}</b><em>{uiText("Nhân vật và mạch kể chuyện", "Characters and narrative flow")}</em></span>
-          </button>
-        </div>
-        <div className="quick-import-note"><Ic.lock size={12} />{uiText("Tài liệu được tạo thành project mới; dataset đang mở không bị thay đổi.", "The document is created as a new project; the open dataset is not changed.")}</div>
+        {mode === "standard" ? <>
+          <div className="quick-import-profile-label">{uiText("Hồ sơ xử lý", "Processing profile")}</div>
+          <div className="quick-import-profile" role="group" aria-label={uiText("Chọn hồ sơ xử lý", "Choose a processing profile")}>
+            <button type="button" className={profile === "technical" ? "active" : ""} aria-pressed={profile === "technical"} onClick={() => setProfile("technical")}>
+              <Ic.layers size={14} /><span><b>{uiText("Kỹ thuật", "Technical")}</b><em>{uiText("Thuật ngữ và cấu trúc tài liệu", "Terminology and document structure")}</em></span>
+            </button>
+            <button type="button" className={profile === "literary" ? "active" : ""} aria-pressed={profile === "literary"} onClick={() => setProfile("literary")}>
+              <Ic.book size={14} /><span><b>{uiText("Văn học", "Literary")}</b><em>{uiText("Nhân vật và mạch kể chuyện", "Characters and narrative flow")}</em></span>
+            </button>
+          </div>
+          <div className="quick-import-note"><Ic.lock size={12} />{uiText("Tài liệu được tạo thành project mới; dataset đang mở không bị thay đổi.", "The document is created as a new project; the open dataset is not changed.")}</div>
+        </> : <div className="quick-import-note"><Ic.lock size={12} />{uiText("Project phải mới và chưa có source package, runtime hoặc run cũ.", "The project must be new and have no existing source package, runtime, or run.")}</div>}
       </div>}
 
       {step === 2 && <div className="quick-import-pane">
-        <div className="quick-import-summary">
+        {mode === "d2l-presegmented" ? <div className="quick-import-summary quick-import-d2l-summary">
+          {QUICK_IMPORT_D2L_FILES.map(item => <div key={item.field}><span>{uiText(item.vi, item.en)}</span><b>{d2lFiles[item.field]?.name}</b><em>{quickImportFileSize(d2lFiles[item.field]?.size)}</em></div>)}
+          <div><span>{uiText("Dự án", "Project")}</span><b className="mono">{docId}</b><em>{title}</em></div>
+        </div> : <div className="quick-import-summary">
           <div><span>{uiText("File nguồn", "Source file")}</span><b>{file?.name}</b><em>{quickImportFileSize(file?.size)}</em></div>
           <div><span>{uiText("Dự án", "Project")}</span><b className="mono">{docId}</b><em>{title}</em></div>
           <div><span>{uiText("Hồ sơ", "Profile")}</span><b>{profile === "technical" ? uiText("Kỹ thuật", "Technical") : uiText("Văn học", "Literary")}</b><em>{profile === "technical" ? "technical" : "literature"}</em></div>
-        </div>
-        <div className="quick-import-note"><Ic.alert size={12} />{uiText("Nếu tài liệu có cấu trúc không rõ, dùng Project / Source sau khi nhập để kiểm tra và chuẩn hóa.", "If the document structure is unclear, use Project / Source after import to review and normalize it.")}</div>
+        </div>}
+        <div className="quick-import-note"><Ic.alert size={12} />{mode === "d2l-presegmented" ? uiText("Request sẽ chạy đồng bộ; không giả lập phần trăm tiến độ. Giữ cửa sổ mở cho đến khi backend trả kết quả.", "The request is synchronous; no percentage progress is simulated. Keep the window open until the backend returns.") : uiText("Nếu tài liệu có cấu trúc không rõ, dùng Project / Source sau khi nhập để kiểm tra và chuẩn hóa.", "If the document structure is unclear, use Project / Source after import to review and normalize it.")}</div>
       </div>}
 
       {step === 3 && <div className="quick-import-pane">
         <div className={`quick-import-result${error ? " failed" : result ? " complete" : ""}`}>
           <span className="quick-import-result-icon">{error ? <Ic.xCircle size={22} /> : result ? <Ic.checkCircle size={22} /> : <span className="as-spin" />}</span>
           <div>
-            <b>{error ? uiText("Chưa thể hoàn tất", "Could not finish") : result ? uiText("Đã tạo managed source package", "Managed source package created") : busy === "create" ? uiText("Đang tạo project", "Creating project") : busy === "upload" ? uiText("Đang tải file nguồn", "Uploading source file") : uiText("Đang chuẩn hóa bằng cấu hình server", "Normalizing with the server configuration")}</b>
-            <p>{error || (result ? `${result.mode}${result.reused ? " · reused" : ""}` : uiText("Không đóng cửa sổ trong khi dữ liệu đang được ghi.", "Keep this window open while data is being written."))}</p>
+            <b>{error ? uiText("Chưa thể hoàn tất", "Could not finish") : result ? uiText("Đã nhập managed source package", "Managed source package imported") : busy === "create" ? uiText("Đang tạo project", "Creating project") : busy === "upload" ? uiText("Đang tải file nguồn", "Uploading source file") : busy === "import-d2l" ? uiText("Đang nhập gói D2L", "Importing D2L bundle") : uiText("Đang chuẩn hóa bằng cấu hình server", "Normalizing with the server configuration")}</b>
+            <p>{error?.message || (result ? `${result.mode}${result.reused ? " · reused" : ""}` : uiText("Không đóng cửa sổ trong khi dữ liệu đang được ghi.", "Keep this window open while data is being written."))}</p>
+            {error?.code && <code className="quick-import-error-code">{error.code}{error.status ? ` · HTTP ${error.status}` : ""}</code>}
             {(createdDocId || result?.docId) && <span className="mono">{result?.docId || createdDocId}</span>}
           </div>
         </div>

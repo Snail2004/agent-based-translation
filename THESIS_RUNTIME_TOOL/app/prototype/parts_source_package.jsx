@@ -187,6 +187,7 @@ function sourcePackageIssueScopeLabel(value) {
 
 function SourcePackageWorkspace({
   docId,
+  reloadKey = 0,
   user,
   api,
   publicationOverlay,
@@ -263,7 +264,7 @@ function SourcePackageWorkspace({
     setUnitBlocks({ state: "idle", unitId: "", rows: [], payloadSha256s: [], error: null });
     setDetailDrawerOpen(false);
     load();
-  }, [docId, load]);
+  }, [docId, load, reloadKey]);
 
   const units = Array.isArray(review?.report?.units) ? review.report.units : [];
   const reviewBindings = React.useMemo(() => sourcePackageReviewBindings(review), [review]);
