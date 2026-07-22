@@ -195,12 +195,14 @@ function SourcePackageWorkspace({
   onOpenLegacy,
   onStatusChange,
   onRuntimeStatusChange,
+  onLoadingChange,
   onOpenRunControl,
 }) {
   const [status, setStatus] = React.useState(null);
   const [review, setReview] = React.useState(null);
   const [runtime, setRuntime] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [reviewLoading, setReviewLoading] = React.useState(false);
   const [busy, setBusy] = React.useState("");
   const [error, setError] = React.useState(null);
   const [notice, setNotice] = React.useState(null);
@@ -222,48 +224,78 @@ function SourcePackageWorkspace({
   const detailTriggerRef = React.useRef(null);
   const detailCloseRef = React.useRef(null);
   const detailPanelRef = React.useRef(null);
+  const loadVersionRef = React.useRef(0);
 
   const load = React.useCallback(async ({ silent = false } = {}) => {
+    const loadVersion = loadVersionRef.current + 1;
+    loadVersionRef.current = loadVersion;
     if (!docId) {
       setStatus(null);
       setReview(null);
       setRuntime(null);
+      setReviewLoading(false);
       if (onStatusChange) onStatusChange(null);
       if (onRuntimeStatusChange) onRuntimeStatusChange(null);
+      if (onLoadingChange) onLoadingChange(false);
       setLoading(false);
       return null;
     }
-    if (!silent) setLoading(true);
+    if (!silent) {
+      setLoading(true);
+      if (onLoadingChange) onLoadingChange(true);
+    }
     try {
-      const nextStatus = await api.getSourcePackageStatus(docId);
-      setStatus(nextStatus);
-      if (onStatusChange) onStatusChange({ docId, status: nextStatus });
-      let nextReview = null;
-      if (nextStatus?.managed === true) {
-        nextReview = await api.getSourcePackageReview(docId);
-      }
-      const nextRuntime = await api.getProjectRuntime(docId).catch(() => null);
-      setReview(nextReview);
-      if (nextRuntime) {
+      const runtimePromise = api.getProjectRuntime(docId).catch(() => null);
+      runtimePromise.then(nextRuntime => {
+        if (!nextRuntime || loadVersion !== loadVersionRef.current) return;
         setRuntime(nextRuntime);
         if (onRuntimeStatusChange) onRuntimeStatusChange(nextRuntime);
-      }
+      });
+      const nextStatus = await api.getSourcePackageStatus(docId);
+      if (loadVersion !== loadVersionRef.current) return null;
+      setStatus(nextStatus);
+      if (onStatusChange) onStatusChange({ docId, status: nextStatus });
+      const nextRuntime = await runtimePromise;
+      if (loadVersion !== loadVersionRef.current) return null;
       setError(null);
+      if (!nextStatus?.managed) {
+        setReview(null);
+        setReviewLoading(false);
+        if (!silent) setLoading(false);
+        return { status: nextStatus, review: null, runtime: nextRuntime };
+      }
+
+      if (!silent) setLoading(false);
+      setReviewLoading(true);
+      let nextReview = null;
+      try {
+        nextReview = await api.getSourcePackageReview(docId);
+      } finally {
+        if (loadVersion === loadVersionRef.current) setReviewLoading(false);
+      }
+      if (loadVersion !== loadVersionRef.current) return null;
+      setReview(nextReview);
       return { status: nextStatus, review: nextReview, runtime: nextRuntime };
     } catch (nextError) {
+      if (loadVersion !== loadVersionRef.current) return null;
       setError(sourcePackageErrorDetail(nextError));
       setStatus(null);
       setReview(null);
+      setReviewLoading(false);
       if (onStatusChange) onStatusChange(null);
       return null;
     } finally {
-      if (!silent) setLoading(false);
+      if (!silent && loadVersion === loadVersionRef.current) {
+        setLoading(false);
+        if (onLoadingChange) onLoadingChange(false);
+      }
     }
-  }, [api, docId, onRuntimeStatusChange, onStatusChange]);
+  }, [api, docId, onLoadingChange, onRuntimeStatusChange, onStatusChange]);
 
   React.useEffect(() => {
     setPublication(null);
     setNotice(null);
+    setReviewLoading(false);
     setSelectedUnitId("");
     setSelectedBoundaryBlockId("");
     setMergeSelection([]);
@@ -828,6 +860,8 @@ function SourcePackageWorkspace({
 
       {loading ? (
         <div className="sp-loading" aria-live="polite"><span className="as-spin" /><b>{uiText("Đang xác minh trạng thái và dữ liệu kiểm tra từ backend… Gói lớn có thể mất 2–5 phút; không bấm tải lại.", "Validating backend status and review… Large packages can take 2–5 minutes; do not reload.")}</b></div>
+      ) : reviewLoading ? (
+        <div className="sp-loading" aria-live="polite"><span className="as-spin" /><b>{uiText("Đã nhận trạng thái backend; đang tải dữ liệu kiểm tra authoritative…", "Backend status received; loading authoritative review data…")}</b></div>
       ) : error && !status ? (
         <div className="sp-empty">
           <Ic.alert size={24} />

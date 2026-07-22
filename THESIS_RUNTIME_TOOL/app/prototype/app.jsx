@@ -236,6 +236,62 @@ function thesisJobId(docId) {
   return value.startsWith(THESIS_PREFIX) ? value.slice(THESIS_PREFIX.length) : "";
 }
 
+function isRuntimeProject(project) {
+  return project?.source === "thesis" || isThesisDatasetId(project?.doc_id);
+}
+
+function sourceDocIdForRuntimeProject(project) {
+  if (!isRuntimeProject(project)) return "";
+  return String(project?.document_doc_id || project?.display_doc_id || "").trim();
+}
+
+function runtimeJobIdForProject(project) {
+  if (!project) return "";
+  if (project.runtime_job_id) return String(project.runtime_job_id);
+  return isRuntimeProject(project) ? String(project.job_id || thesisJobId(project.doc_id) || "") : "";
+}
+
+function buildProjectPickerRows(projects) {
+  const rows = Array.isArray(projects) ? projects : [];
+  const localRows = rows.filter(project => !isRuntimeProject(project));
+  const runtimeRows = rows.filter(isRuntimeProject);
+  const localIds = new Set(localRows.map(project => String(project.doc_id || "")));
+  const runtimeBySource = new Map();
+  runtimeRows.forEach(runtime => {
+    const sourceId = sourceDocIdForRuntimeProject(runtime);
+    if (!sourceId || runtimeBySource.has(sourceId)) return;
+    runtimeBySource.set(sourceId, runtime);
+  });
+
+  const visibleLocalRows = localRows.map(project => {
+    const runtime = runtimeBySource.get(String(project.doc_id || ""));
+    if (!runtime) return { ...project, display_doc_id: project.display_doc_id || project.doc_id };
+    return {
+      ...project,
+      display_doc_id: project.display_doc_id || project.doc_id,
+      runtime_doc_id: runtime.doc_id,
+      runtime_job_id: runtimeJobIdForProject(runtime),
+      runtime_status: runtime.status,
+      runtime_title: runtime.title,
+    };
+  });
+
+  const runtimeOnlyRows = runtimeRows
+    .filter(runtime => !localIds.has(sourceDocIdForRuntimeProject(runtime)))
+    .map(runtime => ({
+      ...runtime,
+      display_doc_id: sourceDocIdForRuntimeProject(runtime) || runtime.display_doc_id || runtime.doc_id,
+    }));
+  return [...visibleLocalRows, ...runtimeOnlyRows];
+}
+
+function pickerRowMatchesActive(project, docId) {
+  const activeId = String(docId || "");
+  return String(project?.doc_id || "") === activeId
+    || String(project?.runtime_doc_id || "") === activeId
+    || (!!thesisJobId(activeId) && String(project?.runtime_job_id || "") === thesisJobId(activeId));
+}
+
 function runsForJob(rows, jobId) {
   if (!jobId) return [];
   return (rows || []).filter(row => String(row?.job_id || "") === String(jobId));
@@ -913,24 +969,29 @@ const WORKSPACE_RUN_MODES = [
 
 function TopProjectPicker({ docId, projects, onSelectProject, onOpenProjectSource }) {
   const [open, setOpen] = useState(false);
+  const pickerRows = buildProjectPickerRows(projects);
+  const activeRow = pickerRows.find(project => pickerRowMatchesActive(project, docId));
+  const displayedDocId = activeRow?.display_doc_id
+    || (isThesisDatasetId(docId) ? sourceDocIdForRuntimeProject(activeRow) || docId : docId)
+    || uiText("chưa có tài liệu", "no document");
   return (
     <div className="tb-project-wrap">
       <button className="tb-project-pick" type="button" onClick={() => setOpen(value => !value)} aria-expanded={open}>
         <Ic.folder size={13} className="faint" />
-        <span className="mono">{docId || uiText("chưa có tài liệu", "no document")}</span>
+        <span className="mono">{displayedDocId}</span>
         <Ic.chevDown size={11} className="faint" />
       </button>
       {open && (<>
         <div className="menu-scrim" onClick={() => setOpen(false)} />
         <div className="tb-project-menu">
           <div className="proj-menu-sec">{uiText("Project gần đây", "Recent projects")}</div>
-          {(projects || []).map(project => (
-            <button key={project.doc_id} className={"proj-menu-item" + (project.doc_id === docId ? " cur" : "")}
+          {pickerRows.map(project => (
+            <button key={project.doc_id} className={"proj-menu-item" + (pickerRowMatchesActive(project, docId) ? " cur" : "")}
               onClick={() => { setOpen(false); onSelectProject(project.doc_id); }}>
               <Ic.doc size={13} className="faint" />
-              <span className="pm-id mono">{project.doc_id}</span>
-              <span className="pm-meta">{project.status}</span>
-              {project.doc_id === docId && <Ic.check size={13} className="pm-cur-ic" />}
+              <span className="pm-id mono">{project.display_doc_id || project.doc_id}</span>
+              <span className="pm-meta">{project.runtime_status || project.status}</span>
+              {pickerRowMatchesActive(project, docId) && <Ic.check size={13} className="pm-cur-ic" />}
             </button>
           ))}
           <div className="divider" />
@@ -943,7 +1004,7 @@ function TopProjectPicker({ docId, projects, onSelectProject, onOpenProjectSourc
   );
 }
 
-function WorkspaceModeNav({ mode, onModeChange, showStructure = true }) {
+function WorkspaceModeNav({ mode, onModeChange, showStructure = true, showContentViews = true, showRunViews = true }) {
   function renderMode(item) {
     return (
       <button key={item.id} className={"top-mode-btn" + (mode === item.id ? " on" : "")}
@@ -955,12 +1016,13 @@ function WorkspaceModeNav({ mode, onModeChange, showStructure = true }) {
   return (
     <nav className="top-mode-nav" aria-label={uiText("Các chế độ workspace", "Workspace views")}>
       <div className="top-mode-group" role="tablist" aria-label={uiText("Chế độ tài liệu", "Document views")}>
-        {WORKSPACE_VIEW_MODES.filter(item => item.id !== "structure" || showStructure).map(renderMode)}
+        {WORKSPACE_VIEW_MODES.filter(item => (item.id !== "structure" || showStructure) && (showContentViews || item.id === "structure")).map(renderMode)}
       </div>
-      <span className="top-mode-sep" />
-      <div className="top-mode-group run" role="tablist" aria-label={uiText("Chế độ run", "Run views")}>
-        {WORKSPACE_RUN_MODES.map(renderMode)}
-      </div>
+      {showRunViews && <><span className="top-mode-sep" />
+        <div className="top-mode-group run" role="tablist" aria-label={uiText("Chế độ run", "Run views")}>
+          {WORKSPACE_RUN_MODES.map(renderMode)}
+        </div>
+      </>}
     </nav>
   );
 }
@@ -970,7 +1032,7 @@ function TopBar({
   leftPanelOpen, rightPanelOpen, onToggleLeftPanel, onToggleRightPanel,
   dirty, lastSaved, onValidate, onExportOption, onFreeze, onUndo, onRedo, history,
   freezeReady, freezeReasons, previewReadOnly, canExportPreview, appVersion,
-  locale, onLocaleChange,
+  locale, onLocaleChange, showContentViews = true, showRunViews = true,
 }) {
   const [exportOpen, setExportOpen] = useState(false);
   const canUndo = !!history?.can_undo && !dirty && !previewReadOnly;
@@ -1005,7 +1067,7 @@ function TopBar({
         </button>
       </div>
 
-      <WorkspaceModeNav mode={mode} onModeChange={onModeChange} showStructure={!isThesisDatasetId(docId)} />
+      <WorkspaceModeNav mode={mode} onModeChange={onModeChange} showStructure={!isThesisDatasetId(docId)} showContentViews={showContentViews} showRunViews={showRunViews} />
 
       <div className="tb-right">
         {!(["console", "structure"].includes(mode)) && <div className="panel-toggle-group">
@@ -1200,6 +1262,7 @@ function App() {
   const [activeDocId, setActiveDocId] = useState(localStorage.getItem(STORAGE_DOC) || "");
   const [sourcePackageReloadKey, setSourcePackageReloadKey] = useState(0);
   const [sourcePackageStatusSnapshot, setSourcePackageStatusSnapshot] = useState(null);
+  const [sourcePackageLoading, setSourcePackageLoading] = useState(false);
   const [focusedTermId, setFocusedTermId] = useState(null);
   const [focusedTermIndex, setFocusedTermIndex] = useState(0);
   const [focusedTermCount, setFocusedTermCount] = useState(0);
@@ -1267,7 +1330,23 @@ function App() {
       source: "thesis",
       status: row.status || "available",
     }));
-    const list = [...(legacy || []), ...thesisRows];
+    const runtimeBySource = new Map();
+    thesisRows.forEach(runtime => {
+      const sourceId = sourceDocIdForRuntimeProject(runtime);
+      if (sourceId && !runtimeBySource.has(sourceId)) runtimeBySource.set(sourceId, runtime);
+    });
+    const enrichedLegacy = (legacy || []).map(project => {
+      const runtime = runtimeBySource.get(String(project.doc_id || ""));
+      if (!runtime) return project;
+      return {
+        ...project,
+        runtime_doc_id: runtime.doc_id,
+        runtime_job_id: runtimeJobIdForProject(runtime),
+        runtime_status: runtime.status,
+        runtime_title: runtime.title,
+      };
+    });
+    const list = [...enrichedLegacy, ...thesisRows];
     setProjects(list);
     return list;
   }, []);
@@ -1398,6 +1477,12 @@ function App() {
       } else if (savedMode === "structure") {
         await openSourcePackage(chosen.doc_id, { replace: true });
         setLoading(false);
+      } else if (chosen.runtime_job_id) {
+        const runtimeProject = list.find(project => project.doc_id === chosen.runtime_doc_id)
+          || list.find(project => project.job_id === chosen.runtime_job_id)
+          || chosen;
+        await loadThesisDataset(chosen.runtime_job_id, { project: runtimeProject });
+        navigateView("workspace", { replace: true });
       } else if (chosen.status === "available") {
         await loadDataset(chosen.doc_id);
       } else {
@@ -1658,7 +1743,7 @@ function App() {
   function openDichModal() {
     const jobId = thesisJobId(activeDocId);
     if (!jobId) { toast(uiText("Chưa mở dataset khóa luận", "No thesis dataset open"), "bad", uiText("Chọn một dataset khóa luận trước khi dịch.", "Choose a thesis dataset before translating.")); return; }
-    setModal({ kind: "dich-run", jobId });
+    setModal({ kind: "dich-run", jobId, sourceTitle: docInfo?.thesis?.document_doc_id || docInfo?.metadata?.title || "" });
   }
 
   async function confirmDich() {
@@ -1916,8 +2001,27 @@ function App() {
     navigateView("workspace", { replace });
   }
 
-  function openProjectSource() {
+  async function openProjectSource() {
     if (isThesisDatasetId(activeDocId)) {
+      const activeRuntime = projects.find(project => project.doc_id === activeDocId)
+        || projects.find(project => project.job_id === thesisJobId(activeDocId));
+      const sourceDocId = sourceDocIdForRuntimeProject(activeRuntime) || docInfo?.thesis?.document_doc_id || "";
+      if (sourceDocId) {
+        let detail = null;
+        try { detail = await API.getProject(sourceDocId); } catch (_err) {}
+        setActiveDocId(sourceDocId);
+        localStorage.setItem(STORAGE_DOC, sourceDocId);
+        setDocInfo({
+          doc_id: sourceDocId,
+          metadata: detail?.metadata || {},
+          provenance: detail?.provenance || {},
+        });
+        setChapters([]);
+        setBlocks([]);
+        setSelectedId(null);
+        navigateView("project", { replace: true });
+        return;
+      }
       navigateView("workspace", { replace: true });
       setModal({ kind: "quick-import" });
       return;
@@ -2341,6 +2445,12 @@ function App() {
     if (thesisId) {
       await loadThesisDataset(thesisId, { project: chosen || null });
       navigateView("workspace");
+    } else if (chosen?.runtime_job_id && centerMode !== "structure") {
+      const runtimeProject = projects.find(project => project.doc_id === chosen.runtime_doc_id)
+        || projects.find(project => project.job_id === chosen.runtime_job_id)
+        || chosen;
+      await loadThesisDataset(chosen.runtime_job_id, { project: runtimeProject });
+      navigateView("workspace");
     } else if (centerMode === "structure") {
       await openSourcePackage(docId);
     } else if (chosen?.status === "available") {
@@ -2533,7 +2643,11 @@ function App() {
       setCenterModeState("book");
       localStorage.setItem(STORAGE_CENTER_MODE, "book");
       navigateView("workspace");
-      setModal({ kind: "dich-run", jobId });
+      setModal({
+        kind: "dich-run",
+        jobId,
+        sourceTitle: project?.document_doc_id || project?.display_doc_id || docInfo?.thesis?.document_doc_id || "",
+      });
     } catch (err) {
       toast(uiText("Không mở được Điều khiển chạy", "Could not open Run Control"), "bad", errorMessage(err));
     } finally {
@@ -3194,6 +3308,9 @@ function App() {
     managedRuntimeForActiveProject?.prepared
     && managedRuntimeForActiveProject?.job_id
   );
+  const sourcePackageBusy = centerMode === "structure" && sourcePackageLoading;
+  const contentViewsReady = isThesisDatasetId(activeDocId)
+    || (!sourcePackageBusy && !managedSourceForActiveProject);
 
   if (view === "project" && !isThesisDatasetId(activeDocId)) {
     return (
@@ -3268,7 +3385,8 @@ function App() {
         onValidate={runValidate} onExportOption={doExport} onFreeze={doFreeze}
         onUndo={runUndo} onRedo={runRedo} history={historyState}
         freezeReady={freezeReady} freezeReasons={freezeReasons} previewReadOnly={["preview", "structure"].includes(centerMode) || readOnly} canExportPreview={!!currentPreviewRun?.run}
-        appVersion={appVersion} locale={uiLocale} onLocaleChange={setUiLocale} />}
+        appVersion={appVersion} locale={uiLocale} onLocaleChange={setUiLocale}
+        showContentViews={contentViewsReady} showRunViews={contentViewsReady} />}
       <div className={["workspace", runSurfaceView ? "workspace--console" : "", view === "report" ? "workspace--report" : "", activeCenterMode === "memory" ? "workspace--memory" : "", activeCenterMode === "structure" ? "workspace--structure" : "", (!leftPanelOpen || activeCenterMode === "structure") ? "workspace--no-left" : "", (!rightPanelOpen || ["memory", "structure"].includes(activeCenterMode)) ? "workspace--no-right" : "", rightPanelOpen && rightPanelExpanded && !["memory", "structure"].includes(activeCenterMode) ? "workspace--right-expanded" : ""].filter(Boolean).join(" ")}>
         {!runSurfaceView && activeCenterMode !== "structure" && leftPanelOpen && <LeftSidebar docInfo={docInfo} blocks={visibleBlocks} chapters={chapters} review={review}
           annoSet={annoSet} selectedId={selectedId} onSelect={selectBlock}
@@ -3285,6 +3403,7 @@ function App() {
             onOpenLegacy={() => setCenterMode("book")}
             onStatusChange={setSourcePackageStatusSnapshot}
             onRuntimeStatusChange={setProjectRuntime}
+            onLoadingChange={setSourcePackageLoading}
             onOpenRunControl={openPreparedRunControl}
           />
         ) : activeCenterMode === "memory" ? (
@@ -3312,7 +3431,7 @@ function App() {
           runControl={{
             runtimeAvailable: !!runtimeJobId,
             sourceProjectId: activeDocId,
-            sourceTitle: docInfo?.metadata?.title || docInfo?.doc_id || activeDocId,
+            sourceTitle: docInfo?.thesis?.document_doc_id || docInfo?.metadata?.title || docInfo?.doc_id || activeDocId,
             sourceStats: { chapters: chapters.length, blocks: blocks.length },
             jobId: runtimeJobId,
             runs: thesisRuns,
@@ -3447,7 +3566,7 @@ function App() {
         <Modal title={uiText("Dịch — một nút", "Translate — one button")} icon={Ic.play} onClose={() => setModal(null)}
           actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
             <button className="btn primary" disabled={runBusy || !(dichForm.chapters || "").trim()} onClick={confirmDich}><Ic.play size={12} />{uiText("Bắt đầu dịch (API thật)", "Start translation (real API)")}</button></>}>
-          <p>{uiText("Chạy toàn bộ pipeline một lượt (Builder → Auditor → Translator → chấm điểm → báo cáo) cho dataset", "Runs the full pipeline in one pass (Builder → Auditor → Translator → scoring → report) for dataset")} <span className="mono">{modal.jobId}</span>. {uiText("Tiến trình hiện trực tiếp trong Console; có thể Tạm dừng/Tiếp tục/Hủy bất kỳ lúc nào.", "Progress appears live in Console; you can Pause/Resume/Cancel at any time.")}</p>
+          <p>{uiText("Chạy toàn bộ pipeline một lượt (Builder → Auditor → Translator → chấm điểm → báo cáo) cho project", "Runs the full pipeline in one pass (Builder → Auditor → Translator → scoring → report) for project")} <span className="mono">{modal.sourceTitle || uiText("đang chọn", "current project")}</span>. {uiText("Tiến trình hiện trực tiếp trong Console; có thể Tạm dừng/Tiếp tục/Hủy bất kỳ lúc nào.", "Progress appears live in Console; you can Pause/Resume/Cancel at any time.")}</p>
           <div className="run-grid">
             <label><span>{uiText("chương", "chapters")}</span><input value={dichForm.chapters} onChange={e => setDichForm(f => ({ ...f, chapters: e.target.value }))} placeholder="d2l_preface" /></label>
             <label><span>{uiText("hồ sơ", "profile")}</span><input value={dichForm.profile} onChange={e => setDichForm(f => ({ ...f, profile: e.target.value }))} placeholder="technical_d2l_v1" /></label>

@@ -421,7 +421,7 @@ function RunControlPanel({ runControl }) {
     <section className="obs-panel run-panel wb-pane">
       <div className="obs-panel-head wb-section-title">
         <span><Ic.play size={13} />{uiText("Điều khiển chạy", "Run Control")}</span>
-        <em>{runControl.jobId || uiText("không có thesis job", "no thesis job")}</em>
+        <em title={runControl.jobId || undefined}>{runControl.sourceTitle || uiText("không có project", "no project")}</em>
       </div>
 
       <div className="run-grid">
