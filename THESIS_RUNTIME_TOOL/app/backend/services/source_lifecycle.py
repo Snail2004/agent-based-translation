@@ -4739,6 +4739,19 @@ def get_managed_runtime_status_context(
         else:
             managed_source = None
 
+        occupancy = _legacy_occupancy(
+            root,
+            doc_id=doc_id,
+            allowed_managed_runtime=managed_source,
+        )
+        if occupancy:
+            raise SourceLifecycleError(
+                "managed_source_legacy_conflict",
+                "Legacy project or runtime evidence appeared after managed publication: "
+                + ", ".join(occupancy),
+                409,
+            )
+
         return {
             "doc_id": doc_id,
             "project_path": str(root),
