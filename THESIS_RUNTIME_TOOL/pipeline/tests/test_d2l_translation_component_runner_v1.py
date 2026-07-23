@@ -279,6 +279,29 @@ def test_runner_pause_resume_increments_component_attempt(tmp_path: Path) -> Non
     assert [row["component_attempt_id"] for row in events if row["event"] == "run_resumed"] == [2]
 
 
+def test_runner_honors_pause_marker_only_at_stage_boundary(tmp_path: Path) -> None:
+    root = tmp_path / "component"
+    pause_file = tmp_path / "PAUSE"
+    _write_payloads(root, attempt_id=2)
+    plan = ComponentPlan.from_mapping(_plan(attempt_id=2))
+
+    # The marker is created before execution to model an App pause request.
+    # The current stage is still allowed to finish; the next stage is the
+    # checkpoint boundary.
+    pause_file.write_text("paused_by_user\n", encoding="utf-8")
+    paused = D2LTranslationComponentRunner(
+        plan,
+        root,
+        pause_file=pause_file,
+    ).run()
+
+    assert paused["terminal_event"] is None
+    manifest = json.loads((root / "component_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "paused"
+    assert manifest["active_stage_id"] == "b1_candidate_discovery"
+    assert manifest["resume"]["paused_reason"] == "user_requested_pause"
+
+
 def test_runner_rejects_plan_with_forbidden_semantic_evidence() -> None:
     plan = _plan(attempt_id=1)
     plan["gold"] = {"term": "answer"}

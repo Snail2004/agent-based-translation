@@ -366,10 +366,12 @@ class D2LTranslationComponentRunner:
         root: str | Path,
         *,
         stop_after_stage: str | None = None,
+        pause_file: str | Path | None = None,
     ) -> None:
         self.plan = plan if isinstance(plan, ComponentPlan) else ComponentPlan.from_mapping(plan)
         self.root = Path(root).resolve()
         self.stop_after_stage = stop_after_stage
+        self.pause_file = Path(pause_file).resolve() if pause_file is not None else None
         if stop_after_stage is not None and stop_after_stage not in STAGE_IDS:
             raise ComponentRunnerError("stop_after_stage is not a D2L stage")
         self.manifest: dict[str, Any]
@@ -557,6 +559,11 @@ class D2LTranslationComponentRunner:
                 if next_stage is None:
                     raise ComponentRunnerError("stop_after_stage cannot pause after the final stage")
                 raise _PauseRun(next_stage.stage_id, "bounded_test_pause")
+            if self.pause_file is not None and self.pause_file.is_file():
+                next_stage = self._next_pending_stage(stage.stage_id)
+                if next_stage is None:
+                    return
+                raise _PauseRun(next_stage.stage_id, "user_requested_pause")
 
     def _start_stage(self, stage: StagePlan) -> None:
         self._set_status("running", active_stage_id=stage.stage_id)
@@ -921,12 +928,14 @@ def run_from_plan_file(
     *,
     resume: bool = False,
     stop_after_stage: str | None = None,
+    pause_file: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = ComponentPlan.from_mapping(_load_json(Path(plan_path), "runner plan"))
     return D2LTranslationComponentRunner(
         plan,
         root,
         stop_after_stage=stop_after_stage,
+        pause_file=pause_file,
     ).run(resume=resume)
 
 
@@ -936,12 +945,14 @@ def main() -> int:
     parser.add_argument("--component-root", required=True)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--stop-after-stage")
+    parser.add_argument("--pause-file")
     args = parser.parse_args()
     result = run_from_plan_file(
         args.plan,
         args.component_root,
         resume=args.resume,
         stop_after_stage=args.stop_after_stage,
+        pause_file=args.pause_file,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0

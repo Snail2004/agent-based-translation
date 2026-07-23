@@ -86,6 +86,26 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--campaign-root", required=True)
     run.add_argument("--resume", action="store_true")
     run.add_argument("--stop-after-stage")
+    run.add_argument("--pause-file")
+
+    app_run = subparsers.add_parser(
+        "app-run",
+        help="Prepare, bind and execute one server-owned D2L campaign.",
+    )
+    app_run.add_argument("--job-root", required=True)
+    app_run.add_argument("--campaign-root", required=True)
+    app_run.add_argument("--workflow-run-id")
+    app_run.add_argument("--component-run-id")
+    scope = app_run.add_mutually_exclusive_group()
+    scope.add_argument("--chapter-id", action="append", dest="chapter_ids")
+    scope.add_argument("--all-chapters", action="store_true")
+    scope.add_argument("--chapter-range", nargs=2, metavar=("START", "END"))
+    app_run.add_argument("--reserved-cost-cap-usd")
+    app_run.add_argument("--hard-total-token-cap", type=int)
+    app_run.add_argument("--code-root", default=str(Path(__file__).resolve().parents[2]))
+    app_run.add_argument("--resume", action="store_true")
+    app_run.add_argument("--allow-dirty-code", action="store_true")
+    _execution_mode(app_run)
     return parser
 
 
@@ -127,14 +147,66 @@ def main(argv: list[str] | None = None) -> int:
             runtime_root=args.runtime_root,
             credential_provider=provider,
         )
-    else:
+    elif args.command == "run-component":
         campaign_root = Path(args.campaign_root).resolve()
         result = run_from_plan_file(
             campaign_root / "component_plan.json",
             campaign_root / "component",
             resume=args.resume,
             stop_after_stage=args.stop_after_stage,
+            pause_file=args.pause_file or campaign_root / "PAUSE",
         )
+    else:
+        campaign_root = Path(args.campaign_root).resolve()
+        if args.resume:
+            if args.workflow_run_id or args.component_run_id:
+                raise ValueError("resume does not accept new workflow/component ids")
+            # The server removes this marker before a legal Resume.  Clearing
+            # it here also keeps the standalone CLI from immediately pausing
+            # again after it has resumed the sealed component.
+            pause_file = campaign_root / "PAUSE"
+            if pause_file.exists():
+                pause_file.unlink()
+            result = run_from_plan_file(
+                campaign_root / "component_plan.json",
+                campaign_root / "component",
+                resume=True,
+                pause_file=pause_file,
+            )
+        else:
+            if not args.workflow_run_id or not args.component_run_id:
+                raise ValueError("fresh app-run requires workflow and component ids")
+            if not (args.chapter_ids or args.all_chapters or args.chapter_range):
+                raise ValueError("fresh app-run requires a chapter selection")
+            chapter_range = args.chapter_range or (None, None)
+            prepare_campaign(
+                job_root=args.job_root,
+                campaign_root=campaign_root,
+                workflow_run_id=args.workflow_run_id,
+                component_run_id=args.component_run_id,
+                code_root=args.code_root,
+                require_clean_code=not args.allow_dirty_code,
+                chapter_ids=args.chapter_ids,
+                start_chapter=chapter_range[0],
+                end_chapter=chapter_range[1],
+                all_chapters=args.all_chapters,
+                reserved_cost_cap_usd=args.reserved_cost_cap_usd,
+                hard_total_token_cap=args.hard_total_token_cap,
+            )
+            credential_files = _credential_files(args.credential_file)
+            build_component_plan(
+                campaign_root=campaign_root,
+                job_root=args.job_root,
+                code_root=args.code_root,
+                dry_run=args.dry_run,
+                runtime_root=args.runtime_root,
+                credential_files=credential_files or None,
+            )
+            result = run_from_plan_file(
+                campaign_root / "component_plan.json",
+                campaign_root / "component",
+                pause_file=campaign_root / "PAUSE",
+            )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
 
