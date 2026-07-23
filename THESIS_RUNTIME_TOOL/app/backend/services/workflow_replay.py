@@ -1283,7 +1283,11 @@ def _read_envelope(
             )
             for row in package["artifact_index"]["artifacts"]
         },
-        "usage": _usage_read_model(typed_artifacts),
+        "usage": _usage_read_model(
+            events=package["events"],
+            typed_artifacts=typed_artifacts,
+            workflow_run_id=manifest["workflow_run_id"],
+        ),
         "source_mode": "live",
         "cursor": {
             "after_seq": after_seq,
@@ -1396,45 +1400,231 @@ def _validated_artifacts(
 
 
 def _usage_read_model(
+    *,
+    events: list[dict[str, Any]],
     typed_artifacts: list[dict[str, Any]],
+    workflow_run_id: str,
 ) -> dict[str, Any] | None:
-    rows = []
-    component_snapshots = []
-    workflow_summary = None
-    for item in typed_artifacts:
-        body = item["body"]
-        schema = (
-            body.get("schema")
-            if isinstance(body, Mapping)
-            else None
-        ) or (
-            body.get("schema_id")
-            if isinstance(body, Mapping)
-            else None
-        )
-        if schema in {
-            "d2l_component_usage_snapshot_v1",
-            "EvaluationComponentUsageSnapshotV1",
-        }:
-            component_snapshots.append(item)
-            call_rows = body.get("call_rows") or body.get("calls") or []
-            if isinstance(call_rows, list):
-                rows.extend(call_rows)
-        elif schema in {
-            "workflow_usage_summary_v1",
-            "WorkflowUsageSummaryV1",
-        }:
-            workflow_summary = item
-    if not rows and not component_snapshots and workflow_summary is None:
+    calls: list[dict[str, Any]] = []
+    stage_totals: list[dict[str, Any]] = []
+    component_totals: list[dict[str, Any]] = []
+
+    d2l_events = [
+        event
+        for event in events
+        if event["component"]["component_id"] == "translation"
+        and event["event"] == "usage_snapshot"
+    ]
+    if d2l_events:
+        (
+            d2l_calls,
+            d2l_stage_totals,
+            d2l_component_total,
+        ) = _project_d2l_usage(d2l_events, workflow_run_id=workflow_run_id)
+        calls.extend(d2l_calls)
+        stage_totals.extend(d2l_stage_totals)
+        component_totals.append(d2l_component_total)
+
+    workflow_total = _indexed_workflow_usage_total(
+        typed_artifacts,
+        workflow_run_id=workflow_run_id,
+    )
+    if not calls and not component_totals and workflow_total is None:
         return None
     return {
         "schema_id": "WorkflowUsageReadModelV1",
         "schema_version": "1.0.0",
+        "workflow_run_id": workflow_run_id,
         "validated": True,
-        "call_rows": rows,
-        "component_snapshots": component_snapshots,
-        "workflow_summary": workflow_summary,
+        "calls": calls,
+        "stage_totals": stage_totals,
+        "component_totals": component_totals,
+        "workflow_total": workflow_total,
+        "validation": {
+            "valid": True,
+            "authority": "producer_snapshots_and_neutral_relay",
+        },
     }
+
+
+def _project_d2l_usage(
+    events: list[dict[str, Any]],
+    *,
+    workflow_run_id: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    from pipeline.prepass.d2l_console_replay_contract_v1 import (
+        D2LConsoleContractError,
+        validate_component_usage_snapshot_sequence,
+    )
+
+    snapshots = [event["payload"] for event in events]
+    try:
+        latest = validate_component_usage_snapshot_sequence(snapshots)
+    except D2LConsoleContractError as exc:
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            f"D2L usage snapshot chain failed validation: {exc}",
+            409,
+        ) from exc
+    if latest is None:
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "D2L usage events did not produce a cumulative snapshot.",
+            409,
+        )
+    if latest["workflow_run_id"] != workflow_run_id:
+        raise WorkflowReplayError(
+            "workflow_usage_identity_drift",
+            "D2L usage snapshots belong to another parent workflow.",
+            409,
+        )
+
+    calls = []
+    latest_stage: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+    for event, snapshot in zip(events, snapshots, strict=True):
+        accepted = snapshot["accepted_usage"]
+        if accepted is None:
+            continue
+        stage_id = f"translation.{snapshot['stage_id']}"
+        latest_stage[stage_id] = (snapshot, event)
+        usage = accepted["usage"]
+        calls.append(
+            {
+                "call_id": (
+                    accepted["attempt_usage_id"]
+                    or accepted["cache_observation_id"]
+                ),
+                "attempt_usage_id": accepted["attempt_usage_id"],
+                "cache_observation_id": accepted["cache_observation_id"],
+                "component_id": "translation",
+                "component_run_id": snapshot["component_run_id"],
+                "component_attempt_id": snapshot["component_attempt_id"],
+                "component_attempt_index": snapshot["component_attempt_id"],
+                "component_seq": event["component"]["component_seq"],
+                "stage_id": stage_id,
+                "work_id": snapshot["work_id"],
+                "logical_request_id": accepted["logical_request_id"],
+                "semantic_attempt_index": accepted["semantic_attempt_index"],
+                "transport_retry_ordinal": accepted[
+                    "transport_retry_ordinal"
+                ],
+                "physical_attempt_index": accepted[
+                    "physical_attempt_index"
+                ],
+                "provider_id": usage["provider_id"],
+                "source_id": usage["source_id"],
+                "source_revision": accepted["source_revision"],
+                "requested_model_id": usage["model_id"],
+                "observed_model_id": None,
+                "provider_call_avoided": not accepted["provider_called"],
+                "finish_reason": usage["finish_reason"],
+                "usage": dict(usage),
+            }
+        )
+
+    projected_stage_totals = [
+        _project_d2l_total(
+            snapshot["stage_cumulative"],
+            component_run_id=snapshot["component_run_id"],
+            component_attempt_id=snapshot["component_attempt_id"],
+            snapshot_seq=snapshot["snapshot_seq"],
+            accepted_through_component_seq=event["component"][
+                "component_seq"
+            ],
+            stage_id=stage_id,
+            sha256=snapshot["snapshot_sha256"],
+        )
+        for stage_id, (snapshot, event) in latest_stage.items()
+    ]
+    component_total = _project_d2l_total(
+        latest["component_cumulative"],
+        component_run_id=latest["component_run_id"],
+        component_attempt_id=latest["component_attempt_id"],
+        snapshot_seq=latest["snapshot_seq"],
+        accepted_through_component_seq=events[-1]["component"][
+            "component_seq"
+        ],
+        stage_id=None,
+        sha256=latest["snapshot_sha256"],
+    )
+    return calls, projected_stage_totals, component_total
+
+
+def _project_d2l_total(
+    totals: Mapping[str, Any],
+    *,
+    component_run_id: str,
+    component_attempt_id: int,
+    snapshot_seq: int,
+    accepted_through_component_seq: int,
+    stage_id: str | None,
+    sha256: str,
+) -> dict[str, Any]:
+    cache_counters = totals["cache_counters"]
+    return {
+        "component_id": "translation",
+        "component_run_id": component_run_id,
+        "component_attempt_id": component_attempt_id,
+        "component_attempt_index": component_attempt_id,
+        "stage_id": stage_id,
+        "snapshot_seq": snapshot_seq,
+        "accepted_through_component_seq": accepted_through_component_seq,
+        "physical_call_count": totals["physical_attempt_count"],
+        "cache_observation_count": totals["cache_observation_count"],
+        "prompt_tokens": totals["prompt_tokens"],
+        "completion_tokens": totals["completion_tokens"],
+        "reasoning_tokens": totals["reasoning_tokens"],
+        "cached_input_tokens": totals["cached_input_tokens"],
+        "total_tokens": totals["total_tokens"],
+        "cache_hit_count": cache_counters.get("hit", 0),
+        "cache_miss_count": cache_counters.get("miss", 0),
+        "unknown_attempt_count": 0,
+        "cost_status": totals["cost_status"],
+        "cost_usd": totals["cost_usd"],
+        "currency": totals["currency"],
+        "snapshot_sha256": sha256,
+    }
+
+
+def _indexed_workflow_usage_total(
+    typed_artifacts: list[dict[str, Any]],
+    *,
+    workflow_run_id: str,
+) -> dict[str, Any] | None:
+    summaries = []
+    for item in typed_artifacts:
+        body = item["body"]
+        if not isinstance(body, Mapping):
+            continue
+        schema = body.get("schema") or body.get("schema_id")
+        if schema in {
+            "workflow_usage_summary_v1",
+            "WorkflowUsageSummaryV1",
+        }:
+            summaries.append(body)
+    if not summaries:
+        return None
+    if len(summaries) != 1:
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "Parent package contains multiple workflow usage summaries.",
+            409,
+        )
+    summary = summaries[0]
+    if summary.get("workflow_run_id") != workflow_run_id:
+        raise WorkflowReplayError(
+            "workflow_usage_identity_drift",
+            "Workflow usage summary belongs to another parent workflow.",
+            409,
+        )
+    total = summary.get("workflow_total") or summary.get("totals")
+    if not isinstance(total, Mapping):
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "Workflow usage summary does not expose a sealed total.",
+            409,
+        )
+    return dict(total)
 
 
 def _actions(

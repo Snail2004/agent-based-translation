@@ -15,6 +15,8 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 TOOL_ROOT = BACKEND_ROOT.parents[1]
@@ -2910,6 +2912,134 @@ def test_route_workflow_replay_reads_validated_parent_cursor_and_artifact(
         "artifact_ref=components%2Ftranslation%2Ftranslation_fixture_v1"
         "%2Fartifacts%2Ftranslation_output"
     )
+
+
+def test_workflow_usage_read_model_projects_validated_d2l_snapshots():
+    from pipeline.prepass.d2l_console_replay_contract_v1 import (
+        build_component_usage_snapshot,
+    )
+    from services.workflow_replay import (
+        WorkflowReplayError,
+        _usage_read_model,
+    )
+
+    usage = {
+        "logical_request_id": "request_1",
+        "physical_attempt_index": 1,
+        "provider_id": "provider",
+        "model_id": "model",
+        "source_id": "source",
+        "masked_quota_bucket": "bucket-***",
+        "prompt_tokens": 10,
+        "completion_tokens": 2,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0,
+        "total_tokens": 12,
+        "latency_ms": 10,
+        "finish_reason": "stop",
+        "cost_usd": None,
+        "currency": None,
+        "cost_status": "unknown",
+        "cache_status": "miss",
+        "cache_mechanism": "local_exact_cache",
+    }
+    accepted = {
+        "identity_kind": "provider_attempt",
+        "attempt_usage_id": "attempt_1",
+        "cache_observation_id": "cache_attempt_1",
+        "logical_request_id": "request_1",
+        "semantic_attempt_index": 1,
+        "transport_retry_ordinal": 0,
+        "physical_attempt_index": 1,
+        "provider_called": True,
+        "source_revision": "source_v1",
+        "usage": usage,
+    }
+    first = build_component_usage_snapshot(
+        previous_snapshots=[],
+        workflow_run_id="workflow_usage_v1",
+        component_run_id="translation_usage_v1",
+        component_attempt_id=1,
+        stage_id="translator",
+        work_id="window_1",
+        accepted_usage=accepted,
+    )
+    final = build_component_usage_snapshot(
+        previous_snapshots=[first],
+        workflow_run_id="workflow_usage_v1",
+        component_run_id="translation_usage_v1",
+        component_attempt_id=1,
+        stage_id=None,
+        work_id=None,
+        accepted_usage=None,
+        component_final=True,
+    )
+
+    def parent_event(payload, component_seq):
+        return {
+            "event": "usage_snapshot",
+            "component": {
+                "component_id": "translation",
+                "component_run_id": "translation_usage_v1",
+                "component_attempt_id": 1,
+                "component_attempt_index": 1,
+                "component_seq": component_seq,
+            },
+            "payload": payload,
+        }
+
+    events = [parent_event(first, 10), parent_event(final, 11)]
+    projected = _usage_read_model(
+        events=events,
+        typed_artifacts=[],
+        workflow_run_id="workflow_usage_v1",
+    )
+
+    assert projected is not None
+    assert projected["workflow_run_id"] == "workflow_usage_v1"
+    assert projected["validated"] is True
+    assert projected["workflow_total"] is None
+    assert projected["calls"] == [
+        {
+            "call_id": "attempt_1",
+            "attempt_usage_id": "attempt_1",
+            "cache_observation_id": "cache_attempt_1",
+            "component_id": "translation",
+            "component_run_id": "translation_usage_v1",
+            "component_attempt_id": 1,
+            "component_attempt_index": 1,
+            "component_seq": 10,
+            "stage_id": "translation.translator",
+            "work_id": "window_1",
+            "logical_request_id": "request_1",
+            "semantic_attempt_index": 1,
+            "transport_retry_ordinal": 0,
+            "physical_attempt_index": 1,
+            "provider_id": "provider",
+            "source_id": "source",
+            "source_revision": "source_v1",
+            "requested_model_id": "model",
+            "observed_model_id": None,
+            "provider_call_avoided": False,
+            "finish_reason": "stop",
+            "usage": usage,
+        }
+    ]
+    assert projected["stage_totals"][0]["stage_id"] == "translation.translator"
+    assert projected["stage_totals"][0]["total_tokens"] == 12
+    assert projected["component_totals"][0]["physical_call_count"] == 1
+    assert projected["component_totals"][0]["cost_status"] == "unknown"
+    assert projected["component_totals"][0]["cost_usd"] is None
+
+    tampered = json.loads(json.dumps(events))
+    tampered[1]["payload"]["previous_snapshot_sha256"] = "0" * 64
+    with pytest.raises(WorkflowReplayError) as rejected:
+        _usage_read_model(
+            events=tampered,
+            typed_artifacts=[],
+            workflow_run_id="workflow_usage_v1",
+        )
+    assert rejected.value.code == "workflow_usage_invalid"
 
 
 def test_route_workflow_replay_long_poll_does_not_revalidate_unchanged_parent(
