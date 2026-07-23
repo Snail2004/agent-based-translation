@@ -449,6 +449,78 @@ class WorkflowOrchestratorV1:
             evaluation_component_root=evaluation_root,
         )
 
+    def run_prepared_scoring(
+        self,
+        *,
+        expected_scoring_handoff: Mapping[str, Any],
+        expected_evaluation_settings: Mapping[str, Any],
+    ) -> WorkflowScoringResultV1:
+        """Run Evaluation from already-published, file-backed scoring authority."""
+
+        if self.evaluation_executor is None:
+            raise WorkflowOrchestratorError(
+                "workflow_runtime_incomplete",
+                "Prepared scoring requires a registered Evaluation executor.",
+            )
+        manifest = validate_workflow_parent_package_v1(self.parent_root)
+        translation = next(
+            (
+                row
+                for row in manifest["components"]
+                if row["component_id"] == "translation"
+            ),
+            None,
+        )
+        if translation is None or translation["status"] != "succeeded":
+            raise WorkflowOrchestratorError(
+                "translation_not_terminal",
+                "Prepared scoring requires a terminal successful Translation component.",
+            )
+        handoff = self._load_scoring_handoff()
+        settings = _read_json(
+            self.parent_root
+            / "handoffs"
+            / "evaluation_workflow_settings.json",
+            owner="parent Evaluation workflow settings",
+        )
+        if handoff != expected_scoring_handoff:
+            raise WorkflowOrchestratorError(
+                "prepared_scoring_handoff_drift",
+                "Parent scoring handoff differs from the registered runtime bundle.",
+            )
+        if settings != expected_evaluation_settings:
+            raise WorkflowOrchestratorError(
+                "prepared_scoring_settings_drift",
+                "Parent Evaluation settings differ from the registered runtime bundle.",
+            )
+
+        evaluation_root = self._execute_evaluation(handoff)
+        receipt = _read_json(
+            evaluation_root / "scoring_receipt.json",
+            owner="Evaluation scoring receipt",
+        )
+        accepted_receipt = self.relay.accept_scoring_receipt(receipt)
+        if accepted_receipt["status"] != "accepted":
+            raise WorkflowOrchestratorError(
+                "evaluation_rejected",
+                "Evaluation rejected the exact five-arm scoring handoff.",
+            )
+        manifest = validate_workflow_parent_package_v1(self.parent_root)
+        translation_root = (
+            self.parent_root
+            / "components"
+            / "translation"
+            / translation["component_run_id"]
+        )
+        return WorkflowScoringResultV1(
+            parent_root=self.parent_root,
+            manifest=manifest,
+            scoring_handoff=handoff,
+            scoring_receipt=accepted_receipt,
+            translation_component_root=translation_root,
+            evaluation_component_root=evaluation_root,
+        )
+
     def prepare_scoring(
         self,
         translation_component_root: str | Path,

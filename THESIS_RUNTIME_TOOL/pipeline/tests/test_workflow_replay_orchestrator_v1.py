@@ -861,6 +861,60 @@ def test_scoring_phase_stops_truthfully_before_publication(
     assert not (relay.root / "components" / "publication").exists()
 
 
+def test_prepared_scoring_reuses_exact_parent_authority(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    translation = _TranslationExecutor(tmp_path / "translation")
+    materializer = _SettingsMaterializer()
+    preparation = WorkflowOrchestratorV1(
+        relay.root,
+        translation_executor=translation,
+        baseline_provider=StaticBaselineInputProviderV1(_baseline_rows()),
+        evaluation_settings_materializer=materializer,
+        selected_chapter_ids=[CHAPTER_ID],
+        translation_adapter_factory=translation.adapter,
+    )
+
+    with pytest.raises(WorkflowComponentPausedV1):
+        preparation.run_translation()
+    translated = preparation.run_translation()
+    prepared = preparation.prepare_scoring(
+        translated.translation_component_root
+    )
+
+    evaluation = _EvaluationExecutor(tmp_path / "evaluation")
+    scoring = WorkflowOrchestratorV1(
+        relay.root,
+        translation_executor=translation,
+        evaluation_executor=evaluation,
+        selected_chapter_ids=[CHAPTER_ID],
+        translation_adapter_factory=translation.adapter,
+        evaluation_adapter_factory=evaluation.adapter,
+    )
+    result = scoring.run_prepared_scoring(
+        expected_scoring_handoff=prepared.scoring_handoff,
+        expected_evaluation_settings=prepared.evaluation_settings,
+    )
+
+    assert result.scoring_handoff == prepared.scoring_handoff
+    assert result.scoring_receipt["status"] == "accepted"
+    assert [
+        row["component_id"] for row in result.manifest["components"]
+    ] == ["translation", "evaluation"]
+
+    foreign_settings = copy.deepcopy(prepared.evaluation_settings)
+    foreign_settings["settings_sha256"] = "f" * 64
+    with pytest.raises(
+        WorkflowOrchestratorError,
+        match="settings differ",
+    ):
+        scoring.run_prepared_scoring(
+            expected_scoring_handoff=prepared.scoring_handoff,
+            expected_evaluation_settings=foreign_settings,
+        )
+
+
 def test_runtime_registration_is_fail_closed_and_self_sealed(
     tmp_path: Path,
 ) -> None:
