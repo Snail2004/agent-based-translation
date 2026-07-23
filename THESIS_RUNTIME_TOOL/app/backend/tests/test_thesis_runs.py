@@ -305,6 +305,43 @@ def test_build_argv_d2l_campaign_uses_server_owned_app_run_boundary(tmp_path):
     assert "--db" not in argv
 
 
+def test_d2l_semantic_role_preview_reads_nested_campaign_contract():
+    from services.thesis_runs import _d2l_semantic_role_preview
+
+    role = {
+        "role_id": "d2l.candidate_discovery",
+        "stage_id": "b1_candidate_discovery",
+        "model_id": "gemini-3.5-flash",
+        "source_id": "shopaikey_gemini_proxy_v2",
+        "prompt": {"id": "prompt_v2", "sha256": "A" * 64},
+        "response_schema_sha256": "B" * 64,
+        "validator_id": "validator_v2",
+        "validator_sha256": "C" * 64,
+        "generation": {
+            "max_input_tokens": 6000,
+            "max_output_tokens": 6144,
+            "temperature": 1.0,
+            "reasoning_effort": "none",
+            "verbosity": "low",
+        },
+        "output_contract": {
+            "structured_output_mode": "disabled",
+            "envelope": "prompt_generated_json",
+        },
+        "semantic_retry_cap": 1,
+        "semantic_role_sha256": "D" * 64,
+    }
+
+    preview = _d2l_semantic_role_preview(role)
+
+    assert preview["prompt_id"] == "prompt_v2"
+    assert preview["max_input_tokens"] == 6000
+    assert preview["max_output_tokens"] == 6144
+    assert preview["structured_output_mode"] == "disabled"
+    assert preview["output_envelope"] == "prompt_generated_json"
+    assert preview["semantic_role_sha256"] == "D" * 64
+
+
 def test_build_resume_argv_d2l_removes_complete_two_value_chapter_range(tmp_path):
     from services.thesis_runs import build_resume_argv_from_entry
 

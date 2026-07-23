@@ -496,6 +496,34 @@ def _d2l_code_revision(tool_root: Path) -> str:
         ) from exc
 
 
+def _d2l_semantic_role_preview(row: dict[str, Any]) -> dict[str, Any]:
+    """Project one sealed campaign role without flattening its source schema."""
+
+    prompt = row["prompt"]
+    generation = row["generation"]
+    output_contract = row["output_contract"]
+    return {
+        "role_id": row["role_id"],
+        "stage_id": row["stage_id"],
+        "model_id": row["model_id"],
+        "source_id": row["source_id"],
+        "prompt_id": prompt["id"],
+        "prompt_sha256": prompt["sha256"],
+        "response_schema_sha256": row["response_schema_sha256"],
+        "validator_id": row["validator_id"],
+        "validator_sha256": row["validator_sha256"],
+        "max_input_tokens": generation["max_input_tokens"],
+        "max_output_tokens": generation["max_output_tokens"],
+        "temperature": generation["temperature"],
+        "reasoning_effort": generation["reasoning_effort"],
+        "verbosity": generation["verbosity"],
+        "structured_output_mode": output_contract["structured_output_mode"],
+        "output_envelope": output_contract["envelope"],
+        "semantic_retry_cap": row["semantic_retry_cap"],
+        "semantic_role_sha256": row["semantic_role_sha256"],
+    }
+
+
 def _d2l_preview_source(
     *,
     job_root: Path,
@@ -582,16 +610,7 @@ def _d2l_preview_source(
         "campaign_config_sha256": config["integrity"]["payload_sha256"],
         "reserved_cost_cap_usd": limits["reserved_cost_cap_usd"],
         "semantic_roles": [
-            {
-                "role_id": row["role_id"],
-                "stage_id": row["stage_id"],
-                "model_id": row["model_id"],
-                "source_id": row["source_id"],
-                "prompt_id": row["prompt_id"],
-                "max_input_tokens": row["max_input_tokens"],
-                "max_output_tokens": row["max_output_tokens"],
-                "semantic_retry_cap": row["semantic_retry_cap"],
-            }
+            _d2l_semantic_role_preview(row)
             for row in config["semantic_roles"]
         ],
         "transport_sources": [
