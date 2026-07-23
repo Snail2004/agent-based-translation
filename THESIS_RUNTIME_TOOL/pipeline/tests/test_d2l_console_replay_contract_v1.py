@@ -12,11 +12,13 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     STAGE_IDS,
     build_checkpoint,
     build_component_manifest,
+    build_component_usage_snapshot,
     canonical_sha256,
     file_sha256,
     scoring_fragment_sha256,
     validate_component_event_stream,
     validate_component_manifest,
+    validate_component_usage_snapshot_sequence,
     validate_artifact_index,
     validate_scoring_handoff_fragment,
     validate_translation_component_package,
@@ -92,6 +94,158 @@ def test_committed_fixture_is_valid_and_deterministic(tmp_path: Path) -> None:
         rebuilt_bytes = (rebuilt / relative).read_bytes().replace(b"\r\n", b"\n")
         committed_bytes = (committed / relative).read_bytes().replace(b"\r\n", b"\n")
         assert rebuilt_bytes == committed_bytes
+
+
+def _usage(
+    logical_request_id: str,
+    *,
+    prompt_tokens: int,
+    completion_tokens: int,
+    cache_status: str,
+) -> dict:
+    return {
+        "logical_request_id": logical_request_id,
+        "physical_attempt_index": 1,
+        "provider_id": "provider",
+        "model_id": "model",
+        "source_id": "source",
+        "masked_quota_bucket": "bucket-***",
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0,
+        "total_tokens": prompt_tokens + completion_tokens,
+        "latency_ms": 10,
+        "finish_reason": "stop",
+        "cost_usd": None,
+        "currency": None,
+        "cost_status": "unknown",
+        "cache_status": cache_status,
+        "cache_mechanism": (
+            "local_exact_cache" if cache_status in {"hit", "miss"} else "none"
+        ),
+    }
+
+
+def _accepted_provider(
+    logical_request_id: str,
+    *,
+    attempt_usage_id: str,
+) -> dict:
+    return {
+        "identity_kind": "provider_attempt",
+        "attempt_usage_id": attempt_usage_id,
+        "cache_observation_id": f"cache_{attempt_usage_id}",
+        "logical_request_id": logical_request_id,
+        "semantic_attempt_index": 1,
+        "transport_retry_ordinal": 0,
+        "physical_attempt_index": 1,
+        "provider_called": True,
+        "source_revision": "source_v1",
+        "usage": _usage(
+            logical_request_id,
+            prompt_tokens=10,
+            completion_tokens=2,
+            cache_status="miss",
+        ),
+    }
+
+
+def test_usage_snapshots_preserve_attempt_cache_and_unknown_cost() -> None:
+    first = build_component_usage_snapshot(
+        previous_snapshots=[],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=2,
+        stage_id="b1_candidate_discovery",
+        work_id="window_1",
+        accepted_usage=_accepted_provider(
+            "request_1",
+            attempt_usage_id="attempt_1",
+        ),
+    )
+    cache_usage = {
+        "identity_kind": "cache_observation",
+        "attempt_usage_id": None,
+        "cache_observation_id": "cache_hit_2",
+        "logical_request_id": "request_2",
+        "semantic_attempt_index": 1,
+        "transport_retry_ordinal": 0,
+        "physical_attempt_index": None,
+        "provider_called": False,
+        "source_revision": "source_v1",
+        "usage": _usage(
+            "request_2",
+            prompt_tokens=0,
+            completion_tokens=0,
+            cache_status="hit",
+        ),
+    }
+    second = build_component_usage_snapshot(
+        previous_snapshots=[first],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=2,
+        stage_id="b1_candidate_discovery",
+        work_id="window_2",
+        accepted_usage=cache_usage,
+    )
+    final = build_component_usage_snapshot(
+        previous_snapshots=[first, second],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=2,
+        stage_id=None,
+        work_id=None,
+        accepted_usage=None,
+        component_final=True,
+    )
+    latest = validate_component_usage_snapshot_sequence([first, second, final])
+
+    assert latest == final
+    assert final["component_cumulative"] == {
+        "logical_request_count": 2,
+        "accepted_result_count": 2,
+        "physical_attempt_count": 1,
+        "cache_observation_count": 2,
+        "prompt_tokens": 10,
+        "completion_tokens": 2,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0,
+        "total_tokens": 12,
+        "cost_usd": None,
+        "currency": None,
+        "cost_status": "unknown",
+        "cache_counters": {"hit": 1, "miss": 1},
+    }
+
+
+def test_usage_snapshot_rejects_duplicate_provider_attempt() -> None:
+    first = build_component_usage_snapshot(
+        previous_snapshots=[],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=1,
+        stage_id="b1_candidate_discovery",
+        work_id="window_1",
+        accepted_usage=_accepted_provider(
+            "request_1",
+            attempt_usage_id="attempt_1",
+        ),
+    )
+    with pytest.raises(D2LConsoleContractError, match="duplicate attempt_usage_id"):
+        build_component_usage_snapshot(
+            previous_snapshots=[first],
+            workflow_run_id=WORKFLOW_RUN_ID,
+            component_run_id=COMPONENT_RUN_ID,
+            component_attempt_id=2,
+            stage_id="b1_candidate_discovery",
+            work_id="window_2",
+            accepted_usage=_accepted_provider(
+                "request_2",
+                attempt_usage_id="attempt_1",
+            ),
+        )
 
 
 def test_component_package_rejects_parent_owned_files(tmp_path: Path) -> None:

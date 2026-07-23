@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 import sys
+import textwrap
+import threading
+import time
 from collections import Counter
 from hashlib import sha256
 from pathlib import Path
@@ -300,6 +303,239 @@ def test_runner_honors_pause_marker_only_at_stage_boundary(tmp_path: Path) -> No
     assert manifest["status"] == "paused"
     assert manifest["active_stage_id"] == "b1_candidate_discovery"
     assert manifest["resume"]["paused_reason"] == "user_requested_pause"
+
+
+def _write_streaming_stage_script(tmp_path: Path) -> Path:
+    script = tmp_path / "streaming_stage.py"
+    script.write_text(
+        textwrap.dedent(
+            """
+            import json
+            import sys
+            import time
+            from pathlib import Path
+
+            sys.path.insert(0, sys.argv[2])
+            from pipeline.prepass.d2l_component_stage_receipt_v1 import (
+                D2LStageObservationJournalWriter,
+                build_stage_receipt,
+                read_observation_journal,
+            )
+            from pipeline.prepass.d2l_console_replay_contract_v1 import (
+                build_component_usage_snapshot,
+                write_json,
+            )
+
+            root = Path(sys.argv[1])
+            manifest = json.loads(
+                (root / "component_manifest.json").read_text(encoding="utf-8")
+            )
+            attempt = int(manifest["component_attempt_id"])
+            stage_id = "preflight"
+            producer = "preflight"
+            work_id = "work_preflight"
+            unit = "checks"
+            journal_path = root / "runtime/component_observations.jsonl"
+            entries = read_observation_journal(journal_path)
+            prior_snapshots = [
+                dict(entry["observation"]["payload"])
+                for entry in entries
+                if entry["observation"]["event"] == "usage_snapshot"
+            ]
+            writer = D2LStageObservationJournalWriter(
+                path=journal_path,
+                workflow_run_id=manifest["workflow_run_id"],
+                component_run_id=manifest["component_run_id"],
+                component_attempt_id=attempt,
+                stage_id=stage_id,
+                producer=producer,
+                work_id=work_id,
+            )
+            observations = []
+
+            def append(event, payload):
+                observation = {
+                    "event": event,
+                    "agent": producer,
+                    "severity": "info",
+                    "ts": f"2026-07-23T00:00:0{attempt}Z",
+                    "payload": payload,
+                }
+                writer.append(observation)
+                observations.append(observation)
+
+            append(
+                "work_progress",
+                {
+                    "work_kind": unit,
+                    "work_id": work_id,
+                    "progress": {"completed": attempt - 1, "total": 2, "unit": unit},
+                },
+            )
+            logical_request_id = f"request_attempt_{attempt}"
+            request_work_id = f"request_work_{attempt}"
+            append(
+                "request_sent",
+                {
+                    "logical_request_id": logical_request_id,
+                    "physical_attempt_index": 1,
+                    "work_kind": unit,
+                    "work_id": request_work_id,
+                    "provider_id": "provider",
+                    "model_id": "model",
+                    "source_id": "source",
+                    "masked_quota_bucket": "bucket-***",
+                },
+            )
+            usage = {
+                "logical_request_id": logical_request_id,
+                "physical_attempt_index": 1,
+                "provider_id": "provider",
+                "model_id": "model",
+                "source_id": "source",
+                "masked_quota_bucket": "bucket-***",
+                "prompt_tokens": 10 * attempt,
+                "completion_tokens": 2 * attempt,
+                "cached_input_tokens": 0,
+                "reasoning_tokens": 0,
+                "total_tokens": 12 * attempt,
+                "latency_ms": 5,
+                "finish_reason": "stop",
+                "cost_usd": None,
+                "currency": None,
+                "cost_status": "unknown",
+                "cache_status": "miss",
+                "cache_mechanism": "local_exact_cache",
+            }
+            append("response_received", {"usage": usage})
+            snapshot = build_component_usage_snapshot(
+                previous_snapshots=prior_snapshots,
+                workflow_run_id=manifest["workflow_run_id"],
+                component_run_id=manifest["component_run_id"],
+                component_attempt_id=attempt,
+                stage_id=stage_id,
+                work_id=request_work_id,
+                accepted_usage={
+                    "identity_kind": "provider_attempt",
+                    "attempt_usage_id": f"attempt_usage_{attempt}",
+                    "cache_observation_id": f"cache_observation_{attempt}",
+                    "logical_request_id": logical_request_id,
+                    "semantic_attempt_index": 1,
+                    "transport_retry_ordinal": 0,
+                    "physical_attempt_index": 1,
+                    "provider_called": True,
+                    "source_revision": "source_v1",
+                    "usage": usage,
+                },
+            )
+            append("usage_snapshot", snapshot)
+            append(
+                "work_progress",
+                {
+                    "work_kind": unit,
+                    "work_id": work_id,
+                    "progress": {"completed": attempt, "total": 2, "unit": unit},
+                },
+            )
+            if attempt == 1:
+                time.sleep(30)
+            receipt = build_stage_receipt(
+                workflow_run_id=manifest["workflow_run_id"],
+                component_run_id=manifest["component_run_id"],
+                component_attempt_id=attempt,
+                stage_id=stage_id,
+                producer=producer,
+                work_id=work_id,
+                observations=observations,
+            )
+            write_json(root / "artifacts/preflight_receipt.json", receipt)
+            """
+        ),
+        encoding="utf-8",
+    )
+    return script
+
+
+def test_runner_streams_partial_usage_and_resumes_without_double_count(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    pause_file = tmp_path / "PAUSE"
+    _write_payloads(root, attempt_id=2)
+    plan_row = _plan(attempt_id=2)
+    script = _write_streaming_stage_script(tmp_path)
+    preflight = plan_row["stages"][0]
+    source_root = Path(__file__).resolve().parents[2]
+    preflight["command"] = [
+        sys.executable,
+        str(script),
+        str(root),
+        str(source_root),
+    ]
+    preflight["cwd"] = str(source_root)
+    preflight["total"] = 99
+    preflight["receipt_ref"] = "artifacts/preflight_receipt.json"
+    preflight["artifact_specs"] = [
+        _artifact_spec(
+            "art_preflight_receipt",
+            "d2l_stage_event_receipt",
+            STAGE_RECEIPT_SCHEMA,
+            "artifacts/preflight_receipt.json",
+        )
+    ]
+    plan = ComponentPlan.from_mapping(plan_row)
+
+    def request_pause_after_first_snapshot() -> None:
+        journal = root / "runtime/component_observations.jsonl"
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            if journal.is_file() and '"event":"usage_snapshot"' in journal.read_text(
+                encoding="utf-8"
+            ):
+                pause_file.write_text("pause\n", encoding="utf-8")
+                return
+            time.sleep(0.02)
+        raise AssertionError("streaming stage did not publish its first usage snapshot")
+
+    pause_thread = threading.Thread(
+        target=request_pause_after_first_snapshot,
+        daemon=True,
+    )
+    pause_thread.start()
+    paused = D2LTranslationComponentRunner(
+        plan,
+        root,
+        pause_file=pause_file,
+    ).run()
+    pause_thread.join(timeout=2)
+
+    assert paused["terminal_event"] is None
+    assert paused["component_usage"]["accepted_result_count"] == 1
+    paused_manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    preflight_state = paused_manifest["stages"][0]
+    assert preflight_state["status"] == "paused"
+    assert preflight_state["progress"] == {
+        "completed": 1,
+        "total": 2,
+        "unit": "checks",
+    }
+
+    completed = D2LTranslationComponentRunner(plan, root).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert completed["component_attempt_id"] == 2
+    assert completed["component_usage"]["accepted_result_count"] == 2
+    assert completed["component_usage"]["physical_attempt_count"] == 2
+    assert completed["component_usage"]["prompt_tokens"] == 30
+    assert completed["component_usage"]["completion_tokens"] == 6
+    events = [
+        json.loads(line)
+        for line in (root / "events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    usage_events = [row for row in events if row["event"] == "usage_snapshot"]
+    assert [row["payload"]["snapshot_seq"] for row in usage_events] == [1, 2, 3]
+    assert usage_events[-1]["payload"]["snapshot_kind"] == "component_final"
 
 
 def test_runner_rejects_plan_with_forbidden_semantic_evidence() -> None:

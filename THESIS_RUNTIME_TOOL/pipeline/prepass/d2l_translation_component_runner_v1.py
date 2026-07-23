@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -25,6 +26,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     STAGE_IDS,
     build_checkpoint,
     build_component_manifest,
+    build_component_usage_snapshot,
     build_stage_plan,
     canonical_sha256,
     file_sha256,
@@ -36,13 +38,17 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     write_json,
 )
 from pipeline.prepass.d2l_component_stage_receipt_v1 import (
+    D2LStageObservationJournalWriter,
     STAGE_RECEIPT_SCHEMA,
+    observation_journal_state,
+    read_observation_journal,
     validate_stage_receipt,
+    validate_stage_receipt_against_journal,
 )
 
 
-RUNNER_SCHEMA = "d2l_translation_component_runner_plan_v1_1"
-RUNNER_VERSION = "d2l_translation_component_runner_v1_1"
+RUNNER_SCHEMA = "d2l_translation_component_runner_plan_v1_2"
+RUNNER_VERSION = "d2l_translation_component_runner_v1_2"
 _FORBIDDEN_PLAN_KEYS = {
     "raw_prompt",
     "raw_response",
@@ -380,6 +386,7 @@ class D2LTranslationComponentRunner:
         self._current_attempt = 1
         self._resuming = False
         self._previous_checkpoint: dict[str, Any] | None = None
+        self._journal_cursor = 0
 
     @property
     def manifest_path(self) -> Path:
@@ -388,6 +395,21 @@ class D2LTranslationComponentRunner:
     @property
     def index_path(self) -> Path:
         return self.root / "artifact_index.json"
+
+    @property
+    def observation_journal_path(self) -> Path:
+        return self.root / "runtime/component_observations.jsonl"
+
+    @staticmethod
+    def _latest_usage_snapshot_sha256(
+        entries: Sequence[Mapping[str, Any]],
+    ) -> str | None:
+        snapshots = [
+            entry["observation"]["payload"]
+            for entry in entries
+            if entry["observation"]["event"] == "usage_snapshot"
+        ]
+        return None if not snapshots else str(snapshots[-1]["snapshot_sha256"])
 
     def run(self, *, resume: bool = False) -> dict[str, Any]:
         if resume:
@@ -408,7 +430,11 @@ class D2LTranslationComponentRunner:
             raise
 
     def _start_new(self) -> None:
-        if self.manifest_path.exists() or (self.root / "events.jsonl").exists():
+        if (
+            self.manifest_path.exists()
+            or (self.root / "events.jsonl").exists()
+            or self.observation_journal_path.exists()
+        ):
             raise ComponentRunnerError("component root already contains a run; use resume")
         self.root.mkdir(parents=True, exist_ok=True)
         stages = build_stage_plan()
@@ -451,12 +477,15 @@ class D2LTranslationComponentRunner:
                 "selected_chapter_ids": list(self.plan.selected_chapter_ids),
             },
         )
+        self._journal_cursor = 0
         self._set_status("running", active_stage_id=STAGE_IDS[0])
 
     def _open_resume(self) -> None:
         # Validate the complete paused package before changing the current
         # manifest/index attempt or invoking any child command.
-        validate_translation_component_package(self.root, require_terminal=False)
+        package_validation = validate_translation_component_package(
+            self.root, require_terminal=False
+        )
         self.manifest = _load_json(self.manifest_path, "component manifest")
         current = validate_component_manifest(self.manifest)
         expected_immutable = {
@@ -472,11 +501,11 @@ class D2LTranslationComponentRunner:
         if any(current[key] != expected for key, expected in expected_immutable.items()):
             raise ComponentRunnerError("resume identity does not match the sealed plan")
         current_stage_definitions = [
-            (row["stage_id"], row["producer"], row["progress"]["unit"], row["progress"]["total"])
+            (row["stage_id"], row["producer"], row["progress"]["unit"])
             for row in current["stages"]
         ]
         plan_stage_definitions = [
-            (stage.stage_id, stage.producer, stage.unit, stage.total)
+            (stage.stage_id, stage.producer, stage.unit)
             for stage in self.plan.stages
         ]
         if current_stage_definitions != plan_stage_definitions:
@@ -498,6 +527,24 @@ class D2LTranslationComponentRunner:
             raise ComponentRunnerError("resume checkpoint has no sealed runner plan")
         if checkpoint_plan_sha != self.plan.plan_sha256:
             raise ComponentRunnerError("resume runner plan hash mismatch")
+        journal_entries = read_observation_journal(self.observation_journal_path)
+        journal_state = observation_journal_state(journal_entries)
+        if (
+            checkpoint_state.get("observation_journal_entry_count")
+            != journal_state["entry_count"]
+            or checkpoint_state.get("observation_journal_last_entry_sha256")
+            != journal_state["last_entry_sha256"]
+        ):
+            raise ComponentRunnerError("resume observation journal lineage mismatch")
+        latest_usage_sha = self._latest_usage_snapshot_sha256(journal_entries)
+        if (
+            checkpoint_state.get("latest_usage_snapshot_sha256")
+            != latest_usage_sha
+            or package_validation.get("latest_usage_snapshot_sha256")
+            != latest_usage_sha
+        ):
+            raise ComponentRunnerError("resume usage snapshot lineage mismatch")
+        self._journal_cursor = len(journal_entries)
         self._current_attempt = int(current["component_attempt_id"]) + 1
         self.manifest = dict(current)
         self.manifest["component_attempt_id"] = self._current_attempt
@@ -596,22 +643,97 @@ class D2LTranslationComponentRunner:
     def _execute_command(self, stage: StagePlan) -> None:
         assert stage.command is not None
         cwd = self.root if stage.cwd is None else Path(stage.cwd).resolve()
-        try:
-            completed = subprocess.run(
-                list(stage.command),
-                cwd=cwd,
-                check=False,
-                shell=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=stage.timeout_seconds,
-            )
-        except subprocess.TimeoutExpired as exc:
-            raise ComponentRunnerError(f"stage {stage.stage_id} timed out") from exc
-        if completed.returncode != 0:
+        started = time.monotonic()
+        pause_was_present_at_start = bool(
+            self.pause_file is not None and self.pause_file.is_file()
+        )
+        process = subprocess.Popen(
+            list(stage.command),
+            cwd=cwd,
+            shell=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        while process.poll() is None:
+            self._drain_observation_journal(stage, allow_incomplete_tail=True)
+            if (
+                self.pause_file is not None
+                and self.pause_file.is_file()
+                and not pause_was_present_at_start
+            ):
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+                self._drain_observation_journal(
+                    stage, allow_incomplete_tail=False
+                )
+                self.pause_file.unlink(missing_ok=True)
+                raise _PauseRun(stage.stage_id, "user_requested_pause")
+            if (
+                stage.timeout_seconds is not None
+                and time.monotonic() - started > stage.timeout_seconds
+            ):
+                process.kill()
+                process.wait(timeout=5)
+                self._drain_observation_journal(
+                    stage, allow_incomplete_tail=False
+                )
+                raise ComponentRunnerError(f"stage {stage.stage_id} timed out")
+            time.sleep(0.05)
+        self._drain_observation_journal(stage, allow_incomplete_tail=False)
+        if process.returncode != 0:
             raise ComponentRunnerError(
-                f"stage {stage.stage_id} returned exit code {completed.returncode}"
+                f"stage {stage.stage_id} returned exit code {process.returncode}"
             )
+
+    def _drain_observation_journal(
+        self,
+        stage: StagePlan,
+        *,
+        allow_incomplete_tail: bool,
+    ) -> None:
+        entries = read_observation_journal(
+            self.observation_journal_path,
+            allow_incomplete_tail=allow_incomplete_tail,
+        )
+        if self._journal_cursor > len(entries):
+            raise ComponentRunnerError("observation journal was truncated")
+        for entry in entries[self._journal_cursor :]:
+            if (
+                entry["workflow_run_id"] != self.manifest["workflow_run_id"]
+                or entry["component_run_id"] != self.manifest["component_run_id"]
+                or entry["component_attempt_id"] != self._current_attempt
+                or entry["stage_id"] != stage.stage_id
+                or entry["producer"] != stage.producer
+                or entry["work_id"] != stage.work_id
+            ):
+                raise ComponentRunnerError(
+                    "observation journal entry is foreign to the active stage"
+                )
+            observation = entry["observation"]
+            event_name = observation["event"]
+            if event_name == "work_progress":
+                progress = dict(observation["payload"]["progress"])
+                row = self._stage_row(stage.stage_id)
+                row["progress"] = progress
+                row["current_work_id"] = stage.work_id
+                self._save_manifest()
+            self.writer.emit(
+                event_name,
+                stage_id=(
+                    None
+                    if event_name in {"cost_snapshot", "usage_snapshot"}
+                    else stage.stage_id
+                ),
+                agent=observation["agent"],
+                severity=observation["severity"],
+                ts=observation["ts"],
+                payload=observation["payload"],
+            )
+            self._journal_cursor += 1
 
     def _register_stage_artifacts(self, stage: StagePlan) -> None:
         for spec in stage.artifact_specs:
@@ -676,11 +798,36 @@ class D2LTranslationComponentRunner:
             work_id=stage.work_id,
             start_component_seq=self.writer.component_seq,
         )
+        journal_entries = read_observation_journal(self.observation_journal_path)
+        matching_journal_entries = [
+            entry
+            for entry in journal_entries
+            if entry["workflow_run_id"] == receipt["workflow_run_id"]
+            and entry["component_run_id"] == receipt["component_run_id"]
+            and entry["component_attempt_id"] == receipt["component_attempt_id"]
+            and entry["stage_id"] == receipt["stage_id"]
+            and entry["producer"] == receipt["producer"]
+            and entry["work_id"] == receipt["work_id"]
+        ]
+        if matching_journal_entries:
+            validate_stage_receipt_against_journal(
+                receipt,
+                journal_entries=journal_entries,
+            )
+            if self._journal_cursor != len(journal_entries):
+                raise ComponentRunnerError(
+                    "stage receipt was published before journal observations were emitted"
+                )
+            return
         for observation in receipt["observations"]:
             event_name = observation["event"]
             self.writer.emit(
                 event_name,
-                stage_id=None if event_name == "cost_snapshot" else stage.stage_id,
+                stage_id=(
+                    None
+                    if event_name in {"cost_snapshot", "usage_snapshot"}
+                    else stage.stage_id
+                ),
                 agent=observation["agent"],
                 severity=observation["severity"],
                 ts=observation["ts"],
@@ -692,7 +839,16 @@ class D2LTranslationComponentRunner:
         row["status"] = outcome
         row["ended_at"] = _timestamp()
         row["current_work_id"] = None
-        row["progress"] = {"completed": stage.total or 0, "total": stage.total, "unit": stage.unit}
+        observed_total = row["progress"]["total"]
+        row["progress"] = {
+            "completed": (
+                row["progress"]["completed"]
+                if observed_total is None
+                else observed_total
+            ),
+            "total": observed_total,
+            "unit": stage.unit,
+        }
         row["artifact_refs"] = [
             item["artifact_ref"]
             for item in self.artifacts
@@ -712,6 +868,17 @@ class D2LTranslationComponentRunner:
 
     def _pause(self, stage_id: str, reason: str) -> None:
         stage = next(item for item in self.plan.stages if item.stage_id == stage_id)
+        if self.observation_journal_path.is_file():
+            self._drain_observation_journal(
+                stage,
+                allow_incomplete_tail=False,
+            )
+        journal_entries = read_observation_journal(self.observation_journal_path)
+        journal_state = observation_journal_state(journal_entries)
+        stage_row = self._stage_row(stage_id)
+        if stage_row["status"] == "running":
+            stage_row["status"] = "paused"
+            stage_row["current_work_id"] = stage.work_id
         state = {
             "completed_stage_ids": [
                 row["stage_id"]
@@ -722,6 +889,13 @@ class D2LTranslationComponentRunner:
             "component_attempt_id": self._current_attempt,
             "runner_plan_schema": RUNNER_SCHEMA,
             "runner_plan_sha256": self.plan.plan_sha256,
+            "observation_journal_entry_count": journal_state["entry_count"],
+            "observation_journal_last_entry_sha256": journal_state[
+                "last_entry_sha256"
+            ],
+            "latest_usage_snapshot_sha256": self._latest_usage_snapshot_sha256(
+                journal_entries
+            ),
         }
         checkpoint_ref = f"checkpoints/checkpoint_a{self._current_attempt}_{stage_id}.json"
         checkpoint = build_checkpoint(
@@ -761,6 +935,56 @@ class D2LTranslationComponentRunner:
             "paused_reason": reason,
         }
         self._save_manifest()
+
+    def _emit_component_final_usage_snapshot(self) -> None:
+        entries = read_observation_journal(self.observation_journal_path)
+        if self._journal_cursor != len(entries):
+            raise ComponentRunnerError(
+                "component final usage cannot skip durable journal observations"
+            )
+        snapshots = [
+            dict(entry["observation"]["payload"])
+            for entry in entries
+            if entry["observation"]["event"] == "usage_snapshot"
+        ]
+        if snapshots and snapshots[-1]["snapshot_kind"] == "component_final":
+            return
+        snapshot = build_component_usage_snapshot(
+            previous_snapshots=snapshots,
+            workflow_run_id=self.manifest["workflow_run_id"],
+            component_run_id=self.manifest["component_run_id"],
+            component_attempt_id=self._current_attempt,
+            stage_id=None,
+            work_id=None,
+            accepted_usage=None,
+            component_final=True,
+        )
+        journal_writer = D2LStageObservationJournalWriter(
+            path=self.observation_journal_path,
+            workflow_run_id=self.manifest["workflow_run_id"],
+            component_run_id=self.manifest["component_run_id"],
+            component_attempt_id=self._current_attempt,
+            stage_id=STAGE_IDS[-1],
+            producer="d2l_component_runner",
+            work_id="component_final_usage",
+        )
+        observation = {
+            "event": "usage_snapshot",
+            "agent": "d2l_component_runner",
+            "severity": "info",
+            "ts": _timestamp(),
+            "payload": snapshot,
+        }
+        journal_writer.append(observation)
+        self._journal_cursor += 1
+        self.writer.emit(
+            "usage_snapshot",
+            stage_id=None,
+            agent=observation["agent"],
+            severity=observation["severity"],
+            ts=observation["ts"],
+            payload=snapshot,
+        )
 
     def _fail(self, exc: Exception) -> None:
         if getattr(self.writer, "_terminal", False):
@@ -803,6 +1027,7 @@ class D2LTranslationComponentRunner:
         self.manifest["status"] = "failed"
         self.manifest["active_stage_id"] = None
         self._save_manifest()
+        self._emit_component_final_usage_snapshot()
         self.writer.emit(
             "run_failed",
             stage_id=None,
@@ -852,6 +1077,7 @@ class D2LTranslationComponentRunner:
         # sealed usage receipt, omitting cost_snapshot is more truthful than
         # fabricating zero calls or zero tokens.
         validate_translation_component_package(self.root, require_terminal=False)
+        self._emit_component_final_usage_snapshot()
         self.writer.emit(
             "run_done",
             stage_id=None,

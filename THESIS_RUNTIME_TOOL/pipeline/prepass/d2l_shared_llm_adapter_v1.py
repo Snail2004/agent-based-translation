@@ -83,6 +83,12 @@ class D2LSharedClientResult:
     finish_reason: str | None
     cache_status: str
     cache_mechanism: str
+    attempt_usage_id: str | None = None
+    semantic_attempt_index: int = 1
+    transport_retry_ordinal: int = 0
+    cache_observation_id: str | None = None
+    provider_called: bool | None = None
+    source_revision: str | None = None
 
 
 class D2LSharedLlmAttemptAdapter:
@@ -276,7 +282,16 @@ class D2LSharedLlmClient:
         response_format: dict[str, Any] | None = None,
         tag: str = "",
         bypass_cache: bool = False,
+        semantic_attempt_index: int = 1,
     ) -> D2LSharedClientResult:
+        if (
+            isinstance(semantic_attempt_index, bool)
+            or not isinstance(semantic_attempt_index, int)
+            or semantic_attempt_index < 1
+        ):
+            raise D2LSharedLlmAdapterError(
+                "semantic_attempt_index must be a positive integer"
+            )
         protocol = str(self.api_source["protocol"])
         if protocol == "google_genai_generate_content":
             output_mode = str(self.structured_output["mode"])
@@ -340,7 +355,7 @@ class D2LSharedLlmClient:
             attempt_run_id=self.attempt_run_id,
             stage_id=self.stage_id,
             logical_request_id=logical_request_id,
-            semantic_attempt_index=1,
+            semantic_attempt_index=semantic_attempt_index,
             transport_retry_ordinal=transport_retry_ordinal,
             request_body=request_body,
             additional_input_bindings=[
@@ -370,6 +385,8 @@ class D2LSharedLlmClient:
             observation.get("cache_key_sha256") or result.artifact_sha256
         )
         physical_attempt_index = int(usage_row.get("physical_attempt_index") or 1)
+        attempt_usage_id = usage_row.get("attempt_usage_id")
+        cache_observation_id = observation.get("observation_id")
         source_id = str(
             usage_row.get("source_id") or self.api_source["source_id"]
         )
@@ -400,8 +417,29 @@ class D2LSharedLlmClient:
             response_payload=result.response_payload,
             logical_request_id=logical_request_id,
             physical_attempt_index=physical_attempt_index,
+            attempt_usage_id=(
+                None if attempt_usage_id is None else str(attempt_usage_id)
+            ),
+            semantic_attempt_index=int(
+                usage_row.get("semantic_attempt_index") or semantic_attempt_index
+            ),
+            transport_retry_ordinal=int(
+                usage_row.get("transport_retry_ordinal")
+                if usage_row.get("transport_retry_ordinal") is not None
+                else transport_retry_ordinal
+            ),
+            cache_observation_id=(
+                None
+                if cache_observation_id is None
+                else str(cache_observation_id)
+            ),
+            provider_called=result.provider_called,
             provider_id=source_id,
             source_id=source_id,
+            source_revision=str(
+                usage_row.get("source_revision")
+                or result.seal["primary"]["source"]["source_revision"]
+            ),
             masked_quota_bucket=_masked_bucket(quota_bucket),
             finish_reason=result.finish_reason,
             cache_status=cache_status,

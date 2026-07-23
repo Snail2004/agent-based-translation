@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import json
+from pathlib import Path
 
 import pytest
 
 from pipeline.prepass.d2l_component_stage_receipt_v1 import (
     D2LStageReceiptError,
+    D2LStageObservationJournalWriter,
     build_stage_receipt,
+    read_observation_journal,
     validate_stage_receipt,
+    validate_stage_receipt_against_journal,
 )
 from pipeline.prepass.d2l_console_replay_contract_v1 import (
     build_component_manifest,
@@ -186,3 +191,64 @@ def test_stage_receipt_accepts_component_scoped_cost_snapshot() -> None:
     )
 
     assert _validate(receipt)["observations"][0]["event"] == "cost_snapshot"
+
+
+def _journal_writer(path: Path) -> D2LStageObservationJournalWriter:
+    return D2LStageObservationJournalWriter(
+        path=path,
+        workflow_run_id="wf_receipt_test",
+        component_run_id="tr_receipt_test",
+        component_attempt_id=1,
+        stage_id="b2_admission_translation",
+        producer="b2",
+        work_id="packet_1",
+    )
+
+
+def test_observation_journal_is_hash_chained_and_receipt_exact(tmp_path: Path) -> None:
+    path = tmp_path / "component_observations.jsonl"
+    writer = _journal_writer(path)
+    writer.append(_request_observation())
+    entries = read_observation_journal(path)
+    receipt = _validate(_receipt())
+
+    assert entries[0]["journal_seq"] == 1
+    assert entries[0]["previous_entry_sha256"] is None
+    validate_stage_receipt_against_journal(
+        receipt,
+        journal_entries=entries,
+    )
+
+    drifted = deepcopy(receipt)
+    drifted["observations"][0]["payload"]["model_id"] = "other"
+    with pytest.raises(D2LStageReceiptError, match="exactly match"):
+        validate_stage_receipt_against_journal(
+            drifted,
+            journal_entries=entries,
+        )
+
+
+def test_observation_journal_ignores_only_unterminated_live_tail(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "component_observations.jsonl"
+    _journal_writer(path).append(_request_observation())
+    path.write_bytes(path.read_bytes()[:-1])
+
+    assert read_observation_journal(path, allow_incomplete_tail=True) == []
+    with pytest.raises(D2LStageReceiptError, match="unterminated"):
+        read_observation_journal(path)
+
+
+def test_observation_journal_rejects_hash_tamper(tmp_path: Path) -> None:
+    path = tmp_path / "component_observations.jsonl"
+    _journal_writer(path).append(_request_observation())
+    row = json.loads(path.read_text(encoding="utf-8"))
+    row["observation"]["payload"]["provider_id"] = "tampered"
+    path.write_text(
+        json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(D2LStageReceiptError, match="hash drift"):
+        read_observation_journal(path)

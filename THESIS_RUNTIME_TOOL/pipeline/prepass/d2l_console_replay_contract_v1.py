@@ -24,6 +24,7 @@ ARTIFACT_INDEX_SCHEMA = "d2l_translation_artifact_index_v1"
 CHECKPOINT_SCHEMA = "d2l_translation_checkpoint_v1"
 SCORING_FRAGMENT_SCHEMA = "scoring_handoff_fragment_v1"
 SOURCE_BINDING_SCHEMA = "canonical_source_binding_v1"
+USAGE_SNAPSHOT_SCHEMA = "d2l_component_usage_snapshot_v1"
 
 COMPONENT_ID = "translation"
 FLOW_KIND = "terminology_translation"
@@ -47,6 +48,7 @@ EVENT_NAMES = (
     "run_resumed",
     "stage_start",
     "work_started",
+    "work_progress",
     "request_sent",
     "response_received",
     "validation_passed",
@@ -56,6 +58,7 @@ EVENT_NAMES = (
     "artifact_created",
     "stage_done",
     "cost_snapshot",
+    "usage_snapshot",
     "run_done",
     "run_failed",
 )
@@ -550,6 +553,421 @@ def _validate_usage(value: Any, label: str) -> dict[str, Any]:
     return row
 
 
+def _validate_usage_totals(value: Any, label: str) -> dict[str, Any]:
+    row = dict(_require_mapping(value, label))
+    _require_exact_keys(
+        row,
+        {
+            "logical_request_count",
+            "accepted_result_count",
+            "physical_attempt_count",
+            "cache_observation_count",
+            "prompt_tokens",
+            "completion_tokens",
+            "cached_input_tokens",
+            "reasoning_tokens",
+            "total_tokens",
+            "cost_usd",
+            "currency",
+            "cost_status",
+            "cache_counters",
+        },
+        label,
+    )
+    for key in (
+        "logical_request_count",
+        "accepted_result_count",
+        "physical_attempt_count",
+        "cache_observation_count",
+        "prompt_tokens",
+        "completion_tokens",
+        "cached_input_tokens",
+        "reasoning_tokens",
+        "total_tokens",
+    ):
+        _require_int(row[key], f"{label}.{key}")
+    if row["total_tokens"] != row["prompt_tokens"] + row["completion_tokens"]:
+        raise D2LConsoleContractError(f"{label}.total_tokens is not prompt + completion")
+    if row["physical_attempt_count"] > row["accepted_result_count"]:
+        raise D2LConsoleContractError(f"{label}.physical_attempt_count is impossible")
+    if row["cost_usd"] is not None and (
+        isinstance(row["cost_usd"], bool)
+        or not isinstance(row["cost_usd"], (int, float))
+        or row["cost_usd"] < 0
+    ):
+        raise D2LConsoleContractError(f"{label}.cost_usd must be non-negative or null")
+    if row["currency"] is not None:
+        _require_string(row["currency"], f"{label}.currency")
+    if row["cost_status"] not in COST_STATUSES:
+        raise D2LConsoleContractError(f"{label}.cost_status is invalid")
+    if row["cost_status"] == "unknown":
+        if row["cost_usd"] is not None or row["currency"] is not None:
+            raise D2LConsoleContractError(f"{label} unknown cost must remain null")
+    elif row["cost_usd"] is None or row["currency"] is None:
+        raise D2LConsoleContractError(f"{label} known cost requires value and currency")
+    counters = dict(_require_mapping(row["cache_counters"], f"{label}.cache_counters"))
+    for key, count in counters.items():
+        if key not in CACHE_STATUSES:
+            raise D2LConsoleContractError(f"{label}.cache_counters has invalid status")
+        _require_int(count, f"{label}.cache_counters.{key}")
+    if sum(counters.values()) != row["accepted_result_count"]:
+        raise D2LConsoleContractError(f"{label}.cache_counters do not cover accepted results")
+    row["cache_counters"] = counters
+    return row
+
+
+def usage_snapshot_sha256(value: Mapping[str, Any]) -> str:
+    payload = dict(value)
+    payload.pop("snapshot_sha256", None)
+    return canonical_sha256(payload)
+
+
+def validate_component_usage_snapshot(value: Mapping[str, Any]) -> dict[str, Any]:
+    row = dict(_require_mapping(value, "usage_snapshot"))
+    _require_exact_keys(
+        row,
+        {
+            "schema_version",
+            "snapshot_kind",
+            "workflow_run_id",
+            "component_run_id",
+            "component_attempt_id",
+            "snapshot_seq",
+            "previous_snapshot_sha256",
+            "stage_id",
+            "work_id",
+            "accepted_usage",
+            "stage_cumulative",
+            "component_cumulative",
+            "snapshot_sha256",
+        },
+        "usage_snapshot",
+    )
+    if row["schema_version"] != USAGE_SNAPSHOT_SCHEMA:
+        raise D2LConsoleContractError("usage_snapshot.schema_version is invalid")
+    if row["snapshot_kind"] not in {"accepted_result", "component_final"}:
+        raise D2LConsoleContractError("usage_snapshot.snapshot_kind is invalid")
+    _require_id(row["workflow_run_id"], "usage_snapshot.workflow_run_id")
+    _require_id(row["component_run_id"], "usage_snapshot.component_run_id")
+    _require_int(
+        row["component_attempt_id"],
+        "usage_snapshot.component_attempt_id",
+        minimum=1,
+    )
+    _require_int(row["snapshot_seq"], "usage_snapshot.snapshot_seq", minimum=1)
+    if row["previous_snapshot_sha256"] is not None:
+        _require_sha(
+            row["previous_snapshot_sha256"],
+            "usage_snapshot.previous_snapshot_sha256",
+        )
+    if row["snapshot_kind"] == "component_final":
+        if any(
+            row[key] is not None
+            for key in ("stage_id", "work_id", "accepted_usage", "stage_cumulative")
+        ):
+            raise D2LConsoleContractError(
+                "component_final usage snapshot cannot claim stage work"
+            )
+    else:
+        _require_id(row["stage_id"], "usage_snapshot.stage_id")
+        _require_id(row["work_id"], "usage_snapshot.work_id")
+        accepted = dict(
+            _require_mapping(row["accepted_usage"], "usage_snapshot.accepted_usage")
+        )
+        _require_exact_keys(
+            accepted,
+            {
+                "identity_kind",
+                "attempt_usage_id",
+                "cache_observation_id",
+                "logical_request_id",
+                "semantic_attempt_index",
+                "transport_retry_ordinal",
+                "physical_attempt_index",
+                "provider_called",
+                "source_revision",
+                "usage",
+            },
+            "usage_snapshot.accepted_usage",
+        )
+        if accepted["identity_kind"] not in {
+            "provider_attempt",
+            "cache_observation",
+        }:
+            raise D2LConsoleContractError("accepted_usage.identity_kind is invalid")
+        _require_id(
+            accepted["logical_request_id"],
+            "usage_snapshot.accepted_usage.logical_request_id",
+        )
+        _require_int(
+            accepted["semantic_attempt_index"],
+            "usage_snapshot.accepted_usage.semantic_attempt_index",
+            minimum=1,
+        )
+        _require_int(
+            accepted["transport_retry_ordinal"],
+            "usage_snapshot.accepted_usage.transport_retry_ordinal",
+        )
+        _require_string(
+            accepted["source_revision"],
+            "usage_snapshot.accepted_usage.source_revision",
+        )
+        _require_bool(
+            accepted["provider_called"],
+            "usage_snapshot.accepted_usage.provider_called",
+        )
+        if accepted["attempt_usage_id"] is not None:
+            _require_id(
+                accepted["attempt_usage_id"],
+                "usage_snapshot.accepted_usage.attempt_usage_id",
+            )
+        if accepted["cache_observation_id"] is not None:
+            _require_id(
+                accepted["cache_observation_id"],
+                "usage_snapshot.accepted_usage.cache_observation_id",
+            )
+        usage = _validate_usage(
+            accepted["usage"],
+            "usage_snapshot.accepted_usage.usage",
+        )
+        accepted["usage"] = usage
+        if usage["logical_request_id"] != accepted["logical_request_id"]:
+            raise D2LConsoleContractError(
+                "accepted usage logical_request_id does not match usage row"
+            )
+        if accepted["provider_called"]:
+            if (
+                accepted["identity_kind"] != "provider_attempt"
+                or accepted["attempt_usage_id"] is None
+            ):
+                raise D2LConsoleContractError(
+                    "provider attempt requires attempt_usage_id"
+                )
+            physical = _require_int(
+                accepted["physical_attempt_index"],
+                "usage_snapshot.accepted_usage.physical_attempt_index",
+                minimum=1,
+            )
+            if physical != usage["physical_attempt_index"]:
+                raise D2LConsoleContractError(
+                    "accepted physical attempt differs from usage row"
+                )
+        else:
+            if (
+                accepted["identity_kind"] != "cache_observation"
+                or accepted["attempt_usage_id"] is not None
+                or accepted["cache_observation_id"] is None
+                or accepted["physical_attempt_index"] is not None
+            ):
+                raise D2LConsoleContractError(
+                    "cache reuse requires only cache_observation_id"
+                )
+            if any(
+                usage[key] != 0
+                for key in (
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "cached_input_tokens",
+                    "reasoning_tokens",
+                    "total_tokens",
+                )
+            ):
+                raise D2LConsoleContractError(
+                    "cache reuse cannot claim new provider tokens"
+                )
+            if usage["cost_usd"] is not None:
+                raise D2LConsoleContractError("cache reuse cannot claim new provider cost")
+        row["accepted_usage"] = accepted
+        row["stage_cumulative"] = _validate_usage_totals(
+            row["stage_cumulative"],
+            "usage_snapshot.stage_cumulative",
+        )
+    row["component_cumulative"] = _validate_usage_totals(
+        row["component_cumulative"],
+        "usage_snapshot.component_cumulative",
+    )
+    expected = usage_snapshot_sha256(row)
+    if _require_sha(row["snapshot_sha256"], "usage_snapshot.snapshot_sha256") != expected:
+        raise D2LConsoleContractError("usage snapshot hash drift")
+    row["snapshot_sha256"] = expected
+    if row["previous_snapshot_sha256"] is not None:
+        row["previous_snapshot_sha256"] = row["previous_snapshot_sha256"].upper()
+    return row
+
+
+def _usage_totals_from_records(
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    logical_ids = {str(row["logical_request_id"]) for row in records}
+    provider_rows = [row for row in records if bool(row["provider_called"])]
+    cache_ids = {
+        str(row["cache_observation_id"])
+        for row in records
+        if row["cache_observation_id"] is not None
+    }
+    prompt = sum(int(row["usage"]["prompt_tokens"]) for row in provider_rows)
+    completion = sum(int(row["usage"]["completion_tokens"]) for row in provider_rows)
+    cached = sum(int(row["usage"]["cached_input_tokens"]) for row in provider_rows)
+    reasoning = sum(int(row["usage"]["reasoning_tokens"]) for row in provider_rows)
+    known_cost_rows = [
+        row
+        for row in provider_rows
+        if row["usage"]["cost_status"] in {"provider_actual", "pinned_tariff"}
+        and row["usage"]["cost_usd"] is not None
+    ]
+    known_statuses = {row["usage"]["cost_status"] for row in known_cost_rows}
+    all_cost_known = bool(provider_rows) and len(known_cost_rows) == len(provider_rows)
+    cost_known = all_cost_known and len(known_statuses) == 1
+    cache_counters = Counter(str(row["usage"]["cache_status"]) for row in records)
+    return {
+        "logical_request_count": len(logical_ids),
+        "accepted_result_count": len(records),
+        "physical_attempt_count": len(provider_rows),
+        "cache_observation_count": len(cache_ids),
+        "prompt_tokens": prompt,
+        "completion_tokens": completion,
+        "cached_input_tokens": cached,
+        "reasoning_tokens": reasoning,
+        "total_tokens": prompt + completion,
+        "cost_usd": (
+            sum(float(row["usage"]["cost_usd"]) for row in known_cost_rows)
+            if cost_known
+            else None
+        ),
+        "currency": "USD" if cost_known else None,
+        "cost_status": next(iter(known_statuses)) if cost_known else "unknown",
+        "cache_counters": dict(sorted(cache_counters.items())),
+    }
+
+
+def validate_component_usage_snapshot_sequence(
+    values: Sequence[Mapping[str, Any]],
+) -> dict[str, Any] | None:
+    accepted_records: list[dict[str, Any]] = []
+    seen_attempt_ids: set[str] = set()
+    seen_cache_ids: set[str] = set()
+    previous_sha: str | None = None
+    previous_attempt: int | None = None
+    final_seen = False
+    latest: dict[str, Any] | None = None
+    for index, value in enumerate(values, start=1):
+        row = validate_component_usage_snapshot(value)
+        if final_seen:
+            raise D2LConsoleContractError("usage snapshot appears after component_final")
+        if row["snapshot_seq"] != index:
+            raise D2LConsoleContractError("usage snapshot sequence is not contiguous")
+        if row["previous_snapshot_sha256"] != previous_sha:
+            raise D2LConsoleContractError("usage snapshot previous hash mismatch")
+        attempt = int(row["component_attempt_id"])
+        if previous_attempt is not None and (
+            attempt < previous_attempt or attempt > previous_attempt + 1
+        ):
+            raise D2LConsoleContractError("usage snapshot attempt progression is invalid")
+        previous_attempt = attempt
+        accepted = row["accepted_usage"]
+        if accepted is not None:
+            attempt_id = accepted["attempt_usage_id"]
+            cache_id = accepted["cache_observation_id"]
+            if attempt_id is not None:
+                if attempt_id in seen_attempt_ids:
+                    raise D2LConsoleContractError("duplicate attempt_usage_id")
+                seen_attempt_ids.add(attempt_id)
+            if cache_id is not None:
+                if cache_id in seen_cache_ids:
+                    raise D2LConsoleContractError("duplicate cache_observation_id")
+                seen_cache_ids.add(cache_id)
+            accepted_records.append(
+                {
+                    **accepted,
+                    "stage_id": row["stage_id"],
+                }
+            )
+            expected_stage = _usage_totals_from_records(
+                [
+                    item
+                    for item in accepted_records
+                    if item["stage_id"] == row["stage_id"]
+                ]
+            )
+            if row["stage_cumulative"] != expected_stage:
+                raise D2LConsoleContractError("usage snapshot stage totals drift")
+        else:
+            final_seen = True
+        expected_component = _usage_totals_from_records(accepted_records)
+        if row["component_cumulative"] != expected_component:
+            raise D2LConsoleContractError("usage snapshot component totals drift")
+        previous_sha = row["snapshot_sha256"]
+        latest = row
+    return latest
+
+
+def build_component_usage_snapshot(
+    *,
+    previous_snapshots: Sequence[Mapping[str, Any]],
+    workflow_run_id: str,
+    component_run_id: str,
+    component_attempt_id: int,
+    stage_id: str | None,
+    work_id: str | None,
+    accepted_usage: Mapping[str, Any] | None,
+    component_final: bool = False,
+) -> dict[str, Any]:
+    normalized_previous = [
+        validate_component_usage_snapshot(value) for value in previous_snapshots
+    ]
+    validate_component_usage_snapshot_sequence(normalized_previous)
+    accepted_records = [
+        {
+            **dict(snapshot["accepted_usage"]),
+            "stage_id": snapshot["stage_id"],
+        }
+        for snapshot in normalized_previous
+        if snapshot["accepted_usage"] is not None
+    ]
+    if component_final:
+        if accepted_usage is not None or stage_id is not None or work_id is not None:
+            raise D2LConsoleContractError(
+                "component final snapshot cannot include accepted stage usage"
+            )
+        stage_cumulative = None
+        accepted_row = None
+    else:
+        if accepted_usage is None or stage_id is None or work_id is None:
+            raise D2LConsoleContractError(
+                "accepted-result snapshot requires stage, work, and usage"
+            )
+        accepted_row = dict(accepted_usage)
+        accepted_records.append({**accepted_row, "stage_id": stage_id})
+        stage_cumulative = _usage_totals_from_records(
+            [
+                item
+                for item in accepted_records
+                if item["stage_id"] == stage_id
+            ]
+        )
+    row = {
+        "schema_version": USAGE_SNAPSHOT_SCHEMA,
+        "snapshot_kind": "component_final" if component_final else "accepted_result",
+        "workflow_run_id": workflow_run_id,
+        "component_run_id": component_run_id,
+        "component_attempt_id": component_attempt_id,
+        "snapshot_seq": len(normalized_previous) + 1,
+        "previous_snapshot_sha256": (
+            None
+            if not normalized_previous
+            else normalized_previous[-1]["snapshot_sha256"]
+        ),
+        "stage_id": stage_id,
+        "work_id": work_id,
+        "accepted_usage": accepted_row,
+        "stage_cumulative": stage_cumulative,
+        "component_cumulative": _usage_totals_from_records(accepted_records),
+    }
+    row["snapshot_sha256"] = usage_snapshot_sha256(row)
+    validate_component_usage_snapshot_sequence([*normalized_previous, row])
+    return row
+
+
 def _reject_forbidden_event_keys(value: Any, label: str = "event.payload") -> None:
     if isinstance(value, Mapping):
         for key, child in value.items():
@@ -573,6 +991,7 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
         },
         "stage_start": {"progress", "current_work_id"},
         "work_started": {"work_kind", "work_id", "progress"},
+        "work_progress": {"work_kind", "work_id", "progress"},
         "request_sent": {
             "logical_request_id",
             "physical_attempt_index",
@@ -626,6 +1045,21 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
             "cost_status",
             "cache_counters",
         },
+        "usage_snapshot": {
+            "schema_version",
+            "snapshot_kind",
+            "workflow_run_id",
+            "component_run_id",
+            "component_attempt_id",
+            "snapshot_seq",
+            "previous_snapshot_sha256",
+            "stage_id",
+            "work_id",
+            "accepted_usage",
+            "stage_cumulative",
+            "component_cumulative",
+            "snapshot_sha256",
+        },
         "run_done": {
             "artifact_index_ref",
             "artifact_index_sha256",
@@ -661,6 +1095,10 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
         _require_string(row["work_kind"], "work_started.work_kind")
         _require_id(row["work_id"], "work_started.work_id")
         _validate_progress(row["progress"], "work_started.progress")
+    elif event_name == "work_progress":
+        _require_string(row["work_kind"], "work_progress.work_kind")
+        _require_id(row["work_id"], "work_progress.work_id")
+        _validate_progress(row["progress"], "work_progress.progress")
     elif event_name == "request_sent":
         for key in (
             "logical_request_id",
@@ -746,6 +1184,8 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
         for key, count in counters.items():
             _require_string(key, "cost_snapshot.cache_counters key")
             _require_int(count, f"cost_snapshot.cache_counters.{key}")
+    elif event_name == "usage_snapshot":
+        row = validate_component_usage_snapshot(row)
     elif event_name == "run_done":
         _validate_relative_ref(row["artifact_index_ref"], "run_done.artifact_index_ref")
         _require_sha(row["artifact_index_sha256"], "run_done.artifact_index_sha256")
@@ -828,7 +1268,10 @@ def validate_component_event(
     _require_string(row["agent"], "event.agent")
     if row["severity"] not in SEVERITIES:
         raise D2LConsoleContractError("event.severity is invalid")
-    if event_name in RUN_LEVEL_EVENTS or event_name == "cost_snapshot":
+    if event_name in RUN_LEVEL_EVENTS or event_name in {
+        "cost_snapshot",
+        "usage_snapshot",
+    }:
         if row["stage_id"] is not None:
             raise D2LConsoleContractError(f"{event_name} requires stage_id=null when component-scoped")
     else:
@@ -841,6 +1284,19 @@ def validate_component_event(
             raise D2LConsoleContractError("run_start chapter scope does not match manifest")
     if event_name == "checkpoint" and payload["stage_id"] != row["stage_id"]:
         raise D2LConsoleContractError("checkpoint stage does not match event stage")
+    if event_name == "usage_snapshot":
+        if payload["workflow_run_id"] != manifest_row["workflow_run_id"]:
+            raise D2LConsoleContractError("usage snapshot workflow identity mismatch")
+        if payload["component_run_id"] != manifest_row["component_run_id"]:
+            raise D2LConsoleContractError("usage snapshot component identity mismatch")
+        if payload["component_attempt_id"] != row["component_attempt_id"]:
+            raise D2LConsoleContractError("usage snapshot attempt differs from event")
+        if (
+            payload["stage_id"] is not None
+            and payload["stage_id"]
+            not in {stage["stage_id"] for stage in manifest_row["stages"]}
+        ):
+            raise D2LConsoleContractError("usage snapshot stage is unknown")
     return row
 
 
@@ -862,6 +1318,7 @@ def validate_component_event_stream(
     awaiting_resume = False
     terminal_seen = False
     checkpoint_events: dict[tuple[str, str], int] = {}
+    usage_snapshots: list[dict[str, Any]] = []
     with event_path.open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
             if not line.strip():
@@ -915,6 +1372,13 @@ def validate_component_event_stream(
                 if checkpoint_key in checkpoint_events:
                     raise D2LConsoleContractError("duplicate checkpoint lineage")
                 checkpoint_events[checkpoint_key] = attempt
+            if event_name == "usage_snapshot":
+                usage_snapshots.append(row["payload"])
+            if event_name == "run_done" and usage_snapshots:
+                if usage_snapshots[-1]["snapshot_kind"] != "component_final":
+                    raise D2LConsoleContractError(
+                        "run_done requires the final component usage snapshot"
+                    )
             if event_name in {"run_done", "run_failed"}:
                 terminal_seen = True
             seen_ids.add(row["event_id"])
@@ -932,6 +1396,7 @@ def validate_component_event_stream(
     terminal_count = counts["run_done"] + counts["run_failed"]
     if terminal_count > 1 or (require_terminal and terminal_count != 1):
         raise D2LConsoleContractError("component stream terminal event count is invalid")
+    latest_usage = validate_component_usage_snapshot_sequence(usage_snapshots)
     return {
         "schema": "d2l_translation_component_event_summary_v1",
         "workflow_run_id": manifest_row["workflow_run_id"],
@@ -941,6 +1406,12 @@ def validate_component_event_stream(
         "last_component_seq": last_seq,
         "terminal_event": last_event if last_event in {"run_done", "run_failed"} else None,
         "event_counts": dict(sorted(counts.items())),
+        "latest_usage_snapshot_sha256": (
+            None if latest_usage is None else latest_usage["snapshot_sha256"]
+        ),
+        "component_usage": (
+            None if latest_usage is None else latest_usage["component_cumulative"]
+        ),
     }
 
 
@@ -1704,6 +2175,7 @@ def validate_translation_component_package(
     artifacts_by_ref = {item["artifact_ref"]: item for item in artifact_index["artifacts"]}
     events_by_id: dict[str, Mapping[str, Any]] = {}
     stage_start_counts: Counter[str] = Counter()
+    stage_start_attempts: dict[str, set[int]] = {}
     stage_done_events: dict[str, Mapping[str, Any]] = {}
     checkpoints = 0
     with event_path.open("r", encoding="utf-8") as handle:
@@ -1752,7 +2224,15 @@ def validate_translation_component_package(
                 if revision_stages != current_stages:
                     raise D2LConsoleContractError("component stage definition drifted after run_start")
             elif event["event"] == "stage_start":
-                stage_start_counts[str(event["stage_id"])] += 1
+                stage_id = str(event["stage_id"])
+                attempt_id = int(event["component_attempt_id"])
+                attempts = stage_start_attempts.setdefault(stage_id, set())
+                if attempt_id in attempts:
+                    raise D2LConsoleContractError(
+                        "stage has duplicate start events in one component attempt"
+                    )
+                attempts.add(attempt_id)
+                stage_start_counts[stage_id] += 1
             elif event["event"] == "stage_done":
                 stage_id = str(event["stage_id"])
                 if stage_id in stage_done_events:
@@ -1858,8 +2338,10 @@ def validate_translation_component_package(
             stage_id = stage["stage_id"]
             if stage["status"] not in expected_outcomes:
                 raise D2LConsoleContractError("run_done requires every stage to be complete")
-            if stage_start_counts[stage_id] != 1 or stage_id not in stage_done_events:
-                raise D2LConsoleContractError("run_done requires one start and one done event per stage")
+            if stage_start_counts[stage_id] < 1 or stage_id not in stage_done_events:
+                raise D2LConsoleContractError(
+                    "run_done requires a start and one done event per stage"
+                )
             if stage_done_events[stage_id]["payload"]["outcome"] != expected_outcomes[stage["status"]]:
                 raise D2LConsoleContractError("stage manifest/event outcome mismatch")
             indexed_refs = {
@@ -1872,7 +2354,7 @@ def validate_translation_component_package(
     elif event_summary["terminal_event"] == "run_failed":
         if manifest["status"] not in {"failed", "cancelled"}:
             raise D2LConsoleContractError("run_failed requires failed or cancelled manifest")
-    return {
+    result = {
         "schema": "d2l_translation_component_package_validation_v1",
         "workflow_run_id": manifest["workflow_run_id"],
         "component_run_id": manifest["component_run_id"],
@@ -1885,6 +2367,12 @@ def validate_translation_component_package(
         "artifact_index_sha256": file_sha256(index_path),
         "scoring_handoff_fragment_sha256": scoring_fragment_sha,
     }
+    if event_summary["latest_usage_snapshot_sha256"] is not None:
+        result["latest_usage_snapshot_sha256"] = event_summary[
+            "latest_usage_snapshot_sha256"
+        ]
+        result["component_usage"] = event_summary["component_usage"]
+    return result
 
 
 def write_json(path: str | Path, value: Any) -> None:
@@ -1907,7 +2395,9 @@ __all__ = [
     "SCORING_FRAGMENT_SCHEMA",
     "SOURCE_BINDING_SCHEMA",
     "STAGE_IDS",
+    "USAGE_SNAPSHOT_SCHEMA",
     "build_checkpoint",
+    "build_component_usage_snapshot",
     "build_component_manifest",
     "build_scoring_handoff_fragment",
     "build_stage_plan",
@@ -1916,11 +2406,14 @@ __all__ = [
     "component_manifest_sha256",
     "file_sha256",
     "scoring_fragment_sha256",
+    "usage_snapshot_sha256",
     "validate_artifact_index",
     "validate_checkpoint",
     "validate_component_event",
     "validate_component_event_stream",
     "validate_component_manifest",
+    "validate_component_usage_snapshot",
+    "validate_component_usage_snapshot_sequence",
     "validate_scoring_handoff_fragment",
     "validate_source_binding",
     "validate_translation_component_package",

@@ -63,10 +63,16 @@ from pipeline.prepass.d2l_candidate_discovery_v2 import (
     render_discovery_messages,
     validate_discovery_output,
 )
-from pipeline.prepass.d2l_component_stage_receipt_v1 import build_stage_receipt
+from pipeline.prepass.d2l_component_stage_receipt_v1 import (
+    D2LStageObservationJournalWriter,
+    build_stage_receipt,
+    read_observation_journal,
+)
 from pipeline.prepass.d2l_console_replay_contract_v1 import (
     SCORING_FRAGMENT_SCHEMA,
+    build_component_usage_snapshot,
     build_scoring_handoff_fragment,
+    build_stage_plan,
     canonical_sha256 as replay_sha256,
     file_sha256,
     validate_scoring_handoff_fragment,
@@ -91,6 +97,9 @@ LIVE_EXECUTOR_VERSION = "d2l_project_live_executor_v1"
 LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2"
 LIVE_SCOPE_ID = "d2l_selected_campaign_scope_v1"
 _COST_STATUSES = {"provider_actual", "pinned_tariff", "unknown"}
+_STAGE_UNITS = {
+    row["stage_id"]: row["progress"]["unit"] for row in build_stage_plan()
+}
 
 
 class D2LProjectLiveExecutorError(RuntimeError):
@@ -250,22 +259,68 @@ def _result_usage(result: Any) -> dict[str, Any]:
 
 
 class _StageObservations:
-    def __init__(self, *, stage_id: str, agent: str, work_kind: str) -> None:
+    def __init__(
+        self,
+        *,
+        campaign: Mapping[str, Any],
+        component_root: Path,
+        component_attempt_id: int,
+        stage_id: str,
+        agent: str,
+        work_kind: str,
+        work_id: str,
+    ) -> None:
         self.stage_id = stage_id
         self.agent = agent
         self.work_kind = work_kind
+        self.work_id = work_id
         self.rows: list[dict[str, Any]] = []
         self.usage_rows: list[dict[str, Any]] = []
+        self.provider_called_rows: list[bool] = []
+        config = campaign["config"]
+        self.workflow_run_id = str(config["workflow_run_id"])
+        self.component_run_id = str(config["component_run_id"])
+        self.component_attempt_id = component_attempt_id
+        self.journal_path = component_root / "runtime/component_observations.jsonl"
+        existing = read_observation_journal(self.journal_path)
+        self.usage_snapshots = [
+            dict(entry["observation"]["payload"])
+            for entry in existing
+            if entry["observation"]["event"] == "usage_snapshot"
+        ]
+        self.journal = D2LStageObservationJournalWriter(
+            path=self.journal_path,
+            workflow_run_id=self.workflow_run_id,
+            component_run_id=self.component_run_id,
+            component_attempt_id=component_attempt_id,
+            stage_id=stage_id,
+            producer=agent,
+            work_id=work_id,
+        )
 
     def _append(self, event: str, payload: Mapping[str, Any], severity: str = "info") -> None:
-        self.rows.append(
+        observation = {
+            "event": event,
+            "agent": self.agent,
+            "severity": severity,
+            "ts": _utc_now(),
+            "payload": dict(payload),
+        }
+        self.journal.append(observation)
+        self.rows.append(observation)
+
+    def progress(self, *, completed: int, total: int) -> None:
+        self._append(
+            "work_progress",
             {
-                "event": event,
-                "agent": self.agent,
-                "severity": severity,
-                "ts": _utc_now(),
-                "payload": dict(payload),
-            }
+                "work_kind": self.work_kind,
+                "work_id": self.work_id,
+                "progress": {
+                    "completed": completed,
+                    "total": total,
+                    "unit": self.work_kind,
+                },
+            },
         )
 
     def response(self, *, result: Any, work_id: str) -> None:
@@ -285,6 +340,70 @@ class _StageObservations:
         )
         self._append("response_received", {"usage": usage})
         self.usage_rows.append(usage)
+        provider_called_claim = getattr(result, "provider_called", None)
+        provider_called = (
+            not bool(getattr(result, "from_cache", False))
+            if provider_called_claim is None
+            else bool(provider_called_claim)
+        )
+        self.provider_called_rows.append(provider_called)
+        attempt_usage_id = getattr(result, "attempt_usage_id", None)
+        cache_observation_id = getattr(result, "cache_observation_id", None)
+        if provider_called and attempt_usage_id is None:
+            attempt_usage_id = "compat_attempt_" + replay_sha256(
+                {
+                    "logical_request_id": usage["logical_request_id"],
+                    "physical_attempt_index": usage["physical_attempt_index"],
+                    "stage_id": self.stage_id,
+                }
+            )[:32].lower()
+        if not provider_called and cache_observation_id is None:
+            cache_observation_id = "compat_cache_" + replay_sha256(
+                {
+                    "logical_request_id": usage["logical_request_id"],
+                    "cache_key": str(getattr(result, "cache_key", "")),
+                    "stage_id": self.stage_id,
+                }
+            )[:32].lower()
+        accepted_usage = {
+            "identity_kind": (
+                "provider_attempt" if provider_called else "cache_observation"
+            ),
+            "attempt_usage_id": (
+                None if attempt_usage_id is None else str(attempt_usage_id)
+            ),
+            "cache_observation_id": (
+                None
+                if cache_observation_id is None
+                else str(cache_observation_id)
+            ),
+            "logical_request_id": usage["logical_request_id"],
+            "semantic_attempt_index": int(
+                getattr(result, "semantic_attempt_index", 1)
+            ),
+            "transport_retry_ordinal": int(
+                getattr(result, "transport_retry_ordinal", 0)
+            ),
+            "physical_attempt_index": (
+                usage["physical_attempt_index"] if provider_called else None
+            ),
+            "provider_called": provider_called,
+            "source_revision": str(
+                getattr(result, "source_revision", None) or "legacy_source_revision"
+            ),
+            "usage": usage,
+        }
+        snapshot = build_component_usage_snapshot(
+            previous_snapshots=self.usage_snapshots,
+            workflow_run_id=self.workflow_run_id,
+            component_run_id=self.component_run_id,
+            component_attempt_id=self.component_attempt_id,
+            stage_id=self.stage_id,
+            work_id=work_id,
+            accepted_usage=accepted_usage,
+        )
+        self._append("usage_snapshot", snapshot)
+        self.usage_snapshots.append(snapshot)
 
     def validation(
         self,
@@ -341,10 +460,24 @@ class _StageObservations:
         completion = sum(row["completion_tokens"] for row in self.usage_rows)
         cached = sum(row["cached_input_tokens"] for row in self.usage_rows)
         reasoning = sum(row["reasoning_tokens"] for row in self.usage_rows)
-        known_costs = [
-            row["cost_usd"] for row in self.usage_rows if row["cost_usd"] is not None
+        provider_usage = [
+            row
+            for row, provider_called in zip(
+                self.usage_rows, self.provider_called_rows, strict=True
+            )
+            if provider_called
         ]
-        all_known = len(known_costs) == len(self.usage_rows) and bool(self.usage_rows)
+        known_costs = [
+            row["cost_usd"] for row in provider_usage if row["cost_usd"] is not None
+        ]
+        cost_statuses = {
+            row["cost_status"] for row in provider_usage if row["cost_usd"] is not None
+        }
+        all_known = (
+            len(known_costs) == len(provider_usage)
+            and bool(provider_usage)
+            and len(cost_statuses) == 1
+        )
         self._append(
             "cost_snapshot",
             {
@@ -352,7 +485,7 @@ class _StageObservations:
                 "logical_request_count": len(
                     {row["logical_request_id"] for row in self.usage_rows}
                 ),
-                "physical_attempt_count": len(self.usage_rows),
+                "physical_attempt_count": len(provider_usage),
                 "prompt_tokens": prompt,
                 "completion_tokens": completion,
                 "cached_input_tokens": cached,
@@ -360,7 +493,7 @@ class _StageObservations:
                 "total_tokens": prompt + completion,
                 "cost_usd": sum(known_costs) if all_known else None,
                 "currency": "USD" if all_known else None,
-                "cost_status": "provider_actual" if all_known else "unknown",
+                "cost_status": next(iter(cost_statuses)) if all_known else "unknown",
                 "cache_counters": dict(
                     sorted(Counter(row["cache_status"] for row in self.usage_rows).items())
                 ),
@@ -409,6 +542,7 @@ def _semantic_call(
             response_format=dict(response_format),
             tag=f"{tag}.semantic_{semantic_attempt}",
             bypass_cache=semantic_attempt > 1,
+            semantic_attempt_index=semantic_attempt,
         )
         observations.response(result=result, work_id=tag)
         errors: list[str] = []
@@ -464,6 +598,7 @@ def _b1_stage(
     accepted_observations = 0
     rejected_rows = 0
     warnings = 0
+    observations.progress(completed=0, total=len(source["windows"]))
     for call_index, window in enumerate(source["windows"], start=1):
         messages = render_discovery_messages(
             chapter_id=LIVE_SCOPE_ID,
@@ -523,6 +658,7 @@ def _b1_stage(
                 "candidates": proposals,
             }
         )
+        observations.progress(completed=call_index, total=len(source["windows"]))
     aggregate = {
         "schema_version": "d2l_candidate_discovery_live_v1",
         "source_manifest": source,
@@ -701,7 +837,8 @@ def _b2_stage(
     )
     validations: list[tuple[Mapping[str, Any], Any]] = []
     packet_records: list[dict[str, Any]] = []
-    for packet_row in packet_plan["packets"]:
+    observations.progress(completed=0, total=len(packet_plan["packets"]))
+    for packet_index, packet_row in enumerate(packet_plan["packets"], start=1):
         packet_bundle = packets[str(packet_row["packet_id"])]
         packet = packet_bundle["packet"]
         messages = packet_bundle["messages"]
@@ -726,6 +863,10 @@ def _b2_stage(
                 "validation": _dataclass_json(validation),
                 "model_packet_sha256": b2_contract.model_packet_sha256(packet),
             }
+        )
+        observations.progress(
+            completed=packet_index,
+            total=len(packet_plan["packets"]),
         )
     consolidation_index = _b2_index(
         candidate_index=candidate_index,
@@ -869,6 +1010,9 @@ def _morphology_stage(
     role = _role(campaign["config"], "d2l.b2.morphology")
     validations: list[tuple[Mapping[str, Any], Any]] = []
     packet_records: list[dict[str, Any]] = []
+    total_components = len(plan["components"])
+    completed_components = 0
+    observations.progress(completed=0, total=total_components)
     if packets:
         client = transport.build_client(
             role["role_id"], component_attempt_id=component_attempt_id
@@ -893,6 +1037,11 @@ def _morphology_stage(
                     "packet_id": packet["packet_id"],
                     "validation": _dataclass_json(validation),
                 }
+            )
+            completed_components += len(packet["components"])
+            observations.progress(
+                completed=completed_components,
+                total=total_components,
             )
     draft = build_draft_package(
         index=source_index,
@@ -1118,6 +1267,9 @@ def _target_collision_stage(
     role = _role(campaign["config"], "d2l.b2.target_collision")
     validations: list[tuple[Mapping[str, Any], Any]] = []
     records: list[dict[str, Any]] = []
+    total_components = len(plan["components"])
+    completed_components = 0
+    observations.progress(completed=0, total=total_components)
     if packets:
         client = transport.build_client(
             role["role_id"], component_attempt_id=component_attempt_id
@@ -1139,6 +1291,11 @@ def _target_collision_stage(
             validations.append((packet, validation))
             records.append(
                 {"packet_id": packet["packet_id"], "validation": _dataclass_json(validation)}
+            )
+            completed_components += len(packet["components"])
+            observations.progress(
+                completed=completed_components,
+                total=total_components,
             )
     if packets:
         draft = build_draft_package(
@@ -1287,6 +1444,9 @@ def _multi_target_stage(
     role = _role(campaign["config"], "d2l.b2.multi_target")
     validations: list[tuple[Mapping[str, Any], Any]] = []
     records: list[dict[str, Any]] = []
+    total_components = len(plan["review_items"])
+    completed_components = 0
+    observations.progress(completed=0, total=total_components)
     if packets:
         client = transport.build_client(
             role["role_id"], component_attempt_id=component_attempt_id
@@ -1308,6 +1468,11 @@ def _multi_target_stage(
             validations.append((packet, validation))
             records.append(
                 {"packet_id": packet["packet_id"], "validation": _dataclass_json(validation)}
+            )
+            completed_components += len(packet["review_items"])
+            observations.progress(
+                completed=completed_components,
+                total=total_components,
             )
     draft = _multi_target_draft(plan=plan, validations=validations)
     return _sealed(
@@ -1589,13 +1754,16 @@ class _RecordingClient:
         self._client = client
         self._observations = observations
         self.results: list[tuple[str, Any]] = []
+        self._semantic_attempts: Counter[str] = Counter()
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._client, name)
 
     def call(self, *args: Any, **kwargs: Any) -> Any:
-        result = self._client.call(*args, **kwargs)
         tag = str(kwargs.get("tag") or "translator_request")
+        self._semantic_attempts[tag] += 1
+        kwargs["semantic_attempt_index"] = self._semantic_attempts[tag]
+        result = self._client.call(*args, **kwargs)
         self._observations.response(result=result, work_id=tag)
         self.results.append((tag, result))
         return result
@@ -1753,8 +1921,10 @@ def _translator_stage(
     db.row_factory = sqlite3.Row
     windows = _translator_windows(campaign=campaign, rows=rows)
     artifacts: dict[str, dict[str, Any]] = {}
+    total_work = len(rows) * 2
+    observations.progress(completed=0, total=total_work)
     try:
-        for arm_id in ("s0", "s1"):
+        for arm_index, arm_id in enumerate(("s0", "s1"), start=1):
             role = _role(campaign["config"], f"d2l.translator.{arm_id}")
             client = _RecordingClient(
                 transport.build_client(
@@ -1805,6 +1975,10 @@ def _translator_stage(
                 arm_id=arm_id,
                 experiment_id=experiment_id,
                 component_attempt_id=component_attempt_id,
+            )
+            observations.progress(
+                completed=arm_index * len(rows),
+                total=total_work,
             )
     finally:
         db.close()
@@ -1961,6 +2135,9 @@ def _quality_stage(
     db.row_factory = sqlite3.Row
     arm_reports: dict[str, Any] = {}
     state_rows: list[dict[str, Any]] = []
+    total_work = len(windows) * 2
+    completed_work = 0
+    observations.progress(completed=0, total=total_work)
     try:
         for arm_id in ("s0", "s1"):
             artifact = _load_json(
@@ -2023,6 +2200,11 @@ def _quality_stage(
                         }
                     )
                 if not safe_blocks:
+                    completed_work += 1
+                    observations.progress(
+                        completed=completed_work,
+                        total=total_work,
+                    )
                     continue
                 cards, refs_by_block = _glossary_cards_for_window(
                     db=db, source_rows=source_rows, max_cards=16
@@ -2065,6 +2247,11 @@ def _quality_stage(
                 )
                 llm_packets += 1
                 findings.extend(dict(value) for value in validation["findings"])
+                completed_work += 1
+                observations.progress(
+                    completed=completed_work,
+                    total=total_work,
+                )
             report = build_quality_observation(
                 audited_block_ids=audited_ids,
                 findings=findings,
@@ -2245,7 +2432,13 @@ def execute_live_stage(
             f"semantic stage requires an injected transport: {stage_id}"
         )
     observations = _StageObservations(
-        stage_id=stage_id, agent=producer, work_kind="campaign_stage_work"
+        campaign=campaign,
+        component_root=component_root,
+        component_attempt_id=component_attempt_id,
+        stage_id=stage_id,
+        agent=producer,
+        work_kind=_STAGE_UNITS[stage_id],
+        work_id=work_id,
     )
     payloads: dict[str, dict[str, Any]]
     if stage_id == "preflight":
