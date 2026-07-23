@@ -3785,6 +3785,12 @@ def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
     tmp_path,
     monkeypatch,
 ):
+    for env_name in (
+        "THESIS_D2L_SHOPAPI_CREDENTIAL_FILE",
+        "THESIS_D2L_MODELAPI_CREDENTIAL_FILE",
+        "THESIS_EVALUATION_RUNTIME_CONFIG_FILE",
+    ):
+        monkeypatch.delenv(env_name, raising=False)
     client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
     workflow_service = importlib.import_module("services.workflow_replay")
     thesis_service = importlib.import_module("services.thesis_runs")
