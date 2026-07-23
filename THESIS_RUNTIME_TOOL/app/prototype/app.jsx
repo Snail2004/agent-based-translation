@@ -999,11 +999,12 @@ function WorkflowSetupBody({
     ) patch.highlightPair = null;
     onSelection(patch);
   };
+  const lifecycle = setup.runtime?.lifecycle ?? setup.sourcePackage?.lifecycle ?? setup.sourcePackage?.status ?? null;
   const sourceSummary = {
     project_id: setup.projectId,
-    lifecycle: setup.sourcePackage?.lifecycle ?? setup.sourcePackage?.status ?? null,
-    finalized: setup.sourcePackage?.finalized ?? setup.sourcePackage?.finalization_status ?? null,
-    frozen: setup.runtime?.frozen ?? setup.runtime?.prepared ?? null,
+    lifecycle,
+    finalized: setup.sourcePackage?.finalized ?? setup.sourcePackage?.finalization_status ?? (lifecycle === "finalized_pre_run" || lifecycle === "run_started_frozen"),
+    frozen: setup.runtime?.frozen ?? lifecycle === "run_started_frozen",
     source_identity_sha256: setup.sourcePackage?.source_identity_sha256 ?? setup.runtime?.source_identity_sha256 ?? null,
     chapter_count: setup.chapters.length,
   };

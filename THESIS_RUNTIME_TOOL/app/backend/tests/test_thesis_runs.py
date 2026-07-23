@@ -3826,6 +3826,7 @@ def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
         "d2l_preliminaries",
         "d2l_linear_networks",
     ]
+    assert all(row["selected_by_default"] for row in setup["chapters"])
     assert setup["chapters"][0]["block_count"] == 2
     assert setup["shared_options"][0]["option_id"] == (
         "shared_llm_transport_catalog_v1"

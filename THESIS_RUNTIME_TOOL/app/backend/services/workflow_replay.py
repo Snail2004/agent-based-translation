@@ -207,6 +207,13 @@ def get_workflow_setup(
         job_id=status["job_id"],
         source_binding_sha256=source_package["source_binding_sha256"],
     )
+    default_chapter_ids = set(
+        evaluation_option["default_selection"]["selected_chapter_ids"]
+    )
+    for chapter in chapters:
+        chapter["selected_by_default"] = (
+            chapter["chapter_id"] in default_chapter_ids
+        )
     scoring_readiness = _scoring_runtime_readiness(
         job_root=(Path(jobs_root).resolve() / status["job_id"]),
         job_id=status["job_id"],
