@@ -93,6 +93,7 @@ const CONSOLE_UI_TEXT = Object.freeze({
     workspace: "Workspace",
     selectRun: "Chọn run",
     translate: "Dịch",
+    score: "Chấm điểm",
     replay: "Phát lại",
     play: "Phát",
     pause: "Tạm dừng",
@@ -147,6 +148,7 @@ const CONSOLE_UI_TEXT = Object.freeze({
     workspace: "Workspace",
     selectRun: "Select run",
     translate: "Translate",
+    score: "Score",
     replay: "Replay",
     play: "Play",
     pause: "Pause",
@@ -2679,7 +2681,7 @@ function AgentConsoleView(props) {
     workflowReplay = null,
     projectId = "", onBack, onOpenReport,
     theme = "paper", onToggleTheme,
-    onRefresh, onPause, onCancel, onResume, onDich, busy = false,
+    onRefresh, onPause, onCancel, onResume, onDich, onScore, busy = false,
   } = props;
   const workflowInvalid = Boolean(workflowReplay && workflowReplay.valid !== true);
   const workflowManifest = workflowReplay?.manifest || null;
@@ -2690,6 +2692,19 @@ function AgentConsoleView(props) {
     : CONSOLE_STAGE_PLAN;
   const workflowReadOnly = Boolean(workflowReplay && (workflowInvalid || workflowReplay.sourceMode === "replay"));
   const workflowActions = workflowReplay?.valid ? (workflowReplay.actions || {}) : {};
+  const scoreAction = workflowActions.score || {};
+  const scoreActionVisible = Boolean(
+    workflowReplay?.valid && Object.keys(scoreAction).length,
+  );
+  const scoreActionAllowed = Boolean(
+    workflowReplay?.sourceMode === "live"
+    && scoreAction.allowed === true
+    && onScore,
+  );
+  const scoreActionTitle = scoreActionAllowed
+    ? consoleText(uiLocale, "score")
+    : (scoreAction.blocking_reasons || []).join(", ")
+      || consoleText(uiLocale, "score");
 
   const [stageFilter, setStageFilter] = React.useState("");
   const [agentFilter, setAgentFilter] = React.useState("");
@@ -3164,6 +3179,7 @@ function AgentConsoleView(props) {
         </span>
         <span className="hdr-actions">
           {!workflowReadOnly && onDich && <button className="btn btn-accent" type="button" disabled={busy || isOpenRun} onClick={onDich} title={consoleText(uiLocale, "translate")}>▸ {consoleText(uiLocale, "translate").toUpperCase()}</button>}
+          {!workflowReadOnly && scoreActionVisible && <button className="btn btn-accent" type="button" disabled={busy || !scoreActionAllowed} onClick={onScore} title={scoreActionTitle}>▸ {consoleText(uiLocale, "score").toUpperCase()}</button>}
           {replayAvailable && <button className="btn" type="button" onClick={toggleReplay} title={consoleText(uiLocale, replayPlaying ? "pause" : replayActive && !replayComplete ? "play" : "replay")}>{consoleText(uiLocale, replayPlaying ? "pause" : replayActive && !replayComplete ? "play" : "replay")}</button>}
           <button className="btn" type="button" disabled={busy} onClick={onRefresh}>↻ {consoleText(uiLocale, "refresh")}</button>
           {!workflowReadOnly && <button className="btn" type="button" disabled={!canPauseRun || !onPause} onClick={onPause}>⏸ {consoleText(uiLocale, "pauseAfterStage")}</button>}

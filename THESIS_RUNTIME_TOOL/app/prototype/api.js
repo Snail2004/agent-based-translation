@@ -193,6 +193,7 @@
     },
     getThesisResumeEstimate: (runId) => request(`/thesis/runs/estimate-preview?resume_run_id=${encodeURIComponent(runId)}`),
     resumeThesisRun: (runId, payload) => request(`/thesis/runs/${encodeURIComponent(runId)}/resume`, { method: "POST", body: payload || {} }),
+    scoreWorkflowRun: (runId) => request(`/thesis/runs/${encodeURIComponent(runId)}/score`, { method: "POST", body: {} }),
     getWorkflowSetup: (docId) => request(`/projects/${encodeURIComponent(docId)}/workflow-setup`),
     preflightWorkflowSetup: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/workflow-setup/preflight`, {
       method: "POST",

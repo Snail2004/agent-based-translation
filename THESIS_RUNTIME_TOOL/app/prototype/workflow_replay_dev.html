@@ -211,7 +211,7 @@ function typedDetail(componentId, kind, data) {
   };
 }
 
-function runSetupContractChecks(adapter) {
+async function runSetupContractChecks(adapter) {
   const setupPayload = {
     schema_id: "WorkflowSetupReadModelV1",
     schema_version: "1.0.0",
@@ -227,8 +227,8 @@ function runSetupContractChecks(adapter) {
     },
     runtime: { prepared: true, pipeline_run_count: 0 },
     chapters: [
-      { chapter_id: "ch01", title: "Chapter 1", block_count: 471, selected_by_default: true },
-      { chapter_id: "ch02", title: "Chapter 2", block_count: 466, selected_by_default: true },
+      { chapter_id: "d2l_preliminaries", title: "Preliminaries", block_count: 471, selected_by_default: true },
+      { chapter_id: "d2l_linear_networks", title: "Linear Networks", block_count: 466, selected_by_default: true },
     ],
     execution_modes: [
       { id: "dry_run", label: "0-API", enabled: true },
@@ -260,15 +260,38 @@ function runSetupContractChecks(adapter) {
     evaluation_settings_options: [{
       id: "evaluation_settings_v1",
       label: "Evaluation five-arm V1",
-      revision: "v1",
+      revision: "1.1.0",
       sha256: "4".repeat(64),
       enabled: true,
-      fixed_facts: { arm_ids: ["s0", "s1", "community", "google_nmt", "llm_lc"] },
+      fixed_facts: {
+        settings_schema_id: "EvaluationWorkflowSettingsV1",
+        settings_schema_version: "1.1.0",
+        arm_ids: ["s0", "s1", "community", "google_nmt", "llm_lc"],
+        scorer_ids: ["sf_qe", "sf_bt", "pj"],
+      },
+      selection_catalog: {
+        chapter_ids: [
+          "d2l_preliminaries", "d2l_linear_networks",
+          "d2l_multilayer_perceptrons", "d2l_deep_learning_computation",
+          "d2l_convolutional_neural_networks",
+        ],
+        arm_ids: ["s0", "s1", "community", "google_nmt", "llm_lc"],
+        scorer_ids: ["sf_qe", "sf_bt", "pj"],
+      },
+      default_selection: {
+        settings_option_id: "evaluation_settings_v1",
+        selected_chapter_ids: ["d2l_preliminaries", "d2l_linear_networks"],
+        selected_arm_ids: ["s0", "s1", "community", "google_nmt", "llm_lc"],
+        selected_scorer_ids: ["sf_qe", "sf_bt", "pj"],
+        highlight_pair: null,
+      },
     }],
     defaults: {
       shared_option_id: "shared_api_v1",
       d2l_settings_option_id: "d2l_settings_v1",
-      evaluation_settings_option_id: "evaluation_settings_v1",
+      evaluation: {
+        settings_option_id: "evaluation_settings_v1",
+      },
       hard_total_token_cap: 200000,
       reserved_cost_cap_usd: 12,
     },
@@ -277,7 +300,19 @@ function runSetupContractChecks(adapter) {
   const selection = setup.valid ? adapter.defaultWorkflowSelection(setup) : null;
   const dryRequest = adapter.buildWorkflowPreflightRequest(setup, selection);
   const liveRequest = adapter.buildWorkflowPreflightRequest(setup, { ...selection, executionMode: "live" });
-  const preflight = adapter.normalizeWorkflowPreflight({
+  const evaluationBasis = {
+    ...dryRequest.payload.evaluation,
+    registered_option_sha256: "4".repeat(64),
+  };
+  const selectionSha256 = await adapter.canonicalSha256(evaluationBasis);
+  const normalizedSelection = {
+    ...dryRequest.payload,
+    evaluation: {
+      ...evaluationBasis,
+      selection_sha256: selectionSha256,
+    },
+  };
+  const preflight = await adapter.normalizeWorkflowPreflight({
     schema_id: "WorkflowPreflightReadModelV1",
     schema_version: "1.0.0",
     valid: true,
@@ -285,7 +320,24 @@ function runSetupContractChecks(adapter) {
     errors: [],
     warnings: ["live_start_allowed=false"],
     live_start_allowed: false,
+    normalized_selection: normalizedSelection,
+    evaluation_summary: {
+      schema_id: "EvaluationWorkflowSettingsV1",
+      schema_version: "1.1.0",
+      settings_status: "pending_scoring_handoff",
+      settings_sha256: null,
+      selection_sha256: selectionSha256,
+      registered_option_sha256: "4".repeat(64),
+      settings_option_id: "evaluation_settings_v1",
+      selected_chapter_ids: normalizedSelection.evaluation.selected_chapter_ids,
+      selected_arm_ids: normalizedSelection.evaluation.selected_arm_ids,
+      selected_scorer_ids: normalizedSelection.evaluation.selected_scorer_ids,
+      highlight_pair: null,
+      registered_authority: { status: "pending_runtime_registration" },
+    },
     launch: {
+      script: "run_workflow_orchestrator_v1",
+      phase: "translation",
       preflight_id: "preflight_fixture_v1",
       preflight_sha256: "5".repeat(64),
       confirm_token: "fixture-confirm-token",
@@ -507,14 +559,17 @@ function WorkflowReplayHarness() {
   }, []);
   React.useEffect(reload, [reload]);
   React.useEffect(() => {
-    const checks = runSetupContractChecks(window.WorkflowReplayAdapter);
-    window.__workflowSetupChecks = checks;
-    const allPassed = Object.values(checks).every(Boolean);
-    const node = document.getElementById("setup-contract-gates");
-    if (node) {
-      node.textContent = `setup gates: ${allPassed ? "PASS" : "FAIL"}`;
-      node.style.color = allPassed ? "#91c788" : "#ff8a80";
-    }
+    runSetupContractChecks(window.WorkflowReplayAdapter).then(checks => {
+      window.__workflowSetupChecks = checks;
+      const allPassed = Object.values(checks).every(Boolean);
+      const node = document.getElementById("setup-contract-gates");
+      if (node) {
+        node.textContent = `setup gates: ${allPassed ? "PASS" : "FAIL"}`;
+        node.style.color = allPassed ? "#91c788" : "#ff8a80";
+      }
+    }).catch(error => {
+      window.__workflowSetupChecks = { error: String(error?.message || error) };
+    });
   }, []);
   React.useEffect(() => {
     document.querySelectorAll(".dev-scenario a").forEach(link => {

@@ -641,6 +641,7 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
         onCancel={runControl.onCancel}
         onResume={runControl.onResume}
         onDich={runControl.onDich}
+        onScore={runControl.onScore}
       />
       {rawLog && (
         <details className="runtime-raw-log" open={!(sel.events || []).length}>

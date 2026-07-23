@@ -17,6 +17,14 @@
 
   const FLOW_KIND = "translation_evaluation_publication";
   const ARM_ORDER = Object.freeze(["s0", "s1", "community", "google_nmt", "llm_lc"]);
+  const EVALUATION_CHAPTER_ORDER = Object.freeze([
+    "d2l_preliminaries",
+    "d2l_linear_networks",
+    "d2l_multilayer_perceptrons",
+    "d2l_deep_learning_computation",
+    "d2l_convolutional_neural_networks",
+  ]);
+  const SCORER_ORDER = Object.freeze(["sf_qe", "sf_bt", "pj"]);
   const COMPONENT_IDS = new Set(["translation", "evaluation", "publication"]);
   const RESUME_EVENTS = new Set(["run_resumed", "component_resumed"]);
   const SOURCE_BINDING_ROLES = Object.freeze(["document", "structure_manifest", "asset_manifest", "admitted_projection", "normalization_receipt", "package_seal"]);
@@ -59,6 +67,14 @@
       )).join(",")}}`;
     }
     throw new TypeError(`unsupported JSON value: ${typeof value}`);
+  }
+
+  function canonicalEqual(left, right) {
+    try {
+      return canonicalJSONString(left) === canonicalJSONString(right);
+    } catch (_error) {
+      return false;
+    }
   }
 
   async function sha256Text(text) {
@@ -376,9 +392,68 @@
       credentialStatus: deepClone(row.credential_status ?? row.credential_ref_status ?? null),
       capabilityStatus: deepClone(row.capability_status ?? row.capability ?? null),
       fixedFacts: deepClone(row.fixed_facts ?? row.facts ?? {}),
+      selectionCatalog: deepClone(row.selection_catalog ?? null),
+      defaultSelection: deepClone(row.default_selection ?? null),
       constraints: deepClone(row.constraints ?? {}),
       raw: deepClone(row),
     };
+  }
+
+  function validateOrderedSubset(value, allowed, minimum, path, errors) {
+    if (!Array.isArray(value)) {
+      addError(errors, "type", path, "expected an array");
+      return [];
+    }
+    if (value.some(item => typeof item !== "string" || !item)) {
+      addError(errors, "selection_id", path, "selection IDs must be non-empty strings");
+      return [];
+    }
+    if (new Set(value).size !== value.length) addError(errors, "duplicate_selection", path, "selection IDs must be unique");
+    const selected = new Set(value);
+    const canonical = allowed.filter(item => selected.has(item));
+    if (canonical.length !== value.length || canonical.some((item, index) => item !== value[index])) {
+      addError(errors, "selection_order", path, "selection must be a canonical subset of the advertised order");
+    }
+    if (value.length < minimum) addError(errors, "selection_cardinality", path, `select at least ${minimum}`);
+    return [...value];
+  }
+
+  function validateEvaluationOption(option, setupChapterIds, path, errors) {
+    if (!option?.enabled) return;
+    const facts = option.fixedFacts;
+    if (facts?.settings_schema_id !== "EvaluationWorkflowSettingsV1" || facts?.settings_schema_version !== "1.1.0") {
+      addError(errors, "evaluation_settings_schema", `${path}.fixed_facts`, "EvaluationWorkflowSettingsV1@1.1.0 is required");
+    }
+    if (!SHA256_RE.test(String(option.sha256 || ""))) addError(errors, "sha256", `${path}.sha256`, "registered Evaluation option SHA-256 is required");
+    const catalog = option.selectionCatalog;
+    if (!isObject(catalog)) {
+      addError(errors, "evaluation_catalog", `${path}.selection_catalog`, "an ordered Evaluation selection catalog is required");
+      return;
+    }
+    if (!Array.isArray(catalog.chapter_ids) || !canonicalEqual(catalog.chapter_ids, EVALUATION_CHAPTER_ORDER)) {
+      addError(errors, "evaluation_chapter_catalog", `${path}.selection_catalog.chapter_ids`, "the registered five-chapter order is required");
+    }
+    if (!Array.isArray(catalog.arm_ids) || !canonicalEqual(catalog.arm_ids, ARM_ORDER)) {
+      addError(errors, "evaluation_arm_catalog", `${path}.selection_catalog.arm_ids`, "the exact five-arm order is required");
+    }
+    if (!Array.isArray(catalog.scorer_ids) || !canonicalEqual(catalog.scorer_ids, SCORER_ORDER)) {
+      addError(errors, "evaluation_scorer_catalog", `${path}.selection_catalog.scorer_ids`, "the exact scorer order is required");
+    }
+    const defaults = option.defaultSelection;
+    if (!isObject(defaults) || defaults.settings_option_id !== option.id) {
+      addError(errors, "evaluation_defaults", `${path}.default_selection`, "server-owned Evaluation defaults are required");
+      return;
+    }
+    const chapters = validateOrderedSubset(defaults.selected_chapter_ids, EVALUATION_CHAPTER_ORDER, 1, `${path}.default_selection.selected_chapter_ids`, errors);
+    chapters.forEach(chapterId => {
+      if (!setupChapterIds.includes(chapterId)) addError(errors, "evaluation_chapter_scope", `${path}.default_selection.selected_chapter_ids`, "default Evaluation chapters must exist in the project");
+    });
+    const arms = validateOrderedSubset(defaults.selected_arm_ids, ARM_ORDER, 2, `${path}.default_selection.selected_arm_ids`, errors);
+    validateOrderedSubset(defaults.selected_scorer_ids, SCORER_ORDER, 1, `${path}.default_selection.selected_scorer_ids`, errors);
+    const pair = defaults.highlight_pair;
+    if (pair !== null && (!isObject(pair) || pair.baseline_arm_id === pair.candidate_arm_id || !arms.includes(pair.baseline_arm_id) || !arms.includes(pair.candidate_arm_id))) {
+      addError(errors, "highlight_pair", `${path}.default_selection.highlight_pair`, "default highlight pair must contain two selected arms");
+    }
   }
 
   function normalizeWorkflowSetup(value) {
@@ -435,6 +510,7 @@
     const sharedOptions = optionList(setup.shared_options ?? setup.shared_api_options ?? [], "$setup.shared_options");
     const d2lOptions = optionList(setup.d2l_settings_options ?? setup.d2l_options ?? [], "$setup.d2l_settings_options");
     const evaluationOptions = optionList(setup.evaluation_settings_options ?? setup.evaluation_options ?? [], "$setup.evaluation_settings_options");
+    evaluationOptions.forEach((option, index) => validateEvaluationOption(option, chapters.map(row => row.chapterId), `$setup.evaluation_settings_options[${index}]`, errors));
     if (!chapters.some(row => row.selectable)) addError(errors, "chapter_catalog", "$setup.chapters", "at least one selectable chapter is required");
     if (!executionModes.some(row => row.id === "dry_run" && row.enabled)) addError(errors, "dry_run_unavailable", "$setup.execution_modes", "0-API dry_run must be advertised");
     if (!sharedOptions.some(row => row.enabled)) addError(errors, "shared_option_unavailable", "$setup.shared_options", "an enabled server-advertised shared option is required");
@@ -455,6 +531,10 @@
       evaluationOptions,
       defaults: deepClone(setup.defaults ?? {}),
       liveStartAllowed: setup.live_start_allowed === true,
+      launchPhase: setup.launch_phase ?? "translation",
+      scoringStartAllowed: setup.scoring_start_allowed === true,
+      scoringBlockingReasons: Array.isArray(setup.scoring_blocking_reasons) ? [...setup.scoring_blocking_reasons] : [],
+      scoringRuntime: deepClone(setup.scoring_runtime ?? {}),
       dryRunAllowed: setup.dry_run_allowed !== false,
       raw: setup,
     });
@@ -463,13 +543,19 @@
   function defaultWorkflowSelection(setup) {
     const selectedChapters = setup.chapters.filter(row => row.selectable && row.selectedByDefault);
     const chapters = selectedChapters.length ? selectedChapters : setup.chapters.filter(row => row.selectable);
+    const evaluationOptionId = setup.defaults.evaluation?.settings_option_id ?? setup.evaluationOptions.find(row => row.enabled)?.id ?? "";
+    const evaluation = setup.evaluationOptions.find(row => row.id === evaluationOptionId && row.enabled) ?? setup.evaluationOptions.find(row => row.enabled);
+    const evaluationDefaults = evaluation?.defaultSelection ?? {};
     return {
       executionMode: "dry_run",
       chapterIds: chapters.map(row => row.chapterId),
       sharedOptionId: setup.defaults.shared_option_id ?? setup.sharedOptions.find(row => row.enabled)?.id ?? "",
       d2lOptionId: setup.defaults.d2l_settings_option_id ?? setup.d2lOptions.find(row => row.enabled)?.id ?? "",
-      evaluationOptionId: setup.defaults.evaluation_settings_option_id ?? setup.evaluationOptions.find(row => row.enabled)?.id ?? "",
-      highlightPair: deepClone(setup.defaults.highlight_pair ?? null),
+      evaluationOptionId: evaluation?.id ?? "",
+      evaluationChapterIds: deepClone(evaluationDefaults.selected_chapter_ids ?? []),
+      evaluationArmIds: deepClone(evaluationDefaults.selected_arm_ids ?? []),
+      evaluationScorerIds: deepClone(evaluationDefaults.selected_scorer_ids ?? []),
+      highlightPair: deepClone(evaluationDefaults.highlight_pair ?? null),
       hardTotalTokenCap: setup.defaults.hard_total_token_cap ?? null,
       reservedCostCapUsd: setup.defaults.reserved_cost_cap_usd ?? null,
     };
@@ -504,13 +590,18 @@
     if (costCap !== null && costCap !== "" && (typeof Number(costCap) !== "number" || !Number.isFinite(Number(costCap)) || Number(costCap) <= 0)) {
       addError(errors, "cost_cap", "$selection.reserved_cost_cap_usd", "reserved cost cap must be a positive number or null");
     }
-    const pair = selection?.highlightPair;
+    const evaluationChapterIds = validateOrderedSubset(selection?.evaluationChapterIds, EVALUATION_CHAPTER_ORDER, 1, "$selection.evaluation.selected_chapter_ids", errors);
+    evaluationChapterIds.forEach(chapterId => {
+      if (!orderedChapterIds.includes(chapterId)) addError(errors, "evaluation_chapter_scope", "$selection.evaluation.selected_chapter_ids", "Evaluation chapters must be selected for the workflow");
+    });
+    const selectedArms = validateOrderedSubset(selection?.evaluationArmIds, ARM_ORDER, 2, "$selection.evaluation.selected_arm_ids", errors);
+    const selectedScorers = validateOrderedSubset(selection?.evaluationScorerIds, SCORER_ORDER, 1, "$selection.evaluation.selected_scorer_ids", errors);
+    const pair = selection?.highlightPair ?? null;
     if (pair !== null) {
       const baseline = pair?.baseline_arm_id;
       const candidate = pair?.candidate_arm_id;
-      const arms = evaluation?.fixedFacts?.arm_ids ?? evaluation?.fixedFacts?.arms ?? [];
-      if (!Array.isArray(arms) || !baseline || !candidate || baseline === candidate || !arms.includes(baseline) || !arms.includes(candidate)) {
-        addError(errors, "highlight_pair", "$selection.highlight_pair", "highlight pair must contain two distinct advertised arms");
+      if (!baseline || !candidate || baseline === candidate || !selectedArms.includes(baseline) || !selectedArms.includes(candidate)) {
+        addError(errors, "highlight_pair", "$selection.evaluation.highlight_pair", "highlight pair must contain two distinct selected arms");
       }
     }
     return {
@@ -518,15 +609,20 @@
       errors,
       payload: errors.length ? null : {
         schema_id: "WorkflowSetupSelectionV1",
-        schema_version: "1.0.0",
+        schema_version: "1.1.0",
         execution_mode: selection.executionMode,
         chapter_ids: orderedChapterIds,
         shared_option_id: shared.id,
         d2l_settings_option_id: d2l.id,
-        evaluation_settings_option_id: evaluation.id,
-        highlight_pair: pair === null ? null : {
-          baseline_arm_id: pair.baseline_arm_id,
-          candidate_arm_id: pair.candidate_arm_id,
+        evaluation: {
+          settings_option_id: evaluation.id,
+          selected_chapter_ids: evaluationChapterIds,
+          selected_arm_ids: selectedArms,
+          selected_scorer_ids: selectedScorers,
+          highlight_pair: pair === null ? null : {
+            baseline_arm_id: pair.baseline_arm_id,
+            candidate_arm_id: pair.candidate_arm_id,
+          },
         },
         hard_total_token_cap: hardCap === null || hardCap === "" ? null : Number(hardCap),
         reserved_cost_cap_usd: costCap === null || costCap === "" ? null : Number(costCap),
@@ -534,7 +630,7 @@
     };
   }
 
-  function normalizeWorkflowPreflight(value, setup, selection) {
+  async function normalizeWorkflowPreflight(value, setup, selection) {
     const preflight = deepClone(value || null);
     const errors = [];
     if (!requireObject(preflight, "$preflight", errors)) {
@@ -547,8 +643,10 @@
     const serverErrors = Array.isArray(preflight.errors) ? preflight.errors : [];
     if (!Array.isArray(preflight.errors)) addError(errors, "type", "$preflight.errors", "expected an array");
     const launch = deepClone(preflight.launch ?? preflight.sealed_launch ?? {});
-    const serverValid = preflight.valid === true || preflight.status === "ready";
+    const serverValid = preflight.valid === true && preflight.status === "ready";
     if (serverValid) {
+      if (launch.script !== "run_workflow_orchestrator_v1") addError(errors, "launch_script", "$preflight.launch.script", "neutral workflow orchestrator is required");
+      if (launch.phase !== "translation") addError(errors, "launch_phase", "$preflight.launch.phase", "Translation is the only supported initial phase");
       if (!validId(launch.preflight_id ?? preflight.preflight_id)) addError(errors, "preflight_id", "$preflight.launch.preflight_id", "sealed preflight identity is required");
       if (!SHA256_RE.test(String(launch.preflight_sha256 ?? preflight.preflight_sha256 ?? ""))) addError(errors, "sha256", "$preflight.launch.preflight_sha256", "sealed preflight SHA-256 is required");
       if (!validId(launch.planned_run_id ?? preflight.planned_run_id)) addError(errors, "planned_run_id", "$preflight.launch.planned_run_id", "planned run ID is required");
@@ -558,19 +656,104 @@
     }
     const requested = buildWorkflowPreflightRequest(setup, selection);
     if (!requested.valid) errors.push(...requested.errors);
+    const normalizedSelection = deepClone(preflight.normalized_selection ?? null);
+    const evaluationSummary = deepClone(preflight.evaluation_summary ?? null);
+    if (requested.valid) {
+      if (!isObject(normalizedSelection)) {
+        addError(errors, "normalized_selection", "$preflight.normalized_selection", "backend-normalized selection is required");
+      } else {
+        exactKeys(normalizedSelection, [
+          "schema_id", "schema_version", "execution_mode", "chapter_ids",
+          "shared_option_id", "d2l_settings_option_id", "evaluation",
+          "hard_total_token_cap", "reserved_cost_cap_usd",
+        ], "$preflight.normalized_selection", errors);
+        const payload = requested.payload;
+        if (normalizedSelection.schema_id !== payload.schema_id || normalizedSelection.schema_version !== payload.schema_version) {
+          addError(errors, "normalized_selection_schema", "$preflight.normalized_selection", "normalized selection schema differs from the request");
+        }
+        ["execution_mode", "chapter_ids", "shared_option_id", "d2l_settings_option_id"].forEach(key => {
+          if (!canonicalEqual(normalizedSelection[key], payload[key])) {
+            addError(errors, "normalized_selection_drift", `$preflight.normalized_selection.${key}`, "normalized selection differs from the sealed request");
+          }
+        });
+        const expectedTokenCap = payload.hard_total_token_cap ?? setup.defaults.hard_total_token_cap ?? null;
+        if (normalizedSelection.hard_total_token_cap !== expectedTokenCap) {
+          addError(errors, "normalized_selection_drift", "$preflight.normalized_selection.hard_total_token_cap", "normalized token cap differs");
+        }
+        const expectedCost = payload.reserved_cost_cap_usd;
+        const observedCost = normalizedSelection.reserved_cost_cap_usd;
+        if (
+          (expectedCost === null) !== (observedCost === null)
+          || (expectedCost !== null && Number(expectedCost) !== Number(observedCost))
+        ) {
+          addError(errors, "normalized_selection_drift", "$preflight.normalized_selection.reserved_cost_cap_usd", "normalized cost cap differs");
+        }
+        const serverEvaluation = normalizedSelection.evaluation;
+        if (!isObject(serverEvaluation)) {
+          addError(errors, "normalized_evaluation", "$preflight.normalized_selection.evaluation", "normalized Evaluation selection is required");
+        } else {
+          exactKeys(serverEvaluation, [
+            "settings_option_id", "selected_chapter_ids", "selected_arm_ids",
+            "selected_scorer_ids", "highlight_pair", "registered_option_sha256",
+            "selection_sha256",
+          ], "$preflight.normalized_selection.evaluation", errors);
+          const evaluationOption = setup.evaluationOptions.find(row => row.id === payload.evaluation.settings_option_id && row.enabled);
+          const expectedBasis = {
+            ...payload.evaluation,
+            registered_option_sha256: evaluationOption?.sha256 ?? null,
+          };
+          const expectedSelectionSha256 = await canonicalSha256(expectedBasis);
+          const expectedEvaluation = {
+            ...expectedBasis,
+            selection_sha256: expectedSelectionSha256,
+          };
+          if (!canonicalEqual(serverEvaluation, expectedEvaluation)) {
+            addError(errors, "normalized_evaluation_drift", "$preflight.normalized_selection.evaluation", "normalized Evaluation selection or hash differs");
+          }
+        }
+      }
+      if (!isObject(evaluationSummary)) {
+        addError(errors, "evaluation_summary", "$preflight.evaluation_summary", "Evaluation preflight summary is required");
+      } else {
+        const normalizedEvaluation = normalizedSelection?.evaluation;
+        if (evaluationSummary.schema_id !== "EvaluationWorkflowSettingsV1" || evaluationSummary.schema_version !== "1.1.0") {
+          addError(errors, "evaluation_summary_schema", "$preflight.evaluation_summary", "EvaluationWorkflowSettingsV1@1.1.0 summary is required");
+        }
+        if (evaluationSummary.settings_status !== "pending_scoring_handoff" || evaluationSummary.settings_sha256 !== null) {
+          addError(errors, "premature_evaluation_settings", "$preflight.evaluation_summary.settings_sha256", "settings hash must remain null until the scoring handoff exists");
+        }
+        if (
+          !isObject(normalizedEvaluation)
+          || evaluationSummary.selection_sha256 !== normalizedEvaluation.selection_sha256
+          || evaluationSummary.registered_option_sha256 !== normalizedEvaluation.registered_option_sha256
+          || !canonicalEqual(evaluationSummary.selected_chapter_ids, normalizedEvaluation.selected_chapter_ids)
+          || !canonicalEqual(evaluationSummary.selected_arm_ids, normalizedEvaluation.selected_arm_ids)
+          || !canonicalEqual(evaluationSummary.selected_scorer_ids, normalizedEvaluation.selected_scorer_ids)
+          || !canonicalEqual(evaluationSummary.highlight_pair, normalizedEvaluation.highlight_pair)
+        ) {
+          addError(errors, "evaluation_summary_drift", "$preflight.evaluation_summary", "Evaluation summary differs from normalized selection");
+        }
+      }
+    }
     return Object.freeze({
       valid: serverValid && serverErrors.length === 0 && errors.length === 0,
       errors: [...serverErrors, ...errors],
       warnings: Array.isArray(preflight.warnings) ? preflight.warnings : [],
       liveStartAllowed: preflight.live_start_allowed === true,
-      normalizedSelection: deepClone(preflight.normalized_selection ?? requested.payload),
+      launchPhase: preflight.launch_phase ?? launch.phase ?? null,
+      scoringStartAllowed: preflight.scoring_start_allowed === true,
+      scoringBlockingReasons: Array.isArray(preflight.scoring_blocking_reasons) ? [...preflight.scoring_blocking_reasons] : [],
+      scoringRuntime: deepClone(preflight.scoring_runtime ?? {}),
+      normalizedSelection,
       sourceSummary: deepClone(preflight.source_summary ?? preflight.source_package ?? {}),
       sharedSummary: deepClone(preflight.shared_summary ?? preflight.shared_settings ?? {}),
       d2lSummary: deepClone(preflight.d2l_summary ?? preflight.d2l_settings ?? {}),
-      evaluationSummary: deepClone(preflight.evaluation_summary ?? preflight.evaluation_settings ?? {}),
+      evaluationSummary,
       bounds: deepClone(preflight.bounds ?? {}),
       identities: deepClone(preflight.identities ?? {}),
       launch: {
+        script: launch.script ?? null,
+        phase: launch.phase ?? null,
         preflightId: launch.preflight_id ?? preflight.preflight_id ?? null,
         preflightSha256: launch.preflight_sha256 ?? preflight.preflight_sha256 ?? null,
         confirmToken: launch.confirm_token ?? preflight.confirm_token ?? null,
@@ -949,6 +1132,59 @@
     return scoring;
   }
 
+  async function validateEvaluationScope(value, scoring, errors) {
+    if (value === null || value === undefined) return null;
+    exactKeys(value, [
+      "schema_id", "schema_version", "settings_option_id",
+      "registered_option_sha256", "selection_sha256",
+      "selected_chapter_ids", "selected_arm_ids", "selected_scorer_ids",
+      "highlight_pair", "scoring_handoff_status", "settings_status",
+      "settings_sha256",
+    ], "$evaluation_scope", errors);
+    if (!isObject(value)) return null;
+    if (value.schema_id !== "EvaluationWorkflowScopeReadV1" || value.schema_version !== "1.0.0") {
+      addError(errors, "evaluation_scope_schema", "$evaluation_scope", "EvaluationWorkflowScopeReadV1@1.0.0 is required");
+    }
+    if (!SHA256_RE.test(String(value.registered_option_sha256 || ""))) addError(errors, "sha256", "$evaluation_scope.registered_option_sha256", "registered option SHA-256 is required");
+    if (!SHA256_RE.test(String(value.selection_sha256 || ""))) addError(errors, "sha256", "$evaluation_scope.selection_sha256", "selection SHA-256 is required");
+    validateOrderedSubset(value.selected_chapter_ids, EVALUATION_CHAPTER_ORDER, 1, "$evaluation_scope.selected_chapter_ids", errors);
+    validateOrderedSubset(value.selected_arm_ids, ARM_ORDER, 2, "$evaluation_scope.selected_arm_ids", errors);
+    validateOrderedSubset(value.selected_scorer_ids, SCORER_ORDER, 1, "$evaluation_scope.selected_scorer_ids", errors);
+    const pair = value.highlight_pair;
+    if (pair !== null && (!isObject(pair) || pair.baseline_arm_id === pair.candidate_arm_id || !value.selected_arm_ids?.includes(pair.baseline_arm_id) || !value.selected_arm_ids?.includes(pair.candidate_arm_id))) {
+      addError(errors, "highlight_pair", "$evaluation_scope.highlight_pair", "highlight pair must contain two selected arms");
+    }
+    const selectionBasis = {
+      settings_option_id: value.settings_option_id,
+      selected_chapter_ids: value.selected_chapter_ids,
+      selected_arm_ids: value.selected_arm_ids,
+      selected_scorer_ids: value.selected_scorer_ids,
+      highlight_pair: value.highlight_pair,
+      registered_option_sha256: value.registered_option_sha256,
+    };
+    try {
+      if (await canonicalSha256(selectionBasis) !== value.selection_sha256) {
+        addError(errors, "evaluation_selection_hash", "$evaluation_scope.selection_sha256", "Evaluation selection hash drift");
+      }
+    } catch (_error) {
+      addError(errors, "evaluation_selection_hash", "$evaluation_scope.selection_sha256", "Evaluation selection cannot be hashed");
+    }
+    const handoffReady = scoring?.handoff !== null;
+    if ((value.scoring_handoff_status === "validated") !== handoffReady) {
+      addError(errors, "evaluation_handoff_status", "$evaluation_scope.scoring_handoff_status", "handoff status differs from validated parent artifacts");
+    }
+    if (value.settings_status === "pending_scoring_handoff") {
+      if (handoffReady || value.settings_sha256 !== null) addError(errors, "premature_evaluation_settings", "$evaluation_scope", "pending handoff requires null settings hash and no handoff");
+    } else if (value.settings_status === "pending_settings_materialization") {
+      if (!handoffReady || value.settings_sha256 !== null) addError(errors, "evaluation_settings_status", "$evaluation_scope", "pending materialization requires a handoff and null settings hash");
+    } else if (value.settings_status === "materialized") {
+      if (!handoffReady || !SHA256_RE.test(String(value.settings_sha256 || ""))) addError(errors, "evaluation_settings_status", "$evaluation_scope", "materialized settings require a handoff and settings SHA-256");
+    } else {
+      addError(errors, "evaluation_settings_status", "$evaluation_scope.settings_status", "unsupported Evaluation settings status");
+    }
+    return deepClone(value);
+  }
+
   function buildStagePlan(stages) {
     let phase = 0;
     let previousComponent = null;
@@ -1012,6 +1248,7 @@
     const scoring = isObject(manifest)
       ? await validateScoringArtifacts(artifactRows, artifactBodies, validatedArtifacts, manifest, errors)
       : { handoff: null, receipt: null, receiptStatus: null, inputSetSha256: null, arms: [], reports: [] };
+    const evaluationScope = await validateEvaluationScope(deepClone(input?.evaluationScope), scoring, errors);
     const usage = validateUsageReadModel(deepClone(input?.usage), manifest, errors);
     const cursor = deepClone(input?.cursor || null);
     if (cursor !== null) {
@@ -1053,6 +1290,7 @@
       stagePlan: valid ? buildStagePlan(manifest?.stages || []) : [],
       artifacts: valid ? artifactRows : [],
       scoring: valid ? scoring : { handoff: null, receipt: null, receiptStatus: null, inputSetSha256: null, arms: [], reports: [] },
+      evaluationScope: valid ? evaluationScope : null,
       usage: valid ? usage : { present: usage.present, calls: [], stageTotals: [], componentTotals: [], workflowTotal: null },
       operationalFacts: valid ? operationalFacts : [],
       latestCheckpoint: valid && checkpoints.length ? checkpoints[checkpoints.length - 1] : null,
@@ -1072,6 +1310,7 @@
       usage: deepClone(envelope?.usage || null),
       cursor: deepClone(envelope?.cursor || null),
       actions: deepClone(envelope?.actions || {}),
+      evaluationScope: deepClone(envelope?.evaluation_scope || envelope?.evaluationScope || null),
       artifactLinks: deepClone(envelope?.artifact_links || envelope?.artifactLinks || {}),
       sourceMode: envelope?.source_mode === "replay" ? "replay" : "live",
     };
@@ -1111,6 +1350,7 @@
       usage: incoming.usage || previous?.usage || null,
       cursor: incoming.cursor || previous?.cursor || null,
       actions: incoming.actions || previous?.actions || {},
+      evaluationScope: incoming.evaluationScope || previous?.evaluationScope || null,
       artifactLinks: { ...(previous?.artifactLinks || {}), ...(incoming.artifactLinks || {}) },
       sourceMode: incoming.sourceMode || previous?.sourceMode || "live",
     };
