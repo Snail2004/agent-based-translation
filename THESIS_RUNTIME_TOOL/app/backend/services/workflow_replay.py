@@ -1425,6 +1425,32 @@ def _usage_read_model(
         stage_totals.extend(d2l_stage_totals)
         component_totals.append(d2l_component_total)
 
+    evaluation_events = [
+        event
+        for event in events
+        if event["component"]["component_id"] == "evaluation"
+        and event["event"] == "usage_snapshot"
+    ]
+    evaluation_artifacts = [
+        item
+        for item in typed_artifacts
+        if item["binding"]["artifact_kind"]
+        == "evaluation_component_usage_snapshot_v1"
+    ]
+    if evaluation_events or evaluation_artifacts:
+        (
+            evaluation_calls,
+            evaluation_stage_totals,
+            evaluation_component_total,
+        ) = _project_evaluation_usage(
+            evaluation_events,
+            evaluation_artifacts,
+            workflow_run_id=workflow_run_id,
+        )
+        calls.extend(evaluation_calls)
+        stage_totals.extend(evaluation_stage_totals)
+        component_totals.append(evaluation_component_total)
+
     workflow_total = _indexed_workflow_usage_total(
         typed_artifacts,
         workflow_run_id=workflow_run_id,
@@ -1444,6 +1470,308 @@ def _usage_read_model(
             "valid": True,
             "authority": "producer_snapshots_and_neutral_relay",
         },
+    }
+
+
+def _project_evaluation_usage(
+    events: list[dict[str, Any]],
+    artifacts: list[dict[str, Any]],
+    *,
+    workflow_run_id: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    from pipeline.eval.contracts_v1 import ContractValidationError
+    from pipeline.eval.evaluation_component_usage_v1 import (
+        validate_evaluation_component_usage_snapshot_chain_v1,
+    )
+
+    if not events or not artifacts or len(events) != len(artifacts):
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "Evaluation usage events and indexed snapshots do not exact-cover each other.",
+            409,
+        )
+    ordered_artifacts = sorted(
+        artifacts,
+        key=lambda item: item["body"].get("snapshot_index", 0),
+    )
+    snapshots = [item["body"] for item in ordered_artifacts]
+    first = snapshots[0]
+    if not isinstance(first, Mapping):
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "Evaluation usage snapshot is not an object.",
+            409,
+        )
+    component_run_id = first.get("component_run_id")
+    stage_rows = first.get("stage_totals")
+    if not isinstance(component_run_id, str) or not isinstance(stage_rows, list):
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "Evaluation usage snapshot identity or stage catalog is malformed.",
+            409,
+        )
+    stage_ids = tuple(
+        row.get("stage_id")
+        for row in stage_rows
+        if isinstance(row, Mapping) and isinstance(row.get("stage_id"), str)
+    )
+    if len(stage_ids) != len(stage_rows):
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "Evaluation usage snapshot has a malformed stage catalog.",
+            409,
+        )
+    try:
+        normalized = list(
+            validate_evaluation_component_usage_snapshot_chain_v1(
+                snapshots,
+                workflow_run_id=workflow_run_id,
+                component_run_id=component_run_id,
+                stage_ids=stage_ids,
+            )
+        )
+    except ContractValidationError as exc:
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            f"Evaluation usage snapshot chain failed validation: {exc}",
+            409,
+        ) from exc
+
+    expected_hashes = []
+    for item, snapshot in zip(ordered_artifacts, normalized, strict=True):
+        binding = item["binding"]
+        snapshot_hash = snapshot["integrity"]["usage_snapshot_sha256"]
+        if (
+            binding["schema_version"] != snapshot["schema_version"]
+            or binding["sha256"] != snapshot_hash
+            or binding["sha256_kind"]
+            != "canonical:EvaluationComponentUsageSnapshotV1@1.0.0"
+        ):
+            raise WorkflowReplayError(
+                "workflow_usage_binding_drift",
+                "Evaluation usage snapshot differs from its indexed binding.",
+                409,
+            )
+        expected_hashes.append(snapshot_hash)
+
+    calls = []
+    cache_counts: dict[str, dict[str, int]] = {
+        stage_id: {"hit": 0, "miss": 0} for stage_id in stage_ids
+    }
+    for event, snapshot, expected_hash in zip(
+        events, normalized, expected_hashes, strict=True
+    ):
+        payload = event["payload"]
+        snapshot_binding = (
+            payload.get("snapshot") if isinstance(payload, Mapping) else None
+        )
+        if (
+            not isinstance(snapshot_binding, Mapping)
+            or snapshot_binding.get("artifact_kind")
+            != "evaluation_component_usage_snapshot_v1"
+            or snapshot_binding.get("schema_version")
+            != snapshot["schema_version"]
+            or snapshot_binding.get("sha256") != expected_hash
+            or snapshot_binding.get("sha256_kind")
+            != "canonical:EvaluationComponentUsageSnapshotV1@1.0.0"
+            or event["component"]["component_run_id"]
+            != snapshot["component_run_id"]
+            or event["component"]["component_attempt_id"]
+            != snapshot["component_attempt_id"]
+            or event["component"]["component_attempt_index"]
+            != snapshot["component_attempt_index"]
+            or event["component"]["component_seq"]
+            != snapshot["accepted_through_component_seq"]
+        ):
+            raise WorkflowReplayError(
+                "workflow_usage_binding_drift",
+                "Evaluation usage event differs from its producer-sealed snapshot.",
+                409,
+            )
+
+        current = snapshot["current_record"]
+        if current["kind"] == "final":
+            continue
+        evidence = current["evidence"]
+        stage_id = f"evaluation.{evidence['stage_id']}"
+        if current["kind"] == "usage":
+            usage = evidence["attempt_usage"]
+            calls.append(
+                {
+                    "call_id": f"evaluation:{usage['attempt_usage_id']}",
+                    "attempt_usage_id": usage["attempt_usage_id"],
+                    "cache_observation_id": None,
+                    "component_id": "evaluation",
+                    "component_run_id": snapshot["component_run_id"],
+                    "component_attempt_id": snapshot["component_attempt_id"],
+                    "component_attempt_index": snapshot[
+                        "component_attempt_index"
+                    ],
+                    "component_seq": event["component"]["component_seq"],
+                    "stage_id": stage_id,
+                    "agent": evidence["role_id"],
+                    "work_id": snapshot["current_work_id"],
+                    "logical_request_id": usage["logical_request_id"],
+                    "semantic_attempt_index": usage["semantic_attempt_index"],
+                    "transport_retry_ordinal": usage[
+                        "transport_retry_ordinal"
+                    ],
+                    "physical_attempt_index": usage["physical_attempt_index"],
+                    "provider_id": None,
+                    "source_id": usage["source_id"],
+                    "source_revision": usage["source_revision"],
+                    "requested_model_id": usage["requested_model_id"],
+                    "observed_model_id": usage["observed_model_id"],
+                    "provider_call_avoided": False,
+                    "finish_reason": usage["finish_reason"],
+                    "outcome": usage["outcome"],
+                    "usage": {
+                        "prompt_tokens": usage["prompt_tokens"],
+                        "cached_input_tokens": usage["cached_input_tokens"],
+                        "completion_tokens": usage["completion_tokens"],
+                        "reasoning_tokens": usage["reasoning_tokens"],
+                        "total_tokens": usage["total_tokens"],
+                        "latency_ms": usage["latency_ms"],
+                        "cost_usd": usage["cost_usd"],
+                        "cost_status": usage["cost_status"],
+                        "currency": "USD",
+                    },
+                }
+            )
+            continue
+
+        observation = evidence["cache_observation"]
+        cache_status = {
+            "bypassed": "bypass",
+            "not_checked": "unknown",
+        }.get(observation["lookup_status"], observation["lookup_status"])
+        cache_mechanism = {
+            "application_response_cache": "local_exact_cache",
+            "checkpoint_stage_reuse": "local_exact_cache",
+            "retrieval_context_cache": "local_exact_cache",
+        }.get(observation["cache_kind"], observation["cache_kind"])
+        if cache_status in cache_counts[evidence["stage_id"]]:
+            cache_counts[evidence["stage_id"]][cache_status] += 1
+        calls.append(
+            {
+                "call_id": f"evaluation:{observation['observation_id']}",
+                "attempt_usage_id": None,
+                "cache_observation_id": observation["observation_id"],
+                "component_id": "evaluation",
+                "component_run_id": snapshot["component_run_id"],
+                "component_attempt_id": snapshot["component_attempt_id"],
+                "component_attempt_index": snapshot["component_attempt_index"],
+                "component_seq": event["component"]["component_seq"],
+                "stage_id": stage_id,
+                "agent": evidence["role_id"],
+                "work_id": snapshot["current_work_id"],
+                "logical_request_id": observation["logical_request_id"],
+                "semantic_attempt_index": None,
+                "transport_retry_ordinal": None,
+                "physical_attempt_index": None,
+                "provider_id": None,
+                "source_id": evidence["execution_target"]["source_id"],
+                "source_revision": evidence["execution_target"][
+                    "source_revision"
+                ],
+                "requested_model_id": evidence["execution_target"][
+                    "requested_model_id"
+                ],
+                "observed_model_id": evidence["execution_target"][
+                    "observed_model_id"
+                ],
+                "provider_call_avoided": observation[
+                    "provider_call_avoided"
+                ],
+                "finish_reason": None,
+                "outcome": None,
+                "usage": {
+                    "prompt_tokens": None,
+                    "cached_input_tokens": None,
+                    "completion_tokens": None,
+                    "reasoning_tokens": None,
+                    "total_tokens": None,
+                    "latency_ms": None,
+                    "cache_status": cache_status,
+                    "cache_mechanism": cache_mechanism,
+                    "cost_usd": 0.0,
+                    "cost_status": "not_applicable",
+                    "currency": "USD",
+                },
+            }
+        )
+
+    latest = normalized[-1]
+    stage_totals = [
+        _project_evaluation_total(
+            row,
+            component_run_id=latest["component_run_id"],
+            component_attempt_id=latest["component_attempt_id"],
+            component_attempt_index=latest["component_attempt_index"],
+            snapshot_index=latest["snapshot_index"],
+            accepted_through_component_seq=latest[
+                "accepted_through_component_seq"
+            ],
+            stage_id=f"evaluation.{row['stage_id']}",
+            snapshot_sha256=latest["integrity"]["usage_snapshot_sha256"],
+            cache_counts=cache_counts[row["stage_id"]],
+        )
+        for row in latest["stage_totals"]
+    ]
+    component_cache_counts = {
+        key: sum(stage[key] for stage in cache_counts.values())
+        for key in ("hit", "miss")
+    }
+    component_total = _project_evaluation_total(
+        latest["component_totals"],
+        component_run_id=latest["component_run_id"],
+        component_attempt_id=latest["component_attempt_id"],
+        component_attempt_index=latest["component_attempt_index"],
+        snapshot_index=latest["snapshot_index"],
+        accepted_through_component_seq=latest[
+            "accepted_through_component_seq"
+        ],
+        stage_id=None,
+        snapshot_sha256=latest["integrity"]["usage_snapshot_sha256"],
+        cache_counts=component_cache_counts,
+    )
+    return calls, stage_totals, component_total
+
+
+def _project_evaluation_total(
+    totals: Mapping[str, Any],
+    *,
+    component_run_id: str,
+    component_attempt_id: str,
+    component_attempt_index: int,
+    snapshot_index: int,
+    accepted_through_component_seq: int,
+    stage_id: str | None,
+    snapshot_sha256: str,
+    cache_counts: Mapping[str, int],
+) -> dict[str, Any]:
+    return {
+        "component_id": "evaluation",
+        "component_run_id": component_run_id,
+        "component_attempt_id": component_attempt_id,
+        "component_attempt_index": component_attempt_index,
+        "stage_id": stage_id,
+        "snapshot_seq": snapshot_index,
+        "accepted_through_component_seq": accepted_through_component_seq,
+        "physical_call_count": totals["physical_attempt_count"],
+        "cache_observation_count": totals["cache_observation_count"],
+        "prompt_tokens": totals["prompt_tokens"],
+        "completion_tokens": totals["completion_tokens"],
+        "reasoning_tokens": totals["reasoning_tokens"],
+        "cached_input_tokens": totals["cached_input_tokens"],
+        "total_tokens": totals["total_tokens"],
+        "cache_hit_count": cache_counts["hit"],
+        "cache_miss_count": cache_counts["miss"],
+        "unknown_attempt_count": totals["unknown_attempt_count"],
+        "cost_status": totals["cost_status"],
+        "cost_usd": totals["cost_usd"],
+        "currency": "USD",
+        "snapshot_sha256": snapshot_sha256,
     }
 
 

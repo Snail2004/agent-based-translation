@@ -3042,6 +3042,213 @@ def test_workflow_usage_read_model_projects_validated_d2l_snapshots():
     assert rejected.value.code == "workflow_usage_invalid"
 
 
+def test_workflow_usage_read_model_projects_validated_evaluation_snapshots():
+    from pipeline.eval.evaluation_component_usage_v1 import (
+        EvaluationComponentUsageTrackerV1,
+    )
+    from services.workflow_replay import (
+        WorkflowReplayError,
+        _usage_read_model,
+    )
+
+    workflow_run_id = "workflow_eval_usage_v1"
+    component_run_id = "evaluation_usage_v1"
+    component_attempt_id = "evalcomp_attempt_0001"
+    stage_ids = ("preflight", "aggregation")
+    target = {
+        "source_id": "google-official",
+        "source_revision": "row1-v3",
+        "physical_quota_bucket_id": "gemini-free-row1",
+        "requested_model_id": "gemini-3.5-flash",
+        "observed_model_id": "gemini-3.5-flash",
+    }
+    usage = {
+        "schema_version": "llm_attempt_usage_v1",
+        "attempt_usage_id": "eval_usage_001",
+        "seal_sha256": "1" * 64,
+        "logical_request_id": "eval_request_001",
+        "logical_request_sha256": "2" * 64,
+        "semantic_attempt_index": 1,
+        "transport_retry_ordinal": 0,
+        "physical_attempt_index": 1,
+        "request_id": "provider-request-001",
+        "source_id": target["source_id"],
+        "source_revision": target["source_revision"],
+        "physical_quota_bucket_id": target["physical_quota_bucket_id"],
+        "requested_model_id": target["requested_model_id"],
+        "observed_model_id": target["observed_model_id"],
+        "started_at_utc": "2026-07-23T00:00:00.000Z",
+        "finished_at_utc": "2026-07-23T00:00:00.100Z",
+        "latency_ms": 100,
+        "outcome": "succeeded",
+        "finish_reason": "stop",
+        "prompt_tokens": 10,
+        "cached_input_tokens": 0,
+        "completion_tokens": 5,
+        "reasoning_tokens": 0,
+        "total_tokens": 15,
+        "cost_usd": None,
+        "cost_status": "unknown",
+        "cost_provenance": {
+            "kind": "unavailable",
+            "reference_id": None,
+            "reference_sha256": None,
+        },
+        "provider_usage_sha256": "3" * 64,
+        "error_id": None,
+    }
+    cache = {
+        "schema_version": "cache_observation_v1",
+        "observation_id": "eval_cache_001",
+        "seal_sha256": "4" * 64,
+        "logical_request_id": "eval_request_001",
+        "logical_request_sha256": "2" * 64,
+        "attempt_usage_id": None,
+        "cache_kind": "none",
+        "cache_namespace": "evaluation.cache.fixture",
+        "cache_key_sha256": None,
+        "lookup_status": "not_checked",
+        "provider_call_avoided": False,
+        "provider_cached_input_tokens": None,
+        "reused_artifact_sha256": None,
+        "producer_seal_sha256": None,
+        "producer_input_bindings_sha256": None,
+        "producer_artifact_receipt_sha256": None,
+        "observed_at_utc": "2026-07-23T00:00:00.101Z",
+    }
+    tracker = EvaluationComponentUsageTrackerV1(
+        workflow_run_id=workflow_run_id,
+        component_run_id=component_run_id,
+        stage_ids=stage_ids,
+    )
+    first = tracker.accept_usage(
+        usage,
+        stage_id="preflight",
+        role_id="evaluation.sf_bt.semantic_judge",
+        source_ledger_ref="ledgers/shared_llm_attempts.sqlite",
+        execution_target=target,
+        component_attempt_id=component_attempt_id,
+        component_attempt_index=1,
+        accepted_through_component_seq=3,
+        current_work_id="chapter_001",
+        generated_at="2026-07-23T00:00:01Z",
+    )
+    second = tracker.accept_cache_observation(
+        cache,
+        stage_id="preflight",
+        role_id="evaluation.sf_bt.semantic_judge",
+        source_ledger_ref="ledgers/shared_llm_attempts.sqlite",
+        execution_target=target,
+        component_attempt_id=component_attempt_id,
+        component_attempt_index=1,
+        accepted_through_component_seq=4,
+        current_work_id="chapter_001",
+        generated_at="2026-07-23T00:00:02Z",
+    )
+    final = tracker.finalize(
+        stage_id="aggregation",
+        component_attempt_id=component_attempt_id,
+        component_attempt_index=1,
+        accepted_through_component_seq=5,
+        generated_at="2026-07-23T00:00:03Z",
+    )
+    snapshots = [first, second, final]
+    assert all(snapshot is not None for snapshot in snapshots)
+
+    events = []
+    artifacts = []
+    for snapshot in snapshots:
+        digest = snapshot["integrity"]["usage_snapshot_sha256"]
+        local_binding = {
+            "artifact_ref": f"usage_snapshots/{digest}.json",
+            "artifact_kind": "evaluation_component_usage_snapshot_v1",
+            "schema_version": "1.0.0",
+            "sha256": digest,
+            "sha256_kind": (
+                "canonical:EvaluationComponentUsageSnapshotV1@1.0.0"
+            ),
+        }
+        events.append(
+            {
+                "event": "usage_snapshot",
+                "component": {
+                    "component_id": "evaluation",
+                    "component_run_id": component_run_id,
+                    "component_attempt_id": component_attempt_id,
+                    "component_attempt_index": 1,
+                    "component_seq": snapshot[
+                        "accepted_through_component_seq"
+                    ],
+                },
+                "payload": {"snapshot": local_binding},
+            }
+        )
+        artifacts.append(
+            {
+                "binding": {
+                    **local_binding,
+                    "artifact_ref": (
+                        f"components/evaluation/{component_run_id}/artifacts/"
+                        f"usage_snapshots/{digest}.json"
+                    ),
+                },
+                "body": snapshot,
+            }
+        )
+
+    projected = _usage_read_model(
+        events=events,
+        typed_artifacts=artifacts,
+        workflow_run_id=workflow_run_id,
+    )
+    assert projected is not None
+    assert [row["call_id"] for row in projected["calls"]] == [
+        "evaluation:eval_usage_001",
+        "evaluation:eval_cache_001",
+    ]
+    assert projected["calls"][0]["stage_id"] == "evaluation.preflight"
+    assert projected["calls"][0]["usage"]["total_tokens"] == 15
+    assert projected["calls"][0]["usage"]["cost_usd"] is None
+    assert projected["calls"][1]["usage"]["cache_status"] == "unknown"
+    assert projected["component_totals"] == [
+        {
+            "component_id": "evaluation",
+            "component_run_id": component_run_id,
+            "component_attempt_id": component_attempt_id,
+            "component_attempt_index": 1,
+            "stage_id": None,
+            "snapshot_seq": 3,
+            "accepted_through_component_seq": 5,
+            "physical_call_count": 1,
+            "cache_observation_count": 1,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "reasoning_tokens": 0,
+            "cached_input_tokens": 0,
+            "total_tokens": 15,
+            "cache_hit_count": 0,
+            "cache_miss_count": 0,
+            "unknown_attempt_count": 0,
+            "cost_status": "partial_unknown",
+            "cost_usd": None,
+            "currency": "USD",
+            "snapshot_sha256": final["integrity"][
+                "usage_snapshot_sha256"
+            ],
+        }
+    ]
+
+    tampered = json.loads(json.dumps(events))
+    tampered[0]["payload"]["snapshot"]["sha256"] = "0" * 64
+    with pytest.raises(WorkflowReplayError) as rejected:
+        _usage_read_model(
+            events=tampered,
+            typed_artifacts=artifacts,
+            workflow_run_id=workflow_run_id,
+        )
+    assert rejected.value.code == "workflow_usage_binding_drift"
+
+
 def test_route_workflow_replay_long_poll_does_not_revalidate_unchanged_parent(
     tmp_path,
     monkeypatch,
