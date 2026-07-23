@@ -23,6 +23,10 @@ from pipeline.eval.benchmark_v1 import (
     validate_benchmark_preflight_v1,
 )
 from pipeline.eval.common_input_v1 import (
+    AdmissionPolicyIdentityV1,
+    CanonicalComponentIdentityV1,
+    CanonicalProjectionIdentityV1,
+    CanonicalSourcePackageBindingV1,
     CommonArmV1,
     CommonBlockV1,
     CommonEvaluationInputV1,
@@ -67,6 +71,49 @@ def _evidence(sources: list[CommonSourceSnapshotV1]) -> list[dict]:
             "source_evidence_kind": "d2l_evaluation_package" if index == 2 else "google_translate_source_input",
         }
         for index, source in enumerate(sources)
+    ]
+
+
+def _canonical_sources() -> list[CommonSourceSnapshotV1]:
+    binding = CanonicalSourcePackageBindingV1(
+        project_id="d2l",
+        document_id="d2l",
+        document=CanonicalComponentIdentityV1("1.5.0", "1" * 64),
+        structure=CanonicalComponentIdentityV1("structure-v1", "2" * 64),
+        asset_manifest=CanonicalComponentIdentityV1(
+            "canonical_asset_manifest_v1", "3" * 64
+        ),
+        admitted_projection=CanonicalProjectionIdentityV1(
+            "admitted_projection_v1", "4" * 64
+        ),
+        admission_policy=AdmissionPolicyIdentityV1(
+            "canonical_source_admission", "1.0.0", "5" * 64
+        ),
+    )
+    return [
+        CommonSourceSnapshotV1(
+            source_schema_id="CanonicalSourcePackageV1",
+            source_schema_version="1.5.0",
+            source_binding=binding,
+            blocks=(
+                CommonBlockV1(
+                    "d2l_preliminaries_b001",
+                    "d2l_preliminaries",
+                    0,
+                    "paragraph",
+                    "Canonical source.",
+                    "translate",
+                ),
+                CommonBlockV1(
+                    "d2l_preliminaries_b002",
+                    "d2l_preliminaries",
+                    1,
+                    "code",
+                    "x = 1",
+                    "preserve",
+                ),
+            ),
+        )
     ]
 
 
@@ -193,6 +240,47 @@ def test_marked_markdown_keeps_full_evidence_hash_and_detects_preserve_violation
         producer_code_commit=COMMIT,
     )
     assert report["status"] == "ready"
+
+
+def test_partial_marked_capture_cannot_cover_a_later_selected_chapter() -> None:
+    sources = _sources()
+    source = sources[-1]
+    partial = "".join(
+        f"[[B{number:04d}]]\nEarlier material\n" for number in range(1, 16)
+    ).encode()
+    partial_overlay = build_marked_markdown_overlay_v1(
+        source,
+        partial,
+        created_at=NOW,
+        producer_code_commit=COMMIT,
+        model_profile_id="gpt-web",
+        model_profile_sha256="4" * 64,
+        logical_run_id="partial-web-run",
+        attempt_run_id="partial-web-attempt",
+    )
+    assert partial_overlay["coverage"]["missing_count"] == len(source.blocks)
+
+    overlays = [
+        partial_overlay
+        if row["arm"]["arm_id"] == "llm_lc"
+        and row["source"]["chapter_id"] == source.blocks[0].chapter_id
+        else row
+        for row in _all_ready_overlays(sources)
+    ]
+    report = build_benchmark_preflight_v1(
+        _manifest(sources),
+        sources,
+        overlays,
+        created_at=NOW,
+        producer_code_commit=COMMIT,
+    )
+    assert report["status"] == "blocked"
+    assert any(
+        row["code"] == "nonready_rows"
+        and row["arm_id"] == "llm_lc"
+        and row["chapter_id"] == source.blocks[0].chapter_id
+        for row in report["blockers"]
+    )
 
 
 def test_preflight_blocks_missing_and_review_held_arms_without_calling_scorers() -> None:
@@ -339,3 +427,122 @@ def test_manifest_and_preflight_accept_registered_bounded_selection() -> None:
         "ready_arm_chapter_count": 6,
         "blocker_count": 0,
     }
+
+
+def test_canonical_manifest_and_overlay_keep_explicit_source_binding() -> None:
+    sources = _canonical_sources()
+    manifest = build_benchmark_manifest_v1(
+        sources,
+        [
+            {
+                "chapter_id": "d2l_preliminaries",
+                "source_artifact_id": "canonical-source-package",
+                "source_artifact_sha256": "a" * 64,
+                "source_evidence_kind": "canonical_source_package_v1",
+            }
+        ],
+        benchmark_id="canonical-benchmark",
+        created_at=NOW,
+        producer_code_commit=COMMIT,
+        selected_chapter_ids=("d2l_preliminaries",),
+        selected_arm_ids=("S0", "S1"),
+    )
+    overlay = build_overlay_from_common_arm_v1(
+        _common(sources[0]),
+        chapter_id="d2l_preliminaries",
+        arm_id="S0",
+        benchmark_role="pipeline_ablation",
+        created_at=NOW,
+        producer_code_commit=COMMIT,
+    )
+
+    assert manifest["schema_version"] == "1.2.0"
+    assert manifest["scope"]["source_binding"]["binding_kind"] == (
+        "canonical_source_package_v1"
+    )
+    assert "source_db_sha256" not in manifest["scope"]
+    assert overlay["source"]["source_binding"] == manifest["scope"]["source_binding"]
+    assert "source_db_sha256" not in overlay["source"]
+
+
+def test_canonical_manifest_rejects_mixed_foreign_and_resealed_tamper() -> None:
+    canonical = _canonical_sources()[0]
+    legacy = _sources()[1]
+    with pytest.raises(ContractValidationError, match="source-binding kind"):
+        build_benchmark_manifest_v1(
+            [canonical, legacy],
+            [
+                {
+                    "chapter_id": "d2l_preliminaries",
+                    "source_artifact_id": "canonical",
+                    "source_artifact_sha256": "a" * 64,
+                    "source_evidence_kind": "canonical_source_package_v1",
+                },
+                {
+                    "chapter_id": "d2l_linear_networks",
+                    "source_artifact_id": "legacy",
+                    "source_artifact_sha256": "b" * 64,
+                    "source_evidence_kind": "d2l_evaluation_package",
+                },
+            ],
+            benchmark_id="mixed",
+            created_at=NOW,
+            producer_code_commit=COMMIT,
+            selected_chapter_ids=(
+                "d2l_preliminaries",
+                "d2l_linear_networks",
+            ),
+            selected_arm_ids=("S0", "S1"),
+        )
+
+    manifest = build_benchmark_manifest_v1(
+        [canonical],
+        [
+            {
+                "chapter_id": "d2l_preliminaries",
+                "source_artifact_id": "canonical",
+                "source_artifact_sha256": "a" * 64,
+                "source_evidence_kind": "canonical_source_package_v1",
+            }
+        ],
+        benchmark_id="canonical-tamper",
+        created_at=NOW,
+        producer_code_commit=COMMIT,
+        selected_chapter_ids=("d2l_preliminaries",),
+        selected_arm_ids=("S0", "S1"),
+    )
+    from pipeline.eval.benchmark_v1 import _MANIFEST_POLICY
+    from pipeline.eval.contracts_v1 import seal_payload
+
+    tampered = copy.deepcopy(manifest)
+    tampered["chapters"][0]["source_binding"]["document"]["sha256"] = "f" * 64
+    tampered["integrity"]["manifest_sha256"] = "0" * 64
+    tampered = seal_payload(
+        tampered,
+        policy=_MANIFEST_POLICY,
+        hash_path=("integrity", "manifest_sha256"),
+    )
+    with pytest.raises(ContractValidationError, match="canonical source package"):
+        validate_benchmark_manifest_v1(tampered)
+
+    relabeled = copy.deepcopy(manifest)
+    relabeled["scope"].pop("source_binding")
+    relabeled["scope"]["source_db_sha256"] = "1" * 64
+    relabeled["chapters"][0].pop("source_binding")
+    relabeled["chapters"][0]["source_db_sha256"] = "1" * 64
+    relabeled["chapters"][0]["runtime_manifest_sha256"] = "2" * 64
+    relabeled["integrity"]["manifest_sha256"] = "0" * 64
+    relabeled = seal_payload(
+        relabeled,
+        policy=_MANIFEST_POLICY,
+        hash_path=("integrity", "manifest_sha256"),
+    )
+    relabeled = validate_benchmark_manifest_v1(relabeled)
+    with pytest.raises(ContractValidationError, match="source drift"):
+        build_benchmark_preflight_v1(
+            relabeled,
+            [canonical],
+            [],
+            created_at=NOW,
+            producer_code_commit=COMMIT,
+        )

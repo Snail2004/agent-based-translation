@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from pipeline.eval.common_input_v1 import (
+    CanonicalSourcePackageBindingV1,
     CommonArmV1,
     CommonBlockV1,
     CommonEvaluationInputV1,
@@ -17,6 +18,7 @@ from pipeline.eval.common_input_v1 import (
     CommonTranslationV1,
     LegacyD2LSourceBindingV1,
     source_binding_to_dict,
+    validate_source_binding,
 )
 from pipeline.eval.contracts_v1 import (
     CanonicalPolicy,
@@ -63,6 +65,7 @@ __all__ = [
     "project_d2l_source_input_v1",
     "slice_common_input_chapter_v1",
     "source_read_model_sha256_v1",
+    "validate_benchmark_source_read_models_v1",
     "validate_benchmark_manifest_v1",
     "validate_benchmark_overlay_v1",
     "validate_benchmark_preflight_v1",
@@ -72,7 +75,9 @@ __all__ = [
 BENCHMARK_MANIFEST_SCHEMA_ID = "EvaluationBenchmarkManifestV1"
 BENCHMARK_OVERLAY_SCHEMA_ID = "EvaluationBenchmarkArmOverlayV1"
 BENCHMARK_PREFLIGHT_SCHEMA_ID = "EvaluationBenchmarkPreflightV1"
-SCHEMA_VERSION = "1.1.0"
+SCHEMA_VERSION = "1.2.0"
+LEGACY_SCHEMA_VERSION = "1.1.0"
+_SUPPORTED_SCHEMA_VERSIONS = {LEGACY_SCHEMA_VERSION, SCHEMA_VERSION}
 
 BENCHMARK_CHAPTER_IDS_V1 = (
     "d2l_preliminaries",
@@ -225,19 +230,52 @@ def build_benchmark_manifest_v1(
             "$.source_evidence",
             "source evidence must exactly cover selected chapters in order",
         )
+    for source in source_by_chapter.values():
+        _validate_source_snapshot(source)
     projects = {row.project_id for row in source_by_chapter.values()}
     documents = {row.document_id for row in source_by_chapter.values()}
-    source_dbs = {
-        row.source_binding.source_db_sha256
+    binding_kinds = {
+        source_binding_to_dict(row.source_binding)["binding_kind"]
         for row in source_by_chapter.values()
-        if isinstance(row.source_binding, LegacyD2LSourceBindingV1)
     }
-    if projects != {"d2l"} or documents != {"d2l"} or len(source_dbs) != 1:
+    if projects != {"d2l"} or documents != {"d2l"} or len(binding_kinds) != 1:
         raise ContractValidationError(
             "benchmark_source_identity",
             "$.sources",
-            "locked benchmark requires one D2L document and one frozen source DB",
+            "locked benchmark requires one D2L document and one source-binding kind",
         )
+    binding_kind = next(iter(binding_kinds))
+    if binding_kind == "legacy_d2l":
+        source_dbs = {
+            row.source_binding.source_db_sha256
+            for row in source_by_chapter.values()
+            if isinstance(row.source_binding, LegacyD2LSourceBindingV1)
+        }
+        if len(source_dbs) != 1:
+            raise ContractValidationError(
+                "benchmark_source_identity",
+                "$.sources",
+                "legacy benchmark chapters must share one frozen source DB",
+            )
+        scope_source = {
+            "source_db_sha256": next(iter(source_dbs)),
+        }
+    else:
+        canonical_bindings = [
+            source_binding_to_dict(row.source_binding)
+            for row in source_by_chapter.values()
+        ]
+        if any(row != canonical_bindings[0] for row in canonical_bindings[1:]):
+            raise ContractValidationError(
+                "benchmark_source_identity",
+                "$.sources",
+                "canonical benchmark chapters must share one exact source package binding",
+            )
+        scope_source = {
+            "source_binding": source_binding_to_dict(
+                next(iter(source_by_chapter.values())).source_binding
+            )
+        }
     chapters = []
     for ordinal, chapter_id in enumerate(chapter_ids):
         source = source_by_chapter[chapter_id]
@@ -248,8 +286,7 @@ def build_benchmark_manifest_v1(
                 "ordinal": ordinal,
                 "source_schema_id": source.source_schema_id,
                 "source_schema_version": source.source_schema_version,
-                "source_db_sha256": source.source_binding.source_db_sha256,
-                "runtime_manifest_sha256": source.source_binding.runtime_manifest_sha256,
+                **_manifest_source_identity(source),
                 "source_read_model_sha256": source_read_model_sha256_v1(source),
                 "source_artifact_id": evidence["source_artifact_id"],
                 "source_artifact_sha256": evidence["source_artifact_sha256"],
@@ -275,7 +312,7 @@ def build_benchmark_manifest_v1(
             "profile_scope": "technical_d2l",
             "project_id": "d2l",
             "document_id": "d2l",
-            "source_db_sha256": next(iter(source_dbs)),
+            **scope_source,
             "chapter_count": len(chapters),
             "block_count": sum(row["block_count"] for row in chapters),
             "contiguous_source_order": _is_contiguous_global_order(
@@ -317,14 +354,25 @@ def validate_benchmark_manifest_v1(payload: Mapping[str, Any]) -> dict[str, Any]
         },
         path="$",
     )
+    schema_version = require_enum(
+        root["schema_version"],
+        _SUPPORTED_SCHEMA_VERSIONS,
+        path="$.schema_version",
+    )
     normalized = {
         "schema_id": require_enum(root["schema_id"], {BENCHMARK_MANIFEST_SCHEMA_ID}, path="$.schema_id"),
-        "schema_version": require_enum(root["schema_version"], {SCHEMA_VERSION}, path="$.schema_version"),
+        "schema_version": schema_version,
         "benchmark_id": _identifier(root["benchmark_id"], "$.benchmark_id"),
         "created_at": require_rfc3339(root["created_at"], path="$.created_at"),
-        "producer": _validate_component(root["producer"], "evaluation_benchmark_manifest_v1"),
-        "scope": _validate_scope(root["scope"]),
-        "chapters": _validate_manifest_chapters(root["chapters"]),
+        "producer": _validate_component(
+            root["producer"],
+            "evaluation_benchmark_manifest_v1",
+            schema_version=schema_version,
+        ),
+        "scope": _validate_scope(root["scope"], schema_version=schema_version),
+        "chapters": _validate_manifest_chapters(
+            root["chapters"], schema_version=schema_version
+        ),
         "arm_contracts": _validate_arm_contracts(root["arm_contracts"]),
         "integrity": _validate_integrity(root["integrity"], "manifest_sha256"),
     }
@@ -332,11 +380,25 @@ def validate_benchmark_manifest_v1(payload: Mapping[str, Any]) -> dict[str, Any]
         raise ContractValidationError("coverage", "$.scope.chapter_count", "chapter count drift")
     if normalized["scope"]["block_count"] != sum(row["block_count"] for row in normalized["chapters"]):
         raise ContractValidationError("coverage", "$.scope.block_count", "block count drift")
-    if normalized["scope"]["source_db_sha256"] != normalized["chapters"][0]["source_db_sha256"] or any(
-        row["source_db_sha256"] != normalized["scope"]["source_db_sha256"]
-        for row in normalized["chapters"]
-    ):
-        raise ContractValidationError("source_identity", "$.chapters", "source DB identity drift")
+    scope_binding = _serialized_manifest_source_identity(normalized["scope"])
+    chapter_bindings = [
+        _serialized_manifest_source_identity(row) for row in normalized["chapters"]
+    ]
+    if scope_binding["binding_kind"] == "legacy_d2l":
+        if any(
+            row["binding_kind"] != "legacy_d2l"
+            or row["source_db_sha256"] != scope_binding["source_db_sha256"]
+            for row in chapter_bindings
+        ):
+            raise ContractValidationError(
+                "source_identity", "$.chapters", "legacy source DB identity drift"
+            )
+    elif any(row != scope_binding for row in chapter_bindings):
+        raise ContractValidationError(
+            "source_identity",
+            "$.chapters",
+            "canonical source package identity drift",
+        )
     chapter_ids = tuple(row["chapter_id"] for row in normalized["chapters"])
     arm_ids = tuple(row["arm_id"] for row in normalized["arm_contracts"])
     expected_kind = (
@@ -368,6 +430,20 @@ def validate_benchmark_manifest_v1(payload: Mapping[str, Any]) -> dict[str, Any]
     canonical = canonicalize(normalized, policy=_MANIFEST_POLICY)
     assert isinstance(canonical, dict)
     return canonical
+
+
+def validate_benchmark_source_read_models_v1(
+    benchmark_manifest: Mapping[str, Any],
+    sources: Sequence[CommonSourceSnapshotV1],
+) -> tuple[CommonSourceSnapshotV1, ...]:
+    """Bind explicit source read models to a sealed benchmark manifest."""
+
+    manifest = validate_benchmark_manifest_v1(benchmark_manifest)
+    source_by_chapter = _source_map(sources)
+    for source in source_by_chapter.values():
+        _validate_source_snapshot(source)
+    _validate_sources_against_manifest(source_by_chapter, manifest)
+    return tuple(source_by_chapter.values())
 
 
 def build_overlay_from_common_arm_v1(
@@ -563,14 +639,25 @@ def validate_benchmark_overlay_v1(payload: Mapping[str, Any]) -> dict[str, Any]:
         },
         path="$",
     )
+    schema_version = require_enum(
+        root["schema_version"],
+        _SUPPORTED_SCHEMA_VERSIONS,
+        path="$.schema_version",
+    )
     normalized = {
         "schema_id": require_enum(root["schema_id"], {BENCHMARK_OVERLAY_SCHEMA_ID}, path="$.schema_id"),
-        "schema_version": require_enum(root["schema_version"], {SCHEMA_VERSION}, path="$.schema_version"),
+        "schema_version": schema_version,
         "overlay_id": _identifier(root["overlay_id"], "$.overlay_id"),
         "created_at": require_rfc3339(root["created_at"], path="$.created_at"),
-        "producer": _validate_component(root["producer"], "evaluation_benchmark_overlay_v1"),
+        "producer": _validate_component(
+            root["producer"],
+            "evaluation_benchmark_overlay_v1",
+            schema_version=schema_version,
+        ),
         "authority": _validate_authority(root["authority"]),
-        "source": _validate_overlay_source(root["source"]),
+        "source": _validate_overlay_source(
+            root["source"], schema_version=schema_version
+        ),
         "arm": _validate_overlay_arm(root["arm"]),
         "rows": _validate_overlay_rows(root["rows"]),
         "coverage": _validate_status_counts(root["coverage"]),
@@ -717,12 +804,21 @@ def validate_benchmark_preflight_v1(payload: Mapping[str, Any]) -> dict[str, Any
         },
         path="$",
     )
+    schema_version = require_enum(
+        root["schema_version"],
+        _SUPPORTED_SCHEMA_VERSIONS,
+        path="$.schema_version",
+    )
     normalized = {
         "schema_id": require_enum(root["schema_id"], {BENCHMARK_PREFLIGHT_SCHEMA_ID}, path="$.schema_id"),
-        "schema_version": require_enum(root["schema_version"], {SCHEMA_VERSION}, path="$.schema_version"),
+        "schema_version": schema_version,
         "preflight_id": _identifier(root["preflight_id"], "$.preflight_id"),
         "created_at": require_rfc3339(root["created_at"], path="$.created_at"),
-        "producer": _validate_component(root["producer"], "evaluation_benchmark_preflight_v1"),
+        "producer": _validate_component(
+            root["producer"],
+            "evaluation_benchmark_preflight_v1",
+            schema_version=schema_version,
+        ),
         "benchmark_manifest_sha256": require_sha256(root["benchmark_manifest_sha256"], path="$.benchmark_manifest_sha256"),
         "status": require_enum(root["status"], {"ready", "blocked"}, path="$.status"),
         "chapter_checks": _validate_preflight_chapters(root["chapter_checks"]),
@@ -900,8 +996,7 @@ def _build_overlay(
             "chapter_id": chapter_id,
             "source_schema_id": source.source_schema_id,
             "source_schema_version": source.source_schema_version,
-            "source_db_sha256": source.source_binding.source_db_sha256,
-            "runtime_manifest_sha256": source.source_binding.runtime_manifest_sha256,
+            **_manifest_source_identity(source),
             "source_read_model_sha256": source_read_model_sha256_v1(source),
             "block_count": len(source.blocks),
         },
@@ -938,8 +1033,7 @@ def _validate_overlay_binding(overlay: Mapping[str, Any], source: CommonSourceSn
         "chapter_id": _single_chapter(source),
         "source_schema_id": source.source_schema_id,
         "source_schema_version": source.source_schema_version,
-        "source_db_sha256": source.source_binding.source_db_sha256,
-        "runtime_manifest_sha256": source.source_binding.runtime_manifest_sha256,
+        **_manifest_source_identity(source),
         "source_read_model_sha256": source_read_model_sha256_v1(source),
         "block_count": len(source.blocks),
     }
@@ -981,8 +1075,7 @@ def _validate_sources_against_manifest(sources: Mapping[str, CommonSourceSnapsho
             "ordinal": declared["ordinal"],
             "source_schema_id": source.source_schema_id,
             "source_schema_version": source.source_schema_version,
-            "source_db_sha256": source.source_binding.source_db_sha256,
-            "runtime_manifest_sha256": source.source_binding.runtime_manifest_sha256,
+            **_manifest_source_identity(source),
             "source_read_model_sha256": source_read_model_sha256_v1(source),
             "source_artifact_id": declared["source_artifact_id"],
             "source_artifact_sha256": declared["source_artifact_sha256"],
@@ -1018,18 +1111,43 @@ def _source_evidence_map(rows: Sequence[Mapping[str, Any]]) -> dict[str, dict[st
             "chapter_id": chapter_id,
             "source_artifact_id": require_string(row["source_artifact_id"], path=f"{path}.source_artifact_id"),
             "source_artifact_sha256": require_sha256(row["source_artifact_sha256"], path=f"{path}.source_artifact_sha256"),
-            "source_evidence_kind": require_enum(row["source_evidence_kind"], {"d2l_evaluation_package", "google_translate_source_input"}, path=f"{path}.source_evidence_kind"),
+            "source_evidence_kind": require_enum(
+                row["source_evidence_kind"],
+                {
+                    "d2l_evaluation_package",
+                    "google_translate_source_input",
+                    "canonical_source_package_v1",
+                },
+                path=f"{path}.source_evidence_kind",
+            ),
         }
     return result
 
 
 def _validate_source_snapshot(source: CommonSourceSnapshotV1) -> None:
-    if not isinstance(source.source_binding, LegacyD2LSourceBindingV1):
-        raise ContractValidationError("source_binding", "$.source", "benchmark v1 currently accepts explicit legacy D2L source binding only")
     require_string(source.source_schema_id, path="$.source.source_schema_id")
     require_string(source.source_schema_version, path="$.source.source_schema_version")
-    require_sha256(source.source_binding.source_db_sha256, path="$.source.source_db_sha256")
-    require_sha256(source.source_binding.runtime_manifest_sha256, path="$.source.runtime_manifest_sha256")
+    if isinstance(source.source_binding, LegacyD2LSourceBindingV1):
+        if source.source_schema_id != "D2LEvaluationInputV1":
+            raise ContractValidationError(
+                "legacy_source_schema",
+                "$.source.source_schema_id",
+                "legacy binding is restricted to D2LEvaluationInputV1 compatibility",
+            )
+        require_sha256(
+            source.source_binding.source_db_sha256,
+            path="$.source.source_db_sha256",
+        )
+        require_sha256(
+            source.source_binding.runtime_manifest_sha256,
+            path="$.source.runtime_manifest_sha256",
+        )
+    elif isinstance(source.source_binding, CanonicalSourcePackageBindingV1):
+        validate_source_binding(source_binding_to_dict(source.source_binding))
+    else:
+        raise ContractValidationError(
+            "source_binding", "$.source", "unsupported source binding type"
+        )
     if not source.blocks:
         raise ContractValidationError("empty_array", "$.source.blocks", "source blocks are required")
     block_ids: list[str] = []
@@ -1131,13 +1249,77 @@ def _common_translation_from_overlay(
     )
 
 
-def _producer(component: str, commit: str) -> dict[str, str]:
-    return {"workstream": "evaluation", "component": component, "component_version": SCHEMA_VERSION, "code_commit": require_commit(commit, path="$.producer_code_commit")}
+def _manifest_source_identity(
+    source: CommonSourceSnapshotV1,
+) -> dict[str, Any]:
+    if isinstance(source.source_binding, LegacyD2LSourceBindingV1):
+        return {
+            "source_db_sha256": source.source_binding.source_db_sha256,
+            "runtime_manifest_sha256": source.source_binding.runtime_manifest_sha256,
+        }
+    if isinstance(source.source_binding, CanonicalSourcePackageBindingV1):
+        return {"source_binding": source_binding_to_dict(source.source_binding)}
+    raise ContractValidationError(
+        "source_binding", "$.source", "unsupported source binding type"
+    )
 
 
-def _validate_component(value: Any, component: str) -> dict[str, str]:
+def _serialized_manifest_source_identity(
+    value: Mapping[str, Any],
+) -> dict[str, Any]:
+    if "source_binding" in value:
+        return copy.deepcopy(dict(value["source_binding"]))
+    result = {
+        "binding_kind": "legacy_d2l",
+        "project_id": value["project_id"] if "project_id" in value else "d2l",
+        "document_id": value["document_id"] if "document_id" in value else "d2l",
+        "source_db_sha256": value["source_db_sha256"],
+    }
+    if "runtime_manifest_sha256" in value:
+        result["runtime_manifest_sha256"] = value["runtime_manifest_sha256"]
+    return result
+
+
+def _validate_canonical_binding_at(value: Any, *, path: str) -> dict[str, Any]:
+    try:
+        binding = validate_source_binding(value)
+    except ContractValidationError as exc:
+        raise ContractValidationError(
+            exc.code,
+            path,
+            f"invalid canonical source binding: {exc}",
+        ) from exc
+    if binding["binding_kind"] != "canonical_source_package_v1":
+        raise ContractValidationError(
+            "source_binding",
+            path,
+            "benchmark canonical identity requires canonical_source_package_v1",
+        )
+    return binding
+
+
+def _producer(
+    component: str,
+    commit: str,
+    *,
+    schema_version: str = SCHEMA_VERSION,
+) -> dict[str, str]:
+    return {
+        "workstream": "evaluation",
+        "component": component,
+        "component_version": schema_version,
+        "code_commit": require_commit(commit, path="$.producer_code_commit"),
+    }
+
+
+def _validate_component(
+    value: Any,
+    component: str,
+    *,
+    schema_version: str,
+) -> dict[str, str]:
     row = validate_producer(value, path="$.producer", workstream="evaluation")
-    if row["component"] != component or row["component_version"] != SCHEMA_VERSION:
+    if row["component"] != component or row["component_version"] != schema_version:
         raise ContractValidationError("producer", "$.producer", "producer component/version drift")
     return row
 
@@ -1149,10 +1331,37 @@ def _identifier(value: Any, path: str) -> str:
     return result
 
 
-def _validate_scope(value: Any) -> dict[str, Any]:
+def _validate_scope(value: Any, *, schema_version: str) -> dict[str, Any]:
     path = "$.scope"
     row = require_mapping(value, path=path)
-    require_exact_keys(row, required={"benchmark_kind", "profile_scope", "project_id", "document_id", "source_db_sha256", "chapter_count", "block_count", "contiguous_source_order"}, path=path)
+    common_keys = {
+        "benchmark_kind",
+        "profile_scope",
+        "project_id",
+        "document_id",
+        "chapter_count",
+        "block_count",
+        "contiguous_source_order",
+    }
+    has_legacy = "source_db_sha256" in row
+    has_canonical = "source_binding" in row
+    if has_legacy == has_canonical:
+        raise ContractValidationError(
+            "source_binding",
+            path,
+            "scope must carry exactly one legacy or canonical source identity",
+        )
+    if schema_version == LEGACY_SCHEMA_VERSION and has_canonical:
+        raise ContractValidationError(
+            "source_binding",
+            f"{path}.source_binding",
+            "benchmark 1.1.0 cannot carry canonical source identity",
+        )
+    require_exact_keys(
+        row,
+        required=common_keys | ({"source_db_sha256"} if has_legacy else {"source_binding"}),
+        path=path,
+    )
     contiguous = row["contiguous_source_order"]
     if not isinstance(contiguous, bool):
         raise ContractValidationError(
@@ -1160,7 +1369,7 @@ def _validate_scope(value: Any) -> dict[str, Any]:
             f"{path}.contiguous_source_order",
             "contiguous_source_order must be boolean",
         )
-    return {
+    result = {
         "benchmark_kind": require_enum(
             row["benchmark_kind"],
             {
@@ -1172,37 +1381,96 @@ def _validate_scope(value: Any) -> dict[str, Any]:
         "profile_scope": require_enum(row["profile_scope"], {"technical_d2l"}, path=f"{path}.profile_scope"),
         "project_id": require_enum(row["project_id"], {"d2l"}, path=f"{path}.project_id"),
         "document_id": require_enum(row["document_id"], {"d2l"}, path=f"{path}.document_id"),
-        "source_db_sha256": require_sha256(row["source_db_sha256"], path=f"{path}.source_db_sha256"),
         "chapter_count": require_int(row["chapter_count"], path=f"{path}.chapter_count", minimum=1),
         "block_count": require_int(row["block_count"], path=f"{path}.block_count", minimum=1),
         "contiguous_source_order": contiguous,
     }
+    if has_legacy:
+        result["source_db_sha256"] = require_sha256(
+            row["source_db_sha256"], path=f"{path}.source_db_sha256"
+        )
+    else:
+        result["source_binding"] = _validate_canonical_binding_at(
+            row["source_binding"], path=f"{path}.source_binding"
+        )
+    return result
 
 
-def _validate_manifest_chapters(value: Any) -> list[dict[str, Any]]:
+def _validate_manifest_chapters(
+    value: Any, *, schema_version: str
+) -> list[dict[str, Any]]:
     rows = require_list(value, path="$.chapters")
     result = []
     for index, raw in enumerate(rows):
         path = f"$.chapters[{index}]"
         row = require_mapping(raw, path=path)
-        require_exact_keys(row, required={"chapter_id", "ordinal", "source_schema_id", "source_schema_version", "source_db_sha256", "runtime_manifest_sha256", "source_read_model_sha256", "source_artifact_id", "source_artifact_sha256", "source_evidence_kind", "block_count", "first_order_index", "last_order_index"}, path=path)
-        result.append(
-            {
+        common_keys = {
+            "chapter_id",
+            "ordinal",
+            "source_schema_id",
+            "source_schema_version",
+            "source_read_model_sha256",
+            "source_artifact_id",
+            "source_artifact_sha256",
+            "source_evidence_kind",
+            "block_count",
+            "first_order_index",
+            "last_order_index",
+        }
+        has_legacy = "source_db_sha256" in row or "runtime_manifest_sha256" in row
+        has_canonical = "source_binding" in row
+        if has_legacy == has_canonical:
+            raise ContractValidationError(
+                "source_binding",
+                path,
+                "chapter must carry exactly one legacy or canonical source identity",
+            )
+        if schema_version == LEGACY_SCHEMA_VERSION and has_canonical:
+            raise ContractValidationError(
+                "source_binding",
+                f"{path}.source_binding",
+                "benchmark 1.1.0 cannot carry canonical source identity",
+            )
+        identity_keys = (
+            {"source_db_sha256", "runtime_manifest_sha256"}
+            if has_legacy
+            else {"source_binding"}
+        )
+        require_exact_keys(row, required=common_keys | identity_keys, path=path)
+        normalized = {
                 "chapter_id": require_string(row["chapter_id"], path=f"{path}.chapter_id"),
                 "ordinal": require_int(row["ordinal"], path=f"{path}.ordinal", minimum=0),
                 "source_schema_id": require_string(row["source_schema_id"], path=f"{path}.source_schema_id"),
                 "source_schema_version": require_string(row["source_schema_version"], path=f"{path}.source_schema_version"),
-                "source_db_sha256": require_sha256(row["source_db_sha256"], path=f"{path}.source_db_sha256"),
-                "runtime_manifest_sha256": require_sha256(row["runtime_manifest_sha256"], path=f"{path}.runtime_manifest_sha256"),
                 "source_read_model_sha256": require_sha256(row["source_read_model_sha256"], path=f"{path}.source_read_model_sha256"),
                 "source_artifact_id": require_string(row["source_artifact_id"], path=f"{path}.source_artifact_id"),
                 "source_artifact_sha256": require_sha256(row["source_artifact_sha256"], path=f"{path}.source_artifact_sha256"),
-                "source_evidence_kind": require_enum(row["source_evidence_kind"], {"d2l_evaluation_package", "google_translate_source_input"}, path=f"{path}.source_evidence_kind"),
+                "source_evidence_kind": require_enum(
+                    row["source_evidence_kind"],
+                    {
+                        "d2l_evaluation_package",
+                        "google_translate_source_input",
+                        "canonical_source_package_v1",
+                    },
+                    path=f"{path}.source_evidence_kind",
+                ),
                 "block_count": require_int(row["block_count"], path=f"{path}.block_count", minimum=1),
                 "first_order_index": require_int(row["first_order_index"], path=f"{path}.first_order_index", minimum=0),
                 "last_order_index": require_int(row["last_order_index"], path=f"{path}.last_order_index", minimum=0),
-            }
-        )
+        }
+        if has_legacy:
+            normalized["source_db_sha256"] = require_sha256(
+                row["source_db_sha256"], path=f"{path}.source_db_sha256"
+            )
+            normalized["runtime_manifest_sha256"] = require_sha256(
+                row["runtime_manifest_sha256"],
+                path=f"{path}.runtime_manifest_sha256",
+            )
+        else:
+            normalized["source_binding"] = _validate_canonical_binding_at(
+                row["source_binding"], path=f"{path}.source_binding"
+            )
+        result.append(normalized)
     chapter_ids = _validate_known_selection(
         [row["chapter_id"] for row in result],
         allowed=BENCHMARK_CHAPTER_IDS_V1,
@@ -1269,21 +1537,62 @@ def _validate_authority(value: Any) -> dict[str, bool]:
     return expected
 
 
-def _validate_overlay_source(value: Any) -> dict[str, Any]:
+def _validate_overlay_source(
+    value: Any, *, schema_version: str
+) -> dict[str, Any]:
     path = "$.source"
     row = require_mapping(value, path=path)
-    require_exact_keys(row, required={"project_id", "document_id", "chapter_id", "source_schema_id", "source_schema_version", "source_db_sha256", "runtime_manifest_sha256", "source_read_model_sha256", "block_count"}, path=path)
-    return {
+    common_keys = {
+        "project_id",
+        "document_id",
+        "chapter_id",
+        "source_schema_id",
+        "source_schema_version",
+        "source_read_model_sha256",
+        "block_count",
+    }
+    has_legacy = "source_db_sha256" in row or "runtime_manifest_sha256" in row
+    has_canonical = "source_binding" in row
+    if has_legacy == has_canonical:
+        raise ContractValidationError(
+            "source_binding",
+            path,
+            "overlay must carry exactly one legacy or canonical source identity",
+        )
+    if schema_version == LEGACY_SCHEMA_VERSION and has_canonical:
+        raise ContractValidationError(
+            "source_binding",
+            f"{path}.source_binding",
+            "overlay 1.1.0 cannot carry canonical source identity",
+        )
+    identity_keys = (
+        {"source_db_sha256", "runtime_manifest_sha256"}
+        if has_legacy
+        else {"source_binding"}
+    )
+    require_exact_keys(row, required=common_keys | identity_keys, path=path)
+    result = {
         "project_id": require_string(row["project_id"], path=f"{path}.project_id"),
         "document_id": require_string(row["document_id"], path=f"{path}.document_id"),
         "chapter_id": require_string(row["chapter_id"], path=f"{path}.chapter_id"),
         "source_schema_id": require_string(row["source_schema_id"], path=f"{path}.source_schema_id"),
         "source_schema_version": require_string(row["source_schema_version"], path=f"{path}.source_schema_version"),
-        "source_db_sha256": require_sha256(row["source_db_sha256"], path=f"{path}.source_db_sha256"),
-        "runtime_manifest_sha256": require_sha256(row["runtime_manifest_sha256"], path=f"{path}.runtime_manifest_sha256"),
         "source_read_model_sha256": require_sha256(row["source_read_model_sha256"], path=f"{path}.source_read_model_sha256"),
         "block_count": require_int(row["block_count"], path=f"{path}.block_count", minimum=1),
     }
+    if has_legacy:
+        result["source_db_sha256"] = require_sha256(
+            row["source_db_sha256"], path=f"{path}.source_db_sha256"
+        )
+        result["runtime_manifest_sha256"] = require_sha256(
+            row["runtime_manifest_sha256"],
+            path=f"{path}.runtime_manifest_sha256",
+        )
+    else:
+        result["source_binding"] = _validate_canonical_binding_at(
+            row["source_binding"], path=f"{path}.source_binding"
+        )
+    return result
 
 
 def _validate_overlay_arm(value: Any) -> dict[str, str]:
