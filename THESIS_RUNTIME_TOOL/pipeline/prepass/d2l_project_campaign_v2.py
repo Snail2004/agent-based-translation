@@ -42,6 +42,7 @@ from pipeline.prepass.d2l_translation_component_runner_v1 import (
 from pipeline.translate import d2l_translation_slots_v1 as slot_contract
 from pipeline.translate import runner as translation_runner_contract
 from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
+from pipeline.translate import d2l_translation_semantic_repair_v1 as repair_contract
 from pipeline.translate.d2l_latex_markup_line_protected_spans_v4 import (
     POLICY_ID as S1_PROTECTED_POLICY_ID,
     PROMPT_VERSION as S1_TRANSLATION_PROMPT_VERSION,
@@ -64,9 +65,9 @@ CONFIG_SCHEMA = "d2l_project_campaign_config_v2"
 SEAL_SCHEMA = "d2l_project_campaign_seal_v2"
 PREFLIGHT_SCHEMA = "d2l_project_campaign_preflight_v2"
 TRANSPORT_SEAL_SCHEMA = "d2l_transport_attempt_seal_v2"
-CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_1_quality_repair"
+CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_2_typed_quality_retries"
 PIPELINE_ID = "d2l_terminology"
-PIPELINE_VERSION = "d2l_translation_component_v1_1_quality_repair"
+PIPELINE_VERSION = "d2l_translation_component_v1_2_typed_quality_retries"
 PROFILE_ID = "technical_d2l_v1"
 
 SHOPAI_SOURCE_ID = "shopaikey_gemini_proxy_v2"
@@ -1077,7 +1078,7 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
             semantic_retry_cap=1,
             extra_policy={
                 "arm_id": "s0",
-                "one_total_retry_per_window": True,
+                "mechanical_retry_cap_per_window": 1,
                 "window_target_tokens": TRANSLATOR_TARGET_TOKENS,
                 "max_blocks": TRANSLATOR_MAX_BLOCKS,
             },
@@ -1108,9 +1109,61 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
                 "response_envelope_policy": TRANSLATOR_ENVELOPE_POLICY_ID,
                 "glossary_review_policy": PROTECTED_LEXICAL_GLOSSARY_REVIEW_POLICY_ID,
                 "glossary_review_match_rule": PROTECTED_LEXICAL_GLOSSARY_REVIEW_MATCH_RULE_ID,
-                "one_total_retry_per_window": True,
+                "mechanical_retry_cap_per_window": 1,
                 "window_target_tokens": TRANSLATOR_TARGET_TOKENS,
                 "max_blocks": TRANSLATOR_MAX_BLOCKS,
+            },
+        ),
+        _role(
+            role_id="d2l.translator.s0.semantic_repair",
+            stage_id="translation_quality_audit",
+            model_id="gpt-5.4",
+            source_id=MODELAPI_SOURCE_ID,
+            prompt_id=repair_contract.PROMPT_ID,
+            prompt_sha256=repair_contract.prompt_sha256(),
+            validator_id=repair_contract.LOCAL_VALIDATOR_ID,
+            validator_sha256=file_sha256(Path(repair_contract.__file__)),
+            response_schema_sha256=repair_contract.response_schema_sha256(),
+            max_input_tokens=8_192,
+            max_output_tokens=4_096,
+            temperature=0.3,
+            seed=20_260_612,
+            reasoning_effort="none",
+            verbosity="low",
+            semantic_retry_cap=0,
+            extra_policy={
+                "arm_id": "s0",
+                "semantic_repair_cap_per_window": 1,
+                "full_original_window_context": True,
+                "original_context_pack": "absent_by_design",
+                "output_scope": "major_blocks_only",
+                "post_repair_validation": "deterministic_only_no_second_auditor",
+            },
+        ),
+        _role(
+            role_id="d2l.translator.s1.semantic_repair",
+            stage_id="translation_quality_audit",
+            model_id="gpt-5.4",
+            source_id=MODELAPI_SOURCE_ID,
+            prompt_id=repair_contract.PROMPT_ID,
+            prompt_sha256=repair_contract.prompt_sha256(),
+            validator_id=repair_contract.LOCAL_VALIDATOR_ID,
+            validator_sha256=file_sha256(Path(repair_contract.__file__)),
+            response_schema_sha256=repair_contract.response_schema_sha256(),
+            max_input_tokens=8_192,
+            max_output_tokens=4_096,
+            temperature=0.3,
+            seed=20_260_612,
+            reasoning_effort="none",
+            verbosity="low",
+            semantic_retry_cap=0,
+            extra_policy={
+                "arm_id": "s1",
+                "semantic_repair_cap_per_window": 1,
+                "full_original_window_context": True,
+                "original_context_pack": "exact_persisted_initial_pack",
+                "output_scope": "major_blocks_only",
+                "post_repair_validation": "deterministic_only_no_second_auditor",
             },
         ),
         _role(
@@ -1136,7 +1189,7 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
                 "authority": "findings_only_non_blocking",
                 "glossary_visibility": "none",
                 "major_finding_repair_policy": (
-                    "one_translator_repair_if_initial_retry_unused"
+                    "one_independent_translator_semantic_repair"
                 ),
                 "post_repair_validation": "deterministic_only_no_second_auditor",
             },
@@ -1198,6 +1251,8 @@ def _build_limits(universe: Mapping[str, Any], roles: Sequence[Mapping[str, Any]
         "d2l.b2.multi_target": component_caps,
         "d2l.translator.s0": translator_windows,
         "d2l.translator.s1": translator_windows,
+        "d2l.translator.s0.semantic_repair": translator_windows,
+        "d2l.translator.s1.semantic_repair": translator_windows,
         "d2l.translator.quality_auditor": translator_windows * 2,
     }
     role_limits = []

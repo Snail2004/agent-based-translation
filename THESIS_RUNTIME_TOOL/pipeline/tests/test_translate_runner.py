@@ -751,6 +751,12 @@ def test_runner_hygiene_reasks_foreign_script_and_persists_clean_result(tmp_path
     assert pack["translator_attempt_count"] == 2
     assert pack["deterministic_quality"]["reasked_blocks"] == ["ch02_b001"]
     assert pack["deterministic_quality"]["final_issues"] == []
+    assert pack["deterministic_quality"]["retry_history"][0]["block_id"] == (
+        "ch02_b001"
+    )
+    assert pack["deterministic_quality"]["retry_history"][0]["issue_type"] == (
+        "unexpected_output_script"
+    )
     assert report.total_usage["calls"] == 2
 
 

@@ -171,7 +171,6 @@ def translate_windows(
     translation_output_policy: str | None = None,
     response_envelope_policy: str | None = None,
     max_attempts_per_window: int = 2,
-    semantic_repair_findings: dict[str, list[dict[str, str]]] | None = None,
 ) -> TranslateReport:
     """Run translation over a list of Window objects.
 
@@ -193,17 +192,6 @@ def translate_windows(
     config = config.upper()
     if max_attempts_per_window not in {1, 2}:
         raise ValueError("Translator max attempts per window must be one or two")
-    repair_findings = semantic_repair_findings or {}
-    unknown_repair_blocks = sorted(set(repair_findings) - {
-        str(block_id)
-        for window in windows
-        for block_id in window.block_ids
-    })
-    if unknown_repair_blocks:
-        raise ValueError(
-            "Semantic repair findings cite foreign blocks: "
-            + ", ".join(unknown_repair_blocks)
-        )
     hygiene_stats = _empty_hygiene_stats(config)
     profile = get_profile(profile_name)
     protected_policy = get_protected_span_policy(protected_spans_policy)
@@ -451,25 +439,6 @@ def translate_windows(
                 ),
                 translation_output_policy=translation_output_policy,
             )
-            repair_rows = {
-                block_id: repair_findings[block_id]
-                for block_id in block_ids
-                if block_id in repair_findings
-            }
-            if repair_rows:
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": _semantic_repair_note(
-                            repair_rows,
-                            block_to_slot=(
-                                invert_slot_map(slot_to_block)
-                                if slot_output_active
-                                else None
-                            ),
-                        ),
-                    }
-                )
             emit_event(
                 sink,
                 "prompt_built",
@@ -840,6 +809,7 @@ def _call_with_reask(
     deterministic_reasked_blocks: set[str] = set()
     deterministic_warnings: list[Any] = []
     final_deterministic_issues: list[Any] = []
+    retry_history: list[dict[str, Any]] = []
     errors: list[str] = []
     for attempt in range(max_attempts):
         emit_event(
@@ -941,6 +911,11 @@ def _call_with_reask(
                     protected_flagged_blocks.update(issue_blocks)
                     if attempt + 1 < max_attempts:
                         protected_reasked_blocks.update(issue_blocks)
+                        retry_history.extend(
+                            _mechanical_retry_history(
+                                "protected_content", protected_issues
+                            )
+                        )
                         emit_event(
                             event_sink,
                             "protected_spans_flagged",
@@ -1008,6 +983,7 @@ def _call_with_reask(
                             deterministic_reasked_blocks,
                             deterministic_warnings,
                             final_deterministic_issues,
+                            retry_history,
                         ),
                     )
 
@@ -1035,6 +1011,11 @@ def _call_with_reask(
                 deterministic_flagged_blocks.update(issue_blocks)
                 if attempt + 1 < max_attempts:
                     deterministic_reasked_blocks.update(issue_blocks)
+                    retry_history.extend(
+                        _mechanical_retry_history(
+                            "deterministic_integrity", deterministic_major
+                        )
+                    )
                     emit_event(
                         event_sink,
                         "deterministic_quality_flagged",
@@ -1103,6 +1084,7 @@ def _call_with_reask(
                         deterministic_reasked_blocks,
                         deterministic_warnings,
                         final_deterministic_issues,
+                        retry_history,
                     ),
                 )
 
@@ -1131,6 +1113,7 @@ def _call_with_reask(
                         deterministic_reasked_blocks,
                         deterministic_warnings,
                         [],
+                        retry_history,
                     ),
                 )
 
@@ -1138,6 +1121,9 @@ def _call_with_reask(
             hygiene_flagged_blocks.update(issue_blocks)
             if attempt + 1 < max_attempts:
                 hygiene_reasked_blocks.update(issue_blocks)
+                retry_history.extend(
+                    _mechanical_retry_history("output_hygiene", issues)
+                )
                 emit_event(
                     event_sink,
                     "hygiene_flagged",
@@ -1202,12 +1188,23 @@ def _call_with_reask(
                     deterministic_reasked_blocks,
                     deterministic_warnings,
                     final_deterministic_issues,
+                    retry_history,
                 ),
             )
 
         errors = list(parse_errors)
 
         if attempt + 1 < max_attempts:
+            retry_history.extend(
+                {
+                    "source": "response_contract",
+                    "scope": "window",
+                    "block_id": None,
+                    "issue_type": "invalid_response_contract",
+                    "evidence": " ".join(str(error).split())[:240],
+                }
+                for error in parse_errors[:12]
+            )
             messages = [
                 *messages,
                 {"role": "assistant", "content": result.text},
@@ -1247,6 +1244,7 @@ def _call_with_reask(
             deterministic_reasked_blocks,
             deterministic_warnings,
             final_deterministic_issues,
+            retry_history,
         ),
     )
 
@@ -1290,44 +1288,49 @@ def _slot_hygiene_reask_note(
     )
 
 
-def _semantic_repair_note(
-    findings_by_block: dict[str, list[dict[str, str]]],
-    *,
-    block_to_slot: dict[str, str] | None,
-) -> str:
-    rows: list[str] = []
-    for block_id, findings in findings_by_block.items():
-        owner = (
-            block_to_slot.get(block_id, block_id)
-            if block_to_slot is not None
-            else block_id
-        )
-        for finding in findings[:8]:
-            issue_type = str(finding.get("issue_type") or "semantic_other")
-            reason = " ".join(str(finding.get("reason") or "").split())
-            rows.append(f"- {owner} [{issue_type}]: {reason[:500]}")
-    return (
-        "SEMANTIC REPAIR REQUEST\n"
-        "A separate quality auditor found the evidence-grounded issues below. "
-        "Retranslate every supplied source slot as a complete Vietnamese translation. "
-        "Correct the stated meaning problem without adding commentary or metadata. "
-        "Keep every protected placeholder and source structure exactly as required.\n"
-        + "\n".join(rows[:24])
-    )
-
-
 def _deterministic_call_summary(
     flagged_blocks: set[str],
     reasked_blocks: set[str],
     warnings: list[Any],
     final_issues: list[Any],
+    retry_history: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return {
         "flagged_blocks": sorted(flagged_blocks),
         "reasked_blocks": sorted(reasked_blocks),
         "warnings": [issue.to_dict() for issue in warnings],
         "final_issues": [issue.to_dict() for issue in final_issues],
+        "retry_history": list(retry_history),
     }
+
+
+def _mechanical_retry_history(
+    source: str,
+    issues: list[Any],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for issue in issues:
+        payload = issue.to_dict() if hasattr(issue, "to_dict") else {}
+        block_id = payload.get("block_id")
+        issue_type = payload.get("issue_type")
+        if not issue_type and source == "output_hygiene":
+            issue_type = "unexpected_output_script"
+        evidence = (
+            payload.get("evidence_target")
+            or payload.get("surface")
+            or payload.get("observed")
+            or ""
+        )
+        rows.append(
+            {
+                "source": source,
+                "scope": "block" if block_id else "window",
+                "block_id": None if block_id is None else str(block_id),
+                "issue_type": str(issue_type or "mechanical_contract_error"),
+                "evidence": " ".join(str(evidence).split())[:240],
+            }
+        )
+    return rows
 
 
 def _protected_span_call_summary(
@@ -1715,12 +1718,26 @@ def load_window_attempt_state(
             raise RuntimeError(
                 f"Translator deterministic state is unavailable for {window_id}"
             )
+        retry_history = deterministic.get("retry_history")
+        if not isinstance(retry_history, list) or any(
+            not isinstance(item, dict) for item in retry_history
+        ):
+            raise RuntimeError(
+                f"Translator retry history is unavailable for {window_id}"
+            )
+        context_pack = payload.get("context_pack")
+        if context_pack is not None and not isinstance(context_pack, dict):
+            raise RuntimeError(
+                f"Translator context pack is invalid for {window_id}"
+            )
         result[window_id] = {
             "window_id": window_id,
             "pack_id": str(row["pack_id"]),
             "attempt_count": raw_count,
             "retry_consumed": raw_count >= 2,
             "deterministic_quality": deterministic,
+            "retry_history": list(retry_history),
+            "context_pack": context_pack,
         }
     if not result:
         raise RuntimeError(
