@@ -98,6 +98,7 @@ ESTIMATE_PREVIEW_SUPPORTED = frozenset(
 D2L_PROJECT_CAMPAIGN_SCRIPT = "run_d2l_project_campaign"
 WORKFLOW_ORCHESTRATOR_SCRIPT = "run_workflow_orchestrator_v1"
 D2L_COMPONENT_ID = "translation"
+EVALUATION_COMPONENT_ID = "evaluation"
 D2L_PROFILE_ID = "technical_d2l_v1"
 
 
@@ -453,6 +454,42 @@ def d2l_campaign_paths(*, jobs_root: Path, job_id: str, run_id: str) -> dict[str
             raise RunControlError(
                 "invalid_d2l_campaign_path",
                 "Resolved D2L campaign path is outside THESIS_JOBS_ROOT.",
+                500,
+            ) from exc
+    return values
+
+
+def evaluation_component_paths(
+    *,
+    jobs_root: Path,
+    job_id: str,
+    workflow_run_id: str,
+    component_run_id: str,
+) -> dict[str, Path]:
+    """Return server-owned paths for one Evaluation component lineage."""
+
+    job = validate_job_id(job_id, required=True)
+    workflow = validate_run_id(workflow_run_id, required=True)
+    component = validate_run_id(component_run_id, required=True)
+    root = Path(jobs_root).resolve()
+    component_root = (
+        root / "_work" / "evaluation" / job / workflow / component
+    ).resolve()
+    values = {
+        "component_root": component_root,
+        "manifest_path": component_root / "component_manifest.json",
+        "event_log_path": component_root / "events.jsonl",
+        "runtime_root": (
+            root / "_runtime" / "evaluation" / job / workflow / component
+        ).resolve(),
+    }
+    for candidate in values.values():
+        try:
+            candidate.relative_to(root)
+        except ValueError as exc:
+            raise RunControlError(
+                "invalid_evaluation_component_path",
+                "Resolved Evaluation path is outside THESIS_JOBS_ROOT.",
                 500,
             ) from exc
     return values
@@ -1385,6 +1422,8 @@ def build_argv(
     parent_root: str | None = None,
     workflow_run_id: str | None = None,
     component_run_id: str | None = None,
+    workflow_phase: str | None = None,
+    evaluation_root: str | None = None,
     code_root: str | None = None,
     runtime_root: str | None = None,
     credential_files: dict[str, Path] | None = None,
@@ -1536,25 +1575,55 @@ def build_argv(
         if run_id:
             argv += ["--run-id", str(validate_run_id(run_id, required=True))]
     elif script in {D2L_PROJECT_CAMPAIGN_SCRIPT, WORKFLOW_ORCHESTRATOR_SCRIPT}:
-        if script == WORKFLOW_ORCHESTRATOR_SCRIPT:
+        phase = workflow_phase or "translate"
+        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            if phase != "translate":
+                raise RunControlError(
+                    "workflow_phase_invalid",
+                    "The D2L campaign script supports Translation only.",
+                    400,
+                )
+            argv.append("app-run")
+        elif phase == "translate":
             argv.append("translate")
             _append_required(argv, "--parent-root", parent_root, "parent_root")
+        elif phase == "score":
+            argv.append("score")
+            _append_required(argv, "--parent-root", parent_root, "parent_root")
+            _append_required(
+                argv, "--evaluation-root", evaluation_root, "evaluation_root"
+            )
         else:
-            argv.append("app-run")
+            raise RunControlError(
+                "workflow_phase_invalid",
+                "Workflow phase must be translate or score.",
+                400,
+            )
+
         _append_required(argv, "--job-root", job_root, "job_root")
-        _append_required(argv, "--campaign-root", campaign_root, "campaign_root")
+        if phase == "translate":
+            _append_required(argv, "--campaign-root", campaign_root, "campaign_root")
         if not resume:
-            _append_required(argv, "--workflow-run-id", workflow_run_id, "workflow_run_id")
-            _append_required(argv, "--component-run-id", component_run_id, "component_run_id")
+            _append_required(
+                argv, "--workflow-run-id", workflow_run_id, "workflow_run_id"
+            )
+            _append_required(
+                argv, "--component-run-id", component_run_id, "component_run_id"
+            )
             chapter_rows = _list(chapters)
             if not chapter_rows:
-                raise RunControlError("missing_arg", "chapters is required for this script.", 400)
+                raise RunControlError(
+                    "missing_arg",
+                    "chapters is required for this script.",
+                    400,
+                )
             for chapter_id in chapter_rows:
                 argv += ["--chapter-id", chapter_id]
-        if hard_total_token_cap is not None:
-            argv += ["--hard-total-token-cap", str(int(hard_total_token_cap))]
-        if reserved_cost_cap_usd is not None:
-            argv += ["--reserved-cost-cap-usd", str(reserved_cost_cap_usd)]
+        if phase == "translate":
+            if hard_total_token_cap is not None:
+                argv += ["--hard-total-token-cap", str(int(hard_total_token_cap))]
+            if reserved_cost_cap_usd is not None:
+                argv += ["--reserved-cost-cap-usd", str(reserved_cost_cap_usd)]
         if code_root:
             argv += ["--code-root", str(code_root)]
         if resume:
@@ -1564,7 +1633,10 @@ def build_argv(
             argv += ["--runtime-root", str(runtime_root)]
         if allow_api:
             for credential_ref, path in sorted((credential_files or {}).items()):
-                argv += ["--credential-file", f"{credential_ref}={Path(path).resolve()}"]
+                argv += [
+                    "--credential-file",
+                    f"{credential_ref}={Path(path).resolve()}",
+                ]
     elif script in {
         "run_experiment_cascade",
         "builder_v2_reelection",

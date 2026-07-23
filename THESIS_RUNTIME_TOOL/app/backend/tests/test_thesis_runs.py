@@ -308,6 +308,60 @@ def test_build_argv_d2l_campaign_uses_server_owned_app_run_boundary(tmp_path):
     assert "--db" not in argv
 
 
+def test_build_argv_workflow_score_uses_separate_evaluation_boundary(tmp_path):
+    from services.thesis_runs import build_argv
+
+    argv = build_argv(
+        script="run_workflow_orchestrator_v1",
+        python_exe=sys.executable,
+        workflow_phase="score",
+        job_root=str(tmp_path / "jobA"),
+        parent_root=str(tmp_path / "_work" / "workflow" / "wf_run"),
+        evaluation_root=str(
+            tmp_path / "_work" / "evaluation" / "jobA" / "wf_run" / "eval_run"
+        ),
+        workflow_run_id="wf_run",
+        component_run_id="eval_run",
+        chapters=["d2l_preliminaries"],
+        runtime_root=str(
+            tmp_path / "_runtime" / "evaluation" / "jobA" / "wf_run"
+        ),
+        code_root=str(TOOL_ROOT),
+        allow_api=True,
+    )
+
+    assert argv[:4] == [
+        sys.executable,
+        "-m",
+        "pipeline.scripts.run_workflow_orchestrator_v1",
+        "score",
+    ]
+    assert "--evaluation-root" in argv
+    assert "--campaign-root" not in argv
+    assert "--hard-total-token-cap" not in argv
+    assert "--live" in argv
+
+
+def test_evaluation_component_paths_are_confined_and_deterministic(tmp_path):
+    from services.thesis_runs import evaluation_component_paths
+
+    paths = evaluation_component_paths(
+        jobs_root=tmp_path,
+        job_id="jobA",
+        workflow_run_id="wf_run",
+        component_run_id="eval_run",
+    )
+
+    assert paths["component_root"] == (
+        tmp_path / "_work" / "evaluation" / "jobA" / "wf_run" / "eval_run"
+    ).resolve()
+    assert paths["manifest_path"].parent == paths["component_root"]
+    assert paths["event_log_path"].parent == paths["component_root"]
+    assert paths["runtime_root"] == (
+        tmp_path / "_runtime" / "evaluation" / "jobA" / "wf_run" / "eval_run"
+    ).resolve()
+
+
 def test_d2l_semantic_role_preview_reads_nested_campaign_contract():
     from services.thesis_runs import _d2l_semantic_role_preview
 
