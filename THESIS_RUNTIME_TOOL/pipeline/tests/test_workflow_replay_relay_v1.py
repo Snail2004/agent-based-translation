@@ -432,6 +432,236 @@ def test_resume_advances_attempt_without_relaying_prefix_twice(tmp_path: Path) -
     assert [row["component"]["component_seq"] for row in _read_events(relay.root)] == list(range(1, 8))
 
 
+def test_evaluation_progress_and_terminal_outcome_project_truthfully(tmp_path: Path) -> None:
+    relay = _relay(tmp_path)
+    source = tmp_path / "evaluation"
+    running_events = (
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=1,
+            event="component_started",
+            stage_id=None,
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=2,
+            event="stage_start",
+            stage_id="score",
+            public_payload={"work_total": 2, "work_unit": "chapters"},
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=3,
+            event="progress",
+            stage_id="score",
+            public_payload={
+                "completed": 1,
+                "total": 2,
+                "unit": "chapters",
+                "current_work_id": "chapter_1",
+            },
+        ),
+    )
+    running = _write_snapshot(
+        source,
+        component_id="evaluation",
+        run_id="evaluation_run_1",
+        local_stage="score",
+        events=running_events,
+        status="running",
+    )
+
+    manifest = relay.ingest_component(source, adapter=FixtureAdapter(running))
+
+    stage = manifest["stages"][1]
+    assert stage["status"] == "running"
+    assert stage["progress"] == {
+        "completed": 1,
+        "total": 2,
+        "unit": "chapters",
+    }
+    assert stage["current_work_id"] == "chapter_1"
+
+    failed_events = (
+        *running_events,
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=4,
+            event="stage_done",
+            stage_id="score",
+            public_payload={"outcome": "blocked"},
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=5,
+            event="component_failed",
+            stage_id="__component__",
+            public_payload={
+                "outcome": "failed",
+                "reason_code": "benchmark_preflight_blocked",
+            },
+        ),
+    )
+    failed = _write_snapshot(
+        source,
+        component_id="evaluation",
+        run_id="evaluation_run_1",
+        local_stage="score",
+        events=failed_events,
+        status="failed",
+    )
+
+    manifest = relay.ingest_component(source, adapter=FixtureAdapter(failed))
+
+    stage = manifest["stages"][1]
+    assert stage["status"] == "failed"
+    assert stage["progress"] == {
+        "completed": 1,
+        "total": 2,
+        "unit": "chapters",
+    }
+    assert stage["current_work_id"] is None
+
+
+def test_component_halt_pauses_active_stage_and_resume_finishes_it(tmp_path: Path) -> None:
+    relay = _relay(tmp_path)
+    source = tmp_path / "evaluation"
+    paused_events = (
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=1,
+            event="component_started",
+            stage_id=None,
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=2,
+            event="stage_start",
+            stage_id="score",
+            public_payload={"work_total": 2, "work_unit": "chapters"},
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=3,
+            event="progress",
+            stage_id="score",
+            public_payload={
+                "completed": 1,
+                "total": 2,
+                "unit": "chapters",
+                "current_work_id": "chapter_1",
+            },
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=4,
+            event="component_halted",
+            stage_id="__component__",
+            public_payload={
+                "reason_code": "operator_pause",
+                "resume_available": True,
+            },
+        ),
+    )
+    paused = _write_snapshot(
+        source,
+        component_id="evaluation",
+        run_id="evaluation_run_1",
+        local_stage="score",
+        events=paused_events,
+        status="paused",
+    )
+
+    manifest = relay.ingest_component(source, adapter=FixtureAdapter(paused))
+
+    stage = manifest["stages"][1]
+    assert stage["status"] == "paused"
+    assert stage["current_work_id"] == "chapter_1"
+    assert manifest["active_stage_id"] is None
+
+    resumed_events = (
+        *paused_events,
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=5,
+            event="component_resumed",
+            stage_id="__component__",
+            attempt=2,
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=6,
+            event="stage_start",
+            stage_id="score",
+            attempt=2,
+            public_payload={"work_total": 2, "work_unit": "chapters"},
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=7,
+            event="progress",
+            stage_id="score",
+            attempt=2,
+            public_payload={
+                "completed": 2,
+                "total": 2,
+                "unit": "chapters",
+                "current_work_id": "chapter_2",
+            },
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=8,
+            event="stage_done",
+            stage_id="score",
+            attempt=2,
+            public_payload={"outcome": "succeeded"},
+        ),
+        _event(
+            component_id="evaluation",
+            component_run_id="evaluation_run_1",
+            seq=9,
+            event="component_done",
+            stage_id="__component__",
+            attempt=2,
+            public_payload={"outcome": "succeeded"},
+        ),
+    )
+    resumed = _write_snapshot(
+        source,
+        component_id="evaluation",
+        run_id="evaluation_run_1",
+        local_stage="score",
+        events=resumed_events,
+        status="succeeded",
+        attempt=2,
+    )
+
+    manifest = relay.ingest_component(source, adapter=FixtureAdapter(resumed))
+
+    stage = manifest["stages"][1]
+    assert stage["status"] == "succeeded"
+    assert stage["progress"] == {
+        "completed": 2,
+        "total": 2,
+        "unit": "chapters",
+    }
+    assert stage["current_work_id"] is None
+
+
 def test_resume_without_explicit_event_and_append_after_terminal_reject(tmp_path: Path) -> None:
     relay = _relay(tmp_path)
     source = tmp_path / "translation"

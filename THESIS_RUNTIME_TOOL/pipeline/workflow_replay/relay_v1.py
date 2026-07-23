@@ -1322,49 +1322,109 @@ class WorkflowRelayV1:
         events: Sequence[Mapping[str, Any]],
         artifacts: Sequence[Mapping[str, Any]],
     ) -> list[dict[str, Any]]:
-        rows = []
         artifact_refs_by_stage: dict[str, list[str]] = {}
         for artifact in artifacts:
             stage_id = artifact["producer"]["stage_id"]
             artifact_refs_by_stage.setdefault(stage_id, []).append(
                 artifact["binding"]["artifact_ref"]
             )
-        for definition in self.stages:
-            status = "pending"
-            progress: dict[str, Any] | None = None
-            current_work_id: str | None = None
-            for event in events:
-                if event["stage_id"] != definition.stage_id:
-                    continue
-                name = event["event"]
-                if name in {"stage_start", "stage_started"}:
-                    status = "running"
-                elif name in {"stage_done", "stage_completed"}:
-                    status = "succeeded"
-                elif name in {"stage_failed"}:
-                    status = "failed"
-                elif name in {"stage_paused"}:
-                    status = "paused"
-                payload = event["payload"]
-                if isinstance(payload.get("progress"), Mapping):
-                    progress = copy.deepcopy(dict(payload["progress"]))
-                if isinstance(payload.get("current_work_id"), str):
-                    current_work_id = payload["current_work_id"]
-            rows.append(
-                {
-                    "stage_id": definition.stage_id,
-                    "component_id": definition.component_id,
-                    "local_stage_id": definition.local_stage_id,
-                    "order": definition.order,
-                    "label": definition.label,
-                    "producer": definition.producer,
-                    "status": status,
-                    "progress": progress,
-                    "current_work_id": current_work_id,
-                    "artifact_refs": sorted(artifact_refs_by_stage.get(definition.stage_id, [])),
+        projected = {
+            definition.stage_id: {
+                "stage_id": definition.stage_id,
+                "component_id": definition.component_id,
+                "local_stage_id": definition.local_stage_id,
+                "order": definition.order,
+                "label": definition.label,
+                "producer": definition.producer,
+                "status": "pending",
+                "progress": None,
+                "current_work_id": None,
+                "artifact_refs": sorted(
+                    artifact_refs_by_stage.get(definition.stage_id, [])
+                ),
+            }
+            for definition in self.stages
+        }
+
+        for event in events:
+            name = event["event"]
+            stage_id = event["stage_id"]
+            if stage_id is None:
+                if name in {"component_halted", "run_paused"}:
+                    for row in projected.values():
+                        if (
+                            row["component_id"] == event["component_id"]
+                            and row["status"] == "running"
+                        ):
+                            row["status"] = "paused"
+                elif name in {"component_failed", "run_failed"}:
+                    for row in projected.values():
+                        if (
+                            row["component_id"] == event["component_id"]
+                            and row["status"] == "running"
+                        ):
+                            row["status"] = "failed"
+                            row["current_work_id"] = None
+                continue
+
+            row = projected[stage_id]
+            payload = event["payload"]
+            if name in {"stage_start", "stage_started"}:
+                row["status"] = "running"
+            elif name in {"stage_done", "stage_completed"}:
+                outcome = payload.get("outcome")
+                if outcome in {None, "succeeded", "skipped", "reused"}:
+                    row["status"] = "succeeded"
+                elif outcome in {"failed", "blocked", "cancelled"}:
+                    row["status"] = "failed"
+                else:
+                    raise WorkflowReplayContractError(
+                        "stage_outcome",
+                        f"$.events[{event['component_seq']}].payload.outcome",
+                        "stage completion outcome cannot be projected",
+                    )
+                row["current_work_id"] = None
+            elif name == "stage_failed":
+                row["status"] = "failed"
+                row["current_work_id"] = None
+            elif name == "stage_paused":
+                row["status"] = "paused"
+
+            if isinstance(payload.get("progress"), Mapping):
+                row["progress"] = copy.deepcopy(dict(payload["progress"]))
+            elif name == "progress" and all(
+                key in payload for key in ("completed", "total", "unit")
+            ):
+                row["progress"] = {
+                    "completed": copy.deepcopy(payload["completed"]),
+                    "total": copy.deepcopy(payload["total"]),
+                    "unit": copy.deepcopy(payload["unit"]),
                 }
-            )
-        return rows
+            elif name in {"stage_start", "stage_started"} and all(
+                key in payload for key in ("work_total", "work_unit")
+            ):
+                row["progress"] = {
+                    "completed": 0,
+                    "total": copy.deepcopy(payload["work_total"]),
+                    "unit": copy.deepcopy(payload["work_unit"]),
+                }
+
+            if "current_work_id" in payload:
+                current_work_id = payload["current_work_id"]
+                if current_work_id is not None and not isinstance(current_work_id, str):
+                    raise WorkflowReplayContractError(
+                        "current_work_id",
+                        f"$.events[{event['component_seq']}].payload.current_work_id",
+                        "current work ID must be a string or null",
+                    )
+                row["current_work_id"] = current_work_id
+            elif name == "work_started" and isinstance(payload.get("work_id"), str):
+                row["current_work_id"] = payload["work_id"]
+
+            if row["status"] in {"failed", "succeeded"}:
+                row["current_work_id"] = None
+
+        return [projected[definition.stage_id] for definition in self.stages]
 
     def _write_relay_artifact(self, row: Mapping[str, Any]) -> None:
         binding = validate_typed_artifact_binding_v1(row["binding"], path="$.binding")
