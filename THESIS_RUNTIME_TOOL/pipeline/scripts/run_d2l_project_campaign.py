@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 import sys
+from typing import Mapping
 
 from pipeline.prepass.d2l_project_campaign_v2 import prepare_campaign
 from pipeline.prepass.d2l_project_stage_runner_v1 import (
@@ -11,6 +12,45 @@ from pipeline.prepass.d2l_project_stage_runner_v1 import (
     execute_stage,
 )
 from pipeline.prepass.d2l_translation_component_runner_v1 import run_from_plan_file
+
+
+class _FileCredentialProvider:
+    """Resolve only explicitly mapped external credential files."""
+
+    def __init__(self, paths: Mapping[str, Path]) -> None:
+        self._paths = dict(paths)
+
+    def resolve(self, credential_ref: str) -> str | None:
+        path = self._paths.get(credential_ref)
+        if path is None:
+            return None
+        value = path.read_text(encoding="utf-8").strip()
+        if not value or any(character.isspace() or ord(character) < 32 for character in value):
+            raise ValueError(f"credential file is invalid: {credential_ref}")
+        return value
+
+
+def _credential_files(values: list[str] | None) -> dict[str, Path]:
+    result: dict[str, Path] = {}
+    for raw in values or []:
+        credential_ref, separator, path_text = raw.partition("=")
+        if not separator or not credential_ref or not path_text:
+            raise ValueError("--credential-file must be CREDENTIAL_REF=ABSOLUTE_PATH")
+        path = Path(path_text).expanduser()
+        if not path.is_absolute():
+            raise ValueError("--credential-file paths must be absolute")
+        if credential_ref in result:
+            raise ValueError(f"duplicate credential ref: {credential_ref}")
+        result[credential_ref] = path.resolve()
+    return result
+
+
+def _execution_mode(parser: argparse.ArgumentParser) -> None:
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--dry-run", action="store_true")
+    mode.add_argument("--live", action="store_true")
+    parser.add_argument("--runtime-root")
+    parser.add_argument("--credential-file", action="append", default=[])
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -34,13 +74,13 @@ def _parser() -> argparse.ArgumentParser:
     plan.add_argument("--job-root", required=True)
     plan.add_argument("--campaign-root", required=True)
     plan.add_argument("--code-root", default=str(Path(__file__).resolve().parents[2]))
-    plan.add_argument("--dry-run", action="store_true", required=True)
+    _execution_mode(plan)
 
     execute = subparsers.add_parser("execute-stage")
     execute.add_argument("--job-root", required=True)
     execute.add_argument("--campaign-root", required=True)
     execute.add_argument("--stage-id", required=True)
-    execute.add_argument("--dry-run", action="store_true", required=True)
+    _execution_mode(execute)
 
     run = subparsers.add_parser("run-component")
     run.add_argument("--campaign-root", required=True)
@@ -67,18 +107,25 @@ def main(argv: list[str] | None = None) -> int:
             hard_total_token_cap=args.hard_total_token_cap,
         )
     elif args.command == "build-plan":
+        credential_files = _credential_files(args.credential_file)
         result = build_component_plan(
             campaign_root=args.campaign_root,
             job_root=args.job_root,
             code_root=args.code_root,
             dry_run=args.dry_run,
+            runtime_root=args.runtime_root,
+            credential_files=credential_files or None,
         )
     elif args.command == "execute-stage":
+        credential_files = _credential_files(args.credential_file)
+        provider = _FileCredentialProvider(credential_files) if args.live else None
         result = execute_stage(
             campaign_root=args.campaign_root,
             job_root=args.job_root,
             stage_id=args.stage_id,
             dry_run=args.dry_run,
+            runtime_root=args.runtime_root,
+            credential_provider=provider,
         )
     else:
         campaign_root = Path(args.campaign_root).resolve()

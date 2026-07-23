@@ -56,7 +56,9 @@ def _load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def test_plan_is_exactly_eleven_stages_and_live_is_closed(tmp_path: Path) -> None:
+def test_plan_is_exactly_eleven_stages_and_live_requires_sealed_paths(
+    tmp_path: Path,
+) -> None:
     job = _fixture_job(tmp_path)
     campaign = tmp_path / "campaign"
     prepare_campaign(
@@ -69,7 +71,7 @@ def test_plan_is_exactly_eleven_stages_and_live_is_closed(tmp_path: Path) -> Non
         chapter_ids=["alpha_unit"],
         created_at=CREATED_AT,
     )
-    with pytest.raises(D2LStageRunnerError, match="live stage execution"):
+    with pytest.raises(D2LStageRunnerError, match="runtime_root"):
         build_component_plan(
             campaign_root=campaign,
             job_root=job,
@@ -85,6 +87,60 @@ def test_plan_is_exactly_eleven_stages_and_live_is_closed(tmp_path: Path) -> Non
     assert [row["stage_id"] for row in plan["stages"]] == list(STAGE_IDS)
     assert all("--dry-run" in row["command"] for row in plan["stages"])
     assert all(row["receipt_ref"] is None for row in plan["stages"])
+
+
+def test_live_plan_seals_runtime_credentials_and_stage_receipts(tmp_path: Path) -> None:
+    job = _fixture_job(tmp_path)
+    campaign = tmp_path / "campaign_live"
+    prepare_campaign(
+        job_root=job,
+        campaign_root=campaign,
+        workflow_run_id="wf_stage_live_fixture",
+        component_run_id="tr_stage_live_fixture",
+        code_revision=CODE_REVISION,
+        require_clean_code=False,
+        chapter_ids=["alpha_unit"],
+        created_at=CREATED_AT,
+    )
+    credential_files = {
+        "credential.modelapi_shared_v1": tmp_path / "modelapi.key",
+        "credential.shopaikey_gemini_proxy_v1": tmp_path / "shopapi.key",
+    }
+    plan = build_component_plan(
+        campaign_root=campaign,
+        job_root=job,
+        code_root=Path(__file__).resolve().parents[2],
+        dry_run=False,
+        runtime_root=tmp_path / "runtime",
+        credential_files=credential_files,
+    )
+    assert [row["stage_id"] for row in plan["stages"]] == list(STAGE_IDS)
+    assert all("--live" in row["command"] for row in plan["stages"])
+    assert all("--runtime-root" in row["command"] for row in plan["stages"])
+    semantic = {
+        "b1_candidate_discovery",
+        "b2_admission_translation",
+        "auditor_morphology",
+        "auditor_target_collision",
+        "auditor_multi_target",
+        "translator",
+        "translation_quality_audit",
+    }
+    for stage in plan["stages"]:
+        if stage["stage_id"] in semantic:
+            assert stage["receipt_ref"] == (
+                f"artifacts/{stage['stage_id']}/stage_receipt.json"
+            )
+            assert any(
+                spec["relative_path"] == stage["receipt_ref"]
+                and spec["artifact_kind"] == "d2l_stage_event_receipt"
+                for spec in stage["artifact_specs"]
+            )
+        else:
+            assert stage["receipt_ref"] is None
+    encoded = json.dumps(plan, ensure_ascii=False)
+    assert "modelapi.key" in encoded
+    assert "shopapi.key" in encoded
 
 
 def test_full_dry_component_exact_covers_admission_and_is_not_publishable(

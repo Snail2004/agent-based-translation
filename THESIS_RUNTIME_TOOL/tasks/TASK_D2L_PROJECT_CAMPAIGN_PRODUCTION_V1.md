@@ -132,10 +132,12 @@ gold/evaluation data are excluded.
 
 ```text
 THESIS_RUNTIME_TOOL/pipeline/prepass/d2l_project_campaign_v2.py
+THESIS_RUNTIME_TOOL/pipeline/prepass/d2l_project_live_executor_v1.py
 THESIS_RUNTIME_TOOL/pipeline/prepass/d2l_project_stage_runner_v1.py
 THESIS_RUNTIME_TOOL/pipeline/prepass/d2l_project_transport_v1.py
 THESIS_RUNTIME_TOOL/pipeline/scripts/run_d2l_project_campaign.py
 THESIS_RUNTIME_TOOL/pipeline/tests/test_d2l_project_campaign_v2.py
+THESIS_RUNTIME_TOOL/pipeline/tests/test_d2l_project_live_executor_v1.py
 THESIS_RUNTIME_TOOL/pipeline/tests/test_d2l_project_stage_runner_v1.py
 THESIS_RUNTIME_TOOL/pipeline/tests/test_d2l_project_transport_v1.py
 THESIS_RUNTIME_TOOL/pipeline/tests/test_d2l_project_campaign_observability_v1.py

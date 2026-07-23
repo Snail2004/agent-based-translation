@@ -1,0 +1,508 @@
+from __future__ import annotations
+
+from copy import deepcopy
+import json
+from pathlib import Path
+import re
+from types import SimpleNamespace
+
+import pytest
+
+from pipeline.agents.llm_client import LLMUsage
+from pipeline.eval.common_input_v1 import validate_translation_artifact
+from pipeline.ingest.document_loader import load_document
+from pipeline.memory.store_init import migrate_db
+from pipeline.prepass.d2l_console_replay_contract_v1 import (
+    canonical_sha256,
+    file_sha256,
+    validate_component_manifest,
+    validate_scoring_handoff_fragment,
+)
+from pipeline.prepass.d2l_component_stage_receipt_v1 import validate_stage_receipt
+from pipeline.prepass.d2l_project_campaign_v2 import (
+    load_campaign,
+    load_project,
+    prepare_campaign,
+)
+from pipeline.prepass.d2l_project_live_executor_v1 import (
+    D2LProjectLiveExecutorError,
+    _mechanical_quality,
+    execute_live_stage,
+)
+from pipeline.prepass.d2l_project_stage_runner_v1 import (
+    _STAGE_PRODUCERS,
+    build_component_plan,
+    execute_stage,
+)
+from pipeline.prepass.d2l_shared_llm_adapter_v1 import D2LSharedClientResult
+from pipeline.prepass.d2l_terminology_memory_delta_v1 import (
+    validate_memory_delta_batch,
+)
+from pipeline.prepass.d2l_translation_component_runner_v1 import (
+    ComponentPlan,
+    run_from_plan_file,
+)
+from pipeline.tests.test_d2l_project_campaign_v2 import (
+    CODE_REVISION,
+    CREATED_AT,
+    _fixture_job,
+)
+from pipeline.translate import d2l_translation_quality_auditor_v2 as quality_contract
+
+
+def _write_json(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def _upgrade_fixture_runtime_db(job: Path) -> None:
+    database = job / "memory.sqlite3"
+    database.unlink()
+    load_document(database, job / "source_package_snapshot" / "document.json")
+    migrate_db(database)
+    manifest_path = job / "source_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    body = dict(manifest)
+    body.pop("manifest_payload_sha256")
+    body["initial_runtime_db_sha256"] = file_sha256(database).lower()
+    body["manifest_payload_sha256"] = canonical_sha256(body).lower()
+    _write_json(manifest_path, body)
+
+
+def _json_objects(text: str) -> list[dict]:
+    decoder = json.JSONDecoder()
+    values: list[dict] = []
+    for index, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            value, _end = decoder.raw_decode(text[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            values.append(value)
+    return values
+
+
+class _FakeClient:
+    uses_shared_backend = True
+
+    def __init__(self, transport: "_FakeTransport", role_id: str) -> None:
+        self.transport = transport
+        self.role_id = role_id
+        self.preset = SimpleNamespace(role_id=role_id)
+        self.transport_identity = f"fake-transport-{role_id}"
+        self.config = SimpleNamespace(
+            model=transport.models[role_id],
+            temperature=0.0,
+            seed=7,
+            reasoning_effort="none",
+            verbosity="low",
+            max_output_tokens=4096,
+            daily_token_cap=1_000_000,
+        )
+
+    def call(self, messages, *, response_format=None, tag="", **_kwargs):
+        self.transport.call_count += 1
+        self.transport.calls.append(
+            {
+                "role_id": self.role_id,
+                "tag": tag,
+                "response_format": response_format,
+            }
+        )
+        payload = self.transport.response(self.role_id, messages, tag)
+        if payload is _INVALID_JSON:
+            parsed = None
+            text = "not-json"
+            json_error = "synthetic_invalid_json"
+        else:
+            parsed = payload
+            text = json.dumps(payload, ensure_ascii=False)
+            json_error = None
+        return D2LSharedClientResult(
+            text=text,
+            parsed_json=parsed,
+            json_error=json_error,
+            model=self.config.model,
+            system_fingerprint="fake-fingerprint",
+            usage=LLMUsage(
+                prompt_tokens=100,
+                cached_tokens=0,
+                completion_tokens=25,
+                reasoning_tokens=0,
+            ),
+            cost_usd=0.001,
+            cost_status="provider_actual",
+            latency_ms=5,
+            from_cache=False,
+            cache_key=f"fake-{self.transport.call_count}",
+            seal_sha256="a" * 64,
+            artifact_sha256="b" * 64,
+            response_payload=parsed or {},
+            logical_request_id=f"lr_fake_{self.transport.call_count:06d}",
+            physical_attempt_index=1,
+            provider_id="fake_provider",
+            source_id="fake_source",
+            masked_quota_bucket="fake-bucket",
+            finish_reason="stop",
+            cache_status="miss",
+            cache_mechanism="local_exact_cache",
+        )
+
+
+_INVALID_JSON = object()
+
+
+class _FakeTransport:
+    def __init__(self, source_by_block: dict[str, str], *, invalid_b1_once: bool = False):
+        self.source_by_block = dict(source_by_block)
+        self.invalid_b1_once = invalid_b1_once
+        self.call_count = 0
+        self.calls: list[dict] = []
+        self.models = {
+            "d2l.candidate_discovery": "gemini-3.5-flash",
+            "d2l.b2.admission": "gpt-5.4",
+            "d2l.b2.morphology": "gpt-5.5",
+            "d2l.b2.target_collision": "gpt-5.5",
+            "d2l.b2.multi_target": "gpt-5.5",
+            "d2l.translator.s0": "gemini-3.5-flash",
+            "d2l.translator.s1": "gemini-3.5-flash",
+            "d2l.translator.quality_auditor": "gpt-5.5",
+        }
+
+    def build_client(self, role_id: str, **_kwargs):
+        return _FakeClient(self, role_id)
+
+    def response(self, role_id: str, messages: list[dict], tag: str):
+        user = "\n".join(
+            str(row.get("content") or "") for row in messages if row.get("role") == "user"
+        )
+        if role_id == "d2l.candidate_discovery":
+            if self.invalid_b1_once:
+                self.invalid_b1_once = False
+                return _INVALID_JSON
+            chapter_id = user.split("CHAPTER_ID\n", 1)[1].split("\n", 1)[0]
+            window_id = user.split("WINDOW_ID\n", 1)[1].split("\n", 1)[0]
+            block_id = next(
+                block_id
+                for block_id, text in self.source_by_block.items()
+                if "technical definition" in text
+            )
+            return {
+                "chapter_id": chapter_id,
+                "window_id": window_id,
+                "candidate_observations": [
+                    {
+                        "source_surface": "technical definition",
+                        "anchor_block_ids": [block_id],
+                    }
+                ],
+            }
+        if role_id == "d2l.b2.admission":
+            packet = next(
+                value
+                for value in _json_objects(user)
+                if "packet_id" in value and "candidates" in value
+            )
+            decisions = []
+            for candidate in packet["candidates"]:
+                decisions.append(
+                    {
+                        "candidate_id": candidate["candidate_id"],
+                        "decision": "admit",
+                        "canonical_source": candidate["surfaces"][0],
+                        "directive": "translate",
+                        "primary_target_vi": "định nghĩa kỹ thuật",
+                        "primary_use": None,
+                        "alternates": [],
+                        "evidence_block_ids": [candidate["evidence_block_ids"][0]],
+                        "rationale": "The expression denotes a reusable technical concept.",
+                    }
+                )
+            return {"packet_id": packet["packet_id"], "decisions": decisions}
+        if role_id.startswith("d2l.b2."):
+            raise AssertionError(f"clean singleton unexpectedly called {role_id}")
+        if role_id == "d2l.translator.s0":
+            return {
+                block_id: source
+                for block_id, source in self.source_by_block.items()
+                if f"[{block_id}]" in user
+            }
+        if role_id == "d2l.translator.s1":
+            translations = {}
+            for line in user.splitlines():
+                match = re.match(r"^\[(T\d+)\]\s?(.*)$", line)
+                if match:
+                    translations[match.group(1)] = match.group(2)
+            return {"translations": translations}
+        if role_id == "d2l.translator.quality_auditor":
+            packet = next(
+                value
+                for value in _json_objects(user)
+                if "window_id" in value and "blocks" in value
+            )
+            return {
+                "contract_version": quality_contract.RESPONSE_CONTRACT_VERSION,
+                "window_id": packet["window_id"],
+                "audited_block_ids": [row["block_id"] for row in packet["blocks"]],
+                "findings": [],
+            }
+        raise AssertionError(f"unexpected fake role: {role_id} ({tag})")
+
+
+def _prepared(tmp_path: Path) -> tuple[Path, Path, dict, object, list[dict], dict]:
+    job = _fixture_job(tmp_path)
+    _upgrade_fixture_runtime_db(job)
+    campaign_root = tmp_path / "campaign"
+    prepare_campaign(
+        job_root=job,
+        campaign_root=campaign_root,
+        workflow_run_id="wf_live_executor_fixture",
+        component_run_id="tr_live_executor_fixture",
+        code_revision=CODE_REVISION,
+        require_clean_code=False,
+        chapter_ids=["alpha_unit", "gamma_unit"],
+        created_at=CREATED_AT,
+    )
+    plan = build_component_plan(
+        campaign_root=campaign_root,
+        job_root=job,
+        code_root=Path(__file__).resolve().parents[2],
+        dry_run=False,
+        runtime_root=tmp_path / "runtime",
+        credential_files={
+            "credential.modelapi_shared_v1": tmp_path / "modelapi.key",
+            "credential.shopaikey_gemini_proxy_v1": tmp_path / "shopapi.key",
+        },
+    )
+    campaign = load_campaign(campaign_root)
+    project = load_project(job, verify_tree=True)
+    rows = [
+        dict(row)
+        for row in project.block_rows
+        if row["chapter_id"] in campaign["config"]["selected_chapter_ids"]
+    ]
+    transport = _FakeTransport(
+        {str(row["block_id"]): str(row["clean_text"] or row["source_text"]) for row in rows},
+        invalid_b1_once=True,
+    )
+    return job, campaign_root, campaign, project, rows, {"plan": plan, "transport": transport}
+
+
+def test_live_executor_full_stage_chain_is_gold_free_and_exact_cover(tmp_path: Path) -> None:
+    job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    source_db_before = file_sha256(job / "memory.sqlite3")
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    plan = ComponentPlan.from_mapping(support["plan"])
+    transport = support["transport"]
+    by_stage = {stage.stage_id: stage for stage in plan.stages}
+
+    for stage_id in [stage.stage_id for stage in plan.stages]:
+        stage = by_stage[stage_id]
+        payloads = execute_live_stage(
+            campaign=campaign,
+            project=project,
+            rows=rows,
+            stage_id=stage_id,
+            component_root=component_root,
+            work_db=campaign_root / "state" / "work.sqlite3",
+            transport=transport if stage_id in {
+                "b1_candidate_discovery",
+                "b2_admission_translation",
+                "auditor_morphology",
+                "auditor_target_collision",
+                "auditor_multi_target",
+                "translator",
+                "translation_quality_audit",
+            } else None,
+            component_attempt_id=1,
+            producer=stage.producer,
+            work_id=stage.work_id,
+        )
+        assert set(payloads) == {spec["artifact_ref"] for spec in stage.artifact_specs}
+        for spec in stage.artifact_specs:
+            _write_json(
+                component_root / spec["relative_path"],
+                payloads[spec["artifact_ref"]],
+            )
+
+    s0 = validate_translation_artifact(
+        json.loads((component_root / "artifacts/translator/s0.json").read_text(encoding="utf-8"))
+    )
+    s1 = validate_translation_artifact(
+        json.loads((component_root / "artifacts/translator/s1.json").read_text(encoding="utf-8"))
+    )
+    assert s0["coverage"] == s1["coverage"]
+    assert s0["coverage"]["source_block_count"] == 4
+    assert s0["coverage"]["translated_count"] == 3
+    assert s0["coverage"]["review_held_count"] == 1
+    fragment = validate_scoring_handoff_fragment(
+        json.loads((component_root / "scoring_handoff_fragment.json").read_text(encoding="utf-8"))
+    )
+    assert [row["arm_id"] for row in fragment["translation_inputs"]] == ["s0", "s1"]
+    glossary = json.loads(
+        (component_root / "artifacts/glossary_seal/glossary.json").read_text(encoding="utf-8")
+    )
+    assert glossary["ready_record_count"] == 1
+    assert glossary["records"][0]["value"]["canonical_source"] == "technical definition"
+    assert re.fullmatch(
+        r"[0-9A-F]{64}",
+        glossary["records"][0]["value"]["resolution"]["authority_sha256"],
+    )
+    delta = validate_memory_delta_batch(
+        json.loads(
+            (component_root / "artifacts/glossary_seal/memory_delta.json").read_text(
+                encoding="utf-8"
+            )
+        )
+    )
+    assert delta["counts"]["total"] == 1
+    quality_state = json.loads(
+        (component_root / "artifacts/quality/state.json").read_text(encoding="utf-8")
+    )
+    assert quality_state["continue_to_scoring"] is True
+    assert not any(call["role_id"].startswith("d2l.b2.") and call["role_id"] != "d2l.b2.admission" for call in transport.calls)
+    b1_receipt = json.loads(
+        (component_root / "artifacts/b1_candidate_discovery/stage_receipt.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert any(row["event"] == "retry" for row in b1_receipt["observations"])
+    serialized = json.dumps(
+        {
+            "glossary": glossary,
+            "fragment": fragment,
+            "quality": quality_state,
+            "receipt": b1_receipt,
+        },
+        ensure_ascii=False,
+    ).casefold()
+    for forbidden in ("gold", "oracle", "reference_text", "raw_prompt", "raw_response"):
+        assert forbidden not in serialized
+    assert file_sha256(job / "memory.sqlite3") == source_db_before
+
+
+def test_live_stage_runner_pauses_before_api_and_validates_fake_b1_receipt(
+    tmp_path: Path,
+) -> None:
+    job, campaign_root, _campaign, _project, rows, support = _prepared(tmp_path)
+    source_db_before = file_sha256(job / "memory.sqlite3")
+    run_from_plan_file(
+        campaign_root / "component_plan.json",
+        campaign_root / "component",
+        stop_after_stage="preflight",
+    )
+    assert json.loads(
+        (campaign_root / "component/component_manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )["status"] == "paused"
+    transport = support["transport"]
+    result = execute_stage(
+        campaign_root=campaign_root,
+        job_root=job,
+        stage_id="b1_candidate_discovery",
+        dry_run=False,
+        transport=transport,
+    )
+    assert result["execution_mode"] == "live_sealed"
+    manifest = validate_component_manifest(
+        json.loads(
+            (campaign_root / "component/component_manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
+    )
+    receipt = json.loads(
+        (
+            campaign_root
+            / "component/artifacts/b1_candidate_discovery/stage_receipt.json"
+        ).read_text(encoding="utf-8")
+    )
+    validated = validate_stage_receipt(
+        receipt,
+        manifest=manifest,
+        stage_id="b1_candidate_discovery",
+        producer=_STAGE_PRODUCERS["b1_candidate_discovery"],
+        work_id="work_b1_candidate_discovery",
+        start_component_seq=0,
+    )
+    assert any(row["event"] == "request_sent" for row in validated["observations"])
+    assert any(row["event"] == "retry" for row in validated["observations"])
+    assert file_sha256(job / "memory.sqlite3") == source_db_before
+
+
+def test_mechanical_quality_detects_math_drift_without_language_judgment() -> None:
+    safe, reasons = _mechanical_quality(
+        block_id="b_math",
+        source=r"The value is $\mathbf{x}$.",
+        target=r"Giá trị là $\mathbf{y}$.",
+    )
+    assert safe is False
+    assert "math_bytes_or_order_changed" in reasons
+
+
+def test_live_executor_b2_invalid_output_fails_closed_without_artifact(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    transport = support["transport"]
+    b1 = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id="b1_candidate_discovery",
+        component_root=component_root,
+        work_db=campaign_root / "state/work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=_STAGE_PRODUCERS["b1_candidate_discovery"],
+        work_id="work_b1_candidate_discovery",
+    )
+    _write_json(
+        component_root / "artifacts/b1_candidate_discovery/candidates.json",
+        b1["art_b1_candidate_discovery"],
+    )
+    index = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id="candidate_index",
+        component_root=component_root,
+        work_db=campaign_root / "state/work.sqlite3",
+        transport=None,
+        component_attempt_id=1,
+        producer=_STAGE_PRODUCERS["candidate_index"],
+        work_id="work_candidate_index",
+    )
+    _write_json(
+        component_root / "artifacts/candidate_index/index.json",
+        index["art_candidate_index"],
+    )
+
+    original = transport.response
+    transport.response = lambda role_id, messages, tag: (
+        _INVALID_JSON if role_id == "d2l.b2.admission" else original(role_id, messages, tag)
+    )
+    with pytest.raises(D2LProjectLiveExecutorError, match="failed local validation"):
+        execute_live_stage(
+            campaign=campaign,
+            project=project,
+            rows=rows,
+            stage_id="b2_admission_translation",
+            component_root=component_root,
+            work_db=campaign_root / "state/work.sqlite3",
+            transport=transport,
+            component_attempt_id=1,
+            producer=_STAGE_PRODUCERS["b2_admission_translation"],
+            work_id="work_b2_admission_translation",
+        )
+    assert not (component_root / "artifacts/b2_admission_translation/decisions.json").exists()

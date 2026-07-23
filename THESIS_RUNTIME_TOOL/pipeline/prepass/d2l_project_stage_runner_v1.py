@@ -27,6 +27,12 @@ from pipeline.prepass.d2l_project_campaign_v2 import (
     load_campaign,
     load_project,
 )
+from pipeline.prepass.d2l_component_stage_receipt_v1 import STAGE_RECEIPT_SCHEMA
+from pipeline.prepass.d2l_project_live_executor_v1 import (
+    LIVE_EXECUTOR_VERSION,
+    execute_live_stage,
+)
+from pipeline.prepass.d2l_project_transport_v1 import D2LProjectTransport
 from pipeline.prepass.d2l_translation_component_runner_v1 import (
     RUNNER_SCHEMA,
     ComponentPlan,
@@ -180,6 +186,38 @@ _STAGE_ARTIFACTS: dict[str, tuple[dict[str, Any], ...]] = {
 }
 
 
+_LIVE_SCHEMA_OVERRIDES = {
+    "art_preflight": "d2l_campaign_stage_preflight_live_v1",
+    "art_b1_candidate_discovery": "d2l_candidate_discovery_live_v1",
+    "art_b1_proposal_timeline": "d2l_candidate_proposal_timeline_v1",
+    "art_candidate_index": "d2l_candidate_index_v2",
+    "art_b2_admission": "d2l_b2_admission_live_v1",
+    "art_auditor_morphology": "d2l_morphology_decisions_live_v1",
+    "art_auditor_target_collision": "d2l_target_collision_decisions_live_v1",
+    "art_auditor_multi_target": "d2l_multi_target_decisions_live_v1",
+    "art_glossary": "d2l_sealed_glossary_v1",
+    "art_glossary_memory_delta": "d2l_terminology_memory_delta_batch_v1",
+    "art_translation_s0": "TranslationArtifactV1",
+    "art_translation_s1": "TranslationArtifactV1",
+    "art_translation_quality_observations": (
+        "d2l_translation_quality_observations_live_v1"
+    ),
+    "art_translation_quality_state": "d2l_translation_quality_state_live_v1",
+    "art_scoring_handoff_fragment": SCORING_FRAGMENT_SCHEMA,
+}
+
+
+_SEMANTIC_STAGE_IDS = {
+    "b1_candidate_discovery",
+    "b2_admission_translation",
+    "auditor_morphology",
+    "auditor_target_collision",
+    "auditor_multi_target",
+    "translator",
+    "translation_quality_audit",
+}
+
+
 _STAGE_PRODUCERS = {
     "preflight": "d2l_campaign_preflight",
     "b1_candidate_discovery": "d2l_candidate_builder",
@@ -291,6 +329,76 @@ def _stage_totals(campaign: Mapping[str, Any]) -> dict[str, tuple[int, str]]:
     }
 
 
+def _required_credential_refs(config: Mapping[str, Any]) -> set[str]:
+    refs = {
+        str(row["credential_ref"])
+        for row in config["transport_sources"].values()
+        if row.get("credential_ref")
+    }
+    if not refs:
+        raise D2LStageRunnerError("live campaign has no credential references")
+    return refs
+
+
+def _live_paths(
+    *,
+    config: Mapping[str, Any],
+    runtime_root: str | Path | None,
+    credential_files: Mapping[str, str | Path] | None,
+) -> tuple[Path, dict[str, Path]]:
+    if runtime_root is None:
+        raise D2LStageRunnerError("live plan requires runtime_root")
+    runtime = Path(runtime_root).expanduser().resolve()
+    if credential_files is None:
+        raise D2LStageRunnerError("live plan requires credential_files")
+    required = _required_credential_refs(config)
+    if set(credential_files) != required:
+        raise D2LStageRunnerError("live credential refs do not exact-cover campaign sources")
+    resolved: dict[str, Path] = {}
+    for credential_ref, raw_path in credential_files.items():
+        path = Path(raw_path).expanduser()
+        if not path.is_absolute():
+            raise D2LStageRunnerError("live credential paths must be absolute")
+        resolved[credential_ref] = path.resolve()
+    return runtime, resolved
+
+
+def _stage_artifact_specs(stage_id: str, *, dry_run: bool) -> list[dict[str, Any]]:
+    execution_mode = "dry_no_api" if dry_run else "live_sealed"
+    specs = []
+    for raw in _STAGE_ARTIFACTS[stage_id]:
+        spec = deepcopy(raw)
+        if not dry_run:
+            spec["schema_version"] = _LIVE_SCHEMA_OVERRIDES[spec["artifact_ref"]]
+        spec["metadata"] = {
+            "execution_mode": execution_mode,
+            "stage_runner_version": STAGE_RUNNER_VERSION,
+            **(
+                {"live_executor_version": LIVE_EXECUTOR_VERSION}
+                if not dry_run
+                else {}
+            ),
+        }
+        specs.append(spec)
+    if not dry_run and stage_id in _SEMANTIC_STAGE_IDS:
+        parent_refs = [str(spec["artifact_ref"]) for spec in specs]
+        specs.append(
+            {
+                "artifact_ref": f"art_{stage_id}_receipt",
+                "artifact_kind": "d2l_stage_event_receipt",
+                "schema_version": STAGE_RECEIPT_SCHEMA,
+                "relative_path": f"artifacts/{stage_id}/stage_receipt.json",
+                "parent_artifact_refs": parent_refs,
+                "metadata": {
+                    "execution_mode": execution_mode,
+                    "stage_runner_version": STAGE_RUNNER_VERSION,
+                    "live_executor_version": LIVE_EXECUTOR_VERSION,
+                },
+            }
+        )
+    return specs
+
+
 def build_component_plan(
     *,
     campaign_root: str | Path,
@@ -298,9 +406,9 @@ def build_component_plan(
     code_root: str | Path,
     python_executable: str | Path | None = None,
     dry_run: bool,
+    runtime_root: str | Path | None = None,
+    credential_files: Mapping[str, str | Path] | None = None,
 ) -> dict[str, Any]:
-    if not dry_run:
-        raise D2LStageRunnerError("live stage execution is not enabled by the 0-API runner")
     campaign = load_campaign(campaign_root)
     project = load_project(job_root, verify_tree=True)
     _validate_project_against_campaign(campaign, project)
@@ -310,20 +418,19 @@ def build_component_plan(
     if not (cwd / "pipeline").is_dir():
         raise D2LStageRunnerError("code_root must be the THESIS_RUNTIME_TOOL directory")
     executable = str(Path(python_executable or sys.executable).resolve())
+    runtime: Path | None = None
+    credentials: dict[str, Path] = {}
+    if not dry_run:
+        runtime, credentials = _live_paths(
+            config=config,
+            runtime_root=runtime_root,
+            credential_files=credential_files,
+        )
     totals = _stage_totals(campaign)
     stages: list[dict[str, Any]] = []
     for stage_id in STAGE_IDS:
         total, unit = totals[stage_id]
-        specs = [
-            {
-                **deepcopy(spec),
-                "metadata": {
-                    "execution_mode": "dry_no_api",
-                    "stage_runner_version": STAGE_RUNNER_VERSION,
-                },
-            }
-            for spec in _STAGE_ARTIFACTS[stage_id]
-        ]
+        specs = _stage_artifact_specs(stage_id, dry_run=dry_run)
         command = [
             executable,
             "-m",
@@ -335,8 +442,20 @@ def build_component_plan(
             str(project.job_root),
             "--stage-id",
             stage_id,
-            "--dry-run",
+            "--dry-run" if dry_run else "--live",
         ]
+        if not dry_run:
+            assert runtime is not None
+            command.extend(["--runtime-root", str(runtime)])
+            for credential_ref, path in sorted(credentials.items()):
+                command.extend(
+                    ["--credential-file", f"{credential_ref}={path}"]
+                )
+        receipt_ref = (
+            f"artifacts/{stage_id}/stage_receipt.json"
+            if not dry_run and stage_id in _SEMANTIC_STAGE_IDS
+            else None
+        )
         stages.append(
             {
                 "stage_id": stage_id,
@@ -348,8 +467,8 @@ def build_component_plan(
                 "unit": unit,
                 "work_id": f"work_{stage_id}",
                 "mode": "execute",
-                "timeout_seconds": 600,
-                "receipt_ref": None,
+                "timeout_seconds": 600 if dry_run else 86_400,
+                "receipt_ref": receipt_ref,
             }
         )
     plan = {
@@ -769,11 +888,13 @@ def execute_stage(
     job_root: str | Path,
     stage_id: str,
     dry_run: bool,
+    runtime_root: str | Path | None = None,
+    credential_provider: Any | None = None,
+    sender: Any | None = None,
+    transport: Any | None = None,
 ) -> dict[str, Any]:
     if stage_id not in STAGE_IDS:
         raise D2LStageRunnerError(f"unknown stage_id: {stage_id}")
-    if not dry_run:
-        raise D2LStageRunnerError("live stage execution is not enabled by the 0-API runner")
     campaign = load_campaign(campaign_root)
     project = load_project(job_root, verify_tree=True)
     rows = _validate_project_against_campaign(campaign, project)
@@ -781,18 +902,44 @@ def execute_stage(
     config = campaign["config"]
     attempt = _component_attempt(root, config)
     component_root = root / str(config["state_layout"]["component_root"])
-    payloads = _dry_stage_payloads(
-        campaign=campaign,
-        project=project,
-        rows=rows,
-        stage_id=stage_id,
-        component_attempt_id=attempt,
-    )
-    expected_refs = {spec["artifact_ref"] for spec in _STAGE_ARTIFACTS[stage_id]}
+    if dry_run:
+        payloads = _dry_stage_payloads(
+            campaign=campaign,
+            project=project,
+            rows=rows,
+            stage_id=stage_id,
+            component_attempt_id=attempt,
+        )
+    else:
+        if transport is None and stage_id in _SEMANTIC_STAGE_IDS:
+            if runtime_root is None or credential_provider is None:
+                raise D2LStageRunnerError(
+                    "live semantic stage requires runtime_root and credential_provider"
+                )
+            transport = D2LProjectTransport(
+                campaign_root=root,
+                runtime_root=runtime_root,
+                credential_provider=credential_provider,
+                sender=sender,
+            )
+        payloads = execute_live_stage(
+            campaign=campaign,
+            project=project,
+            rows=rows,
+            stage_id=stage_id,
+            component_root=component_root,
+            work_db=root / str(config["state_layout"]["work_db"]),
+            transport=transport,
+            component_attempt_id=attempt,
+            producer=_STAGE_PRODUCERS[stage_id],
+            work_id=f"work_{stage_id}",
+        )
+    specs = _stage_artifact_specs(stage_id, dry_run=dry_run)
+    expected_refs = {spec["artifact_ref"] for spec in specs}
     if set(payloads) != expected_refs:
         raise D2LStageRunnerError("stage payloads do not exact-cover artifact specs")
     written = []
-    for spec in _STAGE_ARTIFACTS[stage_id]:
+    for spec in specs:
         path = component_root / str(spec["relative_path"])
         _write_json_immutable(path, payloads[str(spec["artifact_ref"])])
         written.append(
@@ -805,7 +952,7 @@ def execute_stage(
     return {
         "stage_id": stage_id,
         "component_attempt_id": attempt,
-        "execution_mode": "dry_no_api",
+        "execution_mode": "dry_no_api" if dry_run else "live_sealed",
         "artifacts": written,
     }
 

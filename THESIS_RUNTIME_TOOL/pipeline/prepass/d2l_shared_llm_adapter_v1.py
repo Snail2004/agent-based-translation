@@ -75,6 +75,14 @@ class D2LSharedClientResult:
     seal_sha256: str
     artifact_sha256: str
     response_payload: Mapping[str, Any]
+    logical_request_id: str
+    physical_attempt_index: int
+    provider_id: str
+    source_id: str
+    masked_quota_bucket: str
+    finish_reason: str | None
+    cache_status: str
+    cache_mechanism: str
 
 
 class D2LSharedLlmAttemptAdapter:
@@ -361,6 +369,20 @@ class D2LSharedLlmClient:
         cache_key = str(
             observation.get("cache_key_sha256") or result.artifact_sha256
         )
+        physical_attempt_index = int(usage_row.get("physical_attempt_index") or 1)
+        source_id = str(
+            usage_row.get("source_id") or self.api_source["source_id"]
+        )
+        quota_bucket = str(
+            usage_row.get("physical_quota_bucket_id")
+            or self.api_source["physical_quota_bucket_id"]
+        )
+        lookup_status = str(observation.get("lookup_status") or "")
+        cache_status = (
+            lookup_status
+            if lookup_status in {"hit", "miss"}
+            else ("bypass" if bypass_cache else "unknown")
+        )
         return D2LSharedClientResult(
             text=result.response_text,
             parsed_json=parsed,
@@ -376,6 +398,18 @@ class D2LSharedLlmClient:
             seal_sha256=str(result.seal["seal_sha256"]),
             artifact_sha256=result.artifact_sha256,
             response_payload=result.response_payload,
+            logical_request_id=logical_request_id,
+            physical_attempt_index=physical_attempt_index,
+            provider_id=source_id,
+            source_id=source_id,
+            masked_quota_bucket=_masked_bucket(quota_bucket),
+            finish_reason=result.finish_reason,
+            cache_status=cache_status,
+            cache_mechanism=(
+                "local_exact_cache"
+                if cache_status in {"hit", "miss"}
+                else "none"
+            ),
         )
 
     def _transport_retry_ordinal(self, *, logical_request_id: str) -> int:
@@ -670,6 +704,12 @@ def _parse_json_if_requested(
         return json.loads(text), None
     except json.JSONDecodeError as exc:
         return None, str(exc)
+
+
+def _masked_bucket(value: str) -> str:
+    if len(value) <= 8:
+        return "***"
+    return value[:8] + "...***"
 
 
 __all__ = [

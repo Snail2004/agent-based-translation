@@ -615,6 +615,15 @@ def test_llm_client_compatibility_projection_uses_shared_cache(tmp_path) -> None
     assert second.cost_usd is None
     assert second.cost_status == "cache_reuse"
     assert first.seal_sha256 == second.seal_sha256
+    assert first.logical_request_id == second.logical_request_id
+    assert first.physical_attempt_index == 1
+    assert first.provider_id == first.source_id == "test_d2l_openai_source"
+    assert first.masked_quota_bucket == "test-d2l...***"
+    assert first.finish_reason == "stop"
+    assert first.cache_status == "miss"
+    assert first.cache_mechanism == "local_exact_cache"
+    assert second.cache_status == "hit"
+    assert second.cache_mechanism == "local_exact_cache"
     assert sender.calls == 1
 
 
