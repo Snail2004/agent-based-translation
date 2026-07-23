@@ -24,7 +24,7 @@ const CONSOLE_STAGE_PLAN = [
 ];
 
 const CONSOLE_SEVERITY_GLYPH = { info: "├", warning: "▲", error: "✕", context: "⊙" };
-const CONSOLE_TERMINAL_STATUSES = new Set(["done", "failed", "cancelled", "canceled", "error"]);
+const CONSOLE_TERMINAL_STATUSES = new Set(["done", "succeeded", "failed", "cancelled", "canceled", "error"]);
 const CONSOLE_RENDER_CAP = 2000;
 const CONSOLE_REPLAY_SPEEDS = [0.25, 0.5, 1, 2, 4];
 const CONSOLE_REPLAY_EVENT_STEP_MS = 260;
@@ -389,6 +389,8 @@ function consoleText(locale, key) {
 const CONSOLE_IMPORTANT_EVENTS = new Set([
   "run_start", "run_resumed", "run_done", "run_failed", "run_cancelled",
   "stage_start", "stage_done", "stage_failed", "stage_skipped",
+  "component_started", "component_resumed", "component_halted", "component_done", "component_failed",
+  "stage_started", "stage_progress", "stage_completed",
   "checkpoint", "run_committed", "artifact_created", "health_check",
   "window_preview_available", "block_done", "memory_delta", "retry",
   "warning", "error",
@@ -403,8 +405,8 @@ function consoleIsImportantEvent(row) {
     || event.includes("commit");
 }
 
-function consoleCurrentStageId(rows) {
-  const stageIds = new Set(CONSOLE_STAGE_PLAN.map(stage => stage.id));
+function consoleCurrentStageId(rows, stagePlan = CONSOLE_STAGE_PLAN) {
+  const stageIds = new Set(stagePlan.map(stage => stage.id));
   for (let index = rows.length - 1; index >= 0; index -= 1) {
     const stage = String(rows[index]?.stage || "");
     if (stageIds.has(stage)) return stage;
@@ -784,13 +786,17 @@ function consoleEventSequenceLabel(row) {
   const line = firstLine != null && lastLine != null && firstLine !== lastLine
     ? `#${firstLine}-${lastLine}`
     : `#${row.lineNo != null ? row.lineNo : "-"}`;
-  if (row.attempt == null || row.seq == null) return line;
+  if ((row.attempt == null && row.attemptIndex == null) || row.seq == null) return line;
   const firstSeq = row.heartbeatFirstSeq;
   const lastSeq = row.heartbeatLastSeq;
   const seq = firstSeq != null && lastSeq != null && firstSeq !== lastSeq
     ? `${firstSeq}-${lastSeq}`
     : row.seq;
-  return `${line} · a${row.attempt}/${seq}`;
+  const attemptIndex = row.attemptIndex ?? row.attempt;
+  const attemptIdentity = row.attempt != null && String(row.attempt) !== String(attemptIndex)
+    ? `${attemptIndex}:${row.attempt}`
+    : attemptIndex;
+  return `${line} · a${attemptIdentity}/${seq}`;
 }
 
 function formatConsoleMetric(value, unit) {
@@ -919,8 +925,17 @@ function consoleMessageFor(row, ctx) {
     case "run_failed": return `run FAILED · ${consoleShort(p.error, 60)}`;
     case "run_cancelled": return "run huỷ bởi người dùng";
     case "run_committed": return "ghi kết quả dịch vào workdb";
+    case "component_started": return `${row.component?.component_id || "component"} bắt đầu`;
+    case "component_resumed": return `${row.component?.component_id || "component"} tiếp tục`;
+    case "component_halted": return `${row.component?.component_id || "component"} tạm dừng · ${p.reason || p.checkpoint || "checkpoint"}`;
+    case "component_done": return `${row.component?.component_id || "component"} hoàn tất`;
+    case "component_failed": return `${row.component?.component_id || "component"} thất bại · ${consoleShort(p.error || p.reason, 60)}`;
     case "stage_start": return `${ctx.label || row.stage} bắt đầu`;
+    case "stage_started": return `${ctx.label || row.stage} bắt đầu`;
+    case "stage_progress": return `${ctx.label || row.stage} · ${p.progress?.completed ?? "?"}/${p.progress?.total ?? "?"} ${p.progress?.unit || ""}`;
     case "stage_done": return `${ctx.label || row.stage} xong · exit ${p.exit_code}`;
+    case "stage_completed": return `${ctx.label || row.stage} hoàn tất`;
+    case "stage_failed": return `${ctx.label || row.stage} thất bại · ${consoleShort(p.error || p.reason, 60)}`;
     case "stage_skipped": return `${ctx.label || row.stage} bỏ qua · ${p.reason || "resume"}`;
     case "cost_snapshot": {
       if (p.estimated_cumulative_usd != null) return `luỹ kế ~$${Number(p.estimated_cumulative_usd).toFixed(4)} / cap $${Number(p.budget_cap_usd || 0).toFixed(2)}`;
@@ -941,7 +956,7 @@ function consoleMessageFor(row, ctx) {
     case "persist_buffered": return `window ${ctx.win || "?"} · buffer ghi`;
     case "block_done": return `dịch xong ${p.block_id || ""}`;
     case "llm_call": return `LLM ${p.model || ""}${p.cache_hit ? " · cache hit" : ""}`;
-    case "artifact_created": return consoleBaseName(p.artifact_path) || "artifact";
+    case "artifact_created": return consoleBaseName(p.artifact_ref || p.artifact_path) || "artifact";
     case "memory_delta": return consoleMemoryDeltaMessage(consoleMemoryDelta(row, p));
     case "warning": return consoleShort(p.message || p.reason, 60);
     case "error": return consoleShort(p.error || p.message, 60);
@@ -951,9 +966,25 @@ function consoleMessageFor(row, ctx) {
 }
 
 /* Pure: turn a raw merged event array into everything the console renders. */
-function deriveConsoleState(events) {
+function consoleDeclaredStageStatus(status) {
+  if (status === "succeeded") return "done";
+  if (status === "running" || status === "paused") return "active";
+  if (status === "failed") return "failed";
+  return "pending";
+}
+
+function deriveConsoleState(events, stagePlan = CONSOLE_STAGE_PLAN, useDeclaredStageStatus = false) {
   const stageInfo = {};
-  CONSOLE_STAGE_PLAN.forEach(s => { stageInfo[s.id] = { status: "pending", start: null, end: null, exit: null, previews: 0 }; });
+  stagePlan.forEach(s => {
+    stageInfo[s.id] = {
+      status: useDeclaredStageStatus ? consoleDeclaredStageStatus(s.status) : "pending",
+      start: null,
+      end: null,
+      exit: null,
+      previews: 0,
+      declaredProgress: s.progress ?? null,
+    };
+  });
   let winCounter = 0;
   const translatorWindowCounters = {};
   const previewWindowsByArm = {};
@@ -979,7 +1010,7 @@ function deriveConsoleState(events) {
 
   events.forEach((raw, idx) => {
     const payload = raw && typeof raw.payload === "object" && raw.payload ? raw.payload : {};
-    const stage = raw.stage || "";
+    const stage = raw.stage || raw.stage_id || "";
     const event = raw.event || raw.event_type || "";
     let memoryDelta = null;
     const eventArm = String(payload.config || payload.arm || payload.variant || "translation");
@@ -994,7 +1025,7 @@ function deriveConsoleState(events) {
     const eventWindow = payloadWindowOrdinal
       || Number(translatorWindowCounters[eventArm] || 0)
       || Math.max(winCounter, 1);
-    const ctxPlan = CONSOLE_STAGE_PLAN.find(s => s.id === stage);
+    const ctxPlan = stagePlan.find(s => s.id === stage);
     const ctx = {
       label: ctxPlan ? ctxPlan.label : stage,
       win: event.startsWith("window") || ["prompt_built", "request_sent", "response_received", "json_parsed", "persist_buffered"].includes(event) ? eventWindow : null,
@@ -1005,8 +1036,9 @@ function deriveConsoleState(events) {
 
     if (stageInfo[stage]) {
       const si = stageInfo[stage];
-      if (event === "stage_start") { si.status = "active"; si.start = raw.ts; }
-      else if (event === "stage_done") { si.status = payload.exit_code === 0 ? "done" : "failed"; si.end = raw.ts; si.exit = payload.exit_code; }
+      if (event === "stage_start" || event === "stage_started" || event === "stage_progress") { si.status = "active"; si.start = si.start || raw.ts; }
+      else if (event === "stage_done" || event === "stage_completed") { si.status = event === "stage_done" && payload.exit_code !== 0 ? "failed" : "done"; si.end = raw.ts; si.exit = payload.exit_code ?? null; }
+      else if (event === "stage_failed") { si.status = "failed"; si.end = raw.ts; }
       else if (event === "stage_skipped") {
         si.status = "done";
         si.skipped = true;
@@ -1040,15 +1072,15 @@ function deriveConsoleState(events) {
       if (payload.estimated_cumulative_usd != null) cumulativeCost = Number(payload.estimated_cumulative_usd);
       if (payload.budget_cap_usd != null) budgetCap = Number(payload.budget_cap_usd);
     }
-    if (event === "gate_pause") {
+    if (event === "gate_pause" || event === "component_halted") {
       paused = true;
-      pausedReason = payload.reason || "gate";
-    } else if (paused && event === "stage_start") {
+      pausedReason = payload.reason || payload.checkpoint || "checkpoint";
+    } else if (paused && (event === "stage_start" || event === "stage_started" || event === "component_resumed")) {
       paused = false;
       pausedReason = "";
     }
-    if (event === "artifact_created" && payload.artifact_path) latestArtifact = payload.artifact_path;
-    if (event === "stage_done" && payload.artifact_path) latestArtifact = payload.artifact_path;
+    if (event === "artifact_created" && (payload.artifact_ref || payload.artifact_path)) latestArtifact = payload.artifact_ref || payload.artifact_path;
+    if ((event === "stage_done" || event === "stage_completed") && (payload.artifact_ref || payload.artifact_path)) latestArtifact = payload.artifact_ref || payload.artifact_path;
     if (event === "health_check") {
       const id = String(payload.id || "unknown_check").trim() || "unknown_check";
       systemChecks[id] = {
@@ -1073,6 +1105,7 @@ function deriveConsoleState(events) {
     }
     if (event === "run_done") runStatus = payload.status || "done";
     if (event === "run_failed") { runStatus = "failed"; if (payload.error) stderrTail = String(payload.error).split("\n").slice(-4); }
+    if (event === "component_failed") { runStatus = "failed"; if (payload.error) stderrTail = String(payload.error).split("\n").slice(-4); }
     if (event === "error" && payload.error) stderrTail = String(payload.error).split("\n").slice(-4);
 
     const message = consoleMessageFor(raw, ctx);
@@ -1084,7 +1117,8 @@ function deriveConsoleState(events) {
       event,
       severity,
       seq: raw.seq,
-      attempt: raw.attempt_id,
+      attempt: raw.attempt_id ?? raw.component?.component_attempt_id ?? null,
+      attemptIndex: raw.attempt_index ?? raw.component?.component_attempt_index ?? null,
       lineNo: idx + 1,
       glyph: CONSOLE_SEVERITY_GLYPH[severity === "info" && event === "cost_snapshot" ? "context" : severity] || "├",
       isCost: event === "cost_snapshot",
@@ -1095,13 +1129,13 @@ function deriveConsoleState(events) {
       heartbeatBaseMessage: event === "heartbeat" ? message : "",
       skipReason: event === "stage_skipped" ? String(payload.reason || "") : "",
       blockId: String(payload.block_id || ""),
-      artifactPath: String(payload.artifact_path || ""),
+      artifactPath: String(payload.artifact_ref || payload.artifact_path || ""),
       memoryDeltaId: memoryDelta ? memoryDelta.deltaId : "",
       rawEventCount: 1,
     });
   });
 
-  const stagesSeen = CONSOLE_STAGE_PLAN.filter(s => stageInfo[s.id].status !== "pending").length;
+  const stagesSeen = stagePlan.filter(s => stageInfo[s.id].status !== "pending").length;
   const lastTs = normalized.length ? normalized[normalized.length - 1].ts : "";
   // llm-ish activity from the translator lifecycle (real runs have no llm_call yet)
   const llmCalls = normalized.filter(r => r.event === "request_sent" || r.event === "llm_call").length;
@@ -2366,17 +2400,131 @@ function consoleAgeSeconds(ts) {
   return (Date.now() - t) / 1000;
 }
 
+function consoleWorkflowShortHash(value) {
+  const text = String(value || "");
+  return text ? `${text.slice(0, 10)}…${text.slice(-6)}` : "null";
+}
+
+function consoleWorkflowProgress(progress) {
+  if (!progress || typeof progress !== "object") return "";
+  const completed = progress.completed;
+  const total = progress.total;
+  if (completed == null && total == null) return "";
+  return `${completed ?? "null"}/${total ?? "null"}${progress.unit ? ` ${progress.unit}` : ""}`;
+}
+
+function ConsoleWorkflowIdentity({ workflowReplay, uiText }) {
+  if (!workflowReplay || !workflowReplay.valid) return null;
+  const manifest = workflowReplay.manifest || {};
+  const components = Array.isArray(manifest.components) ? manifest.components : [];
+  return (
+    <section className="workflow-facts" aria-label={uiText("Định danh workflow", "Workflow identity") }>
+      <div className="section-label">:: {uiText("workflow", "workflow")}</div>
+      <div className="kv-row"><span className="kv-label">workflow_run_id</span><span className="kv-value workflow-mono" title={manifest.workflow_run_id || ""}>{manifest.workflow_run_id || "null"}</span></div>
+      <div className="kv-row"><span className="kv-label">job_id</span><span className="kv-value workflow-mono" title={manifest.job_id || ""}>{manifest.job_id || "null"}</span></div>
+      <div className="kv-row"><span className="kv-label">status</span><span className="kv-value">{manifest.status ?? "null"}</span></div>
+      <div className="kv-row"><span className="kv-label">resume</span><span className="kv-value">{manifest.resume?.available === true ? (manifest.resume.component_id || "true") : manifest.resume?.available === false ? "false" : "null"}</span></div>
+      <div className="kv-row"><span className="kv-label">timing</span><span className="kv-value">{manifest.timing_authority ?? "null"}</span></div>
+      {manifest.reconstructed === true && <div className="workflow-warning-badge">{uiText("DỰNG LẠI · chỉ có thứ tự logic", "RECONSTRUCTED · logical order only")}</div>}
+      <div className="workflow-component-list">
+        {components.map(component => (
+          <div className="workflow-component-row" key={`${component.component_id}:${component.component_run_id}`}>
+            <span>{component.component_id}</span>
+            <code title={component.component_run_id}>{component.component_run_id}</code>
+            <span className={`workflow-state state-${component.status}`}>{component.status}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ConsoleWorkflowEvidence({ workflowReplay, uiText, selectedArtifact, onSelectArtifact }) {
+  if (!workflowReplay || !workflowReplay.valid) return null;
+  const artifacts = workflowReplay.artifacts || [];
+  const scoring = workflowReplay.scoring || {};
+  const operationalFacts = workflowReplay.operationalFacts || [];
+  const checkpoint = workflowReplay.latestCheckpoint;
+  return (
+    <section className="workflow-evidence" aria-label={uiText("Bằng chứng workflow", "Workflow evidence") }>
+      <div className="section-label">:: {uiText("artifact index", "artifact index")}</div>
+      <details className="workflow-details" open>
+        <summary>{formatConsoleInt(artifacts.length)} artifact</summary>
+        <div className="workflow-artifact-list">
+          {artifacts.map(row => {
+            const binding = row.binding || {};
+            const active = selectedArtifact === binding.artifact_ref;
+            return (
+              <button
+                type="button"
+                className={`workflow-artifact-row${active ? " active" : ""}`}
+                key={binding.artifact_ref}
+                onClick={() => onSelectArtifact && onSelectArtifact(binding.artifact_ref)}
+                title={`${binding.artifact_ref}\n${binding.sha256 || ""}`}
+              >
+                <span>{binding.artifact_kind || "unknown"}</span>
+                <code>{binding.artifact_ref || "null"}</code>
+                <code>{consoleWorkflowShortHash(binding.sha256)}</code>
+              </button>
+            );
+          })}
+        </div>
+      </details>
+
+      <div className="section-label">:: {uiText("evaluation bindings", "evaluation bindings")}</div>
+      <div className="kv-row"><span className="kv-label">handoff</span><span className="kv-value workflow-mono" title={scoring.handoff?.artifact_ref || ""}>{scoring.handoff ? consoleWorkflowShortHash(scoring.handoff.sha256) : "null"}</span></div>
+      <div className="kv-row"><span className="kv-label">receipt</span><span className="kv-value workflow-mono" title={scoring.receipt?.artifact_ref || ""}>{scoring.receipt ? consoleWorkflowShortHash(scoring.receipt.sha256) : "null"}</span></div>
+      <div className="kv-row"><span className="kv-label">receipt status</span><span className="kv-value">{scoring.receiptStatus ?? "null"}</span></div>
+      <div className="kv-row"><span className="kv-label">report</span><span className="kv-value">{scoring.reports?.length ? scoring.reports.map(report => consoleWorkflowShortHash(report.sha256)).join(", ") : "null"}</span></div>
+      <div className="workflow-arm-list" aria-label={uiText("Năm nhánh chấm điểm", "Five scoring arms") }>
+        {(scoring.arms || []).map(arm => (
+          <div className="workflow-arm-row" key={arm.arm_id}>
+            <strong>{arm.arm_id}</strong>
+            <span>{arm.producer?.component_run_id || "null"}</span>
+            <code>{consoleWorkflowShortHash(arm.translation_artifact?.sha256)}</code>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-label">:: {uiText("checkpoint · usage · cost · cache", "checkpoint · usage · cost · cache")}</div>
+      <div className="kv-row"><span className="kv-label">checkpoint</span><span className="kv-value">{checkpoint ? `#${checkpoint.seq} ${checkpoint.payload?.checkpoint ?? checkpoint.event}` : "null"}</span></div>
+      {operationalFacts.length ? (
+        <details className="workflow-details">
+          <summary>{formatConsoleInt(operationalFacts.length)} {uiText("payload đã lưu", "persisted payloads")}</summary>
+          <div className="workflow-operational-list">
+            {operationalFacts.slice(-6).map(fact => (
+              <div className="workflow-operational-row" key={`${fact.seq}:${fact.event}`}>
+                <span>#{fact.seq} · {fact.event}</span>
+                <pre>{JSON.stringify(fact.payload, null, 2)}</pre>
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : <div className="artifact-path kv-dim">{uiText("Không có fact usage/cost/cache trong stream; giữ nguyên null.", "No usage/cost/cache facts in the stream; null is preserved.")}</div>}
+    </section>
+  );
+}
+
 function AgentConsoleView(props) {
   const {
-    runId, runs = [], onSelectRun,
-    events = [], running = false, status = "",
+    runId: providedRunId, runs = [], onSelectRun,
+    events: providedEvents = [], running = false, status = "",
     truncated = false, partialLine = false,
     blockPreview = [], watchlist = [],
     reportSummary = null,
+    workflowReplay = null,
     projectId = "", onBack, onOpenReport,
     theme = "paper", onToggleTheme,
     onRefresh, onPause, onCancel, onResume, onDich, busy = false,
   } = props;
+  const workflowInvalid = Boolean(workflowReplay && workflowReplay.valid !== true);
+  const workflowManifest = workflowReplay?.manifest || null;
+  const runId = workflowManifest?.workflow_run_id || providedRunId;
+  const events = workflowReplay ? (workflowReplay.valid ? workflowReplay.events || [] : []) : providedEvents;
+  const consoleStagePlan = workflowReplay
+    ? (workflowReplay.valid && workflowReplay.stagePlan?.length ? workflowReplay.stagePlan : [])
+    : CONSOLE_STAGE_PLAN;
+  const workflowReadOnly = Boolean(workflowReplay);
 
   const [stageFilter, setStageFilter] = React.useState("");
   const [agentFilter, setAgentFilter] = React.useState("");
@@ -2573,28 +2721,32 @@ function AgentConsoleView(props) {
   const replayActive = replayCursor != null;
   const replayPosition = replayActive ? replayCursor : events.length;
   const shownEvents = replayActive ? events.slice(0, replayPosition) : events;
-  const fullState = React.useMemo(() => deriveConsoleState(events), [events]);
+  const fullState = React.useMemo(() => deriveConsoleState(events, consoleStagePlan, true), [events, consoleStagePlan]);
 
-  const st = React.useMemo(() => deriveConsoleState(shownEvents), [shownEvents]);
-  const sourceRunStatus = fullState.runStatus || status || (running ? "running" : "idle");
+  const st = React.useMemo(() => deriveConsoleState(shownEvents, consoleStagePlan, !replayActive), [shownEvents, consoleStagePlan, replayActive]);
+  const sourceRunStatus = workflowInvalid ? "failed" : (fullState.runStatus || workflowManifest?.status || status || (running ? "running" : "idle"));
   const sourceIsTerminal = !!runId && consoleIsTerminalStatus(sourceRunStatus);
-  const replayAvailable = events.length > 0 && sourceIsTerminal;
+  const workflowRecorded = workflowReplay?.sourceMode === "replay";
+  const replayAvailable = events.length > 0 && (sourceIsTerminal || workflowRecorded);
   const replayComplete = replayActive && replayPosition >= events.length;
   const runStatus = replayActive
     ? (st.runStatus || (replayComplete ? sourceRunStatus : "running"))
     : sourceRunStatus;
   const hasRun = !!runId;
   const isTerminal = hasRun && consoleIsTerminalStatus(runStatus);
-  const isOpenRun = hasRun && !sourceIsTerminal;
+  const isOpenRun = hasRun && !sourceIsTerminal && !workflowRecorded && !workflowInvalid;
   const stalled = !replayActive && isOpenRun && running && consoleAgeSeconds(st.lastTs) > 90;
-  const consoleMode = replayActive ? "REPLAY" : isOpenRun ? "LIVE" : hasRun ? "RECORDED" : "IDLE";
+  const consoleMode = workflowInvalid ? "INVALID" : replayActive ? "REPLAY" : workflowRecorded ? "RECORDED" : isOpenRun ? "LIVE" : hasRun ? "RECORDED" : "IDLE";
   const playbackState = replayActive
     ? (replayComplete
-      ? sourceRunStatus === "failed" ? "FAILED"
+      ? !sourceIsTerminal ? "SNAPSHOT"
+        : sourceRunStatus === "failed" ? "FAILED"
         : sourceRunStatus === "cancelled" ? "CANCELLED"
         : "DONE"
       : replayPlaying ? "PLAYING" : "PAUSED")
-    : stalled ? "STALLED"
+    : workflowInvalid ? "INVALID"
+      : workflowRecorded && !sourceIsTerminal ? "SNAPSHOT"
+      : stalled ? "STALLED"
       : st.paused ? "PAUSED"
         : isOpenRun && !running ? "CONNECTING"
           : String(runStatus || "idle").toUpperCase();
@@ -2604,7 +2756,7 @@ function AgentConsoleView(props) {
   const readySystems = systemChecks.filter(check => check.ok === true).length;
   const failedSystems = systemChecks.filter(check => check.ok === false).length;
   const unknownSystems = systemChecks.length - readySystems - failedSystems;
-  const preflightDone = st.stageInfo.preflight_check.status === "done";
+  const preflightDone = st.stageInfo.preflight_check?.status === "done";
   const systemsTone = failedSystems ? "bad" : unknownSystems || (systemChecks.length && !preflightDone) ? "warn" : systemChecks.length ? "good" : "dim";
   const systemsCount = systemChecks.length
     ? (preflightDone ? `${readySystems}/${systemChecks.length}` : `${readySystems} ready`)
@@ -2622,21 +2774,22 @@ function AgentConsoleView(props) {
   const hiddenOlderEvents = Math.max(0, filtered.length - CONSOLE_RENDER_CAP);
   const rendered = filtered.slice(-CONSOLE_RENDER_CAP).reverse();
   const costPct = st.budgetCap ? Math.min(100, Math.round((st.cumulativeCost / st.budgetCap) * 100)) : 0;
-  const healthClass = ["FAILED", "STALLED"].includes(playbackState) ? "kv-bad"
+  const healthClass = ["FAILED", "STALLED", "INVALID"].includes(playbackState) ? "kv-bad"
     : ["PLAYING", "PAUSED", "CONNECTING"].includes(playbackState) ? "kv-warn"
-      : ["RUNNING", "DONE"].includes(playbackState) ? "kv-good" : "kv-dim";
-  const statusChipClass = ["FAILED", "STALLED"].includes(playbackState) ? "hdr-status-bad"
+      : ["RUNNING", "DONE", "SNAPSHOT"].includes(playbackState) ? "kv-good" : "kv-dim";
+  const statusChipClass = ["FAILED", "STALLED", "INVALID"].includes(playbackState) ? "hdr-status-bad"
     : ["PLAYING", "PAUSED", "CONNECTING"].includes(playbackState) ? "hdr-status-warn"
-      : ["RUNNING", "DONE"].includes(playbackState) ? "hdr-status-good" : "";
-  const reportReached = !replayActive
+      : ["RUNNING", "DONE", "SNAPSHOT"].includes(playbackState) ? "hdr-status-good" : "";
+  const reportReached = !workflowReplay && (!replayActive
     || st.stageInfo.score_run_phase_1.status === "done"
     || st.stageInfo.score_run_final.status === "done"
-    || !!st.runStatus;
+    || !!st.runStatus);
   const visibleReportSummary = reportReached ? reportSummary : null;
-  const visibleWatchlist = !replayActive || st.stageInfo.reelection_watchlist.status === "done" ? watchlist : [];
+  const visibleWatchlist = workflowReplay ? [] : (!replayActive || st.stageInfo.reelection_watchlist?.status === "done" ? watchlist : []);
   const reportCfgs = (visibleReportSummary && visibleReportSummary.phase_1 && visibleReportSummary.phase_1.configs) || [];
   const isCompareRun = reportCfgs.includes("S0") || !!(visibleReportSummary && visibleReportSummary.compare && visibleReportSummary.compare.present);
-  const armsLabel = reportCfgs.length ? (isCompareRun ? "S0+S1" : reportCfgs.join("+")) : (isCompareRun ? "S0+S1" : null);
+  const workflowArms = workflowReplay?.valid ? (workflowReplay.scoring?.arms || []).map(arm => arm.arm_id) : [];
+  const armsLabel = workflowArms.length ? `${workflowArms.length} arms` : reportCfgs.length ? (isCompareRun ? "S0+S1" : reportCfgs.join("+")) : (isCompareRun ? "S0+S1" : null);
   const compareGap = visibleReportSummary && visibleReportSummary.compare && visibleReportSummary.compare.present ? (visibleReportSummary.compare.gap || {}) : null;
   const finalGate = visibleReportSummary && visibleReportSummary.final && visibleReportSummary.final.stage_gate && visibleReportSummary.final.stage_gate.present ? visibleReportSummary.final.stage_gate : null;
   const finalGateText = formatConsoleGate(finalGate);
@@ -2653,8 +2806,8 @@ function AgentConsoleView(props) {
   const previewAvailable = Object.values(previewProgress).some(value => Number(value) > 0);
   const previews = consolePreviewRowsThroughProgress(blockPreview, previewProgress);
   const translatorProgressLabel = consolePreviewProgressLabel(previewProgress, previewTotals);
-  const currentStageId = consoleCurrentStageId(st.normalized);
-  const currentStageMeta = CONSOLE_STAGE_PLAN.find(stage => stage.id === currentStageId);
+  const currentStageId = consoleCurrentStageId(st.normalized, consoleStagePlan) || workflowManifest?.active_stage_id || "";
+  const currentStageMeta = consoleStagePlan.find(stage => stage.id === currentStageId);
   const currentStageLabel = currentStageMeta?.label || consoleText(uiLocale, "noneYet");
   const cursorTextKey = consoleMode === "REPLAY"
     ? "replayCursorAt"
@@ -2743,7 +2896,7 @@ function AgentConsoleView(props) {
   }, [navigationTarget, previews, st.memoryDeltas, st.normalized, uiLocale]);
 
   return (
-    <div className={"agentconsole console-theme-" + theme}>
+    <div className={`agentconsole console-theme-${theme}${workflowReplay ? " workflow-console" : ""}`}>
       <header className="console-header">
         {onBack && <button className="btn console-back" type="button" onClick={onBack}>&larr; {consoleText(uiLocale, "workspace")}</button>}
         <span className="brand">⬢ AGENT CONSOLE</span>
@@ -2804,13 +2957,13 @@ function AgentConsoleView(props) {
           )}
         </span>
         <span className="hdr-actions">
-          {onDich && <button className="btn btn-accent" type="button" disabled={busy || isOpenRun} onClick={onDich} title={consoleText(uiLocale, "translate")}>▸ {consoleText(uiLocale, "translate").toUpperCase()}</button>}
+          {!workflowReadOnly && onDich && <button className="btn btn-accent" type="button" disabled={busy || isOpenRun} onClick={onDich} title={consoleText(uiLocale, "translate")}>▸ {consoleText(uiLocale, "translate").toUpperCase()}</button>}
           {replayAvailable && <button className="btn" type="button" onClick={toggleReplay} title={consoleText(uiLocale, replayPlaying ? "pause" : replayActive && !replayComplete ? "play" : "replay")}>{consoleText(uiLocale, replayPlaying ? "pause" : replayActive && !replayComplete ? "play" : "replay")}</button>}
           <button className="btn" type="button" disabled={busy} onClick={onRefresh}>↻ {consoleText(uiLocale, "refresh")}</button>
-          <button className="btn" type="button" disabled={!isOpenRun || !onPause} onClick={onPause}>⏸ {consoleText(uiLocale, "pauseAfterStage")}</button>
-          {canResumeRun
+          {!workflowReadOnly && <button className="btn" type="button" disabled={!isOpenRun || !onPause} onClick={onPause}>⏸ {consoleText(uiLocale, "pauseAfterStage")}</button>}
+          {!workflowReadOnly && (canResumeRun
             ? <button className="btn btn-accent" type="button" onClick={onResume}>▸ {consoleText(uiLocale, "resume")}</button>
-            : <button className="btn btn-danger" type="button" disabled={!isOpenRun || !onCancel} onClick={onCancel}>✕ {consoleText(uiLocale, "cancel")}</button>}
+            : <button className="btn btn-danger" type="button" disabled={!isOpenRun || !onCancel} onClick={onCancel}>✕ {consoleText(uiLocale, "cancel")}</button>)}
           <ThesisLocaleSwitch compact locale={uiLocale} onChange={setUiLocale} />
           <button
             className="btn btn-icon"
@@ -2834,7 +2987,7 @@ function AgentConsoleView(props) {
           >
             {playbackState}
           </span>
-          {armsLabel && <span className={"hdr-status " + (isCompareRun ? "hdr-status-good" : "")} title={isCompareRun ? uiText("Chạy cả S0 và S1 (có so sánh)", "Runs both S0 and S1 (comparison)") : uiText("Chỉ S1", "S1 only")}>{armsLabel}</span>}
+          {armsLabel && <span className={"hdr-status " + (workflowArms.length || isCompareRun ? "hdr-status-good" : "")} title={workflowArms.length ? workflowArms.join(", ") : isCompareRun ? uiText("Chạy cả S0 và S1 (có so sánh)", "Runs both S0 and S1 (comparison)") : uiText("Chỉ S1", "S1 only")}>{armsLabel}</span>}
         </span>
       </header>
 
@@ -2885,19 +3038,26 @@ function AgentConsoleView(props) {
             {consoleLayout.leftCollapsed ? "›" : "‹"}
           </button>
           <div className="console-side-content">
+          <ConsoleWorkflowIdentity workflowReplay={workflowReplay} uiText={uiText} />
           <div className="section-label">:: {uiText("tổng quan", "overview")}</div>
           <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "mode")}</span><span className="kv-value kv-dim">{consoleMode}</span></div>
           <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "state")}</span><span className={"kv-value " + healthClass}>{playbackState}</span></div>
           {armsLabel && <div className="kv-row"><span className="kv-label">{uiText("nhánh", "arms")}</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
-          <div className="kv-row"><span className="kv-label">{uiText("tầng đã thấy", "stages seen")}</span><span className="kv-value">{st.stagesSeen} / {CONSOLE_STAGE_PLAN.length}</span></div>
+          <div className="kv-row"><span className="kv-label">{uiText("tầng đã thấy", "stages seen")}</span><span className="kv-value">{st.stagesSeen} / {consoleStagePlan.length}</span></div>
           <div className="kv-row"><span className="kv-label">{uiText("sự kiện", "events")}</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
           <div className="kv-row"><span className="kv-label">{uiText("luồng", "stream")}</span><span className="kv-value kv-dim">{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</span></div>
 
           <div className="section-label">:: {uiText("chi phí & cache", "cost & cache")}</div>
-          <div className="kv-row"><span className="kv-label">{uiText("tổng cap", "cap total")}</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
-          <div className="kv-row kv-row-bar"><span className="kv-label">{uiText("cap / ngân sách", "cap / budget")}</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
-          <div className="bar"><div className="bar-fill" style={{ width: costPct + "%" }} /></div>
-          <div className="kv-row"><span className="kv-label">{uiText("sự kiện LLM", "LLM events")}</span><span className="kv-value">{formatConsoleInt(st.llmCalls)}</span></div>
+          {workflowReplay ? (
+            <div className="artifact-path kv-dim">{uiText("Không cộng lại ở UI; xem payload đã lưu ở panel phải. Giá trị thiếu giữ nguyên null.", "No UI aggregation; see persisted payloads in the right panel. Missing values remain null.")}</div>
+          ) : (
+            <>
+              <div className="kv-row"><span className="kv-label">{uiText("tổng cap", "cap total")}</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
+              <div className="kv-row kv-row-bar"><span className="kv-label">{uiText("cap / ngân sách", "cap / budget")}</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
+              <div className="bar"><div className="bar-fill" style={{ width: costPct + "%" }} /></div>
+              <div className="kv-row"><span className="kv-label">{uiText("sự kiện LLM", "LLM events")}</span><span className="kv-value">{formatConsoleInt(st.llmCalls)}</span></div>
+            </>
+          )}
 
           <div className="section-label">:: {uiText("sức khỏe", "health")}</div>
           <div className="kv-row"><span className="kv-label">{uiText("cảnh báo", "warnings")}</span><span className={"kv-value " + (st.warnings ? "kv-warn" : "")}>{formatConsoleInt(st.warnings)}</span></div>
@@ -2927,18 +3087,28 @@ function AgentConsoleView(props) {
           className={`col col-main console-main-${consoleLayout.centerMode}`}
           style={{ "--console-ledger-height": `${consoleLayout.ledgerPercent}%` }}
         >
-          {runStatus === "failed" && (
+          {workflowInvalid && (
+            <div className="banner banner-red workflow-invalid-banner" role="alert">
+              <span className="banner-glyph">✕</span>
+              <span className="banner-msg">
+                <strong>{uiText("Replay bị khóa an toàn", "Replay failed closed")}</strong>
+                <span>{uiText("Manifest, chuỗi sự kiện hoặc artifact binding không hợp lệ. Console không hiển thị fact một phần.", "The manifest, event sequence, or artifact binding is invalid. Console will not render partial facts.")}</span>
+                <code>{(workflowReplay.errors || []).slice(0, 4).map(error => `${error.code} ${error.path}`).join(" · ") || "workflow_contract_invalid"}</code>
+              </span>
+            </div>
+          )}
+          {!workflowInvalid && runStatus === "failed" && (
             <div className="banner banner-red">
               <span className="banner-glyph">✕</span>
               <span className="banner-msg">{uiText("Lần chạy thất bại", "Run failed")}{st.stderrTail.length ? " · " + consoleShort(st.stderrTail[st.stderrTail.length - 1], 70) : ""}</span>
-              {!replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>{uiText("tiếp tục", "resume")}</button></span>}
+              {!workflowReadOnly && !replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>{uiText("tiếp tục", "resume")}</button></span>}
             </div>
           )}
           {st.paused && !isTerminal && runStatus !== "failed" && (
             <div className="banner banner-amber">
               <span className="banner-glyph">⏸</span>
               <span className="banner-msg">{uiText("Đã dừng", "Paused")} · {st.pausedReason} — {uiText("tiếp tục để chạy tiếp", "resume to continue")}</span>
-              {!replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>{uiText("tiếp tục", "resume")}</button></span>}
+              {!workflowReadOnly && !replayActive && onResume && <span className="banner-actions"><button className="btn btn-mini" onClick={onResume}>{uiText("tiếp tục", "resume")}</button></span>}
             </div>
           )}
           {st.phase1Done && runStatus !== "failed" && (
@@ -2975,7 +3145,7 @@ function AgentConsoleView(props) {
               </span>
               <select className="filter-select" value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
                 <option value="">{uiText("tầng: tất cả", "stage: all")}</option>
-                {CONSOLE_STAGE_PLAN.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                {consoleStagePlan.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
               <select className="filter-select" value={agentFilter} onChange={e => setAgentFilter(e.target.value)}>
                 <option value="">{uiText("agent: tất cả", "agent: all")}</option>
@@ -3041,7 +3211,9 @@ function AgentConsoleView(props) {
                     <span className="ev-seq">{consoleEventSequenceLabel(r)}</span>
                   </div>
                 );
-              }) : <div className="console-empty">{uiText("Chọn hoặc phát lại một lần chạy để xem dòng sự kiện.", "Select or replay a run to view its event stream.")}</div>}
+              }) : <div className="console-empty">{workflowInvalid
+                ? uiText("Không hiển thị sự kiện vì replay không vượt qua kiểm tra contract.", "Events are hidden because replay contract validation failed.")
+                : uiText("Chọn hoặc phát lại một lần chạy để xem dòng sự kiện.", "Select or replay a run to view its event stream.")}</div>}
               {hiddenOlderEvents > 0 && (
                 <div className="console-empty">... {formatConsoleInt(hiddenOlderEvents)} {uiText("dòng cũ hơn bị ẩn - dùng bộ lọc để thu hẹp.", "older rows hidden - use filters to narrow the stream.")}</div>
               )}
@@ -3122,23 +3294,28 @@ function AgentConsoleView(props) {
           </button>
           <div className="console-side-content">
           <div className="section-label">:: {uiText("các tầng", "stages")}</div>
-          {CONSOLE_STAGE_PLAN.map((s, i) => {
+          {consoleStagePlan.map((s, i) => {
             const si = st.stageInfo[s.id] || { status: "pending" };
             const stageAvailable = st.normalized.some(row => row.stage === s.id);
             let cls = "stage-pending", dot = "○", prog = "";
-            if (si.status === "done") { cls = "stage-done"; dot = "●"; prog = si.skipped ? uiText("đã bỏ qua", "skipped") : uiText("xong", "done"); }
+            const exactProgress = consoleWorkflowProgress(si.declaredProgress || s.progress);
+            if (si.status === "done") { cls = "stage-done"; dot = "●"; prog = si.skipped ? uiText("đã bỏ qua", "skipped") : (exactProgress || uiText("xong", "done")); }
             else if (si.status === "active") {
               cls = "stage-active";
               dot = "●";
-              prog = s.id === "translator" && si.previews ? (translatorProgressLabel || `${si.previews} win`) : uiText("đang chạy", "running");
+              prog = exactProgress || (s.id === "translator" && si.previews ? (translatorProgressLabel || `${si.previews} win`) : uiText("đang chạy", "running"));
             }
             else if (si.status === "failed") { cls = "stage-failed"; dot = "✕"; prog = uiText("thất bại", "failed"); }
             else if (s.optional && isTerminal) { cls = "stage-pending"; dot = "○"; prog = uiText("đã bỏ qua", "skipped"); }
-            const prev = CONSOLE_STAGE_PLAN[i - 1];
+            const prev = consoleStagePlan[i - 1];
             return (
               <React.Fragment key={s.id}>
                 {prev && prev.phaseEnd && (
-                  <div className="phase-divider"><span className={st.phase1Done ? "phase-ok" : ""}>PHASE 1{st.phase1Done ? " ✓" : ""}</span><span className="phase-line" /><span>PHASE 2</span></div>
+                  <div className="phase-divider">
+                    <span className={prev.componentId ? "phase-ok" : st.phase1Done ? "phase-ok" : ""}>{prev.componentId || `PHASE ${prev.phase}`}{!prev.componentId && st.phase1Done ? " ✓" : ""}</span>
+                    <span className="phase-line" />
+                    <span>{s.componentId || `PHASE ${s.phase}`}</span>
+                  </div>
                 )}
                 <div className={"stage-row " + cls + (highlightedStage === s.id ? " stage-targeted" : "")}>
                   <button
@@ -3160,6 +3337,13 @@ function AgentConsoleView(props) {
             );
           })}
 
+          <ConsoleWorkflowEvidence
+            workflowReplay={workflowReplay}
+            uiText={uiText}
+            selectedArtifact={selectedArtifact}
+            onSelectArtifact={setSelectedArtifact}
+          />
+
           <div className="section-label">:: {consoleText(uiLocale, "latestArtifact")}</div>
           <div
             className={"artifact-path" + (selectedArtifact ? " artifact-targeted" : "")}
@@ -3171,7 +3355,15 @@ function AgentConsoleView(props) {
           </div>
 
           <div className="section-label">:: {consoleText(uiLocale, "results")}</div>
-          {visibleReportSummary && (visibleReportSummary.final?.present || visibleReportSummary.phase_1?.present) ? (
+          {workflowReplay ? (
+            <div className="artifact-path kv-dim">
+              {!workflowReplay.valid
+                ? uiText("Report bị ẩn vì replay không hợp lệ.", "Report hidden because replay validation failed.")
+                : workflowReplay.scoring?.reports?.length
+                ? workflowReplay.scoring.reports.map(report => `${report.artifact_ref} · ${report.sha256}`).join("\n")
+                : uiText("Không có report Evaluation đã được xác thực trong snapshot này; UI không suy ra điểm hoặc verdict.", "This snapshot has no validated Evaluation report; the UI does not infer scores or a verdict.")}
+            </div>
+          ) : visibleReportSummary && (visibleReportSummary.final?.present || visibleReportSummary.phase_1?.present) ? (
             <>
               {((visibleReportSummary.final?.present ? visibleReportSummary.final.metrics : visibleReportSummary.phase_1?.metrics) || []).map(m => (
                 <div className="kv-row" key={m.key}>

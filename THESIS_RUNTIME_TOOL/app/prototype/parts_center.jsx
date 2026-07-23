@@ -629,6 +629,7 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
         blockPreview={runControl.blockPreview || sel.blockPreview || []}
         watchlist={runControl.watchlist || sel.watchlist || []}
         reportSummary={runControl.reportSummary || sel.reportSummary || null}
+        workflowReplay={runControl.workflowReplay || sel.workflowReplay || null}
         projectId={runControl.sourceProjectId || ""}
         onBack={onBack}
         onOpenReport={onOpenReport}

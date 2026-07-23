@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent Console · Workflow replay V1 · 0-API</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="console.css?v=workflow-replay-v1" />
+<link rel="stylesheet" href="i18n.css" />
+<style>
+  html, body { margin: 0; height: 100%; background: #222; }
+  #root { height: 100vh; }
+  .dev-scenario {
+    position: fixed; right: 8px; bottom: 6px; z-index: 999;
+    display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px;
+    max-width: calc(100vw - 16px); padding: 4px 6px;
+    border: 1px solid #7776; background: #1b1b1be8; color: #bbb;
+    font: 10px/1.3 ui-monospace, Consolas, monospace;
+  }
+  .dev-scenario a { color: #d7b96f; text-decoration: none; }
+  .dev-scenario a[aria-current="page"] { color: #fff; text-decoration: underline; }
+</style>
+</head>
+<body>
+<div id="root">loading accepted workflow package…</div>
+<nav class="dev-scenario" aria-label="0-API validation scenarios">
+  <span>fixture-only · no live/API claim</span>
+  <a href="?scenario=valid">valid</a>
+  <a href="?scenario=sequence-drift">sequence drift</a>
+  <a href="?scenario=event-hash-drift">event hash drift</a>
+  <a href="?scenario=arm-drift">arm drift</a>
+  <a href="?scenario=artifact-drift">artifact drift</a>
+  <a href="?scenario=resume-valid">resume valid</a>
+  <a href="?scenario=resume-sequence-gap">resume seq gap</a>
+  <a href="?scenario=resume-attempt-regression">resume attempt regression</a>
+</nav>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="i18n.js"></script>
+<script src="workflow_replay.js"></script>
+<script type="text/babel" src="console.jsx"></script>
+<script type="text/babel">
+const WORKFLOW_FIXTURE_ROOT = "fixtures/workflow_replay_v1/";
+const WORKFLOW_RESUME_FIXTURE_ROOT = "fixtures/workflow_replay_resume_v1/";
+
+function scenarioName() {
+  const value = new URLSearchParams(window.location.search).get("scenario") || "valid";
+  return new Set([
+    "valid", "sequence-drift", "event-hash-drift", "arm-drift", "artifact-drift",
+    "resume-valid", "resume-sequence-gap", "resume-attempt-regression",
+  ]).has(value) ? value : "valid";
+}
+
+async function resealParentEvents(adapter, events) {
+  let previous = null;
+  for (const event of events) {
+    event.integrity.previous_event_sha256 = previous;
+    delete event.integrity.event_sha256;
+    event.integrity.event_sha256 = await adapter.canonicalSha256(event);
+    previous = event.integrity.event_sha256;
+  }
+}
+
+async function loadAcceptedWorkflowPackage() {
+  const adapter = window.WorkflowReplayAdapter;
+  const scenario = scenarioName();
+  const isResume = scenario.startsWith("resume-");
+  const fixtureRoot = isResume ? WORKFLOW_RESUME_FIXTURE_ROOT : WORKFLOW_FIXTURE_ROOT;
+  const [manifest, events, artifactIndex] = await Promise.all([
+    adapter.fetchJson(fixtureRoot + "workflow_manifest.json"),
+    adapter.fetchJsonLines(fixtureRoot + "events.jsonl"),
+    adapter.fetchJson(fixtureRoot + "artifact_index.json"),
+  ]);
+  const [handoff, receipt] = isResume ? [null, null] : await Promise.all([
+    adapter.fetchJson(WORKFLOW_FIXTURE_ROOT + "handoffs/scoring_handoff.json"),
+    adapter.fetchJson(WORKFLOW_FIXTURE_ROOT + "handoffs/scoring_receipt.json"),
+  ]);
+  if (scenario === "sequence-drift") events.pop();
+  if (scenario === "event-hash-drift" && events[1]) events[1].agent = "tampered_fixture_agent";
+  if (scenario === "arm-drift" && receipt.accepted_translation_inputs?.length > 1) {
+    [receipt.accepted_translation_inputs[0], receipt.accepted_translation_inputs[1]] = [receipt.accepted_translation_inputs[1], receipt.accepted_translation_inputs[0]];
+  }
+  if (scenario === "artifact-drift" && artifactIndex.artifacts?.[0]?.binding) {
+    artifactIndex.artifacts[0].binding.sha256 = "0".repeat(64);
+  }
+  if (scenario === "resume-sequence-gap" && events[3]?.component) {
+    events[3].component.component_seq += 1;
+    await resealParentEvents(adapter, events);
+  }
+  if (scenario === "resume-attempt-regression" && events[4]?.component) {
+    events[4].component.component_attempt_id = 1;
+    events[4].component.component_attempt_index = 1;
+    await resealParentEvents(adapter, events);
+  }
+  const artifacts = handoff && receipt ? {
+    "handoffs/scoring_handoff.json": handoff,
+    "handoffs/scoring_receipt.json": receipt,
+  } : {};
+  return adapter.validatePackage({ manifest, events, artifactIndex, artifacts, sourceMode: "replay" });
+}
+
+function WorkflowReplayHarness() {
+  const [model, setModel] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  const [theme, setTheme] = React.useState("paper");
+  const reload = React.useCallback(() => {
+    setModel(null);
+    setError(null);
+    loadAcceptedWorkflowPackage().then(setModel).catch(setError);
+  }, []);
+  React.useEffect(reload, [reload]);
+  React.useEffect(() => {
+    document.querySelectorAll(".dev-scenario a").forEach(link => {
+      const target = new URL(link.href).searchParams.get("scenario") || "valid";
+      if (target === scenarioName()) link.setAttribute("aria-current", "page");
+    });
+  }, []);
+  if (error) return <div style={{ font: "13px monospace", color: "#ff8a80", padding: 20 }}>load failed: {String(error.message || error)}</div>;
+  if (!model) return <div style={{ font: "13px monospace", color: "#aaa", padding: 20 }}>validating persisted package…</div>;
+  const manifest = model.manifest || {};
+  return (
+    <AgentConsoleView
+      runId={manifest.workflow_run_id || "invalid_workflow"}
+      runs={[{ run_id: manifest.workflow_run_id || "invalid_workflow", status: manifest.status || "invalid", started_at: manifest.started_at }]}
+      events={model.events}
+      running={false}
+      status={manifest.status || "invalid"}
+      workflowReplay={model}
+      projectId={manifest.job_id || "fixture"}
+      theme={theme}
+      onToggleTheme={() => setTheme(value => value === "paper" ? "dark" : "paper")}
+      onRefresh={reload}
+    />
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<WorkflowReplayHarness />);
+</script>
+</body>
+</html>

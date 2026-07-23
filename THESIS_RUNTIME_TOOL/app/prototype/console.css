@@ -1397,6 +1397,202 @@ body.console-resizing-ledger { cursor: row-resize; }
 .agentconsole .badge-stalled { animation: console-blink 1.6s ease-in-out infinite; }
 .agentconsole .console-empty { color: var(--c-ink-faint); padding: 20px 4px; }
 
+/* ============ PERSISTED WORKFLOW LIVE / REPLAY ============ */
+.agentconsole .workflow-facts,
+.agentconsole .workflow-evidence {
+  min-width: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--c-border);
+}
+.agentconsole .workflow-mono {
+  min-width: 0;
+  max-width: 62%;
+  overflow: hidden;
+  color: var(--c-ink-dim);
+  font-family: var(--console-mono, ui-monospace, Consolas, monospace);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .workflow-warning-badge {
+  margin: 6px 0;
+  padding: 5px 7px;
+  border: 1px solid var(--c-amber);
+  background: var(--c-amber-bg);
+  color: var(--c-amber);
+  font-size: 10px;
+  line-height: 1.35;
+}
+.agentconsole .workflow-component-list,
+.agentconsole .workflow-arm-list {
+  display: grid;
+  gap: 3px;
+  margin-top: 7px;
+}
+.agentconsole .workflow-component-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--c-border);
+  font-size: 10.5px;
+}
+.agentconsole .workflow-component-row code,
+.agentconsole .workflow-arm-row code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .workflow-component-row code { grid-column: 1 / -1; }
+.agentconsole .workflow-state { color: var(--c-ink-faint); }
+.agentconsole .workflow-state.state-succeeded { color: var(--c-green); }
+.agentconsole .workflow-state.state-running,
+.agentconsole .workflow-state.state-paused { color: var(--c-amber); }
+.agentconsole .workflow-state.state-failed { color: var(--c-red); }
+.agentconsole .workflow-details {
+  min-width: 0;
+  margin: 5px 0 8px;
+  border-top: 1px dotted var(--c-border);
+}
+.agentconsole .workflow-details > summary {
+  padding: 5px 0;
+  color: var(--c-ink-dim);
+  cursor: pointer;
+  font-size: 10.5px;
+}
+.agentconsole .workflow-artifact-list {
+  display: grid;
+  max-height: 230px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.agentconsole .workflow-artifact-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px 7px;
+  padding: 5px 4px;
+  border: 0;
+  border-bottom: 1px dotted var(--c-border);
+  background: transparent;
+  color: var(--c-ink-dim);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+}
+.agentconsole .workflow-artifact-row code {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .workflow-artifact-row:hover,
+.agentconsole .workflow-artifact-row:focus-visible,
+.agentconsole .workflow-artifact-row.active {
+  outline: 0;
+  background: var(--c-accent-bg);
+  color: var(--c-accent);
+}
+.agentconsole .workflow-arm-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 7px;
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--c-border);
+  font-size: 10.5px;
+}
+.agentconsole .workflow-arm-row strong { color: var(--c-accent); }
+.agentconsole .workflow-arm-row span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .workflow-arm-row code { grid-column: 1 / -1; }
+.agentconsole .workflow-operational-list { display: grid; gap: 5px; }
+.agentconsole .workflow-operational-row > span { color: var(--c-accent); font-size: 10px; }
+.agentconsole .workflow-operational-row pre {
+  max-width: 100%;
+  max-height: 140px;
+  margin: 3px 0 0;
+  padding: 5px;
+  overflow: auto;
+  border-left: 2px solid var(--c-border);
+  color: var(--c-ink-dim);
+  font: 9.5px/1.35 var(--console-mono, ui-monospace, Consolas, monospace);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.agentconsole .workflow-invalid-banner { align-items: flex-start; }
+.agentconsole .workflow-invalid-banner .banner-msg {
+  display: grid;
+  gap: 3px;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+.agentconsole .workflow-invalid-banner code {
+  color: inherit;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1050px) and (min-width: 641px) {
+  .agentconsole.workflow-console .console-header {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .agentconsole.workflow-console .hdr-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    margin-left: 0;
+    overflow: visible;
+  }
+  .agentconsole.workflow-console .console-body {
+    grid-template-columns: 190px 5px minmax(0, 1fr) 5px 220px;
+  }
+  .agentconsole.workflow-console .col { padding-inline: 8px; }
+  .agentconsole.workflow-console .ev-src {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .agentconsole.workflow-console .ev-body { overflow: hidden; }
+}
+
+@media (max-width: 640px) {
+  .agentconsole.workflow-console .console-body {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .agentconsole.workflow-console .col-left,
+  .agentconsole.workflow-console .col-right {
+    display: block !important;
+    flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .agentconsole.workflow-console .col-main {
+    flex: 0 0 72vh;
+    width: 100%;
+    min-height: 520px;
+  }
+  .agentconsole.workflow-console .console-side-toggle { display: none; }
+  .agentconsole.workflow-console .workflow-artifact-list { max-height: 280px; }
+}
+
 /* ============ APP-EMBED HARDENING ============
    In the main app (index.html) the app's styles.css loads alongside this file and
    defines generic, UNSCOPED .col / .col-left / .col-right (white --panel background,
