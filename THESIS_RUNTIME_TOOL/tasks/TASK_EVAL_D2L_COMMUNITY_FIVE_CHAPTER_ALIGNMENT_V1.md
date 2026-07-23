@@ -1,6 +1,6 @@
 # TASK_EVAL_D2L_COMMUNITY_FIVE_CHAPTER_ALIGNMENT_V1
 
-Status: IMPLEMENTED - REAL MANUAL AUDIT PENDING
+Status: COMPLETE - ACCEPTED ALIGNMENT EVIDENCE
 
 Owner: Evaluation workstream
 
@@ -136,3 +136,32 @@ separately reviewed resegmentation; it may not fabricate block-local text.
 - failed sample holds the complete section;
 - content-addressed output immutability;
 - exact Community target text preservation.
+
+## 10. Real audit evidence
+
+Implementation commit:
+
+`f0077371f796f14ccee104e9194a6f625cd085b1`
+
+External evidence root:
+
+`C:\work\agent-based-translation-baseline-captures\d2l_community_five_chapter_alignment_v1\accepted\365f15144ddc711f02d20e3a518e7f0f0c82741210cd352f585b9464129c0614`
+
+Bundle SHA-256:
+
+`365f15144ddc711f02d20e3a518e7f0f0c82741210cd352f585b9464129c0614`
+
+Audit facts:
+
+- deterministic population: 1,556 regular 1:1 mappings;
+- manually reviewed sample: 156 mappings;
+- sampled alignment failures: 0;
+- manually reviewed structural exceptions: 4;
+- accepted mappings by chapter: 348, 336, 475, 195, and 206;
+- remaining `review_required` mappings: 0;
+- source exact cover: 1,564 blocks;
+- target exact cover: 1,562 segments.
+
+The audit confirms source-to-target correspondence only. It does not certify
+translation quality. Awkward terminology, untranslated fragments, and damaged
+prose remain observable Community-baseline behavior for downstream scorers.
