@@ -107,6 +107,7 @@ def workflow_setup_preflight(doc_id: str):
                 planned_run_id=_get_registry().new_run_id(),
                 jobs_root=_jobs_root(),
                 tool_root=_tool_root(),
+                python_exe=_python_exe(),
             )
         )
     except WorkflowReplayError as exc:

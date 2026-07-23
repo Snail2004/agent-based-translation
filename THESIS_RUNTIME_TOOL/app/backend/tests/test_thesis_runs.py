@@ -3180,6 +3180,99 @@ def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
     assert registry.list_runs() == []
 
 
+def test_route_workflow_live_confirmation_launches_real_campaign_path(
+    tmp_path,
+    monkeypatch,
+):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    workflow_service = importlib.import_module("services.workflow_replay")
+    thesis_service = importlib.import_module("services.thesis_runs")
+    status, project = _workflow_setup_project_fixture()
+    monkeypatch.setattr(
+        workflow_service,
+        "_load_setup_project",
+        lambda *_args, **_kwargs: (status, project),
+    )
+    monkeypatch.setattr(workflow_service, "LIVE_START_ALLOWED", True)
+    monkeypatch.setattr(routes, "LIVE_START_ALLOWED", True)
+    monkeypatch.setattr(
+        workflow_service,
+        "_credential_status",
+        lambda: [
+            {
+                "credential_ref": "credential.shopaikey_gemini_proxy_v1",
+                "status": "available",
+            },
+            {
+                "credential_ref": "credential.modelapi_shared_v1",
+                "status": "available",
+            },
+        ],
+    )
+    monkeypatch.setattr(
+        workflow_service,
+        "_issue_live_api_token",
+        lambda **_kwargs: "sealed-api-gate-token",
+    )
+    preview = {
+        **_fake_d2l_preview(["chapter_1"]),
+        "source_binding": project.source_binding,
+    }
+    for module in (thesis_service, routes):
+        monkeypatch.setattr(
+            module,
+            "_d2l_preview_source",
+            lambda **_kwargs: preview,
+        )
+    monkeypatch.setattr(routes, "_d2l_credential_files", lambda **_kwargs: {})
+    api_gate_calls = []
+
+    def validate_gate(**kwargs):
+        api_gate_calls.append(kwargs)
+        return kwargs["confirm_token"]
+
+    monkeypatch.setattr(routes, "validate_api_gate", validate_gate)
+    spawned = []
+    frozen = []
+    monkeypatch.setattr(
+        routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id)
+    )
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, run_id, **_kwargs: frozen.append(run_id),
+    )
+
+    setup = client.get("/api/projects/projectA/workflow-setup")
+    assert setup.status_code == 200
+    assert setup.get_json()["data"]["live_start_allowed"] is True
+
+    preflight_response = client.post(
+        "/api/projects/projectA/workflow-setup/preflight",
+        json=_workflow_selection_request(mode="live"),
+    )
+    assert preflight_response.status_code == 200
+    preflight = preflight_response.get_json()["data"]
+    assert preflight["start_allowed"] is True
+    assert preflight["live_start_allowed"] is True
+    assert preflight["blocking_reasons"] == []
+
+    launch = client.post(
+        "/api/thesis/runs",
+        json=_workflow_launch_request(preflight),
+    )
+    assert launch.status_code == 201
+    data = launch.get_json()["data"]
+    assert spawned == [data["run_id"]]
+    assert frozen == [data["run_id"]]
+    assert api_gate_calls[0]["allow_api"] is True
+    assert api_gate_calls[0]["confirm_token"] == "sealed-api-gate-token"
+    entry = registry.get_run(data["run_id"])
+    assert entry["allow_api"] is True
+    assert "--live" in entry["argv"]
+    assert "--dry-run" not in entry["argv"]
+
+
 def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
     tmp_path,
     monkeypatch,

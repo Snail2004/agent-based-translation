@@ -185,6 +185,7 @@ def create_workflow_preflight(
     planned_run_id: str,
     jobs_root: str | Path,
     tool_root: str | Path,
+    python_exe: str | None = None,
 ) -> dict[str, Any]:
     body = _validate_preflight_request(request_body)
     setup = get_workflow_setup(doc_id, jobs_root=jobs_root)
@@ -261,6 +262,19 @@ def create_workflow_preflight(
         blocking_reasons.append("workflow_live_start_disabled")
     if mode == "live" and missing_credentials:
         blocking_reasons.append("workflow_credentials_unavailable")
+    api_confirm_token = None
+    if mode == "live" and not blocking_reasons:
+        api_confirm_token = _issue_live_api_token(
+            job_id=setup["runtime"]["job_id"],
+            planned_run_id=run_id,
+            chapter_ids=list(body["chapter_ids"]),
+            hard_total_token_cap=body["hard_total_token_cap"],
+            reserved_cost_cap_usd=body["reserved_cost_cap_usd"],
+            preview=preview,
+            jobs_root=jobs_root,
+            tool_root=tool_root,
+            python_exe=python_exe,
+        )
     issued_at = _utc_now()
     expires_at = (
         datetime.now(UTC) + timedelta(seconds=PREFLIGHT_TTL_SECONDS)
@@ -285,7 +299,7 @@ def create_workflow_preflight(
         "evaluation_highlight_pair": body["highlight_pair"],
         "source_binding_sha256": preview["source_binding_sha256"],
         "campaign_config_sha256": preview["campaign_config_sha256"],
-        "api_confirm_token": None,
+        "api_confirm_token": api_confirm_token,
     }
     public = {
         "schema_id": WORKFLOW_PREFLIGHT_SCHEMA_ID,
@@ -302,7 +316,7 @@ def create_workflow_preflight(
         ],
         "execution_mode": mode,
         "live_start_allowed": LIVE_START_ALLOWED,
-        "start_allowed": mode == "dry_run" and not blocking_reasons,
+        "start_allowed": not blocking_reasons,
         "blocking_reasons": blocking_reasons,
         "normalized_selection": {
             "schema_id": WORKFLOW_SELECTION_SCHEMA_ID,
@@ -418,13 +432,98 @@ def resolve_workflow_launch(request_body: Any) -> dict[str, Any]:
             "Workflow launch confirmation differs from the server-sealed preflight.",
             409,
         )
-    if record.launch["mode"] == "live" or record.launch["allow_api"]:
+    if not record.public["start_allowed"]:
+        reason = (
+            record.public["blocking_reasons"][0]
+            if record.public["blocking_reasons"]
+            else "workflow_preflight_blocked"
+        )
         raise WorkflowReplayError(
-            "workflow_live_start_disabled",
-            "Live workflow start is disabled until the DEC-064 synthetic gate is accepted.",
+            reason,
+            "Workflow launch is blocked by the sealed preflight.",
             403,
         )
+    if record.launch["mode"] == "live":
+        if (
+            not LIVE_START_ALLOWED
+            or not record.launch["allow_api"]
+            or not record.launch["api_confirm_token"]
+        ):
+            raise WorkflowReplayError(
+                "workflow_live_start_disabled",
+                "Live workflow start is not enabled by this server build.",
+                403,
+            )
     return dict(record.launch)
+
+
+def _issue_live_api_token(
+    *,
+    job_id: str,
+    planned_run_id: str,
+    chapter_ids: list[str],
+    hard_total_token_cap: int,
+    reserved_cost_cap_usd: str | None,
+    preview: Mapping[str, Any],
+    jobs_root: str | Path,
+    tool_root: str | Path,
+    python_exe: str | None,
+) -> str:
+    from services.thesis_runs import (
+        D2L_PROFILE_ID,
+        D2L_PROJECT_CAMPAIGN_SCRIPT,
+        _d2l_credential_files,
+        _d2l_launch_binding_sha256,
+        build_argv,
+        d2l_campaign_paths,
+        d2l_component_ids,
+        issue_estimate_token_for_argv,
+        resolve_job_db,
+    )
+
+    jobs = Path(jobs_root).resolve()
+    tool = Path(tool_root).resolve()
+    identities = d2l_component_ids(planned_run_id)
+    paths = d2l_campaign_paths(
+        jobs_root=jobs,
+        job_id=job_id,
+        run_id=planned_run_id,
+    )
+    credentials = _d2l_credential_files(required=True)
+    launch_binding = _d2l_launch_binding_sha256(
+        job_id=job_id,
+        planned_run_id=planned_run_id,
+        workflow_run_id=identities["workflow_run_id"],
+        component_run_id=identities["component_run_id"],
+        preview=preview,
+    )
+    argv = build_argv(
+        script=D2L_PROJECT_CAMPAIGN_SCRIPT,
+        python_exe=python_exe,
+        job_id=job_id,
+        db=resolve_job_db(db=None, job_id=job_id, jobs_root=jobs),
+        chapters=chapter_ids,
+        profile=D2L_PROFILE_ID,
+        allow_api=True,
+        event_log=str(paths["event_log_path"]),
+        run_id=planned_run_id,
+        hard_total_token_cap=hard_total_token_cap,
+        reserved_cost_cap_usd=reserved_cost_cap_usd,
+        campaign_root=str(paths["campaign_root"]),
+        job_root=str((jobs / job_id).resolve()),
+        workflow_run_id=identities["workflow_run_id"],
+        component_run_id=identities["component_run_id"],
+        code_root=str(tool),
+        runtime_root=str(paths["runtime_root"]),
+        credential_files=credentials,
+    )
+    return issue_estimate_token_for_argv(
+        job_id=job_id,
+        script=D2L_PROJECT_CAMPAIGN_SCRIPT,
+        argv=argv,
+        preview_kind="workflow_preflight_v1",
+        run_identity_digest=launch_binding,
+    )
 
 
 def initialize_workflow_parent(
