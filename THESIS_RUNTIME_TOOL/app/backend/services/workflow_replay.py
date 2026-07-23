@@ -13,6 +13,10 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 from urllib.parse import quote
 
+from pipeline.eval.evaluation_workflow_settings_v1 import (
+    EVALUATION_CHAPTER_IDS_V1,
+    EVALUATION_SCORER_IDS_V1,
+)
 from pipeline.workflow_replay.contracts_v1 import (
     WorkflowReplayContractError,
     canonical_sha256,
@@ -31,7 +35,13 @@ WORKFLOW_PREFLIGHT_SCHEMA_ID = "WorkflowPreflightV1"
 WORKFLOW_SELECTION_SCHEMA_ID = "WorkflowSetupSelectionV1"
 WORKFLOW_LAUNCH_SCHEMA_ID = "WorkflowLaunchConfirmationV1"
 WORKFLOW_APP_SCHEMA_VERSION = "1.0.0"
-LIVE_START_ALLOWED = False
+WORKFLOW_SELECTION_SCHEMA_VERSION = "1.1.0"
+EVALUATION_SETTINGS_SCHEMA_ID = "EvaluationWorkflowSettingsV1"
+EVALUATION_SETTINGS_SCHEMA_VERSION = "1.1.0"
+# This launch contract starts the Translation phase only. Scoring is a separate
+# parent-workflow action and remains project-specific and fail-closed.
+LIVE_START_ALLOWED = True
+SCORING_EXECUTOR_CONNECTED = False
 MAX_WAIT_MS = 20_000
 MAX_ARTIFACT_BYTES = 8 * 1024 * 1024
 MAX_PARENT_JSON_BYTES = 64 * 1024 * 1024
@@ -44,6 +54,8 @@ SHARED_SETTINGS_ID = "shared_llm_transport_catalog_v1"
 D2L_SETTINGS_ID = "d2l_workflow_settings_v1"
 EVALUATION_SETTINGS_ID = "evaluation_workflow_settings_v1"
 EVALUATION_ARM_ORDER = ("s0", "s1", "community", "google_nmt", "llm_lc")
+EVALUATION_CHAPTER_ORDER = tuple(EVALUATION_CHAPTER_IDS_V1)
+EVALUATION_SCORER_ORDER = tuple(EVALUATION_SCORER_IDS_V1)
 
 _CREDENTIAL_BINDINGS = (
     (
@@ -71,6 +83,64 @@ class WorkflowReplayError(ValueError):
         super().__init__(message)
         self.code = code
         self.status = status
+
+
+def _scoring_runtime_readiness(
+    *,
+    job_root: str | Path,
+    job_id: str,
+    source_binding_sha256: str,
+    selected_chapter_ids: list[str] | None = None,
+) -> dict[str, Any]:
+    from pipeline.workflow_replay.orchestrator_v1 import (
+        WorkflowOrchestratorError,
+        load_workflow_runtime_registration_v1,
+    )
+
+    try:
+        registration = load_workflow_runtime_registration_v1(
+            job_root,
+            expected_job_id=job_id,
+            expected_source_binding_sha256=source_binding_sha256,
+            selected_chapter_ids=selected_chapter_ids,
+        )
+    except (OSError, WorkflowOrchestratorError) as exc:
+        blockers = [
+            getattr(exc, "code", "workflow_runtime_registration_invalid")
+        ]
+        if not SCORING_EXECUTOR_CONNECTED:
+            blockers.append("evaluation_app_executor_not_connected")
+        return {
+            "allowed": False,
+            "blockers": blockers,
+            "runtime": {
+                "status": "blocked",
+                "registration_sha256": None,
+            },
+        }
+    blockers = list(registration["blockers"])
+    if not SCORING_EXECUTOR_CONNECTED:
+        blockers.append("evaluation_app_executor_not_connected")
+    return {
+        "allowed": registration["status"] == "ready" and not blockers,
+        "blockers": blockers,
+        "runtime": {
+            "status": registration["status"],
+            "registration_sha256": registration["integrity"][
+                "registration_sha256"
+            ],
+            "supported_chapter_ids": list(
+                registration["supported_chapter_ids"]
+            ),
+            "baseline_status": registration["baseline_bundle"]["status"],
+            "evaluation_executor_id": registration[
+                "evaluation_executor_id"
+            ],
+            "publication_executor_id": registration[
+                "publication_executor_id"
+            ],
+        },
+    }
 
 
 def get_workflow_setup(
@@ -116,7 +186,15 @@ def get_workflow_setup(
     }
     shared_option = _shared_settings_option()
     d2l_option = _d2l_settings_option()
-    evaluation_option = _evaluation_settings_option()
+    available_chapter_ids = [row["chapter_id"] for row in chapters]
+    evaluation_option = _evaluation_settings_option(
+        available_chapter_ids=available_chapter_ids
+    )
+    scoring_readiness = _scoring_runtime_readiness(
+        job_root=(Path(jobs_root).resolve() / status["job_id"]),
+        job_id=status["job_id"],
+        source_binding_sha256=source_package["source_binding_sha256"],
+    )
     payload = {
         "schema_id": WORKFLOW_SETUP_SCHEMA_ID,
         "schema_version": WORKFLOW_APP_SCHEMA_VERSION,
@@ -133,11 +211,15 @@ def get_workflow_setup(
                 "reason": (
                     None
                     if LIVE_START_ALLOWED
-                    else "real_five_chapter_workflow_closed_during_dec064"
+                    else "translation_live_start_disabled"
                 ),
             },
         ],
         "live_start_allowed": LIVE_START_ALLOWED,
+        "launch_phase": "translation",
+        "scoring_start_allowed": scoring_readiness["allowed"],
+        "scoring_blocking_reasons": scoring_readiness["blockers"],
+        "scoring_runtime": scoring_readiness["runtime"],
         "dry_run_allowed": True,
         "shared_options": [shared_option],
         "d2l_settings_options": [d2l_option],
@@ -145,8 +227,7 @@ def get_workflow_setup(
         "defaults": {
             "shared_option_id": SHARED_SETTINGS_ID,
             "d2l_settings_option_id": D2L_SETTINGS_ID,
-            "evaluation_settings_option_id": EVALUATION_SETTINGS_ID,
-            "highlight_pair": None,
+            "evaluation": dict(evaluation_option["default_selection"]),
             "hard_total_token_cap": 6_000_000,
             "reserved_cost_cap_usd": None,
         },
@@ -154,7 +235,7 @@ def get_workflow_setup(
             "selectable_fields": [
                 "execution_mode",
                 "chapter_ids",
-                "highlight_pair",
+                "evaluation",
                 "hard_total_token_cap",
                 "reserved_cost_cap_usd",
             ],
@@ -165,7 +246,7 @@ def get_workflow_setup(
                 "output_mode",
                 "stages",
                 "translation_arms",
-                "scorers",
+                "evaluation_registered_universe",
                 "retry_policy",
                 "fallback_policy",
                 "cache_policy",
@@ -199,23 +280,29 @@ def create_workflow_preflight(
             "workflow_d2l_settings_invalid",
             "d2l_settings_id is not advertised by the server.",
         )
-    if body["evaluation_settings_option_id"] != EVALUATION_SETTINGS_ID:
+    if body["evaluation"]["settings_option_id"] != EVALUATION_SETTINGS_ID:
         raise WorkflowReplayError(
             "workflow_evaluation_settings_invalid",
             "evaluation_settings_id is not advertised by the server.",
         )
-    available_chapters = {
+    available_chapter_order = [
         row["chapter_id"] for row in setup["chapters"] if row["selectable"]
-    }
-    if (
-        not body["chapter_ids"]
-        or len(body["chapter_ids"]) != len(set(body["chapter_ids"]))
-        or not set(body["chapter_ids"]).issubset(available_chapters)
+    ]
+    if not _is_ordered_subset(
+        body["chapter_ids"],
+        allowed=available_chapter_order,
+        minimum=1,
     ):
         raise WorkflowReplayError(
             "workflow_chapters_invalid",
-            "chapter_ids must be a non-empty duplicate-free subset of the advertised chapters.",
+            "chapter_ids must be a canonical non-empty subset of the advertised chapters.",
         )
+    evaluation_option = setup["evaluation_settings_options"][0]
+    evaluation_selection = _normalize_evaluation_selection(
+        body["evaluation"],
+        parent_chapter_ids=body["chapter_ids"],
+        option=evaluation_option,
+    )
     run_id = validate_run_id(planned_run_id, required=True)
     if run_id is None:
         raise WorkflowReplayError(
@@ -257,6 +344,14 @@ def create_workflow_preflight(
         if row["status"] != "available"
     ]
     mode = body["execution_mode"]
+    scoring_readiness = _scoring_runtime_readiness(
+        job_root=(Path(jobs_root).resolve() / setup["runtime"]["job_id"]),
+        job_id=setup["runtime"]["job_id"],
+        source_binding_sha256=setup["source_package"][
+            "source_binding_sha256"
+        ],
+        selected_chapter_ids=body["chapter_ids"],
+    )
     blocking_reasons = []
     if mode == "live" and not LIVE_START_ALLOWED:
         blocking_reasons.append("workflow_live_start_disabled")
@@ -281,7 +376,8 @@ def create_workflow_preflight(
     ).isoformat().replace("+00:00", "Z")
     preflight_id = f"preflight_{run_id}"
     launch = {
-        "script": "run_d2l_project_campaign",
+        "script": "run_workflow_orchestrator_v1",
+        "phase": "translation",
         "mode": mode,
         "allow_api": mode == "live",
         "doc_id": doc_id,
@@ -295,8 +391,13 @@ def create_workflow_preflight(
         "reserved_cost_cap_usd": body["reserved_cost_cap_usd"],
         "shared_settings_id": SHARED_SETTINGS_ID,
         "d2l_settings_id": D2L_SETTINGS_ID,
-        "evaluation_settings_id": EVALUATION_SETTINGS_ID,
-        "evaluation_highlight_pair": body["highlight_pair"],
+        "evaluation_selection": evaluation_selection,
+        "evaluation_selection_sha256": evaluation_selection[
+            "selection_sha256"
+        ],
+        "evaluation_settings_template_sha256": evaluation_selection[
+            "registered_option_sha256"
+        ],
         "source_binding_sha256": preview["source_binding_sha256"],
         "campaign_config_sha256": preview["campaign_config_sha256"],
         "api_confirm_token": api_confirm_token,
@@ -316,24 +417,30 @@ def create_workflow_preflight(
         ],
         "execution_mode": mode,
         "live_start_allowed": LIVE_START_ALLOWED,
+        "launch_phase": "translation",
+        "scoring_start_allowed": scoring_readiness["allowed"],
+        "scoring_blocking_reasons": scoring_readiness["blockers"],
+        "scoring_runtime": scoring_readiness["runtime"],
         "start_allowed": not blocking_reasons,
         "blocking_reasons": blocking_reasons,
         "normalized_selection": {
             "schema_id": WORKFLOW_SELECTION_SCHEMA_ID,
-            "schema_version": WORKFLOW_APP_SCHEMA_VERSION,
+            "schema_version": WORKFLOW_SELECTION_SCHEMA_VERSION,
             "execution_mode": mode,
             "chapter_ids": list(body["chapter_ids"]),
             "shared_option_id": SHARED_SETTINGS_ID,
             "d2l_settings_option_id": D2L_SETTINGS_ID,
-            "evaluation_settings_option_id": EVALUATION_SETTINGS_ID,
-            "highlight_pair": body["highlight_pair"],
+            "evaluation": evaluation_selection,
             "hard_total_token_cap": body["hard_total_token_cap"],
             "reserved_cost_cap_usd": body["reserved_cost_cap_usd"],
         },
         "source_summary": setup["source_package"],
         "shared_summary": _shared_settings_option(),
         "d2l_summary": _d2l_settings_option(),
-        "evaluation_summary": _evaluation_settings_option(),
+        "evaluation_summary": _evaluation_preflight_summary(
+            option=evaluation_option,
+            selection=evaluation_selection,
+        ),
         "credential_status": credentials,
         "capability_status": _capability_status(preview),
         "bounds": _forecast_read_model(preview),
@@ -351,6 +458,8 @@ def create_workflow_preflight(
     public["preflight_sha256"] = canonical_sha256(public)
     token = _issue_preflight_token(public=public, launch=launch)
     launch_read_model = {
+        "script": launch["script"],
+        "phase": launch["phase"],
         "preflight_id": preflight_id,
         "preflight_sha256": public["preflight_sha256"],
         "confirm_token": token,
@@ -471,7 +580,7 @@ def _issue_live_api_token(
 ) -> str:
     from services.thesis_runs import (
         D2L_PROFILE_ID,
-        D2L_PROJECT_CAMPAIGN_SCRIPT,
+        WORKFLOW_ORCHESTRATOR_SCRIPT,
         _d2l_credential_files,
         _d2l_launch_binding_sha256,
         build_argv,
@@ -498,7 +607,7 @@ def _issue_live_api_token(
         preview=preview,
     )
     argv = build_argv(
-        script=D2L_PROJECT_CAMPAIGN_SCRIPT,
+        script=WORKFLOW_ORCHESTRATOR_SCRIPT,
         python_exe=python_exe,
         job_id=job_id,
         db=resolve_job_db(db=None, job_id=job_id, jobs_root=jobs),
@@ -511,6 +620,13 @@ def _issue_live_api_token(
         reserved_cost_cap_usd=reserved_cost_cap_usd,
         campaign_root=str(paths["campaign_root"]),
         job_root=str((jobs / job_id).resolve()),
+        parent_root=str(
+            workflow_replay_root(
+                jobs_root=jobs,
+                job_id=job_id,
+                workflow_run_id=identities["workflow_run_id"],
+            )
+        ),
         workflow_run_id=identities["workflow_run_id"],
         component_run_id=identities["component_run_id"],
         code_root=str(tool),
@@ -519,7 +635,7 @@ def _issue_live_api_token(
     )
     return issue_estimate_token_for_argv(
         job_id=job_id,
-        script=D2L_PROJECT_CAMPAIGN_SCRIPT,
+        script=WORKFLOW_ORCHESTRATOR_SCRIPT,
         argv=argv,
         preview_kind="workflow_preflight_v1",
         run_identity_digest=launch_binding,
@@ -683,8 +799,7 @@ def _validate_preflight_request(value: Any) -> dict[str, Any]:
         "chapter_ids",
         "shared_option_id",
         "d2l_settings_option_id",
-        "evaluation_settings_option_id",
-        "highlight_pair",
+        "evaluation",
         "hard_total_token_cap",
         "reserved_cost_cap_usd",
     }
@@ -695,7 +810,7 @@ def _validate_preflight_request(value: Any) -> dict[str, Any]:
         )
     if (
         value["schema_id"] != WORKFLOW_SELECTION_SCHEMA_ID
-        or value["schema_version"] != WORKFLOW_APP_SCHEMA_VERSION
+        or value["schema_version"] != WORKFLOW_SELECTION_SCHEMA_VERSION
     ):
         raise WorkflowReplayError(
             "workflow_preflight_schema_invalid",
@@ -728,28 +843,7 @@ def _validate_preflight_request(value: Any) -> dict[str, Any]:
             "workflow_token_cap_invalid",
             "hard_total_token_cap must be an integer from 1 to 20000000.",
         )
-    highlight = value["highlight_pair"]
-    if highlight is not None:
-        if (
-            not isinstance(highlight, Mapping)
-            or set(highlight)
-            != {"baseline_arm_id", "candidate_arm_id"}
-        ):
-            raise WorkflowReplayError(
-                "workflow_highlight_pair_invalid",
-                "highlight_pair must name baseline_arm_id and candidate_arm_id.",
-            )
-        baseline = highlight["baseline_arm_id"]
-        candidate = highlight["candidate_arm_id"]
-        if (
-            baseline not in EVALUATION_ARM_ORDER
-            or candidate not in EVALUATION_ARM_ORDER
-            or baseline == candidate
-        ):
-            raise WorkflowReplayError(
-                "workflow_highlight_pair_invalid",
-                "highlight_pair must contain two distinct registered arms.",
-            )
+    evaluation = _validate_evaluation_selection_request(value["evaluation"])
     return {
         "execution_mode": mode,
         "chapter_ids": list(chapter_ids),
@@ -759,16 +853,184 @@ def _validate_preflight_request(value: Any) -> dict[str, Any]:
         "d2l_settings_option_id": _required_string(
             value["d2l_settings_option_id"], "d2l_settings_option_id"
         ),
-        "evaluation_settings_option_id": _required_string(
-            value["evaluation_settings_option_id"],
-            "evaluation_settings_option_id",
-        ),
-        "highlight_pair": None if highlight is None else dict(highlight),
+        "evaluation": evaluation,
         "hard_total_token_cap": token_cap,
         "reserved_cost_cap_usd": _nullable_positive_decimal(
             value["reserved_cost_cap_usd"]
         ),
     }
+
+
+def _validate_evaluation_selection_request(value: Any) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        raise WorkflowReplayError(
+            "workflow_evaluation_selection_invalid",
+            "evaluation must be a JSON object.",
+        )
+    required = {
+        "settings_option_id",
+        "selected_chapter_ids",
+        "selected_arm_ids",
+        "selected_scorer_ids",
+        "highlight_pair",
+    }
+    if set(value) != required:
+        raise WorkflowReplayError(
+            "workflow_evaluation_selection_invalid",
+            "evaluation has missing or unsupported fields.",
+        )
+    selected_chapter_ids = _string_id_list(
+        value["selected_chapter_ids"],
+        field="evaluation.selected_chapter_ids",
+    )
+    selected_arm_ids = _string_id_list(
+        value["selected_arm_ids"],
+        field="evaluation.selected_arm_ids",
+    )
+    selected_scorer_ids = _string_id_list(
+        value["selected_scorer_ids"],
+        field="evaluation.selected_scorer_ids",
+    )
+    highlight = value["highlight_pair"]
+    if highlight is not None:
+        if (
+            not isinstance(highlight, Mapping)
+            or set(highlight)
+            != {"baseline_arm_id", "candidate_arm_id"}
+        ):
+            raise WorkflowReplayError(
+                "workflow_highlight_pair_invalid",
+                "evaluation.highlight_pair must name baseline_arm_id and candidate_arm_id.",
+            )
+        baseline = highlight["baseline_arm_id"]
+        candidate = highlight["candidate_arm_id"]
+        if (
+            not isinstance(baseline, str)
+            or not baseline
+            or not isinstance(candidate, str)
+            or not candidate
+            or baseline == candidate
+        ):
+            raise WorkflowReplayError(
+                "workflow_highlight_pair_invalid",
+                "evaluation.highlight_pair must contain two distinct IDs.",
+            )
+    return {
+        "settings_option_id": _required_string(
+            value["settings_option_id"],
+            "evaluation.settings_option_id",
+        ),
+        "selected_chapter_ids": selected_chapter_ids,
+        "selected_arm_ids": selected_arm_ids,
+        "selected_scorer_ids": selected_scorer_ids,
+        "highlight_pair": None if highlight is None else dict(highlight),
+    }
+
+
+def _normalize_evaluation_selection(
+    value: Mapping[str, Any],
+    *,
+    parent_chapter_ids: list[str],
+    option: Mapping[str, Any],
+) -> dict[str, Any]:
+    catalog = option["selection_catalog"]
+    chapters = list(value["selected_chapter_ids"])
+    arms = list(value["selected_arm_ids"])
+    scorers = list(value["selected_scorer_ids"])
+    if not _is_ordered_subset(
+        chapters,
+        allowed=catalog["chapter_ids"],
+        minimum=int(option["constraints"]["minimum_chapter_count"]),
+    ) or not set(chapters).issubset(parent_chapter_ids):
+        raise WorkflowReplayError(
+            "workflow_evaluation_chapters_invalid",
+            "Evaluation chapters must be a canonical subset of the selected workflow chapters.",
+        )
+    if not _is_ordered_subset(
+        arms,
+        allowed=catalog["arm_ids"],
+        minimum=int(option["constraints"]["minimum_arm_count"]),
+    ):
+        raise WorkflowReplayError(
+            "workflow_evaluation_arms_invalid",
+            "Evaluation arms must be a canonical registered subset with at least two arms.",
+        )
+    if not _is_ordered_subset(
+        scorers,
+        allowed=catalog["scorer_ids"],
+        minimum=int(option["constraints"]["minimum_scorer_count"]),
+    ):
+        raise WorkflowReplayError(
+            "workflow_evaluation_scorers_invalid",
+            "Evaluation scorers must be a canonical registered non-empty subset.",
+        )
+    highlight = value["highlight_pair"]
+    if highlight is not None and (
+        highlight["baseline_arm_id"] not in arms
+        or highlight["candidate_arm_id"] not in arms
+    ):
+        raise WorkflowReplayError(
+            "workflow_highlight_pair_invalid",
+            "evaluation.highlight_pair must use two selected arms.",
+        )
+    basis = {
+        "settings_option_id": option["option_id"],
+        "selected_chapter_ids": chapters,
+        "selected_arm_ids": arms,
+        "selected_scorer_ids": scorers,
+        "highlight_pair": None if highlight is None else dict(highlight),
+        "registered_option_sha256": option["sha256"],
+    }
+    return {
+        **basis,
+        "selection_sha256": canonical_sha256(basis),
+    }
+
+
+def _evaluation_preflight_summary(
+    *,
+    option: Mapping[str, Any],
+    selection: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "schema_id": EVALUATION_SETTINGS_SCHEMA_ID,
+        "schema_version": EVALUATION_SETTINGS_SCHEMA_VERSION,
+        "settings_status": "pending_scoring_handoff",
+        "settings_sha256": None,
+        "selection_sha256": selection["selection_sha256"],
+        "registered_option_sha256": option["sha256"],
+        "settings_option_id": option["option_id"],
+        "selected_chapter_ids": list(selection["selected_chapter_ids"]),
+        "selected_arm_ids": list(selection["selected_arm_ids"]),
+        "selected_scorer_ids": list(selection["selected_scorer_ids"]),
+        "highlight_pair": selection["highlight_pair"],
+        "registered_authority": dict(
+            option["fixed_facts"]["registered_authority"]
+        ),
+    }
+
+
+def _string_id_list(value: Any, *, field: str) -> list[str]:
+    if not isinstance(value, list) or any(
+        not isinstance(item, str) or not item for item in value
+    ):
+        raise WorkflowReplayError(
+            "workflow_evaluation_selection_invalid",
+            f"{field} must be an array of non-empty IDs.",
+        )
+    return list(value)
+
+
+def _is_ordered_subset(
+    values: list[str],
+    *,
+    allowed: list[str] | tuple[str, ...],
+    minimum: int,
+) -> bool:
+    if len(values) < minimum or len(values) != len(set(values)):
+        return False
+    selected = set(values)
+    return values == [item for item in allowed if item in selected]
 
 
 def _load_setup_project(
@@ -923,25 +1185,67 @@ def _d2l_settings_option() -> dict[str, Any]:
     }
 
 
-def _evaluation_settings_option() -> dict[str, Any]:
+def _evaluation_settings_option(
+    *,
+    available_chapter_ids: list[str] | None = None,
+) -> dict[str, Any]:
+    available = (
+        set(EVALUATION_CHAPTER_ORDER)
+        if available_chapter_ids is None
+        else set(available_chapter_ids)
+    )
+    default_chapters = [
+        chapter_id
+        for chapter_id in EVALUATION_CHAPTER_ORDER
+        if chapter_id in available
+    ]
     fixed_facts = {
+        "settings_schema_id": EVALUATION_SETTINGS_SCHEMA_ID,
+        "settings_schema_version": EVALUATION_SETTINGS_SCHEMA_VERSION,
         "arm_ids": list(EVALUATION_ARM_ORDER),
-        "scorers": ["sf_qe", "sf_bt", "pj"],
+        "scorer_ids": list(EVALUATION_SCORER_ORDER),
         "aggregation_policy": "evaluation_benchmark_aggregation_v1",
         "report_policy": "full_run_report_v1",
         "verdict_policy": "evaluation_verdict_v1",
+        "scoring_handoff_authority": (
+            "exact_ordered_five_arm_scoring_handoff_v1"
+        ),
+        "registered_authority": {
+            "status": "pending_runtime_registration",
+            "benchmark_preset_ref": None,
+            "evaluation_config_ref": None,
+            "scorer_set_ref": None,
+            "evaluation_profile_ref": None,
+            "policy_profile_ref": None,
+            "shared_selection_ref": None,
+        },
     }
     return {
         "option_id": EVALUATION_SETTINGS_ID,
-        "label": "Five-arm Evaluation workflow",
-        "revision": "v1",
+        "label": "Registered Evaluation workflow",
+        "revision": EVALUATION_SETTINGS_SCHEMA_VERSION,
         "sha256": canonical_sha256(fixed_facts),
-        "enabled": True,
+        "enabled": bool(default_chapters),
         "status": "registered",
         "fixed_facts": fixed_facts,
+        "selection_catalog": {
+            "chapter_ids": list(EVALUATION_CHAPTER_ORDER),
+            "arm_ids": list(EVALUATION_ARM_ORDER),
+            "scorer_ids": list(EVALUATION_SCORER_ORDER),
+        },
+        "default_selection": {
+            "settings_option_id": EVALUATION_SETTINGS_ID,
+            "selected_chapter_ids": default_chapters,
+            "selected_arm_ids": list(EVALUATION_ARM_ORDER),
+            "selected_scorer_ids": list(EVALUATION_SCORER_ORDER),
+            "highlight_pair": None,
+        },
         "constraints": {
             "server_owned": True,
-            "highlight_pair_arm_ids": list(EVALUATION_ARM_ORDER),
+            "minimum_chapter_count": 1,
+            "minimum_arm_count": 2,
+            "minimum_scorer_count": 1,
+            "canonical_order_required": True,
         },
     }
 
@@ -1099,6 +1403,7 @@ def read_workflow_replay(
             root=root,
             package=package,
             after_seq=after_seq,
+            jobs_root=Path(jobs_root).resolve(),
         )
 
     manifest_commit_sha256 = _manifest_commit_sha256(root)
@@ -1111,6 +1416,7 @@ def read_workflow_replay(
                 root=root,
                 package=package,
                 after_seq=after_seq,
+                jobs_root=Path(jobs_root).resolve(),
             )
         time.sleep(min(0.1, remaining))
         current_manifest_sha256 = _manifest_commit_sha256(root)
@@ -1126,6 +1432,7 @@ def read_workflow_replay(
                 root=root,
                 package=package,
                 after_seq=after_seq,
+                jobs_root=Path(jobs_root).resolve(),
             )
 
 
@@ -1247,6 +1554,7 @@ def _read_envelope(
     root: Path,
     package: Mapping[str, Any],
     after_seq: int,
+    jobs_root: Path,
 ) -> dict[str, Any]:
     manifest = package["manifest"]
     events = [event for event in package["events"] if event["seq"] > after_seq]
@@ -1288,6 +1596,10 @@ def _read_envelope(
             typed_artifacts=typed_artifacts,
             workflow_run_id=manifest["workflow_run_id"],
         ),
+        "evaluation_scope": _evaluation_scope_read_model(
+            entry,
+            typed_artifacts=typed_artifacts,
+        ),
         "source_mode": "live",
         "cursor": {
             "after_seq": after_seq,
@@ -1313,7 +1625,7 @@ def _read_envelope(
                 "artifact_index_sha256"
             ],
         },
-        "actions": _actions(entry, manifest),
+        "actions": _actions(entry, manifest, jobs_root=jobs_root),
     }
 
 
@@ -1335,6 +1647,7 @@ def _typed_artifacts(
         "component_usage_snapshot",
         "d2l_component_usage_snapshot_v1",
         "evaluation_component_usage_snapshot_v1",
+        "evaluation_workflow_settings_v1",
     }
     result: list[dict[str, Any]] = []
     for artifact in artifact_index["artifacts"]:
@@ -1366,6 +1679,133 @@ def _typed_artifacts(
             ) from exc
         result.append({"binding": binding, "body": body})
     return result
+
+
+def _evaluation_scope_read_model(
+    entry: Mapping[str, Any],
+    *,
+    typed_artifacts: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    selection = entry.get("evaluation_selection")
+    if selection is None:
+        return None
+    if not isinstance(selection, Mapping):
+        raise WorkflowReplayError(
+            "workflow_evaluation_selection_invalid",
+            "Run registry Evaluation selection is not an object.",
+            409,
+        )
+    required = {
+        "settings_option_id",
+        "selected_chapter_ids",
+        "selected_arm_ids",
+        "selected_scorer_ids",
+        "highlight_pair",
+        "registered_option_sha256",
+        "selection_sha256",
+    }
+    if set(selection) != required:
+        raise WorkflowReplayError(
+            "workflow_evaluation_selection_invalid",
+            "Run registry Evaluation selection has contract drift.",
+            409,
+        )
+    basis = {key: selection[key] for key in required - {"selection_sha256"}}
+    selection_sha256 = canonical_sha256(basis)
+    if (
+        selection["selection_sha256"] != selection_sha256
+        or entry.get("evaluation_selection_sha256") != selection_sha256
+        or entry.get("evaluation_settings_template_sha256")
+        != selection["registered_option_sha256"]
+    ):
+        raise WorkflowReplayError(
+            "workflow_evaluation_selection_hash_drift",
+            "Run registry Evaluation selection hash binding has drifted.",
+            409,
+        )
+
+    bodies = [
+        row["body"]
+        for row in typed_artifacts
+        if isinstance(row.get("body"), Mapping)
+    ]
+    handoffs = [
+        body
+        for body in bodies
+        if body.get("schema_id") == "ScoringHandoffV1"
+        or body.get("schema") == "scoring_handoff_v1"
+    ]
+    settings_rows = [
+        body
+        for body in bodies
+        if body.get("schema_id") == EVALUATION_SETTINGS_SCHEMA_ID
+    ]
+    if len(handoffs) > 1 or len(settings_rows) > 1:
+        raise WorkflowReplayError(
+            "workflow_evaluation_settings_ambiguous",
+            "Parent package contains duplicate Evaluation authority artifacts.",
+            409,
+        )
+    settings_sha256 = None
+    settings_status = "pending_scoring_handoff"
+    if settings_rows:
+        if not handoffs:
+            raise WorkflowReplayError(
+                "workflow_evaluation_settings_without_handoff",
+                "Evaluation settings appeared before the scoring handoff.",
+                409,
+            )
+        from pipeline.eval.evaluation_workflow_settings_v1 import (
+            validate_evaluation_workflow_settings_v1,
+        )
+
+        try:
+            settings = validate_evaluation_workflow_settings_v1(
+                settings_rows[0],
+                scoring_handoff=handoffs[0],
+            )
+        except Exception as exc:
+            raise WorkflowReplayError(
+                "workflow_evaluation_settings_invalid",
+                f"Evaluation settings failed validation: {exc}",
+                409,
+            ) from exc
+        expected = {
+            "selected_chapter_ids": selection["selected_chapter_ids"],
+            "selected_arm_ids": selection["selected_arm_ids"],
+            "selected_scorer_ids": selection["selected_scorer_ids"],
+            "highlight_pair": selection["highlight_pair"],
+        }
+        observed = {key: settings[key] for key in expected}
+        if observed != expected:
+            raise WorkflowReplayError(
+                "workflow_evaluation_settings_selection_drift",
+                "Materialized Evaluation settings differ from the sealed selection.",
+                409,
+            )
+        settings_sha256 = settings["settings_sha256"]
+        settings_status = "materialized"
+    elif handoffs:
+        settings_status = "pending_settings_materialization"
+
+    return {
+        "schema_id": "EvaluationWorkflowScopeReadV1",
+        "schema_version": "1.0.0",
+        "settings_option_id": selection["settings_option_id"],
+        "registered_option_sha256": selection[
+            "registered_option_sha256"
+        ],
+        "selection_sha256": selection_sha256,
+        "selected_chapter_ids": list(selection["selected_chapter_ids"]),
+        "selected_arm_ids": list(selection["selected_arm_ids"]),
+        "selected_scorer_ids": list(selection["selected_scorer_ids"]),
+        "highlight_pair": selection["highlight_pair"],
+        "scoring_handoff_status": (
+            "validated" if handoffs else "pending"
+        ),
+        "settings_status": settings_status,
+        "settings_sha256": settings_sha256,
+    }
 
 
 def _validated_artifacts(
@@ -1958,8 +2398,39 @@ def _indexed_workflow_usage_total(
 def _actions(
     entry: Mapping[str, Any],
     manifest: Mapping[str, Any],
+    *,
+    jobs_root: Path,
 ) -> dict[str, Any]:
     status = manifest["status"]
+    translation = next(
+        (
+            row
+            for row in manifest["components"]
+            if row["component_id"] == "translation"
+        ),
+        None,
+    )
+    evaluation = next(
+        (
+            row
+            for row in manifest["components"]
+            if row["component_id"] == "evaluation"
+        ),
+        None,
+    )
+    score_blockers = []
+    if translation is None or translation["status"] != "succeeded":
+        score_blockers.append("translation_not_ready")
+    if evaluation is not None and evaluation["status"] == "succeeded":
+        score_blockers.append("evaluation_already_completed")
+    readiness = _scoring_runtime_readiness(
+        job_root=(jobs_root / str(entry["job_id"])).resolve(),
+        job_id=str(entry["job_id"]),
+        source_binding_sha256=str(entry["source_binding_sha256"]),
+        selected_chapter_ids=list(entry.get("selected_chapter_ids") or []),
+    )
+    score_blockers.extend(readiness["blockers"])
+    score_blockers = list(dict.fromkeys(score_blockers))
     return {
         "pause": {
             "allowed": status == "running",
@@ -1979,6 +2450,13 @@ def _actions(
                 f"/api/thesis/runs/{entry['run_id']}/workflow-replay"
                 "?after_seq=0&wait_ms=0"
             ),
+        },
+        "score": {
+            "allowed": not score_blockers,
+            "method": "POST",
+            "href": f"/api/thesis/runs/{entry['run_id']}/score",
+            "blocking_reasons": score_blockers,
+            "runtime": readiness["runtime"],
         },
     }
 

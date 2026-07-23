@@ -156,6 +156,61 @@ class EvaluationComponentAdapterV1:
         )
 
 
+class PublicationComponentAdapterV1:
+    """Validate and project the neutral selected-chapter Publication package."""
+
+    validator_id = "publication.component.validator_v1"
+    validator_revision = "v1"
+
+    def __init__(self, *, require_terminal: bool = True) -> None:
+        self.require_terminal = require_terminal
+
+    def validate_and_snapshot(
+        self, component_root: Path, *, workflow_run_id: str
+    ) -> ComponentSnapshotV1:
+        from .publication_component_v1 import (
+            validate_publication_component_package_v1,
+        )
+
+        root = component_root.resolve()
+        validation = validate_publication_component_package_v1(
+            root,
+            require_terminal=self.require_terminal,
+        )
+        manifest = validation["manifest"]
+        if manifest["workflow_run_id"] != workflow_run_id:
+            raise ValueError("Publication component returned a foreign workflow")
+        events = _load_events(root / "events.jsonl")
+        artifacts = []
+        for row in validation["artifact_index"]["artifacts"]:
+            artifacts.append(
+                ComponentArtifactInputV1(
+                    binding=row["artifact"],
+                    source_relative_path=row["relative_path"],
+                    producer_stage_id=row["stage_id"],
+                    parent_artifact_refs=tuple(row["parent_artifact_refs"]),
+                    created_event_id=row["created_by_event_id"],
+                )
+            )
+        return ComponentSnapshotV1(
+            workflow_run_id=manifest["workflow_run_id"],
+            component_flow_kind=manifest["flow_kind"],
+            component_id=manifest["component_id"],
+            component_run_id=manifest["component_run_id"],
+            component_attempt_id=manifest["component_attempt_id"],
+            component_attempt_index=manifest["component_attempt_index"],
+            status=manifest["status"],
+            validator_id=self.validator_id,
+            validator_revision=self.validator_revision,
+            validation_receipt_sha256=validation[
+                "validation_receipt_sha256"
+            ],
+            files=_component_files(root),
+            events=events,
+            artifacts=tuple(artifacts),
+        )
+
+
 def _load_events(path: Path) -> tuple[ComponentEventInputV1, ...]:
     result = []
     for raw_line in path.read_bytes().splitlines():
@@ -201,4 +256,5 @@ def _load_mapping(path: Path) -> dict[str, Any]:
 __all__ = [
     "D2LTranslationComponentAdapterV1",
     "EvaluationComponentAdapterV1",
+    "PublicationComponentAdapterV1",
 ]

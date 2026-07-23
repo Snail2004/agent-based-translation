@@ -26,6 +26,7 @@ from services.thesis_runs import (
     D2L_COMPONENT_ID,
     D2L_PROFILE_ID,
     D2L_PROJECT_CAMPAIGN_SCRIPT,
+    WORKFLOW_ORCHESTRATOR_SCRIPT,
     RunControlError,
     RunRegistry,
     build_argv,
@@ -58,12 +59,16 @@ from services.workflow_replay import (
     read_workflow_artifact,
     read_workflow_replay,
     resolve_workflow_launch,
+    workflow_replay_root,
 )
 
 
 bp = Blueprint("thesis_runs", __name__)
 
 _FULL_RUN_REPORT_FILENAME = "full_run_report_v1.json"
+_D2L_COMPONENT_SCRIPTS = frozenset(
+    {D2L_PROJECT_CAMPAIGN_SCRIPT, WORKFLOW_ORCHESTRATOR_SCRIPT}
+)
 
 _registry: RunRegistry | None = None
 
@@ -148,6 +153,9 @@ def _validate_planned_run_reuse(
         "campaign_config_sha256",
         "campaign_seal_sha256",
         "launch_binding_sha256",
+        "evaluation_selection",
+        "evaluation_selection_sha256",
+        "evaluation_settings_template_sha256",
     )
     mismatches = [
         field
@@ -165,7 +173,14 @@ def _validate_planned_run_reuse(
 
 def _resolve_resume_root(registry: RunRegistry, entry: dict) -> dict:
     job_id = validate_job_id(entry.get("job_id"), required=True)
-    lineage_fields = ("run_dir", "manifest_path", "event_log_path")
+    lineage_fields = (
+        "run_dir",
+        "manifest_path",
+        "event_log_path",
+        "evaluation_selection",
+        "evaluation_selection_sha256",
+        "evaluation_settings_template_sha256",
+    )
     lineage_identity = {field: entry.get(field) for field in lineage_fields}
     current = entry
     seen: set[str] = set()
@@ -185,7 +200,11 @@ def _resolve_resume_root(registry: RunRegistry, entry: dict) -> dict:
                 409,
             )
         seen.add(current_id)
-        if current.get("script") not in {"run_one_button", D2L_PROJECT_CAMPAIGN_SCRIPT} or current.get("job_id") != job_id:
+        if (
+            current.get("script")
+            not in {"run_one_button", *_D2L_COMPONENT_SCRIPTS}
+            or current.get("job_id") != job_id
+        ):
             raise RunControlError(
                 "resume_ancestry_invalid",
                 "Resume ancestry crosses a job or script boundary.",
@@ -246,6 +265,15 @@ def create_run():
                 ],
                 "allow_api": workflow_launch["allow_api"],
                 "confirm_token": workflow_launch["api_confirm_token"],
+                "evaluation_selection": workflow_launch[
+                    "evaluation_selection"
+                ],
+                "evaluation_selection_sha256": workflow_launch[
+                    "evaluation_selection_sha256"
+                ],
+                "evaluation_settings_template_sha256": workflow_launch[
+                    "evaluation_settings_template_sha256"
+                ],
             }
         script = validate_script(body.get("script", ""))
         allow_api = bool(body.get("allow_api", False))
@@ -274,11 +302,21 @@ def create_run():
         d2l_credentials = {}
         d2l_profile = body.get("profile")
         d2l_launch_binding = None
-        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
-            if allow_api and not LIVE_START_ALLOWED:
+        if script in _D2L_COMPONENT_SCRIPTS:
+            if allow_api and script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+                raise WorkflowReplayError(
+                    "direct_d2l_live_start_disabled",
+                    "Live Translation must start through the neutral workflow orchestrator.",
+                    403,
+                )
+            if (
+                allow_api
+                and script == WORKFLOW_ORCHESTRATOR_SCRIPT
+                and not LIVE_START_ALLOWED
+            ):
                 raise WorkflowReplayError(
                     "workflow_live_start_disabled",
-                    "Live workflow start is disabled until the DEC-064 synthetic gate is accepted.",
+                    "Live Translation start is disabled by this server build.",
                     403,
                 )
             job_id = validate_job_id(job_id, required=True)
@@ -404,6 +442,17 @@ def create_run():
             code_root=str(tool_root) if d2l_paths else None,
             runtime_root=str(d2l_paths["runtime_root"]) if d2l_paths else None,
             credential_files=d2l_credentials if d2l_paths else None,
+            parent_root=(
+                str(
+                    workflow_replay_root(
+                        jobs_root=jobs_root,
+                        job_id=job_id,
+                        workflow_run_id=d2l_ids["workflow_run_id"],
+                    )
+                )
+                if script == WORKFLOW_ORCHESTRATOR_SCRIPT and d2l_ids
+                else None
+            ),
         )
 
         expected_run_identity = {
@@ -443,20 +492,35 @@ def create_run():
             ),
             "campaign_seal_sha256": None,
             "launch_binding_sha256": d2l_launch_binding,
+            "evaluation_selection": (
+                body.get("evaluation_selection")
+                if workflow_launch is not None
+                else None
+            ),
+            "evaluation_selection_sha256": (
+                body.get("evaluation_selection_sha256")
+                if workflow_launch is not None
+                else None
+            ),
+            "evaluation_settings_template_sha256": (
+                body.get("evaluation_settings_template_sha256")
+                if workflow_launch is not None
+                else None
+            ),
         }
         existing = registry.get_run(planned_run_id) if planned_run_id else None
-        if workflow_launch is not None:
-            initialize_workflow_parent(
-                jobs_root=jobs_root,
-                job_id=job_id,
-                workflow_run_id=d2l_ids["workflow_run_id"],
-                selected_chapter_ids=chapter_ids,
-                source_binding=d2l_preview["source_binding"],
-                code_commit=d2l_preview["code_revision"],
-            )
         if existing is not None:
+            if workflow_launch is not None:
+                initialize_workflow_parent(
+                    jobs_root=jobs_root,
+                    job_id=job_id,
+                    workflow_run_id=d2l_ids["workflow_run_id"],
+                    selected_chapter_ids=chapter_ids,
+                    source_binding=d2l_preview["source_binding"],
+                    code_commit=d2l_preview["code_revision"],
+                )
             _validate_planned_run_reuse(existing, expected=expected_run_identity)
-            if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            if script in _D2L_COMPONENT_SCRIPTS:
                 # An exact browser retry after a lost response must not need a
                 # second confirmation token or repeat any source/run write.
                 return ok(_d2l_launch_response(existing, reused=True))
@@ -470,6 +534,15 @@ def create_run():
             run_identity_digest=d2l_launch_binding,
         )
 
+        if workflow_launch is not None:
+            initialize_workflow_parent(
+                jobs_root=jobs_root,
+                job_id=job_id,
+                workflow_run_id=d2l_ids["workflow_run_id"],
+                selected_chapter_ids=chapter_ids,
+                source_binding=d2l_preview["source_binding"],
+                code_commit=d2l_preview["code_revision"],
+            )
         if job_id and planned_run_id:
             freeze_managed_runtime_for_run(
                 job_id,
@@ -524,9 +597,24 @@ def create_run():
             ),
             campaign_seal_sha256=None,
             launch_binding_sha256=d2l_launch_binding,
+            evaluation_selection=(
+                body.get("evaluation_selection")
+                if workflow_launch is not None
+                else None
+            ),
+            evaluation_selection_sha256=(
+                body.get("evaluation_selection_sha256")
+                if workflow_launch is not None
+                else None
+            ),
+            evaluation_settings_template_sha256=(
+                body.get("evaluation_settings_template_sha256")
+                if workflow_launch is not None
+                else None
+            ),
         )
         spawn_run(registry, entry["run_id"])
-        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        if script in _D2L_COMPONENT_SCRIPTS:
             return ok(_d2l_launch_response(entry, reused=False), status=201)
         return ok(
             {
@@ -548,9 +636,9 @@ def create_run():
 def _d2l_launch_response(entry: dict, *, reused: bool) -> dict:
     """Return the public launch envelope without server filesystem authority."""
 
-    return {
+    payload = {
         "run_id": entry["run_id"],
-        "script": D2L_PROJECT_CAMPAIGN_SCRIPT,
+        "script": entry.get("script"),
         "job_id": entry.get("job_id"),
         "status": entry.get("status"),
         "workflow_run_id": entry.get("workflow_run_id"),
@@ -562,6 +650,14 @@ def _d2l_launch_response(entry: dict, *, reused: bool) -> dict:
         "resumed_from": entry.get("resumed_from"),
         "reused": bool(reused),
     }
+    if entry.get("evaluation_selection_sha256") is not None:
+        payload["evaluation_selection_sha256"] = entry[
+            "evaluation_selection_sha256"
+        ]
+        payload["evaluation_settings_template_sha256"] = entry[
+            "evaluation_settings_template_sha256"
+        ]
+    return payload
 
 
 @bp.get("/thesis/runs")
@@ -629,7 +725,7 @@ def estimate_preview():
                     "argv_preview": _public_argv_preview(entry, argv),
                     "estimate_argv_preview": (
                         _public_argv_preview(entry, [*argv, "--estimate-only"])
-                        if script == D2L_PROJECT_CAMPAIGN_SCRIPT
+                        if script in _D2L_COMPONENT_SCRIPTS
                         else [*argv, "--estimate-only"]
                     ),
                     "estimate_by_stage": _manifest_estimates(entry),
@@ -713,7 +809,7 @@ def d2l_component_snapshot(run_id: str):
 
     try:
         entry = _run_entry(run_id)
-        if entry.get("script") != D2L_PROJECT_CAMPAIGN_SCRIPT:
+        if entry.get("script") not in _D2L_COMPONENT_SCRIPTS:
             raise RunControlError(
                 "component_snapshot_not_applicable",
                 "The component snapshot endpoint is only available for D2L translation runs.",
@@ -792,6 +888,43 @@ def workflow_replay_artifact(run_id: str):
         return error(exc.code, str(exc), exc.status)
 
 
+@bp.post("/thesis/runs/<run_id>/score")
+def score_workflow_run(run_id: str):
+    """Fail closed until the parent advertises a connected scoring runtime."""
+
+    try:
+        body = request.get_json(silent=True)
+        if body != {}:
+            raise WorkflowReplayError(
+                "workflow_score_body_invalid",
+                "Workflow score accepts exactly an empty JSON object.",
+            )
+        entry = _run_entry(run_id)
+        replay = read_workflow_replay(
+            entry,
+            jobs_root=_jobs_root(),
+            after_seq=0,
+            wait_ms=0,
+        )
+        action = replay["actions"]["score"]
+        if not action["allowed"]:
+            reasons = ", ".join(action["blocking_reasons"])
+            raise WorkflowReplayError(
+                "workflow_scoring_not_ready",
+                f"Workflow scoring is not ready: {reasons}.",
+                409,
+            )
+        raise WorkflowReplayError(
+            "workflow_scoring_executor_not_connected",
+            "The Evaluation App executor is not connected by this build.",
+            503,
+        )
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+    except WorkflowReplayError as exc:
+        return error(exc.code, str(exc), exc.status)
+
+
 @bp.post("/thesis/runs/<run_id>/cancel")
 def cancel_thesis_run(run_id: str):
     try:
@@ -808,7 +941,7 @@ def pause_thesis_run(run_id: str):
         pause_path = _pause_file_for_run(run_id)
         pause_path.parent.mkdir(parents=True, exist_ok=True)
         pause_path.write_text("paused_by_user\n", encoding="utf-8", newline="\n")
-        if entry.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        if entry.get("script") in _D2L_COMPONENT_SCRIPTS:
             return ok({"run_id": run_id, "paused": True})
         return ok({"run_id": run_id, "paused": True, "pause_file": str(pause_path)})
     except RunControlError as exc:
@@ -822,7 +955,7 @@ def unpause_thesis_run(run_id: str):
         pause_path = _pause_file_for_run(run_id)
         if pause_path.exists():
             pause_path.unlink()
-        if entry.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        if entry.get("script") in _D2L_COMPONENT_SCRIPTS:
             return ok({"run_id": run_id, "paused": False})
         return ok({"run_id": run_id, "paused": False, "pause_file": str(pause_path)})
     except RunControlError as exc:
@@ -833,7 +966,7 @@ def unpause_thesis_run(run_id: str):
 def run_manifest(run_id: str):
     try:
         entry = _run_entry(run_id)
-        if entry.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        if entry.get("script") in _D2L_COMPONENT_SCRIPTS:
             # The D2L component manifest is readable only through the
             # validator-backed snapshot endpoint.
             projection = _d2l_component_projection(entry)
@@ -1007,11 +1140,24 @@ def resume_thesis_run(run_id: str):
         job_id = validate_job_id(entry.get("job_id"), required=True)
         pause_path = _pause_file_from_entry(entry)
         script = entry.get("script") or "run_one_button"
-        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
-            if bool(entry.get("allow_api")) and not LIVE_START_ALLOWED:
+        if script in _D2L_COMPONENT_SCRIPTS:
+            if (
+                bool(entry.get("allow_api"))
+                and script == D2L_PROJECT_CAMPAIGN_SCRIPT
+            ):
+                raise RunControlError(
+                    "direct_d2l_live_start_disabled",
+                    "Live Translation must Resume through the neutral workflow orchestrator.",
+                    403,
+                )
+            if (
+                bool(entry.get("allow_api"))
+                and script == WORKFLOW_ORCHESTRATOR_SCRIPT
+                and not LIVE_START_ALLOWED
+            ):
                 raise RunControlError(
                     "workflow_live_start_disabled",
-                    "Live workflow Resume is disabled until the DEC-064 synthetic gate is accepted.",
+                    "Live Translation Resume is disabled by this server build.",
                     403,
                 )
             try:
@@ -1093,7 +1239,11 @@ def resume_thesis_run(run_id: str):
             cwd=entry.get("cwd"),
             job_id=job_id,
             experiment=entry.get("experiment"),
-            allow_api=bool(entry.get("allow_api")) if script == D2L_PROJECT_CAMPAIGN_SCRIPT else True,
+            allow_api=(
+                bool(entry.get("allow_api"))
+                if script in _D2L_COMPONENT_SCRIPTS
+                else True
+            ),
             prompt_preview_token=consumed_token,
             dry_run_policy=(
                 "api_enabled_confirmed_resume"
@@ -1110,16 +1260,25 @@ def resume_thesis_run(run_id: str):
             workflow_run_id=entry.get("workflow_run_id"),
             component_id=entry.get("component_id"),
             component_run_id=entry.get("component_run_id"),
-            component_attempt_id=attempt_index if script == D2L_PROJECT_CAMPAIGN_SCRIPT else None,
+            component_attempt_id=(
+                attempt_index if script in _D2L_COMPONENT_SCRIPTS else None
+            ),
             selected_chapter_ids=entry.get("selected_chapter_ids"),
             profile_id=entry.get("profile_id"),
             source_binding_sha256=entry.get("source_binding_sha256"),
             campaign_config_sha256=entry.get("campaign_config_sha256"),
             campaign_seal_sha256=entry.get("campaign_seal_sha256"),
             launch_binding_sha256=entry.get("launch_binding_sha256"),
+            evaluation_selection=entry.get("evaluation_selection"),
+            evaluation_selection_sha256=entry.get(
+                "evaluation_selection_sha256"
+            ),
+            evaluation_settings_template_sha256=entry.get(
+                "evaluation_settings_template_sha256"
+            ),
         )
         spawn_run(registry, new_entry["run_id"])
-        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        if script in _D2L_COMPONENT_SCRIPTS:
             return ok(_d2l_launch_response(new_entry, reused=False), status=201)
         return ok(
             {
@@ -1274,7 +1433,8 @@ def _run_entry(run_id: str) -> dict:
 
 
 def _public_argv_preview(entry: dict, argv: list[str]) -> list[str]:
-    if entry.get("script") != D2L_PROJECT_CAMPAIGN_SCRIPT:
+    script = entry.get("script")
+    if script not in _D2L_COMPONENT_SCRIPTS:
         return list(argv)
     # The exact argv remains sealed in the server registry/token.  The browser
     # receives only a non-authoritative shape and never receives source,
@@ -1282,15 +1442,15 @@ def _public_argv_preview(entry: dict, argv: list[str]) -> list[str]:
     return [
         sys.executable,
         "-m",
-        "pipeline.scripts.run_d2l_project_campaign",
-        "app-run",
+        f"pipeline.scripts.{script}",
+        "translate" if script == WORKFLOW_ORCHESTRATOR_SCRIPT else "app-run",
         "[server-managed job/campaign/source arguments]",
     ]
 
 
 def _public_run_entry(entry: dict) -> dict:
     row = dict(entry)
-    if row.get("script") != D2L_PROJECT_CAMPAIGN_SCRIPT:
+    if row.get("script") not in _D2L_COMPONENT_SCRIPTS:
         return row
     row["registry_status"] = row.get("status")
     row["argv"] = None

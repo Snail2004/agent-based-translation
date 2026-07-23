@@ -28,6 +28,24 @@ from .relay_v1 import (
 from .adapters_v1 import (
     D2LTranslationComponentAdapterV1,
     EvaluationComponentAdapterV1,
+    PublicationComponentAdapterV1,
+)
+from .publication_component_v1 import (
+    PublicationComponentError,
+    PublicationComponentResultV1,
+    publish_selected_chapters_v1,
+    validate_publication_component_package_v1,
+)
+from .orchestrator_v1 import (
+    ExistingTranslationComponentExecutorV1,
+    StaticBaselineInputProviderV1,
+    WorkflowComponentPausedV1,
+    WorkflowOrchestratorError,
+    WorkflowOrchestratorResultV1,
+    WorkflowOrchestratorV1,
+    WorkflowTranslationResultV1,
+    load_workflow_runtime_registration_v1,
+    validate_workflow_runtime_registration_v1,
 )
 
 __all__ = [
@@ -41,12 +59,24 @@ __all__ = [
     "ComponentSnapshotV1",
     "D2LTranslationComponentAdapterV1",
     "EvaluationComponentAdapterV1",
+    "PublicationComponentAdapterV1",
+    "PublicationComponentError",
+    "PublicationComponentResultV1",
+    "ExistingTranslationComponentExecutorV1",
+    "StaticBaselineInputProviderV1",
     "StageDefinitionV1",
     "ValidatedComponentAdapterV1",
     "WorkflowRelayV1",
     "WorkflowReplayContractError",
+    "WorkflowComponentPausedV1",
+    "WorkflowOrchestratorError",
+    "WorkflowOrchestratorResultV1",
+    "WorkflowOrchestratorV1",
+    "WorkflowTranslationResultV1",
     "build_scoring_handoff_v1",
     "normalize_d2l_scoring_fragment_v1",
+    "load_workflow_runtime_registration_v1",
+    "publish_selected_chapters_v1",
     "scoring_input_set_sha256_v1",
     "validate_scoring_handoff_v1",
     "validate_scoring_receipt_v1",
@@ -54,4 +84,6 @@ __all__ = [
     "validate_workflow_event_v1",
     "validate_workflow_manifest_v1",
     "validate_workflow_parent_package_v1",
+    "validate_publication_component_package_v1",
+    "validate_workflow_runtime_registration_v1",
 ]

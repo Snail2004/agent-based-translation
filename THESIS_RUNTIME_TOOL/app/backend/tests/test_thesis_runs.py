@@ -2729,7 +2729,7 @@ def test_route_d2l_live_estimate_cannot_bypass_dec064_server_lock(
     assert launched.status_code == 403
     assert (
         launched.get_json()["errors"][0]["code"]
-        == "workflow_live_start_disabled"
+        == "direct_d2l_live_start_disabled"
     )
     assert spawned == []
     assert frozen == []
@@ -2739,7 +2739,7 @@ def test_route_d2l_live_estimate_cannot_bypass_dec064_server_lock(
     assert retried.status_code == 403
     assert (
         retried.get_json()["errors"][0]["code"]
-        == "workflow_live_start_disabled"
+        == "direct_d2l_live_start_disabled"
     )
     assert spawned == []
     assert frozen == []
@@ -2890,6 +2890,10 @@ def test_route_workflow_replay_reads_validated_parent_cursor_and_artifact(
     assert data["cursor"]["terminal"] is False
     assert data["actions"]["replay"]["allowed"] is True
     assert data["actions"]["pause"]["allowed"] is True
+    assert data["actions"]["score"]["allowed"] is False
+    assert "workflow_artifact_missing" in data["actions"]["score"][
+        "blocking_reasons"
+    ]
     assert data["usage"] is None
 
     empty = client.get(
@@ -2911,6 +2915,37 @@ def test_route_workflow_replay_reads_validated_parent_cursor_and_artifact(
     assert data["artifact_links"][artifact_ref].endswith(
         "artifact_ref=components%2Ftranslation%2Ftranslation_fixture_v1"
         "%2Fartifacts%2Ftranslation_output"
+    )
+
+
+def test_route_workflow_score_reports_parent_readiness_blockers(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(
+        tmp_path, monkeypatch
+    )
+    _register_parent_workflow_fixture(tmp_path, registry)
+
+    blocked = client.post(
+        "/api/thesis/runs/run_parent_replay/score",
+        json={},
+    )
+    assert blocked.status_code == 409
+    assert blocked.get_json()["errors"][0]["code"] == (
+        "workflow_scoring_not_ready"
+    )
+    assert "workflow_artifact_missing" in blocked.get_json()["errors"][0][
+        "message"
+    ]
+
+    malformed = client.post(
+        "/api/thesis/runs/run_parent_replay/score",
+        json={"force": True},
+    )
+    assert malformed.status_code == 400
+    assert malformed.get_json()["errors"][0]["code"] == (
+        "workflow_score_body_invalid"
     )
 
 
@@ -3387,16 +3422,22 @@ def _workflow_setup_project_fixture():
     }
     project = SimpleNamespace(
         block_rows=(
-            {"chapter_id": "chapter_1", "block_id": "b1"},
-            {"chapter_id": "chapter_1", "block_id": "b2"},
-            {"chapter_id": "chapter_2", "block_id": "b3"},
+            {"chapter_id": "d2l_preliminaries", "block_id": "b1"},
+            {"chapter_id": "d2l_preliminaries", "block_id": "b2"},
+            {"chapter_id": "d2l_linear_networks", "block_id": "b3"},
         ),
         chapter_rows=(
-            {"chapter_id": "chapter_1", "title": "Chapter 1"},
-            {"chapter_id": "chapter_2", "title": "Chapter 2"},
+            {"chapter_id": "d2l_preliminaries", "title": "Preliminaries"},
+            {
+                "chapter_id": "d2l_linear_networks",
+                "title": "Linear Networks",
+            },
         ),
         manifest={
-            "translatable_chapter_ids": ["chapter_1", "chapter_2"],
+            "translatable_chapter_ids": [
+                "d2l_preliminaries",
+                "d2l_linear_networks",
+            ],
         },
         source_snapshot={"package_tree_sha256": "c" * 64},
         source_binding=source_binding,
@@ -3412,15 +3453,27 @@ def _workflow_selection_request(
 ):
     return {
         "schema_id": "WorkflowSetupSelectionV1",
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "execution_mode": mode,
-        "chapter_ids": chapter_ids or ["chapter_1"],
+        "chapter_ids": chapter_ids or ["d2l_preliminaries"],
         "shared_option_id": shared_option_id,
         "d2l_settings_option_id": "d2l_workflow_settings_v1",
-        "evaluation_settings_option_id": "evaluation_workflow_settings_v1",
-        "highlight_pair": {
-            "baseline_arm_id": "s0",
-            "candidate_arm_id": "s1",
+        "evaluation": {
+            "settings_option_id": "evaluation_workflow_settings_v1",
+            "selected_chapter_ids": chapter_ids
+            or ["d2l_preliminaries"],
+            "selected_arm_ids": [
+                "s0",
+                "s1",
+                "community",
+                "google_nmt",
+                "llm_lc",
+            ],
+            "selected_scorer_ids": ["sf_qe", "sf_bt", "pj"],
+            "highlight_pair": {
+                "baseline_arm_id": "s0",
+                "candidate_arm_id": "s1",
+            },
         },
         "hard_total_token_cap": 6_000_000,
         "reserved_cost_cap_usd": None,
@@ -3431,7 +3484,7 @@ def _workflow_launch_request(preflight, *, job_id="jobA"):
     return {
         "schema_id": "WorkflowLaunchConfirmationV1",
         "schema_version": "1.0.0",
-        "script": "run_d2l_project_campaign",
+        "script": "run_workflow_orchestrator_v1",
         "job_id": job_id,
         "execution_mode": preflight["execution_mode"],
         "allow_api": preflight["execution_mode"] == "live",
@@ -3444,7 +3497,7 @@ def _workflow_launch_request(preflight, *, job_id="jobA"):
     }
 
 
-def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
+def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
     tmp_path,
     monkeypatch,
 ):
@@ -3458,7 +3511,7 @@ def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
         lambda *_args, **_kwargs: (status, project),
     )
     preview = {
-        **_fake_d2l_preview(["chapter_1"]),
+        **_fake_d2l_preview(["d2l_preliminaries"]),
         "source_binding": project.source_binding,
     }
     monkeypatch.setattr(
@@ -3477,10 +3530,18 @@ def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
     setup = setup_response.get_json()["data"]
     assert setup["schema_id"] == "WorkflowSetupV1"
     assert setup["schema_version"] == "1.0.0"
-    assert setup["live_start_allowed"] is False
+    assert setup["live_start_allowed"] is True
+    assert setup["launch_phase"] == "translation"
+    assert setup["scoring_start_allowed"] is False
+    assert "workflow_artifact_missing" in setup[
+        "scoring_blocking_reasons"
+    ]
+    assert "evaluation_app_executor_not_connected" in setup[
+        "scoring_blocking_reasons"
+    ]
     assert [row["chapter_id"] for row in setup["chapters"]] == [
-        "chapter_1",
-        "chapter_2",
+        "d2l_preliminaries",
+        "d2l_linear_networks",
     ]
     assert setup["chapters"][0]["block_count"] == 2
     assert setup["shared_options"][0]["option_id"] == (
@@ -3490,6 +3551,24 @@ def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
         row["status"] == "missing"
         for row in setup["shared_options"][0]["credential_status"]
     )
+    evaluation_option = setup["evaluation_settings_options"][0]
+    assert evaluation_option["revision"] == "1.1.0"
+    assert evaluation_option["selection_catalog"]["arm_ids"] == [
+        "s0",
+        "s1",
+        "community",
+        "google_nmt",
+        "llm_lc",
+    ]
+    assert evaluation_option["selection_catalog"]["scorer_ids"] == [
+        "sf_qe",
+        "sf_bt",
+        "pj",
+    ]
+    assert setup["defaults"]["evaluation"]["selected_chapter_ids"] == [
+        "d2l_preliminaries",
+        "d2l_linear_networks",
+    ]
     assert "api_key" not in json.dumps(setup).lower()
 
     preflight_response = client.post(
@@ -3501,9 +3580,29 @@ def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
     assert preflight["schema_id"] == "WorkflowPreflightV1"
     assert preflight["schema_version"] == "1.0.0"
     assert preflight["start_allowed"] is False
-    assert "workflow_live_start_disabled" in preflight["blocking_reasons"]
+    assert "workflow_credentials_unavailable" in preflight[
+        "blocking_reasons"
+    ]
+    assert preflight["scoring_start_allowed"] is False
     assert preflight["bounds"]["cost_usd"] is None
     assert preflight["launch"]["confirm_token"]
+    assert preflight["normalized_selection"]["schema_version"] == "1.1.0"
+    evaluation_selection = preflight["normalized_selection"]["evaluation"]
+    assert len(evaluation_selection["selection_sha256"]) == 64
+    assert evaluation_selection["selected_arm_ids"] == [
+        "s0",
+        "s1",
+        "community",
+        "google_nmt",
+        "llm_lc",
+    ]
+    assert preflight["evaluation_summary"]["settings_status"] == (
+        "pending_scoring_handoff"
+    )
+    assert preflight["evaluation_summary"]["settings_sha256"] is None
+    assert preflight["evaluation_summary"]["selection_sha256"] == (
+        evaluation_selection["selection_sha256"]
+    )
 
     launched = client.post(
         "/api/thesis/runs",
@@ -3512,7 +3611,7 @@ def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
     assert launched.status_code == 403
     assert (
         launched.get_json()["errors"][0]["code"]
-        == "workflow_live_start_disabled"
+        == "workflow_credentials_unavailable"
     )
     assert registry.list_runs() == []
 
@@ -3552,7 +3651,7 @@ def test_route_workflow_live_confirmation_launches_real_campaign_path(
         lambda **_kwargs: "sealed-api-gate-token",
     )
     preview = {
-        **_fake_d2l_preview(["chapter_1"]),
+        **_fake_d2l_preview(["d2l_preliminaries"]),
         "source_binding": project.source_binding,
     }
     for module in (thesis_service, routes):
@@ -3605,9 +3704,24 @@ def test_route_workflow_live_confirmation_launches_real_campaign_path(
     assert api_gate_calls[0]["allow_api"] is True
     assert api_gate_calls[0]["confirm_token"] == "sealed-api-gate-token"
     entry = registry.get_run(data["run_id"])
+    assert entry["script"] == "run_workflow_orchestrator_v1"
+    assert entry["argv"][1:4] == [
+        "-m",
+        "pipeline.scripts.run_workflow_orchestrator_v1",
+        "translate",
+    ]
+    assert "--parent-root" in entry["argv"]
     assert entry["allow_api"] is True
     assert "--live" in entry["argv"]
     assert "--dry-run" not in entry["argv"]
+    assert entry["evaluation_selection_sha256"] == preflight[
+        "normalized_selection"
+    ]["evaluation"]["selection_sha256"]
+    assert entry["evaluation_selection"]["selected_scorer_ids"] == [
+        "sf_qe",
+        "sf_bt",
+        "pj",
+    ]
 
 
 def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
@@ -3624,7 +3738,7 @@ def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
         lambda *_args, **_kwargs: (status, project),
     )
     preview = {
-        **_fake_d2l_preview(["chapter_1"]),
+        **_fake_d2l_preview(["d2l_preliminaries"]),
         "source_binding": project.source_binding,
     }
     for module in (thesis_service, routes):
@@ -3665,6 +3779,31 @@ def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
     assert spawned == []
     assert frozen == []
 
+    parent_root = workflow_service.workflow_replay_root(
+        jobs_root=tmp_path,
+        job_id="jobA",
+        workflow_run_id=preflight["identities"]["workflow_run_id"],
+    )
+    with monkeypatch.context() as scoped:
+        def reject_api_gate(**_kwargs):
+            raise routes.RunControlError(
+                "api_gate_invalid",
+                "Synthetic rejected gate.",
+                403,
+            )
+
+        scoped.setattr(routes, "validate_api_gate", reject_api_gate)
+        rejected = client.post(
+            "/api/thesis/runs",
+            json=_workflow_launch_request(preflight),
+        )
+    assert rejected.status_code == 403
+    assert rejected.get_json()["errors"][0]["code"] == "api_gate_invalid"
+    assert not parent_root.exists()
+    assert registry.list_runs() == []
+    assert spawned == []
+    assert frozen == []
+
     launch = client.post(
         "/api/thesis/runs",
         json=_workflow_launch_request(preflight),
@@ -3676,6 +3815,9 @@ def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
     assert spawned == [data["run_id"]]
     assert frozen == [data["run_id"]]
     assert registry.get_run(data["run_id"])["allow_api"] is False
+    assert registry.get_run(data["run_id"])["script"] == (
+        "run_workflow_orchestrator_v1"
+    )
 
     parent = client.get(
         f"/api/thesis/runs/{data['run_id']}/workflow-replay"
@@ -3690,6 +3832,13 @@ def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
     assert parent_data["manifest"]["stages"][-1]["stage_id"] == (
         "publication.export"
     )
+    assert parent_data["evaluation_scope"]["settings_status"] == (
+        "pending_scoring_handoff"
+    )
+    assert parent_data["evaluation_scope"]["settings_sha256"] is None
+    assert parent_data["evaluation_scope"]["selection_sha256"] == preflight[
+        "normalized_selection"
+    ]["evaluation"]["selection_sha256"]
 
 
 def test_route_workflow_preflight_rejects_unadvertised_fields_and_ids(
@@ -3725,3 +3874,54 @@ def test_route_workflow_preflight_rejects_unadvertised_fields_and_ids(
         wrong.get_json()["errors"][0]["code"]
         == "workflow_shared_settings_invalid"
     )
+
+    invalid_cases = []
+    old_schema = json.loads(json.dumps(base))
+    old_schema["schema_version"] = "1.0.0"
+    invalid_cases.append((old_schema, "workflow_preflight_schema_invalid"))
+
+    reordered_arms = json.loads(json.dumps(base))
+    reordered_arms["evaluation"]["selected_arm_ids"] = ["s1", "s0"]
+    invalid_cases.append(
+        (reordered_arms, "workflow_evaluation_arms_invalid")
+    )
+
+    one_arm = json.loads(json.dumps(base))
+    one_arm["evaluation"]["selected_arm_ids"] = ["s0"]
+    one_arm["evaluation"]["highlight_pair"] = None
+    invalid_cases.append((one_arm, "workflow_evaluation_arms_invalid"))
+
+    duplicate_scorer = json.loads(json.dumps(base))
+    duplicate_scorer["evaluation"]["selected_scorer_ids"] = [
+        "sf_qe",
+        "sf_qe",
+    ]
+    invalid_cases.append(
+        (duplicate_scorer, "workflow_evaluation_scorers_invalid")
+    )
+
+    outside_parent = json.loads(json.dumps(base))
+    outside_parent["evaluation"]["selected_chapter_ids"] = [
+        "d2l_linear_networks"
+    ]
+    invalid_cases.append(
+        (outside_parent, "workflow_evaluation_chapters_invalid")
+    )
+
+    highlight_outside = json.loads(json.dumps(base))
+    highlight_outside["evaluation"]["selected_arm_ids"] = ["s0", "s1"]
+    highlight_outside["evaluation"]["highlight_pair"] = {
+        "baseline_arm_id": "s0",
+        "candidate_arm_id": "community",
+    }
+    invalid_cases.append(
+        (highlight_outside, "workflow_highlight_pair_invalid")
+    )
+
+    for payload, code in invalid_cases:
+        response = client.post(
+            "/api/projects/projectA/workflow-setup/preflight",
+            json=payload,
+        )
+        assert response.status_code == 400
+        assert response.get_json()["errors"][0]["code"] == code

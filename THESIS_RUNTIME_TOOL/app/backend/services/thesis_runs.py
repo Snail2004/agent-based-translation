@@ -52,6 +52,7 @@ ALLOWLIST = frozenset(
         "score_run",
         "run_one_button",
         "run_d2l_project_campaign",
+        "run_workflow_orchestrator_v1",
         "snapshot_runs",
     }
 )
@@ -68,6 +69,7 @@ API_CAPABLE_SCRIPTS = frozenset(
         "score_pj",
         "run_one_button",
         "run_d2l_project_campaign",
+        "run_workflow_orchestrator_v1",
     }
 )
 
@@ -78,6 +80,7 @@ PREFLIGHT_ONLY_FLAGS = {
     "builder_v2_reelection": "--preflight-only",
     "run_one_button": "--estimate-only",
     "run_d2l_project_campaign": "--dry-run",
+    "run_workflow_orchestrator_v1": "--dry-run",
 }
 
 PROMPT_PREVIEW_SUPPORTED = frozenset({"run_translate"})
@@ -88,10 +91,12 @@ ESTIMATE_PREVIEW_SUPPORTED = frozenset(
         "builder_v2_reelection",
         "run_one_button",
         "run_d2l_project_campaign",
+        "run_workflow_orchestrator_v1",
     }
 )
 
 D2L_PROJECT_CAMPAIGN_SCRIPT = "run_d2l_project_campaign"
+WORKFLOW_ORCHESTRATOR_SCRIPT = "run_workflow_orchestrator_v1"
 D2L_COMPONENT_ID = "translation"
 D2L_PROFILE_ID = "technical_d2l_v1"
 
@@ -211,6 +216,9 @@ class RunRegistry:
         campaign_config_sha256: str | None = None,
         campaign_seal_sha256: str | None = None,
         launch_binding_sha256: str | None = None,
+        evaluation_selection: dict[str, Any] | None = None,
+        evaluation_selection_sha256: str | None = None,
+        evaluation_settings_template_sha256: str | None = None,
     ) -> dict[str, Any]:
         run_id = validate_run_id(run_id) if run_id else self.new_run_id()
         now = _utc_now()
@@ -247,6 +255,15 @@ class RunRegistry:
             "campaign_config_sha256": campaign_config_sha256,
             "campaign_seal_sha256": campaign_seal_sha256,
             "launch_binding_sha256": launch_binding_sha256,
+            "evaluation_selection": (
+                None
+                if evaluation_selection is None
+                else json.loads(json.dumps(evaluation_selection))
+            ),
+            "evaluation_selection_sha256": evaluation_selection_sha256,
+            "evaluation_settings_template_sha256": (
+                evaluation_settings_template_sha256
+            ),
             "status": "pending",
             "pid": None,
             "started_at": now,
@@ -303,6 +320,12 @@ class RunRegistry:
                     "campaign_config_sha256": r.get("campaign_config_sha256"),
                     "campaign_seal_sha256": r.get("campaign_seal_sha256"),
                     "launch_binding_sha256": r.get("launch_binding_sha256"),
+                    "evaluation_selection_sha256": r.get(
+                        "evaluation_selection_sha256"
+                    ),
+                    "evaluation_settings_template_sha256": r.get(
+                        "evaluation_settings_template_sha256"
+                    ),
                 }
                 for r in self._runs.values()
             ]
@@ -731,7 +754,11 @@ def build_resume_argv_from_entry(entry: dict[str, Any]) -> list[str]:
     returned argv through validate_api_gate when allow_api=true.
     """
     script = entry.get("script")
-    if script not in {"run_one_button", D2L_PROJECT_CAMPAIGN_SCRIPT}:
+    if script not in {
+        "run_one_button",
+        D2L_PROJECT_CAMPAIGN_SCRIPT,
+        WORKFLOW_ORCHESTRATOR_SCRIPT,
+    }:
         raise RunControlError(
             "resume_not_supported",
             "This script does not expose a sealed resume contract.",
@@ -741,7 +768,7 @@ def build_resume_argv_from_entry(entry: dict[str, Any]) -> list[str]:
     argv = [str(item) for item in (entry.get("argv") or [])]
     if not argv:
         raise RunControlError("resume_argv_missing", "Original run argv is missing.", 500)
-    if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+    if script in {D2L_PROJECT_CAMPAIGN_SCRIPT, WORKFLOW_ORCHESTRATOR_SCRIPT}:
         cleaned = _strip_flags_with_values(
             argv,
             value_flags={
@@ -1139,7 +1166,10 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
                 current = registry.get_run(run_id) or {}
                 if current.get("status") == "cancelled":
                     return
-                if current.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+                if current.get("script") in {
+                    D2L_PROJECT_CAMPAIGN_SCRIPT,
+                    WORKFLOW_ORCHESTRATOR_SCRIPT,
+                }:
                     component_status = _read_d2l_component_status(current)
                     if component_status in {"succeeded", "paused"}:
                         status = "done" if proc.returncode == 0 else "failed"
@@ -1352,6 +1382,7 @@ def build_argv(
     reserved_cost_cap_usd: str | None = None,
     campaign_root: str | None = None,
     job_root: str | None = None,
+    parent_root: str | None = None,
     workflow_run_id: str | None = None,
     component_run_id: str | None = None,
     code_root: str | None = None,
@@ -1376,7 +1407,7 @@ def build_argv(
         flag = None
     # The D2L campaign has an explicit mutually-exclusive --dry-run/--live
     # mode.  Do not append a second generic --dry-run flag below.
-    if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+    if script in {D2L_PROJECT_CAMPAIGN_SCRIPT, WORKFLOW_ORCHESTRATOR_SCRIPT}:
         flag = None
 
     extra = _list(extra_args)
@@ -1504,8 +1535,12 @@ def build_argv(
             argv += ["--event-log", str(event_log)]
         if run_id:
             argv += ["--run-id", str(validate_run_id(run_id, required=True))]
-    elif script == D2L_PROJECT_CAMPAIGN_SCRIPT:
-        argv.append("app-run")
+    elif script in {D2L_PROJECT_CAMPAIGN_SCRIPT, WORKFLOW_ORCHESTRATOR_SCRIPT}:
+        if script == WORKFLOW_ORCHESTRATOR_SCRIPT:
+            argv.append("translate")
+            _append_required(argv, "--parent-root", parent_root, "parent_root")
+        else:
+            argv.append("app-run")
         _append_required(argv, "--job-root", job_root, "job_root")
         _append_required(argv, "--campaign-root", campaign_root, "campaign_root")
         if not resume:
