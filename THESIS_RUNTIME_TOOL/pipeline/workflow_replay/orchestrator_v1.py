@@ -536,7 +536,7 @@ class WorkflowOrchestratorV1:
                 "Scoring preparation requires registered baselines and settings authority.",
             )
         translation_root = Path(translation_component_root).resolve()
-        handoff = self._publish_scoring_handoff(translation_root)
+        handoff = self.prepare_scoring_handoff(translation_root)
         settings = self.relay.publish_evaluation_settings(
             self.evaluation_settings_materializer.materialize_settings(
                 handoff
@@ -550,6 +550,15 @@ class WorkflowOrchestratorV1:
             evaluation_settings=settings,
             translation_component_root=translation_root,
         )
+
+    def prepare_scoring_handoff(
+        self,
+        translation_component_root: str | Path,
+    ) -> dict[str, Any]:
+        """Publish the exact five-arm handoff without materializing settings."""
+
+        translation_root = Path(translation_component_root).resolve()
+        return self._publish_scoring_handoff(translation_root)
 
     def _publish_scoring_handoff(
         self,

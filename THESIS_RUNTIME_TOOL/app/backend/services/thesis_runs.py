@@ -667,6 +667,33 @@ def _d2l_credential_files(*, required: bool) -> dict[str, Path]:
     return result
 
 
+def _evaluation_runtime_config_file(*, required: bool) -> Path | None:
+    """Resolve the server-owned Evaluation runtime config without reading secrets."""
+
+    env_name = "THESIS_EVALUATION_RUNTIME_CONFIG_FILE"
+    raw = os.environ.get(env_name, "").strip()
+    if not raw:
+        if required:
+            raise RunControlError(
+                "evaluation_runtime_config_missing",
+                f"{env_name} is required for production scoring.",
+                503,
+            )
+        return None
+    path = Path(raw).expanduser()
+    if (
+        not path.is_absolute()
+        or not path.is_file()
+        or path.is_symlink()
+    ):
+        raise RunControlError(
+            "evaluation_runtime_config_invalid",
+            f"{env_name} must name an existing absolute regular file.",
+            503,
+        )
+    return path.resolve()
+
+
 def _d2l_code_revision(tool_root: Path) -> str:
     from pipeline.prepass.d2l_project_campaign_v2 import resolve_code_revision
 
@@ -1647,6 +1674,9 @@ def build_argv(
     component_run_id: str | None = None,
     workflow_phase: str | None = None,
     evaluation_root: str | None = None,
+    evaluation_component_run_id: str | None = None,
+    evaluation_runtime_root: str | None = None,
+    evaluation_runtime_config: str | None = None,
     code_root: str | None = None,
     runtime_root: str | None = None,
     credential_files: dict[str, Path] | None = None,
@@ -1810,11 +1840,40 @@ def build_argv(
         elif phase == "translate":
             argv.append("translate")
             _append_required(argv, "--parent-root", parent_root, "parent_root")
+            _append_required(
+                argv,
+                "--evaluation-component-run-id",
+                evaluation_component_run_id,
+                "evaluation_component_run_id",
+            )
+            _append_required(
+                argv,
+                "--evaluation-root",
+                evaluation_root,
+                "evaluation_root",
+            )
+            _append_required(
+                argv,
+                "--evaluation-runtime-root",
+                evaluation_runtime_root,
+                "evaluation_runtime_root",
+            )
+            if evaluation_runtime_config is not None:
+                argv += [
+                    "--server-runtime-config",
+                    str(evaluation_runtime_config),
+                ]
         elif phase == "score":
             argv.append("score")
             _append_required(argv, "--parent-root", parent_root, "parent_root")
             _append_required(
                 argv, "--evaluation-root", evaluation_root, "evaluation_root"
+            )
+            _append_required(
+                argv,
+                "--server-runtime-config",
+                evaluation_runtime_config,
+                "evaluation_runtime_config",
             )
         else:
             raise RunControlError(

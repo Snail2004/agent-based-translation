@@ -41,7 +41,6 @@ EVALUATION_SETTINGS_SCHEMA_VERSION = "1.1.0"
 # This launch contract starts the Translation phase only. Scoring is a separate
 # parent-workflow action and remains project-specific and fail-closed.
 LIVE_START_ALLOWED = True
-SCORING_EXECUTOR_CONNECTED = False
 MAX_WAIT_MS = 20_000
 MAX_ARTIFACT_BYTES = 8 * 1024 * 1024
 MAX_PARENT_JSON_BYTES = 64 * 1024 * 1024
@@ -92,11 +91,28 @@ def _scoring_runtime_readiness(
     source_binding_sha256: str,
     selected_chapter_ids: list[str] | None = None,
 ) -> dict[str, Any]:
+    from services.thesis_runs import (
+        RunControlError,
+        _evaluation_runtime_config_file,
+    )
     from pipeline.workflow_replay.orchestrator_v1 import (
         WorkflowOrchestratorError,
         load_workflow_runtime_registration_v1,
     )
+    from pipeline.workflow_replay.evaluation_server_runtime_v1 import (
+        EvaluationServerRuntimeError,
+        validate_evaluation_server_runtime_config_v1,
+    )
 
+    executor_blockers: list[str] = []
+    try:
+        runtime_config = _evaluation_runtime_config_file(required=True)
+        assert runtime_config is not None
+        validate_evaluation_server_runtime_config_v1(runtime_config)
+    except RunControlError as exc:
+        executor_blockers.append(exc.code)
+    except EvaluationServerRuntimeError as exc:
+        executor_blockers.append(exc.code)
     try:
         registration = load_workflow_runtime_registration_v1(
             job_root,
@@ -108,8 +124,7 @@ def _scoring_runtime_readiness(
         blockers = [
             getattr(exc, "code", "workflow_runtime_registration_invalid")
         ]
-        if not SCORING_EXECUTOR_CONNECTED:
-            blockers.append("evaluation_app_executor_not_connected")
+        blockers.extend(executor_blockers)
         return {
             "allowed": False,
             "blockers": blockers,
@@ -119,8 +134,7 @@ def _scoring_runtime_readiness(
             },
         }
     blockers = list(registration["blockers"])
-    if not SCORING_EXECUTOR_CONNECTED:
-        blockers.append("evaluation_app_executor_not_connected")
+    blockers.extend(executor_blockers)
     return {
         "allowed": registration["status"] == "ready" and not blockers,
         "blockers": blockers,
@@ -188,7 +202,10 @@ def get_workflow_setup(
     d2l_option = _d2l_settings_option()
     available_chapter_ids = [row["chapter_id"] for row in chapters]
     evaluation_option = _evaluation_settings_option(
-        available_chapter_ids=available_chapter_ids
+        available_chapter_ids=available_chapter_ids,
+        job_root=(Path(jobs_root).resolve() / status["job_id"]),
+        job_id=status["job_id"],
+        source_binding_sha256=source_package["source_binding_sha256"],
     )
     scoring_readiness = _scoring_runtime_readiness(
         job_root=(Path(jobs_root).resolve() / status["job_id"]),
@@ -357,6 +374,9 @@ def create_workflow_preflight(
         blocking_reasons.append("workflow_live_start_disabled")
     if mode == "live" and missing_credentials:
         blocking_reasons.append("workflow_credentials_unavailable")
+    if mode == "live" and not scoring_readiness["allowed"]:
+        blocking_reasons.extend(scoring_readiness["blockers"])
+    blocking_reasons = list(dict.fromkeys(blocking_reasons))
     api_confirm_token = None
     if mode == "live" and not blocking_reasons:
         api_confirm_token = _issue_live_api_token(
@@ -583,9 +603,11 @@ def _issue_live_api_token(
         WORKFLOW_ORCHESTRATOR_SCRIPT,
         _d2l_credential_files,
         _d2l_launch_binding_sha256,
+        _evaluation_runtime_config_file,
         build_argv,
         d2l_campaign_paths,
         d2l_component_ids,
+        evaluation_component_paths,
         issue_estimate_token_for_argv,
         resolve_job_db,
     )
@@ -598,7 +620,17 @@ def _issue_live_api_token(
         job_id=job_id,
         run_id=planned_run_id,
     )
+    evaluation_paths = evaluation_component_paths(
+        jobs_root=jobs,
+        job_id=job_id,
+        workflow_run_id=identities["workflow_run_id"],
+        component_run_id=identities[
+            "reserved_evaluation_component_run_id"
+        ],
+    )
     credentials = _d2l_credential_files(required=True)
+    evaluation_runtime_config = _evaluation_runtime_config_file(required=True)
+    assert evaluation_runtime_config is not None
     launch_binding = _d2l_launch_binding_sha256(
         job_id=job_id,
         planned_run_id=planned_run_id,
@@ -629,6 +661,12 @@ def _issue_live_api_token(
         ),
         workflow_run_id=identities["workflow_run_id"],
         component_run_id=identities["component_run_id"],
+        evaluation_component_run_id=identities[
+            "reserved_evaluation_component_run_id"
+        ],
+        evaluation_root=str(evaluation_paths["component_root"]),
+        evaluation_runtime_root=str(evaluation_paths["runtime_root"]),
+        evaluation_runtime_config=str(evaluation_runtime_config),
         code_root=str(tool),
         runtime_root=str(paths["runtime_root"]),
         credential_files=credentials,
@@ -1209,6 +1247,9 @@ def _d2l_settings_option() -> dict[str, Any]:
 def _evaluation_settings_option(
     *,
     available_chapter_ids: list[str] | None = None,
+    job_root: Path | None = None,
+    job_id: str | None = None,
+    source_binding_sha256: str | None = None,
 ) -> dict[str, Any]:
     available = (
         set(EVALUATION_CHAPTER_ORDER)
@@ -1220,7 +1261,7 @@ def _evaluation_settings_option(
         for chapter_id in EVALUATION_CHAPTER_ORDER
         if chapter_id in available
     ]
-    fixed_facts = {
+    fixed_facts: dict[str, Any] = {
         "settings_schema_id": EVALUATION_SETTINGS_SCHEMA_ID,
         "settings_schema_version": EVALUATION_SETTINGS_SCHEMA_VERSION,
         "arm_ids": list(EVALUATION_ARM_ORDER),
@@ -1241,11 +1282,60 @@ def _evaluation_settings_option(
             "shared_selection_ref": None,
         },
     }
+    option_sha256 = canonical_sha256(fixed_facts)
+    if (
+        job_root is not None
+        and job_id is not None
+        and source_binding_sha256 is not None
+        and (Path(job_root) / "workflow_runtime_v1.json").is_file()
+    ):
+        from pipeline.eval.workflow_runtime_bundle_v1 import (
+            load_workflow_scoring_baseline_template_from_workflow_runtime_v1,
+        )
+        from pipeline.eval.workflow_runtime_factory_v1 import (
+            build_evaluation_registered_option_facts_v1,
+        )
+
+        try:
+            loaded = (
+                load_workflow_scoring_baseline_template_from_workflow_runtime_v1(
+                    Path(job_root),
+                    expected_job_id=job_id,
+                    expected_source_binding_sha256=source_binding_sha256,
+                    selected_chapter_ids=default_chapters,
+                )
+            )
+            registered = loaded.registered_option
+            if registered["settings_option_id"] != EVALUATION_SETTINGS_ID:
+                raise ValueError("registered settings option ID drifted")
+            fixed_facts = build_evaluation_registered_option_facts_v1(
+                loaded.settings_authority,
+                evaluation_profile_ref=registered[
+                    "evaluation_profile_ref"
+                ]["artifact_ref"],
+                policy_profile_ref=(
+                    None
+                    if registered["policy_profile_ref"] is None
+                    else registered["policy_profile_ref"]["artifact_ref"]
+                ),
+                shared_selection_ref=registered[
+                    "shared_selection_ref"
+                ]["artifact_ref"],
+            )
+            option_sha256 = canonical_sha256(fixed_facts)
+            if option_sha256 != registered["registered_option_sha256"]:
+                raise ValueError("registered Evaluation option hash drifted")
+        except Exception as exc:
+            raise WorkflowReplayError(
+                "workflow_evaluation_runtime_invalid",
+                f"Registered Evaluation runtime is invalid: {exc}",
+                409,
+            ) from exc
     return {
         "option_id": EVALUATION_SETTINGS_ID,
         "label": "Registered Evaluation workflow",
         "revision": EVALUATION_SETTINGS_SCHEMA_VERSION,
-        "sha256": canonical_sha256(fixed_facts),
+        "sha256": option_sha256,
         "enabled": bool(default_chapters),
         "status": "registered",
         "fixed_facts": fixed_facts,

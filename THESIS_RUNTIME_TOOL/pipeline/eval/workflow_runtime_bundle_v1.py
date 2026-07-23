@@ -22,6 +22,10 @@ from pipeline.eval.common_input_v1 import (
     CommonSourceSnapshotV1,
     CommonTranslationV1,
 )
+from pipeline.eval.community_aligned_translation_v1 import (
+    COMMUNITY_ALIGNED_TRANSLATION_SCHEMA_ID,
+    build_common_aligned_evaluation_input_v1,
+)
 from pipeline.eval.contracts_v1 import (
     CanonicalPolicy,
     ContractValidationError,
@@ -253,8 +257,9 @@ class _FileBackedEvaluationBenchmarkInputProviderV1:
         common = _normalize_d2l_arm_ids(self._loaded.d2l_common_input)
         selected_chapters = tuple(settings["selected_chapter_ids"])
         selected_arms = tuple(_benchmark_arm_id(row) for row in settings["selected_arm_ids"])
+        common_arm_ids = {row.arm_id for row in common.arms}
         selected_external = {
-            arm_id for arm_id in selected_arms if arm_id not in {"S0", "S1"}
+            arm_id for arm_id in selected_arms if arm_id not in common_arm_ids
         }
         handoff_inputs = {
             row["arm_id"]: row for row in handoff["translation_inputs"]
@@ -2346,15 +2351,14 @@ def _build_canonical_common_from_handoff(
     translation_by_arm = {
         row["arm_id"]: file_paths[row["translation_artifact"]["artifact_ref"]]
         for row in handoff["translation_inputs"]
-        if row["arm_id"] in {"s0", "s1"}
     }
-    if tuple(translation_by_arm) != ("s0", "s1"):
+    if tuple(translation_by_arm) != tuple(ARM_IDS_V1):
         raise ContractValidationError(
-            "d2l_arm_scope",
+            "arm_order",
             "$handoff.translation_inputs",
-            "canonical D2L bridge requires exact ordered s0 and s1 inputs",
+            "canonical Evaluation bridge requires the exact five-arm order",
         )
-    return build_canonical_d2l_common_input_v1(
+    d2l_common = build_canonical_d2l_common_input_v1(
         source_artifacts=FinalizedCanonicalSourceArtifactsV1(
             document=source_by_role["document"],
             structure_manifest=source_by_role["structure_manifest"],
@@ -2365,6 +2369,26 @@ def _build_canonical_common_from_handoff(
         s0_translation_artifact=translation_by_arm["s0"],
         s1_translation_artifact=translation_by_arm["s1"],
         selected_chapter_ids=selected_chapter_ids,
+    )
+    community_payload = _read_json(translation_by_arm["community"])
+    if (
+        community_payload.get("schema_id")
+        != COMMUNITY_ALIGNED_TRANSLATION_SCHEMA_ID
+    ):
+        return d2l_common
+    source = CommonSourceSnapshotV1(
+        source_schema_id=d2l_common.source_schema_id,
+        source_schema_version=d2l_common.source_schema_version,
+        source_binding=d2l_common.source_binding,
+        blocks=d2l_common.blocks,
+    )
+    return build_common_aligned_evaluation_input_v1(
+        source,
+        machine_translation_artifacts={
+            arm_id: _read_json(translation_by_arm[arm_id])
+            for arm_id in ("s0", "s1", "google_nmt", "llm_lc")
+        },
+        community_aligned_artifact=community_payload,
     )
 
 
@@ -2428,11 +2452,15 @@ def _validate_runtime_scope(
         )
     d2l_arms = {_benchmark_arm_id(row.arm_id) for row in d2l_common.arms}
     expected_d2l_arms = {item for item in benchmark_arms if item in {"S0", "S1"}}
-    if d2l_arms != {"S0", "S1"} or not expected_d2l_arms.issubset(d2l_arms):
+    if (
+        not {"S0", "S1"}.issubset(d2l_arms)
+        or not expected_d2l_arms.issubset(d2l_arms)
+        or not d2l_arms.issubset({"S0", "S1", "community", "google_nmt", "llm_lc"})
+    ):
         raise ContractValidationError(
             "d2l_arm_scope",
             "$.d2l_input.arms",
-            "D2L input must contain S0/S1 and cover every selected D2L arm",
+            "canonical input must contain S0/S1 and only registered benchmark arms",
         )
     if legacy_d2l_input is not None:
         handoff_inputs = {

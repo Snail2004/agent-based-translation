@@ -326,6 +326,7 @@ def test_build_argv_workflow_score_uses_separate_evaluation_boundary(tmp_path):
         runtime_root=str(
             tmp_path / "_runtime" / "evaluation" / "jobA" / "wf_run"
         ),
+        evaluation_runtime_config=str(tmp_path / "evaluation_runtime.json"),
         code_root=str(TOOL_ROOT),
         allow_api=True,
     )
@@ -337,6 +338,9 @@ def test_build_argv_workflow_score_uses_separate_evaluation_boundary(tmp_path):
         "score",
     ]
     assert "--evaluation-root" in argv
+    assert argv[argv.index("--server-runtime-config") + 1] == str(
+        tmp_path / "evaluation_runtime.json"
+    )
     assert "--campaign-root" not in argv
     assert "--hard-total-token-cap" not in argv
     assert "--live" in argv
@@ -3114,8 +3118,8 @@ def test_route_workflow_score_creates_and_reuses_bound_evaluation_child(
     )
     monkeypatch.setattr(
         routes,
-        "_d2l_credential_files",
-        lambda **_kwargs: {},
+        "_evaluation_runtime_config_file",
+        lambda **_kwargs: tmp_path / "evaluation_runtime.json",
     )
     spawned = []
     monkeypatch.setattr(
@@ -3815,7 +3819,7 @@ def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
     assert "workflow_artifact_missing" in setup[
         "scoring_blocking_reasons"
     ]
-    assert "evaluation_app_executor_not_connected" in setup[
+    assert "evaluation_runtime_config_missing" in setup[
         "scoring_blocking_reasons"
     ]
     assert [row["chapter_id"] for row in setup["chapters"]] == [
@@ -3895,6 +3899,109 @@ def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
     assert registry.list_runs() == []
 
 
+def test_workflow_setup_uses_registered_evaluation_option_authority(
+    tmp_path,
+    monkeypatch,
+):
+    from pipeline.eval.evaluation_workflow_settings_v1 import (
+        EvaluationWorkflowSettingsAuthorityV1,
+    )
+    from pipeline.eval.workflow_runtime_factory_v1 import (
+        build_evaluation_registered_option_facts_v1,
+    )
+    from pipeline.workflow_replay.contracts_v1 import canonical_sha256
+
+    workflow_service = importlib.import_module("services.workflow_replay")
+    bundle_module = importlib.import_module(
+        "pipeline.eval.workflow_runtime_bundle_v1"
+    )
+
+    def binding(artifact_ref, artifact_kind, digit):
+        return {
+            "artifact_ref": artifact_ref,
+            "artifact_kind": artifact_kind,
+            "schema_version": "1.0.0",
+            "sha256": digit * 64,
+            "sha256_kind": "physical",
+        }
+
+    profile = binding(
+        "authority/profiles/evaluation_production_v1.json",
+        "evaluation_profile_v1",
+        "4",
+    )
+    selection = binding(
+        "authority/selections/d2l_five_chapter_v1.json",
+        "evaluation_shared_selection_v1",
+        "5",
+    )
+    authority = EvaluationWorkflowSettingsAuthorityV1(
+        benchmark_preset=binding(
+            "authority/presets/d2l_five_chapter_v1.json",
+            "evaluation_benchmark_preset_v1",
+            "1",
+        ),
+        evaluation_config=binding(
+            "authority/config/evaluation_workflow_v1.json",
+            "evaluation_run_config_v1",
+            "2",
+        ),
+        scorer_set=binding(
+            "authority/scorers/sf_qe_sf_bt_pj_v1.json",
+            "evaluation_scorer_set_v1",
+            "3",
+        ),
+        evaluation_profiles=(profile,),
+        policy_profiles=(),
+        shared_selections=(selection,),
+    )
+    facts = build_evaluation_registered_option_facts_v1(
+        authority,
+        evaluation_profile_ref=profile["artifact_ref"],
+        policy_profile_ref=None,
+        shared_selection_ref=selection["artifact_ref"],
+    )
+    option_sha256 = canonical_sha256(facts)
+    loaded = type(
+        "LoadedTemplate",
+        (),
+        {
+            "settings_authority": authority,
+            "registered_option": {
+                "settings_option_id": "evaluation_workflow_settings_v1",
+                "registered_option_sha256": option_sha256,
+                "evaluation_profile_id": "evaluation.production.v1",
+                "evaluation_profile_ref": profile,
+                "policy_profile_id": None,
+                "policy_profile_ref": None,
+                "shared_selection_ref": selection,
+            },
+        },
+    )()
+    monkeypatch.setattr(
+        bundle_module,
+        "load_workflow_scoring_baseline_template_from_workflow_runtime_v1",
+        lambda *_args, **_kwargs: loaded,
+    )
+    (tmp_path / "workflow_runtime_v1.json").write_text(
+        "{}\n", encoding="utf-8"
+    )
+
+    option = workflow_service._evaluation_settings_option(
+        available_chapter_ids=[
+            "d2l_preliminaries",
+            "d2l_linear_networks",
+        ],
+        job_root=tmp_path,
+        job_id="jobA",
+        source_binding_sha256="a" * 64,
+    )
+
+    assert option["sha256"] == option_sha256
+    assert option["fixed_facts"] == facts
+    assert option["fixed_facts"]["registered_authority"]["status"] == "ready"
+
+
 def test_route_workflow_live_confirmation_launches_real_campaign_path(
     tmp_path,
     monkeypatch,
@@ -3910,6 +4017,18 @@ def test_route_workflow_live_confirmation_launches_real_campaign_path(
     )
     monkeypatch.setattr(workflow_service, "LIVE_START_ALLOWED", True)
     monkeypatch.setattr(routes, "LIVE_START_ALLOWED", True)
+    monkeypatch.setattr(
+        workflow_service,
+        "_scoring_runtime_readiness",
+        lambda **_kwargs: {
+            "allowed": True,
+            "blockers": [],
+            "runtime": {
+                "status": "ready",
+                "registration_sha256": "a" * 64,
+            },
+        },
+    )
     monkeypatch.setattr(
         workflow_service,
         "_credential_status",
@@ -3940,6 +4059,13 @@ def test_route_workflow_live_confirmation_launches_real_campaign_path(
             lambda **_kwargs: preview,
         )
     monkeypatch.setattr(routes, "_d2l_credential_files", lambda **_kwargs: {})
+    runtime_config = tmp_path / "evaluation_runtime.json"
+    runtime_config.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(
+        routes,
+        "_evaluation_runtime_config_file",
+        lambda **_kwargs: runtime_config,
+    )
     api_gate_calls = []
 
     def validate_gate(**kwargs):
@@ -3990,6 +4116,12 @@ def test_route_workflow_live_confirmation_launches_real_campaign_path(
         "translate",
     ]
     assert "--parent-root" in entry["argv"]
+    assert "--evaluation-component-run-id" in entry["argv"]
+    assert "--evaluation-root" in entry["argv"]
+    assert "--evaluation-runtime-root" in entry["argv"]
+    assert entry["argv"][
+        entry["argv"].index("--server-runtime-config") + 1
+    ] == str(runtime_config)
     assert entry["allow_api"] is True
     assert "--live" in entry["argv"]
     assert "--dry-run" not in entry["argv"]

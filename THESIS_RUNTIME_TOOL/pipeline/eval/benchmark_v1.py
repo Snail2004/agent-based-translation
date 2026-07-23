@@ -238,14 +238,22 @@ def build_benchmark_manifest_v1(
         source_binding_to_dict(row.source_binding)["binding_kind"]
         for row in source_by_chapter.values()
     }
-    if projects != {"d2l"} or documents != {"d2l"} or len(binding_kinds) != 1:
+    if len(projects) != 1 or len(documents) != 1 or len(binding_kinds) != 1:
         raise ContractValidationError(
             "benchmark_source_identity",
             "$.sources",
-            "locked benchmark requires one D2L document and one source-binding kind",
+            "locked benchmark requires one source project, one document and one source-binding kind",
         )
+    project_id = next(iter(projects))
+    document_id = next(iter(documents))
     binding_kind = next(iter(binding_kinds))
     if binding_kind == "legacy_d2l":
+        if project_id != "d2l" or document_id != "d2l":
+            raise ContractValidationError(
+                "benchmark_source_identity",
+                "$.sources",
+                "legacy benchmark identity must remain project_id=document_id=d2l",
+            )
         source_dbs = {
             row.source_binding.source_db_sha256
             for row in source_by_chapter.values()
@@ -310,8 +318,8 @@ def build_benchmark_manifest_v1(
                 else "bounded_registered_selection_d2l_v1"
             ),
             "profile_scope": "technical_d2l",
-            "project_id": "d2l",
-            "document_id": "d2l",
+            "project_id": project_id,
+            "document_id": document_id,
             **scope_source,
             "chapter_count": len(chapters),
             "block_count": sum(row["block_count"] for row in chapters),
@@ -1369,7 +1377,37 @@ def _validate_scope(value: Any, *, schema_version: str) -> dict[str, Any]:
             f"{path}.contiguous_source_order",
             "contiguous_source_order must be boolean",
         )
-    result = {
+    if has_legacy:
+        project_id = require_enum(
+            row["project_id"], {"d2l"}, path=f"{path}.project_id"
+        )
+        document_id = require_enum(
+            row["document_id"], {"d2l"}, path=f"{path}.document_id"
+        )
+        source_identity = {
+            "source_db_sha256": require_sha256(
+                row["source_db_sha256"], path=f"{path}.source_db_sha256"
+            )
+        }
+    else:
+        project_id = require_string(row["project_id"], path=f"{path}.project_id")
+        document_id = require_string(
+            row["document_id"], path=f"{path}.document_id"
+        )
+        source_binding = _validate_canonical_binding_at(
+            row["source_binding"], path=f"{path}.source_binding"
+        )
+        if (
+            source_binding["project_id"] != project_id
+            or source_binding["document_id"] != document_id
+        ):
+            raise ContractValidationError(
+                "source_identity",
+                path,
+                "scope project/document identity differs from canonical source binding",
+            )
+        source_identity = {"source_binding": source_binding}
+    return {
         "benchmark_kind": require_enum(
             row["benchmark_kind"],
             {
@@ -1379,21 +1417,13 @@ def _validate_scope(value: Any, *, schema_version: str) -> dict[str, Any]:
             path=f"{path}.benchmark_kind",
         ),
         "profile_scope": require_enum(row["profile_scope"], {"technical_d2l"}, path=f"{path}.profile_scope"),
-        "project_id": require_enum(row["project_id"], {"d2l"}, path=f"{path}.project_id"),
-        "document_id": require_enum(row["document_id"], {"d2l"}, path=f"{path}.document_id"),
+        "project_id": project_id,
+        "document_id": document_id,
         "chapter_count": require_int(row["chapter_count"], path=f"{path}.chapter_count", minimum=1),
         "block_count": require_int(row["block_count"], path=f"{path}.block_count", minimum=1),
         "contiguous_source_order": contiguous,
+        **source_identity,
     }
-    if has_legacy:
-        result["source_db_sha256"] = require_sha256(
-            row["source_db_sha256"], path=f"{path}.source_db_sha256"
-        )
-    else:
-        result["source_binding"] = _validate_canonical_binding_at(
-            row["source_binding"], path=f"{path}.source_binding"
-        )
-    return result
 
 
 def _validate_manifest_chapters(

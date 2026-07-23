@@ -39,6 +39,7 @@ from pipeline.ingest.canonical_source_package import (
 __all__ = [
     "FinalizedCanonicalSourceArtifactsV1",
     "build_canonical_d2l_common_input_v1",
+    "derive_finalized_canonical_source_binding_v1",
     "load_finalized_canonical_d2l_source_v1",
 ]
 
@@ -59,6 +60,105 @@ class FinalizedCanonicalSourceArtifactsV1:
     asset_manifest: Path
     admitted_projection: Path
     package_seal: Path
+
+
+def derive_finalized_canonical_source_binding_v1(
+    *,
+    source_artifacts: FinalizedCanonicalSourceArtifactsV1,
+    project_id: str,
+) -> dict[str, Any]:
+    """Derive and validate the public binding from explicit finalized files."""
+
+    document = _read_json(source_artifacts.document, label="document")
+    structure = _read_json(
+        source_artifacts.structure_manifest, label="structure manifest"
+    )
+    asset_manifest = _read_json(
+        source_artifacts.asset_manifest, label="asset manifest"
+    )
+    projection = _read_json(
+        source_artifacts.admitted_projection, label="admitted projection"
+    )
+    try:
+        validate_canonical_source_package(document, structure, asset_manifest)
+        validate_admitted_projection(
+            projection, document, structure, asset_manifest
+        )
+    except (CanonicalSourcePackageError, AdmissionProjectionError) as exc:
+        raise ContractValidationError(
+            "canonical_source_package", "$.source_artifacts", str(exc)
+        ) from exc
+    draft = {
+        "binding_kind": "canonical_source_package_v1",
+        "project_id": require_string(project_id, path="$.project_id"),
+        "document_id": require_string(
+            document.get("doc_id"), path="$.document.doc_id"
+        ),
+        "document": {
+            "schema_version": require_string(
+                document.get("schema_version"), path="$.document.schema_version"
+            ),
+            "sha256": canonical_json_sha256(document),
+        },
+        "structure": {
+            "schema_version": require_string(
+                structure.get("schema_version"), path="$.structure.schema_version"
+            ),
+            "sha256": canonical_json_sha256(structure),
+        },
+        "asset_manifest": {
+            "schema_version": require_string(
+                asset_manifest.get("schema_version"),
+                path="$.asset_manifest.schema_version",
+            ),
+            "sha256": canonical_json_sha256(asset_manifest),
+        },
+        "admitted_projection": {
+            "schema_version": require_string(
+                projection.get("schema_version"),
+                path="$.admitted_projection.schema_version",
+            ),
+            "payload_sha256": require_sha256(
+                require_mapping(
+                    projection.get("integrity"),
+                    path="$.admitted_projection.integrity",
+                ).get("payload_sha256"),
+                path="$.admitted_projection.integrity.payload_sha256",
+            ),
+        },
+        "admission_policy": {
+            "policy_id": require_string(
+                require_mapping(
+                    projection.get("policy"), path="$.admitted_projection.policy"
+                ).get("policy_id"),
+                path="$.admitted_projection.policy.policy_id",
+            ),
+            "policy_version": require_string(
+                projection["policy"].get("policy_version"),
+                path="$.admitted_projection.policy.policy_version",
+            ),
+            "policy_sha256": require_sha256(
+                projection["policy"].get("policy_sha256"),
+                path="$.admitted_projection.policy.policy_sha256",
+            ),
+        },
+    }
+    binding = _canonical_binding(
+        draft,
+        document=document,
+        structure=structure,
+        asset_manifest=asset_manifest,
+        projection=projection,
+    )
+    _validate_package_seal(
+        _read_json(source_artifacts.package_seal, label="package seal"),
+        document=document,
+        structure=structure,
+        asset_manifest=asset_manifest,
+        projection=projection,
+        binding=binding,
+    )
+    return source_binding_to_dict(binding)
 
 
 def build_canonical_d2l_common_input_v1(

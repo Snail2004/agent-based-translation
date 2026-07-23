@@ -673,24 +673,23 @@ def _fixture(
             d2l_payload,
             translation_bindings=translation_bindings,
         )
-    universe = canonical_sha256(
-        {"block_ids": [block.block_id for block in common.blocks]}
-    )
+    admitted_blocks = [
+        block for block in common.blocks if block.admission != "review_required"
+    ]
+    universe = canonical_sha256([block.block_id for block in admitted_blocks])
     coverage = {
-        "expected_block_count": len(common.blocks),
+        "expected_block_count": len(admitted_blocks),
         "translated_block_count": sum(
             block.admission in {"translate", "translate_structured"}
-            for block in common.blocks
+            for block in admitted_blocks
         ),
         "preserved_block_count": sum(
-            block.admission == "preserve" for block in common.blocks
+            block.admission == "preserve" for block in admitted_blocks
         ),
         "excluded_block_count": sum(
-            block.admission == "exclude" for block in common.blocks
+            block.admission == "exclude" for block in admitted_blocks
         ),
-        "review_held_block_count": sum(
-            block.admission == "review_required" for block in common.blocks
-        ),
+        "review_held_block_count": 0,
         "missing_block_count": 0,
         "failed_block_count": 0,
         "block_universe_sha256": universe,

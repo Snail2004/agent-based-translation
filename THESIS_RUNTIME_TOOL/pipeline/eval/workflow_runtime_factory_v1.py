@@ -29,6 +29,10 @@ from pipeline.eval.common_input_v1 import (
     source_binding_to_dict,
     validate_translation_artifact,
 )
+from pipeline.eval.community_aligned_translation_v1 import (
+    COMMUNITY_ALIGNED_TRANSLATION_SCHEMA_ID,
+    build_common_aligned_evaluation_input_v1,
+)
 from pipeline.eval.contracts_v1 import (
     ContractValidationError,
     require_commit,
@@ -70,6 +74,7 @@ from pipeline.eval.workflow_runtime_bundle_v1 import (
 from pipeline.eval.workflow_component_v1 import (
     SOURCE_BINDING_ROLES_V1,
     validate_scoring_handoff_v1,
+    validate_typed_artifact_binding_v1,
 )
 from pipeline.llm_backend import (
     ApplicationResponseCache,
@@ -103,6 +108,7 @@ __all__ = [
     "PreparedEvaluationRuntimeBundleV1",
     "RegisteredEvaluationBaselineTemplateV1",
     "build_evaluation_executor_runtime_v1",
+    "build_evaluation_registered_option_facts_v1",
     "build_evaluation_runtime_object_registry_v1",
     "prepare_evaluation_production_runtime_v1",
     "prepare_evaluation_runtime_bundle_v1",
@@ -114,6 +120,105 @@ _WORKFLOW_RUNTIME_FILE_NAME = "workflow_runtime_v1.json"
 _BASELINE_TEMPLATE_RELATIVE_ROOT = "workflow/evaluation_baseline_template"
 _RUNTIME_IDENTITY_RELATIVE_PATH = "_runtime/runtime_identity_v1.json"
 _RUNTIME_ARTIFACT_STORE_RELATIVE_PATH = "_runtime/raw_responses"
+
+
+def build_evaluation_registered_option_facts_v1(
+    authority: EvaluationWorkflowSettingsAuthorityV1,
+    *,
+    evaluation_profile_ref: str,
+    policy_profile_ref: str | None,
+    shared_selection_ref: str,
+) -> dict[str, Any]:
+    """Build the exact server-advertised facts sealed before Translation."""
+
+    def normalized_binding(value: Mapping[str, Any], *, path: str) -> dict[str, str]:
+        binding = validate_typed_artifact_binding_v1(value, path=path)
+        if binding["sha256_kind"] != "physical":
+            raise ContractValidationError(
+                "runtime_file_authority",
+                f"{path}.sha256_kind",
+                "registered Evaluation authority must use physical hashes",
+            )
+        return binding
+
+    profiles = [
+        normalized_binding(row, path=f"$.evaluation_profiles[{index}]")
+        for index, row in enumerate(authority.evaluation_profiles)
+    ]
+    policies = [
+        normalized_binding(row, path=f"$.policy_profiles[{index}]")
+        for index, row in enumerate(authority.policy_profiles)
+    ]
+    selections = [
+        normalized_binding(row, path=f"$.shared_selections[{index}]")
+        for index, row in enumerate(authority.shared_selections)
+    ]
+
+    def catalog_member(
+        rows: Sequence[Mapping[str, str]],
+        artifact_ref: str,
+        *,
+        path: str,
+    ) -> dict[str, str]:
+        ref = require_relative_path(artifact_ref, path=path)
+        matches = [dict(row) for row in rows if row["artifact_ref"] == ref]
+        if len(matches) != 1:
+            raise ContractValidationError(
+                "authority_binding",
+                path,
+                "registered artifact reference is missing or ambiguous",
+            )
+        return matches[0]
+
+    profile = catalog_member(
+        profiles,
+        evaluation_profile_ref,
+        path="$.evaluation_profile_ref",
+    )
+    policy = (
+        None
+        if policy_profile_ref is None
+        else catalog_member(
+            policies,
+            policy_profile_ref,
+            path="$.policy_profile_ref",
+        )
+    )
+    selection = catalog_member(
+        selections,
+        shared_selection_ref,
+        path="$.shared_selection_ref",
+    )
+    return {
+        "settings_schema_id": "EvaluationWorkflowSettingsV1",
+        "settings_schema_version": "1.1.0",
+        "arm_ids": list(authority.arm_ids),
+        "scorer_ids": list(authority.scorer_ids),
+        "aggregation_policy": authority.aggregation_policy_id,
+        "report_policy": authority.report_policy_id,
+        "verdict_policy": authority.verdict_policy_id,
+        "scoring_handoff_authority": (
+            "exact_ordered_five_arm_scoring_handoff_v1"
+        ),
+        "registered_authority": {
+            "status": "ready",
+            "benchmark_preset_ref": normalized_binding(
+                authority.benchmark_preset,
+                path="$.benchmark_preset",
+            ),
+            "evaluation_config_ref": normalized_binding(
+                authority.evaluation_config,
+                path="$.evaluation_config",
+            ),
+            "scorer_set_ref": normalized_binding(
+                authority.scorer_set,
+                path="$.scorer_set",
+            ),
+            "evaluation_profile_ref": profile,
+            "policy_profile_ref": policy,
+            "shared_selection_ref": selection,
+        },
+    }
 _RUNTIME_CACHE_RELATIVE_PATH = "_runtime/response_cache.sqlite3"
 _RUNTIME_QUOTA_RELATIVE_PATH = "_runtime/quota_leases"
 _PREPARED_INPUTS_RELATIVE_ROOT = "_runtime/prepared_inputs_v1"
@@ -1273,12 +1378,71 @@ def _build_five_arm_common_input(
         selected_chapter_ids=selected_chapter_ids,
     )
     source = _source_snapshot_from_common(d2l_common)
-    artifacts = [
-        validate_translation_artifact(_read_json(translation_paths[arm_id]))
-        for arm_id in _ARM_ORDER
-    ]
-    common = build_common_evaluation_input(source, artifacts)
+    _validate_handoff_admitted_universe(source, handoff)
+    raw_artifacts = {
+        arm_id: _read_json(translation_paths[arm_id]) for arm_id in _ARM_ORDER
+    }
+    if (
+        raw_artifacts["community"].get("schema_id")
+        == COMMUNITY_ALIGNED_TRANSLATION_SCHEMA_ID
+    ):
+        common = build_common_aligned_evaluation_input_v1(
+            source,
+            machine_translation_artifacts={
+                arm_id: raw_artifacts[arm_id]
+                for arm_id in ("s0", "s1", "google_nmt", "llm_lc")
+            },
+            community_aligned_artifact=raw_artifacts["community"],
+        )
+    else:
+        artifacts = [
+            validate_translation_artifact(raw_artifacts[arm_id])
+            for arm_id in _ARM_ORDER
+        ]
+        common = _drop_review_held_source_rows(
+            build_common_evaluation_input(source, artifacts)
+        )
     return _normalize_benchmark_arm_ids(common)
+
+
+def _validate_handoff_admitted_universe(
+    source: CommonSourceSnapshotV1,
+    handoff: Mapping[str, Any],
+) -> None:
+    admitted_ids = [
+        row.block_id for row in source.blocks if row.admission != "review_required"
+    ]
+    expected_count = len(admitted_ids)
+    expected_sha256 = canonical_sha256(admitted_ids)
+    for index, row in enumerate(handoff["translation_inputs"]):
+        coverage = row["coverage"]
+        if (
+            coverage["expected_block_count"] != expected_count
+            or coverage["block_universe_sha256"] != expected_sha256
+        ):
+            raise ContractValidationError(
+                "coverage_universe_drift",
+                f"$handoff.translation_inputs[{index}].coverage",
+                "handoff coverage differs from the canonical admitted source universe",
+            )
+
+
+def _drop_review_held_source_rows(
+    common: CommonEvaluationInputV1,
+) -> CommonEvaluationInputV1:
+    admitted_ids = {
+        row.block_id for row in common.blocks if row.admission != "review_required"
+    }
+    return CommonEvaluationInputV1(
+        source_schema_id=common.source_schema_id,
+        source_schema_version=common.source_schema_version,
+        source_binding=common.source_binding,
+        blocks=tuple(row for row in common.blocks if row.block_id in admitted_ids),
+        arms=common.arms,
+        translations=tuple(
+            row for row in common.translations if row.block_id in admitted_ids
+        ),
+    )
 
 
 def _normalize_benchmark_arm_ids(

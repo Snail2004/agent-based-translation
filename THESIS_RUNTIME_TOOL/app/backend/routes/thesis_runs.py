@@ -52,6 +52,7 @@ from services.thesis_runs import (
     _d2l_credential_files,
     _d2l_launch_binding_sha256,
     _d2l_preview_source,
+    _evaluation_runtime_config_file,
 )
 from services.workflow_replay import (
     LIVE_START_ALLOWED,
@@ -319,7 +320,9 @@ def create_run():
         d2l_preview = None
         d2l_ids = None
         d2l_paths = None
+        evaluation_paths = None
         d2l_credentials = {}
+        evaluation_runtime_config = None
         d2l_profile = body.get("profile")
         d2l_launch_binding = None
         if script in _D2L_COMPONENT_SCRIPTS:
@@ -373,6 +376,15 @@ def create_run():
                 job_id=job_id,
                 run_id=planned_run_id,
             )
+            if script == WORKFLOW_ORCHESTRATOR_SCRIPT:
+                evaluation_paths = evaluation_component_paths(
+                    jobs_root=jobs_root,
+                    job_id=job_id,
+                    workflow_run_id=d2l_ids["workflow_run_id"],
+                    component_run_id=d2l_ids[
+                        "reserved_evaluation_component_run_id"
+                    ],
+                )
             d2l_preview = _d2l_preview_source(
                 job_root=(jobs_root / job_id).resolve(),
                 chapters=chapter_ids,
@@ -390,6 +402,10 @@ def create_run():
                 preview=d2l_preview,
             )
             d2l_credentials = _d2l_credential_files(required=allow_api)
+            if script == WORKFLOW_ORCHESTRATOR_SCRIPT:
+                evaluation_runtime_config = _evaluation_runtime_config_file(
+                    required=allow_api
+                )
             event_log_path = d2l_paths["event_log_path"]
             run_dir = d2l_paths["campaign_root"]
             manifest_path = d2l_paths["manifest_path"]
@@ -471,6 +487,26 @@ def create_run():
                     )
                 )
                 if script == WORKFLOW_ORCHESTRATOR_SCRIPT and d2l_ids
+                else None
+            ),
+            evaluation_component_run_id=(
+                d2l_ids["reserved_evaluation_component_run_id"]
+                if script == WORKFLOW_ORCHESTRATOR_SCRIPT and d2l_ids
+                else None
+            ),
+            evaluation_root=(
+                str(evaluation_paths["component_root"])
+                if evaluation_paths is not None
+                else None
+            ),
+            evaluation_runtime_root=(
+                str(evaluation_paths["runtime_root"])
+                if evaluation_paths is not None
+                else None
+            ),
+            evaluation_runtime_config=(
+                str(evaluation_runtime_config)
+                if evaluation_runtime_config is not None
                 else None
             ),
         )
@@ -1070,7 +1106,8 @@ def score_workflow_run(run_id: str):
                 "workflow_runtime_registration_sha256": runtime_sha256,
             }
         )
-        credential_files = _d2l_credential_files(required=True)
+        evaluation_runtime_config = _evaluation_runtime_config_file(required=True)
+        assert evaluation_runtime_config is not None
         argv = build_argv(
             script=WORKFLOW_ORCHESTRATOR_SCRIPT,
             python_exe=_python_exe(),
@@ -1084,7 +1121,7 @@ def score_workflow_run(run_id: str):
             evaluation_root=str(paths["component_root"]),
             code_root=str(_tool_root()),
             runtime_root=str(paths["runtime_root"]),
-            credential_files=credential_files,
+            evaluation_runtime_config=str(evaluation_runtime_config),
         )
         expected = {
             "job_id": job_id,

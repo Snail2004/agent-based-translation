@@ -186,6 +186,7 @@ def test_managed_runtime_requires_finalization_and_snapshots_complete_identity(
 
     draft = project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)
     assert draft["contract_version"] == "project_runtime_source_v2"
+    assert draft["managed"] is True
     assert draft["lifecycle"] == "draft"
     assert draft["prepare_allowed"] is False
     assert draft["job_id"] is None
@@ -213,6 +214,7 @@ def test_managed_runtime_requires_finalization_and_snapshots_complete_identity(
     assert prepared["created"] is True
     assert prepared["prepared"] is True
     assert prepared["contract_version"] == "project_runtime_source_v2"
+    assert prepared["managed"] is True
     assert prepared["lifecycle"] == "finalized_pre_run"
     assert prepared["managed_source"]["state_sha256"] == finalized["state_sha256"]
     job_root = jobs / prepared["job_id"]
@@ -282,6 +284,7 @@ def test_managed_runtime_status_is_compact_and_skips_candidate_tree_validation(
     second = project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)
 
     assert first == second
+    assert first["managed"] is True
     assert first["prepared"] is True
     assert first["job_id"] == prepared["job_id"]
     assert first["chapter_count"] == 1
@@ -477,9 +480,11 @@ def test_prepare_runtime_is_content_addressed_and_strips_annotations(tmp_path, m
 
     before = project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)
     assert before["prepared"] is False
+    assert before["managed"] is False
 
     created = project_runtime.prepare_project_runtime(doc_id, jobs_root=jobs)
     assert created["created"] is True
+    assert created["managed"] is False
     assert created["prepared"] is True
     assert created["chapter_count"] == 1
     assert created["block_count"] == 2

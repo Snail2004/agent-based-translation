@@ -107,6 +107,7 @@ def _get_legacy_project_runtime_status(
     job_dir = _job_dir(root, job_id)
     base = {
         "contract_version": PROJECT_RUNTIME_CONTRACT_VERSION,
+        "managed": False,
         "project_id": doc_id,
         "job_id": job_id,
         "source_sha256": source_sha256,
@@ -214,6 +215,7 @@ def _managed_base(
     if context is None:
         return {
             "contract_version": PROJECT_RUNTIME_MANAGED_CONTRACT_VERSION,
+            "managed": True,
             "project_id": doc_id,
             "job_id": None,
             "source_identity_sha256": None,
@@ -227,6 +229,7 @@ def _managed_base(
     job_id, identity = _managed_job_identity(doc_id, context["managed_source"])
     return {
         "contract_version": PROJECT_RUNTIME_MANAGED_CONTRACT_VERSION,
+        "managed": True,
         "project_id": doc_id,
         "job_id": job_id,
         "source_identity_sha256": identity,

@@ -74,10 +74,14 @@ def _evidence(sources: list[CommonSourceSnapshotV1]) -> list[dict]:
     ]
 
 
-def _canonical_sources() -> list[CommonSourceSnapshotV1]:
+def _canonical_sources(
+    *,
+    project_id: str = "d2l",
+    document_id: str = "d2l",
+) -> list[CommonSourceSnapshotV1]:
     binding = CanonicalSourcePackageBindingV1(
-        project_id="d2l",
-        document_id="d2l",
+        project_id=project_id,
+        document_id=document_id,
         document=CanonicalComponentIdentityV1("1.5.0", "1" * 64),
         structure=CanonicalComponentIdentityV1("structure-v1", "2" * 64),
         asset_manifest=CanonicalComponentIdentityV1(
@@ -463,6 +467,50 @@ def test_canonical_manifest_and_overlay_keep_explicit_source_binding() -> None:
     assert "source_db_sha256" not in manifest["scope"]
     assert overlay["source"]["source_binding"] == manifest["scope"]["source_binding"]
     assert "source_db_sha256" not in overlay["source"]
+
+
+def test_canonical_manifest_accepts_app_managed_project_identity() -> None:
+    sources = _canonical_sources(
+        project_id="d2l_run-5-chapter",
+        document_id="d2l_run-5-chapter",
+    )
+    manifest = build_benchmark_manifest_v1(
+        sources,
+        [
+            {
+                "chapter_id": "d2l_preliminaries",
+                "source_artifact_id": "canonical-source-package",
+                "source_artifact_sha256": "a" * 64,
+                "source_evidence_kind": "canonical_source_package_v1",
+            }
+        ],
+        benchmark_id="canonical-app-project",
+        created_at=NOW,
+        producer_code_commit=COMMIT,
+        selected_chapter_ids=("d2l_preliminaries",),
+        selected_arm_ids=("S0", "S1"),
+    )
+
+    assert manifest["scope"]["project_id"] == "d2l_run-5-chapter"
+    assert manifest["scope"]["document_id"] == "d2l_run-5-chapter"
+    assert (
+        manifest["scope"]["source_binding"]["project_id"]
+        == "d2l_run-5-chapter"
+    )
+
+    from pipeline.eval.benchmark_v1 import _MANIFEST_POLICY
+    from pipeline.eval.contracts_v1 import seal_payload
+
+    tampered = copy.deepcopy(manifest)
+    tampered["scope"]["project_id"] = "foreign-project"
+    tampered["integrity"]["manifest_sha256"] = "0" * 64
+    tampered = seal_payload(
+        tampered,
+        policy=_MANIFEST_POLICY,
+        hash_path=("integrity", "manifest_sha256"),
+    )
+    with pytest.raises(ContractValidationError, match="canonical source binding"):
+        validate_benchmark_manifest_v1(tampered)
 
 
 def test_canonical_manifest_rejects_mixed_foreign_and_resealed_tamper() -> None:

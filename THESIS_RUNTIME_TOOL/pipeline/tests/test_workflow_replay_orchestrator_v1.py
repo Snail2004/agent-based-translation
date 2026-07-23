@@ -826,6 +826,40 @@ def test_scoring_preparation_publishes_authority_without_running_evaluation(
     assert settings_rows[0]["producer"]["component_id"] == "neutral_relay"
 
 
+def test_scoring_handoff_can_be_published_before_evaluation_settings(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    translation = _TranslationExecutor(tmp_path / "translation")
+    orchestrator = WorkflowOrchestratorV1(
+        relay.root,
+        translation_executor=translation,
+        baseline_provider=StaticBaselineInputProviderV1(_baseline_rows()),
+        selected_chapter_ids=[CHAPTER_ID],
+        translation_adapter_factory=translation.adapter,
+    )
+
+    with pytest.raises(WorkflowComponentPausedV1):
+        orchestrator.run_translation()
+    translated = orchestrator.run_translation()
+    handoff = orchestrator.prepare_scoring_handoff(
+        translated.translation_component_root
+    )
+
+    assert [row["arm_id"] for row in handoff["translation_inputs"]] == [
+        "s0",
+        "s1",
+        "community",
+        "google_nmt",
+        "llm_lc",
+    ]
+    assert (relay.root / "handoffs" / "scoring_handoff.json").is_file()
+    assert not (
+        relay.root / "handoffs" / "evaluation_workflow_settings.json"
+    ).exists()
+    assert relay.validate_parent_package()["status"] == "running"
+
+
 def test_scoring_phase_stops_truthfully_before_publication(
     tmp_path: Path,
 ) -> None:
@@ -1059,3 +1093,51 @@ def test_translation_cli_delegates_only_to_server_owned_d2l_command(
     assert "--dry-run" in argv
     assert "--live" not in argv
     assert "--credential-file" not in argv
+
+
+def test_workflow_cli_accepts_resume_and_prepared_score_boundaries(
+    tmp_path: Path,
+) -> None:
+    translation = orchestrator_cli._parser().parse_args(
+        [
+            "translate",
+            "--parent-root",
+            str(tmp_path / "parent"),
+            "--job-root",
+            str(tmp_path / "job"),
+            "--campaign-root",
+            str(tmp_path / "campaign"),
+            "--evaluation-component-run-id",
+            "evaluation_run_v1",
+            "--evaluation-root",
+            str(tmp_path / "evaluation"),
+            "--evaluation-runtime-root",
+            str(tmp_path / "evaluation_runtime"),
+            "--resume",
+            "--live",
+        ]
+    )
+    assert translation.resume is True
+    assert translation.workflow_run_id is None
+    assert translation.component_run_id is None
+
+    score = orchestrator_cli._parser().parse_args(
+        [
+            "score",
+            "--parent-root",
+            str(tmp_path / "parent"),
+            "--job-root",
+            str(tmp_path / "job"),
+            "--evaluation-root",
+            str(tmp_path / "evaluation"),
+            "--runtime-root",
+            str(tmp_path / "evaluation_runtime"),
+            "--server-runtime-config",
+            str(tmp_path / "evaluation_runtime.json"),
+            "--resume",
+            "--live",
+        ]
+    )
+    assert score.resume is True
+    assert score.workflow_run_id is None
+    assert score.component_run_id is None
