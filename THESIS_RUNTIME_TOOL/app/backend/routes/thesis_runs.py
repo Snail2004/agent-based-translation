@@ -537,6 +537,7 @@ def create_run():
                     workflow_run_id=d2l_ids["workflow_run_id"],
                     selected_chapter_ids=chapter_ids,
                     source_binding=d2l_preview["source_binding"],
+                    evaluation_selection=body["evaluation_selection"],
                     code_commit=d2l_preview["code_revision"],
                 )
             _validate_planned_run_reuse(existing, expected=expected_run_identity)
@@ -561,6 +562,7 @@ def create_run():
                 workflow_run_id=d2l_ids["workflow_run_id"],
                 selected_chapter_ids=chapter_ids,
                 source_binding=d2l_preview["source_binding"],
+                evaluation_selection=body["evaluation_selection"],
                 code_commit=d2l_preview["code_revision"],
             )
         if job_id and planned_run_id:

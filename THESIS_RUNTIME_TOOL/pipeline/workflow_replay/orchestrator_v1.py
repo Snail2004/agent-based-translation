@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import secrets
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Mapping, Protocol, Sequence
@@ -14,6 +16,7 @@ from .adapters_v1 import (
 from .contracts_v1 import (
     ARM_IDS_V1,
     WorkflowReplayContractError,
+    canonical_json_bytes,
     canonical_sha256,
     normalize_d2l_scoring_fragment_v1,
     physical_sha256,
@@ -27,6 +30,7 @@ from .relay_v1 import (
 
 AdapterFactoryV1 = Callable[[bool], ValidatedComponentAdapterV1]
 SnapshotObserverV1 = Callable[[Path, bool], None]
+WORKFLOW_LAUNCH_SELECTION_FILENAME_V1 = "workflow_launch_selection_v1.json"
 
 
 class WorkflowOrchestratorError(ValueError):
@@ -39,6 +43,136 @@ class WorkflowComponentPausedV1(RuntimeError):
     def __init__(self, component_id: str, message: str = "component paused") -> None:
         super().__init__(message)
         self.component_id = component_id
+
+
+def materialize_workflow_launch_selection_v1(
+    parent_root: str | Path,
+    *,
+    evaluation_selection: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Persist the server-sealed Evaluation selection beside the parent package."""
+
+    root = Path(parent_root).resolve()
+    manifest = validate_workflow_parent_package_v1(root)
+    selection = _validate_evaluation_selection_v1(evaluation_selection)
+    parent_chapter_ids = {
+        row["local_stage_id"].removeprefix("chapter_")
+        for row in manifest["stages"]
+        if row["component_id"] == "evaluation"
+        and row["local_stage_id"].startswith("chapter_")
+    }
+    if parent_chapter_ids and not set(
+        selection["selected_chapter_ids"]
+    ).issubset(parent_chapter_ids):
+        raise WorkflowOrchestratorError(
+            "workflow_evaluation_selection_chapters",
+            "Evaluation selection contains chapters outside the parent workflow.",
+        )
+    payload = {
+        "schema_id": "WorkflowLaunchSelectionV1",
+        "schema_version": "1.0.0",
+        "workflow_run_id": manifest["workflow_run_id"],
+        "job_id": manifest["job_id"],
+        "source_package_bindings_sha256": canonical_sha256(
+            manifest["source_package_bindings"]
+        ),
+        "evaluation_selection": selection,
+    }
+    row = {
+        **payload,
+        "integrity": {
+            "launch_selection_sha256": canonical_sha256(payload),
+        },
+    }
+    encoded = canonical_json_bytes(row) + b"\n"
+    path = root / WORKFLOW_LAUNCH_SELECTION_FILENAME_V1
+    _write_immutable_bytes(path, encoded)
+    return load_workflow_launch_selection_v1(root)
+
+
+def load_workflow_launch_selection_v1(
+    parent_root: str | Path,
+) -> dict[str, Any]:
+    """Load and rebind the immutable launch selection to the parent package."""
+
+    root = Path(parent_root).resolve()
+    manifest = validate_workflow_parent_package_v1(root)
+    path = root / WORKFLOW_LAUNCH_SELECTION_FILENAME_V1
+    if not path.is_file() or path.is_symlink():
+        raise WorkflowOrchestratorError(
+            "workflow_launch_selection_missing",
+            "Workflow launch selection is missing.",
+        )
+    try:
+        encoded = path.read_bytes()
+        row = json.loads(encoded.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise WorkflowOrchestratorError(
+            "workflow_launch_selection_invalid",
+            "Workflow launch selection is not valid UTF-8 JSON.",
+        ) from exc
+    if not isinstance(row, Mapping):
+        raise WorkflowOrchestratorError(
+            "workflow_launch_selection_invalid",
+            "Workflow launch selection must be an object.",
+        )
+    if encoded != canonical_json_bytes(row) + b"\n":
+        raise WorkflowOrchestratorError(
+            "workflow_launch_selection_noncanonical",
+            "Workflow launch selection bytes are not canonical.",
+        )
+    required = {
+        "schema_id",
+        "schema_version",
+        "workflow_run_id",
+        "job_id",
+        "source_package_bindings_sha256",
+        "evaluation_selection",
+        "integrity",
+    }
+    if set(row) != required:
+        raise WorkflowOrchestratorError(
+            "workflow_launch_selection_invalid",
+            "Workflow launch selection fields differ from V1.",
+        )
+    if (
+        row["schema_id"] != "WorkflowLaunchSelectionV1"
+        or row["schema_version"] != "1.0.0"
+        or row["workflow_run_id"] != manifest["workflow_run_id"]
+        or row["job_id"] != manifest["job_id"]
+        or _sha256(
+            row["source_package_bindings_sha256"],
+            "source_package_bindings_sha256",
+        )
+        != canonical_sha256(manifest["source_package_bindings"])
+    ):
+        raise WorkflowOrchestratorError(
+            "workflow_launch_selection_identity",
+            "Workflow launch selection belongs to another parent package.",
+        )
+    selection = _validate_evaluation_selection_v1(row["evaluation_selection"])
+    integrity = row["integrity"]
+    if (
+        not isinstance(integrity, Mapping)
+        or set(integrity) != {"launch_selection_sha256"}
+    ):
+        raise WorkflowOrchestratorError(
+            "workflow_launch_selection_integrity",
+            "Workflow launch selection integrity fields differ from V1.",
+        )
+    payload = copy.deepcopy(dict(row))
+    payload.pop("integrity")
+    if _sha256(
+        integrity["launch_selection_sha256"],
+        "launch_selection_sha256",
+    ) != canonical_sha256(payload):
+        raise WorkflowOrchestratorError(
+            "workflow_launch_selection_hash",
+            "Workflow launch selection hash drifted.",
+        )
+    accepted = copy.deepcopy(dict(row))
+    accepted["evaluation_selection"] = selection
+    return accepted
 
 
 class TranslationExecutorV1(Protocol):
@@ -833,6 +967,141 @@ def _chapter_ids(values: Sequence[str] | None) -> list[str]:
     return result
 
 
+def _validate_evaluation_selection_v1(value: Any) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        raise WorkflowOrchestratorError(
+            "workflow_evaluation_selection",
+            "Evaluation selection must be an object.",
+        )
+    basis_keys = {
+        "settings_option_id",
+        "selected_chapter_ids",
+        "selected_arm_ids",
+        "selected_scorer_ids",
+        "highlight_pair",
+        "registered_option_sha256",
+    }
+    if set(value) != basis_keys | {"selection_sha256"}:
+        raise WorkflowOrchestratorError(
+            "workflow_evaluation_selection",
+            "Evaluation selection fields differ from V1.",
+        )
+    option_id = value["settings_option_id"]
+    if (
+        not isinstance(option_id, str)
+        or not option_id
+        or len(option_id) > 160
+    ):
+        raise WorkflowOrchestratorError(
+            "workflow_evaluation_selection",
+            "Evaluation settings option ID is invalid.",
+        )
+    chapters = _chapter_ids(value["selected_chapter_ids"])
+    arms = _workflow_ids(
+        value["selected_arm_ids"],
+        owner="selected_arm_ids",
+        minimum=2,
+    )
+    scorers = _workflow_ids(
+        value["selected_scorer_ids"],
+        owner="selected_scorer_ids",
+        minimum=1,
+    )
+    highlight = value["highlight_pair"]
+    if highlight is not None:
+        if (
+            not isinstance(highlight, Mapping)
+            or set(highlight) != {"baseline_arm_id", "candidate_arm_id"}
+            or highlight["baseline_arm_id"] not in arms
+            or highlight["candidate_arm_id"] not in arms
+            or highlight["baseline_arm_id"] == highlight["candidate_arm_id"]
+        ):
+            raise WorkflowOrchestratorError(
+                "workflow_evaluation_selection",
+                "Evaluation highlight pair must contain two selected arms.",
+            )
+        highlight = dict(highlight)
+    basis = {
+        "settings_option_id": option_id,
+        "selected_chapter_ids": chapters,
+        "selected_arm_ids": arms,
+        "selected_scorer_ids": scorers,
+        "highlight_pair": highlight,
+        "registered_option_sha256": _sha256(
+            value["registered_option_sha256"],
+            "registered_option_sha256",
+        ),
+    }
+    if _sha256(value["selection_sha256"], "selection_sha256") != canonical_sha256(
+        basis
+    ):
+        raise WorkflowOrchestratorError(
+            "workflow_evaluation_selection_hash",
+            "Evaluation selection hash drifted.",
+        )
+    return {**basis, "selection_sha256": canonical_sha256(basis)}
+
+
+def _workflow_ids(
+    value: Any,
+    *,
+    owner: str,
+    minimum: int,
+) -> list[str]:
+    if (
+        not isinstance(value, list)
+        or len(value) < minimum
+        or len(value) != len(set(value))
+        or any(
+            not isinstance(item, str)
+            or not item
+            or len(item) > 160
+            or not all(
+                character.isalnum() or character in "_.:-"
+                for character in item
+            )
+            for item in value
+        )
+    ):
+        raise WorkflowOrchestratorError(
+            "workflow_evaluation_selection",
+            f"{owner} is invalid.",
+        )
+    return list(value)
+
+
+def _write_immutable_bytes(path: Path, encoded: bytes) -> None:
+    if path.exists():
+        if path.is_symlink() or not path.is_file() or path.read_bytes() != encoded:
+            raise WorkflowOrchestratorError(
+                "workflow_launch_selection_collision",
+                "Workflow launch selection already exists with different bytes.",
+            )
+        return
+    temporary = path.with_name(
+        f".{path.name}.{os.getpid()}.{secrets.token_hex(8)}.tmp"
+    )
+    try:
+        with temporary.open("xb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            if (
+                path.is_symlink()
+                or not path.is_file()
+                or path.read_bytes() != encoded
+            ):
+                raise WorkflowOrchestratorError(
+                    "workflow_launch_selection_collision",
+                    "Workflow launch selection raced with different bytes.",
+                )
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def _sha256(value: Any, owner: str) -> str:
     if (
         not isinstance(value, str)
@@ -862,6 +1131,8 @@ __all__ = [
     "WorkflowScoringResultV1",
     "WorkflowTranslationResultV1",
     "WorkflowOrchestratorV1",
+    "load_workflow_launch_selection_v1",
     "load_workflow_runtime_registration_v1",
+    "materialize_workflow_launch_selection_v1",
     "validate_workflow_runtime_registration_v1",
 ]

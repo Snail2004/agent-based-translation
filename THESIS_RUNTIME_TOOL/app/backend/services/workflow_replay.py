@@ -649,6 +649,7 @@ def initialize_workflow_parent(
     workflow_run_id: str,
     selected_chapter_ids: list[str],
     source_binding: Mapping[str, Any],
+    evaluation_selection: Mapping[str, Any],
     code_commit: str,
 ) -> dict[str, Any]:
     from pipeline.eval.workflow_component_writer_v1 import (
@@ -661,6 +662,23 @@ def initialize_workflow_parent(
         StageDefinitionV1,
         WorkflowRelayV1,
     )
+    from pipeline.workflow_replay.orchestrator_v1 import (
+        WorkflowOrchestratorError,
+        materialize_workflow_launch_selection_v1,
+    )
+
+    def seal_launch_selection() -> None:
+        try:
+            materialize_workflow_launch_selection_v1(
+                root,
+                evaluation_selection=evaluation_selection,
+            )
+        except WorkflowOrchestratorError as exc:
+            raise WorkflowReplayError(
+                exc.code,
+                str(exc),
+                409,
+            ) from exc
 
     root = workflow_replay_root(
         jobs_root=jobs_root,
@@ -734,6 +752,7 @@ def initialize_workflow_parent(
                 "Existing parent workflow package has a different sealed identity.",
                 409,
             )
+        seal_launch_selection()
         return manifest
 
     try:
@@ -745,7 +764,9 @@ def initialize_workflow_parent(
             stages=tuple(stages),
             code_commit=code_commit,
         )
-        return relay.validate_parent_package()
+        manifest = relay.validate_parent_package()
+        seal_launch_selection()
+        return manifest
     except WorkflowReplayContractError as exc:
         raise WorkflowReplayError(
             "workflow_parent_initialization_failed",

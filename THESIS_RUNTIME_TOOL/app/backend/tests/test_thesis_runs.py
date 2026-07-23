@@ -4097,6 +4097,14 @@ def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
     assert registry.get_run(data["run_id"])["script"] == (
         "run_workflow_orchestrator_v1"
     )
+    from pipeline.workflow_replay.orchestrator_v1 import (
+        load_workflow_launch_selection_v1,
+    )
+
+    launch_selection = load_workflow_launch_selection_v1(parent_root)
+    assert launch_selection["evaluation_selection"] == preflight[
+        "normalized_selection"
+    ]["evaluation"]
 
     parent = client.get(
         f"/api/thesis/runs/{data['run_id']}/workflow-replay"

@@ -23,7 +23,9 @@ from pipeline.workflow_replay.orchestrator_v1 import (
     WorkflowComponentPausedV1,
     WorkflowOrchestratorError,
     WorkflowOrchestratorV1,
+    load_workflow_launch_selection_v1,
     load_workflow_runtime_registration_v1,
+    materialize_workflow_launch_selection_v1,
     validate_workflow_runtime_registration_v1,
 )
 from pipeline.workflow_replay.relay_v1 import (
@@ -690,6 +692,21 @@ def _baseline_rows() -> list[dict]:
     ]
 
 
+def _evaluation_selection() -> dict:
+    basis = {
+        "settings_option_id": "evaluation_workflow_settings_v1",
+        "selected_chapter_ids": [CHAPTER_ID],
+        "selected_arm_ids": ["s0", "s1"],
+        "selected_scorer_ids": ["sf_qe"],
+        "highlight_pair": {
+            "baseline_arm_id": "s0",
+            "candidate_arm_id": "s1",
+        },
+        "registered_option_sha256": "b" * 64,
+    }
+    return {**basis, "selection_sha256": canonical_sha256(basis)}
+
+
 def test_orchestrator_preserves_pause_resume_and_finishes_parent(
     tmp_path: Path,
 ) -> None:
@@ -912,6 +929,51 @@ def test_runtime_registration_is_fail_closed_and_self_sealed(
             expected_source_binding_sha256="a" * 64,
             selected_chapter_ids=["ch1"],
         )
+
+
+def test_launch_selection_is_immutable_and_bound_to_parent(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    selection = _evaluation_selection()
+
+    accepted = materialize_workflow_launch_selection_v1(
+        relay.root,
+        evaluation_selection=selection,
+    )
+    repeated = materialize_workflow_launch_selection_v1(
+        relay.root,
+        evaluation_selection=selection,
+    )
+
+    assert accepted == repeated == load_workflow_launch_selection_v1(
+        relay.root
+    )
+    assert accepted["workflow_run_id"] == WORKFLOW_ID
+    assert accepted["job_id"] == JOB_ID
+    assert accepted["evaluation_selection"] == selection
+
+    foreign = copy.deepcopy(selection)
+    foreign["selected_scorer_ids"] = ["pj"]
+    basis = copy.deepcopy(foreign)
+    basis.pop("selection_sha256")
+    foreign["selection_sha256"] = canonical_sha256(basis)
+    with pytest.raises(
+        WorkflowOrchestratorError,
+        match="already exists with different bytes",
+    ):
+        materialize_workflow_launch_selection_v1(
+            relay.root,
+            evaluation_selection=foreign,
+        )
+
+    path = relay.root / "workflow_launch_selection_v1.json"
+    path.write_bytes(path.read_bytes() + b" ")
+    with pytest.raises(
+        WorkflowOrchestratorError,
+        match="bytes are not canonical",
+    ):
+        load_workflow_launch_selection_v1(relay.root)
 
 
 def test_translation_cli_delegates_only_to_server_owned_d2l_command(
