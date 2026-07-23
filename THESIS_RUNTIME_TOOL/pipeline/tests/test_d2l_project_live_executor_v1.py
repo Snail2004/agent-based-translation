@@ -48,6 +48,7 @@ from pipeline.tests.test_d2l_project_campaign_v2 import (
     _fixture_job,
 )
 from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
+from pipeline.translate import d2l_translation_semantic_repair_v1 as repair_contract
 
 
 def _write_json(path: Path, value: dict) -> None:
@@ -113,6 +114,7 @@ class _FakeClient:
                 "role_id": self.role_id,
                 "tag": tag,
                 "response_format": response_format,
+                "messages": deepcopy(messages),
             }
         )
         payload = self.transport.response(self.role_id, messages, tag)
@@ -172,6 +174,8 @@ class _FakeTransport:
             "d2l.b2.multi_target": "gpt-5.5",
             "d2l.translator.s0": "gpt-5.4",
             "d2l.translator.s1": "gpt-5.4",
+            "d2l.translator.s0.semantic_repair": "gpt-5.4",
+            "d2l.translator.s1.semantic_repair": "gpt-5.4",
             "d2l.translator.quality_auditor": "gemini-3.5-flash",
         }
 
@@ -265,7 +269,6 @@ class _SemanticRepairTransport(_FakeTransport):
         if (
             role_id == "d2l.translator.s0"
             and "[alpha_b002]" in user
-            and "SEMANTIC REPAIR REQUEST" not in user
         ):
             payload = super().response(role_id, messages, tag)
             payload["alpha_b002"] = "Nội dung sai."
@@ -305,6 +308,26 @@ class _SemanticRepairTransport(_FakeTransport):
                     else []
                 ),
             }
+        if role_id.endswith(".semantic_repair"):
+            packet = next(
+                value
+                for value in _json_objects(user)
+                if value.get("contract_version")
+                == repair_contract.INPUT_CONTRACT_VERSION
+            )
+            return {
+                "contract_version": repair_contract.RESPONSE_CONTRACT_VERSION,
+                "window_id": packet["window_id"],
+                "repairs": [
+                    {
+                        "block_id": block_id,
+                        "repaired_target_protected_text": _fake_translation(
+                            self.source_by_block[block_id]
+                        ),
+                    }
+                    for block_id in packet["output_block_ids"]
+                ],
+            }
         return super().response(role_id, messages, tag)
 
 
@@ -323,7 +346,6 @@ class _RetryConsumedSemanticMajorTransport(_SemanticRepairTransport):
         if (
             role_id == "d2l.translator.s0"
             and "[alpha_b002]" in user
-            and "SEMANTIC REPAIR REQUEST" not in user
         ):
             self.initial_s0_calls += 1
             if self.initial_s0_calls == 1:
@@ -551,8 +573,7 @@ def test_quality_major_uses_one_translator_repair_without_second_audit(
     repair_calls = [
         row
         for row in transport.calls
-        if row["role_id"] == "d2l.translator.s0"
-        and row["tag"].startswith("S0_repair_")
+        if row["role_id"] == "d2l.translator.s0.semantic_repair"
     ]
 
     assert draft_by_id["alpha_b002"]["target_text"] == "Nội dung sai."
@@ -565,7 +586,7 @@ def test_quality_major_uses_one_translator_repair_without_second_audit(
     assert state["semantic_repair_applied_count"] == 1
 
 
-def test_quality_does_not_repair_when_deterministic_retry_was_consumed(
+def test_quality_uses_independent_semantic_repair_after_mechanical_retry(
     tmp_path: Path,
 ) -> None:
     _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
@@ -634,22 +655,37 @@ def test_quality_does_not_repair_when_deterministic_retry_was_consumed(
     repair_calls = [
         row
         for row in transport.calls
-        if row["role_id"] == "d2l.translator.s0"
-        and row["tag"].startswith("S0_repair_")
+        if row["role_id"] == "d2l.translator.s0.semantic_repair"
     ]
 
     assert transport.initial_s0_calls == 2
-    assert repair_calls == []
-    assert (
-        final_by_id["alpha_b002"]["target_text"]
-        == draft_by_id["alpha_b002"]["target_text"]
+    assert len(repair_calls) == 1
+    assert final_by_id["alpha_b002"]["target_text"] != draft_by_id[
+        "alpha_b002"
+    ]["target_text"]
+    assert s0_state["semantic_repair_attempt_count"] == 1
+    assert s0_state["mechanical_retry_before_semantic_repair_count"] == 1
+    repair = s0_state["repairs"][0]
+    assert repair["status"] == "repair_applied_unverified_semantically"
+    assert repair["mechanical_retry_consumed"] is True
+    assert repair["resolved_integrity_history_count"] >= 1
+    repair_user = "\n".join(
+        str(row.get("content") or "")
+        for row in repair_calls[0]["messages"]
+        if row.get("role") == "user"
     )
-    assert s0_state["semantic_repair_attempt_count"] == 0
-    assert s0_state["semantic_repair_unavailable_count"] == 1
-    assert (
-        s0_state["repairs"][0]["status"]
-        == "repair_unavailable_retry_consumed"
+    packet = next(
+        value
+        for value in _json_objects(repair_user)
+        if value.get("contract_version") == repair_contract.INPUT_CONTRACT_VERSION
     )
+    assert [row["block_id"] for row in packet["context_blocks"]] == [
+        "alpha_b001",
+        "alpha_b002",
+    ]
+    assert packet["output_block_ids"] == ["alpha_b002"]
+    assert packet["active_semantic_findings"][0]["block_id"] == "alpha_b002"
+    assert packet["resolved_integrity_history"][0]["block_id"] == "alpha_b002"
 
 
 def test_quality_resume_reads_translator_attempt_one_and_publishes_attempt_two(

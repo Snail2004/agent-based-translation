@@ -79,6 +79,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
 )
 from pipeline.prepass.d2l_terminology_memory_delta_v1 import commit_glossary_draft
 from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
+from pipeline.translate import d2l_translation_semantic_repair_v1 as repair_contract
 from pipeline.translate.d2l_translation_integrity_v1 import inspect_translations
 from pipeline.translate.d2l_translation_quality_observation_v1 import (
     build_quality_observation,
@@ -88,7 +89,7 @@ from pipeline.translate.windower import Window
 
 
 LIVE_EXECUTOR_VERSION = "d2l_project_live_executor_v1"
-LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2_1_quality_repair"
+LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2_2_typed_quality_retries"
 LIVE_SCOPE_ID = "d2l_selected_campaign_scope_v1"
 _COST_STATUSES = {"provider_actual", "pinned_tariff", "unknown"}
 _STAGE_UNITS = {
@@ -2038,94 +2039,89 @@ def _translation_artifact_component_attempt_id(
 def _semantic_repair_window(
     *,
     campaign: Mapping[str, Any],
-    db: sqlite3.Connection,
     arm_id: str,
     original_window_id: str,
-    block_ids: Sequence[str],
+    original_block_ids: Sequence[str],
+    output_block_ids: Sequence[str],
     findings_by_block: Mapping[str, list[dict[str, str]]],
     source_by_id: Mapping[str, Mapping[str, Any]],
+    current_translations: Mapping[str, Mapping[str, Any]],
+    attempt_state: Mapping[str, Any],
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
 ) -> tuple[dict[str, str], dict[str, Any]]:
-    role = _role(campaign["config"], f"d2l.translator.{arm_id}")
-    client = _RecordingClient(
-        transport.build_client(
-            role["role_id"], component_attempt_id=component_attempt_id
-        ),
-        observations,
+    role = _role(
+        campaign["config"], f"d2l.translator.{arm_id}.semantic_repair"
     )
-    ordered_ids = [str(value) for value in block_ids]
-    repair_window = Window(
-        window_id=f"repair_{original_window_id}",
-        block_ids=ordered_ids,
-        est_src_tokens=sum(
-            max(1, len(_source_text(source_by_id[block_id])) // 4)
-            for block_id in ordered_ids
-        ),
+    client = transport.build_client(
+        role["role_id"], component_attempt_id=component_attempt_id
     )
-    extra = dict(role.get("extra_policy") or {})
-    experiment_id = (
-        f"{_translator_experiment_id(campaign, arm_id=arm_id, component_attempt_id=component_attempt_id)}"
-        f"_quality_repair_{original_window_id}"
-    )
-    report = translate_windows(
-        db,
-        [repair_window],
-        client,
-        experiment_id=experiment_id,
-        config=arm_id,
-        context_budget_tokens=1500,
-        profile_name="technical_d2l_v1",
-        protected_spans_policy=extra.get("protected_spans_policy"),
-        translation_output_policy=extra.get("translation_output_policy"),
-        response_envelope_policy=extra.get("response_envelope_policy"),
-        max_attempts_per_window=1,
-        semantic_repair_findings={
-            block_id: list(findings_by_block[block_id])
-            for block_id in ordered_ids
-        },
-    )
-    window_report = report.reports[0]
-    observations.validation(
-        passed=window_report.status in {"translated", "skipped"},
-        validator_id=str(role["validator_id"]),
-        subject_ref=f"{arm_id}:{original_window_id}:semantic_repair",
-        reason_codes=(
-            ["semantic_repair_deterministic_validation"]
-            if window_report.status in {"translated", "skipped"}
-            else list(window_report.errors or ["semantic_repair_failed"])
-        ),
-        retryable=False,
-    )
-    if window_report.status not in {"translated", "skipped"}:
+    ordered_context_ids = [str(value) for value in original_block_ids]
+    ordered_output_ids = [str(value) for value in output_block_ids]
+    active_findings = [
+        finding
+        for block_id in ordered_output_ids
+        for finding in findings_by_block[block_id]
+    ]
+    tag = f"semantic_repair_{arm_id}_{original_window_id}"
+    try:
+        plan = repair_contract.build_plan(
+            window_id=original_window_id,
+            arm_id=arm_id,
+            source_blocks=[
+                source_by_id[block_id] for block_id in ordered_context_ids
+            ],
+            current_translations=current_translations,
+            output_block_ids=ordered_output_ids,
+            active_semantic_findings=active_findings,
+            resolved_integrity_history=list(attempt_state["retry_history"]),
+            original_context_pack=attempt_state["context_pack"],
+        )
+        _, validation = _semantic_call(
+            client=client,
+            messages=repair_contract.render_messages(plan),
+            response_format=repair_contract.RESPONSE_SCHEMA,
+            tag=tag,
+            validator_id=repair_contract.LOCAL_VALIDATOR_ID,
+            parse=repair_contract.parse_response,
+            validate=lambda parsed: repair_contract.validate_and_restore(
+                parsed, plan
+            ),
+            observations=observations,
+            retry_cap=0,
+        )
+    except (
+        D2LProjectLiveExecutorError,
+        repair_contract.SemanticRepairContractError,
+    ) as exc:
         return {}, {
             "status": "repair_failed",
-            "experiment_id": experiment_id,
-            "block_ids": ordered_ids,
-            "calls": window_report.calls,
-            "errors": list(window_report.errors),
+            "repair_request_id": tag,
+            "block_ids": ordered_output_ids,
+            "calls": 0
+            if isinstance(exc, repair_contract.SemanticRepairContractError)
+            else 1,
+            "errors": [str(exc)],
+            "mechanical_retry_consumed": bool(attempt_state["retry_consumed"]),
         }
-    rows = db.execute(
-        """
-        SELECT block_id, output_text
-        FROM translation_runs
-        WHERE experiment_id = ? AND config = ? AND stage = 'draft'
-        ORDER BY block_id
-        """,
-        (experiment_id, arm_id.upper()),
-    ).fetchall()
-    updates = {str(row["block_id"]): str(row["output_text"]) for row in rows}
-    if set(updates) != set(ordered_ids):
-        raise D2LProjectLiveExecutorError(
-            "semantic repair did not exact-cover requested block IDs"
-        )
+    updates = {
+        str(block_id): str(value)
+        for block_id, value in validation["updates"].items()
+    }
     return updates, {
         "status": "repair_applied_unverified_semantically",
-        "experiment_id": experiment_id,
-        "block_ids": ordered_ids,
-        "calls": window_report.calls,
+        "repair_request_id": tag,
+        "block_ids": ordered_output_ids,
+        "calls": 1,
         "errors": [],
+        "mechanical_retry_consumed": bool(attempt_state["retry_consumed"]),
+        "original_context_pack_sha256": plan.packet["translator_context"][
+            "context_pack_sha256"
+        ],
+        "resolved_integrity_history_count": len(
+            plan.packet["resolved_integrity_history"]
+        ),
     }
 
 
@@ -2332,19 +2328,21 @@ def _quality_stage(
                         "quality stage lacks Translator attempt state for "
                         + str(window["window_id"])
                     )
-                if major_by_block and not state["retry_consumed"]:
+                if major_by_block:
                     updates, repair_state = _semantic_repair_window(
                         campaign=campaign,
-                        db=db,
                         arm_id=arm_id,
                         original_window_id=str(window["window_id"]),
-                        block_ids=[
+                        original_block_ids=list(window["block_ids"]),
+                        output_block_ids=[
                             block_id
                             for block_id in window["block_ids"]
                             if block_id in major_by_block
                         ],
                         findings_by_block=major_by_block,
                         source_by_id=row_map,
+                        current_translations=translations,
+                        attempt_state=state,
                         transport=transport,
                         component_attempt_id=component_attempt_id,
                         observations=observations,
@@ -2358,21 +2356,6 @@ def _quality_stage(
                                 len(value) for value in major_by_block.values()
                             ),
                             **repair_state,
-                        }
-                    )
-                elif major_by_block:
-                    repair_rows.append(
-                        {
-                            "window_id": str(window["window_id"]),
-                            "initial_attempt_count": int(state["attempt_count"]),
-                            "major_finding_count": sum(
-                                len(value) for value in major_by_block.values()
-                            ),
-                            "status": "repair_unavailable_retry_consumed",
-                            "experiment_id": None,
-                            "block_ids": list(major_by_block),
-                            "calls": 0,
-                            "errors": [],
                         }
                     )
                 completed_work += 1
@@ -2400,8 +2383,8 @@ def _quality_stage(
                         row["status"] == "repair_applied_unverified_semantically"
                         for row in repair_rows
                     ),
-                    "semantic_repair_unavailable_count": sum(
-                        row["status"] == "repair_unavailable_retry_consumed"
+                    "mechanical_retry_before_semantic_repair_count": sum(
+                        bool(row.get("mechanical_retry_consumed"))
                         for row in repair_rows
                     ),
                     "semantic_repair_failed_count": sum(
