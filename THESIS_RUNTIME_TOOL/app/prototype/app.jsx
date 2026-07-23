@@ -1226,7 +1226,7 @@ function App() {
   const [runBlockPreview, setRunBlockPreview] = useState([]);
   const [runWatchlist, setRunWatchlist] = useState([]);
   const [runReportSummary, setRunReportSummary] = useState(null);
-  const [dichForm, setDichForm] = useState({ chapters: "d2l_preface", profile: "technical_d2l_v1", db: "data/jobs/d2l_p1/memory.sqlite3", budget_cap_usd: 1.5, with_s0: false });
+  const [dichForm, setDichForm] = useState({ chapters: "", profile: "technical_d2l_v1", hard_total_token_cap: 6000000 });
   const [runPromptPreview, setRunPromptPreview] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
@@ -1750,6 +1750,15 @@ function App() {
   function openDichModal() {
     const jobId = thesisJobId(activeDocId);
     if (!jobId) { toast(uiText("Chưa mở dataset khóa luận", "No thesis dataset open"), "bad", uiText("Chọn một dataset khóa luận trước khi dịch.", "Choose a thesis dataset before translating.")); return; }
+    const available = chapters.map(chapter => chapter.chapter_id).filter(Boolean);
+    const requested = splitWords(dichForm.chapters).filter(chapterId => available.includes(chapterId));
+    const selected = requested.length ? requested : (available.length ? [available[0]] : []);
+    setDichForm(form => ({
+      ...form,
+      chapters: selected.join(" "),
+      profile: form.profile || "technical_d2l_v1",
+      hard_total_token_cap: form.hard_total_token_cap || 6000000,
+    }));
     setModal({ kind: "dich-run", jobId, sourceTitle: docInfo?.thesis?.document_doc_id || docInfo?.metadata?.title || "" });
   }
 
@@ -1760,24 +1769,18 @@ function App() {
     try {
       const estParams = {
         job_id: jobId,
-        script: "run_one_button",
-        chapters: (dichForm.chapters || "").trim(),
+        script: "run_d2l_project_campaign",
+        chapters: splitWords(dichForm.chapters).join(","),
         profile: dichForm.profile || "",
-        experiment: "one_button_ui",
-        budget_cap_usd: String(dichForm.budget_cap_usd || 1.5),
-        db: dichForm.db || "",
-        with_s0: String(!!dichForm.with_s0),
+        hard_total_token_cap: String(dichForm.hard_total_token_cap || 6000000),
       };
       const est = await API.getThesisOneButtonEstimate(estParams);
       const payload = {
-        script: "run_one_button",
+        script: "run_d2l_project_campaign",
         job_id: jobId,
-        db: dichForm.db || undefined,
         chapters: splitWords(dichForm.chapters),
         profile: dichForm.profile || undefined,
-        experiment: "one_button_ui",
-        budget_cap_usd: Number(dichForm.budget_cap_usd || 1.5),
-        with_s0: !!dichForm.with_s0,
+        hard_total_token_cap: Number(dichForm.hard_total_token_cap || 6000000),
         allow_api: true,
         confirm_token: est.confirm_token,
         planned_run_id: est.planned_run_id,
@@ -3573,18 +3576,14 @@ function App() {
         <Modal title={uiText("Dịch — một nút", "Translate — one button")} icon={Ic.play} onClose={() => setModal(null)}
           actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
             <button className="btn primary" disabled={runBusy || !(dichForm.chapters || "").trim()} onClick={confirmDich}><Ic.play size={12} />{uiText("Bắt đầu dịch (API thật)", "Start translation (real API)")}</button></>}>
-          <p>{uiText("Chạy toàn bộ pipeline một lượt (Builder → Auditor → Translator → chấm điểm → báo cáo) cho project", "Runs the full pipeline in one pass (Builder → Auditor → Translator → scoring → report) for project")} <span className="mono">{modal.sourceTitle || uiText("đang chọn", "current project")}</span>. {uiText("Tiến trình hiện trực tiếp trong Console; có thể Tạm dừng/Tiếp tục/Hủy bất kỳ lúc nào.", "Progress appears live in Console; you can Pause/Resume/Cancel at any time.")}</p>
+          <p>{uiText("Chạy pipeline thuật ngữ (B1 → Candidate Index → B2 → Auditor → Glossary → Translator S0/S1 → kiểm tra chất lượng bản dịch) cho project", "Runs the terminology pipeline (B1 → Candidate Index → B2 → Auditor → Glossary → Translator S0/S1 → translation quality audit) for project")} <span className="mono">{modal.sourceTitle || uiText("đang chọn", "current project")}</span>. {uiText("Kết quả chấm điểm được relay riêng; tiến trình hiện trực tiếp trong Console.", "Scoring is handed off separately; progress appears in Console.")}</p>
           <div className="run-grid">
             <label><span>{uiText("chương", "chapters")}</span><input value={dichForm.chapters} onChange={e => setDichForm(f => ({ ...f, chapters: e.target.value }))} placeholder="d2l_preface" /></label>
             <label><span>{uiText("hồ sơ", "profile")}</span><input value={dichForm.profile} onChange={e => setDichForm(f => ({ ...f, profile: e.target.value }))} placeholder="technical_d2l_v1" /></label>
-            <label><span>{uiText("db nguồn (đã đóng băng, đọc mode=ro)", "source DB (frozen, read mode=ro)")}</span><input value={dichForm.db} onChange={e => setDichForm(f => ({ ...f, db: e.target.value }))} placeholder="data/jobs/d2l_p1/memory.sqlite3" /></label>
-            <label><span>{uiText("trần ngân sách ($)", "budget cap ($)")}</span><input type="number" step="0.1" min="0.01" value={dichForm.budget_cap_usd} onChange={e => setDichForm(f => ({ ...f, budget_cap_usd: e.target.value }))} /></label>
+            <label><span>{uiText("nguồn", "source")}</span><span className="mono muted">{uiText("server tự chọn theo project", "selected by server for this project")}</span></label>
+            <label><span>{uiText("trần token", "hard token cap")}</span><input type="number" step="1000" min="1" value={dichForm.hard_total_token_cap} onChange={e => setDichForm(f => ({ ...f, hard_total_token_cap: e.target.value }))} /></label>
           </div>
-          <label style={{display:"flex",alignItems:"center",gap:"8px",marginTop:"6px",cursor:"pointer"}}>
-            <input type="checkbox" checked={!!dichForm.with_s0} onChange={e => setDichForm(f => ({ ...f, with_s0: e.target.checked }))} />
-            <span>{uiText("Kèm baseline", "Include baseline")} <span className="mono">S0</span> {uiText("(chạy S0+S1 để so sánh S0↔S1 — tốn thêm API)", "(run S0+S1 for an S0↔S1 comparison — uses additional API)")}</span>
-          </label>
-          <p className="muted"><Ic.alert size={11} /> {uiText("Chạy API thật. Gate ngân sách sẽ tự tạm dừng nếu ước tính lũy kế vượt", "Uses the real API. The budget gate pauses automatically if the cumulative estimate exceeds")} <span className="mono">${Number(dichForm.budget_cap_usd || 1.5).toFixed(2)}</span>. {uiText("Chi phí trong Console là TRẦN trên — thực tế thường thấp hơn nhiều (cascade T3 chạy Gemma local ~$0).", "Console cost is an UPPER BOUND — actual cost is usually much lower (cascade T3 runs local Gemma at ~$0).")}</p>
+          <p className="muted"><Ic.alert size={11} /> {uiText("Đây là trần token để dừng an toàn, không phải dự toán chi phí. Chi phí thực tế chỉ ghi theo usage provider nếu có.", "This is a hard token stop, not an expected cost. Actual cost is recorded from provider usage when available.")}</p>
         </Modal>
       )}
 

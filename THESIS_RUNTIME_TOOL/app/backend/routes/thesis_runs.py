@@ -22,11 +22,16 @@ from services.project_runtime import (
     freeze_managed_runtime_for_run,
 )
 from services.thesis_runs import (
+    D2L_COMPONENT_ID,
+    D2L_PROFILE_ID,
+    D2L_PROJECT_CAMPAIGN_SCRIPT,
     RunControlError,
     RunRegistry,
     build_argv,
     build_resume_argv_from_entry,
     cancel_run,
+    d2l_campaign_paths,
+    d2l_component_ids,
     generate_estimate_preview,
     generate_prompt_preview,
     issue_estimate_token_for_argv,
@@ -39,6 +44,9 @@ from services.thesis_runs import (
     validate_job_id,
     validate_run_id,
     validate_script,
+    _d2l_credential_files,
+    _d2l_launch_binding_sha256,
+    _d2l_preview_source,
 )
 
 
@@ -88,6 +96,16 @@ def _validate_planned_run_reuse(
         "manifest_path",
         "attempt_index",
         "resumed_from",
+        "workflow_run_id",
+        "component_id",
+        "component_run_id",
+        "component_attempt_id",
+        "selected_chapter_ids",
+        "profile_id",
+        "source_binding_sha256",
+        "campaign_config_sha256",
+        "campaign_seal_sha256",
+        "launch_binding_sha256",
     )
     mismatches = [
         field
@@ -125,7 +143,7 @@ def _resolve_resume_root(registry: RunRegistry, entry: dict) -> dict:
                 409,
             )
         seen.add(current_id)
-        if current.get("script") != "run_one_button" or current.get("job_id") != job_id:
+        if current.get("script") not in {"run_one_button", D2L_PROJECT_CAMPAIGN_SCRIPT} or current.get("job_id") != job_id:
             raise RunControlError(
                 "resume_ancestry_invalid",
                 "Resume ancestry crosses a job or script boundary.",
@@ -175,10 +193,78 @@ def create_run():
         db = resolve_job_db(db=body.get("db"), job_id=job_id, jobs_root=jobs_root)
         planned_run_id = validate_run_id(body.get("planned_run_id"))
         extra_args = _body_list(body, "extra_args")
+        chapter_ids = _body_list(body, "chapters")
+        hard_total_token_cap = _body_int(body, "hard_total_token_cap")
+        reserved_cost_cap_usd = (
+            None
+            if body.get("reserved_cost_cap_usd") in (None, "")
+            else str(body.get("reserved_cost_cap_usd"))
+        )
         event_log_path = None
         run_dir = None
         manifest_path = None
         workdb = body.get("workdb")
+        d2l_preview = None
+        d2l_ids = None
+        d2l_paths = None
+        d2l_credentials = {}
+        d2l_profile = body.get("profile")
+        d2l_launch_binding = None
+        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            job_id = validate_job_id(job_id, required=True)
+            if body.get("db"):
+                raise RunControlError(
+                    "d2l_client_db_forbidden",
+                    "D2L source DB is selected by the server job; client db is not accepted.",
+                    400,
+                )
+            if not chapter_ids or len(set(chapter_ids)) != len(chapter_ids):
+                raise RunControlError(
+                    "invalid_d2l_chapters",
+                    "D2L launch requires a non-empty, duplicate-free chapter selection.",
+                    400,
+                )
+            if d2l_profile not in (None, D2L_PROFILE_ID):
+                raise RunControlError(
+                    "d2l_profile_invalid",
+                    f"D2L campaign requires profile {D2L_PROFILE_ID}.",
+                    400,
+                )
+            d2l_profile = D2L_PROFILE_ID
+            if allow_api and planned_run_id is None:
+                raise RunControlError(
+                    "planned_run_id_required",
+                    "D2L allow_api=true requires planned_run_id from estimate-preview.",
+                    403,
+                )
+            if planned_run_id is None:
+                planned_run_id = registry.new_run_id()
+            d2l_ids = d2l_component_ids(planned_run_id)
+            d2l_paths = d2l_campaign_paths(
+                jobs_root=jobs_root,
+                job_id=job_id,
+                run_id=planned_run_id,
+            )
+            d2l_preview = _d2l_preview_source(
+                job_root=(jobs_root / job_id).resolve(),
+                chapters=chapter_ids,
+                workflow_run_id=d2l_ids["workflow_run_id"],
+                component_run_id=d2l_ids["component_run_id"],
+                hard_total_token_cap=hard_total_token_cap,
+                reserved_cost_cap_usd=reserved_cost_cap_usd,
+                tool_root=tool_root,
+            )
+            d2l_launch_binding = _d2l_launch_binding_sha256(
+                job_id=job_id,
+                planned_run_id=planned_run_id,
+                workflow_run_id=d2l_ids["workflow_run_id"],
+                component_run_id=d2l_ids["component_run_id"],
+                preview=d2l_preview,
+            )
+            d2l_credentials = _d2l_credential_files(required=allow_api)
+            event_log_path = d2l_paths["event_log_path"]
+            run_dir = d2l_paths["campaign_root"]
+            manifest_path = d2l_paths["manifest_path"]
         if script == "run_translate" and allow_api and job_id:
             if planned_run_id is None:
                 raise RunControlError(
@@ -212,7 +298,7 @@ def create_run():
             db=db,
             source=body.get("source"),
             doc_id=body.get("doc_id"),
-            chapters=_body_list(body, "chapters"),
+            chapters=chapter_ids,
             configs=_body_list(body, "configs"),
             config=body.get("config"),
             config_file=body.get("config_file") or body.get("llm_config"),
@@ -239,6 +325,15 @@ def create_run():
             smoke_query=body.get("smoke_query"),
             event_log=str(event_log_path) if event_log_path else None,
             run_id=planned_run_id,
+            hard_total_token_cap=hard_total_token_cap,
+            reserved_cost_cap_usd=reserved_cost_cap_usd,
+            campaign_root=str(d2l_paths["campaign_root"]) if d2l_paths else None,
+            job_root=str((jobs_root / job_id).resolve()) if d2l_paths else None,
+            workflow_run_id=d2l_ids["workflow_run_id"] if d2l_ids else None,
+            component_run_id=d2l_ids["component_run_id"] if d2l_ids else None,
+            code_root=str(tool_root) if d2l_paths else None,
+            runtime_root=str(d2l_paths["runtime_root"]) if d2l_paths else None,
+            credential_files=d2l_credentials if d2l_paths else None,
         )
 
         expected_run_identity = {
@@ -264,10 +359,28 @@ def create_run():
             "manifest_path": str(manifest_path) if manifest_path else None,
             "attempt_index": None,
             "resumed_from": None,
+            "workflow_run_id": d2l_ids["workflow_run_id"] if d2l_ids else None,
+            "component_id": D2L_COMPONENT_ID if d2l_ids else None,
+            "component_run_id": d2l_ids["component_run_id"] if d2l_ids else None,
+            "component_attempt_id": 1 if d2l_ids else None,
+            "selected_chapter_ids": chapter_ids if d2l_ids else [],
+            "profile_id": d2l_profile if d2l_ids else None,
+            "source_binding_sha256": (
+                d2l_preview["source_binding_sha256"] if d2l_preview else None
+            ),
+            "campaign_config_sha256": (
+                d2l_preview["campaign_config_sha256"] if d2l_preview else None
+            ),
+            "campaign_seal_sha256": None,
+            "launch_binding_sha256": d2l_launch_binding,
         }
         existing = registry.get_run(planned_run_id) if planned_run_id else None
         if existing is not None:
             _validate_planned_run_reuse(existing, expected=expected_run_identity)
+            if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+                # An exact browser retry after a lost response must not need a
+                # second confirmation token or repeat any source/run write.
+                return ok(_d2l_launch_response(existing, reused=True))
 
         consumed_token = validate_api_gate(
             allow_api=allow_api,
@@ -275,6 +388,7 @@ def create_run():
             confirm_token=body.get("confirm_token"),
             job_id=job_id,
             argv=argv,
+            run_identity_digest=d2l_launch_binding,
         )
 
         if job_id and planned_run_id:
@@ -317,8 +431,24 @@ def create_run():
             event_log_path=str(event_log_path) if event_log_path else None,
             run_dir=str(run_dir) if run_dir else None,
             manifest_path=str(manifest_path) if manifest_path else None,
+            workflow_run_id=d2l_ids["workflow_run_id"] if d2l_ids else None,
+            component_id=D2L_COMPONENT_ID if d2l_ids else None,
+            component_run_id=d2l_ids["component_run_id"] if d2l_ids else None,
+            component_attempt_id=1 if d2l_ids else None,
+            selected_chapter_ids=chapter_ids if d2l_ids else None,
+            profile_id=d2l_profile if d2l_ids else None,
+            source_binding_sha256=(
+                d2l_preview["source_binding_sha256"] if d2l_preview else None
+            ),
+            campaign_config_sha256=(
+                d2l_preview["campaign_config_sha256"] if d2l_preview else None
+            ),
+            campaign_seal_sha256=None,
+            launch_binding_sha256=d2l_launch_binding,
         )
         spawn_run(registry, entry["run_id"])
+        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            return ok(_d2l_launch_response(entry, reused=False), status=201)
         return ok(
             {
                 "run_id": entry["run_id"],
@@ -334,9 +464,29 @@ def create_run():
         return error(exc.code, str(exc), exc.status)
 
 
+def _d2l_launch_response(entry: dict, *, reused: bool) -> dict:
+    """Return the public launch envelope without server filesystem authority."""
+
+    return {
+        "run_id": entry["run_id"],
+        "script": D2L_PROJECT_CAMPAIGN_SCRIPT,
+        "job_id": entry.get("job_id"),
+        "status": entry.get("status"),
+        "workflow_run_id": entry.get("workflow_run_id"),
+        "component_id": entry.get("component_id") or D2L_COMPONENT_ID,
+        "component_run_id": entry.get("component_run_id"),
+        "component_attempt_id": entry.get("component_attempt_id") or 1,
+        "selected_chapter_ids": list(entry.get("selected_chapter_ids") or []),
+        "profile_id": entry.get("profile_id") or D2L_PROFILE_ID,
+        "resumed_from": entry.get("resumed_from"),
+        "reused": bool(reused),
+    }
+
+
 @bp.get("/thesis/runs")
 def list_runs():
-    return ok(_get_registry().list_runs())
+    rows = _get_registry().list_runs()
+    return ok([_public_run_entry(row) for row in rows])
 
 
 @bp.get("/thesis/runs/prompt-preview")
@@ -377,20 +527,30 @@ def estimate_preview():
             job_id = validate_job_id(entry.get("job_id"), required=True)
             token = issue_estimate_token_for_argv(
                 job_id=job_id,
-                script="run_one_button",
+                script=entry.get("script") or "run_one_button",
                 argv=argv,
                 preview_kind="resume_estimate_only",
             )
+            script = entry.get("script") or "run_one_button"
             return ok(
                 {
                     "preview_kind": "resume_estimate_only",
                     "job_id": job_id,
-                    "script": "run_one_button",
+                    "script": script,
                     "resume_run_id": resume_run_id,
+                    "workflow_run_id": entry.get("workflow_run_id"),
+                    "component_id": entry.get("component_id"),
+                    "component_run_id": entry.get("component_run_id"),
+                    "component_attempt_id": entry.get("component_attempt_id"),
+                    "selected_chapter_ids": entry.get("selected_chapter_ids") or [],
                     "confirm_token": token,
                     "confirm_token_ttl_seconds": 30 * 60,
-                    "argv_preview": argv,
-                    "estimate_argv_preview": [*argv, "--estimate-only"],
+                    "argv_preview": _public_argv_preview(entry, argv),
+                    "estimate_argv_preview": (
+                        _public_argv_preview(entry, [*argv, "--estimate-only"])
+                        if script == D2L_PROJECT_CAMPAIGN_SCRIPT
+                        else [*argv, "--estimate-only"]
+                    ),
                     "estimate_by_stage": _manifest_estimates(entry),
                     "read_only": True,
                     "policy": {
@@ -416,6 +576,8 @@ def estimate_preview():
             workdb=request.args.get("workdb"),
             budget_cap_usd=_query_float("budget_cap_usd"),
             with_s0=_query_bool("with_s0"),
+            hard_total_token_cap=_query_int("hard_total_token_cap"),
+            reserved_cost_cap_usd=request.args.get("reserved_cost_cap_usd"),
             python_exe=_python_exe(),
             tool_root=_tool_root(),
             jobs_root=_jobs_root(),
@@ -430,7 +592,7 @@ def run_detail(run_id: str):
     entry = _get_registry().get_run(run_id)
     if entry is None:
         return error("run_not_found", f"Run {run_id} not found.", 404)
-    return ok(entry)
+    return ok(_public_run_entry(entry))
 
 
 @bp.get("/thesis/runs/<run_id>/log")
@@ -464,6 +626,35 @@ def run_events(run_id: str):
         return error(exc.code, exc.message, exc.status)
 
 
+@bp.get("/thesis/runs/<run_id>/component-snapshot")
+def d2l_component_snapshot(run_id: str):
+    """Return a validated D2L child package, never a reconstructed replay."""
+
+    try:
+        entry = _run_entry(run_id)
+        if entry.get("script") != D2L_PROJECT_CAMPAIGN_SCRIPT:
+            raise RunControlError(
+                "component_snapshot_not_applicable",
+                "The component snapshot endpoint is only available for D2L translation runs.",
+                400,
+            )
+        package = _load_d2l_component_package(entry, require_terminal=False)
+        return ok(
+            {
+                "schema": "thesis_component_snapshot_read_v1",
+                "run_id": run_id,
+                "validation": package["validation"],
+                "component_manifest": package["component_manifest"],
+                "events": package["events"],
+                "artifact_index": package["artifact_index"],
+                "scoring_handoff_fragment": package["scoring_handoff_fragment"],
+                "transition": package["transition"],
+            }
+        )
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+
+
 @bp.post("/thesis/runs/<run_id>/cancel")
 def cancel_thesis_run(run_id: str):
     try:
@@ -476,9 +667,12 @@ def cancel_thesis_run(run_id: str):
 @bp.post("/thesis/runs/<run_id>/pause")
 def pause_thesis_run(run_id: str):
     try:
+        entry = _run_entry(run_id)
         pause_path = _pause_file_for_run(run_id)
         pause_path.parent.mkdir(parents=True, exist_ok=True)
         pause_path.write_text("paused_by_user\n", encoding="utf-8", newline="\n")
+        if entry.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            return ok({"run_id": run_id, "paused": True})
         return ok({"run_id": run_id, "paused": True, "pause_file": str(pause_path)})
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
@@ -487,9 +681,12 @@ def pause_thesis_run(run_id: str):
 @bp.delete("/thesis/runs/<run_id>/pause")
 def unpause_thesis_run(run_id: str):
     try:
+        entry = _run_entry(run_id)
         pause_path = _pause_file_for_run(run_id)
         if pause_path.exists():
             pause_path.unlink()
+        if entry.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            return ok({"run_id": run_id, "paused": False})
         return ok({"run_id": run_id, "paused": False, "pause_file": str(pause_path)})
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
@@ -498,6 +695,18 @@ def unpause_thesis_run(run_id: str):
 @bp.get("/thesis/runs/<run_id>/manifest")
 def run_manifest(run_id: str):
     try:
+        entry = _run_entry(run_id)
+        if entry.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            # The D2L component manifest is readable only through the
+            # validator-backed snapshot endpoint.
+            projection = _d2l_component_projection(entry)
+            return ok(
+                {
+                    "run_id": run_id,
+                    "component": projection,
+                    "raw_component_manifest_withheld": True,
+                }
+            )
         manifest_path = _manifest_path_for_run(run_id)
         if not manifest_path.exists():
             raise RunControlError("manifest_not_found", f"Manifest not found for run {run_id}.", 404)
@@ -660,23 +869,72 @@ def resume_thesis_run(run_id: str):
         argv = build_resume_argv_from_entry(entry)
         job_id = validate_job_id(entry.get("job_id"), required=True)
         pause_path = _pause_file_from_entry(entry)
-        try:
-            manifest_attempt = int(manifest.get("attempt") or 0)
-            entry_attempt = int(entry.get("attempt_index") or 0)
-        except (TypeError, ValueError) as exc:
-            raise RunControlError(
-                "resume_attempt_invalid",
-                "Resume attempt metadata must contain integers.",
-                409,
-            ) from exc
-        attempt_index = max(manifest_attempt, entry_attempt) + 1
-        consumed_token = validate_api_gate(
-            allow_api=True,
-            script="run_one_button",
-            confirm_token=body.get("confirm_token"),
-            job_id=job_id,
-            argv=argv,
-        )
+        script = entry.get("script") or "run_one_button"
+        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            try:
+                from pipeline.prepass.d2l_console_replay_contract_v1 import (
+                    D2LConsoleContractError,
+                    validate_translation_component_package,
+                )
+
+                validation = validate_translation_component_package(
+                    manifest_path.parent,
+                    require_terminal=False,
+                )
+            except (D2LConsoleContractError, OSError, json.JSONDecodeError) as exc:
+                raise RunControlError(
+                    "d2l_component_not_ready",
+                    "D2L component package is not valid for Resume.",
+                    409,
+                ) from exc
+            if manifest.get("status") in {"succeeded", "failed", "cancelled"}:
+                raise RunControlError(
+                    "resume_terminal_run",
+                    "A terminal D2L component cannot be resumed.",
+                    409,
+                )
+            if manifest.get("status") != "paused" or not (manifest.get("resume") or {}).get(
+                "resume_available"
+            ):
+                raise RunControlError(
+                    "resume_not_available",
+                    "D2L component has no paused resumable checkpoint.",
+                    409,
+                )
+            try:
+                component_attempt = int(manifest.get("component_attempt_id") or 0)
+            except (TypeError, ValueError) as exc:
+                raise RunControlError(
+                    "resume_attempt_invalid",
+                    "D2L component attempt metadata must contain an integer.",
+                    409,
+                ) from exc
+            attempt_index = component_attempt + 1
+            consumed_token = validate_api_gate(
+                allow_api=bool(entry.get("allow_api")),
+                script=script,
+                confirm_token=body.get("confirm_token"),
+                job_id=job_id,
+                argv=argv,
+            )
+        else:
+            try:
+                manifest_attempt = int(manifest.get("attempt") or 0)
+                entry_attempt = int(entry.get("attempt_index") or 0)
+            except (TypeError, ValueError) as exc:
+                raise RunControlError(
+                    "resume_attempt_invalid",
+                    "Resume attempt metadata must contain integers.",
+                    409,
+                ) from exc
+            attempt_index = max(manifest_attempt, entry_attempt) + 1
+            consumed_token = validate_api_gate(
+                allow_api=True,
+                script="run_one_button",
+                confirm_token=body.get("confirm_token"),
+                job_id=job_id,
+                argv=argv,
+            )
         new_run_id = registry.new_run_id()
         freeze_managed_runtime_for_run(
             job_id,
@@ -687,14 +945,18 @@ def resume_thesis_run(run_id: str):
             pause_path.unlink()
         new_log_path = registry.runs_root / "run_logs" / f"{new_run_id}.log"
         new_entry = registry.create_run(
-            script="run_one_button",
+            script=script,
             argv=argv,
             cwd=entry.get("cwd"),
             job_id=job_id,
             experiment=entry.get("experiment"),
-            allow_api=True,
+            allow_api=bool(entry.get("allow_api")) if script == D2L_PROJECT_CAMPAIGN_SCRIPT else True,
             prompt_preview_token=consumed_token,
-            dry_run_policy="api_enabled_confirmed_resume",
+            dry_run_policy=(
+                "api_enabled_confirmed_resume"
+                if bool(entry.get("allow_api"))
+                else "preflight_only_resume"
+            ),
             event_log_path=entry.get("event_log_path"),
             run_dir=entry.get("run_dir"),
             manifest_path=entry.get("manifest_path"),
@@ -702,8 +964,20 @@ def resume_thesis_run(run_id: str):
             attempt_index=attempt_index,
             resumed_from=run_id,
             attempt_log_path=str(new_log_path),
+            workflow_run_id=entry.get("workflow_run_id"),
+            component_id=entry.get("component_id"),
+            component_run_id=entry.get("component_run_id"),
+            component_attempt_id=attempt_index if script == D2L_PROJECT_CAMPAIGN_SCRIPT else None,
+            selected_chapter_ids=entry.get("selected_chapter_ids"),
+            profile_id=entry.get("profile_id"),
+            source_binding_sha256=entry.get("source_binding_sha256"),
+            campaign_config_sha256=entry.get("campaign_config_sha256"),
+            campaign_seal_sha256=entry.get("campaign_seal_sha256"),
+            launch_binding_sha256=entry.get("launch_binding_sha256"),
         )
         spawn_run(registry, new_entry["run_id"])
+        if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            return ok(_d2l_launch_response(new_entry, reused=False), status=201)
         return ok(
             {
                 "run_id": new_entry["run_id"],
@@ -815,6 +1089,19 @@ def _body_float(body: dict, key: str) -> float | None:
         raise RunControlError("invalid_float", f"{key} must be a number.", 400) from exc
 
 
+def _body_int(body: dict, key: str) -> int | None:
+    value = body.get(key)
+    if value in (None, ""):
+        return None
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as exc:
+        raise RunControlError("invalid_int", f"{key} must be an integer.", 400) from exc
+    if parsed <= 0:
+        raise RunControlError("invalid_int", f"{key} must be positive.", 400)
+    return parsed
+
+
 def _query_bool(key: str) -> bool:
     value = request.args.get(key)
     if value in (None, ""):
@@ -841,6 +1128,220 @@ def _run_entry(run_id: str) -> dict:
     if entry is None:
         raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
     return entry
+
+
+def _public_argv_preview(entry: dict, argv: list[str]) -> list[str]:
+    if entry.get("script") != D2L_PROJECT_CAMPAIGN_SCRIPT:
+        return list(argv)
+    # The exact argv remains sealed in the server registry/token.  The browser
+    # receives only a non-authoritative shape and never receives source,
+    # runtime, campaign or credential paths.
+    return [
+        sys.executable,
+        "-m",
+        "pipeline.scripts.run_d2l_project_campaign",
+        "app-run",
+        "[server-managed job/campaign/source arguments]",
+    ]
+
+
+def _public_run_entry(entry: dict) -> dict:
+    row = dict(entry)
+    if row.get("script") != D2L_PROJECT_CAMPAIGN_SCRIPT:
+        return row
+    row["registry_status"] = row.get("status")
+    row["argv"] = None
+    row["cwd"] = None
+    row["run_dir"] = None
+    row["manifest_path"] = None
+    row["event_log_path"] = None
+    row["log_path"] = None
+    row["attempt_log_path"] = None
+    row["cache_path"] = None
+    row["prompt_preview_token"] = None
+    row["component_events_withheld"] = True
+    row["component"] = _d2l_component_projection(entry)
+    return row
+
+
+def _d2l_component_projection(entry: dict) -> dict:
+    """Return status-only component facts, withholding invalid package bytes."""
+
+    base = {
+        "component_id": entry.get("component_id") or D2L_COMPONENT_ID,
+        "registry_status": entry.get("status"),
+        "component_status": "not_ready",
+        "active_stage_id": None,
+        "component_attempt_id": entry.get("component_attempt_id"),
+        "resume": None,
+        "validation": {"state": "not_ready"},
+        "transition": {
+            "state": "not_ready",
+            "scoring_handoff_fragment": None,
+            "reserved_evaluation_component_run_id": None,
+        },
+    }
+    try:
+        package = _load_d2l_component_package(entry, require_terminal=False)
+    except RunControlError as exc:
+        base["validation"] = {
+            "state": "not_ready",
+            "code": exc.code,
+        }
+        return base
+    manifest = package["component_manifest"]
+    base.update(
+        {
+            "component_status": manifest.get("status"),
+            "active_stage_id": manifest.get("active_stage_id"),
+            "component_attempt_id": manifest.get("component_attempt_id"),
+            "resume": manifest.get("resume"),
+            "validation": {"state": "valid", **package["validation"]},
+            "transition": package["transition"],
+        }
+    )
+    return base
+
+
+def _component_relative_path(root: Path, raw_ref: str, label: str) -> Path:
+    ref = Path(str(raw_ref))
+    if ref.is_absolute() or ".." in ref.parts:
+        raise RunControlError("d2l_component_path_invalid", f"{label} is not package-relative.", 500)
+    candidate = (root / ref).resolve()
+    try:
+        candidate.relative_to(root.resolve())
+    except ValueError as exc:
+        raise RunControlError("d2l_component_path_invalid", f"{label} escapes the component package.", 500) from exc
+    return candidate
+
+
+def _load_d2l_component_package(
+    entry: dict,
+    *,
+    require_terminal: bool,
+) -> dict:
+    manifest_path = _manifest_path_for_entry(entry)
+    root = manifest_path.parent
+    if not manifest_path.is_file():
+        raise RunControlError(
+            "d2l_component_not_ready",
+            "D2L component package is not ready.",
+            409,
+        )
+    try:
+        from pipeline.prepass.d2l_console_replay_contract_v1 import (
+            D2LConsoleContractError,
+            canonical_sha256,
+            file_sha256,
+            validate_translation_component_package,
+        )
+
+        validation = validate_translation_component_package(
+            root,
+            require_terminal=require_terminal,
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        identity_pairs = (
+            ("workflow_run_id", entry.get("workflow_run_id")),
+            ("component_run_id", entry.get("component_run_id")),
+            ("component_attempt_id", entry.get("component_attempt_id")),
+        )
+        for field, registered in identity_pairs:
+            if registered is not None and manifest.get(field) != registered:
+                raise D2LConsoleContractError(
+                    f"component manifest {field} disagrees with the run registry"
+                )
+        registered_chapters = list(entry.get("selected_chapter_ids") or [])
+        if registered_chapters and manifest.get("selected_chapter_ids") != registered_chapters:
+            raise D2LConsoleContractError(
+                "component manifest chapter scope disagrees with the run registry"
+            )
+        registered_source_sha = entry.get("source_binding_sha256")
+        if (
+            registered_source_sha is not None
+            and canonical_sha256(manifest.get("source_binding")) != registered_source_sha
+        ):
+            raise D2LConsoleContractError(
+                "component manifest source binding disagrees with the run registry"
+            )
+        registered_config_sha = entry.get("campaign_config_sha256")
+        if (
+            registered_config_sha is not None
+            and manifest.get("config_sha256") != registered_config_sha
+        ):
+            raise D2LConsoleContractError(
+                "component manifest config hash disagrees with the run registry"
+            )
+        event_path = _component_relative_path(
+            root,
+            manifest["event_log_ref"],
+            "manifest.event_log_ref",
+        )
+        index_path = _component_relative_path(
+            root,
+            manifest["artifact_index_ref"],
+            "manifest.artifact_index_ref",
+        )
+        events: list[dict] = []
+        with event_path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                if line.strip():
+                    events.append(json.loads(line))
+        artifact_index = json.loads(index_path.read_text(encoding="utf-8"))
+        fragment = None
+        fragment_ref = manifest.get("scoring_handoff_fragment_ref")
+        if fragment_ref is not None:
+            fragment_path = _component_relative_path(
+                root,
+                fragment_ref,
+                "manifest.scoring_handoff_fragment_ref",
+            )
+            fragment = json.loads(fragment_path.read_text(encoding="utf-8"))
+        validation = {
+            **validation,
+            "event_log_sha256": file_sha256(event_path),
+            "component_status": manifest.get("status"),
+        }
+    except (D2LConsoleContractError, OSError, json.JSONDecodeError, KeyError) as exc:
+        raise RunControlError(
+            "d2l_component_not_ready",
+            "D2L component package failed its validator.",
+            409,
+        ) from exc
+
+    artifact_binding = None
+    if fragment is not None:
+        for item in artifact_index.get("artifacts", []):
+            if item.get("artifact_ref") == fragment.get("artifact_ref"):
+                artifact_binding = {
+                    "artifact_ref": item.get("artifact_ref"),
+                    "schema_version": item.get("schema_version"),
+                    "sha256": item.get("sha256"),
+                    "sha256_kind": item.get("sha256_kind"),
+                }
+                break
+    ready = (
+        manifest.get("status") == "succeeded"
+        and fragment is not None
+        and artifact_binding is not None
+    )
+    transition = {
+        "state": "ready_for_relay" if ready else "not_ready",
+        "scoring_handoff_fragment": artifact_binding,
+        "reserved_evaluation_component_run_id": (
+            fragment.get("reserved_evaluation_component_run_id")
+            if fragment is not None
+            else None
+        ),
+    }
+    return {
+        "validation": validation,
+        "component_manifest": manifest,
+        "events": events,
+        "artifact_index": artifact_index,
+        "scoring_handoff_fragment": fragment,
+        "transition": transition,
+    }
 
 
 def _manifest_path_for_run(run_id: str) -> Path:

@@ -8,6 +8,7 @@ from __future__ import annotations
 import importlib
 import json
 import os
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -220,6 +221,39 @@ def _write_full_run_report(run_dir: Path, report: dict) -> Path:
     return report_path
 
 
+def _fake_d2l_preview(chapters: list[str], *, token_cap: int = 6_000_000) -> dict:
+    return {
+        "project_id": "d2l_run-5-chapter",
+        "source_binding": {"schema": "canonical_source_binding_v1"},
+        "source_binding_sha256": "A" * 64,
+        "source_db_sha256": "1" * 64,
+        "selected_chapter_ids": list(chapters),
+        "selected_block_count": 2355,
+        "selected_universe_sha256": "2" * 64,
+        "chapter_counts": [
+            {"chapter_id": chapter_id, "block_count": 1, "channel_counts": {"semantic_text": 1}}
+            for chapter_id in chapters
+        ],
+        "channel_counts": {"semantic_text": len(chapters)},
+        "window_counts": {"b1": 2, "translator_per_arm": 2},
+        "forecast_total_tokens": 120_000,
+        "forecast_token_range": {"low": 90_000, "high": 180_000},
+        "forecast_status": "empirical_range",
+        "hard_total_token_cap": token_cap,
+        "theoretical_role_reserve_tokens": 500_000,
+        "hard_physical_attempt_cap": 100,
+        "campaign_config_sha256": "B" * 64,
+        "reserved_cost_cap_usd": None,
+        "semantic_roles": [],
+        "transport_sources": [],
+        "cost_usd": None,
+        "cost_basis": {"status": "unknown"},
+        "profile_id": "technical_d2l_v1",
+        "pipeline_version": "d2l_project_campaign_v2",
+        "code_revision": "c" * 40,
+    }
+
+
 def test_build_argv_uses_real_module_invocation_and_no_job_arg(tmp_path):
     from services.thesis_runs import build_argv
 
@@ -240,6 +274,107 @@ def test_build_argv_uses_real_module_invocation_and_no_job_arg(tmp_path):
     assert "--job" not in argv
     assert "--db" in argv
     assert "--preflight-only" not in argv
+
+
+def test_build_argv_d2l_campaign_uses_server_owned_app_run_boundary(tmp_path):
+    from services.thesis_runs import build_argv
+
+    argv = build_argv(
+        script="run_d2l_project_campaign",
+        python_exe=sys.executable,
+        job_id="jobA",
+        job_root=str(tmp_path / "jobA"),
+        campaign_root=str(tmp_path / "_work" / "d2l_campaign" / "jobA" / "run_d2l"),
+        workflow_run_id="wf_run_d2l",
+        component_run_id="tr_run_d2l",
+        chapters=["d2l_preliminaries", "d2l_linear_networks"],
+        hard_total_token_cap=6_000_000,
+        allow_api=False,
+        runtime_root=str(tmp_path / "_runtime" / "d2l" / "jobA" / "run_d2l"),
+    )
+
+    assert argv[:4] == [
+        sys.executable,
+        "-m",
+        "pipeline.scripts.run_d2l_project_campaign",
+        "app-run",
+    ]
+    assert argv.count("--chapter-id") == 2
+    assert "--dry-run" in argv
+    assert "--live" not in argv
+    assert "--db" not in argv
+
+
+def test_build_resume_argv_d2l_removes_complete_two_value_chapter_range(tmp_path):
+    from services.thesis_runs import build_resume_argv_from_entry
+
+    argv = [
+        sys.executable,
+        "-m",
+        "pipeline.scripts.run_d2l_project_campaign",
+        "app-run",
+        "--job-root",
+        str(tmp_path / "jobA"),
+        "--campaign-root",
+        str(tmp_path / "campaign"),
+        "--workflow-run-id",
+        "wf_run_range",
+        "--component-run-id",
+        "tr_run_range",
+        "--chapter-range",
+        "d2l_preliminaries",
+        "d2l_linear_networks",
+        "--dry-run",
+    ]
+
+    resumed = build_resume_argv_from_entry(
+        {
+            "script": "run_d2l_project_campaign",
+            "run_id": "run_range",
+            "argv": argv,
+        }
+    )
+
+    assert "--chapter-range" not in resumed
+    assert "d2l_preliminaries" not in resumed
+    assert "d2l_linear_networks" not in resumed
+    assert "--workflow-run-id" not in resumed
+    assert "--component-run-id" not in resumed
+    assert resumed[-1] == "--resume"
+
+
+def test_d2l_confirmation_token_binds_source_and_config_identity():
+    from services.thesis_runs import (
+        RunControlError,
+        issue_estimate_token_for_argv,
+        validate_api_gate,
+    )
+
+    argv = [
+        sys.executable,
+        "-m",
+        "pipeline.scripts.run_d2l_project_campaign",
+        "app-run",
+    ]
+    token = issue_estimate_token_for_argv(
+        job_id="jobA",
+        script="run_d2l_project_campaign",
+        argv=argv,
+        run_identity_digest="A" * 64,
+    )
+    try:
+        validate_api_gate(
+            allow_api=True,
+            script="run_d2l_project_campaign",
+            confirm_token=token,
+            job_id="jobA",
+            argv=argv,
+            run_identity_digest="B" * 64,
+        )
+    except RunControlError as exc:
+        assert exc.code == "confirm_token_identity_mismatch"
+    else:
+        raise AssertionError("D2L confirmation token accepted a different source/config identity")
 
 
 def test_run_translate_event_flags_are_part_of_argv(tmp_path):
@@ -2389,3 +2524,240 @@ def test_d2l_per_chapter_no_dead_d_branch(tmp_path):
     assert "B_S1" in data["per_chapter"]
     for key in data["per_chapter"]:
         assert key.startswith("B_")
+
+
+def test_route_d2l_launch_returns_component_identity_without_server_paths(
+    tmp_path,
+    monkeypatch,
+):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    spawned: list[str] = []
+    frozen: list[str] = []
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda _registry, run_id: spawned.append(run_id),
+    )
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, run_id, **_kwargs: frozen.append(run_id),
+    )
+    monkeypatch.setattr(
+        routes,
+        "_d2l_preview_source",
+        lambda **_kwargs: {
+            "source_binding_sha256": "A" * 64,
+            "campaign_config_sha256": "B" * 64,
+        },
+    )
+    monkeypatch.setattr(
+        routes,
+        "_d2l_launch_binding_sha256",
+        lambda **_kwargs: "C" * 64,
+    )
+
+    request_payload = {
+        "script": "run_d2l_project_campaign",
+        "job_id": "jobA",
+        "planned_run_id": "run_d2l_route",
+        "chapters": [
+            "d2l_preliminaries",
+            "d2l_linear_networks",
+        ],
+        "profile": "technical_d2l_v1",
+        "hard_total_token_cap": 6_000_000,
+        "allow_api": False,
+    }
+    response = client.post("/api/thesis/runs", json=request_payload)
+
+    assert response.status_code == 201
+    data = response.get_json()["data"]
+    assert data == {
+        "run_id": "run_d2l_route",
+        "script": "run_d2l_project_campaign",
+        "job_id": "jobA",
+        "status": "pending",
+        "workflow_run_id": "wf_run_d2l_route",
+        "component_id": "translation",
+        "component_run_id": "tr_run_d2l_route",
+        "component_attempt_id": 1,
+        "selected_chapter_ids": [
+            "d2l_preliminaries",
+            "d2l_linear_networks",
+        ],
+        "profile_id": "technical_d2l_v1",
+        "resumed_from": None,
+        "reused": False,
+    }
+    entry = registry.get_run("run_d2l_route")
+    assert entry is not None
+    assert entry["argv"][3] == "app-run"
+    assert entry["argv"].count("--chapter-id") == 2
+    assert "--db" not in entry["argv"]
+    assert "--dry-run" in entry["argv"]
+    assert spawned == ["run_d2l_route"]
+    assert frozen == ["run_d2l_route"]
+
+    detail = client.get("/api/thesis/runs/run_d2l_route").get_json()["data"]
+    assert detail["run_dir"] is None
+    assert detail["manifest_path"] is None
+    assert detail["event_log_path"] is None
+    assert detail["log_path"] is None
+    assert detail["prompt_preview_token"] is None
+    assert detail["registry_status"] == "pending"
+    assert detail["component"]["validation"]["state"] == "not_ready"
+    assert detail["component"]["transition"]["state"] == "not_ready"
+    listed = client.get("/api/thesis/runs").get_json()["data"]
+    listed_row = next(row for row in listed if row["run_id"] == "run_d2l_route")
+    assert listed_row["registry_status"] == "pending"
+    assert listed_row["run_dir"] is None
+    assert listed_row["component"]["component_status"] == "not_ready"
+    events = client.get("/api/thesis/runs/run_d2l_route/events").get_json()["data"]
+    assert events["events"] == []
+    assert events["event_log_path"] is None
+    assert events["component_events_withheld"] is True
+
+    reused = client.post("/api/thesis/runs", json=request_payload)
+    assert reused.status_code == 200
+    assert reused.get_json()["data"]["reused"] is True
+    assert spawned == ["run_d2l_route"]
+    assert frozen == ["run_d2l_route"]
+
+
+def test_route_d2l_live_estimate_launch_and_exact_retry_are_one_lineage(
+    tmp_path,
+    monkeypatch,
+):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    service = importlib.import_module("services.thesis_runs")
+    chapters = ["d2l_preliminaries", "d2l_linear_networks"]
+    preview = _fake_d2l_preview(chapters)
+    launch_binding = "C" * 64
+    spawned: list[str] = []
+    frozen: list[str] = []
+
+    for module in (service, routes):
+        monkeypatch.setattr(module, "_d2l_preview_source", lambda **_kwargs: preview)
+        monkeypatch.setattr(module, "_d2l_credential_files", lambda **_kwargs: {})
+        monkeypatch.setattr(
+            module,
+            "_d2l_launch_binding_sha256",
+            lambda **_kwargs: launch_binding,
+        )
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda _registry, run_id: spawned.append(run_id),
+    )
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, run_id, **_kwargs: frozen.append(run_id),
+    )
+
+    estimate = client.get(
+        "/api/thesis/runs/estimate-preview"
+        "?job_id=jobA"
+        "&script=run_d2l_project_campaign"
+        "&chapters=d2l_preliminaries,d2l_linear_networks"
+        "&profile=technical_d2l_v1"
+        "&hard_total_token_cap=6000000"
+        "&planned_run_id=run_d2l_live"
+    )
+    assert estimate.status_code == 200
+    estimate_data = estimate.get_json()["data"]
+    assert estimate_data["workflow_run_id"] == "wf_run_d2l_live"
+    assert estimate_data["component_run_id"] == "tr_run_d2l_live"
+    assert estimate_data["selected_chapter_ids"] == chapters
+    assert estimate_data["run_dir"] is None
+    assert estimate_data["manifest_path"] is None
+    assert estimate_data["event_log_path"] is None
+    assert estimate_data["cost_usd"] is None
+
+    request_payload = {
+        "script": "run_d2l_project_campaign",
+        "job_id": "jobA",
+        "planned_run_id": "run_d2l_live",
+        "chapters": chapters,
+        "profile": "technical_d2l_v1",
+        "hard_total_token_cap": 6_000_000,
+        "allow_api": True,
+        "confirm_token": estimate_data["confirm_token"],
+    }
+    launched = client.post("/api/thesis/runs", json=request_payload)
+    assert launched.status_code == 201
+    assert launched.get_json()["data"]["reused"] is False
+    assert spawned == ["run_d2l_live"]
+    assert frozen == ["run_d2l_live"]
+
+    retried = client.post("/api/thesis/runs", json=request_payload)
+    assert retried.status_code == 200
+    assert retried.get_json()["data"]["reused"] is True
+    assert spawned == ["run_d2l_live"]
+    assert frozen == ["run_d2l_live"]
+    assert registry.get_run("run_d2l_live")["prompt_preview_token"]
+
+
+def test_route_d2l_component_snapshot_relays_only_validated_package(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    fixture = (
+        TOOL_ROOT
+        / "pipeline"
+        / "tests"
+        / "fixtures"
+        / "d2l_console_replay_v1"
+        / "translation_component"
+    )
+    campaign_root = tmp_path / "_work" / "d2l_campaign" / "jobA" / "run_snapshot"
+    component_root = campaign_root / "component"
+    shutil.copytree(fixture, component_root)
+    manifest = json.loads(
+        (component_root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    from pipeline.prepass.d2l_console_replay_contract_v1 import canonical_sha256
+
+    registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_snapshot",
+        job_id="jobA",
+        run_dir=str(campaign_root),
+        manifest_path=str(component_root / "component_manifest.json"),
+        event_log_path=str(component_root / "events.jsonl"),
+        workflow_run_id=manifest["workflow_run_id"],
+        component_id="translation",
+        component_run_id=manifest["component_run_id"],
+        component_attempt_id=manifest["component_attempt_id"],
+        selected_chapter_ids=manifest["selected_chapter_ids"],
+        profile_id="technical_d2l_v1",
+        source_binding_sha256=canonical_sha256(manifest["source_binding"]),
+    )
+    registry.update_run("run_snapshot", status="done", exit_code=0)
+
+    response = client.get("/api/thesis/runs/run_snapshot/component-snapshot")
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["schema"] == "thesis_component_snapshot_read_v1"
+    assert data["validation"]["terminal_event"] == "run_done"
+    assert data["component_manifest"] == manifest
+    assert data["events"]
+    assert data["artifact_index"]["artifacts"]
+    assert data["scoring_handoff_fragment"]["schema"] == "scoring_handoff_fragment_v1"
+    assert data["transition"]["state"] == "ready_for_relay"
+
+    terminal_resume = client.post(
+        "/api/thesis/runs/run_snapshot/resume",
+        json={},
+    )
+    assert terminal_resume.status_code == 409
+    assert terminal_resume.get_json()["errors"][0]["code"] == "resume_terminal_run"
+
+    registry.update_run("run_snapshot", workflow_run_id="wf_foreign")
+    rejected = client.get("/api/thesis/runs/run_snapshot/component-snapshot")
+    assert rejected.status_code == 409
+    assert rejected.get_json()["errors"][0]["code"] == "d2l_component_not_ready"
+    assert rejected.get_json()["data"] is None

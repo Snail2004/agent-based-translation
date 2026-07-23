@@ -51,6 +51,7 @@ ALLOWLIST = frozenset(
         "score_consistency",
         "score_run",
         "run_one_button",
+        "run_d2l_project_campaign",
         "snapshot_runs",
     }
 )
@@ -66,6 +67,7 @@ API_CAPABLE_SCRIPTS = frozenset(
         "probe_pj",
         "score_pj",
         "run_one_button",
+        "run_d2l_project_campaign",
     }
 )
 
@@ -75,6 +77,7 @@ PREFLIGHT_ONLY_FLAGS = {
     "run_experiment_cascade": "--preflight-only",
     "builder_v2_reelection": "--preflight-only",
     "run_one_button": "--estimate-only",
+    "run_d2l_project_campaign": "--dry-run",
 }
 
 PROMPT_PREVIEW_SUPPORTED = frozenset({"run_translate"})
@@ -84,8 +87,13 @@ ESTIMATE_PREVIEW_SUPPORTED = frozenset(
         "run_experiment_cascade",
         "builder_v2_reelection",
         "run_one_button",
+        "run_d2l_project_campaign",
     }
 )
+
+D2L_PROJECT_CAMPAIGN_SCRIPT = "run_d2l_project_campaign"
+D2L_COMPONENT_ID = "translation"
+D2L_PROFILE_ID = "technical_d2l_v1"
 
 
 class RunControlError(Exception):
@@ -104,6 +112,7 @@ class PreviewToken:
     argv_digest: str
     issued_at: float
     preview_kind: str
+    run_identity_digest: str | None = None
 
 
 _active_tokens: dict[str, PreviewToken] = {}
@@ -192,6 +201,16 @@ class RunRegistry:
         attempt_log_path: str | None = None,
         run_dir: str | None = None,
         manifest_path: str | None = None,
+        workflow_run_id: str | None = None,
+        component_id: str | None = None,
+        component_run_id: str | None = None,
+        component_attempt_id: int | None = None,
+        selected_chapter_ids: list[str] | None = None,
+        profile_id: str | None = None,
+        source_binding_sha256: str | None = None,
+        campaign_config_sha256: str | None = None,
+        campaign_seal_sha256: str | None = None,
+        launch_binding_sha256: str | None = None,
     ) -> dict[str, Any]:
         run_id = validate_run_id(run_id) if run_id else self.new_run_id()
         now = _utc_now()
@@ -218,6 +237,16 @@ class RunRegistry:
             "attempt_index": attempt_index,
             "resumed_from": resumed_from,
             "attempt_log_path": attempt_log_path,
+            "workflow_run_id": workflow_run_id,
+            "component_id": component_id,
+            "component_run_id": component_run_id,
+            "component_attempt_id": component_attempt_id,
+            "selected_chapter_ids": list(selected_chapter_ids or []),
+            "profile_id": profile_id,
+            "source_binding_sha256": source_binding_sha256,
+            "campaign_config_sha256": campaign_config_sha256,
+            "campaign_seal_sha256": campaign_seal_sha256,
+            "launch_binding_sha256": launch_binding_sha256,
             "status": "pending",
             "pid": None,
             "started_at": now,
@@ -264,6 +293,16 @@ class RunRegistry:
                     "manifest_path": r.get("manifest_path"),
                     "attempt_index": r.get("attempt_index"),
                     "resumed_from": r.get("resumed_from"),
+                    "workflow_run_id": r.get("workflow_run_id"),
+                    "component_id": r.get("component_id"),
+                    "component_run_id": r.get("component_run_id"),
+                    "component_attempt_id": r.get("component_attempt_id"),
+                    "selected_chapter_ids": r.get("selected_chapter_ids") or [],
+                    "profile_id": r.get("profile_id"),
+                    "source_binding_sha256": r.get("source_binding_sha256"),
+                    "campaign_config_sha256": r.get("campaign_config_sha256"),
+                    "campaign_seal_sha256": r.get("campaign_seal_sha256"),
+                    "launch_binding_sha256": r.get("launch_binding_sha256"),
                 }
                 for r in self._runs.values()
             ]
@@ -365,6 +404,250 @@ def one_button_paths(*, jobs_root: Path, job_id: str, run_id: str) -> dict[str, 
     }
 
 
+def d2l_campaign_paths(*, jobs_root: Path, job_id: str, run_id: str) -> dict[str, Path]:
+    """Return server-owned paths for one D2L component lineage.
+
+    The source job remains outside this tree and is read by the campaign
+    preparer.  The campaign root is the only writable authority for the
+    component package, checkpoint and isolated work database.
+    """
+
+    job = validate_job_id(job_id, required=True)
+    run = validate_run_id(run_id, required=True)
+    root = Path(jobs_root).resolve()
+    campaign_root = (root / "_work" / "d2l_campaign" / job / run).resolve()
+    values = {
+        "campaign_root": campaign_root,
+        "component_root": campaign_root / "component",
+        "manifest_path": campaign_root / "component" / "component_manifest.json",
+        "event_log_path": campaign_root / "component" / "events.jsonl",
+        "runtime_root": root / "_runtime" / "d2l" / job / run,
+    }
+    for candidate in values.values():
+        try:
+            candidate.relative_to(root)
+        except ValueError as exc:
+            raise RunControlError(
+                "invalid_d2l_campaign_path",
+                "Resolved D2L campaign path is outside THESIS_JOBS_ROOT.",
+                500,
+            ) from exc
+    return values
+
+
+def d2l_component_ids(run_id: str) -> dict[str, str]:
+    run = validate_run_id(run_id, required=True)
+    return {
+        "workflow_run_id": f"wf_{run}",
+        "component_id": D2L_COMPONENT_ID,
+        "component_run_id": f"tr_{run}",
+        "reserved_evaluation_component_run_id": f"eval_{run}",
+    }
+
+
+def _d2l_credential_files(*, required: bool) -> dict[str, Path]:
+    """Resolve external credential *paths* without reading their contents."""
+
+    bindings = (
+        (
+            "credential.shopaikey_gemini_proxy_v1",
+            "THESIS_D2L_SHOPAPI_CREDENTIAL_FILE",
+        ),
+        ("credential.modelapi_shared_v1", "THESIS_D2L_MODELAPI_CREDENTIAL_FILE"),
+    )
+    result: dict[str, Path] = {}
+    for credential_ref, env_name in bindings:
+        raw = os.environ.get(env_name, "").strip()
+        if not raw:
+            if required:
+                raise RunControlError(
+                    "d2l_credential_path_missing",
+                    f"{env_name} is required for a live D2L campaign.",
+                    503,
+                )
+            continue
+        path = Path(raw).expanduser()
+        if not path.is_absolute() or not path.is_file():
+            raise RunControlError(
+                "d2l_credential_path_invalid",
+                f"{env_name} must name an existing absolute credential file.",
+                503,
+            )
+        result[credential_ref] = path.resolve()
+    if required and len(result) != len(bindings):
+        raise RunControlError(
+            "d2l_credential_path_incomplete",
+            "Live D2L credential bindings do not cover the sealed sources.",
+            503,
+        )
+    return result
+
+
+def _d2l_code_revision(tool_root: Path) -> str:
+    from pipeline.prepass.d2l_project_campaign_v2 import resolve_code_revision
+
+    try:
+        return resolve_code_revision(tool_root, require_clean=True)
+    except Exception as exc:
+        raise RunControlError(
+            "d2l_code_not_sealable",
+            "D2L live campaign requires a clean committed runtime tree.",
+            409,
+        ) from exc
+
+
+def _d2l_preview_source(
+    *,
+    job_root: Path,
+    chapters: list[str],
+    workflow_run_id: str,
+    component_run_id: str,
+    hard_total_token_cap: int | None,
+    reserved_cost_cap_usd: str | None,
+    tool_root: Path,
+) -> dict[str, Any]:
+    """Build a read-only D2L forecast from the canonical project package."""
+
+    from pipeline.prepass.d2l_project_campaign_v2 import (
+        build_campaign_config,
+        build_selected_universe,
+        load_project,
+        select_chapters,
+    )
+    from pipeline.prepass.d2l_console_replay_contract_v1 import canonical_sha256
+
+    try:
+        project = load_project(job_root, verify_tree=True)
+        selection_mode, selected = select_chapters(
+            project,
+            chapter_ids=chapters,
+        )
+        universe = build_selected_universe(
+            project,
+            selection_mode=selection_mode,
+            selected_chapter_ids=selected,
+        )
+        revision = _d2l_code_revision(tool_root)
+        config = build_campaign_config(
+            project,
+            universe,
+            workflow_run_id=workflow_run_id,
+            component_run_id=component_run_id,
+            code_revision=revision,
+            hard_total_token_cap=hard_total_token_cap,
+            reserved_cost_cap_usd=reserved_cost_cap_usd,
+        )
+    except RunControlError:
+        raise
+    except Exception as exc:
+        raise RunControlError(
+            "d2l_preview_failed",
+            f"D2L campaign preview could not validate the source package: {exc}",
+            409,
+        ) from exc
+
+    limits = config["limits"]
+    chapter_counts = []
+    for chapter in universe["chapters"]:
+        chapter_counts.append(
+            {
+                "chapter_id": chapter["chapter_id"],
+                "block_count": sum(
+                    int(value)
+                    for value in (chapter.get("channel_counts") or {}).values()
+                ),
+                "channel_counts": dict(chapter.get("channel_counts") or {}),
+            }
+        )
+    return {
+        "project_id": project.manifest["project_id"],
+        "source_binding": project.source_binding,
+        "source_binding_sha256": canonical_sha256(project.source_binding),
+        "source_db_sha256": project.source_db_sha256,
+        "selected_chapter_ids": list(selected),
+        "selected_block_count": int(universe["block_count"]),
+        "selected_universe_sha256": universe["integrity"]["payload_sha256"],
+        "chapter_counts": chapter_counts,
+        "channel_counts": dict(universe["channel_counts"]),
+        "window_counts": {
+            "b1": universe["window_estimates"]["b1"]["window_count"],
+            "translator_per_arm": universe["window_estimates"]["translator"]["window_count"],
+        },
+        "forecast_total_tokens": limits["forecast_total_tokens"],
+        "forecast_token_range": dict(limits["forecast_token_range"]),
+        "forecast_status": limits["forecast_status"],
+        "hard_total_token_cap": limits["hard_total_token_cap"],
+        "theoretical_role_reserve_tokens": limits["theoretical_role_reserve_tokens"],
+        "hard_physical_attempt_cap": limits["hard_physical_attempt_cap"],
+        "campaign_config_sha256": config["integrity"]["payload_sha256"],
+        "reserved_cost_cap_usd": limits["reserved_cost_cap_usd"],
+        "semantic_roles": [
+            {
+                "role_id": row["role_id"],
+                "stage_id": row["stage_id"],
+                "model_id": row["model_id"],
+                "source_id": row["source_id"],
+                "prompt_id": row["prompt_id"],
+                "max_input_tokens": row["max_input_tokens"],
+                "max_output_tokens": row["max_output_tokens"],
+                "semantic_retry_cap": row["semantic_retry_cap"],
+            }
+            for row in config["semantic_roles"]
+        ],
+        "transport_sources": [
+            {
+                "source_id": row["source_id"],
+                "source_revision": row["source_revision"],
+                "credential_family": row["credential_family"],
+                "physical_quota_bucket_id": row["physical_quota_bucket_id"],
+                "supported_model_ids": list(row["supported_model_ids"]),
+                "output_mode": row["output_mode"],
+            }
+            for row in config["transport_sources"].values()
+        ],
+        "cost_usd": None,
+        "cost_basis": limits["cost_basis"],
+        "profile_id": config["profile_id"],
+        "pipeline_version": config["pipeline_version"],
+        "code_revision": revision,
+    }
+
+
+def _d2l_launch_binding_sha256(
+    *,
+    job_id: str,
+    planned_run_id: str,
+    workflow_run_id: str,
+    component_run_id: str,
+    preview: dict[str, Any],
+) -> str:
+    import hashlib
+
+    payload = {
+        "schema": "d2l_app_launch_binding_v1",
+        "job_id": validate_job_id(job_id, required=True),
+        "planned_run_id": validate_run_id(planned_run_id, required=True),
+        "workflow_run_id": workflow_run_id,
+        "component_run_id": component_run_id,
+        "profile_id": preview["profile_id"],
+        "selected_chapter_ids": list(preview["selected_chapter_ids"]),
+        "source_binding_sha256": preview["source_binding_sha256"],
+        "source_db_sha256": preview["source_db_sha256"],
+        "selected_universe_sha256": preview["selected_universe_sha256"],
+        "campaign_config_sha256": preview["campaign_config_sha256"],
+        "code_revision": preview["code_revision"],
+        "hard_total_token_cap": preview["hard_total_token_cap"],
+        "reserved_cost_cap_usd": preview["reserved_cost_cap_usd"],
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest().upper()
+
+
 def validate_api_gate(
     *,
     allow_api: bool,
@@ -372,6 +655,7 @@ def validate_api_gate(
     confirm_token: str | None,
     job_id: str | None,
     argv: list[str],
+    run_identity_digest: str | None = None,
 ) -> str | None:
     """Enforce the cost gate.
 
@@ -411,6 +695,12 @@ def validate_api_gate(
                 "confirm_token does not match this job/script/argv.",
                 403,
             )
+        if issued.run_identity_digest != run_identity_digest:
+            raise RunControlError(
+                "confirm_token_identity_mismatch",
+                "confirm_token does not match the sealed source/config/run identity.",
+                403,
+            )
         _active_tokens.pop(token, None)
     return token
 
@@ -421,12 +711,32 @@ def build_resume_argv_from_entry(entry: dict[str, Any]) -> list[str]:
     Resume is a real run, not an estimate replay.  Callers must pass the
     returned argv through validate_api_gate when allow_api=true.
     """
-    if entry.get("script") != "run_one_button":
-        raise RunControlError("resume_not_supported", "Only run_one_button runs can be resumed.", 400)
+    script = entry.get("script")
+    if script not in {"run_one_button", D2L_PROJECT_CAMPAIGN_SCRIPT}:
+        raise RunControlError(
+            "resume_not_supported",
+            "This script does not expose a sealed resume contract.",
+            400,
+        )
     run_id = validate_run_id(str(entry.get("run_id") or ""), required=True)
     argv = [str(item) for item in (entry.get("argv") or [])]
     if not argv:
         raise RunControlError("resume_argv_missing", "Original run argv is missing.", 500)
+    if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        cleaned = _strip_flags_with_values(
+            argv,
+            value_flags={
+                "--workflow-run-id",
+                "--component-run-id",
+                "--chapter-id",
+                "--chapter-range",
+            },
+            bare_flags={"--resume", "--all-chapters"},
+            value_flag_counts={"--chapter-range": 2},
+        )
+        cleaned.append("--resume")
+        validate_args(cleaned[3:])
+        return cleaned
     cleaned = _strip_flags_with_values(
         argv,
         value_flags={"--run-id", "--attempt-id", "--resume"},
@@ -443,10 +753,17 @@ def issue_estimate_token_for_argv(
     script: str,
     argv: list[str],
     preview_kind: str = "estimate_only",
+    run_identity_digest: str | None = None,
 ) -> str:
     job = validate_job_id(job_id, required=True)
     validate_script(script)
-    return _issue_preview_token(job_id=job, script=script, argv=argv, preview_kind=preview_kind)
+    return _issue_preview_token(
+        job_id=job,
+        script=script,
+        argv=argv,
+        preview_kind=preview_kind,
+        run_identity_digest=run_identity_digest,
+    )
 
 
 def generate_prompt_preview(
@@ -566,6 +883,8 @@ def generate_estimate_preview(
     workdb: str | None = None,
     budget_cap_usd: float | None = None,
     with_s0: bool = False,
+    hard_total_token_cap: int | None = None,
+    reserved_cost_cap_usd: str | None = None,
     python_exe: str | None = None,
     tool_root: Path | None = None,
     jobs_root: Path | None = None,
@@ -586,12 +905,48 @@ def generate_estimate_preview(
     manifest_path = None
     run_dir = None
     resolved_workdb = workdb
+    d2l_forecast: dict[str, Any] | None = None
+    d2l_ids: dict[str, str] | None = None
+    d2l_credentials: dict[str, Path] = {}
+    d2l_paths: dict[str, Path] | None = None
+    d2l_launch_binding: str | None = None
     if script == "run_one_button":
         paths = one_button_paths(jobs_root=jobs, job_id=job, run_id=planned)
         event_log_path = paths["event_log_path"]
         run_dir = paths["run_dir"]
         manifest_path = paths["manifest_path"]
         resolved_workdb = resolved_workdb or str(paths["workdb"])
+    elif script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        chapters_list = _list(chapters)
+        if not chapters_list:
+            raise RunControlError("chapters_required", "chapters are required for a D2L campaign.", 400)
+        if len(set(chapters_list)) != len(chapters_list):
+            raise RunControlError("duplicate_chapters", "D2L chapter selection contains duplicates.", 400)
+        if profile not in (None, "", D2L_PROFILE_ID):
+            raise RunControlError(
+                "d2l_profile_invalid",
+                f"D2L campaign requires profile {D2L_PROFILE_ID}.",
+                400,
+            )
+        d2l_ids = d2l_component_ids(planned)
+        d2l_paths = d2l_campaign_paths(jobs_root=jobs, job_id=job, run_id=planned)
+        d2l_forecast = _d2l_preview_source(
+            job_root=(jobs / job).resolve(),
+            chapters=chapters_list,
+            workflow_run_id=d2l_ids["workflow_run_id"],
+            component_run_id=d2l_ids["component_run_id"],
+            hard_total_token_cap=hard_total_token_cap,
+            reserved_cost_cap_usd=reserved_cost_cap_usd,
+            tool_root=tool,
+        )
+        d2l_credentials = _d2l_credential_files(required=True)
+        d2l_launch_binding = _d2l_launch_binding_sha256(
+            job_id=job,
+            planned_run_id=planned,
+            workflow_run_id=d2l_ids["workflow_run_id"],
+            component_run_id=d2l_ids["component_run_id"],
+            preview=d2l_forecast,
+        )
     common_kwargs = dict(
         script=script,
         python_exe=python_exe,
@@ -611,7 +966,16 @@ def generate_estimate_preview(
         workdb=resolved_workdb,
         budget_cap_usd=budget_cap_usd,
         with_s0=with_s0,
-    )
+        hard_total_token_cap=hard_total_token_cap,
+        reserved_cost_cap_usd=reserved_cost_cap_usd,
+        campaign_root=str(d2l_paths["campaign_root"]) if d2l_paths else None,
+        job_root=str((jobs / job).resolve()) if d2l_paths else None,
+        workflow_run_id=d2l_ids["workflow_run_id"] if d2l_ids else None,
+        component_run_id=d2l_ids["component_run_id"] if d2l_ids else None,
+        code_root=str(tool) if d2l_paths else None,
+        runtime_root=str(d2l_paths["runtime_root"]) if d2l_paths else None,
+        credential_files=d2l_credentials if d2l_paths else None,
+        )
     estimate_argv = build_argv(allow_api=False, **common_kwargs)
     run_argv = build_argv(allow_api=True, **common_kwargs)
     token = _issue_preview_token(
@@ -619,8 +983,9 @@ def generate_estimate_preview(
         script=script,
         argv=run_argv,
         preview_kind="estimate_only",
+        run_identity_digest=d2l_launch_binding,
     )
-    return {
+    response = {
         "preview_kind": "estimate_only",
         "job_id": job,
         "script": script,
@@ -645,9 +1010,72 @@ def generate_estimate_preview(
             "orchestrator_note": "One-button orchestrator consumes this interface in a later step.",
         },
     }
+    if d2l_forecast is not None:
+        # Keep server-managed filesystem roots out of the browser contract.
+        public_argv = [
+            python_exe or sys.executable,
+            "-m",
+            f"pipeline.scripts.{D2L_PROJECT_CAMPAIGN_SCRIPT}",
+            "app-run",
+            "[server-managed campaign/source/credential arguments]",
+        ]
+        response.update(
+            {
+                "workflow_run_id": d2l_ids["workflow_run_id"],
+                "component_id": D2L_COMPONENT_ID,
+                "component_run_id": d2l_ids["component_run_id"],
+                "component_attempt_id": 1,
+                "selected_chapter_ids": d2l_forecast["selected_chapter_ids"],
+                "source_binding": d2l_forecast["source_binding"],
+                "source_binding_sha256": d2l_forecast["source_binding_sha256"],
+                "source_db_sha256": d2l_forecast["source_db_sha256"],
+                "selected_universe_sha256": d2l_forecast["selected_universe_sha256"],
+                "selected_block_count": d2l_forecast["selected_block_count"],
+                "chapter_counts": d2l_forecast["chapter_counts"],
+                "channel_counts": d2l_forecast["channel_counts"],
+                "window_counts": d2l_forecast["window_counts"],
+                "forecast_total_tokens": d2l_forecast["forecast_total_tokens"],
+                "forecast_token_range": d2l_forecast["forecast_token_range"],
+                "forecast_status": d2l_forecast["forecast_status"],
+                "hard_total_token_cap": d2l_forecast["hard_total_token_cap"],
+                "theoretical_role_reserve_tokens": d2l_forecast["theoretical_role_reserve_tokens"],
+                "hard_physical_attempt_cap": d2l_forecast["hard_physical_attempt_cap"],
+                "campaign_config_sha256": d2l_forecast["campaign_config_sha256"],
+                "reserved_cost_cap_usd": d2l_forecast["reserved_cost_cap_usd"],
+                "semantic_roles": d2l_forecast["semantic_roles"],
+                "transport_sources": d2l_forecast["transport_sources"],
+                "cost_usd": None,
+                "cost_basis": d2l_forecast["cost_basis"],
+                "profile_id": d2l_forecast["profile_id"],
+                "pipeline_version": d2l_forecast["pipeline_version"],
+                "code_revision": d2l_forecast["code_revision"],
+                "launch_binding_sha256": d2l_launch_binding,
+                "run_dir": None,
+                "manifest_path": None,
+                "event_log_path": None,
+                "estimate_argv_preview": public_argv,
+                "argv_preview": public_argv,
+                "estimate_by_stage": [
+                    {
+                        "stage_id": "campaign",
+                        "estimated_tokens": d2l_forecast["forecast_total_tokens"],
+                        "cost_usd": None,
+                        "cost_status": "unknown",
+                    }
+                ],
+            }
+        )
+    return response
 
 
-def _issue_preview_token(*, job_id: str, script: str, argv: list[str], preview_kind: str) -> str:
+def _issue_preview_token(
+    *,
+    job_id: str,
+    script: str,
+    argv: list[str],
+    preview_kind: str,
+    run_identity_digest: str | None = None,
+) -> str:
     token = uuid.uuid4().hex
     issued = PreviewToken(
         token=token,
@@ -656,6 +1084,7 @@ def _issue_preview_token(*, job_id: str, script: str, argv: list[str], preview_k
         argv_digest=_argv_digest(argv),
         issued_at=time.time(),
         preview_kind=preview_kind,
+        run_identity_digest=run_identity_digest,
     )
     with _token_lock:
         _active_tokens[token] = issued
@@ -691,7 +1120,18 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
                 current = registry.get_run(run_id) or {}
                 if current.get("status") == "cancelled":
                     return
-                status = "done" if proc.returncode == 0 else "failed"
+                if current.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+                    component_status = _read_d2l_component_status(current)
+                    if component_status in {"succeeded", "paused"}:
+                        status = "done" if proc.returncode == 0 else "failed"
+                    elif component_status in {"failed", "cancelled"}:
+                        status = "failed"
+                    else:
+                        # A successful process without a valid component
+                        # manifest is not a successful pipeline run.
+                        status = "error" if proc.returncode == 0 else "failed"
+                else:
+                    status = "done" if proc.returncode == 0 else "failed"
                 registry.update_run(
                     run_id,
                     status=status,
@@ -712,6 +1152,18 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
                 pass
 
     threading.Thread(target=_worker, daemon=True, name=f"run-{run_id}").start()
+
+
+def _read_d2l_component_status(entry: dict[str, Any]) -> str | None:
+    raw_path = entry.get("manifest_path")
+    if not raw_path:
+        return None
+    try:
+        payload = json.loads(Path(str(raw_path)).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    value = payload.get("status")
+    return str(value) if isinstance(value, str) else None
 
 
 def cancel_run(registry: RunRegistry, run_id: str) -> dict[str, Any]:
@@ -798,6 +1250,24 @@ def read_events(
         "max_bytes": safe_max_bytes,
     }
 
+    if entry.get("script") == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        # D2L child events belong to the component package.  The Console
+        # consumes the neutral parent replay stream; exposing this stream here
+        # would make the browser a second relay and duplicate lifecycle facts.
+        return {
+            "run_id": run_id,
+            "events": [],
+            "offset": safe_offset,
+            "truncated": False,
+            "partial_line": False,
+            "max_bytes": safe_max_bytes,
+            "running": entry["status"] == "running",
+            "status": entry["status"],
+            "exit_code": entry["exit_code"],
+            "event_log_path": None,
+            "component_events_withheld": True,
+        }
+
     if raw_path:
         event_path = Path(str(raw_path)).resolve()
         try:
@@ -859,6 +1329,16 @@ def build_argv(
     workdb: str | None = None,
     budget_cap_usd: float | None = None,
     with_s0: bool = False,
+    hard_total_token_cap: int | None = None,
+    reserved_cost_cap_usd: str | None = None,
+    campaign_root: str | None = None,
+    job_root: str | None = None,
+    workflow_run_id: str | None = None,
+    component_run_id: str | None = None,
+    code_root: str | None = None,
+    runtime_root: str | None = None,
+    credential_files: dict[str, Path] | None = None,
+    resume: bool = False,
 ) -> list[str]:
     script = validate_script(script)
     exe = python_exe or sys.executable
@@ -874,6 +1354,10 @@ def build_argv(
                 400,
             )
     else:
+        flag = None
+    # The D2L campaign has an explicit mutually-exclusive --dry-run/--live
+    # mode.  Do not append a second generic --dry-run flag below.
+    if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
         flag = None
 
     extra = _list(extra_args)
@@ -1001,6 +1485,32 @@ def build_argv(
             argv += ["--event-log", str(event_log)]
         if run_id:
             argv += ["--run-id", str(validate_run_id(run_id, required=True))]
+    elif script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+        argv.append("app-run")
+        _append_required(argv, "--job-root", job_root, "job_root")
+        _append_required(argv, "--campaign-root", campaign_root, "campaign_root")
+        if not resume:
+            _append_required(argv, "--workflow-run-id", workflow_run_id, "workflow_run_id")
+            _append_required(argv, "--component-run-id", component_run_id, "component_run_id")
+            chapter_rows = _list(chapters)
+            if not chapter_rows:
+                raise RunControlError("missing_arg", "chapters is required for this script.", 400)
+            for chapter_id in chapter_rows:
+                argv += ["--chapter-id", chapter_id]
+        if hard_total_token_cap is not None:
+            argv += ["--hard-total-token-cap", str(int(hard_total_token_cap))]
+        if reserved_cost_cap_usd is not None:
+            argv += ["--reserved-cost-cap-usd", str(reserved_cost_cap_usd)]
+        if code_root:
+            argv += ["--code-root", str(code_root)]
+        if resume:
+            argv.append("--resume")
+        argv.append("--live" if allow_api else "--dry-run")
+        if runtime_root:
+            argv += ["--runtime-root", str(runtime_root)]
+        if allow_api:
+            for credential_ref, path in sorted((credential_files or {}).items()):
+                argv += ["--credential-file", f"{credential_ref}={Path(path).resolve()}"]
     elif script in {
         "run_experiment_cascade",
         "builder_v2_reelection",
@@ -1213,20 +1723,22 @@ def _strip_flags_with_values(
     *,
     value_flags: set[str],
     bare_flags: set[str],
+    value_flag_counts: dict[str, int] | None = None,
 ) -> list[str]:
     cleaned: list[str] = []
-    skip_next = False
-    for item in argv:
-        value = str(item)
-        if skip_next:
-            skip_next = False
-            continue
-        if value in value_flags:
-            skip_next = True
+    counts = {flag: 1 for flag in value_flags}
+    counts.update(value_flag_counts or {})
+    index = 0
+    while index < len(argv):
+        value = str(argv[index])
+        if value in counts:
+            index += 1 + counts[value]
             continue
         if value in bare_flags:
+            index += 1
             continue
         cleaned.append(value)
+        index += 1
     return cleaned
 
 
@@ -1246,7 +1758,12 @@ def _redact_argv(argv: list[str]) -> list[str]:
             skip_next = False
             continue
         redacted.append(str(item))
-        if str(item).lower() in {"--api-key", "--key", "--token"}:
+        if str(item).lower() in {
+            "--api-key",
+            "--key",
+            "--token",
+            "--credential-file",
+        }:
             skip_next = True
     return redacted
 
