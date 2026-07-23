@@ -51,7 +51,7 @@ __all__ = [
 
 
 BENCHMARK_RUN_REPORT_SCHEMA_ID = "EvaluationBenchmarkRunReportV1"
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 _SELF_HASH_PATH = ("integrity", "report_sha256")
 _USAGE_NUMERIC_FIELDS = (
     "request_count",
@@ -67,7 +67,6 @@ _USAGE_NUMERIC_FIELDS = (
 _POLICY = CanonicalPolicy(
     set_like_paths=frozenset(
         {
-            ("identity", "selected_arm_ids"),
             ("aggregates", "*", "arm_values"),
             ("aggregates", "*", "source_job_ids"),
             ("claim", "reason_codes"),
@@ -75,6 +74,9 @@ _POLICY = CanonicalPolicy(
     ),
     semantic_sequence_paths=frozenset(
         {
+            ("identity", "selected_chapter_ids"),
+            ("identity", "selected_arm_ids"),
+            ("identity", "selected_scorer_ids"),
             ("chapter_runs",),
             ("aggregates",),
             ("aggregates", "*", "comparison_pair_arm_ids"),
@@ -96,6 +98,8 @@ def compose_benchmark_run_report_v1(
     evaluation_profile_id: str,
     policy_profile_id: str | None,
     scoring_contract_sha256: str,
+    selected_scorer_ids: Sequence[str],
+    workflow_settings_sha256: str | None,
     baseline_arm_id: str | None = None,
     candidate_arm_id: str | None = None,
 ) -> dict[str, Any]:
@@ -107,10 +111,36 @@ def compose_benchmark_run_report_v1(
         )
     if preflight["status"] != "ready":
         raise ContractValidationError(
-            "preflight_blocked", "$.benchmark_preflight.status", "benchmark scoring requires all 25 cells ready"
+            "preflight_blocked",
+            "$.benchmark_preflight.status",
+            "benchmark scoring requires every selected arm/chapter cell ready",
+        )
+    selected_chapter_ids = tuple(
+        row["chapter_id"] for row in manifest["chapters"]
+    )
+    selected_arm_ids = tuple(row["arm_id"] for row in manifest["arm_contracts"])
+    scorer_ids = [
+        require_string(item, path="$.selected_scorer_ids[*]")
+        for item in selected_scorer_ids
+    ]
+    _require_canonical_subset(
+        scorer_ids,
+        allowed=("sf_qe", "sf_bt", "pj"),
+        minimum=1,
+        path="$.selected_scorer_ids",
+    )
+    if [row["chapter_id"] for row in preflight["chapter_checks"]] != list(
+        selected_chapter_ids
+    ) or [row["arm_id"] for row in preflight["arm_checks"]] != list(
+        selected_arm_ids
+    ):
+        raise ContractValidationError(
+            "preflight_scope",
+            "$.benchmark_preflight",
+            "preflight chapter/arm scope differs from the benchmark manifest",
         )
     baseline, candidate = _comparison_pair(
-        baseline_arm_id, candidate_arm_id, selected_arm_ids=BENCHMARK_ARM_IDS_V1
+        baseline_arm_id, candidate_arm_id, selected_arm_ids=selected_arm_ids
     )
     timestamp = require_rfc3339(generated_at, path="$.generated_at")
     commit = require_commit(producer_code_commit, path="$.producer_code_commit")
@@ -119,12 +149,12 @@ def compose_benchmark_run_report_v1(
     )
     aggregates = aggregate_evaluation_job_rows_v1(
         all_jobs,
-        selected_arm_ids=BENCHMARK_ARM_IDS_V1,
+        selected_arm_ids=selected_arm_ids,
         baseline_arm_id=baseline,
         candidate_arm_id=candidate,
     )
     coverage = {
-        "expected_chapter_count": len(BENCHMARK_CHAPTER_IDS_V1),
+        "expected_chapter_count": len(selected_chapter_ids),
         "completed_chapter_count": len(normalized_chapters),
         "planned_job_count": sum(row["coverage"]["planned_job_count"] for row in normalized_chapters),
         "blocked_job_count": sum(row["coverage"]["blocked_job_count"] for row in normalized_chapters),
@@ -172,7 +202,17 @@ def compose_benchmark_run_report_v1(
             "scoring_contract_sha256": require_sha256(
                 scoring_contract_sha256, path="$.scoring_contract_sha256"
             ),
-            "selected_arm_ids": list(BENCHMARK_ARM_IDS_V1),
+            "selected_chapter_ids": list(selected_chapter_ids),
+            "selected_arm_ids": list(selected_arm_ids),
+            "selected_scorer_ids": list(scorer_ids),
+            "workflow_settings_sha256": (
+                None
+                if workflow_settings_sha256 is None
+                else require_sha256(
+                    workflow_settings_sha256,
+                    path="$.workflow_settings_sha256",
+                )
+            ),
             "baseline_arm_id": baseline,
             "candidate_arm_id": candidate,
         },
@@ -212,15 +252,19 @@ def validate_benchmark_run_report_v1(payload: Mapping[str, Any]) -> dict[str, An
         },
         path="$",
     )
+    identity = _validate_identity(root["identity"])
     normalized = {
         "schema_id": require_enum(root["schema_id"], {BENCHMARK_RUN_REPORT_SCHEMA_ID}, path="$.schema_id"),
         "schema_version": require_enum(root["schema_version"], {SCHEMA_VERSION}, path="$.schema_version"),
         "report_id": require_string(root["report_id"], path="$.report_id"),
         "generated_at": require_rfc3339(root["generated_at"], path="$.generated_at"),
         "producer": _validate_producer(root["producer"]),
-        "identity": _validate_identity(root["identity"]),
+        "identity": identity,
         "coverage": _validate_coverage(root["coverage"]),
-        "chapter_runs": _validate_chapter_runs(root["chapter_runs"]),
+        "chapter_runs": _validate_chapter_runs(
+            root["chapter_runs"],
+            expected_chapter_ids=identity["selected_chapter_ids"],
+        ),
         "aggregates": validate_evaluation_aggregates_v1(root["aggregates"]),
         "usage": _validate_usage(root["usage"]),
         "claim": _validate_claim(root["claim"]),
@@ -355,9 +399,15 @@ def _normalize_chapter_results(
     values: Sequence[Mapping[str, Any]], *, manifest: Mapping[str, Any]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     rows = require_list(list(values), path="$.chapter_results")
-    if len(rows) != len(BENCHMARK_CHAPTER_IDS_V1):
+    selected_chapter_ids = tuple(
+        row["chapter_id"] for row in manifest["chapters"]
+    )
+    selected_arm_ids = tuple(row["arm_id"] for row in manifest["arm_contracts"])
+    if len(rows) != len(selected_chapter_ids):
         raise ContractValidationError(
-            "chapter_exact_cover", "$.chapter_results", "five chapter results are required"
+            "chapter_exact_cover",
+            "$.chapter_results",
+            "selected chapter results are required",
         )
     manifest_by_id = {row["chapter_id"]: row for row in manifest["chapters"]}
     normalized: list[dict[str, Any]] = []
@@ -378,7 +428,9 @@ def _normalize_chapter_results(
             path=path,
         )
         chapter_id = require_enum(
-            row["chapter_id"], {BENCHMARK_CHAPTER_IDS_V1[ordinal]}, path=f"{path}.chapter_id"
+            row["chapter_id"],
+            {selected_chapter_ids[ordinal]},
+            path=f"{path}.chapter_id",
         )
         report = validate_full_run_report(require_mapping(row["report"], path=f"{path}.report"))
         execution = validate_evaluation_execution_artifact(
@@ -388,11 +440,11 @@ def _normalize_chapter_results(
             raise ContractValidationError(
                 "chapter_incomplete", f"{path}.report.report_state", "chapter report must be complete"
             )
-        if tuple(execution["binding"]["selected_arm_ids"]) != BENCHMARK_ARM_IDS_V1:
+        if tuple(execution["binding"]["selected_arm_ids"]) != selected_arm_ids:
             raise ContractValidationError(
                 "arm_binding", f"{path}.execution.binding.selected_arm_ids", "chapter arm set differs"
             )
-        if [arm["arm_id"] for arm in report["arms"]] != list(BENCHMARK_ARM_IDS_V1):
+        if [arm["arm_id"] for arm in report["arms"]] != list(selected_arm_ids):
             raise ContractValidationError(
                 "arm_binding", f"{path}.report.arms", "chapter report arm order differs"
             )
@@ -488,19 +540,50 @@ def _validate_identity(value: Any) -> dict[str, Any]:
             "evaluation_profile_id",
             "policy_profile_id",
             "scoring_contract_sha256",
+            "selected_chapter_ids",
             "selected_arm_ids",
+            "selected_scorer_ids",
+            "workflow_settings_sha256",
             "baseline_arm_id",
             "candidate_arm_id",
         },
         path=path,
     )
+    chapters = [
+        require_string(item, path=f"{path}.selected_chapter_ids")
+        for item in require_list(
+            row["selected_chapter_ids"], path=f"{path}.selected_chapter_ids"
+        )
+    ]
+    _require_canonical_subset(
+        chapters,
+        allowed=BENCHMARK_CHAPTER_IDS_V1,
+        minimum=1,
+        path=f"{path}.selected_chapter_ids",
+    )
     arms = [require_string(item, path=f"{path}.selected_arm_ids") for item in require_list(row["selected_arm_ids"], path=f"{path}.selected_arm_ids")]
-    if tuple(arms) != BENCHMARK_ARM_IDS_V1:
-        raise ContractValidationError("arm_binding", f"{path}.selected_arm_ids", "benchmark arm set differs")
+    _require_canonical_subset(
+        arms,
+        allowed=BENCHMARK_ARM_IDS_V1,
+        minimum=2,
+        path=f"{path}.selected_arm_ids",
+    )
     baseline, candidate = _comparison_pair(
         require_nullable_string(row["baseline_arm_id"], path=f"{path}.baseline_arm_id"),
         require_nullable_string(row["candidate_arm_id"], path=f"{path}.candidate_arm_id"),
-        selected_arm_ids=BENCHMARK_ARM_IDS_V1,
+        selected_arm_ids=arms,
+    )
+    scorers = [
+        require_string(item, path=f"{path}.selected_scorer_ids")
+        for item in require_list(
+            row["selected_scorer_ids"], path=f"{path}.selected_scorer_ids"
+        )
+    ]
+    _require_canonical_subset(
+        scorers,
+        allowed=("sf_qe", "sf_bt", "pj"),
+        minimum=1,
+        path=f"{path}.selected_scorer_ids",
     )
     return {
         "benchmark_id": require_string(row["benchmark_id"], path=f"{path}.benchmark_id"),
@@ -511,7 +594,17 @@ def _validate_identity(value: Any) -> dict[str, Any]:
         "evaluation_profile_id": require_string(row["evaluation_profile_id"], path=f"{path}.evaluation_profile_id"),
         "policy_profile_id": require_nullable_string(row["policy_profile_id"], path=f"{path}.policy_profile_id"),
         "scoring_contract_sha256": require_sha256(row["scoring_contract_sha256"], path=f"{path}.scoring_contract_sha256"),
+        "selected_chapter_ids": chapters,
         "selected_arm_ids": arms,
+        "selected_scorer_ids": scorers,
+        "workflow_settings_sha256": (
+            None
+            if row["workflow_settings_sha256"] is None
+            else require_sha256(
+                row["workflow_settings_sha256"],
+                path=f"{path}.workflow_settings_sha256",
+            )
+        ),
         "baseline_arm_id": baseline,
         "candidate_arm_id": candidate,
     }
@@ -532,11 +625,15 @@ def _validate_coverage(value: Any) -> dict[str, int]:
     return {field: require_int(row[field], path=f"{path}.{field}", minimum=0) for field in fields}
 
 
-def _validate_chapter_runs(value: Any) -> list[dict[str, Any]]:
+def _validate_chapter_runs(
+    value: Any, *, expected_chapter_ids: Sequence[str]
+) -> list[dict[str, Any]]:
     rows = require_list(value, path="$.chapter_runs")
-    if len(rows) != len(BENCHMARK_CHAPTER_IDS_V1):
+    if len(rows) != len(expected_chapter_ids):
         raise ContractValidationError(
-            "chapter_exact_cover", "$.chapter_runs", "benchmark report requires all five chapters"
+            "chapter_exact_cover",
+            "$.chapter_runs",
+            "benchmark report requires every selected chapter",
         )
     result = []
     for ordinal, raw in enumerate(rows):
@@ -561,7 +658,11 @@ def _validate_chapter_runs(value: Any) -> list[dict[str, Any]]:
             )
         result.append(
             {
-                "chapter_id": require_enum(row["chapter_id"], {BENCHMARK_CHAPTER_IDS_V1[ordinal]}, path=f"{path}.chapter_id"),
+                "chapter_id": require_enum(
+                    row["chapter_id"],
+                    {expected_chapter_ids[ordinal]},
+                    path=f"{path}.chapter_id",
+                ),
                 "ordinal": observed_ordinal,
                 "source_read_model_sha256": require_sha256(row["source_read_model_sha256"], path=f"{path}.source_read_model_sha256"),
                 "report_relative_path": require_relative_path(row["report_relative_path"], path=f"{path}.report_relative_path"),
@@ -639,7 +740,11 @@ def _validate_integrity(value: Any) -> dict[str, str]:
 def _validate_report_semantics(report: Mapping[str, Any]) -> None:
     coverage = report["coverage"]
     chapters = report["chapter_runs"]
-    if coverage["expected_chapter_count"] != len(BENCHMARK_CHAPTER_IDS_V1) or coverage["completed_chapter_count"] != len(chapters):
+    if (
+        coverage["expected_chapter_count"]
+        != len(report["identity"]["selected_chapter_ids"])
+        or coverage["completed_chapter_count"] != len(chapters)
+    ):
         raise ContractValidationError("coverage", "$.coverage", "benchmark chapter counts drift")
     for field in ("planned_job_count", "blocked_job_count", "succeeded_job_count", "failed_job_count"):
         if coverage[field] != sum(row["coverage"][field] for row in chapters):
@@ -658,8 +763,45 @@ def _validate_report_semantics(report: Mapping[str, Any]) -> None:
         )
     if len(aggregate_jobs) != coverage["planned_job_count"]:
         raise ContractValidationError("aggregate_coverage", "$.aggregates", "aggregate source jobs do not exact-cover benchmark jobs")
+    aggregate_method_ids = []
+    for aggregate in report["aggregates"]:
+        method_id = aggregate["method_id"]
+        if method_id not in aggregate_method_ids:
+            aggregate_method_ids.append(method_id)
+    if aggregate_method_ids != report["identity"]["selected_scorer_ids"]:
+        raise ContractValidationError(
+            "scorer_scope",
+            "$.identity.selected_scorer_ids",
+            "selected scorer IDs do not match benchmark aggregates",
+        )
     if report["claim"]["reason_codes"] != ["no_cross_method_composite"]:
         raise ContractValidationError("claim", "$.claim.reason_codes", "benchmark v1 has no composite claim policy")
+
+
+def _require_canonical_subset(
+    values: Sequence[str],
+    *,
+    allowed: Sequence[str],
+    minimum: int,
+    path: str,
+) -> None:
+    if len(values) < minimum:
+        raise ContractValidationError(
+            "selection_size", path, f"selection requires at least {minimum} item(s)"
+        )
+    if len(values) != len(set(values)):
+        raise ContractValidationError(
+            "selection_duplicate", path, "selection items must be unique"
+        )
+    positions = {item: index for index, item in enumerate(allowed)}
+    if any(item not in positions for item in values):
+        raise ContractValidationError(
+            "selection_unknown", path, "selection contains an unsupported item"
+        )
+    if list(sorted(values, key=positions.__getitem__)) != list(values):
+        raise ContractValidationError(
+            "selection_order", path, "selection must preserve canonical order"
+        )
 
 
 def _chapter_usage_summary(value: Mapping[str, Any]) -> dict[str, Any]:

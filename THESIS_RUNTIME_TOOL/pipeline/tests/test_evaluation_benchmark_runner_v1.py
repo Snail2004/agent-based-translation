@@ -141,10 +141,13 @@ def _sources() -> list[CommonSourceSnapshotV1]:
     return result
 
 
-def _common(source: CommonSourceSnapshotV1) -> CommonEvaluationInputV1:
+def _common(
+    source: CommonSourceSnapshotV1,
+    arm_ids: tuple[str, ...] = BENCHMARK_ARM_IDS_V1,
+) -> CommonEvaluationInputV1:
     arms = []
     translations = []
-    for arm_id in BENCHMARK_ARM_IDS_V1:
+    for arm_id in arm_ids:
         arms.append(
             CommonArmV1(
                 f"artifact-{arm_id}-{source.blocks[0].chapter_id}",
@@ -178,7 +181,13 @@ def _common(source: CommonSourceSnapshotV1) -> CommonEvaluationInputV1:
     )
 
 
-def _manifest_and_preflight(sources, *, ready: bool = True):
+def _manifest_and_preflight(
+    sources,
+    *,
+    ready: bool = True,
+    arm_ids: tuple[str, ...] = BENCHMARK_ARM_IDS_V1,
+):
+    chapter_ids = tuple(source.blocks[0].chapter_id for source in sources)
     evidence = [
         {
             "chapter_id": source.blocks[0].chapter_id,
@@ -194,11 +203,13 @@ def _manifest_and_preflight(sources, *, ready: bool = True):
         benchmark_id="d2l-five-chapter-e2e-v1",
         created_at=NOW,
         producer_code_commit=COMMIT,
+        selected_chapter_ids=chapter_ids,
+        selected_arm_ids=arm_ids,
     )
     overlays = []
     for source in sources:
-        common = _common(source)
-        for arm_id in BENCHMARK_ARM_IDS_V1:
+        common = _common(source, arm_ids)
+        for arm_id in arm_ids:
             if not ready and source is sources[-1] and arm_id == "community":
                 continue
             overlays.append(
@@ -277,11 +288,17 @@ def _runtime_root(root: Path, ordinal: int, chapter_id: str) -> Path:
     return root / "chapters" / f"{ordinal:02d}_{chapter_id}"
 
 
-def _runtimes(root: Path, sources, predictors) -> dict[str, BenchmarkChapterRuntimeV1]:
+def _runtimes(
+    root: Path,
+    sources,
+    predictors,
+    *,
+    arm_ids: tuple[str, ...] = BENCHMARK_ARM_IDS_V1,
+) -> dict[str, BenchmarkChapterRuntimeV1]:
     result = {}
     for ordinal, (source, predictor) in enumerate(zip(sources, predictors, strict=True)):
         chapter_id = source.blocks[0].chapter_id
-        common = _common(source)
+        common = _common(source, arm_ids)
         child = _runtime_root(root, ordinal, chapter_id)
         input_path = child / "input" / "evaluation_input.json"
         input_path.parent.mkdir(parents=True, exist_ok=True)
@@ -388,6 +405,72 @@ def test_five_chapter_runner_aggregates_denominators_instead_of_chapter_means(tm
         assert arm["value"] == pytest.approx(550.0 / 15)
     assert [predictor.calls for predictor in predictors] == [1, 1, 1, 1, 1]
     validate_benchmark_run_report_v1(result.report)
+
+
+def test_runner_executes_only_selected_chapters_and_arms(tmp_path: Path) -> None:
+    sources = _sources()[2:4]
+    chapter_ids = tuple(source.blocks[0].chapter_id for source in sources)
+    arm_ids = ("S0", "S1", "google_nmt")
+    manifest, preflight, overlays = _manifest_and_preflight(
+        sources, arm_ids=arm_ids
+    )
+    predictors = [_Predictor(0.5) for _ in sources]
+    root = tmp_path / "bounded"
+    result = _run(
+        root,
+        manifest,
+        preflight,
+        overlays,
+        _runtimes(root, sources, predictors, arm_ids=arm_ids),
+    )
+
+    assert result.status["state"] == "completed"
+    assert result.status["selected_chapter_ids"] == list(chapter_ids)
+    assert list(result.status["chapter_states"]) == list(chapter_ids)
+    assert result.report is not None
+    assert result.report["identity"]["selected_chapter_ids"] == list(chapter_ids)
+    assert result.report["identity"]["selected_arm_ids"] == list(arm_ids)
+    assert result.report["identity"]["selected_scorer_ids"] == ["sf_qe"]
+    assert result.report["identity"]["workflow_settings_sha256"] is None
+    assert result.report["coverage"]["expected_chapter_count"] == 2
+    assert [row["chapter_id"] for row in result.report["chapter_runs"]] == list(
+        chapter_ids
+    )
+    assert [predictor.calls for predictor in predictors] == [1, 1]
+
+
+def test_resume_rejects_changed_arm_selection(tmp_path: Path) -> None:
+    sources = _sources()[2:3]
+    root = tmp_path / "selection-locked"
+    first_arms = ("S0", "S1")
+    manifest, preflight, overlays = _manifest_and_preflight(
+        sources, arm_ids=first_arms
+    )
+    _run(
+        root,
+        manifest,
+        preflight,
+        overlays,
+        _runtimes(root, sources, [_Predictor(0.5)], arm_ids=first_arms),
+    )
+
+    changed_arms = ("S0", "S1", "google_nmt")
+    changed_manifest, changed_preflight, changed_overlays = _manifest_and_preflight(
+        sources, arm_ids=changed_arms
+    )
+    with pytest.raises(ContractValidationError, match="resume_binding"):
+        _run(
+            root,
+            changed_manifest,
+            changed_preflight,
+            changed_overlays,
+            _runtimes(
+                root,
+                sources,
+                [_Predictor(0.5)],
+                arm_ids=changed_arms,
+            ),
+        )
 
 
 def test_blocked_preflight_makes_zero_chapter_runner_calls(tmp_path: Path) -> None:
@@ -588,7 +671,9 @@ def test_checkpoint_ordinal_outside_benchmark_is_controlled_contract_error(tmp_p
         newline="\n",
     )
 
-    with pytest.raises(ContractValidationError, match="outside the five-chapter benchmark"):
+    with pytest.raises(
+        ContractValidationError, match="outside the registered chapter universe"
+    ):
         _run(root, manifest, preflight, overlays, _runtimes(root, sources, predictors))
     assert [predictor.calls for predictor in predictors] == [1, 1, 1, 1, 1]
 

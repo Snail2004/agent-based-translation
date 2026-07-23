@@ -19,7 +19,14 @@ from pipeline.tests.test_evaluation_workflow_component_v1 import _binding, _hand
 
 
 _POLICY = CanonicalPolicy(
-    set_like_paths=frozenset(), semantic_sequence_paths=frozenset()
+    set_like_paths=frozenset(),
+    semantic_sequence_paths=frozenset(
+        {
+            ("selected_chapter_ids",),
+            ("selected_arm_ids",),
+            ("selected_scorer_ids",),
+        }
+    ),
 )
 
 
@@ -75,6 +82,22 @@ def _reseal(value: dict) -> dict:
 
 def test_settings_resolve_only_registered_selectable_refs() -> None:
     settings = _settings()
+    assert settings["schema_version"] == "1.1.0"
+    assert settings["selected_chapter_ids"] == [
+        "d2l_preliminaries",
+        "d2l_linear_networks",
+        "d2l_multilayer_perceptrons",
+        "d2l_deep_learning_computation",
+        "d2l_convolutional_neural_networks",
+    ]
+    assert settings["selected_arm_ids"] == [
+        "s0",
+        "s1",
+        "community",
+        "google_nmt",
+        "llm_lc",
+    ]
+    assert settings["selected_scorer_ids"] == ["sf_qe", "sf_bt", "pj"]
     assert settings["evaluation_profile_ref"]["artifact_ref"].endswith(
         "evaluation_gemini_v1.json"
     )
@@ -141,6 +164,79 @@ def test_exact_five_chapter_and_scorer_authority_cannot_drift() -> None:
             policy_profile_ref=None,
             shared_selection_ref="selections/evaluation_five_chapter_v1.json",
             highlight_pair=None,
+        )
+
+
+def test_registered_universe_allows_sealed_ordered_subsets() -> None:
+    settings = build_evaluation_workflow_settings_v1(
+        authority=_authority(),
+        scoring_handoff=_handoff(),
+        evaluation_profile_ref="profiles/evaluation_gemini_v1.json",
+        policy_profile_ref=None,
+        shared_selection_ref="selections/evaluation_five_chapter_v1.json",
+        selected_chapter_ids=(
+            "d2l_multilayer_perceptrons",
+            "d2l_deep_learning_computation",
+        ),
+        selected_arm_ids=("s0", "s1", "google_nmt"),
+        selected_scorer_ids=("sf_qe", "pj"),
+        highlight_pair={"baseline_arm_id": "s1", "candidate_arm_id": "google_nmt"},
+    )
+    assert settings["selected_chapter_ids"] == [
+        "d2l_multilayer_perceptrons",
+        "d2l_deep_learning_computation",
+    ]
+    assert settings["selected_arm_ids"] == ["s0", "s1", "google_nmt"]
+    assert settings["selected_scorer_ids"] == ["sf_qe", "pj"]
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "match"),
+    (
+        (
+            "selected_chapter_ids",
+            ("d2l_multilayer_perceptrons", "d2l_preliminaries"),
+            "server-owned order",
+        ),
+        ("selected_arm_ids", ("s0",), "at least 2"),
+        ("selected_scorer_ids", ("sf_qe", "sf_qe"), "unique"),
+        ("selected_scorer_ids", ("sf_qe", "foreign"), "unregistered"),
+    ),
+)
+def test_invalid_scope_selection_fails_closed(
+    field: str, value: tuple[str, ...], match: str
+) -> None:
+    kwargs = {
+        "selected_chapter_ids": None,
+        "selected_arm_ids": None,
+        "selected_scorer_ids": None,
+    }
+    kwargs[field] = value
+    with pytest.raises(ContractValidationError, match=match):
+        build_evaluation_workflow_settings_v1(
+            authority=_authority(),
+            scoring_handoff=_handoff(),
+            evaluation_profile_ref="profiles/evaluation_gemini_v1.json",
+            policy_profile_ref=None,
+            shared_selection_ref="selections/evaluation_five_chapter_v1.json",
+            highlight_pair=None,
+            **kwargs,
+        )
+
+
+def test_highlight_pair_must_be_inside_selected_arms() -> None:
+    with pytest.raises(ContractValidationError, match="enum"):
+        build_evaluation_workflow_settings_v1(
+            authority=_authority(),
+            scoring_handoff=_handoff(),
+            evaluation_profile_ref="profiles/evaluation_gemini_v1.json",
+            policy_profile_ref=None,
+            shared_selection_ref="selections/evaluation_five_chapter_v1.json",
+            selected_arm_ids=("s0", "s1"),
+            highlight_pair={
+                "baseline_arm_id": "s1",
+                "candidate_arm_id": "google_nmt",
+            },
         )
 
 

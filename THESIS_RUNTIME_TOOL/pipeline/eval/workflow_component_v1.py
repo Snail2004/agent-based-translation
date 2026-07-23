@@ -1136,9 +1136,17 @@ def _validate_evaluation_detail(value: Any, *, path: str) -> dict[str, Any]:
             require_string(item, path=f"{path}.data.arm_ids[*]")
             for item in require_list(data["arm_ids"], path=f"{path}.data.arm_ids")
         ]
-        if tuple(arm_ids) != ARM_IDS_V1:
+        positions = {arm_id: index for index, arm_id in enumerate(ARM_IDS_V1)}
+        if (
+            len(arm_ids) < 2
+            or len(arm_ids) != len(set(arm_ids))
+            or any(arm_id not in positions for arm_id in arm_ids)
+            or tuple(sorted(arm_ids, key=positions.__getitem__)) != tuple(arm_ids)
+        ):
             raise ContractValidationError(
-                "arm_order", f"{path}.data.arm_ids", "expected exact five-arm order"
+                "arm_order",
+                f"{path}.data.arm_ids",
+                "expected at least two unique registered arms in canonical order",
             )
         normalized_data: dict[str, Any] = {"arm_ids": arm_ids}
     elif kind == "chapter_scorer_progress":

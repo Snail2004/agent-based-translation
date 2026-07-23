@@ -142,7 +142,18 @@ def _manifest(handoff: dict[str, object], *, attempt: int = 1, revision: int = 1
     )
 
 
-def _event(manifest: dict[str, object], seq: int, previous: str | None, event: str, payload: dict[str, object], *, attempt: int = 1, stage: str = "__component__", agent: str = "runner") -> dict[str, object]:
+def _event(
+    manifest: dict[str, object],
+    seq: int,
+    previous: str | None,
+    event: str,
+    payload: dict[str, object],
+    *,
+    attempt: int = 1,
+    stage: str = "__component__",
+    agent: str = "runner",
+    detail: dict[str, object] | None = None,
+) -> dict[str, object]:
     return build_evaluation_component_event_v1(
         manifest,
         component_seq=seq,
@@ -155,6 +166,7 @@ def _event(manifest: dict[str, object], seq: int, previous: str | None, event: s
         severity="info" if event not in {"validation_failed", "component_failed"} else "error",
         payload=payload,
         previous_event_sha256=previous,
+        detail=detail,
     )
 
 
@@ -296,6 +308,36 @@ def test_component_stream_has_contiguous_hash_chained_events() -> None:
     normalized = validate_evaluation_component_stream_v1(manifest, events)
     assert [row["component_seq"] for row in normalized] == list(range(1, 7))
     assert normalized[-1]["event"] == "component_done"
+
+
+def test_input_arm_progress_accepts_only_canonical_registered_subset() -> None:
+    handoff = validate_scoring_handoff_v1(_handoff())
+    manifest = _manifest(handoff)
+    event = _event(
+        manifest,
+        1,
+        None,
+        "component_started",
+        {"stage_count": 1},
+        detail={
+            "detail_kind": "input_arms",
+            "data": {"arm_ids": ["s0", "s1", "google_nmt"]},
+        },
+    )
+    assert event["detail"]["data"]["arm_ids"] == ["s0", "s1", "google_nmt"]
+
+    with pytest.raises(ContractValidationError, match="arm_order"):
+        _event(
+            manifest,
+            1,
+            None,
+            "component_started",
+            {"stage_count": 1},
+            detail={
+                "detail_kind": "input_arms",
+                "data": {"arm_ids": ["google_nmt", "s0"]},
+            },
+        )
 
 
 def test_component_stream_rejects_sequence_gap_and_chain_bypass() -> None:

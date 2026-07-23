@@ -33,7 +33,7 @@ __all__ = [
 
 
 SCHEMA_ID = "EvaluationWorkflowSettingsV1"
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 EVALUATION_CHAPTER_IDS_V1 = (
     "d2l_preliminaries",
     "d2l_linear_networks",
@@ -45,7 +45,13 @@ EVALUATION_SCORER_IDS_V1 = ("sf_qe", "sf_bt", "pj")
 _HASH_PATH = ("settings_sha256",)
 _POLICY = CanonicalPolicy(
     set_like_paths=frozenset(),
-    semantic_sequence_paths=frozenset(),
+    semantic_sequence_paths=frozenset(
+        {
+            ("selected_chapter_ids",),
+            ("selected_arm_ids",),
+            ("selected_scorer_ids",),
+        }
+    ),
 )
 _FORBIDDEN_RUNTIME_AUTHORITY_TOKENS = (
     "gold",
@@ -86,6 +92,9 @@ def build_evaluation_workflow_settings_v1(
     policy_profile_ref: str | None,
     shared_selection_ref: str,
     highlight_pair: Mapping[str, Any] | None,
+    selected_chapter_ids: Sequence[str] | None = None,
+    selected_arm_ids: Sequence[str] | None = None,
+    selected_scorer_ids: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     catalog = _normalize_authority(authority)
     handoff = validate_scoring_handoff_v1(scoring_handoff)
@@ -108,6 +117,24 @@ def build_evaluation_workflow_settings_v1(
         shared_selection_ref,
         path="$.shared_selection_ref",
     )
+    chapters = _validate_ordered_selection(
+        catalog["chapter_ids"] if selected_chapter_ids is None else selected_chapter_ids,
+        allowed=catalog["chapter_ids"],
+        minimum=1,
+        path="$.selected_chapter_ids",
+    )
+    arms = _validate_ordered_selection(
+        catalog["arm_ids"] if selected_arm_ids is None else selected_arm_ids,
+        allowed=catalog["arm_ids"],
+        minimum=2,
+        path="$.selected_arm_ids",
+    )
+    scorers = _validate_ordered_selection(
+        catalog["scorer_ids"] if selected_scorer_ids is None else selected_scorer_ids,
+        allowed=catalog["scorer_ids"],
+        minimum=1,
+        path="$.selected_scorer_ids",
+    )
     draft = {
         "schema_id": SCHEMA_ID,
         "schema_version": SCHEMA_VERSION,
@@ -124,8 +151,11 @@ def build_evaluation_workflow_settings_v1(
             "sha256_kind": "canonical:ScoringHandoffV1@1.0.0",
             "input_set_sha256": handoff["input_set_sha256"],
         },
+        "selected_chapter_ids": list(chapters),
+        "selected_arm_ids": list(arms),
+        "selected_scorer_ids": list(scorers),
         "highlight_pair": _validate_highlight_pair(
-            highlight_pair, arm_ids=catalog["arm_ids"], path="$.highlight_pair"
+            highlight_pair, arm_ids=arms, path="$.highlight_pair"
         ),
         "shared_selection_ref": selection,
         "settings_sha256": "0" * 64,
@@ -157,11 +187,36 @@ def validate_evaluation_workflow_settings_v1(
             "policy_profile_ref",
             "scorer_set_ref",
             "scoring_handoff",
+            "selected_chapter_ids",
+            "selected_arm_ids",
+            "selected_scorer_ids",
             "highlight_pair",
             "shared_selection_ref",
             "settings_sha256",
         },
         path="$settings",
+    )
+    selected_chapter_ids = _validate_ordered_selection(
+        row["selected_chapter_ids"],
+        allowed=(
+            EVALUATION_CHAPTER_IDS_V1 if catalog is None else catalog["chapter_ids"]
+        ),
+        minimum=1,
+        path="$settings.selected_chapter_ids",
+    )
+    selected_arm_ids = _validate_ordered_selection(
+        row["selected_arm_ids"],
+        allowed=ARM_IDS_V1 if catalog is None else catalog["arm_ids"],
+        minimum=2,
+        path="$settings.selected_arm_ids",
+    )
+    selected_scorer_ids = _validate_ordered_selection(
+        row["selected_scorer_ids"],
+        allowed=(
+            EVALUATION_SCORER_IDS_V1 if catalog is None else catalog["scorer_ids"]
+        ),
+        minimum=1,
+        path="$settings.selected_scorer_ids",
     )
     normalized = {
         "schema_id": require_enum(
@@ -194,9 +249,12 @@ def validate_evaluation_workflow_settings_v1(
         "scoring_handoff": _validate_handoff_binding(
             row["scoring_handoff"], path="$settings.scoring_handoff"
         ),
+        "selected_chapter_ids": list(selected_chapter_ids),
+        "selected_arm_ids": list(selected_arm_ids),
+        "selected_scorer_ids": list(selected_scorer_ids),
         "highlight_pair": _validate_highlight_pair(
             row["highlight_pair"],
-            arm_ids=ARM_IDS_V1 if catalog is None else catalog["arm_ids"],
+            arm_ids=selected_arm_ids,
             path="$settings.highlight_pair",
         ),
         "shared_selection_ref": _validate_authority_binding(
@@ -462,3 +520,39 @@ def _validate_highlight_pair(
             "highlight_pair", path, "highlight arms must be distinct"
         )
     return {"baseline_arm_id": baseline, "candidate_arm_id": candidate}
+
+
+def _validate_ordered_selection(
+    value: Sequence[Any],
+    *,
+    allowed: Sequence[str],
+    minimum: int,
+    path: str,
+) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise ContractValidationError(
+            "type_error", path, "selection must be an ordered array"
+        )
+    rows = tuple(
+        require_string(item, path=f"{path}[{index}]")
+        for index, item in enumerate(value)
+    )
+    if len(rows) < minimum:
+        raise ContractValidationError(
+            "selection_size", path, f"selection requires at least {minimum} item(s)"
+        )
+    if len(rows) != len(set(rows)):
+        raise ContractValidationError(
+            "selection_duplicate", path, "selection items must be unique"
+        )
+    allowed_order = tuple(allowed)
+    positions = {item: index for index, item in enumerate(allowed_order)}
+    if any(item not in positions for item in rows):
+        raise ContractValidationError(
+            "settings_selection", path, "selection contains an unregistered item"
+        )
+    if tuple(sorted(rows, key=positions.__getitem__)) != rows:
+        raise ContractValidationError(
+            "selection_order", path, "selection must preserve server-owned order"
+        )
+    return rows

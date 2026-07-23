@@ -300,3 +300,42 @@ def test_source_read_model_hash_changes_with_one_source_byte() -> None:
         (CommonBlockV1(changed.blocks[0].block_id, changed.blocks[0].chapter_id, changed.blocks[0].order_index, changed.blocks[0].block_type, changed.blocks[0].source_text + "!", changed.blocks[0].admission), changed.blocks[1]),
     )
     assert source_read_model_sha256_v1(source) != source_read_model_sha256_v1(changed)
+
+
+def test_manifest_and_preflight_accept_registered_bounded_selection() -> None:
+    sources = _sources()[2:4]
+    chapter_ids = tuple(source.blocks[0].chapter_id for source in sources)
+    arm_ids = ("S0", "S1", "google_nmt")
+    manifest = build_benchmark_manifest_v1(
+        sources,
+        _evidence(sources),
+        benchmark_id="d2l-bounded-selection-v1",
+        created_at=NOW,
+        producer_code_commit=COMMIT,
+        selected_chapter_ids=chapter_ids,
+        selected_arm_ids=arm_ids,
+    )
+    overlays = [
+        row
+        for row in _all_ready_overlays(sources)
+        if row["arm"]["arm_id"] in arm_ids
+    ]
+    preflight = build_benchmark_preflight_v1(
+        manifest,
+        sources,
+        overlays,
+        created_at=NOW,
+        producer_code_commit=COMMIT,
+    )
+
+    assert manifest["scope"]["benchmark_kind"] == "bounded_registered_selection_d2l_v1"
+    assert [row["chapter_id"] for row in manifest["chapters"]] == list(chapter_ids)
+    assert [row["arm_id"] for row in manifest["arm_contracts"]] == list(arm_ids)
+    assert preflight["status"] == "ready"
+    assert preflight["coverage"] == {
+        "expected_chapter_count": 2,
+        "expected_arm_count": 3,
+        "expected_arm_chapter_count": 6,
+        "ready_arm_chapter_count": 6,
+        "blocker_count": 0,
+    }

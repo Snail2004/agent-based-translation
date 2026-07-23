@@ -45,7 +45,13 @@ from pipeline.tests.test_llm_backend_phase2b_v1 import (
 from pipeline.tests.test_evaluation_workflow_component_v1 import _binding, _handoff
 
 
-def _context(*, profile_sha256: str | None = None) -> EvaluationWorkflowRunContextV1:
+def _context(
+    *,
+    profile_sha256: str | None = None,
+    selected_chapter_ids: tuple[str, ...] | None = None,
+    selected_arm_ids: tuple[str, ...] | None = None,
+    selected_scorer_ids: tuple[str, ...] = ("sf_qe",),
+) -> EvaluationWorkflowRunContextV1:
     handoff = _handoff()
     profile = _binding(
         "profiles/evaluation_fixture_v1.json", "evaluation_profile_v1"
@@ -79,6 +85,9 @@ def _context(*, profile_sha256: str | None = None) -> EvaluationWorkflowRunConte
         policy_profile_ref=None,
         shared_selection_ref="selections/evaluation_five_chapter_v1.json",
         highlight_pair={"baseline_arm_id": "s0", "candidate_arm_id": "s1"},
+        selected_chapter_ids=selected_chapter_ids,
+        selected_arm_ids=selected_arm_ids,
+        selected_scorer_ids=selected_scorer_ids,
     )
     return EvaluationWorkflowRunContextV1(
         workflow_run_id=handoff["workflow_run_id"],
@@ -134,6 +143,55 @@ def test_runner_writes_replayable_component_package(tmp_path: Path) -> None:
     assert (root / "workflow_settings.json").is_file()
     assert package["usage_snapshots"][-1]["current_record"]["kind"] == "final"
     assert events[-2]["event"] == "usage_snapshot"
+
+
+def test_runner_replay_package_uses_exact_selected_scope(tmp_path: Path) -> None:
+    sources = _sources()[2:4]
+    chapter_ids = tuple(source.blocks[0].chapter_id for source in sources)
+    arm_ids = ("S0", "S1", "google_nmt")
+    manifest, preflight, overlays = _manifest_and_preflight(
+        sources, arm_ids=arm_ids
+    )
+    root = tmp_path / "bounded"
+    result = _run(
+        root,
+        manifest,
+        preflight,
+        overlays,
+        _runtimes(
+            root,
+            sources,
+            [_Predictor(0.5) for _ in sources],
+            arm_ids=arm_ids,
+        ),
+        workflow_context=_context(
+            selected_chapter_ids=chapter_ids,
+            selected_arm_ids=("s0", "s1", "google_nmt"),
+        ),
+    )
+
+    assert result.status["state"] == "completed"
+    package = validate_evaluation_workflow_component_package_v1(
+        root,
+        _handoff(),
+        require_terminal=True,
+    )
+    settings = json.loads(
+        (root / "workflow_settings.json").read_text(encoding="utf-8")
+    )
+    assert settings["selected_chapter_ids"] == list(chapter_ids)
+    assert settings["selected_arm_ids"] == ["s0", "s1", "google_nmt"]
+    assert result.report is not None
+    assert result.report["identity"]["selected_scorer_ids"] == ["sf_qe"]
+    assert (
+        result.report["identity"]["workflow_settings_sha256"]
+        == settings["settings_sha256"]
+    )
+    assert [row["stage_id"] for row in package["manifest"]["stages"]] == [
+        "preflight",
+        *(f"chapter_{chapter_id}" for chapter_id in chapter_ids),
+        "aggregation",
+    ]
 
 
 def test_writer_projects_real_shared_ledger_usage_once_and_preserves_profile(
@@ -396,7 +454,9 @@ def test_replay_context_cannot_be_added_after_legacy_benchmark_started(tmp_path:
     manifest, preflight, overlays = _manifest_and_preflight(sources)
     root = tmp_path / "benchmark"
     _run(root, manifest, preflight, overlays, _runtimes(root, sources, [_Predictor(0.5) for _ in sources]))
-    with pytest.raises(ContractValidationError, match="retrofit|already-started"):
+    with pytest.raises(
+        ContractValidationError, match="retrofit|already-started|resume_binding"
+    ):
         _run(
             root,
             manifest,

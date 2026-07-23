@@ -175,7 +175,10 @@ class EvaluationWorkflowComponentWriterV1:
                 "artifact_kind": "evaluation_workflow_settings_v1",
                 "schema_version": self.workflow_settings["schema_version"],
                 "sha256": self.workflow_settings["settings_sha256"],
-                "sha256_kind": "canonical:EvaluationWorkflowSettingsV1@1.0.0",
+                "sha256_kind": (
+                    "canonical:EvaluationWorkflowSettingsV1@"
+                    f"{self.workflow_settings['schema_version']}"
+                ),
             },
             path="$.workflow_settings",
         )
@@ -1180,7 +1183,10 @@ def validate_evaluation_workflow_component_package_v1(
         "artifact_kind": "evaluation_workflow_settings_v1",
         "schema_version": settings["schema_version"],
         "sha256": settings["settings_sha256"],
-        "sha256_kind": "canonical:EvaluationWorkflowSettingsV1@1.0.0",
+        "sha256_kind": (
+            "canonical:EvaluationWorkflowSettingsV1@"
+            f"{settings['schema_version']}"
+        ),
     }
     if manifest.get("workflow_settings") != expected_settings_binding:
         raise ContractValidationError(

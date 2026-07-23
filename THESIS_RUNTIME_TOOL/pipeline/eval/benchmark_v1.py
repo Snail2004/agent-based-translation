@@ -72,7 +72,7 @@ __all__ = [
 BENCHMARK_MANIFEST_SCHEMA_ID = "EvaluationBenchmarkManifestV1"
 BENCHMARK_OVERLAY_SCHEMA_ID = "EvaluationBenchmarkArmOverlayV1"
 BENCHMARK_PREFLIGHT_SCHEMA_ID = "EvaluationBenchmarkPreflightV1"
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 
 BENCHMARK_CHAPTER_IDS_V1 = (
     "d2l_preliminaries",
@@ -194,22 +194,37 @@ def build_benchmark_manifest_v1(
     benchmark_id: str,
     created_at: str,
     producer_code_commit: str,
+    selected_chapter_ids: Sequence[str] | None = None,
+    selected_arm_ids: Sequence[str] | None = None,
 ) -> dict[str, Any]:
+    chapter_ids = _validate_known_selection(
+        BENCHMARK_CHAPTER_IDS_V1
+        if selected_chapter_ids is None
+        else selected_chapter_ids,
+        allowed=BENCHMARK_CHAPTER_IDS_V1,
+        minimum=1,
+        path="$.selected_chapter_ids",
+    )
+    arm_ids = _validate_known_selection(
+        BENCHMARK_ARM_IDS_V1 if selected_arm_ids is None else selected_arm_ids,
+        allowed=BENCHMARK_ARM_IDS_V1,
+        minimum=2,
+        path="$.selected_arm_ids",
+    )
     source_by_chapter = _source_map(sources)
     evidence_by_chapter = _source_evidence_map(source_evidence)
-    if tuple(source_by_chapter) != BENCHMARK_CHAPTER_IDS_V1:
+    if tuple(source_by_chapter) != chapter_ids:
         raise ContractValidationError(
             "benchmark_chapters",
             "$.sources",
-            "five-chapter benchmark source order differs from the locked selection",
+            "benchmark source order differs from the selected chapter scope",
         )
-    if tuple(evidence_by_chapter) != BENCHMARK_CHAPTER_IDS_V1:
+    if tuple(evidence_by_chapter) != chapter_ids:
         raise ContractValidationError(
             "source_evidence",
             "$.source_evidence",
-            "source evidence must exactly cover the locked chapters in order",
+            "source evidence must exactly cover selected chapters in order",
         )
-    _require_contiguous_global_order(source_by_chapter.values())
     projects = {row.project_id for row in source_by_chapter.values()}
     documents = {row.document_id for row in source_by_chapter.values()}
     source_dbs = {
@@ -224,7 +239,7 @@ def build_benchmark_manifest_v1(
             "locked benchmark requires one D2L document and one frozen source DB",
         )
     chapters = []
-    for ordinal, chapter_id in enumerate(BENCHMARK_CHAPTER_IDS_V1):
+    for ordinal, chapter_id in enumerate(chapter_ids):
         source = source_by_chapter[chapter_id]
         evidence = evidence_by_chapter[chapter_id]
         chapters.append(
@@ -251,14 +266,21 @@ def build_benchmark_manifest_v1(
         "created_at": created_at,
         "producer": _producer("evaluation_benchmark_manifest_v1", producer_code_commit),
         "scope": {
-            "benchmark_kind": "narrow_five_chapter_d2l_v1",
+            "benchmark_kind": (
+                "narrow_five_chapter_d2l_v1"
+                if chapter_ids == BENCHMARK_CHAPTER_IDS_V1
+                and arm_ids == BENCHMARK_ARM_IDS_V1
+                else "bounded_registered_selection_d2l_v1"
+            ),
             "profile_scope": "technical_d2l",
             "project_id": "d2l",
             "document_id": "d2l",
             "source_db_sha256": next(iter(source_dbs)),
             "chapter_count": len(chapters),
             "block_count": sum(row["block_count"] for row in chapters),
-            "contiguous_source_order": True,
+            "contiguous_source_order": _is_contiguous_global_order(
+                source_by_chapter.values()
+            ),
         },
         "chapters": chapters,
         "arm_contracts": [
@@ -269,6 +291,7 @@ def build_benchmark_manifest_v1(
                 "required": True,
             }
             for arm_id, role, alignment in _ARM_CONTRACTS
+            if arm_id in arm_ids
         ],
         "integrity": {"manifest_sha256": "0" * 64},
     }
@@ -314,6 +337,32 @@ def validate_benchmark_manifest_v1(payload: Mapping[str, Any]) -> dict[str, Any]
         for row in normalized["chapters"]
     ):
         raise ContractValidationError("source_identity", "$.chapters", "source DB identity drift")
+    chapter_ids = tuple(row["chapter_id"] for row in normalized["chapters"])
+    arm_ids = tuple(row["arm_id"] for row in normalized["arm_contracts"])
+    expected_kind = (
+        "narrow_five_chapter_d2l_v1"
+        if chapter_ids == BENCHMARK_CHAPTER_IDS_V1
+        and arm_ids == BENCHMARK_ARM_IDS_V1
+        else "bounded_registered_selection_d2l_v1"
+    )
+    if normalized["scope"]["benchmark_kind"] != expected_kind:
+        raise ContractValidationError(
+            "benchmark_kind",
+            "$.scope.benchmark_kind",
+            "benchmark kind does not match the selected chapter/arm scope",
+        )
+    intervals_are_contiguous = all(
+        right["first_order_index"] == left["last_order_index"] + 1
+        for left, right in zip(
+            normalized["chapters"], normalized["chapters"][1:]
+        )
+    )
+    if normalized["scope"]["contiguous_source_order"] != intervals_are_contiguous:
+        raise ContractValidationError(
+            "source_order",
+            "$.scope.contiguous_source_order",
+            "contiguous-source flag differs from chapter intervals",
+        )
     if not verify_payload_hash(normalized, policy=_MANIFEST_POLICY, hash_path=("integrity", "manifest_sha256")):
         raise ContractValidationError("manifest_hash", "$.integrity.manifest_sha256", "hash drift")
     canonical = canonicalize(normalized, policy=_MANIFEST_POLICY)
@@ -555,12 +604,13 @@ def build_benchmark_preflight_v1(
     _validate_sources_against_manifest(source_by_chapter, manifest)
     overlay_rows = [validate_benchmark_overlay_v1(row) for row in overlays]
     overlay_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    expected_chapters = [row["chapter_id"] for row in manifest["chapters"]]
     expected_arms = [row["arm_id"] for row in manifest["arm_contracts"]]
     for overlay in overlay_rows:
         key = (overlay["arm"]["arm_id"], overlay["source"]["chapter_id"])
         if key in overlay_by_key:
             raise ContractValidationError("duplicate", "$.overlays", f"duplicate overlay {key}")
-        if key[0] not in expected_arms or key[1] not in BENCHMARK_CHAPTER_IDS_V1:
+        if key[0] not in expected_arms or key[1] not in expected_chapters:
             raise ContractValidationError("foreign_overlay", "$.overlays", f"foreign overlay {key}")
         source = source_by_chapter[key[1]]
         _validate_overlay_binding(overlay, source)
@@ -570,7 +620,7 @@ def build_benchmark_preflight_v1(
     blockers: list[dict[str, Any]] = []
     for arm_id in expected_arms:
         chapter_checks: list[dict[str, Any]] = []
-        for chapter_id in BENCHMARK_CHAPTER_IDS_V1:
+        for chapter_id in expected_chapters:
             source = source_by_chapter[chapter_id]
             overlay = overlay_by_key.get((arm_id, chapter_id))
             if overlay is None:
@@ -615,7 +665,7 @@ def build_benchmark_preflight_v1(
             "block_count": len(source_by_chapter[chapter_id].blocks),
             "status": "verified",
         }
-        for chapter_id in BENCHMARK_CHAPTER_IDS_V1
+        for chapter_id in expected_chapters
     ]
     ready = not blockers
     draft = {
@@ -630,9 +680,9 @@ def build_benchmark_preflight_v1(
         "arm_checks": arm_checks,
         "blockers": blockers,
         "coverage": {
-            "expected_chapter_count": len(BENCHMARK_CHAPTER_IDS_V1),
+            "expected_chapter_count": len(expected_chapters),
             "expected_arm_count": len(expected_arms),
-            "expected_arm_chapter_count": len(BENCHMARK_CHAPTER_IDS_V1) * len(expected_arms),
+            "expected_arm_chapter_count": len(expected_chapters) * len(expected_arms),
             "ready_arm_chapter_count": sum(
                 row["status"] == "ready"
                 for arm in arm_checks
@@ -687,6 +737,26 @@ def validate_benchmark_preflight_v1(payload: Mapping[str, Any]) -> dict[str, Any
         for chapter in arm["chapter_checks"]
     )
     coverage = normalized["coverage"]
+    chapter_ids = [row["chapter_id"] for row in normalized["chapter_checks"]]
+    arm_ids = [row["arm_id"] for row in normalized["arm_checks"]]
+    if any(
+        [row["chapter_id"] for row in arm["chapter_checks"]] != chapter_ids
+        for arm in normalized["arm_checks"]
+    ):
+        raise ContractValidationError(
+            "benchmark_chapters",
+            "$.arm_checks",
+            "every arm must use the exact selected chapter order",
+        )
+    expected_dimensions = {
+        "expected_chapter_count": len(chapter_ids),
+        "expected_arm_count": len(arm_ids),
+        "expected_arm_chapter_count": len(chapter_ids) * len(arm_ids),
+    }
+    if any(coverage[key] != value for key, value in expected_dimensions.items()):
+        raise ContractValidationError(
+            "coverage", "$.coverage", "expected benchmark dimensions drift"
+        )
     if coverage["ready_arm_chapter_count"] != ready_count or coverage["blocker_count"] != len(normalized["blockers"]):
         raise ContractValidationError("coverage", "$.coverage", "preflight counts drift")
     expected_status = "ready" if not normalized["blockers"] and ready_count == coverage["expected_arm_chapter_count"] else "blocked"
@@ -901,7 +971,8 @@ def _require_overlay_exact_cover(source: CommonSourceSnapshotV1, rows: Sequence[
 
 
 def _validate_sources_against_manifest(sources: Mapping[str, CommonSourceSnapshotV1], manifest: Mapping[str, Any]) -> None:
-    if tuple(sources) != BENCHMARK_CHAPTER_IDS_V1:
+    expected_chapters = tuple(row["chapter_id"] for row in manifest["chapters"])
+    if tuple(sources) != expected_chapters:
         raise ContractValidationError("benchmark_chapters", "$.sources", "source chapters/order drift")
     for declared in manifest["chapters"]:
         source = sources[declared["chapter_id"]]
@@ -985,10 +1056,11 @@ def _single_chapter(source: CommonSourceSnapshotV1) -> str:
     return source.blocks[0].chapter_id
 
 
-def _require_contiguous_global_order(sources: Sequence[CommonSourceSnapshotV1] | Any) -> None:
+def _is_contiguous_global_order(
+    sources: Sequence[CommonSourceSnapshotV1] | Any,
+) -> bool:
     order = [block.order_index for source in sources for block in source.blocks]
-    if order != list(range(order[0], order[-1] + 1)):
-        raise ContractValidationError("source_order", "$.sources", "selected chapters must form one contiguous source interval")
+    return order == list(range(order[0], order[-1] + 1))
 
 
 def _common_block(row: Mapping[str, Any]) -> CommonBlockV1:
@@ -1082,17 +1154,28 @@ def _validate_scope(value: Any) -> dict[str, Any]:
     row = require_mapping(value, path=path)
     require_exact_keys(row, required={"benchmark_kind", "profile_scope", "project_id", "document_id", "source_db_sha256", "chapter_count", "block_count", "contiguous_source_order"}, path=path)
     contiguous = row["contiguous_source_order"]
-    if contiguous is not True:
-        raise ContractValidationError("scope", f"{path}.contiguous_source_order", "locked scope must be contiguous")
+    if not isinstance(contiguous, bool):
+        raise ContractValidationError(
+            "type_error",
+            f"{path}.contiguous_source_order",
+            "contiguous_source_order must be boolean",
+        )
     return {
-        "benchmark_kind": require_enum(row["benchmark_kind"], {"narrow_five_chapter_d2l_v1"}, path=f"{path}.benchmark_kind"),
+        "benchmark_kind": require_enum(
+            row["benchmark_kind"],
+            {
+                "narrow_five_chapter_d2l_v1",
+                "bounded_registered_selection_d2l_v1",
+            },
+            path=f"{path}.benchmark_kind",
+        ),
         "profile_scope": require_enum(row["profile_scope"], {"technical_d2l"}, path=f"{path}.profile_scope"),
         "project_id": require_enum(row["project_id"], {"d2l"}, path=f"{path}.project_id"),
         "document_id": require_enum(row["document_id"], {"d2l"}, path=f"{path}.document_id"),
         "source_db_sha256": require_sha256(row["source_db_sha256"], path=f"{path}.source_db_sha256"),
         "chapter_count": require_int(row["chapter_count"], path=f"{path}.chapter_count", minimum=1),
         "block_count": require_int(row["block_count"], path=f"{path}.block_count", minimum=1),
-        "contiguous_source_order": True,
+        "contiguous_source_order": contiguous,
     }
 
 
@@ -1120,11 +1203,16 @@ def _validate_manifest_chapters(value: Any) -> list[dict[str, Any]]:
                 "last_order_index": require_int(row["last_order_index"], path=f"{path}.last_order_index", minimum=0),
             }
         )
-    if [row["chapter_id"] for row in result] != list(BENCHMARK_CHAPTER_IDS_V1) or [row["ordinal"] for row in result] != list(range(len(BENCHMARK_CHAPTER_IDS_V1))):
-        raise ContractValidationError("benchmark_chapters", "$.chapters", "locked chapter IDs/order drift")
-    for left, right in zip(result, result[1:]):
-        if right["first_order_index"] != left["last_order_index"] + 1:
-            raise ContractValidationError("source_order", "$.chapters", "chapter source intervals are not contiguous")
+    chapter_ids = _validate_known_selection(
+        [row["chapter_id"] for row in result],
+        allowed=BENCHMARK_CHAPTER_IDS_V1,
+        minimum=1,
+        path="$.chapters.chapter_id",
+    )
+    if [row["ordinal"] for row in result] != list(range(len(chapter_ids))):
+        raise ContractValidationError(
+            "benchmark_chapters", "$.chapters", "chapter ordinals drift"
+        )
     return result
 
 
@@ -1136,7 +1224,9 @@ def _validate_arm_contracts(value: Any) -> list[dict[str, Any]]:
         row = require_mapping(raw, path=path)
         require_exact_keys(row, required={"arm_id", "benchmark_role", "alignment_mode", "required"}, path=path)
         if row["required"] is not True:
-            raise ContractValidationError("required_arm", f"{path}.required", "all five arms are required")
+            raise ContractValidationError(
+                "required_arm", f"{path}.required", "every selected arm is required"
+            )
         result.append(
             {
                 "arm_id": require_string(row["arm_id"], path=f"{path}.arm_id"),
@@ -1145,9 +1235,27 @@ def _validate_arm_contracts(value: Any) -> list[dict[str, Any]]:
                 "required": True,
             }
         )
-    expected = [{"arm_id": a, "benchmark_role": b, "alignment_mode": c, "required": True} for a, b, c in _ARM_CONTRACTS]
+    arm_ids = _validate_known_selection(
+        [row["arm_id"] for row in result],
+        allowed=BENCHMARK_ARM_IDS_V1,
+        minimum=2,
+        path="$.arm_contracts.arm_id",
+    )
+    selected = set(arm_ids)
+    expected = [
+        {
+            "arm_id": arm_id,
+            "benchmark_role": role,
+            "alignment_mode": alignment,
+            "required": True,
+        }
+        for arm_id, role, alignment in _ARM_CONTRACTS
+        if arm_id in selected
+    ]
     if result != expected:
-        raise ContractValidationError("arm_contracts", "$.arm_contracts", "five-arm contract drift")
+        raise ContractValidationError(
+            "arm_contracts", "$.arm_contracts", "selected arm contract drift"
+        )
     return result
 
 
@@ -1252,8 +1360,12 @@ def _validate_preflight_chapters(value: Any) -> list[dict[str, Any]]:
         row = require_mapping(raw, path=path)
         require_exact_keys(row, required={"chapter_id", "source_read_model_sha256", "block_count", "status"}, path=path)
         result.append({"chapter_id": require_string(row["chapter_id"], path=f"{path}.chapter_id"), "source_read_model_sha256": require_sha256(row["source_read_model_sha256"], path=f"{path}.source_read_model_sha256"), "block_count": require_int(row["block_count"], path=f"{path}.block_count", minimum=1), "status": require_enum(row["status"], {"verified"}, path=f"{path}.status")})
-    if [row["chapter_id"] for row in result] != list(BENCHMARK_CHAPTER_IDS_V1):
-        raise ContractValidationError("benchmark_chapters", "$.chapter_checks", "chapter checks drift")
+    _validate_known_selection(
+        [row["chapter_id"] for row in result],
+        allowed=BENCHMARK_CHAPTER_IDS_V1,
+        minimum=1,
+        path="$.chapter_checks.chapter_id",
+    )
     return result
 
 
@@ -1281,14 +1393,22 @@ def _validate_preflight_arms(value: Any) -> list[dict[str, Any]]:
                 **{f"{issue}_count": require_int(chapter[f"{issue}_count"], path=f"{chapter_path}.{issue}_count", minimum=0) for issue in _ISSUE_CODES},
                 "sample_nonready_block_ids": samples,
             })
-        if [row["chapter_id"] for row in chapters] != list(BENCHMARK_CHAPTER_IDS_V1):
-            raise ContractValidationError("benchmark_chapters", f"{path}.chapter_checks", "chapter checks drift")
+        _validate_known_selection(
+            [row["chapter_id"] for row in chapters],
+            allowed=BENCHMARK_CHAPTER_IDS_V1,
+            minimum=1,
+            path=f"{path}.chapter_checks.chapter_id",
+        )
         status = require_enum(row["status"], {"ready", "blocked"}, path=f"{path}.status")
         if status != ("ready" if all(ch["status"] == "ready" for ch in chapters) else "blocked"):
             raise ContractValidationError("arm_status", f"{path}.status", "arm status drift")
         result.append({"arm_id": require_string(row["arm_id"], path=f"{path}.arm_id"), "status": status, "chapter_checks": chapters})
-    if [row["arm_id"] for row in result] != list(BENCHMARK_ARM_IDS_V1):
-        raise ContractValidationError("benchmark_arms", "$.arm_checks", "arm checks drift")
+    _validate_known_selection(
+        [row["arm_id"] for row in result],
+        allowed=BENCHMARK_ARM_IDS_V1,
+        minimum=2,
+        path="$.arm_checks.arm_id",
+    )
     return result
 
 
@@ -1307,10 +1427,41 @@ def _validate_preflight_coverage(value: Any) -> dict[str, int]:
     path = "$.coverage"
     row = require_mapping(value, path=path)
     require_exact_keys(row, required={"expected_chapter_count", "expected_arm_count", "expected_arm_chapter_count", "ready_arm_chapter_count", "blocker_count"}, path=path)
-    result = {key: require_int(row[key], path=f"{path}.{key}", minimum=0) for key in row}
-    if result["expected_chapter_count"] != len(BENCHMARK_CHAPTER_IDS_V1) or result["expected_arm_count"] != len(BENCHMARK_ARM_IDS_V1) or result["expected_arm_chapter_count"] != len(BENCHMARK_CHAPTER_IDS_V1) * len(BENCHMARK_ARM_IDS_V1):
-        raise ContractValidationError("coverage", path, "expected benchmark dimensions drift")
-    return result
+    return {
+        key: require_int(row[key], path=f"{path}.{key}", minimum=0)
+        for key in row
+    }
+
+
+def _validate_known_selection(
+    values: Sequence[Any],
+    *,
+    allowed: Sequence[str],
+    minimum: int,
+    path: str,
+) -> tuple[str, ...]:
+    rows = tuple(
+        require_string(item, path=f"{path}[{index}]")
+        for index, item in enumerate(values)
+    )
+    if len(rows) < minimum:
+        raise ContractValidationError(
+            "selection_size", path, f"selection requires at least {minimum} item(s)"
+        )
+    if len(rows) != len(set(rows)):
+        raise ContractValidationError(
+            "selection_duplicate", path, "selection items must be unique"
+        )
+    positions = {item: index for index, item in enumerate(allowed)}
+    if any(item not in positions for item in rows):
+        raise ContractValidationError(
+            "selection_unknown", path, "selection contains an unsupported item"
+        )
+    if tuple(sorted(rows, key=positions.__getitem__)) != rows:
+        raise ContractValidationError(
+            "selection_order", path, "selection must preserve canonical order"
+        )
+    return rows
 
 
 def _normalized_newlines(value: str) -> str:
