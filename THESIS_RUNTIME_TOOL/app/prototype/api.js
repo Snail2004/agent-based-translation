@@ -193,6 +193,22 @@
     },
     getThesisResumeEstimate: (runId) => request(`/thesis/runs/estimate-preview?resume_run_id=${encodeURIComponent(runId)}`),
     resumeThesisRun: (runId, payload) => request(`/thesis/runs/${encodeURIComponent(runId)}/resume`, { method: "POST", body: payload || {} }),
+    getWorkflowSetup: (docId) => request(`/projects/${encodeURIComponent(docId)}/workflow-setup`),
+    preflightWorkflowSetup: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}/workflow-setup/preflight`, {
+      method: "POST",
+      body: payload || {},
+    }),
+    getWorkflowReplay: (runId, afterSeq = 0, waitMs = 0) => {
+      const query = new URLSearchParams({
+        after_seq: String(Math.max(0, Number(afterSeq) || 0)),
+        wait_ms: String(Math.max(0, Number(waitMs) || 0)),
+      });
+      return request(`/thesis/runs/${encodeURIComponent(runId)}/workflow-replay?${query.toString()}`);
+    },
+    getWorkflowReplayArtifact: (runId, artifactRef) => {
+      const query = new URLSearchParams({ artifact_ref: String(artifactRef || "") });
+      return requestBlob(`/thesis/runs/${encodeURIComponent(runId)}/workflow-replay/artifact?${query.toString()}`);
+    },
     createProject: (payload) => request("/projects", { method: "POST", body: payload }),
     getProject: (docId) => request(`/projects/${encodeURIComponent(docId)}`),
     getProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime`, { timeoutMs: 30000 }),

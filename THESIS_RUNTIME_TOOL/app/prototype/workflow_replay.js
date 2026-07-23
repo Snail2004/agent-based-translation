@@ -29,6 +29,12 @@
   ]);
   const OPERATIONAL_FACT_RE = /(token|cost|cache|quota|usage)/i;
   const SHA256_RE = /^[0-9a-f]{64}$/;
+  const CACHE_STATUSES = new Set(["hit", "miss", "bypass", "unknown"]);
+  const CACHE_MECHANISMS = new Set([
+    "none", "provider_prompt_cache", "provider_implicit_cache",
+    "local_exact_cache", "unknown",
+  ]);
+  const OPTIONAL_DETAIL_COMPONENTS = new Set(["translation", "evaluation", "publication"]);
 
   function isObject(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -142,6 +148,438 @@
     if (Array.isArray(value)) return value.some(containsOperationalFact);
     if (!isObject(value)) return false;
     return Object.entries(value).some(([key, child]) => OPERATIONAL_FACT_RE.test(key) || containsOperationalFact(child));
+  }
+
+  function nullableNonNegativeNumber(value, path, errors, integer = false) {
+    if (value === undefined || value === null) return null;
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || (integer && !Number.isInteger(value))) {
+      addError(errors, "usage_number", path, integer ? "expected a non-negative integer or null" : "expected a non-negative number or null");
+      return null;
+    }
+    return value;
+  }
+
+  function usageValue(row, key) {
+    if (Object.prototype.hasOwnProperty.call(row || {}, key)) return row[key];
+    const usage = isObject(row?.usage) ? row.usage : null;
+    return usage && Object.prototype.hasOwnProperty.call(usage, key) ? usage[key] : undefined;
+  }
+
+  function normalizeUsageFacts(row, path, errors) {
+    if (!requireObject(row, path, errors)) return null;
+    inspectPrivatePayload(row, path, errors);
+    const attemptUsageId = row.attempt_usage_id ?? row.usage_id ?? null;
+    const cacheObservationId = row.cache_observation_id ?? row.observation_id ?? null;
+    const rowId = row.call_id ?? attemptUsageId ?? cacheObservationId;
+    if (!validId(rowId)) addError(errors, "usage_id", `${path}.call_id`, "a stable call/cache identity is required");
+    const cacheStatus = usageValue(row, "cache_status") ?? row.lookup_status ?? null;
+    const cacheMechanism = usageValue(row, "cache_mechanism") ?? row.cache_kind ?? null;
+    if (cacheStatus !== null && !CACHE_STATUSES.has(cacheStatus)) {
+      addError(errors, "cache_status", `${path}.cache_status`, "unsupported cache status");
+    }
+    if (cacheMechanism !== null && !CACHE_MECHANISMS.has(cacheMechanism)) {
+      addError(errors, "cache_mechanism", `${path}.cache_mechanism`, "unsupported cache mechanism");
+    }
+    const costStatus = usageValue(row, "cost_status") ?? null;
+    const costUsd = nullableNonNegativeNumber(usageValue(row, "cost_usd"), `${path}.cost_usd`, errors);
+    if (costStatus === "unknown" && costUsd !== null) {
+      addError(errors, "unknown_cost", `${path}.cost_usd`, "unknown cost must remain null");
+    }
+    return {
+      rowId: validId(rowId) ? rowId : `${path}:invalid`,
+      rowKind: attemptUsageId ? "call" : cacheObservationId ? "cache" : String(row.row_kind || "call"),
+      attemptUsageId,
+      cacheObservationId,
+      componentId: row.component_id ?? null,
+      componentRunId: row.component_run_id ?? null,
+      componentAttemptId: row.component_attempt_id ?? null,
+      componentAttemptIndex: row.component_attempt_index ?? null,
+      componentSeq: row.component_seq ?? row.accepted_through_component_seq ?? null,
+      stageId: row.stage_id ?? null,
+      agent: row.agent ?? null,
+      workId: row.work_id ?? row.current_work_id ?? null,
+      logicalRequestId: row.logical_request_id ?? null,
+      semanticAttemptIndex: row.semantic_attempt_index ?? null,
+      transportRetryOrdinal: row.transport_retry_ordinal ?? null,
+      physicalAttemptIndex: row.physical_attempt_index ?? null,
+      providerId: row.provider_id ?? null,
+      sourceId: row.source_id ?? null,
+      sourceRevision: row.source_revision ?? null,
+      requestedModelId: row.requested_model_id ?? row.model_id ?? null,
+      observedModelId: row.observed_model_id ?? null,
+      promptTokens: nullableNonNegativeNumber(usageValue(row, "prompt_tokens"), `${path}.prompt_tokens`, errors, true),
+      completionTokens: nullableNonNegativeNumber(usageValue(row, "completion_tokens"), `${path}.completion_tokens`, errors, true),
+      reasoningTokens: nullableNonNegativeNumber(usageValue(row, "reasoning_tokens"), `${path}.reasoning_tokens`, errors, true),
+      cachedInputTokens: nullableNonNegativeNumber(usageValue(row, "cached_input_tokens"), `${path}.cached_input_tokens`, errors, true),
+      totalTokens: nullableNonNegativeNumber(usageValue(row, "total_tokens"), `${path}.total_tokens`, errors, true),
+      cacheStatus,
+      cacheMechanism,
+      providerCallAvoided: row.provider_call_avoided ?? null,
+      latencyMs: nullableNonNegativeNumber(usageValue(row, "latency_ms"), `${path}.latency_ms`, errors),
+      finishReason: row.finish_reason ?? null,
+      outcome: row.outcome ?? null,
+      costStatus,
+      costUsd,
+      currency: usageValue(row, "currency") ?? null,
+      binding: row.binding ?? row.usage_binding ?? null,
+    };
+  }
+
+  function normalizeUsageTotal(row, path, errors) {
+    if (!requireObject(row, path, errors)) return null;
+    inspectPrivatePayload(row, path, errors);
+    const costStatus = usageValue(row, "cost_status") ?? null;
+    const costUsd = nullableNonNegativeNumber(usageValue(row, "cost_usd"), `${path}.cost_usd`, errors);
+    if (costStatus === "unknown" && costUsd !== null) {
+      addError(errors, "unknown_cost", `${path}.cost_usd`, "unknown cost must remain null");
+    }
+    return {
+      componentId: row.component_id ?? null,
+      componentRunId: row.component_run_id ?? null,
+      stageId: row.stage_id ?? null,
+      snapshotSeq: row.snapshot_seq ?? null,
+      acceptedThroughComponentSeq: row.accepted_through_component_seq ?? null,
+      physicalCallCount: nullableNonNegativeNumber(usageValue(row, "physical_call_count"), `${path}.physical_call_count`, errors, true),
+      cacheObservationCount: nullableNonNegativeNumber(usageValue(row, "cache_observation_count"), `${path}.cache_observation_count`, errors, true),
+      promptTokens: nullableNonNegativeNumber(usageValue(row, "prompt_tokens"), `${path}.prompt_tokens`, errors, true),
+      completionTokens: nullableNonNegativeNumber(usageValue(row, "completion_tokens"), `${path}.completion_tokens`, errors, true),
+      reasoningTokens: nullableNonNegativeNumber(usageValue(row, "reasoning_tokens"), `${path}.reasoning_tokens`, errors, true),
+      cachedInputTokens: nullableNonNegativeNumber(usageValue(row, "cached_input_tokens"), `${path}.cached_input_tokens`, errors, true),
+      totalTokens: nullableNonNegativeNumber(usageValue(row, "total_tokens"), `${path}.total_tokens`, errors, true),
+      cacheHitCount: nullableNonNegativeNumber(usageValue(row, "cache_hit_count"), `${path}.cache_hit_count`, errors, true),
+      cacheMissCount: nullableNonNegativeNumber(usageValue(row, "cache_miss_count"), `${path}.cache_miss_count`, errors, true),
+      unknownAttemptCount: nullableNonNegativeNumber(usageValue(row, "unknown_attempt_count"), `${path}.unknown_attempt_count`, errors, true),
+      costStatus,
+      costUsd,
+      currency: usageValue(row, "currency") ?? null,
+      binding: row.binding ?? row.snapshot_binding ?? null,
+      sha256: row.snapshot_sha256 ?? row.summary_sha256 ?? null,
+    };
+  }
+
+  function validateUsageReadModel(value, manifest, errors) {
+    if (value === undefined || value === null) {
+      return { present: false, calls: [], stageTotals: [], componentTotals: [], workflowTotal: null };
+    }
+    if (!requireObject(value, "$usage", errors)) {
+      return { present: true, calls: [], stageTotals: [], componentTotals: [], workflowTotal: null };
+    }
+    if (typeof value.schema_id !== "string" || typeof value.schema_version !== "string") {
+      addError(errors, "usage_schema", "$usage", "a versioned usage read model is required");
+    }
+    if (value.workflow_run_id !== manifest?.workflow_run_id) {
+      addError(errors, "usage_binding", "$usage.workflow_run_id", "usage workflow identity differs from manifest");
+    }
+    const backendValidated = value.validated === true || value.validation?.valid === true;
+    if (!backendValidated) addError(errors, "usage_unvalidated", "$usage", "backend validation receipt is required");
+    inspectPrivatePayload(value, "$usage", errors);
+    const rawCalls = value.calls ?? value.call_rows ?? value.physical_calls ?? [];
+    const rawStageTotals = value.stage_totals ?? [];
+    const rawComponentTotals = value.component_totals ?? [];
+    if (!Array.isArray(rawCalls)) addError(errors, "type", "$usage.calls", "expected an array");
+    if (!Array.isArray(rawStageTotals)) addError(errors, "type", "$usage.stage_totals", "expected an array");
+    if (!Array.isArray(rawComponentTotals)) addError(errors, "type", "$usage.component_totals", "expected an array");
+    const identities = new Set();
+    const calls = (Array.isArray(rawCalls) ? rawCalls : []).map((row, index) => {
+      const normalized = normalizeUsageFacts(row, `$usage.calls[${index}]`, errors);
+      if (normalized && identities.has(normalized.rowId)) {
+        addError(errors, "usage_duplicate", `$usage.calls[${index}]`, `duplicate usage/cache identity ${normalized.rowId}`);
+      }
+      if (normalized) identities.add(normalized.rowId);
+      return normalized;
+    }).filter(Boolean);
+    const stageTotals = (Array.isArray(rawStageTotals) ? rawStageTotals : [])
+      .map((row, index) => normalizeUsageTotal(row, `$usage.stage_totals[${index}]`, errors))
+      .filter(Boolean);
+    const componentTotals = (Array.isArray(rawComponentTotals) ? rawComponentTotals : [])
+      .map((row, index) => normalizeUsageTotal(row, `$usage.component_totals[${index}]`, errors))
+      .filter(Boolean);
+    const workflowTotal = value.workflow_total === null || value.workflow_total === undefined
+      ? null
+      : normalizeUsageTotal(value.workflow_total, "$usage.workflow_total", errors);
+    return {
+      present: true,
+      schemaId: value.schema_id ?? null,
+      schemaVersion: value.schema_version ?? null,
+      calls,
+      stageTotals,
+      componentTotals,
+      workflowTotal,
+      validation: value.validation ?? { valid: value.validated === true },
+    };
+  }
+
+  function validateOptionalDetails(events, errors) {
+    events.forEach((event, eventIndex) => {
+      const details = event?.payload?.optional_details;
+      if (details === undefined) return;
+      const path = `$events[${eventIndex}].payload.optional_details`;
+      if (!Array.isArray(details)) {
+        addError(errors, "optional_details", path, "expected an array of typed details");
+        return;
+      }
+      details.forEach((detail, detailIndex) => {
+        const detailPath = `${path}[${detailIndex}]`;
+        exactKeys(detail, ["schema_id", "schema_version", "component_id", "kind", "data"], detailPath, errors);
+        if (!isObject(detail)) return;
+        if (typeof detail.schema_id !== "string" || typeof detail.schema_version !== "string") {
+          addError(errors, "optional_detail_schema", detailPath, "typed detail schema is required");
+        }
+        if (!OPTIONAL_DETAIL_COMPONENTS.has(detail.component_id) || detail.component_id !== event?.component?.component_id) {
+          addError(errors, "optional_detail_component", `${detailPath}.component_id`, "detail authority differs from event component");
+        }
+        if (typeof detail.kind !== "string" || !detail.kind) addError(errors, "optional_detail_kind", `${detailPath}.kind`, "detail kind is required");
+        if (!isObject(detail.data) && !Array.isArray(detail.data)) addError(errors, "optional_detail_data", `${detailPath}.data`, "detail data must be an object or array");
+        inspectPrivatePayload(detail.data, `${detailPath}.data`, errors);
+      });
+    });
+  }
+
+  function projectOptionalDetails(payload) {
+    return Array.isArray(payload?.optional_details) ? deepClone(payload.optional_details) : [];
+  }
+
+  function inspectSetupExposure(value, path, errors) {
+    if (Array.isArray(value)) {
+      value.forEach((child, index) => inspectSetupExposure(child, `${path}[${index}]`, errors));
+      return;
+    }
+    if (!isObject(value)) return;
+    Object.entries(value).forEach(([key, child]) => {
+      const normalized = key.toLocaleLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+      if (
+        ["api_key", "authorization", "base_url", "credential_path", "endpoint_url", "filesystem_path", "raw_prompt", "secret", "secret_bytes"].includes(normalized)
+        || normalized.endsWith("_secret")
+      ) {
+        addError(errors, "private_setup_field", `${path}.${key}`, "workflow setup may expose only registered IDs and credential-ref status");
+      }
+      inspectSetupExposure(child, `${path}.${key}`, errors);
+    });
+  }
+
+  function advertisedOption(row, path, errors) {
+    if (!requireObject(row, path, errors)) return null;
+    const ref = isObject(row.ref) ? row.ref : row;
+    const id = row.option_id ?? row.id ?? ref.id ?? ref.profile_id ?? ref.settings_id;
+    const revision = row.revision ?? ref.revision ?? null;
+    const sha256 = row.sha256 ?? ref.sha256 ?? null;
+    if (!validId(id)) addError(errors, "advertised_option_id", `${path}.id`, "stable option ID is required");
+    if (revision !== null && typeof revision !== "string") addError(errors, "advertised_option_revision", `${path}.revision`, "revision must be a string or null");
+    if (sha256 !== null && !SHA256_RE.test(String(sha256))) addError(errors, "sha256", `${path}.sha256`, "expected lowercase SHA-256 or null");
+    return {
+      id: validId(id) ? id : `${path}:invalid`,
+      label: String(row.label ?? row.name ?? id ?? ""),
+      revision,
+      sha256,
+      enabled: row.enabled !== false,
+      status: row.status ?? null,
+      credentialStatus: deepClone(row.credential_status ?? row.credential_ref_status ?? null),
+      capabilityStatus: deepClone(row.capability_status ?? row.capability ?? null),
+      fixedFacts: deepClone(row.fixed_facts ?? row.facts ?? {}),
+      constraints: deepClone(row.constraints ?? {}),
+      raw: deepClone(row),
+    };
+  }
+
+  function normalizeWorkflowSetup(value) {
+    const setup = deepClone(value || null);
+    const errors = [];
+    if (!requireObject(setup, "$setup", errors)) {
+      return Object.freeze({ valid: false, errors, raw: setup });
+    }
+    if (typeof setup.schema_id !== "string" || typeof setup.schema_version !== "string") {
+      addError(errors, "setup_schema", "$setup", "a versioned workflow setup read model is required");
+    }
+    inspectSetupExposure(setup, "$setup", errors);
+    const sourcePackage = deepClone(setup.source_package ?? setup.source ?? {});
+    const runtime = deepClone(setup.runtime ?? {});
+    const rawChapters = setup.chapters ?? sourcePackage.chapters ?? [];
+    if (!Array.isArray(rawChapters)) addError(errors, "type", "$setup.chapters", "expected an array");
+    const chapterIds = new Set();
+    const chapters = (Array.isArray(rawChapters) ? rawChapters : []).map((row, index) => {
+      const path = `$setup.chapters[${index}]`;
+      if (!requireObject(row, path, errors)) return null;
+      const chapterId = row.chapter_id ?? row.id;
+      if (!validId(chapterId)) addError(errors, "chapter_id", `${path}.chapter_id`, "stable chapter ID is required");
+      if (chapterIds.has(chapterId)) addError(errors, "duplicate_chapter", `${path}.chapter_id`, "chapter ID repeats");
+      chapterIds.add(chapterId);
+      return {
+        chapterId,
+        title: String(row.title ?? row.label ?? chapterId ?? ""),
+        blockCount: Number.isInteger(row.block_count) && row.block_count >= 0 ? row.block_count : null,
+        selectable: row.selectable !== false,
+        selectedByDefault: row.selected === true || row.selected_by_default === true,
+        order: Number.isInteger(row.order) ? row.order : index + 1,
+      };
+    }).filter(Boolean);
+    const rawModes = setup.execution_modes ?? [{ id: "dry_run", enabled: true }, { id: "live", enabled: setup.live_start_allowed === true }];
+    if (!Array.isArray(rawModes)) addError(errors, "type", "$setup.execution_modes", "expected an array");
+    const executionModes = (Array.isArray(rawModes) ? rawModes : []).map((row, index) => {
+      const valueRow = typeof row === "string" ? { id: row } : row;
+      const id = valueRow?.id ?? valueRow?.mode;
+      if (!["dry_run", "live"].includes(id)) addError(errors, "execution_mode", `$setup.execution_modes[${index}]`, "only dry_run or live may be advertised");
+      return {
+        id,
+        label: String(valueRow?.label ?? id ?? ""),
+        enabled: valueRow?.enabled !== false && (id !== "live" || setup.live_start_allowed === true),
+        reason: valueRow?.reason ?? null,
+      };
+    });
+    function optionList(valueRows, path) {
+      if (!Array.isArray(valueRows)) {
+        addError(errors, "type", path, "expected an array");
+        return [];
+      }
+      return valueRows.map((row, index) => advertisedOption(row, `${path}[${index}]`, errors)).filter(Boolean);
+    }
+    const sharedOptions = optionList(setup.shared_options ?? setup.shared_api_options ?? [], "$setup.shared_options");
+    const d2lOptions = optionList(setup.d2l_settings_options ?? setup.d2l_options ?? [], "$setup.d2l_settings_options");
+    const evaluationOptions = optionList(setup.evaluation_settings_options ?? setup.evaluation_options ?? [], "$setup.evaluation_settings_options");
+    if (!chapters.some(row => row.selectable)) addError(errors, "chapter_catalog", "$setup.chapters", "at least one selectable chapter is required");
+    if (!executionModes.some(row => row.id === "dry_run" && row.enabled)) addError(errors, "dry_run_unavailable", "$setup.execution_modes", "0-API dry_run must be advertised");
+    if (!sharedOptions.some(row => row.enabled)) addError(errors, "shared_option_unavailable", "$setup.shared_options", "an enabled server-advertised shared option is required");
+    if (!d2lOptions.some(row => row.enabled)) addError(errors, "d2l_option_unavailable", "$setup.d2l_settings_options", "an enabled D2L settings preset is required");
+    if (!evaluationOptions.some(row => row.enabled)) addError(errors, "evaluation_option_unavailable", "$setup.evaluation_settings_options", "an enabled Evaluation settings preset is required");
+    return Object.freeze({
+      valid: errors.length === 0,
+      errors,
+      schemaId: setup.schema_id ?? null,
+      schemaVersion: setup.schema_version ?? null,
+      projectId: setup.project_id ?? setup.doc_id ?? sourcePackage.project_id ?? null,
+      sourcePackage,
+      runtime,
+      chapters,
+      executionModes,
+      sharedOptions,
+      d2lOptions,
+      evaluationOptions,
+      defaults: deepClone(setup.defaults ?? {}),
+      liveStartAllowed: setup.live_start_allowed === true,
+      dryRunAllowed: setup.dry_run_allowed !== false,
+      raw: setup,
+    });
+  }
+
+  function defaultWorkflowSelection(setup) {
+    const selectedChapters = setup.chapters.filter(row => row.selectable && row.selectedByDefault);
+    const chapters = selectedChapters.length ? selectedChapters : setup.chapters.filter(row => row.selectable);
+    return {
+      executionMode: "dry_run",
+      chapterIds: chapters.map(row => row.chapterId),
+      sharedOptionId: setup.defaults.shared_option_id ?? setup.sharedOptions.find(row => row.enabled)?.id ?? "",
+      d2lOptionId: setup.defaults.d2l_settings_option_id ?? setup.d2lOptions.find(row => row.enabled)?.id ?? "",
+      evaluationOptionId: setup.defaults.evaluation_settings_option_id ?? setup.evaluationOptions.find(row => row.enabled)?.id ?? "",
+      highlightPair: deepClone(setup.defaults.highlight_pair ?? null),
+      hardTotalTokenCap: setup.defaults.hard_total_token_cap ?? null,
+      reservedCostCapUsd: setup.defaults.reserved_cost_cap_usd ?? null,
+    };
+  }
+
+  function buildWorkflowPreflightRequest(setup, selection) {
+    const errors = [];
+    if (!setup?.valid) {
+      addError(errors, "setup_invalid", "$selection", "workflow setup is invalid");
+      return { valid: false, errors, payload: null };
+    }
+    const mode = setup.executionModes.find(row => row.id === selection?.executionMode && row.enabled);
+    if (!mode) addError(errors, "execution_mode", "$selection.execution_mode", "execution mode is not advertised or enabled");
+    const selected = new Set(Array.isArray(selection?.chapterIds) ? selection.chapterIds : []);
+    const selectableIds = new Set(setup.chapters.filter(row => row.selectable).map(row => row.chapterId));
+    if (!selected.size) addError(errors, "chapter_selection", "$selection.chapter_ids", "select at least one chapter");
+    selected.forEach(chapterId => {
+      if (!selectableIds.has(chapterId)) addError(errors, "chapter_selection", "$selection.chapter_ids", `chapter is not selectable: ${chapterId}`);
+    });
+    const orderedChapterIds = setup.chapters.filter(row => selected.has(row.chapterId)).map(row => row.chapterId);
+    const shared = setup.sharedOptions.find(row => row.id === selection?.sharedOptionId && row.enabled);
+    const d2l = setup.d2lOptions.find(row => row.id === selection?.d2lOptionId && row.enabled);
+    const evaluation = setup.evaluationOptions.find(row => row.id === selection?.evaluationOptionId && row.enabled);
+    if (!shared) addError(errors, "shared_option", "$selection.shared_option_id", "shared option is not advertised or enabled");
+    if (!d2l) addError(errors, "d2l_option", "$selection.d2l_settings_option_id", "D2L settings are not advertised or enabled");
+    if (!evaluation) addError(errors, "evaluation_option", "$selection.evaluation_settings_option_id", "Evaluation settings are not advertised or enabled");
+    const hardCap = selection?.hardTotalTokenCap;
+    if (hardCap !== null && hardCap !== "" && (!Number.isInteger(Number(hardCap)) || Number(hardCap) <= 0)) {
+      addError(errors, "token_cap", "$selection.hard_total_token_cap", "hard token cap must be a positive integer or null");
+    }
+    const costCap = selection?.reservedCostCapUsd;
+    if (costCap !== null && costCap !== "" && (typeof Number(costCap) !== "number" || !Number.isFinite(Number(costCap)) || Number(costCap) <= 0)) {
+      addError(errors, "cost_cap", "$selection.reserved_cost_cap_usd", "reserved cost cap must be a positive number or null");
+    }
+    const pair = selection?.highlightPair;
+    if (pair !== null) {
+      const baseline = pair?.baseline_arm_id;
+      const candidate = pair?.candidate_arm_id;
+      const arms = evaluation?.fixedFacts?.arm_ids ?? evaluation?.fixedFacts?.arms ?? [];
+      if (!Array.isArray(arms) || !baseline || !candidate || baseline === candidate || !arms.includes(baseline) || !arms.includes(candidate)) {
+        addError(errors, "highlight_pair", "$selection.highlight_pair", "highlight pair must contain two distinct advertised arms");
+      }
+    }
+    return {
+      valid: errors.length === 0,
+      errors,
+      payload: errors.length ? null : {
+        schema_id: "WorkflowSetupSelectionV1",
+        schema_version: "1.0.0",
+        execution_mode: selection.executionMode,
+        chapter_ids: orderedChapterIds,
+        shared_option_id: shared.id,
+        d2l_settings_option_id: d2l.id,
+        evaluation_settings_option_id: evaluation.id,
+        highlight_pair: pair === null ? null : {
+          baseline_arm_id: pair.baseline_arm_id,
+          candidate_arm_id: pair.candidate_arm_id,
+        },
+        hard_total_token_cap: hardCap === null || hardCap === "" ? null : Number(hardCap),
+        reserved_cost_cap_usd: costCap === null || costCap === "" ? null : Number(costCap),
+      },
+    };
+  }
+
+  function normalizeWorkflowPreflight(value, setup, selection) {
+    const preflight = deepClone(value || null);
+    const errors = [];
+    if (!requireObject(preflight, "$preflight", errors)) {
+      return Object.freeze({ valid: false, errors, raw: preflight });
+    }
+    if (typeof preflight.schema_id !== "string" || typeof preflight.schema_version !== "string") {
+      addError(errors, "preflight_schema", "$preflight", "a versioned preflight read model is required");
+    }
+    inspectSetupExposure(preflight, "$preflight", errors);
+    const serverErrors = Array.isArray(preflight.errors) ? preflight.errors : [];
+    if (!Array.isArray(preflight.errors)) addError(errors, "type", "$preflight.errors", "expected an array");
+    const launch = deepClone(preflight.launch ?? preflight.sealed_launch ?? {});
+    const serverValid = preflight.valid === true || preflight.status === "ready";
+    if (serverValid) {
+      if (!validId(launch.preflight_id ?? preflight.preflight_id)) addError(errors, "preflight_id", "$preflight.launch.preflight_id", "sealed preflight identity is required");
+      if (!SHA256_RE.test(String(launch.preflight_sha256 ?? preflight.preflight_sha256 ?? ""))) addError(errors, "sha256", "$preflight.launch.preflight_sha256", "sealed preflight SHA-256 is required");
+      if (!validId(launch.planned_run_id ?? preflight.planned_run_id)) addError(errors, "planned_run_id", "$preflight.launch.planned_run_id", "planned run ID is required");
+      if (typeof (launch.confirm_token ?? preflight.confirm_token) !== "string" || !(launch.confirm_token ?? preflight.confirm_token)) {
+        addError(errors, "confirm_token", "$preflight.launch.confirm_token", "short-lived confirmation token is required");
+      }
+    }
+    const requested = buildWorkflowPreflightRequest(setup, selection);
+    if (!requested.valid) errors.push(...requested.errors);
+    return Object.freeze({
+      valid: serverValid && serverErrors.length === 0 && errors.length === 0,
+      errors: [...serverErrors, ...errors],
+      warnings: Array.isArray(preflight.warnings) ? preflight.warnings : [],
+      liveStartAllowed: preflight.live_start_allowed === true,
+      normalizedSelection: deepClone(preflight.normalized_selection ?? requested.payload),
+      sourceSummary: deepClone(preflight.source_summary ?? preflight.source_package ?? {}),
+      sharedSummary: deepClone(preflight.shared_summary ?? preflight.shared_settings ?? {}),
+      d2lSummary: deepClone(preflight.d2l_summary ?? preflight.d2l_settings ?? {}),
+      evaluationSummary: deepClone(preflight.evaluation_summary ?? preflight.evaluation_settings ?? {}),
+      bounds: deepClone(preflight.bounds ?? {}),
+      identities: deepClone(preflight.identities ?? {}),
+      launch: {
+        preflightId: launch.preflight_id ?? preflight.preflight_id ?? null,
+        preflightSha256: launch.preflight_sha256 ?? preflight.preflight_sha256 ?? null,
+        confirmToken: launch.confirm_token ?? preflight.confirm_token ?? null,
+        plannedRunId: launch.planned_run_id ?? preflight.planned_run_id ?? null,
+        workflowRunId: launch.workflow_run_id ?? preflight.workflow_run_id ?? null,
+        expiresAt: launch.expires_at ?? preflight.expires_at ?? null,
+      },
+      raw: preflight,
+    });
   }
 
   async function verifyNestedHash(value, path, declared, errorCode, errorPath, errors) {
@@ -534,13 +972,22 @@
   }
 
   function projectEvents(events) {
-    return events.map(event => ({
-      ...event,
-      ts: event.accepted_at,
-      stage: event.stage_id || "",
-      attempt_id: event.component?.component_attempt_id ?? null,
-      attempt_index: event.component?.component_attempt_index ?? null,
-    }));
+    return events.map(event => {
+      const payload = event.payload || {};
+      const flatProgress = ["completed", "total", "unit"].every(key => Object.prototype.hasOwnProperty.call(payload, key))
+        ? { completed: payload.completed, total: payload.total, unit: payload.unit }
+        : null;
+      return {
+        ...event,
+        ts: event.accepted_at,
+        stage: event.stage_id || "",
+        attempt_id: event.component?.component_attempt_id ?? null,
+        attempt_index: event.component?.component_attempt_index ?? null,
+        persistedProgress: isObject(payload.progress) ? deepClone(payload.progress) : flatProgress,
+        currentWorkId: payload.current_work_id ?? payload.work_id ?? null,
+        optionalDetails: projectOptionalDetails(payload),
+      };
+    });
   }
 
   async function validatePackage(input) {
@@ -549,13 +996,14 @@
     const parentEvents = deepClone(input?.events || []);
     const artifactBodies = deepClone(input?.artifacts || {});
     const validatedArtifacts = deepClone(input?.validatedArtifacts || {});
-    const errors = [];
+    const errors = deepClone(input?.transportErrors || []);
 
     validateManifestShape(manifest, errors);
     if (isObject(manifest)) {
       await verifyNestedHash(manifest, ["integrity", "manifest_sha256"], manifest?.integrity?.manifest_sha256, "manifest_hash", "$manifest.integrity.manifest_sha256", errors);
     }
     await validateEvents(parentEvents, manifest, errors);
+    validateOptionalDetails(parentEvents, errors);
     const artifactRows = validateArtifactIndexShape(artifactIndex, manifest, parentEvents, errors);
     if (isObject(artifactIndex)) {
       await verifyNestedHash(artifactIndex, ["integrity", "artifact_index_sha256"], artifactIndex?.integrity?.artifact_index_sha256, "artifact_index_hash", "$artifact_index.integrity.artifact_index_sha256", errors);
@@ -564,6 +1012,28 @@
     const scoring = isObject(manifest)
       ? await validateScoringArtifacts(artifactRows, artifactBodies, validatedArtifacts, manifest, errors)
       : { handoff: null, receipt: null, receiptStatus: null, inputSetSha256: null, arms: [], reports: [] };
+    const usage = validateUsageReadModel(deepClone(input?.usage), manifest, errors);
+    const cursor = deepClone(input?.cursor || null);
+    if (cursor !== null) {
+      if (!isObject(cursor)) {
+        addError(errors, "cursor", "$cursor", "expected an object or null");
+      } else {
+        const throughSeq = cursor.through_seq ?? cursor.latest_seq ?? cursor.latest_event_seq;
+        if (throughSeq !== undefined && throughSeq !== parentEvents.length) {
+          addError(errors, "cursor_sequence", "$cursor.through_seq", `expected ${parentEvents.length}`);
+        }
+        const chainHead = cursor.event_chain_head_sha256;
+        const observedHead = parentEvents.length ? parentEvents[parentEvents.length - 1]?.integrity?.event_sha256 : null;
+        if (chainHead !== undefined && chainHead !== observedHead) {
+          addError(errors, "cursor_chain", "$cursor.event_chain_head_sha256", "cursor does not bind the accepted event-chain head");
+        }
+        if (cursor.package_revision_sha256 !== undefined && !SHA256_RE.test(String(cursor.package_revision_sha256 || ""))) {
+          addError(errors, "sha256", "$cursor.package_revision_sha256", "expected lowercase SHA-256");
+        }
+      }
+    }
+    const actions = deepClone(input?.actions || {});
+    inspectPrivatePayload(actions, "$actions", errors);
     const operationalFacts = parentEvents.filter(event => containsOperationalFact(event?.payload)).map(event => ({
       seq: event.seq,
       stage_id: event.stage_id,
@@ -583,9 +1053,69 @@
       stagePlan: valid ? buildStagePlan(manifest?.stages || []) : [],
       artifacts: valid ? artifactRows : [],
       scoring: valid ? scoring : { handoff: null, receipt: null, receiptStatus: null, inputSetSha256: null, arms: [], reports: [] },
+      usage: valid ? usage : { present: usage.present, calls: [], stageTotals: [], componentTotals: [], workflowTotal: null },
       operationalFacts: valid ? operationalFacts : [],
       latestCheckpoint: valid && checkpoints.length ? checkpoints[checkpoints.length - 1] : null,
+      cursor: valid ? cursor : null,
+      actions: valid ? actions : {},
+      artifactLinks: valid ? deepClone(input?.artifactLinks || {}) : {},
     });
+  }
+
+  function replayEnvelopePackage(envelope) {
+    return {
+      manifest: deepClone(envelope?.manifest || null),
+      events: deepClone(envelope?.events || []),
+      artifactIndex: deepClone(envelope?.artifact_index || envelope?.artifactIndex || null),
+      artifacts: deepClone(envelope?.artifacts || envelope?.artifact_bodies || {}),
+      validatedArtifacts: deepClone(envelope?.validated_artifacts || envelope?.validatedArtifacts || {}),
+      usage: deepClone(envelope?.usage || null),
+      cursor: deepClone(envelope?.cursor || null),
+      actions: deepClone(envelope?.actions || {}),
+      artifactLinks: deepClone(envelope?.artifact_links || envelope?.artifactLinks || {}),
+      sourceMode: envelope?.source_mode === "replay" ? "replay" : "live",
+    };
+  }
+
+  async function mergeReplayEnvelope(previousPackage, envelope) {
+    const previous = previousPackage ? deepClone(previousPackage) : null;
+    const incoming = replayEnvelopePackage(envelope);
+    const errors = [];
+    const mergedEvents = Array.isArray(previous?.events) ? previous.events : [];
+    const deltaEvents = Array.isArray(incoming.events) ? incoming.events : [];
+    if (!Array.isArray(incoming.events)) addError(errors, "type", "$transport.events", "expected an array");
+    for (const event of deltaEvents) {
+      const seq = event?.seq;
+      if (!Number.isInteger(seq) || seq < 1) {
+        addError(errors, "event_seq", "$transport.events", "incoming event lacks a positive sequence");
+        continue;
+      }
+      if (seq <= mergedEvents.length) {
+        if (canonicalJSONString(mergedEvents[seq - 1]) !== canonicalJSONString(event)) {
+          addError(errors, "event_conflict", `$transport.events[seq=${seq}]`, "accepted event bytes changed");
+        }
+        continue;
+      }
+      if (seq !== mergedEvents.length + 1) {
+        addError(errors, "event_gap", `$transport.events[seq=${seq}]`, `expected ${mergedEvents.length + 1}`);
+        continue;
+      }
+      mergedEvents.push(event);
+    }
+    const merged = {
+      manifest: incoming.manifest || previous?.manifest || null,
+      events: mergedEvents,
+      artifactIndex: incoming.artifactIndex || previous?.artifactIndex || null,
+      artifacts: { ...(previous?.artifacts || {}), ...(incoming.artifacts || {}) },
+      validatedArtifacts: { ...(previous?.validatedArtifacts || {}), ...(incoming.validatedArtifacts || {}) },
+      usage: incoming.usage || previous?.usage || null,
+      cursor: incoming.cursor || previous?.cursor || null,
+      actions: incoming.actions || previous?.actions || {},
+      artifactLinks: { ...(previous?.artifactLinks || {}), ...(incoming.artifactLinks || {}) },
+      sourceMode: incoming.sourceMode || previous?.sourceMode || "live",
+    };
+    const model = await validatePackage({ ...merged, transportErrors: errors });
+    return { package: merged, model };
   }
 
   async function fetchJson(url) {
@@ -608,7 +1138,12 @@
     ARM_ORDER,
     canonicalJSONString,
     canonicalSha256,
+    normalizeWorkflowSetup,
+    defaultWorkflowSelection,
+    buildWorkflowPreflightRequest,
+    normalizeWorkflowPreflight,
     validatePackage,
+    mergeReplayEnvelope,
     fetchJson,
     fetchJsonLines,
   });

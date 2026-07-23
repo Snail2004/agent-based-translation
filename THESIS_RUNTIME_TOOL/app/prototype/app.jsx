@@ -907,6 +907,260 @@ function Modal({ title, icon: I, tone, children, onClose, actions, className = "
   );
 }
 
+function workflowDisplayValue(value) {
+  if (value === null || value === undefined || value === "") return uiText("Chưa xác định", "Unknown");
+  if (typeof value === "boolean") return value ? uiText("Có", "Yes") : uiText("Không", "No");
+  if (Array.isArray(value)) return value.length ? value.join(" · ") : uiText("Không có", "None");
+  if (typeof value === "object") return Object.entries(value)
+    .map(([key, child]) => `${key}: ${workflowDisplayValue(child)}`)
+    .join(" · ");
+  return String(value);
+}
+
+function WorkflowFacts({ title, value, empty }) {
+  const entries = value && typeof value === "object" && !Array.isArray(value)
+    ? Object.entries(value).filter(([, child]) => child !== undefined)
+    : [];
+  return (
+    <section className="workflow-facts">
+      {title && <div className="workflow-section-title">{title}</div>}
+      {entries.length ? entries.map(([key, child]) => (
+        <div className="workflow-fact-row" key={key}>
+          <span>{key.replaceAll("_", " ")}</span>
+          <b title={typeof child === "string" ? child : undefined}>{workflowDisplayValue(child)}</b>
+        </div>
+      )) : <p className="muted">{empty || uiText("Backend không công bố thêm dữ kiện.", "The backend did not advertise additional facts.")}</p>}
+    </section>
+  );
+}
+
+function WorkflowOptionSummary({ option }) {
+  if (!option) return null;
+  return (
+    <div className="workflow-option-summary">
+      <div className="workflow-option-head">
+        <strong>{option.label || option.id}</strong>
+        <span className="mono">{option.id}</span>
+        {option.revision && <span className="workflow-chip">{option.revision}</span>}
+      </div>
+      <WorkflowFacts title={uiText("Nguồn API / model / output / capability", "API source / model / output / capability")} value={option.fixedFacts} />
+      <div className="workflow-settings-split">
+        <WorkflowFacts title={uiText("Trạng thái credential-ref", "Credential-ref status")} value={option.credentialStatus} />
+        <WorkflowFacts title={uiText("Trạng thái capability", "Capability status")} value={option.capabilityStatus} />
+      </div>
+      <WorkflowFacts title={uiText("Giới hạn được chấp nhận", "Accepted constraints")} value={option.constraints} />
+    </div>
+  );
+}
+
+function WorkflowSetupBody({
+  state,
+  onToggleChapter,
+  onSelection,
+  onSettingsTab,
+}) {
+  if (state.status === "loading") {
+    return <div className="workflow-loading" role="status"><span className="spinner" />{uiText("Đang tải cấu hình workflow từ backend…", "Loading workflow setup from the backend…")}</div>;
+  }
+  if (state.status === "error" || !state.setup || !state.selection) {
+    return (
+      <div className="workflow-blocked" role="alert">
+        <Ic.alert size={18} />
+        <div><b>{uiText("Không thể mở cấu hình workflow", "Workflow setup is unavailable")}</b><p>{state.error || uiText("Payload setup không hợp lệ.", "The setup payload is invalid.")}</p></div>
+      </div>
+    );
+  }
+  const { setup, selection, preflight, step } = state;
+  const confirmedSelection = preflight?.normalizedSelection || null;
+  const confirmedMode = confirmedSelection?.execution_mode ?? selection.executionMode;
+  const shared = setup.sharedOptions.find(option => option.id === selection.sharedOptionId) || null;
+  const d2l = setup.d2lOptions.find(option => option.id === selection.d2lOptionId) || null;
+  const evaluation = setup.evaluationOptions.find(option => option.id === selection.evaluationOptionId) || null;
+  const advertisedArms = evaluation?.fixedFacts?.arm_ids || evaluation?.fixedFacts?.arms || [];
+  const highlight = selection.highlightPair || { baseline_arm_id: "", candidate_arm_id: "" };
+  const sourceSummary = {
+    project_id: setup.projectId,
+    lifecycle: setup.sourcePackage?.lifecycle ?? setup.sourcePackage?.status ?? null,
+    finalized: setup.sourcePackage?.finalized ?? setup.sourcePackage?.finalization_status ?? null,
+    frozen: setup.runtime?.frozen ?? setup.runtime?.prepared ?? null,
+    source_identity_sha256: setup.sourcePackage?.source_identity_sha256 ?? setup.runtime?.source_identity_sha256 ?? null,
+    chapter_count: setup.chapters.length,
+  };
+  return (
+    <>
+      <ol className="workflow-stepper" aria-label={uiText("Tiến trình cấu hình workflow", "Workflow setup progress")}>
+        {[
+          uiText("Nguồn", "Source"),
+          uiText("API chung", "Shared API"),
+          uiText("Pipeline", "Pipelines"),
+          "Preflight",
+          uiText("Xác nhận", "Confirm"),
+        ].map((label, index) => (
+          <li className={step === index + 1 ? "current" : step > index + 1 ? "done" : ""} key={label}>
+            <span>{step > index + 1 ? "✓" : index + 1}</span><b>{label}</b>
+          </li>
+        ))}
+      </ol>
+
+      {step === 1 && (
+        <div className="workflow-step-panel">
+          <div className="workflow-callout"><Ic.lock size={14} /><span>{uiText("Nguồn đã chốt là authority. UI chỉ chọn chương; không sửa hash, stage hoặc đường dẫn.", "The finalized source is authoritative. The UI only selects chapters; it cannot edit hashes, stages, or paths.")}</span></div>
+          <WorkflowFacts title={uiText("Source Package và runtime", "Source Package and runtime")} value={sourceSummary} />
+          <div className="workflow-section-title">{uiText("Chương sẽ chạy", "Chapters to run")} <span className="workflow-count">{selection.chapterIds.length}/{setup.chapters.filter(row => row.selectable).length}</span></div>
+          <div className="workflow-chapter-list">
+            {setup.chapters.map(chapter => (
+              <label className={"workflow-chapter" + (!chapter.selectable ? " disabled" : "")} key={chapter.chapterId}>
+                <input
+                  type="checkbox"
+                  checked={selection.chapterIds.includes(chapter.chapterId)}
+                  disabled={!chapter.selectable}
+                  onChange={() => onToggleChapter(chapter.chapterId)}
+                />
+                <span><b>{chapter.title}</b><em className="mono">{chapter.chapterId}</em></span>
+                <small>{chapter.blockCount === null ? uiText("số block chưa công bố", "block count unknown") : `${chapter.blockCount} block`}</small>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="workflow-step-panel">
+          <div className="workflow-section-title">{uiText("Chế độ thực thi", "Execution mode")}</div>
+          <div className="workflow-mode-grid">
+            {setup.executionModes.map(mode => (
+              <button
+                type="button"
+                key={mode.id}
+                className={"workflow-mode" + (selection.executionMode === mode.id ? " selected" : "")}
+                disabled={!mode.enabled}
+                onClick={() => onSelection({ executionMode: mode.id })}
+              >
+                <b>{mode.id === "dry_run" ? "Dry-run · 0 API" : "Live · API"}</b>
+                <span>{mode.reason || (mode.enabled ? uiText("Được backend cho phép", "Allowed by backend") : uiText("Đang khóa trong gate 0-API", "Locked during the 0-API gate"))}</span>
+              </button>
+            ))}
+          </div>
+          <label className="workflow-field">
+            <span>{uiText("Cấu hình API chung đã đăng ký", "Registered shared API setup")}</span>
+            <select value={selection.sharedOptionId} onChange={event => onSelection({ sharedOptionId: event.target.value })}>
+              {setup.sharedOptions.filter(option => option.enabled).map(option => <option key={option.id} value={option.id}>{option.label} · {option.id}</option>)}
+            </select>
+          </label>
+          <WorkflowOptionSummary option={shared} />
+          <div className="workflow-cap-grid">
+            <label className="workflow-field">
+              <span>{uiText("Trần token cứng", "Hard token cap")}</span>
+              <input type="number" min="1" step="1000" value={selection.hardTotalTokenCap ?? ""} onChange={event => onSelection({ hardTotalTokenCap: event.target.value })} placeholder={uiText("Không đặt", "Not set")} />
+            </label>
+            <label className="workflow-field">
+              <span>{uiText("Trần chi phí dự phòng (USD)", "Reserved cost cap (USD)")}</span>
+              <input type="number" min="0.01" step="0.01" value={selection.reservedCostCapUsd ?? ""} onChange={event => onSelection({ reservedCostCapUsd: event.target.value })} placeholder={uiText("Không đặt", "Not set")} />
+            </label>
+          </div>
+          <p className="muted">{uiText("Trần là gate dừng an toàn, không phải dự toán hay chi phí thực tế.", "Caps are safety gates, not forecasts or actual spend.")}</p>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="workflow-step-panel">
+          <div className="workflow-settings-tabs" role="tablist">
+            <button type="button" role="tab" aria-selected={state.settingsTab === "d2l"} className={state.settingsTab === "d2l" ? "active" : ""} onClick={() => onSettingsTab("d2l")}>D2L</button>
+            <button type="button" role="tab" aria-selected={state.settingsTab === "evaluation"} className={state.settingsTab === "evaluation" ? "active" : ""} onClick={() => onSettingsTab("evaluation")}>Evaluation</button>
+          </div>
+          {state.settingsTab === "d2l" ? (
+            <>
+              <label className="workflow-field">
+                <span>{uiText("Preset D2L có phiên bản", "Versioned D2L preset")}</span>
+                <select value={selection.d2lOptionId} onChange={event => onSelection({ d2lOptionId: event.target.value })}>
+                  {setup.d2lOptions.filter(option => option.enabled).map(option => <option key={option.id} value={option.id}>{option.label} · {option.id}</option>)}
+                </select>
+              </label>
+              <WorkflowOptionSummary option={d2l} />
+              <div className="workflow-callout"><Ic.lock size={14} /><span>{uiText("Stage, S0/S1, role/model binding, validator, retry và cache do server cố định.", "Stages, S0/S1, role/model bindings, validators, retry, and cache are server-fixed.")}</span></div>
+            </>
+          ) : (
+            <>
+              <label className="workflow-field">
+                <span>{uiText("Preset Evaluation có phiên bản", "Versioned Evaluation preset")}</span>
+                <select value={selection.evaluationOptionId} onChange={event => onSelection({ evaluationOptionId: event.target.value })}>
+                  {setup.evaluationOptions.filter(option => option.enabled).map(option => <option key={option.id} value={option.id}>{option.label} · {option.id}</option>)}
+                </select>
+              </label>
+              <WorkflowOptionSummary option={evaluation} />
+              {advertisedArms.length > 1 && (
+                <div className="workflow-cap-grid">
+                  <label className="workflow-field"><span>{uiText("Arm gốc để tô sáng", "Highlight baseline arm")}</span>
+                    <select value={highlight.baseline_arm_id} onChange={event => onSelection({ highlightPair: event.target.value ? { ...highlight, baseline_arm_id: event.target.value } : null })}>
+                      <option value="">{uiText("Không chọn", "None")}</option>
+                      {advertisedArms.map(arm => <option key={arm} value={arm}>{arm}</option>)}
+                    </select>
+                  </label>
+                  <label className="workflow-field"><span>{uiText("Arm so sánh", "Comparison arm")}</span>
+                    <select value={highlight.candidate_arm_id} disabled={!highlight.baseline_arm_id} onChange={event => onSelection({ highlightPair: event.target.value ? { ...highlight, candidate_arm_id: event.target.value } : null })}>
+                      <option value="">{uiText("Không chọn", "None")}</option>
+                      {advertisedArms.filter(arm => arm !== highlight.baseline_arm_id).map(arm => <option key={arm} value={arm}>{arm}</option>)}
+                    </select>
+                  </label>
+                </div>
+              )}
+              <div className="workflow-callout"><Ic.lock size={14} /><span>{uiText("Năm arm, scorer, aggregation, threshold và verdict là preset hash-bound của server.", "The five arms, scorers, aggregation, thresholds, and verdict are server hash-bound presets.")}</span></div>
+            </>
+          )}
+        </div>
+      )}
+
+      {step === 4 && (
+        <div className="workflow-step-panel">
+          {state.status === "preflighting" ? (
+            <div className="workflow-loading" role="status"><span className="spinner" />{uiText("Backend đang chạy preflight 0-API…", "The backend is running the 0-API preflight…")}</div>
+          ) : preflight ? (
+            <>
+              <div className={"workflow-preflight-status " + (preflight.valid ? "good" : "bad")}>
+                {preflight.valid ? <Ic.checkCircle size={18} /> : <Ic.xCircle size={18} />}
+                <div><b>{preflight.valid ? uiText("Preflight hợp lệ", "Preflight passed") : uiText("Preflight bị chặn", "Preflight blocked")}</b>
+                  <span>{preflight.valid ? uiText("Các identity và giới hạn đã được backend đóng dấu.", "The backend sealed identities and bounds.") : uiText("Sửa lựa chọn rồi chạy lại; UI không tự bỏ qua lỗi.", "Adjust the selection and rerun; the UI will not bypass errors.")}</span>
+                </div>
+              </div>
+              {!!preflight.errors?.length && <ul className="workflow-message-list bad">{preflight.errors.map((error, index) => <li key={index}>{error.code ? `${error.code}: ` : ""}{error.message || String(error)}</li>)}</ul>}
+              {!!preflight.warnings?.length && <ul className="workflow-message-list warn">{preflight.warnings.map((warning, index) => <li key={index}>{warning.code ? `${warning.code}: ` : ""}{warning.message || String(warning)}</li>)}</ul>}
+              <div className="workflow-settings-split">
+                <WorkflowFacts title={uiText("Identity đã đóng dấu", "Sealed identities")} value={preflight.identities} />
+                <WorkflowFacts title={uiText("Giới hạn đã xác minh", "Validated bounds")} value={preflight.bounds} />
+              </div>
+            </>
+          ) : <div className="workflow-callout"><Ic.shield size={14} /><span>{uiText("Chạy preflight để backend kiểm tra profile, capability, credential-ref, giới hạn và identity.", "Run preflight so the backend can validate profiles, capabilities, credential refs, caps, and identities.")}</span></div>}
+        </div>
+      )}
+
+      {step === 5 && preflight && (
+        <div className="workflow-step-panel">
+          <div className="workflow-final-confirm">
+            <Ic.checkCircle size={22} />
+            <div>
+              <b>{confirmedMode === "live" ? uiText("Xác nhận bắt đầu Live", "Confirm Live start") : uiText("Xác nhận dry-run 0-API", "Confirm 0-API dry run")}</b>
+              <p>{uiText("Đây là hành động cuối rõ ràng. Request chỉ gửi seal preflight; không gửi prompt, secret, URL, stage list hay trọng số.", "This is the explicit final action. The request sends only the preflight seal—never prompts, secrets, URLs, stage lists, or weights.")}</p>
+            </div>
+          </div>
+          <WorkflowFacts value={{
+            execution_mode: confirmedMode,
+            chapters: confirmedSelection?.chapter_ids ?? selection.chapterIds,
+            shared_option: confirmedSelection?.shared_option_id ?? selection.sharedOptionId,
+            d2l_settings: confirmedSelection?.d2l_settings_option_id ?? selection.d2lOptionId,
+            evaluation_settings: confirmedSelection?.evaluation_settings_option_id ?? selection.evaluationOptionId,
+            planned_run_id: preflight.launch?.plannedRunId,
+            preflight_sha256: preflight.launch?.preflightSha256,
+          }} />
+          {confirmedMode === "live" && !preflight.liveStartAllowed && (
+            <div className="workflow-blocked" role="alert"><Ic.lock size={18} /><div><b>{uiText("Live đang bị khóa", "Live start is locked")}</b><p>{uiText("Gate tích hợp hiện là 0-API; backend chưa cấp live_start_allowed.", "This integration gate is 0-API; the backend has not granted live_start_allowed.")}</p></div></div>
+          )}
+        </div>
+      )}
+      {state.error && <div className="workflow-inline-error" role="alert"><Ic.alert size={13} />{state.error}</div>}
+    </>
+  );
+}
+
 function historyTip(prefix, event) {
   return event?.label ? `${prefix}: ${event.label}` : `${prefix} ${uiText("không khả dụng", "unavailable")}`;
 }
@@ -1226,7 +1480,18 @@ function App() {
   const [runBlockPreview, setRunBlockPreview] = useState([]);
   const [runWatchlist, setRunWatchlist] = useState([]);
   const [runReportSummary, setRunReportSummary] = useState(null);
-  const [dichForm, setDichForm] = useState({ chapters: "", profile: "technical_d2l_v1", hard_total_token_cap: 6000000 });
+  const [workflowSetupState, setWorkflowSetupState] = useState({
+    status: "idle",
+    step: 1,
+    settingsTab: "d2l",
+    projectId: "",
+    jobId: "",
+    setup: null,
+    selection: null,
+    preflight: null,
+    error: "",
+  });
+  const [workflowReplay, setWorkflowReplay] = useState(null);
   const [runPromptPreview, setRunPromptPreview] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
@@ -1278,6 +1543,8 @@ function App() {
   const saveTimers = useRef({});
   const runLogOffsetRef = useRef(0);
   const runEventOffsetRef = useRef(0);
+  const workflowReplayPackageRef = useRef(null);
+  const workflowReplayRunRef = useRef("");
   const fullRegistryOverlayCacheRef = useRef(new Map());
 
   const navigateView = useCallback((nextView, { replace = false } = {}) => {
@@ -1617,6 +1884,9 @@ function App() {
 
   function selectRun(runId) {
     setSelectedRunId(runId);
+    workflowReplayRunRef.current = "";
+    workflowReplayPackageRef.current = null;
+    setWorkflowReplay(null);
     runLogOffsetRef.current = 0;
     runEventOffsetRef.current = 0;
     setSelectedRunLog({ run_id: runId, log: "", offset: 0, running: true, status: "" });
@@ -1747,59 +2017,163 @@ function App() {
     }
   }
 
-  function openDichModal() {
+  function workflowSourceProjectId() {
     const jobId = thesisJobId(activeDocId);
-    if (!jobId) { toast(uiText("Chưa mở dataset khóa luận", "No thesis dataset open"), "bad", uiText("Chọn một dataset khóa luận trước khi dịch.", "Choose a thesis dataset before translating.")); return; }
-    const available = chapters.map(chapter => chapter.chapter_id).filter(Boolean);
-    const requested = splitWords(dichForm.chapters).filter(chapterId => available.includes(chapterId));
-    const selected = requested.length ? requested : (available.length ? [available[0]] : []);
-    setDichForm(form => ({
-      ...form,
-      chapters: selected.join(" "),
-      profile: form.profile || "technical_d2l_v1",
-      hard_total_token_cap: form.hard_total_token_cap || 6000000,
-    }));
-    setModal({ kind: "dich-run", jobId, sourceTitle: docInfo?.thesis?.document_doc_id || docInfo?.metadata?.title || "" });
+    const linked = projects.find(project => String(project?.runtime_doc_id || "") === String(activeDocId || ""))
+      || projects.find(project => jobId && runtimeJobIdForProject(project) === jobId)
+      || projects.find(project => String(project?.doc_id || "") === String(activeDocId || ""));
+    if (linked && !isRuntimeProject(linked)) return String(linked.doc_id || "");
+    if (linked) return sourceDocIdForRuntimeProject(linked);
+    if (projectRuntime?.project_id && !isThesisDatasetId(projectRuntime.project_id)) return String(projectRuntime.project_id);
+    return isThesisDatasetId(activeDocId) ? "" : String(activeDocId || "");
   }
 
-  async function confirmDich() {
-    const jobId = thesisJobId(activeDocId);
-    if (!jobId) return;
-    setRunBusy(true);
+  async function openWorkflowSetupFor(projectIdOverride = "", jobIdOverride = "") {
+    const adapter = window.WorkflowReplayAdapter;
+    const jobId = jobIdOverride || thesisJobId(activeDocId);
+    const projectId = projectIdOverride || workflowSourceProjectId();
+    if (!jobId || !projectId) {
+      toast(
+        uiText("Không xác định được nguồn chạy", "Could not resolve the run source"),
+        "bad",
+        uiText("Mở project đã chuẩn bị runtime trước khi cấu hình workflow.", "Open a project with a prepared runtime before configuring the workflow."),
+      );
+      return;
+    }
+    setModal({ kind: "workflow-setup" });
+    setWorkflowSetupState({
+      status: "loading",
+      step: 1,
+      settingsTab: "d2l",
+      projectId,
+      jobId,
+      setup: null,
+      selection: null,
+      preflight: null,
+      error: "",
+    });
+    setRunError("");
     try {
-      const estParams = {
-        job_id: jobId,
-        script: "run_d2l_project_campaign",
-        chapters: splitWords(dichForm.chapters).join(","),
-        profile: dichForm.profile || "",
-        hard_total_token_cap: String(dichForm.hard_total_token_cap || 6000000),
+      if (!adapter?.normalizeWorkflowSetup || !adapter?.defaultWorkflowSelection) {
+        throw new Error("Workflow setup adapter is unavailable.");
+      }
+      const response = await API.getWorkflowSetup(projectId);
+      const setup = adapter.normalizeWorkflowSetup(response);
+      if (!setup.valid) {
+        const first = setup.errors?.[0];
+        throw new Error(first?.message || "Backend workflow setup failed validation.");
+      }
+      setWorkflowSetupState(current => ({
+        ...current,
+        status: "ready",
+        setup,
+        selection: adapter.defaultWorkflowSelection(setup),
+      }));
+    } catch (err) {
+      const message = errorMessage(err);
+      setWorkflowSetupState(current => ({ ...current, status: "error", error: message }));
+      setRunError(message);
+    }
+  }
+
+  function openDichModal() {
+    return openWorkflowSetupFor();
+  }
+
+  function updateWorkflowSelection(patch) {
+    setWorkflowSetupState(current => {
+      if (current.status !== "ready" && current.status !== "preflighted") return current;
+      return {
+        ...current,
+        status: "ready",
+        selection: { ...(current.selection || {}), ...patch },
+        preflight: null,
+        error: "",
+        step: Math.min(current.step, 3),
       };
-      const est = await API.getThesisOneButtonEstimate(estParams);
+    });
+  }
+
+  function toggleWorkflowChapter(chapterId) {
+    const selected = new Set(workflowSetupState.selection?.chapterIds || []);
+    if (selected.has(chapterId)) selected.delete(chapterId);
+    else selected.add(chapterId);
+    const ordered = (workflowSetupState.setup?.chapters || [])
+      .filter(chapter => selected.has(chapter.chapterId))
+      .map(chapter => chapter.chapterId);
+    updateWorkflowSelection({ chapterIds: ordered });
+  }
+
+  function moveWorkflowSetupStep(delta) {
+    setWorkflowSetupState(current => ({
+      ...current,
+      step: Math.max(1, Math.min(5, current.step + delta)),
+    }));
+  }
+
+  async function runWorkflowPreflight() {
+    const adapter = window.WorkflowReplayAdapter;
+    const state = workflowSetupState;
+    const request = adapter?.buildWorkflowPreflightRequest?.(state.setup, state.selection);
+    if (!request?.valid) {
+      const message = request?.errors?.[0]?.message || uiText("Cấu hình workflow chưa hợp lệ.", "Workflow configuration is invalid.");
+      setWorkflowSetupState(current => ({ ...current, error: message }));
+      return;
+    }
+    setRunBusy(true);
+    setWorkflowSetupState(current => ({ ...current, status: "preflighting", step: 4, error: "" }));
+    try {
+      const response = await API.preflightWorkflowSetup(state.projectId, request.payload);
+      const preflight = adapter.normalizeWorkflowPreflight(response, state.setup, state.selection);
+      setWorkflowSetupState(current => ({
+        ...current,
+        status: preflight.valid ? "preflighted" : "ready",
+        preflight,
+        error: preflight.valid ? "" : (preflight.errors?.[0]?.message || uiText("Preflight bị chặn.", "Preflight is blocked.")),
+      }));
+    } catch (err) {
+      setWorkflowSetupState(current => ({ ...current, status: "ready", error: errorMessage(err) }));
+    } finally {
+      setRunBusy(false);
+    }
+  }
+
+  async function confirmWorkflowLaunch() {
+    const state = workflowSetupState;
+    const preflight = state.preflight;
+    const mode = preflight?.normalizedSelection?.execution_mode ?? state.selection?.executionMode;
+    const liveAllowed = state.setup?.liveStartAllowed === true && preflight?.liveStartAllowed === true;
+    if (!preflight?.valid || (mode === "live" && !liveAllowed)) return;
+    setRunBusy(true);
+    setWorkflowSetupState(current => ({ ...current, status: "launching", error: "" }));
+    try {
       const payload = {
+        schema_id: "WorkflowLaunchConfirmationV1",
+        schema_version: "1.0.0",
         script: "run_d2l_project_campaign",
-        job_id: jobId,
-        chapters: splitWords(dichForm.chapters),
-        profile: dichForm.profile || undefined,
-        hard_total_token_cap: Number(dichForm.hard_total_token_cap || 6000000),
-        allow_api: true,
-        confirm_token: est.confirm_token,
-        planned_run_id: est.planned_run_id,
+        job_id: state.jobId,
+        execution_mode: mode,
+        allow_api: mode === "live",
+        workflow_preflight_id: preflight.launch.preflightId,
+        workflow_preflight_sha256: preflight.launch.preflightSha256,
+        confirm_token: preflight.launch.confirmToken,
+        planned_run_id: preflight.launch.plannedRunId,
       };
       const created = await API.createThesisRun(payload);
       setModal(null);
-      setSelectedRunId(created.run_id);
-      runLogOffsetRef.current = 0;
-      runEventOffsetRef.current = 0;
-      setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
-      setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status, aggregate: emptyRunEventAggregate() });
-      setRunBlockPreview([]);
-      setRunWatchlist([]);
-      setRunReportSummary(null);
+      setWorkflowSetupState(current => ({ ...current, status: "launched" }));
+      selectRun(created.run_id);
       setCenterMode("console");
       await refreshThesisRuns();
-      toast(uiText("Đã bắt đầu dịch", "Translation started"), "good", created.run_id);
+      toast(
+        mode === "live" ? uiText("Đã bắt đầu workflow Live", "Live workflow started") : uiText("Đã bắt đầu dry-run 0-API", "0-API dry run started"),
+        "good",
+        created.workflow_run_id || created.run_id,
+      );
     } catch (err) {
-      toast(uiText("Khởi động dịch thất bại", "Translation launch failed"), "bad", errorMessage(err));
+      const message = errorMessage(err);
+      setWorkflowSetupState(current => ({ ...current, status: "preflighted", error: message }));
+      toast(uiText("Khởi động workflow thất bại", "Workflow launch failed"), "bad", message);
     } finally {
       setRunBusy(false);
     }
@@ -1812,7 +2186,8 @@ function App() {
     setRunBusy(true);
     try {
       const resumed = await API.resumeThesisRun(pending.runId, { confirm_token: pending.estimate.confirm_token });
-      toast(uiText("Đã tiếp tục lần chạy", "Run resumed"), "good", `${resumed.run_id} · attempt ${resumed.attempt_index}`);
+      const attempt = resumed.component_attempt_id ?? resumed.component_attempt_index ?? resumed.attempt_index ?? "?";
+      toast(uiText("Đã tiếp tục lần chạy", "Run resumed"), "good", `${resumed.run_id} · attempt ${attempt}`);
       await refreshThesisRuns();
       selectRun(resumed.run_id);
     } catch (err) {
@@ -1890,6 +2265,70 @@ function App() {
       if (timer) clearTimeout(timer);
     };
   }, [selectedRunId, refreshThesisRuns]);
+
+  const selectedWorkflowRun = useMemo(
+    () => (thesisRuns || []).find(run => run.run_id === selectedRunId) || null,
+    [selectedRunId, thesisRuns],
+  );
+  const workflowReplayAdvertised = Boolean(
+    selectedWorkflowRun?.workflow_run_id
+    || selectedWorkflowRun?.workflow_replay_available === true
+    || selectedWorkflowRun?.script === "run_d2l_project_campaign",
+  );
+
+  useEffect(() => {
+    if (!selectedRunId || !workflowReplayAdvertised) {
+      workflowReplayRunRef.current = "";
+      workflowReplayPackageRef.current = null;
+      setWorkflowReplay(null);
+      return undefined;
+    }
+    const adapter = window.WorkflowReplayAdapter;
+    if (!adapter?.mergeReplayEnvelope) return undefined;
+    if (workflowReplayRunRef.current !== selectedRunId) {
+      workflowReplayRunRef.current = selectedRunId;
+      workflowReplayPackageRef.current = null;
+      setWorkflowReplay(null);
+    }
+    let cancelled = false;
+    let timer = null;
+    async function tailParentWorkflow() {
+      const acceptedThrough = workflowReplayPackageRef.current?.events?.length || 0;
+      try {
+        const response = await API.getWorkflowReplay(selectedRunId, acceptedThrough, 1500);
+        if (cancelled) return;
+        const envelope = response?.workflow_replay || response;
+        const merged = await adapter.mergeReplayEnvelope(workflowReplayPackageRef.current, envelope);
+        if (cancelled) return;
+        workflowReplayPackageRef.current = merged.package;
+        setWorkflowReplay(merged.model);
+        if (!merged.model.valid) return;
+        const status = String(merged.model.manifest?.status || "").toLowerCase();
+        if (!["done", "failed", "blocked", "cancelled", "canceled"].includes(status)) {
+          timer = setTimeout(tailParentWorkflow, 150);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if ([404, 405, 501].includes(Number(err?.status))) {
+          // Current production may not advertise the frozen parent replay API yet.
+          // Keep the legacy Console path intact; never fall back to child snapshots.
+          setWorkflowReplay(null);
+          return;
+        }
+        timer = setTimeout(tailParentWorkflow, 2200);
+      }
+    }
+    tailParentWorkflow();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [
+    selectedRunId,
+    workflowReplayAdvertised,
+    selectedWorkflowRun?.workflow_run_id,
+    selectedWorkflowRun?.script,
+  ]);
 
   // Entering a run surface with nothing selected: auto-pick the newest run so
   // Console and Report share the same current run (registry list is newest-first).
@@ -2653,11 +3092,9 @@ function App() {
       setCenterModeState("book");
       localStorage.setItem(STORAGE_CENTER_MODE, "book");
       navigateView("workspace");
-      setModal({
-        kind: "dich-run",
-        jobId,
-        sourceTitle: project?.document_doc_id || project?.display_doc_id || docInfo?.thesis?.document_doc_id || "",
-      });
+      const sourceProjectId = sourceDocIdForRuntimeProject(project)
+        || String(project?.display_doc_id || docInfo?.thesis?.document_doc_id || "");
+      await openWorkflowSetupFor(sourceProjectId, jobId);
     } catch (err) {
       toast(uiText("Không mở được Điều khiển chạy", "Could not open Run Control"), "bad", errorMessage(err));
     } finally {
@@ -3451,6 +3888,7 @@ function App() {
             blockPreview: runBlockPreview,
             watchlist: runWatchlist,
             reportSummary: runReportSummary,
+            workflowReplay,
             runForm,
             promptPreview: runPromptPreview,
             busy: runBusy,
@@ -3572,20 +4010,69 @@ function App() {
         </Modal>
       )}
 
-      {modal?.kind === "dich-run" && (
-        <Modal title={uiText("Dịch — một nút", "Translate — one button")} icon={Ic.play} onClose={() => setModal(null)}
-          actions={<><button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
-            <button className="btn primary" disabled={runBusy || !(dichForm.chapters || "").trim()} onClick={confirmDich}><Ic.play size={12} />{uiText("Bắt đầu dịch (API thật)", "Start translation (real API)")}</button></>}>
-          <p>{uiText("Chạy pipeline thuật ngữ (B1 → Candidate Index → B2 → Auditor → Glossary → Translator S0/S1 → kiểm tra chất lượng bản dịch) cho project", "Runs the terminology pipeline (B1 → Candidate Index → B2 → Auditor → Glossary → Translator S0/S1 → translation quality audit) for project")} <span className="mono">{modal.sourceTitle || uiText("đang chọn", "current project")}</span>. {uiText("Kết quả chấm điểm được relay riêng; tiến trình hiện trực tiếp trong Console.", "Scoring is handed off separately; progress appears in Console.")}</p>
-          <div className="run-grid">
-            <label><span>{uiText("chương", "chapters")}</span><input value={dichForm.chapters} onChange={e => setDichForm(f => ({ ...f, chapters: e.target.value }))} placeholder="d2l_preface" /></label>
-            <label><span>{uiText("hồ sơ", "profile")}</span><input value={dichForm.profile} onChange={e => setDichForm(f => ({ ...f, profile: e.target.value }))} placeholder="technical_d2l_v1" /></label>
-            <label><span>{uiText("nguồn", "source")}</span><span className="mono muted">{uiText("server tự chọn theo project", "selected by server for this project")}</span></label>
-            <label><span>{uiText("trần token", "hard token cap")}</span><input type="number" step="1000" min="1" value={dichForm.hard_total_token_cap} onChange={e => setDichForm(f => ({ ...f, hard_total_token_cap: e.target.value }))} /></label>
-          </div>
-          <p className="muted"><Ic.alert size={11} /> {uiText("Đây là trần token để dừng an toàn, không phải dự toán chi phí. Chi phí thực tế chỉ ghi theo usage provider nếu có.", "This is a hard token stop, not an expected cost. Actual cost is recorded from provider usage when available.")}</p>
-        </Modal>
-      )}
+      {modal?.kind === "workflow-setup" && (() => {
+        const state = workflowSetupState;
+        const step = state.step || 1;
+        const confirmedMode = state.preflight?.normalizedSelection?.execution_mode ?? state.selection?.executionMode;
+        const liveAllowed = state.setup?.liveStartAllowed === true && state.preflight?.liveStartAllowed === true;
+        const finalBlocked = !state.preflight?.valid
+          || (confirmedMode === "live" && !liveAllowed);
+        let actions;
+        if (state.status === "loading") {
+          actions = <button className="btn" disabled>{uiText("Đang tải…", "Loading…")}</button>;
+        } else if (state.status === "error") {
+          actions = <>
+            <button className="btn" onClick={() => setModal(null)}>{uiText("Đóng", "Close")}</button>
+            <button className="btn primary" onClick={openDichModal}><Ic.refresh size={12} />{uiText("Thử lại", "Retry")}</button>
+          </>;
+        } else if (step === 1) {
+          actions = <>
+            <button className="btn" onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
+            <button className="btn primary" disabled={!state.selection?.chapterIds?.length} onClick={() => moveWorkflowSetupStep(1)}>{uiText("Tiếp tục", "Continue")} <Ic.arrowRight size={12} /></button>
+          </>;
+        } else if (step === 2) {
+          actions = <>
+            <button className="btn" onClick={() => moveWorkflowSetupStep(-1)}>{uiText("Quay lại", "Back")}</button>
+            <button className="btn primary" onClick={() => moveWorkflowSetupStep(1)}>{uiText("Tiếp tục", "Continue")} <Ic.arrowRight size={12} /></button>
+          </>;
+        } else if (step === 3) {
+          actions = <>
+            <button className="btn" disabled={runBusy} onClick={() => moveWorkflowSetupStep(-1)}>{uiText("Quay lại", "Back")}</button>
+            <button className="btn primary" disabled={runBusy} onClick={runWorkflowPreflight}><Ic.shield size={12} />{uiText("Chạy preflight 0-API", "Run 0-API preflight")}</button>
+          </>;
+        } else if (step === 4) {
+          actions = <>
+            <button className="btn" disabled={runBusy} onClick={() => moveWorkflowSetupStep(-1)}>{uiText("Sửa cấu hình", "Edit setup")}</button>
+            {state.preflight?.valid
+              ? <button className="btn primary" onClick={() => moveWorkflowSetupStep(1)}>{uiText("Tới xác nhận cuối", "Review final confirmation")} <Ic.arrowRight size={12} /></button>
+              : <button className="btn primary" disabled={runBusy} onClick={runWorkflowPreflight}><Ic.refresh size={12} />{uiText("Chạy lại preflight", "Rerun preflight")}</button>}
+          </>;
+        } else {
+          actions = <>
+            <button className="btn" disabled={runBusy} onClick={() => moveWorkflowSetupStep(-1)}>{uiText("Quay lại", "Back")}</button>
+            <button className="btn primary" disabled={runBusy || finalBlocked} onClick={confirmWorkflowLaunch}>
+              {runBusy ? <span className="spinner" /> : <Ic.play size={12} />}
+              {confirmedMode === "live" ? uiText("Bắt đầu Live", "Start Live") : uiText("Bắt đầu dry-run 0-API", "Start 0-API dry run")}
+            </button>
+          </>;
+        }
+        return (
+          <Modal
+            title={uiText("Thiết lập workflow Dịch → Chấm điểm", "Translation → Evaluation workflow setup")}
+            icon={Ic.play}
+            className={`workflow-setup-modal workflow-run-theme-${localStorage.getItem("ailab.console_theme") === "dark" ? "dark" : "paper"}`}
+            onClose={() => !runBusy && setModal(null)}
+            actions={actions}
+          >
+            <WorkflowSetupBody
+              state={state}
+              onToggleChapter={toggleWorkflowChapter}
+              onSelection={updateWorkflowSelection}
+              onSettingsTab={settingsTab => setWorkflowSetupState(current => ({ ...current, settingsTab }))}
+            />
+          </Modal>
+        );
+      })()}
 
       {modal?.kind === "cancel-run" && (
         <Modal title={uiText("Hủy lần chạy", "Cancel run")} icon={Ic.alert} tone="bad" onClose={() => setModal(null)}

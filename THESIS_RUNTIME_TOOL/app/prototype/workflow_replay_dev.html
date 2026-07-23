@@ -25,7 +25,13 @@
 <div id="root">loading accepted workflow package…</div>
 <nav class="dev-scenario" aria-label="0-API validation scenarios">
   <span>fixture-only · no live/API claim</span>
+  <span id="setup-contract-gates">setup gates: pending</span>
   <a href="?scenario=valid">valid</a>
+  <a href="?scenario=usage-valid">usage</a>
+  <a href="?scenario=usage-null">usage null</a>
+  <a href="?scenario=usage-unknown-zero">unknown≠0</a>
+  <a href="?scenario=optional-details">typed details</a>
+  <a href="?scenario=cursor-drift">cursor drift</a>
   <a href="?scenario=sequence-drift">sequence drift</a>
   <a href="?scenario=event-hash-drift">event hash drift</a>
   <a href="?scenario=arm-drift">arm drift</a>
@@ -49,8 +55,255 @@ function scenarioName() {
   const value = new URLSearchParams(window.location.search).get("scenario") || "valid";
   return new Set([
     "valid", "sequence-drift", "event-hash-drift", "arm-drift", "artifact-drift",
+    "usage-valid", "usage-null", "usage-unknown-zero", "optional-details", "cursor-drift",
     "resume-valid", "resume-sequence-gap", "resume-attempt-regression",
   ]).has(value) ? value : "valid";
+}
+
+function usageTotal(overrides = {}) {
+  return {
+    snapshot_seq: 4,
+    accepted_through_component_seq: 4,
+    physical_call_count: 1,
+    cache_observation_count: 1,
+    prompt_tokens: 120,
+    completion_tokens: 40,
+    reasoning_tokens: null,
+    cached_input_tokens: 24,
+    total_tokens: 160,
+    cache_hit_count: 1,
+    cache_miss_count: 1,
+    unknown_attempt_count: 0,
+    cost_status: "recorded",
+    cost_usd: 0.0042,
+    currency: "USD",
+    snapshot_binding: { authority: "producer_sealed" },
+    snapshot_sha256: "a".repeat(64),
+    ...overrides,
+  };
+}
+
+function makeUsageReadModel(manifest, mode) {
+  const unknown = mode === "null" || mode === "unknown-zero";
+  const nullable = value => unknown ? null : value;
+  const cost = mode === "unknown-zero" ? 0 : unknown ? null : 0.0042;
+  return {
+    schema_id: "WorkflowUsageReadModelV1",
+    schema_version: "1.0.0",
+    workflow_run_id: manifest.workflow_run_id,
+    validated: true,
+    validation: { valid: true, validator_id: "neutral_relay.usage.validator_v1" },
+    calls: [
+      {
+        attempt_usage_id: "usage_call_1",
+        component_id: "translation",
+        component_run_id: "translation_run_1",
+        component_attempt_id: 1,
+        component_attempt_index: 1,
+        component_seq: 3,
+        stage_id: "translation.translate",
+        agent: "translator",
+        work_id: "work_1",
+        logical_request_id: "request_1",
+        semantic_attempt_index: 1,
+        transport_retry_ordinal: 0,
+        physical_attempt_index: 1,
+        provider_id: "provider_registered_v1",
+        source_id: "shared_source_v1",
+        source_revision: "source-rev-1",
+        requested_model_id: "model_alias_v1",
+        observed_model_id: "provider_model_v1",
+        prompt_tokens: nullable(120),
+        completion_tokens: nullable(40),
+        reasoning_tokens: null,
+        cached_input_tokens: nullable(24),
+        total_tokens: nullable(160),
+        cache_status: "miss",
+        cache_mechanism: "provider_prompt_cache",
+        provider_call_avoided: false,
+        latency_ms: nullable(842),
+        finish_reason: unknown ? null : "stop",
+        outcome: "accepted",
+        cost_status: unknown ? "unknown" : "recorded",
+        cost_usd: cost,
+        currency: "USD",
+        usage_binding: { authority: "producer_sealed" },
+      },
+      {
+        cache_observation_id: "cache_observation_1",
+        component_id: "translation",
+        component_run_id: "translation_run_1",
+        component_attempt_id: 1,
+        component_attempt_index: 1,
+        component_seq: 4,
+        stage_id: "translation.translate",
+        agent: "translator",
+        work_id: "work_1",
+        logical_request_id: "request_2",
+        physical_attempt_index: null,
+        provider_id: "provider_registered_v1",
+        source_id: "shared_source_v1",
+        requested_model_id: "model_alias_v1",
+        observed_model_id: null,
+        prompt_tokens: null,
+        completion_tokens: null,
+        reasoning_tokens: null,
+        cached_input_tokens: null,
+        total_tokens: null,
+        cache_status: "hit",
+        cache_mechanism: "local_exact_cache",
+        provider_call_avoided: true,
+        latency_ms: nullable(3),
+        finish_reason: null,
+        outcome: "cache_hit",
+        cost_status: "unknown",
+        cost_usd: null,
+        currency: "USD",
+        usage_binding: { authority: "producer_sealed" },
+      },
+    ],
+    stage_totals: [
+      usageTotal({
+        component_id: "translation",
+        component_run_id: "translation_run_1",
+        stage_id: "translation.translate",
+        prompt_tokens: nullable(120),
+        completion_tokens: nullable(40),
+        cached_input_tokens: nullable(24),
+        total_tokens: nullable(160),
+        cost_status: unknown ? "unknown" : "recorded",
+        cost_usd: cost,
+      }),
+    ],
+    component_totals: [
+      usageTotal({
+        component_id: "translation",
+        component_run_id: "translation_run_1",
+        prompt_tokens: nullable(120),
+        completion_tokens: nullable(40),
+        cached_input_tokens: nullable(24),
+        total_tokens: nullable(160),
+        cost_status: unknown ? "unknown" : "recorded",
+        cost_usd: cost,
+      }),
+    ],
+    workflow_total: usageTotal({
+      component_id: null,
+      component_run_id: null,
+      snapshot_binding: { authority: "relay_sealed" },
+      prompt_tokens: nullable(120),
+      completion_tokens: nullable(40),
+      cached_input_tokens: nullable(24),
+      total_tokens: nullable(160),
+      cost_status: unknown ? "unknown" : "recorded",
+      cost_usd: cost,
+    }),
+  };
+}
+
+function typedDetail(componentId, kind, data) {
+  return {
+    schema_id: "WorkflowOptionalDetailV1",
+    schema_version: "1.0.0",
+    component_id: componentId,
+    kind,
+    data,
+  };
+}
+
+function runSetupContractChecks(adapter) {
+  const setupPayload = {
+    schema_id: "WorkflowSetupReadModelV1",
+    schema_version: "1.0.0",
+    project_id: "project_fixture_v1",
+    live_start_allowed: false,
+    dry_run_allowed: true,
+    source_package: {
+      lifecycle: "finalized_pre_run",
+      finalization_status: "finalized",
+      chapter_count: 5,
+      block_count: 2355,
+      source_identity_sha256: "1".repeat(64),
+    },
+    runtime: { prepared: true, pipeline_run_count: 0 },
+    chapters: [
+      { chapter_id: "ch01", title: "Chapter 1", block_count: 471, selected_by_default: true },
+      { chapter_id: "ch02", title: "Chapter 2", block_count: 466, selected_by_default: true },
+    ],
+    execution_modes: [
+      { id: "dry_run", label: "0-API", enabled: true },
+      { id: "live", label: "Live", enabled: true, reason: "Coordinator gate closed" },
+    ],
+    shared_options: [{
+      id: "shared_api_v1",
+      label: "Shared API profile",
+      revision: "v1",
+      sha256: "2".repeat(64),
+      enabled: true,
+      credential_status: { ref_id: "credential_ref_v1", available: true },
+      capability_status: { json_object: true, streaming: true },
+      fixed_facts: {
+        source_id: "shared_source_v1",
+        profile_id: "shared_profile_v1",
+        requested_model_id: "model_alias_v1",
+        output_mode: "json_object",
+      },
+    }],
+    d2l_settings_options: [{
+      id: "d2l_settings_v1",
+      label: "D2L campaign V1",
+      revision: "v1",
+      sha256: "3".repeat(64),
+      enabled: true,
+      fixed_facts: { component_id: "translation", handoff: "s0+s1" },
+    }],
+    evaluation_settings_options: [{
+      id: "evaluation_settings_v1",
+      label: "Evaluation five-arm V1",
+      revision: "v1",
+      sha256: "4".repeat(64),
+      enabled: true,
+      fixed_facts: { arm_ids: ["s0", "s1", "community", "google_nmt", "llm_lc"] },
+    }],
+    defaults: {
+      shared_option_id: "shared_api_v1",
+      d2l_settings_option_id: "d2l_settings_v1",
+      evaluation_settings_option_id: "evaluation_settings_v1",
+      hard_total_token_cap: 200000,
+      reserved_cost_cap_usd: 12,
+    },
+  };
+  const setup = adapter.normalizeWorkflowSetup(setupPayload);
+  const selection = setup.valid ? adapter.defaultWorkflowSelection(setup) : null;
+  const dryRequest = adapter.buildWorkflowPreflightRequest(setup, selection);
+  const liveRequest = adapter.buildWorkflowPreflightRequest(setup, { ...selection, executionMode: "live" });
+  const preflight = adapter.normalizeWorkflowPreflight({
+    schema_id: "WorkflowPreflightReadModelV1",
+    schema_version: "1.0.0",
+    valid: true,
+    status: "ready",
+    errors: [],
+    warnings: ["live_start_allowed=false"],
+    live_start_allowed: false,
+    launch: {
+      preflight_id: "preflight_fixture_v1",
+      preflight_sha256: "5".repeat(64),
+      confirm_token: "fixture-confirm-token",
+      planned_run_id: "workflow_planned_fixture_v1",
+    },
+  }, setup, selection);
+  const exposedSecretPayload = JSON.parse(JSON.stringify(setupPayload));
+  exposedSecretPayload.shared_options[0].api_key = "must-not-be-exposed";
+  const exposedSecret = adapter.normalizeWorkflowSetup(exposedSecretPayload);
+  return {
+    setupValid: setup.valid,
+    dryRequestValid: dryRequest.valid,
+    liveRequestRejected: liveRequest.valid === false,
+    preflightValid: preflight.valid,
+    liveStartBlocked: preflight.liveStartAllowed === false,
+    exposedSecretRejected: exposedSecret.valid === false
+      && exposedSecret.errors.some(error => error.code === "private_setup_field"),
+  };
 }
 
 async function resealParentEvents(adapter, events) {
@@ -61,6 +314,117 @@ async function resealParentEvents(adapter, events) {
     event.integrity.event_sha256 = await adapter.canonicalSha256(event);
     previous = event.integrity.event_sha256;
   }
+}
+
+async function addTypedDetails(adapter, manifest, events) {
+  events[2].payload.optional_details = [
+    typedDetail("translation", "d2l_glossary", {
+      artifact_ref: "components/translation/translation_run_1/artifacts/glossary_seal.json",
+      status: "sealed",
+      term_count: 43,
+    }),
+    typedDetail("translation", "d2l_admission", {
+      admitted_block_count: 2355,
+      held_block_count: 7,
+      policy_revision: "d2l_admission_v1",
+    }),
+    typedDetail("translation", "d2l_protected_spans", {
+      protected_span_count: 118,
+      validation_status: "passed",
+    }),
+    typedDetail("translation", "d2l_quality", {
+      audit_status: "passed",
+      issue_count: 0,
+    }),
+    typedDetail("translation", "d2l_memory", {
+      glossary_revision: "glossary_seal_v1",
+      memory_delta_ref: "components/translation/translation_run_1/artifacts/memory_delta.json",
+    }),
+    typedDetail("translation", "d2l_s0_s1", {
+      s0_artifact_ref: "components/translation/translation_run_1/artifacts/d2l/s0.json",
+      s1_artifact_ref: "components/translation/translation_run_1/artifacts/d2l/s1.json",
+    }),
+  ];
+
+  manifest.components.push({
+    component_attempt_id: 1,
+    component_attempt_index: 1,
+    component_id: "evaluation",
+    component_run_id: "evaluation_run_1",
+    last_component_seq: 1,
+    manifest: {
+      artifact_kind: "component_manifest",
+      artifact_ref: "components/evaluation/evaluation_run_1/component_manifest.json",
+      schema_version: "1.0.0",
+      sha256: "b".repeat(64),
+      sha256_kind: "physical",
+    },
+    status: "running",
+    terminal: false,
+    validator: {
+      validation_receipt_sha256: "b".repeat(64),
+      validator_id: "evaluation.component.validator_v1",
+      validator_revision: "v1",
+    },
+  });
+  manifest.stages[1].status = "running";
+  manifest.stages[1].current_work_id = "evaluation_packet_1";
+  manifest.stages[1].progress = { completed: 2, total: 5, unit: "arms" };
+  manifest.active_stage_id = "evaluation.score";
+  manifest.latest_event_seq = 5;
+  manifest.updated_at = "2026-07-22T00:00:03Z";
+  events.push({
+    schema_id: "WorkflowEventV1",
+    schema_version: "1.0.0",
+    event_id: "workflow_event_00000005",
+    workflow_run_id: manifest.workflow_run_id,
+    flow_kind: manifest.flow_kind,
+    seq: 5,
+    accepted_at: "2026-07-22T00:00:03Z",
+    component: {
+      component_id: "evaluation",
+      component_run_id: "evaluation_run_1",
+      component_attempt_id: 1,
+      component_attempt_index: 1,
+      component_seq: 1,
+      source_event_id: "evt_evaluation_run_1_00000001",
+      source_event_sha256: "c".repeat(64),
+      source_event_sha256_kind: "physical",
+      validator_id: "evaluation.component.validator_v1",
+      validator_revision: "v1",
+    },
+    stage_id: "evaluation.score",
+    agent: "evaluation_runner",
+    event: "component_started",
+    severity: "info",
+    payload: {
+      current_work_id: "evaluation_packet_1",
+      progress: { completed: 2, total: 5, unit: "arms" },
+      optional_details: [
+        typedDetail("evaluation", "evaluation_progress", {
+          completed_arms: 2,
+          total_arms: 5,
+          current_arm_id: "community",
+        }),
+        typedDetail("evaluation", "evaluation_metrics", {
+          report_ref: "reports/score_run_partial.json",
+          status: "partial",
+        }),
+        typedDetail("evaluation", "evaluation_aggregation", {
+          aggregation_status: "pending",
+          accepted_arm_count: 2,
+        }),
+        typedDetail("evaluation", "evaluation_verdict", {
+          verdict: null,
+          reason: "not_terminal",
+        }),
+      ],
+    },
+    integrity: { previous_event_sha256: null, event_sha256: "" },
+  });
+  await resealParentEvents(adapter, events);
+  delete manifest.integrity.manifest_sha256;
+  manifest.integrity.manifest_sha256 = await adapter.canonicalSha256(manifest);
 }
 
 async function loadAcceptedWorkflowPackage() {
@@ -94,11 +458,35 @@ async function loadAcceptedWorkflowPackage() {
     events[4].component.component_attempt_index = 1;
     await resealParentEvents(adapter, events);
   }
+  if (scenario === "optional-details") await addTypedDetails(adapter, manifest, events);
   const artifacts = handoff && receipt ? {
     "handoffs/scoring_handoff.json": handoff,
     "handoffs/scoring_receipt.json": receipt,
   } : {};
-  return adapter.validatePackage({ manifest, events, artifactIndex, artifacts, sourceMode: "replay" });
+  const usageMode = scenario === "usage-valid" || scenario === "optional-details"
+    ? "valid"
+    : scenario === "usage-null"
+      ? "null"
+      : scenario === "usage-unknown-zero"
+        ? "unknown-zero"
+        : null;
+  const cursor = {
+    through_seq: events.length,
+    event_chain_head_sha256: events.at(-1)?.integrity?.event_sha256 ?? null,
+    package_revision_sha256: "d".repeat(64),
+  };
+  if (scenario === "cursor-drift") cursor.event_chain_head_sha256 = "0".repeat(64);
+  return adapter.validatePackage({
+    manifest,
+    events,
+    artifactIndex,
+    artifacts,
+    usage: usageMode ? makeUsageReadModel(manifest, usageMode) : null,
+    cursor,
+    actions: { pause_allowed: false, resume_allowed: false, cancel_allowed: false },
+    artifactLinks: {},
+    sourceMode: "replay",
+  });
 }
 
 function WorkflowReplayHarness() {
@@ -108,9 +496,26 @@ function WorkflowReplayHarness() {
   const reload = React.useCallback(() => {
     setModel(null);
     setError(null);
-    loadAcceptedWorkflowPackage().then(setModel).catch(setError);
+    window.__workflowDevResult = null;
+    loadAcceptedWorkflowPackage().then(result => {
+      window.__workflowDevResult = result;
+      setModel(result);
+    }).catch(loadError => {
+      window.__workflowDevResult = { valid: false, loadError: String(loadError?.message || loadError) };
+      setError(loadError);
+    });
   }, []);
   React.useEffect(reload, [reload]);
+  React.useEffect(() => {
+    const checks = runSetupContractChecks(window.WorkflowReplayAdapter);
+    window.__workflowSetupChecks = checks;
+    const allPassed = Object.values(checks).every(Boolean);
+    const node = document.getElementById("setup-contract-gates");
+    if (node) {
+      node.textContent = `setup gates: ${allPassed ? "PASS" : "FAIL"}`;
+      node.style.color = allPassed ? "#91c788" : "#ff8a80";
+    }
+  }, []);
   React.useEffect(() => {
     document.querySelectorAll(".dev-scenario a").forEach(link => {
       const target = new URL(link.href).searchParams.get("scenario") || "valid";
