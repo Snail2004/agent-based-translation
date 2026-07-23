@@ -48,6 +48,16 @@ from services.thesis_runs import (
     _d2l_launch_binding_sha256,
     _d2l_preview_source,
 )
+from services.workflow_replay import (
+    LIVE_START_ALLOWED,
+    WorkflowReplayError,
+    create_workflow_preflight,
+    get_workflow_setup,
+    initialize_workflow_parent,
+    read_workflow_artifact,
+    read_workflow_replay,
+    resolve_workflow_launch,
+)
 
 
 bp = Blueprint("thesis_runs", __name__)
@@ -70,6 +80,36 @@ def set_registry(registry: RunRegistry) -> None:
     """Allow tests to inject a registry."""
     global _registry
     _registry = registry
+
+
+@bp.get("/projects/<doc_id>/workflow-setup")
+def workflow_setup(doc_id: str):
+    try:
+        if request.args:
+            raise WorkflowReplayError(
+                "workflow_setup_query_invalid",
+                "workflow-setup does not accept query fields.",
+            )
+        return ok(get_workflow_setup(doc_id, jobs_root=_jobs_root()))
+    except WorkflowReplayError as exc:
+        return error(exc.code, str(exc), exc.status)
+
+
+@bp.post("/projects/<doc_id>/workflow-setup/preflight")
+def workflow_setup_preflight(doc_id: str):
+    try:
+        body = request.get_json(silent=True)
+        return ok(
+            create_workflow_preflight(
+                doc_id,
+                body,
+                planned_run_id=_get_registry().new_run_id(),
+                jobs_root=_jobs_root(),
+                tool_root=_tool_root(),
+            )
+        )
+    except WorkflowReplayError as exc:
+        return error(exc.code, str(exc), exc.status)
 
 
 def _validate_planned_run_reuse(
@@ -183,6 +223,23 @@ def _resolve_resume_root(registry: RunRegistry, entry: dict) -> dict:
 def create_run():
     try:
         body = request.get_json(force=True) or {}
+        workflow_launch = None
+        if "workflow_preflight_token" in body:
+            workflow_launch = resolve_workflow_launch(body)
+            body = {
+                "script": workflow_launch["script"],
+                "job_id": workflow_launch["job_id"],
+                "planned_run_id": workflow_launch["planned_run_id"],
+                "chapters": workflow_launch["chapter_ids"],
+                "profile": workflow_launch["profile_id"],
+                "hard_total_token_cap": workflow_launch[
+                    "hard_total_token_cap"
+                ],
+                "reserved_cost_cap_usd": workflow_launch[
+                    "reserved_cost_cap_usd"
+                ],
+                "allow_api": workflow_launch["allow_api"],
+            }
         script = validate_script(body.get("script", ""))
         allow_api = bool(body.get("allow_api", False))
         job_id = validate_job_id(body.get("job_id"))
@@ -211,6 +268,12 @@ def create_run():
         d2l_profile = body.get("profile")
         d2l_launch_binding = None
         if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            if allow_api and not LIVE_START_ALLOWED:
+                raise WorkflowReplayError(
+                    "workflow_live_start_disabled",
+                    "Live workflow start is disabled until the DEC-064 synthetic gate is accepted.",
+                    403,
+                )
             job_id = validate_job_id(job_id, required=True)
             if body.get("db"):
                 raise RunControlError(
@@ -375,6 +438,15 @@ def create_run():
             "launch_binding_sha256": d2l_launch_binding,
         }
         existing = registry.get_run(planned_run_id) if planned_run_id else None
+        if workflow_launch is not None:
+            initialize_workflow_parent(
+                jobs_root=jobs_root,
+                job_id=job_id,
+                workflow_run_id=d2l_ids["workflow_run_id"],
+                selected_chapter_ids=chapter_ids,
+                source_binding=d2l_preview["source_binding"],
+                code_commit=d2l_preview["code_revision"],
+            )
         if existing is not None:
             _validate_planned_run_reuse(existing, expected=expected_run_identity)
             if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
@@ -461,6 +533,8 @@ def create_run():
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
     except ProjectRuntimeError as exc:
+        return error(exc.code, str(exc), exc.status)
+    except WorkflowReplayError as exc:
         return error(exc.code, str(exc), exc.status)
 
 
@@ -653,6 +727,57 @@ def d2l_component_snapshot(run_id: str):
         )
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
+
+
+@bp.get("/thesis/runs/<run_id>/workflow-replay")
+def workflow_replay(run_id: str):
+    """Return one validated parent stream for both Live tail and Replay."""
+
+    try:
+        unknown = sorted(set(request.args) - {"after_seq", "wait_ms"})
+        if unknown:
+            raise WorkflowReplayError(
+                "workflow_replay_query_invalid",
+                "Unsupported query fields: " + ", ".join(unknown),
+            )
+        entry = _run_entry(run_id)
+        return ok(
+            read_workflow_replay(
+                entry,
+                jobs_root=_jobs_root(),
+                after_seq=_query_int("after_seq") or 0,
+                wait_ms=_query_int("wait_ms") or 0,
+            )
+        )
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+    except WorkflowReplayError as exc:
+        return error(exc.code, str(exc), exc.status)
+
+
+@bp.get("/thesis/runs/<run_id>/workflow-replay/artifact")
+def workflow_replay_artifact(run_id: str):
+    """Resolve only an artifact indexed by the validated parent package."""
+
+    try:
+        unknown = sorted(set(request.args) - {"artifact_ref"})
+        if unknown:
+            raise WorkflowReplayError(
+                "workflow_artifact_query_invalid",
+                "Unsupported query fields: " + ", ".join(unknown),
+            )
+        entry = _run_entry(run_id)
+        return ok(
+            read_workflow_artifact(
+                entry,
+                jobs_root=_jobs_root(),
+                artifact_ref=request.args.get("artifact_ref", ""),
+            )
+        )
+    except RunControlError as exc:
+        return error(exc.code, exc.message, exc.status)
+    except WorkflowReplayError as exc:
+        return error(exc.code, str(exc), exc.status)
 
 
 @bp.post("/thesis/runs/<run_id>/cancel")
@@ -871,6 +996,12 @@ def resume_thesis_run(run_id: str):
         pause_path = _pause_file_from_entry(entry)
         script = entry.get("script") or "run_one_button"
         if script == D2L_PROJECT_CAMPAIGN_SCRIPT:
+            if bool(entry.get("allow_api")) and not LIVE_START_ALLOWED:
+                raise RunControlError(
+                    "workflow_live_start_disabled",
+                    "Live workflow Resume is disabled until the DEC-064 synthetic gate is accepted.",
+                    403,
+                )
             try:
                 from pipeline.prepass.d2l_console_replay_contract_v1 import (
                     D2LConsoleContractError,

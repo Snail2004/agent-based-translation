@@ -88,6 +88,7 @@ def _reset_app_modules() -> None:
             or name == "routes"
             or name.startswith("routes.")
             or name.startswith("services.thesis_")
+            or name == "services.workflow_replay"
         ):
             sys.modules.pop(name, None)
 
@@ -2662,7 +2663,7 @@ def test_route_d2l_launch_returns_component_identity_without_server_paths(
     assert frozen == ["run_d2l_route"]
 
 
-def test_route_d2l_live_estimate_launch_and_exact_retry_are_one_lineage(
+def test_route_d2l_live_estimate_cannot_bypass_dec064_server_lock(
     tmp_path,
     monkeypatch,
 ):
@@ -2723,17 +2724,24 @@ def test_route_d2l_live_estimate_launch_and_exact_retry_are_one_lineage(
         "confirm_token": estimate_data["confirm_token"],
     }
     launched = client.post("/api/thesis/runs", json=request_payload)
-    assert launched.status_code == 201
-    assert launched.get_json()["data"]["reused"] is False
-    assert spawned == ["run_d2l_live"]
-    assert frozen == ["run_d2l_live"]
+    assert launched.status_code == 403
+    assert (
+        launched.get_json()["errors"][0]["code"]
+        == "workflow_live_start_disabled"
+    )
+    assert spawned == []
+    assert frozen == []
+    assert registry.get_run("run_d2l_live") is None
 
     retried = client.post("/api/thesis/runs", json=request_payload)
-    assert retried.status_code == 200
-    assert retried.get_json()["data"]["reused"] is True
-    assert spawned == ["run_d2l_live"]
-    assert frozen == ["run_d2l_live"]
-    assert registry.get_run("run_d2l_live")["prompt_preview_token"]
+    assert retried.status_code == 403
+    assert (
+        retried.get_json()["errors"][0]["code"]
+        == "workflow_live_start_disabled"
+    )
+    assert spawned == []
+    assert frozen == []
+    assert registry.get_run("run_d2l_live") is None
 
 
 def test_route_d2l_component_snapshot_relays_only_validated_package(
@@ -2798,3 +2806,457 @@ def test_route_d2l_component_snapshot_relays_only_validated_package(
     assert rejected.status_code == 409
     assert rejected.get_json()["errors"][0]["code"] == "d2l_component_not_ready"
     assert rejected.get_json()["data"] is None
+
+
+def _register_parent_workflow_fixture(tmp_path, registry):
+    from pipeline.tests.test_workflow_replay_relay_v1 import (
+        COMMIT,
+        CREATED_AT,
+        JOB_ID,
+        WORKFLOW_ID,
+        Clock,
+        FixtureAdapter,
+        _source_bindings,
+        _stages,
+        _write_snapshot,
+    )
+    from pipeline.workflow_replay.relay_v1 import WorkflowRelayV1
+    from services.workflow_replay import workflow_replay_root
+
+    root = workflow_replay_root(
+        jobs_root=tmp_path,
+        job_id=JOB_ID,
+        workflow_run_id=WORKFLOW_ID,
+    )
+    relay = WorkflowRelayV1(
+        root,
+        workflow_run_id=WORKFLOW_ID,
+        job_id=JOB_ID,
+        source_package_bindings=_source_bindings(),
+        stages=_stages(),
+        code_commit=COMMIT,
+        created_at=CREATED_AT,
+        clock=Clock(),
+    )
+    component_root = tmp_path / "fixture_component"
+    snapshot = _write_snapshot(
+        component_root,
+        component_id="translation",
+        run_id="translation_fixture_v1",
+        local_stage="translate",
+    )
+    relay.ingest_component(component_root, adapter=FixtureAdapter(snapshot))
+    registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_parent_replay",
+        job_id=JOB_ID,
+        workflow_run_id=WORKFLOW_ID,
+        component_id="translation",
+        component_run_id="translation_fixture_v1",
+        component_attempt_id=1,
+    )
+    return root
+
+
+def test_route_workflow_replay_reads_validated_parent_cursor_and_artifact(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    _register_parent_workflow_fixture(tmp_path, registry)
+
+    response = client.get(
+        "/api/thesis/runs/run_parent_replay/workflow-replay"
+        "?after_seq=0&wait_ms=0"
+    )
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["schema"] == "workflow_replay_read_v1"
+    assert data["run_id"] == "run_parent_replay"
+    assert data["workflow_run_id"] == "workflow_fixture_v1"
+    assert [event["seq"] for event in data["events"]] == [1, 2, 3, 4]
+    assert data["cursor"]["latest_seq"] == 4
+    assert data["cursor"]["returned_through_seq"] == 4
+    assert data["cursor"]["terminal"] is False
+    assert data["actions"]["replay"]["allowed"] is True
+    assert data["actions"]["pause"]["allowed"] is True
+    assert data["usage"]["workflow_summary"] is None
+
+    empty = client.get(
+        "/api/thesis/runs/run_parent_replay/workflow-replay",
+        query_string={"after_seq": 4, "wait_ms": 0},
+    )
+    assert empty.status_code == 200
+    assert empty.get_json()["data"]["events"] == []
+
+    artifact_ref = data["artifact_index"]["artifacts"][0]["binding"]["artifact_ref"]
+    artifact = client.get(
+        "/api/thesis/runs/run_parent_replay/workflow-replay/artifact",
+        query_string={"artifact_ref": artifact_ref},
+    )
+    assert artifact.status_code == 200
+    artifact_data = artifact.get_json()["data"]
+    assert artifact_data["schema"] == "workflow_artifact_read_v1"
+    assert artifact_data["artifact"]["binding"]["artifact_ref"] == artifact_ref
+    assert artifact_data["media_type"] == "application/json"
+    assert artifact_data["body"] == {"ok": True}
+
+
+def test_route_workflow_replay_long_poll_does_not_revalidate_unchanged_parent(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    _register_parent_workflow_fixture(tmp_path, registry)
+    workflow_service = importlib.import_module("services.workflow_replay")
+    original = workflow_service._load_validated_parent
+    validation_calls = []
+
+    def counted(*args, **kwargs):
+        validation_calls.append(True)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(workflow_service, "_load_validated_parent", counted)
+    response = client.get(
+        "/api/thesis/runs/run_parent_replay/workflow-replay",
+        query_string={"after_seq": 4, "wait_ms": 120},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["data"]["events"] == []
+    assert len(validation_calls) == 1
+
+
+def test_route_workflow_replay_rejects_unindexed_paths_and_parent_drift(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    root = _register_parent_workflow_fixture(tmp_path, registry)
+
+    traversal = client.get(
+        "/api/thesis/runs/run_parent_replay/workflow-replay/artifact",
+        query_string={"artifact_ref": "../workflow_manifest.json"},
+    )
+    assert traversal.status_code == 404
+    assert (
+        traversal.get_json()["errors"][0]["code"]
+        == "workflow_artifact_not_found"
+    )
+
+    unknown_query = client.get(
+        "/api/thesis/runs/run_parent_replay/workflow-replay?offset=0"
+    )
+    assert unknown_query.status_code == 400
+    assert (
+        unknown_query.get_json()["errors"][0]["code"]
+        == "workflow_replay_query_invalid"
+    )
+
+    artifact_index = json.loads(
+        (root / "artifact_index.json").read_text(encoding="utf-8")
+    )
+    artifact_ref = artifact_index["artifacts"][0]["binding"]["artifact_ref"]
+    artifact_path = root.joinpath(*artifact_ref.split("/"))
+    artifact_path.write_bytes(b'{"ok":false}')
+
+    drift = client.get(
+        "/api/thesis/runs/run_parent_replay/workflow-replay?after_seq=0"
+    )
+    assert drift.status_code == 409
+    assert drift.get_json()["errors"][0]["code"] == "workflow_replay_invalid"
+
+
+def test_route_workflow_replay_rejects_missing_parent_and_invalid_cursor(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="run_missing_parent",
+        job_id="job_fixture_v1",
+        workflow_run_id="workflow_missing_v1",
+    )
+
+    missing = client.get(
+        "/api/thesis/runs/run_missing_parent/workflow-replay"
+    )
+    assert missing.status_code == 409
+    assert (
+        missing.get_json()["errors"][0]["code"]
+        == "workflow_replay_not_ready"
+    )
+
+    invalid = client.get(
+        "/api/thesis/runs/run_missing_parent/workflow-replay?after_seq=-1"
+    )
+    assert invalid.status_code == 400
+    assert (
+        invalid.get_json()["errors"][0]["code"]
+        == "workflow_replay_cursor_invalid"
+    )
+
+
+def _workflow_setup_project_fixture():
+    from types import SimpleNamespace
+
+    def binding(ref, kind):
+        return {
+            "artifact_ref": ref,
+            "artifact_kind": kind,
+            "schema_version": "1.0.0",
+            "sha256": "a" * 64,
+            "sha256_kind": "physical",
+        }
+
+    source_binding = {
+        "schema": "canonical_source_binding_v1",
+        "document": binding("source/document.json", "document"),
+        "structure_manifest": binding(
+            "source/structure_manifest.json", "structure_manifest"
+        ),
+        "asset_manifest": binding(
+            "source/asset_manifest.json", "asset_manifest"
+        ),
+        "admitted_projection": binding(
+            "source/admitted_projection_v1.json", "admitted_projection"
+        ),
+        "normalization_receipt": binding(
+            "source/normalization_receipt.json", "normalization_receipt"
+        ),
+        "package_seal": binding(
+            "source/source_lifecycle_v2.json", "source_package_seal"
+        ),
+    }
+    status = {
+        "project_id": "projectA",
+        "job_id": "jobA",
+        "managed": True,
+        "prepared": True,
+        "lifecycle": "finalized_pre_run",
+        "source_identity_sha256": "b" * 64,
+    }
+    project = SimpleNamespace(
+        block_rows=(
+            {"chapter_id": "chapter_1", "block_id": "b1"},
+            {"chapter_id": "chapter_1", "block_id": "b2"},
+            {"chapter_id": "chapter_2", "block_id": "b3"},
+        ),
+        chapter_rows=(
+            {"chapter_id": "chapter_1", "title": "Chapter 1"},
+            {"chapter_id": "chapter_2", "title": "Chapter 2"},
+        ),
+        manifest={
+            "translatable_chapter_ids": ["chapter_1", "chapter_2"],
+        },
+        source_snapshot={"package_tree_sha256": "c" * 64},
+        source_binding=source_binding,
+    )
+    return status, project
+
+
+def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
+    tmp_path,
+    monkeypatch,
+):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    workflow_service = importlib.import_module("services.workflow_replay")
+    thesis_service = importlib.import_module("services.thesis_runs")
+    status, project = _workflow_setup_project_fixture()
+    monkeypatch.setattr(
+        workflow_service,
+        "_load_setup_project",
+        lambda *_args, **_kwargs: (status, project),
+    )
+    preview = {
+        **_fake_d2l_preview(["chapter_1"]),
+        "source_binding": project.source_binding,
+    }
+    monkeypatch.setattr(
+        thesis_service,
+        "_d2l_preview_source",
+        lambda **_kwargs: preview,
+    )
+    monkeypatch.setattr(
+        routes,
+        "_d2l_preview_source",
+        lambda **_kwargs: preview,
+    )
+
+    setup_response = client.get("/api/projects/projectA/workflow-setup")
+    assert setup_response.status_code == 200
+    setup = setup_response.get_json()["data"]
+    assert setup["schema"] == "workflow_setup_v1"
+    assert setup["live_start_allowed"] is False
+    assert [row["chapter_id"] for row in setup["chapters"]] == [
+        "chapter_1",
+        "chapter_2",
+    ]
+    assert setup["chapters"][0]["block_count"] == 2
+    assert setup["shared_settings"]["selected_id"] == (
+        "shared_llm_transport_catalog_v1"
+    )
+    assert all(
+        row["status"] == "missing" for row in setup["credential_status"]
+    )
+    assert "api_key" not in json.dumps(setup).lower()
+
+    request_body = {
+        "mode": "live",
+        "chapter_ids": ["chapter_1"],
+        "shared_settings_id": "shared_llm_transport_catalog_v1",
+        "d2l_settings_id": "d2l_workflow_settings_v1",
+        "evaluation_settings_id": "evaluation_workflow_settings_v1",
+        "evaluation_highlight_pair": ["s0", "s1"],
+        "hard_total_token_cap": 6_000_000,
+        "reserved_cost_cap_usd": None,
+    }
+    preflight_response = client.post(
+        "/api/projects/projectA/workflow-setup/preflight",
+        json=request_body,
+    )
+    assert preflight_response.status_code == 200
+    preflight = preflight_response.get_json()["data"]
+    assert preflight["schema"] == "workflow_preflight_v1"
+    assert preflight["start_allowed"] is False
+    assert "workflow_live_start_disabled" in preflight["blocking_reasons"]
+    assert preflight["forecast"]["cost_usd"] is None
+    assert preflight["preflight_token"]
+
+    launched = client.post(
+        "/api/thesis/runs",
+        json={
+            "workflow_preflight_token": preflight["preflight_token"],
+            "confirmed": True,
+        },
+    )
+    assert launched.status_code == 403
+    assert (
+        launched.get_json()["errors"][0]["code"]
+        == "workflow_live_start_disabled"
+    )
+    assert registry.list_runs() == []
+
+
+def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
+    tmp_path,
+    monkeypatch,
+):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    workflow_service = importlib.import_module("services.workflow_replay")
+    thesis_service = importlib.import_module("services.thesis_runs")
+    status, project = _workflow_setup_project_fixture()
+    monkeypatch.setattr(
+        workflow_service,
+        "_load_setup_project",
+        lambda *_args, **_kwargs: (status, project),
+    )
+    preview = {
+        **_fake_d2l_preview(["chapter_1"]),
+        "source_binding": project.source_binding,
+    }
+    for module in (thesis_service, routes):
+        monkeypatch.setattr(
+            module,
+            "_d2l_preview_source",
+            lambda **_kwargs: preview,
+        )
+    spawned = []
+    frozen = []
+    monkeypatch.setattr(
+        routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id)
+    )
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, run_id, **_kwargs: frozen.append(run_id),
+    )
+
+    preflight_response = client.post(
+        "/api/projects/projectA/workflow-setup/preflight",
+        json={
+            "mode": "dry_run",
+            "chapter_ids": ["chapter_1"],
+            "shared_settings_id": "shared_llm_transport_catalog_v1",
+            "d2l_settings_id": "d2l_workflow_settings_v1",
+            "evaluation_settings_id": "evaluation_workflow_settings_v1",
+            "hard_total_token_cap": 6_000_000,
+        },
+    )
+    assert preflight_response.status_code == 200
+    preflight = preflight_response.get_json()["data"]
+    assert preflight["start_allowed"] is True
+
+    launch = client.post(
+        "/api/thesis/runs",
+        json={
+            "workflow_preflight_token": preflight["preflight_token"],
+            "confirmed": True,
+        },
+    )
+    assert launch.status_code == 201
+    data = launch.get_json()["data"]
+    assert data["run_id"] == preflight["identities"]["planned_run_id"]
+    assert data["workflow_run_id"] == preflight["identities"]["workflow_run_id"]
+    assert spawned == [data["run_id"]]
+    assert frozen == [data["run_id"]]
+    assert registry.get_run(data["run_id"])["allow_api"] is False
+
+    parent = client.get(
+        f"/api/thesis/runs/{data['run_id']}/workflow-replay"
+        "?after_seq=0&wait_ms=0"
+    )
+    assert parent.status_code == 200
+    parent_data = parent.get_json()["data"]
+    assert parent_data["events"] == []
+    assert parent_data["manifest"]["stages"][0]["stage_id"] == (
+        "translation.preflight"
+    )
+    assert parent_data["manifest"]["stages"][-1]["stage_id"] == (
+        "publication.export"
+    )
+
+
+def test_route_workflow_preflight_rejects_unadvertised_fields_and_ids(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, _registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    workflow_service = importlib.import_module("services.workflow_replay")
+    status, project = _workflow_setup_project_fixture()
+    monkeypatch.setattr(
+        workflow_service,
+        "_load_setup_project",
+        lambda *_args, **_kwargs: (status, project),
+    )
+    base = {
+        "mode": "dry_run",
+        "chapter_ids": ["chapter_1"],
+        "shared_settings_id": "shared_llm_transport_catalog_v1",
+        "d2l_settings_id": "d2l_workflow_settings_v1",
+        "evaluation_settings_id": "evaluation_workflow_settings_v1",
+        "hard_total_token_cap": 6_000_000,
+    }
+
+    extra = client.post(
+        "/api/projects/projectA/workflow-setup/preflight",
+        json={**base, "requested_model_id": "arbitrary-model"},
+    )
+    assert extra.status_code == 400
+    assert (
+        extra.get_json()["errors"][0]["code"]
+        == "workflow_preflight_body_invalid"
+    )
+
+    wrong = client.post(
+        "/api/projects/projectA/workflow-setup/preflight",
+        json={**base, "shared_settings_id": "client_fabricated"},
+    )
+    assert wrong.status_code == 400
+    assert (
+        wrong.get_json()["errors"][0]["code"]
+        == "workflow_shared_settings_invalid"
+    )
