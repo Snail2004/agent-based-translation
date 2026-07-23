@@ -30,6 +30,9 @@
   <a href="?scenario=event-hash-drift">event hash drift</a>
   <a href="?scenario=arm-drift">arm drift</a>
   <a href="?scenario=artifact-drift">artifact drift</a>
+  <a href="?scenario=resume-valid">resume valid</a>
+  <a href="?scenario=resume-sequence-gap">resume seq gap</a>
+  <a href="?scenario=resume-attempt-regression">resume attempt regression</a>
 </nav>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
@@ -40,22 +43,40 @@
 <script type="text/babel" src="console.jsx"></script>
 <script type="text/babel">
 const WORKFLOW_FIXTURE_ROOT = "fixtures/workflow_replay_v1/";
+const WORKFLOW_RESUME_FIXTURE_ROOT = "fixtures/workflow_replay_resume_v1/";
 
 function scenarioName() {
   const value = new URLSearchParams(window.location.search).get("scenario") || "valid";
-  return new Set(["valid", "sequence-drift", "event-hash-drift", "arm-drift", "artifact-drift"]).has(value) ? value : "valid";
+  return new Set([
+    "valid", "sequence-drift", "event-hash-drift", "arm-drift", "artifact-drift",
+    "resume-valid", "resume-sequence-gap", "resume-attempt-regression",
+  ]).has(value) ? value : "valid";
+}
+
+async function resealParentEvents(adapter, events) {
+  let previous = null;
+  for (const event of events) {
+    event.integrity.previous_event_sha256 = previous;
+    delete event.integrity.event_sha256;
+    event.integrity.event_sha256 = await adapter.canonicalSha256(event);
+    previous = event.integrity.event_sha256;
+  }
 }
 
 async function loadAcceptedWorkflowPackage() {
   const adapter = window.WorkflowReplayAdapter;
-  const [manifest, events, artifactIndex, handoff, receipt] = await Promise.all([
-    adapter.fetchJson(WORKFLOW_FIXTURE_ROOT + "workflow_manifest.json"),
-    adapter.fetchJsonLines(WORKFLOW_FIXTURE_ROOT + "events.jsonl"),
-    adapter.fetchJson(WORKFLOW_FIXTURE_ROOT + "artifact_index.json"),
+  const scenario = scenarioName();
+  const isResume = scenario.startsWith("resume-");
+  const fixtureRoot = isResume ? WORKFLOW_RESUME_FIXTURE_ROOT : WORKFLOW_FIXTURE_ROOT;
+  const [manifest, events, artifactIndex] = await Promise.all([
+    adapter.fetchJson(fixtureRoot + "workflow_manifest.json"),
+    adapter.fetchJsonLines(fixtureRoot + "events.jsonl"),
+    adapter.fetchJson(fixtureRoot + "artifact_index.json"),
+  ]);
+  const [handoff, receipt] = isResume ? [null, null] : await Promise.all([
     adapter.fetchJson(WORKFLOW_FIXTURE_ROOT + "handoffs/scoring_handoff.json"),
     adapter.fetchJson(WORKFLOW_FIXTURE_ROOT + "handoffs/scoring_receipt.json"),
   ]);
-  const scenario = scenarioName();
   if (scenario === "sequence-drift") events.pop();
   if (scenario === "event-hash-drift" && events[1]) events[1].agent = "tampered_fixture_agent";
   if (scenario === "arm-drift" && receipt.accepted_translation_inputs?.length > 1) {
@@ -64,10 +85,19 @@ async function loadAcceptedWorkflowPackage() {
   if (scenario === "artifact-drift" && artifactIndex.artifacts?.[0]?.binding) {
     artifactIndex.artifacts[0].binding.sha256 = "0".repeat(64);
   }
-  const artifacts = {
+  if (scenario === "resume-sequence-gap" && events[3]?.component) {
+    events[3].component.component_seq += 1;
+    await resealParentEvents(adapter, events);
+  }
+  if (scenario === "resume-attempt-regression" && events[4]?.component) {
+    events[4].component.component_attempt_id = 1;
+    events[4].component.component_attempt_index = 1;
+    await resealParentEvents(adapter, events);
+  }
+  const artifacts = handoff && receipt ? {
     "handoffs/scoring_handoff.json": handoff,
     "handoffs/scoring_receipt.json": receipt,
-  };
+  } : {};
   return adapter.validatePackage({ manifest, events, artifactIndex, artifacts, sourceMode: "replay" });
 }
 

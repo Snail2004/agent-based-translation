@@ -18,6 +18,7 @@
   const FLOW_KIND = "translation_evaluation_publication";
   const ARM_ORDER = Object.freeze(["s0", "s1", "community", "google_nmt", "llm_lc"]);
   const COMPONENT_IDS = new Set(["translation", "evaluation", "publication"]);
+  const RESUME_EVENTS = new Set(["run_resumed", "component_resumed"]);
   const SOURCE_BINDING_ROLES = Object.freeze(["document", "structure_manifest", "asset_manifest", "admitted_projection", "normalization_receipt", "package_seal"]);
   const WORKFLOW_STATUSES = new Set(["pending", "running", "paused", "failed", "succeeded"]);
   const FORBIDDEN_PAYLOAD_KEYS = new Set([
@@ -316,11 +317,70 @@
         addError(errors, "type", `${path}.component`, "expected an object");
       } else {
         const component = event.component;
-        const cursorKey = `${component.component_id}:${component.component_run_id}:${component.component_attempt_index}`;
-        const expectedComponentSeq = Number(componentCursors.get(cursorKey) || 0) + 1;
-        if (component.component_seq !== expectedComponentSeq) addError(errors, "component_seq", `${path}.component.component_seq`, `expected ${expectedComponentSeq}`);
-        componentCursors.set(cursorKey, component.component_seq);
+        const componentPath = `${path}.component`;
+        exactKeys(component, [
+          "component_id", "component_run_id", "component_attempt_id", "component_attempt_index",
+          "component_seq", "source_event_id", "source_event_sha256", "source_event_sha256_kind",
+          "validator_id", "validator_revision",
+        ], componentPath, errors);
         if (!COMPONENT_IDS.has(component.component_id)) addError(errors, "component_id", `${path}.component.component_id`, "unknown component");
+        if (!validId(component.component_run_id)) addError(errors, "component_run_id", `${componentPath}.component_run_id`, "invalid component run ID");
+
+        const attemptIndex = component.component_attempt_index;
+        const attemptId = component.component_attempt_id;
+        const validAttemptIndex = Number.isInteger(attemptIndex) && attemptIndex >= 1;
+        const validAttemptId = (Number.isInteger(attemptId) && attemptId >= 1) || validId(attemptId);
+        if (!validAttemptIndex) addError(errors, "attempt_identity", `${componentPath}.component_attempt_index`, "expected a positive integer");
+        if (!validAttemptId) addError(errors, "attempt_identity", `${componentPath}.component_attempt_id`, "expected a positive integer or stable identifier");
+        if (Number.isInteger(attemptId) && validAttemptIndex && attemptId !== attemptIndex) {
+          addError(errors, "attempt_identity", componentPath, "numeric attempt ID must equal attempt index");
+        }
+
+        const cursorKey = `${component.component_id}:${component.component_run_id}`;
+        let cursor = componentCursors.get(cursorKey);
+        if (!cursor) {
+          cursor = { lastSeq: 0, attemptIndex: null, attemptId: null, attemptIds: new Map() };
+          componentCursors.set(cursorKey, cursor);
+        }
+        const expectedComponentSeq = cursor.lastSeq + 1;
+        if (component.component_seq !== expectedComponentSeq) {
+          addError(errors, "component_sequence", `${componentPath}.component_seq`, `expected ${expectedComponentSeq}`);
+        }
+        if (Number.isInteger(component.component_seq) && component.component_seq >= 1) cursor.lastSeq = component.component_seq;
+
+        if (validAttemptIndex && validAttemptId) {
+          const knownAttemptId = cursor.attemptIds.get(attemptIndex);
+          if (knownAttemptId !== undefined && knownAttemptId !== attemptId) {
+            addError(errors, "attempt_identity", componentPath, "one attempt index has multiple attempt IDs");
+          } else if (knownAttemptId === undefined) {
+            cursor.attemptIds.set(attemptIndex, attemptId);
+          }
+
+          let transitionAllowed = true;
+          if (cursor.attemptIndex === null) {
+            if (attemptIndex !== 1) {
+              addError(errors, "attempt_lineage", componentPath, "component event stream must begin at attempt 1");
+              transitionAllowed = false;
+            }
+          } else if (attemptIndex < cursor.attemptIndex) {
+            addError(errors, "attempt_lineage", componentPath, "component attempt cannot reopen or regress");
+            transitionAllowed = false;
+          } else if (attemptIndex > cursor.attemptIndex + 1) {
+            addError(errors, "attempt_lineage", componentPath, "component attempt sequence must be contiguous");
+            transitionAllowed = false;
+          } else if (attemptIndex === cursor.attemptIndex + 1 && !RESUME_EVENTS.has(event.event)) {
+            addError(errors, "attempt_lineage", path, "new attempt must begin with an explicit resume event");
+            transitionAllowed = false;
+          }
+          if (attemptIndex === cursor.attemptIndex && cursor.attemptId !== null && cursor.attemptId !== attemptId) {
+            addError(errors, "attempt_identity", componentPath, "attempt ID changed within one attempt index");
+            transitionAllowed = false;
+          }
+          if (transitionAllowed) {
+            cursor.attemptIndex = attemptIndex;
+            cursor.attemptId = attemptId;
+          }
+        }
       }
       inspectPrivatePayload(event.payload, `${path}.payload`, errors);
       if (!isObject(event.integrity)) {
@@ -334,6 +394,26 @@
     if (Number(manifest?.latest_event_seq) !== events.length) {
       addError(errors, "incomplete_replay", "$events", `manifest declares ${manifest?.latest_event_seq}; received ${events.length}`);
     }
+    const manifestComponents = new Map((manifest?.components || []).map(component => [
+      `${component.component_id}:${component.component_run_id}`,
+      component,
+    ]));
+    componentCursors.forEach((cursor, cursorKey) => {
+      const component = manifestComponents.get(cursorKey);
+      if (!component) {
+        addError(errors, "component_binding", "$manifest.components", `event stream component ${cursorKey} is absent from manifest`);
+        return;
+      }
+      if (component.last_component_seq !== cursor.lastSeq) {
+        addError(errors, "component_sequence", "$manifest.components", `${cursorKey} declares last_component_seq ${component.last_component_seq}; observed ${cursor.lastSeq}`);
+      }
+      if (component.component_attempt_index !== cursor.attemptIndex || component.component_attempt_id !== cursor.attemptId) {
+        addError(errors, "attempt_identity", "$manifest.components", `${cursorKey} current attempt differs from event lineage`);
+      }
+    });
+    manifestComponents.forEach((component, cursorKey) => {
+      if (!componentCursors.has(cursorKey)) addError(errors, "component_binding", "$events", `manifest component ${cursorKey} has no event evidence`);
+    });
   }
 
   async function validateScoringArtifacts(artifactRows, bodies, validatedArtifacts, manifest, errors) {
@@ -459,6 +539,7 @@
       ts: event.accepted_at,
       stage: event.stage_id || "",
       attempt_id: event.component?.component_attempt_id ?? null,
+      attempt_index: event.component?.component_attempt_index ?? null,
     }));
   }
 

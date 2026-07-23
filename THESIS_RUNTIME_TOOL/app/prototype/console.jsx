@@ -786,13 +786,17 @@ function consoleEventSequenceLabel(row) {
   const line = firstLine != null && lastLine != null && firstLine !== lastLine
     ? `#${firstLine}-${lastLine}`
     : `#${row.lineNo != null ? row.lineNo : "-"}`;
-  if (row.attempt == null || row.seq == null) return line;
+  if ((row.attempt == null && row.attemptIndex == null) || row.seq == null) return line;
   const firstSeq = row.heartbeatFirstSeq;
   const lastSeq = row.heartbeatLastSeq;
   const seq = firstSeq != null && lastSeq != null && firstSeq !== lastSeq
     ? `${firstSeq}-${lastSeq}`
     : row.seq;
-  return `${line} · a${row.attempt}/${seq}`;
+  const attemptIndex = row.attemptIndex ?? row.attempt;
+  const attemptIdentity = row.attempt != null && String(row.attempt) !== String(attemptIndex)
+    ? `${attemptIndex}:${row.attempt}`
+    : attemptIndex;
+  return `${line} · a${attemptIdentity}/${seq}`;
 }
 
 function formatConsoleMetric(value, unit) {
@@ -1114,6 +1118,7 @@ function deriveConsoleState(events, stagePlan = CONSOLE_STAGE_PLAN, useDeclaredS
       severity,
       seq: raw.seq,
       attempt: raw.attempt_id ?? raw.component?.component_attempt_id ?? null,
+      attemptIndex: raw.attempt_index ?? raw.component?.component_attempt_index ?? null,
       lineNo: idx + 1,
       glyph: CONSOLE_SEVERITY_GLYPH[severity === "info" && event === "cost_snapshot" ? "context" : severity] || "├",
       isCost: event === "cost_snapshot",
