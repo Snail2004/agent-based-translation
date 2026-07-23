@@ -522,15 +522,16 @@ body.console-resizing-ledger { cursor: row-resize; }
 }
 .agentconsole .event-feed { flex: 1; min-height: 0; overflow-y: auto; }
 .agentconsole .ev-row {
-  display: grid; grid-template-columns: auto auto 1fr auto;
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   gap: 0 8px; align-items: baseline; padding: 1px 4px 1px 0;
 }
 .agentconsole .ev-time { color: var(--c-ink-faint); }
 .agentconsole .ev-glyph { color: var(--c-ink-faint); }
-.agentconsole .ev-body { display: flex; gap: 6px; min-width: 0; white-space: nowrap; align-items: baseline; }
-.agentconsole .ev-type { font-weight: 700; }
-.agentconsole .ev-src { color: var(--c-ink-dim); }
-.agentconsole .ev-msg { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.agentconsole .ev-body { display: flex; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; align-items: baseline; }
+.agentconsole .ev-heading { flex: 0 1 190px; overflow: hidden; }
+.agentconsole .ev-type { min-width: 0; overflow: hidden; font-weight: 700; text-overflow: ellipsis; }
+.agentconsole .ev-src { flex: 0 1 210px; min-width: 0; overflow: hidden; color: var(--c-ink-dim); text-overflow: ellipsis; }
+.agentconsole .ev-msg { flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .agentconsole .ev-dur { font-style: italic; color: var(--c-ink-dim); }
 .agentconsole .ev-seq { color: var(--c-ink-faint); font-size: 11px; }
 .agentconsole .ev-warning .ev-glyph, .agentconsole .ev-warning .ev-type { color: var(--c-amber); }
@@ -1222,7 +1223,7 @@ body.console-resizing-ledger { cursor: row-resize; }
     grid-column: 1;
   }
   .agentconsole .ev-row {
-    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
     gap: 0 4px;
   }
   .agentconsole .ev-body {
@@ -1604,6 +1605,7 @@ body.console-resizing-ledger { cursor: row-resize; }
 }
 .agentconsole .ev-expand {
   align-self: center;
+  justify-self: end;
   width: 22px;
   height: 22px;
   padding: 0;
@@ -1637,6 +1639,114 @@ body.console-resizing-ledger { cursor: row-resize; }
   display: flex;
   gap: 6px;
   align-items: center;
+}
+.agentconsole .workflow-compact-section {
+  min-width: 0;
+  padding: 0 0 9px;
+  border-bottom: 1px solid var(--c-border);
+}
+.agentconsole .workflow-compact-section + .workflow-compact-section {
+  padding-top: 7px;
+}
+.agentconsole .workflow-compact-primary {
+  overflow: hidden;
+  color: var(--c-ink);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .workflow-compact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 8px;
+  margin-top: 5px;
+  color: var(--c-ink-dim);
+}
+.agentconsole .workflow-compact-grid > strong {
+  max-width: 140px;
+  overflow: hidden;
+  color: var(--c-ink);
+  font-weight: 600;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .workflow-compact-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.agentconsole .workflow-compact-metrics > span {
+  min-width: 0;
+  padding: 5px 4px;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg-alt);
+  text-align: center;
+}
+.agentconsole .workflow-compact-metrics strong,
+.agentconsole .workflow-compact-metrics small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .workflow-compact-metrics strong {
+  color: var(--c-ink);
+  font-size: 11px;
+}
+.agentconsole .workflow-compact-metrics small {
+  margin-top: 2px;
+  color: var(--c-ink-faint);
+  font-size: 8.5px;
+  text-transform: uppercase;
+}
+.agentconsole .workflow-compact-stream {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  color: var(--c-ink-dim);
+}
+.agentconsole .workflow-compact-stream strong { color: var(--c-ink); }
+.agentconsole .workflow-compact-empty,
+.agentconsole .workflow-result-summary {
+  color: var(--c-ink-dim);
+  line-height: 1.45;
+}
+.agentconsole .workflow-detail-trigger {
+  width: 100%;
+  margin-top: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--c-border);
+  background: transparent;
+  color: var(--c-accent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.agentconsole .workflow-detail-trigger:hover,
+.agentconsole .workflow-detail-trigger:focus-visible {
+  border-color: var(--c-accent);
+  background: var(--c-accent-bg);
+  outline: 0;
+}
+.agentconsole .workflow-health-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.agentconsole .workflow-health-strip > span {
+  min-width: 0;
+  color: var(--c-ink-dim);
+  font-size: 8.5px;
+  text-align: center;
+  text-transform: uppercase;
+}
+.agentconsole .workflow-health-strip strong {
+  display: block;
+  margin-bottom: 2px;
+  color: currentColor;
+  font-size: 11px;
 }
 .agentconsole .workflow-usage-ledger {
   min-width: 0;
@@ -1699,6 +1809,96 @@ body.console-resizing-ledger { cursor: row-resize; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.agentconsole .console-detail-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, #111 48%, transparent);
+  backdrop-filter: blur(2px);
+}
+.agentconsole .console-detail-modal {
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-bg);
+  color: var(--c-ink);
+  box-shadow: 0 18px 70px rgba(0, 0, 0, .34);
+  outline: 0;
+}
+.agentconsole .console-detail-modal-wide {
+  width: min(1080px, calc(100vw - 32px));
+}
+.agentconsole .console-detail-head {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-bg-alt);
+}
+.agentconsole .console-detail-kicker {
+  color: var(--c-accent);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+.agentconsole .console-detail-head h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font: 700 13px/1.2 var(--console-mono, ui-monospace, Consolas, monospace);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .console-detail-close {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--c-border);
+  background: transparent;
+  color: var(--c-ink-dim);
+  font: 18px/1 var(--console-mono, ui-monospace, Consolas, monospace);
+  cursor: pointer;
+}
+.agentconsole .console-detail-close:hover,
+.agentconsole .console-detail-close:focus-visible {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  outline: 0;
+}
+.agentconsole .console-detail-body {
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.agentconsole .console-detail-body .workflow-facts,
+.agentconsole .console-detail-body .workflow-evidence,
+.agentconsole .console-detail-body .workflow-usage-ledger {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.agentconsole .console-detail-body .workflow-usage-ledger { margin-top: 0; }
+.agentconsole .console-detail-body .workflow-usage-scroll { max-height: 52dvh; }
+.agentconsole .console-detail-body .ev-expanded {
+  grid-template-columns: minmax(220px, .8fr) minmax(280px, 1.2fr);
+  padding: 0;
+  background: transparent;
+}
+.agentconsole .console-detail-body .workflow-typed-details {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--c-border);
+}
 .agentconsole .stage-paused .stage-dot,
 .agentconsole .stage-paused .stage-progress { color: var(--c-amber); }
 
@@ -1750,6 +1950,16 @@ body.console-resizing-ledger { cursor: row-resize; }
   .agentconsole.workflow-console .console-side-toggle { display: none; }
   .agentconsole.workflow-console .workflow-artifact-list { max-height: 280px; }
   .agentconsole .ev-expanded { grid-template-columns: 1fr; padding-left: 12px; }
+  .agentconsole .console-detail-scrim { padding: 7px; }
+  .agentconsole .console-detail-modal,
+  .agentconsole .console-detail-modal-wide {
+    width: calc(100vw - 14px);
+    max-height: calc(100dvh - 14px);
+  }
+  .agentconsole .console-detail-kicker { display: none; }
+  .agentconsole .console-detail-head { grid-template-columns: minmax(0, 1fr) auto; }
+  .agentconsole .console-detail-body { padding: 9px; }
+  .agentconsole .console-detail-body .ev-expanded { grid-template-columns: 1fr; padding: 0; }
 }
 
 /* ============ WORKFLOW SETUP / PREFLIGHT MODAL ============ */

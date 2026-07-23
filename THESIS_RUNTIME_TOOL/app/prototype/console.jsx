@@ -65,7 +65,7 @@ const CONSOLE_MEMORY_OPERATION_META = {
   reinforced: { glyph: "↑", label: "reinforced" },
   revised: { glyph: "~", label: "revised" },
 };
-const CONSOLE_LAYOUT_STORAGE_KEY = "thesis.agentconsole.layout.v1";
+const CONSOLE_LAYOUT_STORAGE_KEY = "thesis.agentconsole.layout.v2";
 const CONSOLE_LAYOUT_DEFAULTS = Object.freeze({
   leftWidth: 220,
   rightWidth: 260,
@@ -73,7 +73,7 @@ const CONSOLE_LAYOUT_DEFAULTS = Object.freeze({
   leftCollapsed: false,
   rightCollapsed: false,
   centerMode: "split",
-  ledgerOpen: true,
+  ledgerOpen: false,
   ledgerSurface: "translation",
   ledgerView: "changes",
   translationLayout: "target",
@@ -2574,6 +2574,115 @@ function ConsoleEventExpanded({ row }) {
   );
 }
 
+function ConsoleWorkflowSummary({ workflowReplay, onOpen, uiText }) {
+  if (!workflowReplay?.valid) return null;
+  const manifest = workflowReplay.manifest || {};
+  return (
+    <section className="workflow-compact-section" aria-label={uiText("Tóm tắt workflow", "Workflow summary")}>
+      <div className="section-label">:: {uiText("lần chạy", "run")}</div>
+      <div className="workflow-compact-primary" title={manifest.workflow_run_id || ""}>
+        {manifest.workflow_run_id || "null"}
+      </div>
+      <div className="workflow-compact-grid">
+        <span>{uiText("trạng thái", "status")}</span>
+        <strong className={`workflow-state state-${manifest.status || "unknown"}`}>{manifest.status ?? "null"}</strong>
+        <span>resume</span>
+        <strong>{manifest.resume?.available === true ? uiText("có", "available") : manifest.resume?.available === false ? uiText("không", "no") : "null"}</strong>
+      </div>
+      <button className="workflow-detail-trigger" type="button" onClick={onOpen}>
+        {uiText("Chi tiết lần chạy", "Run details")} →
+      </button>
+    </section>
+  );
+}
+
+function ConsoleUsageSummary({ usage, onOpen, uiText }) {
+  const total = usage?.present ? usage.workflowTotal : null;
+  return (
+    <section className="workflow-compact-section" aria-label={uiText("Tóm tắt sử dụng API", "API usage summary")}>
+      <div className="section-label">:: {uiText("sử dụng API", "API usage")}</div>
+      {total ? (
+        <div className="workflow-compact-metrics">
+          <span><strong>{consolePersistedValue(total.physicalCallCount, "int")}</strong><small>calls</small></span>
+          <span><strong>{consolePersistedValue(total.totalTokens, "int")}</strong><small>tokens</small></span>
+          <span><strong>{consolePersistedValue(total.costUsd, "usd")}</strong><small>{total.costStatus ?? uiText("không xác định", "unknown")}</small></span>
+        </div>
+      ) : (
+        <div className="workflow-compact-empty">{uiText("Chưa có tổng usage đã xác thực", "No validated usage total")}</div>
+      )}
+      <button className="workflow-detail-trigger" type="button" onClick={onOpen}>
+        {uiText("Xem từng API call", "View API calls")} →
+      </button>
+    </section>
+  );
+}
+
+function ConsoleWorkflowEvidenceSummary({ workflowReplay, onOpen, uiText }) {
+  if (!workflowReplay?.valid) return null;
+  const scoring = workflowReplay.scoring || {};
+  const artifacts = workflowReplay.artifacts || [];
+  const checkpoint = workflowReplay.latestCheckpoint;
+  const reportCount = scoring.reports?.length || 0;
+  return (
+    <section className="workflow-compact-section" aria-label={uiText("Tóm tắt bằng chứng", "Evidence summary")}>
+      <div className="section-label">:: {uiText("bằng chứng", "evidence")}</div>
+      <div className="workflow-compact-grid">
+        <span>artifact</span><strong>{formatConsoleInt(artifacts.length)}</strong>
+        <span>receipt</span><strong>{scoring.receiptStatus ?? "null"}</strong>
+        <span>report</span><strong>{reportCount ? formatConsoleInt(reportCount) : uiText("chưa có", "none")}</strong>
+        <span>checkpoint</span><strong>{checkpoint ? `#${checkpoint.seq}` : "null"}</strong>
+      </div>
+      <button className="workflow-detail-trigger" type="button" onClick={onOpen}>
+        {uiText("Mở bằng chứng kỹ thuật", "Open technical evidence")} →
+      </button>
+    </section>
+  );
+}
+
+function ConsoleDetailModal({ title, wide = false, onClose, children, uiText }) {
+  const dialogRef = React.useRef(null);
+  const returnFocusRef = React.useRef(null);
+  React.useEffect(() => {
+    returnFocusRef.current = document.activeElement;
+    dialogRef.current?.focus();
+    function closeOnEscape(event) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      returnFocusRef.current?.focus?.();
+    };
+  }, [onClose]);
+  return (
+    <div className="console-detail-scrim" onMouseDown={event => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
+      <section
+        ref={dialogRef}
+        className={`console-detail-modal${wide ? " console-detail-modal-wide" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="console-detail-modal-title"
+        tabIndex="-1"
+      >
+        <header className="console-detail-head">
+          <span className="console-detail-kicker">AGENT CONSOLE</span>
+          <h2 id="console-detail-modal-title">{title}</h2>
+          <button
+            className="console-detail-close"
+            type="button"
+            onClick={onClose}
+            aria-label={uiText("Đóng chi tiết", "Close details")}
+            title={uiText("Đóng", "Close")}
+          >×</button>
+        </header>
+        <div className="console-detail-body">{children}</div>
+      </section>
+    </div>
+  );
+}
+
 function ConsoleWorkflowIdentity({ workflowReplay, uiText }) {
   if (!workflowReplay || !workflowReplay.valid) return null;
   const manifest = workflowReplay.manifest || {};
@@ -2714,7 +2823,8 @@ function AgentConsoleView(props) {
   const [selectedArtifact, setSelectedArtifact] = React.useState("");
   const [artifactBusy, setArtifactBusy] = React.useState(false);
   const [selectedEventKey, setSelectedEventKey] = React.useState("");
-  const [expandedEventKey, setExpandedEventKey] = React.useState("");
+  const [detailModal, setDetailModal] = React.useState(null);
+  const closeDetailModal = React.useCallback(() => setDetailModal(null), []);
   const navigationTokenRef = React.useRef(0);
   const [consoleLayout, setConsoleLayout] = React.useState(() => consoleReadLayout());
   const mainColumnRef = React.useRef(null);
@@ -2838,7 +2948,7 @@ function AgentConsoleView(props) {
     setHighlightedStage("");
     setSelectedArtifact("");
     setSelectedEventKey("");
-    setExpandedEventKey("");
+    setDetailModal(null);
     stopReplayTimer();
   }, [runId, stopReplayTimer]);
   React.useEffect(() => {
@@ -3276,31 +3386,59 @@ function AgentConsoleView(props) {
             {consoleLayout.leftCollapsed ? "›" : "‹"}
           </button>
           <div className="console-side-content">
-          <ConsoleWorkflowIdentity workflowReplay={workflowReplay} uiText={uiText} />
-          <div className="section-label">:: {uiText("tổng quan", "overview")}</div>
-          <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "mode")}</span><span className="kv-value kv-dim">{consoleMode}</span></div>
-          <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "state")}</span><span className={"kv-value " + healthClass}>{playbackState}</span></div>
-          {armsLabel && <div className="kv-row"><span className="kv-label">{uiText("nhánh", "arms")}</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
-          <div className="kv-row"><span className="kv-label">{uiText("tầng đã thấy", "stages seen")}</span><span className="kv-value">{st.stagesSeen} / {consoleStagePlan.length}</span></div>
-          <div className="kv-row"><span className="kv-label">{uiText("sự kiện", "events")}</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
-          <div className="kv-row"><span className="kv-label">{uiText("luồng", "stream")}</span><span className="kv-value kv-dim">{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</span></div>
-
           {workflowReplay ? (
-            <ConsoleUsageLedger usage={workflowReplay.valid ? workflowReplay.usage : null} />
+            <>
+              <ConsoleWorkflowSummary
+                workflowReplay={workflowReplay}
+                uiText={uiText}
+                onOpen={() => setDetailModal({ kind: "workflow" })}
+              />
+              <section className="workflow-compact-section" aria-label={uiText("Tổng quan", "Overview")}>
+                <div className="section-label">:: {uiText("tổng quan", "overview")}</div>
+                <div className="workflow-compact-metrics">
+                  <span><strong>{st.stagesSeen}/{consoleStagePlan.length}</strong><small>{uiText("tầng", "stages")}</small></span>
+                  <span><strong>{formatConsoleInt(st.totalEvents)}</strong><small>{uiText("sự kiện", "events")}</small></span>
+                  <span><strong>{armsLabel || "—"}</strong><small>{uiText("nhánh", "arms")}</small></span>
+                </div>
+                <div className="workflow-compact-stream">
+                  <span>{uiText("luồng", "stream")}</span>
+                  <strong>{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</strong>
+                </div>
+              </section>
+              <ConsoleUsageSummary
+                usage={workflowReplay.valid ? workflowReplay.usage : null}
+                uiText={uiText}
+                onOpen={() => setDetailModal({ kind: "usage" })}
+              />
+              <section className="workflow-compact-section" aria-label={uiText("Sức khỏe", "Health")}>
+                <div className="section-label">:: {uiText("sức khỏe", "health")}</div>
+                <div className="workflow-health-strip">
+                  <span className={st.warnings ? "kv-warn" : ""}><strong>{st.warnings == null ? "?" : formatConsoleInt(st.warnings)}</strong>{uiText("cảnh báo", "warnings")}</span>
+                  <span className={st.errors ? "kv-bad" : ""}><strong>{st.errors == null ? "?" : formatConsoleInt(st.errors)}</strong>{uiText("lỗi", "errors")}</span>
+                  <span><strong>{st.lastTs ? st.lastTs.slice(11, 19) : "—"}</strong>{uiText("cuối", "last")}</span>
+                </div>
+              </section>
+            </>
           ) : (
             <>
+              <div className="section-label">:: {uiText("tổng quan", "overview")}</div>
+              <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "mode")}</span><span className="kv-value kv-dim">{consoleMode}</span></div>
+              <div className="kv-row"><span className="kv-label">{consoleText(uiLocale, "state")}</span><span className={"kv-value " + healthClass}>{playbackState}</span></div>
+              {armsLabel && <div className="kv-row"><span className="kv-label">{uiText("nhánh", "arms")}</span><span className={"kv-value " + (isCompareRun ? "kv-good" : "kv-dim")}>{armsLabel}</span></div>}
+              <div className="kv-row"><span className="kv-label">{uiText("tầng đã thấy", "stages seen")}</span><span className="kv-value">{st.stagesSeen} / {consoleStagePlan.length}</span></div>
+              <div className="kv-row"><span className="kv-label">{uiText("sự kiện", "events")}</span><span className="kv-value">{formatConsoleInt(st.totalEvents)}</span></div>
+              <div className="kv-row"><span className="kv-label">{uiText("luồng", "stream")}</span><span className="kv-value kv-dim">{truncated ? uiText("bị cắt", "truncated") : partialLine ? uiText("dòng chưa đủ", "partial line") : isOpenRun ? (running ? uiText("trực tiếp", "live") : uiText("đang kết nối", "connecting")) : uiText("đã đóng", "closed")}</span></div>
               <div className="section-label">:: {uiText("chi phí & cache", "cost & cache")}</div>
               <div className="kv-row"><span className="kv-label">{uiText("tổng cap", "cap total")}</span><span className="kv-value">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(4) : "—"}</span></div>
               <div className="kv-row kv-row-bar"><span className="kv-label">{uiText("cap / ngân sách", "cap / budget")}</span><span className="kv-value kv-dim">{st.cumulativeCost != null ? "$" + st.cumulativeCost.toFixed(3) : "—"} / {st.budgetCap != null ? "$" + st.budgetCap.toFixed(2) : "—"}</span></div>
               <div className="bar"><div className="bar-fill" style={{ width: costPct + "%" }} /></div>
               <div className="kv-row"><span className="kv-label">{uiText("sự kiện LLM", "LLM events")}</span><span className="kv-value">{formatConsoleInt(st.llmCalls)}</span></div>
+              <div className="section-label">:: {uiText("sức khỏe", "health")}</div>
+              <div className="kv-row"><span className="kv-label">{uiText("cảnh báo", "warnings")}</span><span className={"kv-value " + (st.warnings ? "kv-warn" : "")}>{st.warnings == null ? uiText("không xác định", "unknown") : formatConsoleInt(st.warnings)}</span></div>
+              <div className="kv-row"><span className="kv-label">{uiText("lỗi", "errors")}</span><span className={"kv-value " + (st.errors ? "kv-bad" : "")}>{st.errors == null ? uiText("không xác định", "unknown") : formatConsoleInt(st.errors)}</span></div>
+              <div className="kv-row"><span className="kv-label">{uiText("sự kiện cuối", "last event")}</span><span className="kv-value kv-dim">{st.lastTs ? st.lastTs.slice(11, 19) : "—"}</span></div>
             </>
           )}
-
-          <div className="section-label">:: {uiText("sức khỏe", "health")}</div>
-          <div className="kv-row"><span className="kv-label">{uiText("cảnh báo", "warnings")}</span><span className={"kv-value " + (st.warnings ? "kv-warn" : "")}>{st.warnings == null ? uiText("không xác định", "unknown") : formatConsoleInt(st.warnings)}</span></div>
-          <div className="kv-row"><span className="kv-label">{uiText("lỗi", "errors")}</span><span className={"kv-value " + (st.errors ? "kv-bad" : "")}>{st.errors == null ? uiText("không xác định", "unknown") : formatConsoleInt(st.errors)}</span></div>
-          <div className="kv-row"><span className="kv-label">{uiText("sự kiện cuối", "last event")}</span><span className="kv-value kv-dim">{st.lastTs ? st.lastTs.slice(11, 19) : "—"}</span></div>
           </div>
         </aside>
 
@@ -3420,9 +3558,9 @@ function AgentConsoleView(props) {
             <div className="event-feed">
               {rendered.length ? rendered.map(r => {
                 const navigable = Boolean(r.memoryDeltaId || r.blockId || r.artifactPath || r.stage);
-                const expanded = expandedEventKey === r.key;
+                const detailsOpen = detailModal?.kind === "event" && detailModal.row?.key === r.key;
                 return (
-                  <div className={"ev-wrap" + (expanded ? " expanded" : "")} key={r.key}>
+                  <div className="ev-wrap" key={r.key}>
                     <div
                       className={"ev-row ev-" + r.severity
                         + (r.isCost ? " ev-cost" : "")
@@ -3456,18 +3594,17 @@ function AgentConsoleView(props) {
                         <button
                           type="button"
                           className="ev-expand"
-                          aria-expanded={expanded}
-                          aria-label={expanded ? uiText("Thu gọn chi tiết sự kiện", "Collapse event details") : uiText("Mở chi tiết sự kiện", "Expand event details")}
+                          aria-expanded={detailsOpen}
+                          aria-label={uiText("Mở chi tiết sự kiện", "Open event details")}
                           onClick={event => {
                             event.stopPropagation();
-                            setExpandedEventKey(current => current === r.key ? "" : r.key);
+                            setDetailModal({ kind: "event", row: r });
                           }}
                         >
-                          {expanded ? "−" : "+"}
+                          +
                         </button>
                       )}
                     </div>
-                    {expanded && <ConsoleEventExpanded row={r} />}
                   </div>
                 );
               }) : <div className="console-empty">{workflowInvalid
@@ -3597,93 +3734,140 @@ function AgentConsoleView(props) {
             );
           })}
 
-          <ConsoleWorkflowEvidence
-            workflowReplay={workflowReplay}
-            uiText={uiText}
-            selectedArtifact={selectedArtifact}
-            onSelectArtifact={setSelectedArtifact}
-            onOpenArtifact={downloadWorkflowArtifact}
-            artifactBusy={artifactBusy}
-          />
-          {workflowReplay?.valid && <ConsoleTypedDetails events={shownEvents} compact />}
-
-          <div className="section-label">:: {consoleText(uiLocale, "latestArtifact")}</div>
-          <div
-            className={"artifact-path" + (selectedArtifact ? " artifact-targeted" : "")}
-            title={selectedArtifact || st.latestArtifact || ""}
-          >
-            {(selectedArtifact || st.latestArtifact)
-              ? consoleBaseName(selectedArtifact || st.latestArtifact)
-              : consoleText(uiLocale, "noneYet")}
-          </div>
-
-          <div className="section-label">:: {consoleText(uiLocale, "results")}</div>
           {workflowReplay ? (
-            <div className="artifact-path kv-dim">
-              {!workflowReplay.valid
-                ? uiText("Report bị ẩn vì replay không hợp lệ.", "Report hidden because replay validation failed.")
-                : workflowReplay.scoring?.reports?.length
-                ? workflowReplay.scoring.reports.map(report => `${report.artifact_ref} · ${report.sha256}`).join("\n")
-                : uiText("Không có report Evaluation đã được xác thực trong snapshot này; UI không suy ra điểm hoặc verdict.", "This snapshot has no validated Evaluation report; the UI does not infer scores or a verdict.")}
-            </div>
-          ) : visibleReportSummary && (visibleReportSummary.final?.present || visibleReportSummary.phase_1?.present) ? (
             <>
-              {((visibleReportSummary.final?.present ? visibleReportSummary.final.metrics : visibleReportSummary.phase_1?.metrics) || []).map(m => (
-                <div className="kv-row" key={m.key}>
-                  <ConsoleMetricLabel
-                    metricKey={m.key}
-                    fallbackLabel={m.label || m.key}
-                    locale={uiLocale}
-                    idSuffix={`result-${m.key}`}
-                  />
-                  <span className={"kv-value " + (m.status === "good" ? "kv-good" : m.status === "warn" ? "kv-warn" : m.status === "bad" ? "kv-bad" : "")}>
-                    {formatConsoleMetric(m.value, m.unit)}
-                  </span>
+              <ConsoleWorkflowEvidenceSummary
+                workflowReplay={workflowReplay}
+                uiText={uiText}
+                onOpen={() => setDetailModal({ kind: "evidence" })}
+              />
+              <section className="workflow-compact-section" aria-label={uiText("Kết quả", "Results")}>
+                <div className="section-label">:: {consoleText(uiLocale, "results")}</div>
+                <div className="workflow-result-summary">
+                  {!workflowReplay.valid
+                    ? uiText("Replay không hợp lệ; kết quả bị khóa.", "Replay is invalid; results are locked.")
+                    : workflowReplay.scoring?.reports?.length
+                    ? uiText(`${formatConsoleInt(workflowReplay.scoring.reports.length)} report đã xác thực`, `${formatConsoleInt(workflowReplay.scoring.reports.length)} validated reports`)
+                    : uiText("Chưa có report Evaluation đã xác thực.", "No validated Evaluation report yet.")}
                 </div>
-              ))}
-              {finalGateText && (
-                <div className="kv-row">
-                  <span className="kv-label">{consoleText(uiLocale, "gates")}</span>
-                  <span className={"kv-value " + (finalGate.all_ok === false ? "kv-bad" : "kv-good")}>{finalGateText}</span>
-                </div>
-              )}
-              {compareGap && (
-                <>
-                  <div className="kv-row">
-                    <ConsoleMetricLabel
-                      metricKey="TC"
-                      locale={uiLocale}
-                      prefix={`${consoleText(uiLocale, "gap")} `}
-                      suffix="(S1-S0)"
-                      idSuffix="gap-tc"
-                    />
-                    <span className={"kv-value " + (Number(compareGap.TC) >= 0 ? "kv-good" : "kv-bad")}>{formatConsoleSignedRatio(compareGap.TC)}</span>
-                  </div>
-                  <div className="kv-row">
-                    <ConsoleMetricLabel
-                      metricKey="TA"
-                      locale={uiLocale}
-                      prefix={`${consoleText(uiLocale, "gap")} `}
-                      suffix="(S1-S0)"
-                      idSuffix="gap-ta"
-                    />
-                    <span className={"kv-value " + (Number(compareGap.TA) >= 0 ? "kv-good" : "kv-warn")}>{formatConsoleSignedRatio(compareGap.TA)}</span>
-                  </div>
-                </>
-              )}
-              {visibleReportSummary.final?.present && visibleReportSummary.final.verdict && typeof visibleReportSummary.final.verdict.pass === "boolean" && (
-                <div className={"banner " + (visibleReportSummary.final.verdict.pass === false ? "banner-red" : "banner-green")}>
-                  <span className="banner-glyph">{visibleReportSummary.final.verdict.pass === false ? "✕" : "●"}</span>
-                  <span className="banner-msg">{visibleReportSummary.final.verdict.pass === false ? (consoleText(uiLocale, "gateFail") + " · " + ((visibleReportSummary.final.verdict.reasons || []).join(", ") || consoleText(uiLocale, "seeReport"))) : consoleText(uiLocale, "gatePass")}</span>
-                </div>
-              )}
-              {visibleReportSummary.final?.report_path && <div className="artifact-path">{visibleReportSummary.final.report_path}</div>}
+                {onOpenReport && workflowReplay.scoring?.reports?.length > 0 && (
+                  <button className="workflow-detail-trigger" type="button" onClick={onOpenReport}>
+                    {uiText("Mở Báo cáo", "Open Report")} →
+                  </button>
+                )}
+              </section>
             </>
-          ) : <div className="artifact-path kv-dim">{consoleText(uiLocale, "noScores")}</div>}
+          ) : (
+            <>
+              <div className="section-label">:: {consoleText(uiLocale, "latestArtifact")}</div>
+              <div
+                className={"artifact-path" + (selectedArtifact ? " artifact-targeted" : "")}
+                title={selectedArtifact || st.latestArtifact || ""}
+              >
+                {(selectedArtifact || st.latestArtifact)
+                  ? consoleBaseName(selectedArtifact || st.latestArtifact)
+                  : consoleText(uiLocale, "noneYet")}
+              </div>
+
+              <div className="section-label">:: {consoleText(uiLocale, "results")}</div>
+              {visibleReportSummary && (visibleReportSummary.final?.present || visibleReportSummary.phase_1?.present) ? (
+                <>
+                  {((visibleReportSummary.final?.present ? visibleReportSummary.final.metrics : visibleReportSummary.phase_1?.metrics) || []).map(m => (
+                    <div className="kv-row" key={m.key}>
+                      <ConsoleMetricLabel
+                        metricKey={m.key}
+                        fallbackLabel={m.label || m.key}
+                        locale={uiLocale}
+                        idSuffix={`result-${m.key}`}
+                      />
+                      <span className={"kv-value " + (m.status === "good" ? "kv-good" : m.status === "warn" ? "kv-warn" : m.status === "bad" ? "kv-bad" : "")}>
+                        {formatConsoleMetric(m.value, m.unit)}
+                      </span>
+                    </div>
+                  ))}
+                  {finalGateText && (
+                    <div className="kv-row">
+                      <span className="kv-label">{consoleText(uiLocale, "gates")}</span>
+                      <span className={"kv-value " + (finalGate.all_ok === false ? "kv-bad" : "kv-good")}>{finalGateText}</span>
+                    </div>
+                  )}
+                  {compareGap && (
+                    <>
+                      <div className="kv-row">
+                        <ConsoleMetricLabel
+                          metricKey="TC"
+                          locale={uiLocale}
+                          prefix={`${consoleText(uiLocale, "gap")} `}
+                          suffix="(S1-S0)"
+                          idSuffix="gap-tc"
+                        />
+                        <span className={"kv-value " + (Number(compareGap.TC) >= 0 ? "kv-good" : "kv-bad")}>{formatConsoleSignedRatio(compareGap.TC)}</span>
+                      </div>
+                      <div className="kv-row">
+                        <ConsoleMetricLabel
+                          metricKey="TA"
+                          locale={uiLocale}
+                          prefix={`${consoleText(uiLocale, "gap")} `}
+                          suffix="(S1-S0)"
+                          idSuffix="gap-ta"
+                        />
+                        <span className={"kv-value " + (Number(compareGap.TA) >= 0 ? "kv-good" : "kv-warn")}>{formatConsoleSignedRatio(compareGap.TA)}</span>
+                      </div>
+                    </>
+                  )}
+                  {visibleReportSummary.final?.present && visibleReportSummary.final.verdict && typeof visibleReportSummary.final.verdict.pass === "boolean" && (
+                    <div className={"banner " + (visibleReportSummary.final.verdict.pass === false ? "banner-red" : "banner-green")}>
+                      <span className="banner-glyph">{visibleReportSummary.final.verdict.pass === false ? "✕" : "●"}</span>
+                      <span className="banner-msg">{visibleReportSummary.final.verdict.pass === false ? (consoleText(uiLocale, "gateFail") + " · " + ((visibleReportSummary.final.verdict.reasons || []).join(", ") || consoleText(uiLocale, "seeReport"))) : consoleText(uiLocale, "gatePass")}</span>
+                    </div>
+                  )}
+                  {visibleReportSummary.final?.report_path && <div className="artifact-path">{visibleReportSummary.final.report_path}</div>}
+                </>
+              ) : <div className="artifact-path kv-dim">{consoleText(uiLocale, "noScores")}</div>}
+            </>
+          )}
 
           </div>
         </aside>
       </div>
+
+      {detailModal && (
+        <ConsoleDetailModal
+          title={detailModal.kind === "workflow"
+            ? uiText("Chi tiết lần chạy", "Run details")
+            : detailModal.kind === "usage"
+            ? uiText("Sử dụng API đã lưu", "Persisted API usage")
+            : detailModal.kind === "evidence"
+            ? uiText("Bằng chứng workflow", "Workflow evidence")
+            : uiText("Chi tiết sự kiện", "Event details")}
+          wide={detailModal.kind === "usage" || detailModal.kind === "evidence"}
+          onClose={closeDetailModal}
+          uiText={uiText}
+        >
+          {detailModal.kind === "workflow" && (
+            <ConsoleWorkflowIdentity workflowReplay={workflowReplay} uiText={uiText} />
+          )}
+          {detailModal.kind === "usage" && (
+            <ConsoleUsageLedger usage={workflowReplay?.valid ? workflowReplay.usage : null} />
+          )}
+          {detailModal.kind === "evidence" && (
+            <>
+              <ConsoleWorkflowEvidence
+                workflowReplay={workflowReplay}
+                uiText={uiText}
+                selectedArtifact={selectedArtifact}
+                onSelectArtifact={setSelectedArtifact}
+                onOpenArtifact={downloadWorkflowArtifact}
+                artifactBusy={artifactBusy}
+              />
+              {workflowReplay?.valid && <ConsoleTypedDetails events={shownEvents} />}
+            </>
+          )}
+          {detailModal.kind === "event" && detailModal.row && (
+            <ConsoleEventExpanded row={detailModal.row} />
+          )}
+        </ConsoleDetailModal>
+      )}
     </div>
   );
 }
