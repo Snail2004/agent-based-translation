@@ -136,6 +136,59 @@ class BenchmarkEndToEndResultV1:
     workflow_component_root: Path | None = None
 
 
+class _UsageRecordingRoleRunnerV1:
+    """Thin role-runner view that projects ledger facts after each real attempt."""
+
+    def __init__(
+        self,
+        base: SharedEvaluationRoleRunnerV1,
+        *,
+        workflow: EvaluationWorkflowComponentWriterV1,
+        ledger: SharedLlmAttemptLedger,
+        stage_id: str,
+    ) -> None:
+        self._base = base
+        self._workflow = workflow
+        self._ledger = ledger
+        self._stage_id = stage_id
+
+    @property
+    def execution_binding(self) -> dict[str, str]:
+        return self._base.execution_binding
+
+    @property
+    def cache_mode(self) -> str:
+        return self._base.cache_mode
+
+    @property
+    def semantic_contract(self) -> dict[str, Any]:
+        return self._base.semantic_contract
+
+    @property
+    def attempt_runtime_binding(self) -> dict[str, Any]:
+        return self._base.attempt_runtime_binding
+
+    def execute(self, **kwargs):
+        logical_request_id = require_string(
+            kwargs.get("logical_request_id"), path="$.logical_request_id"
+        )
+        try:
+            result = self._base.execute(**kwargs)
+        except Exception:
+            self._sync(logical_request_id)
+            raise
+        self._sync(logical_request_id)
+        return result
+
+    def _sync(self, logical_request_id: str) -> None:
+        self._workflow.sync_usage_from_ledger(
+            self._ledger,
+            stage_id=self._stage_id,
+            current_work_id=logical_request_id,
+            execution_binding=self._base.execution_binding,
+        )
+
+
 ChapterRunnerV1 = Callable[..., EndToEndEvaluationResultV1]
 
 
@@ -263,6 +316,18 @@ def run_benchmark_end_to_end_v1(
                 total=1,
                 unit="gate",
                 current_work_id="benchmark_preflight_v1",
+                detail={
+                    "detail_kind": "input_arms",
+                    "data": {
+                        "arm_ids": [
+                            "s0",
+                            "s1",
+                            "community",
+                            "google_nmt",
+                            "llm_lc",
+                        ]
+                    },
+                },
             )
             if preflight["status"] == "ready":
                 workflow.validation_passed(
@@ -312,6 +377,22 @@ def run_benchmark_end_to_end_v1(
                             total=1,
                             unit="report",
                             current_work_id="benchmark_run_report_v1",
+                            detail={
+                                "detail_kind": "aggregation_result",
+                                "data": {
+                                    "report": workflow.file_binding(
+                                        _relative(root, persisted_report_path),
+                                        artifact_kind="benchmark_run_report_v1",
+                                        schema_version=report["schema_version"],
+                                    ),
+                                    "metric_ids": sorted(
+                                        {
+                                            row["method_id"]
+                                            for row in report["aggregates"]
+                                        }
+                                    ),
+                                },
+                            },
                         )
                         accepted = workflow.validation_passed(
                             "aggregation", validator_id="benchmark_run_report_v1"
@@ -369,6 +450,20 @@ def run_benchmark_end_to_end_v1(
                     workflow.start_stage(
                         workflow_active_stage, work_total=1, work_unit="chapter"
                     )
+                chapter_llm_roles = runtime.llm_roles
+                if workflow is not None and runtime.llm_roles is not None:
+                    if runtime.shared_ledger is None:
+                        raise ContractValidationError(
+                            "usage_ledger_missing",
+                            f"$.chapter_runtimes.{chapter_id}.shared_ledger",
+                            "provider-backed Evaluation requires its shared attempt ledger",
+                        )
+                    chapter_llm_roles = _UsageRecordingRoleRunnerV1(
+                        runtime.llm_roles,
+                        workflow=workflow,
+                        ledger=runtime.shared_ledger,
+                        stage_id=workflow_active_stage,
+                    )
                 state.append_event("chapter_started", chapter_id=chapter_id)
                 result = chapter_runner(
                     runtime.common_input,
@@ -386,11 +481,22 @@ def run_benchmark_end_to_end_v1(
                     baseline_arm_id=baseline_arm_id,
                     candidate_arm_id=candidate_arm_id,
                     local_sf_qe_runtime=runtime.local_sf_qe_runtime,
-                    llm_roles=runtime.llm_roles,
+                    llm_roles=chapter_llm_roles,
                     shared_ledger=runtime.shared_ledger,
                     shared_ledger_relative_path=runtime.shared_ledger_relative_path,
                     caveats=runtime.caveats,
                 )
+                if (
+                    workflow is not None
+                    and runtime.llm_roles is not None
+                    and runtime.shared_ledger is not None
+                ):
+                    workflow.sync_usage_from_ledger(
+                        runtime.shared_ledger,
+                        stage_id=workflow_active_stage,
+                        current_work_id=chapter_id,
+                        execution_binding=runtime.llm_roles.execution_binding,
+                    )
                 checkpoint = state.persist_chapter_checkpoint(
                     chapter_id=chapter_id,
                     ordinal=ordinal,
@@ -410,6 +516,15 @@ def run_benchmark_end_to_end_v1(
                         total=1,
                         unit="chapter",
                         current_work_id=chapter_id,
+                        detail={
+                            "detail_kind": "chapter_scorer_progress",
+                            "data": {
+                                "chapter_id": chapter_id,
+                                "scorer_id": None,
+                                "completed": 1,
+                                "total": 1,
+                            },
+                        },
                     )
                     accepted = workflow.validation_passed(
                         workflow_active_stage,
@@ -491,6 +606,19 @@ def run_benchmark_end_to_end_v1(
                     total=1,
                     unit="report",
                     current_work_id="benchmark_run_report_v1",
+                    detail={
+                        "detail_kind": "aggregation_result",
+                        "data": {
+                            "report": workflow.file_binding(
+                                _relative(root, persisted),
+                                artifact_kind="benchmark_run_report_v1",
+                                schema_version=report["schema_version"],
+                            ),
+                            "metric_ids": sorted(
+                                {row["method_id"] for row in report["aggregates"]}
+                            ),
+                        },
+                    },
                 )
                 accepted = workflow.validation_passed(
                     "aggregation", validator_id="benchmark_run_report_v1"
@@ -800,6 +928,30 @@ def _validate_chapter_runtimes(
     bindings = []
     for ordinal, chapter_id in enumerate(BENCHMARK_CHAPTER_IDS_V1):
         runtime = runtimes[chapter_id]
+        runtime_path = f"$.chapter_runtimes.{chapter_id}"
+        if runtime.llm_roles is not None:
+            if runtime.shared_ledger is None:
+                raise ContractValidationError(
+                    "usage_ledger_missing",
+                    f"{runtime_path}.shared_ledger",
+                    "provider-backed Evaluation requires its shared attempt ledger",
+                )
+            if runtime.shared_ledger_relative_path is None:
+                raise ContractValidationError(
+                    "usage_ledger_path",
+                    f"{runtime_path}.shared_ledger_relative_path",
+                    "provider-backed Evaluation requires the persisted ledger path",
+                )
+            require_relative_path(
+                runtime.shared_ledger_relative_path,
+                path=f"{runtime_path}.shared_ledger_relative_path",
+            )
+        elif runtime.shared_ledger is not None or runtime.shared_ledger_relative_path is not None:
+            raise ContractValidationError(
+                "usage_ledger_without_roles",
+                runtime_path,
+                "a shared attempt ledger cannot be attached without provider-backed roles",
+            )
         common = runtime.common_input
         if {row.chapter_id for row in common.blocks} != {chapter_id}:
             raise ContractValidationError("chapter_binding", f"$.chapter_runtimes.{chapter_id}", "common input chapter differs")

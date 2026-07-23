@@ -26,6 +26,15 @@ from pipeline.eval.contracts_v1 import (
     seal_payload,
     verify_payload_hash,
 )
+from pipeline.eval.evaluation_component_usage_v1 import (
+    EvaluationComponentUsageTrackerV1,
+    validate_evaluation_component_usage_snapshot_chain_v1,
+    validate_evaluation_component_usage_snapshot_v1,
+)
+from pipeline.eval.evaluation_workflow_settings_v1 import (
+    EvaluationWorkflowSettingsAuthorityV1,
+    validate_evaluation_workflow_settings_v1,
+)
 from pipeline.eval.workflow_component_v1 import (
     SCHEMA_VERSION,
     build_evaluation_artifact_index_v1,
@@ -39,6 +48,11 @@ from pipeline.eval.workflow_component_v1 import (
     validate_scoring_handoff_v1,
     validate_scoring_receipt_v1,
     validate_typed_artifact_binding_v1,
+)
+from pipeline.llm_backend import (
+    SharedLlmAttemptLedger,
+    validate_llm_run_records,
+    validate_resolved_llm_run_seal,
 )
 
 
@@ -67,6 +81,8 @@ class EvaluationWorkflowRunContextV1:
     scoring_handoff: Mapping[str, Any]
     scoring_handoff_artifact_ref: str
     evaluation_profile: Mapping[str, Any]
+    workflow_settings: Mapping[str, Any]
+    workflow_settings_authority: EvaluationWorkflowSettingsAuthorityV1
 
 
 def benchmark_workflow_stages_v1(chapter_ids: Sequence[str]) -> tuple[dict[str, Any], ...]:
@@ -141,7 +157,34 @@ class EvaluationWorkflowComponentWriterV1:
         self.evaluation_profile = validate_typed_artifact_binding_v1(
             context.evaluation_profile, path="$.evaluation_profile"
         )
+        self.workflow_settings_authority = context.workflow_settings_authority
+        self.workflow_settings = validate_evaluation_workflow_settings_v1(
+            context.workflow_settings,
+            authority=self.workflow_settings_authority,
+            scoring_handoff=self.handoff,
+        )
+        if self.workflow_settings["evaluation_profile_ref"] != self.evaluation_profile:
+            raise ContractValidationError(
+                "settings_profile_binding",
+                "$.workflow_settings.evaluation_profile_ref",
+                "workflow settings and Evaluation profile disagree",
+            )
+        self.workflow_settings_binding = validate_typed_artifact_binding_v1(
+            {
+                "artifact_ref": "workflow_settings.json",
+                "artifact_kind": "evaluation_workflow_settings_v1",
+                "schema_version": self.workflow_settings["schema_version"],
+                "sha256": self.workflow_settings["settings_sha256"],
+                "sha256_kind": "canonical:EvaluationWorkflowSettingsV1@1.0.0",
+            },
+            path="$.workflow_settings",
+        )
         self.stages = tuple(copy.deepcopy(list(stages)))
+        self.stage_ids = tuple(
+            require_string(stage["stage_id"], path="$.stages[*].stage_id")
+            for stage in self.stages
+        )
+        self.workflow_settings_path = self.root / "workflow_settings.json"
         self.manifest_path = self.root / "component_manifest.json"
         self.manifest_revisions_root = self.root / "manifest_revisions"
         self.event_records_root = self.root / "event_records"
@@ -149,10 +192,16 @@ class EvaluationWorkflowComponentWriterV1:
         self.artifact_index_path = self.root / "artifact_index.json"
         self.receipt_path = self.root / "scoring_receipt.json"
         self.checkpoints_root = self.root / "checkpoints"
+        self.usage_snapshots_root = self.root / "usage_snapshots"
         self.resume_intent_path = self.root / ".resume_intent.json"
         self._events: list[dict[str, Any]] = []
         self._manifest_revisions: list[dict[str, Any]] = []
         self._artifact_rows: list[dict[str, Any]] = []
+        self._usage_tracker = EvaluationComponentUsageTrackerV1(
+            workflow_run_id=self.workflow_run_id,
+            component_run_id=self.component_run_id,
+            stage_ids=self.stage_ids,
+        )
         self.created_new = False
         self.recovered_resume = False
 
@@ -164,6 +213,7 @@ class EvaluationWorkflowComponentWriterV1:
             self.events_path,
             self.artifact_index_path,
             self.receipt_path,
+            self.workflow_settings_path,
             self.manifest_revisions_root,
             self.event_records_root,
         )
@@ -180,6 +230,7 @@ class EvaluationWorkflowComponentWriterV1:
                 "cannot retrofit replay records onto an already-started benchmark",
             )
         self.created_new = True
+        _write_immutable_json(self.workflow_settings_path, self.workflow_settings)
         self.manifest = self._build_manifest(
             attempt_index=1,
             revision=1,
@@ -202,6 +253,14 @@ class EvaluationWorkflowComponentWriterV1:
             agent="runner",
             severity="info",
             payload={"stage_count": len(self.stages)},
+        )
+        self.add_artifact(
+            "workflow_settings.json",
+            artifact_kind="evaluation_workflow_settings_v1",
+            schema_version=self.workflow_settings["schema_version"],
+            stage_id="preflight",
+            created_by_event_id=started["event_id"],
+            parent_artifact_refs=(),
         )
         self.add_artifact(
             "scoring_receipt.json",
@@ -373,6 +432,7 @@ class EvaluationWorkflowComponentWriterV1:
         agent: str,
         severity: str,
         payload: Mapping[str, Any],
+        detail: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         previous = (
             self._events[-1]["integrity"]["event_sha256"] if self._events else None
@@ -389,6 +449,7 @@ class EvaluationWorkflowComponentWriterV1:
             severity=severity,
             payload=payload,
             previous_event_sha256=previous,
+            detail=detail,
         )
         _write_immutable_json(
             self.event_records_root / f"{row['component_seq']:08d}.json", row
@@ -422,6 +483,7 @@ class EvaluationWorkflowComponentWriterV1:
         total: int,
         unit: str,
         current_work_id: str | None,
+        detail: Mapping[str, Any] | None = None,
     ) -> None:
         self.append_event(
             "progress",
@@ -434,6 +496,7 @@ class EvaluationWorkflowComponentWriterV1:
                 "unit": unit,
                 "current_work_id": current_work_id,
             },
+            detail=detail,
         )
 
     def validation_passed(self, stage_id: str, *, validator_id: str) -> dict[str, Any]:
@@ -532,6 +595,7 @@ class EvaluationWorkflowComponentWriterV1:
         )
 
     def done(self) -> None:
+        self._finalize_usage(stage_id="aggregation")
         self.append_event(
             "component_done",
             stage_id="__component__",
@@ -541,6 +605,7 @@ class EvaluationWorkflowComponentWriterV1:
         )
 
     def failed(self, *, reason_code: str) -> None:
+        self._finalize_usage(stage_id=self._latest_non_pending_stage_id())
         self.append_event(
             "component_failed",
             stage_id="__component__",
@@ -609,6 +674,231 @@ class EvaluationWorkflowComponentWriterV1:
         self._persist_artifact_index()
         return copy.deepcopy(candidate)
 
+    def sync_usage_from_ledger(
+        self,
+        ledger: SharedLlmAttemptLedger,
+        *,
+        stage_id: str,
+        current_work_id: str | None,
+        execution_binding: Mapping[str, Any],
+    ) -> tuple[dict[str, Any], ...]:
+        """Project newly accepted shared-ledger facts into immutable Console snapshots."""
+
+        if self.terminal_event is not None:
+            raise ContractValidationError(
+                "usage_terminal",
+                str(self.events_path),
+                "cannot append usage after a terminal component event",
+            )
+        if self.stage_state(stage_id) != "running":
+            raise ContractValidationError(
+                "usage_stage_state",
+                "$.stage_id",
+                "usage may be projected only while its Evaluation stage is running",
+            )
+        binding = require_mapping(execution_binding, path="$.execution_binding")
+        require_exact_keys(
+            binding,
+            required={
+                "evaluation_logical_run_id",
+                "evaluation_attempt_run_id",
+                "evaluation_profile_id",
+                "evaluation_profile_sha256",
+            },
+            path="$.execution_binding",
+        )
+        run_id = require_string(
+            binding["evaluation_logical_run_id"],
+            path="$.execution_binding.evaluation_logical_run_id",
+        )
+        attempt_run_id = require_string(
+            binding["evaluation_attempt_run_id"],
+            path="$.execution_binding.evaluation_attempt_run_id",
+        )
+        profile_id = require_string(
+            binding["evaluation_profile_id"],
+            path="$.execution_binding.evaluation_profile_id",
+        )
+        profile_sha256 = require_sha256(
+            binding["evaluation_profile_sha256"],
+            path="$.execution_binding.evaluation_profile_sha256",
+        )
+        if profile_sha256 != self.evaluation_profile["sha256"]:
+            raise ContractValidationError(
+                "usage_profile_binding",
+                "$.execution_binding.evaluation_profile_sha256",
+                "usage profile differs from the profile sealed in workflow settings",
+            )
+        ledger_path = ledger.path.resolve()
+        if not ledger_path.is_relative_to(self.root):
+            raise ContractValidationError(
+                "usage_ledger_path",
+                str(ledger_path),
+                "shared usage ledger must be inside the Evaluation component root",
+            )
+        source_ledger_ref = ledger_path.relative_to(self.root).as_posix()
+        all_seals = [
+            validate_resolved_llm_run_seal(row)
+            for row in ledger.list_records("seal")
+        ]
+        selected_seals = [
+            row
+            for row in all_seals
+            if row["run_id"] == run_id and row["attempt_run_id"] == attempt_run_id
+        ]
+        for seal in selected_seals:
+            if seal["workstream"] != "evaluation":
+                raise ContractValidationError(
+                    "usage_workstream",
+                    "$.shared_ledger.seals",
+                    "Evaluation usage snapshots cannot accept another workstream's seal",
+                )
+            if (
+                seal["profile"]["record"]["profile_id"] != profile_id
+                or seal["profile"]["sha256"] != profile_sha256
+            ):
+                raise ContractValidationError(
+                    "usage_profile_binding",
+                    "$.shared_ledger.seals",
+                    "sealed provider attempt differs from the Evaluation execution profile",
+                )
+        all_usage = ledger.list_records("usage")
+        all_errors = ledger.list_records("error")
+        all_cache = ledger.list_records("cache")
+        all_receipts = ledger.list_records("artifact_receipt")
+        evidence: list[tuple[str, str, str, dict[str, Any], dict[str, Any]]] = []
+        for seal in selected_seals:
+            seal_hash = seal["seal_sha256"]
+            validated = validate_llm_run_records(
+                seal=seal,
+                usage_rows=[
+                    row for row in all_usage if row["seal_sha256"] == seal_hash
+                ],
+                error_rows=[
+                    row for row in all_errors if row["seal_sha256"] == seal_hash
+                ],
+                cache_observations=[
+                    row for row in all_cache if row["seal_sha256"] == seal_hash
+                ],
+                producer_seals=all_seals,
+                reusable_artifact_receipts=all_receipts,
+                certify_limits=True,
+            )
+            for row in validated["usage_rows"]:
+                evidence.append(
+                    (
+                        row["finished_at_utc"],
+                        "usage",
+                        row["attempt_usage_id"],
+                        seal,
+                        row,
+                    )
+                )
+            for row in validated["cache_observations"]:
+                evidence.append(
+                    (
+                        row["observed_at_utc"],
+                        "cache",
+                        row["observation_id"],
+                        seal,
+                        row,
+                    )
+                )
+        emitted: list[dict[str, Any]] = []
+        for _, kind, _, seal, row in sorted(
+            evidence, key=lambda item: (item[0], item[1], item[2])
+        ):
+            target = _execution_target_from_seal(seal)
+            common = {
+                "stage_id": stage_id,
+                "role_id": seal["role_id"],
+                "source_ledger_ref": source_ledger_ref,
+                "execution_target": target,
+                "component_attempt_id": self.component_attempt_id,
+                "component_attempt_index": self.component_attempt_index,
+                "accepted_through_component_seq": len(self._events) + 1,
+                "current_work_id": current_work_id,
+                "generated_at": self.generated_at,
+            }
+            snapshot = (
+                self._usage_tracker.accept_usage(row, **common)
+                if kind == "usage"
+                else self._usage_tracker.accept_cache_observation(row, **common)
+            )
+            if snapshot is not None:
+                self._persist_usage_snapshot(snapshot)
+                emitted.append(snapshot)
+        return tuple(copy.deepcopy(emitted))
+
+    def _persist_usage_snapshot(
+        self, snapshot: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        tracker_snapshots = self._usage_tracker.snapshots
+        previous_snapshot = (
+            None if len(tracker_snapshots) < 2 else tracker_snapshots[-2]
+        )
+        normalized = validate_evaluation_component_usage_snapshot_v1(
+            snapshot,
+            previous_snapshot=previous_snapshot,
+            stage_ids=self.stage_ids,
+        )
+        canonical_hash = normalized["integrity"]["usage_snapshot_sha256"]
+        relative_path = f"usage_snapshots/{canonical_hash}.json"
+        _write_immutable_json(self.root / relative_path, normalized)
+        binding = validate_typed_artifact_binding_v1(
+            {
+                "artifact_ref": relative_path,
+                "artifact_kind": "evaluation_component_usage_snapshot_v1",
+                "schema_version": normalized["schema_version"],
+                "sha256": canonical_hash,
+                "sha256_kind": (
+                    "canonical:EvaluationComponentUsageSnapshotV1@1.0.0"
+                ),
+            },
+            path="$.usage_snapshot",
+        )
+        component_level = normalized["current_record"]["kind"] == "final"
+        event = self.append_event(
+            "usage_snapshot",
+            stage_id="__component__" if component_level else normalized["stage_id"],
+            agent=(
+                "runner"
+                if component_level
+                else self._stage_agent(normalized["stage_id"])
+            ),
+            severity="info",
+            payload={"snapshot": binding},
+        )
+        if event["component_seq"] != normalized["accepted_through_component_seq"]:
+            raise ContractValidationError(
+                "usage_component_sequence",
+                relative_path,
+                "usage snapshot does not bind the event that published it",
+            )
+        self.add_artifact(
+            relative_path,
+            artifact_kind="evaluation_component_usage_snapshot_v1",
+            schema_version=normalized["schema_version"],
+            stage_id=normalized["stage_id"],
+            created_by_event_id=event["event_id"],
+            parent_artifact_refs=(
+                "workflow_settings.json",
+                "scoring_receipt.json",
+            ),
+        )
+        return copy.deepcopy(event)
+
+    def _finalize_usage(self, *, stage_id: str) -> None:
+        snapshot = self._usage_tracker.finalize(
+            stage_id=stage_id,
+            component_attempt_id=self.component_attempt_id,
+            component_attempt_index=self.component_attempt_index,
+            accepted_through_component_seq=len(self._events) + 1,
+            generated_at=self.generated_at,
+        )
+        if snapshot is not None:
+            self._persist_usage_snapshot(snapshot)
+
     def validate_package(self, *, require_terminal: bool = False) -> dict[str, Any]:
         return validate_evaluation_workflow_component_package_v1(
             self.root, self.handoff, require_terminal=require_terminal
@@ -634,6 +924,7 @@ class EvaluationWorkflowComponentWriterV1:
             scoring_receipt_ref="scoring_receipt.json",
             accepted_input_set_sha256=self.handoff["input_set_sha256"],
             evaluation_profile=self.evaluation_profile,
+            workflow_settings=self.workflow_settings_binding,
             stages=self.stages,
         )
 
@@ -678,6 +969,23 @@ class EvaluationWorkflowComponentWriterV1:
         if self.manifest["evaluation_profile"] != self.evaluation_profile:
             raise ContractValidationError(
                 "profile_binding", str(self.manifest_path), "evaluation profile changed"
+            )
+        persisted_settings = validate_evaluation_workflow_settings_v1(
+            _load_json(self.workflow_settings_path),
+            authority=self.workflow_settings_authority,
+            scoring_handoff=self.handoff,
+        )
+        if persisted_settings != self.workflow_settings:
+            raise ContractValidationError(
+                "settings_binding",
+                str(self.workflow_settings_path),
+                "workflow settings changed",
+            )
+        if self.manifest.get("workflow_settings") != self.workflow_settings_binding:
+            raise ContractValidationError(
+                "settings_binding",
+                str(self.manifest_path),
+                "manifest workflow settings binding changed",
             )
         if self.manifest["stages"] != list(self.stages):
             raise ContractValidationError(
@@ -733,6 +1041,36 @@ class EvaluationWorkflowComponentWriterV1:
         )
         self._artifact_rows = copy.deepcopy(index["artifacts"])
         _verify_physical_artifacts(self.root, self._artifact_rows)
+        self._restore_usage_tracker()
+
+    def _restore_usage_tracker(self) -> None:
+        snapshots = [
+            _load_json(self.root / row["artifact"]["artifact_ref"])
+            for row in self._artifact_rows
+            if row["artifact"]["artifact_kind"]
+            == "evaluation_component_usage_snapshot_v1"
+        ]
+        snapshots.sort(
+            key=lambda row: require_int(
+                row.get("snapshot_index"),
+                path="$usage_snapshot.snapshot_index",
+                minimum=1,
+            )
+        )
+        snapshots = list(
+            validate_evaluation_component_usage_snapshot_chain_v1(
+                snapshots,
+                workflow_run_id=self.workflow_run_id,
+                component_run_id=self.component_run_id,
+                stage_ids=self.stage_ids,
+            )
+        )
+        self._usage_tracker = EvaluationComponentUsageTrackerV1(
+            workflow_run_id=self.workflow_run_id,
+            component_run_id=self.component_run_id,
+            stage_ids=self.stage_ids,
+            snapshots=snapshots,
+        )
 
     def _validate_stream(self) -> None:
         prior = [
@@ -776,6 +1114,13 @@ class EvaluationWorkflowComponentWriterV1:
             str(self.events_path),
             "halted component has no durable checkpoint",
         )
+
+    def _latest_non_pending_stage_id(self) -> str:
+        states = self._stage_states()
+        for stage in reversed(self.stages):
+            if states[stage["stage_id"]] != "pending":
+                return stage["stage_id"]
+        return self.stage_ids[0]
 
 
 def validate_evaluation_workflow_component_package_v1(
@@ -826,6 +1171,29 @@ def validate_evaluation_workflow_component_package_v1(
         raise ContractValidationError(
             "handoff_binding", str(package_root), "manifest binds a foreign scoring handoff"
         )
+    settings = validate_evaluation_workflow_settings_v1(
+        _load_json(package_root / "workflow_settings.json"),
+        scoring_handoff=accepted_handoff,
+    )
+    expected_settings_binding = {
+        "artifact_ref": "workflow_settings.json",
+        "artifact_kind": "evaluation_workflow_settings_v1",
+        "schema_version": settings["schema_version"],
+        "sha256": settings["settings_sha256"],
+        "sha256_kind": "canonical:EvaluationWorkflowSettingsV1@1.0.0",
+    }
+    if manifest.get("workflow_settings") != expected_settings_binding:
+        raise ContractValidationError(
+            "settings_binding",
+            str(package_root),
+            "manifest binds foreign workflow settings",
+        )
+    if settings["evaluation_profile_ref"] != manifest["evaluation_profile"]:
+        raise ContractValidationError(
+            "settings_profile_binding",
+            str(package_root),
+            "workflow settings and manifest profile disagree",
+        )
     events = _load_jsonl(package_root / "events.jsonl")
     immutable_events = [
         _load_json(path)
@@ -874,6 +1242,108 @@ def validate_evaluation_workflow_component_package_v1(
                 "artifact points to an unknown component stage",
             )
     _verify_physical_artifacts(package_root, index["artifacts"])
+    settings_artifacts = [
+        row
+        for row in index["artifacts"]
+        if row["artifact"]["artifact_ref"] == "workflow_settings.json"
+    ]
+    if len(settings_artifacts) != 1 or settings_artifacts[0]["artifact"][
+        "artifact_kind"
+    ] != "evaluation_workflow_settings_v1":
+        raise ContractValidationError(
+            "settings_artifact",
+            str(package_root),
+            "artifact index must contain the exact workflow settings artifact",
+        )
+    usage_artifact_rows = [
+        row
+        for row in index["artifacts"]
+        if row["artifact"]["artifact_kind"]
+        == "evaluation_component_usage_snapshot_v1"
+    ]
+    usage_snapshots = [
+        _load_json(package_root / row["artifact"]["artifact_ref"])
+        for row in usage_artifact_rows
+    ]
+    paired_usage = sorted(
+        zip(usage_snapshots, usage_artifact_rows, strict=True),
+        key=lambda pair: require_int(
+            pair[0].get("snapshot_index"),
+            path="$usage_snapshot.snapshot_index",
+            minimum=1,
+        ),
+    )
+    usage_snapshots = [pair[0] for pair in paired_usage]
+    usage_artifact_rows = [pair[1] for pair in paired_usage]
+    usage_snapshots = list(
+        validate_evaluation_component_usage_snapshot_chain_v1(
+            usage_snapshots,
+            workflow_run_id=manifest["workflow_run_id"],
+            component_run_id=manifest["component_run_id"],
+            stage_ids=tuple(stage["stage_id"] for stage in manifest["stages"]),
+        )
+    )
+    usage_events = [
+        event for event in normalized_events if event["event"] == "usage_snapshot"
+    ]
+    if len(usage_events) != len(usage_snapshots):
+        raise ContractValidationError(
+            "usage_snapshot_coverage",
+            str(package_root),
+            "usage events and indexed snapshots must have exact cover",
+        )
+    for snapshot, artifact_row, event in zip(
+        usage_snapshots, usage_artifact_rows, usage_events, strict=True
+    ):
+        expected_binding = {
+            "artifact_ref": artifact_row["artifact"]["artifact_ref"],
+            "artifact_kind": "evaluation_component_usage_snapshot_v1",
+            "schema_version": snapshot["schema_version"],
+            "sha256": snapshot["integrity"]["usage_snapshot_sha256"],
+            "sha256_kind": (
+                "canonical:EvaluationComponentUsageSnapshotV1@1.0.0"
+            ),
+        }
+        if event["payload"]["snapshot"] != expected_binding:
+            raise ContractValidationError(
+                "usage_snapshot_binding",
+                event["event_id"],
+                "usage event binds foreign snapshot bytes",
+            )
+        if snapshot["accepted_through_component_seq"] != event["component_seq"]:
+            raise ContractValidationError(
+                "usage_component_sequence",
+                event["event_id"],
+                "usage snapshot does not name its publishing event",
+            )
+        if artifact_row["created_by_event_id"] != event["event_id"]:
+            raise ContractValidationError(
+                "usage_snapshot_event",
+                artifact_row["artifact"]["artifact_ref"],
+                "usage artifact creator differs from its publishing event",
+            )
+    terminal = normalized_events[-1]["event"] in {
+        "component_done",
+        "component_failed",
+    }
+    if terminal:
+        if (
+            not usage_snapshots
+            or usage_snapshots[-1]["current_record"]["kind"] != "final"
+            or len(normalized_events) < 2
+            or normalized_events[-2]["event"] != "usage_snapshot"
+        ):
+            raise ContractValidationError(
+                "usage_final",
+                str(package_root),
+                "terminal Evaluation component requires a final usage snapshot",
+            )
+    elif usage_snapshots and usage_snapshots[-1]["current_record"]["kind"] == "final":
+        raise ContractValidationError(
+            "usage_final",
+            str(package_root),
+            "nonterminal Evaluation component cannot publish final usage",
+        )
     if require_terminal and normalized_events[-1]["event"] not in {
         "component_done",
         "component_failed",
@@ -885,7 +1355,23 @@ def validate_evaluation_workflow_component_package_v1(
         "manifest": manifest,
         "events": tuple(copy.deepcopy(normalized_events)),
         "receipt": receipt,
+        "workflow_settings": settings,
+        "usage_snapshots": tuple(copy.deepcopy(usage_snapshots)),
         "artifact_index": index,
+    }
+
+
+def _execution_target_from_seal(seal: Mapping[str, Any]) -> dict[str, Any]:
+    normalized = validate_resolved_llm_run_seal(seal)
+    primary = normalized["primary"]
+    return {
+        "source_id": primary["source"]["source_id"],
+        "source_revision": primary["source"]["source_revision"],
+        "physical_quota_bucket_id": primary["source"][
+            "physical_quota_bucket_id"
+        ],
+        "requested_model_id": primary["target"]["requested_model_id"],
+        "observed_model_id": primary["capability"]["observed_model_id"],
     }
 
 

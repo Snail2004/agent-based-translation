@@ -8,14 +8,21 @@ import pytest
 
 import pipeline.eval.workflow_component_writer_v1 as writer_module
 from pipeline.eval.contracts_v1 import ContractValidationError
+from pipeline.eval.evaluation_workflow_settings_v1 import (
+    EvaluationWorkflowSettingsAuthorityV1,
+    build_evaluation_workflow_settings_v1,
+)
 from pipeline.eval.workflow_component_v1 import (
     build_evaluation_component_manifest_v1,
     build_scoring_receipt_v1,
 )
 from pipeline.eval.workflow_component_writer_v1 import (
+    EvaluationWorkflowComponentWriterV1,
     EvaluationWorkflowRunContextV1,
+    benchmark_workflow_stages_v1,
     validate_evaluation_workflow_component_package_v1,
 )
+from pipeline.eval.execution_runner_v1 import execute_evaluation_plan_v1
 from pipeline.tests.test_evaluation_benchmark_runner_v1 import (
     _Predictor,
     _manifest_and_preflight,
@@ -23,17 +30,64 @@ from pipeline.tests.test_evaluation_benchmark_runner_v1 import (
     _run,
     _sources,
 )
+from pipeline.tests.test_evaluation_method_executors_v1 import (
+    _SemanticSender,
+    _common as _llm_common,
+    _config as _llm_config,
+    _runtime as _llm_runtime,
+)
+from pipeline.tests.test_llm_backend_phase2b_v1 import (
+    _SuccessSender,
+    _backend,
+    _cost_fact,
+    _sealed,
+)
 from pipeline.tests.test_evaluation_workflow_component_v1 import _binding, _handoff
 
 
-def _context() -> EvaluationWorkflowRunContextV1:
+def _context(*, profile_sha256: str | None = None) -> EvaluationWorkflowRunContextV1:
     handoff = _handoff()
+    profile = _binding(
+        "profiles/evaluation_fixture_v1.json", "evaluation_profile_v1"
+    )
+    if profile_sha256 is not None:
+        profile["sha256"] = profile_sha256
+    authority = EvaluationWorkflowSettingsAuthorityV1(
+        benchmark_preset=_binding(
+            "presets/narrow_five_chapter_d2l_v1.json",
+            "evaluation_benchmark_preset_v1",
+        ),
+        evaluation_config=_binding(
+            "configs/evaluation_config_v1.json", "evaluation_run_config_v1"
+        ),
+        scorer_set=_binding(
+            "scorers/sf_qe_sf_bt_pj_v1.json", "evaluation_scorer_set_v1"
+        ),
+        evaluation_profiles=(profile,),
+        policy_profiles=(),
+        shared_selections=(
+            _binding(
+                "selections/evaluation_five_chapter_v1.json",
+                "evaluation_shared_selection_v1",
+            ),
+        ),
+    )
+    settings = build_evaluation_workflow_settings_v1(
+        authority=authority,
+        scoring_handoff=handoff,
+        evaluation_profile_ref=profile["artifact_ref"],
+        policy_profile_ref=None,
+        shared_selection_ref="selections/evaluation_five_chapter_v1.json",
+        highlight_pair={"baseline_arm_id": "s0", "candidate_arm_id": "s1"},
+    )
     return EvaluationWorkflowRunContextV1(
         workflow_run_id=handoff["workflow_run_id"],
         component_run_id="evalcomp_fixture_001",
         scoring_handoff=handoff,
         scoring_handoff_artifact_ref="handoffs/scoring_handoff.json",
-        evaluation_profile=_binding("profiles/evaluation_fixture_v1.json", "evaluation_profile_v1"),
+        evaluation_profile=profile,
+        workflow_settings=settings,
+        workflow_settings_authority=authority,
     )
 
 
@@ -77,6 +131,155 @@ def test_runner_writes_replayable_component_package(tmp_path: Path) -> None:
     assert (root / "events.jsonl").is_file()
     assert (root / "artifact_index.json").is_file()
     assert (root / "scoring_receipt.json").is_file()
+    assert (root / "workflow_settings.json").is_file()
+    assert package["usage_snapshots"][-1]["current_record"]["kind"] == "final"
+    assert events[-2]["event"] == "usage_snapshot"
+
+
+def test_writer_projects_real_shared_ledger_usage_once_and_preserves_profile(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    common = _llm_common()
+    config = _llm_config(common)
+    executor, ledger = _llm_runtime(
+        root / "llm_runtime",
+        _SemanticSender(),
+        common,
+        config,
+    )
+    execute_evaluation_plan_v1(
+        common,
+        config,
+        executor,
+        created_at="2026-07-23T00:00:00Z",
+        runner_code_commit="a" * 40,
+        baseline_arm_id="S0",
+        candidate_arm_id="S1",
+    )
+    seal = ledger.list_records("seal")[0]
+    writer = EvaluationWorkflowComponentWriterV1(
+        root,
+        _context(profile_sha256=seal["profile"]["sha256"]),
+        generated_at="2026-07-23T00:00:00Z",
+        producer_code_commit="a" * 40,
+        stages=benchmark_workflow_stages_v1(
+            (
+                "d2l_preliminaries",
+                "d2l_linear_networks",
+                "d2l_multilayer_perceptrons",
+                "d2l_deep_learning_computation",
+                "d2l_convolutional_neural_networks",
+            )
+        ),
+        allow_create=True,
+    )
+    stage_id = "chapter_d2l_preliminaries"
+    writer.start_stage(stage_id, work_total=1, work_unit="chapter")
+    binding = {
+        key: executor.execution_binding[key]
+        for key in (
+            "evaluation_logical_run_id",
+            "evaluation_attempt_run_id",
+            "evaluation_profile_id",
+            "evaluation_profile_sha256",
+        )
+    }
+    emitted = writer.sync_usage_from_ledger(
+        ledger,
+        stage_id=stage_id,
+        current_work_id="fixture_request",
+        execution_binding=binding,
+    )
+
+    assert len(emitted) == ledger.count("usage") + ledger.count("cache")
+    assert len(emitted) > 0
+    assert emitted[-1]["component_totals"]["physical_attempt_count"] == ledger.count(
+        "usage"
+    )
+    assert emitted[-1]["component_totals"]["cost_usd"] is None
+    assert all(
+        snapshot["current_record"]["evidence"]["execution_target"]["source_id"]
+        == seal["primary"]["source"]["source_id"]
+        for snapshot in emitted
+    )
+    assert writer.sync_usage_from_ledger(
+        ledger,
+        stage_id=stage_id,
+        current_work_id="fixture_request",
+        execution_binding=binding,
+    ) == ()
+    package = writer.validate_package()
+    assert len(package["usage_snapshots"]) == len(emitted)
+    reopened = EvaluationWorkflowComponentWriterV1(
+        root,
+        _context(profile_sha256=seal["profile"]["sha256"]),
+        generated_at="2026-07-23T00:00:00Z",
+        producer_code_commit="a" * 40,
+        stages=benchmark_workflow_stages_v1(
+            (
+                "d2l_preliminaries",
+                "d2l_linear_networks",
+                "d2l_multilayer_perceptrons",
+                "d2l_deep_learning_computation",
+                "d2l_convolutional_neural_networks",
+            )
+        ),
+        allow_create=False,
+    )
+    assert reopened.sync_usage_from_ledger(
+        ledger,
+        stage_id=stage_id,
+        current_work_id="fixture_request",
+        execution_binding=binding,
+    ) == ()
+    assert len(reopened.validate_package()["usage_snapshots"]) == len(emitted)
+
+
+def test_writer_rejects_foreign_workstream_ledger_even_with_matching_profile_hash(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    seal, request_body = _sealed()
+    backend, ledger, _ = _backend(root / "foreign_runtime", _SuccessSender())
+    backend.execute_one_attempt(
+        seal=seal,
+        logical_request_id="foreign_request",
+        semantic_attempt_index=1,
+        transport_retry_ordinal=0,
+        request_body=request_body,
+        cost_fact=_cost_fact(),
+    )
+    writer = EvaluationWorkflowComponentWriterV1(
+        root,
+        _context(profile_sha256=seal["profile"]["sha256"]),
+        generated_at="2026-07-23T00:00:00Z",
+        producer_code_commit="a" * 40,
+        stages=benchmark_workflow_stages_v1(
+            (
+                "d2l_preliminaries",
+                "d2l_linear_networks",
+                "d2l_multilayer_perceptrons",
+                "d2l_deep_learning_computation",
+                "d2l_convolutional_neural_networks",
+            )
+        ),
+        allow_create=True,
+    )
+    stage_id = "chapter_d2l_preliminaries"
+    writer.start_stage(stage_id, work_total=1, work_unit="chapter")
+    with pytest.raises(ContractValidationError, match="another workstream"):
+        writer.sync_usage_from_ledger(
+            ledger,
+            stage_id=stage_id,
+            current_work_id="foreign_request",
+            execution_binding={
+                "evaluation_logical_run_id": seal["run_id"],
+                "evaluation_attempt_run_id": seal["attempt_run_id"],
+                "evaluation_profile_id": seal["profile"]["record"]["profile_id"],
+                "evaluation_profile_sha256": seal["profile"]["sha256"],
+            },
+        )
 
 
 def test_interrupted_component_resumes_same_component_and_skips_completed_chapters(

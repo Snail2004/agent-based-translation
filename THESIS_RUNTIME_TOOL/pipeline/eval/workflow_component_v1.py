@@ -83,7 +83,15 @@ _MANIFEST_POLICY = CanonicalPolicy(
     set_like_paths=frozenset(),
     semantic_sequence_paths=frozenset({("stages",)}),
 )
-_EVENT_POLICY = CanonicalPolicy(set_like_paths=frozenset(), semantic_sequence_paths=frozenset())
+_EVENT_POLICY = CanonicalPolicy(
+    set_like_paths=frozenset(),
+    semantic_sequence_paths=frozenset(
+        {
+            ("detail", "data", "arm_ids"),
+            ("detail", "data", "metric_ids"),
+        }
+    ),
+)
 _ARTIFACT_INDEX_POLICY = CanonicalPolicy(
     set_like_paths=frozenset({("artifacts", "*", "parent_artifact_refs")}),
     semantic_sequence_paths=frozenset({("artifacts",)}),
@@ -107,6 +115,7 @@ _EVENT_TYPES = frozenset(
         "validation_failed",
         "retry",
         "checkpoint",
+        "usage_snapshot",
         "stage_done",
         "component_halted",
         "component_done",
@@ -465,6 +474,7 @@ def build_evaluation_component_manifest_v1(
     accepted_input_set_sha256: str,
     evaluation_profile: Mapping[str, Any],
     stages: Sequence[Mapping[str, Any]],
+    workflow_settings: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     handoff_binding = validate_typed_artifact_binding_v1(
         scoring_handoff, path="$.scoring_handoff"
@@ -521,6 +531,10 @@ def build_evaluation_component_manifest_v1(
         "stages": normalized_stages,
         "integrity": {"manifest_sha256": "0" * 64},
     }
+    if workflow_settings is not None:
+        draft["workflow_settings"] = validate_typed_artifact_binding_v1(
+            workflow_settings, path="$.workflow_settings"
+        )
     return validate_evaluation_component_manifest_v1(
         seal_payload(draft, policy=_MANIFEST_POLICY, hash_path=_MANIFEST_HASH_PATH)
     )
@@ -550,6 +564,7 @@ def validate_evaluation_component_manifest_v1(value: Mapping[str, Any]) -> dict[
             "stages",
             "integrity",
         },
+        optional={"workflow_settings"},
         path="$manifest",
     )
     attempt_index = require_int(
@@ -597,6 +612,10 @@ def validate_evaluation_component_manifest_v1(value: Mapping[str, Any]) -> dict[
         "stages": stages,
         "integrity": _validate_single_hash(row["integrity"], "manifest_sha256", "$manifest.integrity"),
     }
+    if "workflow_settings" in row:
+        normalized["workflow_settings"] = validate_typed_artifact_binding_v1(
+            row["workflow_settings"], path="$manifest.workflow_settings"
+        )
     if normalized["scoring_handoff"]["artifact_kind"] != "scoring_handoff_v1":
         raise ContractValidationError("handoff_binding", "$manifest.scoring_handoff.artifact_kind", "expected scoring_handoff_v1")
     if not verify_payload_hash(normalized, policy=_MANIFEST_POLICY, hash_path=_MANIFEST_HASH_PATH):
@@ -619,6 +638,7 @@ def build_evaluation_component_event_v1(
     severity: str,
     payload: Mapping[str, Any],
     previous_event_sha256: str | None,
+    detail: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     accepted_manifest = validate_evaluation_component_manifest_v1(manifest)
     draft_without_id = {
@@ -640,6 +660,10 @@ def build_evaluation_component_event_v1(
         "previous_event_sha256": _require_nullable_sha(previous_event_sha256, "$.previous_event_sha256"),
         "manifest_sha256": accepted_manifest["integrity"]["manifest_sha256"],
     }
+    if detail is not None:
+        draft_without_id["detail"] = _validate_evaluation_detail(
+            detail, path="$.detail"
+        )
     _require_attempt_pair(
         draft_without_id["component_attempt_id"],
         draft_without_id["component_attempt_index"],
@@ -667,6 +691,7 @@ def validate_evaluation_component_event_v1(value: Mapping[str, Any]) -> dict[str
             "event", "severity", "payload", "previous_event_sha256", "manifest_sha256",
             "integrity",
         },
+        optional={"detail"},
         path="$event",
     )
     event_type = require_enum(row["event"], _EVENT_TYPES, path="$event.event")
@@ -694,6 +719,10 @@ def validate_evaluation_component_event_v1(value: Mapping[str, Any]) -> dict[str
         "manifest_sha256": require_sha256(row["manifest_sha256"], path="$event.manifest_sha256"),
         "integrity": _validate_single_hash(row["integrity"], "event_sha256", "$event.integrity"),
     }
+    if "detail" in row:
+        normalized["detail"] = _validate_evaluation_detail(
+            row["detail"], path="$event.detail"
+        )
     id_material = {key: value for key, value in normalized.items() if key not in {"event_id", "integrity"}}
     expected_id = "evalevt_" + canonical_sha256(id_material, policy=_EVENT_POLICY)[:32]
     if normalized["event_id"] != expected_id:
@@ -777,7 +806,14 @@ def validate_evaluation_component_stream_v1(
             attempt_open = True
         elif attempt_index != current_attempt or event_manifest["component_attempt_index"] != attempt_index or not attempt_open:
             raise ContractValidationError("component_attempt", path, "event is outside the active component attempt")
-        if event_type not in {"component_started", "component_resumed", "component_halted", "component_done", "component_failed"}:
+        if event_type == "usage_snapshot" and event["stage_id"] == "__component__":
+            if event["agent"] != "runner":
+                raise ContractValidationError(
+                    "stage_binding",
+                    f"{path}.agent",
+                    "component-level usage snapshot must be emitted by the runner",
+                )
+        elif event_type not in {"component_started", "component_resumed", "component_halted", "component_done", "component_failed"}:
             stage_id = event["stage_id"]
             if stage_id not in stages or event["agent"] != stages[stage_id]["agent"]:
                 raise ContractValidationError("stage_binding", f"{path}.stage_id", "unknown stage or agent")
@@ -786,7 +822,7 @@ def validate_evaluation_component_stream_v1(
                 if state not in {"pending", "halted"}:
                     raise ContractValidationError("stage_state", path, "stage cannot start from current state")
                 stage_states[stage_id] = "running"
-            elif event_type in {"progress", "validation_passed", "validation_failed", "retry", "checkpoint"}:
+            elif event_type in {"progress", "validation_passed", "validation_failed", "retry", "checkpoint", "usage_snapshot"}:
                 if state != "running":
                     raise ContractValidationError("stage_state", path, "stage detail requires a running stage")
             elif event_type == "stage_done":
@@ -1051,6 +1087,13 @@ def _validate_event_payload(event_type: str, value: Any, *, path: str) -> dict[s
             "checkpoint": validate_typed_artifact_binding_v1(row["checkpoint"], path=f"{path}.checkpoint"),
             "work_id": require_nullable_string(row["work_id"], path=f"{path}.work_id"),
         }
+    if event_type == "usage_snapshot":
+        require_exact_keys(row, required={"snapshot"}, path=path)
+        return {
+            "snapshot": validate_typed_artifact_binding_v1(
+                row["snapshot"], path=f"{path}.snapshot"
+            )
+        }
     if event_type == "stage_done":
         require_exact_keys(row, required={"outcome"}, path=path)
         return {"outcome": require_enum(row["outcome"], {"succeeded", "failed", "blocked", "skipped"}, path=f"{path}.outcome")}
@@ -1069,6 +1112,143 @@ def _validate_event_payload(event_type: str, value: Any, *, path: str) -> dict[s
             "reason_code": require_string(row["reason_code"], path=f"{path}.reason_code"),
         }
     raise ContractValidationError("event_type", path, "unsupported event payload")
+
+
+def _validate_evaluation_detail(value: Any, *, path: str) -> dict[str, Any]:
+    row = require_mapping(value, path=path)
+    require_exact_keys(row, required={"detail_kind", "data"}, path=path)
+    kind = require_enum(
+        row["detail_kind"],
+        {
+            "input_arms",
+            "chapter_scorer_progress",
+            "metric_result",
+            "aggregation_result",
+            "verdict",
+            "scoring_receipt",
+        },
+        path=f"{path}.detail_kind",
+    )
+    data = require_mapping(row["data"], path=f"{path}.data")
+    if kind == "input_arms":
+        require_exact_keys(data, required={"arm_ids"}, path=f"{path}.data")
+        arm_ids = [
+            require_string(item, path=f"{path}.data.arm_ids[*]")
+            for item in require_list(data["arm_ids"], path=f"{path}.data.arm_ids")
+        ]
+        if tuple(arm_ids) != ARM_IDS_V1:
+            raise ContractValidationError(
+                "arm_order", f"{path}.data.arm_ids", "expected exact five-arm order"
+            )
+        normalized_data: dict[str, Any] = {"arm_ids": arm_ids}
+    elif kind == "chapter_scorer_progress":
+        require_exact_keys(
+            data,
+            required={"chapter_id", "scorer_id", "completed", "total"},
+            path=f"{path}.data",
+        )
+        completed = require_int(
+            data["completed"], path=f"{path}.data.completed", minimum=0
+        )
+        total = require_int(data["total"], path=f"{path}.data.total", minimum=0)
+        if completed > total:
+            raise ContractValidationError(
+                "progress", f"{path}.data.completed", "completed cannot exceed total"
+            )
+        normalized_data = {
+            "chapter_id": require_string(
+                data["chapter_id"], path=f"{path}.data.chapter_id"
+            ),
+            "scorer_id": require_nullable_string(
+                data["scorer_id"], path=f"{path}.data.scorer_id"
+            ),
+            "completed": completed,
+            "total": total,
+        }
+    elif kind == "metric_result":
+        require_exact_keys(
+            data,
+            required={"chapter_id", "scorer_id", "arm_id", "status", "value"},
+            path=f"{path}.data",
+        )
+        raw_value = data["value"]
+        if raw_value is not None:
+            if isinstance(raw_value, bool) or not isinstance(raw_value, (int, float)):
+                raise ContractValidationError(
+                    "metric_value", f"{path}.data.value", "value must be numeric or null"
+                )
+            raw_value = float(raw_value)
+            if raw_value != raw_value or raw_value in {float("inf"), float("-inf")}:
+                raise ContractValidationError(
+                    "metric_value", f"{path}.data.value", "value must be finite"
+                )
+        status = require_enum(
+            data["status"],
+            {"available", "missing", "failed"},
+            path=f"{path}.data.status",
+        )
+        if (status == "available") != (raw_value is not None):
+            raise ContractValidationError(
+                "metric_value",
+                f"{path}.data.value",
+                "available requires a value; missing/failed require null",
+            )
+        normalized_data = {
+            "chapter_id": require_nullable_string(
+                data["chapter_id"], path=f"{path}.data.chapter_id"
+            ),
+            "scorer_id": require_string(
+                data["scorer_id"], path=f"{path}.data.scorer_id"
+            ),
+            "arm_id": require_nullable_string(
+                data["arm_id"], path=f"{path}.data.arm_id"
+            ),
+            "status": status,
+            "value": raw_value,
+        }
+    elif kind == "aggregation_result":
+        require_exact_keys(
+            data, required={"report", "metric_ids"}, path=f"{path}.data"
+        )
+        normalized_data = {
+            "report": validate_typed_artifact_binding_v1(
+                data["report"], path=f"{path}.data.report"
+            ),
+            "metric_ids": [
+                require_string(item, path=f"{path}.data.metric_ids[*]")
+                for item in require_list(
+                    data["metric_ids"], path=f"{path}.data.metric_ids"
+                )
+            ],
+        }
+        require_unique(
+            normalized_data["metric_ids"], path=f"{path}.data.metric_ids"
+        )
+    elif kind == "verdict":
+        require_exact_keys(
+            data, required={"status", "verdict_id", "reason_code"}, path=f"{path}.data"
+        )
+        normalized_data = {
+            "status": require_enum(
+                data["status"],
+                {"not_defined", "inconclusive", "available"},
+                path=f"{path}.data.status",
+            ),
+            "verdict_id": require_string(
+                data["verdict_id"], path=f"{path}.data.verdict_id"
+            ),
+            "reason_code": require_nullable_string(
+                data["reason_code"], path=f"{path}.data.reason_code"
+            ),
+        }
+    else:
+        require_exact_keys(data, required={"receipt"}, path=f"{path}.data")
+        normalized_data = {
+            "receipt": validate_typed_artifact_binding_v1(
+                data["receipt"], path=f"{path}.data.receipt"
+            )
+        }
+    return {"detail_kind": kind, "data": normalized_data}
 
 
 def _validate_artifact_row(value: Any, *, path: str) -> dict[str, Any]:

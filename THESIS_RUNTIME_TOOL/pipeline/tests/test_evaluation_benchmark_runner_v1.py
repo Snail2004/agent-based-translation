@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import pipeline.eval.benchmark_runner_v1 as benchmark_runner_module
 from pipeline.eval.benchmark_aggregate_v1 import validate_benchmark_run_report_v1
 from pipeline.eval.benchmark_runner_v1 import (
     BenchmarkChapterRuntimeV1,
@@ -36,6 +37,7 @@ from pipeline.eval.end_to_end_runner_v1 import (
 )
 from pipeline.eval.execution_runner_v1 import seal_evaluation_execution_artifact
 from pipeline.eval.local_sf_qe_v1 import SF_QE_MODEL_ID
+from pipeline.llm_backend import SharedLlmAttemptLedger
 from pipeline.eval.offline_orchestrator_v1 import seal_evaluation_run_config
 
 
@@ -63,6 +65,36 @@ class _Predictor:
             raise AssertionError("completed chapter must not call its local scorer")
         assert batch_size == 8
         return [self.score for _ in rows]
+
+
+class _FakeProviderRoleRunner:
+    def __init__(self, *, fail: bool = False) -> None:
+        self.fail = fail
+        self.calls = 0
+        self.execution_binding = {
+            "evaluation_logical_run_id": "evaluation_fixture_run",
+            "evaluation_attempt_run_id": "evaluation_fixture_attempt",
+            "evaluation_profile_id": "evaluation_fixture_profile",
+            "evaluation_profile_sha256": "a" * 64,
+        }
+        self.cache_mode = "bypass"
+        self.semantic_contract = {"contract_id": "fixture"}
+        self.attempt_runtime_binding = {"binding_id": "fixture"}
+
+    def execute(self, **kwargs):
+        self.calls += 1
+        if self.fail:
+            raise RuntimeError("fixture provider failure")
+        return {"status": "accepted"}
+
+
+class _UsageSyncSpy:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def sync_usage_from_ledger(self, ledger, **kwargs):
+        self.calls.append((ledger, kwargs))
+        return ()
 
 
 def _sources() -> list[CommonSourceSnapshotV1]:
@@ -559,3 +591,56 @@ def test_checkpoint_ordinal_outside_benchmark_is_controlled_contract_error(tmp_p
     with pytest.raises(ContractValidationError, match="outside the five-chapter benchmark"):
         _run(root, manifest, preflight, overlays, _runtimes(root, sources, predictors))
     assert [predictor.calls for predictor in predictors] == [1, 1, 1, 1, 1]
+
+
+def test_usage_recording_role_runner_syncs_after_success_and_failure(
+    tmp_path: Path,
+) -> None:
+    ledger = SharedLlmAttemptLedger(tmp_path / "attempt_ledger.sqlite3")
+    workflow = _UsageSyncSpy()
+    success = _FakeProviderRoleRunner()
+    wrapped = benchmark_runner_module._UsageRecordingRoleRunnerV1(
+        success,
+        workflow=workflow,
+        ledger=ledger,
+        stage_id="chapter_d2l_preliminaries",
+    )
+    assert wrapped.execute(logical_request_id="request_success") == {
+        "status": "accepted"
+    }
+    assert workflow.calls[-1][1]["current_work_id"] == "request_success"
+
+    failure = _FakeProviderRoleRunner(fail=True)
+    wrapped_failure = benchmark_runner_module._UsageRecordingRoleRunnerV1(
+        failure,
+        workflow=workflow,
+        ledger=ledger,
+        stage_id="chapter_d2l_preliminaries",
+    )
+    with pytest.raises(RuntimeError, match="provider failure"):
+        wrapped_failure.execute(logical_request_id="request_failure")
+    assert workflow.calls[-1][1]["current_work_id"] == "request_failure"
+
+
+def test_provider_runtime_requires_exact_ledger_pair_before_chapter_execution(
+    tmp_path: Path,
+) -> None:
+    sources = _sources()
+    manifest, preflight, overlays = _manifest_and_preflight(sources)
+    predictors = [_Predictor(0.5) for _ in sources]
+    root = tmp_path / "benchmark"
+    runtimes = _runtimes(root, sources, predictors)
+    chapter_id = BENCHMARK_CHAPTER_IDS_V1[0]
+    current = runtimes[chapter_id]
+    runtimes[chapter_id] = BenchmarkChapterRuntimeV1(
+        **{
+            **{
+                field: getattr(current, field)
+                for field in current.__dataclass_fields__
+            },
+            "llm_roles": _FakeProviderRoleRunner(),
+        }
+    )
+    with pytest.raises(ContractValidationError, match="attempt ledger"):
+        _run(root, manifest, preflight, overlays, runtimes)
+    assert [predictor.calls for predictor in predictors] == [0, 0, 0, 0, 0]
