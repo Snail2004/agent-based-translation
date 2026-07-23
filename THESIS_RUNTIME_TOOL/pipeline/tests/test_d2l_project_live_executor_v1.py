@@ -107,7 +107,15 @@ class _FakeClient:
             daily_token_cap=1_000_000,
         )
 
-    def call(self, messages, *, response_format=None, tag="", **_kwargs):
+    def call(
+        self,
+        messages,
+        *,
+        response_format=None,
+        tag="",
+        semantic_attempt_index=1,
+        **_kwargs,
+    ):
         self.transport.call_count += 1
         self.transport.calls.append(
             {
@@ -115,6 +123,7 @@ class _FakeClient:
                 "tag": tag,
                 "response_format": response_format,
                 "messages": deepcopy(messages),
+                "semantic_attempt_index": semantic_attempt_index,
             }
         )
         payload = self.transport.response(self.role_id, messages, tag)
@@ -486,6 +495,12 @@ def test_live_executor_full_stage_chain_is_gold_free_and_exact_cover(tmp_path: P
         )
     )
     assert any(row["event"] == "retry" for row in b1_receipt["observations"])
+    b1_calls = [
+        row for row in transport.calls if row["role_id"] == "d2l.candidate_discovery"
+    ]
+    assert len(b1_calls) >= 2
+    assert all(row["semantic_attempt_index"] == 1 for row in b1_calls)
+    assert any(row["tag"].endswith(".semantic_2") for row in b1_calls)
     serialized = json.dumps(
         {
             "glossary": glossary,
@@ -659,6 +674,11 @@ def test_quality_uses_independent_semantic_repair_after_mechanical_retry(
     ]
 
     assert transport.initial_s0_calls == 2
+    assert all(
+        row["semantic_attempt_index"] == 1
+        for row in transport.calls
+        if row["role_id"] in {"d2l.translator.s0", "d2l.translator.s1"}
+    )
     assert len(repair_calls) == 1
     assert final_by_id["alpha_b002"]["target_text"] != draft_by_id[
         "alpha_b002"

@@ -537,7 +537,10 @@ def _semantic_call(
             response_format=dict(response_format),
             tag=f"{tag}.semantic_{semantic_attempt}",
             bypass_cache=semantic_attempt > 1,
-            semantic_attempt_index=semantic_attempt,
+            # The correction changes the sealed request body and therefore
+            # creates a new logical request. Its local attempt sequence starts
+            # at one; retry lineage is carried by the observation below.
+            semantic_attempt_index=1,
         )
         observations.response(result=result, work_id=tag)
         errors: list[str] = []
@@ -1749,15 +1752,16 @@ class _RecordingClient:
         self._client = client
         self._observations = observations
         self.results: list[tuple[str, Any]] = []
-        self._semantic_attempts: Counter[str] = Counter()
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._client, name)
 
     def call(self, *args: Any, **kwargs: Any) -> Any:
         tag = str(kwargs.get("tag") or "translator_request")
-        self._semantic_attempts[tag] += 1
-        kwargs["semantic_attempt_index"] = self._semantic_attempts[tag]
+        # Translator corrections change the request body. Shared Backend binds
+        # logical identity to those bytes, so each corrected request starts its
+        # own semantic-attempt sequence at one.
+        kwargs["semantic_attempt_index"] = 1
         result = self._client.call(*args, **kwargs)
         self._observations.response(result=result, work_id=tag)
         self.results.append((tag, result))
