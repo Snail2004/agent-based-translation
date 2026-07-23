@@ -2461,7 +2461,7 @@ function ConsoleUsageTotals({ title, rows, workflow = false }) {
     <section className="workflow-usage-totals">
       <div className="workflow-usage-subhead">{title}</div>
       {values.map((row, index) => (
-        <div className="workflow-usage-total" key={`${row.componentId || row.stageId || "workflow"}:${row.snapshotSeq ?? index}`}>
+        <div className="workflow-usage-total" key={`${row.stageId || row.componentId || "workflow"}:${row.snapshotSeq ?? index}`}>
           <span className="workflow-usage-total-id">{row.stageId || row.componentId || uiText("toàn workflow", "workflow")}</span>
           <span>{consolePersistedValue(row.physicalCallCount, "int")} calls</span>
           <span>{consolePersistedValue(row.totalTokens, "int")} tok</span>
