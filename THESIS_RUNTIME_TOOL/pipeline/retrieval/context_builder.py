@@ -133,6 +133,8 @@ ACTION_SORT_RANK = {
     "context_sensitive_translate": 2,
 }
 
+PRESERVE_MATCH_SCOPE_POLICY_ID = "lowercase_alpha_requires_inline_code_v1"
+
 
 def load_notebook_terms(notebook_path: str | Path) -> list[dict[str, Any]]:
     """Load Builder-v2 audited notebook terms for Translator injection."""
@@ -172,6 +174,7 @@ def notebook_entries_to_term_rows(entries: list[dict[str, Any]]) -> list[dict[st
                 "audit": audit,
                 "source_surfaces": surfaces,
                 "target_variants": _entry_target_variants(entry, target),
+                "target_variant_rules": _entry_target_variant_rules(entry, target),
             }
         )
     guarded_rows, _ = apply_canonical_collision_soft_fallback_to_rows(rows)
@@ -652,21 +655,81 @@ def _entry_target_term(entry: dict[str, Any]) -> str:
 
 def _entry_target_variants(entry: dict[str, Any], target: str) -> list[str]:
     values: list[str] = [target] if target else []
-    raw_variants = entry.get("target_variants")
-    if isinstance(raw_variants, list):
-        for item in raw_variants:
-            if isinstance(item, dict):
-                values.append(str(item.get("surface") or item.get("target") or item.get("value") or ""))
-            else:
-                values.append(str(item or ""))
+    values.extend(rule["target"] for rule in _entry_target_variant_rules(entry, target))
     return _dedupe_surfaces(values)
+
+
+def _entry_target_variant_rules(
+    entry: dict[str, Any], target: str
+) -> list[dict[str, str]]:
+    rules: list[dict[str, str]] = []
+    raw_variants = entry.get("target_variants")
+    if not isinstance(raw_variants, list):
+        return rules
+    seen: set[str] = set()
+    normalized_target = " ".join(target.casefold().split())
+    for item in raw_variants:
+        if isinstance(item, dict):
+            text = str(
+                item.get("surface")
+                or item.get("target")
+                or item.get("value")
+                or item.get("text")
+                or ""
+            ).strip()
+            applicability = str(
+                item.get("applicability")
+                or item.get("condition")
+                or item.get("when")
+                or ""
+            ).strip()
+        else:
+            text = str(item or "").strip()
+            applicability = ""
+        normalized = " ".join(text.casefold().split())
+        if not text or normalized == normalized_target or normalized in seen:
+            continue
+        seen.add(normalized)
+        rule = {"target": text}
+        if applicability:
+            rule["applicability"] = " ".join(applicability.split())
+        rules.append(rule)
+    return rules
 
 
 def _term_source_surfaces(term: dict[str, Any]) -> list[str]:
     surfaces = term.get("source_surfaces")
     if isinstance(surfaces, list) and surfaces:
-        return _dedupe_surfaces([str(item) for item in surfaces])
-    return _dedupe_surfaces([str(term.get("source_term") or "")])
+        values = _dedupe_surfaces([str(item) for item in surfaces])
+    else:
+        values = _dedupe_surfaces([str(term.get("source_term") or "")])
+    if _injection_action(term) != "preserve":
+        return values
+    return _preserve_match_surfaces(values)
+
+
+def _preserve_match_surfaces(surfaces: list[str]) -> list[str]:
+    """Scope ambiguous lowercase preserve rows to explicit inline-code uses."""
+
+    scoped: list[str] = []
+    for surface in surfaces:
+        if _preserve_surface_is_self_identifying(surface):
+            scoped.append(surface)
+        else:
+            scoped.append(f"`{surface}`")
+    return _dedupe_surfaces(scoped)
+
+
+def _preserve_surface_is_self_identifying(surface: str) -> bool:
+    letters = [character for character in surface if character.isalpha()]
+    if not letters:
+        return True
+    if any(character.isupper() for character in letters):
+        return True
+    return any(
+        not (character.isalpha() or character.isspace())
+        for character in surface
+    )
 
 
 def _injection_action(row: dict[str, Any]) -> str:
@@ -684,10 +747,39 @@ def _term_line(row: dict[str, Any], action: str) -> str:
     if action == "preserve":
         return f"{source} (keep unchanged)"
     if action == "context_sensitive_translate":
-        variants = [item for item in _jsonish_list(row.get("target_variants")) if item and item != target]
-        variant_note = f"; variants: {', '.join(variants[:2])}" if variants else ""
+        variant_rules = _row_target_variant_rules(row, target)
+        rendered_rules = []
+        for rule in variant_rules[:2]:
+            applicability = rule.get("applicability")
+            rendered_rules.append(
+                f"{rule['target']} when: {applicability}"
+                if applicability
+                else rule["target"]
+            )
+        variant_note = (
+            f"; alternatives: {'; '.join(rendered_rules)}"
+            if rendered_rules
+            else ""
+        )
         return f"{source} -> {target} (context-sensitive{variant_note}; do not force)"
     return f"{source} -> {target}"
+
+
+def _row_target_variant_rules(
+    row: dict[str, Any], target: str
+) -> list[dict[str, str]]:
+    raw_rules = row.get("target_variant_rules")
+    if isinstance(raw_rules, list):
+        rules = _entry_target_variant_rules(
+            {"target_variants": raw_rules}, target
+        )
+        if rules:
+            return rules
+    return [
+        {"target": item}
+        for item in _jsonish_list(row.get("target_variants"))
+        if item and item != target
+    ]
 
 
 def _action_sort_rank(action: str) -> int:

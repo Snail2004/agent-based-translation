@@ -61,12 +61,28 @@ TECHNICAL_D2L_SYSTEM_PROMPT = (
     "- PROMPT VERSION: {prompt_version}\n"
 )
 
+TECHNICAL_D2L_S1_SYSTEM_PROMPT = TECHNICAL_D2L_SYSTEM_PROMPT.replace(
+    "Every block_id from the user's input MUST appear as a key with its Vietnamese "
+    "translation as the value. Do NOT add extra keys, explanations, or markup.\n\n",
+    "Every block_id from the user's input MUST appear as a key with its Vietnamese "
+    "translation as the value. The only optional extra key is __term_overrides__ "
+    "when requested by the user message; do not add any other keys, explanations, "
+    "or markup.\n\n",
+).replace(
+    "- Keep terminology consistent inside this window and follow any mandatory terminology "
+    "provided by the user message.\n",
+    "- Treat preferred terminology as a strong consistency recommendation when the local "
+    "technical sense matches; never force it across a different source sense. Preserve rules "
+    "remain exact.\n",
+)
+
 
 @dataclass(frozen=True)
 class DocumentProfile:
     name: str
     default_experiment_id: str
     system_prompt_template: str
+    s1_system_prompt_template: str | None
     prompt_versions: dict[str, str]
     translatable_block_types: frozenset[str] | None
     passthrough_block_types: frozenset[str]
@@ -78,8 +94,13 @@ class DocumentProfile:
         key = config.upper()
         return self.prompt_versions.get(key, self.prompt_versions["S0"])
 
-    def system_prompt(self, prompt_version: str) -> str:
-        return self.system_prompt_template.replace("{prompt_version}", prompt_version)
+    def system_prompt(self, prompt_version: str, *, config: str = "S0") -> str:
+        template = (
+            self.s1_system_prompt_template
+            if config.upper() == "S1" and self.s1_system_prompt_template is not None
+            else self.system_prompt_template
+        )
+        return template.replace("{prompt_version}", prompt_version)
 
 
 PROFILES: dict[str, DocumentProfile] = {
@@ -87,6 +108,7 @@ PROFILES: dict[str, DocumentProfile] = {
         name="literary_v1",
         default_experiment_id="translate_run",
         system_prompt_template=LITERARY_SYSTEM_PROMPT,
+        s1_system_prompt_template=None,
         prompt_versions={"S0": "s0_literary_translator_v2", "S1": "s1_literary_translator_v2"},
         translatable_block_types=None,
         passthrough_block_types=frozenset(),
@@ -98,7 +120,11 @@ PROFILES: dict[str, DocumentProfile] = {
         name="technical_d2l_v1",
         default_experiment_id="d2l_p3",
         system_prompt_template=TECHNICAL_D2L_SYSTEM_PROMPT,
-        prompt_versions={"S0": "s0_d2l_v1", "S1": "s1_d2l_v1"},
+        s1_system_prompt_template=TECHNICAL_D2L_S1_SYSTEM_PROMPT,
+        prompt_versions={
+            "S0": "s0_d2l_v1",
+            "S1": "s1_d2l_soft_glossary_v2_3",
+        },
         translatable_block_types=frozenset({"heading", "prose"}),
         passthrough_block_types=frozenset({"code", "math_block", "image", "label"}),
         min_injection_occurrences=0,

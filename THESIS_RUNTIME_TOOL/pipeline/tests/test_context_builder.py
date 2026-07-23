@@ -274,7 +274,12 @@ def test_audited_notebook_pack_exclusion_and_sections(tmp_path):
             "entry_id": "shape",
             "source_term": "shape",
             "canonical_target_vi": "hinh dang",
-            "target_variants": ["kich thuoc"],
+            "target_variants": [
+                {
+                    "target": "kich thuoc",
+                    "applicability": "Use for geometric dimensions.",
+                }
+            ],
             "occurrences_total": 3,
             "audit": {
                 "audit_label": "polysemy_or_context_dependent",
@@ -321,6 +326,13 @@ def test_audited_notebook_pack_exclusion_and_sections(tmp_path):
         },
     ]
     term_rows = cb.notebook_entries_to_term_rows(entries)
+    shape_row = next(row for row in term_rows if row["source_term"] == "shape")
+    assert shape_row["target_variant_rules"] == [
+        {
+            "target": "kich thuoc",
+            "applicability": "Use for geometric dimensions.",
+        }
+    ]
     blocks = _blocks(conn, ["b4"])
     window = Window("w_ch01_004", ["b4"], 10)
 
@@ -342,6 +354,10 @@ def test_audited_notebook_pack_exclusion_and_sections(tmp_path):
     assert "- .shape (keep unchanged)" in rendered
     assert "CONTEXT-SENSITIVE TERMINOLOGY HINTS" in rendered
     assert "shape -> hinh dang (context-sensitive" in rendered
+    assert (
+        "alternatives: kich thuoc when: Use for geometric dimensions."
+        in rendered
+    )
     assert pack.repair_queue == [
         {
             "glossary_id": "calculu",
@@ -351,6 +367,66 @@ def test_audited_notebook_pack_exclusion_and_sections(tmp_path):
             "reason": "truncated surface",
         }
     ]
+
+
+def test_preserve_scope_requires_inline_code_for_lowercase_alpha(tmp_path):
+    conn = _fixture_db(tmp_path)
+    conn.executemany(
+        """
+        INSERT INTO blocks (block_id, doc_id, order_index, chapter_id, block_type, text)
+        VALUES (?, 'doc1', ?, 'ch01', 'paragraph', ?)
+        """,
+        [
+            (
+                "b_preserve_plain",
+                10,
+                "continuous ones use PyTorch on CPU and inspect .shape during training",
+            ),
+            (
+                "b_preserve_code",
+                11,
+                "Call the `ones` function to construct an array.",
+            ),
+        ],
+    )
+    conn.commit()
+    entries = [
+        {
+            "entry_id": source,
+            "source_term": source,
+            "canonical_target_vi": target,
+            "audit": {
+                "audit_label": "preserve_token" if action == "preserve" else "keep",
+                "injection_action": action,
+                "priority_tier": "high",
+            },
+        }
+        for source, target, action in [
+            ("ones", "ones", "preserve"),
+            ("PyTorch", "PyTorch", "preserve"),
+            ("CPU", "CPU", "preserve"),
+            (".shape", ".shape", "preserve"),
+            ("training", "huan luyen", "translate"),
+        ]
+    ]
+    term_rows = cb.notebook_entries_to_term_rows(entries)
+
+    plain_anchors = plan_anchors(
+        conn,
+        _blocks(conn, ["b_preserve_plain"]),
+        profile_name="technical_d2l_v1",
+        term_rows=term_rows,
+    )
+    code_anchors = plan_anchors(
+        conn,
+        _blocks(conn, ["b_preserve_code"]),
+        profile_name="technical_d2l_v1",
+        term_rows=term_rows,
+    )
+
+    assert "ones" not in plain_anchors.term_block_ids
+    assert set(plain_anchors.term_block_ids) == {"PyTorch", "CPU", ".shape", "training"}
+    assert code_anchors.term_block_ids["ones"] == ["b_preserve_code"]
 
 
 def test_canonical_collision_soft_fallback_keeps_mechanical_groups_hard(tmp_path):

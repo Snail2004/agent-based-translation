@@ -9,7 +9,7 @@ import uuid
 from hashlib import sha256
 from pathlib import Path
 from statistics import mean
-from typing import Any
+from typing import Any, Callable, Mapping
 
 from pipeline.agents.llm_client import LLMClient, estimate_prompt_tokens
 from pipeline.agents.llm_config import LLMConfig, load_llm_config
@@ -23,13 +23,36 @@ from pipeline.retrieval.context_builder import (
     registry_injection_stats,
 )
 from pipeline.translate.prompt import build_messages, prompt_version_for_config
+from pipeline.translate.d2l_protected_span_policies import (
+    POLICY_IDS as D2L_PROTECTED_SPAN_POLICY_IDS,
+    get_protected_span_policy,
+)
+from pipeline.translate.d2l_translation_slots_v1 import (
+    POLICY_ID as D2L_TRANSLATION_SLOTS_POLICY_ID,
+    PROMPT_VERSION as D2L_TRANSLATION_SLOTS_PROMPT_VERSION,
+    build_slot_map,
+    invert_slot_map,
+    slotize_blocks,
+)
+from pipeline.translate.d2l_prompt_json_envelope_v1 import (
+    POLICY_ID as D2L_PROMPT_JSON_ENVELOPE_V1_POLICY_ID,
+)
+from pipeline.translate.d2l_prompt_json_envelope_v2 import (
+    POLICY_ID as D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+)
 from pipeline.translate.profiles import get_profile
 from pipeline.translate.runner import TranslateReport, translate_windows
 from pipeline.translate.run_events import EventSink
 from pipeline.translate.windower import Window, build_windows
 
 
-def main() -> int:
+def main(
+    *,
+    shared_client_factories: Mapping[
+        str, Callable[[LLMConfig, Path], Any]
+    ]
+    | None = None,
+) -> int:
     parser = argparse.ArgumentParser(
         description="Run S0/S1 translation over specified chapters."
     )
@@ -106,6 +129,27 @@ def main() -> int:
         help="Optional sidecar JSONL event log path for live observation.",
     )
     parser.add_argument(
+        "--protected-spans-policy",
+        choices=list(D2L_PROTECTED_SPAN_POLICY_IDS),
+        help="Opt in to deterministic protected-span restoration for technical S1.",
+    )
+    parser.add_argument(
+        "--translation-output-policy",
+        choices=[D2L_TRANSLATION_SLOTS_POLICY_ID],
+        help="Opt in to the technical S1 translation-only short-slot contract.",
+    )
+    parser.add_argument(
+        "--response-envelope-policy",
+        choices=[
+            D2L_PROMPT_JSON_ENVELOPE_V1_POLICY_ID,
+            D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+        ],
+        help=(
+            "Opt in to a versioned prompt-JSON envelope normalizer before the "
+            "unchanged local slot validator."
+        ),
+    )
+    parser.add_argument(
         "--run-id",
         dest="attempt_id",
         help="Run/attempt id used inside the sidecar event log.",
@@ -119,6 +163,13 @@ def main() -> int:
 
     profile = get_profile(args.profile)
     configs = _configs_from_args(args)
+    _validate_translation_policy_args(
+        configs,
+        profile_name=profile.name,
+        protected_spans_policy=args.protected_spans_policy,
+        translation_output_policy=args.translation_output_policy,
+        response_envelope_policy=args.response_envelope_policy,
+    )
     experiment = args.experiment or profile.default_experiment_id
     llm_config = load_llm_config(args.config_file)
     frozen_db_path = Path(args.db).resolve()
@@ -149,6 +200,9 @@ def main() -> int:
             notebook_terms=notebook_terms,
             original_windows=all_windows,
             max_windows=args.max_windows,
+            protected_spans_policy=args.protected_spans_policy,
+            translation_output_policy=args.translation_output_policy,
+            response_envelope_policy=args.response_envelope_policy,
         )
         preflight_meta = _run_metadata(
             args,
@@ -170,8 +224,13 @@ def main() -> int:
         if args.preflight_only:
             db.close()
 
-    _ensure_api_key()
-    client = LLMClient(config=llm_config, cache_path=args.cache)
+    shared_factories = _shared_factories_for_configs(
+        configs, shared_client_factories
+    )
+    legacy_client = None
+    if shared_factories is None:
+        _ensure_api_key()
+        legacy_client = LLMClient(config=llm_config, cache_path=args.cache)
     event_sink = None
     if args.event_log:
         attempt_id = args.attempt_id or f"run_{uuid.uuid4().hex[:12]}"
@@ -179,6 +238,13 @@ def main() -> int:
     reports: dict[str, dict[str, Any]] = {}
     try:
         for config in configs:
+            client = (
+                legacy_client
+                if shared_factories is None
+                else shared_factories[config](llm_config, Path(args.cache))
+            )
+            if client is None:
+                raise RuntimeError(f"Translator client factory returned None for {config}")
             context_builder = (
                 _notebook_context_builder(
                     notebook_terms,
@@ -198,6 +264,21 @@ def main() -> int:
                 context_budget_tokens=args.context_budget,
                 profile_name=profile.name,
                 event_sink=event_sink,
+                protected_spans_policy=(
+                    args.protected_spans_policy
+                    if config.upper() == "S1"
+                    else None
+                ),
+                translation_output_policy=(
+                    args.translation_output_policy
+                    if config.upper() == "S1"
+                    else None
+                ),
+                response_envelope_policy=(
+                    args.response_envelope_policy
+                    if config.upper() == "S1"
+                    else None
+                ),
             )
             reports[config] = report.to_json_dict()
             _print_translate_summary(report)
@@ -356,6 +437,8 @@ def _run_metadata(
         "memory_notebook": args.memory_notebook,
         "context_budget": int(args.context_budget),
         "max_windows": int(args.max_windows or 0),
+        "protected_spans_policy": args.protected_spans_policy,
+        "translation_output_policy": args.translation_output_policy,
         "llm_config": llm_config_path,
         "zero_api": bool(zero_api),
     }
@@ -406,7 +489,11 @@ def _preflight(
     notebook_terms: list[dict[str, Any]] | None = None,
     original_windows: list[Window] | None = None,
     max_windows: int = 0,
+    protected_spans_policy: str | None = None,
+    translation_output_policy: str | None = None,
+    response_envelope_policy: str | None = None,
 ) -> dict[str, Any]:
+    resolved_protected_policy = get_protected_span_policy(protected_spans_policy)
     resolved_chapters = _window_chapter_ids(db, windows)
     original_windows = original_windows if original_windows is not None else windows
     result: dict[str, Any] = {
@@ -426,6 +513,9 @@ def _preflight(
         if notebook_terms is not None
         else None,
         "configs": {},
+        "protected_spans_policy": protected_spans_policy,
+        "translation_output_policy": translation_output_policy,
+        "response_envelope_policy": response_envelope_policy,
     }
     for config in configs:
         estimates: list[int] = []
@@ -433,6 +523,23 @@ def _preflight(
         dropped_by_budget: list[dict[str, Any]] = []
         for window in windows:
             blocks = _fetch_window_blocks(db, window)
+            prompt_blocks = blocks
+            protection_plan = None
+            slot_to_block: dict[str, str] = {}
+            protected_active = (
+                config.upper() == "S1"
+                and resolved_protected_policy is not None
+            )
+            slot_output_active = (
+                config.upper() == "S1"
+                and translation_output_policy == D2L_TRANSLATION_SLOTS_POLICY_ID
+            )
+            if protected_active:
+                protection_plan = resolved_protected_policy.protect_blocks(blocks)
+                prompt_blocks = protection_plan.protected_blocks
+            if slot_output_active:
+                slot_to_block = build_slot_map(list(window.block_ids))
+                prompt_blocks = slotize_blocks(prompt_blocks, slot_to_block)
             context_pack = None
             if config.upper() == "S1":
                 anchors = plan_anchors(
@@ -456,11 +563,35 @@ def _preflight(
                 for item in dropped:
                     dropped_by_budget.append({"window_id": str(window.window_id), **item})
             messages = build_messages(
-                blocks,
-                prompt_version=prompt_version_for_config(config, profile_name),
+                prompt_blocks,
+                prompt_version=(
+                    D2L_TRANSLATION_SLOTS_PROMPT_VERSION
+                    if slot_output_active and resolved_protected_policy is None
+                    else (
+                        resolved_protected_policy.translation_slots_prompt_version
+                        if slot_output_active
+                        else (
+                            resolved_protected_policy.prompt_version
+                            if protected_active
+                            else prompt_version_for_config(config, profile_name)
+                        )
+                    )
+                ),
                 config=config,
                 context_pack=context_pack,
                 profile_name=profile_name,
+                protected_span_legend=(
+                    protection_plan.prompt_legend(
+                        invert_slot_map(slot_to_block)
+                        if slot_output_active
+                        else None
+                    )
+                    if protection_plan is not None
+                    else None
+                ),
+                translation_output_policy=(
+                    translation_output_policy if slot_output_active else None
+                ),
             )
             estimates.append(
                 estimate_prompt_tokens(messages, response_format={"type": "json_object"})
@@ -484,6 +615,67 @@ def _preflight(
         item["upper_total_with_max_output"] for item in result["configs"].values()
     )
     return result
+
+
+def _validate_translation_policy_args(
+    configs: list[str],
+    *,
+    profile_name: str,
+    protected_spans_policy: str | None,
+    translation_output_policy: str | None,
+    response_envelope_policy: str | None = None,
+) -> None:
+    if (
+        protected_spans_policy is None
+        and translation_output_policy is None
+        and response_envelope_policy is None
+    ):
+        return
+    if profile_name != "technical_d2l_v1" or "S1" not in {
+        config.upper() for config in configs
+    }:
+        raise SystemExit(
+            "D2L protected/slot policies require technical_d2l_v1 with S1"
+        )
+    try:
+        resolved_protected_policy = get_protected_span_policy(
+            protected_spans_policy
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    if (
+        translation_output_policy == D2L_TRANSLATION_SLOTS_POLICY_ID
+        and resolved_protected_policy is None
+    ):
+        raise SystemExit(
+            "d2l_translation_slots_v1 requires a protected-span policy"
+        )
+    if (
+        resolved_protected_policy is not None
+        and resolved_protected_policy.hides_source_bytes
+        and translation_output_policy != D2L_TRANSLATION_SLOTS_POLICY_ID
+    ):
+        raise SystemExit(
+            "Opaque LaTeX protection requires d2l_translation_slots_v1"
+        )
+    if (
+        response_envelope_policy is not None
+        and response_envelope_policy
+        not in {
+            D2L_PROMPT_JSON_ENVELOPE_V1_POLICY_ID,
+            D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+        }
+    ):
+        raise SystemExit(
+            f"Unknown Translator response-envelope policy: {response_envelope_policy}"
+        )
+    if (
+        response_envelope_policy is not None
+        and translation_output_policy != D2L_TRANSLATION_SLOTS_POLICY_ID
+    ):
+        raise SystemExit(
+            "Prompt-JSON envelope normalization requires d2l_translation_slots_v1"
+        )
 
 
 def _notebook_context_builder(
@@ -691,8 +883,11 @@ def _print_translate_summary(report: TranslateReport) -> None:
     print("\n=== Usage ===")
     print(f"  prompt_tokens:      {usage['prompt_tokens']}")
     print(f"  completion_tokens:  {usage['completion_tokens']}")
-    print(f"  total_cost_usd:     ${usage['cost_usd']:.6f}")
-    print(f"  incremental_cost:   ${usage['incremental_cost_usd']:.6f}")
+    print(f"  total_cost_usd:     {_format_cost(usage['cost_usd'])}")
+    print(
+        "  incremental_cost:   "
+        f"{_format_cost(usage['incremental_cost_usd'])}"
+    )
     print(f"  calls:              {usage['calls']}")
     print(f"  cache_hits:         {usage['cache_hits']}")
     print(f"Model: {report.model}  Seed: {report.seed}")
@@ -702,6 +897,36 @@ def _print_translate_summary(report: TranslateReport) -> None:
         print(f"  windows_with_context: {context_stats['windows_with_context']}")
         print(f"  low_context_windows:  {context_stats['windows_low_context']}")
         print(f"  dropped_by_budget:    {context_stats['dropped_by_budget']}")
+
+
+def _format_cost(value: Any) -> str:
+    return "unknown" if value is None else f"${float(value):.6f}"
+
+
+def _shared_factories_for_configs(
+    configs: list[str],
+    factories: Mapping[str, Callable[[LLMConfig, Path], Any]] | None,
+) -> dict[str, Callable[[LLMConfig, Path], Any]] | None:
+    if factories is None:
+        return None
+    normalized: dict[str, Callable[[LLMConfig, Path], Any]] = {}
+    for key, factory in factories.items():
+        normalized_key = str(key).upper()
+        if normalized_key in normalized:
+            raise RuntimeError(
+                f"Duplicate shared Translator factory for {normalized_key}"
+            )
+        if not bool(getattr(factory, "uses_shared_backend", False)):
+            raise RuntimeError(
+                f"Shared Translator factory for {normalized_key} is unmarked"
+            )
+        normalized[normalized_key] = factory
+    expected = set(configs)
+    if set(normalized) != expected:
+        raise RuntimeError(
+            "Shared Translator factories must exact-cover selected configs"
+        )
+    return normalized
 
 
 def _ensure_api_key() -> None:

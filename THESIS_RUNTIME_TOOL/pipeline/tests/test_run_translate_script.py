@@ -9,6 +9,15 @@ import pytest
 from pipeline.scripts import run_translate
 from pipeline.tests.test_translate_runner import _make_doc_db
 from pipeline.translate.runner import TranslateReport
+from pipeline.translate.d2l_protected_spans_v1 import (
+    POLICY_ID as D2L_PROTECTED_SPANS_POLICY_ID,
+)
+from pipeline.translate.d2l_latex_protected_spans_v2 import (
+    POLICY_ID as D2L_LATEX_PROTECTED_SPANS_POLICY_ID,
+)
+from pipeline.translate.d2l_translation_slots_v1 import (
+    POLICY_ID as D2L_TRANSLATION_SLOTS_POLICY_ID,
+)
 
 
 def test_preflight_only_writes_report_and_truncation_metadata(tmp_path, monkeypatch):
@@ -172,6 +181,154 @@ def test_non_preflight_writes_only_workdb_and_keeps_source_hash(tmp_path, monkey
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     assert payload["run"]["frozen_db_sha256_before"] == source_hash_before
     assert payload["run"]["frozen_db_sha256_after"] == source_hash_before
+
+
+def test_shared_factories_exact_cover_s0_s1_without_legacy_credentials(
+    tmp_path, monkeypatch
+) -> None:
+    conn, _ = _make_doc_db(tmp_path)
+    conn.close()
+    source_db = tmp_path / "memory.sqlite3"
+    workdb = tmp_path.parent / f"{tmp_path.name}_shared_work" / "memory.sqlite3"
+    seen: list[tuple[str, str]] = []
+
+    class _Factory:
+        uses_shared_backend = True
+
+        def __init__(self, label: str) -> None:
+            self.label = label
+
+        def __call__(self, config, cache_path):
+            seen.append((self.label, str(cache_path)))
+            return type("SharedClient", (), {"label": self.label})()
+
+    def _fake_translate_windows(
+        db, windows, client, *, experiment_id, config, **kwargs
+    ):
+        assert client.label == config
+        return TranslateReport(
+            experiment_id=experiment_id,
+            config=config,
+            windows_total=len(windows),
+            windows_translated=len(windows),
+            windows_failed=0,
+            windows_skipped=0,
+            blocks_translated=sum(len(window.block_ids) for window in windows),
+            blocks_failed=0,
+            json_fail_rate=0.0,
+            total_usage={
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "reasoning_tokens": 0,
+                "cost_usd": None,
+                "incremental_cost_usd": None,
+                "cost_status": "unknown",
+                "calls": 0,
+                "cache_hits": 0,
+            },
+            context_stats={
+                "windows_with_context": 0,
+                "windows_low_context": 0,
+                "dropped_by_budget": 0,
+            },
+            hygiene={"reask_count": 0, "still_bad": 0},
+            model="test",
+            seed=0,
+            system_fingerprint="shared:seal",
+            reports=[],
+            transport_identity=f"identity-{config}",
+        )
+
+    monkeypatch.setattr(
+        run_translate,
+        "_ensure_api_key",
+        lambda: pytest.fail("shared path must not load a legacy credential"),
+    )
+    monkeypatch.setattr(run_translate, "translate_windows", _fake_translate_windows)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_translate",
+            "--db",
+            str(source_db),
+            "--workdb",
+            str(workdb),
+            "--chapters",
+            "ti_ch02",
+            "--configs",
+            "S0",
+            "S1",
+        ],
+    )
+
+    assert (
+        run_translate.main(
+            shared_client_factories={
+                "S0": _Factory("S0"),
+                "S1": _Factory("S1"),
+            }
+        )
+        == 0
+    )
+    assert [label for label, _ in seen] == ["S0", "S1"]
+    assert run_translate._format_cost(None) == "unknown"
+
+
+def test_shared_factory_selection_rejects_unmarked_or_partial_maps() -> None:
+    with pytest.raises(RuntimeError, match="unmarked"):
+        run_translate._shared_factories_for_configs(
+            ["S0"], {"S0": lambda config, cache_path: object()}
+        )
+
+    class _Factory:
+        uses_shared_backend = True
+
+        def __call__(self, config, cache_path):
+            return object()
+
+    with pytest.raises(RuntimeError, match="exact-cover"):
+        run_translate._shared_factories_for_configs(
+            ["S0", "S1"], {"S0": _Factory()}
+        )
+
+
+def test_translation_slot_cli_policy_requires_technical_s1_and_protection() -> None:
+    run_translate._validate_translation_policy_args(
+        ["S1"],
+        profile_name="technical_d2l_v1",
+        protected_spans_policy=D2L_PROTECTED_SPANS_POLICY_ID,
+        translation_output_policy=D2L_TRANSLATION_SLOTS_POLICY_ID,
+    )
+
+    run_translate._validate_translation_policy_args(
+        ["S1"],
+        profile_name="technical_d2l_v1",
+        protected_spans_policy=D2L_LATEX_PROTECTED_SPANS_POLICY_ID,
+        translation_output_policy=D2L_TRANSLATION_SLOTS_POLICY_ID,
+    )
+
+    with pytest.raises(SystemExit, match="requires a protected-span policy"):
+        run_translate._validate_translation_policy_args(
+            ["S1"],
+            profile_name="technical_d2l_v1",
+            protected_spans_policy=None,
+            translation_output_policy=D2L_TRANSLATION_SLOTS_POLICY_ID,
+        )
+    with pytest.raises(SystemExit, match="require technical_d2l_v1 with S1"):
+        run_translate._validate_translation_policy_args(
+            ["S0"],
+            profile_name="literary_v1",
+            protected_spans_policy=D2L_PROTECTED_SPANS_POLICY_ID,
+            translation_output_policy=None,
+        )
+    with pytest.raises(SystemExit, match="Opaque LaTeX protection requires"):
+        run_translate._validate_translation_policy_args(
+            ["S1"],
+            profile_name="technical_d2l_v1",
+            protected_spans_policy=D2L_LATEX_PROTECTED_SPANS_POLICY_ID,
+            translation_output_policy=None,
+        )
 
 
 def test_purge_runtime_state_clears_run_tables_keeps_static(tmp_path):

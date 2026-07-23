@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from pipeline.translate.d2l_soft_glossary_v1 import render_soft_glossary_context
+from pipeline.translate.d2l_translation_slots_v1 import (
+    POLICY_ID as D2L_TRANSLATION_SLOTS_POLICY_ID,
+    render_system_prompt as render_slot_system_prompt,
+)
 from pipeline.translate.profiles import get_profile
 
 
@@ -20,6 +25,8 @@ def build_messages(
     config: str = "S0",
     context_pack: Any | None = None,
     profile_name: str = "literary_v1",
+    protected_span_legend: str | None = None,
+    translation_output_policy: str | None = None,
 ) -> list[dict[str, str]]:
     """Build translator messages.
 
@@ -31,10 +38,39 @@ def build_messages(
     profile = get_profile(profile_name)
     if prompt_version == PROMPT_VERSION:
         prompt_version = prompt_version_for_config(config, profile_name)
+    if protected_span_legend and not (
+        config == "S1" and profile.name == "technical_d2l_v1"
+    ):
+        raise ValueError(
+            "Protected-span context is only supported for technical D2L S1"
+        )
+    slot_output_active = (
+        translation_output_policy == D2L_TRANSLATION_SLOTS_POLICY_ID
+    )
+    if translation_output_policy is not None and not slot_output_active:
+        raise ValueError(
+            f"Unknown translation output policy: {translation_output_policy}"
+        )
+    if slot_output_active and not (
+        config == "S1" and profile.name == "technical_d2l_v1"
+    ):
+        raise ValueError(
+            "Translation slots are only supported for technical D2L S1"
+        )
 
-    system = profile.system_prompt(prompt_version)
+    system = (
+        render_slot_system_prompt(prompt_version)
+        if slot_output_active
+        else profile.system_prompt(prompt_version, config=config)
+    )
     user = (
-        _render_s1_user(window_blocks, context_pack)
+        _render_s1_user(
+            window_blocks,
+            context_pack,
+            profile_name=profile.name,
+            protected_span_legend=protected_span_legend,
+            include_override_log=not slot_output_active,
+        )
         if config == "S1"
         else _render_source_blocks(window_blocks)
     )
@@ -60,7 +96,23 @@ def _render_source_blocks(blocks: list[dict[str, Any]]) -> str:
 def _render_s1_user(
     blocks: list[dict[str, Any]],
     context_pack: Any | None,
+    *,
+    profile_name: str,
+    protected_span_legend: str | None = None,
+    include_override_log: bool = True,
 ) -> str:
+    if profile_name == "technical_d2l_v1":
+        constraints = render_soft_glossary_context(
+            context_pack,
+            include_override_log=include_override_log,
+        )
+        protected = (
+            f"\n\n{protected_span_legend}" if protected_span_legend else ""
+        )
+        return (
+            f"{constraints}{protected}\n\n"
+            f"SOURCE WINDOW\n{_render_source_blocks(blocks)}"
+        )
     constraints = ""
     if context_pack is not None and hasattr(context_pack, "render_hard_constraints"):
         constraints = str(context_pack.render_hard_constraints())

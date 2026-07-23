@@ -2,11 +2,48 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from hashlib import sha256
 from typing import Any
 
 from pipeline.agents.llm_client import LLMResult, estimate_prompt_tokens
+from pipeline.translate.d2l_soft_glossary_v1 import (
+    OVERRIDE_MATCH_RULE_ID,
+    POLICY_ID as D2L_SOFT_GLOSSARY_POLICY_ID,
+    TERM_OVERRIDES_KEY,
+    injected_override_preferences,
+    injected_override_sources,
+    split_term_override_metadata,
+)
+from pipeline.translate.d2l_protected_span_policies import (
+    ProtectedSpanPolicy,
+    get_protected_span_policy,
+)
+from pipeline.translate.d2l_prompt_json_envelope_v1 import (
+    POLICY_ID as D2L_PROMPT_JSON_ENVELOPE_V1_POLICY_ID,
+    normalize_prompt_json_envelope as normalize_prompt_json_envelope_v1,
+)
+from pipeline.translate.d2l_prompt_json_envelope_v2 import (
+    POLICY_ID as D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+    normalize_prompt_json_envelope as normalize_prompt_json_envelope_v2,
+)
+from pipeline.translate.d2l_translation_slots_v1 import (
+    GLOSSARY_REVIEW_MATCH_RULE_ID,
+    GLOSSARY_REVIEW_POLICY_ID,
+    POLICY_ID as D2L_TRANSLATION_SLOTS_POLICY_ID,
+    PROMPT_VERSION as D2L_TRANSLATION_SLOTS_PROMPT_VERSION,
+    PROTECTED_LEXICAL_GLOSSARY_REVIEW_MATCH_RULE_ID,
+    PROTECTED_LEXICAL_GLOSSARY_REVIEW_POLICY_ID,
+    TRANSLATIONS_KEY,
+    build_slot_map,
+    extract_slot_translations,
+    glossary_review_rows,
+    glossary_review_summary,
+    invert_slot_map,
+    parse_slot_json_text,
+    slot_reask_note,
+    slotize_blocks,
+)
 from pipeline.translate.hygiene import (
     HygieneIssue,
     detect_hygiene_issues,
@@ -30,11 +67,13 @@ class WindowRunReport:
     prompt_tokens: int
     completion_tokens: int
     reasoning_tokens: int
-    cost_usd: float
-    incremental_cost_usd: float
+    cost_usd: float | None
+    incremental_cost_usd: float | None
     from_cache: bool
     system_fingerprint: str | None
     errors: list[str]
+    term_overrides: int = 0
+    glossary_reviews: int = 0
 
 
 @dataclass(frozen=True)
@@ -48,16 +87,20 @@ class TranslateReport:
     blocks_translated: int
     blocks_failed: int
     json_fail_rate: float
-    total_usage: dict[str, int | float]
+    total_usage: dict[str, int | float | None | str]
     context_stats: dict[str, int]
     hygiene: dict[str, Any]
     model: str
     seed: int
     system_fingerprint: str | None
     reports: list[WindowRunReport]
+    transport_identity: str | None = None
+    terminology: dict[str, Any] | None = None
+    protected_spans: dict[str, Any] | None = None
+    translation_output: dict[str, Any] | None = None
 
     def to_json_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "experiment_id": self.experiment_id,
             "config": self.config,
             "windows_total": self.windows_total,
@@ -73,8 +116,39 @@ class TranslateReport:
             "model": self.model,
             "seed": self.seed,
             "system_fingerprint": self.system_fingerprint,
-            "reports": [asdict(r) for r in self.reports],
+            "reports": [
+                _window_report_payload(
+                    report,
+                    include_terminology=self.terminology is not None,
+                    include_translation_output=self.translation_output is not None,
+                )
+                for report in self.reports
+            ],
         }
+        if self.transport_identity is not None:
+            payload["shared_backend_used"] = True
+            payload["transport_identity"] = self.transport_identity
+        if self.terminology is not None:
+            payload["terminology"] = self.terminology
+        if self.protected_spans is not None:
+            payload["protected_spans"] = self.protected_spans
+        if self.translation_output is not None:
+            payload["translation_output"] = self.translation_output
+        return payload
+
+
+def _window_report_payload(
+    report: WindowRunReport,
+    *,
+    include_terminology: bool,
+    include_translation_output: bool,
+) -> dict[str, Any]:
+    payload = asdict(report)
+    if not include_terminology:
+        payload.pop("term_overrides", None)
+    if not include_translation_output:
+        payload.pop("glossary_reviews", None)
+    return payload
 
 
 def translate_windows(
@@ -87,6 +161,9 @@ def translate_windows(
     context_budget_tokens: int = 1500,
     profile_name: str = "literary_v1",
     event_sink: Any | None = None,
+    protected_spans_policy: str | None = None,
+    translation_output_policy: str | None = None,
+    response_envelope_policy: str | None = None,
 ) -> TranslateReport:
     """Run translation over a list of Window objects.
 
@@ -108,12 +185,100 @@ def translate_windows(
     config = config.upper()
     hygiene_stats = _empty_hygiene_stats(config)
     profile = get_profile(profile_name)
-    prompt_version = prompt_version_for_config(config, profile.name)
+    protected_policy = get_protected_span_policy(protected_spans_policy)
+    protected_spans_active = protected_policy is not None
+    if protected_spans_active and not (
+        config == "S1" and profile.name == "technical_d2l_v1"
+    ):
+        raise ValueError(
+            "Protected spans are only supported for technical D2L S1"
+        )
+    slot_output_active = (
+        translation_output_policy == D2L_TRANSLATION_SLOTS_POLICY_ID
+    )
+    if translation_output_policy is not None and not slot_output_active:
+        raise ValueError(
+            f"Unknown translation output policy: {translation_output_policy}"
+        )
+    if slot_output_active and not (
+        config == "S1"
+        and profile.name == "technical_d2l_v1"
+        and protected_spans_active
+    ):
+        raise ValueError(
+            "Translation slots require technical D2L S1 with protected spans"
+        )
+    if response_envelope_policy not in {
+        None,
+        D2L_PROMPT_JSON_ENVELOPE_V1_POLICY_ID,
+        D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+    }:
+        raise ValueError(
+            f"Unknown Translator response-envelope policy: {response_envelope_policy}"
+        )
+    if response_envelope_policy is not None and not slot_output_active:
+        raise ValueError(
+            "Prompt-JSON envelope normalization requires translation slots"
+        )
+    if (
+        protected_policy is not None
+        and protected_policy.hides_source_bytes
+        and not slot_output_active
+    ):
+        raise ValueError(
+            "Opaque LaTeX protection requires the translation-slot output policy"
+        )
+    prompt_version = (
+        (
+            protected_policy.translation_slots_prompt_version
+            if protected_policy is not None
+            else D2L_TRANSLATION_SLOTS_PROMPT_VERSION
+        )
+        if slot_output_active
+        else (
+            protected_policy.prompt_version
+            if protected_policy is not None
+            else prompt_version_for_config(config, profile.name)
+        )
+    )
+    transport_identity = _transport_identity(client, config)
+    soft_glossary_active = config == "S1" and profile.name == "technical_d2l_v1"
+    legacy_override_active = soft_glossary_active and not slot_output_active
+    protected_lexical_active = bool(
+        protected_policy is not None
+        and protected_policy.lexical_source_blocks is not None
+    )
+    glossary_review_policy_id = (
+        PROTECTED_LEXICAL_GLOSSARY_REVIEW_POLICY_ID
+        if protected_lexical_active
+        else GLOSSARY_REVIEW_POLICY_ID
+    )
+    glossary_review_match_rule_id = (
+        PROTECTED_LEXICAL_GLOSSARY_REVIEW_MATCH_RULE_ID
+        if protected_lexical_active
+        else None
+    )
+    terminology_stats = _empty_terminology_stats(legacy_override_active)
+    protected_span_stats = _empty_protected_span_stats(
+        protected_policy,
+        effective_prompt_version=prompt_version,
+    )
+    translation_output_stats = _empty_translation_output_stats(
+        slot_output_active,
+        glossary_review_policy_id=glossary_review_policy_id,
+        response_envelope_policy=response_envelope_policy,
+    )
 
     try:
         for window in windows:
             window_id = window.window_id
             block_ids = list(window.block_ids)
+            pack_id = _pack_id(
+                experiment_id=experiment_id,
+                config=config,
+                window_id=window_id,
+                transport_identity=transport_identity,
+            )
             emit_event(
                 sink,
                 "window_started",
@@ -126,7 +291,35 @@ def translate_windows(
             )
 
             # --- Resume check ---
-            already_done = _blocks_already_run(db, experiment_id, config, block_ids)
+            already_done = _blocks_already_run(
+                db,
+                experiment_id,
+                config,
+                block_ids,
+                expected_pack_id=pack_id,
+                expected_transport_identity=transport_identity,
+                expected_prompt_version=prompt_version,
+                expected_terminology_policy=(
+                    D2L_SOFT_GLOSSARY_POLICY_ID if soft_glossary_active else None
+                ),
+                expected_override_match_rule=(
+                    OVERRIDE_MATCH_RULE_ID if legacy_override_active else None
+                ),
+                expected_protected_spans_policy=(
+                    protected_policy.policy_id if protected_policy is not None else None
+                ),
+                expected_translation_output_policy=(
+                    D2L_TRANSLATION_SLOTS_POLICY_ID
+                    if slot_output_active
+                    else None
+                ),
+                expected_glossary_review_policy=(
+                    glossary_review_policy_id if slot_output_active else None
+                ),
+                expected_response_envelope_policy=(
+                    response_envelope_policy if slot_output_active else None
+                ),
+            )
             if already_done == len(block_ids):
                 emit_event(
                     sink,
@@ -161,13 +354,43 @@ def translate_windows(
             block_rows = _fetch_blocks(db, block_ids)
             block_map = {str(row["block_id"]): dict(row) for row in block_rows}
             blocks_for_prompt = [block_map[bid] for bid in block_ids if bid in block_map]
+            protection_plan: Any | None = None
+            context_blocks = blocks_for_prompt
+            lexical_blocks = blocks_for_prompt
+            slot_to_block: dict[str, str] = {}
+            prompt_blocks = blocks_for_prompt
+            if protected_spans_active:
+                assert protected_policy is not None
+                protection_plan = protected_policy.protect_blocks(blocks_for_prompt)
+                prompt_blocks = protection_plan.protected_blocks
+                if protected_policy.context_source_blocks is not None:
+                    context_blocks = protected_policy.context_source_blocks(
+                        protection_plan
+                    )
+                if protected_policy.lexical_source_blocks is not None:
+                    lexical_blocks = protected_policy.lexical_source_blocks(
+                        protection_plan
+                    )
+                emit_event(
+                    sink,
+                    "protected_spans_prepared",
+                    experiment_id=experiment_id,
+                    config=config,
+                    window_id=window_id,
+                    block_ids=block_ids,
+                    metadata=protection_plan.metadata(),
+                    committed=False,
+                )
+            if slot_output_active:
+                slot_to_block = build_slot_map(block_ids)
+                prompt_blocks = slotize_blocks(prompt_blocks, slot_to_block)
 
             context_pack = None
             if config == "S1":
                 context_pack = _build_context_pack_for_window(
                     db,
                     window,
-                    blocks_for_prompt,
+                    context_blocks,
                     context_builder=context_builder,
                     budget_tokens=context_budget_tokens,
                     profile_name=profile.name,
@@ -179,13 +402,33 @@ def translate_windows(
                     getattr(context_pack, "dropped_by_budget", []) or []
                 )
                 _raise_if_context_dropped_by_budget(window_id, context_pack)
+            allowed_override_sources = (
+                injected_override_sources(context_pack)
+                if soft_glossary_active
+                else set()
+            )
+            allowed_override_preferences = (
+                injected_override_preferences(context_pack)
+                if soft_glossary_active
+                else {}
+            )
 
             messages = build_messages(
-                blocks_for_prompt,
+                prompt_blocks,
                 prompt_version=prompt_version,
                 config=config,
                 context_pack=context_pack,
                 profile_name=profile.name,
+                protected_span_legend=(
+                    protection_plan.prompt_legend(
+                        invert_slot_map(slot_to_block)
+                        if slot_output_active
+                        else None
+                    )
+                    if protection_plan is not None
+                    else None
+                ),
+                translation_output_policy=translation_output_policy,
             )
             emit_event(
                 sink,
@@ -202,12 +445,27 @@ def translate_windows(
                 ),
                 messages_summary=_messages_summary(messages),
                 context_summary=_context_pack_summary(context_pack),
-                pack_summary=_pack_summary_for_event(context_pack),
+                pack_summary=_pack_summary_for_event(
+                    context_pack,
+                    terminology_policy=(
+                        D2L_SOFT_GLOSSARY_POLICY_ID
+                        if soft_glossary_active
+                        else None
+                    ),
+                ),
                 committed=False,
             )
 
             # --- Call with re-ask ---
-            result, status, errors, hygiene_issues, call_results, hygiene_summary = _call_with_reask(
+            (
+                result,
+                status,
+                errors,
+                hygiene_issues,
+                call_results,
+                hygiene_summary,
+                protected_summary,
+            ) = _call_with_reask(
                 client,
                 messages,
                 window_id,
@@ -215,11 +473,64 @@ def translate_windows(
                 config,
                 blocks_for_prompt=blocks_for_prompt,
                 event_sink=sink,
+                allow_term_overrides=legacy_override_active,
+                allowed_override_sources=allowed_override_sources,
+                allowed_override_preferences=allowed_override_preferences,
+                protection_plan=protection_plan,
+                protected_span_policy=protected_policy,
+                slot_to_block=slot_to_block or None,
+                response_envelope_policy=response_envelope_policy,
             )
             all_results.extend(call_results)
+            _record_response_envelope_stats(
+                translation_output_stats,
+                call_results,
+                response_envelope_policy=response_envelope_policy,
+            )
             _merge_hygiene_stats(hygiene_stats, config, hygiene_summary)
+            _merge_protected_span_stats(
+                protected_span_stats,
+                plan=protection_plan,
+                summary=protected_summary,
+                status=status,
+            )
 
-            translations, parse_errors = extract_translations(result.parsed_json, block_ids)
+            (
+                translations,
+                term_overrides,
+                override_reporting_present,
+                parse_errors,
+            ) = _extract_translator_output(
+                result.parsed_json,
+                block_ids,
+                allow_term_overrides=legacy_override_active,
+                allowed_override_sources=allowed_override_sources,
+                allowed_override_preferences=allowed_override_preferences,
+                slot_to_block=slot_to_block or None,
+            )
+            _record_terminology_stats(
+                terminology_stats,
+                reporting_present=override_reporting_present,
+                overrides=term_overrides,
+            )
+            glossary_reviews = (
+                glossary_review_rows(
+                    lexical_blocks,
+                    translations,
+                    context_pack,
+                    policy_id=glossary_review_policy_id,
+                    match_rule_id=(
+                        glossary_review_match_rule_id
+                        or GLOSSARY_REVIEW_MATCH_RULE_ID
+                    ),
+                )
+                if slot_output_active and status == "translated"
+                else []
+            )
+            _record_translation_output_stats(
+                translation_output_stats,
+                glossary_reviews,
+            )
             emit_event(
                 sink,
                 "json_parsed",
@@ -229,6 +540,9 @@ def translate_windows(
                 block_ids=block_ids,
                 status=status,
                 translated_blocks=sorted(translations.keys()),
+                term_override_count=len(term_overrides),
+                term_override_reporting_present=override_reporting_present,
+                glossary_review_count=len(glossary_reviews),
                 errors=errors or parse_errors,
                 committed=False,
             )
@@ -253,7 +567,6 @@ def translate_windows(
             temperature = float(getattr(client.config, "temperature", 0.3) if hasattr(client, "config") else 0.3)
             seed = int(getattr(client.config, "seed", 0) if hasattr(client, "config") else 0)
 
-            pack_id = f"pk_{config}_{window_id}"
             _persist_pack(
                 db,
                 pack_id,
@@ -262,16 +575,49 @@ def translate_windows(
                 config,
                 messages,
                 result,
+                experiment_id=experiment_id,
                 prompt_version=prompt_version,
                 context_pack=context_pack,
-                blocks_for_prompt=blocks_for_prompt,
+                blocks_for_prompt=prompt_blocks,
                 profile_name=profile.name,
+                transport_identity=transport_identity,
+                term_overrides=term_overrides,
+                term_override_reporting_present=override_reporting_present,
+                terminology_policy=(
+                    D2L_SOFT_GLOSSARY_POLICY_ID if soft_glossary_active else None
+                ),
+                term_override_match_rule=(
+                    OVERRIDE_MATCH_RULE_ID if legacy_override_active else None
+                ),
+                protected_span_metadata=(
+                    protection_plan.metadata()
+                    if protection_plan is not None
+                    else None
+                ),
+                translation_output_policy=(
+                    D2L_TRANSLATION_SLOTS_POLICY_ID
+                    if slot_output_active
+                    else None
+                ),
+                slot_map=slot_to_block or None,
+                glossary_review_policy=(
+                    glossary_review_policy_id if slot_output_active else None
+                ),
+                glossary_reviews=glossary_reviews,
+                response_envelope_policy=(
+                    response_envelope_policy if slot_output_active else None
+                ),
             )
 
             persisted_blocks: list[str] = []
             if status == "translated":
                 for block_id, translation in translations.items():
-                    run_id = f"tr_{config}_{block_id}"
+                    run_id = _translation_run_id(
+                        experiment_id=experiment_id,
+                        config=config,
+                        block_id=block_id,
+                        transport_identity=transport_identity,
+                    )
                     _persist_run(
                         db, run_id, experiment_id, block_id, config, "draft",
                         window_id, pack_id, translation,
@@ -306,13 +652,15 @@ def translate_windows(
                     prompt_tokens=sum(r.usage.prompt_tokens for r in call_results),
                     completion_tokens=sum(r.usage.completion_tokens for r in call_results),
                     reasoning_tokens=sum(r.usage.reasoning_tokens for r in call_results),
-                    cost_usd=round(sum(r.cost_usd for r in call_results), 12),
-                    incremental_cost_usd=round(
-                        sum(r.cost_usd for r in call_results if not r.from_cache), 12
+                    cost_usd=_sum_cost(call_results),
+                    incremental_cost_usd=_sum_cost(
+                        call_results, incremental_only=True
                     ),
                     from_cache=all(r.from_cache for r in call_results),
                     system_fingerprint=_last_fingerprint(call_results),
                     errors=errors,
+                    term_overrides=len(term_overrides),
+                    glossary_reviews=len(glossary_reviews),
                 )
             )
 
@@ -337,6 +685,16 @@ def translate_windows(
             seed=seed,
             system_fingerprint=_last_fingerprint(all_results),
             reports=reports,
+            transport_identity=transport_identity,
+            terminology=(
+                terminology_stats if legacy_override_active else None
+            ),
+            protected_spans=(
+                protected_span_stats if protected_spans_active else None
+            ),
+            translation_output=(
+                translation_output_stats if slot_output_active else None
+            ),
         )
 
         db.commit()
@@ -406,12 +764,30 @@ def _call_with_reask(
     *,
     blocks_for_prompt: list[dict[str, Any]],
     event_sink: Any | None = None,
-) -> tuple[LLMResult, str, list[str], list[HygieneIssue], list[LLMResult], dict[str, Any]]:
+    allow_term_overrides: bool = False,
+    allowed_override_sources: set[str] | None = None,
+    allowed_override_preferences: dict[str, set[str]] | None = None,
+    protection_plan: Any | None = None,
+    protected_span_policy: ProtectedSpanPolicy | None = None,
+    slot_to_block: dict[str, str] | None = None,
+    response_envelope_policy: str | None = None,
+) -> tuple[
+    LLMResult,
+    str,
+    list[str],
+    list[HygieneIssue],
+    list[LLMResult],
+    dict[str, Any],
+    dict[str, Any],
+]:
     """Call LLM; re-ask once on JSON or hygiene validation failure."""
     call_results: list[LLMResult] = []
     hygiene_flagged_blocks: set[str] = set()
     hygiene_reasked_blocks: set[str] = set()
     final_hygiene_issues: list[HygieneIssue] = []
+    protected_flagged_blocks: set[str] = set()
+    protected_reasked_blocks: set[str] = set()
+    final_protected_issues: list[Any] = []
     errors: list[str] = []
     for attempt in range(2):
         emit_event(
@@ -456,9 +832,134 @@ def _call_with_reask(
             json_error=result.json_error,
             committed=False,
         )
-        translations, parse_errors = extract_translations(result.parsed_json, block_ids)
+        response_text_for_validation = result.text
+        envelope_normalized = False
+        response_envelope_normalizer = _response_envelope_normalizer(
+            response_envelope_policy
+        )
+        if response_envelope_normalizer is not None:
+            response_text_for_validation, envelope_normalized = (
+                response_envelope_normalizer(result.text)
+            )
+            if envelope_normalized:
+                emit_event(
+                    event_sink,
+                    "response_envelope_normalized",
+                    config=config,
+                    window_id=window_id,
+                    block_ids=block_ids,
+                    attempt=attempt + 1,
+                    policy_id=response_envelope_policy,
+                    committed=False,
+                )
+        translations, _, _, parse_errors = _extract_translator_output(
+            result.parsed_json,
+            block_ids,
+            allow_term_overrides=allow_term_overrides,
+            allowed_override_sources=allowed_override_sources or set(),
+            allowed_override_preferences=allowed_override_preferences or {},
+            slot_to_block=slot_to_block,
+            raw_text=response_text_for_validation,
+        )
+        if envelope_normalized and not parse_errors:
+            normalized_payload, normalized_errors = parse_slot_json_text(
+                response_text_for_validation
+            )
+            if not normalized_errors:
+                result = replace(
+                    result,
+                    parsed_json=normalized_payload,
+                    json_error=None,
+                )
 
         if not parse_errors and len(translations) == len(block_ids):
+            if protection_plan is not None:
+                if protected_span_policy is None:
+                    raise RuntimeError(
+                        "Protection plan is missing its versioned policy handlers"
+                    )
+                restored, protected_issues = protected_span_policy.restore_translations(
+                    translations,
+                    protection_plan,
+                )
+                if protected_issues:
+                    issue_blocks = {
+                        issue.block_id for issue in protected_issues
+                    }
+                    protected_flagged_blocks.update(issue_blocks)
+                    if attempt == 0:
+                        protected_reasked_blocks.update(issue_blocks)
+                        emit_event(
+                            event_sink,
+                            "protected_spans_flagged",
+                            config=config,
+                            window_id=window_id,
+                            block_ids=block_ids,
+                            flagged_blocks=sorted(issue_blocks),
+                            issues=[
+                                issue.to_dict() for issue in protected_issues
+                            ],
+                            reask=True,
+                            committed=False,
+                        )
+                        messages = [
+                            *messages,
+                            {"role": "assistant", "content": result.text},
+                            {
+                                "role": "user",
+                                "content": protected_span_policy.reask_note(
+                                    protected_issues,
+                                    invert_slot_map(slot_to_block)
+                                    if slot_to_block
+                                    else None,
+                                ),
+                            },
+                        ]
+                        continue
+
+                    final_protected_issues = protected_issues
+                    errors = [
+                        f"protected_span:{issue.block_id}:{issue.issue_type}"
+                        for issue in final_protected_issues
+                    ]
+                    emit_event(
+                        event_sink,
+                        "protected_spans_still_bad",
+                        config=config,
+                        window_id=window_id,
+                        block_ids=block_ids,
+                        flagged_blocks=sorted(issue_blocks),
+                        issues=[
+                            issue.to_dict() for issue in final_protected_issues
+                        ],
+                        committed=False,
+                    )
+                    return (
+                        result,
+                        "failed",
+                        errors,
+                        [],
+                        call_results,
+                        _hygiene_call_summary(
+                            hygiene_flagged_blocks,
+                            hygiene_reasked_blocks,
+                            [],
+                            [],
+                        ),
+                        _protected_span_call_summary(
+                            protected_flagged_blocks,
+                            protected_reasked_blocks,
+                            final_protected_issues,
+                        ),
+                    )
+
+                result = _result_with_restored_translations(
+                    result,
+                    restored,
+                    slot_to_block=slot_to_block,
+                )
+                translations = restored
+
             issues = detect_hygiene_issues(blocks_for_prompt, translations)
             if not issues:
                 fixed_blocks = sorted(hygiene_reasked_blocks)
@@ -472,6 +973,11 @@ def _call_with_reask(
                         hygiene_flagged_blocks,
                         hygiene_reasked_blocks,
                         fixed_blocks,
+                        [],
+                    ),
+                    _protected_span_call_summary(
+                        protected_flagged_blocks,
+                        protected_reasked_blocks,
                         [],
                     ),
                 )
@@ -494,7 +1000,14 @@ def _call_with_reask(
                 messages = [
                     *messages,
                     {"role": "assistant", "content": result.text},
-                    {"role": "user", "content": hygiene_reask_note(issues)},
+                    {
+                        "role": "user",
+                        "content": (
+                            _slot_hygiene_reask_note(issues, slot_to_block)
+                            if slot_to_block
+                            else hygiene_reask_note(issues)
+                        ),
+                    },
                 ]
                 continue
 
@@ -527,21 +1040,34 @@ def _call_with_reask(
                     fixed_blocks,
                     final_hygiene_issues,
                 ),
+                _protected_span_call_summary(
+                    protected_flagged_blocks,
+                    protected_reasked_blocks,
+                    final_protected_issues,
+                ),
             )
 
         errors = list(parse_errors)
 
         if attempt == 0:
-            errors_msg = "; ".join(parse_errors[:5])
             messages = [
                 *messages,
                 {"role": "assistant", "content": result.text},
                 {
                     "role": "user",
                     "content": (
-                        f"Output errors: {errors_msg}. "
-                        "Return a valid JSON object with all block_ids as keys and "
-                        "Vietnamese translations as string values. No extra keys."
+                        slot_reask_note(parse_errors, slot_to_block)
+                        if slot_to_block
+                        else (
+                            f"Output errors: {'; '.join(parse_errors[:5])}. "
+                            "Return a valid JSON object with all block_ids as keys and "
+                            "Vietnamese translations as string values. "
+                            + (
+                                f"Only optional {TERM_OVERRIDES_KEY} metadata is allowed."
+                                if allow_term_overrides
+                                else "No extra keys."
+                            )
+                        )
                     ),
                 },
             ]
@@ -553,7 +1079,63 @@ def _call_with_reask(
         final_hygiene_issues,
         call_results,
         _hygiene_call_summary(hygiene_flagged_blocks, hygiene_reasked_blocks, [], []),
+        _protected_span_call_summary(
+            protected_flagged_blocks,
+            protected_reasked_blocks,
+            final_protected_issues,
+        ),
     )
+
+
+def _result_with_restored_translations(
+    result: LLMResult,
+    translations: dict[str, str],
+    *,
+    slot_to_block: dict[str, str] | None = None,
+) -> LLMResult:
+    if slot_to_block:
+        payload = {
+            TRANSLATIONS_KEY: {
+                slot_id: translations[block_id]
+                for slot_id, block_id in slot_to_block.items()
+                if block_id in translations
+            }
+        }
+        return replace(result, parsed_json=payload, json_error=None)
+    payload = dict(result.parsed_json or {})
+    payload.update(translations)
+    return replace(result, parsed_json=payload)
+
+
+def _slot_hygiene_reask_note(
+    issues: list[HygieneIssue],
+    slot_to_block: dict[str, str],
+) -> str:
+    block_to_slot = invert_slot_map(slot_to_block)
+    samples = "; ".join(
+        f"{block_to_slot.get(issue.block_id, issue.block_id)}:"
+        f"{issue.script}:{issue.surface}"
+        for issue in issues[:5]
+    )
+    extra = "" if len(issues) <= 5 else f"; +{len(issues) - 5} more"
+    return (
+        "Your previous translations contained output-only non-Vietnamese scripts "
+        f"({samples}{extra}). Retranslate the same window. Keep source placeholders, "
+        "names, and symbols. Return only the same translations object with exactly "
+        "the same short slots and no metadata."
+    )
+
+
+def _protected_span_call_summary(
+    flagged_blocks: set[str],
+    reasked_blocks: set[str],
+    final_issues: list[Any],
+) -> dict[str, Any]:
+    return {
+        "flagged_blocks": sorted(flagged_blocks),
+        "reasked_blocks": sorted(reasked_blocks),
+        "final_issues": [issue.to_dict() for issue in final_issues],
+    }
 
 
 def _blocks_already_run(
@@ -561,20 +1143,338 @@ def _blocks_already_run(
     experiment_id: str,
     config: str,
     block_ids: list[str],
+    *,
+    expected_pack_id: str,
+    expected_transport_identity: str | None = None,
+    expected_prompt_version: str,
+    expected_terminology_policy: str | None,
+    expected_override_match_rule: str | None,
+    expected_protected_spans_policy: str | None,
+    expected_translation_output_policy: str | None,
+    expected_glossary_review_policy: str | None,
+    expected_response_envelope_policy: str | None,
 ) -> int:
     if not block_ids:
         return 0
     placeholders = ",".join("?" * len(block_ids))
-    row = db.execute(
+    rows = db.execute(
         f"""
-        SELECT COUNT(DISTINCT block_id) AS cnt
-        FROM translation_runs
-        WHERE experiment_id = ? AND config = ? AND stage = 'draft'
-          AND block_id IN ({placeholders})
+        SELECT tr.run_id, tr.block_id, tr.pack_id,
+               tr.prompt_version AS run_prompt_version,
+               mp.prompt_version AS pack_prompt_version,
+               mp.payload_json
+        FROM translation_runs AS tr
+        LEFT JOIN memory_packs AS mp ON mp.pack_id = tr.pack_id
+        WHERE tr.experiment_id = ? AND tr.config = ? AND tr.stage = 'draft'
+          AND tr.block_id IN ({placeholders})
         """,
         [experiment_id, config] + block_ids,
-    ).fetchone()
-    return int(row["cnt"] if row else 0)
+    ).fetchall()
+    prompt_or_policy_conflicts = sorted(
+        str(row["block_id"])
+        for row in rows
+        if (
+            str(row["run_prompt_version"] or "") != expected_prompt_version
+            or (
+                row["pack_id"] is not None
+                and str(row["pack_prompt_version"] or "") != expected_prompt_version
+            )
+            or _stored_terminology_policy(row["payload_json"])
+            != expected_terminology_policy
+            or _stored_protected_spans_policy(row["payload_json"])
+            != expected_protected_spans_policy
+            or _stored_override_match_rule(row["payload_json"])
+            != expected_override_match_rule
+            or _stored_translation_output_policy(row["payload_json"])
+            != expected_translation_output_policy
+            or _stored_glossary_review_policy(row["payload_json"])
+            != expected_glossary_review_policy
+            or _stored_response_envelope_policy(row["payload_json"])
+            != expected_response_envelope_policy
+        )
+    )
+    if prompt_or_policy_conflicts:
+        raise RuntimeError(
+            "Translator resume prompt/policy conflicts with existing rows: "
+            + ", ".join(prompt_or_policy_conflicts)
+        )
+    if expected_transport_identity is None:
+        shared_rows = sorted(
+            str(row["block_id"])
+            for row in rows
+            if _stored_transport_identity(row["payload_json"]) is not None
+        )
+        if shared_rows:
+            raise RuntimeError(
+                "Legacy Translator cannot resume shared-backend rows: "
+                + ", ".join(shared_rows)
+            )
+
+    unscoped_legacy_rows = sorted(
+        str(row["block_id"])
+        for row in rows
+        if (
+            expected_transport_identity is None
+            and (
+                str(row["run_id"] or "")
+                != _translation_run_id(
+                    experiment_id=experiment_id,
+                    config=config,
+                    block_id=str(row["block_id"]),
+                    transport_identity=None,
+                )
+                or str(row["pack_id"] or "") != expected_pack_id
+            )
+        )
+    )
+    if unscoped_legacy_rows:
+        raise RuntimeError(
+            "Translator historical unscoped resume rows cannot be reused: "
+            + ", ".join(unscoped_legacy_rows)
+        )
+
+    conflicting = sorted(
+        str(row["block_id"])
+        for row in rows
+        if (
+            str(row["run_id"] or "")
+            != _translation_run_id(
+                experiment_id=experiment_id,
+                config=config,
+                block_id=str(row["block_id"]),
+                transport_identity=expected_transport_identity,
+            )
+            or str(row["pack_id"] or "") != expected_pack_id
+            or _stored_transport_identity(row["payload_json"])
+            != expected_transport_identity
+            or (
+                _stored_experiment_id(row["payload_json"]) is not None
+                and _stored_experiment_id(row["payload_json"]) != experiment_id
+            )
+        )
+    )
+    if conflicting:
+        raise RuntimeError(
+            "Translator resume identity conflicts with existing rows: "
+            + ", ".join(conflicting)
+        )
+    return len({str(row["block_id"]) for row in rows})
+
+
+def _extract_translator_output(
+    parsed_json: dict[str, Any] | None,
+    expected_block_ids: list[str],
+    *,
+    allow_term_overrides: bool,
+    allowed_override_sources: set[str],
+    allowed_override_preferences: dict[str, set[str]],
+    slot_to_block: dict[str, str] | None = None,
+    raw_text: str | None = None,
+) -> tuple[dict[str, str], list[dict[str, str]], bool, list[str]]:
+    if slot_to_block is not None:
+        if allow_term_overrides:
+            raise ValueError("Translation slots cannot allow model-authored overrides")
+        slot_payload = parsed_json
+        if raw_text is not None:
+            slot_payload, raw_errors = parse_slot_json_text(raw_text)
+            if raw_errors:
+                return {}, [], False, raw_errors
+        translations, errors = extract_slot_translations(
+            slot_payload,
+            slot_to_block,
+        )
+        return translations, [], False, errors
+    if not allow_term_overrides:
+        translations, errors = extract_translations(parsed_json, expected_block_ids)
+        return translations, [], False, errors
+    payload, overrides, reporting_present, metadata_errors = (
+        split_term_override_metadata(
+            parsed_json,
+            expected_block_ids=expected_block_ids,
+            allowed_source_terms=allowed_override_sources,
+            allowed_preferred_targets=allowed_override_preferences,
+        )
+    )
+    translations, translation_errors = extract_translations(payload, expected_block_ids)
+    errors = [*translation_errors, *metadata_errors]
+    return (
+        translations,
+        [] if metadata_errors else overrides,
+        reporting_present,
+        errors,
+    )
+
+
+def _empty_terminology_stats(active: bool) -> dict[str, Any]:
+    if not active:
+        return {}
+    return {
+        "policy_id": D2L_SOFT_GLOSSARY_POLICY_ID,
+        "windows_reporting_present": 0,
+        "windows_reporting_omitted": 0,
+        "windows_with_overrides": 0,
+        "overrides_total": 0,
+        "reason_counts": {},
+    }
+
+
+def _record_terminology_stats(
+    stats: dict[str, Any],
+    *,
+    reporting_present: bool,
+    overrides: list[dict[str, str]],
+) -> None:
+    if not stats:
+        return
+    key = (
+        "windows_reporting_present"
+        if reporting_present
+        else "windows_reporting_omitted"
+    )
+    stats[key] = int(stats[key]) + 1
+    if overrides:
+        stats["windows_with_overrides"] = int(stats["windows_with_overrides"]) + 1
+    stats["overrides_total"] = int(stats["overrides_total"]) + len(overrides)
+    reasons = stats["reason_counts"]
+    for row in overrides:
+        reason = row["reason_code"]
+        reasons[reason] = int(reasons.get(reason, 0)) + 1
+
+
+def _empty_translation_output_stats(
+    active: bool,
+    *,
+    glossary_review_policy_id: str = GLOSSARY_REVIEW_POLICY_ID,
+    response_envelope_policy: str | None = None,
+) -> dict[str, Any]:
+    if not active:
+        return {}
+    result = {
+        "policy_id": D2L_TRANSLATION_SLOTS_POLICY_ID,
+        "glossary_review_policy_id": glossary_review_policy_id,
+        "windows_with_reviews": 0,
+        "review_rows_total": 0,
+        "review_blocks": 0,
+    }
+    if response_envelope_policy is not None:
+        result["response_envelope_policy_id"] = response_envelope_policy
+        result["responses_envelope_normalized"] = 0
+    return result
+
+
+def _record_translation_output_stats(
+    stats: dict[str, Any],
+    rows: list[dict[str, Any]],
+) -> None:
+    if not stats:
+        return
+    summary = glossary_review_summary(rows)
+    if rows:
+        stats["windows_with_reviews"] = int(stats["windows_with_reviews"]) + 1
+    stats["review_rows_total"] = int(stats["review_rows_total"]) + int(
+        summary["review_rows"]
+    )
+    stats["review_blocks"] = int(stats["review_blocks"]) + int(
+        summary["review_blocks"]
+    )
+
+
+def _record_response_envelope_stats(
+    stats: dict[str, Any],
+    results: list[LLMResult],
+    *,
+    response_envelope_policy: str | None,
+) -> None:
+    if not stats or response_envelope_policy is None:
+        return
+    normalizer = _response_envelope_normalizer(response_envelope_policy)
+    if normalizer is None:
+        raise ValueError(
+            f"Unknown Translator response-envelope policy: {response_envelope_policy}"
+        )
+    normalized = sum(
+        1
+        for result in results
+        if normalizer(result.text)[1]
+    )
+    stats["responses_envelope_normalized"] = int(
+        stats.get("responses_envelope_normalized") or 0
+    ) + normalized
+
+
+def _response_envelope_normalizer(response_envelope_policy: str | None):
+    if response_envelope_policy == D2L_PROMPT_JSON_ENVELOPE_V1_POLICY_ID:
+        return normalize_prompt_json_envelope_v1
+    if response_envelope_policy == D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID:
+        return normalize_prompt_json_envelope_v2
+    return None
+
+
+def _stored_transport_identity(payload_json: Any) -> str | None:
+    payload = _stored_pack_payload(payload_json)
+    identity = payload.get("transport_identity")
+    return str(identity) if isinstance(identity, str) and identity else None
+
+
+def _stored_experiment_id(payload_json: Any) -> str | None:
+    payload = _stored_pack_payload(payload_json)
+    experiment_id = payload.get("experiment_id")
+    return (
+        str(experiment_id)
+        if isinstance(experiment_id, str) and experiment_id
+        else None
+    )
+
+
+def _stored_terminology_policy(payload_json: Any) -> str | None:
+    payload = _stored_pack_payload(payload_json)
+    policy = payload.get("terminology_policy")
+    return str(policy) if isinstance(policy, str) and policy else None
+
+
+def _stored_override_match_rule(payload_json: Any) -> str | None:
+    payload = _stored_pack_payload(payload_json)
+    rule = payload.get("term_override_match_rule")
+    return str(rule) if isinstance(rule, str) and rule else None
+
+
+def _stored_protected_spans_policy(payload_json: Any) -> str | None:
+    payload = _stored_pack_payload(payload_json)
+    protected = payload.get("protected_spans")
+    if not isinstance(protected, dict):
+        return None
+    policy = protected.get("policy_id")
+    return str(policy) if isinstance(policy, str) and policy else None
+
+
+def _stored_translation_output_policy(payload_json: Any) -> str | None:
+    payload = _stored_pack_payload(payload_json)
+    policy = payload.get("translation_output_policy")
+    return str(policy) if isinstance(policy, str) and policy else None
+
+
+def _stored_glossary_review_policy(payload_json: Any) -> str | None:
+    payload = _stored_pack_payload(payload_json)
+    policy = payload.get("glossary_review_policy")
+    return str(policy) if isinstance(policy, str) and policy else None
+
+
+def _stored_response_envelope_policy(payload_json: Any) -> str | None:
+    payload = _stored_pack_payload(payload_json)
+    policy = payload.get("response_envelope_policy")
+    return str(policy) if isinstance(policy, str) and policy else None
+
+
+def _stored_pack_payload(payload_json: Any) -> dict[str, Any]:
+    if payload_json is None:
+        return {}
+    try:
+        payload = json.loads(str(payload_json or "{}"))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("Translator memory-pack payload is invalid JSON") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError("Translator memory-pack payload must be a JSON object")
+    return payload
 
 
 def _fetch_blocks(db: sqlite3.Connection, block_ids: list[str]) -> list:
@@ -602,15 +1502,28 @@ def _persist_pack(
     messages: list[dict],
     result: LLMResult,
     *,
+    experiment_id: str,
     prompt_version: str,
     context_pack: Any | None,
     blocks_for_prompt: list[dict[str, Any]],
     profile_name: str,
+    transport_identity: str | None,
+    term_overrides: list[dict[str, str]],
+    term_override_reporting_present: bool,
+    terminology_policy: str | None,
+    term_override_match_rule: str | None,
+    protected_span_metadata: dict[str, Any] | None,
+    translation_output_policy: str | None,
+    slot_map: dict[str, str] | None,
+    glossary_review_policy: str | None,
+    glossary_reviews: list[dict[str, Any]],
+    response_envelope_policy: str | None,
 ) -> None:
     # Store window context in payload_json (existing column).
     # config is stored via _add_column_if_missing during migration 005.
     zones = _zone_estimates(messages, blocks_for_prompt, context_pack)
     payload = {
+        "experiment_id": experiment_id,
         "window_id": window_id,
         "block_ids": block_ids,
         "config": config,
@@ -623,6 +1536,25 @@ def _persist_pack(
         if context_pack is not None
         else False,
     }
+    if transport_identity is not None:
+        payload["transport_identity"] = transport_identity
+    if terminology_policy is not None:
+        payload["terminology_policy"] = terminology_policy
+    if term_override_match_rule is not None:
+        payload["term_override_match_rule"] = term_override_match_rule
+        payload["term_override_reporting_present"] = bool(
+            term_override_reporting_present
+        )
+        payload["term_overrides"] = term_overrides
+    if protected_span_metadata is not None:
+        payload["protected_spans"] = protected_span_metadata
+    if translation_output_policy is not None:
+        payload["translation_output_policy"] = translation_output_policy
+        payload["slot_map"] = slot_map or {}
+        payload["glossary_review_policy"] = glossary_review_policy
+        payload["glossary_reviews"] = glossary_reviews
+        if response_envelope_policy is not None:
+            payload["response_envelope_policy"] = response_envelope_policy
     if context_pack is not None and hasattr(context_pack, "to_dict"):
         payload["context_pack"] = context_pack.to_dict()
     pack_hash = sha256(
@@ -630,9 +1562,43 @@ def _persist_pack(
     ).hexdigest()[:16]
 
     existing = db.execute(
-        "SELECT pack_id FROM memory_packs WHERE pack_id = ?", (pack_id,)
+        "SELECT pack_id, prompt_version, payload_json FROM memory_packs WHERE pack_id = ?",
+        (pack_id,),
     ).fetchone()
     if existing:
+        existing_payload = _stored_pack_payload(existing["payload_json"])
+        if existing_payload.get("experiment_id") != experiment_id:
+            raise RuntimeError("Translator memory-pack experiment identity mismatch")
+        if (
+            existing_payload.get("window_id") != window_id
+            or existing_payload.get("block_ids") != block_ids
+            or existing_payload.get("config") != config
+        ):
+            raise RuntimeError("Translator memory-pack scoped ID collision")
+        if str(existing["prompt_version"] or "") != prompt_version:
+            raise RuntimeError("Translator memory-pack prompt version mismatch")
+        if _stored_terminology_policy(existing["payload_json"]) != terminology_policy:
+            raise RuntimeError("Translator memory-pack terminology policy mismatch")
+        if (
+            _stored_override_match_rule(existing["payload_json"])
+            != term_override_match_rule
+        ):
+            raise RuntimeError("Translator memory-pack override match rule mismatch")
+        if existing_payload.get("protected_spans") != protected_span_metadata:
+            raise RuntimeError("Translator memory-pack protected-span policy mismatch")
+        if (
+            existing_payload.get("translation_output_policy")
+            != translation_output_policy
+            or existing_payload.get("slot_map") != (slot_map or None)
+            or existing_payload.get("glossary_review_policy")
+            != glossary_review_policy
+            or existing_payload.get("response_envelope_policy")
+            != response_envelope_policy
+        ):
+            raise RuntimeError("Translator memory-pack output policy mismatch")
+        if transport_identity is not None:
+            if existing_payload.get("transport_identity") != transport_identity:
+                raise RuntimeError("Shared Translator memory-pack identity mismatch")
         return
 
     doc_id = ""
@@ -686,6 +1652,23 @@ def _persist_run(
         "SELECT doc_id FROM blocks WHERE block_id = ?", (block_id,)
     ).fetchone()
     doc_id = str(row["doc_id"]) if row else ""
+
+    existing = db.execute(
+        """
+        SELECT experiment_id, block_id, config, stage, pack_id
+        FROM translation_runs
+        WHERE run_id = ?
+        """,
+        (run_id,),
+    ).fetchone()
+    if existing and (
+        str(existing["experiment_id"] or "") != experiment_id
+        or str(existing["block_id"] or "") != block_id
+        or str(existing["config"] or "") != config
+        or str(existing["stage"] or "") != stage
+        or str(existing["pack_id"] or "") != pack_id
+    ):
+        raise RuntimeError("Translator scoped run ID collision")
 
     db.execute(
         """
@@ -789,18 +1772,134 @@ def _hygiene_call_summary(
     }
 
 
-def _total_usage(results: list[LLMResult]) -> dict[str, int | float]:
-    return {
+def _empty_protected_span_stats(
+    policy: ProtectedSpanPolicy | None,
+    *,
+    effective_prompt_version: str,
+) -> dict[str, Any]:
+    if policy is None:
+        return {}
+    stats = {
+        "policy_id": policy.policy_id,
+        # V1 telemetry is a published compatibility surface. Its prompt field
+        # names the protected-span prompt even when translation slots select a
+        # different effective generation prompt.
+        "prompt_version": (
+            effective_prompt_version
+            if policy.hides_source_bytes
+            else policy.prompt_version
+        ),
+        "windows": 0,
+        "blocks": 0,
+        "spans": 0,
+        "windows_reasked": 0,
+        "blocks_flagged": 0,
+        "windows_failed": 0,
+        "final_issue_count": 0,
+    }
+    if policy.hides_source_bytes:
+        stats["latex_visible_to_model"] = False
+    return stats
+
+
+def _merge_protected_span_stats(
+    stats: dict[str, Any],
+    *,
+    plan: Any | None,
+    summary: dict[str, Any],
+    status: str,
+) -> None:
+    if not stats or plan is None:
+        return
+    stats["windows"] = int(stats["windows"]) + 1
+    stats["blocks"] = int(stats["blocks"]) + len(plan.protected_blocks)
+    stats["spans"] = int(stats["spans"]) + plan.protected_span_count
+    if summary.get("reasked_blocks"):
+        stats["windows_reasked"] = int(stats["windows_reasked"]) + 1
+    stats["blocks_flagged"] = int(stats["blocks_flagged"]) + len(
+        summary.get("flagged_blocks") or []
+    )
+    final_issues = summary.get("final_issues") or []
+    stats["final_issue_count"] = int(stats["final_issue_count"]) + len(
+        final_issues
+    )
+    if status == "failed":
+        stats["windows_failed"] = int(stats["windows_failed"]) + 1
+
+
+def _total_usage(
+    results: list[LLMResult],
+) -> dict[str, int | float | None | str]:
+    payload: dict[str, int | float | None | str] = {
         "prompt_tokens": sum(r.usage.prompt_tokens for r in results),
         "completion_tokens": sum(r.usage.completion_tokens for r in results),
         "reasoning_tokens": sum(r.usage.reasoning_tokens for r in results),
-        "cost_usd": round(sum(r.cost_usd for r in results), 12),
-        "incremental_cost_usd": round(
-            sum(r.cost_usd for r in results if not r.from_cache), 12
-        ),
+        "cost_usd": _sum_cost(results),
+        "incremental_cost_usd": _sum_cost(results, incremental_only=True),
         "calls": len(results),
         "cache_hits": sum(1 for r in results if r.from_cache),
     }
+    if payload["cost_usd"] is None or payload["incremental_cost_usd"] is None:
+        payload["cost_status"] = "unknown"
+    return payload
+
+
+def _sum_cost(
+    results: list[Any], *, incremental_only: bool = False
+) -> float | None:
+    selected = [
+        row for row in results if not incremental_only or not row.from_cache
+    ]
+    if any(row.cost_usd is None for row in selected):
+        return None
+    return round(sum(float(row.cost_usd) for row in selected), 12)
+
+
+def _transport_identity(client: Any, config: str) -> str | None:
+    if not bool(getattr(client, "uses_shared_backend", False)):
+        return None
+    preset = getattr(client, "preset", None)
+    expected_role = f"d2l.translator.{config.casefold()}"
+    if getattr(preset, "role_id", None) != expected_role:
+        raise RuntimeError(
+            f"Shared Translator {config} requires role {expected_role}"
+        )
+    identity = getattr(client, "transport_identity", None)
+    if not isinstance(identity, str) or not identity:
+        raise RuntimeError("Shared Translator client lacks transport identity")
+    return identity
+
+
+def _pack_id(
+    *,
+    experiment_id: str,
+    config: str,
+    window_id: str,
+    transport_identity: str | None,
+) -> str:
+    experiment_hash = sha256(experiment_id.encode("utf-8")).hexdigest()[:12]
+    if transport_identity is None:
+        return f"pk_{config}_{window_id}_{experiment_hash}"
+    return (
+        f"pk_{config}_{window_id}_{experiment_hash}_"
+        f"{transport_identity[:20]}"
+    )
+
+
+def _translation_run_id(
+    *,
+    experiment_id: str,
+    config: str,
+    block_id: str,
+    transport_identity: str | None,
+) -> str:
+    experiment_hash = sha256(experiment_id.encode("utf-8")).hexdigest()[:12]
+    if transport_identity is None:
+        return f"tr_{config}_{block_id}_{experiment_hash}"
+    return (
+        f"tr_{config}_{block_id}_{experiment_hash}_"
+        f"{transport_identity[:20]}"
+    )
 
 
 def _last_fingerprint(results: list[LLMResult]) -> str | None:
@@ -903,13 +2002,20 @@ def _context_pack_summary(context_pack: Any | None) -> dict[str, Any]:
     }
 
 
-def _pack_summary_for_event(context_pack: Any | None) -> dict[str, Any] | None:
+def _pack_summary_for_event(
+    context_pack: Any | None,
+    *,
+    terminology_policy: str | None = None,
+) -> dict[str, Any] | None:
     if context_pack is None:
         return None
     summary = _context_pack_summary(context_pack)
+    soft_glossary = terminology_policy == D2L_SOFT_GLOSSARY_POLICY_ID
     pack_summary: dict[str, Any] = {
         "injected": int(summary.get("included_count") or 0),
-        "mandatory": len(getattr(context_pack, "glossary_lines", []) or [])
+        "mandatory": len(getattr(context_pack, "entity_lines", []) or [])
+        if soft_glossary
+        else len(getattr(context_pack, "glossary_lines", []) or [])
         + len(getattr(context_pack, "entity_lines", []) or []),
         "soft": len(getattr(context_pack, "context_sensitive_lines", []) or []),
         "preserve": len(getattr(context_pack, "preserve_lines", []) or []),
@@ -918,19 +2024,42 @@ def _pack_summary_for_event(context_pack: Any | None) -> dict[str, Any] | None:
         "dropped_by_budget": int(summary.get("dropped_by_budget_count") or 0),
         "est_tokens": int(summary.get("token_estimate") or 0),
     }
-    pack_summary["sample"] = _pack_summary_sample(context_pack)
-    pack_summary["more"] = _pack_summary_more(pack_summary["sample"], context_pack)
+    if soft_glossary:
+        pack_summary["preferred"] = len(
+            getattr(context_pack, "glossary_lines", []) or []
+        )
+        pack_summary["terminology_policy"] = terminology_policy
+    pack_summary["sample"] = _pack_summary_sample(
+        context_pack,
+        soft_glossary=soft_glossary,
+    )
+    pack_summary["more"] = _pack_summary_more(
+        pack_summary["sample"],
+        context_pack,
+        soft_glossary=soft_glossary,
+    )
     return pack_summary
 
 
-def _pack_summary_sample(context_pack: Any, *, limit: int = 6) -> dict[str, list[str]]:
+def _pack_summary_sample(
+    context_pack: Any,
+    *,
+    limit: int = 6,
+    soft_glossary: bool = False,
+) -> dict[str, list[str]]:
     buckets = {
-        "mandatory": list(getattr(context_pack, "glossary_lines", []) or [])
+        "mandatory": list(getattr(context_pack, "entity_lines", []) or [])
+        if soft_glossary
+        else list(getattr(context_pack, "glossary_lines", []) or [])
         + list(getattr(context_pack, "entity_lines", []) or []),
         "soft": list(getattr(context_pack, "context_sensitive_lines", []) or []),
         "preserve": list(getattr(context_pack, "preserve_lines", []) or []),
         "address": list(getattr(context_pack, "address_lines", []) or []),
     }
+    if soft_glossary:
+        buckets["preferred"] = list(
+            getattr(context_pack, "glossary_lines", []) or []
+        )
     sample = {key: [str(line) for line in lines[:limit]] for key, lines in buckets.items() if lines}
     repair_queue = getattr(context_pack, "repair_queue", []) or []
     if repair_queue:
@@ -942,15 +2071,25 @@ def _pack_summary_sample(context_pack: Any, *, limit: int = 6) -> dict[str, list
     return sample
 
 
-def _pack_summary_more(sample: dict[str, list[str]], context_pack: Any, *, limit: int = 6) -> dict[str, int]:
+def _pack_summary_more(
+    sample: dict[str, list[str]],
+    context_pack: Any,
+    *,
+    limit: int = 6,
+    soft_glossary: bool = False,
+) -> dict[str, int]:
     totals = {
-        "mandatory": len(getattr(context_pack, "glossary_lines", []) or [])
+        "mandatory": len(getattr(context_pack, "entity_lines", []) or [])
+        if soft_glossary
+        else len(getattr(context_pack, "glossary_lines", []) or [])
         + len(getattr(context_pack, "entity_lines", []) or []),
         "soft": len(getattr(context_pack, "context_sensitive_lines", []) or []),
         "preserve": len(getattr(context_pack, "preserve_lines", []) or []),
         "address": len(getattr(context_pack, "address_lines", []) or []),
         "quarantine": len(getattr(context_pack, "repair_queue", []) or []),
     }
+    if soft_glossary:
+        totals["preferred"] = len(getattr(context_pack, "glossary_lines", []) or [])
     return {
         key: max(0, count - len(sample.get(key, [])))
         for key, count in totals.items()
