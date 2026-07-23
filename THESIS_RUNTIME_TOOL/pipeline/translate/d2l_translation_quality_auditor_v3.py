@@ -8,6 +8,9 @@ import re
 from typing import Any, Mapping, Sequence
 
 from pipeline.llm_backend import canonical_json, canonical_sha256
+from pipeline.translate.d2l_prompt_json_envelope_v1 import (
+    normalize_prompt_json_envelope,
+)
 from pipeline.translate.d2l_translation_quality_auditor_v1 import (
     AuditContractError,
 )
@@ -248,6 +251,7 @@ def reask_note(errors: Sequence[str]) -> str:
 
 
 def parse_response(text: str) -> Mapping[str, Any]:
+    normalized, _ = normalize_prompt_json_envelope(str(text))
     duplicates: list[str] = []
 
     def pairs(values: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -259,7 +263,7 @@ def parse_response(text: str) -> Mapping[str, Any]:
         return result
 
     try:
-        value = json.loads(str(text), object_pairs_hook=pairs)
+        value = json.loads(normalized, object_pairs_hook=pairs)
     except json.JSONDecodeError as exc:
         raise AuditContractError(f"V3 audit JSON parse failed: {exc}") from exc
     if duplicates:

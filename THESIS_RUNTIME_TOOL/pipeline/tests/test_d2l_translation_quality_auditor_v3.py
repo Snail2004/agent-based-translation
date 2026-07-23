@@ -113,12 +113,20 @@ def test_v3_rejects_terminology_findings() -> None:
         validate_response(response, _packet())
 
 
-def test_v3_rejects_duplicate_keys_and_protected_refs() -> None:
+def test_v3_rejects_duplicate_keys() -> None:
     with pytest.raises(AuditContractError, match="duplicates keys"):
         parse_response(
             '{"contract_version":"x","contract_version":"y",'
             '"window_id":"w1","audited_block_ids":[],"findings":[]}'
         )
+
+
+def test_v3_json_fence_and_protected_ref_boundaries() -> None:
+    response_json = json.dumps(_response(), separators=(",", ":"))
+
+    assert parse_response(f"```json\n{response_json}\n```") == _response()
+    with pytest.raises(AuditContractError, match="JSON parse failed"):
+        parse_response(f"discussion\n```json\n{response_json}\n```")
     with pytest.raises(AuditContractError, match="protected reference"):
         build_packet(
             window_id="w1",
