@@ -707,6 +707,41 @@ def test_translation_phase_stops_truthfully_before_scoring(tmp_path: Path) -> No
         orchestrator.run()
 
 
+def test_scoring_phase_stops_truthfully_before_publication(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    translation = _TranslationExecutor(tmp_path / "translation")
+    evaluation = _EvaluationExecutor(tmp_path / "evaluation")
+    orchestrator = WorkflowOrchestratorV1(
+        relay.root,
+        translation_executor=translation,
+        baseline_provider=StaticBaselineInputProviderV1(_baseline_rows()),
+        evaluation_executor=evaluation,
+        selected_chapter_ids=["ch1"],
+        translation_adapter_factory=translation.adapter,
+        evaluation_adapter_factory=evaluation.adapter,
+    )
+
+    with pytest.raises(WorkflowComponentPausedV1):
+        orchestrator.run_translation()
+    translated = orchestrator.run_translation()
+    scored = orchestrator.run_scoring(
+        translated.translation_component_root
+    )
+
+    assert scored.manifest["status"] == "running"
+    assert [
+        row["component_id"] for row in scored.manifest["components"]
+    ] == ["translation", "evaluation"]
+    assert [row["status"] for row in scored.manifest["components"]] == [
+        "succeeded",
+        "succeeded",
+    ]
+    assert scored.scoring_receipt["status"] == "accepted"
+    assert not (relay.root / "components" / "publication").exists()
+
+
 def test_runtime_registration_is_fail_closed_and_self_sealed(
     tmp_path: Path,
 ) -> None:

@@ -2949,6 +2949,75 @@ def test_route_workflow_score_reports_parent_readiness_blockers(
     )
 
 
+def test_workflow_actions_require_materialized_settings_and_live_source(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(
+        tmp_path, monkeypatch
+    )
+    root = _register_parent_workflow_fixture(tmp_path, registry)
+    workflow_service = importlib.import_module("services.workflow_replay")
+    manifest = json.loads(
+        (root / "workflow_manifest.json").read_text(encoding="utf-8")
+    )
+    entry = registry.get_run("run_parent_replay")
+    entry["source_binding_sha256"] = "a" * 64
+    monkeypatch.setattr(
+        workflow_service,
+        "_scoring_runtime_readiness",
+        lambda **_kwargs: {
+            "allowed": True,
+            "blockers": [],
+            "runtime": {"status": "ready"},
+        },
+    )
+    scope = {
+        "scoring_handoff_status": "validated",
+        "settings_status": "materialized",
+        "settings_sha256": "b" * 64,
+    }
+
+    actions = workflow_service._actions(
+        entry,
+        manifest,
+        jobs_root=tmp_path,
+        evaluation_scope=scope,
+        source_mode="live",
+    )
+    assert actions["score"]["allowed"] is True
+
+    pending = workflow_service._actions(
+        entry,
+        manifest,
+        jobs_root=tmp_path,
+        evaluation_scope={
+            **scope,
+            "settings_status": "pending_settings_materialization",
+            "settings_sha256": None,
+        },
+        source_mode="live",
+    )
+    assert pending["score"]["allowed"] is False
+    assert "evaluation_settings_not_materialized" in pending["score"][
+        "blocking_reasons"
+    ]
+
+    replay = workflow_service._actions(
+        entry,
+        manifest,
+        jobs_root=tmp_path,
+        evaluation_scope=scope,
+        source_mode="replay",
+    )
+    assert replay["pause"]["allowed"] is False
+    assert replay["resume"]["allowed"] is False
+    assert replay["score"]["allowed"] is False
+    assert "historical_replay_read_only" in replay["score"][
+        "blocking_reasons"
+    ]
+
+
 def test_workflow_usage_read_model_projects_validated_d2l_snapshots():
     from pipeline.prepass.d2l_console_replay_contract_v1 import (
         build_component_usage_snapshot,

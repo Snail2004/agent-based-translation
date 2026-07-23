@@ -1565,6 +1565,15 @@ def _read_envelope(
     }
     validated_artifacts = _validated_artifacts(typed_artifacts)
     latest_seq = manifest["latest_event_seq"]
+    source_mode = (
+        "replay"
+        if manifest["status"] in {"failed", "succeeded"}
+        else "live"
+    )
+    evaluation_scope = _evaluation_scope_read_model(
+        entry,
+        typed_artifacts=typed_artifacts,
+    )
     returned_through = events[-1]["seq"] if events else after_seq
     if after_seq > latest_seq:
         raise WorkflowReplayError(
@@ -1596,11 +1605,8 @@ def _read_envelope(
             typed_artifacts=typed_artifacts,
             workflow_run_id=manifest["workflow_run_id"],
         ),
-        "evaluation_scope": _evaluation_scope_read_model(
-            entry,
-            typed_artifacts=typed_artifacts,
-        ),
-        "source_mode": "live",
+        "evaluation_scope": evaluation_scope,
+        "source_mode": source_mode,
         "cursor": {
             "after_seq": after_seq,
             "returned_through_seq": returned_through,
@@ -1625,7 +1631,13 @@ def _read_envelope(
                 "artifact_index_sha256"
             ],
         },
-        "actions": _actions(entry, manifest, jobs_root=jobs_root),
+        "actions": _actions(
+            entry,
+            manifest,
+            jobs_root=jobs_root,
+            evaluation_scope=evaluation_scope,
+            source_mode=source_mode,
+        ),
     }
 
 
@@ -2400,6 +2412,8 @@ def _actions(
     manifest: Mapping[str, Any],
     *,
     jobs_root: Path,
+    evaluation_scope: Mapping[str, Any] | None,
+    source_mode: str,
 ) -> dict[str, Any]:
     status = manifest["status"]
     translation = next(
@@ -2419,10 +2433,26 @@ def _actions(
         None,
     )
     score_blockers = []
+    if source_mode != "live":
+        score_blockers.append("historical_replay_read_only")
     if translation is None or translation["status"] != "succeeded":
         score_blockers.append("translation_not_ready")
-    if evaluation is not None and evaluation["status"] == "succeeded":
-        score_blockers.append("evaluation_already_completed")
+    if evaluation is not None:
+        score_blockers.append(
+            "evaluation_already_completed"
+            if evaluation["status"] == "succeeded"
+            else "evaluation_already_started"
+        )
+    if evaluation_scope is None:
+        score_blockers.append("evaluation_scope_missing")
+    else:
+        if evaluation_scope.get("scoring_handoff_status") != "validated":
+            score_blockers.append("scoring_handoff_not_ready")
+        if (
+            evaluation_scope.get("settings_status") != "materialized"
+            or not _is_sha256(evaluation_scope.get("settings_sha256"))
+        ):
+            score_blockers.append("evaluation_settings_not_materialized")
     readiness = _scoring_runtime_readiness(
         job_root=(jobs_root / str(entry["job_id"])).resolve(),
         job_id=str(entry["job_id"]),
@@ -2433,12 +2463,15 @@ def _actions(
     score_blockers = list(dict.fromkeys(score_blockers))
     return {
         "pause": {
-            "allowed": status == "running",
+            "allowed": source_mode == "live" and status == "running",
             "method": "POST",
             "href": f"/api/thesis/runs/{entry['run_id']}/pause",
         },
         "resume": {
-            "allowed": bool(manifest["resume"]["available"]),
+            "allowed": (
+                source_mode == "live"
+                and bool(manifest["resume"]["available"])
+            ),
             "method": "POST",
             "href": f"/api/thesis/runs/{entry['run_id']}/resume",
             "component_id": manifest["resume"]["component_id"],
@@ -2459,6 +2492,14 @@ def _actions(
             "runtime": readiness["runtime"],
         },
     }
+
+
+def _is_sha256(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value.lower())
+    )
 
 
 def _artifact_by_ref(

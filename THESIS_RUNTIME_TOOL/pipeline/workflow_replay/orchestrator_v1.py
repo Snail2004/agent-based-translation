@@ -95,6 +95,16 @@ class WorkflowTranslationResultV1:
     translation_component_root: Path
 
 
+@dataclass(frozen=True, slots=True)
+class WorkflowScoringResultV1:
+    parent_root: Path
+    manifest: dict[str, Any]
+    scoring_handoff: dict[str, Any]
+    scoring_receipt: dict[str, Any]
+    translation_component_root: Path
+    evaluation_component_root: Path
+
+
 class ExistingTranslationComponentExecutorV1:
     """Reuse one already-terminal D2L component without launching a child."""
 
@@ -240,20 +250,34 @@ class WorkflowOrchestratorV1:
 
     def run(self) -> WorkflowOrchestratorResultV1:
         translation_root = self.run_translation().translation_component_root
-        return self._run_after_translation(translation_root)
+        scoring = self.run_scoring(translation_root)
+        return self._run_publication(scoring)
 
-    def _run_after_translation(
+    def run_scoring(
         self,
-        translation_root: Path,
-    ) -> WorkflowOrchestratorResultV1:
-        if (
-            self.baseline_provider is None
-            or self.evaluation_executor is None
-            or self.publication_executor is None
-        ):
+        translation_component_root: str | Path,
+    ) -> WorkflowScoringResultV1:
+        """Publish the five-arm handoff and run Evaluation, without Publication."""
+
+        translation_root = Path(translation_component_root).resolve()
+        if self.baseline_provider is None or self.evaluation_executor is None:
             raise WorkflowOrchestratorError(
                 "workflow_runtime_incomplete",
-                "Scoring requires registered baseline, Evaluation and Publication executors.",
+                "Scoring requires registered baseline and Evaluation executors.",
+            )
+        manifest = validate_workflow_parent_package_v1(self.parent_root)
+        translation = next(
+            (
+                row
+                for row in manifest["components"]
+                if row["component_id"] == "translation"
+            ),
+            None,
+        )
+        if translation is None or translation["status"] != "succeeded":
+            raise WorkflowOrchestratorError(
+                "translation_not_terminal",
+                "Scoring requires a terminal successful Translation component.",
             )
         fragment = _read_json(
             translation_root / "scoring_handoff_fragment.json",
@@ -321,7 +345,31 @@ class WorkflowOrchestratorV1:
                 "evaluation_rejected",
                 "Evaluation rejected the exact five-arm scoring handoff.",
             )
+        manifest = validate_workflow_parent_package_v1(self.parent_root)
+        return WorkflowScoringResultV1(
+            parent_root=self.parent_root,
+            manifest=manifest,
+            scoring_handoff=handoff,
+            scoring_receipt=accepted_receipt,
+            translation_component_root=translation_root,
+            evaluation_component_root=evaluation_root,
+        )
 
+    def _run_publication(
+        self,
+        scoring: WorkflowScoringResultV1,
+    ) -> WorkflowOrchestratorResultV1:
+        if self.publication_executor is None:
+            raise WorkflowOrchestratorError(
+                "workflow_runtime_incomplete",
+                "Publication executor is not registered.",
+        )
+        handoff = scoring.scoring_handoff
+        translation_root = scoring.translation_component_root
+        fragment = _read_json(
+            translation_root / "scoring_handoff_fragment.json",
+            owner="D2L scoring handoff fragment",
+        )
         selected_input = next(
             row for row in handoff["translation_inputs"]
             if row["arm_id"] == self.product_arm_id
@@ -346,9 +394,9 @@ class WorkflowOrchestratorV1:
             parent_root=self.parent_root,
             manifest=manifest,
             scoring_handoff=handoff,
-            scoring_receipt=accepted_receipt,
+            scoring_receipt=scoring.scoring_receipt,
             translation_component_root=translation_root,
-            evaluation_component_root=evaluation_root,
+            evaluation_component_root=scoring.evaluation_component_root,
             publication_component_root=publication_root,
         )
 
@@ -740,6 +788,7 @@ __all__ = [
     "WorkflowComponentPausedV1",
     "WorkflowOrchestratorError",
     "WorkflowOrchestratorResultV1",
+    "WorkflowScoringResultV1",
     "WorkflowTranslationResultV1",
     "WorkflowOrchestratorV1",
     "load_workflow_runtime_registration_v1",
