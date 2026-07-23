@@ -1747,11 +1747,12 @@ def _evaluation_scope_read_model(
         if body.get("schema_id") == "ScoringHandoffV1"
         or body.get("schema") == "scoring_handoff_v1"
     ]
-    settings_rows = [
-        body
+    settings_by_sha256 = {
+        canonical_sha256(body): body
         for body in bodies
         if body.get("schema_id") == EVALUATION_SETTINGS_SCHEMA_ID
-    ]
+    }
+    settings_rows = list(settings_by_sha256.values())
     if len(handoffs) > 1 or len(settings_rows) > 1:
         raise WorkflowReplayError(
             "workflow_evaluation_settings_ambiguous",

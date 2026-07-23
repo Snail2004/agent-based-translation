@@ -264,6 +264,65 @@ class WorkflowRelayV1:
             self._project()
         return handoff
 
+    def publish_evaluation_settings(
+        self,
+        settings: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Publish the exact Evaluation settings derived from the parent handoff."""
+
+        from pipeline.eval.evaluation_workflow_settings_v1 import (
+            validate_evaluation_workflow_settings_v1,
+        )
+
+        with self._exclusive():
+            handoff_path = self.root / "handoffs" / "scoring_handoff.json"
+            if not handoff_path.is_file():
+                raise WorkflowReplayContractError(
+                    "missing_handoff",
+                    "$.scoring_handoff",
+                    "Evaluation settings require a published scoring handoff",
+                )
+            handoff = validate_scoring_handoff_v1(
+                _read_exact_json(handoff_path)
+            )
+            accepted = validate_evaluation_workflow_settings_v1(
+                settings,
+                scoring_handoff=handoff,
+            )
+            path = (
+                self.root
+                / "handoffs"
+                / "evaluation_workflow_settings.json"
+            )
+            _write_json_absent_or_equal(path, accepted)
+            self._write_relay_artifact(
+                {
+                    "binding": {
+                        "artifact_ref": (
+                            "handoffs/evaluation_workflow_settings.json"
+                        ),
+                        "artifact_kind": "evaluation_workflow_settings_v1",
+                        "schema_version": accepted["schema_version"],
+                        "sha256": accepted["settings_sha256"],
+                        "sha256_kind": (
+                            "canonical:EvaluationWorkflowSettingsV1@1.1.0"
+                        ),
+                    },
+                    "physical_sha256": physical_sha256(path.read_bytes()),
+                    "producer_component_id": "neutral_relay",
+                    "producer_component_run_id": self.workflow_run_id,
+                    "producer_component_attempt_id": None,
+                    "producer_component_attempt_index": None,
+                    "producer_stage_id": "relay.evaluation_settings",
+                    "parent_artifact_refs": [
+                        "handoffs/scoring_handoff.json"
+                    ],
+                    "created_event_id": None,
+                }
+            )
+            self._project()
+        return accepted
+
     def accept_scoring_receipt(self, receipt: Mapping[str, Any]) -> dict[str, Any]:
         with self._exclusive():
             handoff_path = self.root / "handoffs" / "scoring_handoff.json"

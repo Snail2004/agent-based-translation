@@ -7,6 +7,10 @@ from pathlib import Path
 
 import pytest
 
+from pipeline.eval.evaluation_workflow_settings_v1 import (
+    EvaluationWorkflowSettingsAuthorityV1,
+    build_evaluation_workflow_settings_v1,
+)
 from pipeline.eval.workflow_component_v1 import build_scoring_receipt_v1
 from pipeline.scripts import run_workflow_orchestrator_v1 as orchestrator_cli
 from pipeline.workflow_replay.contracts_v1 import (
@@ -37,6 +41,7 @@ WORKFLOW_ID = "wf_orchestrator_fixture_v1"
 JOB_ID = "job_orchestrator_fixture_v1"
 COMMIT = "a" * 40
 CREATED_AT = "2026-07-23T00:00:00Z"
+CHAPTER_ID = "d2l_preliminaries"
 
 
 def _binding(ref: str, kind: str) -> dict[str, str]:
@@ -295,7 +300,7 @@ def _translation_fragment(
         "glossary_binding": None,
         "context_memory_binding": None,
         "admitted_projection_binding": source["admitted_projection"],
-        "selected_chapter_ids": ["ch1"],
+        "selected_chapter_ids": [CHAPTER_ID],
         "admitted_universe": {
             "ordered_block_ids_sha256": canonical_sha256(["b1"]),
             "block_count": 1,
@@ -526,6 +531,57 @@ class _EvaluationExecutor:
         return self.root
 
 
+class _SettingsMaterializer:
+    def __init__(self) -> None:
+        profile = _binding(
+            "profiles/evaluation_fixture_v1.json",
+            "evaluation_profile_v1",
+        )
+        self.authority = EvaluationWorkflowSettingsAuthorityV1(
+            benchmark_preset=_binding(
+                "presets/narrow_five_chapter_d2l_v1.json",
+                "evaluation_benchmark_preset_v1",
+            ),
+            evaluation_config=_binding(
+                "configs/evaluation_config_v1.json",
+                "evaluation_run_config_v1",
+            ),
+            scorer_set=_binding(
+                "scorers/sf_qe_sf_bt_pj_v1.json",
+                "evaluation_scorer_set_v1",
+            ),
+            evaluation_profiles=(profile,),
+            policy_profiles=(),
+            shared_selections=(
+                _binding(
+                    "selections/evaluation_five_chapter_v1.json",
+                    "evaluation_shared_selection_v1",
+                ),
+            ),
+        )
+
+    def materialize_settings(self, scoring_handoff):
+        return build_evaluation_workflow_settings_v1(
+            authority=self.authority,
+            scoring_handoff=scoring_handoff,
+            evaluation_profile_ref="profiles/evaluation_fixture_v1.json",
+            policy_profile_ref=None,
+            shared_selection_ref=(
+                "selections/evaluation_five_chapter_v1.json"
+            ),
+            highlight_pair=None,
+            selected_chapter_ids=[CHAPTER_ID],
+            selected_arm_ids=[
+                "s0",
+                "s1",
+                "community",
+                "google_nmt",
+                "llm_lc",
+            ],
+            selected_scorer_ids=["sf_qe"],
+        )
+
+
 class _PublicationExecutor:
     validator_id = "publication.fixture.validator_v1"
 
@@ -547,7 +603,7 @@ class _PublicationExecutor:
         observer,
     ) -> Path:
         assert scoring_handoff["translation_inputs"][1] == selected_translation_input
-        assert selected_chapter_ids == ["ch1"]
+        assert selected_chapter_ids == [CHAPTER_ID]
         self.selected_path = selected_translation_path
         payload = b'{"publication":"ok"}'
         binding = {
@@ -647,7 +703,7 @@ def test_orchestrator_preserves_pause_resume_and_finishes_parent(
         baseline_provider=StaticBaselineInputProviderV1(_baseline_rows()),
         evaluation_executor=evaluation,
         publication_executor=publication,
-        selected_chapter_ids=["ch1"],
+        selected_chapter_ids=[CHAPTER_ID],
         translation_adapter_factory=translation.adapter,
         evaluation_adapter_factory=evaluation.adapter,
         publication_adapter_factory=publication.adapter,
@@ -686,7 +742,7 @@ def test_translation_phase_stops_truthfully_before_scoring(tmp_path: Path) -> No
     orchestrator = WorkflowOrchestratorV1(
         relay.root,
         translation_executor=translation,
-        selected_chapter_ids=["ch1"],
+        selected_chapter_ids=[CHAPTER_ID],
         translation_adapter_factory=translation.adapter,
     )
 
@@ -707,6 +763,52 @@ def test_translation_phase_stops_truthfully_before_scoring(tmp_path: Path) -> No
         orchestrator.run()
 
 
+def test_scoring_preparation_publishes_authority_without_running_evaluation(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    translation = _TranslationExecutor(tmp_path / "translation")
+    materializer = _SettingsMaterializer()
+    orchestrator = WorkflowOrchestratorV1(
+        relay.root,
+        translation_executor=translation,
+        baseline_provider=StaticBaselineInputProviderV1(_baseline_rows()),
+        evaluation_settings_materializer=materializer,
+        selected_chapter_ids=[CHAPTER_ID],
+        translation_adapter_factory=translation.adapter,
+    )
+
+    with pytest.raises(WorkflowComponentPausedV1):
+        orchestrator.run_translation()
+    translated = orchestrator.run_translation()
+    prepared = orchestrator.prepare_scoring(
+        translated.translation_component_root
+    )
+    repeated = orchestrator.prepare_scoring(
+        translated.translation_component_root
+    )
+
+    assert prepared.scoring_handoff == repeated.scoring_handoff
+    assert prepared.evaluation_settings == repeated.evaluation_settings
+    assert prepared.evaluation_settings["selected_chapter_ids"] == [
+        CHAPTER_ID
+    ]
+    assert prepared.manifest["components"] == translated.manifest["components"]
+    assert not (relay.root / "components" / "evaluation").exists()
+    relay.validate_parent_package()
+    artifact_index = json.loads(
+        (relay.root / "artifact_index.json").read_text(encoding="utf-8")
+    )
+    settings_rows = [
+        row
+        for row in artifact_index["artifacts"]
+        if row["binding"]["artifact_kind"]
+        == "evaluation_workflow_settings_v1"
+    ]
+    assert len(settings_rows) == 1
+    assert settings_rows[0]["producer"]["component_id"] == "neutral_relay"
+
+
 def test_scoring_phase_stops_truthfully_before_publication(
     tmp_path: Path,
 ) -> None:
@@ -718,7 +820,7 @@ def test_scoring_phase_stops_truthfully_before_publication(
         translation_executor=translation,
         baseline_provider=StaticBaselineInputProviderV1(_baseline_rows()),
         evaluation_executor=evaluation,
-        selected_chapter_ids=["ch1"],
+        selected_chapter_ids=[CHAPTER_ID],
         translation_adapter_factory=translation.adapter,
         evaluation_adapter_factory=evaluation.adapter,
     )

@@ -65,6 +65,13 @@ class EvaluationExecutorV1(Protocol):
     ) -> Path: ...
 
 
+class EvaluationSettingsMaterializerV1(Protocol):
+    def materialize_settings(
+        self,
+        scoring_handoff: Mapping[str, Any],
+    ) -> Mapping[str, Any]: ...
+
+
 class PublicationExecutorV1(Protocol):
     def execute(
         self,
@@ -103,6 +110,15 @@ class WorkflowScoringResultV1:
     scoring_receipt: dict[str, Any]
     translation_component_root: Path
     evaluation_component_root: Path
+
+
+@dataclass(frozen=True, slots=True)
+class WorkflowScoringPreparationV1:
+    parent_root: Path
+    manifest: dict[str, Any]
+    scoring_handoff: dict[str, Any]
+    evaluation_settings: dict[str, Any]
+    translation_component_root: Path
 
 
 class ExistingTranslationComponentExecutorV1:
@@ -181,6 +197,9 @@ class WorkflowOrchestratorV1:
         selected_chapter_ids: Sequence[str],
         baseline_provider: BaselineInputProviderV1 | None = None,
         evaluation_executor: EvaluationExecutorV1 | None = None,
+        evaluation_settings_materializer: (
+            EvaluationSettingsMaterializerV1 | None
+        ) = None,
         publication_executor: PublicationExecutorV1 | None = None,
         product_arm_id: str = "s1",
         translation_adapter_factory: AdapterFactoryV1 | None = None,
@@ -192,6 +211,9 @@ class WorkflowOrchestratorV1:
         self.translation_executor = translation_executor
         self.baseline_provider = baseline_provider
         self.evaluation_executor = evaluation_executor
+        self.evaluation_settings_materializer = (
+            evaluation_settings_materializer
+        )
         self.publication_executor = publication_executor
         self.selected_chapter_ids = _chapter_ids(selected_chapter_ids)
         if product_arm_id not in {"s0", "s1"}:
@@ -265,6 +287,73 @@ class WorkflowOrchestratorV1:
                 "workflow_runtime_incomplete",
                 "Scoring requires registered baseline and Evaluation executors.",
             )
+        handoff = self._publish_scoring_handoff(translation_root)
+        if self.evaluation_settings_materializer is not None:
+            settings = self.evaluation_settings_materializer.materialize_settings(
+                handoff
+            )
+            self.relay.publish_evaluation_settings(settings)
+
+        evaluation_root = self._execute_evaluation(handoff)
+        receipt = _read_json(
+            evaluation_root / "scoring_receipt.json",
+            owner="Evaluation scoring receipt",
+        )
+        accepted_receipt = self.relay.accept_scoring_receipt(receipt)
+        if accepted_receipt["status"] != "accepted":
+            raise WorkflowOrchestratorError(
+                "evaluation_rejected",
+                "Evaluation rejected the exact five-arm scoring handoff.",
+            )
+        manifest = validate_workflow_parent_package_v1(self.parent_root)
+        return WorkflowScoringResultV1(
+            parent_root=self.parent_root,
+            manifest=manifest,
+            scoring_handoff=handoff,
+            scoring_receipt=accepted_receipt,
+            translation_component_root=translation_root,
+            evaluation_component_root=evaluation_root,
+        )
+
+    def prepare_scoring(
+        self,
+        translation_component_root: str | Path,
+    ) -> WorkflowScoringPreparationV1:
+        """Prepare exact scoring authority without running any scorer."""
+
+        if (
+            self.baseline_provider is None
+            or self.evaluation_settings_materializer is None
+        ):
+            raise WorkflowOrchestratorError(
+                "workflow_runtime_incomplete",
+                "Scoring preparation requires registered baselines and settings authority.",
+            )
+        translation_root = Path(translation_component_root).resolve()
+        handoff = self._publish_scoring_handoff(translation_root)
+        settings = self.relay.publish_evaluation_settings(
+            self.evaluation_settings_materializer.materialize_settings(
+                handoff
+            )
+        )
+        manifest = validate_workflow_parent_package_v1(self.parent_root)
+        return WorkflowScoringPreparationV1(
+            parent_root=self.parent_root,
+            manifest=manifest,
+            scoring_handoff=handoff,
+            evaluation_settings=settings,
+            translation_component_root=translation_root,
+        )
+
+    def _publish_scoring_handoff(
+        self,
+        translation_root: Path,
+    ) -> dict[str, Any]:
+        if self.baseline_provider is None:
+            raise WorkflowOrchestratorError(
+                "workflow_runtime_incomplete",
+                "Scoring handoff requires a registered baseline provider.",
+            )
         manifest = validate_workflow_parent_package_v1(self.parent_root)
         translation = next(
             (
@@ -333,27 +422,7 @@ class WorkflowOrchestratorV1:
             translation_inputs=all_inputs,
             created_at=self.relay.created_at,
         )
-
-        evaluation_root = self._execute_evaluation(handoff)
-        receipt = _read_json(
-            evaluation_root / "scoring_receipt.json",
-            owner="Evaluation scoring receipt",
-        )
-        accepted_receipt = self.relay.accept_scoring_receipt(receipt)
-        if accepted_receipt["status"] != "accepted":
-            raise WorkflowOrchestratorError(
-                "evaluation_rejected",
-                "Evaluation rejected the exact five-arm scoring handoff.",
-            )
-        manifest = validate_workflow_parent_package_v1(self.parent_root)
-        return WorkflowScoringResultV1(
-            parent_root=self.parent_root,
-            manifest=manifest,
-            scoring_handoff=handoff,
-            scoring_receipt=accepted_receipt,
-            translation_component_root=translation_root,
-            evaluation_component_root=evaluation_root,
-        )
+        return handoff
 
     def _run_publication(
         self,
@@ -780,6 +849,7 @@ def _sha256(value: Any, owner: str) -> str:
 __all__ = [
     "BaselineInputProviderV1",
     "EvaluationExecutorV1",
+    "EvaluationSettingsMaterializerV1",
     "ExistingTranslationComponentExecutorV1",
     "PublicationExecutorV1",
     "SnapshotObserverV1",
@@ -788,6 +858,7 @@ __all__ = [
     "WorkflowComponentPausedV1",
     "WorkflowOrchestratorError",
     "WorkflowOrchestratorResultV1",
+    "WorkflowScoringPreparationV1",
     "WorkflowScoringResultV1",
     "WorkflowTranslationResultV1",
     "WorkflowOrchestratorV1",
