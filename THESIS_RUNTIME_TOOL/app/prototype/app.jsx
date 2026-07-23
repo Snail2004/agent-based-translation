@@ -910,7 +910,7 @@ function Modal({ title, icon: I, tone, children, onClose, actions, className = "
 function workflowDisplayValue(value) {
   if (value === null || value === undefined || value === "") return uiText("Chưa xác định", "Unknown");
   if (typeof value === "boolean") return value ? uiText("Có", "Yes") : uiText("Không", "No");
-  if (Array.isArray(value)) return value.length ? value.join(" · ") : uiText("Không có", "None");
+  if (Array.isArray(value)) return value.length ? value.map(workflowDisplayValue).join(" · ") : uiText("Không có", "None");
   if (typeof value === "object") return Object.entries(value)
     .map(([key, child]) => `${key}: ${workflowDisplayValue(child)}`)
     .join(" · ");
@@ -918,14 +918,25 @@ function workflowDisplayValue(value) {
 }
 
 function WorkflowFacts({ title, value, empty }) {
-  const entries = value && typeof value === "object" && !Array.isArray(value)
-    ? Object.entries(value).filter(([, child]) => child !== undefined)
-    : [];
+  const entries = Array.isArray(value)
+    ? value.map((child, index) => {
+      if (!child || typeof child !== "object" || Array.isArray(child)) return [String(index + 1), child];
+      const labelKey = ["credential_ref", "source_id", "requested_model_id", "id"]
+        .find(key => child[key] !== undefined);
+      const label = labelKey ? child[labelKey] : String(index + 1);
+      const details = Object.fromEntries(
+        Object.entries(child).filter(([key, detail]) => detail !== undefined && key !== labelKey),
+      );
+      return [String(label), details];
+    })
+    : value && typeof value === "object"
+      ? Object.entries(value).filter(([, child]) => child !== undefined)
+      : [];
   return (
     <section className="workflow-facts">
       {title && <div className="workflow-section-title">{title}</div>}
-      {entries.length ? entries.map(([key, child]) => (
-        <div className="workflow-fact-row" key={key}>
+      {entries.length ? entries.map(([key, child], index) => (
+        <div className="workflow-fact-row" key={`${key}-${index}`}>
           <span>{key.replaceAll("_", " ")}</span>
           <b title={typeof child === "string" ? child : undefined}>{workflowDisplayValue(child)}</b>
         </div>
