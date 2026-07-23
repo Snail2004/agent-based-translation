@@ -19,6 +19,13 @@ required by the neutral workflow orchestrator. The boundary separates:
 - Materialize Settings 1.1 once from registered authority plus the locked
   selection, then require the executor to reuse the exact settings hash.
 - Materialize and load a run-specific, content-addressed file bundle.
+- Expose one high-level production preparation call that accepts only the
+  registered template, exact five-arm handoff, explicit producer file map,
+  locked selection, run identities, output roots, and server runtime config.
+- Derive the benchmark manifest, preflight, five arm overlays, chapter configs,
+  presentations, pairwise plan, and runtime bindings inside Evaluation.
+- Build the process-local runtime registry from the registered local SF-QE
+  runtime and sealed shared-LLM profile/source/capability/credential references.
 - Keep `workflow_run_id` and `component_run_id` stable across Resume.
 - Verify the registered settings option and selection hash before preparing work.
 - Require the input provider to echo the exact handoff and materialized settings.
@@ -34,11 +41,16 @@ required by the neutral workflow orchestrator. The boundary separates:
   chapter/block universe before any scorer starts. In particular, the historical
   143-block failed GPT Web capture is evidence only and can never be registered
   as the `llm_lc` arm for the five-chapter benchmark.
+- When PJ is selected for all five arms, derive the complete unordered
+  round-robin of ten arm pairs; do not silently reduce the comparison to
+  S1-versus-all.
 
 ## Boundaries
 
 - Zero API calls in this task.
 - No provider, model, credential, fallback, or retry selection.
+- No credential bytes in templates, bundles, identities, reports, or tests of
+  persisted output. Credentials remain behind the server-owned resolver.
 - No directory scan or inference from filenames.
 - No App, D2L, neutral relay, DB, source package, or live output edits.
 - No scoring semantic, prompt, validator, aggregation, or report contract changes.
@@ -55,21 +67,28 @@ required by the neutral workflow orchestrator. The boundary separates:
   without rerunning completed chapters.
 - Selection hash drift, foreign workflow, and foreign provider echoes are rejected
   before semantic scoring.
+- High-level preparation is byte-stable on Resume and reuses the same settings
+  hash and runtime identity without invoking a provider.
+- The caller is not required or allowed to synthesize Evaluation-owned manifests,
+  preflight rows, overlays, chapter configs, presentations, or runtime bindings.
 - Focused and Evaluation regression tests pass with no API or shared-state writes.
 
-## Remaining integration dependency
+## Production callable
 
-The canonical D2L bridge and file-backed executor are implemented here. The
-runtime bundle deliberately binds runtime object IDs rather than serializing
-live Python objects or credentials. The App integration layer must supply an
-explicit server-owned `EvaluationRuntimeObjectRegistryV1` that resolves those
-registered IDs to:
+`prepare_evaluation_production_runtime_v1(...)` is the production boundary used
+after Translation. It:
 
-- the local SF-QE predictor;
-- the already sealed Evaluation LLM role runners;
-- their shared attempt ledgers.
+1. loads the baseline template only through `workflow_runtime_v1`;
+2. validates the exact parent handoff and explicit producer files;
+3. materializes and reuses `EvaluationWorkflowSettingsV1@1.1.0`;
+4. derives all Evaluation-owned benchmark inputs;
+5. materializes the run-specific runtime bundle; and
+6. returns a concrete executor runtime ready for the existing benchmark runner.
 
-That registry is an injected process-local dependency, not data inferred from a
-directory and not credential material stored in the runtime bundle. A missing or
-foreign runtime ID fails before scoring; no provider, model, credential, or
-fallback is selected by this task.
+The server supplies `EvaluationServerRuntimeConfigV1`: the registered local
+SF-QE predictor, sealed Evaluation LLM profile, exact API source and capability
+records, external credential resolver, sender, and cache/clock dependencies.
+Evaluation constructs `EvaluationRuntimeObjectRegistryV1` and attempt ledgers
+itself. Missing, foreign, or expanded runtime authority fails before a provider
+call. The returned bundle stores only IDs and commitments, never live objects or
+credential material.

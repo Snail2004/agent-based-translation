@@ -2512,11 +2512,12 @@ def _validate_runtime_scope(
         )
     selected_scorers = list(settings["selected_scorer_ids"])
     for chapter_id, config in configs.items():
-        if [row["method_id"] for row in config["methods"]] != selected_scorers:
+        configured_scorers = [row["method_id"] for row in config["methods"]]
+        if set(configured_scorers) != set(selected_scorers):
             raise ContractValidationError(
                 "scorer_scope",
                 f"$.chapter_configs[{chapter_id}].methods",
-                "chapter config and settings select different scorers",
+                "chapter config must exact-cover the scorers selected by settings",
             )
 
 

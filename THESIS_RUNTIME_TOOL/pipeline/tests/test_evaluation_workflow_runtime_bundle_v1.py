@@ -39,6 +39,7 @@ from pipeline.eval.evaluation_workflow_settings_v1 import (
     EvaluationWorkflowSettingsAuthorityV1,
 )
 from pipeline.eval.local_sf_qe_v1 import SF_QE_MODEL_ID
+from pipeline.eval.offline_orchestrator_v1 import seal_evaluation_run_config
 from pipeline.eval.workflow_component_writer_v1 import (
     validate_evaluation_workflow_component_package_v1,
 )
@@ -490,12 +491,16 @@ def _authority_files(
     return authority, paths
 
 
-def _locked_selection(registered_option_sha256: str) -> dict:
+def _locked_selection(
+    registered_option_sha256: str,
+    *,
+    selected_scorer_ids: tuple[str, ...] = ("sf_qe",),
+) -> dict:
     basis = {
         "settings_option_id": "evaluation_workflow_settings_v1",
         "selected_chapter_ids": [CHAPTER_ID],
         "selected_arm_ids": list(ARM_IDS),
-        "selected_scorer_ids": ["sf_qe"],
+        "selected_scorer_ids": list(selected_scorer_ids),
         "highlight_pair": {
             "baseline_arm_id": "s0",
             "candidate_arm_id": "s1",
@@ -505,7 +510,39 @@ def _locked_selection(registered_option_sha256: str) -> dict:
     return {**basis, "selection_sha256": canonical_sha256(basis)}
 
 
-def _fixture(tmp_path: Path, *, canonical: bool = False):
+def _config_for_scorers(
+    common: CommonEvaluationInputV1,
+    selected_scorer_ids: tuple[str, ...],
+) -> dict:
+    if selected_scorer_ids == ("sf_qe",):
+        return _config(common)
+    payload = copy.deepcopy(_config(common))
+    payload["config_id"] = "workflow-runtime-selected-scorers-fixture"
+    payload["methods"] = [
+        {
+            "method_id": method_id,
+            "method_version": f"{method_id}-fixture-v1",
+            "scorer_kind": "pairwise" if method_id == "pj" else "unary",
+            "profile_scope": "common",
+            "eligible_admissions": ["translate"],
+        }
+        for method_id in selected_scorer_ids
+    ]
+    payload["comparison_pairs"] = (
+        [{"pair_id": "s0-vs-s1", "arm_1_id": "S0", "arm_2_id": "S1"}]
+        if "pj" in selected_scorer_ids
+        else []
+    )
+    payload["integrity"]["config_sha256"] = "0" * 64
+    return seal_evaluation_run_config(payload)
+
+
+def _fixture(
+    tmp_path: Path,
+    *,
+    canonical: bool = False,
+    selected_scorer_ids: tuple[str, ...] = ("sf_qe",),
+):
     inputs = tmp_path / "inputs"
     source_paths: dict[str, Path] = {}
     source_bindings: list[dict] = []
@@ -581,7 +618,7 @@ def _fixture(tmp_path: Path, *, canonical: bool = False):
     translation_bindings: dict[str, dict[str, str]] = {}
     for arm_id in ARM_IDS:
         artifact_ref = f"translations/{arm_id}.json"
-        if canonical and arm_id in {"s0", "s1"}:
+        if canonical:
             assert canonical_paths is not None
             assert canonical_binding is not None
             assert canonical_projection is not None
@@ -773,14 +810,17 @@ def _fixture(tmp_path: Path, *, canonical: bool = False):
         ],
     )
     config_path = _write_json(
-        inputs / "runtime" / "config.json", _config(runtime_common)
+        inputs / "runtime" / "config.json",
+        _config_for_scorers(runtime_common, selected_scorer_ids),
     )
 
     authority, authority_paths = _authority_files(inputs)
     option_sha = canonical_sha256(
         {"settings_option_id": "evaluation_workflow_settings_v1", "revision": 1}
     )
-    selection = _locked_selection(option_sha)
+    selection = _locked_selection(
+        option_sha, selected_scorer_ids=selected_scorer_ids
+    )
     template_path = materialize_workflow_scoring_baseline_template_v1(
         tmp_path / "baseline-template",
         template_id="d2l-five-arm-baseline-template-v1",
@@ -859,25 +899,54 @@ def _fixture(tmp_path: Path, *, canonical: bool = False):
         }
         for arm_id in ARM_IDS
     ]
+    display_names = {
+        "sf_qe": "Semantic fidelity QE",
+        "sf_bt": "Semantic fidelity back-translation",
+        "pj": "Pairwise judge",
+    }
     method_presentations = [
         {
-            "display_name": "Semantic fidelity QE",
+            "display_name": display_names[method_id],
             "method": {
-                "method_id": "sf_qe",
-                "method_version": "sf-qe-fixture-v1",
+                "method_id": method_id,
+                "method_version": (
+                    "sf-qe-fixture-v1"
+                    if method_id == "sf_qe"
+                    else f"{method_id}-fixture-v1"
+                ),
                 "implementation_commit": COMMIT,
-                "prompt_version": None,
-                "model_id": SF_QE_MODEL_ID,
+                "prompt_version": (
+                    None if method_id == "sf_qe" else f"{method_id}-prompt-v1"
+                ),
+                "model_id": (
+                    SF_QE_MODEL_ID
+                    if method_id == "sf_qe"
+                    else "evaluation-fixture-model"
+                ),
             },
         }
+        for method_id in selected_scorer_ids
     ]
+    needs_llm = any(
+        method_id in {"sf_bt", "pj"} for method_id in selected_scorer_ids
+    )
     chapter_runtime_bindings = [
         {
             "chapter_id": CHAPTER_ID,
-            "local_sf_qe_runtime_id": "local_sf_qe.fixture.v1",
-            "llm_roles_runtime_id": None,
-            "shared_ledger_runtime_id": None,
-            "shared_ledger_relative_path": None,
+            "local_sf_qe_runtime_id": (
+                "local_sf_qe.fixture.v1"
+                if "sf_qe" in selected_scorer_ids
+                else None
+            ),
+            "llm_roles_runtime_id": (
+                "llm_roles.fixture.v1" if needs_llm else None
+            ),
+            "shared_ledger_runtime_id": (
+                "shared_ledger.fixture.v1" if needs_llm else None
+            ),
+            "shared_ledger_relative_path": (
+                "usage/attempt_ledger.sqlite3" if needs_llm else None
+            ),
         }
     ]
     return {
