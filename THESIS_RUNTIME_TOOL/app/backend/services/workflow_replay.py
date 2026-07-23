@@ -7,10 +7,11 @@ import secrets
 import threading
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
+from urllib.parse import quote
 
 from pipeline.workflow_replay.contracts_v1 import (
     WorkflowReplayContractError,
@@ -25,8 +26,11 @@ from services.thesis_runs import validate_job_id, validate_run_id
 
 WORKFLOW_REPLAY_READ_SCHEMA = "workflow_replay_read_v1"
 WORKFLOW_ARTIFACT_READ_SCHEMA = "workflow_artifact_read_v1"
-WORKFLOW_SETUP_SCHEMA = "workflow_setup_v1"
-WORKFLOW_PREFLIGHT_SCHEMA = "workflow_preflight_v1"
+WORKFLOW_SETUP_SCHEMA_ID = "WorkflowSetupV1"
+WORKFLOW_PREFLIGHT_SCHEMA_ID = "WorkflowPreflightV1"
+WORKFLOW_SELECTION_SCHEMA_ID = "WorkflowSetupSelectionV1"
+WORKFLOW_LAUNCH_SCHEMA_ID = "WorkflowLaunchConfirmationV1"
+WORKFLOW_APP_SCHEMA_VERSION = "1.0.0"
 LIVE_START_ALLOWED = False
 MAX_WAIT_MS = 20_000
 MAX_ARTIFACT_BYTES = 8 * 1024 * 1024
@@ -74,9 +78,9 @@ def get_workflow_setup(
     *,
     jobs_root: str | Path,
 ) -> dict[str, Any]:
-    status, project = _load_setup_project(doc_id, jobs_root=jobs_root)
+    status, loaded_project = _load_setup_project(doc_id, jobs_root=jobs_root)
     chapter_counts: dict[str, int] = {}
-    for block in project.block_rows:
+    for block in loaded_project.block_rows:
         chapter_id = str(block["chapter_id"])
         chapter_counts[chapter_id] = chapter_counts.get(chapter_id, 0) + 1
     chapters = [
@@ -86,33 +90,47 @@ def get_workflow_setup(
             "block_count": chapter_counts.get(row["chapter_id"], 0),
             "selectable": True,
         }
-        for row in project.chapter_rows
-        if row["chapter_id"] in set(project.manifest["translatable_chapter_ids"])
+        for row in loaded_project.chapter_rows
+        if row["chapter_id"]
+        in set(loaded_project.manifest["translatable_chapter_ids"])
     ]
+    source_package = {
+        "project_id": doc_id,
+        "doc_id": doc_id,
+        "source_package_tree_sha256": loaded_project.source_snapshot[
+            "package_tree_sha256"
+        ],
+        "source_binding_sha256": canonical_sha256(
+            loaded_project.source_binding
+        ),
+        "source_package_bindings": _parent_source_bindings(
+            loaded_project.source_binding
+        ),
+    }
+    runtime = {
+        "job_id": status["job_id"],
+        "managed": bool(status.get("managed")),
+        "prepared": bool(status.get("prepared")),
+        "lifecycle": status.get("lifecycle"),
+        "source_identity_sha256": status.get("source_identity_sha256"),
+    }
+    shared_option = _shared_settings_option()
+    d2l_option = _d2l_settings_option()
+    evaluation_option = _evaluation_settings_option()
     payload = {
-        "schema": WORKFLOW_SETUP_SCHEMA,
-        "project": {
-            "doc_id": doc_id,
-            "job_id": status["job_id"],
-            "managed": bool(status.get("managed")),
-            "prepared": bool(status.get("prepared")),
-            "lifecycle": status.get("lifecycle"),
-            "source_identity_sha256": status.get("source_identity_sha256"),
-            "source_package_tree_sha256": project.source_snapshot[
-                "package_tree_sha256"
-            ],
-            "source_binding_sha256": canonical_sha256(project.source_binding),
-            "source_package_bindings": _parent_source_bindings(
-                project.source_binding
-            ),
-        },
+        "schema_id": WORKFLOW_SETUP_SCHEMA_ID,
+        "schema_version": WORKFLOW_APP_SCHEMA_VERSION,
+        "project_id": doc_id,
+        "source_package": source_package,
+        "runtime": runtime,
         "chapters": chapters,
         "execution_modes": [
-            {"id": "dry_run", "enabled": True},
+            {"id": "dry_run", "label": "Dry run", "enabled": True},
             {
                 "id": "live",
+                "label": "Live",
                 "enabled": LIVE_START_ALLOWED,
-                "disabled_reason": (
+                "reason": (
                     None
                     if LIVE_START_ALLOWED
                     else "real_five_chapter_workflow_closed_during_dec064"
@@ -120,15 +138,23 @@ def get_workflow_setup(
             },
         ],
         "live_start_allowed": LIVE_START_ALLOWED,
-        "shared_settings": _shared_settings_catalog(),
-        "d2l_settings": _d2l_settings_catalog(),
-        "evaluation_settings": _evaluation_settings_catalog(),
-        "credential_status": _credential_status(),
+        "dry_run_allowed": True,
+        "shared_options": [shared_option],
+        "d2l_settings_options": [d2l_option],
+        "evaluation_settings_options": [evaluation_option],
+        "defaults": {
+            "shared_option_id": SHARED_SETTINGS_ID,
+            "d2l_settings_option_id": D2L_SETTINGS_ID,
+            "evaluation_settings_option_id": EVALUATION_SETTINGS_ID,
+            "highlight_pair": None,
+            "hard_total_token_cap": 6_000_000,
+            "reserved_cost_cap_usd": None,
+        },
         "constraints": {
             "selectable_fields": [
-                "mode",
+                "execution_mode",
                 "chapter_ids",
-                "evaluation_highlight_pair",
+                "highlight_pair",
                 "hard_total_token_cap",
                 "reserved_cost_cap_usd",
             ],
@@ -162,17 +188,17 @@ def create_workflow_preflight(
 ) -> dict[str, Any]:
     body = _validate_preflight_request(request_body)
     setup = get_workflow_setup(doc_id, jobs_root=jobs_root)
-    if body["shared_settings_id"] != SHARED_SETTINGS_ID:
+    if body["shared_option_id"] != SHARED_SETTINGS_ID:
         raise WorkflowReplayError(
             "workflow_shared_settings_invalid",
             "shared_settings_id is not advertised by the server.",
         )
-    if body["d2l_settings_id"] != D2L_SETTINGS_ID:
+    if body["d2l_settings_option_id"] != D2L_SETTINGS_ID:
         raise WorkflowReplayError(
             "workflow_d2l_settings_invalid",
             "d2l_settings_id is not advertised by the server.",
         )
-    if body["evaluation_settings_id"] != EVALUATION_SETTINGS_ID:
+    if body["evaluation_settings_option_id"] != EVALUATION_SETTINGS_ID:
         raise WorkflowReplayError(
             "workflow_evaluation_settings_invalid",
             "evaluation_settings_id is not advertised by the server.",
@@ -205,7 +231,9 @@ def create_workflow_preflight(
     identities = d2l_component_ids(run_id)
     try:
         preview = _d2l_preview_source(
-            job_root=(Path(jobs_root).resolve() / setup["project"]["job_id"]),
+            job_root=(
+                Path(jobs_root).resolve() / setup["runtime"]["job_id"]
+            ),
             chapters=list(body["chapter_ids"]),
             workflow_run_id=identities["workflow_run_id"],
             component_run_id=identities["component_run_id"],
@@ -227,19 +255,23 @@ def create_workflow_preflight(
         for row in credentials
         if row["status"] != "available"
     ]
-    mode = body["mode"]
+    mode = body["execution_mode"]
     blocking_reasons = []
     if mode == "live" and not LIVE_START_ALLOWED:
         blocking_reasons.append("workflow_live_start_disabled")
     if mode == "live" and missing_credentials:
         blocking_reasons.append("workflow_credentials_unavailable")
     issued_at = _utc_now()
+    expires_at = (
+        datetime.now(UTC) + timedelta(seconds=PREFLIGHT_TTL_SECONDS)
+    ).isoformat().replace("+00:00", "Z")
+    preflight_id = f"preflight_{run_id}"
     launch = {
         "script": "run_d2l_project_campaign",
         "mode": mode,
         "allow_api": mode == "live",
         "doc_id": doc_id,
-        "job_id": setup["project"]["job_id"],
+        "job_id": setup["runtime"]["job_id"],
         "planned_run_id": run_id,
         "workflow_run_id": identities["workflow_run_id"],
         "component_run_id": identities["component_run_id"],
@@ -250,29 +282,47 @@ def create_workflow_preflight(
         "shared_settings_id": SHARED_SETTINGS_ID,
         "d2l_settings_id": D2L_SETTINGS_ID,
         "evaluation_settings_id": EVALUATION_SETTINGS_ID,
-        "evaluation_highlight_pair": body["evaluation_highlight_pair"],
+        "evaluation_highlight_pair": body["highlight_pair"],
         "source_binding_sha256": preview["source_binding_sha256"],
         "campaign_config_sha256": preview["campaign_config_sha256"],
+        "api_confirm_token": None,
     }
     public = {
-        "schema": WORKFLOW_PREFLIGHT_SCHEMA,
+        "schema_id": WORKFLOW_PREFLIGHT_SCHEMA_ID,
+        "schema_version": WORKFLOW_APP_SCHEMA_VERSION,
+        "preflight_id": preflight_id,
         "issued_at": issued_at,
-        "expires_in_seconds": PREFLIGHT_TTL_SECONDS,
-        "mode": mode,
+        "expires_at": expires_at,
+        "status": "ready",
+        "valid": True,
+        "errors": [],
+        "warnings": [
+            {"code": reason, "message": reason}
+            for reason in blocking_reasons
+        ],
+        "execution_mode": mode,
         "live_start_allowed": LIVE_START_ALLOWED,
         "start_allowed": mode == "dry_run" and not blocking_reasons,
         "blocking_reasons": blocking_reasons,
-        "project": setup["project"],
-        "selected_chapter_ids": list(body["chapter_ids"]),
-        "settings": {
-            "shared_settings_id": SHARED_SETTINGS_ID,
-            "d2l_settings_id": D2L_SETTINGS_ID,
-            "evaluation_settings_id": EVALUATION_SETTINGS_ID,
-            "evaluation_highlight_pair": body["evaluation_highlight_pair"],
+        "normalized_selection": {
+            "schema_id": WORKFLOW_SELECTION_SCHEMA_ID,
+            "schema_version": WORKFLOW_APP_SCHEMA_VERSION,
+            "execution_mode": mode,
+            "chapter_ids": list(body["chapter_ids"]),
+            "shared_option_id": SHARED_SETTINGS_ID,
+            "d2l_settings_option_id": D2L_SETTINGS_ID,
+            "evaluation_settings_option_id": EVALUATION_SETTINGS_ID,
+            "highlight_pair": body["highlight_pair"],
+            "hard_total_token_cap": body["hard_total_token_cap"],
+            "reserved_cost_cap_usd": body["reserved_cost_cap_usd"],
         },
+        "source_summary": setup["source_package"],
+        "shared_summary": _shared_settings_option(),
+        "d2l_summary": _d2l_settings_option(),
+        "evaluation_summary": _evaluation_settings_option(),
         "credential_status": credentials,
         "capability_status": _capability_status(preview),
-        "forecast": _forecast_read_model(preview),
+        "bounds": _forecast_read_model(preview),
         "identities": {
             "planned_run_id": run_id,
             "workflow_run_id": identities["workflow_run_id"],
@@ -286,16 +336,21 @@ def create_workflow_preflight(
     }
     public["preflight_sha256"] = canonical_sha256(public)
     token = _issue_preflight_token(public=public, launch=launch)
+    launch_read_model = {
+        "preflight_id": preflight_id,
+        "preflight_sha256": public["preflight_sha256"],
+        "confirm_token": token,
+        "planned_run_id": run_id,
+        "workflow_run_id": identities["workflow_run_id"],
+        "expires_at": expires_at,
+    }
     return {
         **public,
-        "preflight_token": token,
+        "launch": launch_read_model,
         "final_action": {
             "method": "POST",
             "href": "/api/thesis/runs",
-            "required_body": {
-                "workflow_preflight_token": token,
-                "confirmed": True,
-            },
+            "required_body_schema_id": WORKFLOW_LAUNCH_SCHEMA_ID,
         },
     }
 
@@ -306,18 +361,32 @@ def resolve_workflow_launch(request_body: Any) -> dict[str, Any]:
             "workflow_launch_body_invalid",
             "Workflow launch body must be a JSON object.",
         )
-    if set(request_body) != {"workflow_preflight_token", "confirmed"}:
+    required = {
+        "schema_id",
+        "schema_version",
+        "script",
+        "job_id",
+        "execution_mode",
+        "allow_api",
+        "workflow_preflight_id",
+        "workflow_preflight_sha256",
+        "confirm_token",
+        "planned_run_id",
+    }
+    if set(request_body) != required:
         raise WorkflowReplayError(
             "workflow_launch_body_invalid",
-            "Workflow launch accepts only workflow_preflight_token and confirmed.",
+            "Workflow launch confirmation has missing or unsupported fields.",
         )
-    if request_body["confirmed"] is not True:
+    if (
+        request_body["schema_id"] != WORKFLOW_LAUNCH_SCHEMA_ID
+        or request_body["schema_version"] != WORKFLOW_APP_SCHEMA_VERSION
+    ):
         raise WorkflowReplayError(
-            "workflow_launch_confirmation_required",
-            "Workflow launch requires explicit confirmed=true.",
-            403,
+            "workflow_launch_schema_invalid",
+            "Workflow launch confirmation schema is not supported.",
         )
-    token = request_body["workflow_preflight_token"]
+    token = request_body["confirm_token"]
     if not isinstance(token, str) or not token:
         raise WorkflowReplayError(
             "workflow_preflight_token_invalid",
@@ -332,6 +401,22 @@ def resolve_workflow_launch(request_body: Any) -> dict[str, Any]:
             "workflow_preflight_token_invalid",
             "Workflow preflight token is unknown or expired.",
             403,
+        )
+    expected = {
+        "script": record.launch["script"],
+        "job_id": record.launch["job_id"],
+        "execution_mode": record.launch["mode"],
+        "allow_api": record.launch["allow_api"],
+        "workflow_preflight_id": record.public["preflight_id"],
+        "workflow_preflight_sha256": record.public["preflight_sha256"],
+        "planned_run_id": record.launch["planned_run_id"],
+    }
+    observed = {key: request_body[key] for key in expected}
+    if observed != expected:
+        raise WorkflowReplayError(
+            "workflow_launch_binding_invalid",
+            "Workflow launch confirmation differs from the server-sealed preflight.",
+            409,
         )
     if record.launch["mode"] == "live" or record.launch["allow_api"]:
         raise WorkflowReplayError(
@@ -493,20 +578,31 @@ def _validate_preflight_request(value: Any) -> dict[str, Any]:
             "Workflow preflight body must be a JSON object.",
         )
     required = {
-        "mode",
+        "schema_id",
+        "schema_version",
+        "execution_mode",
         "chapter_ids",
-        "shared_settings_id",
-        "d2l_settings_id",
-        "evaluation_settings_id",
+        "shared_option_id",
+        "d2l_settings_option_id",
+        "evaluation_settings_option_id",
+        "highlight_pair",
         "hard_total_token_cap",
+        "reserved_cost_cap_usd",
     }
-    optional = {"evaluation_highlight_pair", "reserved_cost_cap_usd"}
-    if set(value) - required - optional or required - set(value):
+    if set(value) != required:
         raise WorkflowReplayError(
             "workflow_preflight_body_invalid",
             "Workflow preflight body has missing or unsupported fields.",
         )
-    mode = value["mode"]
+    if (
+        value["schema_id"] != WORKFLOW_SELECTION_SCHEMA_ID
+        or value["schema_version"] != WORKFLOW_APP_SCHEMA_VERSION
+    ):
+        raise WorkflowReplayError(
+            "workflow_preflight_schema_invalid",
+            "Workflow setup selection schema is not supported.",
+        )
+    mode = value["execution_mode"]
     if mode not in {"dry_run", "live"}:
         raise WorkflowReplayError(
             "workflow_mode_invalid",
@@ -521,6 +617,8 @@ def _validate_preflight_request(value: Any) -> dict[str, Any]:
             "chapter_ids must be an array of non-empty server-advertised IDs.",
         )
     token_cap = value["hard_total_token_cap"]
+    if token_cap is None:
+        token_cap = 6_000_000
     if (
         isinstance(token_cap, bool)
         or not isinstance(token_cap, int)
@@ -531,36 +629,45 @@ def _validate_preflight_request(value: Any) -> dict[str, Any]:
             "workflow_token_cap_invalid",
             "hard_total_token_cap must be an integer from 1 to 20000000.",
         )
-    highlight = value.get("evaluation_highlight_pair")
+    highlight = value["highlight_pair"]
     if highlight is not None:
         if (
-            not isinstance(highlight, list)
-            or len(highlight) != 2
-            or len(set(highlight)) != 2
-            or any(item not in EVALUATION_ARM_ORDER for item in highlight)
+            not isinstance(highlight, Mapping)
+            or set(highlight)
+            != {"baseline_arm_id", "candidate_arm_id"}
         ):
             raise WorkflowReplayError(
                 "workflow_highlight_pair_invalid",
-                "evaluation_highlight_pair must contain two distinct registered arms.",
+                "highlight_pair must name baseline_arm_id and candidate_arm_id.",
+            )
+        baseline = highlight["baseline_arm_id"]
+        candidate = highlight["candidate_arm_id"]
+        if (
+            baseline not in EVALUATION_ARM_ORDER
+            or candidate not in EVALUATION_ARM_ORDER
+            or baseline == candidate
+        ):
+            raise WorkflowReplayError(
+                "workflow_highlight_pair_invalid",
+                "highlight_pair must contain two distinct registered arms.",
             )
     return {
-        "mode": mode,
+        "execution_mode": mode,
         "chapter_ids": list(chapter_ids),
-        "shared_settings_id": _required_string(
-            value["shared_settings_id"], "shared_settings_id"
+        "shared_option_id": _required_string(
+            value["shared_option_id"], "shared_option_id"
         ),
-        "d2l_settings_id": _required_string(
-            value["d2l_settings_id"], "d2l_settings_id"
+        "d2l_settings_option_id": _required_string(
+            value["d2l_settings_option_id"], "d2l_settings_option_id"
         ),
-        "evaluation_settings_id": _required_string(
-            value["evaluation_settings_id"], "evaluation_settings_id"
+        "evaluation_settings_option_id": _required_string(
+            value["evaluation_settings_option_id"],
+            "evaluation_settings_option_id",
         ),
-        "evaluation_highlight_pair": (
-            None if highlight is None else list(highlight)
-        ),
+        "highlight_pair": None if highlight is None else dict(highlight),
         "hard_total_token_cap": token_cap,
         "reserved_cost_cap_usd": _nullable_positive_decimal(
-            value.get("reserved_cost_cap_usd")
+            value["reserved_cost_cap_usd"]
         ),
     }
 
@@ -625,95 +732,117 @@ def _parent_source_bindings(source_binding: Mapping[str, Any]) -> list[dict[str,
     ]
 
 
-def _shared_settings_catalog() -> dict[str, Any]:
-    return {
-        "selected_id": SHARED_SETTINGS_ID,
-        "options": [
+def _shared_settings_option() -> dict[str, Any]:
+    fixed_facts = {
+        "sources": [
             {
-                "settings_id": SHARED_SETTINGS_ID,
-                "sources": [
-                    {
-                        "source_id": "shopaikey_gemini_proxy_v2",
-                        "source_revision": "shopaikey_gemini_profile_v2",
-                        "requested_model_id": "gemini-3.5-flash",
-                        "output_mode": "prompt_json",
-                        "capability_status": "qualified",
-                        "credential_ref": "credential.shopaikey_gemini_proxy_v1",
-                    },
-                    {
-                        "source_id": "modelapi_shared_v1",
-                        "source_revision": "modelapi_profile_v1",
-                        "requested_model_id": "gpt-5.4",
-                        "output_mode": "prompt_json",
-                        "capability_status": "qualified",
-                        "credential_ref": "credential.modelapi_shared_v1",
-                    },
-                    {
-                        "source_id": "modelapi_shared_v1",
-                        "source_revision": "modelapi_profile_v1",
-                        "requested_model_id": "gpt-5.5",
-                        "output_mode": "prompt_json",
-                        "capability_status": "qualified",
-                        "credential_ref": "credential.modelapi_shared_v1",
-                    },
-                ],
-                "policy": {
-                    "transport_retry_cap": 0,
-                    "fallback_enabled": False,
-                    "rotation_enabled": False,
-                    "concurrency": 1,
-                    "cache_policy": "exact_local_cache_v1",
-                    "semantic_retry_policy": "role_sealed_bounded_v1",
-                    "tariff_status": "unpinned",
-                },
-            }
+                "source_id": "shopaikey_gemini_proxy_v2",
+                "source_revision": "shopaikey_gemini_profile_v2",
+                "requested_model_id": "gemini-3.5-flash",
+                "output_mode": "prompt_json",
+                "capability_status": "qualified",
+                "credential_ref": "credential.shopaikey_gemini_proxy_v1",
+            },
+            {
+                "source_id": "modelapi_shared_v1",
+                "source_revision": "modelapi_profile_v1",
+                "requested_model_id": "gpt-5.4",
+                "output_mode": "prompt_json",
+                "capability_status": "qualified",
+                "credential_ref": "credential.modelapi_shared_v1",
+            },
+            {
+                "source_id": "modelapi_shared_v1",
+                "source_revision": "modelapi_profile_v1",
+                "requested_model_id": "gpt-5.5",
+                "output_mode": "prompt_json",
+                "capability_status": "qualified",
+                "credential_ref": "credential.modelapi_shared_v1",
+            },
         ],
+        "policy": {
+            "transport_retry_cap": 0,
+            "fallback_enabled": False,
+            "rotation_enabled": False,
+            "concurrency": 1,
+            "cache_policy": "exact_local_cache_v1",
+            "semantic_retry_policy": "role_sealed_bounded_v1",
+            "tariff_status": "unpinned",
+        },
+    }
+    return {
+        "option_id": SHARED_SETTINGS_ID,
+        "label": "Registered shared API profile",
+        "revision": "v1",
+        "sha256": canonical_sha256(fixed_facts),
+        "enabled": True,
+        "status": "registered",
+        "credential_status": _credential_status(),
+        "capability_status": [
+            {
+                "source_id": row["source_id"],
+                "requested_model_id": row["requested_model_id"],
+                "status": row["capability_status"],
+            }
+            for row in fixed_facts["sources"]
+        ],
+        "fixed_facts": fixed_facts,
+        "constraints": {
+            "server_owned": True,
+            "arbitrary_source_model_output_forbidden": True,
+        },
     }
 
 
-def _d2l_settings_catalog() -> dict[str, Any]:
-    return {
-        "selected_id": D2L_SETTINGS_ID,
-        "options": [
-            {
-                "settings_id": D2L_SETTINGS_ID,
-                "profile_id": "technical_d2l_v1",
-                "translation_arms": ["s0", "s1"],
-                "stages": [
-                    "preflight",
-                    "b1_candidate_discovery",
-                    "candidate_index",
-                    "b2_admission_translation",
-                    "auditor_morphology",
-                    "auditor_target_collision",
-                    "auditor_multi_target",
-                    "glossary_seal",
-                    "translator",
-                    "translation_quality_audit",
-                    "scoring_handoff_fragment",
-                ],
-                "server_fixed": True,
-            }
+def _d2l_settings_option() -> dict[str, Any]:
+    fixed_facts = {
+        "profile_id": "technical_d2l_v1",
+        "arm_ids": ["s0", "s1"],
+        "stages": [
+            "preflight",
+            "b1_candidate_discovery",
+            "candidate_index",
+            "b2_admission_translation",
+            "auditor_morphology",
+            "auditor_target_collision",
+            "auditor_multi_target",
+            "glossary_seal",
+            "translator",
+            "translation_quality_audit",
+            "scoring_handoff_fragment",
         ],
+    }
+    return {
+        "option_id": D2L_SETTINGS_ID,
+        "label": "Technical D2L workflow",
+        "revision": "v1",
+        "sha256": canonical_sha256(fixed_facts),
+        "enabled": True,
+        "status": "registered",
+        "fixed_facts": fixed_facts,
+        "constraints": {"server_owned": True},
     }
 
 
-def _evaluation_settings_catalog() -> dict[str, Any]:
+def _evaluation_settings_option() -> dict[str, Any]:
+    fixed_facts = {
+        "arm_ids": list(EVALUATION_ARM_ORDER),
+        "scorers": ["sf_qe", "sf_bt", "pj"],
+        "aggregation_policy": "evaluation_benchmark_aggregation_v1",
+        "report_policy": "full_run_report_v1",
+        "verdict_policy": "evaluation_verdict_v1",
+    }
     return {
-        "selected_id": EVALUATION_SETTINGS_ID,
-        "options": [
-            {
-                "settings_id": EVALUATION_SETTINGS_ID,
-                "translation_arms": list(EVALUATION_ARM_ORDER),
-                "scorers": ["sf_qe", "sf_bt", "pj"],
-                "aggregation_policy": "evaluation_benchmark_aggregation_v1",
-                "report_policy": "full_run_report_v1",
-                "verdict_policy": "evaluation_verdict_v1",
-                "server_fixed": True,
-            }
-        ],
-        "selectable": {
-            "highlight_pair": list(EVALUATION_ARM_ORDER),
+        "option_id": EVALUATION_SETTINGS_ID,
+        "label": "Five-arm Evaluation workflow",
+        "revision": "v1",
+        "sha256": canonical_sha256(fixed_facts),
+        "enabled": True,
+        "status": "registered",
+        "fixed_facts": fixed_facts,
+        "constraints": {
+            "server_owned": True,
+            "highlight_pair_arm_ids": list(EVALUATION_ARM_ORDER),
         },
     }
 
@@ -920,48 +1049,14 @@ def read_workflow_artifact(
         )
 
     media_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-    body: Any
-    parsed_json = None
-    try:
-        parsed_json = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        pass
-    if parsed_json is not None:
-        body = parsed_json
-        media_type = "application/json"
-    elif media_type == "application/json" or path.suffix.lower() == ".json":
-        try:
-            body = json.loads(raw.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise WorkflowReplayError(
-                "workflow_artifact_json_invalid",
-                "Indexed JSON artifact is not valid UTF-8 JSON.",
-                409,
-            ) from exc
-        media_type = "application/json"
-    elif media_type.startswith("text/"):
-        try:
-            body = raw.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            raise WorkflowReplayError(
-                "workflow_artifact_text_invalid",
-                "Indexed text artifact is not valid UTF-8.",
-                409,
-            ) from exc
-    else:
-        raise WorkflowReplayError(
-            "workflow_artifact_media_unsupported",
-            "Binary workflow artifacts are not exposed through the Console read model.",
-            415,
-        )
-
     return {
         "schema": WORKFLOW_ARTIFACT_READ_SCHEMA,
         "run_id": entry["run_id"],
         "workflow_run_id": entry["workflow_run_id"],
         "artifact": artifact,
         "media_type": media_type,
-        "body": body,
+        "filename": path.name,
+        "content": raw,
     }
 
 
@@ -1057,6 +1152,11 @@ def _read_envelope(
     manifest = package["manifest"]
     events = [event for event in package["events"] if event["seq"] > after_seq]
     typed_artifacts = _typed_artifacts(root, package["artifact_index"])
+    artifact_bodies = {
+        item["binding"]["artifact_ref"]: item["body"]
+        for item in typed_artifacts
+    }
+    validated_artifacts = _validated_artifacts(typed_artifacts)
     latest_seq = manifest["latest_event_seq"]
     returned_through = events[-1]["seq"] if events else after_seq
     if after_seq > latest_seq:
@@ -1074,10 +1174,22 @@ def _read_envelope(
         "events": events,
         "artifact_index": package["artifact_index"],
         "typed_artifacts": typed_artifacts,
+        "artifacts": artifact_bodies,
+        "validated_artifacts": validated_artifacts,
+        "artifact_links": {
+            row["binding"]["artifact_ref"]: (
+                f"/api/thesis/runs/{entry['run_id']}/workflow-replay/artifact"
+                "?artifact_ref="
+                + quote(row["binding"]["artifact_ref"], safe="")
+            )
+            for row in package["artifact_index"]["artifacts"]
+        },
         "usage": _usage_read_model(typed_artifacts),
+        "source_mode": "live",
         "cursor": {
             "after_seq": after_seq,
             "returned_through_seq": returned_through,
+            "through_seq": latest_seq,
             "latest_seq": latest_seq,
             "terminal": manifest["status"] in {"failed", "succeeded"},
             "latest_event_sha256": (
@@ -1085,7 +1197,15 @@ def _read_envelope(
                 if package["events"]
                 else None
             ),
+            "event_chain_head_sha256": (
+                package["events"][-1]["integrity"]["event_sha256"]
+                if package["events"]
+                else None
+            ),
             "manifest_sha256": manifest["integrity"]["manifest_sha256"],
+            "package_revision_sha256": manifest["integrity"][
+                "manifest_sha256"
+            ],
             "artifact_index_sha256": package["artifact_index"]["integrity"][
                 "artifact_index_sha256"
             ],
@@ -1100,10 +1220,18 @@ def _typed_artifacts(
 ) -> list[dict[str, Any]]:
     selected_kinds = {
         "scoring_handoff",
+        "scoring_handoff_v1",
         "scoring_receipt",
+        "scoring_receipt_v1",
         "full_run_report",
+        "full_run_report_v1",
+        "benchmark_run_report_v1",
+        "evaluation_report_v1",
         "workflow_usage_summary",
+        "workflow_usage_summary_v1",
         "component_usage_snapshot",
+        "d2l_component_usage_snapshot_v1",
+        "evaluation_component_usage_snapshot_v1",
     }
     result: list[dict[str, Any]] = []
     for artifact in artifact_index["artifacts"]:
@@ -1137,9 +1265,40 @@ def _typed_artifacts(
     return result
 
 
+def _validated_artifacts(
+    typed_artifacts: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    from pipeline.eval.full_run_report_v1 import validate_full_run_report
+
+    report_kinds = {
+        "full_run_report_v1",
+        "benchmark_run_report_v1",
+        "evaluation_report_v1",
+    }
+    result: dict[str, dict[str, Any]] = {}
+    for item in typed_artifacts:
+        binding = item["binding"]
+        if binding["artifact_kind"] not in report_kinds:
+            continue
+        try:
+            validate_full_run_report(item["body"])
+        except Exception as exc:
+            raise WorkflowReplayError(
+                "workflow_report_invalid",
+                f"Indexed Evaluation report failed validation: {exc}",
+                409,
+            ) from exc
+        result[binding["artifact_ref"]] = {
+            "valid": True,
+            "sha256": binding["sha256"],
+            "sha256_kind": binding["sha256_kind"],
+        }
+    return result
+
+
 def _usage_read_model(
     typed_artifacts: list[dict[str, Any]],
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
     rows = []
     component_snapshots = []
     workflow_summary = None
@@ -1167,7 +1326,12 @@ def _usage_read_model(
             "WorkflowUsageSummaryV1",
         }:
             workflow_summary = item
+    if not rows and not component_snapshots and workflow_summary is None:
+        return None
     return {
+        "schema_id": "WorkflowUsageReadModelV1",
+        "schema_version": "1.0.0",
+        "validated": True,
         "call_rows": rows,
         "component_snapshots": component_snapshots,
         "workflow_summary": workflow_summary,

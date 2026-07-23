@@ -6,9 +6,10 @@ import os
 import sqlite3
 import subprocess
 import sys
+from io import BytesIO
 from pathlib import Path
 
-from flask import Blueprint, request
+from flask import Blueprint, request, send_file
 
 from pipeline.eval.contracts_v1 import ContractValidationError
 from pipeline.eval.full_run_report_v1 import (
@@ -224,7 +225,11 @@ def create_run():
     try:
         body = request.get_json(force=True) or {}
         workflow_launch = None
-        if "workflow_preflight_token" in body:
+        if (
+            body.get("schema_id") == "WorkflowLaunchConfirmationV1"
+            or "workflow_preflight_id" in body
+            or "workflow_preflight_sha256" in body
+        ):
             workflow_launch = resolve_workflow_launch(body)
             body = {
                 "script": workflow_launch["script"],
@@ -239,6 +244,7 @@ def create_run():
                     "reserved_cost_cap_usd"
                 ],
                 "allow_api": workflow_launch["allow_api"],
+                "confirm_token": workflow_launch["api_confirm_token"],
             }
         script = validate_script(body.get("script", ""))
         allow_api = bool(body.get("allow_api", False))
@@ -767,12 +773,17 @@ def workflow_replay_artifact(run_id: str):
                 "Unsupported query fields: " + ", ".join(unknown),
             )
         entry = _run_entry(run_id)
-        return ok(
-            read_workflow_artifact(
-                entry,
-                jobs_root=_jobs_root(),
-                artifact_ref=request.args.get("artifact_ref", ""),
-            )
+        artifact = read_workflow_artifact(
+            entry,
+            jobs_root=_jobs_root(),
+            artifact_ref=request.args.get("artifact_ref", ""),
+        )
+        return send_file(
+            BytesIO(artifact["content"]),
+            mimetype=artifact["media_type"],
+            as_attachment=True,
+            download_name=artifact["filename"],
+            max_age=0,
         )
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)

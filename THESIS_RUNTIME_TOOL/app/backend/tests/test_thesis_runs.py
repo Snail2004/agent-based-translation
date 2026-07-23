@@ -2878,10 +2878,17 @@ def test_route_workflow_replay_reads_validated_parent_cursor_and_artifact(
     assert [event["seq"] for event in data["events"]] == [1, 2, 3, 4]
     assert data["cursor"]["latest_seq"] == 4
     assert data["cursor"]["returned_through_seq"] == 4
+    assert data["cursor"]["through_seq"] == 4
+    assert data["cursor"]["event_chain_head_sha256"] == (
+        data["events"][-1]["integrity"]["event_sha256"]
+    )
+    assert data["cursor"]["package_revision_sha256"] == (
+        data["manifest"]["integrity"]["manifest_sha256"]
+    )
     assert data["cursor"]["terminal"] is False
     assert data["actions"]["replay"]["allowed"] is True
     assert data["actions"]["pause"]["allowed"] is True
-    assert data["usage"]["workflow_summary"] is None
+    assert data["usage"] is None
 
     empty = client.get(
         "/api/thesis/runs/run_parent_replay/workflow-replay",
@@ -2896,11 +2903,13 @@ def test_route_workflow_replay_reads_validated_parent_cursor_and_artifact(
         query_string={"artifact_ref": artifact_ref},
     )
     assert artifact.status_code == 200
-    artifact_data = artifact.get_json()["data"]
-    assert artifact_data["schema"] == "workflow_artifact_read_v1"
-    assert artifact_data["artifact"]["binding"]["artifact_ref"] == artifact_ref
-    assert artifact_data["media_type"] == "application/json"
-    assert artifact_data["body"] == {"ok": True}
+    assert artifact.mimetype == "application/octet-stream"
+    assert artifact.data == b'{"ok":true}'
+    assert "attachment" in artifact.headers["Content-Disposition"]
+    assert data["artifact_links"][artifact_ref].endswith(
+        "artifact_ref=components%2Ftranslation%2Ftranslation_fixture_v1"
+        "%2Fartifacts%2Ftranslation_output"
+    )
 
 
 def test_route_workflow_replay_long_poll_does_not_revalidate_unchanged_parent(
@@ -3058,6 +3067,46 @@ def _workflow_setup_project_fixture():
     return status, project
 
 
+def _workflow_selection_request(
+    *,
+    mode="dry_run",
+    chapter_ids=None,
+    shared_option_id="shared_llm_transport_catalog_v1",
+):
+    return {
+        "schema_id": "WorkflowSetupSelectionV1",
+        "schema_version": "1.0.0",
+        "execution_mode": mode,
+        "chapter_ids": chapter_ids or ["chapter_1"],
+        "shared_option_id": shared_option_id,
+        "d2l_settings_option_id": "d2l_workflow_settings_v1",
+        "evaluation_settings_option_id": "evaluation_workflow_settings_v1",
+        "highlight_pair": {
+            "baseline_arm_id": "s0",
+            "candidate_arm_id": "s1",
+        },
+        "hard_total_token_cap": 6_000_000,
+        "reserved_cost_cap_usd": None,
+    }
+
+
+def _workflow_launch_request(preflight, *, job_id="jobA"):
+    return {
+        "schema_id": "WorkflowLaunchConfirmationV1",
+        "schema_version": "1.0.0",
+        "script": "run_d2l_project_campaign",
+        "job_id": job_id,
+        "execution_mode": preflight["execution_mode"],
+        "allow_api": preflight["execution_mode"] == "live",
+        "workflow_preflight_id": preflight["launch"]["preflight_id"],
+        "workflow_preflight_sha256": preflight["launch"][
+            "preflight_sha256"
+        ],
+        "confirm_token": preflight["launch"]["confirm_token"],
+        "planned_run_id": preflight["launch"]["planned_run_id"],
+    }
+
+
 def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
     tmp_path,
     monkeypatch,
@@ -3089,49 +3138,39 @@ def test_route_workflow_setup_and_preflight_are_closed_and_live_disabled(
     setup_response = client.get("/api/projects/projectA/workflow-setup")
     assert setup_response.status_code == 200
     setup = setup_response.get_json()["data"]
-    assert setup["schema"] == "workflow_setup_v1"
+    assert setup["schema_id"] == "WorkflowSetupV1"
+    assert setup["schema_version"] == "1.0.0"
     assert setup["live_start_allowed"] is False
     assert [row["chapter_id"] for row in setup["chapters"]] == [
         "chapter_1",
         "chapter_2",
     ]
     assert setup["chapters"][0]["block_count"] == 2
-    assert setup["shared_settings"]["selected_id"] == (
+    assert setup["shared_options"][0]["option_id"] == (
         "shared_llm_transport_catalog_v1"
     )
     assert all(
-        row["status"] == "missing" for row in setup["credential_status"]
+        row["status"] == "missing"
+        for row in setup["shared_options"][0]["credential_status"]
     )
     assert "api_key" not in json.dumps(setup).lower()
 
-    request_body = {
-        "mode": "live",
-        "chapter_ids": ["chapter_1"],
-        "shared_settings_id": "shared_llm_transport_catalog_v1",
-        "d2l_settings_id": "d2l_workflow_settings_v1",
-        "evaluation_settings_id": "evaluation_workflow_settings_v1",
-        "evaluation_highlight_pair": ["s0", "s1"],
-        "hard_total_token_cap": 6_000_000,
-        "reserved_cost_cap_usd": None,
-    }
     preflight_response = client.post(
         "/api/projects/projectA/workflow-setup/preflight",
-        json=request_body,
+        json=_workflow_selection_request(mode="live"),
     )
     assert preflight_response.status_code == 200
     preflight = preflight_response.get_json()["data"]
-    assert preflight["schema"] == "workflow_preflight_v1"
+    assert preflight["schema_id"] == "WorkflowPreflightV1"
+    assert preflight["schema_version"] == "1.0.0"
     assert preflight["start_allowed"] is False
     assert "workflow_live_start_disabled" in preflight["blocking_reasons"]
-    assert preflight["forecast"]["cost_usd"] is None
-    assert preflight["preflight_token"]
+    assert preflight["bounds"]["cost_usd"] is None
+    assert preflight["launch"]["confirm_token"]
 
     launched = client.post(
         "/api/thesis/runs",
-        json={
-            "workflow_preflight_token": preflight["preflight_token"],
-            "confirmed": True,
-        },
+        json=_workflow_launch_request(preflight),
     )
     assert launched.status_code == 403
     assert (
@@ -3177,25 +3216,28 @@ def test_route_workflow_dry_preflight_launch_initializes_parent_without_api(
 
     preflight_response = client.post(
         "/api/projects/projectA/workflow-setup/preflight",
-        json={
-            "mode": "dry_run",
-            "chapter_ids": ["chapter_1"],
-            "shared_settings_id": "shared_llm_transport_catalog_v1",
-            "d2l_settings_id": "d2l_workflow_settings_v1",
-            "evaluation_settings_id": "evaluation_workflow_settings_v1",
-            "hard_total_token_cap": 6_000_000,
-        },
+        json=_workflow_selection_request(),
     )
     assert preflight_response.status_code == 200
     preflight = preflight_response.get_json()["data"]
     assert preflight["start_allowed"] is True
 
+    mismatched = client.post(
+        "/api/thesis/runs",
+        json=_workflow_launch_request(preflight, job_id="jobB"),
+    )
+    assert mismatched.status_code == 409
+    assert (
+        mismatched.get_json()["errors"][0]["code"]
+        == "workflow_launch_binding_invalid"
+    )
+    assert registry.list_runs() == []
+    assert spawned == []
+    assert frozen == []
+
     launch = client.post(
         "/api/thesis/runs",
-        json={
-            "workflow_preflight_token": preflight["preflight_token"],
-            "confirmed": True,
-        },
+        json=_workflow_launch_request(preflight),
     )
     assert launch.status_code == 201
     data = launch.get_json()["data"]
@@ -3232,14 +3274,7 @@ def test_route_workflow_preflight_rejects_unadvertised_fields_and_ids(
         "_load_setup_project",
         lambda *_args, **_kwargs: (status, project),
     )
-    base = {
-        "mode": "dry_run",
-        "chapter_ids": ["chapter_1"],
-        "shared_settings_id": "shared_llm_transport_catalog_v1",
-        "d2l_settings_id": "d2l_workflow_settings_v1",
-        "evaluation_settings_id": "evaluation_workflow_settings_v1",
-        "hard_total_token_cap": 6_000_000,
-    }
+    base = _workflow_selection_request()
 
     extra = client.post(
         "/api/projects/projectA/workflow-setup/preflight",
@@ -3253,7 +3288,7 @@ def test_route_workflow_preflight_rejects_unadvertised_fields_and_ids(
 
     wrong = client.post(
         "/api/projects/projectA/workflow-setup/preflight",
-        json={**base, "shared_settings_id": "client_fabricated"},
+        json={**base, "shared_option_id": "client_fabricated"},
     )
     assert wrong.status_code == 400
     assert (
