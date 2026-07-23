@@ -1211,7 +1211,7 @@ def initial_transport_sources() -> dict[str, dict[str, Any]]:
         "route_id": "generate_content",
         "credential_ref": "credential.shopaikey_gemini_proxy_v1",
         "credential_family": "SHOPAIKEY_GEMINI_PROXY",
-        "physical_quota_bucket_id": "shopaikey-gemini-d2l-v1|gemini-3.5-flash",
+        "physical_quota_bucket_id": "shopaikey-gemini-d2l-v1.gemini-3.5-flash",
         "supported_model_ids": ["gemini-3.5-flash"],
         "output_mode": "prompt_generated_json",
         "native_schema_parameter_sent": False,

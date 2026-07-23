@@ -113,6 +113,25 @@ def test_runtime_source_binds_commitment_without_exposing_value() -> None:
     assert runtime["source_id"] == "modelapi_shared_v1"
 
 
+def test_every_production_source_builds_a_schema_valid_runtime_record() -> None:
+    sources = initial_transport_sources()
+    credentials = {
+        str(source["credential_ref"]): f"test-only-{source_id}"
+        for source_id, source in sources.items()
+    }
+    provider = MappingCredentialProvider(credentials)
+
+    for source_id, source in sources.items():
+        runtime = transport.build_runtime_api_source(
+            source,
+            credential_provider=provider,
+        )
+        assert runtime["source_id"] == source_id
+        assert runtime["physical_quota_bucket_id"] == source[
+            "physical_quota_bucket_id"
+        ]
+
+
 def test_runtime_source_fails_when_credential_is_unavailable() -> None:
     source = initial_transport_sources()["modelapi_shared_v1"]
     with pytest.raises(transport.D2LProjectTransportError, match="unavailable"):
