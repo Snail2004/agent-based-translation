@@ -197,8 +197,21 @@ def _structure_signature(text: str, *, block_id: str) -> list[tuple[str, ...]]:
             placeholder += "]]"
         if placeholder not in identities:
             raise ValueError(f"Unresolved protected reference in {block_id}")
-        result.append(identities[placeholder])
+        result.extend(_canonical_structure_tokens(identities[placeholder]))
     return result
+
+
+def _canonical_structure_tokens(identity: tuple[str, ...]) -> list[tuple[str, ...]]:
+    """Compare adjacent Markdown delimiters by bytes, not parser grouping."""
+
+    if identity[:2] == ("base", "markdown_marker"):
+        marker = identity[2]
+        if marker and all(character in "[]()*_~" for character in marker):
+            return [("markdown_marker_character", character) for character in marker]
+    if identity[:2] == ("format", "markdown_emphasis"):
+        markers = identity[2] + identity[3]
+        return [("markdown_marker_character", character) for character in markers]
+    return [identity]
 
 
 def _source_text(raw: Mapping[str, Any]) -> str:

@@ -29,6 +29,28 @@ def test_integrity_accepts_vietnamese_with_exact_math_and_markup() -> None:
     assert retry_findings(findings) == []
 
 
+def test_integrity_accepts_equivalent_adjacent_markdown_delimiter_grouping() -> None:
+    source = r"[**The *derivative* of $f$ is defined as**]"
+    target = r"[***Dao ham* cua $f$ duoc dinh nghia la**]"
+
+    findings = inspect_translations([_block(source)], {"b1": target})
+
+    assert "protected_structure_or_order_changed" not in {
+        row.issue_type for row in retry_findings(findings)
+    }
+
+
+def test_integrity_rejects_missing_adjacent_markdown_delimiter() -> None:
+    source = r"[**The *derivative* of $f$ is defined as**]"
+    target = r"[***Dao ham* cua $f$ duoc dinh nghia la*]"
+
+    findings = inspect_translations([_block(source)], {"b1": target})
+
+    assert "protected_structure_or_order_changed" in {
+        row.issue_type for row in retry_findings(findings)
+    }
+
+
 @pytest.mark.parametrize(
     ("target", "issue_type"),
     [
