@@ -78,23 +78,17 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     validate_scoring_handoff_fragment,
 )
 from pipeline.prepass.d2l_terminology_memory_delta_v1 import commit_glossary_draft
-from pipeline.retrieval.context_builder import plan_anchors
-from pipeline.translate import d2l_translation_quality_auditor_v2 as quality_contract
-from pipeline.translate.d2l_latex_markup_line_protected_spans_v4 import (
-    contains_forbidden_control,
-    math_spans_in_text,
-    protect_blocks,
-)
-from pipeline.translate.d2l_translation_quality_auditor_v1 import AuditPacketCaps
+from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
+from pipeline.translate.d2l_translation_integrity_v1 import inspect_translations
 from pipeline.translate.d2l_translation_quality_observation_v1 import (
     build_quality_observation,
 )
-from pipeline.translate.runner import translate_windows
+from pipeline.translate.runner import load_window_attempt_state, translate_windows
 from pipeline.translate.windower import Window
 
 
 LIVE_EXECUTOR_VERSION = "d2l_project_live_executor_v1"
-LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2"
+LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2_1_quality_repair"
 LIVE_SCOPE_ID = "d2l_selected_campaign_scope_v1"
 _COST_STATUSES = {"provider_actual", "pinned_tariff", "unknown"}
 _STAGE_UNITS = {
@@ -1985,63 +1979,27 @@ def _translator_stage(
     return artifacts["s0"], artifacts["s1"]
 
 
-_PROTECTED_REF_RE = re.compile(
-    r"\[\[(?P<kind>MATH_REF|STRUCT_REF|FORMAT_REF|LINE_REF)_[0-9]{4}"
-    r"(?:\|[^|\[\]\r\n]+)?\]\]"
-)
-
-
-def _structure_signature(text: str, *, block_id: str) -> list[tuple[str, ...]]:
-    plan = protect_blocks(
-        [{"block_id": block_id, "source_text": text, "clean_text": text}]
-    )
-    base = plan.base_plan
-    base_v2 = base.base_plan
-    identities: dict[str, tuple[str, ...]] = {}
-    for span in base_v2.spans_for_block(block_id):
-        if not span.is_math:
-            identities[span.placeholder] = ("base", span.kind, span.source)
-    for span in base.format_spans_for_block(block_id):
-        identities[span.placeholder] = (
-            "format",
-            span.kind,
-            span.open_marker,
-            span.close_marker,
-        )
-    for span in plan.line_spans_for_block(block_id):
-        identities[span.placeholder] = ("line", span.kind, span.source)
-    protected = str(plan.protected_blocks[0]["clean_text"])
-    result: list[tuple[str, ...]] = []
-    for match in _PROTECTED_REF_RE.finditer(protected):
-        if match.group("kind") == "MATH_REF":
-            continue
-        identity = match.group(0).split("|", 1)[0] + ("]]" if "|" in match.group(0) else "")
-        identity = identity.replace("]]", "") + "]]"
-        if identity not in identities:
-            raise D2LProjectLiveExecutorError(
-                f"unresolved protected structure reference in {block_id}"
-            )
-        result.append(identities[identity])
-    return result
-
-
 def _mechanical_quality(
     *, block_id: str, source: str, target: str
 ) -> tuple[bool, list[str]]:
-    reasons: list[str] = []
-    if contains_forbidden_control(source) or contains_forbidden_control(target):
-        reasons.append("forbidden_control_character")
-    if "[[MATH_REF_" in target or "[[STRUCT_REF_" in target or "[[FORMAT_REF_" in target or "[[LINE_REF_" in target:
-        reasons.append("protected_reference_not_restored")
-    try:
-        if math_spans_in_text(source) != math_spans_in_text(target):
-            reasons.append("math_bytes_or_order_changed")
-        if _structure_signature(source, block_id=block_id) != _structure_signature(
-            target, block_id=block_id
-        ):
-            reasons.append("protected_structure_or_order_changed")
-    except Exception:
-        reasons.append("protected_content_not_parseable")
+    findings = inspect_translations(
+        [
+            {
+                "block_id": block_id,
+                "block_type": "prose",
+                "source_text": source,
+                "clean_text": source,
+            }
+        ],
+        {block_id: target},
+    )
+    reasons = sorted(
+        {
+            row.issue_type
+            for row in findings
+            if row.severity == "major"
+        }
+    )
     return not reasons, sorted(set(reasons))
 
 
@@ -2051,63 +2009,172 @@ def _exact_evidence(value: str, *, limit: int = 160) -> str:
     return value[:limit]
 
 
-def _glossary_cards_for_window(
+def _translator_experiment_id(
+    campaign: Mapping[str, Any],
     *,
-    db: sqlite3.Connection,
-    source_rows: Sequence[Mapping[str, Any]],
-    max_cards: int,
-) -> tuple[list[dict[str, Any]], dict[str, list[str]]]:
-    anchors = plan_anchors(
-        db, [dict(row) for row in source_rows], profile_name="technical_d2l_v1"
+    arm_id: str,
+    component_attempt_id: int,
+) -> str:
+    return (
+        f"{campaign['config']['component_run_id']}_{arm_id}_"
+        f"a{component_attempt_id:04d}"
     )
-    ranked = sorted(
-        anchors.term_block_ids,
-        key=lambda term_id: (
-            -int(anchors.term_counts.get(term_id, 0)),
-            str(term_id),
-        ),
-    )[:max_cards]
-    cards: list[dict[str, Any]] = []
-    for term_id in ranked:
-        row = db.execute(
-            """
-            SELECT glossary_id, source_term, target_term, do_not_translate,
-                   allowed_variants_json
-            FROM glossary_entries WHERE glossary_id = ?
-            """,
-            (term_id,),
-        ).fetchone()
-        if row is None:
-            raise D2LProjectLiveExecutorError(
-                f"quality glossary anchor is absent: {term_id}"
-            )
-        variants = [str(row["target_term"])]
-        try:
-            variants.extend(str(value) for value in json.loads(row["allowed_variants_json"] or "[]"))
-        except json.JSONDecodeError as exc:
-            raise D2LProjectLiveExecutorError(
-                f"quality glossary variants are invalid: {term_id}"
-            ) from exc
-        variants = list(dict.fromkeys(value for value in variants if value))
-        cards.append(
-            {
-                "glossary_ref": str(row["glossary_id"]),
-                "source_term": str(row["source_term"]),
-                "allowed_target_variants": variants,
-                "policy": (
-                    "preserve" if int(row["do_not_translate"] or 0) else "context_sensitive"
-                ),
-            }
+
+
+def _translation_artifact_component_attempt_id(
+    artifact: Mapping[str, Any],
+    *,
+    arm_id: str,
+) -> int:
+    artifact_id = str(artifact.get("artifact_id") or "")
+    match = re.fullmatch(r".+_" + re.escape(arm_id) + r"_a(\d{4})", artifact_id)
+    if match is None:
+        raise D2LProjectLiveExecutorError(
+            f"{arm_id} draft artifact does not expose component attempt lineage"
         )
-    by_block = {
-        str(row["block_id"]): [
-            term_id
-            for term_id in ranked
-            if str(row["block_id"]) in anchors.term_block_ids[term_id]
-        ]
-        for row in source_rows
+    return int(match.group(1))
+
+
+def _semantic_repair_window(
+    *,
+    campaign: Mapping[str, Any],
+    db: sqlite3.Connection,
+    arm_id: str,
+    original_window_id: str,
+    block_ids: Sequence[str],
+    findings_by_block: Mapping[str, list[dict[str, str]]],
+    source_by_id: Mapping[str, Mapping[str, Any]],
+    transport: ProjectTransport,
+    component_attempt_id: int,
+    observations: _StageObservations,
+) -> tuple[dict[str, str], dict[str, Any]]:
+    role = _role(campaign["config"], f"d2l.translator.{arm_id}")
+    client = _RecordingClient(
+        transport.build_client(
+            role["role_id"], component_attempt_id=component_attempt_id
+        ),
+        observations,
+    )
+    ordered_ids = [str(value) for value in block_ids]
+    repair_window = Window(
+        window_id=f"repair_{original_window_id}",
+        block_ids=ordered_ids,
+        est_src_tokens=sum(
+            max(1, len(_source_text(source_by_id[block_id])) // 4)
+            for block_id in ordered_ids
+        ),
+    )
+    extra = dict(role.get("extra_policy") or {})
+    experiment_id = (
+        f"{_translator_experiment_id(campaign, arm_id=arm_id, component_attempt_id=component_attempt_id)}"
+        f"_quality_repair_{original_window_id}"
+    )
+    report = translate_windows(
+        db,
+        [repair_window],
+        client,
+        experiment_id=experiment_id,
+        config=arm_id,
+        context_budget_tokens=1500,
+        profile_name="technical_d2l_v1",
+        protected_spans_policy=extra.get("protected_spans_policy"),
+        translation_output_policy=extra.get("translation_output_policy"),
+        response_envelope_policy=extra.get("response_envelope_policy"),
+        max_attempts_per_window=1,
+        semantic_repair_findings={
+            block_id: list(findings_by_block[block_id])
+            for block_id in ordered_ids
+        },
+    )
+    window_report = report.reports[0]
+    observations.validation(
+        passed=window_report.status in {"translated", "skipped"},
+        validator_id=str(role["validator_id"]),
+        subject_ref=f"{arm_id}:{original_window_id}:semantic_repair",
+        reason_codes=(
+            ["semantic_repair_deterministic_validation"]
+            if window_report.status in {"translated", "skipped"}
+            else list(window_report.errors or ["semantic_repair_failed"])
+        ),
+        retryable=False,
+    )
+    if window_report.status not in {"translated", "skipped"}:
+        return {}, {
+            "status": "repair_failed",
+            "experiment_id": experiment_id,
+            "block_ids": ordered_ids,
+            "calls": window_report.calls,
+            "errors": list(window_report.errors),
+        }
+    rows = db.execute(
+        """
+        SELECT block_id, output_text
+        FROM translation_runs
+        WHERE experiment_id = ? AND config = ? AND stage = 'draft'
+        ORDER BY block_id
+        """,
+        (experiment_id, arm_id.upper()),
+    ).fetchall()
+    updates = {str(row["block_id"]): str(row["output_text"]) for row in rows}
+    if set(updates) != set(ordered_ids):
+        raise D2LProjectLiveExecutorError(
+            "semantic repair did not exact-cover requested block IDs"
+        )
+    return updates, {
+        "status": "repair_applied_unverified_semantically",
+        "experiment_id": experiment_id,
+        "block_ids": ordered_ids,
+        "calls": window_report.calls,
+        "errors": [],
     }
-    return cards, by_block
+
+
+def _final_translation_artifact(
+    *,
+    draft: Mapping[str, Any],
+    updates: Mapping[str, str],
+    campaign: Mapping[str, Any],
+    arm_id: str,
+    component_attempt_id: int,
+) -> dict[str, Any]:
+    payload = deepcopy(dict(draft))
+    payload["artifact_id"] = (
+        f"{campaign['config']['component_run_id']}_{arm_id}_quality_final_"
+        f"a{component_attempt_id:04d}"
+    )
+    payload["created_at"] = _utc_now()
+    payload["run_identity"] = {
+        **dict(payload["run_identity"]),
+        "attempt_run_id": (
+            f"{campaign['config']['component_run_id']}_a"
+            f"{component_attempt_id}_{arm_id}_quality_final"
+        ),
+    }
+    translations: list[dict[str, Any]] = []
+    for raw in payload["translations"]:
+        row = dict(raw)
+        block_id = str(row["block_id"])
+        if block_id in updates:
+            row["status"] = "translated"
+            row["target_text"] = str(updates[block_id])
+            row["error_code"] = None
+        translations.append(row)
+    payload["translations"] = translations
+    counts = Counter(row["status"] for row in translations)
+    payload["coverage"] = {
+        "source_block_count": len(translations),
+        "eligible_count": counts["translated"] + counts["missing"] + counts["failed"],
+        "translated_count": counts["translated"],
+        "preserved_count": counts["preserved"],
+        "excluded_count": counts["excluded"],
+        "review_held_count": counts["review_held"],
+        "missing_count": counts["missing"],
+        "failed_count": counts["failed"],
+    }
+    payload["integrity"] = {"artifact_sha256": "0" * 64}
+    sealed = seal_translation_artifact(payload)
+    validate_translation_artifact(sealed)
+    return sealed
 
 
 def _quality_stage(
@@ -2119,41 +2186,55 @@ def _quality_stage(
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+) -> tuple[
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+]:
     role = _role(campaign["config"], "d2l.translator.quality_auditor")
     client = transport.build_client(
         role["role_id"], component_attempt_id=component_attempt_id
     )
     row_map = {str(row["block_id"]): dict(row) for row in rows}
     windows = _windows(campaign=campaign, rows=rows, family="translator")
-    caps = AuditPacketCaps(
-        max_glossary_cards_per_window=16,
-        max_glossary_tokens_per_window=1500,
-    )
-    token_counter = lambda value: max(1, (len(value) + 3) // 4)
     db = sqlite3.connect(work_db)
     db.row_factory = sqlite3.Row
     arm_reports: dict[str, Any] = {}
     state_rows: list[dict[str, Any]] = []
+    final_artifacts: dict[str, dict[str, Any]] = {}
     total_work = len(windows) * 2
     completed_work = 0
     observations.progress(completed=0, total=total_work)
     try:
         for arm_id in ("s0", "s1"):
-            artifact = _load_json(
+            draft_artifact = _load_json(
                 component_root / f"artifacts/translator/{arm_id}.json",
                 f"{arm_id} translation artifact",
             )
             translations = {
-                str(row["block_id"]): row for row in artifact["translations"]
+                str(row["block_id"]): dict(row)
+                for row in draft_artifact["translations"]
             }
+            attempt_state = load_window_attempt_state(
+                db,
+                experiment_id=_translator_experiment_id(
+                    campaign,
+                    arm_id=arm_id,
+                    component_attempt_id=_translation_artifact_component_attempt_id(
+                        draft_artifact,
+                        arm_id=arm_id,
+                    ),
+                ),
+            )
             audited_ids: list[str] = []
             findings: list[dict[str, str]] = []
+            repair_rows: list[dict[str, Any]] = []
+            repair_updates: dict[str, str] = {}
             llm_packets = 0
             deterministic_issue_blocks = 0
             for window in windows:
                 safe_blocks: list[dict[str, Any]] = []
-                source_rows: list[dict[str, Any]] = []
                 for block_id in window["block_ids"]:
                     source_row = row_map[block_id]
                     translated = translations[block_id]
@@ -2189,14 +2270,12 @@ def _quality_stage(
                             }
                         )
                         continue
-                    source_rows.append(source_row)
                     safe_blocks.append(
                         {
                             "block_id": block_id,
                             "block_type": str(source_row.get("block_type") or "prose"),
                             "source_full_text": source,
                             "target_full_text": target,
-                            "applicable_glossary_refs": [],
                         }
                     )
                 if not safe_blocks:
@@ -2206,15 +2285,9 @@ def _quality_stage(
                         total=total_work,
                     )
                     continue
-                cards, refs_by_block = _glossary_cards_for_window(
-                    db=db, source_rows=source_rows, max_cards=16
-                )
-                for block in safe_blocks:
-                    block["applicable_glossary_refs"] = refs_by_block[block["block_id"]]
                 packet = quality_contract.build_packet(
                     window_id=f"quality_{arm_id}_{window['window_id']}",
                     blocks=safe_blocks,
-                    glossary_cards=cards,
                     integrity_receipt={
                         "policy_id": quality_contract.INTEGRITY_POLICY_ID,
                         "full_text_restored": True,
@@ -2223,14 +2296,10 @@ def _quality_stage(
                         "forbidden_control_characters_absent": True,
                         "protected_content_read_only": True,
                     },
-                    caps=caps,
-                    glossary_token_counter=token_counter,
                 )
                 _, validation = _semantic_call(
                     client=client,
-                    messages=quality_contract.render_messages(
-                        packet, caps=caps, glossary_token_counter=token_counter
-                    ),
+                    messages=quality_contract.render_messages(packet),
                     response_format=quality_contract.RESPONSE_SCHEMA,
                     tag=f"quality_{arm_id}_{window['window_id']}",
                     validator_id=quality_contract.LOCAL_VALIDATOR_ID,
@@ -2246,7 +2315,66 @@ def _quality_stage(
                     retry_cap=int(role["semantic_retry_cap"]),
                 )
                 llm_packets += 1
-                findings.extend(dict(value) for value in validation["findings"])
+                window_findings = [
+                    dict(value) for value in validation["findings"]
+                ]
+                findings.extend(window_findings)
+                major_by_block: dict[str, list[dict[str, str]]] = {}
+                for finding in window_findings:
+                    if finding["severity"] != "major":
+                        continue
+                    major_by_block.setdefault(
+                        str(finding["block_id"]), []
+                    ).append(finding)
+                state = attempt_state.get(str(window["window_id"]))
+                if state is None:
+                    raise D2LProjectLiveExecutorError(
+                        "quality stage lacks Translator attempt state for "
+                        + str(window["window_id"])
+                    )
+                if major_by_block and not state["retry_consumed"]:
+                    updates, repair_state = _semantic_repair_window(
+                        campaign=campaign,
+                        db=db,
+                        arm_id=arm_id,
+                        original_window_id=str(window["window_id"]),
+                        block_ids=[
+                            block_id
+                            for block_id in window["block_ids"]
+                            if block_id in major_by_block
+                        ],
+                        findings_by_block=major_by_block,
+                        source_by_id=row_map,
+                        transport=transport,
+                        component_attempt_id=component_attempt_id,
+                        observations=observations,
+                    )
+                    repair_updates.update(updates)
+                    repair_rows.append(
+                        {
+                            "window_id": str(window["window_id"]),
+                            "initial_attempt_count": int(state["attempt_count"]),
+                            "major_finding_count": sum(
+                                len(value) for value in major_by_block.values()
+                            ),
+                            **repair_state,
+                        }
+                    )
+                elif major_by_block:
+                    repair_rows.append(
+                        {
+                            "window_id": str(window["window_id"]),
+                            "initial_attempt_count": int(state["attempt_count"]),
+                            "major_finding_count": sum(
+                                len(value) for value in major_by_block.values()
+                            ),
+                            "status": "repair_unavailable_retry_consumed",
+                            "experiment_id": None,
+                            "block_ids": list(major_by_block),
+                            "calls": 0,
+                            "errors": [],
+                        }
+                    )
                 completed_work += 1
                 observations.progress(
                     completed=completed_work,
@@ -2265,36 +2393,80 @@ def _quality_stage(
                     "llm_packet_count": llm_packets,
                     "deterministic_issue_block_count": deterministic_issue_blocks,
                     "finding_count": report["counts"]["findings"],
+                    "semantic_repair_attempt_count": sum(
+                        row["calls"] for row in repair_rows
+                    ),
+                    "semantic_repair_applied_count": sum(
+                        row["status"] == "repair_applied_unverified_semantically"
+                        for row in repair_rows
+                    ),
+                    "semantic_repair_unavailable_count": sum(
+                        row["status"] == "repair_unavailable_retry_consumed"
+                        for row in repair_rows
+                    ),
+                    "semantic_repair_failed_count": sum(
+                        row["status"] == "repair_failed" for row in repair_rows
+                    ),
+                    "repairs": repair_rows,
                     "continue_to_scoring": True,
                 }
+            )
+            final_artifacts[arm_id] = _final_translation_artifact(
+                draft=draft_artifact,
+                updates=repair_updates,
+                campaign=campaign,
+                arm_id=arm_id,
+                component_attempt_id=component_attempt_id,
             )
     finally:
         db.close()
     observations_payload = _sealed(
         {
-            "schema_version": "d2l_translation_quality_observations_live_v1",
-            "policy_id": "d2l_translation_quality_nonblocking_v1",
+            "schema_version": "d2l_translation_quality_observations_live_v2",
+            "policy_id": "d2l_translation_quality_repair_once_nonblocking_v2",
             "arms": arm_reports,
             "source_translation_artifact_refs": [
                 "art_translation_s0",
                 "art_translation_s1",
             ],
+            "final_translation_artifact_refs": [
+                "art_translation_s0_final",
+                "art_translation_s1_final",
+            ],
+            "glossary_visibility": "none",
             "semantic_output_authority": "validated_findings_only",
         }
     )
     total_findings = sum(int(row["finding_count"]) for row in state_rows)
+    applied_repairs = sum(
+        int(row["semantic_repair_applied_count"]) for row in state_rows
+    )
     state = _sealed(
         {
-            "schema_version": "d2l_translation_quality_state_live_v1",
-            "policy_id": "d2l_translation_quality_nonblocking_v1",
+            "schema_version": "d2l_translation_quality_state_live_v2",
+            "policy_id": "d2l_translation_quality_repair_once_nonblocking_v2",
             "arms": state_rows,
             "finding_count": total_findings,
+            "semantic_repair_applied_count": applied_repairs,
             "blocking": False,
             "continue_to_scoring": True,
-            "status": "completed_with_findings" if total_findings else "completed_clean",
+            "status": (
+                "completed_after_semantic_repair_unverified"
+                if applied_repairs
+                else (
+                    "completed_with_findings"
+                    if total_findings
+                    else "completed_clean"
+                )
+            ),
         }
     )
-    return observations_payload, state
+    return (
+        observations_payload,
+        state,
+        final_artifacts["s0"],
+        final_artifacts["s1"],
+    )
 
 
 def _artifact_binding(
@@ -2334,8 +2506,8 @@ def _scoring_handoff_stage(
     translation_inputs: list[dict[str, Any]] = []
     for arm_id in ("s0", "s1"):
         artifact = _load_json(
-            component_root / f"artifacts/translator/{arm_id}.json",
-            f"{arm_id} translation artifact",
+            component_root / f"artifacts/quality/{arm_id}_final.json",
+            f"{arm_id} final translation artifact",
         )
         missing = int(artifact["coverage"]["missing_count"])
         failed = int(artifact["coverage"]["failed_count"])
@@ -2354,10 +2526,10 @@ def _scoring_handoff_stage(
                 "arm_id": arm_id,
                 "artifact": _artifact_binding(
                     component_root,
-                    artifact_ref=f"art_translation_{arm_id}",
+                    artifact_ref=f"art_translation_{arm_id}_final",
                     artifact_kind="translation_artifact",
                     schema_version="TranslationArtifactV1",
-                    relative_path=f"artifacts/translator/{arm_id}.json",
+                    relative_path=f"artifacts/quality/{arm_id}_final.json",
                 ),
                 "producer_component_run_id": config["component_run_id"],
                 "producer_component_attempt_id": component_attempt_id,
@@ -2542,7 +2714,7 @@ def execute_live_stage(
         payloads = {"art_translation_s0": s0, "art_translation_s1": s1}
     elif stage_id == "translation_quality_audit":
         assert transport is not None
-        quality, state = _quality_stage(
+        quality, state, s0_final, s1_final = _quality_stage(
             campaign=campaign,
             rows=rows,
             component_root=component_root,
@@ -2554,6 +2726,8 @@ def execute_live_stage(
         payloads = {
             "art_translation_quality_observations": quality,
             "art_translation_quality_state": state,
+            "art_translation_s0_final": s0_final,
+            "art_translation_s1_final": s1_final,
         }
     elif stage_id == "scoring_handoff_fragment":
         payloads = {

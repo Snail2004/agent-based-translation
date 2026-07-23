@@ -153,7 +153,7 @@ def test_full_dry_component_exact_covers_admission_and_is_not_publishable(
         campaign / "component_plan.json", campaign / "component"
     )
     assert result["terminal_event"] == "run_done"
-    assert result["artifact_count"] == 15
+    assert result["artifact_count"] == 17
     package = validate_translation_component_package(campaign / "component")
     assert package["component_attempt_id"] == 1
 
@@ -212,7 +212,7 @@ def test_resume_after_translator_keeps_artifact_attempt_lineage(tmp_path: Path) 
     assert fragment["translation_component_attempt_id"] == 2
     assert {
         row["producer_component_attempt_id"] for row in fragment["translation_inputs"]
-    } == {1}
+    } == {2}
 
 
 def test_resume_rejects_material_plan_drift_before_component_mutation(

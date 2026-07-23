@@ -41,7 +41,7 @@ from pipeline.prepass.d2l_translation_component_runner_v1 import (
 )
 from pipeline.translate import d2l_translation_slots_v1 as slot_contract
 from pipeline.translate import runner as translation_runner_contract
-from pipeline.translate import d2l_translation_quality_auditor_v2 as quality_contract
+from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
 from pipeline.translate.d2l_latex_markup_line_protected_spans_v4 import (
     POLICY_ID as S1_PROTECTED_POLICY_ID,
     PROMPT_VERSION as S1_TRANSLATION_PROMPT_VERSION,
@@ -64,9 +64,9 @@ CONFIG_SCHEMA = "d2l_project_campaign_config_v2"
 SEAL_SCHEMA = "d2l_project_campaign_seal_v2"
 PREFLIGHT_SCHEMA = "d2l_project_campaign_preflight_v2"
 TRANSPORT_SEAL_SCHEMA = "d2l_transport_attempt_seal_v2"
-CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2"
+CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_1_quality_repair"
 PIPELINE_ID = "d2l_terminology"
-PIPELINE_VERSION = "d2l_translation_component_v1"
+PIPELINE_VERSION = "d2l_translation_component_v1_1_quality_repair"
 PROFILE_ID = "technical_d2l_v1"
 
 SHOPAI_SOURCE_ID = "shopaikey_gemini_proxy_v2"
@@ -1059,8 +1059,8 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
         _role(
             role_id="d2l.translator.s0",
             stage_id="translator",
-            model_id="gemini-3.5-flash",
-            source_id=SHOPAI_SOURCE_ID,
+            model_id="gpt-5.4",
+            source_id=MODELAPI_SOURCE_ID,
             prompt_id=s0_prompt,
             prompt_sha256=canonical_sha256(s0_system),
             validator_id="d2l_translation_exact_block_cover_validator_v1",
@@ -1077,6 +1077,7 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
             semantic_retry_cap=1,
             extra_policy={
                 "arm_id": "s0",
+                "one_total_retry_per_window": True,
                 "window_target_tokens": TRANSLATOR_TARGET_TOKENS,
                 "max_blocks": TRANSLATOR_MAX_BLOCKS,
             },
@@ -1084,8 +1085,8 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
         _role(
             role_id="d2l.translator.s1",
             stage_id="translator",
-            model_id="gemini-3.5-flash",
-            source_id=SHOPAI_SOURCE_ID,
+            model_id="gpt-5.4",
+            source_id=MODELAPI_SOURCE_ID,
             prompt_id=S1_TRANSLATION_PROMPT_VERSION,
             prompt_sha256=canonical_sha256(s1_system),
             validator_id="d2l_translation_slots_v4_local_validator",
@@ -1107,6 +1108,7 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
                 "response_envelope_policy": TRANSLATOR_ENVELOPE_POLICY_ID,
                 "glossary_review_policy": PROTECTED_LEXICAL_GLOSSARY_REVIEW_POLICY_ID,
                 "glossary_review_match_rule": PROTECTED_LEXICAL_GLOSSARY_REVIEW_MATCH_RULE_ID,
+                "one_total_retry_per_window": True,
                 "window_target_tokens": TRANSLATOR_TARGET_TOKENS,
                 "max_blocks": TRANSLATOR_MAX_BLOCKS,
             },
@@ -1114,8 +1116,8 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
         _role(
             role_id="d2l.translator.quality_auditor",
             stage_id="translation_quality_audit",
-            model_id="gpt-5.5",
-            source_id=MODELAPI_SOURCE_ID,
+            model_id="gemini-3.5-flash",
+            source_id=SHOPAI_SOURCE_ID,
             prompt_id=quality_contract.PROMPT_ID,
             prompt_sha256=quality_contract.prompt_sha256(),
             validator_id=quality_contract.LOCAL_VALIDATOR_ID,
@@ -1132,6 +1134,11 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
                 "input_contract": quality_contract.INPUT_CONTRACT_VERSION,
                 "semantic_contract": quality_contract.SEMANTIC_CONTRACT_VERSION,
                 "authority": "findings_only_non_blocking",
+                "glossary_visibility": "none",
+                "major_finding_repair_policy": (
+                    "one_translator_repair_if_initial_retry_unused"
+                ),
+                "post_repair_validation": "deterministic_only_no_second_auditor",
             },
         ),
     ]
