@@ -2490,7 +2490,9 @@ function ConsoleUsageLedger({ usage }) {
           <thead>
             <tr>
               <th>{uiText("call/cache", "call/cache")}</th>
-              <th>{uiText("nguồn · model", "source · model")}</th>
+              <th>provider</th>
+              <th>{uiText("nguồn", "source")}</th>
+              <th>model</th>
               <th>{uiText("component · tầng", "component · stage")}</th>
               <th>{uiText("attempt", "attempt")}</th>
               <th>prompt</th><th>completion</th><th>reasoning</th><th>cached</th><th>total</th>
@@ -2501,7 +2503,9 @@ function ConsoleUsageLedger({ usage }) {
             {(usage.calls || []).map(row => (
               <tr key={row.rowId}>
                 <td title={row.rowId}><b>{row.rowKind}</b><code>{row.logicalRequestId || row.rowId}</code></td>
-                <td><span>{row.sourceId || row.providerId || uiText("không xác định", "unknown")}</span><code>{row.observedModelId || row.requestedModelId || uiText("không xác định", "unknown")}</code></td>
+                <td>{consolePersistedValue(row.providerId)}</td>
+                <td><span>{consolePersistedValue(row.sourceId)}</span><code>{consolePersistedValue(row.sourceRevision)}</code></td>
+                <td><span>{consolePersistedValue(row.observedModelId)}</span><code>{consolePersistedValue(row.requestedModelId)}</code></td>
                 <td><span>{row.componentId || uiText("không xác định", "unknown")}</span><code>{row.stageId || uiText("không xác định", "unknown")}</code></td>
                 <td>{consolePersistedValue(row.physicalAttemptIndex ?? row.componentAttemptIndex)}</td>
                 <td>{consolePersistedValue(row.promptTokens, "int")}</td>
@@ -2690,21 +2694,11 @@ function AgentConsoleView(props) {
   const consoleStagePlan = workflowReplay
     ? (workflowReplay.valid && workflowReplay.stagePlan?.length ? workflowReplay.stagePlan : [])
     : CONSOLE_STAGE_PLAN;
-  const workflowReadOnly = Boolean(workflowReplay && (workflowInvalid || workflowReplay.sourceMode === "replay"));
   const workflowActions = workflowReplay?.valid ? (workflowReplay.actions || {}) : {};
   const scoreAction = workflowActions.score || {};
   const scoreActionVisible = Boolean(
     workflowReplay?.valid && Object.keys(scoreAction).length,
   );
-  const scoreActionAllowed = Boolean(
-    workflowReplay?.sourceMode === "live"
-    && scoreAction.allowed === true
-    && onScore,
-  );
-  const scoreActionTitle = scoreActionAllowed
-    ? consoleText(uiLocale, "score")
-    : (scoreAction.blocking_reasons || []).join(", ")
-      || consoleText(uiLocale, "score");
 
   const [stageFilter, setStageFilter] = React.useState("");
   const [agentFilter, setAgentFilter] = React.useState("");
@@ -2904,6 +2898,28 @@ function AgentConsoleView(props) {
   const replayActive = replayCursor != null;
   const replayPosition = replayActive ? replayCursor : events.length;
   const shownEvents = replayActive ? events.slice(0, replayPosition) : events;
+  const workflowReadOnly = Boolean(
+    workflowReplay
+    && (workflowInvalid || workflowReplay.sourceMode === "replay" || replayActive),
+  );
+  const scoreReadiness = workflowReplay?.valid
+    ? (workflowReplay.scoreReadiness || { allowed: false, blockingReasons: ["evaluation_score_readiness_missing"] })
+    : { allowed: false, blockingReasons: ["workflow_replay_invalid"] };
+  const scoreActionAllowed = Boolean(
+    !workflowReadOnly
+    && workflowReplay?.sourceMode === "live"
+    && scoreAction.allowed === true
+    && scoreReadiness.allowed === true
+    && onScore,
+  );
+  const scoreBlockingReasons = [
+    ...(Array.isArray(scoreAction.blocking_reasons) ? scoreAction.blocking_reasons : []),
+    ...(Array.isArray(scoreReadiness.blockingReasons) ? scoreReadiness.blockingReasons : []),
+    ...(workflowReadOnly ? ["workflow_replay_read_only"] : []),
+  ].filter((reason, index, values) => reason && values.indexOf(reason) === index);
+  const scoreActionTitle = scoreActionAllowed
+    ? consoleText(uiLocale, "score")
+    : scoreBlockingReasons.join(", ") || consoleText(uiLocale, "score");
   const fullState = React.useMemo(
     () => deriveConsoleState(events, consoleStagePlan, true, Boolean(workflowReplay)),
     [events, consoleStagePlan, workflowReplay],

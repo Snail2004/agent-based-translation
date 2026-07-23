@@ -31,6 +31,9 @@
   <a href="?scenario=usage-null">usage null</a>
   <a href="?scenario=usage-unknown-zero">unknown≠0</a>
   <a href="?scenario=optional-details">typed details</a>
+  <a href="?scenario=score-pending">score pending</a>
+  <a href="?scenario=score-materialized">score ready</a>
+  <a href="?scenario=stale-live-replay">stale live replay</a>
   <a href="?scenario=cursor-drift">cursor drift</a>
   <a href="?scenario=sequence-drift">sequence drift</a>
   <a href="?scenario=event-hash-drift">event hash drift</a>
@@ -56,6 +59,7 @@ function scenarioName() {
   return new Set([
     "valid", "sequence-drift", "event-hash-drift", "arm-drift", "artifact-drift",
     "usage-valid", "usage-null", "usage-unknown-zero", "optional-details", "cursor-drift",
+    "score-pending", "score-materialized", "stale-live-replay",
     "resume-valid", "resume-sequence-gap", "resume-attempt-regression",
   ]).has(value) ? value : "valid";
 }
@@ -368,6 +372,26 @@ async function resealParentEvents(adapter, events) {
   }
 }
 
+async function evaluationScope(adapter, settingsStatus) {
+  const basis = {
+    settings_option_id: "evaluation_settings_v1",
+    selected_chapter_ids: ["d2l_preliminaries", "d2l_linear_networks"],
+    selected_arm_ids: ["s0", "s1", "community", "google_nmt", "llm_lc"],
+    selected_scorer_ids: ["sf_qe", "sf_bt", "pj"],
+    highlight_pair: null,
+    registered_option_sha256: "4".repeat(64),
+  };
+  return {
+    schema_id: "EvaluationWorkflowScopeReadV1",
+    schema_version: "1.0.0",
+    ...basis,
+    selection_sha256: await adapter.canonicalSha256(basis),
+    scoring_handoff_status: "validated",
+    settings_status: settingsStatus,
+    settings_sha256: settingsStatus === "materialized" ? "9".repeat(64) : null,
+  };
+}
+
 async function addTypedDetails(adapter, manifest, events) {
   events[2].payload.optional_details = [
     typedDetail("translation", "d2l_glossary", {
@@ -511,6 +535,12 @@ async function loadAcceptedWorkflowPackage() {
     await resealParentEvents(adapter, events);
   }
   if (scenario === "optional-details") await addTypedDetails(adapter, manifest, events);
+  if (scenario === "stale-live-replay") {
+    manifest.status = "succeeded";
+    manifest.updated_at = "2026-07-22T00:00:05Z";
+    delete manifest.integrity.manifest_sha256;
+    manifest.integrity.manifest_sha256 = await adapter.canonicalSha256(manifest);
+  }
   const artifacts = handoff && receipt ? {
     "handoffs/scoring_handoff.json": handoff,
     "handoffs/scoring_receipt.json": receipt,
@@ -528,6 +558,10 @@ async function loadAcceptedWorkflowPackage() {
     package_revision_sha256: "d".repeat(64),
   };
   if (scenario === "cursor-drift") cursor.event_chain_head_sha256 = "0".repeat(64);
+  const scoreScenario = new Set(["score-pending", "score-materialized", "stale-live-replay"]).has(scenario);
+  const scope = scoreScenario
+    ? await evaluationScope(adapter, scenario === "score-pending" ? "pending_settings_materialization" : "materialized")
+    : null;
   return adapter.validatePackage({
     manifest,
     events,
@@ -535,9 +569,17 @@ async function loadAcceptedWorkflowPackage() {
     artifacts,
     usage: usageMode ? makeUsageReadModel(manifest, usageMode) : null,
     cursor,
-    actions: { pause_allowed: false, resume_allowed: false, cancel_allowed: false },
+    actions: scoreScenario
+      ? {
+        pause: { allowed: true },
+        resume: { allowed: false },
+        replay: { allowed: true },
+        score: { allowed: true, blocking_reasons: [] },
+      }
+      : { pause_allowed: false, resume_allowed: false, cancel_allowed: false },
+    evaluationScope: scope,
     artifactLinks: {},
-    sourceMode: "replay",
+    sourceMode: scoreScenario ? "live" : "replay",
   });
 }
 
@@ -592,6 +634,8 @@ function WorkflowReplayHarness() {
       theme={theme}
       onToggleTheme={() => setTheme(value => value === "paper" ? "dark" : "paper")}
       onRefresh={reload}
+      onPause={() => { window.__pauseInvocations = (window.__pauseInvocations || 0) + 1; }}
+      onScore={() => { window.__scoreInvocations = (window.__scoreInvocations || 0) + 1; }}
     />
   );
 }

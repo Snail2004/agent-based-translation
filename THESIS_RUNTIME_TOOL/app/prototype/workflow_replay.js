@@ -1185,6 +1185,27 @@
     return deepClone(value);
   }
 
+  function evaluationScoreReadiness(evaluationScope, scoring) {
+    const blockingReasons = [];
+    if (!evaluationScope) {
+      blockingReasons.push("evaluation_scope_missing");
+    } else {
+      if (evaluationScope.scoring_handoff_status !== "validated" || !scoring?.handoff) {
+        blockingReasons.push("scoring_handoff_not_validated");
+      }
+      if (evaluationScope.settings_status !== "materialized") {
+        blockingReasons.push("evaluation_settings_not_materialized");
+      }
+      if (!SHA256_RE.test(String(evaluationScope.settings_sha256 || ""))) {
+        blockingReasons.push("evaluation_settings_sha256_missing");
+      }
+    }
+    return Object.freeze({
+      allowed: blockingReasons.length === 0,
+      blockingReasons: [...new Set(blockingReasons)],
+    });
+  }
+
   function buildStagePlan(stages) {
     let phase = 0;
     let previousComponent = null;
@@ -1279,6 +1300,9 @@
     }));
     const checkpoints = parentEvents.filter(event => event?.event === "checkpoint" || Object.prototype.hasOwnProperty.call(event?.payload || {}, "checkpoint"));
     const valid = errors.length === 0;
+    const scoreReadiness = valid
+      ? evaluationScoreReadiness(evaluationScope, scoring)
+      : Object.freeze({ allowed: false, blockingReasons: ["workflow_replay_invalid"] });
     return Object.freeze({
       contract: "workflow_replay_ui_projection_v1",
       valid,
@@ -1291,6 +1315,7 @@
       artifacts: valid ? artifactRows : [],
       scoring: valid ? scoring : { handoff: null, receipt: null, receiptStatus: null, inputSetSha256: null, arms: [], reports: [] },
       evaluationScope: valid ? evaluationScope : null,
+      scoreReadiness,
       usage: valid ? usage : { present: usage.present, calls: [], stageTotals: [], componentTotals: [], workflowTotal: null },
       operationalFacts: valid ? operationalFacts : [],
       latestCheckpoint: valid && checkpoints.length ? checkpoints[checkpoints.length - 1] : null,

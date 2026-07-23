@@ -2001,11 +2001,22 @@ function App() {
   async function scoreRun() {
     if (!selectedRunId) return;
     const action = workflowReplay?.actions?.score || {};
-    if (action.allowed !== true) {
+    const readiness = workflowReplay?.scoreReadiness || {};
+    if (
+      workflowReplay?.valid !== true
+      || workflowReplay?.sourceMode !== "live"
+      || action.allowed !== true
+      || readiness.allowed !== true
+    ) {
+      const reasons = [
+        ...(Array.isArray(action.blocking_reasons) ? action.blocking_reasons : []),
+        ...(Array.isArray(readiness.blockingReasons) ? readiness.blockingReasons : []),
+        ...(workflowReplay?.sourceMode === "replay" ? ["workflow_replay_read_only"] : []),
+      ].filter((reason, index, values) => reason && values.indexOf(reason) === index);
       toast(
         uiText("Chấm điểm chưa sẵn sàng", "Scoring is not ready"),
         "bad",
-        (action.blocking_reasons || []).join(", "),
+        reasons.join(", ") || "workflow_replay_invalid",
       );
       return;
     }
