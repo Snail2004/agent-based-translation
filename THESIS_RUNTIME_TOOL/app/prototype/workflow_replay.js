@@ -430,8 +430,16 @@
       addError(errors, "evaluation_catalog", `${path}.selection_catalog`, "an ordered Evaluation selection catalog is required");
       return;
     }
-    if (!Array.isArray(catalog.chapter_ids) || !canonicalEqual(catalog.chapter_ids, EVALUATION_CHAPTER_ORDER)) {
-      addError(errors, "evaluation_chapter_catalog", `${path}.selection_catalog.chapter_ids`, "the registered five-chapter order is required");
+    const catalogChapterIds = Array.isArray(catalog.chapter_ids) ? catalog.chapter_ids : [];
+    const catalogChapterSet = new Set(catalogChapterIds);
+    const canonicalProjectSubset = setupChapterIds.filter(chapterId => catalogChapterSet.has(chapterId));
+    if (
+      !catalogChapterIds.length
+      || catalogChapterIds.some(chapterId => typeof chapterId !== "string" || !chapterId)
+      || catalogChapterSet.size !== catalogChapterIds.length
+      || !canonicalEqual(catalogChapterIds, canonicalProjectSubset)
+    ) {
+      addError(errors, "evaluation_chapter_catalog", `${path}.selection_catalog.chapter_ids`, "Evaluation chapters must be a non-empty canonical subset of the project chapter order");
     }
     if (!Array.isArray(catalog.arm_ids) || !canonicalEqual(catalog.arm_ids, ARM_ORDER)) {
       addError(errors, "evaluation_arm_catalog", `${path}.selection_catalog.arm_ids`, "the exact five-arm order is required");
@@ -444,7 +452,7 @@
       addError(errors, "evaluation_defaults", `${path}.default_selection`, "server-owned Evaluation defaults are required");
       return;
     }
-    const chapters = validateOrderedSubset(defaults.selected_chapter_ids, EVALUATION_CHAPTER_ORDER, 1, `${path}.default_selection.selected_chapter_ids`, errors);
+    const chapters = validateOrderedSubset(defaults.selected_chapter_ids, catalogChapterIds, 1, `${path}.default_selection.selected_chapter_ids`, errors);
     chapters.forEach(chapterId => {
       if (!setupChapterIds.includes(chapterId)) addError(errors, "evaluation_chapter_scope", `${path}.default_selection.selected_chapter_ids`, "default Evaluation chapters must exist in the project");
     });
@@ -590,7 +598,10 @@
     if (costCap !== null && costCap !== "" && (typeof Number(costCap) !== "number" || !Number.isFinite(Number(costCap)) || Number(costCap) <= 0)) {
       addError(errors, "cost_cap", "$selection.reserved_cost_cap_usd", "reserved cost cap must be a positive number or null");
     }
-    const evaluationChapterIds = validateOrderedSubset(selection?.evaluationChapterIds, EVALUATION_CHAPTER_ORDER, 1, "$selection.evaluation.selected_chapter_ids", errors);
+    const evaluationChapterOrder = Array.isArray(evaluation?.selectionCatalog?.chapter_ids)
+      ? evaluation.selectionCatalog.chapter_ids
+      : [];
+    const evaluationChapterIds = validateOrderedSubset(selection?.evaluationChapterIds, evaluationChapterOrder, 1, "$selection.evaluation.selected_chapter_ids", errors);
     evaluationChapterIds.forEach(chapterId => {
       if (!orderedChapterIds.includes(chapterId)) addError(errors, "evaluation_chapter_scope", "$selection.evaluation.selected_chapter_ids", "Evaluation chapters must be selected for the workflow");
     });
@@ -1132,7 +1143,7 @@
     return scoring;
   }
 
-  async function validateEvaluationScope(value, scoring, errors) {
+  async function validateEvaluationScope(value, scoring, manifest, errors) {
     if (value === null || value === undefined) return null;
     exactKeys(value, [
       "schema_id", "schema_version", "settings_option_id",
@@ -1147,7 +1158,16 @@
     }
     if (!SHA256_RE.test(String(value.registered_option_sha256 || ""))) addError(errors, "sha256", "$evaluation_scope.registered_option_sha256", "registered option SHA-256 is required");
     if (!SHA256_RE.test(String(value.selection_sha256 || ""))) addError(errors, "sha256", "$evaluation_scope.selection_sha256", "selection SHA-256 is required");
-    validateOrderedSubset(value.selected_chapter_ids, EVALUATION_CHAPTER_ORDER, 1, "$evaluation_scope.selected_chapter_ids", errors);
+    const parentEvaluationChapterOrder = (manifest?.stages || [])
+      .filter(stage => stage?.component_id === "evaluation" && String(stage?.local_stage_id || "").startsWith("chapter_"))
+      .map(stage => String(stage.local_stage_id).slice("chapter_".length));
+    validateOrderedSubset(
+      value.selected_chapter_ids,
+      parentEvaluationChapterOrder,
+      1,
+      "$evaluation_scope.selected_chapter_ids",
+      errors,
+    );
     validateOrderedSubset(value.selected_arm_ids, ARM_ORDER, 2, "$evaluation_scope.selected_arm_ids", errors);
     validateOrderedSubset(value.selected_scorer_ids, SCORER_ORDER, 1, "$evaluation_scope.selected_scorer_ids", errors);
     const pair = value.highlight_pair;
@@ -1269,7 +1289,7 @@
     const scoring = isObject(manifest)
       ? await validateScoringArtifacts(artifactRows, artifactBodies, validatedArtifacts, manifest, errors)
       : { handoff: null, receipt: null, receiptStatus: null, inputSetSha256: null, arms: [], reports: [] };
-    const evaluationScope = await validateEvaluationScope(deepClone(input?.evaluationScope), scoring, errors);
+    const evaluationScope = await validateEvaluationScope(deepClone(input?.evaluationScope), scoring, manifest, errors);
     const usage = validateUsageReadModel(deepClone(input?.usage), manifest, errors);
     const cursor = deepClone(input?.cursor || null);
     if (cursor !== null) {

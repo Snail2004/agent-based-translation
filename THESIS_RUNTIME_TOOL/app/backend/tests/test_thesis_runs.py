@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -3867,6 +3868,13 @@ def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
     assert "workflow_credentials_unavailable" in preflight[
         "blocking_reasons"
     ]
+    assert "workflow_artifact_missing" not in preflight["blocking_reasons"]
+    assert "evaluation_runtime_config_missing" not in preflight[
+        "blocking_reasons"
+    ]
+    warning_codes = [row["code"] for row in preflight["warnings"]]
+    assert "workflow_translation_only_scoring_deferred" in warning_codes
+    assert "workflow_artifact_missing" in warning_codes
     assert preflight["scoring_start_allowed"] is False
     assert preflight["bounds"]["cost_usd"] is None
     assert preflight["launch"]["confirm_token"]
@@ -3898,6 +3906,170 @@ def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
         == "workflow_credentials_unavailable"
     )
     assert registry.list_runs() == []
+
+
+def test_route_workflow_live_translation_allows_generic_project_without_baseline(
+    tmp_path,
+    monkeypatch,
+):
+    client, routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    workflow_service = importlib.import_module("services.workflow_replay")
+    thesis_service = importlib.import_module("services.thesis_runs")
+    status, source_project = _workflow_setup_project_fixture()
+    project = SimpleNamespace(
+        block_rows=(
+            {"chapter_id": "introduction", "block_id": "generic_b1"},
+            {"chapter_id": "chapter_one", "block_id": "generic_b2"},
+        ),
+        chapter_rows=(
+            {"chapter_id": "introduction", "title": "Introduction"},
+            {"chapter_id": "chapter_one", "title": "Chapter One"},
+        ),
+        manifest={
+            "translatable_chapter_ids": ["introduction", "chapter_one"],
+        },
+        source_snapshot=source_project.source_snapshot,
+        source_binding=source_project.source_binding,
+    )
+    monkeypatch.setattr(
+        workflow_service,
+        "_load_setup_project",
+        lambda *_args, **_kwargs: (status, project),
+    )
+    monkeypatch.setattr(
+        workflow_service,
+        "_scoring_runtime_readiness",
+        lambda **_kwargs: {
+            "allowed": False,
+            "blockers": ["workflow_runtime_registration_missing"],
+            "runtime": {
+                "status": "blocked",
+                "registration_sha256": None,
+            },
+        },
+    )
+    monkeypatch.setattr(
+        workflow_service,
+        "_credential_status",
+        lambda: [
+            {
+                "credential_ref": "credential.shopaikey_gemini_proxy_v1",
+                "status": "available",
+            },
+            {
+                "credential_ref": "credential.modelapi_shared_v1",
+                "status": "available",
+            },
+        ],
+    )
+    preview = {
+        **_fake_d2l_preview(["introduction"]),
+        "source_binding": project.source_binding,
+    }
+    for module in (thesis_service, routes):
+        monkeypatch.setattr(
+            module,
+            "_d2l_preview_source",
+            lambda **_kwargs: preview,
+        )
+    for module in (thesis_service, routes):
+        monkeypatch.setattr(
+            module,
+            "_d2l_credential_files",
+            lambda **_kwargs: {},
+        )
+
+    def reject_evaluation_runtime_lookup(**_kwargs):
+        raise AssertionError(
+            "Translation-only launch must not resolve Evaluation runtime config."
+        )
+
+    for module in (thesis_service, routes):
+        monkeypatch.setattr(
+            module,
+            "_evaluation_runtime_config_file",
+            reject_evaluation_runtime_lookup,
+        )
+    monkeypatch.setattr(
+        thesis_service,
+        "resolve_job_db",
+        lambda **_kwargs: tmp_path / "unused.sqlite3",
+    )
+    issued_tokens = []
+
+    def issue_token(**kwargs):
+        issued_tokens.append(kwargs)
+        return "translation-only-api-token"
+
+    monkeypatch.setattr(
+        thesis_service,
+        "issue_estimate_token_for_argv",
+        issue_token,
+    )
+    monkeypatch.setattr(
+        routes,
+        "validate_api_gate",
+        lambda **kwargs: kwargs["confirm_token"],
+    )
+    spawned = []
+    frozen = []
+    monkeypatch.setattr(
+        routes, "spawn_run", lambda _registry, run_id: spawned.append(run_id)
+    )
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda _job_id, run_id, **_kwargs: frozen.append(run_id),
+    )
+
+    setup_response = client.get("/api/projects/projectA/workflow-setup")
+    assert setup_response.status_code == 200
+    setup = setup_response.get_json()["data"]
+    evaluation_option = setup["evaluation_settings_options"][0]
+    assert evaluation_option["status"] == "pending_baseline_registration"
+    assert evaluation_option["selection_catalog"]["chapter_ids"] == [
+        "introduction",
+        "chapter_one",
+    ]
+    assert setup["defaults"]["evaluation"]["selected_chapter_ids"] == [
+        "introduction",
+        "chapter_one",
+    ]
+
+    preflight_response = client.post(
+        "/api/projects/projectA/workflow-setup/preflight",
+        json=_workflow_selection_request(
+            mode="live",
+            chapter_ids=["introduction"],
+        ),
+    )
+    assert preflight_response.status_code == 200
+    preflight = preflight_response.get_json()["data"]
+    assert preflight["start_allowed"] is True
+    assert preflight["blocking_reasons"] == []
+    assert preflight["scoring_start_allowed"] is False
+    assert preflight["normalized_selection"]["evaluation"][
+        "selected_chapter_ids"
+    ] == ["introduction"]
+    assert "workflow_translation_only_scoring_deferred" in [
+        row["code"] for row in preflight["warnings"]
+    ]
+    assert "--server-runtime-config" not in issued_tokens[0]["argv"]
+
+    launched = client.post(
+        "/api/thesis/runs",
+        json=_workflow_launch_request(preflight),
+    )
+    assert launched.status_code == 201
+    data = launched.get_json()["data"]
+    entry = registry.get_run(data["run_id"])
+    assert entry["selected_chapter_ids"] == ["introduction"]
+    assert "--server-runtime-config" not in entry["argv"]
+    assert entry["evaluation_selection"]["selected_chapter_ids"] == [
+        "introduction"
+    ]
+    assert spawned == [data["run_id"]]
+    assert frozen == [data["run_id"]]
 
 
 def test_workflow_setup_uses_registered_evaluation_option_authority(

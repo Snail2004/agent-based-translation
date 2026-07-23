@@ -230,7 +230,7 @@ def _run_translation(args: argparse.Namespace) -> int:
                 result.translation_component_root
             ),
         }
-        if args.live:
+        if args.live and args.server_runtime_config:
             prepared = _prepare_evaluation_runtime(
                 args,
                 translation_component_root=result.translation_component_root,
@@ -250,6 +250,15 @@ def _run_translation(args: argparse.Namespace) -> int:
                     "evaluation_runtime_bundle": str(
                         prepared.prepared_bundle.bundle_path
                     ),
+                }
+            )
+        elif args.live:
+            payload.update(
+                {
+                    "scoring_status": "pending_baseline_registration",
+                    "scoring_handoff_sha256": None,
+                    "evaluation_settings_sha256": None,
+                    "evaluation_runtime_bundle": None,
                 }
             )
     except WorkflowComponentPausedV1:

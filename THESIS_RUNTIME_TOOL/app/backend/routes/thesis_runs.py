@@ -295,6 +295,7 @@ def create_run():
                 "evaluation_settings_template_sha256": workflow_launch[
                     "evaluation_settings_template_sha256"
                 ],
+                "prepare_scoring": workflow_launch["prepare_scoring"],
             }
         script = validate_script(body.get("script", ""))
         allow_api = bool(body.get("allow_api", False))
@@ -323,6 +324,11 @@ def create_run():
         evaluation_paths = None
         d2l_credentials = {}
         evaluation_runtime_config = None
+        prepare_scoring = (
+            workflow_launch is not None
+            and bool(body.get("prepare_scoring", False))
+            and allow_api
+        )
         d2l_profile = body.get("profile")
         d2l_launch_binding = None
         if script in _D2L_COMPONENT_SCRIPTS:
@@ -402,9 +408,9 @@ def create_run():
                 preview=d2l_preview,
             )
             d2l_credentials = _d2l_credential_files(required=allow_api)
-            if script == WORKFLOW_ORCHESTRATOR_SCRIPT:
+            if script == WORKFLOW_ORCHESTRATOR_SCRIPT and prepare_scoring:
                 evaluation_runtime_config = _evaluation_runtime_config_file(
-                    required=allow_api
+                    required=True
                 )
             event_log_path = d2l_paths["event_log_path"]
             run_dir = d2l_paths["campaign_root"]

@@ -987,6 +987,7 @@ function WorkflowSetupBody({
   const shared = setup.sharedOptions.find(option => option.id === selection.sharedOptionId) || null;
   const d2l = setup.d2lOptions.find(option => option.id === selection.d2lOptionId) || null;
   const evaluation = setup.evaluationOptions.find(option => option.id === selection.evaluationOptionId) || null;
+  const evaluationPendingBaseline = evaluation?.status === "pending_baseline_registration";
   const evaluationCatalog = evaluation?.selectionCatalog || {};
   const advertisedArms = evaluationCatalog.arm_ids || [];
   const advertisedScorers = evaluationCatalog.scorer_ids || [];
@@ -1131,6 +1132,15 @@ function WorkflowSetupBody({
                 </select>
               </label>
               <WorkflowOptionSummary option={evaluation} />
+              {evaluationPendingBaseline && (
+                <div className="workflow-callout">
+                  <Ic.lock size={14} />
+                  <span>{uiText(
+                    "Project chưa đăng ký baseline chấm điểm. Dịch vẫn chạy bình thường; Chấm điểm sẽ giữ khóa cho tới khi baseline được chuẩn bị và xác thực.",
+                    "This project has no registered scoring baseline. Translation remains available; Scoring stays locked until a baseline is prepared and validated.",
+                  )}</span>
+                </div>
+              )}
               <div className="workflow-section-title">
                 {uiText("Phạm vi chấm điểm", "Scoring scope")}
               </div>
@@ -1252,6 +1262,8 @@ function WorkflowSetupBody({
             evaluation_template_sha256: confirmedSelection?.evaluation?.registered_option_sha256 ?? null,
             evaluation_settings_sha256: preflight.evaluationSummary?.settings_sha256 ?? null,
             evaluation_settings_status: preflight.evaluationSummary?.settings_status ?? null,
+            evaluation_baseline_status: evaluation?.status ?? null,
+            scoring_start_allowed: preflight.scoringStartAllowed,
             planned_run_id: preflight.launch?.plannedRunId,
             preflight_sha256: preflight.launch?.preflightSha256,
           }} />

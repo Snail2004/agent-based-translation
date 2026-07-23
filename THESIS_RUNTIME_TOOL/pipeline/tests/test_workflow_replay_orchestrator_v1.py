@@ -4,6 +4,7 @@ import copy
 import json
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -1141,3 +1142,80 @@ def test_workflow_cli_accepts_resume_and_prepared_score_boundaries(
     assert score.resume is True
     assert score.workflow_run_id is None
     assert score.component_run_id is None
+
+
+def test_translation_cli_live_without_runtime_config_defers_scoring(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    component_root = tmp_path / "campaign" / "component"
+
+    class FakeOrchestrator:
+        def __init__(
+            self,
+            _parent_root,
+            *,
+            translation_executor,
+            selected_chapter_ids,
+        ) -> None:
+            assert translation_executor.live is True
+            assert tuple(selected_chapter_ids) == ("generic_chapter",)
+
+        def run_translation(self):
+            return SimpleNamespace(
+                manifest={
+                    "workflow_run_id": WORKFLOW_ID,
+                    "status": "running",
+                },
+                translation_component_root=component_root,
+            )
+
+    monkeypatch.setattr(
+        orchestrator_cli,
+        "WorkflowOrchestratorV1",
+        FakeOrchestrator,
+    )
+
+    def reject_scoring_prepare(*_args, **_kwargs):
+        raise AssertionError(
+            "Translation-only execution must not prepare Evaluation."
+        )
+
+    monkeypatch.setattr(
+        orchestrator_cli,
+        "_prepare_evaluation_runtime",
+        reject_scoring_prepare,
+    )
+    args = orchestrator_cli._parser().parse_args(
+        [
+            "translate",
+            "--parent-root",
+            str(tmp_path / "parent"),
+            "--job-root",
+            str(tmp_path / "job"),
+            "--campaign-root",
+            str(tmp_path / "campaign"),
+            "--workflow-run-id",
+            WORKFLOW_ID,
+            "--component-run-id",
+            "translation_run_v1",
+            "--evaluation-component-run-id",
+            "evaluation_run_v1",
+            "--evaluation-root",
+            str(tmp_path / "evaluation"),
+            "--evaluation-runtime-root",
+            str(tmp_path / "evaluation_runtime"),
+            "--chapter-id",
+            "generic_chapter",
+            "--live",
+        ]
+    )
+
+    assert orchestrator_cli._run_translation(args) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "translation_succeeded"
+    assert payload["scoring_status"] == "pending_baseline_registration"
+    assert payload["scoring_handoff_sha256"] is None
+    assert payload["evaluation_settings_sha256"] is None
+    assert payload["evaluation_runtime_bundle"] is None

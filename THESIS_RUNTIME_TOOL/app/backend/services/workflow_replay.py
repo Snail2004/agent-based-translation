@@ -381,8 +381,6 @@ def create_workflow_preflight(
         blocking_reasons.append("workflow_live_start_disabled")
     if mode == "live" and missing_credentials:
         blocking_reasons.append("workflow_credentials_unavailable")
-    if mode == "live" and not scoring_readiness["allowed"]:
-        blocking_reasons.extend(scoring_readiness["blockers"])
     blocking_reasons = list(dict.fromkeys(blocking_reasons))
     api_confirm_token = None
     if mode == "live" and not blocking_reasons:
@@ -396,6 +394,7 @@ def create_workflow_preflight(
             jobs_root=jobs_root,
             tool_root=tool_root,
             python_exe=python_exe,
+            prepare_scoring=scoring_readiness["allowed"],
         )
     issued_at = _utc_now()
     expires_at = (
@@ -425,6 +424,7 @@ def create_workflow_preflight(
         "evaluation_settings_template_sha256": evaluation_selection[
             "registered_option_sha256"
         ],
+        "prepare_scoring": scoring_readiness["allowed"],
         "source_binding_sha256": preview["source_binding_sha256"],
         "campaign_config_sha256": preview["campaign_config_sha256"],
         "api_confirm_token": api_confirm_token,
@@ -440,7 +440,17 @@ def create_workflow_preflight(
         "errors": [],
         "warnings": [
             {"code": reason, "message": reason}
-            for reason in blocking_reasons
+            for reason in (
+                blocking_reasons
+                + (
+                    []
+                    if scoring_readiness["allowed"]
+                    else [
+                        "workflow_translation_only_scoring_deferred",
+                        *scoring_readiness["blockers"],
+                    ]
+                )
+            )
         ],
         "execution_mode": mode,
         "live_start_allowed": LIVE_START_ALLOWED,
@@ -604,6 +614,7 @@ def _issue_live_api_token(
     jobs_root: str | Path,
     tool_root: str | Path,
     python_exe: str | None,
+    prepare_scoring: bool,
 ) -> str:
     from services.thesis_runs import (
         D2L_PROFILE_ID,
@@ -636,8 +647,11 @@ def _issue_live_api_token(
         ],
     )
     credentials = _d2l_credential_files(required=True)
-    evaluation_runtime_config = _evaluation_runtime_config_file(required=True)
-    assert evaluation_runtime_config is not None
+    evaluation_runtime_config = (
+        _evaluation_runtime_config_file(required=True)
+        if prepare_scoring
+        else None
+    )
     launch_binding = _d2l_launch_binding_sha256(
         job_id=job_id,
         planned_run_id=planned_run_id,
@@ -673,7 +687,11 @@ def _issue_live_api_token(
         ],
         evaluation_root=str(evaluation_paths["component_root"]),
         evaluation_runtime_root=str(evaluation_paths["runtime_root"]),
-        evaluation_runtime_config=str(evaluation_runtime_config),
+        evaluation_runtime_config=(
+            None
+            if evaluation_runtime_config is None
+            else str(evaluation_runtime_config)
+        ),
         code_root=str(tool),
         runtime_root=str(paths["runtime_root"]),
         credential_files=credentials,
@@ -1258,16 +1276,20 @@ def _evaluation_settings_option(
     job_id: str | None = None,
     source_binding_sha256: str | None = None,
 ) -> dict[str, Any]:
-    available = (
-        set(EVALUATION_CHAPTER_ORDER)
+    available_order = (
+        list(EVALUATION_CHAPTER_ORDER)
         if available_chapter_ids is None
-        else set(available_chapter_ids)
+        else list(dict.fromkeys(available_chapter_ids))
     )
-    default_chapters = [
+    available = set(available_order)
+    registered_default_chapters = [
         chapter_id
         for chapter_id in EVALUATION_CHAPTER_ORDER
         if chapter_id in available
     ]
+    catalog_chapters = list(available_order)
+    default_chapters = list(catalog_chapters)
+    option_status = "pending_baseline_registration"
     fixed_facts: dict[str, Any] = {
         "settings_schema_id": EVALUATION_SETTINGS_SCHEMA_ID,
         "settings_schema_version": EVALUATION_SETTINGS_SCHEMA_VERSION,
@@ -1309,7 +1331,7 @@ def _evaluation_settings_option(
                     Path(job_root),
                     expected_job_id=job_id,
                     expected_source_binding_sha256=source_binding_sha256,
-                    selected_chapter_ids=default_chapters,
+                    selected_chapter_ids=registered_default_chapters,
                 )
             )
             registered = loaded.registered_option
@@ -1332,6 +1354,13 @@ def _evaluation_settings_option(
             option_sha256 = canonical_sha256(fixed_facts)
             if option_sha256 != registered["registered_option_sha256"]:
                 raise ValueError("registered Evaluation option hash drifted")
+            catalog_chapters = [
+                chapter_id
+                for chapter_id in loaded.settings_authority.chapter_ids
+                if chapter_id in available
+            ]
+            default_chapters = list(catalog_chapters)
+            option_status = "registered"
         except Exception as exc:
             raise WorkflowReplayError(
                 "workflow_evaluation_runtime_invalid",
@@ -1344,10 +1373,10 @@ def _evaluation_settings_option(
         "revision": EVALUATION_SETTINGS_SCHEMA_VERSION,
         "sha256": option_sha256,
         "enabled": bool(default_chapters),
-        "status": "registered",
+        "status": option_status,
         "fixed_facts": fixed_facts,
         "selection_catalog": {
-            "chapter_ids": list(EVALUATION_CHAPTER_ORDER),
+            "chapter_ids": list(catalog_chapters),
             "arm_ids": list(EVALUATION_ARM_ORDER),
             "scorer_ids": list(EVALUATION_SCORER_ORDER),
         },

@@ -238,14 +238,14 @@ async function runSetupContractChecks(adapter) {
     source_package: {
       lifecycle: "finalized_pre_run",
       finalization_status: "finalized",
-      chapter_count: 5,
-      block_count: 2355,
+      chapter_count: 2,
+      block_count: 937,
       source_identity_sha256: "1".repeat(64),
     },
     runtime: { prepared: true, pipeline_run_count: 0 },
     chapters: [
-      { chapter_id: "d2l_preliminaries", title: "Preliminaries", block_count: 471, selected_by_default: true },
-      { chapter_id: "d2l_linear_networks", title: "Linear Networks", block_count: 466, selected_by_default: true },
+      { chapter_id: "introduction", title: "Introduction", block_count: 471, selected_by_default: true },
+      { chapter_id: "chapter_one", title: "Chapter One", block_count: 466, selected_by_default: true },
     ],
     execution_modes: [
       { id: "dry_run", label: "0-API", enabled: true },
@@ -280,6 +280,7 @@ async function runSetupContractChecks(adapter) {
       revision: "1.1.0",
       sha256: "4".repeat(64),
       enabled: true,
+      status: "pending_baseline_registration",
       fixed_facts: {
         settings_schema_id: "EvaluationWorkflowSettingsV1",
         settings_schema_version: "1.1.0",
@@ -287,17 +288,13 @@ async function runSetupContractChecks(adapter) {
         scorer_ids: ["sf_qe", "sf_bt", "pj"],
       },
       selection_catalog: {
-        chapter_ids: [
-          "d2l_preliminaries", "d2l_linear_networks",
-          "d2l_multilayer_perceptrons", "d2l_deep_learning_computation",
-          "d2l_convolutional_neural_networks",
-        ],
+        chapter_ids: ["introduction", "chapter_one"],
         arm_ids: ["s0", "s1", "community", "google_nmt", "llm_lc"],
         scorer_ids: ["sf_qe", "sf_bt", "pj"],
       },
       default_selection: {
         settings_option_id: "evaluation_settings_v1",
-        selected_chapter_ids: ["d2l_preliminaries", "d2l_linear_networks"],
+        selected_chapter_ids: ["introduction", "chapter_one"],
         selected_arm_ids: ["s0", "s1", "community", "google_nmt", "llm_lc"],
         selected_scorer_ids: ["sf_qe", "sf_bt", "pj"],
         highlight_pair: null,
