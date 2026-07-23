@@ -19,6 +19,7 @@ import sys
 import threading
 import time
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -125,6 +126,58 @@ _active_tokens: dict[str, PreviewToken] = {}
 _token_lock = threading.Lock()
 
 
+@contextmanager
+def _registry_file_guard(registry_path: Path):
+    lock_path = registry_path.with_suffix(registry_path.suffix + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path.touch(exist_ok=True)
+    with lock_path.open("r+b") as handle:
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+
+            if handle.read(1) == b"":
+                handle.seek(0)
+                handle.write(b"0")
+                handle.flush()
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            handle.seek(0)
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def _latest_registry_entry(
+    registry_path: Path,
+    run_id: str,
+) -> dict[str, Any] | None:
+    if not registry_path.exists():
+        return None
+    latest = None
+    with registry_path.open(encoding="utf-8") as handle:
+        for line in handle:
+            try:
+                row = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if isinstance(row, dict) and row.get("run_id") == run_id:
+                latest = row
+    return latest
+
+
 class RunRegistry:
     """Persist run provenance as JSONL and keep the latest snapshot in memory."""
 
@@ -220,6 +273,12 @@ class RunRegistry:
         evaluation_selection: dict[str, Any] | None = None,
         evaluation_selection_sha256: str | None = None,
         evaluation_settings_template_sha256: str | None = None,
+        workflow_phase: str | None = None,
+        parent_manifest_sha256: str | None = None,
+        scoring_handoff_sha256: str | None = None,
+        evaluation_settings_sha256: str | None = None,
+        workflow_runtime_registration_sha256: str | None = None,
+        reject_if_exists: bool = False,
     ) -> dict[str, Any]:
         run_id = validate_run_id(run_id) if run_id else self.new_run_id()
         now = _utc_now()
@@ -265,6 +324,13 @@ class RunRegistry:
             "evaluation_settings_template_sha256": (
                 evaluation_settings_template_sha256
             ),
+            "workflow_phase": workflow_phase,
+            "parent_manifest_sha256": parent_manifest_sha256,
+            "scoring_handoff_sha256": scoring_handoff_sha256,
+            "evaluation_settings_sha256": evaluation_settings_sha256,
+            "workflow_runtime_registration_sha256": (
+                workflow_runtime_registration_sha256
+            ),
             "status": "pending",
             "pid": None,
             "started_at": now,
@@ -273,9 +339,51 @@ class RunRegistry:
             "log_path": log_path,
         }
         with self._lock:
-            self._runs[run_id] = entry
-            self._append(entry)
+            if reject_if_exists:
+                with _registry_file_guard(self._registry_path):
+                    existing = _latest_registry_entry(
+                        self._registry_path,
+                        run_id,
+                    )
+                    if existing is not None:
+                        self._runs[run_id] = existing
+                        raise RunControlError(
+                            "run_already_exists",
+                            f"Run {run_id} already exists.",
+                            409,
+                        )
+                    self._runs[run_id] = entry
+                    self._append(entry)
+            else:
+                self._runs[run_id] = entry
+                self._append(entry)
         return dict(entry)
+
+    def claim_run_for_spawn(self, run_id: str) -> bool:
+        run = validate_run_id(run_id, required=True)
+        with self._lock:
+            with _registry_file_guard(self._registry_path):
+                latest = _latest_registry_entry(self._registry_path, run)
+                if latest is None:
+                    return False
+                status = latest.get("status")
+                if status == "launching" and _process_alive(
+                    latest.get("spawn_claim_pid")
+                ):
+                    self._runs[run] = latest
+                    return False
+                if status not in {"pending", "launching"}:
+                    self._runs[run] = latest
+                    return False
+                claimed = {
+                    **latest,
+                    "status": "launching",
+                    "spawn_claim_pid": os.getpid(),
+                    "spawn_claimed_at": _utc_now(),
+                }
+                self._runs[run] = claimed
+                self._append(claimed)
+                return True
 
     def update_run(self, run_id: str, **updates: Any) -> dict[str, Any] | None:
         with self._lock:
@@ -493,6 +601,22 @@ def evaluation_component_paths(
                 500,
             ) from exc
     return values
+
+
+def evaluation_component_attempt_id(attempt_index: int) -> str:
+    if isinstance(attempt_index, bool) or not isinstance(attempt_index, int):
+        raise RunControlError(
+            "evaluation_attempt_invalid",
+            "Evaluation attempt index must be an integer.",
+            400,
+        )
+    if attempt_index < 1 or attempt_index > 9999:
+        raise RunControlError(
+            "evaluation_attempt_invalid",
+            "Evaluation attempt index must be between 1 and 9999.",
+            400,
+        )
+    return f"evalcomp_attempt_{attempt_index:04d}"
 
 
 def d2l_component_ids(run_id: str) -> dict[str, str]:
@@ -1175,6 +1299,8 @@ def _issue_preview_token(
 
 
 def spawn_run(registry: RunRegistry, run_id: str) -> None:
+    if not registry.claim_run_for_spawn(run_id):
+        return
     entry = registry.get_run(run_id)
     if entry is None:
         return
@@ -1203,7 +1329,26 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
                 current = registry.get_run(run_id) or {}
                 if current.get("status") == "cancelled":
                     return
-                if current.get("script") in {
+                if (
+                    current.get("script") == WORKFLOW_ORCHESTRATOR_SCRIPT
+                    and current.get("component_id") == EVALUATION_COMPONENT_ID
+                ):
+                    component_status = _read_parent_component_status(
+                        current,
+                        EVALUATION_COMPONENT_ID,
+                    )
+                    if component_status == "succeeded":
+                        status = "done" if proc.returncode == 0 else "failed"
+                    elif component_status in {"failed", "paused"}:
+                        status = (
+                            "done"
+                            if component_status == "paused"
+                            and proc.returncode == 0
+                            else "failed"
+                        )
+                    else:
+                        status = "error" if proc.returncode == 0 else "failed"
+                elif current.get("script") in {
                     D2L_PROJECT_CAMPAIGN_SCRIPT,
                     WORKFLOW_ORCHESTRATOR_SCRIPT,
                 }:
@@ -1240,6 +1385,38 @@ def spawn_run(registry: RunRegistry, run_id: str) -> None:
     threading.Thread(target=_worker, daemon=True, name=f"run-{run_id}").start()
 
 
+def _process_alive(pid: Any) -> bool:
+    try:
+        value = int(pid or 0)
+    except (TypeError, ValueError):
+        return False
+    if value <= 0:
+        return False
+    if value == os.getpid():
+        return True
+    if os.name == "nt":
+        try:
+            import ctypes
+
+            query_limited_information = 0x1000
+            handle = ctypes.windll.kernel32.OpenProcess(
+                query_limited_information,
+                False,
+                value,
+            )
+            if handle:
+                ctypes.windll.kernel32.CloseHandle(handle)
+                return True
+        except (AttributeError, OSError):
+            return False
+        return False
+    try:
+        os.kill(value, 0)
+    except OSError:
+        return False
+    return True
+
+
 def _read_d2l_component_status(entry: dict[str, Any]) -> str | None:
     raw_path = entry.get("manifest_path")
     if not raw_path:
@@ -1249,6 +1426,52 @@ def _read_d2l_component_status(entry: dict[str, Any]) -> str | None:
     except (OSError, json.JSONDecodeError):
         return None
     value = payload.get("status")
+    return str(value) if isinstance(value, str) else None
+
+
+def _read_parent_component_status(
+    entry: dict[str, Any],
+    component_id: str,
+) -> str | None:
+    job_id = entry.get("job_id")
+    workflow_run_id = entry.get("workflow_run_id")
+    if not isinstance(job_id, str) or not isinstance(workflow_run_id, str):
+        return None
+    parent_root = (
+        Path(entry.get("registry_root") or "")
+        if entry.get("registry_root")
+        else None
+    )
+    if parent_root is None:
+        argv = [str(item) for item in entry.get("argv") or []]
+        try:
+            parent_root = Path(argv[argv.index("--parent-root") + 1])
+        except (ValueError, IndexError):
+            return None
+    try:
+        from pipeline.workflow_replay.relay_v1 import (
+            validate_workflow_parent_package_v1,
+        )
+
+        manifest = validate_workflow_parent_package_v1(parent_root.resolve())
+    except (OSError, ValueError):
+        return None
+    if (
+        manifest.get("job_id") != job_id
+        or manifest.get("workflow_run_id") != workflow_run_id
+    ):
+        return None
+    row = next(
+        (
+            item
+            for item in manifest.get("components", [])
+            if item.get("component_id") == component_id
+        ),
+        None,
+    )
+    if not isinstance(row, dict):
+        return None
+    value = row.get("status")
     return str(value) if isinstance(value, str) else None
 
 

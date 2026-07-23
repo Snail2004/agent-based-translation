@@ -598,6 +598,45 @@ def test_run_registry_persists_to_jsonl(tmp_path):
     assert reloaded["exit_code"] == 0
 
 
+def test_run_registry_create_once_rejects_cross_instance_duplicate(tmp_path):
+    from services.thesis_runs import RunControlError, RunRegistry
+
+    first = RunRegistry(runs_root=tmp_path)
+    second = RunRegistry(runs_root=tmp_path)
+    first.create_run(
+        script="score_run",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="score_once",
+        reject_if_exists=True,
+    )
+
+    with pytest.raises(RunControlError) as exc_info:
+        second.create_run(
+            script="score_run",
+            argv=[sys.executable, "-c", "pass"],
+            run_id="score_once",
+            reject_if_exists=True,
+        )
+
+    assert exc_info.value.code == "run_already_exists"
+
+
+def test_run_registry_spawn_claim_is_single_writer(tmp_path):
+    from services.thesis_runs import RunRegistry
+
+    first = RunRegistry(runs_root=tmp_path)
+    second = RunRegistry(runs_root=tmp_path)
+    first.create_run(
+        script="score_run",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="score_claim",
+        reject_if_exists=True,
+    )
+
+    assert first.claim_run_for_spawn("score_claim") is True
+    assert second.claim_run_for_spawn("score_claim") is False
+
+
 def test_script_outside_allowlist_returns_400():
     from services.thesis_runs import RunControlError, validate_script
 
@@ -3001,6 +3040,123 @@ def test_route_workflow_score_reports_parent_readiness_blockers(
     assert malformed.get_json()["errors"][0]["code"] == (
         "workflow_score_body_invalid"
     )
+
+
+def test_route_workflow_score_creates_and_reuses_bound_evaluation_child(
+    tmp_path,
+    monkeypatch,
+):
+    client, routes, registry = _prepare_full_report_route(
+        tmp_path, monkeypatch
+    )
+    selection = {
+        "settings_option_id": "evaluation_registered_v1",
+        "selected_chapter_ids": ["d2l_preliminaries"],
+        "selected_arm_ids": ["s0", "s1"],
+        "selected_scorer_ids": ["sf_qe"],
+        "highlight_pair": ["s0", "s1"],
+        "registered_option_sha256": "a" * 64,
+        "selection_sha256": "b" * 64,
+    }
+    registry.create_run(
+        script="run_workflow_orchestrator_v1",
+        argv=[sys.executable, "-c", "pass"],
+        run_id="translation_root",
+        job_id="jobA",
+        workflow_run_id="wf_translation_root",
+        component_id="translation",
+        component_run_id="tr_translation_root",
+        component_attempt_id=1,
+        selected_chapter_ids=["d2l_preliminaries"],
+        source_binding_sha256="c" * 64,
+        evaluation_selection=selection,
+        evaluation_selection_sha256=selection["selection_sha256"],
+        evaluation_settings_template_sha256=selection[
+            "registered_option_sha256"
+        ],
+    )
+    replay = {
+        "actions": {
+            "score": {
+                "allowed": True,
+                "blocking_reasons": [],
+                "runtime": {
+                    "registration_sha256": "d" * 64,
+                },
+            }
+        },
+        "evaluation_scope": {
+            **selection,
+            "scoring_handoff_status": "validated",
+            "settings_status": "materialized",
+            "settings_sha256": "e" * 64,
+        },
+        "manifest": {
+            "integrity": {
+                "manifest_sha256": "f" * 64,
+            }
+        },
+        "typed_artifacts": [
+            {
+                "body": {
+                    "schema_id": "ScoringHandoffV1",
+                    "integrity": {
+                        "handoff_sha256": "1" * 64,
+                    },
+                }
+            }
+        ],
+    }
+    monkeypatch.setattr(
+        routes,
+        "read_workflow_replay",
+        lambda *_args, **_kwargs: replay,
+    )
+    monkeypatch.setattr(
+        routes,
+        "_d2l_credential_files",
+        lambda **_kwargs: {},
+    )
+    spawned = []
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda _registry, child_run_id: spawned.append(child_run_id),
+    )
+
+    created = client.post(
+        "/api/thesis/runs/translation_root/score",
+        json={},
+    )
+    assert created.status_code == 201
+    created_data = created.get_json()["data"]
+    assert created_data["run_id"] == "score_translation_root"
+    assert created_data["component_id"] == "evaluation"
+    assert created_data["component_run_id"] == "eval_translation_root"
+    assert created_data["component_attempt_id"] == "evalcomp_attempt_0001"
+    assert created_data["reused"] is False
+    entry = registry.get_run("score_translation_root")
+    assert entry["workflow_phase"] == "score"
+    assert entry["scoring_handoff_sha256"] == "1" * 64
+    assert entry["evaluation_settings_sha256"] == "e" * 64
+    assert entry["workflow_runtime_registration_sha256"] == "d" * 64
+    assert entry["argv"][3] == "score"
+    assert "--evaluation-root" in entry["argv"]
+
+    retried = client.post(
+        "/api/thesis/runs/translation_root/score",
+        json={},
+    )
+    assert retried.status_code == 200
+    assert retried.get_json()["data"]["reused"] is True
+    assert len(
+        [
+            row
+            for row in registry.list_runs()
+            if row["run_id"] == "score_translation_root"
+        ]
+    ) == 1
+    assert spawned == ["score_translation_root", "score_translation_root"]
 
 
 def test_workflow_actions_require_materialized_settings_and_live_source(

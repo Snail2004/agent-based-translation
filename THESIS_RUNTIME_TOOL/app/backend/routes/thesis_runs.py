@@ -26,6 +26,7 @@ from services.thesis_runs import (
     D2L_COMPONENT_ID,
     D2L_PROFILE_ID,
     D2L_PROJECT_CAMPAIGN_SCRIPT,
+    EVALUATION_COMPONENT_ID,
     WORKFLOW_ORCHESTRATOR_SCRIPT,
     RunControlError,
     RunRegistry,
@@ -34,6 +35,8 @@ from services.thesis_runs import (
     cancel_run,
     d2l_campaign_paths,
     d2l_component_ids,
+    evaluation_component_attempt_id,
+    evaluation_component_paths,
     generate_estimate_preview,
     generate_prompt_preview,
     issue_estimate_token_for_argv,
@@ -156,6 +159,11 @@ def _validate_planned_run_reuse(
         "evaluation_selection",
         "evaluation_selection_sha256",
         "evaluation_settings_template_sha256",
+        "workflow_phase",
+        "parent_manifest_sha256",
+        "scoring_handoff_sha256",
+        "evaluation_settings_sha256",
+        "workflow_runtime_registration_sha256",
     )
     mismatches = [
         field
@@ -174,12 +182,24 @@ def _validate_planned_run_reuse(
 def _resolve_resume_root(registry: RunRegistry, entry: dict) -> dict:
     job_id = validate_job_id(entry.get("job_id"), required=True)
     lineage_fields = (
+        "script",
         "run_dir",
         "manifest_path",
         "event_log_path",
+        "workflow_run_id",
+        "component_id",
+        "component_run_id",
+        "selected_chapter_ids",
+        "source_binding_sha256",
+        "launch_binding_sha256",
         "evaluation_selection",
         "evaluation_selection_sha256",
         "evaluation_settings_template_sha256",
+        "workflow_phase",
+        "parent_manifest_sha256",
+        "scoring_handoff_sha256",
+        "evaluation_settings_sha256",
+        "workflow_runtime_registration_sha256",
     )
     lineage_identity = {field: entry.get(field) for field in lineage_fields}
     current = entry
@@ -660,6 +680,65 @@ def _d2l_launch_response(entry: dict, *, reused: bool) -> dict:
     return payload
 
 
+def _evaluation_launch_response(entry: dict, *, reused: bool) -> dict:
+    return {
+        "run_id": entry["run_id"],
+        "script": entry.get("script"),
+        "job_id": entry.get("job_id"),
+        "status": entry.get("status"),
+        "workflow_run_id": entry.get("workflow_run_id"),
+        "component_id": EVALUATION_COMPONENT_ID,
+        "component_run_id": entry.get("component_run_id"),
+        "component_attempt_id": entry.get("component_attempt_id"),
+        "selected_chapter_ids": list(
+            entry.get("selected_chapter_ids") or []
+        ),
+        "evaluation_selection_sha256": entry.get(
+            "evaluation_selection_sha256"
+        ),
+        "evaluation_settings_sha256": entry.get(
+            "evaluation_settings_sha256"
+        ),
+        "resumed_from": entry.get("resumed_from"),
+        "reused": bool(reused),
+    }
+
+
+def _workflow_handoff_sha256(replay: dict) -> str:
+    rows = []
+    for item in replay.get("typed_artifacts") or []:
+        body = item.get("body") if isinstance(item, dict) else None
+        if not isinstance(body, dict):
+            continue
+        if (
+            body.get("schema_id") == "ScoringHandoffV1"
+            or body.get("schema") == "scoring_handoff_v1"
+        ):
+            rows.append(body)
+    if len(rows) != 1:
+        raise WorkflowReplayError(
+            "workflow_scoring_handoff_ambiguous",
+            "Workflow scoring requires exactly one validated handoff.",
+            409,
+        )
+    value = (rows[0].get("integrity") or {}).get("handoff_sha256")
+    if not _is_sha256(value):
+        raise WorkflowReplayError(
+            "workflow_scoring_handoff_invalid",
+            "Workflow scoring handoff identity is missing or invalid.",
+            409,
+        )
+    return str(value).lower()
+
+
+def _is_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdefABCDEF" for character in value)
+    )
+
+
 @bp.get("/thesis/runs")
 def list_runs():
     rows = _get_registry().list_runs()
@@ -890,7 +969,7 @@ def workflow_replay_artifact(run_id: str):
 
 @bp.post("/thesis/runs/<run_id>/score")
 def score_workflow_run(run_id: str):
-    """Fail closed until the parent advertises a connected scoring runtime."""
+    """Launch or reuse the exact Evaluation child bound by the parent."""
 
     try:
         body = request.get_json(silent=True)
@@ -899,7 +978,9 @@ def score_workflow_run(run_id: str):
                 "workflow_score_body_invalid",
                 "Workflow score accepts exactly an empty JSON object.",
             )
+        registry = _get_registry()
         entry = _run_entry(run_id)
+        root_entry = _resolve_resume_root(registry, entry)
         replay = read_workflow_replay(
             entry,
             jobs_root=_jobs_root(),
@@ -907,17 +988,187 @@ def score_workflow_run(run_id: str):
             wait_ms=0,
         )
         action = replay["actions"]["score"]
-        if not action["allowed"]:
+        translation_root_run_id = validate_run_id(
+            root_entry.get("run_id"),
+            required=True,
+        )
+        workflow_run_id = validate_run_id(
+            entry.get("workflow_run_id"),
+            required=True,
+        )
+        score_run_id = validate_run_id(
+            f"score_{translation_root_run_id}",
+            required=True,
+        )
+        existing = registry.get_run(score_run_id)
+        if existing is None and not action["allowed"]:
             reasons = ", ".join(action["blocking_reasons"])
             raise WorkflowReplayError(
                 "workflow_scoring_not_ready",
                 f"Workflow scoring is not ready: {reasons}.",
                 409,
             )
-        raise WorkflowReplayError(
-            "workflow_scoring_executor_not_connected",
-            "The Evaluation App executor is not connected by this build.",
-            503,
+        evaluation_scope = replay.get("evaluation_scope")
+        if not isinstance(evaluation_scope, dict):
+            raise WorkflowReplayError(
+                "workflow_evaluation_scope_missing",
+                "Workflow scoring has no validated Evaluation scope.",
+                409,
+            )
+        component_run_id = validate_run_id(
+            f"eval_{translation_root_run_id}",
+            required=True,
+        )
+        job_id = validate_job_id(entry.get("job_id"), required=True)
+        paths = evaluation_component_paths(
+            jobs_root=_jobs_root(),
+            job_id=job_id,
+            workflow_run_id=workflow_run_id,
+            component_run_id=component_run_id,
+        )
+        parent_root = workflow_replay_root(
+            jobs_root=_jobs_root(),
+            job_id=job_id,
+            workflow_run_id=workflow_run_id,
+        )
+        handoff_sha256 = _workflow_handoff_sha256(replay)
+        settings_sha256 = evaluation_scope.get("settings_sha256")
+        runtime_sha256 = (action.get("runtime") or {}).get(
+            "registration_sha256"
+        )
+        if not all(
+            _is_sha256(value)
+            for value in (handoff_sha256, settings_sha256, runtime_sha256)
+        ):
+            raise WorkflowReplayError(
+                "workflow_scoring_identity_missing",
+                "Workflow scoring authority is missing a sealed identity.",
+                409,
+            )
+        from pipeline.workflow_replay.contracts_v1 import canonical_sha256
+
+        launch_binding_sha256 = canonical_sha256(
+            {
+                "schema_id": "WorkflowScoringLaunchBindingV1",
+                "schema_version": "1.0.0",
+                "translation_root_run_id": translation_root_run_id,
+                "workflow_run_id": workflow_run_id,
+                "component_run_id": component_run_id,
+                "source_binding_sha256": entry.get(
+                    "source_binding_sha256"
+                ),
+                "selection_sha256": evaluation_scope[
+                    "selection_sha256"
+                ],
+                "registered_option_sha256": evaluation_scope[
+                    "registered_option_sha256"
+                ],
+                "scoring_handoff_sha256": handoff_sha256,
+                "evaluation_settings_sha256": settings_sha256,
+                "workflow_runtime_registration_sha256": runtime_sha256,
+            }
+        )
+        credential_files = _d2l_credential_files(required=True)
+        argv = build_argv(
+            script=WORKFLOW_ORCHESTRATOR_SCRIPT,
+            python_exe=_python_exe(),
+            chapters=list(evaluation_scope["selected_chapter_ids"]),
+            allow_api=True,
+            job_root=str((_jobs_root() / job_id).resolve()),
+            parent_root=str(parent_root),
+            workflow_run_id=workflow_run_id,
+            component_run_id=component_run_id,
+            workflow_phase="score",
+            evaluation_root=str(paths["component_root"]),
+            code_root=str(_tool_root()),
+            runtime_root=str(paths["runtime_root"]),
+            credential_files=credential_files,
+        )
+        expected = {
+            "job_id": job_id,
+            "script": WORKFLOW_ORCHESTRATOR_SCRIPT,
+            "argv": argv,
+            "cwd": str(_tool_root()),
+            "config": None,
+            "configs": [],
+            "seed": None,
+            "model": None,
+            "prompt_version": None,
+            "cache_path": None,
+            "experiment": None,
+            "allow_api": True,
+            "dry_run_policy": "api_enabled_explicit_score_action",
+            "event_log_path": str(paths["event_log_path"]),
+            "run_dir": str(paths["component_root"]),
+            "manifest_path": str(paths["manifest_path"]),
+            "attempt_index": 1,
+            "resumed_from": None,
+            "workflow_run_id": workflow_run_id,
+            "component_id": EVALUATION_COMPONENT_ID,
+            "component_run_id": component_run_id,
+            "component_attempt_id": evaluation_component_attempt_id(1),
+            "selected_chapter_ids": list(
+                evaluation_scope["selected_chapter_ids"]
+            ),
+            "profile_id": evaluation_scope["settings_option_id"],
+            "source_binding_sha256": entry.get(
+                "source_binding_sha256"
+            ),
+            "campaign_config_sha256": None,
+            "campaign_seal_sha256": None,
+            "launch_binding_sha256": launch_binding_sha256,
+            "evaluation_selection": entry.get("evaluation_selection"),
+            "evaluation_selection_sha256": entry.get(
+                "evaluation_selection_sha256"
+            ),
+            "evaluation_settings_template_sha256": entry.get(
+                "evaluation_settings_template_sha256"
+            ),
+            "workflow_phase": "score",
+            "parent_manifest_sha256": replay["manifest"]["integrity"][
+                "manifest_sha256"
+            ],
+            "scoring_handoff_sha256": handoff_sha256,
+            "evaluation_settings_sha256": settings_sha256,
+            "workflow_runtime_registration_sha256": runtime_sha256,
+        }
+        if existing is not None:
+            expected["parent_manifest_sha256"] = existing.get(
+                "parent_manifest_sha256"
+            )
+            _validate_planned_run_reuse(existing, expected=expected)
+            spawn_run(registry, score_run_id)
+            return ok(
+                _evaluation_launch_response(existing, reused=True)
+            )
+        try:
+            created = registry.create_run(
+                **expected,
+                prompt_preview_token=None,
+                run_id=score_run_id,
+                reject_if_exists=True,
+            )
+            reused = False
+        except RunControlError as exc:
+            if exc.code != "run_already_exists":
+                raise
+            registry.refresh()
+            created = registry.get_run(score_run_id)
+            if created is None:
+                raise RunControlError(
+                    "workflow_score_registry_race",
+                    "Evaluation run registration could not be recovered.",
+                    500,
+                ) from exc
+            expected["parent_manifest_sha256"] = created.get(
+                "parent_manifest_sha256"
+            )
+            _validate_planned_run_reuse(created, expected=expected)
+            reused = True
+        spawn_run(registry, score_run_id)
+        return ok(
+            _evaluation_launch_response(created, reused=reused),
+            status=200 if reused else 201,
         )
     except RunControlError as exc:
         return error(exc.code, exc.message, exc.status)
@@ -1141,6 +1392,10 @@ def resume_thesis_run(run_id: str):
         pause_path = _pause_file_from_entry(entry)
         script = entry.get("script") or "run_one_button"
         if script in _D2L_COMPONENT_SCRIPTS:
+            is_evaluation = (
+                script == WORKFLOW_ORCHESTRATOR_SCRIPT
+                and entry.get("component_id") == EVALUATION_COMPONENT_ID
+            )
             if (
                 bool(entry.get("allow_api"))
                 and script == D2L_PROJECT_CAMPAIGN_SCRIPT
@@ -1160,45 +1415,108 @@ def resume_thesis_run(run_id: str):
                     "Live Translation Resume is disabled by this server build.",
                     403,
                 )
-            try:
-                from pipeline.prepass.d2l_console_replay_contract_v1 import (
-                    D2LConsoleContractError,
-                    validate_translation_component_package,
-                )
+            if is_evaluation:
+                try:
+                    from pipeline.eval.workflow_component_writer_v1 import (
+                        validate_evaluation_workflow_component_package_v1,
+                    )
 
-                validation = validate_translation_component_package(
-                    manifest_path.parent,
-                    require_terminal=False,
-                )
-            except (D2LConsoleContractError, OSError, json.JSONDecodeError) as exc:
-                raise RunControlError(
-                    "d2l_component_not_ready",
-                    "D2L component package is not valid for Resume.",
-                    409,
-                ) from exc
-            if manifest.get("status") in {"succeeded", "failed", "cancelled"}:
-                raise RunControlError(
-                    "resume_terminal_run",
-                    "A terminal D2L component cannot be resumed.",
-                    409,
-                )
-            if manifest.get("status") != "paused" or not (manifest.get("resume") or {}).get(
-                "resume_available"
-            ):
-                raise RunControlError(
-                    "resume_not_available",
-                    "D2L component has no paused resumable checkpoint.",
-                    409,
-                )
-            try:
-                component_attempt = int(manifest.get("component_attempt_id") or 0)
-            except (TypeError, ValueError) as exc:
-                raise RunControlError(
-                    "resume_attempt_invalid",
-                    "D2L component attempt metadata must contain an integer.",
-                    409,
-                ) from exc
-            attempt_index = component_attempt + 1
+                    parent_root = workflow_replay_root(
+                        jobs_root=_jobs_root(),
+                        job_id=job_id,
+                        workflow_run_id=entry["workflow_run_id"],
+                    )
+                    handoff = json.loads(
+                        (
+                            parent_root
+                            / "handoffs"
+                            / "scoring_handoff.json"
+                        ).read_text(encoding="utf-8")
+                    )
+                    validation = (
+                        validate_evaluation_workflow_component_package_v1(
+                            manifest_path.parent,
+                            handoff,
+                            require_terminal=False,
+                        )
+                    )
+                except (
+                    ContractValidationError,
+                    OSError,
+                    json.JSONDecodeError,
+                ) as exc:
+                    raise RunControlError(
+                        "evaluation_component_not_ready",
+                        "Evaluation component package is not valid for Resume.",
+                        409,
+                    ) from exc
+                latest_event = validation["events"][-1]["event"]
+                if latest_event in {"component_done", "component_failed"}:
+                    raise RunControlError(
+                        "resume_terminal_run",
+                        "A terminal Evaluation component cannot be resumed.",
+                        409,
+                    )
+                if latest_event != "component_halted":
+                    raise RunControlError(
+                        "resume_not_available",
+                        "Evaluation has no halted resumable checkpoint.",
+                        409,
+                    )
+                component_attempt = validation["manifest"][
+                    "component_attempt_index"
+                ]
+                attempt_index = int(component_attempt) + 1
+            else:
+                try:
+                    from pipeline.prepass.d2l_console_replay_contract_v1 import (
+                        D2LConsoleContractError,
+                        validate_translation_component_package,
+                    )
+
+                    validation = validate_translation_component_package(
+                        manifest_path.parent,
+                        require_terminal=False,
+                    )
+                except (
+                    D2LConsoleContractError,
+                    OSError,
+                    json.JSONDecodeError,
+                ) as exc:
+                    raise RunControlError(
+                        "d2l_component_not_ready",
+                        "D2L component package is not valid for Resume.",
+                        409,
+                    ) from exc
+                if manifest.get("status") in {
+                    "succeeded",
+                    "failed",
+                    "cancelled",
+                }:
+                    raise RunControlError(
+                        "resume_terminal_run",
+                        "A terminal D2L component cannot be resumed.",
+                        409,
+                    )
+                if manifest.get("status") != "paused" or not (
+                    manifest.get("resume") or {}
+                ).get("resume_available"):
+                    raise RunControlError(
+                        "resume_not_available",
+                        "D2L component has no paused resumable checkpoint.",
+                        409,
+                    )
+                try:
+                    component_attempt = int(
+                        manifest.get("component_attempt_id") or 0
+                    )
+                except (TypeError, ValueError) as exc:
+                    raise RunControlError(
+                        "resume_attempt_invalid",
+                        "D2L component attempt metadata must contain an integer.",
+                        409,
+                    ) from exc
+                attempt_index = component_attempt + 1
             consumed_token = validate_api_gate(
                 allow_api=bool(entry.get("allow_api")),
                 script=script,
@@ -1225,11 +1543,15 @@ def resume_thesis_run(run_id: str):
                 argv=argv,
             )
         new_run_id = registry.new_run_id()
-        freeze_managed_runtime_for_run(
-            job_id,
-            resume_root["run_id"],
-            jobs_root=registry.runs_root,
-        )
+        if not (
+            script == WORKFLOW_ORCHESTRATOR_SCRIPT
+            and entry.get("component_id") == EVALUATION_COMPONENT_ID
+        ):
+            freeze_managed_runtime_for_run(
+                job_id,
+                resume_root["run_id"],
+                jobs_root=registry.runs_root,
+            )
         if pause_path.exists():
             pause_path.unlink()
         new_log_path = registry.runs_root / "run_logs" / f"{new_run_id}.log"
@@ -1261,7 +1583,14 @@ def resume_thesis_run(run_id: str):
             component_id=entry.get("component_id"),
             component_run_id=entry.get("component_run_id"),
             component_attempt_id=(
-                attempt_index if script in _D2L_COMPONENT_SCRIPTS else None
+                evaluation_component_attempt_id(attempt_index)
+                if (
+                    script == WORKFLOW_ORCHESTRATOR_SCRIPT
+                    and entry.get("component_id") == EVALUATION_COMPONENT_ID
+                )
+                else attempt_index
+                if script in _D2L_COMPONENT_SCRIPTS
+                else None
             ),
             selected_chapter_ids=entry.get("selected_chapter_ids"),
             profile_id=entry.get("profile_id"),
@@ -1276,8 +1605,25 @@ def resume_thesis_run(run_id: str):
             evaluation_settings_template_sha256=entry.get(
                 "evaluation_settings_template_sha256"
             ),
+            workflow_phase=entry.get("workflow_phase"),
+            parent_manifest_sha256=entry.get("parent_manifest_sha256"),
+            scoring_handoff_sha256=entry.get("scoring_handoff_sha256"),
+            evaluation_settings_sha256=entry.get(
+                "evaluation_settings_sha256"
+            ),
+            workflow_runtime_registration_sha256=entry.get(
+                "workflow_runtime_registration_sha256"
+            ),
         )
         spawn_run(registry, new_entry["run_id"])
+        if (
+            script == WORKFLOW_ORCHESTRATOR_SCRIPT
+            and entry.get("component_id") == EVALUATION_COMPONENT_ID
+        ):
+            return ok(
+                _evaluation_launch_response(new_entry, reused=False),
+                status=201,
+            )
         if script in _D2L_COMPONENT_SCRIPTS:
             return ok(_d2l_launch_response(new_entry, reused=False), status=201)
         return ok(
