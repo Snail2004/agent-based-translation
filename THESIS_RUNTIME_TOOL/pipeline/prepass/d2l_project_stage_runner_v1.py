@@ -157,16 +157,36 @@ _STAGE_ARTIFACTS: dict[str, tuple[dict[str, Any], ...]] = {
         {
             "artifact_ref": "art_translation_quality_observations",
             "artifact_kind": "translation_quality_observations",
-            "schema_version": "d2l_translation_quality_observations_dry_v1",
+            "schema_version": "d2l_translation_quality_observations_dry_v2",
             "relative_path": "artifacts/quality/observations.json",
             "parent_artifact_refs": ["art_translation_s0", "art_translation_s1"],
         },
         {
             "artifact_ref": "art_translation_quality_state",
             "artifact_kind": "translation_quality_state",
-            "schema_version": "d2l_translation_quality_state_dry_v1",
+            "schema_version": "d2l_translation_quality_state_dry_v2",
             "relative_path": "artifacts/quality/state.json",
             "parent_artifact_refs": ["art_translation_quality_observations"],
+        },
+        {
+            "artifact_ref": "art_translation_s0_final",
+            "artifact_kind": "translation_artifact",
+            "schema_version": "TranslationArtifactV1",
+            "relative_path": "artifacts/quality/s0_final.json",
+            "parent_artifact_refs": [
+                "art_translation_s0",
+                "art_translation_quality_state",
+            ],
+        },
+        {
+            "artifact_ref": "art_translation_s1_final",
+            "artifact_kind": "translation_artifact",
+            "schema_version": "TranslationArtifactV1",
+            "relative_path": "artifacts/quality/s1_final.json",
+            "parent_artifact_refs": [
+                "art_translation_s1",
+                "art_translation_quality_state",
+            ],
         },
     ),
     "scoring_handoff_fragment": (
@@ -177,8 +197,8 @@ _STAGE_ARTIFACTS: dict[str, tuple[dict[str, Any], ...]] = {
             "relative_path": "scoring_handoff_fragment.json",
             "parent_artifact_refs": [
                 "art_glossary",
-                "art_translation_s0",
-                "art_translation_s1",
+                "art_translation_s0_final",
+                "art_translation_s1_final",
                 "art_translation_quality_state",
             ],
         },
@@ -200,9 +220,11 @@ _LIVE_SCHEMA_OVERRIDES = {
     "art_translation_s0": "TranslationArtifactV1",
     "art_translation_s1": "TranslationArtifactV1",
     "art_translation_quality_observations": (
-        "d2l_translation_quality_observations_live_v1"
+        "d2l_translation_quality_observations_live_v2"
     ),
-    "art_translation_quality_state": "d2l_translation_quality_state_live_v1",
+    "art_translation_quality_state": "d2l_translation_quality_state_live_v2",
+    "art_translation_s0_final": "TranslationArtifactV1",
+    "art_translation_s1_final": "TranslationArtifactV1",
     "art_scoring_handoff_fragment": SCORING_FRAGMENT_SCHEMA,
 }
 
@@ -803,6 +825,20 @@ def _dry_stage_payloads(
         return {
             "art_translation_quality_observations": observations,
             "art_translation_quality_state": state,
+            "art_translation_s0_final": _translation_artifact(
+                campaign=campaign,
+                project=project,
+                rows=rows,
+                arm_id="s0",
+                component_attempt_id=component_attempt_id,
+            ),
+            "art_translation_s1_final": _translation_artifact(
+                campaign=campaign,
+                project=project,
+                rows=rows,
+                arm_id="s1",
+                component_attempt_id=component_attempt_id,
+            ),
         }
     if stage_id != "scoring_handoff_fragment":
         raise D2LStageRunnerError(f"unsupported stage: {stage_id}")
@@ -830,9 +866,11 @@ def _dry_stage_payloads(
     }
     translation_inputs = []
     for arm_id in ("s0", "s1"):
-        ref = f"art_translation_{arm_id}"
+        ref = f"art_translation_{arm_id}_final"
         artifact_spec = next(
-            spec for spec in _STAGE_ARTIFACTS["translator"] if spec["artifact_ref"] == ref
+            spec
+            for spec in _STAGE_ARTIFACTS["translation_quality_audit"]
+            if spec["artifact_ref"] == ref
         )
         indexed_row = indexed.get(ref)
         if not isinstance(indexed_row, Mapping):

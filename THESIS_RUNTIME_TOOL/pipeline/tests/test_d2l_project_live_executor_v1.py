@@ -47,7 +47,7 @@ from pipeline.tests.test_d2l_project_campaign_v2 import (
     CREATED_AT,
     _fixture_job,
 )
-from pipeline.translate import d2l_translation_quality_auditor_v2 as quality_contract
+from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
 
 
 def _write_json(path: Path, value: dict) -> None:
@@ -170,9 +170,9 @@ class _FakeTransport:
             "d2l.b2.morphology": "gpt-5.5",
             "d2l.b2.target_collision": "gpt-5.5",
             "d2l.b2.multi_target": "gpt-5.5",
-            "d2l.translator.s0": "gemini-3.5-flash",
-            "d2l.translator.s1": "gemini-3.5-flash",
-            "d2l.translator.quality_auditor": "gpt-5.5",
+            "d2l.translator.s0": "gpt-5.4",
+            "d2l.translator.s1": "gpt-5.4",
+            "d2l.translator.quality_auditor": "gemini-3.5-flash",
         }
 
     def build_client(self, role_id: str, **_kwargs):
@@ -229,7 +229,7 @@ class _FakeTransport:
             raise AssertionError(f"clean singleton unexpectedly called {role_id}")
         if role_id == "d2l.translator.s0":
             return {
-                block_id: source
+                block_id: _fake_translation(source)
                 for block_id, source in self.source_by_block.items()
                 if f"[{block_id}]" in user
             }
@@ -238,7 +238,7 @@ class _FakeTransport:
             for line in user.splitlines():
                 match = re.match(r"^\[(T\d+)\]\s?(.*)$", line)
                 if match:
-                    translations[match.group(1)] = match.group(2)
+                    translations[match.group(1)] = _fake_translation(match.group(2))
             return {"translations": translations}
         if role_id == "d2l.translator.quality_auditor":
             packet = next(
@@ -253,6 +253,96 @@ class _FakeTransport:
                 "findings": [],
             }
         raise AssertionError(f"unexpected fake role: {role_id} ({tag})")
+
+
+class _SemanticRepairTransport(_FakeTransport):
+    def response(self, role_id: str, messages: list[dict], tag: str):
+        user = "\n".join(
+            str(row.get("content") or "")
+            for row in messages
+            if row.get("role") == "user"
+        )
+        if (
+            role_id == "d2l.translator.s0"
+            and "[alpha_b002]" in user
+            and "SEMANTIC REPAIR REQUEST" not in user
+        ):
+            payload = super().response(role_id, messages, tag)
+            payload["alpha_b002"] = "Nội dung sai."
+            return payload
+        if role_id == "d2l.translator.quality_auditor":
+            packet = next(
+                value
+                for value in _json_objects(user)
+                if "window_id" in value and "blocks" in value
+            )
+            bad = next(
+                (
+                    row
+                    for row in packet["blocks"]
+                    if row["target_full_text"] == "Nội dung sai."
+                ),
+                None,
+            )
+            return {
+                "contract_version": quality_contract.RESPONSE_CONTRACT_VERSION,
+                "window_id": packet["window_id"],
+                "audited_block_ids": [
+                    row["block_id"] for row in packet["blocks"]
+                ],
+                "findings": (
+                    [
+                        {
+                            "block_id": bad["block_id"],
+                            "issue_type": "meaning_omission",
+                            "severity": "major",
+                            "source_evidence": bad["source_full_text"],
+                            "target_evidence": "",
+                            "reason": "The candidate omits the technical definition.",
+                        }
+                    ]
+                    if bad is not None
+                    else []
+                ),
+            }
+        return super().response(role_id, messages, tag)
+
+
+class _RetryConsumedSemanticMajorTransport(_SemanticRepairTransport):
+    def __init__(self, source_by_block: dict[str, str]) -> None:
+        super().__init__(source_by_block)
+        self.initial_s0_calls = 0
+
+    def response(self, role_id: str, messages: list[dict], tag: str):
+        user = "\n".join(
+            str(row.get("content") or "")
+            for row in messages
+            if row.get("role") == "user"
+        )
+        payload = super().response(role_id, messages, tag)
+        if (
+            role_id == "d2l.translator.s0"
+            and "[alpha_b002]" in user
+            and "SEMANTIC REPAIR REQUEST" not in user
+        ):
+            self.initial_s0_calls += 1
+            if self.initial_s0_calls == 1:
+                payload["alpha_b002"] = "هنوز"
+        return payload
+
+
+def _fake_translation(value: str) -> str:
+    replacements = {
+        "Alpha": "An-pha",
+        "A technical definition.": "Một định nghĩa kỹ thuật.",
+        "A long explanation.": "Một lời giải thích dài.",
+        "Structured table text.": "Văn bản bảng có cấu trúc.",
+        "Ordinary prose.": "Văn xuôi thông thường.",
+    }
+    result = str(value)
+    for source, target in replacements.items():
+        result = result.replace(source, target)
+    return result
 
 
 def _prepared(tmp_path: Path) -> tuple[Path, Path, dict, object, list[dict], dict]:
@@ -386,6 +476,239 @@ def test_live_executor_full_stage_chain_is_gold_free_and_exact_cover(tmp_path: P
     for forbidden in ("gold", "oracle", "reference_text", "raw_prompt", "raw_response"):
         assert forbidden not in serialized
     assert file_sha256(job / "memory.sqlite3") == source_db_before
+
+
+def test_quality_major_uses_one_translator_repair_without_second_audit(
+    tmp_path: Path,
+) -> None:
+    job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    plan = ComponentPlan.from_mapping(support["plan"])
+    transport = _SemanticRepairTransport(
+        {
+            str(row["block_id"]): str(row["clean_text"] or row["source_text"])
+            for row in rows
+        }
+    )
+    for stage in plan.stages:
+        payloads = execute_live_stage(
+            campaign=campaign,
+            project=project,
+            rows=rows,
+            stage_id=stage.stage_id,
+            component_root=component_root,
+            work_db=campaign_root / "state" / "work.sqlite3",
+            transport=(
+                transport
+                if stage.stage_id in {
+                    "b1_candidate_discovery",
+                    "b2_admission_translation",
+                    "auditor_morphology",
+                    "auditor_target_collision",
+                    "auditor_multi_target",
+                    "translator",
+                    "translation_quality_audit",
+                }
+                else None
+            ),
+            component_attempt_id=1,
+            producer=stage.producer,
+            work_id=stage.work_id,
+        )
+        for spec in stage.artifact_specs:
+            _write_json(
+                component_root / spec["relative_path"],
+                payloads[spec["artifact_ref"]],
+            )
+
+    draft = validate_translation_artifact(
+        json.loads(
+            (component_root / "artifacts/translator/s0.json").read_text(
+                encoding="utf-8"
+            )
+        )
+    )
+    final = validate_translation_artifact(
+        json.loads(
+            (component_root / "artifacts/quality/s0_final.json").read_text(
+                encoding="utf-8"
+            )
+        )
+    )
+    draft_by_id = {row["block_id"]: row for row in draft["translations"]}
+    final_by_id = {row["block_id"]: row for row in final["translations"]}
+    state = json.loads(
+        (component_root / "artifacts/quality/state.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    quality_calls = [
+        row
+        for row in transport.calls
+        if row["role_id"] == "d2l.translator.quality_auditor"
+    ]
+    repair_calls = [
+        row
+        for row in transport.calls
+        if row["role_id"] == "d2l.translator.s0"
+        and row["tag"].startswith("S0_repair_")
+    ]
+
+    assert draft_by_id["alpha_b002"]["target_text"] == "Nội dung sai."
+    assert final_by_id["alpha_b002"]["target_text"] == "Một định nghĩa kỹ thuật."
+    assert len(repair_calls) == 1
+    assert len(quality_calls) == len(
+        campaign["universe"]["window_estimates"]["translator"]["windows"]
+    ) * 2
+    assert state["status"] == "completed_after_semantic_repair_unverified"
+    assert state["semantic_repair_applied_count"] == 1
+
+
+def test_quality_does_not_repair_when_deterministic_retry_was_consumed(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    plan = ComponentPlan.from_mapping(support["plan"])
+    transport = _RetryConsumedSemanticMajorTransport(
+        {
+            str(row["block_id"]): str(row["clean_text"] or row["source_text"])
+            for row in rows
+        }
+    )
+    for stage in plan.stages:
+        payloads = execute_live_stage(
+            campaign=campaign,
+            project=project,
+            rows=rows,
+            stage_id=stage.stage_id,
+            component_root=component_root,
+            work_db=campaign_root / "state" / "work.sqlite3",
+            transport=(
+                transport
+                if stage.stage_id in {
+                    "b1_candidate_discovery",
+                    "b2_admission_translation",
+                    "auditor_morphology",
+                    "auditor_target_collision",
+                    "auditor_multi_target",
+                    "translator",
+                    "translation_quality_audit",
+                }
+                else None
+            ),
+            component_attempt_id=1,
+            producer=stage.producer,
+            work_id=stage.work_id,
+        )
+        for spec in stage.artifact_specs:
+            _write_json(
+                component_root / spec["relative_path"],
+                payloads[spec["artifact_ref"]],
+            )
+
+    draft = validate_translation_artifact(
+        json.loads(
+            (component_root / "artifacts/translator/s0.json").read_text(
+                encoding="utf-8"
+            )
+        )
+    )
+    final = validate_translation_artifact(
+        json.loads(
+            (component_root / "artifacts/quality/s0_final.json").read_text(
+                encoding="utf-8"
+            )
+        )
+    )
+    draft_by_id = {row["block_id"]: row for row in draft["translations"]}
+    final_by_id = {row["block_id"]: row for row in final["translations"]}
+    state = json.loads(
+        (component_root / "artifacts/quality/state.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    s0_state = next(row for row in state["arms"] if row["arm_id"] == "s0")
+    repair_calls = [
+        row
+        for row in transport.calls
+        if row["role_id"] == "d2l.translator.s0"
+        and row["tag"].startswith("S0_repair_")
+    ]
+
+    assert transport.initial_s0_calls == 2
+    assert repair_calls == []
+    assert (
+        final_by_id["alpha_b002"]["target_text"]
+        == draft_by_id["alpha_b002"]["target_text"]
+    )
+    assert s0_state["semantic_repair_attempt_count"] == 0
+    assert s0_state["semantic_repair_unavailable_count"] == 1
+    assert (
+        s0_state["repairs"][0]["status"]
+        == "repair_unavailable_retry_consumed"
+    )
+
+
+def test_quality_resume_reads_translator_attempt_one_and_publishes_attempt_two(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    plan = ComponentPlan.from_mapping(support["plan"])
+    transport = support["transport"]
+    by_stage = {stage.stage_id: stage for stage in plan.stages}
+    for stage in plan.stages:
+        if stage.stage_id == "translation_quality_audit":
+            break
+        payloads = execute_live_stage(
+            campaign=campaign,
+            project=project,
+            rows=rows,
+            stage_id=stage.stage_id,
+            component_root=component_root,
+            work_db=campaign_root / "state" / "work.sqlite3",
+            transport=(
+                transport
+                if stage.stage_id in {
+                    "b1_candidate_discovery",
+                    "b2_admission_translation",
+                    "auditor_morphology",
+                    "auditor_target_collision",
+                    "auditor_multi_target",
+                    "translator",
+                }
+                else None
+            ),
+            component_attempt_id=1,
+            producer=stage.producer,
+            work_id=stage.work_id,
+        )
+        for spec in stage.artifact_specs:
+            _write_json(
+                component_root / spec["relative_path"],
+                payloads[spec["artifact_ref"]],
+            )
+
+    quality_stage = by_stage["translation_quality_audit"]
+    payloads = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=quality_stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=2,
+        producer=quality_stage.producer,
+        work_id=quality_stage.work_id,
+    )
+
+    assert payloads["art_translation_s0_final"]["artifact_id"].endswith("a0002")
+    assert payloads["art_translation_s1_final"]["artifact_id"].endswith("a0002")
 
 
 def test_live_stage_runner_pauses_before_api_and_validates_fake_b1_receipt(

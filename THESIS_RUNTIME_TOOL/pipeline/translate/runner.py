@@ -49,6 +49,12 @@ from pipeline.translate.hygiene import (
     detect_hygiene_issues,
     hygiene_reask_note,
 )
+from pipeline.translate.d2l_translation_integrity_v1 import (
+    inspect_translations,
+    render_retry_note as integrity_reask_note,
+    retry_findings as integrity_retry_findings,
+    warning_findings as integrity_warning_findings,
+)
 from pipeline.translate.prompt import (
     build_messages,
     extract_translations,
@@ -164,6 +170,8 @@ def translate_windows(
     protected_spans_policy: str | None = None,
     translation_output_policy: str | None = None,
     response_envelope_policy: str | None = None,
+    max_attempts_per_window: int = 2,
+    semantic_repair_findings: dict[str, list[dict[str, str]]] | None = None,
 ) -> TranslateReport:
     """Run translation over a list of Window objects.
 
@@ -183,6 +191,19 @@ def translate_windows(
     }
     sink = event_sink or NullEventSink()
     config = config.upper()
+    if max_attempts_per_window not in {1, 2}:
+        raise ValueError("Translator max attempts per window must be one or two")
+    repair_findings = semantic_repair_findings or {}
+    unknown_repair_blocks = sorted(set(repair_findings) - {
+        str(block_id)
+        for window in windows
+        for block_id in window.block_ids
+    })
+    if unknown_repair_blocks:
+        raise ValueError(
+            "Semantic repair findings cite foreign blocks: "
+            + ", ".join(unknown_repair_blocks)
+        )
     hygiene_stats = _empty_hygiene_stats(config)
     profile = get_profile(profile_name)
     protected_policy = get_protected_span_policy(protected_spans_policy)
@@ -430,6 +451,25 @@ def translate_windows(
                 ),
                 translation_output_policy=translation_output_policy,
             )
+            repair_rows = {
+                block_id: repair_findings[block_id]
+                for block_id in block_ids
+                if block_id in repair_findings
+            }
+            if repair_rows:
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": _semantic_repair_note(
+                            repair_rows,
+                            block_to_slot=(
+                                invert_slot_map(slot_to_block)
+                                if slot_output_active
+                                else None
+                            ),
+                        ),
+                    }
+                )
             emit_event(
                 sink,
                 "prompt_built",
@@ -465,6 +505,7 @@ def translate_windows(
                 call_results,
                 hygiene_summary,
                 protected_summary,
+                deterministic_summary,
             ) = _call_with_reask(
                 client,
                 messages,
@@ -480,6 +521,7 @@ def translate_windows(
                 protected_span_policy=protected_policy,
                 slot_to_block=slot_to_block or None,
                 response_envelope_policy=response_envelope_policy,
+                max_attempts=max_attempts_per_window,
             )
             all_results.extend(call_results)
             _record_response_envelope_stats(
@@ -607,6 +649,8 @@ def translate_windows(
                 response_envelope_policy=(
                     response_envelope_policy if slot_output_active else None
                 ),
+                call_count=len(call_results),
+                deterministic_quality=deterministic_summary,
             )
 
             persisted_blocks: list[str] = []
@@ -771,6 +815,7 @@ def _call_with_reask(
     protected_span_policy: ProtectedSpanPolicy | None = None,
     slot_to_block: dict[str, str] | None = None,
     response_envelope_policy: str | None = None,
+    max_attempts: int = 2,
 ) -> tuple[
     LLMResult,
     str,
@@ -779,8 +824,11 @@ def _call_with_reask(
     list[LLMResult],
     dict[str, Any],
     dict[str, Any],
+    dict[str, Any],
 ]:
     """Call LLM; re-ask once on JSON or hygiene validation failure."""
+    if max_attempts not in {1, 2}:
+        raise ValueError("Translator call attempts must be one or two")
     call_results: list[LLMResult] = []
     hygiene_flagged_blocks: set[str] = set()
     hygiene_reasked_blocks: set[str] = set()
@@ -788,8 +836,12 @@ def _call_with_reask(
     protected_flagged_blocks: set[str] = set()
     protected_reasked_blocks: set[str] = set()
     final_protected_issues: list[Any] = []
+    deterministic_flagged_blocks: set[str] = set()
+    deterministic_reasked_blocks: set[str] = set()
+    deterministic_warnings: list[Any] = []
+    final_deterministic_issues: list[Any] = []
     errors: list[str] = []
-    for attempt in range(2):
+    for attempt in range(max_attempts):
         emit_event(
             event_sink,
             "request_sent",
@@ -887,7 +939,7 @@ def _call_with_reask(
                         issue.block_id for issue in protected_issues
                     }
                     protected_flagged_blocks.update(issue_blocks)
-                    if attempt == 0:
+                    if attempt + 1 < max_attempts:
                         protected_reasked_blocks.update(issue_blocks)
                         emit_event(
                             event_sink,
@@ -951,6 +1003,12 @@ def _call_with_reask(
                             protected_reasked_blocks,
                             final_protected_issues,
                         ),
+                        _deterministic_call_summary(
+                            deterministic_flagged_blocks,
+                            deterministic_reasked_blocks,
+                            deterministic_warnings,
+                            final_deterministic_issues,
+                        ),
                     )
 
                 result = _result_with_restored_translations(
@@ -959,6 +1017,94 @@ def _call_with_reask(
                     slot_to_block=slot_to_block,
                 )
                 translations = restored
+
+            deterministic_findings = inspect_translations(
+                blocks_for_prompt,
+                translations,
+            )
+            deterministic_major = integrity_retry_findings(
+                deterministic_findings
+            )
+            deterministic_warnings = integrity_warning_findings(
+                deterministic_findings
+            )
+            if deterministic_major:
+                issue_blocks = {
+                    issue.block_id for issue in deterministic_major
+                }
+                deterministic_flagged_blocks.update(issue_blocks)
+                if attempt + 1 < max_attempts:
+                    deterministic_reasked_blocks.update(issue_blocks)
+                    emit_event(
+                        event_sink,
+                        "deterministic_quality_flagged",
+                        config=config,
+                        window_id=window_id,
+                        block_ids=block_ids,
+                        flagged_blocks=sorted(issue_blocks),
+                        findings=[
+                            issue.to_dict() for issue in deterministic_findings
+                        ],
+                        reask=True,
+                        committed=False,
+                    )
+                    messages = [
+                        *messages,
+                        {"role": "assistant", "content": result.text},
+                        {
+                            "role": "user",
+                            "content": integrity_reask_note(
+                                deterministic_major,
+                                block_to_slot=(
+                                    invert_slot_map(slot_to_block)
+                                    if slot_to_block
+                                    else None
+                                ),
+                            ),
+                        },
+                    ]
+                    continue
+                final_deterministic_issues = deterministic_major
+                errors = [
+                    f"deterministic:{issue.block_id}:{issue.issue_type}"
+                    for issue in deterministic_major
+                ]
+                emit_event(
+                    event_sink,
+                    "deterministic_quality_still_bad",
+                    config=config,
+                    window_id=window_id,
+                    block_ids=block_ids,
+                    flagged_blocks=sorted(issue_blocks),
+                    findings=[
+                        issue.to_dict() for issue in deterministic_findings
+                    ],
+                    committed=False,
+                )
+                return (
+                    result,
+                    "failed",
+                    errors,
+                    [],
+                    call_results,
+                    _hygiene_call_summary(
+                        hygiene_flagged_blocks,
+                        hygiene_reasked_blocks,
+                        [],
+                        [],
+                    ),
+                    _protected_span_call_summary(
+                        protected_flagged_blocks,
+                        protected_reasked_blocks,
+                        final_protected_issues,
+                    ),
+                    _deterministic_call_summary(
+                        deterministic_flagged_blocks,
+                        deterministic_reasked_blocks,
+                        deterministic_warnings,
+                        final_deterministic_issues,
+                    ),
+                )
 
             issues = detect_hygiene_issues(blocks_for_prompt, translations)
             if not issues:
@@ -980,11 +1126,17 @@ def _call_with_reask(
                         protected_reasked_blocks,
                         [],
                     ),
+                    _deterministic_call_summary(
+                        deterministic_flagged_blocks,
+                        deterministic_reasked_blocks,
+                        deterministic_warnings,
+                        [],
+                    ),
                 )
 
             issue_blocks = {issue.block_id for issue in issues}
             hygiene_flagged_blocks.update(issue_blocks)
-            if attempt == 0:
+            if attempt + 1 < max_attempts:
                 hygiene_reasked_blocks.update(issue_blocks)
                 emit_event(
                     event_sink,
@@ -1045,11 +1197,17 @@ def _call_with_reask(
                     protected_reasked_blocks,
                     final_protected_issues,
                 ),
+                _deterministic_call_summary(
+                    deterministic_flagged_blocks,
+                    deterministic_reasked_blocks,
+                    deterministic_warnings,
+                    final_deterministic_issues,
+                ),
             )
 
         errors = list(parse_errors)
 
-        if attempt == 0:
+        if attempt + 1 < max_attempts:
             messages = [
                 *messages,
                 {"role": "assistant", "content": result.text},
@@ -1083,6 +1241,12 @@ def _call_with_reask(
             protected_flagged_blocks,
             protected_reasked_blocks,
             final_protected_issues,
+        ),
+        _deterministic_call_summary(
+            deterministic_flagged_blocks,
+            deterministic_reasked_blocks,
+            deterministic_warnings,
+            final_deterministic_issues,
         ),
     )
 
@@ -1124,6 +1288,46 @@ def _slot_hygiene_reask_note(
         "names, and symbols. Return only the same translations object with exactly "
         "the same short slots and no metadata."
     )
+
+
+def _semantic_repair_note(
+    findings_by_block: dict[str, list[dict[str, str]]],
+    *,
+    block_to_slot: dict[str, str] | None,
+) -> str:
+    rows: list[str] = []
+    for block_id, findings in findings_by_block.items():
+        owner = (
+            block_to_slot.get(block_id, block_id)
+            if block_to_slot is not None
+            else block_id
+        )
+        for finding in findings[:8]:
+            issue_type = str(finding.get("issue_type") or "semantic_other")
+            reason = " ".join(str(finding.get("reason") or "").split())
+            rows.append(f"- {owner} [{issue_type}]: {reason[:500]}")
+    return (
+        "SEMANTIC REPAIR REQUEST\n"
+        "A separate quality auditor found the evidence-grounded issues below. "
+        "Retranslate every supplied source slot as a complete Vietnamese translation. "
+        "Correct the stated meaning problem without adding commentary or metadata. "
+        "Keep every protected placeholder and source structure exactly as required.\n"
+        + "\n".join(rows[:24])
+    )
+
+
+def _deterministic_call_summary(
+    flagged_blocks: set[str],
+    reasked_blocks: set[str],
+    warnings: list[Any],
+    final_issues: list[Any],
+) -> dict[str, Any]:
+    return {
+        "flagged_blocks": sorted(flagged_blocks),
+        "reasked_blocks": sorted(reasked_blocks),
+        "warnings": [issue.to_dict() for issue in warnings],
+        "final_issues": [issue.to_dict() for issue in final_issues],
+    }
 
 
 def _protected_span_call_summary(
@@ -1477,6 +1681,54 @@ def _stored_pack_payload(payload_json: Any) -> dict[str, Any]:
     return payload
 
 
+def load_window_attempt_state(
+    db: sqlite3.Connection,
+    *,
+    experiment_id: str,
+) -> dict[str, dict[str, Any]]:
+    """Read durable per-window Translator attempt state for later quality repair."""
+
+    result: dict[str, dict[str, Any]] = {}
+    rows = db.execute(
+        "SELECT pack_id, payload_json FROM memory_packs ORDER BY pack_id"
+    ).fetchall()
+    for row in rows:
+        payload = _stored_pack_payload(row["payload_json"])
+        if payload.get("experiment_id") != experiment_id:
+            continue
+        window_id = str(payload.get("window_id") or "")
+        if not window_id or window_id in result:
+            raise RuntimeError(
+                "Translator attempt-state window identity is missing or duplicated"
+            )
+        raw_count = payload.get("translator_attempt_count")
+        if (
+            isinstance(raw_count, bool)
+            or not isinstance(raw_count, int)
+            or raw_count not in {1, 2}
+        ):
+            raise RuntimeError(
+                f"Translator attempt count is unavailable for {window_id}"
+            )
+        deterministic = payload.get("deterministic_quality")
+        if not isinstance(deterministic, dict):
+            raise RuntimeError(
+                f"Translator deterministic state is unavailable for {window_id}"
+            )
+        result[window_id] = {
+            "window_id": window_id,
+            "pack_id": str(row["pack_id"]),
+            "attempt_count": raw_count,
+            "retry_consumed": raw_count >= 2,
+            "deterministic_quality": deterministic,
+        }
+    if not result:
+        raise RuntimeError(
+            f"Translator attempt state is absent for experiment {experiment_id}"
+        )
+    return result
+
+
 def _fetch_blocks(db: sqlite3.Connection, block_ids: list[str]) -> list:
     if not block_ids:
         return []
@@ -1518,6 +1770,8 @@ def _persist_pack(
     glossary_review_policy: str | None,
     glossary_reviews: list[dict[str, Any]],
     response_envelope_policy: str | None,
+    call_count: int,
+    deterministic_quality: dict[str, Any],
 ) -> None:
     # Store window context in payload_json (existing column).
     # config is stored via _add_column_if_missing during migration 005.
@@ -1535,6 +1789,8 @@ def _persist_pack(
         "low_context": bool(getattr(context_pack, "low_context", False))
         if context_pack is not None
         else False,
+        "translator_attempt_count": int(call_count),
+        "deterministic_quality": deterministic_quality,
     }
     if transport_identity is not None:
         payload["transport_identity"] = transport_identity

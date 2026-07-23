@@ -415,7 +415,14 @@ def test_prepare_seals_routes_models_limits_and_isolated_state(tmp_path: Path) -
     assert roles["d2l.candidate_discovery"]["model_id"] == "gemini-3.5-flash"
     assert roles["d2l.b2.admission"]["model_id"] == "gpt-5.4"
     assert roles["d2l.b2.morphology"]["model_id"] == "gpt-5.5"
-    assert roles["d2l.translator.quality_auditor"]["model_id"] == "gpt-5.5"
+    assert roles["d2l.translator.s0"]["model_id"] == "gpt-5.4"
+    assert roles["d2l.translator.s1"]["model_id"] == "gpt-5.4"
+    assert roles["d2l.translator.quality_auditor"]["model_id"] == (
+        "gemini-3.5-flash"
+    )
+    assert roles["d2l.translator.quality_auditor"]["extra_policy"][
+        "glossary_visibility"
+    ] == "none"
     assert all(
         row["output_contract"]["structured_output_mode"] == "disabled"
         and row["output_contract"]["native_schema_parameter_sent"] is False

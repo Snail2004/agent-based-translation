@@ -738,20 +738,23 @@ def test_runner_hygiene_reasks_foreign_script_and_persists_clean_result(tmp_path
         "SELECT output_text FROM translation_runs WHERE block_id = 'ch02_b001'"
     ).fetchone()
     qa_count = conn.execute("SELECT COUNT(*) FROM qa_issues").fetchone()[0]
+    pack = json.loads(
+        conn.execute("SELECT payload_json FROM memory_packs").fetchone()[0]
+    )
 
     assert report.windows_translated == 1
     assert len(client.calls) == 2
-    assert "non-Vietnamese-script" in client.calls[1]["messages"][-1]["content"]
+    assert "deterministic integrity checks" in client.calls[1]["messages"][-1]["content"]
+    assert "unexpected_output_script" in client.calls[1]["messages"][-1]["content"]
     assert row["output_text"] == "Bản dịch đã sạch."
     assert qa_count == 0
-    assert report.hygiene["flagged_blocks"] == 1
-    assert report.hygiene["reasked"] == 1
-    assert report.hygiene["fixed"] == 1
-    assert report.hygiene["still_bad"] == 0
+    assert pack["translator_attempt_count"] == 2
+    assert pack["deterministic_quality"]["reasked_blocks"] == ["ch02_b001"]
+    assert pack["deterministic_quality"]["final_issues"] == []
     assert report.total_usage["calls"] == 2
 
 
-def test_runner_hygiene_persists_qa_issue_after_reask_still_bad(tmp_path):
+def test_runner_foreign_script_fails_row_after_single_reask_still_bad(tmp_path):
     conn, doc_id = _make_doc_db(tmp_path)
     client = _FakeClient([
         _fake_result({"ch02_b001": "Bản dịch còn либо."}),
@@ -767,30 +770,21 @@ def test_runner_hygiene_persists_qa_issue_after_reask_still_bad(tmp_path):
         "S0",
     )
 
-    issue = conn.execute(
-        """
-        SELECT run_id, block_id, rule_or_subtype, severity, evidence_target,
-               retry_count, fixed
-        FROM qa_issues
-        """
-    ).fetchone()
-
-    assert report.windows_translated == 1
-    assert len(client.calls) == 2
-    assert report.hygiene["flagged_blocks"] == 1
-    assert report.hygiene["reasked"] == 1
-    assert report.hygiene["fixed"] == 0
-    assert report.hygiene["still_bad"] == 1
-    assert report.reports[0].errors == ["hygiene:ch02_b001:Cyrillic:либо"]
-    assert issue["run_id"] == (
-        f"tr_S0_ch02_b001_{_experiment_scope('exp_test')}"
+    persisted = conn.execute(
+        "SELECT COUNT(*) FROM translation_runs WHERE block_id = 'ch02_b001'"
+    ).fetchone()[0]
+    pack = json.loads(
+        conn.execute("SELECT payload_json FROM memory_packs").fetchone()[0]
     )
-    assert issue["block_id"] == "ch02_b001"
-    assert issue["rule_or_subtype"] == "hygiene_foreign_script:Cyrillic"
-    assert issue["severity"] == "major"
-    assert "либо" in issue["evidence_target"]
-    assert issue["retry_count"] == 1
-    assert issue["fixed"] == 0
+
+    assert report.windows_translated == 0
+    assert report.windows_failed == 1
+    assert len(client.calls) == 2
+    assert persisted == 0
+    assert pack["translator_attempt_count"] == 2
+    assert pack["deterministic_quality"]["final_issues"][0]["issue_type"] == (
+        "unexpected_output_script"
+    )
 
 
 def test_runner_hygiene_allows_script_present_in_source(tmp_path):
