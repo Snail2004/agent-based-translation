@@ -3361,6 +3361,237 @@ def test_workflow_usage_read_model_projects_validated_d2l_snapshots():
     assert rejected.value.code == "workflow_usage_invalid"
 
 
+def test_workflow_usage_read_model_projects_d2l_transport_failures():
+    from pipeline.prepass.d2l_console_replay_contract_v1 import (
+        build_component_usage_snapshot,
+    )
+    from services.workflow_replay import _usage_read_model
+
+    usage = {
+        "logical_request_id": "request_retry",
+        "physical_attempt_index": 3,
+        "provider_id": "provider",
+        "model_id": "model",
+        "source_id": "source",
+        "masked_quota_bucket": "bucket-***",
+        "prompt_tokens": 10,
+        "completion_tokens": 2,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0,
+        "total_tokens": 12,
+        "latency_ms": 10,
+        "finish_reason": "stop",
+        "cost_usd": None,
+        "currency": None,
+        "cost_status": "unknown",
+        "cache_status": "miss",
+        "cache_mechanism": "local_exact_cache",
+    }
+    accepted = {
+        "identity_kind": "provider_attempt",
+        "attempt_usage_id": "attempt_retry_3",
+        "cache_observation_id": "cache_attempt_retry_3",
+        "logical_request_id": "request_retry",
+        "semantic_attempt_index": 1,
+        "transport_retry_ordinal": 2,
+        "physical_attempt_index": 3,
+        "provider_called": True,
+        "source_revision": "source_v1",
+        "usage": usage,
+    }
+    snapshot = build_component_usage_snapshot(
+        previous_snapshots=[],
+        workflow_run_id="workflow_retry_usage_v1",
+        component_run_id="translation_retry_usage_v1",
+        component_attempt_id=1,
+        stage_id="translator",
+        work_id="window_retry",
+        accepted_usage=accepted,
+    )
+
+    def failed_event(
+        *,
+        component_seq: int,
+        attempt_usage_id: str,
+        physical_attempt_index: int,
+        transport_retry_ordinal: int,
+        prompt_tokens: int | None,
+        completion_tokens: int | None,
+    ) -> dict:
+        known = prompt_tokens is not None
+        return {
+            "event": "transport_attempt_failed",
+            "workflow_run_id": "workflow_retry_usage_v1",
+            "agent": "translator",
+            "stage_id": "translation.translator",
+            "component": {
+                "component_id": "translation",
+                "component_run_id": "translation_retry_usage_v1",
+                "component_attempt_id": 1,
+                "component_attempt_index": 1,
+                "component_seq": component_seq,
+            },
+            "payload": {
+                "attempt_usage_id": attempt_usage_id,
+                "logical_request_id": "request_retry",
+                "semantic_attempt_index": 1,
+                "transport_retry_ordinal": transport_retry_ordinal,
+                "physical_attempt_index": physical_attempt_index,
+                "work_kind": "translator_window",
+                "work_id": "window_retry",
+                "provider_id": "provider",
+                "model_id": "model",
+                "source_id": "source",
+                "source_revision": "source_v1",
+                "masked_quota_bucket": "bucket-***",
+                "latency_ms": 50,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "cached_input_tokens": 0 if known else None,
+                "reasoning_tokens": 0 if known else None,
+                "total_tokens": (
+                    prompt_tokens + completion_tokens if known else None
+                ),
+                "cost_usd": None,
+                "cost_status": "unknown",
+                "reason_code": "timeout",
+                "retry_class": "timeout",
+                "retry_disposition": "transport_retry_allowed",
+            },
+        }
+
+    events = [
+        failed_event(
+            component_seq=10,
+            attempt_usage_id="attempt_retry_1",
+            physical_attempt_index=1,
+            transport_retry_ordinal=0,
+            prompt_tokens=None,
+            completion_tokens=None,
+        ),
+        failed_event(
+            component_seq=12,
+            attempt_usage_id="attempt_retry_2",
+            physical_attempt_index=2,
+            transport_retry_ordinal=1,
+            prompt_tokens=5,
+            completion_tokens=1,
+        ),
+        {
+            "event": "usage_snapshot",
+            "agent": "translator",
+            "stage_id": "translation.translator",
+            "component": {
+                "component_id": "translation",
+                "component_run_id": "translation_retry_usage_v1",
+                "component_attempt_id": 1,
+                "component_attempt_index": 1,
+                "component_seq": 14,
+            },
+            "payload": snapshot,
+        },
+    ]
+    projected = _usage_read_model(
+        events=events,
+        typed_artifacts=[],
+        workflow_run_id="workflow_retry_usage_v1",
+    )
+
+    assert projected is not None
+    assert [row["call_id"] for row in projected["calls"]] == [
+        "attempt_retry_1",
+        "attempt_retry_2",
+        "attempt_retry_3",
+    ]
+    assert projected["calls"][0]["outcome"] == "transport_failed"
+    assert projected["calls"][0]["usage"]["total_tokens"] is None
+    assert projected["calls"][0]["usage"]["cost_usd"] is None
+    assert projected["calls"][1]["usage"]["total_tokens"] == 6
+    assert "outcome" not in projected["calls"][2]
+    assert projected["stage_totals"][0]["physical_call_count"] == 3
+    assert projected["stage_totals"][0]["unknown_attempt_count"] == 1
+    assert projected["stage_totals"][0]["total_tokens"] is None
+    assert projected["component_totals"][0]["physical_call_count"] == 3
+    assert projected["component_totals"][0]["unknown_attempt_count"] == 1
+    assert projected["component_totals"][0]["total_tokens"] is None
+    assert projected["component_totals"][0]["cost_status"] == "unknown"
+    assert projected["component_totals"][0]["cost_usd"] is None
+
+
+def test_workflow_usage_read_model_projects_exhausted_d2l_transport_chain():
+    from services.workflow_replay import WorkflowReplayError, _usage_read_model
+
+    def failed_event(component_seq: int, attempt_usage_id: str) -> dict:
+        return {
+            "event": "transport_attempt_failed",
+            "workflow_run_id": "workflow_exhausted_usage_v1",
+            "agent": "translator",
+            "stage_id": "translation.translator",
+            "component": {
+                "component_id": "translation",
+                "component_run_id": "translation_exhausted_usage_v1",
+                "component_attempt_id": 1,
+                "component_attempt_index": 1,
+                "component_seq": component_seq,
+            },
+            "payload": {
+                "attempt_usage_id": attempt_usage_id,
+                "logical_request_id": "request_exhausted",
+                "semantic_attempt_index": 1,
+                "transport_retry_ordinal": component_seq - 1,
+                "physical_attempt_index": component_seq,
+                "work_kind": "translator_window",
+                "work_id": "window_exhausted",
+                "provider_id": "provider",
+                "model_id": "model",
+                "source_id": "source",
+                "source_revision": "source_v1",
+                "masked_quota_bucket": "bucket-***",
+                "latency_ms": 50,
+                "prompt_tokens": None,
+                "completion_tokens": None,
+                "cached_input_tokens": None,
+                "reasoning_tokens": None,
+                "total_tokens": None,
+                "cost_usd": None,
+                "cost_status": "unknown",
+                "reason_code": "server_unavailable",
+                "retry_class": "server_unavailable",
+                "retry_disposition": "transport_retry_allowed",
+            },
+        }
+
+    events = [
+        failed_event(1, "attempt_exhausted_1"),
+        failed_event(2, "attempt_exhausted_2"),
+        failed_event(3, "attempt_exhausted_3"),
+    ]
+    projected = _usage_read_model(
+        events=events,
+        typed_artifacts=[],
+        workflow_run_id="workflow_exhausted_usage_v1",
+    )
+
+    assert projected is not None
+    assert len(projected["calls"]) == 3
+    assert projected["stage_totals"][0]["physical_call_count"] == 3
+    assert projected["stage_totals"][0]["unknown_attempt_count"] == 3
+    assert projected["component_totals"][0]["physical_call_count"] == 3
+    assert projected["component_totals"][0]["unknown_attempt_count"] == 3
+    assert projected["component_totals"][0]["snapshot_seq"] is None
+    assert projected["component_totals"][0]["snapshot_sha256"] is None
+
+    tampered = json.loads(json.dumps(events))
+    tampered[0]["payload"]["completion_tokens"] = 1
+    with pytest.raises(WorkflowReplayError) as rejected:
+        _usage_read_model(
+            events=tampered,
+            typed_artifacts=[],
+            workflow_run_id="workflow_exhausted_usage_v1",
+        )
+    assert rejected.value.code == "workflow_usage_invalid"
+
+
 def test_workflow_usage_read_model_projects_validated_evaluation_snapshots():
     from pipeline.eval.evaluation_component_usage_v1 import (
         EvaluationComponentUsageTrackerV1,
