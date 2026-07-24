@@ -108,6 +108,7 @@ class D2LSharedClientResult:
     provider_called: bool | None = None
     source_revision: str | None = None
     transport_retry_summary: Mapping[str, Any] | None = None
+    provider_cached_input_tokens: int | None = None
 
 
 class D2LSharedLlmAttemptAdapter:
@@ -468,9 +469,19 @@ class D2LSharedLlmClient:
             result.response_text, response_format=response_format
         )
         usage_row = result.usage or {}
+        raw_cached_input_tokens = usage_row.get("cached_input_tokens")
+        provider_cached_input_tokens = (
+            0
+            if not result.provider_called
+            else (
+                None
+                if raw_cached_input_tokens is None
+                else int(raw_cached_input_tokens)
+            )
+        )
         usage = LLMUsage(
             prompt_tokens=int(usage_row.get("prompt_tokens") or 0),
-            cached_tokens=int(usage_row.get("cached_input_tokens") or 0),
+            cached_tokens=int(provider_cached_input_tokens or 0),
             completion_tokens=int(usage_row.get("completion_tokens") or 0),
             reasoning_tokens=int(usage_row.get("reasoning_tokens") or 0),
         )
@@ -545,6 +556,7 @@ class D2LSharedLlmClient:
                 else "none"
             ),
             transport_retry_summary=retry_summary,
+            provider_cached_input_tokens=provider_cached_input_tokens,
         )
 
     def _transport_retry_ordinal(self, *, logical_request_id: str) -> int:

@@ -3309,7 +3309,7 @@ def test_workflow_usage_read_model_projects_validated_d2l_snapshots():
         "masked_quota_bucket": "bucket-***",
         "prompt_tokens": 10,
         "completion_tokens": 2,
-        "cached_input_tokens": 0,
+        "cached_input_tokens": None,
         "reasoning_tokens": 0,
         "total_tokens": 12,
         "latency_ms": 10,
@@ -3404,7 +3404,10 @@ def test_workflow_usage_read_model_projects_validated_d2l_snapshots():
     ]
     assert projected["stage_totals"][0]["stage_id"] == "translation.translator"
     assert projected["stage_totals"][0]["total_tokens"] == 12
+    assert projected["calls"][0]["usage"]["cached_input_tokens"] is None
+    assert projected["stage_totals"][0]["cached_input_tokens"] is None
     assert projected["component_totals"][0]["physical_call_count"] == 1
+    assert projected["component_totals"][0]["cached_input_tokens"] is None
     assert projected["component_totals"][0]["cost_status"] == "unknown"
     assert projected["component_totals"][0]["cost_usd"] is None
 

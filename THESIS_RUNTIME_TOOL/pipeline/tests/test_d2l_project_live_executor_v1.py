@@ -173,6 +173,7 @@ class _FakeClient:
             finish_reason="stop",
             cache_status="miss",
             cache_mechanism="local_exact_cache",
+            provider_cached_input_tokens=0,
         )
 
 
@@ -272,6 +273,7 @@ def test_stage_observations_emit_truthful_transport_retry_summary(
             transport_retry_ordinal=1,
             provider_called=True,
             source_revision="source_v1",
+            provider_cached_input_tokens=None,
             transport_retry_summary={
                 "logical_request_id": "request_transport_1",
                 "retry_count": 1,
@@ -300,8 +302,13 @@ def test_stage_observations_emit_truthful_transport_retry_summary(
     ]
     cost = receipt["observations"][-1]["payload"]
     assert cost["physical_attempt_count"] == 2
+    assert cost["cached_input_tokens"] is None
     assert cost["cost_usd"] is None
     assert cost["cost_status"] == "unknown"
+    response_usage = receipt["observations"][4]["payload"]["usage"]
+    snapshot_usage = receipt["observations"][5]["payload"]["accepted_usage"]["usage"]
+    assert response_usage["cached_input_tokens"] is None
+    assert snapshot_usage["cached_input_tokens"] is None
 
 
 class _FakeTransport:

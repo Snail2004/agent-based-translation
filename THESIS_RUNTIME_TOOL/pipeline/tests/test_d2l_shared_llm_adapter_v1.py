@@ -48,9 +48,10 @@ class _Clock:
 
 
 class _OpenAiSender:
-    def __init__(self) -> None:
+    def __init__(self, *, reported_cached_tokens: int | None = 0) -> None:
         self.calls = 0
         self.requests = []
+        self.reported_cached_tokens = reported_cached_tokens
 
     def send(self, request) -> RawTransportResponse:
         self.calls += 1
@@ -68,10 +69,13 @@ class _OpenAiSender:
                 "prompt_tokens": 12,
                 "completion_tokens": 7,
                 "total_tokens": 19,
-                "prompt_tokens_details": {"cached_tokens": 0},
                 "completion_tokens_details": {"reasoning_tokens": 0},
             },
         }
+        if self.reported_cached_tokens is not None:
+            payload["usage"]["prompt_tokens_details"] = {
+                "cached_tokens": self.reported_cached_tokens
+            }
         return RawTransportResponse(
             status_code=200,
             headers={},
@@ -561,8 +565,12 @@ def test_google_disabled_client_uses_prompt_json_and_local_parse_only(tmp_path) 
     assert "responseJsonSchema" not in wire["generationConfig"]
 
 
-def test_llm_client_compatibility_projection_uses_shared_cache(tmp_path) -> None:
-    sender = _OpenAiSender()
+@pytest.mark.parametrize("reported_cached_tokens", [None, 0, 4])
+def test_llm_client_compatibility_projection_uses_shared_cache(
+    tmp_path,
+    reported_cached_tokens,
+) -> None:
+    sender = _OpenAiSender(reported_cached_tokens=reported_cached_tokens)
     adapter = _adapter(tmp_path, sender)
     prompt_ref, schema_ref, validator_ref, extension_ref = _refs()
     preset = get_role_preset(ROLE_ID)
@@ -628,8 +636,11 @@ def test_llm_client_compatibility_projection_uses_shared_cache(tmp_path) -> None
     assert first.finish_reason == "stop"
     assert first.cache_status == "miss"
     assert first.cache_mechanism == "local_exact_cache"
+    assert first.provider_cached_input_tokens == reported_cached_tokens
+    assert first.usage.cached_tokens == int(reported_cached_tokens or 0)
     assert second.cache_status == "hit"
     assert second.cache_mechanism == "local_exact_cache"
+    assert second.provider_cached_input_tokens == 0
     assert sender.calls == 1
 
 

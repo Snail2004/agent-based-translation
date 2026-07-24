@@ -528,12 +528,13 @@ def _validate_usage(value: Any, label: str) -> dict[str, Any]:
     for key in (
         "prompt_tokens",
         "completion_tokens",
-        "cached_input_tokens",
         "reasoning_tokens",
         "total_tokens",
         "latency_ms",
     ):
         _require_int(row[key], f"{label}.{key}")
+    if row["cached_input_tokens"] is not None:
+        _require_int(row["cached_input_tokens"], f"{label}.cached_input_tokens")
     if row["finish_reason"] is not None:
         _require_string(row["finish_reason"], f"{label}.finish_reason")
     if row["cost_usd"] is not None and (
@@ -583,11 +584,12 @@ def _validate_usage_totals(value: Any, label: str) -> dict[str, Any]:
         "cache_observation_count",
         "prompt_tokens",
         "completion_tokens",
-        "cached_input_tokens",
         "reasoning_tokens",
         "total_tokens",
     ):
         _require_int(row[key], f"{label}.{key}")
+    if row["cached_input_tokens"] is not None:
+        _require_int(row["cached_input_tokens"], f"{label}.cached_input_tokens")
     if row["total_tokens"] != row["prompt_tokens"] + row["completion_tokens"]:
         raise D2LConsoleContractError(f"{label}.total_tokens is not prompt + completion")
     if row["physical_attempt_count"] > row["accepted_result_count"]:
@@ -809,7 +811,12 @@ def _usage_totals_from_records(
     }
     prompt = sum(int(row["usage"]["prompt_tokens"]) for row in provider_rows)
     completion = sum(int(row["usage"]["completion_tokens"]) for row in provider_rows)
-    cached = sum(int(row["usage"]["cached_input_tokens"]) for row in provider_rows)
+    cached_values = [row["usage"]["cached_input_tokens"] for row in provider_rows]
+    cached = (
+        None
+        if any(value is None for value in cached_values)
+        else sum(int(value) for value in cached_values)
+    )
     reasoning = sum(int(row["usage"]["reasoning_tokens"]) for row in provider_rows)
     known_cost_rows = [
         row
@@ -1304,11 +1311,15 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
             "physical_attempt_count",
             "prompt_tokens",
             "completion_tokens",
-            "cached_input_tokens",
             "reasoning_tokens",
             "total_tokens",
         ):
             _require_int(row[key], f"cost_snapshot.{key}")
+        if row["cached_input_tokens"] is not None:
+            _require_int(
+                row["cached_input_tokens"],
+                "cost_snapshot.cached_input_tokens",
+            )
         if row["cost_usd"] is not None and (
             isinstance(row["cost_usd"], bool)
             or not isinstance(row["cost_usd"], (int, float))

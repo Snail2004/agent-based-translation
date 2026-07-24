@@ -2799,7 +2799,7 @@ def _project_d2l_total(
         "cached_input_tokens",
         "total_tokens",
     ):
-        if unknown_attempt_count:
+        if unknown_attempt_count or totals[key] is None:
             token_totals[key] = None
         else:
             token_totals[key] = totals[key] + sum(

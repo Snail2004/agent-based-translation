@@ -273,7 +273,12 @@ def _result_usage(result: Any) -> dict[str, Any]:
     usage = result.usage
     prompt = int(getattr(usage, "prompt_tokens", 0) or 0)
     completion = int(getattr(usage, "completion_tokens", 0) or 0)
-    cached = int(getattr(usage, "cached_tokens", 0) or 0)
+    raw_cached = getattr(
+        result,
+        "provider_cached_input_tokens",
+        getattr(usage, "cached_tokens", 0),
+    )
+    cached = None if raw_cached is None else int(raw_cached or 0)
     reasoning = int(getattr(usage, "reasoning_tokens", 0) or 0)
     raw_status = str(getattr(result, "cost_status", "unknown") or "unknown")
     cost_status = raw_status if raw_status in _COST_STATUSES else "unknown"
@@ -584,7 +589,12 @@ class _StageObservations:
     ) -> dict[str, Any]:
         prompt = sum(row["prompt_tokens"] for row in self.usage_rows)
         completion = sum(row["completion_tokens"] for row in self.usage_rows)
-        cached = sum(row["cached_input_tokens"] for row in self.usage_rows)
+        cached_values = [row["cached_input_tokens"] for row in self.usage_rows]
+        cached = (
+            None
+            if any(value is None for value in cached_values)
+            else sum(int(value) for value in cached_values)
+        )
         reasoning = sum(row["reasoning_tokens"] for row in self.usage_rows)
         provider_usage = [
             row

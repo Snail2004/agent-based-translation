@@ -102,6 +102,7 @@ def _usage(
     prompt_tokens: int,
     completion_tokens: int,
     cache_status: str,
+    cached_input_tokens: int | None = 0,
 ) -> dict:
     return {
         "logical_request_id": logical_request_id,
@@ -112,7 +113,7 @@ def _usage(
         "masked_quota_bucket": "bucket-***",
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
-        "cached_input_tokens": 0,
+        "cached_input_tokens": cached_input_tokens,
         "reasoning_tokens": 0,
         "total_tokens": prompt_tokens + completion_tokens,
         "latency_ms": 10,
@@ -131,6 +132,7 @@ def _accepted_provider(
     logical_request_id: str,
     *,
     attempt_usage_id: str,
+    cached_input_tokens: int | None = 0,
 ) -> dict:
     return {
         "identity_kind": "provider_attempt",
@@ -147,6 +149,7 @@ def _accepted_provider(
             prompt_tokens=10,
             completion_tokens=2,
             cache_status="miss",
+            cached_input_tokens=cached_input_tokens,
         ),
     }
 
@@ -218,6 +221,37 @@ def test_usage_snapshots_preserve_attempt_cache_and_unknown_cost() -> None:
         "cost_status": "unknown",
         "cache_counters": {"hit": 1, "miss": 1},
     }
+
+
+def test_usage_snapshot_preserves_unreported_provider_cache_as_unknown() -> None:
+    first = build_component_usage_snapshot(
+        previous_snapshots=[],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=1,
+        stage_id="translator",
+        work_id="window_1",
+        accepted_usage=_accepted_provider(
+            "request_unreported_cache",
+            attempt_usage_id="attempt_unreported_cache",
+            cached_input_tokens=None,
+        ),
+    )
+    final = build_component_usage_snapshot(
+        previous_snapshots=[first],
+        workflow_run_id=WORKFLOW_RUN_ID,
+        component_run_id=COMPONENT_RUN_ID,
+        component_attempt_id=1,
+        stage_id=None,
+        work_id=None,
+        accepted_usage=None,
+        component_final=True,
+    )
+
+    assert first["accepted_usage"]["usage"]["cached_input_tokens"] is None
+    assert first["stage_cumulative"]["cached_input_tokens"] is None
+    assert final["component_cumulative"]["cached_input_tokens"] is None
+    assert validate_component_usage_snapshot_sequence([first, final]) == final
 
 
 def test_usage_snapshot_rejects_duplicate_provider_attempt() -> None:
