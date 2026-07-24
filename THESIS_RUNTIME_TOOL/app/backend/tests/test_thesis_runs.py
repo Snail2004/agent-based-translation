@@ -4069,6 +4069,13 @@ def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
     assert setup["shared_options"][0]["option_id"] == (
         "shared_llm_transport_catalog_v1"
     )
+    assert setup["shared_options"][0]["revision"] == "v2_transport_retry"
+    assert (
+        setup["shared_options"][0]["fixed_facts"]["policy"][
+            "transport_retry_cap"
+        ]
+        == 2
+    )
     assert all(
         row["status"] == "missing"
         for row in setup["shared_options"][0]["credential_status"]
@@ -4101,6 +4108,13 @@ def test_route_workflow_setup_allows_translation_and_blocks_unready_scoring(
     preflight = preflight_response.get_json()["data"]
     assert preflight["schema_id"] == "WorkflowPreflightV1"
     assert preflight["schema_version"] == "1.0.0"
+    assert preflight["shared_summary"]["revision"] == "v2_transport_retry"
+    assert (
+        preflight["shared_summary"]["fixed_facts"]["policy"][
+            "transport_retry_cap"
+        ]
+        == 2
+    )
     assert preflight["start_allowed"] is False
     assert "workflow_credentials_unavailable" in preflight[
         "blocking_reasons"

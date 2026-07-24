@@ -1178,6 +1178,8 @@ def _parent_source_bindings(source_binding: Mapping[str, Any]) -> list[dict[str,
 
 
 def _shared_settings_option() -> dict[str, Any]:
+    from pipeline.prepass.d2l_project_campaign_v2 import TRANSPORT_RETRY_POLICY
+
     fixed_facts = {
         "sources": [
             {
@@ -1206,7 +1208,7 @@ def _shared_settings_option() -> dict[str, Any]:
             },
         ],
         "policy": {
-            "transport_retry_cap": 0,
+            "transport_retry_cap": int(TRANSPORT_RETRY_POLICY["max_retries"]),
             "fallback_enabled": False,
             "rotation_enabled": False,
             "concurrency": 1,
@@ -1218,7 +1220,7 @@ def _shared_settings_option() -> dict[str, Any]:
     return {
         "option_id": SHARED_SETTINGS_ID,
         "label": "Registered shared API profile",
-        "revision": "v1",
+        "revision": "v2_transport_retry",
         "sha256": canonical_sha256(fixed_facts),
         "enabled": True,
         "status": "registered",
