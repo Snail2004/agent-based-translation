@@ -8,6 +8,10 @@ from types import SimpleNamespace
 
 import pytest
 
+from pipeline.eval.common_input_v1 import (
+    seal_translation_artifact,
+    validate_translation_artifact,
+)
 from pipeline.eval.evaluation_workflow_settings_v1 import (
     EvaluationWorkflowSettingsAuthorityV1,
     build_evaluation_workflow_settings_v1,
@@ -262,18 +266,23 @@ class _SnapshotAdapter:
 def _translation_fragment(
     s0_binding: dict[str, str],
     s1_binding: dict[str, str],
+    *,
+    chapter_ids: list[str] | None = None,
+    block_ids: list[str] | None = None,
 ) -> dict:
+    chapter_ids = chapter_ids or [CHAPTER_ID]
+    block_ids = block_ids or ["b1"]
     source = {
         "schema": "canonical_source_binding_v1",
         **{row["role"]: row["binding"] for row in _source_bindings()},
     }
     coverage = {
-        "admitted_block_count": 1,
-        "translated_block_count": 1,
+        "admitted_block_count": len(block_ids),
+        "translated_block_count": len(block_ids),
         "preserved_block_count": 0,
         "missing_block_count": 0,
         "failed_block_count": 0,
-        "ordered_block_ids_sha256": canonical_sha256(["b1"]),
+        "ordered_block_ids_sha256": canonical_sha256(block_ids),
         "status": "exact_cover",
     }
     fragment = {
@@ -303,10 +312,10 @@ def _translation_fragment(
         "glossary_binding": None,
         "context_memory_binding": None,
         "admitted_projection_binding": source["admitted_projection"],
-        "selected_chapter_ids": [CHAPTER_ID],
+        "selected_chapter_ids": chapter_ids,
         "admitted_universe": {
-            "ordered_block_ids_sha256": canonical_sha256(["b1"]),
-            "block_count": 1,
+            "ordered_block_ids_sha256": canonical_sha256(block_ids),
+            "block_count": len(block_ids),
             "status": "exact_cover",
         },
         "producer_lineage": {
@@ -324,13 +333,100 @@ def _translation_fragment(
     return fragment
 
 
+def _valid_translation_artifact(
+    arm_id: str,
+    *,
+    block_ids: list[str],
+) -> dict:
+    rows = [
+        {
+            "block_id": block_id,
+            "status": "translated",
+            "target_text": f"{arm_id}::{block_id}",
+            "error_code": None,
+        }
+        for block_id in block_ids
+    ]
+    return seal_translation_artifact(
+        {
+            "schema_id": "TranslationArtifactV1",
+            "schema_version": "1.0.0",
+            "artifact_id": f"translation_{arm_id}_full",
+            "created_at": CREATED_AT,
+            "producer": {
+                "workstream": "d2l",
+                "component": "fixture_translation_writer",
+                "component_version": "1.0.0",
+                "code_commit": COMMIT,
+            },
+            "source_binding": {
+                "binding_kind": "canonical_source_package_v1",
+                "project_id": JOB_ID,
+                "document_id": "document_v1",
+                "document": {
+                    "schema_version": "1.5.0",
+                    "sha256": "1" * 64,
+                },
+                "structure": {
+                    "schema_version": "1.0.0",
+                    "sha256": "2" * 64,
+                },
+                "asset_manifest": {
+                    "schema_version": "1.0.0",
+                    "sha256": "3" * 64,
+                },
+                "admitted_projection": {
+                    "schema_version": "admitted_projection_v1",
+                    "payload_sha256": "4" * 64,
+                },
+                "admission_policy": {
+                    "policy_id": "canonical_admission_v1",
+                    "policy_version": "1.0.0",
+                    "policy_sha256": "5" * 64,
+                },
+            },
+            "run_identity": {
+                "logical_run_id": "translation_run_v1",
+                "attempt_run_id": "translation_attempt_0002",
+                "arm_id": arm_id,
+                "profile_id": "technical_d2l_v1",
+                "profile_config_sha256": "6" * 64,
+                "source_language": "en",
+                "target_language": "vi",
+            },
+            "translations": rows,
+            "coverage": {
+                "source_block_count": len(rows),
+                "eligible_count": len(rows),
+                "translated_count": len(rows),
+                "preserved_count": 0,
+                "excluded_count": 0,
+                "review_held_count": 0,
+                "missing_count": 0,
+                "failed_count": 0,
+            },
+            "integrity": {"artifact_sha256": "0" * 64},
+        }
+    )
+
+
 class _TranslationExecutor:
     validator_id = "translation.fixture.validator_v1"
 
-    def __init__(self, root: Path) -> None:
+    def __init__(
+        self,
+        root: Path,
+        *,
+        chapter_ids: list[str] | None = None,
+        block_ids: list[str] | None = None,
+        valid_artifacts: bool = False,
+    ) -> None:
         self.root = root
         self.snapshot: ComponentSnapshotV1
         self.calls = 0
+        self.chapter_ids = chapter_ids or [CHAPTER_ID]
+        self.block_ids = block_ids or ["b1"]
+        self.valid_artifacts = valid_artifacts
 
     def adapter(self, terminal: bool) -> _SnapshotAdapter:
         return _SnapshotAdapter(self, terminal)
@@ -354,7 +450,11 @@ class _TranslationExecutor:
                 stage_id="translate",
                 attempt=1,
                 payload={
-                    "progress": {"completed": 0, "total": 1, "unit": "blocks"}
+                    "progress": {
+                        "completed": 0,
+                        "total": len(self.block_ids),
+                        "unit": "blocks",
+                    }
                 },
             ),
             _event(
@@ -380,8 +480,16 @@ class _TranslationExecutor:
             observer(self.root, False)
             raise WorkflowComponentPausedV1("translation")
 
-        s0_bytes = b'{"arm":"s0","translations":[{"block_id":"b1"}]}'
-        s1_bytes = b'{"arm":"s1","translations":[{"block_id":"b1"}]}'
+        if self.valid_artifacts:
+            s0_bytes = canonical_json_bytes(
+                _valid_translation_artifact("s0", block_ids=self.block_ids)
+            )
+            s1_bytes = canonical_json_bytes(
+                _valid_translation_artifact("s1", block_ids=self.block_ids)
+            )
+        else:
+            s0_bytes = b'{"arm":"s0","translations":[{"block_id":"b1"}]}'
+            s1_bytes = b'{"arm":"s1","translations":[{"block_id":"b1"}]}'
         s0_binding = {
             "artifact_ref": "art_translation_s0",
             "artifact_kind": "translation_artifact",
@@ -396,7 +504,12 @@ class _TranslationExecutor:
             "sha256": physical_sha256(s1_bytes),
             "sha256_kind": "physical",
         }
-        fragment = _translation_fragment(s0_binding, s1_binding)
+        fragment = _translation_fragment(
+            s0_binding,
+            s1_binding,
+            chapter_ids=self.chapter_ids,
+            block_ids=self.block_ids,
+        )
         fragment_bytes = canonical_json_bytes(fragment)
         fragment_binding = {
             "artifact_ref": "art_scoring_handoff_fragment",
@@ -424,7 +537,11 @@ class _TranslationExecutor:
                 attempt=2,
                 payload={
                     "outcome": "succeeded",
-                    "progress": {"completed": 1, "total": 1, "unit": "blocks"},
+                    "progress": {
+                        "completed": len(self.block_ids),
+                        "total": len(self.block_ids),
+                        "unit": "blocks",
+                    },
                 },
             ),
             _event(
@@ -859,6 +976,105 @@ def test_scoring_handoff_can_be_published_before_evaluation_settings(
         relay.root / "handoffs" / "evaluation_workflow_settings.json"
     ).exists()
     assert relay.validate_parent_package()["status"] == "running"
+
+
+def test_scoring_projects_full_translation_to_evaluation_chapter_subset(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    translation = _TranslationExecutor(
+        tmp_path / "translation",
+        chapter_ids=[CHAPTER_ID, "d2l_linear_networks"],
+        block_ids=["b1", "b2"],
+        valid_artifacts=True,
+    )
+    orchestrator = WorkflowOrchestratorV1(
+        relay.root,
+        translation_executor=translation,
+        baseline_provider=StaticBaselineInputProviderV1(_baseline_rows()),
+        selected_chapter_ids=[CHAPTER_ID],
+        evaluation_block_ids=["b1"],
+        translation_adapter_factory=translation.adapter,
+    )
+
+    with pytest.raises(WorkflowComponentPausedV1):
+        orchestrator.run_translation()
+    translated = orchestrator.run_translation()
+    full_s0_bytes = (translation.root / "artifacts" / "s0.json").read_bytes()
+    full_s1_bytes = (translation.root / "artifacts" / "s1.json").read_bytes()
+
+    handoff = orchestrator.prepare_scoring_handoff(
+        translated.translation_component_root
+    )
+    repeated = orchestrator.prepare_scoring_handoff(
+        translated.translation_component_root
+    )
+
+    assert handoff == repeated
+    assert [row["arm_id"] for row in handoff["translation_inputs"]] == [
+        "s0",
+        "s1",
+        "community",
+        "google_nmt",
+        "llm_lc",
+    ]
+    for row in handoff["translation_inputs"][:2]:
+        assert row["coverage"] == {
+            "block_universe_sha256": canonical_sha256(["b1"]),
+            "excluded_block_count": 0,
+            "expected_block_count": 1,
+            "failed_block_count": 0,
+            "missing_block_count": 0,
+            "preserved_block_count": 0,
+            "review_held_block_count": 0,
+            "translated_block_count": 1,
+        }
+        artifact_path = relay.root / row["translation_artifact"]["artifact_ref"]
+        projected = validate_translation_artifact(
+            json.loads(artifact_path.read_text(encoding="utf-8"))
+        )
+        assert [item["block_id"] for item in projected["translations"]] == [
+            "b1"
+        ]
+    assert handoff["optional_bindings"]["projection"] is not None
+    assert (translation.root / "artifacts" / "s0.json").read_bytes() == full_s0_bytes
+    assert (translation.root / "artifacts" / "s1.json").read_bytes() == full_s1_bytes
+    assert len(
+        validate_translation_artifact(
+            json.loads(full_s0_bytes.decode("utf-8"))
+        )["translations"]
+    ) == 2
+    assert validate_workflow_parent_package_v1(relay.root)["status"] == "running"
+
+
+def test_scoring_subset_fails_closed_without_exact_block_universe(
+    tmp_path: Path,
+) -> None:
+    relay = _relay(tmp_path)
+    translation = _TranslationExecutor(
+        tmp_path / "translation",
+        chapter_ids=[CHAPTER_ID, "d2l_linear_networks"],
+        block_ids=["b1", "b2"],
+        valid_artifacts=True,
+    )
+    orchestrator = WorkflowOrchestratorV1(
+        relay.root,
+        translation_executor=translation,
+        baseline_provider=StaticBaselineInputProviderV1(_baseline_rows()),
+        selected_chapter_ids=[CHAPTER_ID],
+        translation_adapter_factory=translation.adapter,
+    )
+
+    with pytest.raises(WorkflowComponentPausedV1):
+        orchestrator.run_translation()
+    translated = orchestrator.run_translation()
+    with pytest.raises(
+        WorkflowOrchestratorError,
+        match="requires exact ordered block IDs",
+    ):
+        orchestrator.prepare_scoring_handoff(
+            translated.translation_component_root
+        )
 
 
 def test_scoring_phase_stops_truthfully_before_publication(

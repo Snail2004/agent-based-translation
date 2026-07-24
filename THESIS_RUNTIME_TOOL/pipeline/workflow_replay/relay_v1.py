@@ -264,6 +264,48 @@ class WorkflowRelayV1:
             self._project()
         return handoff
 
+    def publish_derived_artifact(
+        self,
+        *,
+        artifact_ref: str,
+        artifact_kind: str,
+        schema_version: str,
+        payload: Mapping[str, Any],
+        producer_stage_id: str,
+        parent_artifact_refs: Sequence[str],
+    ) -> dict[str, str]:
+        """Persist one deterministic relay-derived artifact and index its lineage."""
+
+        data = canonical_json_bytes(payload)
+        binding = validate_typed_artifact_binding_v1(
+            {
+                "artifact_ref": artifact_ref,
+                "artifact_kind": artifact_kind,
+                "schema_version": schema_version,
+                "sha256": physical_sha256(data),
+                "sha256_kind": "physical",
+            },
+            path="$.binding",
+        )
+        with self._exclusive():
+            target = _resolve_under(self.root, binding["artifact_ref"])
+            _write_bytes_absent_or_equal(target, data)
+            self._write_relay_artifact(
+                {
+                    "binding": binding,
+                    "physical_sha256": binding["sha256"],
+                    "producer_component_id": "neutral_relay",
+                    "producer_component_run_id": self.workflow_run_id,
+                    "producer_component_attempt_id": None,
+                    "producer_component_attempt_index": None,
+                    "producer_stage_id": producer_stage_id,
+                    "parent_artifact_refs": list(parent_artifact_refs),
+                    "created_event_id": None,
+                }
+            )
+            self._project()
+        return binding
+
     def publish_evaluation_settings(
         self,
         settings: Mapping[str, Any],

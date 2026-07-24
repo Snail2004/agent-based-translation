@@ -312,6 +312,10 @@ def _prepare_evaluation_runtime(
         expected_source_binding_sha256=source_binding_sha256,
         selected_chapter_ids=selected_chapters,
     )
+    evaluation_block_ids = _evaluation_block_ids(
+        job_root,
+        selected_chapter_ids=selected_chapters,
+    )
     preparation = WorkflowOrchestratorV1(
         parent_root,
         translation_executor=ExistingTranslationComponentExecutorV1(
@@ -321,6 +325,7 @@ def _prepare_evaluation_runtime(
             template.template["external_translation_inputs"]
         ),
         selected_chapter_ids=selected_chapters,
+        evaluation_block_ids=evaluation_block_ids,
     )
     handoff = preparation.prepare_scoring_handoff(translation_root)
     handoff_path = parent_root / "handoffs" / "scoring_handoff.json"
@@ -369,6 +374,40 @@ def _prepare_evaluation_runtime(
             "Parent Evaluation settings differ from the prepared runtime.",
         )
     return prepared
+
+
+def _evaluation_block_ids(
+    job_root: Path,
+    *,
+    selected_chapter_ids: Sequence[str],
+) -> list[str]:
+    from pipeline.prepass.d2l_project_campaign_v2 import load_project
+
+    project = load_project(job_root)
+    selected = list(selected_chapter_ids)
+    selected_set = set(selected)
+    canonical_chapters = [
+        str(row["chapter_id"])
+        for row in project.chapter_rows
+        if row["chapter_id"] in selected_set
+    ]
+    if canonical_chapters != selected:
+        raise WorkflowOrchestratorError(
+            "translation_projection_chapters",
+            "Evaluation chapters differ from canonical source order.",
+        )
+    block_ids = [
+        str(row["block_id"])
+        for row in project.block_rows
+        if row["chapter_id"] in selected_set
+        and row["channel"] != "review_required"
+    ]
+    if not block_ids:
+        raise WorkflowOrchestratorError(
+            "translation_projection_universe",
+            "Evaluation scope contains no admitted blocks.",
+        )
+    return block_ids
 
 
 def _run_score(args: argparse.Namespace) -> int:

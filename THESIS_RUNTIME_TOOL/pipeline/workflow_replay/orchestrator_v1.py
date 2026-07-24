@@ -4,9 +4,15 @@ import copy
 import json
 import os
 import secrets
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Mapping, Protocol, Sequence
+
+from pipeline.eval.common_input_v1 import (
+    seal_translation_artifact,
+    validate_translation_artifact,
+)
 
 from .adapters_v1 import (
     D2LTranslationComponentAdapterV1,
@@ -329,6 +335,7 @@ class WorkflowOrchestratorV1:
         *,
         translation_executor: TranslationExecutorV1,
         selected_chapter_ids: Sequence[str],
+        evaluation_block_ids: Sequence[str] | None = None,
         baseline_provider: BaselineInputProviderV1 | None = None,
         evaluation_executor: EvaluationExecutorV1 | None = None,
         evaluation_settings_materializer: (
@@ -350,6 +357,11 @@ class WorkflowOrchestratorV1:
         )
         self.publication_executor = publication_executor
         self.selected_chapter_ids = _chapter_ids(selected_chapter_ids)
+        self.evaluation_block_ids = (
+            None
+            if evaluation_block_ids is None
+            else _block_ids(evaluation_block_ids)
+        )
         if product_arm_id not in {"s0", "s1"}:
             raise WorkflowOrchestratorError(
                 "publication_arm",
@@ -597,10 +609,20 @@ class WorkflowOrchestratorV1:
                 "translation_workflow_identity",
                 "D2L scoring fragment belongs to another parent workflow.",
             )
-        if fragment["selected_chapter_ids"] != self.selected_chapter_ids:
+        translation_chapters = list(fragment["selected_chapter_ids"])
+        if not _ordered_subset(
+            self.selected_chapter_ids,
+            allowed=translation_chapters,
+        ):
             raise WorkflowOrchestratorError(
                 "translation_chapter_binding",
-                "D2L selected chapters differ from the parent launch.",
+                "Evaluation chapters are not an ordered subset of D2L chapters.",
+            )
+        if translation_chapters != self.selected_chapter_ids:
+            projected = self._project_d2l_evaluation_scope(
+                translation_root=translation_root,
+                fragment=fragment,
+                projected=projected,
             )
         d2l_inputs = projected["translation_inputs"]
         admitted = projected["source_package_bindings"][3]["binding"]
@@ -638,6 +660,109 @@ class WorkflowOrchestratorV1:
             created_at=self.relay.created_at,
         )
         return handoff
+
+    def _project_d2l_evaluation_scope(
+        self,
+        *,
+        translation_root: Path,
+        fragment: Mapping[str, Any],
+        projected: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        block_ids = self.evaluation_block_ids
+        if block_ids is None:
+            raise WorkflowOrchestratorError(
+                "translation_projection_universe",
+                "A narrower Evaluation scope requires exact ordered block IDs.",
+            )
+        selection_sha256 = canonical_sha256(
+            {
+                "selected_chapter_ids": self.selected_chapter_ids,
+                "ordered_block_ids": block_ids,
+            }
+        )
+        projected_inputs: list[dict[str, Any]] = []
+        parent_bindings: list[dict[str, Any]] = []
+        child_bindings: list[dict[str, Any]] = []
+        for raw_input in projected["translation_inputs"]:
+            arm_id = str(raw_input["arm_id"])
+            parent_binding = dict(raw_input["translation_artifact"])
+            parent_bindings.append(parent_binding)
+            source_path = _component_artifact_path(
+                translation_root,
+                fragment,
+                arm_id=arm_id,
+            )
+            source_artifact = _read_json(
+                source_path,
+                owner=f"D2L {arm_id} TranslationArtifactV1",
+            )
+            child_artifact = _project_translation_artifact_v1(
+                source_artifact,
+                selected_block_ids=block_ids,
+                selection_sha256=selection_sha256,
+            )
+            child_ref = (
+                "handoffs/evaluation_projection/"
+                f"{selection_sha256}/{arm_id}.json"
+            )
+            child_binding = self.relay.publish_derived_artifact(
+                artifact_ref=child_ref,
+                artifact_kind="translation_artifact",
+                schema_version="TranslationArtifactV1",
+                payload=child_artifact,
+                producer_stage_id="relay.evaluation_projection",
+                parent_artifact_refs=[parent_binding["artifact_ref"]],
+            )
+            child_bindings.append(child_binding)
+            counts = Counter(
+                row["status"] for row in child_artifact["translations"]
+            )
+            child_input = copy.deepcopy(dict(raw_input))
+            child_input["translation_artifact"] = child_binding
+            child_input["coverage"] = {
+                "expected_block_count": len(block_ids),
+                "block_universe_sha256": canonical_sha256(block_ids),
+                "translated_block_count": counts["translated"],
+                "preserved_block_count": counts["preserved"],
+                "excluded_block_count": 0,
+                "review_held_block_count": 0,
+                "missing_block_count": counts["missing"],
+                "failed_block_count": counts["failed"],
+            }
+            projected_inputs.append(child_input)
+
+        receipt = {
+            "schema_id": "D2LEvaluationScopeProjectionReceiptV1",
+            "schema_version": "1.0.0",
+            "workflow_run_id": self.relay.workflow_run_id,
+            "selected_chapter_ids": list(self.selected_chapter_ids),
+            "ordered_block_ids_sha256": canonical_sha256(block_ids),
+            "block_count": len(block_ids),
+            "source_translation_artifacts": parent_bindings,
+            "projected_translation_artifacts": child_bindings,
+            "created_at": self.relay.created_at,
+        }
+        receipt["integrity"] = {
+            "projection_sha256": canonical_sha256(receipt)
+        }
+        receipt_binding = self.relay.publish_derived_artifact(
+            artifact_ref=(
+                "handoffs/evaluation_projection/"
+                f"{selection_sha256}/projection_receipt.json"
+            ),
+            artifact_kind="d2l_evaluation_scope_projection",
+            schema_version="D2LEvaluationScopeProjectionReceiptV1",
+            payload=receipt,
+            producer_stage_id="relay.evaluation_projection",
+            parent_artifact_refs=[
+                *[row["artifact_ref"] for row in parent_bindings],
+                *[row["artifact_ref"] for row in child_bindings],
+            ],
+        )
+        result = copy.deepcopy(dict(projected))
+        result["translation_inputs"] = projected_inputs
+        result["optional_bindings"]["projection"] = receipt_binding
+        return result
 
     def _run_publication(
         self,
@@ -1046,6 +1171,114 @@ def _chapter_ids(values: Sequence[str] | None) -> list[str]:
             "Selected chapter IDs must be non-empty and duplicate-free.",
         )
     return result
+
+
+def _block_ids(values: Sequence[str]) -> list[str]:
+    if isinstance(values, (str, bytes)):
+        raise WorkflowOrchestratorError(
+            "translation_projection_universe",
+            "Evaluation block IDs must be an array.",
+        )
+    result = []
+    for value in values:
+        if not isinstance(value, str) or not value or len(value) > 512:
+            raise WorkflowOrchestratorError(
+                "translation_projection_universe",
+                "Evaluation block ID is invalid.",
+            )
+        result.append(value)
+    if not result or len(result) != len(set(result)):
+        raise WorkflowOrchestratorError(
+            "translation_projection_universe",
+            "Evaluation block IDs must be non-empty and duplicate-free.",
+        )
+    return result
+
+
+def _ordered_subset(values: Sequence[str], *, allowed: Sequence[str]) -> bool:
+    selected = set(values)
+    return (
+        len(values) == len(selected)
+        and list(values) == [item for item in allowed if item in selected]
+    )
+
+
+def _project_translation_artifact_v1(
+    value: Mapping[str, Any],
+    *,
+    selected_block_ids: Sequence[str],
+    selection_sha256: str,
+) -> dict[str, Any]:
+    source = validate_translation_artifact(value)
+    rows_by_id = {
+        str(row["block_id"]): row for row in source["translations"]
+    }
+    missing = [
+        block_id for block_id in selected_block_ids if block_id not in rows_by_id
+    ]
+    if missing:
+        raise WorkflowOrchestratorError(
+            "translation_projection_coverage",
+            "D2L translation artifact lacks Evaluation block IDs.",
+        )
+    rows = [
+        copy.deepcopy(rows_by_id[block_id])
+        for block_id in selected_block_ids
+    ]
+    unsupported = [
+        row["block_id"]
+        for row in rows
+        if row["status"] not in {
+            "translated",
+            "preserved",
+            "missing",
+            "failed",
+        }
+    ]
+    if unsupported:
+        raise WorkflowOrchestratorError(
+            "translation_projection_admission",
+            "Evaluation projection contains excluded or review-held blocks.",
+        )
+    counts = Counter(row["status"] for row in rows)
+    run_identity = copy.deepcopy(source["run_identity"])
+    run_identity["attempt_run_id"] = (
+        f"{run_identity['attempt_run_id']}_eval_{selection_sha256[:16]}"
+    )
+    payload = {
+        "schema_id": source["schema_id"],
+        "schema_version": source["schema_version"],
+        "artifact_id": (
+            f"{source['artifact_id']}_eval_{selection_sha256[:16]}"
+        ),
+        "created_at": source["created_at"],
+        "producer": {
+            "workstream": "d2l",
+            "component": "d2l_evaluation_scope_projector",
+            "component_version": "1.0.0",
+            "code_commit": source["producer"]["code_commit"],
+        },
+        "source_binding": copy.deepcopy(source["source_binding"]),
+        "run_identity": run_identity,
+        "translations": rows,
+        "coverage": {
+            "source_block_count": len(rows),
+            "eligible_count": (
+                counts["translated"]
+                + counts["missing"]
+                + counts["failed"]
+            ),
+            "translated_count": counts["translated"],
+            "preserved_count": counts["preserved"],
+            "excluded_count": 0,
+            "review_held_count": 0,
+            "missing_count": counts["missing"],
+            "failed_count": counts["failed"],
+        },
+        "integrity": {"artifact_sha256": "0" * 64},
+    }
+    projected = seal_translation_artifact(payload)
+    return validate_translation_artifact(projected)
 
 
 def _validate_evaluation_selection_v1(value: Any) -> dict[str, Any]:
