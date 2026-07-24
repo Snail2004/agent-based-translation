@@ -397,6 +397,7 @@ const CONSOLE_IMPORTANT_EVENTS = new Set([
   "usage_snapshot", "run_blocked", "component_blocked",
   "checkpoint", "run_committed", "artifact_created", "health_check",
   "window_preview_available", "block_done", "memory_delta", "retry",
+  "transport_attempt_failed", "retry_summary",
   "warning", "error",
 ]);
 
@@ -784,6 +785,71 @@ function consoleHeartbeatRows(rows, mode = "grouped") {
   return result;
 }
 
+function consoleRetryChainKind(row) {
+  if (!row) return "";
+  if (row.event === "transport_attempt_failed") return "transport";
+  return String(row.payload?.retry_kind || "").trim();
+}
+
+function consoleRetryChainKey(row) {
+  const payload = row?.payload || {};
+  const componentId = String(row?.componentId || row?.component?.component_id || "").trim();
+  const componentRunId = String(row?.componentRunId || row?.component?.component_run_id || "").trim();
+  const componentAttemptId = String(
+    row?.componentAttemptId ?? row?.component?.component_attempt_id ?? "",
+  ).trim();
+  const componentAttemptIndex = String(
+    row?.attemptIndex ?? row?.component?.component_attempt_index ?? "",
+  ).trim();
+  const stageId = String(row?.stage || "").trim();
+  const workId = String(payload.work_id || row?.workId || "").trim();
+  const logicalRequestId = String(payload.logical_request_id || "").trim();
+  const retryKind = consoleRetryChainKind(row);
+  if (
+    !componentId
+    || !componentRunId
+    || !componentAttemptId
+    || !componentAttemptIndex
+    || !stageId
+    || !workId
+    || !logicalRequestId
+    || retryKind !== "transport"
+  ) return "";
+  return [
+    componentId,
+    componentRunId,
+    componentAttemptId,
+    componentAttemptIndex,
+    stageId,
+    workId,
+    logicalRequestId,
+    retryKind,
+  ].join("|");
+}
+
+/* Presentation-only retry compaction. A recovered producer-sealed retry_summary
+   is the only authority allowed to hide its matching transport attempt rows in
+   the Important view. All, exhausted, semantic and incomplete chains stay raw. */
+function consoleRetryPresentationRows(rows, eventPreset) {
+  if (eventPreset !== "important") return rows;
+  const recoveredKeys = new Set(
+    rows
+      .filter(row => (
+        row.event === "retry_summary"
+        && row.payload?.retry_kind === "transport"
+        && row.payload?.outcome === "recovered"
+      ))
+      .map(consoleRetryChainKey)
+      .filter(Boolean),
+  );
+  if (!recoveredKeys.size) return rows;
+  return rows.filter(row => {
+    const isTransportEvidence = row.event === "transport_attempt_failed"
+      || (row.event === "retry" && row.payload?.retry_kind === "transport");
+    return !isTransportEvidence || !recoveredKeys.has(consoleRetryChainKey(row));
+  });
+}
+
 function consoleEventSequenceLabel(row) {
   const firstLine = row.heartbeatFirstLineNo;
   const lastLine = row.heartbeatLastLineNo;
@@ -981,7 +1047,24 @@ function consoleMessageFor(row, ctx) {
     case "memory_delta": return consoleMemoryDeltaMessage(consoleMemoryDelta(row, p));
     case "warning": return consoleShort(p.message || p.reason, 60);
     case "error": return consoleShort(p.error || p.message, 60);
-    case "retry": return `retry ${p.attempt || ""} · ${p.reason || ""}`;
+    case "transport_attempt_failed":
+      return `Lần gọi mạng ${p.physical_attempt_index || "?"} thất bại · ${p.reason_code || p.retry_class || "không rõ"}`;
+    case "retry":
+      if (p.retry_kind === "transport") {
+        return `Mạng không ổn định · thử lại ${p.index || "?"}/${p.max || "?"} · ${p.reason_code || "không rõ"}`;
+      }
+      if (p.retry_kind === "semantic") {
+        return `Retry ngữ nghĩa ${p.index || "?"}/${p.max || "?"} · ${p.reason_code || "không rõ"}`;
+      }
+      return `retry ${p.index || p.attempt || ""} · ${p.reason_code || p.reason || ""}`;
+    case "retry_summary":
+      if (p.retry_kind === "transport" && p.outcome === "recovered") {
+        return `Mạng không ổn định · retry ${p.retry_count || 0} lần · đã phục hồi`;
+      }
+      if (p.retry_kind === "transport" && p.outcome === "exhausted") {
+        return `Retry mạng đã cạn sau ${p.retry_count || 0} lần · cần Resume`;
+      }
+      return `retry ${p.outcome || "summary"} · ${p.retry_count || 0} lần`;
     default: return consoleShort(p.message || p.reason || row.event, 60);
   }
 }
@@ -2557,9 +2640,11 @@ function ConsoleEventExpanded({ row }) {
     component_attempt_id: row.componentAttemptId ?? null,
     component_seq: row.componentSeq ?? null,
     stage_id: row.stage || null,
+    event: row.event || null,
     current_work_id: row.workId || null,
     progress: row.progress,
     severity: row.severity,
+    payload: row.payload || {},
   };
   return (
     <div className="ev-expanded">
@@ -3091,7 +3176,11 @@ function AgentConsoleView(props) {
   const displayRows = React.useMemo(() => consoleHeartbeatRows(st.normalized, heartbeatMode), [st.normalized, heartbeatMode]);
   const agents = uniqueConsole(st.normalized.map(r => r.agent).filter(Boolean));
   const severities = uniqueConsole(st.normalized.map(r => r.severity).filter(Boolean));
-  const presetRows = displayRows.filter(r => eventPreset === "all" || consoleIsImportantEvent(r));
+  const retryPresentationRows = React.useMemo(
+    () => consoleRetryPresentationRows(displayRows, eventPreset),
+    [displayRows, eventPreset],
+  );
+  const presetRows = retryPresentationRows.filter(r => eventPreset === "all" || consoleIsImportantEvent(r));
   const filtered = presetRows.filter(r =>
     (!stageFilter || r.stage === stageFilter)
     && (!agentFilter || r.agent === agentFilter)

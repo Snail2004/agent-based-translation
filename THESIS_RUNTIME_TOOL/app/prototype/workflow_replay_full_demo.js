@@ -251,10 +251,72 @@
         progress: { completed: 0, total: definition.total, unit: definition.unit },
       });
       if (definition.local === "translator") {
+        await push("translation", stageId, definition.producer, "request_sent", {
+          logical_request_id: "usage_d2l_s1_request",
+          work_id: "s1_packet_01",
+          physical_attempt_index: 1,
+        });
+        await push("translation", stageId, definition.producer, "transport_attempt_failed", {
+          attempt_usage_id: "usage_d2l_s1_transport_failed_01",
+          logical_request_id: "usage_d2l_s1_request",
+          semantic_attempt_index: 2,
+          transport_retry_ordinal: 0,
+          physical_attempt_index: 1,
+          work_kind: "translation_packet",
+          work_id: "s1_packet_01",
+          provider_id: "provider_primary_v1",
+          model_id: "provider_translation_model_v1",
+          source_id: "shared_source_primary_v1",
+          source_revision: "source-rev-demo-1",
+          masked_quota_bucket: "quota_bucket_primary",
+          latency_ms: 30000,
+          prompt_tokens: null,
+          completion_tokens: null,
+          cached_input_tokens: null,
+          reasoning_tokens: null,
+          total_tokens: null,
+          cost_usd: null,
+          cost_status: "unknown",
+          reason_code: "timeout",
+          retry_class: "transport",
+          retry_disposition: "retryable",
+        }, "warning");
         await push("translation", stageId, definition.producer, "retry", {
-          semantic_retry_index: 1,
+          retry_kind: "transport",
+          index: 1,
+          max: 2,
+          reason_code: "timeout",
+          logical_request_id: "usage_d2l_s1_request",
+          work_kind: "translation_packet",
+          work_id: "s1_packet_01",
+        }, "warning");
+        await push("translation", stageId, definition.producer, "request_sent", {
+          logical_request_id: "usage_d2l_s1_request",
+          work_id: "s1_packet_01",
+          physical_attempt_index: 2,
+        });
+        await push("translation", stageId, definition.producer, "response_received", {
+          logical_request_id: "usage_d2l_s1_request",
+          work_id: "s1_packet_01",
+          attempt_usage_id: "usage_d2l_s1",
+          physical_attempt_index: 2,
+        });
+        await push("translation", stageId, definition.producer, "retry_summary", {
+          logical_request_id: "usage_d2l_s1_request",
+          retry_kind: "transport",
+          retry_count: 1,
+          outcome: "recovered",
+          work_id: "s1_packet_01",
+          reason_codes: ["timeout"],
+        });
+        await push("translation", stageId, definition.producer, "retry", {
+          retry_kind: "semantic",
+          index: 1,
+          max: 1,
           reason_code: "terminology_guard_repair",
-          progress: { completed: 1412, total: definition.total, unit: definition.unit },
+          logical_request_id: "usage_d2l_s1_request",
+          work_kind: "translation_packet",
+          work_id: "s1_packet_01",
         }, "warning");
       }
       const optionalDetails = [];
@@ -459,10 +521,10 @@
       stage_id: spec.stage,
       agent: spec.agent,
       work_id: spec.workId,
-      logical_request_id: `${spec.id}_request`,
+      logical_request_id: spec.logicalRequestId || `${spec.id}_request`,
       semantic_attempt_index: spec.semanticAttempt || 1,
-      transport_retry_ordinal: 0,
-      physical_attempt_index: 1,
+      transport_retry_ordinal: spec.transportRetryOrdinal ?? 0,
+      physical_attempt_index: spec.physicalAttemptIndex ?? 1,
       provider_id: "provider_primary_v1",
       source_id: "shared_source_primary_v1",
       source_revision: "source-rev-demo-1",
@@ -486,12 +548,35 @@
     };
   }
 
+  function failedTransportUsage(spec) {
+    return {
+      ...usageCall({
+        ...spec,
+        prompt: null,
+        completion: null,
+        cached: null,
+        total: null,
+        latency: spec.latency,
+        cost: null,
+      }),
+      reasoning_tokens: null,
+      cached_input_tokens: null,
+      cache_status: "unknown",
+      cache_mechanism: "unknown",
+      finish_reason: null,
+      outcome: "failed",
+      cost_status: "unknown",
+      cost_usd: null,
+    };
+  }
+
   function buildUsage(manifest, eventCount) {
     const calls = [
       usageCall({ id: "usage_d2l_b1", component: "translation", componentSeq: 4, stage: "translation.b1_candidate_discovery", agent: "b1_candidate_discovery", workId: "b1_chapters", prompt: 1800, completion: 420, total: 2220, latency: 1840, cost: 0.012 }),
       usageCall({ id: "usage_d2l_b2", component: "translation", componentSeq: 8, stage: "translation.b2_admission_translation", agent: "b2_admission_translation", workId: "admission_packets", prompt: 9200, completion: 1800, total: 11000, latency: 4260, cost: 0.058 }),
       usageCall({ id: "usage_d2l_s0", component: "translation", componentSeq: 20, stage: "translation.translator", agent: "translator", workId: "s0_packet_01", prompt: 18400, completion: 5900, total: 24300, latency: 11840, cost: 0.124 }),
-      usageCall({ id: "usage_d2l_s1", component: "translation", componentSeq: 21, stage: "translation.translator", agent: "translator", workId: "s1_packet_01", prompt: 18100, completion: 6100, cached: 4800, total: 24200, cacheStatus: "hit", semanticAttempt: 2, latency: 10960, cost: 0.126 }),
+      failedTransportUsage({ id: "usage_d2l_s1_transport_failed_01", component: "translation", componentSeq: 23, stage: "translation.translator", agent: "translator", workId: "s1_packet_01", logicalRequestId: "usage_d2l_s1_request", semanticAttempt: 2, transportRetryOrdinal: 0, physicalAttemptIndex: 1, latency: 30000 }),
+      usageCall({ id: "usage_d2l_s1", component: "translation", componentSeq: 26, stage: "translation.translator", agent: "translator", workId: "s1_packet_01", logicalRequestId: "usage_d2l_s1_request", prompt: 18100, completion: 6100, cached: 4800, total: 24200, cacheStatus: "hit", semanticAttempt: 2, transportRetryOrdinal: 1, physicalAttemptIndex: 2, latency: 10960, cost: 0.126 }),
       usageCall({ id: "usage_eval_sfbt_reverse", component: "evaluation", componentSeq: 7, stage: "evaluation.chapter_d2l_linear_networks", agent: "sf_bt_runner", workId: "sf_bt_reverse", prompt: 6200, completion: 1800, total: 8000, latency: 5340, cost: 0.045 }),
       usageCall({ id: "usage_eval_sfbt_judge", component: "evaluation", componentSeq: 10, stage: "evaluation.chapter_d2l_multilayer_perceptrons", agent: "sf_bt_runner", workId: "sf_bt_semantic", prompt: 4200, completion: 700, reasoning: 300, total: 5200, latency: 4710, cost: 0.032 }),
       usageCall({ id: "usage_eval_pj_canonical", component: "evaluation", componentSeq: 13, stage: "evaluation.chapter_d2l_deep_learning_computation", agent: "pj_runner", workId: "pj_canonical", prompt: 3100, completion: 450, total: 3550, latency: 2930, cost: 0.022 }),
@@ -530,8 +615,8 @@
       },
     ];
     const totals = {
-      workflow: { calls: 8, cache: 1, prompt: 64200, completion: 17640, reasoning: 300, cached: 4800, tokens: 82140, hits: 2, misses: 7, cost: 0.442 },
-      translation: { calls: 4, cache: 1, prompt: 47500, completion: 14220, reasoning: 0, cached: 4800, tokens: 61720, hits: 2, misses: 3, cost: 0.32 },
+      workflow: { calls: 9, cache: 1, prompt: 64200, completion: 17640, reasoning: 300, cached: 4800, tokens: 82140, hits: 2, misses: 7, unknown: 1, costStatus: "unknown", cost: null },
+      translation: { calls: 5, cache: 1, prompt: 47500, completion: 14220, reasoning: 0, cached: 4800, tokens: 61720, hits: 2, misses: 3, unknown: 1, costStatus: "unknown", cost: null },
       evaluation: { calls: 4, cache: 0, prompt: 16700, completion: 3420, reasoning: 300, cached: 0, tokens: 20420, hits: 0, misses: 4, cost: 0.122 },
     };
     function sealedTotal(id, row, extra = {}) {
@@ -547,6 +632,8 @@
         total_tokens: row.tokens,
         cache_hit_count: row.hits,
         cache_miss_count: row.misses,
+        unknown_attempt_count: row.unknown || 0,
+        cost_status: row.costStatus || "recorded",
         cost_usd: row.cost,
         snapshot_sha256: extra.hashChar.repeat(64),
         ...id,
@@ -562,7 +649,7 @@
       stage_totals: [
         sealedTotal({ component_id: "translation", component_run_id: TRANSLATION_RUN_ID, stage_id: "translation.b1_candidate_discovery" }, { calls: 1, cache: 0, prompt: 1800, completion: 420, reasoning: 0, cached: 0, tokens: 2220, hits: 0, misses: 1, cost: 0.012 }, { acceptedSeq: 4, hashChar: "1" }),
         sealedTotal({ component_id: "translation", component_run_id: TRANSLATION_RUN_ID, stage_id: "translation.b2_admission_translation" }, { calls: 1, cache: 0, prompt: 9200, completion: 1800, reasoning: 0, cached: 0, tokens: 11000, hits: 0, misses: 1, cost: 0.058 }, { acceptedSeq: 8, hashChar: "2" }),
-        sealedTotal({ component_id: "translation", component_run_id: TRANSLATION_RUN_ID, stage_id: "translation.translator" }, { calls: 2, cache: 1, prompt: 36500, completion: 12000, reasoning: 0, cached: 4800, tokens: 48500, hits: 2, misses: 1, cost: 0.25 }, { acceptedSeq: 22, hashChar: "3" }),
+        sealedTotal({ component_id: "translation", component_run_id: TRANSLATION_RUN_ID, stage_id: "translation.translator" }, { calls: 3, cache: 1, prompt: 36500, completion: 12000, reasoning: 0, cached: 4800, tokens: 48500, hits: 2, misses: 1, unknown: 1, costStatus: "unknown", cost: null }, { acceptedSeq: 28, hashChar: "3" }),
         sealedTotal({ component_id: "evaluation", component_run_id: EVALUATION_RUN_ID, stage_id: "evaluation.chapter_d2l_linear_networks" }, { calls: 2, cache: 0, prompt: 10400, completion: 2500, reasoning: 300, cached: 0, tokens: 13200, hits: 0, misses: 2, cost: 0.077 }, { acceptedSeq: 10, hashChar: "4" }),
         sealedTotal({ component_id: "evaluation", component_run_id: EVALUATION_RUN_ID, stage_id: "evaluation.chapter_d2l_deep_learning_computation" }, { calls: 2, cache: 0, prompt: 6300, completion: 920, reasoning: 0, cached: 0, tokens: 7220, hits: 0, misses: 2, cost: 0.045 }, { acceptedSeq: 16, hashChar: "5" }),
       ],
