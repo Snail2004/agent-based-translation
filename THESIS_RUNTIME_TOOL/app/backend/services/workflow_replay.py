@@ -2013,7 +2013,7 @@ def _usage_read_model(
         event
         for event in events
         if event["component"]["component_id"] == "translation"
-        and event["event"] == "usage_snapshot"
+        and event["event"] in {"transport_attempt_failed", "usage_snapshot"}
     ]
     if d2l_events:
         (
@@ -2385,35 +2385,57 @@ def _project_d2l_usage(
         validate_component_usage_snapshot_sequence,
     )
 
-    snapshots = [event["payload"] for event in events]
-    try:
-        latest = validate_component_usage_snapshot_sequence(snapshots)
-    except D2LConsoleContractError as exc:
-        raise WorkflowReplayError(
-            "workflow_usage_invalid",
-            f"D2L usage snapshot chain failed validation: {exc}",
-            409,
-        ) from exc
-    if latest is None:
-        raise WorkflowReplayError(
-            "workflow_usage_invalid",
-            "D2L usage events did not produce a cumulative snapshot.",
-            409,
-        )
-    if latest["workflow_run_id"] != workflow_run_id:
-        raise WorkflowReplayError(
-            "workflow_usage_identity_drift",
-            "D2L usage snapshots belong to another parent workflow.",
-            409,
-        )
+    snapshot_events = [
+        event for event in events if event["event"] == "usage_snapshot"
+    ]
+    snapshots = [event["payload"] for event in snapshot_events]
+    latest = None
+    if snapshots:
+        try:
+            latest = validate_component_usage_snapshot_sequence(snapshots)
+        except D2LConsoleContractError as exc:
+            raise WorkflowReplayError(
+                "workflow_usage_invalid",
+                f"D2L usage snapshot chain failed validation: {exc}",
+                409,
+            ) from exc
+        if latest is None:
+            raise WorkflowReplayError(
+                "workflow_usage_invalid",
+                "D2L usage events did not produce a cumulative snapshot.",
+                409,
+            )
+        if latest["workflow_run_id"] != workflow_run_id:
+            raise WorkflowReplayError(
+                "workflow_usage_identity_drift",
+                "D2L usage snapshots belong to another parent workflow.",
+                409,
+            )
 
-    calls = []
+    calls: list[dict[str, Any]] = []
     latest_stage: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
-    for event, snapshot in zip(events, snapshots, strict=True):
+    failure_calls_by_stage: dict[str, list[dict[str, Any]]] = {}
+    stage_order: list[str] = []
+    for event in events:
+        if event["event"] == "transport_attempt_failed":
+            call = _project_d2l_transport_failure(
+                event,
+                workflow_run_id=workflow_run_id,
+            )
+            stage_id = call["stage_id"]
+            if stage_id not in stage_order:
+                stage_order.append(stage_id)
+            failure_calls_by_stage.setdefault(stage_id, []).append(call)
+            calls.append(call)
+            continue
+
+        snapshot = event["payload"]
         accepted = snapshot["accepted_usage"]
         if accepted is None:
             continue
         stage_id = f"translation.{snapshot['stage_id']}"
+        if stage_id not in stage_order:
+            stage_order.append(stage_id)
         latest_stage[stage_id] = (snapshot, event)
         usage = accepted["usage"]
         calls.append(
@@ -2450,32 +2472,306 @@ def _project_d2l_usage(
             }
         )
 
-    projected_stage_totals = [
-        _project_d2l_total(
-            snapshot["stage_cumulative"],
-            component_run_id=snapshot["component_run_id"],
-            component_attempt_id=snapshot["component_attempt_id"],
-            snapshot_seq=snapshot["snapshot_seq"],
-            accepted_through_component_seq=event["component"][
-                "component_seq"
-            ],
-            stage_id=stage_id,
-            sha256=snapshot["snapshot_sha256"],
+    call_ids = [call["call_id"] for call in calls]
+    if any(not isinstance(call_id, str) or not call_id for call_id in call_ids):
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "D2L usage evidence has no stable call identity.",
+            409,
         )
-        for stage_id, (snapshot, event) in latest_stage.items()
+    if len(call_ids) != len(set(call_ids)):
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            "D2L usage evidence repeats a physical/cache identity.",
+            409,
+        )
+
+    projected_stage_totals = []
+    for stage_id in stage_order:
+        snapshot_item = latest_stage.get(stage_id)
+        failures = failure_calls_by_stage.get(stage_id, [])
+        if snapshot_item is not None:
+            snapshot, snapshot_event = snapshot_item
+            totals = snapshot["stage_cumulative"]
+            component_run_id = snapshot["component_run_id"]
+            component_attempt_id = snapshot["component_attempt_id"]
+            snapshot_seq: int | None = snapshot["snapshot_seq"]
+            accepted_through_component_seq = snapshot_event["component"][
+                "component_seq"
+            ]
+            sha256: str | None = snapshot["snapshot_sha256"]
+        else:
+            totals = _empty_d2l_usage_totals()
+            latest_failure = max(
+                failures,
+                key=lambda row: row["component_seq"],
+            )
+            component_run_id = latest_failure["component_run_id"]
+            component_attempt_id = latest_failure["component_attempt_id"]
+            snapshot_seq = None
+            accepted_through_component_seq = latest_failure["component_seq"]
+            sha256 = None
+        if failures:
+            latest_failure = max(
+                failures,
+                key=lambda row: row["component_seq"],
+            )
+            if (
+                latest_failure["component_seq"]
+                > accepted_through_component_seq
+            ):
+                component_run_id = latest_failure["component_run_id"]
+                component_attempt_id = latest_failure[
+                    "component_attempt_id"
+                ]
+            accepted_through_component_seq = max(
+                accepted_through_component_seq,
+                *(row["component_seq"] for row in failures),
+            )
+        projected_stage_totals.append(
+            _project_d2l_total(
+                totals,
+                component_run_id=component_run_id,
+                component_attempt_id=component_attempt_id,
+                snapshot_seq=snapshot_seq,
+                accepted_through_component_seq=(
+                    accepted_through_component_seq
+                ),
+                stage_id=stage_id,
+                sha256=sha256,
+                failures=failures,
+            )
+        )
+
+    last_event = events[-1]
+    component_totals = (
+        latest["component_cumulative"]
+        if latest is not None
+        else _empty_d2l_usage_totals()
+    )
+    component_snapshot_seq = (
+        latest["snapshot_seq"] if latest is not None else None
+    )
+    component_snapshot_sha256 = (
+        latest["snapshot_sha256"] if latest is not None else None
+    )
+    failure_calls = [
+        call for call in calls if call.get("outcome") == "transport_failed"
     ]
     component_total = _project_d2l_total(
-        latest["component_cumulative"],
-        component_run_id=latest["component_run_id"],
-        component_attempt_id=latest["component_attempt_id"],
-        snapshot_seq=latest["snapshot_seq"],
-        accepted_through_component_seq=events[-1]["component"][
-            "component_seq"
+        component_totals,
+        component_run_id=last_event["component"]["component_run_id"],
+        component_attempt_id=last_event["component"][
+            "component_attempt_id"
         ],
+        snapshot_seq=component_snapshot_seq,
+        accepted_through_component_seq=max(
+            event["component"]["component_seq"] for event in events
+        ),
         stage_id=None,
-        sha256=latest["snapshot_sha256"],
+        sha256=component_snapshot_sha256,
+        failures=failure_calls,
     )
     return calls, projected_stage_totals, component_total
+
+
+_D2L_TRANSPORT_FAILURE_KEYS = {
+    "attempt_usage_id",
+    "logical_request_id",
+    "semantic_attempt_index",
+    "transport_retry_ordinal",
+    "physical_attempt_index",
+    "work_kind",
+    "work_id",
+    "provider_id",
+    "model_id",
+    "source_id",
+    "source_revision",
+    "masked_quota_bucket",
+    "latency_ms",
+    "prompt_tokens",
+    "completion_tokens",
+    "cached_input_tokens",
+    "reasoning_tokens",
+    "total_tokens",
+    "cost_usd",
+    "cost_status",
+    "reason_code",
+    "retry_class",
+    "retry_disposition",
+}
+_D2L_TRANSPORT_FAILURE_TOKEN_KEYS = (
+    "prompt_tokens",
+    "completion_tokens",
+    "cached_input_tokens",
+    "reasoning_tokens",
+    "total_tokens",
+)
+
+
+def _project_d2l_transport_failure(
+    event: Mapping[str, Any],
+    *,
+    workflow_run_id: str,
+) -> dict[str, Any]:
+    def reject(message: str) -> None:
+        raise WorkflowReplayError(
+            "workflow_usage_invalid",
+            f"D2L transport failure is invalid: {message}",
+            409,
+        )
+
+    if event.get("workflow_run_id") != workflow_run_id:
+        raise WorkflowReplayError(
+            "workflow_usage_identity_drift",
+            "D2L transport failure belongs to another parent workflow.",
+            409,
+        )
+    component = event.get("component")
+    if not isinstance(component, Mapping):
+        reject("component identity is missing")
+    if component.get("component_id") != "translation":
+        reject("component identity is not translation")
+    for key in ("component_run_id",):
+        if not isinstance(component.get(key), str) or not component[key]:
+            reject(f"{key} is invalid")
+    for key in (
+        "component_attempt_id",
+        "component_attempt_index",
+        "component_seq",
+    ):
+        value = component.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            reject(f"{key} is invalid")
+    if component["component_attempt_id"] != component[
+        "component_attempt_index"
+    ]:
+        reject("component attempt identity is inconsistent")
+
+    stage_id = event.get("stage_id")
+    if not isinstance(stage_id, str) or not stage_id.startswith(
+        "translation."
+    ):
+        reject("stage identity is invalid")
+    payload = event.get("payload")
+    if not isinstance(payload, Mapping):
+        reject("payload is not an object")
+    if set(payload) != _D2L_TRANSPORT_FAILURE_KEYS:
+        reject("payload keys do not match the sealed producer contract")
+    for key in (
+        "attempt_usage_id",
+        "logical_request_id",
+        "work_kind",
+        "work_id",
+        "provider_id",
+        "model_id",
+        "source_id",
+        "source_revision",
+        "masked_quota_bucket",
+        "reason_code",
+        "retry_class",
+        "retry_disposition",
+    ):
+        if not isinstance(payload[key], str) or not payload[key]:
+            reject(f"{key} is invalid")
+    for key, minimum in (
+        ("semantic_attempt_index", 1),
+        ("transport_retry_ordinal", 0),
+        ("physical_attempt_index", 1),
+        ("latency_ms", 0),
+    ):
+        value = payload[key]
+        if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
+            reject(f"{key} is invalid")
+
+    token_values = [payload[key] for key in _D2L_TRANSPORT_FAILURE_TOKEN_KEYS]
+    if any(value is None for value in token_values):
+        if any(value is not None for value in token_values):
+            reject("token facts must be all null or all known")
+    else:
+        for key in _D2L_TRANSPORT_FAILURE_TOKEN_KEYS:
+            value = payload[key]
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                reject(f"{key} is invalid")
+        if payload["total_tokens"] != (
+            payload["prompt_tokens"] + payload["completion_tokens"]
+        ):
+            reject("total_tokens is inconsistent")
+    if payload["cost_status"] != "unknown" or payload["cost_usd"] is not None:
+        reject("unavailable failure cost must remain unknown/null")
+    if payload["retry_disposition"] not in {
+        "transport_retry_allowed",
+        "do_not_retry",
+    }:
+        reject("retry disposition is invalid")
+
+    usage = {
+        "logical_request_id": payload["logical_request_id"],
+        "physical_attempt_index": payload["physical_attempt_index"],
+        "provider_id": payload["provider_id"],
+        "model_id": payload["model_id"],
+        "source_id": payload["source_id"],
+        "masked_quota_bucket": payload["masked_quota_bucket"],
+        "prompt_tokens": payload["prompt_tokens"],
+        "completion_tokens": payload["completion_tokens"],
+        "cached_input_tokens": payload["cached_input_tokens"],
+        "reasoning_tokens": payload["reasoning_tokens"],
+        "total_tokens": payload["total_tokens"],
+        "latency_ms": payload["latency_ms"],
+        "finish_reason": None,
+        "cost_usd": None,
+        "currency": None,
+        "cost_status": "unknown",
+        "cache_status": "unknown",
+        "cache_mechanism": "unknown",
+    }
+    return {
+        "call_id": payload["attempt_usage_id"],
+        "attempt_usage_id": payload["attempt_usage_id"],
+        "cache_observation_id": None,
+        "component_id": "translation",
+        "component_run_id": component["component_run_id"],
+        "component_attempt_id": component["component_attempt_id"],
+        "component_attempt_index": component["component_attempt_index"],
+        "component_seq": component["component_seq"],
+        "stage_id": stage_id,
+        "agent": event.get("agent"),
+        "work_id": payload["work_id"],
+        "logical_request_id": payload["logical_request_id"],
+        "semantic_attempt_index": payload["semantic_attempt_index"],
+        "transport_retry_ordinal": payload["transport_retry_ordinal"],
+        "physical_attempt_index": payload["physical_attempt_index"],
+        "provider_id": payload["provider_id"],
+        "source_id": payload["source_id"],
+        "source_revision": payload["source_revision"],
+        "requested_model_id": payload["model_id"],
+        "observed_model_id": None,
+        "provider_call_avoided": False,
+        "finish_reason": None,
+        "outcome": "transport_failed",
+        "reason_code": payload["reason_code"],
+        "retry_class": payload["retry_class"],
+        "retry_disposition": payload["retry_disposition"],
+        "usage": usage,
+    }
+
+
+def _empty_d2l_usage_totals() -> dict[str, Any]:
+    return {
+        "logical_request_count": 0,
+        "accepted_result_count": 0,
+        "physical_attempt_count": 0,
+        "cache_observation_count": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": None,
+        "currency": None,
+        "cost_status": "unknown",
+        "cache_counters": {},
+    }
 
 
 def _project_d2l_total(
@@ -2483,12 +2779,42 @@ def _project_d2l_total(
     *,
     component_run_id: str,
     component_attempt_id: int,
-    snapshot_seq: int,
+    snapshot_seq: int | None,
     accepted_through_component_seq: int,
     stage_id: str | None,
-    sha256: str,
+    sha256: str | None,
+    failures: list[Mapping[str, Any]],
 ) -> dict[str, Any]:
     cache_counters = totals["cache_counters"]
+    unknown_attempt_count = sum(
+        row["usage"]["total_tokens"] is None for row in failures
+    )
+    token_totals: dict[str, int | None] = {}
+    for key in (
+        "prompt_tokens",
+        "completion_tokens",
+        "reasoning_tokens",
+        "cached_input_tokens",
+        "total_tokens",
+    ):
+        if unknown_attempt_count:
+            token_totals[key] = None
+        else:
+            token_totals[key] = totals[key] + sum(
+                row["usage"][key] for row in failures
+            )
+
+    cost_status = totals["cost_status"]
+    cost_usd = totals["cost_usd"]
+    currency = totals["currency"]
+    if failures:
+        snapshot_seq = None
+        sha256 = None
+        cost_usd = None
+        if cost_status == "unknown":
+            currency = None
+        else:
+            cost_status = "partial_unknown"
     return {
         "component_id": "translation",
         "component_run_id": component_run_id,
@@ -2497,19 +2823,21 @@ def _project_d2l_total(
         "stage_id": stage_id,
         "snapshot_seq": snapshot_seq,
         "accepted_through_component_seq": accepted_through_component_seq,
-        "physical_call_count": totals["physical_attempt_count"],
+        "physical_call_count": (
+            totals["physical_attempt_count"] + len(failures)
+        ),
         "cache_observation_count": totals["cache_observation_count"],
-        "prompt_tokens": totals["prompt_tokens"],
-        "completion_tokens": totals["completion_tokens"],
-        "reasoning_tokens": totals["reasoning_tokens"],
-        "cached_input_tokens": totals["cached_input_tokens"],
-        "total_tokens": totals["total_tokens"],
+        "prompt_tokens": token_totals["prompt_tokens"],
+        "completion_tokens": token_totals["completion_tokens"],
+        "reasoning_tokens": token_totals["reasoning_tokens"],
+        "cached_input_tokens": token_totals["cached_input_tokens"],
+        "total_tokens": token_totals["total_tokens"],
         "cache_hit_count": cache_counters.get("hit", 0),
         "cache_miss_count": cache_counters.get("miss", 0),
-        "unknown_attempt_count": 0,
-        "cost_status": totals["cost_status"],
-        "cost_usd": totals["cost_usd"],
-        "currency": totals["currency"],
+        "unknown_attempt_count": unknown_attempt_count,
+        "cost_status": cost_status,
+        "cost_usd": cost_usd,
+        "currency": currency,
         "snapshot_sha256": sha256,
     }
 
