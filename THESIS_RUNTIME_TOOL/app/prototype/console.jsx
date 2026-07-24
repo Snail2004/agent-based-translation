@@ -2880,6 +2880,7 @@ function AgentConsoleView(props) {
     projectId = "", onBack, onOpenReport,
     theme = "paper", onToggleTheme,
     onRefresh, onPause, onCancel, onResume, onDich, onScore, busy = false,
+    onReplayStateChange,
   } = props;
   const workflowInvalid = Boolean(workflowReplay && workflowReplay.valid !== true);
   const workflowManifest = workflowReplay?.manifest || null;
@@ -3091,6 +3092,12 @@ function AgentConsoleView(props) {
   }
 
   const replayActive = replayCursor != null;
+  React.useEffect(() => {
+    if (typeof onReplayStateChange === "function") onReplayStateChange(replayActive);
+  }, [onReplayStateChange, replayActive]);
+  React.useEffect(() => () => {
+    if (typeof onReplayStateChange === "function") onReplayStateChange(false);
+  }, [onReplayStateChange]);
   const replayPosition = replayActive ? replayCursor : events.length;
   const shownEvents = replayActive ? events.slice(0, replayPosition) : events;
   const workflowReadOnly = Boolean(

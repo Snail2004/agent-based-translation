@@ -642,6 +642,7 @@ function AgentConsole({ runControl, onBack, onOpenReport }) {
         onResume={runControl.onResume}
         onDich={runControl.onDich}
         onScore={runControl.onScore}
+        onReplayStateChange={runControl.onReplayStateChange}
       />
       {rawLog && (
         <details className="runtime-raw-log" open={!(sel.events || []).length}>

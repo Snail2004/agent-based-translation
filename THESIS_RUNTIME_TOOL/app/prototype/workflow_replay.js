@@ -43,9 +43,161 @@
     "local_exact_cache", "unknown",
   ]);
   const OPTIONAL_DETAIL_COMPONENTS = new Set(["translation", "evaluation", "publication"]);
+  const ACTIVE_REGISTRY_RUN_STATUSES = new Set(["pending", "running"]);
 
   function isObject(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function registryRunId(run) {
+    return String(run?.run_id || "").trim();
+  }
+
+  function isActiveRegistryRun(run) {
+    return ACTIVE_REGISTRY_RUN_STATUSES.has(String(run?.status || "").trim().toLowerCase());
+  }
+
+  function newestActiveRegistryRun(runs) {
+    return (Array.isArray(runs) ? runs : []).find(run => registryRunId(run) && isActiveRegistryRun(run)) || null;
+  }
+
+  function chooseRunRegistrySelection({
+    runs = [],
+    seenRunIds = new Set(),
+    selectedRunId = "",
+    replayActive = false,
+    sourceMode = "",
+    manualHistoricalRunId = "",
+    explicit = false,
+  } = {}) {
+    const selectedId = String(selectedRunId || "");
+    const manualHistoricalId = String(manualHistoricalRunId || "");
+    if (
+      replayActive
+      || String(sourceMode || "").toLowerCase() === "replay"
+      || (selectedId && manualHistoricalId === selectedId)
+    ) {
+      return null;
+    }
+    const active = newestActiveRegistryRun(runs);
+    const activeId = registryRunId(active);
+    if (!activeId || activeId === selectedId) return null;
+    if (!explicit && seenRunIds?.has?.(activeId)) return null;
+    return active;
+  }
+
+  function createRunRegistryPoller({
+    fetchRuns,
+    onRuns,
+    onSelect,
+    getContext,
+    onError,
+    seenRunIds = new Set(),
+    intervalMs = 4000,
+    setTimer = global.setTimeout?.bind(global),
+    clearTimer = global.clearTimeout?.bind(global),
+  } = {}) {
+    if (typeof fetchRuns !== "function") throw new TypeError("fetchRuns is required");
+    if (typeof setTimer !== "function" || typeof clearTimer !== "function") {
+      throw new TypeError("timer functions are required");
+    }
+    const seen = seenRunIds instanceof Set ? seenRunIds : new Set(seenRunIds || []);
+    const delay = Math.max(1000, Number(intervalMs) || 4000);
+    let stopped = true;
+    let timer = null;
+    let inFlight = null;
+    let lifecycleEpoch = 0;
+
+    function cancelScheduledPoll() {
+      if (timer == null) return;
+      clearTimer(timer);
+      timer = null;
+    }
+
+    function schedule() {
+      if (stopped) return;
+      cancelScheduledPoll();
+      timer = setTimer(() => {
+        timer = null;
+        void tick();
+      }, delay);
+    }
+
+    async function refresh({ explicit = false, reschedule = true } = {}) {
+      if (inFlight) return inFlight;
+      const shouldReschedule = !stopped && reschedule;
+      if (shouldReschedule) cancelScheduledPoll();
+      const startedRefresh = !stopped;
+      const refreshEpoch = lifecycleEpoch;
+      inFlight = (async () => {
+        const fetched = await fetchRuns();
+        const runs = Array.isArray(fetched) ? fetched : [];
+        if (startedRefresh && (stopped || refreshEpoch !== lifecycleEpoch)) return runs;
+        const context = typeof getContext === "function" ? (getContext() || {}) : {};
+        const selected = chooseRunRegistrySelection({
+          ...context,
+          runs,
+          seenRunIds: seen,
+          explicit,
+        });
+        runs.forEach(run => {
+          const runId = registryRunId(run);
+          if (runId) seen.add(runId);
+        });
+        if (typeof onRuns === "function") onRuns(runs);
+        if (selected && typeof onSelect === "function") {
+          onSelect(registryRunId(selected), selected, {
+            origin: "external-discovery",
+            explicit: Boolean(explicit),
+          });
+        }
+        return runs;
+      })();
+      try {
+        return await inFlight;
+      } finally {
+        inFlight = null;
+        if (shouldReschedule && !stopped && refreshEpoch === lifecycleEpoch) schedule();
+      }
+    }
+
+    async function tick() {
+      if (stopped) return;
+      try {
+        await refresh({ reschedule: false });
+      } catch (error) {
+        if (typeof onError === "function") onError(error);
+      } finally {
+        schedule();
+      }
+    }
+
+    function start() {
+      if (!stopped) return;
+      stopped = false;
+      lifecycleEpoch += 1;
+      void tick();
+    }
+
+    function stop() {
+      stopped = true;
+      lifecycleEpoch += 1;
+      cancelScheduledPoll();
+    }
+
+    function markSeen(runId) {
+      const value = String(runId || "").trim();
+      if (value) seen.add(value);
+    }
+
+    return Object.freeze({
+      start,
+      stop,
+      refresh,
+      markSeen,
+      isStarted: () => !stopped,
+      hasScheduledPoll: () => timer != null,
+    });
   }
 
   function deepClone(value) {
@@ -1429,6 +1581,10 @@
     normalizeWorkflowPreflight,
     validatePackage,
     mergeReplayEnvelope,
+    isActiveRegistryRun,
+    newestActiveRegistryRun,
+    chooseRunRegistrySelection,
+    createRunRegistryPoller,
     fetchJson,
     fetchJsonLines,
   });

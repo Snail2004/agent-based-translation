@@ -1661,6 +1661,15 @@ function App() {
   const runEventOffsetRef = useRef(0);
   const workflowReplayPackageRef = useRef(null);
   const workflowReplayRunRef = useRef("");
+  const runRegistryPollerRef = useRef(null);
+  const runDiscoveryStateRef = useRef({
+    jobId: "",
+    selectedRunId: "",
+    replayActive: false,
+    sourceMode: "",
+    manualHistoricalRunId: "",
+    seenRunIds: new Set(),
+  });
   const fullRegistryOverlayCacheRef = useRef(new Map());
 
   const navigateView = useCallback((nextView, { replace = false } = {}) => {
@@ -1892,6 +1901,19 @@ function App() {
   const readOnly = !!docInfo?.read_only || String(activeDocId || "").startsWith(THESIS_PREFIX);
   const runtimeJobId = thesisJobId(activeDocId)
     || (projectRuntime?.prepared && projectRuntime?.project_id === activeDocId ? projectRuntime.job_id : "");
+  runDiscoveryStateRef.current.selectedRunId = String(selectedRunId || "");
+  runDiscoveryStateRef.current.sourceMode = String(workflowReplay?.sourceMode || "");
+
+  useEffect(() => {
+    const discovery = runDiscoveryStateRef.current;
+    if (discovery.jobId === runtimeJobId) return;
+    discovery.jobId = runtimeJobId;
+    discovery.selectedRunId = "";
+    discovery.replayActive = false;
+    discovery.sourceMode = "";
+    discovery.manualHistoricalRunId = "";
+    discovery.seenRunIds = new Set();
+  }, [runtimeJobId]);
 
   useEffect(() => {
     if (!runtimeJobId || !selectedCallId) {
@@ -1916,13 +1938,20 @@ function App() {
     return () => { cancelled = true; };
   }, [runtimeJobId, selectedCallId]);
 
-  const refreshThesisRuns = useCallback(async () => {
+  const refreshThesisRuns = useCallback(async ({ explicit = false } = {}) => {
     if (!runtimeJobId) return [];
+    const poller = runRegistryPollerRef.current;
+    if (poller?.isStarted?.()) return poller.refresh({ explicit });
     const rows = await API.listThesisRuns();
     const scoped = runsForJob(rows, runtimeJobId);
     setThesisRuns(scoped);
     return scoped;
   }, [runtimeJobId]);
+
+  const refreshRunSurfaceRuns = useCallback(
+    () => refreshThesisRuns({ explicit: true }),
+    [refreshThesisRuns],
+  );
 
   function runFormPayload(includeToken = false) {
     const payload = {
@@ -1977,11 +2006,7 @@ function App() {
     try {
       const payload = runFormPayload(!!runForm.allow_api);
       const created = await API.createThesisRun(payload);
-      setSelectedRunId(created.run_id);
-      runLogOffsetRef.current = 0;
-      runEventOffsetRef.current = 0;
-      setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
-      setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status, aggregate: emptyRunEventAggregate() });
+      selectRun(created.run_id, { origin: "launch", run: created });
       await refreshThesisRuns();
       toast(uiText("Đã khởi chạy lần chạy", "Run launched"), "good", created.run_id);
     } catch (err) {
@@ -1998,19 +2023,64 @@ function App() {
     setRunForm(form => ({ ...form, ...patch }));
   }
 
-  function selectRun(runId) {
-    setSelectedRunId(runId);
+  function selectRun(runId, { origin = "manual", run = null } = {}) {
+    const nextRunId = String(runId || "");
+    if (!nextRunId) return;
+    const discovery = runDiscoveryStateRef.current;
+    const registryRun = run || (thesisRuns || []).find(row => String(row?.run_id || "") === nextRunId) || null;
+    const isManualHistory = origin === "manual"
+      && !window.WorkflowReplayAdapter?.isActiveRegistryRun?.(registryRun);
+    discovery.selectedRunId = nextRunId;
+    discovery.replayActive = false;
+    discovery.sourceMode = "";
+    discovery.manualHistoricalRunId = isManualHistory ? nextRunId : "";
+    discovery.seenRunIds.add(nextRunId);
+    runRegistryPollerRef.current?.markSeen?.(nextRunId);
+    setSelectedRunId(nextRunId);
     workflowReplayRunRef.current = "";
     workflowReplayPackageRef.current = null;
     setWorkflowReplay(null);
     runLogOffsetRef.current = 0;
     runEventOffsetRef.current = 0;
-    setSelectedRunLog({ run_id: runId, log: "", offset: 0, running: true, status: "" });
-    setSelectedRunEvents({ run_id: runId, events: [], offset: 0, running: true, status: "", aggregate: emptyRunEventAggregate() });
+    setSelectedRunLog({ run_id: nextRunId, log: "", offset: 0, running: true, status: registryRun?.status || "" });
+    setSelectedRunEvents({ run_id: nextRunId, events: [], offset: 0, running: true, status: registryRun?.status || "", aggregate: emptyRunEventAggregate() });
     setRunBlockPreview([]);
     setRunWatchlist([]);
     setRunReportSummary(null);
   }
+
+  const handleConsoleReplayStateChange = useCallback((active) => {
+    runDiscoveryStateRef.current.replayActive = Boolean(active);
+  }, []);
+
+  useEffect(() => {
+    const adapter = window.WorkflowReplayAdapter;
+    const onRunSurface = ["console", "report"].includes(view);
+    runRegistryPollerRef.current?.stop?.();
+    runRegistryPollerRef.current = null;
+    if (!runtimeJobId || !onRunSurface || !adapter?.createRunRegistryPoller) return undefined;
+
+    const discovery = runDiscoveryStateRef.current;
+    const poller = adapter.createRunRegistryPoller({
+      fetchRuns: async () => runsForJob(await API.listThesisRuns(), runtimeJobId),
+      onRuns: setThesisRuns,
+      onSelect: (runId, run) => selectRun(runId, { origin: "external-discovery", run }),
+      getContext: () => ({
+        selectedRunId: discovery.selectedRunId,
+        replayActive: discovery.replayActive,
+        sourceMode: discovery.sourceMode,
+        manualHistoricalRunId: discovery.manualHistoricalRunId,
+      }),
+      seenRunIds: discovery.seenRunIds,
+      intervalMs: 4000,
+    });
+    runRegistryPollerRef.current = poller;
+    poller.start();
+    return () => {
+      poller.stop();
+      if (runRegistryPollerRef.current === poller) runRegistryPollerRef.current = null;
+    };
+  }, [runtimeJobId, view]);
 
   async function pauseRun() {
     if (!selectedRunId) return;
@@ -2155,14 +2225,7 @@ function App() {
         allow_api: false,
       });
       setRunPromptPreview(null);
-      setSelectedRunId(created.run_id);
-      runLogOffsetRef.current = 0;
-      runEventOffsetRef.current = 0;
-      setSelectedRunLog({ run_id: created.run_id, log: "", offset: 0, running: true, status: created.status });
-      setSelectedRunEvents({ run_id: created.run_id, events: [], offset: 0, running: true, status: created.status, aggregate: emptyRunEventAggregate() });
-      setRunBlockPreview([]);
-      setRunWatchlist([]);
-      setRunReportSummary(null);
+      selectRun(created.run_id, { origin: "launch", run: created });
       setModal(null);
       setCenterMode("console");
       toast(uiText("Đã khởi chạy kiểm tra pipeline", "Pipeline check launched"), "good", `${runtime.job_id} · ${uiText("không gọi API", "no API calls")}`);
@@ -2323,7 +2386,7 @@ function App() {
       const created = await API.createThesisRun(payload);
       setModal(null);
       setWorkflowSetupState(current => ({ ...current, status: "launched" }));
-      selectRun(created.run_id);
+      selectRun(created.run_id, { origin: "launch", run: created });
       setCenterMode("console");
       await refreshThesisRuns();
       toast(
@@ -2350,7 +2413,7 @@ function App() {
       const attempt = resumed.component_attempt_id ?? resumed.component_attempt_index ?? resumed.attempt_index ?? "?";
       toast(uiText("Đã tiếp tục lần chạy", "Run resumed"), "good", `${resumed.run_id} · attempt ${attempt}`);
       await refreshThesisRuns();
-      selectRun(resumed.run_id);
+      selectRun(resumed.run_id, { origin: "resume", run: resumed });
     } catch (err) {
       toast(uiText("Tiếp tục thất bại", "Resume failed"), "bad", errorMessage(err));
     } finally {
@@ -2407,7 +2470,6 @@ function App() {
             };
           });
         }
-        await refreshThesisRuns();
         const needsDrain = !!eventResult?.truncated;
         const needsPartialFollowup = !!eventResult?.partial_line;
         const pollStatus = eventResult?.status || result.status || "";
@@ -2425,7 +2487,7 @@ function App() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [selectedRunId, refreshThesisRuns]);
+  }, [selectedRunId]);
 
   const selectedWorkflowRun = useMemo(
     () => (thesisRuns || []).find(run => run.run_id === selectedRunId) || null,
@@ -2496,7 +2558,8 @@ function App() {
   // Console and Report share the same current run (registry list is newest-first).
   useEffect(() => {
     if (!["console", "report"].includes(view) || selectedRunId || !thesisRuns.length) return;
-    selectRun(thesisRuns[0].run_id);
+    const run = window.WorkflowReplayAdapter?.newestActiveRegistryRun?.(thesisRuns) || thesisRuns[0];
+    selectRun(run.run_id, { origin: "surface-entry", run });
   }, [view, selectedRunId, thesisRuns]);
 
   function setCenterMode(mode) {
@@ -4059,7 +4122,8 @@ function App() {
             onPreview: previewThesisRun,
             onCreateRun: createThesisRun,
             onSelectRun: selectRun,
-            onRefreshRuns: refreshThesisRuns,
+            onRefreshRuns: refreshRunSurfaceRuns,
+            onReplayStateChange: handleConsoleReplayStateChange,
             onOpenProjectSource: openProjectSource,
             onConfigurePipeline: openProjectPipelineModal,
             onPause: pauseRun,
