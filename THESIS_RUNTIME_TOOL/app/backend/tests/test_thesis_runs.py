@@ -2909,13 +2909,16 @@ def test_route_d2l_component_snapshot_relays_only_validated_package(
     assert rejected.get_json()["data"] is None
 
 
-def test_route_d2l_resume_rejects_live_component_writer_after_wrapper_exit(
+@pytest.mark.parametrize("lease_kind", ["component", "stage"])
+def test_route_d2l_resume_rejects_live_writer_after_wrapper_exit(
     tmp_path,
     monkeypatch,
+    lease_kind,
 ):
     client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
     from pipeline.prepass.d2l_component_writer_lease_v1 import (
         D2LComponentWriterLease,
+        D2LStageWriterLease,
     )
 
     campaign_root = tmp_path / "_work" / "d2l_campaign" / "jobA" / "run_locked"
@@ -2947,7 +2950,12 @@ def test_route_d2l_resume_rejects_live_component_writer_after_wrapper_exit(
     registry.update_run("run_locked", status="running", pid=999999999)
     before_ids = {row["run_id"] for row in registry.list_runs()}
 
-    with D2LComponentWriterLease(component_root):
+    lease_type = (
+        D2LComponentWriterLease
+        if lease_kind == "component"
+        else D2LStageWriterLease
+    )
+    with lease_type(component_root):
         response = client.post("/api/thesis/runs/run_locked/resume", json={})
 
     assert response.status_code == 409

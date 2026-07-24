@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import ctypes
+from ctypes import wintypes
 import json
+import os
+import signal
 import subprocess
 import sys
 import textwrap
@@ -24,6 +28,11 @@ from pipeline.prepass.d2l_component_stage_receipt_v1 import (
     STAGE_RECEIPT_SCHEMA,
     build_stage_receipt,
 )
+from pipeline.prepass.d2l_component_writer_lease_v1 import (
+    D2LComponentWriterLease,
+    component_writer_is_active,
+    stage_writer_is_active,
+)
 from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
 )
@@ -41,6 +50,65 @@ CONFIG_SHA = "2" * 64
 CODE_SHA = "3" * 64
 PROFILE_SHA = "4" * 64
 CHAPTERS = ["d2l_multilayer_perceptrons"]
+TOOL_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _wait_until(predicate, *, timeout: float = 12.0) -> None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return
+        time.sleep(0.05)
+    raise AssertionError("condition did not become true before timeout")
+
+
+def _pid_is_alive(pid: int) -> bool:
+    if os.name == "nt":
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.OpenProcess.argtypes = [
+            wintypes.DWORD,
+            wintypes.BOOL,
+            wintypes.DWORD,
+        ]
+        kernel32.WaitForSingleObject.restype = wintypes.DWORD
+        kernel32.WaitForSingleObject.argtypes = [
+            wintypes.HANDLE,
+            wintypes.DWORD,
+        ]
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        handle = kernel32.OpenProcess(0x00100000, False, pid)
+        if not handle:
+            return False
+        try:
+            return kernel32.WaitForSingleObject(handle, 0) == 0x00000102
+        finally:
+            kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def _kill_process_only(process: subprocess.Popen) -> None:
+    if process.poll() is not None:
+        return
+    process.kill()
+    process.wait(timeout=10)
+
+
+def _kill_process_tree(pid: int) -> None:
+    if not _pid_is_alive(pid):
+        return
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(pid)],
+            check=False,
+            capture_output=True,
+        )
+    else:
+        os.kill(pid, signal.SIGKILL)
 
 
 def _event_counts(root: Path) -> Counter[str]:
@@ -1029,6 +1097,80 @@ def test_runner_rejects_semantic_code_change_before_resume_mutation(
     assert not (root / "runtime/repair_receipts/repair_a0002.json").exists()
 
 
+def test_stale_recovery_rejects_semantic_delta_before_package_mutation(
+    tmp_path: Path,
+) -> None:
+    code_root = tmp_path / "code"
+    prompt_relative = "THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py"
+    prompt_path = code_root / prompt_relative
+    prompt_path.parent.mkdir(parents=True)
+    prompt_path.write_text('PROMPT = "sealed"\n', encoding="utf-8")
+
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(code_root), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    git("init")
+    git("config", "user.name", "CodeX")
+    git("config", "user.email", "codex@example.invalid")
+    git("add", prompt_relative)
+    git("commit", "-m", "baseline")
+    baseline = git("rev-parse", "HEAD")
+
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    raw_plan = _plan(attempt_id=2)
+    raw_plan["code_revision"] = baseline
+    plan = ComponentPlan.from_mapping(raw_plan)
+    abandoned = D2LTranslationComponentRunner(
+        plan,
+        root,
+        repair_code_root=code_root,
+    )
+    abandoned._start_new()
+    abandoned._start_stage(plan.stages[0])
+
+    prompt_path.write_text('PROMPT = "changed"\n', encoding="utf-8")
+    git("add", prompt_relative)
+    git("commit", "-m", "semantic prompt change")
+    before = {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+
+    with pytest.raises(ComponentRunnerError, match="closed mechanical scope"):
+        D2LTranslationComponentRunner(
+            plan,
+            root,
+            recover_stale=True,
+            repair_code_root=code_root,
+            repair_reason="incorrectly_claimed_mechanical_fix",
+        ).run(resume=True)
+
+    assert before == {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+    manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["status"] == "running"
+    assert not (root / "runtime/repair_receipts/repair_a0002.json").exists()
+
+
 def test_runner_quarantines_incomplete_observation_tail_and_resumes(
     tmp_path: Path,
 ) -> None:
@@ -1167,6 +1309,80 @@ def test_runner_recovers_stale_running_attempt_with_checkpoint(
         row["artifact_kind"] == "d2l_observation_journal_recovery"
         for row in index["artifacts"]
     )
+
+
+def test_runner_death_kills_actual_stage_writer_before_lease_reopens(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=1)
+    stage_pid_path = tmp_path / "actual_stage.pid"
+    stage_script = tmp_path / "long_stage.py"
+    stage_script.write_text(
+        textwrap.dedent(
+            """
+            import os
+            from pathlib import Path
+            import sys
+            import time
+
+            pid_path = Path(sys.argv[1])
+            pid_path.write_text(str(os.getpid()), encoding="ascii")
+            while True:
+                time.sleep(0.05)
+            """
+        ),
+        encoding="utf-8",
+    )
+    raw_plan = _plan(attempt_id=1)
+    raw_plan["stages"][0]["command"] = [
+        sys.executable,
+        str(stage_script),
+        str(stage_pid_path),
+    ]
+    plan_path = tmp_path / "runner_plan.json"
+    plan_path.write_text(
+        json.dumps(raw_plan, ensure_ascii=True, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    runner = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "pipeline.prepass.d2l_translation_component_runner_v1",
+            "--plan",
+            str(plan_path),
+            "--component-root",
+            str(root),
+        ],
+        cwd=TOOL_ROOT,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    stage_pid: int | None = None
+    try:
+        _wait_until(stage_pid_path.is_file, timeout=30)
+        stage_pid = int(stage_pid_path.read_text(encoding="ascii"))
+        _wait_until(lambda: component_writer_is_active(root))
+        _wait_until(lambda: stage_writer_is_active(root))
+        assert runner.poll() is None
+        assert _pid_is_alive(stage_pid)
+
+        _kill_process_only(runner)
+
+        assert runner.poll() is not None
+        _wait_until(lambda: not _pid_is_alive(stage_pid))
+        _wait_until(lambda: not component_writer_is_active(root))
+        _wait_until(lambda: not stage_writer_is_active(root))
+        with D2LComponentWriterLease(root):
+            assert component_writer_is_active(root) is True
+    finally:
+        if runner.poll() is None:
+            _kill_process_tree(runner.pid)
+            runner.wait(timeout=10)
+        if stage_pid is not None and _pid_is_alive(stage_pid):
+            _kill_process_tree(stage_pid)
 
 
 def test_runner_preserves_unpublished_stage_output_before_retry(

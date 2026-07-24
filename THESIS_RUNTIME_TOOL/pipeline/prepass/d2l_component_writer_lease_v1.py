@@ -10,6 +10,7 @@ from uuid import uuid4
 
 
 LEASE_SCHEMA = "d2l_component_writer_lease_v1"
+STAGE_LEASE_SCHEMA = "d2l_stage_writer_lease_v1"
 
 
 class D2LComponentWriterLeaseError(RuntimeError):
@@ -21,8 +22,15 @@ def lease_path_for_component(component_root: str | Path) -> Path:
     return root.parent / f".{root.name}.writer.lock"
 
 
+def stage_lease_path_for_component(component_root: str | Path) -> Path:
+    root = Path(component_root).resolve()
+    return root.parent / f".{root.name}.stage-writer.lock"
+
+
 class D2LComponentWriterLease:
     """Hold an OS-released exclusive byte lock for the runner lifetime."""
+
+    schema = LEASE_SCHEMA
 
     def __init__(self, component_root: str | Path) -> None:
         self.component_root = Path(component_root).resolve()
@@ -69,7 +77,7 @@ class D2LComponentWriterLease:
     def _write_owner_record(self) -> None:
         assert self._handle is not None
         record = {
-            "schema": LEASE_SCHEMA,
+            "schema": self.schema,
             "component_root": str(self.component_root),
             "owner_pid": os.getpid(),
             "lease_nonce": uuid4().hex,
@@ -110,10 +118,17 @@ class D2LComponentWriterLease:
         self.release()
 
 
-def component_writer_is_active(component_root: str | Path) -> bool:
-    """Probe the lease without trusting registry PID state."""
+class D2LStageWriterLease(D2LComponentWriterLease):
+    """Lease retained by the stage guard that owns the actual writer tree."""
 
-    lease = D2LComponentWriterLease(component_root)
+    schema = STAGE_LEASE_SCHEMA
+
+    def __init__(self, component_root: str | Path) -> None:
+        super().__init__(component_root)
+        self.path = stage_lease_path_for_component(self.component_root)
+
+
+def _lease_is_active(lease: D2LComponentWriterLease) -> bool:
     try:
         lease.acquire()
     except D2LComponentWriterLeaseError:
@@ -123,10 +138,26 @@ def component_writer_is_active(component_root: str | Path) -> bool:
         return False
 
 
+def component_writer_is_active(component_root: str | Path) -> bool:
+    """Probe the lease without trusting registry PID state."""
+
+    return _lease_is_active(D2LComponentWriterLease(component_root))
+
+
+def stage_writer_is_active(component_root: str | Path) -> bool:
+    """Return true while a stage guard can still write journal/output bytes."""
+
+    return _lease_is_active(D2LStageWriterLease(component_root))
+
+
 __all__ = [
     "D2LComponentWriterLease",
     "D2LComponentWriterLeaseError",
+    "D2LStageWriterLease",
     "LEASE_SCHEMA",
+    "STAGE_LEASE_SCHEMA",
     "component_writer_is_active",
     "lease_path_for_component",
+    "stage_lease_path_for_component",
+    "stage_writer_is_active",
 ]

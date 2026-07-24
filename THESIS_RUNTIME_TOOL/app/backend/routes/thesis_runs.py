@@ -19,6 +19,7 @@ from pipeline.eval.full_run_report_v1 import (
 )
 from pipeline.prepass.d2l_component_writer_lease_v1 import (
     component_writer_is_active,
+    stage_writer_is_active,
 )
 from routes.common import error, ok
 from services.project_runtime import (
@@ -1445,8 +1446,10 @@ def resume_thesis_run(run_id: str):
         )
         if (
             is_translation_component
-            and manifest.get("status") == "running"
-            and component_writer_is_active(manifest_path.parent)
+            and (
+                component_writer_is_active(manifest_path.parent)
+                or stage_writer_is_active(manifest_path.parent)
+            )
         ):
             raise RunControlError(
                 "component_writer_still_active",

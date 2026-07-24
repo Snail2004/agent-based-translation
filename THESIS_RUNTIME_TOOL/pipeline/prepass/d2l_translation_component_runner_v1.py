@@ -51,6 +51,7 @@ from pipeline.prepass.d2l_component_stage_receipt_v1 import (
 from pipeline.prepass.d2l_component_writer_lease_v1 import (
     D2LComponentWriterLease,
     D2LComponentWriterLeaseError,
+    stage_writer_is_active,
 )
 from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
@@ -63,6 +64,10 @@ from pipeline.prepass.d2l_repair_resume_v1 import (
 from pipeline.prepass.d2l_stage_work_journal_v1 import (
     read_work_journal,
     work_journal_state,
+)
+from pipeline.prepass.d2l_stage_process_tree_v1 import (
+    D2LGuardedStageProcess,
+    D2LStageProcessTreeError,
 )
 
 
@@ -419,6 +424,8 @@ class D2LTranslationComponentRunner:
         self._effective_code_revision = self.plan.code_revision
         self._repair_receipt: dict[str, Any] | None = None
         self._repair_receipt_path: Path | None = None
+        self._repair_delta: dict[str, Any] | None = None
+        self._revision_preflight_done = False
         self._pending_journal_recovery: (
             tuple[StagePlan, Path, dict[str, Any]] | None
         ) = None
@@ -534,18 +541,18 @@ class D2LTranslationComponentRunner:
             )
         return revision
 
-    def _prepare_repair_receipt(
-        self,
-        *,
-        current: Mapping[str, Any],
-        resume: Mapping[str, Any],
-    ) -> None:
+    def _preflight_runtime_revision(self) -> None:
+        if self._revision_preflight_done:
+            return
         observed_revision = self._runtime_code_revision()
         if observed_revision == self.plan.code_revision:
             if self.repair_reason is not None:
                 raise ComponentRunnerError(
                     "repair reason was supplied without a code revision change"
                 )
+            self._effective_code_revision = observed_revision
+            self._repair_delta = None
+            self._revision_preflight_done = True
             return
         if not isinstance(self.repair_reason, str) or not self.repair_reason:
             raise ComponentRunnerError(
@@ -594,6 +601,24 @@ class D2LTranslationComponentRunner:
             self.plan.code_revision,
             observed_revision,
         ).stdout
+        self._effective_code_revision = observed_revision
+        self._repair_delta = {
+            "observed_revision": observed_revision,
+            "changed_paths": changed_paths,
+            "git_delta_sha256": sha256(delta).hexdigest().upper(),
+        }
+        self._revision_preflight_done = True
+
+    def _prepare_repair_receipt(
+        self,
+        *,
+        current: Mapping[str, Any],
+        resume: Mapping[str, Any],
+    ) -> None:
+        self._preflight_runtime_revision()
+        repair_delta = self._repair_delta
+        if repair_delta is None:
+            return
         previous_attempt = int(current["component_attempt_id"])
         receipt = build_repair_receipt(
             workflow_run_id=str(current["workflow_run_id"]),
@@ -604,11 +629,11 @@ class D2LTranslationComponentRunner:
             checkpoint_sha256=str(resume["checkpoint_sha256"]),
             reason_code=self.repair_reason,
             baseline_code_revision=self.plan.code_revision,
-            effective_code_revision=observed_revision,
+            effective_code_revision=str(repair_delta["observed_revision"]),
             semantic_contract_sha256=self._semantic_contract_sha256(),
             runner_plan_sha256=self.plan.plan_sha256,
-            git_delta_sha256=sha256(delta).hexdigest().upper(),
-            changed_paths=changed_paths,
+            git_delta_sha256=str(repair_delta["git_delta_sha256"]),
+            changed_paths=list(repair_delta["changed_paths"]),
             created_at=_timestamp(),
         )
         relative_ref = (
@@ -621,13 +646,16 @@ class D2LTranslationComponentRunner:
                 raise ComponentRunnerError("repair receipt path already drifted")
         else:
             write_json(receipt_path, receipt)
-        self._effective_code_revision = observed_revision
         self._repair_receipt = receipt
         self._repair_receipt_path = receipt_path
 
     def run(self, *, resume: bool = False) -> dict[str, Any]:
         try:
             with D2LComponentWriterLease(self.root):
+                if stage_writer_is_active(self.root):
+                    raise ComponentRunnerError(
+                        "stage writer lease is held by a surviving subprocess"
+                    )
                 return self._run_exclusive(resume=resume)
         except D2LComponentWriterLeaseError as exc:
             raise ComponentRunnerError(str(exc)) from exc
@@ -637,6 +665,9 @@ class D2LTranslationComponentRunner:
             if not self.root.is_dir():
                 raise ComponentRunnerError("component root is missing during resume")
             current = _load_json(self.manifest_path, "component manifest")
+            # Git lineage and the closed mechanical path policy must pass
+            # before stale recovery can append a checkpoint or event.
+            self._preflight_runtime_revision()
             if current.get("status") == "running":
                 if not self.recover_stale:
                     raise ComponentRunnerError(
@@ -1225,15 +1256,16 @@ class D2LTranslationComponentRunner:
                 self._repair_receipt_path
             )
         try:
-            process = subprocess.Popen(
-                list(stage.command),
+            process = D2LGuardedStageProcess(
+                component_root=self.root,
+                stage_id=stage.stage_id,
+                command=list(stage.command),
                 cwd=cwd,
-                shell=False,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 env=environment,
             )
-        except OSError as exc:
+        except (OSError, D2LStageProcessTreeError) as exc:
             self._emit_repairable_stage_failure(
                 stage,
                 reason_code="stage_process_launch_failed",
@@ -1243,49 +1275,52 @@ class D2LTranslationComponentRunner:
                 stage.stage_id,
                 "stage_process_launch_failed",
             ) from exc
-        while process.poll() is None:
-            self._drain_observation_journal(stage, allow_incomplete_tail=True)
-            if (
-                self.pause_file is not None
-                and self.pause_file.is_file()
-                and not pause_was_present_at_start
-            ):
-                process.terminate()
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
+        try:
+            while process.poll() is None:
+                self._drain_observation_journal(stage, allow_incomplete_tail=True)
+                if (
+                    self.pause_file is not None
+                    and self.pause_file.is_file()
+                    and not pause_was_present_at_start
+                ):
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait(timeout=5)
+                    self._drain_after_process(stage)
+                    self.pause_file.unlink(missing_ok=True)
+                    raise _PauseRun(stage.stage_id, "user_requested_pause")
+                if (
+                    stage.timeout_seconds is not None
+                    and time.monotonic() - started > stage.timeout_seconds
+                ):
                     process.kill()
                     process.wait(timeout=5)
-                self._drain_after_process(stage)
-                self.pause_file.unlink(missing_ok=True)
-                raise _PauseRun(stage.stage_id, "user_requested_pause")
-            if (
-                stage.timeout_seconds is not None
-                and time.monotonic() - started > stage.timeout_seconds
-            ):
-                process.kill()
-                process.wait(timeout=5)
-                self._drain_after_process(stage)
+                    self._drain_after_process(stage)
+                    self._emit_repairable_stage_failure(
+                        stage,
+                        reason_code="stage_process_timeout",
+                        detail_code="timeout",
+                    )
+                    raise _PauseRun(stage.stage_id, "stage_process_timeout")
+                time.sleep(0.05)
+            self._drain_after_process(stage)
+            if process.returncode == TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE:
+                raise _PauseRun(stage.stage_id, "transport_retry_exhausted")
+            if process.returncode != 0:
                 self._emit_repairable_stage_failure(
                     stage,
-                    reason_code="stage_process_timeout",
-                    detail_code="timeout",
+                    reason_code="stage_process_exit_nonzero",
+                    detail_code=f"exit_{process.returncode}",
                 )
-                raise _PauseRun(stage.stage_id, "stage_process_timeout")
-            time.sleep(0.05)
-        self._drain_after_process(stage)
-        if process.returncode == TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE:
-            raise _PauseRun(stage.stage_id, "transport_retry_exhausted")
-        if process.returncode != 0:
-            self._emit_repairable_stage_failure(
-                stage,
-                reason_code="stage_process_exit_nonzero",
-                detail_code=f"exit_{process.returncode}",
-            )
-            raise _PauseRun(
-                stage.stage_id,
-                f"stage_process_exit_{process.returncode}",
-            )
+                raise _PauseRun(
+                    stage.stage_id,
+                    f"stage_process_exit_{process.returncode}",
+                )
+        finally:
+            process.close()
 
     def _drain_after_process(self, stage: StagePlan) -> None:
         try:

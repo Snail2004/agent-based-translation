@@ -21,10 +21,12 @@ Resume keeps `workflow_run_id` and `component_run_id`, increments
 `component_attempt_id`, and appends `run_resumed`.
 
 The component runner holds an OS-released single-writer lease for its complete
-lifetime. Registry-wrapper PID death is not enough to authorize Resume: the App
-also probes this lease, and the runner independently reacquires it before
-reading or mutating the component package. A surviving child therefore blocks
-a second writer even when its wrapper has already exited.
+lifetime. Every executable stage runs behind a guard that holds a separate
+stage-writer lease. On Windows, the guard and the actual stage process tree are
+assigned to a `kill-on-close` Job Object before the start barrier is released.
+If the runner dies, Windows kills that writer tree; until that closure is
+observed, both the App and a replacement runner probe the stage lease and reject
+a second writer. Registry-wrapper PID death alone never authorizes Resume.
 
 Accepted semantic work items are stored in an append-only, hash-chained journal.
 The same work item is reused only when its input hash and semantic contract ID
@@ -33,7 +35,8 @@ physical provider attempts remain attempt-bound.
 
 ## Mechanical code repair
 
-A code revision change is rejected before any Resume mutation unless the
+A code revision change is rejected immediately after the writer lease is
+acquired and before stale recovery or any other Resume mutation unless the
 operator supplies an explicit repair reason and the new clean Git revision
 descends from the sealed baseline.
 
