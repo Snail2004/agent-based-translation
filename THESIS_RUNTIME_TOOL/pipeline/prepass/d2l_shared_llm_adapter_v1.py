@@ -21,20 +21,38 @@ from pipeline.llm_backend import (
     resolve_llm_run_seal,
 )
 from pipeline.llm_backend.credentials_v1 import CredentialProvider
-from pipeline.llm_backend.transport_v1 import TransportSender
+from pipeline.llm_backend.transport_v1 import TransportCallError, TransportSender
 from pipeline.prepass.d2l_shared_llm_profiles_v1 import (
     D2LRolePreset,
     build_pipeline_profile,
 )
 
 
-ADAPTER_VERSION = "d2l_shared_llm_adapter_v1"
+ADAPTER_VERSION = "d2l_shared_llm_adapter_v2_transport_retry"
+TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE = 75
 
 ProfileBuilder = Callable[..., dict[str, Any]]
+TransportObserver = Callable[[str, Mapping[str, Any]], None]
 
 
 class D2LSharedLlmAdapterError(RuntimeError):
     pass
+
+
+class D2LTransportRetriesExhausted(RuntimeError):
+    """Raised after every sealed retryable transport attempt is persisted."""
+
+    def __init__(
+        self,
+        *,
+        logical_request_id: str,
+        retry_summary: Mapping[str, Any],
+    ) -> None:
+        super().__init__(
+            f"transport retries exhausted for logical request {logical_request_id}"
+        )
+        self.logical_request_id = logical_request_id
+        self.retry_summary = dict(retry_summary)
 
 
 @dataclass(frozen=True)
@@ -89,6 +107,7 @@ class D2LSharedClientResult:
     cache_observation_id: str | None = None
     provider_called: bool | None = None
     source_revision: str | None = None
+    transport_retry_summary: Mapping[str, Any] | None = None
 
 
 class D2LSharedLlmAttemptAdapter:
@@ -226,6 +245,7 @@ class D2LSharedLlmClient:
         attempt_run_id: str,
         stage_id: str,
         google_response_json_schema: Mapping[str, Any] | None = None,
+        sleeper: Callable[[float], None] = time.sleep,
     ) -> None:
         self.adapter = adapter
         self.config = config
@@ -248,6 +268,7 @@ class D2LSharedLlmClient:
             if google_response_json_schema is None
             else dict(google_response_json_schema)
         )
+        self._sleeper = sleeper
 
     @property
     def transport_identity(self) -> str:
@@ -283,6 +304,7 @@ class D2LSharedLlmClient:
         tag: str = "",
         bypass_cache: bool = False,
         semantic_attempt_index: int = 1,
+        transport_observer: TransportObserver | None = None,
     ) -> D2LSharedClientResult:
         if (
             isinstance(semantic_attempt_index, bool)
@@ -337,37 +359,100 @@ class D2LSharedLlmClient:
             attempt_run_id=self.attempt_run_id,
             stage_id=self.stage_id,
         )
-        transport_retry_ordinal = self._transport_retry_ordinal(
-            logical_request_id=logical_request_id
-        )
-        started = time.perf_counter()
-        result = self.adapter.execute(
-            preset=self.preset,
-            api_source=self.api_source,
-            capability=self.capability,
-            prompt_ref=self.prompt_ref,
-            response_schema_ref=self.response_schema_ref,
-            validator_ref=self.validator_ref,
-            semantic_extension_ref=self.semantic_extension_ref,
-            structured_output=self.structured_output,
-            limits=self.limits,
-            run_id=self.run_id,
-            attempt_run_id=self.attempt_run_id,
-            stage_id=self.stage_id,
-            logical_request_id=logical_request_id,
-            semantic_attempt_index=semantic_attempt_index,
-            transport_retry_ordinal=transport_retry_ordinal,
-            request_body=request_body,
-            additional_input_bindings=[
-                {
-                    "name": "semantic_call_tag",
-                    "sha256": sha256(tag.encode("utf-8")).hexdigest(),
+        retry_reason_codes: list[str] = []
+        retry_count = 0
+        retry_summary: dict[str, Any] | None = None
+        while True:
+            transport_retry_ordinal = self._transport_retry_ordinal(
+                logical_request_id=logical_request_id
+            )
+            started = time.perf_counter()
+            try:
+                result = self.adapter.execute(
+                    preset=self.preset,
+                    api_source=self.api_source,
+                    capability=self.capability,
+                    prompt_ref=self.prompt_ref,
+                    response_schema_ref=self.response_schema_ref,
+                    validator_ref=self.validator_ref,
+                    semantic_extension_ref=self.semantic_extension_ref,
+                    structured_output=self.structured_output,
+                    limits=self.limits,
+                    run_id=self.run_id,
+                    attempt_run_id=self.attempt_run_id,
+                    stage_id=self.stage_id,
+                    logical_request_id=logical_request_id,
+                    semantic_attempt_index=semantic_attempt_index,
+                    transport_retry_ordinal=transport_retry_ordinal,
+                    request_body=request_body,
+                    additional_input_bindings=[
+                        {
+                            "name": "semantic_call_tag",
+                            "sha256": sha256(tag.encode("utf-8")).hexdigest(),
+                        }
+                    ],
+                    allow_response_cache_read=not bypass_cache,
+                    allow_response_cache_write=True,
+                )
+            except TransportCallError as exc:
+                failure = self._transport_failure(
+                    logical_request_id=logical_request_id,
+                    semantic_attempt_index=semantic_attempt_index,
+                    transport_retry_ordinal=transport_retry_ordinal,
+                )
+                retry_reason_codes.append(str(failure["retry_class"]))
+                if transport_observer is not None:
+                    transport_observer("attempt_failed", failure)
+                if failure["retry_disposition"] == "transport_retry_allowed":
+                    retry_count = transport_retry_ordinal + 1
+                    if transport_observer is not None:
+                        transport_observer(
+                            "retry_scheduled",
+                            {
+                                "logical_request_id": logical_request_id,
+                                "retry_index": retry_count,
+                                "retry_max": int(
+                                    self.preset.transport_retry["max_retries"]
+                                ),
+                                "reason_code": str(failure["retry_class"]),
+                            },
+                        )
+                    self._sleep_before_retry(retry_count)
+                    continue
+                retryable_codes = set(
+                    str(value)
+                    for value in self.preset.transport_retry["retryable_codes"]
+                )
+                exhausted = (
+                    str(failure["retry_class"]) in retryable_codes
+                    and transport_retry_ordinal
+                    >= int(self.preset.transport_retry["max_retries"])
+                )
+                if exhausted:
+                    summary = {
+                        "logical_request_id": logical_request_id,
+                        "retry_count": int(
+                            self.preset.transport_retry["max_retries"]
+                        ),
+                        "outcome": "exhausted",
+                        "reason_codes": sorted(set(retry_reason_codes)),
+                    }
+                    if transport_observer is not None:
+                        transport_observer("retry_summary", summary)
+                    raise D2LTransportRetriesExhausted(
+                        logical_request_id=logical_request_id,
+                        retry_summary=summary,
+                    ) from exc
+                raise
+            latency_ms = int((time.perf_counter() - started) * 1000)
+            if retry_count:
+                retry_summary = {
+                    "logical_request_id": logical_request_id,
+                    "retry_count": retry_count,
+                    "outcome": "recovered",
+                    "reason_codes": sorted(set(retry_reason_codes)),
                 }
-            ],
-            allow_response_cache_read=not bypass_cache,
-            allow_response_cache_write=True,
-        )
-        latency_ms = int((time.perf_counter() - started) * 1000)
+            break
         parsed, json_error = _parse_json_if_requested(
             result.response_text, response_format=response_format
         )
@@ -448,6 +533,7 @@ class D2LSharedLlmClient:
                 if cache_status in {"hit", "miss"}
                 else "none"
             ),
+            transport_retry_summary=retry_summary,
         )
 
     def _transport_retry_ordinal(self, *, logical_request_id: str) -> int:
@@ -472,6 +558,77 @@ class D2LSharedLlmClient:
         if error is None or error.get("retry_disposition") != "transport_retry_allowed":
             return 0
         return int(latest["transport_retry_ordinal"]) + 1
+
+    def _transport_failure(
+        self,
+        *,
+        logical_request_id: str,
+        semantic_attempt_index: int,
+        transport_retry_ordinal: int,
+    ) -> dict[str, Any]:
+        matching = [
+            row
+            for row in self.adapter.ledger.list_records("usage")
+            if row.get("logical_request_id") == logical_request_id
+            and int(row.get("semantic_attempt_index") or 0)
+            == semantic_attempt_index
+            and int(row.get("transport_retry_ordinal") or 0)
+            == transport_retry_ordinal
+        ]
+        if len(matching) != 1:
+            raise D2LSharedLlmAdapterError(
+                "transport failure lacks one authoritative usage row"
+            )
+        usage = matching[0]
+        error_id = usage.get("error_id")
+        error = (
+            None
+            if error_id is None
+            else self.adapter.ledger.get_record("error", str(error_id))
+        )
+        if error is None:
+            raise D2LSharedLlmAdapterError(
+                "transport failure lacks its authoritative error row"
+            )
+        return {
+            "attempt_usage_id": str(usage["attempt_usage_id"]),
+            "logical_request_id": logical_request_id,
+            "semantic_attempt_index": semantic_attempt_index,
+            "transport_retry_ordinal": transport_retry_ordinal,
+            "physical_attempt_index": int(usage["physical_attempt_index"]),
+            "provider_id": str(usage["source_id"]),
+            "model_id": str(usage["requested_model_id"]),
+            "source_id": str(usage["source_id"]),
+            "source_revision": str(usage["source_revision"]),
+            "masked_quota_bucket": _masked_bucket(
+                str(usage["physical_quota_bucket_id"])
+            ),
+            "latency_ms": int(usage["latency_ms"]),
+            "prompt_tokens": usage["prompt_tokens"],
+            "completion_tokens": usage["completion_tokens"],
+            "cached_input_tokens": usage["cached_input_tokens"],
+            "reasoning_tokens": usage["reasoning_tokens"],
+            "total_tokens": usage["total_tokens"],
+            "cost_usd": usage["cost_usd"],
+            "cost_status": str(usage["cost_status"]),
+            "reason_code": str(error["code"]),
+            "retry_class": str(error["retry_class"]),
+            "retry_disposition": str(error["retry_disposition"]),
+        }
+
+    def _sleep_before_retry(self, retry_index: int) -> None:
+        policy = self.preset.transport_retry
+        initial_ms = int(policy["initial_delay_ms"])
+        maximum_ms = int(policy["max_delay_ms"])
+        if policy["backoff_policy"] == "fixed":
+            delay_ms = initial_ms
+        elif policy["backoff_policy"] == "exponential":
+            delay_ms = initial_ms * (2 ** (retry_index - 1))
+        else:
+            raise D2LSharedLlmAdapterError(
+                "retryable transport failure has no backoff policy"
+            )
+        self._sleeper(min(delay_ms, maximum_ms) / 1000.0)
 
     def get_usage_today(self) -> dict[str, int | str]:
         rows = self.adapter.ledger.list_records("usage")
@@ -751,6 +908,8 @@ def _masked_bucket(value: str) -> str:
 
 
 __all__ = [
+    "D2LTransportRetriesExhausted",
+    "TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE",
     "ADAPTER_VERSION",
     "D2LSharedAttemptResult",
     "D2LSharedClientResult",

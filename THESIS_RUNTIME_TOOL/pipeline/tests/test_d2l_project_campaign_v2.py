@@ -458,6 +458,32 @@ def test_prepare_seals_routes_models_limits_and_isolated_state(tmp_path: Path) -
         < loaded["config"]["limits"]["forecast_total_tokens"]
         < loaded["config"]["limits"]["forecast_token_range"]["high"]
     )
+    assert loaded["config"]["limits"]["derivation"] == (
+        "selected_universe_conservative_v3_transport_retry"
+    )
+    for limit in loaded["config"]["limits"]["roles"]:
+        assert limit["transport_retry_cap"] == 2
+        assert limit["physical_attempts_per_semantic_attempt"] == 3
+        assert limit["physical_attempt_cap"] == (
+            limit["semantic_request_cap"]
+            * limit["semantic_attempts_per_request"]
+            * limit["physical_attempts_per_semantic_attempt"]
+        )
+    assert loaded["config"]["transport_policy"] == {
+        "version": "d2l_project_transport_v2",
+        "retry": {
+            "max_retries": 2,
+            "backoff_policy": "exponential",
+            "initial_delay_ms": 1_000,
+            "max_delay_ms": 4_000,
+            "retryable_codes": [
+                "connection",
+                "rate_limit",
+                "server_unavailable",
+                "timeout",
+            ],
+        },
+    }
     sources = loaded["config"]["transport_sources"]
     assert set(sources) == {
         "shopaikey_gemini_proxy_v2",

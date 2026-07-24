@@ -23,6 +23,9 @@ from pipeline.prepass.d2l_component_stage_receipt_v1 import (
     STAGE_RECEIPT_SCHEMA,
     build_stage_receipt,
 )
+from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
+    TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
+)
 from pipeline.prepass.d2l_translation_component_runner_v1 import (
     ComponentPlan,
     ComponentRunnerError,
@@ -280,6 +283,52 @@ def test_runner_pause_resume_increments_component_attempt(tmp_path: Path) -> Non
     ]
     assert sum(row["event"] == "run_resumed" for row in events) == 1
     assert [row["component_attempt_id"] for row in events if row["event"] == "run_resumed"] == [2]
+
+
+def test_transport_retry_exhaustion_pauses_and_resumes_same_stage(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    marker = tmp_path / "transport_recovered"
+    script = tmp_path / "transport_pause_once.py"
+    script.write_text(
+        textwrap.dedent(
+            f"""
+            import sys
+            from pathlib import Path
+
+            marker = Path(sys.argv[1])
+            if not marker.exists():
+                marker.write_text("retry later", encoding="utf-8")
+                raise SystemExit({TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE})
+            """
+        ),
+        encoding="utf-8",
+    )
+    raw_plan = _plan(attempt_id=2)
+    raw_plan["stages"][0]["command"] = [
+        sys.executable,
+        str(script),
+        str(marker),
+    ]
+    plan = ComponentPlan.from_mapping(raw_plan)
+
+    paused = D2LTranslationComponentRunner(plan, root).run()
+    assert paused["terminal_event"] is None
+    first_manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    assert first_manifest["status"] == "paused"
+    assert first_manifest["active_stage_id"] == "preflight"
+    assert first_manifest["resume"]["paused_reason"] == (
+        "transport_retry_exhausted"
+    )
+    assert _event_counts(root)["run_failed"] == 0
+
+    completed = D2LTranslationComponentRunner(plan, root).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert completed["component_attempt_id"] == 2
 
 
 def test_runner_honors_pause_marker_only_at_stage_boundary(tmp_path: Path) -> None:

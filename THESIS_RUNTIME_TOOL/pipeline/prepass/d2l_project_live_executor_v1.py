@@ -90,7 +90,7 @@ from pipeline.translate.runner import load_window_attempt_state, translate_windo
 from pipeline.translate.windower import Window
 
 
-LIVE_EXECUTOR_VERSION = "d2l_project_live_executor_v1"
+LIVE_EXECUTOR_VERSION = "d2l_project_live_executor_v1_1_transport_retry"
 LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2_3_protected_dual_arm"
 LIVE_SCOPE_ID = "d2l_selected_campaign_scope_v1"
 _COST_STATUSES = {"provider_actual", "pinned_tariff", "unknown"}
@@ -274,6 +274,7 @@ class _StageObservations:
         self.rows: list[dict[str, Any]] = []
         self.usage_rows: list[dict[str, Any]] = []
         self.provider_called_rows: list[bool] = []
+        self.transport_failure_rows: list[dict[str, Any]] = []
         config = campaign["config"]
         self.workflow_run_id = str(config["workflow_run_id"])
         self.component_run_id = str(config["component_run_id"])
@@ -401,6 +402,88 @@ class _StageObservations:
         )
         self._append("usage_snapshot", snapshot)
         self.usage_snapshots.append(snapshot)
+        retry_summary = getattr(result, "transport_retry_summary", None)
+        if retry_summary is not None:
+            self._append_retry_summary(
+                retry_summary,
+                work_id=work_id,
+            )
+
+    def transport_observer(
+        self,
+        *,
+        work_id: str,
+    ) -> Callable[[str, Mapping[str, Any]], None]:
+        def observe(event: str, payload: Mapping[str, Any]) -> None:
+            row = dict(payload)
+            if event == "attempt_failed":
+                self._append(
+                    "request_sent",
+                    {
+                        "logical_request_id": row["logical_request_id"],
+                        "physical_attempt_index": row["physical_attempt_index"],
+                        "work_kind": self.work_kind,
+                        "work_id": work_id,
+                        "provider_id": row["provider_id"],
+                        "model_id": row["model_id"],
+                        "source_id": row["source_id"],
+                        "masked_quota_bucket": row["masked_quota_bucket"],
+                    },
+                )
+                failure = {
+                    **row,
+                    "work_kind": self.work_kind,
+                    "work_id": work_id,
+                }
+                self._append(
+                    "transport_attempt_failed",
+                    failure,
+                    "warning",
+                )
+                self.transport_failure_rows.append(failure)
+                return
+            if event == "retry_scheduled":
+                self._append(
+                    "retry",
+                    {
+                        "retry_kind": "transport",
+                        "index": row["retry_index"],
+                        "max": row["retry_max"],
+                        "reason_code": row["reason_code"],
+                        "logical_request_id": row["logical_request_id"],
+                        "work_kind": self.work_kind,
+                        "work_id": work_id,
+                    },
+                    "warning",
+                )
+                return
+            if event == "retry_summary":
+                self._append_retry_summary(row, work_id=work_id)
+                return
+            raise D2LProjectLiveExecutorError(
+                f"unsupported transport observation: {event}"
+            )
+
+        return observe
+
+    def _append_retry_summary(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        work_id: str,
+    ) -> None:
+        self._append(
+            "retry_summary",
+            {
+                "logical_request_id": payload["logical_request_id"],
+                "retry_kind": "transport",
+                "retry_count": payload["retry_count"],
+                "outcome": payload["outcome"],
+                "work_id": work_id,
+                "reason_codes": list(payload["reason_codes"]),
+            },
+            "info" if payload["outcome"] == "recovered" else "warning",
+        )
 
     def validation(
         self,
@@ -474,15 +557,26 @@ class _StageObservations:
             len(known_costs) == len(provider_usage)
             and bool(provider_usage)
             and len(cost_statuses) == 1
+            and not self.transport_failure_rows
         )
+        logical_request_ids = {
+            row["logical_request_id"] for row in self.usage_rows
+        } | {
+            row["logical_request_id"] for row in self.transport_failure_rows
+        }
+        cache_counters = Counter(
+            row["cache_status"] for row in self.usage_rows
+        )
+        if self.transport_failure_rows:
+            cache_counters["unknown"] += len(self.transport_failure_rows)
         self._append(
             "cost_snapshot",
             {
                 "scope": self.stage_id,
-                "logical_request_count": len(
-                    {row["logical_request_id"] for row in self.usage_rows}
+                "logical_request_count": len(logical_request_ids),
+                "physical_attempt_count": (
+                    len(provider_usage) + len(self.transport_failure_rows)
                 ),
-                "physical_attempt_count": len(provider_usage),
                 "prompt_tokens": prompt,
                 "completion_tokens": completion,
                 "cached_input_tokens": cached,
@@ -491,9 +585,7 @@ class _StageObservations:
                 "cost_usd": sum(known_costs) if all_known else None,
                 "currency": "USD" if all_known else None,
                 "cost_status": next(iter(cost_statuses)) if all_known else "unknown",
-                "cache_counters": dict(
-                    sorted(Counter(row["cache_status"] for row in self.usage_rows).items())
-                ),
+                "cache_counters": dict(sorted(cache_counters.items())),
             },
         )
         config = campaign["config"]
@@ -534,16 +626,20 @@ def _semantic_call(
                     ),
                 }
             )
-        result = client.call(
-            attempt_messages,
-            response_format=dict(response_format),
-            tag=f"{tag}.semantic_{semantic_attempt}",
-            bypass_cache=semantic_attempt > 1,
+        call_kwargs: dict[str, Any] = {
+            "response_format": dict(response_format),
+            "tag": f"{tag}.semantic_{semantic_attempt}",
+            "bypass_cache": semantic_attempt > 1,
             # The correction changes the sealed request body and therefore
             # creates a new logical request. Its local attempt sequence starts
             # at one; retry lineage is carried by the observation below.
-            semantic_attempt_index=1,
-        )
+            "semantic_attempt_index": 1,
+        }
+        if getattr(client, "uses_shared_backend", False):
+            call_kwargs["transport_observer"] = observations.transport_observer(
+                work_id=tag
+            )
+        result = client.call(attempt_messages, **call_kwargs)
         observations.response(result=result, work_id=tag)
         errors: list[str] = []
         validation = None
@@ -1764,6 +1860,10 @@ class _RecordingClient:
         # logical identity to those bytes, so each corrected request starts its
         # own semantic-attempt sequence at one.
         kwargs["semantic_attempt_index"] = 1
+        if getattr(self._client, "uses_shared_backend", False):
+            kwargs["transport_observer"] = self._observations.transport_observer(
+                work_id=tag
+            )
         result = self._client.call(*args, **kwargs)
         self._observations.response(result=result, work_id=tag)
         self.results.append((tag, result))

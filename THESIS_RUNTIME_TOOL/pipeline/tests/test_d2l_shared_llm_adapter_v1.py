@@ -23,6 +23,7 @@ from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     D2LSharedLlmClientFactory,
     D2LSharedLlmAttemptAdapter,
     D2LSharedOpenAiTransportBridge,
+    D2LTransportRetriesExhausted,
     render_google_generate_content_request,
     render_openai_chat_request,
 )
@@ -213,12 +214,12 @@ def _capability() -> dict:
     }
 
 
-def _limits() -> dict:
+def _limits(*, max_calls: int = 2) -> dict:
     return {
-        "max_calls": 2,
-        "max_prompt_tokens": 12000,
-        "max_completion_tokens": 8192,
-        "max_total_tokens": 20192,
+        "max_calls": max_calls,
+        "max_prompt_tokens": 6000 * max_calls,
+        "max_completion_tokens": 4096 * max_calls,
+        "max_total_tokens": 10096 * max_calls,
         "max_cost_usd": None,
         "request_timeout_ms": 300000,
     }
@@ -838,7 +839,7 @@ def test_openai_bridge_rejects_wire_drift_and_records_attempt(tmp_path) -> None:
         bridge(**drifted)
 
 
-def test_explicit_second_call_advances_only_retryable_transport_lineage(
+def test_client_retries_retryable_transport_and_reports_recovery(
     tmp_path,
 ) -> None:
     sender = _FailOnceSender()
@@ -865,6 +866,7 @@ def test_explicit_second_call_advances_only_retryable_transport_lineage(
         (),
         {"model": "gpt-5.5", "temperature": 1.0, "seed": 20260718},
     )()
+    sleeps: list[float] = []
     client = D2LSharedLlmClient(
         adapter=adapter,
         config=config,
@@ -883,6 +885,7 @@ def test_explicit_second_call_advances_only_retryable_transport_lineage(
         run_id="d2l_retry_test",
         attempt_run_id="d2l_retry_attempt",
         stage_id="b2_admission",
+        sleeper=sleeps.append,
     )
     messages = [{"role": "user", "content": "packet"}]
     response_format = {
@@ -901,15 +904,123 @@ def test_explicit_second_call_advances_only_retryable_transport_lineage(
             },
         },
     }
-    with pytest.raises(TransportCallError):
-        client.call(messages, response_format=response_format, tag="same")
-    result = client.call(messages, response_format=response_format, tag="same")
+    observations: list[tuple[str, dict]] = []
+    result = client.call(
+        messages,
+        response_format=response_format,
+        tag="same",
+        transport_observer=lambda event, payload: observations.append(
+            (event, dict(payload))
+        ),
+    )
     assert result.parsed_json == {"packet_id": "pkt", "decisions": []}
+    assert result.transport_retry_summary == {
+        "logical_request_id": result.logical_request_id,
+        "retry_count": 1,
+        "outcome": "recovered",
+        "reason_codes": ["server_unavailable"],
+    }
+    assert sleeps == [1.0]
+    assert [event for event, _payload in observations] == [
+        "attempt_failed",
+        "retry_scheduled",
+    ]
     rows = sorted(
         adapter.ledger.list_records("usage"),
         key=lambda row: row["physical_attempt_index"],
     )
     assert [row["transport_retry_ordinal"] for row in rows] == [0, 1]
+
+
+def test_client_exhaustion_is_bounded_and_preserves_every_attempt(
+    tmp_path,
+) -> None:
+    sender = _FailingSender()
+    adapter = _adapter(tmp_path, sender)
+    prompt_ref, schema_ref, validator_ref, extension_ref = _refs()
+    preset = replace(
+        get_role_preset(ROLE_ID),
+        transport_retry={
+            "max_retries": 2,
+            "backoff_policy": "exponential",
+            "initial_delay_ms": 1000,
+            "max_delay_ms": 4000,
+            "retryable_codes": [
+                "connection",
+                "rate_limit",
+                "server_unavailable",
+                "timeout",
+            ],
+        },
+    )
+    sleeps: list[float] = []
+    client = D2LSharedLlmClient(
+        adapter=adapter,
+        config=type(
+            "Config",
+            (),
+            {"model": "gpt-5.5", "temperature": 1.0, "seed": 20260718},
+        )(),
+        preset=preset,
+        api_source=_source(),
+        capability=_capability(),
+        prompt_ref=prompt_ref,
+        response_schema_ref=schema_ref,
+        validator_ref=validator_ref,
+        semantic_extension_ref=extension_ref,
+        structured_output={
+            "mode": "required",
+            "schema_dialect": "json_schema_2020_12",
+        },
+        limits=_limits(max_calls=3),
+        run_id="d2l_retry_exhausted_test",
+        attempt_run_id="d2l_retry_exhausted_attempt",
+        stage_id="b2_admission",
+        sleeper=sleeps.append,
+    )
+    observations: list[tuple[str, dict]] = []
+    with pytest.raises(D2LTransportRetriesExhausted) as caught:
+        client.call(
+            [{"role": "user", "content": "packet"}],
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "d2l_test",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "packet_id": {"type": "string"},
+                            "decisions": {"type": "array"},
+                        },
+                        "required": ["packet_id", "decisions"],
+                        "additionalProperties": False,
+                    },
+                },
+            },
+            tag="same",
+            transport_observer=lambda event, payload: observations.append(
+                (event, dict(payload))
+            ),
+        )
+
+    assert caught.value.retry_summary["retry_count"] == 2
+    assert caught.value.retry_summary["outcome"] == "exhausted"
+    assert sleeps == [1.0, 2.0]
+    assert [event for event, _payload in observations] == [
+        "attempt_failed",
+        "retry_scheduled",
+        "attempt_failed",
+        "retry_scheduled",
+        "attempt_failed",
+        "retry_summary",
+    ]
+    rows = sorted(
+        adapter.ledger.list_records("usage"),
+        key=lambda row: row["physical_attempt_index"],
+    )
+    assert [row["transport_retry_ordinal"] for row in rows] == [0, 1, 2]
+    assert all(row["cost_usd"] is None for row in rows)
 
 
 def test_pipeline_reask_with_same_tag_is_a_new_logical_request(tmp_path) -> None:

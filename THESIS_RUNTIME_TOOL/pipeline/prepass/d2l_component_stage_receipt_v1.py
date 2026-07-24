@@ -26,7 +26,9 @@ ALLOWED_OBSERVATIONS = {
     "response_received",
     "validation_passed",
     "validation_failed",
+    "transport_attempt_failed",
     "retry",
+    "retry_summary",
     "cost_snapshot",
     "usage_snapshot",
 }
@@ -363,6 +365,11 @@ def validate_stage_receipt(
 
     sent: set[tuple[str, int]] = set()
     received: set[tuple[str, int]] = set()
+    failed: set[tuple[str, int]] = set()
+    retry_summaries: set[str] = set()
+    failures_by_request: dict[str, list[dict[str, Any]]] = {}
+    transport_retries_by_request: dict[str, list[int]] = {}
+    summary_by_request: dict[str, dict[str, Any]] = {}
     normalized: list[dict[str, Any]] = []
     for index, raw in enumerate(observations):
         observation = _mapping(raw, f"observations[{index}]")
@@ -413,11 +420,85 @@ def validate_stage_receipt(
             if key in received:
                 raise D2LStageReceiptError("duplicate response_received identity")
             received.add(key)
+        elif event_name == "transport_attempt_failed":
+            key = (
+                str(payload["logical_request_id"]),
+                int(payload["physical_attempt_index"]),
+            )
+            if key not in sent:
+                raise D2LStageReceiptError(
+                    "transport_attempt_failed has no preceding request_sent"
+                )
+            if key in received or key in failed:
+                raise D2LStageReceiptError(
+                    "duplicate or contradictory transport failure identity"
+                )
+            failed.add(key)
+            failures_by_request.setdefault(key[0], []).append(payload)
         elif event_name == "retry":
             logical_request_id = str(payload["logical_request_id"])
             if logical_request_id not in {item[0] for item in sent}:
                 raise D2LStageReceiptError("retry has no preceding request_sent")
+            if (
+                payload["retry_kind"] == "transport"
+                and logical_request_id not in {item[0] for item in failed}
+            ):
+                raise D2LStageReceiptError(
+                    "transport retry has no preceding failed attempt"
+                )
+            if payload["retry_kind"] == "transport":
+                transport_retries_by_request.setdefault(
+                    logical_request_id, []
+                ).append(int(payload["index"]))
+        elif event_name == "retry_summary":
+            logical_request_id = str(payload["logical_request_id"])
+            if logical_request_id in retry_summaries:
+                raise D2LStageReceiptError("duplicate retry_summary identity")
+            if logical_request_id not in {item[0] for item in failed}:
+                raise D2LStageReceiptError(
+                    "retry_summary has no preceding failed attempt"
+                )
+            if (
+                payload["outcome"] == "recovered"
+                and logical_request_id not in {item[0] for item in received}
+            ):
+                raise D2LStageReceiptError(
+                    "recovered retry_summary has no successful response"
+                )
+            retry_summaries.add(logical_request_id)
+            summary_by_request[logical_request_id] = payload
         normalized.append(observation)
+    for logical_request_id, summary in summary_by_request.items():
+        failures = failures_by_request.get(logical_request_id, [])
+        retry_count = int(summary["retry_count"])
+        expected_failure_count = (
+            retry_count if summary["outcome"] == "recovered" else retry_count + 1
+        )
+        if len(failures) != expected_failure_count:
+            raise D2LStageReceiptError(
+                "retry_summary count does not match failed attempts"
+            )
+        expected_reasons = sorted(
+            {str(failure["retry_class"]) for failure in failures}
+        )
+        if summary["reason_codes"] != expected_reasons:
+            raise D2LStageReceiptError(
+                "retry_summary reasons do not match failed attempts"
+            )
+        if transport_retries_by_request.get(logical_request_id, []) != list(
+            range(1, retry_count + 1)
+        ):
+            raise D2LStageReceiptError(
+                "retry_summary count does not match scheduled retries"
+            )
+        response_count = sum(
+            1 for key in received if key[0] == logical_request_id
+        )
+        expected_response_count = 1 if summary["outcome"] == "recovered" else 0
+        if response_count != expected_response_count:
+            raise D2LStageReceiptError(
+                "retry_summary outcome does not match response evidence"
+            )
     row["observations"] = normalized
     row["receipt_sha256"] = row["receipt_sha256"].upper()
     return row

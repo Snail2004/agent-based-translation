@@ -11,6 +11,10 @@ from pipeline.prepass.d2l_project_stage_runner_v1 import (
     build_component_plan,
     execute_stage,
 )
+from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
+    D2LTransportRetriesExhausted,
+    TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
+)
 from pipeline.prepass.d2l_translation_component_runner_v1 import run_from_plan_file
 
 
@@ -212,4 +216,20 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    try:
+        raise SystemExit(main(sys.argv[1:]))
+    except D2LTransportRetriesExhausted as exc:
+        print(
+            json.dumps(
+                {
+                    "status": "paused_transport_retry_exhausted",
+                    "logical_request_id": exc.logical_request_id,
+                    "retry_count": exc.retry_summary["retry_count"],
+                    "reason_codes": exc.retry_summary["reason_codes"],
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+        )
+        raise SystemExit(TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE)

@@ -60,12 +60,16 @@ def _role(role_id: str = "d2l.b2.admission") -> dict:
 
 
 def _loaded(role: dict) -> dict:
-    attempts = 2
+    attempts = 6
     return {
         "seal": {"integrity": {"payload_sha256": "a" * 64}},
         "config": {
             "component_run_id": "d2l_component_transport_test",
             "semantic_roles": [role],
+            "transport_policy": {
+                "version": transport.TRANSPORT_VERSION,
+                "retry": deepcopy(transport.TRANSPORT_RETRY_POLICY),
+            },
             "limits": {
                 "hard_total_token_cap": 100_000,
                 "roles": [
@@ -211,13 +215,35 @@ def test_transport_attempt_component_identity_is_fail_closed(
         project.build_client(role["role_id"], component_attempt_id=1)
 
 
+def test_historical_campaign_without_transport_policy_fails_closed(
+    tmp_path, monkeypatch
+) -> None:
+    role = _role()
+    loaded = _loaded(role)
+    del loaded["config"]["transport_policy"]
+    monkeypatch.setattr(transport, "load_campaign", lambda _root: loaded)
+
+    with pytest.raises(
+        transport.D2LProjectTransportError,
+        match="prepare a new campaign",
+    ):
+        transport.D2LProjectTransport(
+            campaign_root=tmp_path / "campaign",
+            runtime_root=tmp_path / "runtime",
+            credential_provider=MappingCredentialProvider({}),
+            sender=_OpenAiSender(),
+        )
+
+
 def test_role_namespaces_and_limits_are_revision_bound() -> None:
     role = _role()
     preset = transport.role_preset(role, "modelapi_shared_v1")
     assert role["semantic_role_sha256"][:16].lower() in preset.preset_id
+    assert preset.transport_retry["max_retries"] == 2
+    assert preset.transport_retry["backoff_policy"] == "exponential"
     assert len(set(preset.namespaces.values())) == 3
     limits = transport.role_limits(_loaded(role)["config"], role["role_id"])
-    assert limits["max_calls"] == 2
+    assert limits["max_calls"] == 6
     assert limits["max_total_tokens"] >= (
         role["generation"]["max_input_tokens"]
         + role["generation"]["max_output_tokens"]

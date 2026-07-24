@@ -45,6 +45,9 @@ from pipeline.prepass.d2l_component_stage_receipt_v1 import (
     validate_stage_receipt,
     validate_stage_receipt_against_journal,
 )
+from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
+    TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
+)
 
 
 RUNNER_SCHEMA = "d2l_translation_component_runner_plan_v1_2"
@@ -684,6 +687,8 @@ class D2LTranslationComponentRunner:
                 raise ComponentRunnerError(f"stage {stage.stage_id} timed out")
             time.sleep(0.05)
         self._drain_observation_journal(stage, allow_incomplete_tail=False)
+        if process.returncode == TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE:
+            raise _PauseRun(stage.stage_id, "transport_retry_exhausted")
         if process.returncode != 0:
             raise ComponentRunnerError(
                 f"stage {stage.stage_id} returned exit code {process.returncode}"

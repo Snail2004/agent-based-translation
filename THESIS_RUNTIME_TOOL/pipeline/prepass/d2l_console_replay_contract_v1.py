@@ -53,7 +53,9 @@ EVENT_NAMES = (
     "response_received",
     "validation_passed",
     "validation_failed",
+    "transport_attempt_failed",
     "retry",
+    "retry_summary",
     "checkpoint",
     "artifact_created",
     "stage_done",
@@ -1005,6 +1007,31 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
         "response_received": {"usage"},
         "validation_passed": {"validator_id", "subject_ref", "reason_codes", "retryable"},
         "validation_failed": {"validator_id", "subject_ref", "reason_codes", "retryable"},
+        "transport_attempt_failed": {
+            "attempt_usage_id",
+            "logical_request_id",
+            "semantic_attempt_index",
+            "transport_retry_ordinal",
+            "physical_attempt_index",
+            "work_kind",
+            "work_id",
+            "provider_id",
+            "model_id",
+            "source_id",
+            "source_revision",
+            "masked_quota_bucket",
+            "latency_ms",
+            "prompt_tokens",
+            "completion_tokens",
+            "cached_input_tokens",
+            "reasoning_tokens",
+            "total_tokens",
+            "cost_usd",
+            "cost_status",
+            "reason_code",
+            "retry_class",
+            "retry_disposition",
+        },
         "retry": {
             "retry_kind",
             "index",
@@ -1013,6 +1040,14 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
             "logical_request_id",
             "work_kind",
             "work_id",
+        },
+        "retry_summary": {
+            "logical_request_id",
+            "retry_kind",
+            "retry_count",
+            "outcome",
+            "work_id",
+            "reason_codes",
         },
         "checkpoint": {
             "checkpoint_ref",
@@ -1120,6 +1155,81 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
         if any(not isinstance(reason, str) or not reason for reason in reasons):
             raise D2LConsoleContractError(f"{event_name}.reason_codes must contain strings")
         _require_bool(row["retryable"], f"{event_name}.retryable")
+    elif event_name == "transport_attempt_failed":
+        for key in (
+            "attempt_usage_id",
+            "logical_request_id",
+            "work_kind",
+            "work_id",
+            "provider_id",
+            "model_id",
+            "source_id",
+            "source_revision",
+            "masked_quota_bucket",
+            "reason_code",
+            "retry_class",
+            "retry_disposition",
+        ):
+            _require_string(row[key], f"transport_attempt_failed.{key}")
+        _require_int(
+            row["semantic_attempt_index"],
+            "transport_attempt_failed.semantic_attempt_index",
+            minimum=1,
+        )
+        _require_int(
+            row["transport_retry_ordinal"],
+            "transport_attempt_failed.transport_retry_ordinal",
+        )
+        _require_int(
+            row["physical_attempt_index"],
+            "transport_attempt_failed.physical_attempt_index",
+            minimum=1,
+        )
+        _require_int(
+            row["latency_ms"],
+            "transport_attempt_failed.latency_ms",
+        )
+        token_values = [
+            row[key]
+            for key in (
+                "prompt_tokens",
+                "completion_tokens",
+                "cached_input_tokens",
+                "reasoning_tokens",
+                "total_tokens",
+            )
+        ]
+        if any(value is None for value in token_values):
+            if any(value is not None for value in token_values):
+                raise D2LConsoleContractError(
+                    "transport failure token facts must be all null or all known"
+                )
+        else:
+            for key in (
+                "prompt_tokens",
+                "completion_tokens",
+                "cached_input_tokens",
+                "reasoning_tokens",
+                "total_tokens",
+            ):
+                _require_int(row[key], f"transport_attempt_failed.{key}")
+            if row["total_tokens"] != (
+                row["prompt_tokens"] + row["completion_tokens"]
+            ):
+                raise D2LConsoleContractError(
+                    "transport failure total_tokens is inconsistent"
+                )
+        if row["cost_status"] != "unknown" or row["cost_usd"] is not None:
+            raise D2LConsoleContractError(
+                "transport failure with unavailable cost must remain null"
+            )
+        if row["retry_disposition"] not in {
+            "transport_retry_allowed",
+            "do_not_retry",
+        }:
+            raise D2LConsoleContractError(
+                "transport_attempt_failed.retry_disposition is invalid"
+            )
     elif event_name == "retry":
         for key in ("retry_kind", "reason_code", "logical_request_id", "work_kind", "work_id"):
             _require_string(row[key], f"retry.{key}")
@@ -1127,6 +1237,37 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
         maximum = _require_int(row["max"], "retry.max", minimum=1)
         if index > maximum:
             raise D2LConsoleContractError("retry.index exceeds retry.max")
+    elif event_name == "retry_summary":
+        _require_string(
+            row["logical_request_id"],
+            "retry_summary.logical_request_id",
+        )
+        if row["retry_kind"] != "transport":
+            raise D2LConsoleContractError(
+                "retry_summary.retry_kind must be transport"
+            )
+        _require_int(
+            row["retry_count"],
+            "retry_summary.retry_count",
+            minimum=1,
+        )
+        if row["outcome"] not in {"recovered", "exhausted"}:
+            raise D2LConsoleContractError("retry_summary.outcome is invalid")
+        _require_id(row["work_id"], "retry_summary.work_id")
+        reasons = _require_list(
+            row["reason_codes"],
+            "retry_summary.reason_codes",
+        )
+        if not reasons or any(
+            not isinstance(reason, str) or not reason for reason in reasons
+        ):
+            raise D2LConsoleContractError(
+                "retry_summary.reason_codes must contain strings"
+            )
+        if reasons != sorted(set(reasons)):
+            raise D2LConsoleContractError(
+                "retry_summary.reason_codes must be sorted unique"
+            )
     elif event_name == "checkpoint":
         _validate_relative_ref(row["checkpoint_ref"], "checkpoint.checkpoint_ref")
         _require_sha(row["checkpoint_sha256"], "checkpoint.checkpoint_sha256")

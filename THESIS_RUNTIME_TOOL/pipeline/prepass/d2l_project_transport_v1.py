@@ -23,6 +23,8 @@ from pipeline.llm_backend.credentials_v1 import CredentialProvider
 from pipeline.llm_backend.transport_v1 import TransportSender
 from pipeline.prepass.d2l_project_campaign_v2 import (
     D2LCampaignError,
+    TRANSPORT_POLICY_VERSION,
+    TRANSPORT_RETRY_POLICY,
     load_campaign,
     load_transport_attempt_seal,
 )
@@ -33,7 +35,7 @@ from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
 from pipeline.prepass.d2l_shared_llm_profiles_v1 import D2LRolePreset
 
 
-TRANSPORT_VERSION = "d2l_project_transport_v1"
+TRANSPORT_VERSION = TRANSPORT_POLICY_VERSION
 STRUCTURED_OUTPUT = {"mode": "disabled", "schema_dialect": None}
 
 
@@ -217,19 +219,13 @@ def role_preset(role: Mapping[str, Any], source_id: str) -> D2LRolePreset:
     revision = str(role["semantic_role_sha256"])[:16].lower()
     return D2LRolePreset(
         role_id=role_id,
-        preset_id=f"{role_id}.production_{revision}",
-        preset_revision="campaign_v2",
+        preset_id=f"{role_id}.production_transport_v2_{revision}",
+        preset_revision="campaign_v2_transport_retry_v1",
         lifecycle="active",
         source_choice=source_id,
         requested_model_id=str(role["model_id"]),
         generation=generation,
-        transport_retry={
-            "max_retries": 0,
-            "backoff_policy": "none",
-            "initial_delay_ms": 0,
-            "max_delay_ms": 0,
-            "retryable_codes": [],
-        },
+        transport_retry=deepcopy(TRANSPORT_RETRY_POLICY),
         semantic_retry={
             "max_retries": semantic_retries,
             "retryable_categories": (
@@ -237,9 +233,9 @@ def role_preset(role: Mapping[str, Any], source_id: str) -> D2LRolePreset:
             ),
         },
         namespaces={
-            "output": f"{role_id}.{revision}.output",
-            "checkpoint": f"{role_id}.{revision}.checkpoint",
-            "cache": f"{role_id}.{revision}.cache",
+            "output": f"{role_id}.{revision}.transport_v2.output",
+            "checkpoint": f"{role_id}.{revision}.transport_v2.checkpoint",
+            "cache": f"{role_id}.{revision}.transport_v2.cache",
         },
     )
 
@@ -312,6 +308,15 @@ class D2LProjectTransport:
     ) -> None:
         self.campaign_root = Path(campaign_root).resolve()
         self.loaded = load_campaign(self.campaign_root)
+        expected_transport_policy = {
+            "version": TRANSPORT_VERSION,
+            "retry": TRANSPORT_RETRY_POLICY,
+        }
+        if self.loaded["config"].get("transport_policy") != expected_transport_policy:
+            raise D2LProjectTransportError(
+                "campaign transport policy differs from the active version; "
+                "prepare a new campaign"
+            )
         self.credential_provider = credential_provider
         self.adapter = D2LSharedLlmAttemptAdapter(
             runtime_root=runtime_root,
@@ -413,6 +418,7 @@ __all__ = [
     "D2LProjectTransport",
     "D2LProjectTransportError",
     "STRUCTURED_OUTPUT",
+    "TRANSPORT_RETRY_POLICY",
     "TRANSPORT_VERSION",
     "build_runtime_api_source",
     "role_artifact_refs",

@@ -64,7 +64,7 @@ CONFIG_SCHEMA = "d2l_project_campaign_config_v2"
 SEAL_SCHEMA = "d2l_project_campaign_seal_v2"
 PREFLIGHT_SCHEMA = "d2l_project_campaign_preflight_v2"
 TRANSPORT_SEAL_SCHEMA = "d2l_transport_attempt_seal_v2"
-CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_4_fixed_only_hardened"
+CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_5_transport_retry"
 PIPELINE_ID = "d2l_terminology"
 PIPELINE_VERSION = "d2l_translation_component_v1_4_fixed_only_hardened"
 PROFILE_ID = "technical_d2l_v1"
@@ -75,6 +75,19 @@ DEFAULT_HARD_TOTAL_TOKEN_CAP = 6_000_000
 FORECAST_TOKEN_MULTIPLIER = 25
 FORECAST_TOKEN_LOW_MULTIPLIER = 21
 FORECAST_TOKEN_HIGH_MULTIPLIER = 31
+TRANSPORT_POLICY_VERSION = "d2l_project_transport_v2"
+TRANSPORT_RETRY_POLICY = {
+    "max_retries": 2,
+    "backoff_policy": "exponential",
+    "initial_delay_ms": 1_000,
+    "max_delay_ms": 4_000,
+    "retryable_codes": [
+        "connection",
+        "rate_limit",
+        "server_unavailable",
+        "timeout",
+    ],
+}
 
 ALLOWED_CHANNELS = (
     "semantic_text",
@@ -1260,10 +1273,16 @@ def _build_limits(universe: Mapping[str, Any], roles: Sequence[Mapping[str, Any]
     role_limits = []
     total_attempts = 0
     total_tokens = 0
+    transport_retry_cap = int(TRANSPORT_RETRY_POLICY["max_retries"])
+    physical_attempts_per_semantic_attempt = 1 + transport_retry_cap
     for role in roles:
         request_cap = semantic_request_caps[role["role_id"]]
-        attempts_per_request = 1 + int(role["semantic_retry_cap"])
-        attempt_cap = request_cap * attempts_per_request
+        semantic_attempts_per_request = 1 + int(role["semantic_retry_cap"])
+        attempt_cap = (
+            request_cap
+            * semantic_attempts_per_request
+            * physical_attempts_per_semantic_attempt
+        )
         per_call = int(role["generation"]["max_input_tokens"]) + int(
             role["generation"]["max_output_tokens"]
         )
@@ -1274,6 +1293,11 @@ def _build_limits(universe: Mapping[str, Any], roles: Sequence[Mapping[str, Any]
             {
                 "role_id": role["role_id"],
                 "semantic_request_cap": request_cap,
+                "semantic_attempts_per_request": semantic_attempts_per_request,
+                "transport_retry_cap": transport_retry_cap,
+                "physical_attempts_per_semantic_attempt": (
+                    physical_attempts_per_semantic_attempt
+                ),
                 "physical_attempt_cap": attempt_cap,
                 "max_input_tokens_per_attempt": role["generation"]["max_input_tokens"],
                 "max_output_tokens_per_attempt": role["generation"]["max_output_tokens"],
@@ -1284,7 +1308,7 @@ def _build_limits(universe: Mapping[str, Any], roles: Sequence[Mapping[str, Any]
     forecast_tokens = source_tokens * FORECAST_TOKEN_MULTIPLIER
     return {
         "cap_semantics": "hard_stop_ceiling_not_expected_usage",
-        "derivation": "selected_universe_conservative_v2",
+        "derivation": "selected_universe_conservative_v3_transport_retry",
         "roles": role_limits,
         "hard_physical_attempt_cap": total_attempts,
         "theoretical_role_reserve_tokens": total_tokens,
@@ -1356,6 +1380,10 @@ def build_campaign_config(
         "stage_ids": list(STAGE_IDS),
         "semantic_roles": roles,
         "transport_sources": transports,
+        "transport_policy": {
+            "version": TRANSPORT_POLICY_VERSION,
+            "retry": deepcopy(TRANSPORT_RETRY_POLICY),
+        },
         "limits": limits,
         "state_layout": {
             "work_db": "state/work.sqlite3",
@@ -1861,6 +1889,8 @@ __all__ = [
     "SEAL_SCHEMA",
     "TRANSLATOR_MAX_BLOCKS",
     "TRANSLATOR_TARGET_TOKENS",
+    "TRANSPORT_POLICY_VERSION",
+    "TRANSPORT_RETRY_POLICY",
     "TRANSPORT_SEAL_SCHEMA",
     "UNIVERSE_SCHEMA",
     "bind_component_plan",

@@ -76,6 +76,71 @@ def _request_observation() -> dict[str, object]:
     }
 
 
+def _transport_failure_observation() -> dict[str, object]:
+    return {
+        "event": "transport_attempt_failed",
+        "agent": "b2",
+        "severity": "warning",
+        "ts": "2026-07-22T00:00:02Z",
+        "payload": {
+            "attempt_usage_id": "usage_1",
+            "logical_request_id": "req_1",
+            "semantic_attempt_index": 1,
+            "transport_retry_ordinal": 0,
+            "physical_attempt_index": 1,
+            "work_kind": "packet",
+            "work_id": "packet_1",
+            "provider_id": "provider",
+            "model_id": "model",
+            "source_id": "source",
+            "source_revision": "source_v1",
+            "masked_quota_bucket": "bucket-***",
+            "latency_ms": 10,
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "cached_input_tokens": None,
+            "reasoning_tokens": None,
+            "total_tokens": None,
+            "cost_usd": None,
+            "cost_status": "unknown",
+            "reason_code": "http_500",
+            "retry_class": "server_unavailable",
+            "retry_disposition": "transport_retry_allowed",
+        },
+    }
+
+
+def _response_observation(*, physical_attempt_index: int = 2) -> dict[str, object]:
+    return {
+        "event": "response_received",
+        "agent": "b2",
+        "severity": "info",
+        "ts": "2026-07-22T00:00:05Z",
+        "payload": {
+            "usage": {
+                "logical_request_id": "req_1",
+                "physical_attempt_index": physical_attempt_index,
+                "provider_id": "provider",
+                "model_id": "model",
+                "source_id": "source",
+                "masked_quota_bucket": "bucket-***",
+                "prompt_tokens": 1,
+                "completion_tokens": 1,
+                "cached_input_tokens": 0,
+                "reasoning_tokens": 0,
+                "total_tokens": 2,
+                "latency_ms": 10,
+                "finish_reason": "stop",
+                "cost_usd": None,
+                "currency": None,
+                "cost_status": "unknown",
+                "cache_status": "miss",
+                "cache_mechanism": "none",
+            }
+        },
+    }
+
+
 def _receipt(observations: list[dict[str, object]] | None = None) -> dict[str, object]:
     return build_stage_receipt(
         workflow_run_id="wf_receipt_test",
@@ -162,6 +227,140 @@ def test_stage_receipt_rejects_duplicate_physical_request() -> None:
 
     with pytest.raises(D2LStageReceiptError, match="duplicate request_sent"):
         _validate(receipt)
+
+
+def test_stage_receipt_accepts_transport_retry_recovery_chain() -> None:
+    second_request = deepcopy(_request_observation())
+    second_request["ts"] = "2026-07-22T00:00:04Z"
+    second_request["payload"]["physical_attempt_index"] = 2
+    observations = [
+        _request_observation(),
+        _transport_failure_observation(),
+        {
+            "event": "retry",
+            "agent": "b2",
+            "severity": "warning",
+            "ts": "2026-07-22T00:00:03Z",
+            "payload": {
+                "retry_kind": "transport",
+                "index": 1,
+                "max": 2,
+                "reason_code": "server_unavailable",
+                "logical_request_id": "req_1",
+                "work_kind": "packet",
+                "work_id": "packet_1",
+            },
+        },
+        second_request,
+        _response_observation(),
+        {
+            "event": "retry_summary",
+            "agent": "b2",
+            "severity": "info",
+            "ts": "2026-07-22T00:00:06Z",
+            "payload": {
+                "logical_request_id": "req_1",
+                "retry_kind": "transport",
+                "retry_count": 1,
+                "outcome": "recovered",
+                "work_id": "packet_1",
+                "reason_codes": ["server_unavailable"],
+            },
+        },
+    ]
+
+    validated = _validate(_receipt(observations))
+    assert [row["event"] for row in validated["observations"]] == [
+        "request_sent",
+        "transport_attempt_failed",
+        "retry",
+        "request_sent",
+        "response_received",
+        "retry_summary",
+    ]
+
+
+def test_stage_receipt_rejects_false_recovered_retry_summary() -> None:
+    observations = [
+        _request_observation(),
+        _transport_failure_observation(),
+        {
+            "event": "retry_summary",
+            "agent": "b2",
+            "severity": "info",
+            "ts": "2026-07-22T00:00:03Z",
+            "payload": {
+                "logical_request_id": "req_1",
+                "retry_kind": "transport",
+                "retry_count": 1,
+                "outcome": "recovered",
+                "work_id": "packet_1",
+                "reason_codes": ["server_unavailable"],
+            },
+        },
+    ]
+
+    with pytest.raises(
+        D2LStageReceiptError,
+        match="no successful response",
+    ):
+        _validate(_receipt(observations))
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("retry_count", 2, "count does not match failed attempts"),
+        ("reason_codes", ["timeout"], "reasons do not match failed attempts"),
+    ],
+)
+def test_stage_receipt_rejects_retry_summary_evidence_drift(
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    second_request = deepcopy(_request_observation())
+    second_request["payload"]["physical_attempt_index"] = 2
+    summary = {
+        "event": "retry_summary",
+        "agent": "b2",
+        "severity": "info",
+        "ts": "2026-07-22T00:00:06Z",
+        "payload": {
+            "logical_request_id": "req_1",
+            "retry_kind": "transport",
+            "retry_count": 1,
+            "outcome": "recovered",
+            "work_id": "packet_1",
+            "reason_codes": ["server_unavailable"],
+        },
+    }
+    summary["payload"][field] = value
+    observations = [
+        _request_observation(),
+        _transport_failure_observation(),
+        {
+            "event": "retry",
+            "agent": "b2",
+            "severity": "warning",
+            "ts": "2026-07-22T00:00:03Z",
+            "payload": {
+                "retry_kind": "transport",
+                "index": 1,
+                "max": 2,
+                "reason_code": "server_unavailable",
+                "logical_request_id": "req_1",
+                "work_kind": "packet",
+                "work_id": "packet_1",
+            },
+        },
+        second_request,
+        _response_observation(),
+        summary,
+    ]
+
+    with pytest.raises(D2LStageReceiptError, match=message):
+        _validate(_receipt(observations))
 
 
 def test_stage_receipt_accepts_component_scoped_cost_snapshot() -> None:

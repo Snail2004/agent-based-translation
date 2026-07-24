@@ -26,6 +26,7 @@ from pipeline.prepass.d2l_project_campaign_v2 import (
 )
 from pipeline.prepass.d2l_project_live_executor_v1 import (
     D2LProjectLiveExecutorError,
+    _StageObservations,
     _mechanical_quality,
     execute_live_stage,
 )
@@ -167,6 +168,126 @@ class _FakeClient:
 
 
 _INVALID_JSON = object()
+
+
+def test_stage_observations_emit_truthful_transport_retry_summary(
+    tmp_path: Path,
+) -> None:
+    campaign = {
+        "config": {
+            "workflow_run_id": "wf_transport_observation",
+            "component_run_id": "component_transport_observation",
+        }
+    }
+    observations = _StageObservations(
+        campaign=campaign,
+        component_root=tmp_path,
+        component_attempt_id=1,
+        stage_id="b2_admission_translation",
+        agent="b2",
+        work_kind="packet",
+        work_id="packet_1",
+    )
+    observe = observations.transport_observer(work_id="packet_1")
+    observe(
+        "attempt_failed",
+        {
+            "attempt_usage_id": "usage_failed_1",
+            "logical_request_id": "request_transport_1",
+            "semantic_attempt_index": 1,
+            "transport_retry_ordinal": 0,
+            "physical_attempt_index": 1,
+            "provider_id": "provider",
+            "model_id": "model",
+            "source_id": "source",
+            "source_revision": "source_v1",
+            "masked_quota_bucket": "bucket-***",
+            "latency_ms": 10,
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "cached_input_tokens": None,
+            "reasoning_tokens": None,
+            "total_tokens": None,
+            "cost_usd": None,
+            "cost_status": "unknown",
+            "reason_code": "http_500",
+            "retry_class": "server_unavailable",
+            "retry_disposition": "transport_retry_allowed",
+        },
+    )
+    observe(
+        "retry_scheduled",
+        {
+            "logical_request_id": "request_transport_1",
+            "retry_index": 1,
+            "retry_max": 2,
+            "reason_code": "server_unavailable",
+        },
+    )
+    observations.response(
+        result=D2LSharedClientResult(
+            text='{"ok":true}',
+            parsed_json={"ok": True},
+            json_error=None,
+            model="model",
+            system_fingerprint="fingerprint",
+            usage=LLMUsage(
+                prompt_tokens=10,
+                cached_tokens=0,
+                completion_tokens=2,
+                reasoning_tokens=0,
+            ),
+            cost_usd=0.001,
+            cost_status="provider_actual",
+            latency_ms=12,
+            from_cache=False,
+            cache_key="cache-key",
+            seal_sha256="a" * 64,
+            artifact_sha256="b" * 64,
+            response_payload={"ok": True},
+            logical_request_id="request_transport_1",
+            physical_attempt_index=2,
+            provider_id="provider",
+            source_id="source",
+            masked_quota_bucket="bucket-***",
+            finish_reason="stop",
+            cache_status="miss",
+            cache_mechanism="local_exact_cache",
+            attempt_usage_id="usage_success_2",
+            semantic_attempt_index=1,
+            transport_retry_ordinal=1,
+            provider_called=True,
+            source_revision="source_v1",
+            transport_retry_summary={
+                "logical_request_id": "request_transport_1",
+                "retry_count": 1,
+                "outcome": "recovered",
+                "reason_codes": ["server_unavailable"],
+            },
+        ),
+        work_id="packet_1",
+    )
+    receipt = observations.receipt(
+        campaign=campaign,
+        component_attempt_id=1,
+        producer="b2",
+        work_id="packet_1",
+    )
+
+    assert [row["event"] for row in receipt["observations"]] == [
+        "request_sent",
+        "transport_attempt_failed",
+        "retry",
+        "request_sent",
+        "response_received",
+        "usage_snapshot",
+        "retry_summary",
+        "cost_snapshot",
+    ]
+    cost = receipt["observations"][-1]["payload"]
+    assert cost["physical_attempt_count"] == 2
+    assert cost["cost_usd"] is None
+    assert cost["cost_status"] == "unknown"
 
 
 class _FakeTransport:
