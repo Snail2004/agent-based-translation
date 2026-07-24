@@ -7,6 +7,8 @@ from pipeline.translate.d2l_latex_markup_line_protected_spans_v4 import (
     POLICY_ID,
     PROMPT_VERSION,
     context_source_blocks,
+    fixed_only_block_ids,
+    fixed_source_segments,
     lexical_source_blocks,
     protect_blocks,
     protected_span_reask_note,
@@ -167,6 +169,21 @@ def test_policy_dispatch_keeps_v3_and_v4_independent() -> None:
     assert new_policy.protect_blocks is protect_blocks
     assert new_policy.context_source_blocks is context_source_blocks
     assert new_policy.lexical_source_blocks is lexical_source_blocks
+
+
+def test_fixed_only_blocks_and_source_segments_are_derived_by_code() -> None:
+    blocks = [
+        _block(r"$$\operatorname*{argmin}_{x} f(x)$$", "math_only"),
+        _block(":eqlabel:`eq_x`", "directive_only"),
+        _block(r"Use $x$ in prose.", "mixed"),
+    ]
+    plan = protect_blocks(blocks)
+    segments = fixed_source_segments(plan)
+
+    assert fixed_only_block_ids(plan) == {"math_only", "directive_only"}
+    assert segments["math_only"] == [r"$$\operatorname*{argmin}_{x} f(x)$$"]
+    assert segments["directive_only"] == [":eqlabel:`eq_x`"]
+    assert r"$x$" in segments["mixed"]
 
 
 def test_reask_note_does_not_disclose_line_bytes_or_formula() -> None:

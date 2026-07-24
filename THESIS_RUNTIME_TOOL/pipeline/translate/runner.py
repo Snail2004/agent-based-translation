@@ -197,10 +197,10 @@ def translate_windows(
     protected_policy = get_protected_span_policy(protected_spans_policy)
     protected_spans_active = protected_policy is not None
     if protected_spans_active and not (
-        config == "S1" and profile.name == "technical_d2l_v1"
+        config in {"S0", "S1"} and profile.name == "technical_d2l_v1"
     ):
         raise ValueError(
-            "Protected spans are only supported for technical D2L S1"
+            "Protected spans are only supported for technical D2L S0/S1"
         )
     slot_output_active = (
         translation_output_policy == D2L_TRANSLATION_SLOTS_POLICY_ID
@@ -210,12 +210,12 @@ def translate_windows(
             f"Unknown translation output policy: {translation_output_policy}"
         )
     if slot_output_active and not (
-        config == "S1"
+        config in {"S0", "S1"}
         and profile.name == "technical_d2l_v1"
         and protected_spans_active
     ):
         raise ValueError(
-            "Translation slots require technical D2L S1 with protected spans"
+            "Translation slots require technical D2L S0/S1 with protected spans"
         )
     if response_envelope_policy not in {
         None,
@@ -368,6 +368,7 @@ def translate_windows(
             lexical_blocks = blocks_for_prompt
             slot_to_block: dict[str, str] = {}
             prompt_blocks = blocks_for_prompt
+            unchanged_allowed_block_ids: set[str] = set()
             if protected_spans_active:
                 assert protected_policy is not None
                 protection_plan = protected_policy.protect_blocks(blocks_for_prompt)
@@ -379,6 +380,10 @@ def translate_windows(
                 if protected_policy.lexical_source_blocks is not None:
                     lexical_blocks = protected_policy.lexical_source_blocks(
                         protection_plan
+                    )
+                if protected_policy.fixed_only_block_ids is not None:
+                    unchanged_allowed_block_ids = (
+                        protected_policy.fixed_only_block_ids(protection_plan)
                     )
                 emit_event(
                     sink,
@@ -488,6 +493,7 @@ def translate_windows(
                 allowed_override_preferences=allowed_override_preferences,
                 protection_plan=protection_plan,
                 protected_span_policy=protected_policy,
+                unchanged_allowed_block_ids=unchanged_allowed_block_ids,
                 slot_to_block=slot_to_block or None,
                 response_envelope_policy=response_envelope_policy,
                 max_attempts=max_attempts_per_window,
@@ -782,6 +788,7 @@ def _call_with_reask(
     allowed_override_preferences: dict[str, set[str]] | None = None,
     protection_plan: Any | None = None,
     protected_span_policy: ProtectedSpanPolicy | None = None,
+    unchanged_allowed_block_ids: set[str] | None = None,
     slot_to_block: dict[str, str] | None = None,
     response_envelope_policy: str | None = None,
     max_attempts: int = 2,
@@ -1001,6 +1008,16 @@ def _call_with_reask(
             deterministic_major = integrity_retry_findings(
                 deterministic_findings
             )
+            unchanged_allowed = unchanged_allowed_block_ids or set()
+            deterministic_major = [
+                finding
+                for finding in deterministic_major
+                if not (
+                    finding.block_id in unchanged_allowed
+                    and finding.issue_type
+                    in {"target_equals_source", "untranslated_heading"}
+                )
+            ]
             deterministic_warnings = integrity_warning_findings(
                 deterministic_findings
             )

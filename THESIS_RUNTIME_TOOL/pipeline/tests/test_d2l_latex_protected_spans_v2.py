@@ -150,6 +150,29 @@ def test_code_and_sphinx_roles_are_structural_not_math() -> None:
     assert all(span.source not in plan.prompt_legend() for span in plan.spans)
 
 
+@pytest.mark.parametrize(
+    "source",
+    [
+        r"The optimum is $$\operatorname*{argmin}_{x} f(x).$$",
+        r"The pair is $(\mathbf{w}^*, b^*)$.",
+        r"Convolution is $$ (f * g)(x)=\int f(z)g(x-z)\,dz. $$",
+        r"Emphasis wraps (**$$x^* = \operatorname*{argmax}_x f(x)$$**).",
+    ],
+)
+def test_markdown_asterisks_inside_math_do_not_create_overlapping_spans(
+    source: str,
+) -> None:
+    plan = protect_blocks([_block(source)])
+
+    assert math_spans_in_text(source)
+    assert all(
+        span.source not in plan.protected_blocks[0]["clean_text"]
+        for span in plan.spans
+    )
+    ranges = [(span.start, span.end) for span in plan.spans]
+    assert all(left[1] <= right[0] for left, right in zip(ranges, ranges[1:]))
+
+
 def test_reask_note_never_discloses_source_formula() -> None:
     plan = protect_blocks([_block(r"Use $x$.")])
     _, issues = restore_translations({"b1": "Use x."}, plan)
