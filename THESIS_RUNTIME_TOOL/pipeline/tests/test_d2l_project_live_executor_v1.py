@@ -132,6 +132,15 @@ class _FakeClient:
             parsed = None
             text = "not-json"
             json_error = "synthetic_invalid_json"
+        elif isinstance(payload, _FencedJsonPayload):
+            parsed = None
+            text = (
+                "```json\n"
+                + json.dumps(payload.value, ensure_ascii=False)
+                + "\n```"
+            )
+            json_error = None
+            payload = payload.value
         else:
             parsed = payload
             text = json.dumps(payload, ensure_ascii=False)
@@ -168,6 +177,11 @@ class _FakeClient:
 
 
 _INVALID_JSON = object()
+
+
+class _FencedJsonPayload:
+    def __init__(self, value: dict) -> None:
+        self.value = value
 
 
 def test_stage_observations_emit_truthful_transport_retry_summary(
@@ -291,9 +305,16 @@ def test_stage_observations_emit_truthful_transport_retry_summary(
 
 
 class _FakeTransport:
-    def __init__(self, source_by_block: dict[str, str], *, invalid_b1_once: bool = False):
+    def __init__(
+        self,
+        source_by_block: dict[str, str],
+        *,
+        invalid_b1_once: bool = False,
+        fenced_b1_once: bool = False,
+    ):
         self.source_by_block = dict(source_by_block)
         self.invalid_b1_once = invalid_b1_once
+        self.fenced_b1_once = fenced_b1_once
         self.call_count = 0
         self.calls: list[dict] = []
         self.models = {
@@ -327,7 +348,7 @@ class _FakeTransport:
                 for block_id, text in self.source_by_block.items()
                 if "technical definition" in text
             )
-            return {
+            response = {
                 "chapter_id": chapter_id,
                 "window_id": window_id,
                 "candidate_observations": [
@@ -337,6 +358,10 @@ class _FakeTransport:
                     }
                 ],
             }
+            if self.fenced_b1_once:
+                self.fenced_b1_once = False
+                return _FencedJsonPayload(response)
+            return response
         if role_id == "d2l.b2.admission":
             packet = next(
                 value
@@ -538,6 +563,104 @@ def _prepared(tmp_path: Path) -> tuple[Path, Path, dict, object, list[dict], dic
         invalid_b1_once=True,
     )
     return job, campaign_root, campaign, project, rows, {"plan": plan, "transport": transport}
+
+
+def test_b1_accepts_one_whole_response_json_fence_without_semantic_retry(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    plan = ComponentPlan.from_mapping(support["plan"])
+    stage = next(
+        item for item in plan.stages if item.stage_id == "b1_candidate_discovery"
+    )
+    transport = support["transport"]
+    transport.invalid_b1_once = False
+    transport.fenced_b1_once = True
+
+    payloads = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+
+    candidate_calls = [
+        row
+        for row in transport.calls
+        if row["role_id"] == "d2l.candidate_discovery"
+    ]
+    assert candidate_calls
+    assert all(row["tag"].endswith(".semantic_1") for row in candidate_calls)
+    assert "art_b1_candidate_discovery" in payloads
+    receipt = next(
+        value for value in payloads.values() if "observations" in value
+    )
+    assert not any(
+        row["event"] == "retry" for row in receipt["observations"]
+    )
+
+
+def test_b1_reuses_durable_work_results_after_process_resume(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    stage = next(
+        item
+        for item in ComponentPlan.from_mapping(support["plan"]).stages
+        if item.stage_id == "b1_candidate_discovery"
+    )
+    transport = support["transport"]
+    transport.invalid_b1_once = False
+    first = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+    call_count = transport.call_count
+
+    resumed = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=2,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+
+    assert transport.call_count == call_count
+    assert (
+        resumed["art_b1_candidate_discovery"]["candidates"]
+        == first["art_b1_candidate_discovery"]["candidates"]
+    )
+    receipt = next(
+        value for value in resumed.values() if "observations" in value
+    )
+    assert any(
+        row["event"] == "validation_passed"
+        and row["payload"]["reason_codes"] == ["durable_work_item_reused"]
+        for row in receipt["observations"]
+    )
 
 
 def test_live_executor_full_stage_chain_is_gold_free_and_exact_cover(tmp_path: Path) -> None:

@@ -12,7 +12,9 @@ sequence, or a five-arm scoring handoff.
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 import json
+import os
 import subprocess
 import time
 from dataclasses import dataclass
@@ -38,6 +40,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     write_json,
 )
 from pipeline.prepass.d2l_component_stage_receipt_v1 import (
+    D2LStageReceiptError,
     D2LStageObservationJournalWriter,
     STAGE_RECEIPT_SCHEMA,
     observation_journal_state,
@@ -48,10 +51,15 @@ from pipeline.prepass.d2l_component_stage_receipt_v1 import (
 from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
 )
+from pipeline.prepass.d2l_repair_resume_v1 import build_repair_receipt
+from pipeline.prepass.d2l_stage_work_journal_v1 import (
+    read_work_journal,
+    work_journal_state,
+)
 
 
 RUNNER_SCHEMA = "d2l_translation_component_runner_plan_v1_2"
-RUNNER_VERSION = "d2l_translation_component_runner_v1_2"
+RUNNER_VERSION = "d2l_translation_component_runner_v1_3_repair_resume"
 _FORBIDDEN_PLAN_KEYS = {
     "raw_prompt",
     "raw_response",
@@ -376,11 +384,21 @@ class D2LTranslationComponentRunner:
         *,
         stop_after_stage: str | None = None,
         pause_file: str | Path | None = None,
+        repair_code_root: str | Path | None = None,
+        repair_reason: str | None = None,
+        recover_stale: bool = False,
     ) -> None:
         self.plan = plan if isinstance(plan, ComponentPlan) else ComponentPlan.from_mapping(plan)
         self.root = Path(root).resolve()
         self.stop_after_stage = stop_after_stage
         self.pause_file = Path(pause_file).resolve() if pause_file is not None else None
+        self.repair_code_root = (
+            Path(repair_code_root).resolve()
+            if repair_code_root is not None
+            else None
+        )
+        self.repair_reason = repair_reason
+        self.recover_stale = recover_stale
         if stop_after_stage is not None and stop_after_stage not in STAGE_IDS:
             raise ComponentRunnerError("stop_after_stage is not a D2L stage")
         self.manifest: dict[str, Any]
@@ -390,6 +408,12 @@ class D2LTranslationComponentRunner:
         self._resuming = False
         self._previous_checkpoint: dict[str, Any] | None = None
         self._journal_cursor = 0
+        self._effective_code_revision = self.plan.code_revision
+        self._repair_receipt: dict[str, Any] | None = None
+        self._repair_receipt_path: Path | None = None
+        self._pending_journal_recovery: (
+            tuple[StagePlan, Path, dict[str, Any]] | None
+        ) = None
 
     @property
     def manifest_path(self) -> Path:
@@ -414,10 +438,192 @@ class D2LTranslationComponentRunner:
         ]
         return None if not snapshots else str(snapshots[-1]["snapshot_sha256"])
 
+    def _work_journal_checkpoint_state(self) -> dict[str, dict[str, Any]]:
+        journals: dict[str, dict[str, Any]] = {}
+        for stage_id in STAGE_IDS:
+            relative_ref = f"runtime/work_items/{stage_id}.jsonl"
+            path = self.root / relative_ref
+            if not path.is_file():
+                continue
+            state = work_journal_state(read_work_journal(path))
+            journals[stage_id] = {
+                "journal_ref": relative_ref,
+                "journal_sha256": file_sha256(path),
+                "entry_count": state["entry_count"],
+                "last_entry_sha256": state["last_entry_sha256"],
+            }
+        return journals
+
+    def _semantic_contract_sha256(self) -> str:
+        plan = self.plan.canonical_mapping()
+        stage_contracts = []
+        for stage in plan["stages"]:
+            stage_contracts.append(
+                {
+                    key: stage[key]
+                    for key in (
+                        "stage_id",
+                        "producer",
+                        "artifact_specs",
+                        "total",
+                        "unit",
+                        "work_id",
+                        "mode",
+                        "receipt_ref",
+                    )
+                }
+            )
+        return canonical_sha256(
+            {
+                "pipeline_id": plan["pipeline_id"],
+                "pipeline_version": plan["pipeline_version"],
+                "source_binding": plan["source_binding"],
+                "config_sha256": plan["config_sha256"],
+                "selected_chapter_ids": plan["selected_chapter_ids"],
+                "scoring_handoff_fragment_ref": plan[
+                    "scoring_handoff_fragment_ref"
+                ],
+                "stage_contracts": stage_contracts,
+            }
+        )
+
+    def _git_command(self, *args: str) -> subprocess.CompletedProcess:
+        if self.repair_code_root is None:
+            raise ComponentRunnerError("repair code root is unavailable")
+        try:
+            return subprocess.run(
+                ["git", "-C", str(self.repair_code_root), *args],
+                check=True,
+                capture_output=True,
+                timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise ComponentRunnerError(
+                "cannot verify repair Git lineage"
+            ) from exc
+
+    def _runtime_code_revision(self) -> str:
+        if self.repair_code_root is None:
+            return self.plan.code_revision
+        revision = (
+            self._git_command("rev-parse", "HEAD")
+            .stdout.decode("ascii")
+            .strip()
+            .lower()
+        )
+        if len(revision) != 40 or any(
+            character not in "0123456789abcdef" for character in revision
+        ):
+            raise ComponentRunnerError("runtime Git revision is invalid")
+        status = self._git_command(
+            "status",
+            "--porcelain",
+            "--untracked-files=no",
+        ).stdout
+        if status.strip():
+            raise ComponentRunnerError(
+                "runtime Git tree has tracked changes; commit before Resume"
+            )
+        return revision
+
+    def _prepare_repair_receipt(
+        self,
+        *,
+        current: Mapping[str, Any],
+        resume: Mapping[str, Any],
+    ) -> None:
+        observed_revision = self._runtime_code_revision()
+        if observed_revision == self.plan.code_revision:
+            if self.repair_reason is not None:
+                raise ComponentRunnerError(
+                    "repair reason was supplied without a code revision change"
+                )
+            return
+        if not isinstance(self.repair_reason, str) or not self.repair_reason:
+            raise ComponentRunnerError(
+                "runtime code revision changed; explicit repair reason is required"
+            )
+        ancestor = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repair_code_root),
+                "merge-base",
+                "--is-ancestor",
+                self.plan.code_revision,
+                observed_revision,
+            ],
+            capture_output=True,
+            timeout=30,
+        )
+        if ancestor.returncode != 0:
+            raise ComponentRunnerError(
+                "repair revision must descend from the sealed baseline"
+            )
+        changed_raw = self._git_command(
+            "diff",
+            "--name-only",
+            "-z",
+            self.plan.code_revision,
+            observed_revision,
+        ).stdout
+        changed_paths = sorted(
+            {
+                value.decode("utf-8")
+                for value in changed_raw.split(b"\0")
+                if value
+            }
+        )
+        if not changed_paths:
+            raise ComponentRunnerError("repair Git delta is empty")
+        delta = self._git_command(
+            "diff",
+            "--binary",
+            self.plan.code_revision,
+            observed_revision,
+        ).stdout
+        previous_attempt = int(current["component_attempt_id"])
+        receipt = build_repair_receipt(
+            workflow_run_id=str(current["workflow_run_id"]),
+            component_run_id=str(current["component_run_id"]),
+            previous_component_attempt_id=previous_attempt,
+            stage_id=str(resume["stage_id"]),
+            checkpoint_ref=str(resume["checkpoint_ref"]),
+            checkpoint_sha256=str(resume["checkpoint_sha256"]),
+            reason_code=self.repair_reason,
+            baseline_code_revision=self.plan.code_revision,
+            effective_code_revision=observed_revision,
+            semantic_contract_sha256=self._semantic_contract_sha256(),
+            runner_plan_sha256=self.plan.plan_sha256,
+            git_delta_sha256=sha256(delta).hexdigest().upper(),
+            changed_paths=changed_paths,
+            created_at=_timestamp(),
+        )
+        relative_ref = (
+            "runtime/repair_receipts/"
+            f"repair_a{previous_attempt + 1:04d}.json"
+        )
+        receipt_path = self.root / relative_ref
+        if receipt_path.exists():
+            if _load_json(receipt_path, "repair receipt") != receipt:
+                raise ComponentRunnerError("repair receipt path already drifted")
+        else:
+            write_json(receipt_path, receipt)
+        self._effective_code_revision = observed_revision
+        self._repair_receipt = receipt
+        self._repair_receipt_path = receipt_path
+
     def run(self, *, resume: bool = False) -> dict[str, Any]:
         if resume:
             if not self.root.is_dir():
                 raise ComponentRunnerError("component root is missing during resume")
+            current = _load_json(self.manifest_path, "component manifest")
+            if current.get("status") == "running":
+                if not self.recover_stale:
+                    raise ComponentRunnerError(
+                        "running component requires explicit stale-attempt recovery"
+                    )
+                self._recover_stale_attempt()
             self._open_resume()
         else:
             self.root.mkdir(parents=True, exist_ok=True)
@@ -431,6 +637,77 @@ class D2LTranslationComponentRunner:
         except Exception as exc:
             self._fail(exc)
             raise
+
+    def _recover_stale_attempt(self) -> None:
+        self.manifest = validate_component_manifest(
+            _load_json(self.manifest_path, "component manifest")
+        )
+        if self.manifest["status"] != "running":
+            raise ComponentRunnerError(
+                "stale-attempt recovery requires a running component"
+            )
+        expected_immutable = {
+            "workflow_run_id": self.plan.workflow_run_id,
+            "component_run_id": self.plan.component_run_id,
+            "pipeline_id": self.plan.pipeline_id,
+            "pipeline_version": self.plan.pipeline_version,
+            "source_binding": self.plan.source_binding,
+            "config_sha256": self.plan.config_sha256,
+            "code_revision": self.plan.code_revision,
+            "selected_chapter_ids": list(self.plan.selected_chapter_ids),
+        }
+        if any(
+            self.manifest[key] != expected
+            for key, expected in expected_immutable.items()
+        ):
+            raise ComponentRunnerError(
+                "stale-attempt identity does not match the sealed plan"
+            )
+        stage_id = str(self.manifest["active_stage_id"])
+        stage = next(
+            (row for row in self.plan.stages if row.stage_id == stage_id),
+            None,
+        )
+        if stage is None or self._stage_row(stage_id)["status"] != "running":
+            raise ComponentRunnerError(
+                "stale-attempt active stage is not recoverable"
+            )
+        index = _load_json(self.index_path, "artifact index")
+        self.artifacts = list(index.get("artifacts") or [])
+        self._current_attempt = int(self.manifest["component_attempt_id"])
+        try:
+            journal_entries = read_observation_journal(
+                self.observation_journal_path
+            )
+        except D2LStageReceiptError as exc:
+            if "unterminated final row" not in str(exc):
+                raise
+            receipt_path, receipt = (
+                self._quarantine_incomplete_observation_tail(
+                    stage,
+                    register=False,
+                )
+            )
+            self._pending_journal_recovery = (
+                stage,
+                receipt_path,
+                receipt,
+            )
+            journal_entries = read_observation_journal(
+                self.observation_journal_path
+            )
+        validate_translation_component_package(
+            self.root,
+            require_terminal=False,
+        )
+        self._journal_cursor = len(journal_entries)
+        self.writer = D2LTranslationComponentEventWriter(
+            self.root / "events.jsonl",
+            manifest=self.manifest,
+            component_attempt_id=self._current_attempt,
+            recover_existing_attempt=True,
+        )
+        self._pause(stage_id, "stale_process_recovered")
 
     def _start_new(self) -> None:
         if (
@@ -547,6 +824,11 @@ class D2LTranslationComponentRunner:
             != latest_usage_sha
         ):
             raise ComponentRunnerError("resume usage snapshot lineage mismatch")
+        if checkpoint_state.get("work_journals", {}) != (
+            self._work_journal_checkpoint_state()
+        ):
+            raise ComponentRunnerError("resume work journal lineage mismatch")
+        self._prepare_repair_receipt(current=current, resume=resume)
         self._journal_cursor = len(journal_entries)
         self._current_attempt = int(current["component_attempt_id"]) + 1
         self.manifest = dict(current)
@@ -576,7 +858,243 @@ class D2LTranslationComponentRunner:
                 "previous_component_attempt_id": self._current_attempt - 1,
                 "checkpoint_ref": resume["checkpoint_ref"],
                 "checkpoint_sha256": resume["checkpoint_sha256"],
-                "reason_code": "resume_after_pause",
+                "reason_code": (
+                    "resume_after_code_repair"
+                    if self._repair_receipt is not None
+                    else "resume_after_pause"
+                ),
+            },
+        )
+        if self._pending_journal_recovery is not None:
+            recovery_stage, receipt_path, receipt = (
+                self._pending_journal_recovery
+            )
+            self._register_recovery_receipt(
+                stage=recovery_stage,
+                receipt_path=receipt_path,
+                receipt=receipt,
+            )
+            self._pending_journal_recovery = None
+        self._register_repair_receipt(stage_id=str(resume["stage_id"]))
+        self._quarantine_unpublished_stage_outputs(
+            stage_id=str(resume["stage_id"]),
+            previous_component_attempt_id=self._current_attempt - 1,
+            paused_reason=str(resume["paused_reason"]),
+        )
+
+    def _register_repair_receipt(self, *, stage_id: str) -> None:
+        if self._repair_receipt is None or self._repair_receipt_path is None:
+            return
+        artifact_ref = f"art_component_repair_a{self._current_attempt:04d}"
+        if artifact_ref in {row["artifact_ref"] for row in self.artifacts}:
+            raise ComponentRunnerError("repair receipt was already registered")
+        row = {
+            "workflow_run_id": self.manifest["workflow_run_id"],
+            "flow_kind": self.manifest["flow_kind"],
+            "component_id": COMPONENT_ID,
+            "component_run_id": self.manifest["component_run_id"],
+            "component_attempt_id": self._current_attempt,
+            "artifact_ref": artifact_ref,
+            "artifact_kind": "d2l_component_repair_receipt",
+            "schema_version": self._repair_receipt["schema_version"],
+            "sha256": file_sha256(self._repair_receipt_path),
+            "sha256_kind": "physical",
+            "producer_stage_id": stage_id,
+            "parent_artifact_refs": [],
+            "created_event_id": self.writer.next_event_id,
+            "relative_path": str(
+                self._repair_receipt_path.relative_to(self.root)
+            ).replace("\\", "/"),
+            "availability": "available",
+            "metadata": {
+                "repair_kind": self._repair_receipt["repair_kind"],
+                "baseline_code_revision": self._repair_receipt[
+                    "baseline_code_revision"
+                ],
+                "effective_code_revision": self._repair_receipt[
+                    "effective_code_revision"
+                ],
+            },
+        }
+        self.artifacts.append(row)
+        self._write_index()
+        self.writer.emit(
+            "artifact_created",
+            stage_id=stage_id,
+            agent="d2l_component_runner",
+            payload={
+                "artifact_ref": row["artifact_ref"],
+                "artifact_kind": row["artifact_kind"],
+                "schema_version": row["schema_version"],
+                "sha256": row["sha256"],
+                "sha256_kind": row["sha256_kind"],
+                "parent_artifact_refs": [],
+            },
+        )
+
+    def _quarantine_unpublished_stage_outputs(
+        self,
+        *,
+        stage_id: str,
+        previous_component_attempt_id: int,
+        paused_reason: str,
+    ) -> None:
+        recoverable_prefixes = (
+            "stage_process_",
+            "stage_output_contract_failed",
+            "observation_journal_",
+            "transport_retry_exhausted",
+            "stale_process_recovered",
+        )
+        if not paused_reason.startswith(recoverable_prefixes):
+            return
+        stage = next(
+            (row for row in self.plan.stages if row.stage_id == stage_id),
+            None,
+        )
+        if stage is None:
+            raise ComponentRunnerError(
+                "resume stage is absent from the sealed plan"
+            )
+        published_refs = {row["artifact_ref"] for row in self.artifacts}
+        candidates: list[tuple[Mapping[str, Any], Path]] = []
+        for spec in stage.artifact_specs:
+            if spec["artifact_ref"] in published_refs:
+                continue
+            path = _relative_path(
+                self.root,
+                spec["relative_path"],
+                f"{stage_id}.unpublished_output",
+            )
+            if path.is_file():
+                candidates.append((spec, path))
+        if not candidates:
+            return
+
+        recovery_root = (
+            self.root
+            / "runtime"
+            / "unpublished_outputs"
+            / f"a{previous_component_attempt_id:04d}"
+            / stage_id
+        )
+        recovered: list[dict[str, Any]] = []
+        for spec, source_path in candidates:
+            relative_source = str(
+                source_path.relative_to(self.root)
+            ).replace("\\", "/")
+            target_path = recovery_root / relative_source
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            source_sha = file_sha256(source_path)
+            source_size = source_path.stat().st_size
+            if target_path.exists():
+                if (
+                    file_sha256(target_path) != source_sha
+                    or target_path.stat().st_size != source_size
+                ):
+                    raise ComponentRunnerError(
+                        "unpublished output recovery target drift"
+                    )
+                source_path.unlink()
+            else:
+                source_path.replace(target_path)
+            recovered.append(
+                {
+                    "artifact_ref": str(spec["artifact_ref"]),
+                    "original_relative_path": relative_source,
+                    "quarantined_relative_path": str(
+                        target_path.relative_to(self.root)
+                    ).replace("\\", "/"),
+                    "sha256": source_sha,
+                    "size": source_size,
+                }
+            )
+
+        receipt_path = recovery_root / "receipt.json"
+        receipt = {
+            "schema_version": "d2l_unpublished_stage_output_recovery_v1",
+            "workflow_run_id": self.manifest["workflow_run_id"],
+            "component_run_id": self.manifest["component_run_id"],
+            "previous_component_attempt_id": previous_component_attempt_id,
+            "next_component_attempt_id": self._current_attempt,
+            "stage_id": stage_id,
+            "paused_reason": paused_reason,
+            "recovered_outputs": recovered,
+            "created_at": _timestamp(),
+        }
+        receipt["integrity"] = {
+            "payload_sha256": canonical_sha256(receipt)
+        }
+        if receipt_path.exists():
+            if _load_json(
+                receipt_path,
+                "unpublished output recovery receipt",
+            ) != receipt:
+                raise ComponentRunnerError(
+                    "unpublished output recovery receipt drift"
+                )
+        else:
+            write_json(receipt_path, receipt)
+        self._register_unpublished_output_receipt(
+            stage_id=stage_id,
+            receipt_path=receipt_path,
+            receipt=receipt,
+        )
+
+    def _register_unpublished_output_receipt(
+        self,
+        *,
+        stage_id: str,
+        receipt_path: Path,
+        receipt: Mapping[str, Any],
+    ) -> None:
+        artifact_ref = (
+            "art_unpublished_output_recovery_"
+            f"a{self._current_attempt:04d}_{stage_id}"
+        )
+        if artifact_ref in {row["artifact_ref"] for row in self.artifacts}:
+            raise ComponentRunnerError(
+                "unpublished output recovery was already registered"
+            )
+        row = {
+            "workflow_run_id": self.manifest["workflow_run_id"],
+            "flow_kind": self.manifest["flow_kind"],
+            "component_id": COMPONENT_ID,
+            "component_run_id": self.manifest["component_run_id"],
+            "component_attempt_id": self._current_attempt,
+            "artifact_ref": artifact_ref,
+            "artifact_kind": "d2l_unpublished_stage_output_recovery",
+            "schema_version": str(receipt["schema_version"]),
+            "sha256": file_sha256(receipt_path),
+            "sha256_kind": "physical",
+            "producer_stage_id": stage_id,
+            "parent_artifact_refs": [],
+            "created_event_id": self.writer.next_event_id,
+            "relative_path": str(
+                receipt_path.relative_to(self.root)
+            ).replace("\\", "/"),
+            "availability": "available",
+            "metadata": {
+                "paused_reason": str(receipt["paused_reason"]),
+                "recovered_output_count": len(
+                    receipt["recovered_outputs"]
+                ),
+            },
+        }
+        self.artifacts.append(row)
+        self._write_index()
+        self.writer.emit(
+            "artifact_created",
+            stage_id=stage_id,
+            agent="d2l_component_runner",
+            severity="warning",
+            payload={
+                "artifact_ref": row["artifact_ref"],
+                "artifact_kind": row["artifact_kind"],
+                "schema_version": row["schema_version"],
+                "sha256": row["sha256"],
+                "sha256_kind": row["sha256_kind"],
+                "parent_artifact_refs": [],
             },
         )
 
@@ -589,8 +1107,29 @@ class D2LTranslationComponentRunner:
             self._start_stage(stage)
             if stage.mode == "execute":
                 self._execute_command(stage)
-            self._emit_stage_receipt(stage)
-            self._register_stage_artifacts(stage)
+            try:
+                self._emit_stage_receipt(stage)
+                self._register_stage_artifacts(stage)
+            except Exception as exc:
+                self.writer.emit(
+                    "validation_failed",
+                    stage_id=stage.stage_id,
+                    agent="d2l_component_runner",
+                    severity="error",
+                    payload={
+                        "validator_id": "d2l_stage_output_contract_v1",
+                        "subject_ref": stage.stage_id,
+                        "reason_codes": [
+                            "stage_output_contract_failed",
+                            type(exc).__name__,
+                        ],
+                        "retryable": True,
+                    },
+                )
+                raise _PauseRun(
+                    stage.stage_id,
+                    "stage_output_contract_failed",
+                ) from exc
             self.writer.emit(
                 "validation_passed",
                 stage_id=stage.stage_id,
@@ -650,13 +1189,41 @@ class D2LTranslationComponentRunner:
         pause_was_present_at_start = bool(
             self.pause_file is not None and self.pause_file.is_file()
         )
-        process = subprocess.Popen(
-            list(stage.command),
-            cwd=cwd,
-            shell=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        environment = None
+        if self._effective_code_revision != self.plan.code_revision:
+            if self._repair_receipt_path is None:
+                raise ComponentRunnerError(
+                    "effective repair revision lacks a repair receipt"
+                )
+            environment = dict(os.environ)
+            environment["THESIS_D2L_EFFECTIVE_CODE_REVISION"] = (
+                self._effective_code_revision
+            )
+            environment["THESIS_D2L_REPAIR_RECEIPT_REF"] = str(
+                self._repair_receipt_path.relative_to(self.root)
+            ).replace("\\", "/")
+            environment["THESIS_D2L_REPAIR_RECEIPT_SHA256"] = file_sha256(
+                self._repair_receipt_path
+            )
+        try:
+            process = subprocess.Popen(
+                list(stage.command),
+                cwd=cwd,
+                shell=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=environment,
+            )
+        except OSError as exc:
+            self._emit_repairable_stage_failure(
+                stage,
+                reason_code="stage_process_launch_failed",
+                detail_code=type(exc).__name__,
+            )
+            raise _PauseRun(
+                stage.stage_id,
+                "stage_process_launch_failed",
+            ) from exc
         while process.poll() is None:
             self._drain_observation_journal(stage, allow_incomplete_tail=True)
             if (
@@ -670,9 +1237,7 @@ class D2LTranslationComponentRunner:
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait(timeout=5)
-                self._drain_observation_journal(
-                    stage, allow_incomplete_tail=False
-                )
+                self._drain_after_process(stage)
                 self.pause_file.unlink(missing_ok=True)
                 raise _PauseRun(stage.stage_id, "user_requested_pause")
             if (
@@ -681,18 +1246,214 @@ class D2LTranslationComponentRunner:
             ):
                 process.kill()
                 process.wait(timeout=5)
-                self._drain_observation_journal(
-                    stage, allow_incomplete_tail=False
+                self._drain_after_process(stage)
+                self._emit_repairable_stage_failure(
+                    stage,
+                    reason_code="stage_process_timeout",
+                    detail_code="timeout",
                 )
-                raise ComponentRunnerError(f"stage {stage.stage_id} timed out")
+                raise _PauseRun(stage.stage_id, "stage_process_timeout")
             time.sleep(0.05)
-        self._drain_observation_journal(stage, allow_incomplete_tail=False)
+        self._drain_after_process(stage)
         if process.returncode == TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE:
             raise _PauseRun(stage.stage_id, "transport_retry_exhausted")
         if process.returncode != 0:
-            raise ComponentRunnerError(
-                f"stage {stage.stage_id} returned exit code {process.returncode}"
+            self._emit_repairable_stage_failure(
+                stage,
+                reason_code="stage_process_exit_nonzero",
+                detail_code=f"exit_{process.returncode}",
             )
+            raise _PauseRun(
+                stage.stage_id,
+                f"stage_process_exit_{process.returncode}",
+            )
+
+    def _drain_after_process(self, stage: StagePlan) -> None:
+        try:
+            self._drain_observation_journal(
+                stage,
+                allow_incomplete_tail=False,
+            )
+        except D2LStageReceiptError as exc:
+            if "unterminated final row" not in str(exc):
+                raise
+            self._quarantine_incomplete_observation_tail(stage)
+            self._drain_observation_journal(
+                stage,
+                allow_incomplete_tail=False,
+            )
+            self._emit_repairable_stage_failure(
+                stage,
+                reason_code="observation_journal_incomplete_tail",
+                detail_code="unterminated_final_row",
+            )
+            raise _PauseRun(
+                stage.stage_id,
+                "observation_journal_incomplete_tail",
+            ) from exc
+
+    def _quarantine_incomplete_observation_tail(
+        self,
+        stage: StagePlan,
+        *,
+        register: bool = True,
+    ) -> tuple[Path, dict[str, Any]]:
+        path = self.observation_journal_path
+        raw = path.read_bytes()
+        if not raw or raw.endswith((b"\n", b"\r")):
+            raise ComponentRunnerError(
+                "observation journal recovery found no incomplete tail"
+            )
+        prefix_end = raw.rfind(b"\n") + 1
+        prefix = raw[:prefix_end]
+        tail = raw[prefix_end:]
+        if not tail:
+            raise ComponentRunnerError(
+                "observation journal recovery tail is empty"
+            )
+        read_observation_journal(path, allow_incomplete_tail=True)
+
+        recovery_root = (
+            self.root
+            / "runtime"
+            / "journal_recovery"
+            / f"a{self._current_attempt:04d}"
+        )
+        recovery_root.mkdir(parents=True, exist_ok=True)
+        tail_path = recovery_root / f"{stage.stage_id}.tail.bin"
+        receipt_path = recovery_root / f"{stage.stage_id}.receipt.json"
+        if tail_path.exists() and tail_path.read_bytes() != tail:
+            raise ComponentRunnerError(
+                "observation journal recovery tail path drift"
+            )
+        if not tail_path.exists():
+            tail_path.write_bytes(tail)
+        receipt = {
+            "schema_version": "d2l_observation_journal_recovery_v1",
+            "workflow_run_id": self.manifest["workflow_run_id"],
+            "component_run_id": self.manifest["component_run_id"],
+            "component_attempt_id": self._current_attempt,
+            "stage_id": stage.stage_id,
+            "work_id": stage.work_id,
+            "reason_code": "unterminated_final_row",
+            "journal_ref": str(path.relative_to(self.root)).replace("\\", "/"),
+            "original_journal_sha256": sha256(raw).hexdigest().upper(),
+            "retained_prefix_sha256": sha256(prefix).hexdigest().upper(),
+            "quarantined_tail_ref": str(
+                tail_path.relative_to(self.root)
+            ).replace("\\", "/"),
+            "quarantined_tail_sha256": sha256(tail).hexdigest().upper(),
+            "quarantined_tail_size": len(tail),
+            "created_at": _timestamp(),
+        }
+        receipt["integrity"] = {
+            "payload_sha256": canonical_sha256(receipt)
+        }
+        if receipt_path.exists():
+            if _load_json(
+                receipt_path,
+                "observation journal recovery receipt",
+            ) != receipt:
+                raise ComponentRunnerError(
+                    "observation journal recovery receipt drift"
+                )
+        else:
+            write_json(receipt_path, receipt)
+
+        replacement = path.with_suffix(path.suffix + ".recovery.tmp")
+        replacement.write_bytes(prefix)
+        os.replace(replacement, path)
+        if path.read_bytes() != prefix:
+            raise ComponentRunnerError(
+                "observation journal recovery replacement drift"
+            )
+        if register:
+            self._register_recovery_receipt(
+                stage=stage,
+                receipt_path=receipt_path,
+                receipt=receipt,
+            )
+        return receipt_path, receipt
+
+    def _register_recovery_receipt(
+        self,
+        *,
+        stage: StagePlan,
+        receipt_path: Path,
+        receipt: Mapping[str, Any],
+    ) -> None:
+        artifact_ref = (
+            "art_observation_recovery_"
+            f"a{self._current_attempt:04d}_{stage.stage_id}"
+        )
+        if artifact_ref in {row["artifact_ref"] for row in self.artifacts}:
+            raise ComponentRunnerError(
+                "observation recovery receipt was already registered"
+            )
+        row = {
+            "workflow_run_id": self.manifest["workflow_run_id"],
+            "flow_kind": self.manifest["flow_kind"],
+            "component_id": COMPONENT_ID,
+            "component_run_id": self.manifest["component_run_id"],
+            "component_attempt_id": self._current_attempt,
+            "artifact_ref": artifact_ref,
+            "artifact_kind": "d2l_observation_journal_recovery",
+            "schema_version": str(receipt["schema_version"]),
+            "sha256": file_sha256(receipt_path),
+            "sha256_kind": "physical",
+            "producer_stage_id": stage.stage_id,
+            "parent_artifact_refs": [],
+            "created_event_id": self.writer.next_event_id,
+            "relative_path": str(
+                receipt_path.relative_to(self.root)
+            ).replace("\\", "/"),
+            "availability": "available",
+            "metadata": {
+                "reason_code": str(receipt["reason_code"]),
+                "quarantined_tail_sha256": str(
+                    receipt["quarantined_tail_sha256"]
+                ),
+                "quarantined_tail_size": int(
+                    receipt["quarantined_tail_size"]
+                ),
+            },
+        }
+        self.artifacts.append(row)
+        self._write_index()
+        self.writer.emit(
+            "artifact_created",
+            stage_id=stage.stage_id,
+            agent="d2l_component_runner",
+            severity="warning",
+            payload={
+                "artifact_ref": row["artifact_ref"],
+                "artifact_kind": row["artifact_kind"],
+                "schema_version": row["schema_version"],
+                "sha256": row["sha256"],
+                "sha256_kind": row["sha256_kind"],
+                "parent_artifact_refs": [],
+            },
+        )
+
+    def _emit_repairable_stage_failure(
+        self,
+        stage: StagePlan,
+        *,
+        reason_code: str,
+        detail_code: str,
+    ) -> None:
+        self.writer.emit(
+            "validation_failed",
+            stage_id=stage.stage_id,
+            agent="d2l_component_runner",
+            severity="error",
+            payload={
+                "validator_id": "d2l_stage_process_v1",
+                "subject_ref": stage.stage_id,
+                "reason_codes": [reason_code, detail_code],
+                "retryable": True,
+            },
+        )
 
     def _drain_observation_journal(
         self,
@@ -741,9 +1502,11 @@ class D2LTranslationComponentRunner:
             self._journal_cursor += 1
 
     def _register_stage_artifacts(self, stage: StagePlan) -> None:
+        pending: list[tuple[str, Path, dict[str, Any], list[str]]] = []
+        existing_refs = {row["artifact_ref"] for row in self.artifacts}
         for spec in stage.artifact_specs:
             ref = _nonempty_string(spec["artifact_ref"], "artifact_ref")
-            if ref in {row["artifact_ref"] for row in self.artifacts}:
+            if ref in existing_refs:
                 raise ComponentRunnerError(f"artifact_ref was already published: {ref}")
             path = _relative_path(self.root, spec["relative_path"], f"{ref}.relative_path")
             if not path.is_file():
@@ -753,6 +1516,9 @@ class D2LTranslationComponentRunner:
                 not isinstance(item, str) or not item for item in parent_refs
             ):
                 raise ComponentRunnerError(f"{ref}.parent_artifact_refs is invalid")
+            pending.append((ref, path, dict(spec), list(parent_refs)))
+
+        for ref, path, spec, parent_refs in pending:
             row = {
                 "workflow_run_id": self.manifest["workflow_run_id"],
                 "flow_kind": self.manifest["flow_kind"],
@@ -765,7 +1531,7 @@ class D2LTranslationComponentRunner:
                 "sha256": file_sha256(path),
                 "sha256_kind": "physical",
                 "producer_stage_id": stage.stage_id,
-                "parent_artifact_refs": list(parent_refs),
+                "parent_artifact_refs": parent_refs,
                 "created_event_id": self.writer.next_event_id,
                 "relative_path": str(path.relative_to(self.root)).replace("\\", "/"),
                 "availability": "available",
@@ -901,6 +1667,7 @@ class D2LTranslationComponentRunner:
             "latest_usage_snapshot_sha256": self._latest_usage_snapshot_sha256(
                 journal_entries
             ),
+            "work_journals": self._work_journal_checkpoint_state(),
         }
         checkpoint_ref = f"checkpoints/checkpoint_a{self._current_attempt}_{stage_id}.json"
         checkpoint = build_checkpoint(
@@ -1160,6 +1927,9 @@ def run_from_plan_file(
     resume: bool = False,
     stop_after_stage: str | None = None,
     pause_file: str | Path | None = None,
+    repair_code_root: str | Path | None = None,
+    repair_reason: str | None = None,
+    recover_stale: bool = False,
 ) -> dict[str, Any]:
     plan = ComponentPlan.from_mapping(_load_json(Path(plan_path), "runner plan"))
     return D2LTranslationComponentRunner(
@@ -1167,6 +1937,9 @@ def run_from_plan_file(
         root,
         stop_after_stage=stop_after_stage,
         pause_file=pause_file,
+        repair_code_root=repair_code_root,
+        repair_reason=repair_reason,
+        recover_stale=recover_stale,
     ).run(resume=resume)
 
 
@@ -1177,6 +1950,9 @@ def main() -> int:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--stop-after-stage")
     parser.add_argument("--pause-file")
+    parser.add_argument("--code-root")
+    parser.add_argument("--repair-reason")
+    parser.add_argument("--recover-stale", action="store_true")
     args = parser.parse_args()
     result = run_from_plan_file(
         args.plan,
@@ -1184,6 +1960,9 @@ def main() -> int:
         resume=args.resume,
         stop_after_stage=args.stop_after_stage,
         pause_file=args.pause_file,
+        repair_code_root=args.code_root,
+        repair_reason=args.repair_reason,
+        recover_stale=args.recover_stale,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0

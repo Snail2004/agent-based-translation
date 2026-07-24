@@ -28,7 +28,7 @@ from pipeline.prepass.d2l_shared_llm_profiles_v1 import (
 )
 
 
-ADAPTER_VERSION = "d2l_shared_llm_adapter_v2_transport_retry"
+ADAPTER_VERSION = "d2l_shared_llm_adapter_v2_transport_retry_resume_identity"
 TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE = 75
 
 ProfileBuilder = Callable[..., dict[str, Any]]
@@ -271,7 +271,9 @@ class D2LSharedLlmClient:
         self._sleeper = sleeper
 
     @property
-    def transport_identity(self) -> str:
+    def resume_transport_identity(self) -> str:
+        """Stable semantic transport identity shared by component attempts."""
+
         material = {
             "adapter_version": ADAPTER_VERSION,
             "role_id": self.preset.role_id,
@@ -291,8 +293,17 @@ class D2LSharedLlmClient:
             "structured_output": self.structured_output,
             "limits": self.limits,
             "run_id": self.run_id,
-            "attempt_run_id": self.attempt_run_id,
             "stage_id": self.stage_id,
+        }
+        return sha256(canonical_json(material).encode("utf-8")).hexdigest()
+
+    @property
+    def transport_identity(self) -> str:
+        """Physical-attempt identity retained for sealed call evidence."""
+
+        material = {
+            "resume_transport_identity": self.resume_transport_identity,
+            "attempt_run_id": self.attempt_run_id,
         }
         return sha256(canonical_json(material).encode("utf-8")).hexdigest()
 

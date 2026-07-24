@@ -1565,6 +1565,7 @@ class D2LTranslationComponentEventWriter:
         *,
         manifest: Mapping[str, Any],
         component_attempt_id: int,
+        recover_existing_attempt: bool = False,
     ) -> None:
         self.path = Path(path)
         self.manifest = validate_component_manifest(manifest)
@@ -1578,6 +1579,9 @@ class D2LTranslationComponentEventWriter:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._terminal = False
         self._requires_resume = False
+        self._recovery_checkpoint_only = False
+        self._closed = False
+        self._recover_existing_attempt = recover_existing_attempt
         self._seq = self._load_existing()
 
     def _load_existing(self) -> int:
@@ -1609,9 +1613,12 @@ class D2LTranslationComponentEventWriter:
             return int(summary["last_component_seq"])
         last_attempt = int(summary["component_attempt_id"])
         if self.component_attempt_id == last_attempt:
-            raise D2LConsoleContractError(
-                "opening an existing nonterminal stream requires a new component attempt"
-            )
+            if not self._recover_existing_attempt:
+                raise D2LConsoleContractError(
+                    "opening an existing nonterminal stream requires a new component attempt"
+                )
+            self._recovery_checkpoint_only = True
+            return int(summary["last_component_seq"])
         if self.component_attempt_id != last_attempt + 1:
             raise D2LConsoleContractError("resume must increment component_attempt_id by one")
         if self.manifest["reconstructed"]:
@@ -1637,8 +1644,12 @@ class D2LTranslationComponentEventWriter:
         severity: str = "info",
         ts: str | None = None,
     ) -> dict[str, Any]:
-        if self._terminal:
+        if self._terminal or self._closed:
             raise D2LConsoleContractError("cannot append after terminal event")
+        if self._recovery_checkpoint_only and event != "checkpoint":
+            raise D2LConsoleContractError(
+                "stale-attempt recovery may append only one checkpoint"
+            )
         if self._seq == 0 and event != "run_start":
             raise D2LConsoleContractError("first component event must be run_start")
         if self._requires_resume and event != "run_resumed":
@@ -1674,6 +1685,8 @@ class D2LTranslationComponentEventWriter:
             os.fsync(handle.fileno())
         self._seq = next_seq
         self._requires_resume = False
+        if self._recovery_checkpoint_only:
+            self._closed = True
         if event in {"run_done", "run_failed"}:
             self._terminal = True
         return row

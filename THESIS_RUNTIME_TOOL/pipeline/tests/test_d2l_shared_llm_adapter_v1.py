@@ -452,6 +452,11 @@ def test_openai_compatible_disabled_mode_does_not_send_native_schema(tmp_path) -
         },
         tag="disabled_output",
     )
+    stable_resume_identity = client.resume_transport_identity
+    physical_attempt_identity = client.transport_identity
+    client.attempt_run_id = "d2l_disabled_openai_attempt_2"
+    assert client.resume_transport_identity == stable_resume_identity
+    assert client.transport_identity != physical_attempt_identity
     wire = json.loads(sender.requests[0].body.decode("utf-8"))
     assert "response_format" not in wire
 

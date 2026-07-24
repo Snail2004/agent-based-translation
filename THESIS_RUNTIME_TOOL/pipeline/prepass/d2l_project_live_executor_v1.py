@@ -14,6 +14,7 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 import re
 import sqlite3
@@ -77,6 +78,8 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     file_sha256,
     validate_scoring_handoff_fragment,
 )
+from pipeline.prepass.d2l_stage_work_journal_v1 import D2LStageWorkJournal
+from pipeline.prepass.d2l_repair_resume_v1 import validate_repair_receipt
 from pipeline.prepass.d2l_terminology_memory_delta_v1 import commit_glossary_draft
 from pipeline.translate import d2l_latex_markup_line_protected_spans_v4 as spans_v4
 from pipeline.translate import d2l_latex_markup_line_protected_spans_v5 as spans_v5
@@ -86,11 +89,14 @@ from pipeline.translate.d2l_translation_integrity_v1 import inspect_translations
 from pipeline.translate.d2l_translation_quality_observation_v1 import (
     build_quality_observation,
 )
+from pipeline.translate.d2l_prompt_json_envelope_v1 import (
+    normalize_prompt_json_envelope,
+)
 from pipeline.translate.runner import load_window_attempt_state, translate_windows
 from pipeline.translate.windower import Window
 
 
-LIVE_EXECUTOR_VERSION = "d2l_project_live_executor_v1_1_transport_retry"
+LIVE_EXECUTOR_VERSION = "d2l_project_live_executor_v1_2_resumable_work"
 LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2_3_protected_dual_arm"
 LIVE_SCOPE_ID = "d2l_selected_campaign_scope_v1"
 _COST_STATUSES = {"provider_actual", "pinned_tariff", "unknown"}
@@ -115,6 +121,46 @@ class ProjectTransport(Protocol):
 
 def _utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _effective_code_revision(
+    *,
+    campaign: Mapping[str, Any],
+    component_root: Path,
+) -> str:
+    baseline = str(campaign["config"]["code_revision"]).lower()
+    effective = os.environ.get("THESIS_D2L_EFFECTIVE_CODE_REVISION")
+    if effective is None:
+        return baseline
+    effective = effective.lower()
+    if not re.fullmatch(r"[0-9a-f]{40}", effective) or effective == baseline:
+        raise D2LProjectLiveExecutorError(
+            "effective repair code revision is invalid"
+        )
+    relative_ref = os.environ.get("THESIS_D2L_REPAIR_RECEIPT_REF")
+    expected_sha = os.environ.get("THESIS_D2L_REPAIR_RECEIPT_SHA256")
+    if not relative_ref or not expected_sha:
+        raise D2LProjectLiveExecutorError(
+            "effective repair revision lacks a bound receipt"
+        )
+    receipt_path = (component_root / relative_ref).resolve()
+    root = component_root.resolve()
+    if root not in receipt_path.parents or not receipt_path.is_file():
+        raise D2LProjectLiveExecutorError("repair receipt path is invalid")
+    if file_sha256(receipt_path) != expected_sha.upper():
+        raise D2LProjectLiveExecutorError("repair receipt physical hash drift")
+    receipt = validate_repair_receipt(
+        _load_json(receipt_path, "repair receipt")
+    )
+    config = campaign["config"]
+    if (
+        receipt["workflow_run_id"] != config["workflow_run_id"]
+        or receipt["component_run_id"] != config["component_run_id"]
+        or receipt["baseline_code_revision"] != baseline
+        or receipt["effective_code_revision"] != effective
+    ):
+        raise D2LProjectLiveExecutorError("repair receipt identity mismatch")
+    return effective
 
 
 def _sealed(body: Mapping[str, Any]) -> dict[str, Any]:
@@ -611,7 +657,41 @@ def _semantic_call(
     validate: Callable[[dict[str, Any]], Any],
     observations: _StageObservations,
     retry_cap: int,
+    work_journal: D2LStageWorkJournal,
+    work_contract_id: str,
 ) -> tuple[Any, Any]:
+    input_sha256 = replay_sha256(
+        {
+            "messages": messages,
+            "response_format": dict(response_format),
+            "validator_id": validator_id,
+            "retry_cap": retry_cap,
+        }
+    )
+    durable_result = work_journal.lookup(
+        work_item_id=tag,
+        work_contract_id=work_contract_id,
+        input_sha256=input_sha256,
+    )
+    if durable_result is not None:
+        parsed = parse(durable_result)
+        validation = validate(parsed)
+        errors = [
+            str(value) for value in getattr(validation, "errors", ())
+        ]
+        if errors:
+            raise D2LProjectLiveExecutorError(
+                f"durable work result no longer validates for {tag}: {errors}"
+            )
+        observations.validation(
+            passed=True,
+            validator_id=validator_id,
+            subject_ref=tag,
+            reason_codes=["durable_work_item_reused"],
+            retryable=False,
+        )
+        return None, validation
+
     correction: str | None = None
     for semantic_attempt in range(1, retry_cap + 2):
         attempt_messages = list(messages)
@@ -644,7 +724,12 @@ def _semantic_call(
         errors: list[str] = []
         validation = None
         try:
-            parsed = parse(result.parsed_json if result.parsed_json is not None else result.text)
+            response_value: Any = result.parsed_json
+            if response_value is None:
+                response_value, _envelope_normalized = (
+                    normalize_prompt_json_envelope(result.text)
+                )
+            parsed = parse(response_value)
             validation = validate(parsed)
             errors.extend(str(value) for value in getattr(validation, "errors", ()))
         except Exception as exc:
@@ -658,6 +743,12 @@ def _semantic_call(
             retryable=not passed and semantic_attempt <= retry_cap,
         )
         if passed:
+            work_journal.append(
+                work_item_id=tag,
+                work_contract_id=work_contract_id,
+                input_sha256=input_sha256,
+                result=parsed,
+            )
             return result, validation
         if semantic_attempt <= retry_cap:
             observations.retry(
@@ -682,6 +773,7 @@ def _b1_stage(
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
+    work_journal: D2LStageWorkJournal,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     config = campaign["config"]
     role = _role(config, "d2l.candidate_discovery")
@@ -717,6 +809,8 @@ def _b1_stage(
             ),
             observations=observations,
             retry_cap=int(role["semantic_retry_cap"]),
+            work_journal=work_journal,
+            work_contract_id=str(role["semantic_role_sha256"]),
         )
         normalized = _dataclass_json(validation)
         accepted_observations += len(normalized["observations"])
@@ -913,6 +1007,7 @@ def _b2_stage(
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
+    work_journal: D2LStageWorkJournal,
 ) -> dict[str, Any]:
     config = campaign["config"]
     role = _role(config, "d2l.b2.admission")
@@ -950,6 +1045,8 @@ def _b2_stage(
             ),
             observations=observations,
             retry_cap=int(role["semantic_retry_cap"]),
+            work_journal=work_journal,
+            work_contract_id=str(role["semantic_role_sha256"]),
         )
         validations.append((packet, validation))
         packet_records.append(
@@ -1089,6 +1186,7 @@ def _morphology_stage(
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
+    work_journal: D2LStageWorkJournal,
 ) -> dict[str, Any]:
     b2 = _load_json(
         component_root / "artifacts/b2_admission_translation/decisions.json",
@@ -1126,6 +1224,8 @@ def _morphology_stage(
                 ),
                 observations=observations,
                 retry_cap=int(role["semantic_retry_cap"]),
+                work_journal=work_journal,
+                work_contract_id=str(role["semantic_role_sha256"]),
             )
             validations.append((packet, validation))
             packet_records.append(
@@ -1348,6 +1448,7 @@ def _target_collision_stage(
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
+    work_journal: D2LStageWorkJournal,
 ) -> dict[str, Any]:
     morphology = _load_json(
         component_root / "artifacts/auditor_morphology/decisions.json",
@@ -1383,6 +1484,8 @@ def _target_collision_stage(
                 ),
                 observations=observations,
                 retry_cap=int(role["semantic_retry_cap"]),
+                work_journal=work_journal,
+                work_contract_id=str(role["semantic_role_sha256"]),
             )
             validations.append((packet, validation))
             records.append(
@@ -1524,6 +1627,7 @@ def _multi_target_stage(
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
+    work_journal: D2LStageWorkJournal,
 ) -> dict[str, Any]:
     target = _load_json(
         component_root / "artifacts/auditor_target_collision/decisions.json",
@@ -1560,6 +1664,8 @@ def _multi_target_stage(
                 ),
                 observations=observations,
                 retry_cap=int(role["semantic_retry_cap"]),
+                work_journal=work_journal,
+                work_contract_id=str(role["semantic_role_sha256"]),
             )
             validations.append((packet, validation))
             records.append(
@@ -1929,6 +2035,7 @@ def _live_translation_artifact(
     arm_id: str,
     experiment_id: str,
     component_attempt_id: int,
+    code_revision: str,
 ) -> dict[str, Any]:
     translated_rows = {
         str(row["block_id"]): str(row["output_text"])
@@ -1978,7 +2085,7 @@ def _live_translation_artifact(
             "workstream": "d2l",
             "component": "d2l_project_live_executor",
             "component_version": LIVE_EXECUTOR_VERSION,
-            "code_commit": config["code_revision"],
+            "code_commit": code_revision,
         },
         "source_binding": _evaluation_source_binding(project),
         "run_identity": {
@@ -2013,6 +2120,7 @@ def _translator_stage(
     campaign: Mapping[str, Any],
     project: Any,
     rows: Sequence[Mapping[str, Any]],
+    component_root: Path,
     work_db: Path,
     transport: ProjectTransport,
     component_attempt_id: int,
@@ -2021,6 +2129,10 @@ def _translator_stage(
     db = sqlite3.connect(work_db)
     db.row_factory = sqlite3.Row
     windows = _translator_windows(campaign=campaign, rows=rows)
+    effective_code_revision = _effective_code_revision(
+        campaign=campaign,
+        component_root=component_root,
+    )
     artifacts: dict[str, dict[str, Any]] = {}
     total_work = len(rows) * 2
     observations.progress(completed=0, total=total_work)
@@ -2033,9 +2145,9 @@ def _translator_stage(
                 ),
                 observations,
             )
-            experiment_id = (
-                f"{campaign['config']['component_run_id']}_{arm_id}_"
-                f"a{component_attempt_id:04d}"
+            experiment_id = _translator_experiment_id(
+                campaign,
+                arm_id=arm_id,
             )
             extra = dict(role.get("extra_policy") or {})
             report = translate_windows(
@@ -2070,6 +2182,7 @@ def _translator_stage(
                 arm_id=arm_id,
                 experiment_id=experiment_id,
                 component_attempt_id=component_attempt_id,
+                code_revision=effective_code_revision,
             )
             observations.progress(
                 completed=arm_index * len(rows),
@@ -2123,26 +2236,8 @@ def _translator_experiment_id(
     campaign: Mapping[str, Any],
     *,
     arm_id: str,
-    component_attempt_id: int,
 ) -> str:
-    return (
-        f"{campaign['config']['component_run_id']}_{arm_id}_"
-        f"a{component_attempt_id:04d}"
-    )
-
-
-def _translation_artifact_component_attempt_id(
-    artifact: Mapping[str, Any],
-    *,
-    arm_id: str,
-) -> int:
-    artifact_id = str(artifact.get("artifact_id") or "")
-    match = re.fullmatch(r".+_" + re.escape(arm_id) + r"_a(\d{4})", artifact_id)
-    if match is None:
-        raise D2LProjectLiveExecutorError(
-            f"{arm_id} draft artifact does not expose component attempt lineage"
-        )
-    return int(match.group(1))
+    return f"{campaign['config']['component_run_id']}_{arm_id}_stable_v1"
 
 
 def _semantic_repair_window(
@@ -2159,6 +2254,7 @@ def _semantic_repair_window(
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
+    work_journal: D2LStageWorkJournal,
 ) -> tuple[dict[str, str], dict[str, Any]]:
     role = _role(
         campaign["config"], f"d2l.translator.{arm_id}.semantic_repair"
@@ -2199,6 +2295,8 @@ def _semantic_repair_window(
             ),
             observations=observations,
             retry_cap=0,
+            work_journal=work_journal,
+            work_contract_id=str(role["semantic_role_sha256"]),
         )
     except (
         D2LProjectLiveExecutorError,
@@ -2291,6 +2389,7 @@ def _quality_stage(
     transport: ProjectTransport,
     component_attempt_id: int,
     observations: _StageObservations,
+    work_journal: D2LStageWorkJournal,
 ) -> tuple[
     dict[str, Any],
     dict[str, Any],
@@ -2326,10 +2425,6 @@ def _quality_stage(
                 experiment_id=_translator_experiment_id(
                     campaign,
                     arm_id=arm_id,
-                    component_attempt_id=_translation_artifact_component_attempt_id(
-                        draft_artifact,
-                        arm_id=arm_id,
-                    ),
                 ),
             )
             audited_ids: list[str] = []
@@ -2432,6 +2527,8 @@ def _quality_stage(
                     ),
                     observations=observations,
                     retry_cap=int(role["semantic_retry_cap"]),
+                    work_journal=work_journal,
+                    work_contract_id=str(role["semantic_role_sha256"]),
                 )
                 llm_packets += 1
                 validated_findings = [
@@ -2477,6 +2574,7 @@ def _quality_stage(
                         transport=transport,
                         component_attempt_id=component_attempt_id,
                         observations=observations,
+                        work_journal=work_journal,
                     )
                     repair_updates.update(updates)
                     repair_rows.append(
@@ -2611,6 +2709,10 @@ def _scoring_handoff_stage(
     component_attempt_id: int,
 ) -> dict[str, Any]:
     config = campaign["config"]
+    effective_code_revision = _effective_code_revision(
+        campaign=campaign,
+        component_root=component_root,
+    )
     eligible_ids = [
         str(row["block_id"])
         for row in rows
@@ -2681,7 +2783,7 @@ def _scoring_handoff_stage(
             "status": "exact_cover",
         },
         producer_lineage={
-            "git_commit": config["code_revision"],
+            "git_commit": effective_code_revision,
             "pipeline_version": config["pipeline_version"],
             "config_sha256": config["integrity"]["payload_sha256"],
             "code_sha256": file_sha256(Path(__file__)),
@@ -2701,6 +2803,7 @@ _SEMANTIC_STAGES = {
     "translator",
     "translation_quality_audit",
 }
+_JOURNALED_SEMANTIC_STAGES = _SEMANTIC_STAGES - {"translator"}
 
 
 def execute_live_stage(
@@ -2729,6 +2832,17 @@ def execute_live_stage(
         work_kind=_STAGE_UNITS[stage_id],
         work_id=work_id,
     )
+    work_journal = (
+        D2LStageWorkJournal(
+            path=component_root / "runtime/work_items" / f"{stage_id}.jsonl",
+            workflow_run_id=str(campaign["config"]["workflow_run_id"]),
+            component_run_id=str(campaign["config"]["component_run_id"]),
+            component_attempt_id=component_attempt_id,
+            stage_id=stage_id,
+        )
+        if stage_id in _JOURNALED_SEMANTIC_STAGES
+        else None
+    )
     payloads: dict[str, dict[str, Any]]
     if stage_id == "preflight":
         payloads = {
@@ -2748,12 +2862,14 @@ def execute_live_stage(
         }
     elif stage_id == "b1_candidate_discovery":
         assert transport is not None
+        assert work_journal is not None
         discovery, timeline = _b1_stage(
             campaign=campaign,
             rows=rows,
             transport=transport,
             component_attempt_id=component_attempt_id,
             observations=observations,
+            work_journal=work_journal,
         )
         payloads = {
             "art_b1_candidate_discovery": discovery,
@@ -2767,6 +2883,7 @@ def execute_live_stage(
         }
     elif stage_id == "b2_admission_translation":
         assert transport is not None
+        assert work_journal is not None
         payloads = {
             "art_b2_admission": _b2_stage(
                 campaign=campaign,
@@ -2774,10 +2891,12 @@ def execute_live_stage(
                 transport=transport,
                 component_attempt_id=component_attempt_id,
                 observations=observations,
+                work_journal=work_journal,
             )
         }
     elif stage_id == "auditor_morphology":
         assert transport is not None
+        assert work_journal is not None
         payloads = {
             "art_auditor_morphology": _morphology_stage(
                 campaign=campaign,
@@ -2785,10 +2904,12 @@ def execute_live_stage(
                 transport=transport,
                 component_attempt_id=component_attempt_id,
                 observations=observations,
+                work_journal=work_journal,
             )
         }
     elif stage_id == "auditor_target_collision":
         assert transport is not None
+        assert work_journal is not None
         payloads = {
             "art_auditor_target_collision": _target_collision_stage(
                 campaign=campaign,
@@ -2796,10 +2917,12 @@ def execute_live_stage(
                 transport=transport,
                 component_attempt_id=component_attempt_id,
                 observations=observations,
+                work_journal=work_journal,
             )
         }
     elif stage_id == "auditor_multi_target":
         assert transport is not None
+        assert work_journal is not None
         payloads = {
             "art_auditor_multi_target": _multi_target_stage(
                 campaign=campaign,
@@ -2807,6 +2930,7 @@ def execute_live_stage(
                 transport=transport,
                 component_attempt_id=component_attempt_id,
                 observations=observations,
+                work_journal=work_journal,
             )
         }
     elif stage_id == "glossary_seal":
@@ -2823,6 +2947,7 @@ def execute_live_stage(
             campaign=campaign,
             project=project,
             rows=rows,
+            component_root=component_root,
             work_db=work_db,
             transport=transport,
             component_attempt_id=component_attempt_id,
@@ -2831,6 +2956,7 @@ def execute_live_stage(
         payloads = {"art_translation_s0": s0, "art_translation_s1": s1}
     elif stage_id == "translation_quality_audit":
         assert transport is not None
+        assert work_journal is not None
         quality, state, s0_final, s1_final = _quality_stage(
             campaign=campaign,
             rows=rows,
@@ -2839,6 +2965,7 @@ def execute_live_stage(
             transport=transport,
             component_attempt_id=component_attempt_id,
             observations=observations,
+            work_journal=work_journal,
         )
         payloads = {
             "art_translation_quality_observations": quality,

@@ -91,6 +91,9 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--resume", action="store_true")
     run.add_argument("--stop-after-stage")
     run.add_argument("--pause-file")
+    run.add_argument("--code-root", default=str(Path(__file__).resolve().parents[2]))
+    run.add_argument("--repair-reason")
+    run.add_argument("--recover-stale", action="store_true")
 
     app_run = subparsers.add_parser(
         "app-run",
@@ -108,6 +111,8 @@ def _parser() -> argparse.ArgumentParser:
     app_run.add_argument("--hard-total-token-cap", type=int)
     app_run.add_argument("--code-root", default=str(Path(__file__).resolve().parents[2]))
     app_run.add_argument("--resume", action="store_true")
+    app_run.add_argument("--repair-reason")
+    app_run.add_argument("--recover-stale", action="store_true")
     app_run.add_argument("--allow-dirty-code", action="store_true")
     _execution_mode(app_run)
     return parser
@@ -159,6 +164,9 @@ def main(argv: list[str] | None = None) -> int:
             resume=args.resume,
             stop_after_stage=args.stop_after_stage,
             pause_file=args.pause_file or campaign_root / "PAUSE",
+            repair_code_root=args.code_root,
+            repair_reason=args.repair_reason,
+            recover_stale=args.recover_stale,
         )
     else:
         campaign_root = Path(args.campaign_root).resolve()
@@ -176,6 +184,9 @@ def main(argv: list[str] | None = None) -> int:
                 campaign_root / "component",
                 resume=True,
                 pause_file=pause_file,
+                repair_code_root=args.code_root,
+                repair_reason=args.repair_reason,
+                recover_stale=args.recover_stale,
             )
         else:
             if not args.workflow_run_id or not args.component_run_id:
@@ -210,6 +221,7 @@ def main(argv: list[str] | None = None) -> int:
                 campaign_root / "component_plan.json",
                 campaign_root / "component",
                 pause_file=campaign_root / "PAUSE",
+                repair_code_root=args.code_root,
             )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0

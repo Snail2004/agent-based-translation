@@ -1312,6 +1312,55 @@ def test_translation_cli_delegates_only_to_server_owned_d2l_command(
     assert "--credential-file" not in argv
 
 
+def test_translation_cli_ingests_terminal_child_failure_before_raising(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    executor = orchestrator_cli._D2LSubprocessExecutorV1(
+        job_root=tmp_path / "job",
+        campaign_root=tmp_path / "campaign",
+        workflow_run_id=WORKFLOW_ID,
+        component_run_id="translation_run_v1",
+        chapter_ids=("ch1",),
+        hard_total_token_cap=1234,
+        reserved_cost_cap_usd=None,
+        code_root=tmp_path,
+        runtime_root=tmp_path / "runtime",
+        credential_files=(),
+        live=False,
+        resume=False,
+    )
+
+    class FailedProcess:
+        def poll(self) -> int:
+            return 1
+
+        def wait(self) -> int:
+            return 1
+
+    monkeypatch.setattr(
+        orchestrator_cli.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: FailedProcess(),
+    )
+    monkeypatch.setattr(
+        orchestrator_cli,
+        "_read_component_manifest",
+        lambda _root: {"status": "failed"},
+    )
+    observed: list[tuple[Path, bool]] = []
+
+    with pytest.raises(
+        WorkflowOrchestratorError,
+        match="component status 'failed'",
+    ):
+        executor.execute(
+            lambda root, terminal: observed.append((root, terminal))
+        )
+
+    assert observed == [(executor.component_root, True)]
+
+
 def test_workflow_cli_accepts_resume_and_prepared_score_boundaries(
     tmp_path: Path,
 ) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import textwrap
 import threading
@@ -26,6 +27,7 @@ from pipeline.prepass.d2l_component_stage_receipt_v1 import (
 from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
 )
+from pipeline.prepass.d2l_stage_work_journal_v1 import D2LStageWorkJournal
 from pipeline.prepass.d2l_translation_component_runner_v1 import (
     ComponentPlan,
     ComponentRunnerError,
@@ -352,6 +354,56 @@ def test_runner_honors_pause_marker_only_at_stage_boundary(tmp_path: Path) -> No
     assert manifest["status"] == "paused"
     assert manifest["active_stage_id"] == "b1_candidate_discovery"
     assert manifest["resume"]["paused_reason"] == "user_requested_pause"
+
+
+def test_checkpoint_binds_durable_work_journal_lineage(tmp_path: Path) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    journal = D2LStageWorkJournal(
+        path=root / "runtime/work_items/b1_candidate_discovery.jsonl",
+        workflow_run_id="wf_component_test_v1",
+        component_run_id="tr_component_test_v1",
+        component_attempt_id=1,
+        stage_id="b1_candidate_discovery",
+    )
+    journal.append(
+        work_item_id="b1_window_0001",
+        work_contract_id="candidate_v1",
+        input_sha256=canonical_sha256({"source": "window"}),
+        result={"window_id": "b1_window_0001"},
+    )
+    plan = ComponentPlan.from_mapping(_plan(attempt_id=2))
+
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="preflight",
+    ).run()
+    manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    checkpoint = json.loads(
+        (root / manifest["resume"]["checkpoint_ref"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    state = checkpoint["state"]["work_journals"]["b1_candidate_discovery"]
+    assert state["entry_count"] == 1
+    assert state["journal_ref"] == (
+        "runtime/work_items/b1_candidate_discovery.jsonl"
+    )
+
+    journal.append(
+        work_item_id="b1_window_0002",
+        work_contract_id="candidate_v1",
+        input_sha256=canonical_sha256({"source": "changed-after-checkpoint"}),
+        result={"window_id": "b1_window_0002"},
+    )
+    with pytest.raises(
+        ComponentRunnerError,
+        match="work journal lineage mismatch",
+    ):
+        D2LTranslationComponentRunner(plan, root).run(resume=True)
 
 
 def _write_streaming_stage_script(tmp_path: Path) -> Path:
@@ -755,26 +807,365 @@ def test_runner_rejects_material_noncommand_drift_before_write(tmp_path: Path) -
     }
 
 
-def test_runner_records_terminal_failure_without_claiming_success(tmp_path: Path) -> None:
+def test_runner_pauses_nonzero_stage_and_resumes_same_component(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "component"
-    _write_payloads(root, attempt_id=1)
-    plan = _plan(attempt_id=1)
-    plan["stages"][3]["command"] = [sys.executable, "-c", "raise SystemExit(7)"]
+    _write_payloads(root, attempt_id=2)
+    marker = tmp_path / "stage_repaired"
+    script = tmp_path / "fail_once.py"
+    script.write_text(
+        textwrap.dedent(
+            """
+            import sys
+            from pathlib import Path
 
-    with pytest.raises(ComponentRunnerError, match="exit code 7"):
-        D2LTranslationComponentRunner(plan, root).run()
+            marker = Path(sys.argv[1])
+            if not marker.exists():
+                marker.write_text("repairable", encoding="utf-8")
+                raise SystemExit(7)
+            """
+        ),
+        encoding="utf-8",
+    )
+    raw_plan = _plan(attempt_id=2)
+    raw_plan["stages"][3]["command"] = [
+        sys.executable,
+        str(script),
+        str(marker),
+    ]
+    plan = ComponentPlan.from_mapping(raw_plan)
 
-    result = validate_translation_component_package(root)
-    assert result["terminal_event"] == "run_failed"
+    result = D2LTranslationComponentRunner(plan, root).run()
+    assert result["terminal_event"] is None
     manifest = json.loads((root / "component_manifest.json").read_text(encoding="utf-8"))
-    assert manifest["status"] == "failed"
+    assert manifest["status"] == "paused"
+    assert manifest["resume"]["resume_available"] is True
+    assert manifest["resume"]["paused_reason"] == "stage_process_exit_7"
     assert manifest["scoring_handoff_fragment_ref"] is None
-    failed = next(
+    paused = next(
         stage for stage in manifest["stages"] if stage["stage_id"] == "b2_admission_translation"
     )
-    assert failed["status"] == "failed"
-    assert failed["ended_at"] is not None
-    assert failed["current_work_id"] is None
+    assert paused["status"] == "paused"
+    assert paused["ended_at"] is None
+    assert paused["current_work_id"] == "work_b2_admission_translation"
     counts = _event_counts(root)
     assert counts["validation_failed"] == 1
-    assert counts["stage_done"] == 4
+    assert counts["run_failed"] == 0
+
+    completed = D2LTranslationComponentRunner(plan, root).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert completed["component_attempt_id"] == 2
+
+
+def test_runner_requires_and_records_explicit_same_run_code_repair(
+    tmp_path: Path,
+) -> None:
+    code_root = tmp_path / "code"
+    code_root.mkdir()
+
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(code_root), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    git("init")
+    git("config", "user.name", "CodeX")
+    git("config", "user.email", "codex@example.invalid")
+    repair_target = code_root / "runtime_fix.py"
+    repair_target.write_text("VALUE = 1\n", encoding="utf-8")
+    git("add", "runtime_fix.py")
+    git("commit", "-m", "baseline")
+    baseline = git("rev-parse", "HEAD")
+
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    raw_plan = _plan(attempt_id=2)
+    raw_plan["code_revision"] = baseline
+    plan = ComponentPlan.from_mapping(raw_plan)
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="candidate_index",
+        repair_code_root=code_root,
+    ).run()
+
+    repair_target.write_text("VALUE = 2\n", encoding="utf-8")
+    git("add", "runtime_fix.py")
+    git("commit", "-m", "mechanical repair")
+    effective = git("rev-parse", "HEAD")
+    before = {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+
+    with pytest.raises(
+        ComponentRunnerError,
+        match="explicit repair reason is required",
+    ):
+        D2LTranslationComponentRunner(
+            plan,
+            root,
+            repair_code_root=code_root,
+        ).run(resume=True)
+
+    assert before == {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+
+    completed = D2LTranslationComponentRunner(
+        plan,
+        root,
+        repair_code_root=code_root,
+        repair_reason="repair_json_envelope_normalization",
+    ).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert completed["component_attempt_id"] == 2
+
+    receipt_path = root / "runtime/repair_receipts/repair_a0002.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["baseline_code_revision"] == baseline
+    assert receipt["effective_code_revision"] == effective
+    assert receipt["changed_paths"] == ["runtime_fix.py"]
+    index = json.loads((root / "artifact_index.json").read_text(encoding="utf-8"))
+    repair_artifact = next(
+        row
+        for row in index["artifacts"]
+        if row["artifact_kind"] == "d2l_component_repair_receipt"
+    )
+    assert repair_artifact["sha256"] == file_sha256(receipt_path)
+    events = [
+        json.loads(line)
+        for line in (root / "events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    resumed = next(row for row in events if row["event"] == "run_resumed")
+    assert resumed["payload"]["reason_code"] == "resume_after_code_repair"
+
+
+def test_runner_quarantines_incomplete_observation_tail_and_resumes(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    marker = tmp_path / "tail_written"
+    script = tmp_path / "write_partial_tail_once.py"
+    journal_path = root / "runtime/component_observations.jsonl"
+    script.write_text(
+        textwrap.dedent(
+            """
+            import sys
+            from pathlib import Path
+
+            marker = Path(sys.argv[1])
+            journal = Path(sys.argv[2])
+            if not marker.exists():
+                marker.write_text("written", encoding="utf-8")
+                journal.parent.mkdir(parents=True, exist_ok=True)
+                with journal.open("ab") as handle:
+                    handle.write(b'{"partial_observation"')
+                    handle.flush()
+                raise SystemExit(9)
+            """
+        ),
+        encoding="utf-8",
+    )
+    raw_plan = _plan(attempt_id=2)
+    raw_plan["stages"][3]["command"] = [
+        sys.executable,
+        str(script),
+        str(marker),
+        str(journal_path),
+    ]
+    plan = ComponentPlan.from_mapping(raw_plan)
+
+    paused = D2LTranslationComponentRunner(plan, root).run()
+    assert paused["terminal_event"] is None
+    manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["status"] == "paused"
+    assert (
+        manifest["resume"]["paused_reason"]
+        == "observation_journal_incomplete_tail"
+    )
+    receipt_path = (
+        root
+        / "runtime/journal_recovery/a0001"
+        / "b2_admission_translation.receipt.json"
+    )
+    tail_path = (
+        root
+        / "runtime/journal_recovery/a0001"
+        / "b2_admission_translation.tail.bin"
+    )
+    assert receipt_path.is_file()
+    assert tail_path.read_bytes() == b'{"partial_observation"'
+    journal_bytes = journal_path.read_bytes()
+    assert not journal_bytes or journal_bytes.endswith(b"\n")
+
+    completed = D2LTranslationComponentRunner(plan, root).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert completed["component_attempt_id"] == 2
+    index = json.loads((root / "artifact_index.json").read_text(encoding="utf-8"))
+    assert any(
+        row["artifact_kind"] == "d2l_observation_journal_recovery"
+        for row in index["artifacts"]
+    )
+
+
+def test_runner_recovers_stale_running_attempt_with_checkpoint(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    plan = ComponentPlan.from_mapping(_plan(attempt_id=2))
+
+    abandoned = D2LTranslationComponentRunner(plan, root)
+    root.mkdir(parents=True, exist_ok=True)
+    abandoned._start_new()
+    abandoned._start_stage(plan.stages[0])
+    stale_journal = root / "runtime/component_observations.jsonl"
+    stale_journal.parent.mkdir(parents=True, exist_ok=True)
+    stale_journal.write_bytes(b'{"partial_after_parent_crash"')
+    before = {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+    before_journal = stale_journal.read_bytes()
+
+    with pytest.raises(
+        ComponentRunnerError,
+        match="explicit stale-attempt recovery",
+    ):
+        D2LTranslationComponentRunner(plan, root).run(resume=True)
+    assert before == {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+    assert stale_journal.read_bytes() == before_journal
+
+    completed = D2LTranslationComponentRunner(
+        plan,
+        root,
+        recover_stale=True,
+    ).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert completed["component_attempt_id"] == 2
+    events = [
+        json.loads(line)
+        for line in (root / "events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    checkpoint_index = next(
+        index
+        for index, row in enumerate(events)
+        if row["event"] == "checkpoint"
+        and row["payload"]["paused_reason"] == "stale_process_recovered"
+    )
+    resumed_index = next(
+        index for index, row in enumerate(events) if row["event"] == "run_resumed"
+    )
+    assert checkpoint_index < resumed_index
+    assert events[checkpoint_index]["component_attempt_id"] == 1
+    assert events[resumed_index]["component_attempt_id"] == 2
+    index = json.loads((root / "artifact_index.json").read_text(encoding="utf-8"))
+    assert any(
+        row["artifact_kind"] == "d2l_observation_journal_recovery"
+        for row in index["artifacts"]
+    )
+
+
+def test_runner_preserves_unpublished_stage_output_before_retry(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    marker = tmp_path / "failed_once"
+    output_path = root / "artifacts/b2/retry_output.json"
+    script = tmp_path / "write_output_then_fail_once.py"
+    script.write_text(
+        textwrap.dedent(
+            """
+            import json
+            import sys
+            from pathlib import Path
+
+            marker = Path(sys.argv[1])
+            output = Path(sys.argv[2])
+            output.parent.mkdir(parents=True, exist_ok=True)
+            if not marker.exists():
+                marker.write_text("failed", encoding="utf-8")
+                output.write_text(
+                    json.dumps({"state": "unpublished"}) + "\\n",
+                    encoding="utf-8",
+                )
+                raise SystemExit(11)
+            output.write_text(
+                json.dumps({"state": "recovered"}) + "\\n",
+                encoding="utf-8",
+            )
+            """
+        ),
+        encoding="utf-8",
+    )
+    raw_plan = _plan(attempt_id=2)
+    raw_plan["stages"][3]["artifact_specs"] = [
+        _artifact_spec(
+            "art_b2_retry_output",
+            "d2l_test_output",
+            "d2l_test_output_v1",
+            "artifacts/b2/retry_output.json",
+        )
+    ]
+    raw_plan["stages"][3]["command"] = [
+        sys.executable,
+        str(script),
+        str(marker),
+        str(output_path),
+    ]
+    plan = ComponentPlan.from_mapping(raw_plan)
+
+    paused = D2LTranslationComponentRunner(plan, root).run()
+    assert paused["terminal_event"] is None
+    assert output_path.is_file()
+
+    completed = D2LTranslationComponentRunner(plan, root).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert json.loads(output_path.read_text(encoding="utf-8")) == {
+        "state": "recovered"
+    }
+    receipt_path = (
+        root
+        / "runtime/unpublished_outputs/a0001"
+        / "b2_admission_translation/receipt.json"
+    )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["recovered_outputs"][0]["artifact_ref"] == (
+        "art_b2_retry_output"
+    )
+    quarantined = root / receipt["recovered_outputs"][0][
+        "quarantined_relative_path"
+    ]
+    assert json.loads(quarantined.read_text(encoding="utf-8")) == {
+        "state": "unpublished"
+    }

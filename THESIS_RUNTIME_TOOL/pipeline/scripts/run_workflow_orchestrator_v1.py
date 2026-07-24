@@ -52,6 +52,8 @@ def _parser() -> argparse.ArgumentParser:
     translation.add_argument("--runtime-root")
     translation.add_argument("--credential-file", action="append", default=[])
     translation.add_argument("--resume", action="store_true")
+    translation.add_argument("--repair-reason")
+    translation.add_argument("--recover-stale", action="store_true")
     mode = translation.add_mutually_exclusive_group(required=True)
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--live", action="store_true")
@@ -104,6 +106,8 @@ class _D2LSubprocessExecutorV1:
         credential_files: Sequence[str],
         live: bool,
         resume: bool,
+        repair_reason: str | None = None,
+        recover_stale: bool = False,
     ) -> None:
         self.job_root = job_root.resolve()
         self.campaign_root = campaign_root.resolve()
@@ -118,6 +122,8 @@ class _D2LSubprocessExecutorV1:
         self.credential_files = tuple(credential_files)
         self.live = live
         self.resume = resume
+        self.repair_reason = repair_reason
+        self.recover_stale = recover_stale
 
     def execute(self, observer) -> Path:
         argv = self._argv()
@@ -141,6 +147,12 @@ class _D2LSubprocessExecutorV1:
         if status == "paused":
             observer(self.component_root, False)
             raise WorkflowComponentPausedV1("translation")
+        if status in {"failed", "cancelled"}:
+            # A terminal child snapshot must reach the single parent writer
+            # before the subprocess error is surfaced. Otherwise the Console
+            # is left showing a stale running parent after a truthful child
+            # failure.
+            observer(self.component_root, True)
         if return_code != 0 or status != "succeeded":
             raise WorkflowOrchestratorError(
                 "translation_process_failed",
@@ -163,6 +175,10 @@ class _D2LSubprocessExecutorV1:
         ]
         if self.resume:
             argv.append("--resume")
+            if self.repair_reason:
+                argv.extend(["--repair-reason", self.repair_reason])
+            if self.recover_stale:
+                argv.append("--recover-stale")
         else:
             if not self.chapter_ids:
                 raise WorkflowOrchestratorError(
@@ -214,6 +230,8 @@ def _run_translation(args: argparse.Namespace) -> int:
         credential_files=args.credential_file,
         live=bool(args.live),
         resume=bool(args.resume),
+        repair_reason=args.repair_reason,
+        recover_stale=bool(args.recover_stale),
     )
     orchestrator = WorkflowOrchestratorV1(
         parent_root,

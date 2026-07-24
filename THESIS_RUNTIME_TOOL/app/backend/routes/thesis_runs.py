@@ -1543,12 +1543,15 @@ def resume_thesis_run(run_id: str):
                         "A terminal D2L component cannot be resumed.",
                         409,
                     )
-                if manifest.get("status") != "paused" or not (
-                    manifest.get("resume") or {}
-                ).get("resume_available"):
+                component_status = manifest.get("status")
+                paused_resume = component_status == "paused" and bool(
+                    (manifest.get("resume") or {}).get("resume_available")
+                )
+                stale_running_resume = component_status == "running"
+                if not (paused_resume or stale_running_resume):
                     raise RunControlError(
                         "resume_not_available",
-                        "D2L component has no paused resumable checkpoint.",
+                        "D2L component has neither a paused checkpoint nor a stale running attempt.",
                         409,
                     )
                 try:

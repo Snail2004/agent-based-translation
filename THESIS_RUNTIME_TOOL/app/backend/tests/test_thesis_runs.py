@@ -439,6 +439,7 @@ def test_build_resume_argv_d2l_removes_complete_two_value_chapter_range(tmp_path
     assert "d2l_linear_networks" not in resumed
     assert "--workflow-run-id" not in resumed
     assert "--component-run-id" not in resumed
+    assert resumed[-2:] == ["--recover-stale", "--resume"]
     assert resumed[-1] == "--resume"
 
 

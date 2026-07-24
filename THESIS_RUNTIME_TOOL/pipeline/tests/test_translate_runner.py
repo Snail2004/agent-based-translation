@@ -171,11 +171,14 @@ class _SharedFakeClient(_FakeClient):
         *,
         role_id: str,
         transport_identity: str,
+        resume_transport_identity: str | None = None,
     ) -> None:
         super().__init__(responses)
         self.config = _Config()
         self.preset = _SharedPreset(role_id)
         self.transport_identity = transport_identity
+        if resume_transport_identity is not None:
+            self.resume_transport_identity = resume_transport_identity
 
 
 def _stable_translation_rows(conn: sqlite3.Connection) -> list[dict]:
@@ -299,7 +302,8 @@ def test_shared_runner_binds_resume_identity_and_preserves_unknown_cost(
     client = _SharedFakeClient(
         [result],
         role_id="d2l.translator.s0",
-        transport_identity=identity,
+        transport_identity="physical-attempt-1",
+        resume_transport_identity=identity,
     )
     windows = [
         Window(
@@ -332,9 +336,21 @@ def test_shared_runner_binds_resume_identity_and_preserves_unknown_cost(
     ).fetchone()
     assert json.loads(str(pack["payload_json"]))["transport_identity"] == identity
 
-    resumed = translate_windows(conn, windows, client, "exp_shared", "S0")
+    resumed_client = _SharedFakeClient(
+        [],
+        role_id="d2l.translator.s0",
+        transport_identity="physical-attempt-2",
+        resume_transport_identity=identity,
+    )
+    resumed = translate_windows(
+        conn,
+        windows,
+        resumed_client,
+        "exp_shared",
+        "S0",
+    )
     assert resumed.windows_skipped == 1
-    assert len(client.calls) == 1
+    assert len(resumed_client.calls) == 0
 
     legacy = _FakeClient([_fake_result(_ok_response(block_ids))])
     legacy.config = _Config()
@@ -345,6 +361,7 @@ def test_shared_runner_binds_resume_identity_and_preserves_unknown_cost(
         [_fake_result(_ok_response(block_ids))],
         role_id="d2l.translator.s0",
         transport_identity="b" * 64,
+        resume_transport_identity="c" * 64,
     )
     with pytest.raises(RuntimeError, match="resume identity conflicts"):
         translate_windows(conn, windows, foreign, "exp_shared", "S0")

@@ -964,11 +964,16 @@ def build_resume_argv_from_entry(entry: dict[str, Any]) -> list[str]:
                 "--component-run-id",
                 "--chapter-id",
                 "--chapter-range",
+                "--repair-reason",
             },
-            bare_flags={"--resume", "--all-chapters"},
+            bare_flags={"--resume", "--recover-stale", "--all-chapters"},
             value_flag_counts={"--chapter-range": 2},
         )
-        cleaned.append("--resume")
+        # The route verifies the previous registry PID is dead before this
+        # command is launched. The flag is harmless for an already-paused
+        # component and enables a checkpointed recovery if the old process
+        # died while its manifest still said running.
+        cleaned.extend(["--recover-stale", "--resume"])
         validate_args(cleaned[3:])
         return cleaned
     cleaned = _strip_flags_with_values(

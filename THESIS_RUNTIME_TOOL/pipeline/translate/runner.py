@@ -2173,7 +2173,9 @@ def _transport_identity(client: Any, config: str) -> str | None:
         raise RuntimeError(
             f"Shared Translator {config} requires role {expected_role}"
         )
-    identity = getattr(client, "transport_identity", None)
+    identity = getattr(client, "resume_transport_identity", None)
+    if identity is None:
+        identity = getattr(client, "transport_identity", None)
     if not isinstance(identity, str) or not identity:
         raise RuntimeError("Shared Translator client lacks transport identity")
     return identity
