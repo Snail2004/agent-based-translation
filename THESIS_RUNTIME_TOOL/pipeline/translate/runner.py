@@ -369,6 +369,7 @@ def translate_windows(
             slot_to_block: dict[str, str] = {}
             prompt_blocks = blocks_for_prompt
             unchanged_allowed_block_ids: set[str] = set()
+            fixed_only_protected_translations: dict[str, str] = {}
             if protected_spans_active:
                 assert protected_policy is not None
                 protection_plan = protected_policy.protect_blocks(blocks_for_prompt)
@@ -384,6 +385,15 @@ def translate_windows(
                 if protected_policy.fixed_only_block_ids is not None:
                     unchanged_allowed_block_ids = (
                         protected_policy.fixed_only_block_ids(protection_plan)
+                    )
+                if (
+                    protected_policy.fixed_only_protected_translations
+                    is not None
+                ):
+                    fixed_only_protected_translations = (
+                        protected_policy.fixed_only_protected_translations(
+                            protection_plan
+                        )
                     )
                 emit_event(
                     sink,
@@ -494,6 +504,9 @@ def translate_windows(
                 protection_plan=protection_plan,
                 protected_span_policy=protected_policy,
                 unchanged_allowed_block_ids=unchanged_allowed_block_ids,
+                fixed_only_protected_translations=(
+                    fixed_only_protected_translations
+                ),
                 slot_to_block=slot_to_block or None,
                 response_envelope_policy=response_envelope_policy,
                 max_attempts=max_attempts_per_window,
@@ -789,6 +802,7 @@ def _call_with_reask(
     protection_plan: Any | None = None,
     protected_span_policy: ProtectedSpanPolicy | None = None,
     unchanged_allowed_block_ids: set[str] | None = None,
+    fixed_only_protected_translations: dict[str, str] | None = None,
     slot_to_block: dict[str, str] | None = None,
     response_envelope_policy: str | None = None,
     max_attempts: int = 2,
@@ -890,6 +904,11 @@ def _call_with_reask(
             slot_to_block=slot_to_block,
             raw_text=response_text_for_validation,
         )
+        for block_id, protected_target in (
+            fixed_only_protected_translations or {}
+        ).items():
+            if block_id in translations:
+                translations[block_id] = protected_target
         if envelope_normalized and not parse_errors:
             normalized_payload, normalized_errors = parse_slot_json_text(
                 response_text_for_validation

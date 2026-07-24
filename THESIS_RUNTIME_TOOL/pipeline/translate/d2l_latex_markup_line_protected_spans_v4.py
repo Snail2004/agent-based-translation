@@ -134,7 +134,11 @@ class ProtectionPlan:
         }
 
 
-def protect_blocks(blocks: Sequence[Mapping[str, Any]]) -> ProtectionPlan:
+def protect_blocks(
+    blocks: Sequence[Mapping[str, Any]],
+    *,
+    protect_bracketed_emphasis: bool = False,
+) -> ProtectionPlan:
     source_blocks = [dict(block) for block in blocks]
     context_blocks = _build_context_blocks(source_blocks)
     lexical_blocks = _build_lexical_blocks(source_blocks)
@@ -175,7 +179,10 @@ def protect_blocks(blocks: Sequence[Mapping[str, Any]]) -> ProtectionPlan:
         block["clean_text"] = "".join(pieces)
         transformed_blocks.append(block)
 
-    base_plan = v3.protect_blocks(transformed_blocks)
+    base_plan = v3.protect_blocks(
+        transformed_blocks,
+        protect_bracketed_emphasis=protect_bracketed_emphasis,
+    )
     identity = {
         "policy_id": POLICY_ID,
         "base_plan_sha256": base_plan.plan_sha256,

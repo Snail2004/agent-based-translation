@@ -7,7 +7,7 @@ import json
 from typing import Any, Mapping, Sequence
 
 from pipeline.llm_backend import canonical_json, canonical_sha256
-from pipeline.translate import d2l_latex_markup_line_protected_spans_v4 as spans_v4
+from pipeline.translate import d2l_latex_markup_line_protected_spans_v5 as spans_v5
 from pipeline.translate.d2l_translation_integrity_v1 import (
     inspect_translations,
     retry_findings,
@@ -17,7 +17,7 @@ from pipeline.translate.d2l_translation_integrity_v1 import (
 
 INPUT_CONTRACT_VERSION = "d2l_translation_semantic_repair_input_v1"
 RESPONSE_CONTRACT_VERSION = "d2l_translation_semantic_repair_response_v1"
-PROMPT_ID = "d2l_translation_semantic_repair_v1_0"
+PROMPT_ID = "d2l_translation_semantic_repair_v1_1_bracketed_fixed_only"
 LOCAL_VALIDATOR_ID = "d2l_translation_semantic_repair_validator_v1_0"
 
 _FINDING_FIELDS = {
@@ -112,7 +112,7 @@ class SemanticRepairContractError(ValueError):
 class SemanticRepairPlan:
     packet: dict[str, Any]
     source_blocks_by_id: dict[str, dict[str, Any]]
-    target_plans_by_id: dict[str, spans_v4.ProtectionPlan]
+    target_plans_by_id: dict[str, spans_v5.ProtectionPlan]
 
 
 def build_plan(
@@ -141,10 +141,10 @@ def build_plan(
         raise SemanticRepairContractError("Repair output IDs are invalid")
 
     context_rows: list[dict[str, Any]] = []
-    target_plans: dict[str, spans_v4.ProtectionPlan] = {}
+    target_plans: dict[str, spans_v5.ProtectionPlan] = {}
     for source_row in source_rows:
         block_id = source_row["block_id"]
-        source_plan = spans_v4.protect_blocks(
+        source_plan = spans_v5.protect_blocks(
             [
                 {
                     "block_id": block_id,
@@ -159,7 +159,7 @@ def build_plan(
         target = (translated or {}).get("target_text")
         target_protected: str | None = None
         if isinstance(target, str) and target:
-            target_plan = spans_v4.protect_blocks(
+            target_plan = spans_v5.protect_blocks(
                 [
                     {
                         "block_id": block_id,
@@ -292,9 +292,15 @@ def validate_and_restore(
     restored_updates: dict[str, str] = {}
     warnings: list[dict[str, Any]] = []
     for block_id in expected_ids:
-        restored, issues = spans_v4.restore_translations(
-            {block_id: protected_updates[block_id]},
-            plan.target_plans_by_id[block_id],
+        target_plan = plan.target_plans_by_id[block_id]
+        fixed_only = spans_v5.fixed_only_protected_translations(target_plan)
+        protected_target = fixed_only.get(
+            block_id,
+            protected_updates[block_id],
+        )
+        restored, issues = spans_v5.restore_translations(
+            {block_id: protected_target},
+            target_plan,
         )
         if issues or set(restored) != {block_id}:
             codes = sorted({str(issue.issue_type) for issue in issues})
@@ -315,6 +321,13 @@ def validate_and_restore(
             {block_id: restored[block_id]},
         )
         majors = retry_findings(integrity)
+        if block_id in fixed_only:
+            majors = [
+                row
+                for row in majors
+                if row.issue_type
+                not in {"target_equals_source", "untranslated_heading"}
+            ]
         if majors:
             codes = sorted({row.issue_type for row in majors})
             raise SemanticRepairContractError(
@@ -397,7 +410,7 @@ def _canonical_findings(
 def _protect_audit_text(value: str, *, block_type: str, block_id: str) -> str:
     if not value:
         return ""
-    plan = spans_v4.protect_blocks(
+    plan = spans_v5.protect_blocks(
         [
             {
                 "block_id": block_id,

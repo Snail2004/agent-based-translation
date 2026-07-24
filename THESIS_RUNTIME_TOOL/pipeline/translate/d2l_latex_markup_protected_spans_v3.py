@@ -25,12 +25,14 @@ _FORMAT_PATTERNS = (
     (
         "markdown_strong_emphasis",
         "***",
+        "***",
         re.compile(
             r"(?<![\\*])\*\*\*(?!\*)(?P<inner>[^*\r\n]+?)(?<!\\)\*\*\*(?!\*)"
         ),
     ),
     (
         "markdown_strong",
+        "**",
         "**",
         re.compile(
             r"(?<![\\*])\*\*(?!\*)(?P<inner>[^*\r\n]+?)(?<!\\)\*\*(?!\*)"
@@ -39,6 +41,7 @@ _FORMAT_PATTERNS = (
     (
         "markdown_emphasis",
         "*",
+        "*",
         re.compile(
             r"(?<![\\*])\*(?!\*)(?P<inner>[^*\r\n]+?)(?<!\\)\*(?!\*)"
         ),
@@ -46,8 +49,43 @@ _FORMAT_PATTERNS = (
     (
         "markdown_strikethrough",
         "~~",
+        "~~",
         re.compile(
             r"(?<![\\~])~~(?!~)(?P<inner>[^~\r\n]+?)(?<!\\)~~(?!~)"
+        ),
+    ),
+)
+_BRACKETED_FORMAT_PATTERNS = (
+    (
+        "markdown_bracketed_strong_emphasis",
+        "[***",
+        "***]",
+        re.compile(
+            r"(?<!\\)\[\*\*\*(?!\*)(?P<inner>[^*\r\n]+?)(?<!\\)\*\*\*\](?!\()"
+        ),
+    ),
+    (
+        "markdown_bracketed_strong",
+        "[**",
+        "**]",
+        re.compile(
+            r"(?<!\\)\[\*\*(?!\*)(?P<inner>[^*\r\n]+?)(?<!\\)\*\*\](?!\()"
+        ),
+    ),
+    (
+        "markdown_bracketed_emphasis",
+        "[*",
+        "*]",
+        re.compile(
+            r"(?<!\\)\[\*(?!\*)(?P<inner>[^*\r\n]+?)(?<!\\)\*\](?!\()"
+        ),
+    ),
+    (
+        "markdown_bracketed_strikethrough",
+        "[~~",
+        "~~]",
+        re.compile(
+            r"(?<!\\)\[~~(?!~)(?P<inner>[^~\r\n]+?)(?<!\\)~~\](?!\()"
         ),
     ),
 )
@@ -165,7 +203,11 @@ class ProtectionPlan:
         }
 
 
-def protect_blocks(blocks: Sequence[Mapping[str, Any]]) -> ProtectionPlan:
+def protect_blocks(
+    blocks: Sequence[Mapping[str, Any]],
+    *,
+    protect_bracketed_emphasis: bool = False,
+) -> ProtectionPlan:
     source_blocks = [dict(block) for block in blocks]
     original_plan = v2.protect_blocks(source_blocks)
     format_spans: list[FormatSpan] = []
@@ -185,10 +227,19 @@ def protect_blocks(blocks: Sequence[Mapping[str, Any]]) -> ProtectionPlan:
             for span in original_plan.spans_for_block(block_id)
             if span.is_math or span.kind in _EXCLUDED_V2_KINDS
         ]
-        candidates = _simple_format_candidates(source, excluded=excluded)
+        patterns = (
+            (*_BRACKETED_FORMAT_PATTERNS, *_FORMAT_PATTERNS)
+            if protect_bracketed_emphasis
+            else _FORMAT_PATTERNS
+        )
+        candidates = _simple_format_candidates(
+            source,
+            excluded=excluded,
+            patterns=patterns,
+        )
         pieces: list[str] = []
         cursor = 0
-        for start, end, kind, marker, source_inner in candidates:
+        for start, end, kind, open_marker, close_marker, source_inner in candidates:
             placeholder = f"[[FORMAT_REF_{format_counter:04d}]]"
             format_counter += 1
             pieces.append(source[cursor:start])
@@ -199,8 +250,8 @@ def protect_blocks(blocks: Sequence[Mapping[str, Any]]) -> ProtectionPlan:
                     placeholder=placeholder,
                     kind=kind,
                     source_inner=source_inner,
-                    open_marker=marker,
-                    close_marker=marker,
+                    open_marker=open_marker,
+                    close_marker=close_marker,
                     start=start,
                     end=end,
                 )
@@ -400,17 +451,20 @@ def _simple_format_candidates(
     source: str,
     *,
     excluded: Sequence[tuple[int, int]],
-) -> list[tuple[int, int, str, str, str]]:
-    candidates: list[tuple[int, int, str, str, str]] = []
-    for kind, marker, pattern in _FORMAT_PATTERNS:
+    patterns: Sequence[tuple[str, str, str, re.Pattern[str]]] = _FORMAT_PATTERNS,
+) -> list[tuple[int, int, str, str, str, str]]:
+    candidates: list[tuple[int, int, str, str, str, str]] = []
+    for kind, open_marker, close_marker, pattern in patterns:
         for match in pattern.finditer(source):
             start, end = match.span()
             inner = match.group("inner")
             if _overlaps(start, end, excluded) or not _eligible_source_inner(inner):
                 continue
-            candidates.append((start, end, kind, marker, inner))
+            candidates.append(
+                (start, end, kind, open_marker, close_marker, inner)
+            )
 
-    selected: list[tuple[int, int, str, str, str]] = []
+    selected: list[tuple[int, int, str, str, str, str]] = []
     previous_end = -1
     for candidate in sorted(candidates, key=lambda row: (row[0], row[1])):
         if candidate[0] < previous_end:

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from pipeline.translate import d2l_latex_markup_line_protected_spans_v4
+from pipeline.translate import d2l_latex_markup_line_protected_spans_v5
 from pipeline.translate import d2l_latex_markup_protected_spans_v3
 from pipeline.translate import d2l_latex_protected_spans_v2
 from pipeline.translate import d2l_protected_spans_v1
@@ -26,6 +27,9 @@ class ProtectedSpanPolicy:
     context_source_blocks: Callable[..., list[dict[str, Any]]] | None = None
     lexical_source_blocks: Callable[..., list[dict[str, Any]]] | None = None
     fixed_only_block_ids: Callable[..., set[str]] | None = None
+    fixed_only_protected_translations: (
+        Callable[..., dict[str, str]] | None
+    ) = None
 
 
 _POLICIES = {
@@ -82,6 +86,33 @@ _POLICIES = {
         ),
         fixed_only_block_ids=(
             d2l_latex_markup_line_protected_spans_v4.fixed_only_block_ids
+        ),
+    ),
+    d2l_latex_markup_line_protected_spans_v5.POLICY_ID: ProtectedSpanPolicy(
+        policy_id=d2l_latex_markup_line_protected_spans_v5.POLICY_ID,
+        prompt_version=d2l_latex_markup_line_protected_spans_v5.PROMPT_VERSION,
+        translation_slots_prompt_version=(
+            d2l_latex_markup_line_protected_spans_v5.PROMPT_VERSION
+        ),
+        protect_blocks=d2l_latex_markup_line_protected_spans_v5.protect_blocks,
+        restore_translations=(
+            d2l_latex_markup_line_protected_spans_v5.restore_translations
+        ),
+        reask_note=(
+            d2l_latex_markup_line_protected_spans_v5.protected_span_reask_note
+        ),
+        hides_source_bytes=True,
+        context_source_blocks=(
+            d2l_latex_markup_line_protected_spans_v5.context_source_blocks
+        ),
+        lexical_source_blocks=(
+            d2l_latex_markup_line_protected_spans_v5.lexical_source_blocks
+        ),
+        fixed_only_block_ids=(
+            d2l_latex_markup_line_protected_spans_v5.fixed_only_block_ids
+        ),
+        fixed_only_protected_translations=(
+            d2l_latex_markup_line_protected_spans_v5.fixed_only_protected_translations
         ),
     ),
 }

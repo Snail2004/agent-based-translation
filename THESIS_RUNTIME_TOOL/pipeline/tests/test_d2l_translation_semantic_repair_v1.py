@@ -216,3 +216,58 @@ def test_s0_repair_cannot_receive_a_glossary_pack() -> None:
             resolved_integrity_history=[],
             original_context_pack=_context_pack(),
         )
+
+
+def test_fixed_only_semantic_repair_discards_model_authored_prose() -> None:
+    source = r"$$f'(x) = \lim_{h \rightarrow 0} \frac{f(x+h)-f(x)}{h}$$"
+    plan = contract.build_plan(
+        window_id="w_fixed",
+        arm_id="s0",
+        source_blocks=[
+            {
+                "block_id": "b_fixed",
+                "block_type": "paragraph",
+                "clean_text": source,
+            }
+        ],
+        current_translations={
+            "b_fixed": {
+                "block_id": "b_fixed",
+                "status": "translated",
+                "target_text": source,
+            }
+        },
+        output_block_ids=["b_fixed"],
+        active_semantic_findings=[
+            {
+                "block_id": "b_fixed",
+                "issue_type": "unsupported_addition",
+                "severity": "major",
+                "source_evidence": source,
+                "target_evidence": source,
+                "reason": "The target must not add prose to a fixed-only block.",
+            }
+        ],
+        resolved_integrity_history=[],
+        original_context_pack=None,
+    )
+    current = next(
+        row["current_target_protected_text"]
+        for row in plan.packet["context_blocks"]
+    )
+
+    result = contract.validate_and_restore(
+        {
+            "contract_version": contract.RESPONSE_CONTRACT_VERSION,
+            "window_id": "w_fixed",
+            "repairs": [
+                {
+                    "block_id": "b_fixed",
+                    "repaired_target_protected_text": "Ta có " + str(current),
+                }
+            ],
+        },
+        plan,
+    )
+
+    assert result["updates"] == {"b_fixed": source}

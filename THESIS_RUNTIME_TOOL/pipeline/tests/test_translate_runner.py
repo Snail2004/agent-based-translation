@@ -30,6 +30,10 @@ from pipeline.translate.d2l_latex_markup_line_protected_spans_v4 import (
     POLICY_ID as D2L_LINE_PROTECTED_SPANS_POLICY_ID,
     PROMPT_VERSION as D2L_LINE_PROTECTED_SPANS_PROMPT_VERSION,
 )
+from pipeline.translate.d2l_latex_markup_line_protected_spans_v5 import (
+    POLICY_ID as D2L_HARDENED_PROTECTED_SPANS_POLICY_ID,
+    PROMPT_VERSION as D2L_HARDENED_PROTECTED_SPANS_PROMPT_VERSION,
+)
 from pipeline.translate.d2l_prompt_json_envelope_v1 import (
     POLICY_ID as D2L_PROMPT_JSON_ENVELOPE_POLICY_ID,
 )
@@ -1466,6 +1470,116 @@ def test_d2l_v4_fixed_only_block_is_preserved_without_false_retry(tmp_path):
     assert report.windows_translated == 1
     assert report.reports[0].calls == 1
     assert output == source
+
+
+def test_d2l_v5_fixed_only_block_discards_model_authored_prose(tmp_path):
+    conn, _ = _make_doc_db(tmp_path)
+    source = (
+        r"(**$$f'(x) = \lim_{h \rightarrow 0} "
+        r"\frac{f(x+h) - f(x)}{h},$$**)"
+        "\n:eqlabel:`eq_derivative`"
+    )
+    conn.execute(
+        "UPDATE blocks SET text = ?, original_text = ? WHERE block_id = ?",
+        (source, source, "ch02_b001"),
+    )
+    client = _FakeClient(
+        [
+            _fake_result(
+                {
+                    "translations": {
+                        "T01": (
+                            "Ta co [[MATH_REF_0001]]"
+                            "[[STRUCT_REF_0001]]"
+                        )
+                    }
+                }
+            )
+        ]
+    )
+    client.config = _Config()
+
+    report = translate_windows(
+        conn,
+        [Window(window_id="w_fixed_v5", block_ids=["ch02_b001"], est_src_tokens=20)],
+        client,
+        "exp_d2l_v5_fixed",
+        "S1",
+        context_builder=_empty_d2l_context_builder,
+        profile_name="technical_d2l_v1",
+        protected_spans_policy=D2L_HARDENED_PROTECTED_SPANS_POLICY_ID,
+        translation_output_policy=D2L_TRANSLATION_SLOTS_POLICY_ID,
+        response_envelope_policy=D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+    )
+
+    output = conn.execute(
+        "SELECT output_text, prompt_version FROM translation_runs"
+    ).fetchone()
+    assert report.windows_translated == 1
+    assert report.reports[0].calls == 1
+    assert output["output_text"] == source
+    assert output["prompt_version"] == (
+        D2L_HARDENED_PROTECTED_SPANS_PROMPT_VERSION
+    )
+
+
+def test_d2l_v5_restores_bracketed_emphasis_around_translation(tmp_path):
+    conn, _ = _make_doc_db(tmp_path)
+    source = (
+        "As with an ordinary Python array,\n"
+        "we [**can access the length of a tensor**]\n"
+        "by calling Python's built-in `len()` function."
+    )
+    conn.execute(
+        "UPDATE blocks SET text = ?, original_text = ? WHERE block_id = ?",
+        (source, source, "ch02_b001"),
+    )
+    client = _FakeClient(
+        [
+            _fake_result(
+                {
+                    "translations": {
+                        "T01": (
+                            "Cũng như với một mảng Python thông thường,\n"
+                            "ta [[FORMAT_REF_0001|có thể truy cập độ dài của một tensor]]\n"
+                            "bằng cách gọi hàm [[STRUCT_REF_0001]] tích hợp sẵn."
+                        )
+                    }
+                }
+            )
+        ]
+    )
+    client.config = _Config()
+
+    report = translate_windows(
+        conn,
+        [
+            Window(
+                window_id="w_bracketed_v5",
+                block_ids=["ch02_b001"],
+                est_src_tokens=35,
+            )
+        ],
+        client,
+        "exp_d2l_v5_bracketed",
+        "S1",
+        context_builder=_empty_d2l_context_builder,
+        profile_name="technical_d2l_v1",
+        protected_spans_policy=D2L_HARDENED_PROTECTED_SPANS_POLICY_ID,
+        translation_output_policy=D2L_TRANSLATION_SLOTS_POLICY_ID,
+        response_envelope_policy=D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+    )
+
+    output = conn.execute(
+        "SELECT output_text FROM translation_runs"
+    ).fetchone()["output_text"]
+    assert report.windows_translated == 1
+    assert report.reports[0].calls == 1
+    assert output == (
+        "Cũng như với một mảng Python thông thường,\n"
+        "ta [**có thể truy cập độ dài của một tensor**]\n"
+        "bằng cách gọi hàm `len()` tích hợp sẵn."
+    )
 
 
 def test_d2l_s0_uses_protected_slots_without_glossary_context(tmp_path):

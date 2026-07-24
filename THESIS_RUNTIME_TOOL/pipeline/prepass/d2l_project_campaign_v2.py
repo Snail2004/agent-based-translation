@@ -43,7 +43,7 @@ from pipeline.translate import d2l_translation_slots_v1 as slot_contract
 from pipeline.translate import runner as translation_runner_contract
 from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
 from pipeline.translate import d2l_translation_semantic_repair_v1 as repair_contract
-from pipeline.translate.d2l_latex_markup_line_protected_spans_v4 import (
+from pipeline.translate.d2l_latex_markup_line_protected_spans_v5 import (
     POLICY_ID as S1_PROTECTED_POLICY_ID,
     PROMPT_VERSION as S1_TRANSLATION_PROMPT_VERSION,
 )
@@ -64,9 +64,9 @@ CONFIG_SCHEMA = "d2l_project_campaign_config_v2"
 SEAL_SCHEMA = "d2l_project_campaign_seal_v2"
 PREFLIGHT_SCHEMA = "d2l_project_campaign_preflight_v2"
 TRANSPORT_SEAL_SCHEMA = "d2l_transport_attempt_seal_v2"
-CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_3_protected_dual_arm"
+CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_4_fixed_only_hardened"
 PIPELINE_ID = "d2l_terminology"
-PIPELINE_VERSION = "d2l_translation_component_v1_3_protected_dual_arm"
+PIPELINE_VERSION = "d2l_translation_component_v1_4_fixed_only_hardened"
 PROFILE_ID = "technical_d2l_v1"
 
 SHOPAI_SOURCE_ID = "shopaikey_gemini_proxy_v2"
