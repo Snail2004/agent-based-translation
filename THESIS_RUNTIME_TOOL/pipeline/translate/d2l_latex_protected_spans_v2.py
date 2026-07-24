@@ -158,9 +158,7 @@ def protect_blocks(blocks: Sequence[Mapping[str, Any]]) -> ProtectionPlan:
                 f"Source block contains reserved placeholder prefix: {block_id}"
             )
 
-        structural = _structural_spans(source)
-        math = _math_spans(source, excluded=structural)
-        selected = _merge_nonoverlapping_spans(structural, math, block_id=block_id)
+        selected = _selected_spans(source, block_id=block_id)
 
         pieces: list[str] = []
         cursor = 0
@@ -278,13 +276,10 @@ def restore_translations(
             continue
 
         try:
-            restored_structural = _structural_spans(restored_text)
-            restored_math = _math_spans(restored_text, excluded=restored_structural)
-            restored_all = _merge_nonoverlapping_spans(
-                restored_structural,
-                restored_math,
-                block_id=block_id,
-            )
+            restored_all = _selected_spans(restored_text, block_id=block_id)
+            restored_math = [
+                span for span in restored_all if span[2].startswith("math_")
+            ]
         except D2LLatexProtectionError as exc:
             issues.append(
                 ProtectedSpanIssue(
@@ -374,8 +369,11 @@ def protected_span_reask_note(
 def math_spans_in_text(text: str) -> list[str]:
     """Return exact math spans in source order, raising on malformed delimiters."""
 
-    structural = _structural_spans(text)
-    return [text[start:end] for start, end, _ in _math_spans(text, excluded=structural)]
+    return [
+        text[start:end]
+        for start, end, kind in _selected_spans(text, block_id="<text>")
+        if kind.startswith("math_")
+    ]
 
 
 def contains_forbidden_control(text: str) -> bool:
@@ -395,6 +393,30 @@ def _structural_spans(text: str) -> list[tuple[int, int, str]]:
         (match.start(), match.end(), str(match.lastgroup))
         for match in _STRUCTURAL_RE.finditer(text)
     ]
+
+
+def _selected_spans(text: str, *, block_id: str) -> list[tuple[int, int, str]]:
+    structural = _structural_spans(text)
+    opaque_structural = [
+        span for span in structural if span[2] != "markdown_marker"
+    ]
+    math = _math_spans(text, excluded=opaque_structural)
+    math_ranges = [(start, end) for start, end, _ in math]
+    markdown = [
+        span
+        for span in structural
+        if span[2] == "markdown_marker"
+        and not _overlaps_any(span[0], span[1], math_ranges)
+    ]
+    selected_structural = sorted(
+        [*opaque_structural, *markdown],
+        key=lambda row: (row[0], row[1]),
+    )
+    return _merge_nonoverlapping_spans(
+        selected_structural,
+        math,
+        block_id=block_id,
+    )
 
 
 def _math_spans(
@@ -526,6 +548,14 @@ def _covering_end(position: int, spans: Sequence[tuple[int, int]]) -> int | None
         if start > position:
             break
     return None
+
+
+def _overlaps_any(
+    start: int,
+    end: int,
+    spans: Sequence[tuple[int, int]],
+) -> bool:
+    return any(start < other_end and other_start < end for other_start, other_end in spans)
 
 
 def _is_escaped(text: str, position: int) -> bool:

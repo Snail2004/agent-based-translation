@@ -25,6 +25,7 @@ class ProtectedSpanPolicy:
     hides_source_bytes: bool
     context_source_blocks: Callable[..., list[dict[str, Any]]] | None = None
     lexical_source_blocks: Callable[..., list[dict[str, Any]]] | None = None
+    fixed_only_block_ids: Callable[..., set[str]] | None = None
 
 
 _POLICIES = {
@@ -78,6 +79,9 @@ _POLICIES = {
         ),
         lexical_source_blocks=(
             d2l_latex_markup_line_protected_spans_v4.lexical_source_blocks
+        ),
+        fixed_only_block_ids=(
+            d2l_latex_markup_line_protected_spans_v4.fixed_only_block_ids
         ),
     ),
 }

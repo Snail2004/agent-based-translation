@@ -240,13 +240,7 @@ class _FakeTransport:
             return {"packet_id": packet["packet_id"], "decisions": decisions}
         if role_id.startswith("d2l.b2."):
             raise AssertionError(f"clean singleton unexpectedly called {role_id}")
-        if role_id == "d2l.translator.s0":
-            return {
-                block_id: _fake_translation(source)
-                for block_id, source in self.source_by_block.items()
-                if f"[{block_id}]" in user
-            }
-        if role_id == "d2l.translator.s1":
+        if role_id in {"d2l.translator.s0", "d2l.translator.s1"}:
             translations = {}
             for line in user.splitlines():
                 match = re.match(r"^\[(T\d+)\]\s?(.*)$", line)
@@ -277,10 +271,11 @@ class _SemanticRepairTransport(_FakeTransport):
         )
         if (
             role_id == "d2l.translator.s0"
-            and "[alpha_b002]" in user
+            and "A technical definition." in user
         ):
             payload = super().response(role_id, messages, tag)
-            payload["alpha_b002"] = "Nội dung sai."
+            slot_id = _slot_id_for_source(user, "A technical definition.")
+            payload["translations"][slot_id] = "Nội dung sai."
             return payload
         if role_id == "d2l.translator.quality_auditor":
             packet = next(
@@ -354,12 +349,21 @@ class _RetryConsumedSemanticMajorTransport(_SemanticRepairTransport):
         payload = super().response(role_id, messages, tag)
         if (
             role_id == "d2l.translator.s0"
-            and "[alpha_b002]" in user
+            and "A technical definition." in user
         ):
             self.initial_s0_calls += 1
             if self.initial_s0_calls == 1:
-                payload["alpha_b002"] = "هنوز"
+                slot_id = _slot_id_for_source(user, "A technical definition.")
+                payload["translations"][slot_id] = "هنوز"
         return payload
+
+
+def _slot_id_for_source(user: str, source: str) -> str:
+    for line in user.splitlines():
+        match = re.match(r"^\[(T\d+)\]\s?(.*)$", line)
+        if match and source in match.group(2):
+            return match.group(1)
+    raise AssertionError(f"source is absent from translator slots: {source!r}")
 
 
 def _fake_translation(value: str) -> str:

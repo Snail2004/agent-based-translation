@@ -1435,6 +1435,78 @@ def test_d2l_v4_normalizes_one_json_object_with_harmless_trailing_prose(tmp_path
     assert pack["response_envelope_policy"] == D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID
 
 
+def test_d2l_v4_fixed_only_block_is_preserved_without_false_retry(tmp_path):
+    conn, _ = _make_doc_db(tmp_path)
+    source = r"$$\operatorname*{argmin}_{x} f(x)$$"
+    conn.execute(
+        "UPDATE blocks SET text = ?, original_text = ? WHERE block_id = ?",
+        (source, source, "ch02_b001"),
+    )
+    client = _FakeClient(
+        [_fake_result({"translations": {"T01": "[[MATH_REF_0001]]"}})]
+    )
+    client.config = _Config()
+
+    report = translate_windows(
+        conn,
+        [Window(window_id="w_fixed", block_ids=["ch02_b001"], est_src_tokens=20)],
+        client,
+        "exp_d2l_v4_fixed",
+        "S1",
+        context_builder=_empty_d2l_context_builder,
+        profile_name="technical_d2l_v1",
+        protected_spans_policy=D2L_LINE_PROTECTED_SPANS_POLICY_ID,
+        translation_output_policy=D2L_TRANSLATION_SLOTS_POLICY_ID,
+        response_envelope_policy=D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+    )
+
+    output = conn.execute(
+        "SELECT output_text FROM translation_runs"
+    ).fetchone()["output_text"]
+    assert report.windows_translated == 1
+    assert report.reports[0].calls == 1
+    assert output == source
+
+
+def test_d2l_s0_uses_protected_slots_without_glossary_context(tmp_path):
+    conn, _ = _make_doc_db(tmp_path)
+    source = r"Use $x$."
+    conn.execute(
+        "UPDATE blocks SET text = ?, original_text = ? WHERE block_id = ?",
+        (source, source, "ch02_b001"),
+    )
+    client = _FakeClient(
+        [_fake_result({"translations": {"T01": "Dung [[MATH_REF_0001]]."}})]
+    )
+    client.config = _Config()
+
+    def forbidden_context_builder(*_args, **_kwargs):
+        raise AssertionError("S0 must not build or receive glossary context")
+
+    report = translate_windows(
+        conn,
+        [Window(window_id="w_s0_safe", block_ids=["ch02_b001"], est_src_tokens=20)],
+        client,
+        "exp_d2l_s0_safe",
+        "S0",
+        context_builder=forbidden_context_builder,
+        profile_name="technical_d2l_v1",
+        protected_spans_policy=D2L_LINE_PROTECTED_SPANS_POLICY_ID,
+        translation_output_policy=D2L_TRANSLATION_SLOTS_POLICY_ID,
+        response_envelope_policy=D2L_PROMPT_JSON_ENVELOPE_V2_POLICY_ID,
+    )
+
+    output = conn.execute(
+        "SELECT output_text FROM translation_runs"
+    ).fetchone()["output_text"]
+    prompt = "\n".join(row["content"] for row in client.calls[0]["messages"])
+    assert report.windows_translated == 1
+    assert output == "Dung $x$."
+    assert "[T01] Use [[MATH_REF_0001]]." in prompt
+    assert "glossary" not in prompt.casefold()
+    assert "term_overrides" not in prompt
+
+
 def test_d2l_v4_context_retains_inline_code_while_review_ignores_protected_identifier(
     tmp_path,
 ):

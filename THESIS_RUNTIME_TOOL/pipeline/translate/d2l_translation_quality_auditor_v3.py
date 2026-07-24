@@ -347,6 +347,89 @@ def validate_response(
     }
 
 
+def filter_protected_content_findings(
+    findings: Sequence[Mapping[str, str]],
+    *,
+    blocks: Sequence[Mapping[str, Any]],
+    protected_segments_by_block: Mapping[str, Sequence[str]],
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    """Suppress findings whose evidence resolves to read-only protected bytes."""
+
+    blocks_by_id = {str(row["block_id"]): row for row in blocks}
+    kept: list[dict[str, str]] = []
+    suppressed: list[dict[str, str]] = []
+    for raw in findings:
+        finding = {key: str(value) for key, value in raw.items()}
+        block_id = finding.get("block_id", "")
+        block = blocks_by_id.get(block_id)
+        segments = [
+            str(value)
+            for value in protected_segments_by_block.get(block_id, ())
+            if str(value)
+        ]
+        evidence = [
+            (
+                finding.get("source_evidence", ""),
+                str(block.get("source_full_text") or "") if block else "",
+            ),
+            (
+                finding.get("target_evidence", ""),
+                str(block.get("target_full_text") or "") if block else "",
+            ),
+        ]
+        nonempty_evidence = [(value, text) for value, text in evidence if value]
+        if (
+            block is not None
+            and segments
+            and nonempty_evidence
+            and all(
+                _evidence_has_protected_occurrence(value, text, segments)
+                for value, text in nonempty_evidence
+            )
+        ):
+            suppressed.append(finding)
+        else:
+            kept.append(finding)
+    return kept, suppressed
+
+
+def _evidence_has_protected_occurrence(
+    evidence: str,
+    text: str,
+    protected_segments: Sequence[str],
+) -> bool:
+    evidence_ranges = _all_occurrence_ranges(text, evidence)
+    protected_ranges = [
+        observed
+        for segment in protected_segments
+        for observed in _all_occurrence_ranges(text, segment)
+    ]
+    # Findings do not carry offsets. If a short evidence string has even one
+    # occurrence inside verified read-only notation, it cannot safely
+    # authorize semantic repair.
+    return bool(evidence_ranges) and any(
+        any(
+            protected_start <= start and end <= protected_end
+            for protected_start, protected_end in protected_ranges
+        )
+        for start, end in evidence_ranges
+    )
+
+
+def _all_occurrence_ranges(text: str, needle: str) -> list[tuple[int, int]]:
+    if not needle:
+        return []
+    result: list[tuple[int, int]] = []
+    cursor = 0
+    while True:
+        start = text.find(needle, cursor)
+        if start < 0:
+            return result
+        end = start + len(needle)
+        result.append((start, end))
+        cursor = end
+
+
 def build_semantic_manifest(
     *,
     deterministic_policy_id: str,
@@ -442,6 +525,7 @@ __all__ = [
     "AuditContractError",
     "build_packet",
     "build_semantic_manifest",
+    "filter_protected_content_findings",
     "parse_response",
     "prompt_sha256",
     "reask_note",

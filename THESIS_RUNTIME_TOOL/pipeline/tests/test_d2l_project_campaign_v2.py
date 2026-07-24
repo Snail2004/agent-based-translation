@@ -420,6 +420,14 @@ def test_prepare_seals_routes_models_limits_and_isolated_state(tmp_path: Path) -
     assert roles["d2l.translator.s0.semantic_repair"]["model_id"] == "gpt-5.4"
     assert roles["d2l.translator.s1.semantic_repair"]["model_id"] == "gpt-5.4"
     assert roles["d2l.translator.s0.semantic_repair"]["semantic_retry_cap"] == 0
+    assert roles["d2l.translator.s0"]["generation"]["max_input_tokens"] == 8_192
+    assert roles["d2l.translator.s0"]["extra_policy"]["protected_spans_policy"] == (
+        "d2l_latex_markup_line_protected_spans_v4"
+    )
+    assert roles["d2l.translator.s0"]["extra_policy"]["translation_output_policy"] == (
+        "d2l_translation_slots_v1"
+    )
+    assert roles["d2l.translator.s0"]["extra_policy"]["glossary_visibility"] == "none"
     assert roles["d2l.translator.s1.semantic_repair"]["generation"][
         "max_input_tokens"
     ] == 8_192

@@ -15,6 +15,7 @@ from pipeline.translate.d2l_translation_quality_auditor_v3 import (
     RESPONSE_CONTRACT_VERSION,
     RESPONSE_SCHEMA,
     build_packet,
+    filter_protected_content_findings,
     parse_response,
     render_messages,
     validate_packet,
@@ -140,3 +141,59 @@ def test_v3_json_fence_and_protected_ref_boundaries() -> None:
             ],
             integrity_receipt=_receipt(),
         )
+
+
+def test_v3_suppresses_ambiguous_evidence_with_a_protected_occurrence() -> None:
+    blocks = [
+        {
+            "block_id": "b1",
+            "block_type": "prose",
+            "source_full_text": r"Use either option, or write $\text{yes or no}$.",
+            "target_full_text": r"Chọn một phương án, hoặc viết $\text{yes or no}$.",
+        }
+    ]
+    finding = {
+        "block_id": "b1",
+        "issue_type": "untranslated_source_content",
+        "severity": "major",
+        "source_evidence": "or",
+        "target_evidence": "or",
+        "reason": "The token appears untranslated.",
+    }
+
+    kept, suppressed = filter_protected_content_findings(
+        [finding],
+        blocks=blocks,
+        protected_segments_by_block={"b1": [r"$\text{yes or no}$"]},
+    )
+
+    assert kept == []
+    assert suppressed == [finding]
+
+
+def test_v3_keeps_evidence_outside_protected_content() -> None:
+    blocks = [
+        {
+            "block_id": "b1",
+            "block_type": "prose",
+            "source_full_text": r"The prose claim is missing beside $x$.",
+            "target_full_text": r"Thiếu nội dung bên cạnh $x$.",
+        }
+    ]
+    finding = {
+        "block_id": "b1",
+        "issue_type": "meaning_omission",
+        "severity": "major",
+        "source_evidence": "prose claim",
+        "target_evidence": "",
+        "reason": "The prose claim is absent.",
+    }
+
+    kept, suppressed = filter_protected_content_findings(
+        [finding],
+        blocks=blocks,
+        protected_segments_by_block={"b1": ["$x$"]},
+    )
+
+    assert kept == [finding]
+    assert suppressed == []

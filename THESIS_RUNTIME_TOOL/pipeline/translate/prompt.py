@@ -39,10 +39,10 @@ def build_messages(
     if prompt_version == PROMPT_VERSION:
         prompt_version = prompt_version_for_config(config, profile_name)
     if protected_span_legend and not (
-        config == "S1" and profile.name == "technical_d2l_v1"
+        config in {"S0", "S1"} and profile.name == "technical_d2l_v1"
     ):
         raise ValueError(
-            "Protected-span context is only supported for technical D2L S1"
+            "Protected-span context is only supported for technical D2L S0/S1"
         )
     slot_output_active = (
         translation_output_policy == D2L_TRANSLATION_SLOTS_POLICY_ID
@@ -52,10 +52,10 @@ def build_messages(
             f"Unknown translation output policy: {translation_output_policy}"
         )
     if slot_output_active and not (
-        config == "S1" and profile.name == "technical_d2l_v1"
+        config in {"S0", "S1"} and profile.name == "technical_d2l_v1"
     ):
         raise ValueError(
-            "Translation slots are only supported for technical D2L S1"
+            "Translation slots are only supported for technical D2L S0/S1"
         )
 
     system = (
@@ -72,7 +72,10 @@ def build_messages(
             include_override_log=not slot_output_active,
         )
         if config == "S1"
-        else _render_source_blocks(window_blocks)
+        else _render_s0_user(
+            window_blocks,
+            protected_span_legend=protected_span_legend,
+        )
     )
 
     return [
@@ -91,6 +94,17 @@ def _render_source_blocks(blocks: list[dict[str, Any]]) -> str:
         )
         lines.append(f"[{block_id}] {text}")
     return "\n\n".join(lines)
+
+
+def _render_s0_user(
+    blocks: list[dict[str, Any]],
+    *,
+    protected_span_legend: str | None,
+) -> str:
+    source = _render_source_blocks(blocks)
+    if not protected_span_legend:
+        return source
+    return f"{protected_span_legend}\n\nSOURCE WINDOW\n{source}"
 
 
 def _render_s1_user(

@@ -21,6 +21,9 @@ _ANY_COMBINED_REF_RE = re.compile(
     r"\[\[(?P<fixed>(?:MATH_REF|STRUCT_REF|LINE_REF)_[0-9]{4})\]\]"
     r"|\[\[(?P<format>FORMAT_REF_[0-9]{4})(?:\|[^|\[\]\r\n]+)?\]\]"
 )
+_FIXED_REF_RE = re.compile(
+    r"\[\[(?:MATH_REF|STRUCT_REF|LINE_REF)_[0-9]{4}\]\]"
+)
 _LIST_PREFIX_RE = re.compile(
     r"(?:\A|\r?\n)[ \t]{0,3}(?:(?:[*+-])|(?:[0-9]+[.)]))[ \t]+"
 )
@@ -337,6 +340,31 @@ def context_source_blocks(plan: ProtectionPlan) -> list[dict[str, Any]]:
     return [dict(block) for block in plan.context_blocks]
 
 
+def fixed_only_block_ids(plan: ProtectionPlan) -> set[str]:
+    """Return blocks whose model-visible content contains no editable prose."""
+
+    result: set[str] = set()
+    for block in plan.protected_blocks:
+        block_id = str(block.get("block_id") or "")
+        text = str(block.get("clean_text") or block.get("source_text") or "")
+        if block_id and _FIXED_REF_RE.sub("", text).strip() == "":
+            result.add(block_id)
+    return result
+
+
+def fixed_source_segments(plan: ProtectionPlan) -> dict[str, list[str]]:
+    """Return read-only source bytes used to police semantic-audit evidence."""
+
+    result: dict[str, list[str]] = {}
+    fixed_spans = [
+        *plan.base_plan.base_plan.spans,
+        *plan.line_spans,
+    ]
+    for span in fixed_spans:
+        result.setdefault(span.block_id, []).append(span.source)
+    return result
+
+
 def math_spans_in_text(text: str) -> list[str]:
     return v3.math_spans_in_text(text)
 
@@ -482,6 +510,9 @@ __all__ = [
     "ProtectionPlan",
     "ProtectedSpanIssue",
     "contains_forbidden_control",
+    "context_source_blocks",
+    "fixed_only_block_ids",
+    "fixed_source_segments",
     "lexical_source_blocks",
     "math_spans_in_text",
     "protect_blocks",

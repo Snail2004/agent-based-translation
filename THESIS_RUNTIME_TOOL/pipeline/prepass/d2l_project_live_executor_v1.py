@@ -78,6 +78,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     validate_scoring_handoff_fragment,
 )
 from pipeline.prepass.d2l_terminology_memory_delta_v1 import commit_glossary_draft
+from pipeline.translate import d2l_latex_markup_line_protected_spans_v4 as spans_v4
 from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
 from pipeline.translate import d2l_translation_semantic_repair_v1 as repair_contract
 from pipeline.translate.d2l_translation_integrity_v1 import inspect_translations
@@ -89,7 +90,7 @@ from pipeline.translate.windower import Window
 
 
 LIVE_EXECUTOR_VERSION = "d2l_project_live_executor_v1"
-LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2_2_typed_quality_retries"
+LIVE_PROFILE_ID = "technical_d2l_v1_campaign_v2_3_protected_dual_arm"
 LIVE_SCOPE_ID = "d2l_selected_campaign_scope_v1"
 _COST_STATUSES = {"provider_actual", "pinned_tariff", "unknown"}
 _STAGE_UNITS = {
@@ -1944,15 +1945,9 @@ def _translator_stage(
                 config=arm_id,
                 context_budget_tokens=1500,
                 profile_name="technical_d2l_v1",
-                protected_spans_policy=(
-                    extra.get("protected_spans_policy") if arm_id == "s1" else None
-                ),
-                translation_output_policy=(
-                    extra.get("translation_output_policy") if arm_id == "s1" else None
-                ),
-                response_envelope_policy=(
-                    extra.get("response_envelope_policy") if arm_id == "s1" else None
-                ),
+                protected_spans_policy=extra.get("protected_spans_policy"),
+                translation_output_policy=extra.get("translation_output_policy"),
+                response_envelope_policy=extra.get("response_envelope_policy"),
             )
             for window_report in report.reports:
                 observations.validation(
@@ -2233,8 +2228,10 @@ def _quality_stage(
             repair_updates: dict[str, str] = {}
             llm_packets = 0
             deterministic_issue_blocks = 0
+            protected_finding_suppressed_count = 0
             for window in windows:
                 safe_blocks: list[dict[str, Any]] = []
+                protected_segments_by_block: dict[str, list[str]] = {}
                 for block_id in window["block_ids"]:
                     source_row = row_map[block_id]
                     translated = translations[block_id]
@@ -2278,6 +2275,10 @@ def _quality_stage(
                             "target_full_text": target,
                         }
                     )
+                    source_plan = spans_v4.protect_blocks([source_row])
+                    protected_segments_by_block.update(
+                        spans_v4.fixed_source_segments(source_plan)
+                    )
                 if not safe_blocks:
                     completed_work += 1
                     observations.progress(
@@ -2315,9 +2316,17 @@ def _quality_stage(
                     retry_cap=int(role["semantic_retry_cap"]),
                 )
                 llm_packets += 1
-                window_findings = [
+                validated_findings = [
                     dict(value) for value in validation["findings"]
                 ]
+                window_findings, suppressed_findings = (
+                    quality_contract.filter_protected_content_findings(
+                        validated_findings,
+                        blocks=packet["blocks"],
+                        protected_segments_by_block=protected_segments_by_block,
+                    )
+                )
+                protected_finding_suppressed_count += len(suppressed_findings)
                 findings.extend(window_findings)
                 major_by_block: dict[str, list[dict[str, str]]] = {}
                 for finding in window_findings:
@@ -2380,6 +2389,9 @@ def _quality_stage(
                     "llm_packet_count": llm_packets,
                     "deterministic_issue_block_count": deterministic_issue_blocks,
                     "finding_count": report["counts"]["findings"],
+                    "protected_finding_suppressed_count": (
+                        protected_finding_suppressed_count
+                    ),
                     "semantic_repair_attempt_count": sum(
                         row["calls"] for row in repair_rows
                     ),

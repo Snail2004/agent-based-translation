@@ -56,7 +56,6 @@ from pipeline.translate.d2l_translation_slots_v1 import (
     PROTECTED_LEXICAL_GLOSSARY_REVIEW_POLICY_ID,
     render_system_prompt as render_slot_system_prompt,
 )
-from pipeline.translate.profiles import get_profile
 
 
 CATALOG_SCHEMA = "d2l_project_chapter_catalog_v2"
@@ -65,9 +64,9 @@ CONFIG_SCHEMA = "d2l_project_campaign_config_v2"
 SEAL_SCHEMA = "d2l_project_campaign_seal_v2"
 PREFLIGHT_SCHEMA = "d2l_project_campaign_preflight_v2"
 TRANSPORT_SEAL_SCHEMA = "d2l_transport_attempt_seal_v2"
-CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_2_typed_quality_retries"
+CAMPAIGN_VERSION = "d2l_project_campaign_runner_v2_3_protected_dual_arm"
 PIPELINE_ID = "d2l_terminology"
-PIPELINE_VERSION = "d2l_translation_component_v1_2_typed_quality_retries"
+PIPELINE_VERSION = "d2l_translation_component_v1_3_protected_dual_arm"
 PROFILE_ID = "technical_d2l_v1"
 
 SHOPAI_SOURCE_ID = "shopaikey_gemini_proxy_v2"
@@ -959,9 +958,8 @@ def _role(
 
 
 def semantic_role_profiles() -> list[dict[str, Any]]:
-    technical = get_profile(PROFILE_ID)
-    s0_prompt = technical.prompt_version("S0")
-    s0_system = technical.system_prompt(s0_prompt, config="S0")
+    s0_prompt = S1_TRANSLATION_PROMPT_VERSION
+    s0_system = render_slot_system_prompt(s0_prompt)
     s1_system = render_slot_system_prompt(S1_TRANSLATION_PROMPT_VERSION)
     candidate_schema_hash = canonical_sha256(discovery_contract.RESPONSE_SCHEMA)
     b2_schema_hash = canonical_sha256(b2_contract.RESPONSE_FORMAT)
@@ -1064,12 +1062,12 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
             source_id=MODELAPI_SOURCE_ID,
             prompt_id=s0_prompt,
             prompt_sha256=canonical_sha256(s0_system),
-            validator_id="d2l_translation_exact_block_cover_validator_v1",
-            validator_sha256=file_sha256(Path(translation_runner_contract.__file__)),
+            validator_id="d2l_translation_slots_v4_local_validator",
+            validator_sha256=file_sha256(Path(slot_contract.__file__)),
             response_schema_sha256=canonical_sha256(
-                {"type": "object", "values": "translated_text_by_block_id"}
+                {"type": "object", "required": ["translations"]}
             ),
-            max_input_tokens=6_000,
+            max_input_tokens=8_192,
             max_output_tokens=4_096,
             temperature=0.3,
             seed=20_260_612,
@@ -1078,6 +1076,10 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
             semantic_retry_cap=1,
             extra_policy={
                 "arm_id": "s0",
+                "protected_spans_policy": S1_PROTECTED_POLICY_ID,
+                "translation_output_policy": TRANSLATION_OUTPUT_POLICY_ID,
+                "response_envelope_policy": TRANSLATOR_ENVELOPE_POLICY_ID,
+                "glossary_visibility": "none",
                 "mechanical_retry_cap_per_window": 1,
                 "window_target_tokens": TRANSLATOR_TARGET_TOKENS,
                 "max_blocks": TRANSLATOR_MAX_BLOCKS,
@@ -1095,7 +1097,7 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
             response_schema_sha256=canonical_sha256(
                 {"type": "object", "required": ["translations"]}
             ),
-            max_input_tokens=6_000,
+            max_input_tokens=8_192,
             max_output_tokens=4_096,
             temperature=0.3,
             seed=20_260_612,
