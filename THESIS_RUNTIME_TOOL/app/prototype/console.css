@@ -19,6 +19,17 @@
   --c-amber-bg: rgba(165, 118, 10, 0.10);
   --c-red: #b3402e;
   --c-red-bg: rgba(179, 64, 46, 0.08);
+  --role-system: #5f6b7a;
+  --role-preflight: #2563b8;
+  --role-builder: #08766d;
+  --role-audit: #7551a8;
+  --role-glossary: #3f7d20;
+  --role-translator: #b45309;
+  --role-qa: #b93868;
+  --role-handoff: #0874a6;
+  --role-scorer: #bd2c3f;
+  --role-aggregate: #514bc1;
+  --role-publisher: #875b2f;
 }
 .agentconsole.console-theme-dark {
   --c-bg: #14161a;
@@ -35,6 +46,17 @@
   --c-amber-bg: rgba(217, 164, 65, 0.12);
   --c-red: #e0604c;
   --c-red-bg: rgba(224, 96, 76, 0.10);
+  --role-system: #aab2bf;
+  --role-preflight: #74a9ff;
+  --role-builder: #5edbcf;
+  --role-audit: #c1a9f2;
+  --role-glossary: #8ecf70;
+  --role-translator: #efb45f;
+  --role-qa: #f08bb0;
+  --role-handoff: #6cccf0;
+  --role-scorer: #f38a9a;
+  --role-aggregate: #a9a6f5;
+  --role-publisher: #d7ad7e;
 }
 
 /* ============ FRAME ============ */
@@ -1584,6 +1606,33 @@ body.console-resizing-ledger { cursor: row-resize; }
 .agentconsole .workflow-component-badge.component-translation { border-color: var(--c-accent); color: var(--c-accent); }
 .agentconsole .workflow-component-badge.component-evaluation { border-color: var(--c-green); color: var(--c-green); }
 .agentconsole .workflow-component-badge.component-publication { border-color: var(--c-amber); color: var(--c-amber); }
+.agentconsole .workflow-role-badge {
+  --role-color: var(--c-ink-dim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: max-content;
+  min-width: 42px;
+  padding: 1px 5px;
+  border: 1px solid var(--role-color);
+  background: color-mix(in srgb, var(--role-color) 8%, transparent);
+  color: var(--role-color);
+  font: 700 8.5px/1.35 var(--console-mono, ui-monospace, Consolas, monospace);
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.agentconsole .workflow-role-badge.role-system { --role-color: var(--role-system); }
+.agentconsole .workflow-role-badge.role-preflight { --role-color: var(--role-preflight); }
+.agentconsole .workflow-role-badge.role-builder { --role-color: var(--role-builder); }
+.agentconsole .workflow-role-badge.role-audit { --role-color: var(--role-audit); }
+.agentconsole .workflow-role-badge.role-glossary { --role-color: var(--role-glossary); }
+.agentconsole .workflow-role-badge.role-translator { --role-color: var(--role-translator); }
+.agentconsole .workflow-role-badge.role-qa { --role-color: var(--role-qa); }
+.agentconsole .workflow-role-badge.role-handoff { --role-color: var(--role-handoff); }
+.agentconsole .workflow-role-badge.role-scorer { --role-color: var(--role-scorer); }
+.agentconsole .workflow-role-badge.role-aggregate { --role-color: var(--role-aggregate); }
+.agentconsole .workflow-role-badge.role-publisher { --role-color: var(--role-publisher); }
 .agentconsole .ev-wrap {
   min-width: 0;
   border-bottom: 1px solid color-mix(in srgb, var(--c-border) 55%, transparent);

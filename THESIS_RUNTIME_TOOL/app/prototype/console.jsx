@@ -65,6 +65,137 @@ const CONSOLE_MEMORY_OPERATION_META = {
   reinforced: { glyph: "↑", label: "reinforced" },
   revised: { glyph: "~", label: "revised" },
 };
+const CONSOLE_ROLE_META = Object.freeze({
+  system: Object.freeze({
+    label: "SYSTEM",
+    vi: "Điều phối vòng đời run và component",
+    en: "Run and component lifecycle orchestration",
+  }),
+  preflight: Object.freeze({
+    label: "PREFLIGHT",
+    vi: "Kiểm tra điều kiện chạy và hợp đồng đầu vào",
+    en: "Runtime and input-contract checks",
+  }),
+  builder: Object.freeze({
+    label: "BUILDER",
+    vi: "Khám phá, lập chỉ mục và tiếp nhận ứng viên",
+    en: "Candidate discovery, indexing, and admission",
+  }),
+  audit: Object.freeze({
+    label: "AUDIT",
+    vi: "Kiểm tra hình thái, va chạm và đa đích",
+    en: "Morphology, collision, and multi-target audit",
+  }),
+  glossary: Object.freeze({
+    label: "GLOSSARY",
+    vi: "Đóng dấu bộ thuật ngữ",
+    en: "Glossary sealing",
+  }),
+  translator: Object.freeze({
+    label: "TRANSLATOR",
+    vi: "Sinh bản dịch",
+    en: "Translation generation",
+  }),
+  qa: Object.freeze({
+    label: "QA",
+    vi: "Kiểm tra chất lượng bản dịch",
+    en: "Translation quality audit",
+  }),
+  handoff: Object.freeze({
+    label: "HANDOFF",
+    vi: "Bàn giao dữ liệu sang chấm điểm",
+    en: "Scoring handoff",
+  }),
+  scorer: Object.freeze({
+    label: "SCORER",
+    vi: "Chấm điểm theo chương và phương pháp",
+    en: "Chapter and method scoring",
+  }),
+  aggregate: Object.freeze({
+    label: "AGGREGATE",
+    vi: "Tổng hợp điểm và báo cáo",
+    en: "Score and report aggregation",
+  }),
+  publisher: Object.freeze({
+    label: "PUBLISHER",
+    vi: "Xuất bản tài liệu đầu ra",
+    en: "Output publication",
+  }),
+});
+const CONSOLE_STAGE_ROLE_IDS = Object.freeze({
+  orchestrator: "system",
+  preflight: "preflight",
+  preflight_check: "preflight",
+  b1_candidate_discovery: "builder",
+  candidate_index: "builder",
+  b2_admission_translation: "builder",
+  builder: "builder",
+  builder_c2: "builder",
+  auditor_morphology: "audit",
+  auditor_target_collision: "audit",
+  auditor_multi_target: "audit",
+  auditor: "audit",
+  auditor_c3: "audit",
+  decollision_c35: "audit",
+  reelection_watchlist: "audit",
+  glossary_seal: "glossary",
+  translator: "translator",
+  translation_quality_audit: "qa",
+  scoring_handoff_fragment: "handoff",
+  score_run_phase_1: "scorer",
+  cascade: "scorer",
+  sf_qe: "scorer",
+  sf_bt: "scorer",
+  pj: "scorer",
+  aggregation: "aggregate",
+  report: "aggregate",
+  score_run_final: "aggregate",
+  export: "publisher",
+});
+const CONSOLE_AGENT_ROLE_IDS = Object.freeze({
+  onebutton: "system",
+  runner: "system",
+  d2l_component_runner: "system",
+  d2l_workflow_runner: "system",
+  d2l_campaign_preflight: "preflight",
+  preflight: "preflight",
+  preflightcheck: "preflight",
+  evaluation_preflight: "preflight",
+  b1_candidate_discovery: "builder",
+  candidate_index: "builder",
+  b2_admission_translation: "builder",
+  builder: "builder",
+  d2l_candidate_builder: "builder",
+  d2l_candidate_indexer: "builder",
+  d2l_b2_admission_builder: "builder",
+  d2l_candidate_validator: "builder",
+  d2l_candidate_discovery_validator_v2: "builder",
+  auditor: "audit",
+  d2l_morphology_auditor: "audit",
+  d2l_target_collision_auditor: "audit",
+  d2l_multi_target_auditor: "audit",
+  glossary_seal: "glossary",
+  d2l_glossary_writer: "glossary",
+  translator: "translator",
+  d2l_translator: "translator",
+  translation_quality_audit: "qa",
+  d2l_translation_quality_auditor: "qa",
+  scoring_handoff_fragment: "handoff",
+  d2l_scoring_handoff_writer: "handoff",
+  evaluator: "scorer",
+  evaluation_chapter_runner: "scorer",
+  sf_qe_runner: "scorer",
+  sf_bt_runner: "scorer",
+  pj_runner: "scorer",
+  reporter: "aggregate",
+  evaluation_aggregator: "aggregate",
+  publisher: "publisher",
+});
+const CONSOLE_SYSTEM_ROLE_EVENTS = new Set([
+  "run_start", "run_resumed", "run_done", "run_failed", "run_cancelled",
+  "component_started", "component_resumed", "component_halted", "component_done", "component_failed",
+  "component_blocked", "run_blocked", "run_committed",
+]);
 const CONSOLE_LAYOUT_STORAGE_KEY = "thesis.agentconsole.layout.v2";
 const CONSOLE_LAYOUT_DEFAULTS = Object.freeze({
   leftWidth: 220,
@@ -386,6 +517,61 @@ function consoleWriteLocale(locale) {
 function consoleText(locale, key) {
   const table = CONSOLE_UI_TEXT[CONSOLE_UI_LOCALES.has(locale) ? locale : "vi"];
   return table[key] || CONSOLE_UI_TEXT.en[key] || key;
+}
+
+function consoleLocalStageId(stageId) {
+  const normalized = String(stageId || "").trim().toLowerCase();
+  if (!normalized) return "";
+  const segments = normalized.split(".");
+  return segments[segments.length - 1];
+}
+
+function consoleRoleForRow(row) {
+  const localStageId = consoleLocalStageId(row?.stage);
+  let roleId = CONSOLE_STAGE_ROLE_IDS[localStageId] || "";
+  if (
+    !roleId
+    && String(row?.componentId || "").toLowerCase() === "evaluation"
+    && localStageId.startsWith("chapter_")
+  ) {
+    roleId = "scorer";
+  }
+  if (!roleId) {
+    roleId = CONSOLE_AGENT_ROLE_IDS[String(row?.agent || "").trim().toLowerCase()] || "";
+  }
+  if (!roleId && CONSOLE_SYSTEM_ROLE_EVENTS.has(String(row?.event || ""))) {
+    roleId = "system";
+  }
+  return roleId ? { id: roleId, ...CONSOLE_ROLE_META[roleId] } : null;
+}
+
+function ConsoleRoleBadge({ row, uiText }) {
+  const role = consoleRoleForRow(row);
+  if (!role) {
+    return row?.componentId
+      ? <span className={`workflow-component-badge component-${row.componentId}`}>{row.componentId}</span>
+      : null;
+  }
+  const component = String(row?.componentId || "").trim();
+  const stage = String(row?.stage || "").trim();
+  const agent = String(row?.agent || "").trim();
+  const facts = [
+    `${uiText("Vai trò", "Role")}: ${role.label}`,
+    uiText(role.vi, role.en),
+    component ? `${uiText("Component", "Component")}: ${component}` : "",
+    stage ? `${uiText("Tầng", "Stage")}: ${stage}` : "",
+    agent ? `${uiText("Agent", "Agent")}: ${agent}` : "",
+  ].filter(Boolean);
+  return (
+    <span
+      className={`workflow-role-badge role-${role.id}`}
+      data-console-role={role.id}
+      title={facts.join(" · ")}
+      aria-label={facts.join(". ")}
+    >
+      {role.label}
+    </span>
+  );
 }
 
 const CONSOLE_IMPORTANT_EVENTS = new Set([
@@ -2640,6 +2826,7 @@ function ConsoleEventExpanded({ row }) {
     component_attempt_id: row.componentAttemptId ?? null,
     component_seq: row.componentSeq ?? null,
     stage_id: row.stage || null,
+    agent: row.agent || null,
     event: row.event || null,
     current_work_id: row.workId || null,
     progress: row.progress,
@@ -3677,7 +3864,7 @@ function AgentConsoleView(props) {
                       <span className="ev-glyph">{r.glyph}</span>
                       <span className="ev-body">
                         <span className="ev-heading">
-                          {r.componentId && <span className={`workflow-component-badge component-${r.componentId}`}>{r.componentId}</span>}
+                          <ConsoleRoleBadge row={r} uiText={uiText} />
                           <b className="ev-type">{r.event}{r.heartbeatCount > 1 ? ` ×${r.heartbeatCount}` : ""}</b>
                         </span>
                         <span className="ev-src">{r.stage || "-"}{r.agent ? " · " + r.agent : ""}{r.workId ? " · " + r.workId : ""}</span>

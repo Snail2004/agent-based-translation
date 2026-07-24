@@ -251,6 +251,15 @@ function runtimeJobIdForProject(project) {
   return isRuntimeProject(project) ? String(project.job_id || thesisJobId(project.doc_id) || "") : "";
 }
 
+function projectPickerDisplayId(project) {
+  const explicit = String(project?.display_doc_id || "").trim();
+  if (explicit) return explicit;
+  const docId = String(project?.doc_id || "").trim();
+  const title = String(project?.title || "").trim();
+  const safeAlias = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(title);
+  return safeAlias && title.length < docId.length ? title : docId;
+}
+
 function buildProjectPickerRows(projects) {
   const rows = Array.isArray(projects) ? projects : [];
   const localRows = rows.filter(project => !isRuntimeProject(project));
@@ -267,10 +276,10 @@ function buildProjectPickerRows(projects) {
 
   const visibleLocalRows = localRows.map(project => {
     const runtime = runtimeBySource.get(String(project.doc_id || ""));
-    if (!runtime) return { ...project, display_doc_id: project.display_doc_id || project.doc_id };
+    if (!runtime) return { ...project, display_doc_id: projectPickerDisplayId(project) };
     return {
       ...project,
-      display_doc_id: project.display_doc_id || project.doc_id,
+      display_doc_id: projectPickerDisplayId(project),
       runtime_doc_id: runtime.doc_id,
       runtime_job_id: runtimeJobIdForProject(runtime),
       runtime_status: runtime.status,
