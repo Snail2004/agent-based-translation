@@ -20,6 +20,12 @@ The following conditions pause and checkpoint the current component:
 Resume keeps `workflow_run_id` and `component_run_id`, increments
 `component_attempt_id`, and appends `run_resumed`.
 
+The component runner holds an OS-released single-writer lease for its complete
+lifetime. Registry-wrapper PID death is not enough to authorize Resume: the App
+also probes this lease, and the runner independently reacquires it before
+reading or mutating the component package. A surviving child therefore blocks
+a second writer even when its wrapper has already exited.
+
 Accepted semantic work items are stored in an append-only, hash-chained journal.
 The same work item is reused only when its input hash and semantic contract ID
 match exactly. Translator window state uses a stable experiment identity while
@@ -31,13 +37,21 @@ A code revision change is rejected before any Resume mutation unless the
 operator supplies an explicit repair reason and the new clean Git revision
 descends from the sealed baseline.
 
-An accepted repair publishes `d2l_component_repair_receipt_v1`, binding:
+An accepted repair publishes
+`d2l_component_repair_receipt_v2_mechanical_scope`, binding:
 
 - baseline and effective Git revisions;
 - checkpoint and component attempt lineage;
 - runner-plan and semantic-contract hashes;
 - Git delta hash and changed paths;
 - an explicit `semantic_contract_unchanged` attestation.
+
+The attestation is not sufficient on its own. The Git delta must also satisfy
+the closed `d2l_mechanical_repair_paths_v1` policy. Only component
+orchestration, recovery, replay-contract, App Resume boundary, related tests,
+and task documentation paths are eligible. Prompt, model/profile, glossary,
+validator, Translator, and semantic-executor paths are rejected before any
+Resume package byte is changed.
 
 The effective revision is propagated to new Translation and scoring artifacts.
 
@@ -50,7 +64,8 @@ The effective revision is propagated to new Translation and scoring artifacts.
   attempt-scoped evidence directory and bound by a recovery receipt before the
   stage executes again.
 - A stale `running` attempt may be recovered only through the explicit
-  stale-recovery path. The App route first proves the previous process is dead.
+  stale-recovery path. The App route first proves the previous registry process
+  is dead and the component writer lease is no longer active.
 
 ## New-run boundary
 

@@ -26,8 +26,14 @@ def _receipt() -> dict:
         runner_plan_sha256="C" * 64,
         git_delta_sha256="D" * 64,
         changed_paths=[
-            "THESIS_RUNTIME_TOOL/pipeline/prepass/live.py",
-            "THESIS_RUNTIME_TOOL/pipeline/tests/test_live.py",
+            (
+                "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+                "d2l_translation_component_runner_v1.py"
+            ),
+            (
+                "THESIS_RUNTIME_TOOL/pipeline/tests/"
+                "test_d2l_translation_component_runner_v1.py"
+            ),
         ],
         created_at="2026-07-25T00:00:00Z",
     )
@@ -56,3 +62,21 @@ def test_repair_receipt_rejects_semantic_or_identity_ambiguity() -> None:
     unsafe_path["changed_paths"] = ["../outside.py"]
     with pytest.raises(D2LRepairResumeError, match="changed_paths"):
         validate_repair_receipt(unsafe_path)
+
+    with pytest.raises(D2LRepairResumeError, match="closed mechanical scope"):
+        build_repair_receipt(
+            workflow_run_id="wf_repair",
+            component_run_id="tr_repair",
+            previous_component_attempt_id=2,
+            stage_id="b1_candidate_discovery",
+            checkpoint_ref="checkpoints/checkpoint_a2_b1.json",
+            checkpoint_sha256="A" * 64,
+            reason_code="semantic_prompt_change",
+            baseline_code_revision="1" * 40,
+            effective_code_revision="2" * 40,
+            semantic_contract_sha256="B" * 64,
+            runner_plan_sha256="C" * 64,
+            git_delta_sha256="D" * 64,
+            changed_paths=["THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py"],
+            created_at="2026-07-25T00:00:00Z",
+        )

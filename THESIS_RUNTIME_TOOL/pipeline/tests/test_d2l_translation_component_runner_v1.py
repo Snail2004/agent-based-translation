@@ -876,9 +876,14 @@ def test_runner_requires_and_records_explicit_same_run_code_repair(
     git("init")
     git("config", "user.name", "CodeX")
     git("config", "user.email", "codex@example.invalid")
-    repair_target = code_root / "runtime_fix.py"
+    repair_relative = (
+        "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+        "d2l_translation_component_runner_v1.py"
+    )
+    repair_target = code_root / repair_relative
+    repair_target.parent.mkdir(parents=True)
     repair_target.write_text("VALUE = 1\n", encoding="utf-8")
-    git("add", "runtime_fix.py")
+    git("add", repair_relative)
     git("commit", "-m", "baseline")
     baseline = git("rev-parse", "HEAD")
 
@@ -895,7 +900,7 @@ def test_runner_requires_and_records_explicit_same_run_code_repair(
     ).run()
 
     repair_target.write_text("VALUE = 2\n", encoding="utf-8")
-    git("add", "runtime_fix.py")
+    git("add", repair_relative)
     git("commit", "-m", "mechanical repair")
     effective = git("rev-parse", "HEAD")
     before = {
@@ -939,7 +944,8 @@ def test_runner_requires_and_records_explicit_same_run_code_repair(
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     assert receipt["baseline_code_revision"] == baseline
     assert receipt["effective_code_revision"] == effective
-    assert receipt["changed_paths"] == ["runtime_fix.py"]
+    assert receipt["changed_paths"] == [repair_relative]
+    assert receipt["repair_scope_policy_id"] == "d2l_mechanical_repair_paths_v1"
     index = json.loads((root / "artifact_index.json").read_text(encoding="utf-8"))
     repair_artifact = next(
         row
@@ -953,6 +959,74 @@ def test_runner_requires_and_records_explicit_same_run_code_repair(
     ]
     resumed = next(row for row in events if row["event"] == "run_resumed")
     assert resumed["payload"]["reason_code"] == "resume_after_code_repair"
+
+
+def test_runner_rejects_semantic_code_change_before_resume_mutation(
+    tmp_path: Path,
+) -> None:
+    code_root = tmp_path / "code"
+    prompt_relative = "THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py"
+    prompt_path = code_root / prompt_relative
+    prompt_path.parent.mkdir(parents=True)
+    prompt_path.write_text('PROMPT = "sealed"\n', encoding="utf-8")
+
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(code_root), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    git("init")
+    git("config", "user.name", "CodeX")
+    git("config", "user.email", "codex@example.invalid")
+    git("add", prompt_relative)
+    git("commit", "-m", "baseline")
+    baseline = git("rev-parse", "HEAD")
+
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    raw_plan = _plan(attempt_id=2)
+    raw_plan["code_revision"] = baseline
+    plan = ComponentPlan.from_mapping(raw_plan)
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="candidate_index",
+        repair_code_root=code_root,
+    ).run()
+
+    prompt_path.write_text('PROMPT = "changed"\n', encoding="utf-8")
+    git("add", prompt_relative)
+    git("commit", "-m", "semantic prompt change")
+    before = {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+
+    with pytest.raises(ComponentRunnerError, match="closed mechanical scope"):
+        D2LTranslationComponentRunner(
+            plan,
+            root,
+            repair_code_root=code_root,
+            repair_reason="incorrectly_claimed_mechanical_fix",
+        ).run(resume=True)
+
+    assert before == {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+    assert not (root / "runtime/repair_receipts/repair_a0002.json").exists()
 
 
 def test_runner_quarantines_incomplete_observation_tail_and_resumes(

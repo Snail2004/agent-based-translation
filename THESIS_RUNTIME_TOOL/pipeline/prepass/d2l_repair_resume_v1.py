@@ -9,11 +9,42 @@ from typing import Any, Mapping, Sequence
 from pipeline.prepass.d2l_console_replay_contract_v1 import canonical_sha256
 
 
-SCHEMA_VERSION = "d2l_component_repair_receipt_v1"
+SCHEMA_VERSION = "d2l_component_repair_receipt_v2_mechanical_scope"
 REPAIR_KIND = "mechanical_runtime_fix"
 ATTESTATION = "semantic_contract_unchanged"
+REPAIR_SCOPE_POLICY_ID = "d2l_mechanical_repair_paths_v1"
 _GIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _SHA_RE = re.compile(r"^[0-9A-F]{64}$")
+_MECHANICAL_RUNTIME_PATHS = frozenset(
+    {
+        "THESIS_RUNTIME_TOOL/app/backend/routes/thesis_runs.py",
+        "THESIS_RUNTIME_TOOL/app/backend/services/thesis_runs.py",
+        "THESIS_RUNTIME_TOOL/app/backend/tests/test_thesis_runs.py",
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+            "d2l_component_writer_lease_v1.py"
+        ),
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+            "d2l_console_replay_contract_v1.py"
+        ),
+        "THESIS_RUNTIME_TOOL/pipeline/prepass/d2l_repair_resume_v1.py",
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+            "d2l_stage_work_journal_v1.py"
+        ),
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+            "d2l_translation_component_runner_v1.py"
+        ),
+        "THESIS_RUNTIME_TOOL/pipeline/scripts/run_d2l_project_campaign.py",
+        "THESIS_RUNTIME_TOOL/pipeline/scripts/run_workflow_orchestrator_v1.py",
+    }
+)
+_MECHANICAL_SUPPORT_PREFIXES = (
+    "THESIS_RUNTIME_TOOL/pipeline/tests/",
+    "THESIS_RUNTIME_TOOL/tasks/",
+)
 
 
 class D2LRepairResumeError(ValueError):
@@ -52,6 +83,30 @@ def _payload(value: Mapping[str, Any]) -> dict[str, Any]:
     return row
 
 
+def validate_mechanical_repair_paths(paths: Sequence[str]) -> list[str]:
+    normalized = sorted(set(str(path) for path in paths))
+    if not normalized:
+        raise D2LRepairResumeError("repair changed_paths cannot be empty")
+    for path in normalized:
+        if (
+            not path
+            or "\\" in path
+            or path.startswith("/")
+            or ".." in path.split("/")
+        ):
+            raise D2LRepairResumeError(
+                "repair changed_paths must be sorted unique relative paths"
+            )
+        if path in _MECHANICAL_RUNTIME_PATHS:
+            continue
+        if any(path.startswith(prefix) for prefix in _MECHANICAL_SUPPORT_PREFIXES):
+            continue
+        raise D2LRepairResumeError(
+            f"repair path is outside the closed mechanical scope: {path}"
+        )
+    return normalized
+
+
 def validate_repair_receipt(value: Mapping[str, Any]) -> dict[str, Any]:
     row = deepcopy(dict(value))
     expected = {
@@ -64,6 +119,7 @@ def validate_repair_receipt(value: Mapping[str, Any]) -> dict[str, Any]:
         "checkpoint_ref",
         "checkpoint_sha256",
         "repair_kind",
+        "repair_scope_policy_id",
         "reason_code",
         "operator_attestation",
         "baseline_code_revision",
@@ -104,6 +160,8 @@ def validate_repair_receipt(value: Mapping[str, Any]) -> dict[str, Any]:
         )
     if row["repair_kind"] != REPAIR_KIND:
         raise D2LRepairResumeError("repair kind is invalid")
+    if row["repair_scope_policy_id"] != REPAIR_SCOPE_POLICY_ID:
+        raise D2LRepairResumeError("repair scope policy is invalid")
     if row["operator_attestation"] != ATTESTATION:
         raise D2LRepairResumeError("repair attestation is invalid")
     baseline = _git(
@@ -140,6 +198,7 @@ def validate_repair_receipt(value: Mapping[str, Any]) -> dict[str, Any]:
         raise D2LRepairResumeError(
             "repair changed_paths must be sorted unique relative paths"
         )
+    changed_paths = validate_mechanical_repair_paths(changed_paths)
     integrity = row["integrity"]
     if not isinstance(integrity, Mapping) or set(integrity) != {
         "payload_sha256"
@@ -185,6 +244,7 @@ def build_repair_receipt(
         "checkpoint_ref": checkpoint_ref,
         "checkpoint_sha256": checkpoint_sha256,
         "repair_kind": REPAIR_KIND,
+        "repair_scope_policy_id": REPAIR_SCOPE_POLICY_ID,
         "reason_code": reason_code,
         "operator_attestation": ATTESTATION,
         "baseline_code_revision": baseline_code_revision,
@@ -202,8 +262,10 @@ def build_repair_receipt(
 __all__ = [
     "ATTESTATION",
     "D2LRepairResumeError",
+    "REPAIR_SCOPE_POLICY_ID",
     "REPAIR_KIND",
     "SCHEMA_VERSION",
     "build_repair_receipt",
+    "validate_mechanical_repair_paths",
     "validate_repair_receipt",
 ]

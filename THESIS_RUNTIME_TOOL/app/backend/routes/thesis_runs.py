@@ -17,6 +17,9 @@ from pipeline.eval.full_run_report_v1 import (
     SCHEMA_VERSION as _FULL_RUN_REPORT_SCHEMA_VERSION,
     validate_full_run_report,
 )
+from pipeline.prepass.d2l_component_writer_lease_v1 import (
+    component_writer_is_active,
+)
 from routes.common import error, ok
 from services.project_runtime import (
     ProjectRuntimeError,
@@ -1432,10 +1435,27 @@ def resume_thesis_run(run_id: str):
                 "Resume manifest must be a JSON object.",
                 409,
             )
+        script = entry.get("script") or "run_one_button"
+        is_translation_component = (
+            script == D2L_PROJECT_CAMPAIGN_SCRIPT
+            or (
+                script == WORKFLOW_ORCHESTRATOR_SCRIPT
+                and entry.get("component_id") == D2L_COMPONENT_ID
+            )
+        )
+        if (
+            is_translation_component
+            and manifest.get("status") == "running"
+            and component_writer_is_active(manifest_path.parent)
+        ):
+            raise RunControlError(
+                "component_writer_still_active",
+                "The previous Translation writer is still active; Resume is unsafe.",
+                409,
+            )
         argv = build_resume_argv_from_entry(entry)
         job_id = validate_job_id(entry.get("job_id"), required=True)
         pause_path = _pause_file_from_entry(entry)
-        script = entry.get("script") or "run_one_button"
         if script in _D2L_COMPONENT_SCRIPTS:
             is_evaluation = (
                 script == WORKFLOW_ORCHESTRATOR_SCRIPT

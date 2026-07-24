@@ -48,10 +48,18 @@ from pipeline.prepass.d2l_component_stage_receipt_v1 import (
     validate_stage_receipt,
     validate_stage_receipt_against_journal,
 )
+from pipeline.prepass.d2l_component_writer_lease_v1 import (
+    D2LComponentWriterLease,
+    D2LComponentWriterLeaseError,
+)
 from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
 )
-from pipeline.prepass.d2l_repair_resume_v1 import build_repair_receipt
+from pipeline.prepass.d2l_repair_resume_v1 import (
+    D2LRepairResumeError,
+    build_repair_receipt,
+    validate_mechanical_repair_paths,
+)
 from pipeline.prepass.d2l_stage_work_journal_v1 import (
     read_work_journal,
     work_journal_state,
@@ -59,7 +67,7 @@ from pipeline.prepass.d2l_stage_work_journal_v1 import (
 
 
 RUNNER_SCHEMA = "d2l_translation_component_runner_plan_v1_2"
-RUNNER_VERSION = "d2l_translation_component_runner_v1_3_repair_resume"
+RUNNER_VERSION = "d2l_translation_component_runner_v1_4_exclusive_repair_resume"
 _FORBIDDEN_PLAN_KEYS = {
     "raw_prompt",
     "raw_response",
@@ -576,6 +584,10 @@ class D2LTranslationComponentRunner:
         )
         if not changed_paths:
             raise ComponentRunnerError("repair Git delta is empty")
+        try:
+            changed_paths = validate_mechanical_repair_paths(changed_paths)
+        except D2LRepairResumeError as exc:
+            raise ComponentRunnerError(str(exc)) from exc
         delta = self._git_command(
             "diff",
             "--binary",
@@ -614,6 +626,13 @@ class D2LTranslationComponentRunner:
         self._repair_receipt_path = receipt_path
 
     def run(self, *, resume: bool = False) -> dict[str, Any]:
+        try:
+            with D2LComponentWriterLease(self.root):
+                return self._run_exclusive(resume=resume)
+        except D2LComponentWriterLeaseError as exc:
+            raise ComponentRunnerError(str(exc)) from exc
+
+    def _run_exclusive(self, *, resume: bool) -> dict[str, Any]:
         if resume:
             if not self.root.is_dir():
                 raise ComponentRunnerError("component root is missing during resume")

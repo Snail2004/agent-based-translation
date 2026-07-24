@@ -2909,6 +2909,55 @@ def test_route_d2l_component_snapshot_relays_only_validated_package(
     assert rejected.get_json()["data"] is None
 
 
+def test_route_d2l_resume_rejects_live_component_writer_after_wrapper_exit(
+    tmp_path,
+    monkeypatch,
+):
+    client, _routes, registry = _prepare_full_report_route(tmp_path, monkeypatch)
+    from pipeline.prepass.d2l_component_writer_lease_v1 import (
+        D2LComponentWriterLease,
+    )
+
+    campaign_root = tmp_path / "_work" / "d2l_campaign" / "jobA" / "run_locked"
+    component_root = campaign_root / "component"
+    component_root.mkdir(parents=True)
+    manifest_path = component_root / "component_manifest.json"
+    manifest_path.write_text('{"status":"running"}\n', encoding="utf-8")
+    registry.create_run(
+        script="run_d2l_project_campaign",
+        argv=[
+            sys.executable,
+            "-m",
+            "pipeline.scripts.run_d2l_project_campaign",
+            "app-run",
+        ],
+        run_id="run_locked",
+        job_id="jobA",
+        run_dir=str(campaign_root),
+        manifest_path=str(manifest_path),
+        event_log_path=str(component_root / "events.jsonl"),
+        workflow_run_id="wf_locked",
+        component_id="translation",
+        component_run_id="tr_locked",
+        component_attempt_id=1,
+        selected_chapter_ids=["d2l_preliminaries"],
+        profile_id="technical_d2l_v1",
+        source_binding_sha256="A" * 64,
+    )
+    registry.update_run("run_locked", status="running", pid=999999999)
+    before_ids = {row["run_id"] for row in registry.list_runs()}
+
+    with D2LComponentWriterLease(component_root):
+        response = client.post("/api/thesis/runs/run_locked/resume", json={})
+
+    assert response.status_code == 409
+    assert (
+        response.get_json()["errors"][0]["code"]
+        == "component_writer_still_active"
+    )
+    assert {row["run_id"] for row in registry.list_runs()} == before_ids
+
+
 def _register_parent_workflow_fixture(tmp_path, registry):
     from pipeline.tests.test_workflow_replay_relay_v1 import (
         COMMIT,
