@@ -4441,17 +4441,23 @@ def test_route_workflow_live_confirmation_launches_real_campaign_path(
     )
     monkeypatch.setattr(workflow_service, "LIVE_START_ALLOWED", True)
     monkeypatch.setattr(routes, "LIVE_START_ALLOWED", True)
-    monkeypatch.setattr(
-        workflow_service,
-        "_scoring_runtime_readiness",
-        lambda **_kwargs: {
+    readiness_calls = []
+
+    def scoring_readiness(**kwargs):
+        readiness_calls.append(kwargs)
+        return {
             "allowed": True,
             "blockers": [],
             "runtime": {
                 "status": "ready",
                 "registration_sha256": "a" * 64,
             },
-        },
+        }
+
+    monkeypatch.setattr(
+        workflow_service,
+        "_scoring_runtime_readiness",
+        scoring_readiness,
     )
     monkeypatch.setattr(
         workflow_service,
@@ -4512,15 +4518,30 @@ def test_route_workflow_live_confirmation_launches_real_campaign_path(
     assert setup.status_code == 200
     assert setup.get_json()["data"]["live_start_allowed"] is True
 
+    selection = _workflow_selection_request(
+        mode="live",
+        chapter_ids=["d2l_preliminaries", "d2l_linear_networks"],
+    )
+    selection["evaluation"]["selected_chapter_ids"] = ["d2l_preliminaries"]
     preflight_response = client.post(
         "/api/projects/projectA/workflow-setup/preflight",
-        json=_workflow_selection_request(mode="live"),
+        json=selection,
     )
     assert preflight_response.status_code == 200
     preflight = preflight_response.get_json()["data"]
     assert preflight["start_allowed"] is True
     assert preflight["live_start_allowed"] is True
     assert preflight["blocking_reasons"] == []
+    assert readiness_calls[-1]["selected_chapter_ids"] == [
+        "d2l_preliminaries"
+    ]
+    assert preflight["normalized_selection"]["chapter_ids"] == [
+        "d2l_preliminaries",
+        "d2l_linear_networks",
+    ]
+    assert preflight["normalized_selection"]["evaluation"][
+        "selected_chapter_ids"
+    ] == ["d2l_preliminaries"]
 
     launch = client.post(
         "/api/thesis/runs",

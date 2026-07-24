@@ -374,7 +374,7 @@ def create_workflow_preflight(
         source_binding_sha256=setup["source_package"][
             "source_binding_sha256"
         ],
-        selected_chapter_ids=body["chapter_ids"],
+        selected_chapter_ids=evaluation_selection["selected_chapter_ids"],
     )
     blocking_reasons = []
     if mode == "live" and not LIVE_START_ALLOWED:
