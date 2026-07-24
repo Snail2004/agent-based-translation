@@ -831,6 +831,27 @@ def test_mechanical_quality_detects_math_drift_without_language_judgment() -> No
     assert "math_bytes_or_order_changed" in reasons
 
 
+def test_mechanical_quality_allows_only_code_owned_unchanged_blocks() -> None:
+    source = r"(**$$f'(x) = \frac{df}{dx},$$**) :eqlabel:`eq_derivative`"
+    safe, reasons = _mechanical_quality(
+        block_id="b_math_only",
+        source=source,
+        target=source,
+        allow_unchanged=True,
+    )
+    assert safe is True
+    assert reasons == []
+
+    safe, reasons = _mechanical_quality(
+        block_id="b_prose",
+        source="Translate this sentence.",
+        target="Translate this sentence.",
+        allow_unchanged=False,
+    )
+    assert safe is False
+    assert "target_equals_source" in reasons
+
+
 def test_live_executor_b2_invalid_output_fails_closed_without_artifact(
     tmp_path: Path,
 ) -> None:

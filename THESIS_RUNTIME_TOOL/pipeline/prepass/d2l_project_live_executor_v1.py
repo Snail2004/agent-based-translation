@@ -79,6 +79,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
 )
 from pipeline.prepass.d2l_terminology_memory_delta_v1 import commit_glossary_draft
 from pipeline.translate import d2l_latex_markup_line_protected_spans_v4 as spans_v4
+from pipeline.translate import d2l_latex_markup_line_protected_spans_v5 as spans_v5
 from pipeline.translate import d2l_translation_quality_auditor_v3 as quality_contract
 from pipeline.translate import d2l_translation_semantic_repair_v1 as repair_contract
 from pipeline.translate.d2l_translation_integrity_v1 import inspect_translations
@@ -1980,7 +1981,11 @@ def _translator_stage(
 
 
 def _mechanical_quality(
-    *, block_id: str, source: str, target: str
+    *,
+    block_id: str,
+    source: str,
+    target: str,
+    allow_unchanged: bool = False,
 ) -> tuple[bool, list[str]]:
     findings = inspect_translations(
         [
@@ -1998,6 +2003,11 @@ def _mechanical_quality(
             row.issue_type
             for row in findings
             if row.severity == "major"
+            and not (
+                allow_unchanged
+                and row.issue_type
+                in {"target_equals_source", "untranslated_heading"}
+            )
         }
     )
     return not reasons, sorted(set(reasons))
@@ -2252,7 +2262,15 @@ def _quality_stage(
                         )
                         continue
                     safe, reasons = _mechanical_quality(
-                        block_id=block_id, source=source, target=target
+                        block_id=block_id,
+                        source=source,
+                        target=target,
+                        allow_unchanged=(
+                            block_id
+                            in spans_v5.fixed_only_block_ids(
+                                spans_v5.protect_blocks([source_row])
+                            )
+                        ),
                     )
                     if not safe:
                         deterministic_issue_blocks += 1
