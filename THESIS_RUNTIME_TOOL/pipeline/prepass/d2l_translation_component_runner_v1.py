@@ -20,7 +20,7 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from pipeline.prepass.d2l_console_replay_contract_v1 import (
     COMPONENT_ID,
@@ -409,6 +409,7 @@ class D2LTranslationComponentRunner:
         repair_code_root: str | Path | None = None,
         repair_reason: str | None = None,
         recover_stale: bool = False,
+        resume_attempt_preparer: Callable[[int], None] | None = None,
     ) -> None:
         self.plan = plan if isinstance(plan, ComponentPlan) else ComponentPlan.from_mapping(plan)
         self.root = Path(root).resolve()
@@ -421,6 +422,7 @@ class D2LTranslationComponentRunner:
         )
         self.repair_reason = repair_reason
         self.recover_stale = recover_stale
+        self.resume_attempt_preparer = resume_attempt_preparer
         if stop_after_stage is not None and stop_after_stage not in STAGE_IDS:
             raise ComponentRunnerError("stop_after_stage is not a D2L stage")
         self.manifest: dict[str, Any]
@@ -1551,9 +1553,12 @@ class D2LTranslationComponentRunner:
             self._work_journal_checkpoint_state()
         ):
             raise ComponentRunnerError("resume work journal lineage mismatch")
+        next_attempt = int(current["component_attempt_id"]) + 1
+        if self.resume_attempt_preparer is not None:
+            self.resume_attempt_preparer(next_attempt)
         self._prepare_repair_receipt(current=current, resume=resume)
         self._journal_cursor = len(journal_entries)
-        self._current_attempt = int(current["component_attempt_id"]) + 1
+        self._current_attempt = next_attempt
         self.manifest = dict(current)
         self.manifest["component_attempt_id"] = self._current_attempt
         self.manifest["status"] = "running"
@@ -2781,6 +2786,7 @@ def run_from_plan_file(
     repair_code_root: str | Path | None = None,
     repair_reason: str | None = None,
     recover_stale: bool = False,
+    resume_attempt_preparer: Callable[[int], None] | None = None,
 ) -> dict[str, Any]:
     plan = ComponentPlan.from_mapping(_load_json(Path(plan_path), "runner plan"))
     return D2LTranslationComponentRunner(
@@ -2791,6 +2797,7 @@ def run_from_plan_file(
         repair_code_root=repair_code_root,
         repair_reason=repair_reason,
         recover_stale=recover_stale,
+        resume_attempt_preparer=resume_attempt_preparer,
     ).run(resume=resume)
 
 

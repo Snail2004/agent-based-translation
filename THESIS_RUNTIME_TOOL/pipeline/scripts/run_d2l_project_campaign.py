@@ -6,7 +6,10 @@ from pathlib import Path
 import sys
 from typing import Mapping
 
-from pipeline.prepass.d2l_project_campaign_v2 import prepare_campaign
+from pipeline.prepass.d2l_project_campaign_v2 import (
+    ensure_resume_transport_attempt_seals,
+    prepare_campaign,
+)
 from pipeline.prepass.d2l_project_stage_runner_v1 import (
     build_component_plan,
     execute_stage,
@@ -47,6 +50,16 @@ def _credential_files(values: list[str] | None) -> dict[str, Path]:
             raise ValueError(f"duplicate credential ref: {credential_ref}")
         result[credential_ref] = path.resolve()
     return result
+
+
+def _prepare_resume_transport_attempt(
+    campaign_root: Path,
+    component_attempt_id: int,
+) -> None:
+    ensure_resume_transport_attempt_seals(
+        campaign_root,
+        component_attempt_id=component_attempt_id,
+    )
 
 
 def _execution_mode(parser: argparse.ArgumentParser) -> None:
@@ -167,6 +180,12 @@ def main(argv: list[str] | None = None) -> int:
             repair_code_root=args.code_root,
             repair_reason=args.repair_reason,
             recover_stale=args.recover_stale,
+            resume_attempt_preparer=lambda component_attempt_id: (
+                _prepare_resume_transport_attempt(
+                    campaign_root,
+                    component_attempt_id,
+                )
+            ),
         )
     else:
         campaign_root = Path(args.campaign_root).resolve()
@@ -187,6 +206,12 @@ def main(argv: list[str] | None = None) -> int:
                 repair_code_root=args.code_root,
                 repair_reason=args.repair_reason,
                 recover_stale=args.recover_stale,
+                resume_attempt_preparer=lambda component_attempt_id: (
+                    _prepare_resume_transport_attempt(
+                        campaign_root,
+                        component_attempt_id,
+                    )
+                ),
             )
         else:
             if not args.workflow_run_id or not args.component_run_id:

@@ -127,6 +127,10 @@ _CHAIN_NON_COMPONENT_INFRA_PATHS = frozenset(
 )
 _CHAIN_COMPONENT_RUNTIME_PATHS = frozenset(
     {
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+            "d2l_project_campaign_v2.py"
+        ),
         "THESIS_RUNTIME_TOOL/pipeline/prepass/d2l_repair_resume_v1.py",
         (
             "THESIS_RUNTIME_TOOL/pipeline/prepass/"
@@ -136,6 +140,7 @@ _CHAIN_COMPONENT_RUNTIME_PATHS = frozenset(
             "THESIS_RUNTIME_TOOL/pipeline/prepass/"
             "d2l_project_live_executor_v1.py"
         ),
+        "THESIS_RUNTIME_TOOL/pipeline/scripts/run_d2l_project_campaign.py",
     }
 )
 

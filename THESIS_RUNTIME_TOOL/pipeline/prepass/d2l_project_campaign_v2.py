@@ -1570,6 +1570,127 @@ def load_transport_attempt_seal(
     return seal
 
 
+def _transport_assignment_envelope(seal: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        key: deepcopy(value)
+        for key, value in seal.items()
+        if key
+        not in {
+            "component_attempt_id",
+            "transport_attempt_index",
+            "created_at",
+            "integrity",
+        }
+    }
+
+
+def ensure_resume_transport_attempt_seals(
+    campaign_root: str | Path,
+    *,
+    component_attempt_id: int,
+) -> dict[str, Any]:
+    """Seal one Resume attempt without changing its provider assignment."""
+
+    _require_positive_int(component_attempt_id, "component_attempt_id")
+    if component_attempt_id <= 1:
+        raise D2LCampaignError(
+            "resume transport seals require component attempt greater than one"
+        )
+    loaded = load_campaign(campaign_root)
+    root = loaded["root"]
+    roles = list(loaded["config"]["semantic_roles"])
+    if not roles:
+        raise D2LCampaignError("campaign has no semantic roles")
+
+    prepared: list[dict[str, Any]] = []
+    for role in roles:
+        role_id = str(role["role_id"])
+        role_slug = role_id.replace(".", "_")
+        prior_seal: dict[str, Any] | None = None
+        prior_index: int | None = None
+        for candidate_index in range(component_attempt_id - 1, 0, -1):
+            candidate_path = (
+                root
+                / "transport_attempts"
+                / role_slug
+                / f"attempt_{candidate_index:04d}.json"
+            )
+            if not candidate_path.is_file():
+                continue
+            prior_seal = load_transport_attempt_seal(
+                root,
+                role_id=role_id,
+                transport_attempt_index=candidate_index,
+            )
+            prior_index = candidate_index
+            if prior_seal["component_attempt_id"] != candidate_index:
+                raise D2LCampaignError(
+                    "prior transport seal component attempt does not match its index"
+                )
+            break
+        if prior_seal is None or prior_index is None:
+            raise D2LCampaignError(
+                f"resume transport source has no prior seal: {role_id}"
+            )
+
+        target_path = (
+            root
+            / "transport_attempts"
+            / role_slug
+            / f"attempt_{component_attempt_id:04d}.json"
+        )
+        target_seal: dict[str, Any] | None = None
+        if target_path.exists():
+            if not target_path.is_file():
+                raise D2LCampaignError(
+                    f"transport attempt seal path is not a file: {target_path}"
+                )
+            target_seal = load_transport_attempt_seal(
+                root,
+                role_id=role_id,
+                transport_attempt_index=component_attempt_id,
+            )
+            if target_seal["component_attempt_id"] != component_attempt_id:
+                raise D2LCampaignError(
+                    "resume transport seal component attempt mismatch"
+                )
+            if _transport_assignment_envelope(
+                target_seal
+            ) != _transport_assignment_envelope(prior_seal):
+                raise D2LCampaignError(
+                    "resume transport assignment differs from latest prior seal"
+                )
+        prepared.append(
+            {
+                "role_id": role_id,
+                "prior_transport_attempt_index": prior_index,
+                "source": deepcopy(prior_seal["source"]),
+                "target_seal": target_seal,
+            }
+        )
+
+    seals: list[dict[str, Any]] = []
+    created_count = 0
+    for item in prepared:
+        seal = item["target_seal"]
+        if seal is None:
+            seal = build_transport_attempt_seal(
+                root,
+                role_id=item["role_id"],
+                source_record=item["source"],
+                component_attempt_id=component_attempt_id,
+                transport_attempt_index=component_attempt_id,
+            )
+            created_count += 1
+        seals.append(deepcopy(seal))
+    return {
+        "component_attempt_id": component_attempt_id,
+        "created_count": created_count,
+        "reused_count": len(seals) - created_count,
+        "seals": seals,
+    }
+
+
 def prepare_campaign(
     *,
     job_root: str | Path,

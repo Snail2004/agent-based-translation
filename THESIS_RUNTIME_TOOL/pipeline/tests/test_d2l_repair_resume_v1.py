@@ -141,6 +141,36 @@ def test_fast_resume_paths_are_closed_nonsemantic_repair_scope() -> None:
     assert validate_chain_repair_paths(paths) == sorted(paths)
 
 
+def test_resume_transport_seal_delta_is_closed_chained_scope() -> None:
+    paths = [
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+            "d2l_project_campaign_v2.py"
+        ),
+        "THESIS_RUNTIME_TOOL/pipeline/prepass/d2l_repair_resume_v1.py",
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+            "d2l_translation_component_runner_v1.py"
+        ),
+        "THESIS_RUNTIME_TOOL/pipeline/scripts/run_d2l_project_campaign.py",
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/tests/"
+            "test_d2l_project_campaign_v2.py"
+        ),
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/tests/"
+            "test_d2l_repair_resume_v1.py"
+        ),
+        (
+            "THESIS_RUNTIME_TOOL/pipeline/tests/"
+            "test_d2l_translation_component_runner_v1.py"
+        ),
+    ]
+
+    assert validate_mechanical_repair_paths(paths) == sorted(paths)
+    assert validate_chain_repair_paths(paths) == sorted(paths)
+
+
 def test_chained_repair_receipt_binds_parent_and_closed_paths() -> None:
     receipt = build_chain_repair_receipt(
         workflow_run_id="wf_repair",

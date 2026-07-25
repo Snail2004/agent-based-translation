@@ -334,6 +334,7 @@ def test_runner_pause_resume_increments_component_attempt(tmp_path: Path) -> Non
     root = tmp_path / "component"
     _write_payloads(root, attempt_id=2)
     plan = ComponentPlan.from_mapping(_plan(attempt_id=2))
+    prepared_attempts: list[int] = []
 
     paused = D2LTranslationComponentRunner(
         plan,
@@ -346,15 +347,56 @@ def test_runner_pause_resume_increments_component_attempt(tmp_path: Path) -> Non
     assert manifest1["component_attempt_id"] == 1
     assert manifest1["resume"]["resume_available"] is True
 
-    resumed = D2LTranslationComponentRunner(plan, root).run(resume=True)
+    resumed = D2LTranslationComponentRunner(
+        plan,
+        root,
+        resume_attempt_preparer=prepared_attempts.append,
+    ).run(resume=True)
     assert resumed["terminal_event"] == "run_done"
     assert resumed["component_attempt_id"] == 2
+    assert prepared_attempts == [2]
     events = [
         json.loads(line)
         for line in (root / "events.jsonl").read_text(encoding="utf-8").splitlines()
     ]
     assert sum(row["event"] == "run_resumed" for row in events) == 1
     assert [row["component_attempt_id"] for row in events if row["event"] == "run_resumed"] == [2]
+
+
+def test_resume_attempt_preparer_fails_before_component_mutation(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=2)
+    plan = ComponentPlan.from_mapping(_plan(attempt_id=2))
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="candidate_index",
+    ).run()
+    paths = [
+        root / "component_manifest.json",
+        root / "artifact_index.json",
+        root / "events.jsonl",
+    ]
+    before = {path: path.read_bytes() for path in paths}
+
+    def reject(attempt: int) -> None:
+        assert attempt == 2
+        assert {path: path.read_bytes() for path in paths} == before
+        raise RuntimeError("transport attempt preparation rejected")
+
+    with pytest.raises(
+        RuntimeError,
+        match="transport attempt preparation rejected",
+    ):
+        D2LTranslationComponentRunner(
+            plan,
+            root,
+            resume_attempt_preparer=reject,
+        ).run(resume=True)
+
+    assert {path: path.read_bytes() for path in paths} == before
 
 
 def test_transport_retry_exhaustion_pauses_and_resumes_same_stage(

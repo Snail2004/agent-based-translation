@@ -18,13 +18,16 @@ from pipeline.prepass.d2l_project_campaign_v2 import (
     TRANSPORT_SEAL_SCHEMA,
     bind_component_plan,
     build_transport_attempt_seal,
+    ensure_resume_transport_attempt_seals,
     initial_transport_sources,
     load_campaign,
     load_project,
+    load_transport_attempt_seal,
     prepare_campaign,
     select_chapters,
 )
 from pipeline.prepass.d2l_translation_component_runner_v1 import RUNNER_SCHEMA
+from pipeline.scripts import run_d2l_project_campaign as campaign_cli
 
 
 CREATED_AT = "2026-07-23T00:00:00Z"
@@ -643,6 +646,184 @@ def test_transport_change_keeps_model_and_rejects_secret_or_model_drift(tmp_path
             transport_attempt_index=4,
             created_at=CREATED_AT,
         )
+
+
+def test_resume_transport_seals_skip_missing_attempt_and_reuse_exact_target(
+    tmp_path: Path,
+) -> None:
+    _job, campaign = _prepare(tmp_path)
+    roles = load_campaign(campaign)["config"]["semantic_roles"]
+
+    created = ensure_resume_transport_attempt_seals(
+        campaign,
+        component_attempt_id=3,
+    )
+
+    assert created["component_attempt_id"] == 3
+    assert created["created_count"] == len(roles)
+    assert created["reused_count"] == 0
+    for role in roles:
+        role_id = role["role_id"]
+        role_slug = role_id.replace(".", "_")
+        assert not (
+            campaign
+            / "transport_attempts"
+            / role_slug
+            / "attempt_0002.json"
+        ).exists()
+        attempt1 = load_transport_attempt_seal(
+            campaign,
+            role_id=role_id,
+            transport_attempt_index=1,
+        )
+        attempt3 = load_transport_attempt_seal(
+            campaign,
+            role_id=role_id,
+            transport_attempt_index=3,
+        )
+        assert attempt3["component_attempt_id"] == 3
+        assert attempt3["source"] == attempt1["source"]
+        assert attempt3["model_id"] == attempt1["model_id"]
+
+    reused = ensure_resume_transport_attempt_seals(
+        campaign,
+        component_attempt_id=3,
+    )
+    assert reused["created_count"] == 0
+    assert reused["reused_count"] == len(roles)
+    assert reused["seals"] == created["seals"]
+
+
+def test_resume_transport_seals_reject_presealed_assignment_drift_before_write(
+    tmp_path: Path,
+) -> None:
+    _job, campaign = _prepare(tmp_path)
+    roles = load_campaign(campaign)["config"]["semantic_roles"]
+    assigned_role = roles[-1]["role_id"]
+    prior = load_transport_attempt_seal(
+        campaign,
+        role_id=assigned_role,
+        transport_attempt_index=1,
+    )
+    assigned_source = deepcopy(prior["source"])
+    assigned_source["physical_quota_bucket_id"] = "explicit-resume-bucket"
+    build_transport_attempt_seal(
+        campaign,
+        role_id=assigned_role,
+        source_record=assigned_source,
+        component_attempt_id=3,
+        transport_attempt_index=3,
+        created_at=CREATED_AT,
+    )
+
+    with pytest.raises(
+        D2LCampaignError,
+        match="resume transport assignment differs from latest prior seal",
+    ):
+        ensure_resume_transport_attempt_seals(
+            campaign,
+            component_attempt_id=3,
+        )
+
+    for role in roles[:-1]:
+        assert not (
+            campaign
+            / "transport_attempts"
+            / role["role_id"].replace(".", "_")
+            / "attempt_0003.json"
+        ).exists()
+
+
+def test_resume_transport_seals_reject_tamper_before_partial_write(
+    tmp_path: Path,
+) -> None:
+    _job, campaign = _prepare(tmp_path)
+    roles = load_campaign(campaign)["config"]["semantic_roles"]
+    tampered_role = roles[-1]["role_id"]
+    prior = load_transport_attempt_seal(
+        campaign,
+        role_id=tampered_role,
+        transport_attempt_index=1,
+    )
+    target = build_transport_attempt_seal(
+        campaign,
+        role_id=tampered_role,
+        source_record=prior["source"],
+        component_attempt_id=3,
+        transport_attempt_index=3,
+        created_at=CREATED_AT,
+    )
+    target["source"]["physical_quota_bucket_id"] = "tampered-bucket"
+    target_path = (
+        campaign
+        / "transport_attempts"
+        / tampered_role.replace(".", "_")
+        / "attempt_0003.json"
+    )
+    _write_json(target_path, target)
+
+    with pytest.raises(D2LCampaignError):
+        ensure_resume_transport_attempt_seals(
+            campaign,
+            component_attempt_id=3,
+        )
+
+    for role in roles[:-1]:
+        assert not (
+            campaign
+            / "transport_attempts"
+            / role["role_id"].replace(".", "_")
+            / "attempt_0003.json"
+        ).exists()
+
+
+def test_app_resume_wires_transport_preparation_into_component_runner(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    campaign = tmp_path / "campaign"
+    campaign.mkdir()
+    prepared: list[tuple[Path, int]] = []
+
+    def fake_prepare(campaign_root: Path, component_attempt_id: int) -> None:
+        prepared.append((campaign_root, component_attempt_id))
+
+    def fake_run_from_plan(
+        _plan_path: Path,
+        _component_root: Path,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        preparer = kwargs["resume_attempt_preparer"]
+        assert callable(preparer)
+        preparer(3)
+        return {"status": "paused"}
+
+    monkeypatch.setattr(
+        campaign_cli,
+        "_prepare_resume_transport_attempt",
+        fake_prepare,
+    )
+    monkeypatch.setattr(
+        campaign_cli,
+        "run_from_plan_file",
+        fake_run_from_plan,
+    )
+
+    assert (
+        campaign_cli.main(
+            [
+                "app-run",
+                "--job-root",
+                str(tmp_path / "job"),
+                "--campaign-root",
+                str(campaign),
+                "--resume",
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    assert prepared == [(campaign.resolve(), 3)]
 
 
 def test_component_plan_binds_only_exact_campaign_identity(tmp_path: Path) -> None:
