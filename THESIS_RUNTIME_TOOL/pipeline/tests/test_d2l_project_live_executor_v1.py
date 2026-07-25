@@ -279,7 +279,13 @@ class _FakeClient:
             }
         )
         payload = self.transport.response(self.role_id, messages, tag)
-        if payload is _INVALID_JSON:
+        finish_reason = "stop"
+        if payload is _TRUNCATED_JSON:
+            parsed = None
+            text = '{"chapter_id":"truncated'
+            json_error = "synthetic_truncated_json"
+            finish_reason = "length"
+        elif payload is _INVALID_JSON:
             parsed = None
             text = "not-json"
             json_error = "synthetic_invalid_json"
@@ -321,7 +327,7 @@ class _FakeClient:
             provider_id="fake_provider",
             source_id="fake_source",
             masked_quota_bucket="fake-bucket",
-            finish_reason="stop",
+            finish_reason=finish_reason,
             cache_status="miss",
             cache_mechanism="local_exact_cache",
             provider_cached_input_tokens=0,
@@ -329,6 +335,7 @@ class _FakeClient:
 
 
 _INVALID_JSON = object()
+_TRUNCATED_JSON = object()
 
 
 class _FencedJsonPayload:
@@ -469,10 +476,12 @@ class _FakeTransport:
         *,
         invalid_b1_once: bool = False,
         fenced_b1_once: bool = False,
+        truncated_b1_once: bool = False,
     ):
         self.source_by_block = dict(source_by_block)
         self.invalid_b1_once = invalid_b1_once
         self.fenced_b1_once = fenced_b1_once
+        self.truncated_b1_once = truncated_b1_once
         self.call_count = 0
         self.calls: list[dict] = []
         self.models = {
@@ -496,6 +505,9 @@ class _FakeTransport:
             str(row.get("content") or "") for row in messages if row.get("role") == "user"
         )
         if role_id == "d2l.candidate_discovery":
+            if self.truncated_b1_once:
+                self.truncated_b1_once = False
+                return _TRUNCATED_JSON
             if self.invalid_b1_once:
                 self.invalid_b1_once = False
                 return _INVALID_JSON
@@ -764,6 +776,55 @@ def test_b1_accepts_one_whole_response_json_fence_without_semantic_retry(
     assert not any(
         row["event"] == "retry" for row in receipt["observations"]
     )
+
+
+def test_b1_truncated_response_retries_once_with_bounded_complete_output(
+    tmp_path: Path,
+) -> None:
+    _job, campaign_root, campaign, project, rows, support = _prepared(tmp_path)
+    component_root = campaign_root / "component"
+    component_root.mkdir()
+    plan = ComponentPlan.from_mapping(support["plan"])
+    stage = next(
+        item for item in plan.stages if item.stage_id == "b1_candidate_discovery"
+    )
+    transport = support["transport"]
+    transport.invalid_b1_once = False
+    transport.truncated_b1_once = True
+
+    payloads = execute_live_stage(
+        campaign=campaign,
+        project=project,
+        rows=rows,
+        stage_id=stage.stage_id,
+        component_root=component_root,
+        work_db=campaign_root / "state" / "work.sqlite3",
+        transport=transport,
+        component_attempt_id=1,
+        producer=stage.producer,
+        work_id=stage.work_id,
+    )
+
+    candidate_calls = [
+        row
+        for row in transport.calls
+        if row["role_id"] == "d2l.candidate_discovery"
+    ]
+    assert candidate_calls[0]["tag"].endswith(".semantic_1")
+    assert candidate_calls[1]["tag"].endswith(".semantic_2")
+    retry_prompt = candidate_calls[1]["messages"][-1]["content"]
+    assert "reached the output limit and was truncated" in retry_prompt
+    assert "candidate_observations to at most 48" in retry_prompt
+    assert "Omit lower-priority items" in retry_prompt
+
+    receipt = next(
+        value for value in payloads.values() if "observations" in value
+    )
+    retries = [
+        row for row in receipt["observations"] if row["event"] == "retry"
+    ]
+    assert len(retries) == 1
+    assert retries[0]["payload"]["reason_code"] == "response_truncated"
 
 
 def test_b1_reuses_durable_work_results_after_process_resume(

@@ -808,6 +808,8 @@ def _semantic_call(
     retry_cap: int,
     work_journal: D2LStageWorkJournal,
     work_contract_id: str,
+    truncation_retry_array_name: str | None = None,
+    truncation_retry_item_limit: int | None = None,
 ) -> tuple[Any, Any]:
     input_sha256 = replay_sha256(
         {
@@ -845,14 +847,29 @@ def _semantic_call(
     for semantic_attempt in range(1, retry_cap + 2):
         attempt_messages = list(messages)
         if correction is not None:
+            if (
+                correction == "response_truncated"
+                and truncation_retry_array_name is not None
+                and truncation_retry_item_limit is not None
+            ):
+                correction_content = (
+                    "Your previous response reached the output limit and was truncated. "
+                    "Rebuild the answer from the original source and return one complete "
+                    "JSON object only. Do not add commentary. "
+                    f"Keep {truncation_retry_array_name} to at most "
+                    f"{truncation_retry_item_limit} highest-priority distinct items. "
+                    "Omit lower-priority items instead of returning incomplete JSON."
+                )
+            else:
+                correction_content = (
+                    "Your previous response failed the local response contract. "
+                    "Return a complete JSON object only. Do not add commentary. "
+                    f"Failure category: {correction}."
+                )
             attempt_messages.append(
                 {
                     "role": "user",
-                    "content": (
-                        "Your previous response failed the local response contract. "
-                        "Return a complete JSON object only. Do not add commentary. "
-                        f"Failure category: {correction}."
-                    ),
+                    "content": correction_content,
                 }
             )
         call_kwargs: dict[str, Any] = {
@@ -884,6 +901,13 @@ def _semantic_call(
         except Exception as exc:
             errors.append(type(exc).__name__)
         passed = not errors and validation is not None
+        finish_reason = str(getattr(result, "finish_reason", "") or "").strip().casefold()
+        response_truncated = (
+            not passed
+            and finish_reason in {"length", "max_tokens", "max_output_tokens"}
+        )
+        if response_truncated:
+            errors.append("response_truncated")
         observations.validation(
             passed=passed,
             validator_id=validator_id,
@@ -900,14 +924,17 @@ def _semantic_call(
             )
             return result, validation
         if semantic_attempt <= retry_cap:
+            retry_reason = (
+                "response_truncated" if response_truncated else "local_validation_failed"
+            )
             observations.retry(
                 result=result,
                 work_id=tag,
                 index=semantic_attempt,
                 maximum=retry_cap,
-                reason_code="local_validation_failed",
+                reason_code=retry_reason,
             )
-            correction = "local_validation_failed"
+            correction = retry_reason
             continue
         raise D2LProjectLiveExecutorError(
             f"semantic response failed local validation for {tag}: {errors}"
@@ -960,6 +987,10 @@ def _b1_stage(
             retry_cap=int(role["semantic_retry_cap"]),
             work_journal=work_journal,
             work_contract_id=str(role["semantic_role_sha256"]),
+            truncation_retry_array_name="candidate_observations",
+            truncation_retry_item_limit=max(
+                1, int(role["generation"]["max_output_tokens"]) // 128
+            ),
         )
         normalized = _dataclass_json(validation)
         accepted_observations += len(normalized["observations"])
