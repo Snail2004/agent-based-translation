@@ -821,6 +821,31 @@ def _append_resume_repair_reason(
     return [*argv, "--repair-reason", reason]
 
 
+_RECOVERED_PAUSE_REPAIR_REASONS = {
+    "journal_publication_race_recovered": "journal_publication_race_recovery",
+}
+
+
+def _resolved_resume_repair_reason(
+    entry: dict,
+    supplied: object,
+) -> str | None:
+    if supplied is not None and str(supplied).strip():
+        return str(supplied).strip()
+    if entry.get("script") not in _D2L_COMPONENT_SCRIPTS:
+        return None
+    component = _d2l_component_projection(entry)
+    if (
+        component.get("component_status") != "paused"
+        or (component.get("validation") or {}).get("state") != "valid"
+    ):
+        return None
+    resume = component.get("resume") or {}
+    if not resume.get("resume_available"):
+        return None
+    return _RECOVERED_PAUSE_REPAIR_REASONS.get(resume.get("paused_reason"))
+
+
 def _existing_resume_child(
     registry: RunRegistry,
     source: dict,
@@ -953,9 +978,13 @@ def estimate_preview():
             entry = registry.get_run(resume_run_id)
             if entry is None:
                 raise RunControlError("run_not_found", f"Run {resume_run_id} not found.", 404)
+            repair_reason = _resolved_resume_repair_reason(
+                entry,
+                request.args.get("repair_reason"),
+            )
             argv = _append_resume_repair_reason(
                 build_resume_argv_from_entry(entry),
-                request.args.get("repair_reason"),
+                repair_reason,
             )
             job_id = validate_job_id(entry.get("job_id"), required=True)
             token = issue_estimate_token_for_argv(
@@ -976,6 +1005,7 @@ def estimate_preview():
                     "component_run_id": entry.get("component_run_id"),
                     "component_attempt_id": entry.get("component_attempt_id"),
                     "selected_chapter_ids": entry.get("selected_chapter_ids") or [],
+                    "repair_reason": repair_reason,
                     "confirm_token": token,
                     "confirm_token_ttl_seconds": 30 * 60,
                     "argv_preview": _public_argv_preview(entry, argv),
@@ -1559,15 +1589,13 @@ def resume_thesis_run(run_id: str):
         if entry is None:
             raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
         script = entry.get("script") or "run_one_button"
-        argv = _append_resume_repair_reason(
-            build_resume_argv_from_entry(entry),
+        repair_reason = _resolved_resume_repair_reason(
+            entry,
             body.get("repair_reason"),
         )
-        repair_reason = (
-            str(body.get("repair_reason")).strip()
-            if body.get("repair_reason") is not None
-            and str(body.get("repair_reason")).strip()
-            else None
+        argv = _append_resume_repair_reason(
+            build_resume_argv_from_entry(entry),
+            repair_reason,
         )
         if _is_pid_alive(entry.get("pid")):
             raise RunControlError(

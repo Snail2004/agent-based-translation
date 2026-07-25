@@ -467,19 +467,49 @@ def test_d2l_semantic_role_preview_reads_nested_campaign_contract():
 
 
 def test_resume_repair_reason_is_bounded_and_argv_material():
-    from routes.thesis_runs import _append_resume_repair_reason
+    import routes.thesis_runs as routes
     from services.thesis_runs import RunControlError
 
     argv = ["python", "-m", "pipeline.scripts.run_workflow_orchestrator_v1"]
     reason = "repair_shopaikey_model_identity_route"
-    assert _append_resume_repair_reason(argv, reason) == [
+    assert routes._append_resume_repair_reason(argv, reason) == [
         *argv,
         "--repair-reason",
         reason,
     ]
-    assert _append_resume_repair_reason(argv, None) == argv
+    assert routes._append_resume_repair_reason(argv, None) == argv
     with pytest.raises(RunControlError, match="bounded identifier"):
-        _append_resume_repair_reason(argv, "contains whitespace")
+        routes._append_resume_repair_reason(argv, "contains whitespace")
+
+
+def test_resume_repair_reason_defaults_only_from_valid_recovery_pause(monkeypatch):
+    import routes.thesis_runs as routes
+
+    entry = {"script": routes.WORKFLOW_ORCHESTRATOR_SCRIPT}
+    projection = {
+        "component_status": "paused",
+        "validation": {"state": "valid"},
+        "resume": {
+            "resume_available": True,
+            "paused_reason": "journal_publication_race_recovered",
+        },
+    }
+    monkeypatch.setattr(routes, "_d2l_component_projection", lambda _entry: projection)
+
+    assert (
+        routes._resolved_resume_repair_reason(entry, None)
+        == "journal_publication_race_recovery"
+    )
+    assert (
+        routes._resolved_resume_repair_reason(entry, "operator_selected_repair")
+        == "operator_selected_repair"
+    )
+
+    projection["resume"]["paused_reason"] = "transport_retry_exhausted"
+    assert routes._resolved_resume_repair_reason(entry, None) is None
+    projection["resume"]["paused_reason"] = "journal_publication_race_recovered"
+    projection["validation"]["state"] = "not_ready"
+    assert routes._resolved_resume_repair_reason(entry, None) is None
 
 
 def test_build_resume_argv_d2l_removes_complete_two_value_chapter_range(tmp_path):

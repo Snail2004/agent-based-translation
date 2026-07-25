@@ -2418,7 +2418,9 @@ function App() {
     if (!pending?.runId || !pending?.estimate?.confirm_token) return;
     setRunBusy(true);
     try {
-      const resumed = await API.resumeThesisRun(pending.runId, { confirm_token: pending.estimate.confirm_token });
+      const payload = { confirm_token: pending.estimate.confirm_token };
+      if (pending.estimate.repair_reason) payload.repair_reason = pending.estimate.repair_reason;
+      const resumed = await API.resumeThesisRun(pending.runId, payload);
       const attempt = resumed.component_attempt_id ?? resumed.component_attempt_index ?? resumed.attempt_index ?? "?";
       toast(uiText("Đã tiếp tục lần chạy", "Run resumed"), "good", `${resumed.run_id} · attempt ${attempt}`);
       await refreshThesisRuns();
@@ -4339,6 +4341,9 @@ function App() {
             ) : (
               <p className="muted">{uiText("Manifest chưa có ước tính theo tầng; orchestrator vẫn áp budget gate nội bộ khi chạy.", "The manifest has no per-stage estimate; the orchestrator still applies its internal budget gate during the run.")}</p>
             )}
+            {modal.estimate?.repair_reason ? (
+              <p>{uiText("Lý do phục hồi đã khóa:", "Sealed recovery reason:")} <span className="mono">{modal.estimate.repair_reason}</span></p>
+            ) : null}
             <p className="mono">{modal.runId}</p>
           </Modal>
         );
