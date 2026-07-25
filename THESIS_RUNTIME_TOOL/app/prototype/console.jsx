@@ -607,7 +607,7 @@ const CONSOLE_IMPORTANT_EVENTS = new Set([
   "stage_start", "stage_done", "stage_failed", "stage_skipped",
   "component_started", "component_resumed", "component_halted", "component_done", "component_failed",
   "stage_started", "stage_progress", "stage_completed", "stage_paused",
-  "work_started", "work_completed", "validation_passed", "validation_failed",
+  "work_started", "work_progress", "work_completed", "validation_passed", "validation_failed",
   "usage_snapshot", "run_blocked", "component_blocked",
   "checkpoint", "run_committed", "artifact_created", "health_check",
   "window_preview_available", "block_done", "memory_delta", "retry",
@@ -1064,6 +1064,23 @@ function consoleRetryPresentationRows(rows, eventPreset) {
   });
 }
 
+/* Important shows the latest producer work_progress for each canonical stage.
+   All keeps every physical row, and historical stage-start progress is never
+   rewritten or replaced. */
+function consoleLatestWorkProgressRows(rows, eventPreset) {
+  if (eventPreset !== "important") return rows;
+  const latestByStage = new Map();
+  rows.forEach(row => {
+    if (row?.event !== "work_progress") return;
+    const stageId = String(row.stage || "").trim();
+    if (stageId) latestByStage.set(stageId, row);
+  });
+  return rows.filter(row => (
+    row?.event !== "work_progress"
+    || latestByStage.get(String(row.stage || "").trim()) === row
+  ));
+}
+
 function consoleEventSequenceLabel(row) {
   const firstLine = row.heartbeatFirstLineNo;
   const lastLine = row.heartbeatLastLineNo;
@@ -1240,6 +1257,7 @@ function consoleMessageFor(row, ctx) {
     }
     case "checkpoint": return `checkpoint · ${p.checkpoint || "saved"}`;
     case "work_started": return `${p.current_work_id || p.work_id || "work"} bắt đầu${progressText ? ` · ${progressText}` : ""}`;
+    case "work_progress": return `${ctx.label || row.stage} · tiến độ hiện tại${progressText ? ` · ${progressText}` : ""}`;
     case "work_completed": return `${p.current_work_id || p.work_id || "work"} hoàn tất${progressText ? ` · ${progressText}` : ""}`;
     case "validation_passed": return `${p.validator_id || "validation"} · PASS`;
     case "validation_failed": return `${p.validator_id || "validation"} · FAIL${p.reason ? ` · ${consoleShort(p.reason, 60)}` : ""}`;
@@ -2967,10 +2985,16 @@ function consoleUsageSummaryTotal(usage, allowComponentFallback) {
   }
   const componentTotals = Array.isArray(usage.componentTotals) ? usage.componentTotals : [];
   const componentTotal = componentTotals.length === 1 ? componentTotals[0] : null;
+  const snapshotSeq = componentTotal?.snapshotSeq;
+  const snapshotSha256 = String(componentTotal?.sha256 || "");
   if (
     allowComponentFallback
     && componentTotal
-    && componentTotal.binding?.authority === "producer_sealed"
+    && usage.validation?.valid === true
+    && usage.validation?.authority === "producer_snapshots_and_neutral_relay"
+    && Number.isInteger(snapshotSeq)
+    && snapshotSeq > 0
+    && /^[0-9a-f]{64}$/i.test(snapshotSha256)
   ) {
     return { total: componentTotal, authority: "component" };
   }
@@ -3863,7 +3887,11 @@ function AgentConsoleView(props) {
     () => consoleRetryPresentationRows(displayRows, eventPreset),
     [displayRows, eventPreset],
   );
-  const presetRows = retryPresentationRows.filter(r => eventPreset === "all" || consoleIsImportantEvent(r));
+  const progressPresentationRows = React.useMemo(
+    () => consoleLatestWorkProgressRows(retryPresentationRows, eventPreset),
+    [retryPresentationRows, eventPreset],
+  );
+  const presetRows = progressPresentationRows.filter(r => eventPreset === "all" || consoleIsImportantEvent(r));
   const filtered = presetRows.filter(r =>
     (!stageFilter || r.stage === stageFilter)
     && (!agentFilter || r.agent === agentFilter)

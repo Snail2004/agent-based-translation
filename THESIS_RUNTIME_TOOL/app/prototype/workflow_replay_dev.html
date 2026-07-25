@@ -132,6 +132,7 @@ function makeUsageReadModel(manifest, mode) {
     cost_status: "unknown",
     cost_usd: null,
     currency: null,
+    snapshot_binding: undefined,
     snapshot_sha256: "b".repeat(64),
   });
   const componentTotals = componentOnly
@@ -154,6 +155,7 @@ function makeUsageReadModel(manifest, mode) {
         cost_status: "unknown",
         cost_usd: null,
         currency: null,
+        snapshot_binding: undefined,
         snapshot_sha256: "c".repeat(64),
       })] : []),
     ]
@@ -174,7 +176,11 @@ function makeUsageReadModel(manifest, mode) {
     schema_version: "1.0.0",
     workflow_run_id: manifest.workflow_run_id,
     validated: true,
-    validation: { valid: true, validator_id: "neutral_relay.usage.validator_v1" },
+    validation: {
+      valid: true,
+      authority: "producer_snapshots_and_neutral_relay",
+      validator_id: "neutral_relay.usage.validator_v1",
+    },
     calls: [
       {
         attempt_usage_id: "usage_call_1",
