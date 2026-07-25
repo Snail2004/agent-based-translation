@@ -74,10 +74,23 @@
     const controller = timeoutMs > 0 && typeof AbortController !== "undefined"
       ? new AbortController()
       : null;
+    const externalSignal = opts.signal || null;
+    let timeoutTriggered = false;
+    let abortFromExternal = null;
     let timeoutId = null;
     if (controller) {
       init.signal = controller.signal;
-      timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      if (externalSignal) {
+        abortFromExternal = () => controller.abort();
+        if (externalSignal.aborted) abortFromExternal();
+        else externalSignal.addEventListener("abort", abortFromExternal, { once: true });
+      }
+      timeoutId = setTimeout(() => {
+        timeoutTriggered = true;
+        controller.abort();
+      }, timeoutMs);
+    } else if (externalSignal) {
+      init.signal = externalSignal;
     }
     if (opts.formData) {
       init.body = opts.formData;
@@ -90,12 +103,21 @@
     try {
       response = await fetch(baseUrl() + path, init);
     } catch (err) {
-      if (controller?.signal.aborted) {
+      if (timeoutTriggered) {
         throw new ApiError("Backend did not return status in time. Retry after checking the backend process.", {
           ok: false,
           errors: [{
             code: "request_timeout",
             message: `Backend did not respond within ${Math.ceil(timeoutMs / 1000)} seconds.`,
+          }],
+        }, 0);
+      }
+      if (externalSignal?.aborted) {
+        throw new ApiError("Request was cancelled because the active view changed.", {
+          ok: false,
+          errors: [{
+            code: "request_cancelled",
+            message: "The active source-package unit changed before this request completed.",
           }],
         }, 0);
       }
@@ -105,6 +127,9 @@
       }, 0);
     } finally {
       if (timeoutId !== null) clearTimeout(timeoutId);
+      if (externalSignal && abortFromExternal) {
+        externalSignal.removeEventListener("abort", abortFromExternal);
+      }
     }
 
     let payload;
@@ -218,12 +243,12 @@
     getProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime`, { timeoutMs: 30000 }),
     prepareProjectRuntime: (docId) => request(`/projects/${encodeURIComponent(docId)}/runtime/prepare`, { method: "POST", body: {} }),
     getSourcePackageStatus: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package`, { timeoutMs: 240000 }),
-    normalizeSourcePackage: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/normalize`, { method: "POST", body: {} }),
+    normalizeSourcePackage: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/normalize`, { method: "POST", body: {}, timeoutMs: 600000 }),
     getSourcePackageReview: (docId) => request(`/projects/${encodeURIComponent(docId)}/source-package/review`, { timeoutMs: 240000 }),
-    getSourcePackageUnitBlocks: (docId, unitId, expected, offset = 0, limit = 200) => request(sourcePackageUnitBlocksPath(docId, unitId, expected, offset, limit), { timeoutMs: 60000 }),
-    applySourcePackageCorrections: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/corrections`, { method: "POST", body }),
-    applySourcePackageHierarchy: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/hierarchy`, { method: "POST", body }),
-    finalizeSourcePackage: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/finalize`, { method: "POST", body }),
+    getSourcePackageUnitBlocks: (docId, unitId, expected, offset = 0, limit = 200, options = {}) => request(sourcePackageUnitBlocksPath(docId, unitId, expected, offset, limit), { timeoutMs: 240000, signal: options.signal }),
+    applySourcePackageCorrections: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/corrections`, { method: "POST", body, timeoutMs: 600000 }),
+    applySourcePackageHierarchy: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/hierarchy`, { method: "POST", body, timeoutMs: 600000 }),
+    finalizeSourcePackage: (docId, body) => request(`/projects/${encodeURIComponent(docId)}/source-package/finalize`, { method: "POST", body, timeoutMs: 600000 }),
     publishSourcePackage: (docId, overlay) => request(`/projects/${encodeURIComponent(docId)}/source-package/publications`, { method: "POST", body: overlay }),
     patchProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "PATCH", body: payload }),
     deleteProject: (docId, payload) => request(`/projects/${encodeURIComponent(docId)}`, { method: "DELETE", body: payload || {} }),

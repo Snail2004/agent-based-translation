@@ -7,9 +7,47 @@
   const scenario = params.get("scenario") || "draft";
   const overlayMode = params.get("overlay") || "missing";
   const previewMode = params.get("preview") || "valid";
+  const slowMode = params.get("delay") === "slow";
+  const latencyMode = scenario === "latency";
+  const syncFailureMode = scenario === "sync-failure";
+  const ambiguityCode = params.get("ambiguity") || "";
+  const normalizeAmbiguityMode = scenario === "normalize-ambiguous"
+    && ["request_timeout", "network_error", "invalid_json"].includes(ambiguityCode);
+  const refreshFailureMode = normalizeAmbiguityMode && params.get("refresh") === "fail";
+  const fixtureDelays = {
+    status: latencyMode ? 400 : slowMode ? 250 : 0,
+    review: latencyMode ? 5000 : slowMode ? 1600 : 0,
+    blocks: latencyMode ? 12000 : slowMode ? 1800 : 0,
+    mutation: latencyMode ? 5000 : slowMode ? 1200 : 0,
+  };
+  const fixtureMetrics = { unitBlockRequests: 0, mutations: 0, statusRequests: 0 };
+  let syncFailureDelivered = false;
+  let normalizeAmbiguityDelivered = false;
   const docId = "source_package_ui_demo";
   const hash = char => String(char).repeat(64);
   const clone = value => JSON.parse(JSON.stringify(value));
+
+  function waitForFixture(ms, signal) {
+    if (!ms) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const cancel = () => {
+        window.clearTimeout(timer);
+        signal?.removeEventListener("abort", cancel);
+        reject(new ApiError("Fixture request cancelled.", {
+          ok: false,
+          errors: [{ code: "request_cancelled", message: "Fixture request cancelled." }],
+        }, 0));
+      };
+      const finish = () => {
+        signal?.removeEventListener("abort", cancel);
+        resolve();
+      };
+      const timer = window.setTimeout(finish, ms);
+      if (!signal) return;
+      if (signal.aborted) cancel();
+      else signal.addEventListener("abort", cancel, { once: true });
+    });
+  }
 
   localStorage.setItem("ailab.doc_id", docId);
   localStorage.setItem("ailab.center_mode", "structure");
@@ -168,7 +206,7 @@
   let staleOnce = scenario === "stale";
   let blockStaleOnce = previewMode === "stale";
   let runtime = { project_id: docId, prepared: false };
-  let mode = scenario === "unmanaged"
+  let mode = scenario === "unmanaged" || normalizeAmbiguityMode
     ? "unmanaged_draft"
     : scenario === "legacy"
       ? "legacy_only"
@@ -311,7 +349,9 @@
 
   window.SOURCE_PACKAGE_UI_FIXTURE = {
     scenario,
+    ambiguityCode: normalizeAmbiguityMode ? ambiguityCode : null,
     overlay: overlayMode === "valid" ? overlay : null,
+    metrics: fixtureMetrics,
   };
 
   window.AILAB_API = {
@@ -366,14 +406,28 @@
       source: { glossary_by_id: {}, entities_by_id: {} },
       target_by_config: {},
     }),
-    getSourcePackageStatus: async () => clone(statusPayload()),
+    getSourcePackageStatus: async () => {
+      fixtureMetrics.statusRequests += 1;
+      await waitForFixture(fixtureDelays.status);
+      if (refreshFailureMode && normalizeAmbiguityDelivered) {
+        throw apiError("network_error", "Fixture withheld authoritative status after an ambiguous normalize result.", 0);
+      }
+      return clone(statusPayload());
+    },
     getSourcePackageReview: async () => {
+      await waitForFixture(fixtureDelays.review);
+      if (syncFailureMode && fixtureMetrics.mutations > 0 && !syncFailureDelivered) {
+        syncFailureDelivered = true;
+        throw apiError("fixture_review_unavailable", "Fixture withheld the first post-mutation review.", 503);
+      }
       if (!["managed_draft", "managed_finalized_pre_run", "managed_run_started_frozen"].includes(mode)) {
         throw apiError("source_package_not_managed", "Normalize the source package before requesting structure review.", 409);
       }
       return clone(reviewPayload());
     },
-    getSourcePackageUnitBlocks: async (_id, unitId, expected, offset = 0, limit = 200) => {
+    getSourcePackageUnitBlocks: async (_id, unitId, expected, offset = 0, limit = 200, options = {}) => {
+      fixtureMetrics.unitBlockRequests += 1;
+      await waitForFixture(fixtureDelays.blocks, options.signal);
       if (previewMode === "missing") {
         throw apiError("source_package_unit_blocks_unavailable", "Authoritative unit blocks are unavailable in this fixture state.", 503);
       }
@@ -428,17 +482,31 @@
       return clone(payload);
     },
     normalizeSourcePackage: async () => {
+      fixtureMetrics.mutations += 1;
+      await waitForFixture(fixtureDelays.mutation);
       const reused = mode !== "unmanaged_draft";
       mode = "managed_draft";
+      if (normalizeAmbiguityMode && !normalizeAmbiguityDelivered) {
+        normalizeAmbiguityDelivered = true;
+        throw apiError(
+          ambiguityCode,
+          `Fixture simulated ${ambiguityCode} after the backend may have committed normalization.`,
+          ambiguityCode === "invalid_json" ? 200 : 0,
+        );
+      }
       return { ...clone(statusPayload()), created: !reused, reused };
     },
     applySourcePackageCorrections: async (_id, body) => {
+      fixtureMetrics.mutations += 1;
+      await waitForFixture(fixtureDelays.mutation);
       assertFresh();
       applyCorrectionActions(body.actions);
       mode = "managed_draft";
       return { ...clone(statusPayload()), decision_created: true, decision_reused: false };
     },
     applySourcePackageHierarchy: async (_id, body) => {
+      fixtureMetrics.mutations += 1;
+      await waitForFixture(fixtureDelays.mutation);
       assertFresh();
       for (const action of body.actions || []) {
         if (action.action_type === "set_parent") parentByUnit[action.child_unit_id] = action.parent_unit_id;
@@ -448,6 +516,8 @@
       return { ...clone(statusPayload()), decision_created: true, decision_reused: false };
     },
     finalizeSourcePackage: async () => {
+      fixtureMetrics.mutations += 1;
+      await waitForFixture(fixtureDelays.mutation);
       assertFresh();
       mode = "managed_finalized_pre_run";
       revision += 1;

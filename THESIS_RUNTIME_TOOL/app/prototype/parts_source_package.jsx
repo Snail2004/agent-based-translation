@@ -22,6 +22,11 @@ const SOURCE_PACKAGE_REVIEW_BINDING_FIELDS = [
   "structure_sha256",
   "report_sha256",
 ];
+const SOURCE_PACKAGE_AMBIGUOUS_MUTATION_ERRORS = new Set([
+  "request_timeout",
+  "network_error",
+  "invalid_json",
+]);
 
 function sourcePackageErrorDetail(error) {
   const first = error?.errors?.[0] || error?.payload?.errors?.[0] || {};
@@ -204,6 +209,8 @@ function SourcePackageWorkspace({
   const [loading, setLoading] = React.useState(true);
   const [reviewLoading, setReviewLoading] = React.useState(false);
   const [busy, setBusy] = React.useState("");
+  const [operation, setOperation] = React.useState(null);
+  const [syncRequired, setSyncRequired] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [notice, setNotice] = React.useState(null);
   const [selectedUnitId, setSelectedUnitId] = React.useState("");
@@ -220,15 +227,25 @@ function SourcePackageWorkspace({
   const [technicalOpen, setTechnicalOpen] = React.useState(false);
   const [modal, setModal] = React.useState(null);
   const [publication, setPublication] = React.useState(null);
+  const [blockReloadKey, setBlockReloadKey] = React.useState(0);
+  const [clock, setClock] = React.useState(() => Date.now());
   const issuePanelRef = React.useRef(null);
   const detailTriggerRef = React.useRef(null);
   const detailCloseRef = React.useRef(null);
   const detailPanelRef = React.useRef(null);
   const loadVersionRef = React.useRef(0);
+  const unitBlocksCacheRef = React.useRef({ scope: "", entries: new Map() });
+  const mutationInFlightRef = React.useRef(false);
 
-  const load = React.useCallback(async ({ silent = false } = {}) => {
+  const load = React.useCallback(async ({
+    silent = false,
+    statusHint = null,
+    preserveExisting = false,
+    throwOnError = false,
+  } = {}) => {
     const loadVersion = loadVersionRef.current + 1;
     loadVersionRef.current = loadVersion;
+    let receivedStatus = null;
     if (!docId) {
       setStatus(null);
       setReview(null);
@@ -251,18 +268,20 @@ function SourcePackageWorkspace({
         setRuntime(nextRuntime);
         if (onRuntimeStatusChange) onRuntimeStatusChange(nextRuntime);
       });
-      const nextStatus = await api.getSourcePackageStatus(docId);
+      const hintedStatus = statusHint && typeof statusHint === "object" && typeof statusHint.managed === "boolean"
+        ? statusHint
+        : null;
+      const nextStatus = hintedStatus || await api.getSourcePackageStatus(docId);
       if (loadVersion !== loadVersionRef.current) return null;
+      receivedStatus = nextStatus;
       setStatus(nextStatus);
       if (onStatusChange) onStatusChange({ docId, status: nextStatus });
-      const nextRuntime = await runtimePromise;
-      if (loadVersion !== loadVersionRef.current) return null;
       setError(null);
       if (!nextStatus?.managed) {
         setReview(null);
         setReviewLoading(false);
         if (!silent) setLoading(false);
-        return { status: nextStatus, review: null, runtime: nextRuntime };
+        return { status: nextStatus, review: null };
       }
 
       if (!silent) setLoading(false);
@@ -275,14 +294,21 @@ function SourcePackageWorkspace({
       }
       if (loadVersion !== loadVersionRef.current) return null;
       setReview(nextReview);
-      return { status: nextStatus, review: nextReview, runtime: nextRuntime };
+      return { status: nextStatus, review: nextReview };
     } catch (nextError) {
       if (loadVersion !== loadVersionRef.current) return null;
       setError(sourcePackageErrorDetail(nextError));
-      setStatus(null);
-      setReview(null);
+      if (!receivedStatus) {
+        if (!preserveExisting) {
+          setStatus(null);
+          setReview(null);
+          if (onStatusChange) onStatusChange(null);
+        }
+      } else if (!preserveExisting) {
+        setReview(null);
+      }
       setReviewLoading(false);
-      if (onStatusChange) onStatusChange(null);
+      if (throwOnError) throw nextError;
       return null;
     } finally {
       if (!silent && loadVersion === loadVersionRef.current) {
@@ -295,6 +321,8 @@ function SourcePackageWorkspace({
   React.useEffect(() => {
     setPublication(null);
     setNotice(null);
+    setOperation(null);
+    setSyncRequired(false);
     setReviewLoading(false);
     setSelectedUnitId("");
     setSelectedBoundaryBlockId("");
@@ -302,9 +330,18 @@ function SourcePackageWorkspace({
     setIssueReviewActive(false);
     setActiveIssueIndex(0);
     setUnitBlocks({ state: "idle", unitId: "", rows: [], payloadSha256s: [], error: null });
+    setBlockReloadKey(0);
+    unitBlocksCacheRef.current = { scope: "", entries: new Map() };
     setDetailDrawerOpen(false);
     load();
   }, [docId, load, reloadKey]);
+
+  React.useEffect(() => {
+    if (!operation && unitBlocks.state !== "loading") return undefined;
+    setClock(Date.now());
+    const timer = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [operation, unitBlocks.state]);
 
   const units = Array.isArray(review?.report?.units) ? review.report.units : [];
   const reviewBindings = React.useMemo(() => sourcePackageReviewBindings(review), [review]);
@@ -366,9 +403,14 @@ function SourcePackageWorkspace({
 
   React.useEffect(() => {
     let cancelled = false;
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    let requestTimer = null;
     if (!selectedUnit) {
       setUnitBlocks({ state: "idle", unitId: "", rows: [], payloadSha256s: [], error: null });
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+        controller?.abort();
+      };
     }
     if (!reviewBindings) {
       setUnitBlocks({ state: "invalid", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: {
@@ -376,7 +418,10 @@ function SourcePackageWorkspace({
         message: uiText("Review hiện tại thiếu một hoặc nhiều binding bắt buộc để đọc block.", "The current review is missing one or more bindings required to read blocks."),
         status: 0,
       } });
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+        controller?.abort();
+      };
     }
 
     const expectedBlockIds = Array.isArray(selectedUnit.block_ids) ? [...selectedUnit.block_ids] : [];
@@ -390,11 +435,36 @@ function SourcePackageWorkspace({
         message: uiText("Danh sách block của unit trong review không hợp lệ.", "The unit block list in the review is invalid."),
         status: 0,
       } });
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+        controller?.abort();
+      };
     }
 
-    setUnitBlocks({ state: "loading", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: null });
-    (async () => {
+    const cacheScope = `${docId}\u0000${reviewBindingKey}`;
+    if (unitBlocksCacheRef.current.scope !== cacheScope) {
+      unitBlocksCacheRef.current = { scope: cacheScope, entries: new Map() };
+    }
+    const cached = unitBlocksCacheRef.current.entries.get(selectedUnit.unit_id);
+    if (cached) {
+      unitBlocksCacheRef.current.entries.delete(selectedUnit.unit_id);
+      unitBlocksCacheRef.current.entries.set(selectedUnit.unit_id, cached);
+      setUnitBlocks({ ...cached, source: "cache" });
+      return () => {
+        cancelled = true;
+        controller?.abort();
+      };
+    }
+
+    setUnitBlocks({
+      state: "loading",
+      unitId: selectedUnit.unit_id,
+      rows: [],
+      payloadSha256s: [],
+      error: null,
+      startedAt: Date.now(),
+    });
+    const readBlocks = async () => {
       const rows = [];
       const payloadSha256s = [];
       const limit = 200;
@@ -402,7 +472,14 @@ function SourcePackageWorkspace({
       let total = null;
       let pageCount = 0;
       while (true) {
-        const payload = await api.getSourcePackageUnitBlocks(docId, selectedUnit.unit_id, reviewBindings, offset, limit);
+        const payload = await api.getSourcePackageUnitBlocks(
+          docId,
+          selectedUnit.unit_id,
+          reviewBindings,
+          offset,
+          limit,
+          { signal: controller?.signal },
+        );
         const page = sourcePackageUnitBlocksPage(payload, {
           docId,
           unitId: selectedUnit.unit_id,
@@ -440,12 +517,26 @@ function SourcePackageWorkspace({
         "Nội dung block không phủ chính xác unit của review hiện tại.",
         "Block content does not exactly cover the unit in the current review.",
       );
-      if (!cancelled) setUnitBlocks({ state: "ready", unitId: selectedUnit.unit_id, rows, payloadSha256s, error: null });
-    })().catch(async nextError => {
+      if (cancelled) return;
+      const ready = {
+        state: "ready",
+        unitId: selectedUnit.unit_id,
+        rows,
+        payloadSha256s,
+        error: null,
+      };
+      const entries = unitBlocksCacheRef.current.entries;
+      entries.set(selectedUnit.unit_id, ready);
+      while (entries.size > 12) entries.delete(entries.keys().next().value);
+      setUnitBlocks(ready);
+    };
+    requestTimer = window.setTimeout(() => readBlocks().catch(async nextError => {
       if (cancelled) return;
       const detail = sourcePackageErrorDetail(nextError);
+      if (detail.code === "request_cancelled") return;
       if (detail.status === 409 && detail.code === "source_package_review_stale") {
         setUnitBlocks({ state: "stale", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: detail });
+        unitBlocksCacheRef.current = { scope: "", entries: new Map() };
         setSelectedBoundaryBlockId("");
         setMergeSelection([]);
         setIssueReviewActive(false);
@@ -454,9 +545,13 @@ function SourcePackageWorkspace({
         return;
       }
       setUnitBlocks({ state: detail.code.includes("invalid") ? "invalid" : "error", unitId: selectedUnit.unit_id, rows: [], payloadSha256s: [], error: detail });
-    });
-    return () => { cancelled = true; };
-  }, [api, docId, load, reviewBindingKey, selectedUnit?.unit_id]);
+    }), 120);
+    return () => {
+      cancelled = true;
+      if (requestTimer !== null) window.clearTimeout(requestTimer);
+      controller?.abort();
+    };
+  }, [api, blockReloadKey, docId, load, reviewBindingKey, selectedUnit?.unit_id]);
 
   React.useEffect(() => {
     setSelectedBoundaryBlockId("");
@@ -545,18 +640,19 @@ function SourcePackageWorkspace({
   const managedDraft = mode === "managed_draft" && status?.lifecycle === "draft";
   const legacy = mode === "legacy_only";
   const reviewReady = status?.managed === true && sourcePackageExpectedReady(review, issueQueue.state);
-  const blockingContract = status?.managed === true && !reviewReady;
+  const blockingContract = status?.managed === true && (!reviewReady || syncRequired);
   const correctionsSupported = Array.isArray(review?.supported_actions) ? review.supported_actions : [];
   const hierarchySupported = Array.isArray(review?.supported_hierarchy_actions) ? review.supported_hierarchy_actions : [];
-  const canUpdate = managedDraft && reviewReady && correctionsSupported.includes("update_unit");
+  const canUpdate = managedDraft && reviewReady && !syncRequired && correctionsSupported.includes("update_unit");
   const splitSupported = managedDraft
     && reviewReady
+    && !syncRequired
     && correctionsSupported.includes("split_unit")
     && selectedBlockIds.length > 1
     && unitBlocks.state === "ready"
     && unitBlocks.unitId === selectedUnit?.unit_id;
   const canSplit = splitSupported && selectedBlockIds.slice(1).includes(selectedBoundaryBlockId);
-  const mergeSupported = managedDraft && reviewReady && correctionsSupported.includes("merge_adjacent_units");
+  const mergeSupported = managedDraft && reviewReady && !syncRequired && correctionsSupported.includes("merge_adjacent_units");
   const mergeUnits = mergeSelection.map(unitId => units.find(unit => unit.unit_id === unitId)).filter(Boolean);
   const mergeIndexes = mergeUnits.map(unit => units.findIndex(row => row.unit_id === unit.unit_id));
   const mergeAdjacent = mergeIndexes.length === 2 && Math.abs(mergeIndexes[0] - mergeIndexes[1]) === 1;
@@ -564,8 +660,8 @@ function SourcePackageWorkspace({
     ? [...mergeUnits].sort((left, right) => Number(left.order_index) - Number(right.order_index))
     : [];
   const canMerge = mergeSupported && mergePair.length === 2;
-  const canHierarchy = managedDraft && reviewReady && hierarchySupported.length > 0;
-  const canFinalize = managedDraft && reviewReady && status?.finalization_allowed === true;
+  const canHierarchy = managedDraft && reviewReady && !syncRequired && hierarchySupported.length > 0;
+  const canFinalize = managedDraft && reviewReady && !syncRequired && status?.finalization_allowed === true;
   const overlayReady = !!(
     publicationOverlay
     && typeof publicationOverlay === "object"
@@ -576,32 +672,144 @@ function SourcePackageWorkspace({
     : !overlayReady
       ? uiText("Chưa có producer/relay authoritative canonical_translation_overlay_v1 trong App state/API.", "No authoritative canonical_translation_overlay_v1 producer or relay is available in App state/API.")
       : uiText("Xuất HTML/Markdown từ overlay authoritative.", "Export HTML/Markdown from the authoritative overlay.");
+  const operationElapsed = operation?.startedAt
+    ? Math.max(0, Math.floor((clock - operation.startedAt) / 1000))
+    : 0;
+  const blockLoadElapsed = unitBlocks.state === "loading" && unitBlocks.startedAt
+    ? Math.max(0, Math.floor((clock - unitBlocks.startedAt) / 1000))
+    : 0;
+  const operationName = (() => {
+    if (operation?.kind === "normalize") return uiText("chuẩn hóa", "normalization");
+    if (operation?.kind === "update") return uiText("lưu revision đơn vị", "unit revision");
+    if (operation?.kind === "split") return uiText("tách đơn vị", "unit split");
+    if (operation?.kind === "merge") return uiText("gộp đơn vị", "unit merge");
+    if (operation?.kind === "hierarchy") return uiText("lưu phân cấp", "hierarchy revision");
+    if (operation?.kind === "finalize") return uiText("chốt cấu trúc", "structure finalization");
+    return uiText("tải lại cấu trúc", "structure refresh");
+  })();
+  const busyActionText = operation?.phase === "syncing"
+    ? uiText("Đang đồng bộ…", "Synchronizing…")
+    : uiText("Đang xử lý…", "Processing…");
 
   async function mutate(kind, action, successMessage) {
-    if (busy || blockingContract) return false;
+    if (mutationInFlightRef.current || busy || blockingContract || syncRequired) return false;
+    mutationInFlightRef.current = true;
     setBusy(kind);
+    setOperation({ kind, phase: "submitting", startedAt: Date.now() });
     setError(null);
     setNotice(null);
+    let acceptedResult = null;
     try {
-      await action();
-      await load({ silent: true });
+      acceptedResult = await action();
+      setSyncRequired(true);
+      setOperation({ kind, phase: "syncing", startedAt: Date.now() });
+      const refreshed = await load({
+        silent: true,
+        statusHint: acceptedResult,
+        preserveExisting: true,
+        throwOnError: true,
+      });
+      if (!refreshed || (refreshed.status?.managed === true && !refreshed.review)) {
+        throw sourcePackageContractError(
+          "source_package_refresh_required",
+          "Backend đã ghi nhận thay đổi nhưng UI chưa nhận được review mới.",
+          "The backend accepted the change, but the UI has not received the new review.",
+        );
+      }
+      setSyncRequired(false);
+      setDraftResetVersion(version => version + 1);
+      setError(null);
       setNotice({ tone: "good", text: successMessage });
       return true;
     } catch (nextError) {
       const detail = sourcePackageErrorDetail(nextError);
+      if (acceptedResult) {
+        setSyncRequired(true);
+        setNotice({
+          tone: "warn",
+          text: uiText(
+            "Backend đã ghi nhận thay đổi. UI chưa đồng bộ được review mới; thao tác chỉnh sửa đang được khóa để tránh gửi lặp.",
+            "The backend accepted the change. The UI could not synchronize the new review, so editing is locked to prevent a duplicate submission.",
+          ),
+        });
+        setError({
+          code: "source_package_refresh_required",
+          message: uiText(
+            "Bấm Tải lại trạng thái; không gửi lại thao tác vừa rồi.",
+            "Reload structure status; do not submit the previous action again.",
+          ),
+          status: detail.status,
+        });
+        return true;
+      }
       if (detail.status === 409) {
-        await load({ silent: true });
+        setSyncRequired(true);
+        setOperation({ kind, phase: "syncing", startedAt: Date.now() });
+        const refreshed = await load({ silent: true, preserveExisting: true });
+        const refreshComplete = !!(refreshed && (!refreshed.status?.managed || refreshed.review));
+        if (refreshComplete) setSyncRequired(false);
         setDraftResetVersion(version => version + 1);
-        if (detail.code.includes("stale")) {
+        if (!refreshComplete) {
+          setNotice({
+            tone: "warn",
+            text: uiText(
+              "Backend từ chối revision cũ và UI chưa tải được review mới. Chỉnh sửa vẫn bị khóa; hãy tải lại trạng thái.",
+              "The backend rejected the stale revision and the UI could not load a fresh review. Editing remains locked; reload status.",
+            ),
+          });
+        } else if (detail.code.includes("stale")) {
           setNotice({ tone: "warn", text: uiText("Cấu trúc đã thay đổi ở lượt khác. Dữ liệu kiểm tra mới đã được tải; hãy xem lại trước khi gửi lại.", "The structure changed in another session. A fresh review has been loaded; inspect it before submitting again.") });
         } else if (detail.code.includes("frozen")) {
           setNotice({ tone: "warn", text: uiText("Backend đã đóng băng source package. Mọi control biên soạn đã chuyển sang chỉ đọc.", "The backend froze the source package. All editing controls are now read-only.") });
         }
+      } else if (SOURCE_PACKAGE_AMBIGUOUS_MUTATION_ERRORS.has(detail.code)) {
+        setSyncRequired(true);
+        setNotice({
+          tone: "warn",
+          text: uiText(
+            "Kết nối kết thúc trước khi UI nhận được kết quả hợp lệ, nên chưa thể xác định backend đã ghi thay đổi hay chưa. UI đã khóa gửi lặp; hãy tải lại trạng thái authoritative.",
+            "The connection ended before the UI received a valid result, so it is unknown whether the backend committed the change. Duplicate submission is locked; reload authoritative status.",
+          ),
+        });
       }
       setError(detail);
       return false;
     } finally {
+      mutationInFlightRef.current = false;
       setBusy("");
+      setOperation(null);
+    }
+  }
+
+  async function refreshWorkspace() {
+    if (mutationInFlightRef.current || busy) return false;
+    setBusy("refresh");
+    setOperation({ kind: "refresh", phase: "refreshing", startedAt: Date.now() });
+    setError(null);
+    try {
+      const refreshed = await load({
+        silent: true,
+        preserveExisting: true,
+        throwOnError: true,
+      });
+      if (!refreshed || (refreshed.status?.managed === true && !refreshed.review)) {
+        throw sourcePackageContractError(
+          "source_package_refresh_required",
+          "Backend chưa trả đủ status và review authoritative.",
+          "The backend did not return complete authoritative status and review data.",
+        );
+      }
+      setSyncRequired(false);
+      setError(null);
+      setNotice({ tone: "good", text: uiText("Đã đồng bộ cấu trúc mới nhất từ backend.", "The latest structure was synchronized from the backend.") });
+      return true;
+    } catch (nextError) {
+      setSyncRequired(current => current || status?.managed === true);
+      setError(sourcePackageErrorDetail(nextError));
+      return false;
+    } finally {
+      setBusy("");
+      setOperation(null);
     }
   }
 
@@ -823,9 +1031,9 @@ function SourcePackageWorkspace({
           <span className={`sp-lifecycle-badge ${modeMeta.tone}`}><span />{uiText(modeMeta.vi, modeMeta.en)}</span>
         </div>
         <div className="sp-command-actions">
-          <button className="btn icon-only tip" type="button" data-tip={uiText("Tải lại trạng thái và dữ liệu kiểm tra từ backend", "Reload backend status and review")} aria-label={uiText("Tải lại cấu trúc", "Reload structure")} disabled={!!busy} onClick={() => load()}><Ic.refresh size={13} /></button>
+          <button className="btn icon-only tip" type="button" data-tip={uiText("Tải lại trạng thái và dữ liệu kiểm tra từ backend", "Reload backend status and review")} aria-label={uiText("Tải lại cấu trúc", "Reload structure")} disabled={!!busy} onClick={refreshWorkspace}><Ic.refresh size={13} /></button>
           {status?.normalize_allowed === true && !finalized && !frozen && (
-            <button className="btn" type="button" disabled={!!busy} onClick={normalize}><Ic.sparkle size={13} />{status?.managed ? uiText("Chuẩn hóa lại", "Normalize again") : uiText("Chuẩn hóa", "Normalize")}</button>
+            <button className="btn" type="button" disabled={!!busy || syncRequired} onClick={normalize}>{busy === "normalize" ? <span className="as-spin" aria-hidden="true" /> : <Ic.sparkle size={13} />}{busy === "normalize" ? busyActionText : status?.managed ? uiText("Chuẩn hóa lại", "Normalize again") : uiText("Chuẩn hóa", "Normalize")}</button>
           )}
           <button className="btn" type="button" disabled={!canSplit || !!busy} title={!canSplit ? (splitSupported ? uiText("Chọn một ranh giới bằng biểu tượng kéo trong danh sách block.", "Select a boundary with the grip control in the block list.") : uiText("Chọn đơn vị có ít nhất hai block và được backend hỗ trợ tách.", "Select a unit with at least two blocks and backend split support.")) : ""} onClick={openSplit}><Ic.sliders size={13} />{uiText("Tách", "Split")}</button>
           <button className="btn" type="button" disabled={!canMerge || !!busy} title={!canMerge ? (mergeSelection.length === 2 ? uiText("Hai đơn vị đã chọn phải liền kề.", "The two selected units must be adjacent.") : uiText("Chọn đúng hai đơn vị liền kề bằng control gộp trong dàn ý.", "Select exactly two adjacent units with the merge controls in the outline.")) : ""} onClick={openMerge}><Ic.layers size={13} />{uiText("Gộp", "Merge")}{mergeSupported && <span className="sp-action-count">{mergeSelection.length}/2</span>}</button>
@@ -850,17 +1058,32 @@ function SourcePackageWorkspace({
         })}
       </div>
 
+      {operation && <div className={`sp-banner sp-operation ${operation.phase}`} role="status" aria-live="polite" aria-atomic="true">
+        <span className="as-spin" aria-hidden="true" />
+        <span>
+          <b>{operation.phase === "submitting"
+            ? uiText(`Đang ${operationName}`, `Processing ${operationName}`)
+            : operation.phase === "syncing"
+              ? uiText(`Backend đã ghi nhận ${operationName}`, `Backend accepted ${operationName}`)
+              : uiText("Đang đồng bộ cấu trúc", "Synchronizing structure")}</b>
+          {operation.phase === "submitting"
+            ? uiText("Yêu cầu đang chạy; không bấm lại hoặc tải lại trang.", "The request is running; do not submit again or reload the page.")
+            : uiText("UI đang tải status/review mới trong nền. Các control chỉnh sửa tạm khóa để không dùng hash cũ.", "The UI is loading fresh status/review data in the background. Editing is temporarily locked to avoid stale hashes.")}
+          <em>{operationElapsed}s</em>
+        </span>
+      </div>}
       {notice && <div className={`sp-banner ${notice.tone}`} role="status"><Ic.checkCircle size={13} /><span>{notice.text}</span></div>}
       {error && <div className="sp-banner bad" role="alert"><Ic.alert size={13} /><span><b className="mono">{error.code}</b>{error.message}</span></div>}
       {busy === "prepare" && <div className="sp-banner warn" role="status" aria-live="polite">
         <span className="as-spin" aria-hidden="true" />
         <span><b>{uiText("Backend đang chuẩn bị runtime", "Backend is preparing the runtime")}</b>{uiText("Gói lớn có thể mất vài phút. Backend chưa cung cấp phần trăm; UI sẽ tự mở khóa và hiện Điều khiển chạy khi hoàn tất. Không bấm lại hoặc tải lại trang.", "Large packages can take several minutes. The backend does not expose a percentage; the UI will unlock and show Run Control when it finishes. Do not submit again or reload the page.")}</span>
       </div>}
-      {blockingContract && <div className="sp-banner bad" role="alert"><Ic.lock size={13} /><span><b>{uiText("Dữ liệu kiểm tra chưa đầy đủ", "Incomplete review contract")}</b>{uiText("UI đã khóa mutation vì thiếu năm expected binding, report.units hoặc issue_queue authoritative từ backend.", "Mutations are locked because the five expected bindings, report.units, or the authoritative issue_queue are missing.")}</span></div>}
+      {syncRequired && !operation ? <div className="sp-banner warn sp-sync-required" role="alert"><Ic.lock size={13} /><span><b>{uiText("Đang chờ đồng bộ review mới", "Fresh review synchronization required")}</b>{uiText("UI giữ nguyên dữ liệu đang xem nhưng khóa chỉnh sửa để tránh gửi lặp bằng hash cũ.", "The current view remains visible, but editing is locked to prevent a duplicate submission with stale hashes.")}<button className="btn" type="button" disabled={!!busy} onClick={refreshWorkspace}><Ic.refresh size={12} />{uiText("Tải lại trạng thái", "Reload status")}</button></span></div>
+        : blockingContract && <div className="sp-banner bad" role="alert"><Ic.lock size={13} /><span><b>{uiText("Dữ liệu kiểm tra chưa đầy đủ", "Incomplete review contract")}</b>{uiText("UI đã khóa mutation vì thiếu năm expected binding, report.units hoặc issue_queue authoritative từ backend.", "Mutations are locked because the five expected bindings, report.units, or the authoritative issue_queue are missing.")}</span></div>}
 
       {loading ? (
         <div className="sp-loading" aria-live="polite"><span className="as-spin" /><b>{uiText("Đang xác minh trạng thái và dữ liệu kiểm tra từ backend… Gói lớn có thể mất 2–5 phút; không bấm tải lại.", "Validating backend status and review… Large packages can take 2–5 minutes; do not reload.")}</b></div>
-      ) : reviewLoading ? (
+      ) : reviewLoading && !operation ? (
         <div className="sp-loading" aria-live="polite"><span className="as-spin" /><b>{uiText("Đã nhận trạng thái backend; đang tải dữ liệu kiểm tra authoritative…", "Backend status received; loading authoritative review data…")}</b></div>
       ) : error && !status ? (
         <div className="sp-empty">
@@ -868,7 +1091,7 @@ function SourcePackageWorkspace({
           <h2>{uiText("Không thể xác định trạng thái source package", "Could not determine source-package status")}</h2>
           <p>{uiText("UI không suy đoán project đang trống hay đã nhập dở. Hãy kiểm tra backend rồi tải lại trạng thái; dữ liệu hiện có không bị UI tự xóa hoặc ghi đè.", "The UI will not guess whether this project is empty or partially imported. Check the backend and reload status; existing data is not deleted or overwritten by the UI.")}</p>
           <div>
-            <button className="btn" type="button" disabled={!!busy} onClick={() => load()}><Ic.refresh size={13} />{uiText("Tải lại trạng thái", "Reload status")}</button>
+            <button className="btn" type="button" disabled={!!busy} onClick={refreshWorkspace}><Ic.refresh size={13} />{uiText("Tải lại trạng thái", "Reload status")}</button>
             <button className="btn" type="button" onClick={onOpenProjectSource}><Ic.upload size={13} />{uiText("Project / Nguồn", "Project / Source")}</button>
           </div>
         </div>
@@ -890,7 +1113,7 @@ function SourcePackageWorkspace({
               : uiText("Tải TXT, EPUB, Markdown, HTML hoặc PDF trong Project / Nguồn trước khi chuẩn hóa.", "Upload TXT, EPUB, Markdown, HTML, or PDF in Project / Source before normalization.")}</p>
           <div>
             <button className="btn" type="button" onClick={onOpenProjectSource}><Ic.upload size={13} />{uiText("Project / Nguồn", "Project / Source")}</button>
-            {status?.normalize_allowed === true && <button className="btn primary" type="button" disabled={!!busy} onClick={normalize}><Ic.sparkle size={13} />{uiText("Chuẩn hóa", "Normalize")}</button>}
+            {status?.normalize_allowed === true && <button className="btn primary" type="button" disabled={!!busy || syncRequired} onClick={normalize}><Ic.sparkle size={13} />{uiText("Chuẩn hóa", "Normalize")}</button>}
           </div>
         </div>
       ) : (
@@ -956,8 +1179,10 @@ function SourcePackageWorkspace({
                     })}
                   </div>
                   {!selectedBlockIds.length && <p className="sp-muted">{uiText("Payload review không công bố block ID cho đơn vị này.", "The review payload does not expose block IDs for this unit.")}</p>}
-                  {!!selectedBlockIds.length && unitBlocks.state === "loading" && <div className="sp-block-content-gap loading" role="status"><span className="as-spin" /><span><b>{uiText("Đang tải nội dung block authoritative", "Loading authoritative block content")}</b>{uiText("Đọc từ document.json đã revalidate với đúng năm binding của review hiện tại.", "Reading the revalidated document.json with the five exact bindings of the current review.")}</span></div>}
-                  {!!selectedBlockIds.length && !["ready", "loading"].includes(unitBlocks.state) && <div className={`sp-block-content-gap ${unitBlocks.state}`} role="alert"><Ic.lock size={12} /><span><b>{uiText("Chưa thể hiển thị nội dung block authoritative", "Authoritative block content unavailable")}</b><code>{unitBlocks.error?.code || "source_package_unit_blocks_unavailable"}</code>{unitBlocks.error?.message || uiText("UI không đọc fixture, filesystem hoặc preview khác để lấp dữ liệu.", "The UI will not fill this gap from a fixture, filesystem, or another preview.")}</span></div>}
+                  {!!selectedBlockIds.length && unitBlocks.state === "loading" && <div className="sp-block-content-gap loading" role="status" aria-live="polite"><span className="as-spin" /><span><b>{uiText(`Đang tải ${selectedBlockIds.length} block · ${blockLoadElapsed}s`, `Loading ${selectedBlockIds.length} blocks · ${blockLoadElapsed}s`)}</b>{blockLoadElapsed < 10
+                    ? uiText("Backend đang kiểm tra revision authoritative trước khi trả nội dung.", "The backend is validating the authoritative revision before returning content.")
+                    : uiText("Lần đọc đầu có thể lâu vì backend xác minh toàn bộ candidate, không chỉ chương đang xem. Bạn có thể chọn chương khác; không cần tải lại trang.", "The first read can take longer because the backend validates the full candidate, not only this chapter. You may select another chapter; no page reload is needed.")}</span></div>}
+                  {!!selectedBlockIds.length && !["ready", "loading"].includes(unitBlocks.state) && <div className={`sp-block-content-gap ${unitBlocks.state}`} role="alert"><Ic.lock size={12} /><span><b>{uiText("Chưa thể hiển thị nội dung block authoritative", "Authoritative block content unavailable")}</b><code>{unitBlocks.error?.code || "source_package_unit_blocks_unavailable"}</code>{unitBlocks.error?.message || uiText("UI không đọc fixture, filesystem hoặc preview khác để lấp dữ liệu.", "The UI will not fill this gap from a fixture, filesystem, or another preview.")}{unitBlocks.state === "error" && <button className="btn" type="button" onClick={() => setBlockReloadKey(value => value + 1)}><Ic.refresh size={12} />{uiText("Thử tải lại nội dung", "Retry content load")}</button>}</span></div>}
                 </section>
 
                 {!!visibleIssues.length && <section ref={issuePanelRef} className="sp-flat-section" tabIndex={-1} aria-label={uiText("Vấn đề cần kiểm tra", "Issues requiring review")}>
@@ -980,14 +1205,14 @@ function SourcePackageWorkspace({
                   {!classificationDraft && <option value="">{uiText("Backend chưa công bố", "Not reported by backend")}</option>}
                   {SOURCE_PACKAGE_CLASSIFICATIONS.map(item => <option key={item.id} value={item.id}>{uiText(item.vi, item.en)}</option>)}
                 </select></label>
-                <button className="btn primary sp-save-unit" type="button" disabled={saveDisabled || !!busy} onClick={saveUnit}><Ic.save size={13} />{uiText("Lưu revision đơn vị", "Save unit revision")}</button>
+                <button className="btn primary sp-save-unit" type="button" disabled={saveDisabled || !!busy} onClick={saveUnit}>{busy === "update" ? <span className="as-spin" aria-hidden="true" /> : <Ic.save size={13} />}{busy === "update" ? busyActionText : uiText("Lưu revision đơn vị", "Save unit revision")}</button>
 
                 <div className="sp-detail-divider" />
                 <label className="sp-field"><span>{uiText("Đơn vị cha", "Parent unit")}</span><select value={parentDraft} disabled={!canHierarchy || !!busy} onChange={event => setParentDraft(event.target.value)}>
                   <option value="">{uiText("Không có đơn vị cha", "No parent unit")}</option>
                   {parentChoices.map(unit => <option key={unit.unit_id} value={unit.unit_id}>{unit.title || unit.unit_id}</option>)}
                 </select></label>
-                <button className="btn" type="button" disabled={!canHierarchy || parentDraft === currentParentId || !!busy} onClick={saveHierarchy}><Ic.layers size={13} />{uiText("Lưu phân cấp", "Save hierarchy")}</button>
+                <button className="btn" type="button" disabled={!canHierarchy || parentDraft === currentParentId || !!busy} onClick={saveHierarchy}>{busy === "hierarchy" ? <span className="as-spin" aria-hidden="true" /> : <Ic.layers size={13} />}{busy === "hierarchy" ? busyActionText : uiText("Lưu phân cấp", "Save hierarchy")}</button>
 
                 <div className="sp-detail-divider" />
                 <dl className="sp-unit-facts">
@@ -1042,7 +1267,7 @@ function SourcePackageWorkspace({
 
       {modal?.kind === "split" && <Modal title={uiText("Tách đơn vị tại ranh giới block", "Split unit at a block boundary")} icon={Ic.sliders} onClose={() => !busy && setModal(null)} actions={<>
         <button className="btn" type="button" disabled={!!busy} onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
-        <button className="btn primary" type="button" disabled={!!busy || !modal.atBlockId || !modal.leftTitle.trim() || !modal.rightTitle.trim()} onClick={applySplit}>{uiText("Xác nhận tách", "Confirm split")}</button>
+        <button className="btn primary" type="button" disabled={!!busy || !modal.atBlockId || !modal.leftTitle.trim() || !modal.rightTitle.trim()} onClick={applySplit}>{busy === "split" && <span className="as-spin" aria-hidden="true" />}{busy === "split" ? busyActionText : uiText("Xác nhận tách", "Confirm split")}</button>
       </>}>
         <div className="sp-modal-grid">
           <div className="sp-field"><span>{uiText("Ranh giới đã chọn · đơn vị mới bắt đầu tại block", "Selected boundary · new unit starts at block")}</span><code className="sp-selected-boundary">{modal.atBlockId}</code></div>
@@ -1055,7 +1280,7 @@ function SourcePackageWorkspace({
 
       {modal?.kind === "merge" && <Modal title={uiText("Gộp hai đơn vị liền kề", "Merge adjacent units")} icon={Ic.layers} onClose={() => !busy && setModal(null)} actions={<>
         <button className="btn" type="button" disabled={!!busy} onClick={() => setModal(null)}>{uiText("Hủy", "Cancel")}</button>
-        <button className="btn primary" type="button" disabled={!!busy || !modal.title.trim()} onClick={applyMerge}>{uiText("Xác nhận gộp", "Confirm merge")}</button>
+        <button className="btn primary" type="button" disabled={!!busy || !modal.title.trim()} onClick={applyMerge}>{busy === "merge" && <span className="as-spin" aria-hidden="true" />}{busy === "merge" ? busyActionText : uiText("Xác nhận gộp", "Confirm merge")}</button>
       </>}>
         <p><span className="mono">{mergePair[0]?.unit_id}</span> + <span className="mono">{mergePair[1]?.unit_id}</span></p>
         <div className="sp-modal-grid">
@@ -1066,7 +1291,7 @@ function SourcePackageWorkspace({
 
       {modal?.kind === "finalize" && <Modal title={uiText("Chốt cấu trúc trước run", "Finalize structure before run")} icon={Ic.checkCircle} onClose={() => !busy && setModal(null)} actions={<>
         <button className="btn" type="button" disabled={!!busy} onClick={() => setModal(null)}>{uiText("Xem lại", "Review again")}</button>
-        <button className="btn primary" type="button" disabled={!!busy} onClick={finalize}>{uiText("Chốt cấu trúc", "Finalize structure")}</button>
+        <button className="btn primary" type="button" disabled={!!busy} onClick={finalize}>{busy === "finalize" && <span className="as-spin" aria-hidden="true" />}{busy === "finalize" ? busyActionText : uiText("Chốt cấu trúc", "Finalize structure")}</button>
       </>}>
         <p>{uiText("Backend sẽ tạo revision chốt từ đúng hash state/tree/report/hierarchy của review hiện tại.", "The backend will create a finalization revision from the exact state/tree/report/hierarchy hashes in the current review.")}</p>
         {(pendingReviewUnits.length > 0 || issues.length > 0) && <>
