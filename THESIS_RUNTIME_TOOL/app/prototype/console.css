@@ -572,10 +572,11 @@ body.console-resizing-ledger { cursor: row-resize; }
   box-shadow: inset 2px 0 0 var(--c-accent);
 }
 
-/* ============ MEMORY LEDGER ============
+/* ============ RUN LEDGER ============
    Changes are replay-synchronised persisted memory_delta_v1 events. "Current"
    is only the latest committed revision visible in this run, and "Pending" is
-   the separate watchlist. None of these views diff full registry snapshots. */
+   the separate watchlist. Term lifecycle is a distinct provisional surface.
+   None of these views diff full registry snapshots. */
 .agentconsole .memory-delta-pane {
   flex: 0 0 var(--console-ledger-height, 34%);
   min-height: 0;
@@ -645,6 +646,7 @@ body.console-resizing-ledger { cursor: row-resize; }
   color: var(--c-ink-dim);
   font: inherit;
   font-size: 10px;
+  white-space: nowrap;
   cursor: pointer;
 }
 .agentconsole .run-ledger-surface:last-child { border-right: 0; }
@@ -2030,6 +2032,216 @@ body.console-resizing-ledger { cursor: row-resize; }
   color: var(--c-ink-dim);
   line-height: 1.45;
 }
+.agentconsole .term-ledger-pane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.agentconsole .term-ledger-summary {
+  flex: none;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px 12px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-ink-dim);
+  font-size: 9.5px;
+}
+.agentconsole .term-ledger-summary > span {
+  white-space: nowrap;
+}
+.agentconsole .term-ledger-summary strong {
+  color: var(--c-ink);
+}
+.agentconsole .term-ledger-progress {
+  color: var(--c-accent);
+}
+.agentconsole .term-ledger-seal {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-ledger-open-detail {
+  flex: none;
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 1px solid var(--c-border);
+  background: transparent;
+  color: var(--c-accent);
+  font: inherit;
+  font-size: 9.5px;
+  cursor: pointer;
+}
+.agentconsole .term-ledger-open-detail:hover,
+.agentconsole .term-ledger-open-detail:focus-visible {
+  border-color: var(--c-accent);
+  background: var(--c-accent-bg);
+  outline: 0;
+}
+.agentconsole .term-ledger-feed {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+.agentconsole .term-ledger-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(148px, 0.7fr) minmax(0, 2.3fr) auto;
+  gap: 7px 12px;
+  align-items: start;
+  padding: 7px 8px;
+  border-bottom: 1px dotted var(--c-border);
+}
+.agentconsole .term-ledger-row:hover {
+  background: var(--c-accent-bg);
+}
+.agentconsole .term-ledger-identity,
+.agentconsole .term-ledger-current,
+.agentconsole .term-ledger-decision {
+  min-width: 0;
+}
+.agentconsole .term-ledger-identity {
+  display: grid;
+  gap: 2px;
+}
+.agentconsole .term-ledger-identity > strong {
+  overflow: hidden;
+  color: var(--c-ink);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-ledger-identity > code {
+  overflow: hidden;
+  color: var(--c-ink-faint);
+  font: 8px/1.3 var(--console-mono, ui-monospace, Consolas, monospace);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-ledger-current {
+  display: grid;
+  gap: 6px;
+}
+.agentconsole .term-ledger-decision + .term-ledger-decision {
+  padding-top: 6px;
+  border-top: 1px dotted var(--c-border);
+}
+.agentconsole .term-ledger-decision-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px 9px;
+}
+.agentconsole .term-ledger-decision-head .term-state-chip {
+  flex: none;
+  padding-block: 2px;
+}
+.agentconsole .term-ledger-stage {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink-dim);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-ledger-decision-head > strong {
+  flex: none;
+  margin-left: auto;
+  font-size: 8.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.agentconsole .term-ledger-target {
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+  color: var(--c-accent);
+  font-size: 10px;
+  line-height: 1.35;
+}
+.agentconsole .term-ledger-reason {
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+  color: var(--c-ink-dim);
+  font-size: 8.5px;
+  line-height: 1.35;
+}
+.agentconsole .term-ledger-evidence {
+  margin-top: 3px;
+  color: var(--c-ink-faint);
+  font-size: 8.5px;
+}
+.agentconsole .term-ledger-evidence > summary,
+.agentconsole .term-ledger-history > summary {
+  width: fit-content;
+  cursor: pointer;
+}
+.agentconsole .term-ledger-evidence > summary:hover,
+.agentconsole .term-ledger-evidence > summary:focus-visible,
+.agentconsole .term-ledger-history > summary:hover,
+.agentconsole .term-ledger-history > summary:focus-visible {
+  color: var(--c-accent);
+  outline: 0;
+}
+.agentconsole .term-ledger-evidence > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+  padding-left: 7px;
+  border-left: 2px solid var(--c-border);
+}
+.agentconsole .term-ledger-evidence code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--c-ink-dim);
+  font: 8px/1.35 var(--console-mono, ui-monospace, Consolas, monospace);
+}
+.agentconsole .term-ledger-history {
+  min-width: 76px;
+  color: var(--c-ink-faint);
+  font-size: 8.5px;
+}
+.agentconsole .term-ledger-history[open] {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding-top: 5px;
+  border-top: 1px solid var(--c-border);
+}
+.agentconsole .term-ledger-history-list {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  margin-top: 5px;
+}
+.agentconsole .term-ledger-history-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(100px, 0.65fr) minmax(110px, 1fr) minmax(90px, 0.8fr) minmax(90px, 1fr);
+  gap: 4px 8px;
+  align-items: center;
+  padding: 4px 6px;
+  border-left: 2px solid var(--c-border);
+  background: var(--c-bg);
+  color: var(--c-ink-dim);
+}
+.agentconsole .term-ledger-history-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.agentconsole .term-ledger-history-row > code {
+  grid-column: 2 / -1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--c-ink-faint);
+  font: 8px/1.35 var(--console-mono, ui-monospace, Consolas, monospace);
+}
 .agentconsole .workflow-health-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2284,6 +2496,42 @@ body.console-resizing-ledger { cursor: row-resize; }
   }
   .agentconsole .term-lifecycle-row-details dd + dt {
     margin-top: 5px;
+  }
+  .agentconsole .term-ledger-summary {
+    flex-wrap: wrap;
+    gap: 4px 9px;
+  }
+  .agentconsole .term-ledger-seal {
+    flex: 1 1 100%;
+    order: 3;
+  }
+  .agentconsole .term-ledger-open-detail {
+    margin-left: auto;
+  }
+  .agentconsole .term-ledger-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+  .agentconsole .term-ledger-identity > strong,
+  .agentconsole .term-ledger-identity > code,
+  .agentconsole .term-ledger-stage {
+    white-space: normal;
+  }
+  .agentconsole .term-ledger-decision-head {
+    flex-wrap: wrap;
+  }
+  .agentconsole .term-ledger-decision-head > strong {
+    margin-left: 0;
+  }
+  .agentconsole .term-ledger-history[open] {
+    grid-column: 1;
+  }
+  .agentconsole .term-ledger-history-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .agentconsole .term-ledger-history-row > code {
+    grid-column: 1;
   }
 }
 

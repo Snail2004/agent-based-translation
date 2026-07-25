@@ -483,7 +483,7 @@ function consoleReadLayout() {
     const centerMode = ["split", "events", "ledger"].includes(raw.centerMode)
       ? raw.centerMode
       : CONSOLE_LAYOUT_DEFAULTS.centerMode;
-    const ledgerSurface = ["memory", "translation"].includes(raw.ledgerSurface)
+    const ledgerSurface = ["memory", "translation", "term-lifecycle"].includes(raw.ledgerSurface)
       ? raw.ledgerSurface
       : CONSOLE_LAYOUT_DEFAULTS.ledgerSurface;
     const ledgerView = ["changes", "current", "pending"].includes(raw.ledgerView)
@@ -1688,6 +1688,8 @@ function ConsoleMemoryLedger({
   deltas = [],
   invalidCount = 0,
   watchlist = [],
+  termLifecycle = null,
+  onOpenTermLifecycle,
   packSummary = null,
   packWindow = "",
   consistencyTierRows = [],
@@ -1704,6 +1706,11 @@ function ConsoleMemoryLedger({
   navigationTarget = null,
   onNavigationResult,
 }) {
+  const termLifecycleAvailable = Boolean(
+    termLifecycle?.present
+    && termLifecycle.valid === true
+    && termLifecycle.summary,
+  );
   const [open, setOpen] = React.useState(layoutPreferences.ledgerOpen !== false);
   const [surface, setSurface] = React.useState(layoutPreferences.ledgerSurface || "translation");
   const [view, setView] = React.useState(layoutPreferences.ledgerView || "changes");
@@ -1744,8 +1751,17 @@ function ConsoleMemoryLedger({
     setOpen(layoutPreferences.ledgerOpen !== false);
   }, [layoutPreferences.ledgerOpen]);
   React.useEffect(() => {
-    setSurface(layoutPreferences.ledgerSurface || "translation");
-  }, [layoutPreferences.ledgerSurface]);
+    const preferred = layoutPreferences.ledgerSurface || "translation";
+    if (preferred === "term-lifecycle" && !termLifecycleAvailable) {
+      setSurface("memory");
+      return;
+    }
+    if (preferred === "translation" && !previewAvailable) {
+      setSurface("memory");
+      return;
+    }
+    setSurface(preferred);
+  }, [layoutPreferences.ledgerSurface, previewAvailable, termLifecycleAvailable]);
   React.useEffect(() => {
     setView(layoutPreferences.ledgerView || "changes");
   }, [layoutPreferences.ledgerView]);
@@ -1772,6 +1788,10 @@ function ConsoleMemoryLedger({
   function chooseLedgerSurface(nextSurface) {
     setSurface(nextSurface);
     updateLedgerPreference("ledgerSurface", nextSurface);
+    if (!open) {
+      setOpen(true);
+      updateLedgerPreference("ledgerOpen", true);
+    }
   }
 
   function chooseLedgerView(nextView) {
@@ -1785,11 +1805,9 @@ function ConsoleMemoryLedger({
   }
 
   function toggleLedgerOpen() {
-    setOpen(current => {
-      const next = !current;
-      updateLedgerPreference("ledgerOpen", next);
-      return next;
-    });
+    const next = !open;
+    setOpen(next);
+    updateLedgerPreference("ledgerOpen", next);
   }
   React.useEffect(() => {
     if (!sawDeltaRef.current && deltas.length > 0) {
@@ -1805,7 +1823,14 @@ function ConsoleMemoryLedger({
       sawDeltaRef.current = deltas.length > 0;
       sawPreviewRef.current = previewAvailable;
       setOpen(layoutPreferences.ledgerOpen !== false);
-      setSurface(previewAvailable && layoutPreferences.ledgerSurface === "translation" ? "translation" : "memory");
+      const preferred = layoutPreferences.ledgerSurface || "translation";
+      setSurface(
+        preferred === "term-lifecycle" && termLifecycleAvailable
+          ? "term-lifecycle"
+          : preferred === "translation" && previewAvailable
+            ? "translation"
+            : "memory",
+      );
       setTranslationArm(latestPreviewArm || "");
       setFocusedBlockId("");
       setSelectedBlockId("");
@@ -1815,7 +1840,7 @@ function ConsoleMemoryLedger({
     }
     if (!previewAvailable) {
       sawPreviewRef.current = false;
-      setSurface("memory");
+      setSurface(current => current === "translation" ? "memory" : current);
       return;
     }
     if (!sawPreviewRef.current) {
@@ -1823,7 +1848,13 @@ function ConsoleMemoryLedger({
       if (layoutPreferences.ledgerSurface === "translation") setSurface("translation");
       setOpen(true);
     }
-  }, [previewAvailable, runKey, layoutPreferences.ledgerOpen, layoutPreferences.ledgerSurface]);
+  }, [
+    previewAvailable,
+    termLifecycleAvailable,
+    runKey,
+    layoutPreferences.ledgerOpen,
+    layoutPreferences.ledgerSurface,
+  ]);
   const counts = React.useMemo(() => {
     const next = { all: deltas.length };
     CONSOLE_MEMORY_COLLECTIONS.forEach(key => { next[key] = 0; });
@@ -2227,12 +2258,12 @@ function ConsoleMemoryLedger({
       : "watchlist · not committed";
 
   return (
-    <section className={"memory-delta-pane" + (open ? "" : " memory-delta-collapsed")} aria-label={uiText("Sổ cái bộ nhớ", "Memory ledger")}>
+    <section className={"memory-delta-pane" + (open ? "" : " memory-delta-collapsed")} aria-label={uiText("Sổ cái lần chạy", "Run ledger")}>
       <div className="memory-delta-head">
         <button
           type="button"
           className="memory-delta-toggle"
-          aria-label={open ? uiText("Thu gọn sổ cái bộ nhớ", "Collapse memory ledger") : uiText("Mở rộng sổ cái bộ nhớ", "Expand memory ledger")}
+          aria-label={open ? uiText("Thu gọn sổ cái lần chạy", "Collapse run ledger") : uiText("Mở rộng sổ cái lần chạy", "Expand run ledger")}
           aria-expanded={open}
           title={open ? uiText("Thu gọn cập nhật bộ nhớ", "Collapse memory updates") : uiText("Mở cập nhật bộ nhớ", "Expand memory updates")}
           onClick={toggleLedgerOpen}
@@ -2261,10 +2292,26 @@ function ConsoleMemoryLedger({
               {uiText("Bản dịch", "Translation")}
             </button>
           )}
+          {termLifecycleAvailable && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={surface === "term-lifecycle"}
+              className={"run-ledger-surface" + (surface === "term-lifecycle" ? " active" : "")}
+              onClick={() => chooseLedgerSurface("term-lifecycle")}
+            >
+              {uiText("Vòng đời thuật ngữ", "Term lifecycle")}
+            </button>
+          )}
         </span>
         <span className="memory-delta-total">
           {surface === "translation"
             ? (previewProgressText ? `${previewProgressText} windows` : "0 windows")
+            : surface === "term-lifecycle" && termLifecycleAvailable
+              ? uiText(
+                `${formatConsoleInt(termLifecycle.summary.observations)} quan sát · ${formatConsoleInt(termLifecycle.summary.logical_terms)} term`,
+                `${formatConsoleInt(termLifecycle.summary.observations)} observations · ${formatConsoleInt(termLifecycle.summary.logical_terms)} terms`,
+              )
             : uiText(`${formatConsoleInt(deltas.length)} thay đổi đã commit`, `${formatConsoleInt(deltas.length)} committed changes`)}
         </span>
         {onCenterMode && (
@@ -2301,6 +2348,14 @@ function ConsoleMemoryLedger({
               {formatConsoleInt(translationBlockCount)} {uiText("block sẵn sàng", "blocks ready")}
             </span>
             {latestPreview && <span className="memory-ledger-chip">{latestPreview.model || latestPreview.config || "translator"}</span>}
+          </span>
+        )}
+        {surface === "term-lifecycle" && termLifecycleAvailable && (
+          <span className="memory-ledger-summary" aria-label={uiText("Tóm tắt vòng đời thuật ngữ", "Term lifecycle summary")}>
+            <span className="memory-ledger-chip" title={termLifecycle.stageLabel || ""}>
+              {termLifecycle.stageLabel || "—"}
+            </span>
+            <span className="memory-ledger-chip ledger-chip-good">producer-sealed</span>
           </span>
         )}
         {surface === "memory" && <span className="memory-delta-stats" aria-label={uiText("Tổng thao tác delta bộ nhớ", "Memory delta operation totals")}>
@@ -2457,6 +2512,13 @@ function ConsoleMemoryLedger({
             )}
           </div>
         </>
+      )}
+      {open && surface === "term-lifecycle" && termLifecycleAvailable && (
+        <ConsoleTermLifecycleLedger
+          lifecycle={termLifecycle}
+          onOpen={onOpenTermLifecycle}
+          uiText={uiText}
+        />
       )}
       {open && surface === "translation" && (
         <div className="translation-stream-pane" role="tabpanel" aria-label={uiText("Luồng dịch", "Translation stream")}>
@@ -2974,6 +3036,172 @@ function consoleTermProgress(summary) {
   const completed = Number.isInteger(summary.completed) ? formatConsoleInt(summary.completed) : "—";
   const total = Number.isInteger(summary.total) ? `/${formatConsoleInt(summary.total)}` : "";
   return `${completed}${total} ${summary.unit || ""}`.trim();
+}
+
+function consoleTermTargetLabels(row) {
+  return (Array.isArray(row?.targets) ? row.targets : []).map(target => {
+    const applicability = target.applicability === null || target.applicability === undefined
+      ? ""
+      : typeof target.applicability === "string"
+        ? target.applicability
+        : JSON.stringify(target.applicability);
+    return `${target.target_vi}${applicability ? ` · ${applicability}` : ""}`;
+  });
+}
+
+function consoleTermLifecycleGroups(lifecycle) {
+  const rows = Array.isArray(lifecycle?.rows) ? lifecycle.rows : [];
+  const supersededRowIds = new Set();
+  rows.forEach(row => {
+    (Array.isArray(row.supersedes_row_ids) ? row.supersedes_row_ids : [])
+      .forEach(rowId => supersededRowIds.add(rowId));
+  });
+  const grouped = new Map();
+  rows.forEach(row => {
+    const logicalTermId = row.logical_term_id;
+    if (!grouped.has(logicalTermId)) grouped.set(logicalTermId, []);
+    grouped.get(logicalTermId).push(row);
+  });
+  return Array.from(grouped, ([logicalTermId, groupRows]) => {
+    const history = [...groupRows].sort((left, right) => {
+      const seqDelta = Number(left.parentSeq || 0) - Number(right.parentSeq || 0);
+      return seqDelta || String(left.row_id).localeCompare(String(right.row_id));
+    });
+    const currentRows = history.filter(row => !supersededRowIds.has(row.row_id));
+    const visibleCurrentRows = currentRows.length ? currentRows : history.slice(-1);
+    return {
+      logicalTermId,
+      history,
+      currentRows: visibleCurrentRows,
+      displayRow: visibleCurrentRows[visibleCurrentRows.length - 1] || history[history.length - 1],
+    };
+  });
+}
+
+function ConsoleTermLifecycleLedger({ lifecycle, onOpen, uiText }) {
+  const groups = React.useMemo(() => consoleTermLifecycleGroups(lifecycle), [lifecycle]);
+  if (!lifecycle?.present || lifecycle.valid !== true || !lifecycle.summary) return null;
+  const summary = lifecycle.summary;
+  return (
+    <div
+      className="term-ledger-pane"
+      role="tabpanel"
+      aria-label={uiText("Vòng đời thuật ngữ", "Term lifecycle")}
+      data-term-ledger="visible"
+    >
+      <div className="term-ledger-summary">
+        <span><strong>{formatConsoleInt(summary.observations)}</strong> {uiText("quan sát", "observations")}</span>
+        <span><strong>{formatConsoleInt(summary.unique_surfaces)}</strong> {uiText("bề mặt", "surfaces")}</span>
+        <span><strong>{formatConsoleInt(summary.logical_terms)}</strong> {uiText("term logic", "logical terms")}</span>
+        <span className="term-ledger-progress">{consoleTermProgress(summary)}</span>
+        <span className="term-ledger-seal">producer-sealed · {lifecycle.projectionMode} · {lifecycle.timingAuthority}</span>
+        <button type="button" className="term-ledger-open-detail" onClick={onOpen}>
+          {uiText("Chi tiết đầy đủ", "Full details")} →
+        </button>
+      </div>
+
+      <div className="term-ledger-feed" role="list">
+        {groups.map(group => {
+          const displaySurfaces = Array.isArray(group.displayRow?.surfaces) && group.displayRow.surfaces.length
+            ? group.displayRow.surfaces.join(" · ")
+            : group.logicalTermId;
+          return (
+            <article
+              className="term-ledger-row"
+              role="listitem"
+              key={group.logicalTermId}
+              data-logical-term-id={group.logicalTermId}
+            >
+              <div className="term-ledger-identity">
+                <strong title={displaySurfaces}>{displaySurfaces}</strong>
+                <code title={group.logicalTermId}>{group.logicalTermId}</code>
+              </div>
+              <div className="term-ledger-current">
+                {group.currentRows.map(row => {
+                  const meta = consoleTermStateMeta(row.state);
+                  const targets = consoleTermTargetLabels(row);
+                  const sourceBlockIds = Array.isArray(row.source_block_ids) ? row.source_block_ids : [];
+                  const evidenceCount = row.evidence_ref ? 1 : 0;
+                  return (
+                    <div
+                      className="term-ledger-decision"
+                      key={row.row_id}
+                      data-current-term-row={row.row_id}
+                      data-term-state={row.state}
+                      data-term-authority={row.authority}
+                    >
+                      <div className="term-ledger-decision-head">
+                        <span className={`term-state-chip term-state-${meta.tone}`}>
+                          {consoleTermStateLabel(row.state, uiText)}
+                        </span>
+                        <span className="term-ledger-stage">{row.stageLabel || row.stageId || "—"}</span>
+                        <strong className={row.authority === "none" ? "term-authority-none" : "term-authority-committed"}>
+                          authority={row.authority}
+                        </strong>
+                      </div>
+                      <div className="term-ledger-target">
+                        {targets.length
+                          ? targets.join(" | ")
+                          : uiText("Chưa có đích được producer ghi nhận", "No producer-recorded target yet")}
+                      </div>
+                      {(row.reason_codes?.length || row.rationale) && (
+                        <div className="term-ledger-reason">
+                          {row.reason_codes?.length ? row.reason_codes.join(", ") : ""}
+                          {row.reason_codes?.length && row.rationale ? " · " : ""}
+                          {row.rationale || ""}
+                        </div>
+                      )}
+                      <details className="term-ledger-evidence">
+                        <summary>
+                          {formatConsoleInt(sourceBlockIds.length)} block · {formatConsoleInt(evidenceCount)} evidence
+                        </summary>
+                        <div>
+                          <code>{sourceBlockIds.length ? sourceBlockIds.join(", ") : "—"}</code>
+                          <code>{row.evidence_ref || "—"}</code>
+                          <code>{consoleWorkflowShortHash(row.evidence_sha256)}</code>
+                        </div>
+                      </details>
+                    </div>
+                  );
+                })}
+              </div>
+              <details className="term-ledger-history">
+                <summary>
+                  {uiText("Lịch sử", "History")} {formatConsoleInt(group.history.length)}
+                </summary>
+                <div className="term-ledger-history-list">
+                  {group.history.map(row => {
+                    const meta = consoleTermStateMeta(row.state);
+                    const targets = consoleTermTargetLabels(row);
+                    return (
+                      <div className="term-ledger-history-row" key={`history:${row.row_id}`}>
+                        <span className={`term-state-chip term-state-${meta.tone}`}>
+                          {consoleTermStateLabel(row.state, uiText)}
+                        </span>
+                        <span>{row.stageLabel || row.stageId || "—"}</span>
+                        <span>{targets.length ? targets.join(" | ") : "—"}</span>
+                        <span>{row.reason_codes?.length ? row.reason_codes.join(", ") : "—"}</span>
+                        <span>{row.rationale || "—"}</span>
+                        <code>#{row.parentSeq} · {row.row_id}</code>
+                        <code>
+                          supersedes={row.supersedes_row_ids?.length ? row.supersedes_row_ids.join(",") : "—"}
+                        </code>
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            </article>
+          );
+        })}
+        {!groups.length && (
+          <div className="memory-delta-empty">
+            {uiText("Chưa có dòng vòng đời thuật ngữ tại cursor này.", "No term lifecycle rows exist at this cursor.")}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function ConsoleTermLifecycleSummary({ lifecycle, onOpen, uiText }) {
@@ -4189,6 +4417,8 @@ function AgentConsoleView(props) {
             deltas={st.memoryDeltas}
             invalidCount={st.invalidMemoryDeltaCount}
             watchlist={visibleWatchlist}
+            termLifecycle={termLifecycleView}
+            onOpenTermLifecycle={() => setDetailModal({ kind: "term-lifecycle" })}
             packSummary={st.latestPackSummary}
             packWindow={st.latestPackWindow}
             consistencyTierRows={consistencyTierRows}
