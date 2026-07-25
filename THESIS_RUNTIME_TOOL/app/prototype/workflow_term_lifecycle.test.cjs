@@ -54,7 +54,39 @@ function evidence(attempt, seq, stage, seed) {
   };
 }
 
+function artifactEvidence(attempt, seq, seed) {
+  return {
+    evidence_kind: "artifact",
+    artifact_ref: `term_lifecycle_artifact_${seed.toLowerCase()}`,
+    artifact_kind: "d2l_term_lifecycle_artifact_v1",
+    schema_version: "1.0.0",
+    sha256: seed.repeat(64),
+    sha256_kind: "physical",
+    created_event_id: `evt_translation_run_1_${String(seq).padStart(8, "0")}`,
+    producer_component_attempt_id: attempt,
+    created_component_seq: seq,
+  };
+}
+
+function evidenceBinding(evidenceRow) {
+  if (evidenceRow.evidence_kind === "artifact") {
+    return {
+      attempt: evidenceRow.producer_component_attempt_id,
+      seq: evidenceRow.created_component_seq,
+      ref: evidenceRow.artifact_ref,
+      sha256: evidenceRow.sha256,
+    };
+  }
+  return {
+    attempt: evidenceRow.validation_component_attempt_id,
+    seq: evidenceRow.validation_component_seq,
+    ref: evidenceRow.journal_ref,
+    sha256: evidenceRow.entry_sha256,
+  };
+}
+
 async function row(adapter, stageId, evidenceRow, values) {
+  const binding = evidenceBinding(evidenceRow);
   const value = {
     row_id: "",
     row_sha256: "",
@@ -62,8 +94,8 @@ async function row(adapter, stageId, evidenceRow, values) {
     state: values.state,
     lifecycle: values.state === "committed" ? "committed" : "provisional",
     authority: values.state === "committed" ? "glossary_commit" : "none",
-    origin_component_attempt_id: evidenceRow.validation_component_attempt_id,
-    origin_component_seq: evidenceRow.validation_component_seq,
+    origin_component_attempt_id: binding.attempt,
+    origin_component_seq: binding.seq,
     candidate_ids: ["cand_gradient"],
     member_ids: [],
     surfaces: ["gradient"],
@@ -72,8 +104,8 @@ async function row(adapter, stageId, evidenceRow, values) {
     reason_codes: values.reason_codes || [],
     rationale: values.rationale ?? null,
     supersedes_row_ids: values.supersedes_row_ids || [],
-    evidence_ref: evidenceRow.journal_ref,
-    evidence_sha256: evidenceRow.entry_sha256,
+    evidence_ref: binding.ref,
+    evidence_sha256: binding.sha256,
   };
   const identity = {
     schema_version: "d2l_term_lifecycle_row_identity_v1",
@@ -96,6 +128,7 @@ async function row(adapter, stageId, evidenceRow, values) {
 }
 
 async function batch(adapter, stageId, evidenceRow, rows, summary, projectionMode = "live") {
+  const binding = evidenceBinding(evidenceRow);
   const orderedRows = [...rows].sort((left, right) => left.row_id.localeCompare(right.row_id));
   const identity = {
     schema_version: "d2l_term_lifecycle_batch_identity_v1",
@@ -109,8 +142,8 @@ async function batch(adapter, stageId, evidenceRow, rows, summary, projectionMod
     batch_sha256: "",
     projection_mode: projectionMode,
     timing_authority: projectionMode === "resume_backfill" ? "logical_order_only" : "recorded",
-    origin_component_attempt_id: evidenceRow.validation_component_attempt_id,
-    origin_component_seq: evidenceRow.validation_component_seq,
+    origin_component_attempt_id: binding.attempt,
+    origin_component_seq: binding.seq,
     evidence: evidenceRow,
     rows: orderedRows,
     summary,
@@ -121,7 +154,14 @@ async function batch(adapter, stageId, evidenceRow, rows, summary, projectionMod
   return value;
 }
 
-function event(seq, stageId, payload, attempt = 1, attemptIndex = attempt) {
+function event(
+  seq,
+  stageId,
+  payload,
+  attempt = 1,
+  attemptIndex = attempt,
+  componentSeq = payload.origin_component_seq + 1,
+) {
   return {
     seq,
     event_id: `workflow_event_${String(seq).padStart(8, "0")}`,
@@ -131,7 +171,7 @@ function event(seq, stageId, payload, attempt = 1, attemptIndex = attempt) {
       component_id: "translation",
       component_attempt_id: attempt,
       component_attempt_index: attemptIndex,
-      component_seq: seq,
+      component_seq: componentSeq,
     },
     payload,
   };
@@ -220,8 +260,8 @@ async function resumeDuplicateIsIdempotent(adapter) {
     through_work_id: "window_1",
   }, "resume_backfill");
   const model = await adapter.validateTermLifecycleEvents([
-    event(1, "b1_candidate_discovery", backfillBatch, 1),
-    event(2, "b1_candidate_discovery", JSON.parse(JSON.stringify(backfillBatch)), 2),
+    event(1, "b1_candidate_discovery", backfillBatch, 2),
+    event(2, "b1_candidate_discovery", JSON.parse(JSON.stringify(backfillBatch)), 3),
   ], manifest());
   assert.equal(model.valid, true);
   assert.equal(model.batches.length, 1, "same deterministic Resume batch must dedupe");
@@ -230,8 +270,8 @@ async function resumeDuplicateIsIdempotent(adapter) {
   const drift = JSON.parse(JSON.stringify(backfillBatch));
   drift.batch_sha256 = "0".repeat(64);
   const conflict = await adapter.validateTermLifecycleEvents([
-    event(1, "b1_candidate_discovery", backfillBatch, 1),
-    event(2, "b1_candidate_discovery", drift, 2),
+    event(1, "b1_candidate_discovery", backfillBatch, 2),
+    event(2, "b1_candidate_discovery", drift, 3),
   ], manifest());
   assert.equal(conflict.valid, false);
   assert.ok(conflict.errors.some(error => error.code === "term_batch_hash" || error.code === "term_batch_conflict"));
@@ -315,13 +355,103 @@ async function futureEvidenceAndAuthorityFailClosed(adapter) {
   assert.ok(invalidAuthority.errors.some(error => error.code === "term_authority"));
 }
 
+async function chronologyAndProjectionMatrixFailClosed(adapter) {
+  const liveEvidence = evidence(1, 2, "b1_candidate_discovery", "7");
+  const liveRow = await row(adapter, "b1_candidate_discovery", liveEvidence, {
+    state: "proposed",
+    reason_codes: ["chronology"],
+  });
+  const summary = {
+    observations: 1,
+    unique_surfaces: 1,
+    logical_terms: 1,
+    state_counts: { proposed: 1 },
+    completed: 1,
+    total: 10,
+    unit: "windows",
+    through_work_id: "window_chronology",
+  };
+  const liveBatch = await batch(
+    adapter,
+    "b1_candidate_discovery",
+    liveEvidence,
+    [liveRow],
+    summary,
+  );
+
+  const equalSeq = await adapter.validateTermLifecycleEvents([
+    event(1, "b1_candidate_discovery", liveBatch, 1, 1, 2),
+  ], manifest());
+  assert.equal(equalSeq.valid, false, "same-attempt evidence cannot equal the lifecycle event sequence");
+  assert.ok(
+    equalSeq.errors.some(error => error.code === "term_future_origin"),
+    JSON.stringify(equalSeq.errors),
+  );
+
+  const futureSeq = await adapter.validateTermLifecycleEvents([
+    event(1, "b1_candidate_discovery", liveBatch, 1, 1, 1),
+  ], manifest());
+  assert.equal(futureSeq.valid, false, "same-attempt evidence cannot follow the lifecycle event");
+  assert.ok(futureSeq.errors.some(error => error.code === "term_future_origin"));
+
+  const liveAttemptMismatch = await adapter.validateTermLifecycleEvents([
+    event(1, "b1_candidate_discovery", liveBatch, 2, 2, 3),
+  ], manifest());
+  assert.equal(liveAttemptMismatch.valid, false, "live projection must stay in the evidence attempt");
+  assert.ok(liveAttemptMismatch.errors.some(error => error.code === "term_projection_attempt"));
+
+  const backfillBatch = await batch(
+    adapter,
+    "b1_candidate_discovery",
+    liveEvidence,
+    [liveRow],
+    summary,
+    "resume_backfill",
+  );
+  const backfillSameAttempt = await adapter.validateTermLifecycleEvents([
+    event(1, "b1_candidate_discovery", backfillBatch, 1, 1, 3),
+  ], manifest());
+  assert.equal(backfillSameAttempt.valid, false, "Resume backfill must originate in an older attempt");
+  assert.ok(backfillSameAttempt.errors.some(error => error.code === "term_projection_attempt"));
+
+  const backfillOlderAttempt = await adapter.validateTermLifecycleEvents([
+    event(1, "b1_candidate_discovery", backfillBatch, 2, 2, 3),
+  ], manifest());
+  assert.equal(backfillOlderAttempt.valid, true, "Resume backfill may bind an older evidence attempt");
+
+  const artifact = artifactEvidence(1, 2, "8");
+  const artifactRow = await row(adapter, "b1_candidate_discovery", artifact, {
+    state: "proposed",
+    reason_codes: ["artifact_projection"],
+  });
+  const artifactBatch = await batch(
+    adapter,
+    "b1_candidate_discovery",
+    artifact,
+    [artifactRow],
+    summary,
+    "stage_artifact_projection",
+  );
+  const artifactSameAttempt = await adapter.validateTermLifecycleEvents([
+    event(1, "b1_candidate_discovery", artifactBatch, 1, 1, 3),
+  ], manifest());
+  assert.equal(artifactSameAttempt.valid, true, "artifact projection may bind prior evidence in the same attempt");
+
+  const artifactAttemptMismatch = await adapter.validateTermLifecycleEvents([
+    event(1, "b1_candidate_discovery", artifactBatch, 2, 2, 3),
+  ], manifest());
+  assert.equal(artifactAttemptMismatch.valid, false, "artifact projection cannot bind an older attempt");
+  assert.ok(artifactAttemptMismatch.errors.some(error => error.code === "term_projection_attempt"));
+}
+
 async function main() {
   const adapter = loadAdapter();
   await validatesAndFoldsAtCursor(adapter);
   await resumeDuplicateIsIdempotent(adapter);
   await illegalTransitionFailsClosed(adapter);
   await futureEvidenceAndAuthorityFailClosed(adapter);
-  console.log("workflow term lifecycle: 4/4 passed");
+  await chronologyAndProjectionMatrixFailClosed(adapter);
+  console.log("workflow term lifecycle: 5/5 passed");
 }
 
 main().catch(error => {

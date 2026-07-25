@@ -518,6 +518,20 @@ async function termBatch(adapter, stageId, evidence, rows, summary, projectionMo
 
 function termParentEvent(template, seq, componentSeq, stageId, agent, payload) {
   const event = JSON.parse(JSON.stringify(template));
+  const eventAttempt = event.component.component_attempt_id;
+  if (
+    payload.origin_component_attempt_id === eventAttempt
+    && payload.origin_component_seq >= componentSeq
+  ) {
+    throw new Error("term lifecycle fixture evidence must precede its same-attempt projection");
+  }
+  if (
+    payload.projection_mode === "resume_backfill"
+      ? payload.origin_component_attempt_id >= eventAttempt
+      : payload.origin_component_attempt_id !== eventAttempt
+  ) {
+    throw new Error("term lifecycle fixture projection attempt does not match its mode");
+  }
   event.event_id = `workflow_event_${String(seq).padStart(8, "0")}`;
   event.seq = seq;
   event.accepted_at = `2026-07-22T00:00:0${Math.min(9, seq)}Z`;

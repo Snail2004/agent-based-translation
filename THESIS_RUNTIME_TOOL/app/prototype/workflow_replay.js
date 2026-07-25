@@ -809,12 +809,60 @@
       const validated = await termValidateBatch(event.payload, stage, path, errors);
       if (!validated) continue;
       const payload = validated.payload;
-      if (
-        Number.isInteger(event?.component?.component_attempt_id)
-        && Number.isInteger(payload.origin_component_attempt_id)
-        && payload.origin_component_attempt_id > event.component.component_attempt_id
-      ) {
-        addError(errors, "term_future_origin", `${path}.origin_component_attempt_id`, "term lifecycle evidence comes from a future attempt");
+      const eventAttempt = event?.component?.component_attempt_id;
+      const eventComponentSeq = event?.component?.component_seq;
+      const validEventAttempt = termRequireInt(
+        eventAttempt,
+        `$events[${eventIndex}].component.component_attempt_id`,
+        errors,
+        1,
+      );
+      const validEventComponentSeq = termRequireInt(
+        eventComponentSeq,
+        `$events[${eventIndex}].component.component_seq`,
+        errors,
+        1,
+      );
+      if (validEventAttempt && validEventComponentSeq) {
+        if (payload.origin_component_attempt_id > eventAttempt) {
+          addError(
+            errors,
+            "term_future_origin",
+            `${path}.origin_component_attempt_id`,
+            "term lifecycle evidence comes from a future attempt",
+          );
+        } else if (
+          payload.origin_component_attempt_id === eventAttempt
+          && payload.origin_component_seq >= eventComponentSeq
+        ) {
+          addError(
+            errors,
+            "term_future_origin",
+            `${path}.origin_component_seq`,
+            "same-attempt evidence must precede the term lifecycle event",
+          );
+        }
+        if (
+          payload.projection_mode === "resume_backfill"
+          && payload.origin_component_attempt_id >= eventAttempt
+        ) {
+          addError(
+            errors,
+            "term_projection_attempt",
+            `${path}.origin_component_attempt_id`,
+            "Resume backfill must originate in an older component attempt",
+          );
+        } else if (
+          (payload.projection_mode === "live" || payload.projection_mode === "stage_artifact_projection")
+          && payload.origin_component_attempt_id !== eventAttempt
+        ) {
+          addError(
+            errors,
+            "term_projection_attempt",
+            `${path}.origin_component_attempt_id`,
+            `${payload.projection_mode} must originate in the projected component attempt`,
+          );
+        }
       }
       const existingBatchHash = batchesById.get(payload.batch_id);
       if (existingBatchHash !== undefined) {
