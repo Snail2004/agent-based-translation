@@ -21,7 +21,9 @@ _SHA_RE = re.compile(r"^[0-9A-F]{64}$")
 _MECHANICAL_RUNTIME_PATHS = frozenset(
     {
         "THESIS_RUNTIME_TOOL/app/backend/routes/thesis_runs.py",
+        "THESIS_RUNTIME_TOOL/app/backend/services/project_runtime.py",
         "THESIS_RUNTIME_TOOL/app/backend/services/thesis_runs.py",
+        "THESIS_RUNTIME_TOOL/app/backend/tests/test_project_runtime.py",
         "THESIS_RUNTIME_TOOL/app/backend/tests/test_thesis_runs.py",
         "THESIS_RUNTIME_TOOL/app/prototype/app.jsx",
         "THESIS_RUNTIME_TOOL/app/prototype/console.jsx",
@@ -81,8 +83,10 @@ _MECHANICAL_SUPPORT_PREFIXES = (
 _CHAIN_NON_COMPONENT_INFRA_PATHS = frozenset(
     {
         "THESIS_RUNTIME_TOOL/app/backend/routes/thesis_runs.py",
+        "THESIS_RUNTIME_TOOL/app/backend/services/project_runtime.py",
         "THESIS_RUNTIME_TOOL/app/backend/services/source_lifecycle.py",
         "THESIS_RUNTIME_TOOL/app/backend/services/thesis_runs.py",
+        "THESIS_RUNTIME_TOOL/app/backend/tests/test_project_runtime.py",
         "THESIS_RUNTIME_TOOL/app/backend/tests/test_source_lifecycle.py",
         "THESIS_RUNTIME_TOOL/app/backend/tests/test_thesis_runs.py",
         "THESIS_RUNTIME_TOOL/app/prototype/app.jsx",

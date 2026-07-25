@@ -9,6 +9,7 @@ from pipeline.prepass.d2l_repair_resume_v1 import (
     D2LRepairResumeError,
     build_chain_repair_receipt,
     build_repair_receipt,
+    validate_chain_repair_paths,
     validate_mechanical_repair_paths,
     validate_repair_receipt,
 )
@@ -128,6 +129,16 @@ def test_reviewed_app_resume_and_console_paths_are_nonsemantic_repair_scope() ->
     ]
 
     assert validate_mechanical_repair_paths(paths) == sorted(paths)
+
+
+def test_fast_resume_paths_are_closed_nonsemantic_repair_scope() -> None:
+    paths = [
+        "THESIS_RUNTIME_TOOL/app/backend/services/project_runtime.py",
+        "THESIS_RUNTIME_TOOL/app/backend/tests/test_project_runtime.py",
+    ]
+
+    assert validate_mechanical_repair_paths(paths) == sorted(paths)
+    assert validate_chain_repair_paths(paths) == sorted(paths)
 
 
 def test_chained_repair_receipt_binds_parent_and_closed_paths() -> None:
