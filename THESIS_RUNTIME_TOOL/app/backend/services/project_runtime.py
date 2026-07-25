@@ -949,6 +949,85 @@ def _validated_managed_status_manifest(
     }
 
 
+def _reuse_frozen_managed_runtime_for_run(
+    job_dir: Path,
+    *,
+    context: dict[str, Any],
+    job_id: str,
+    run_id: str,
+) -> dict[str, Any]:
+    """Validate the sealed run-start receipt without walking snapshot files."""
+
+    if context.get("lifecycle") != "run_started_frozen":
+        raise ProjectRuntimeError(
+            "source_package_not_frozen",
+            "Managed runtime reuse requires a frozen run-start receipt.",
+            409,
+        )
+    run_start = context.get("run_start")
+    runtime = run_start.get("runtime") if isinstance(run_start, dict) else None
+    if not isinstance(run_start, dict) or not isinstance(runtime, dict):
+        raise ProjectRuntimeError(
+            "source_package_run_start_invalid",
+            "Frozen managed runtime has no valid run-start receipt.",
+            409,
+        )
+    if run_start.get("run_id") != run_id or run_start.get("job_id") != job_id:
+        raise ProjectRuntimeError(
+            "source_package_already_frozen",
+            "This source package is already frozen to a different run or job.",
+            409,
+        )
+
+    manifest_path = job_dir / "source_manifest.json"
+    compact_manifest = _validated_managed_status_manifest(
+        job_dir,
+        context=context,
+    )
+    expected_job_id, expected_source_identity = _managed_job_identity(
+        context["doc_id"],
+        context["managed_source"],
+    )
+    if (
+        expected_job_id != job_id
+        or compact_manifest["job_id"] != job_id
+        or compact_manifest["source_identity_sha256"] != expected_source_identity
+        or runtime.get("manifest_relative_path")
+        != f"{job_id}/source_manifest.json"
+        or runtime.get("managed_source") != context["managed_source"]
+    ):
+        raise ProjectRuntimeError(
+            "runtime_manifest_mismatch",
+            "Frozen managed runtime identity differs from its run-start receipt.",
+            409,
+        )
+    if _sha256_file(manifest_path) != runtime.get("manifest_sha256"):
+        raise ProjectRuntimeError(
+            "source_package_runtime_invalid",
+            "The frozen runtime manifest bytes changed.",
+            409,
+        )
+
+    return {
+        "schema_version": run_start["schema_version"],
+        "doc_id": context["doc_id"],
+        "mode": "managed_run_started_frozen",
+        "managed": True,
+        "lifecycle": "run_started_frozen",
+        "pipeline_run_count": context["pipeline_run_count"],
+        "source_identity_sha256": expected_source_identity,
+        "run_start": {
+            "sha256": run_start["integrity"]["payload_sha256"],
+            "run_id": run_id,
+            "job_id": job_id,
+            "runtime_manifest_sha256": runtime["manifest_sha256"],
+        },
+        "run_start_created": False,
+        "run_start_reused": True,
+        "validation_mode": "sealed_run_start_receipt",
+    }
+
+
 def freeze_managed_runtime_for_run(
     job_id: str,
     run_id: str,
@@ -975,6 +1054,24 @@ def freeze_managed_runtime_for_run(
             "Managed runtime manifest project_id is invalid.",
             409,
         )
+    try:
+        status_context = get_managed_runtime_status_context(
+            get_project_path(doc_id),
+            doc_id,
+        )
+    except SourceLifecycleError as exc:
+        raise _translate_lifecycle_error(exc) from exc
+    if (
+        status_context is not None
+        and status_context.get("lifecycle") == "run_started_frozen"
+    ):
+        return _reuse_frozen_managed_runtime_for_run(
+            job_dir,
+            context=status_context,
+            job_id=job_id,
+            run_id=run_id,
+        )
+
     context = _managed_context(doc_id)
     _validated_managed_manifest(job_dir, context=context)
     try:

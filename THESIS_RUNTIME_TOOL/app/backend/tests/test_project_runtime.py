@@ -440,17 +440,33 @@ def test_managed_runtime_first_run_freeze_is_idempotent_and_permanent(
     assert first["pipeline_run_count"] == 1
     assert first["run_start_created"] is True
 
-    repeated = project_runtime.freeze_managed_runtime_for_run(
-        prepared["job_id"], "run_first", jobs_root=jobs
-    )
-    assert repeated is not None
-    assert repeated["run_start_reused"] is True
-
-    with pytest.raises(project_runtime.ProjectRuntimeError) as alternate:
-        project_runtime.freeze_managed_runtime_for_run(
-            prepared["job_id"], "run_other", jobs_root=jobs
+    with monkeypatch.context() as frozen_reuse:
+        frozen_reuse.setattr(
+            project_runtime,
+            "_managed_context",
+            lambda _doc_id: pytest.fail(
+                "frozen Resume must not perform full managed-context validation"
+            ),
         )
-    assert alternate.value.code == "source_package_already_frozen"
+        frozen_reuse.setattr(
+            project_runtime,
+            "_file_tree",
+            lambda _root: pytest.fail(
+                "frozen Resume must not walk the managed snapshot tree"
+            ),
+        )
+        repeated = project_runtime.freeze_managed_runtime_for_run(
+            prepared["job_id"], "run_first", jobs_root=jobs
+        )
+        assert repeated is not None
+        assert repeated["run_start_reused"] is True
+        assert repeated["validation_mode"] == "sealed_run_start_receipt"
+
+        with pytest.raises(project_runtime.ProjectRuntimeError) as alternate:
+            project_runtime.freeze_managed_runtime_for_run(
+                prepared["job_id"], "run_other", jobs_root=jobs
+            )
+        assert alternate.value.code == "source_package_already_frozen"
 
     frozen = project_runtime.get_project_runtime_status(doc_id, jobs_root=jobs)
     assert frozen["prepared"] is True
@@ -468,6 +484,43 @@ def test_managed_runtime_first_run_freeze_is_idempotent_and_permanent(
         "source_package_runtime_missing",
         "managed_runtime_missing_after_freeze",
     }
+
+
+def test_frozen_runtime_fast_reuse_rejects_manifest_byte_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    doc_id = "managed_runtime_fast_reuse_drift"
+    root, jobs, project_runtime, source_lifecycle = _managed_project(
+        tmp_path, monkeypatch, doc_id
+    )
+    review = source_lifecycle.get_source_package_review(root, doc_id)
+    source_lifecycle.finalize_managed_source_package(
+        root,
+        doc_id,
+        {
+            "expected_state_sha256": review["expected"]["state_sha256"],
+            "expected_candidate_tree_sha256": review["expected"][
+                "candidate_tree_sha256"
+            ],
+            "expected_report_sha256": review["expected"]["report_sha256"],
+            "expected_hierarchy_sha256": review["expected"]["hierarchy_sha256"],
+            "approved": True,
+            "user": "runtime_reviewer",
+        },
+    )
+    prepared = project_runtime.prepare_project_runtime(doc_id, jobs_root=jobs)
+    project_runtime.freeze_managed_runtime_for_run(
+        prepared["job_id"], "run_first", jobs_root=jobs
+    )
+
+    manifest_path = jobs / prepared["job_id"] / "source_manifest.json"
+    manifest_path.write_bytes(manifest_path.read_bytes() + b"\n")
+    with pytest.raises(project_runtime.ProjectRuntimeError) as drift:
+        project_runtime.freeze_managed_runtime_for_run(
+            prepared["job_id"], "run_first", jobs_root=jobs
+        )
+    assert drift.value.code == "source_package_runtime_invalid"
 
 
 def test_prepare_runtime_is_content_addressed_and_strips_annotations(tmp_path, monkeypatch):
