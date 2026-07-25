@@ -9,16 +9,20 @@ from typing import Any, Mapping, Sequence
 from pipeline.prepass.d2l_console_replay_contract_v1 import canonical_sha256
 
 
-SCHEMA_VERSION = "d2l_component_repair_receipt_v2_mechanical_scope"
+LEGACY_SCHEMA_VERSION = "d2l_component_repair_receipt_v2_mechanical_scope"
+SCHEMA_VERSION = "d2l_component_repair_receipt_v4_revision_seals"
 REPAIR_KIND = "mechanical_runtime_fix"
 ATTESTATION = "semantic_contract_unchanged"
-REPAIR_SCOPE_POLICY_ID = "d2l_mechanical_repair_paths_v1"
-CHAIN_SCHEMA_VERSION = "d2l_component_repair_receipt_v3_chain_scope"
+LEGACY_REPAIR_SCOPE_POLICY_ID = "d2l_mechanical_repair_paths_v1"
+REPAIR_SCOPE_POLICY_ID = "d2l_revision_seals_v2"
+LEGACY_CHAIN_SCHEMA_VERSION = "d2l_component_repair_receipt_v3_chain_scope"
+CHAIN_SCHEMA_VERSION = "d2l_component_repair_receipt_v4_chain_revision_seals"
 CHAIN_REPAIR_KIND = "chained_runtime_infrastructure_fix"
-CHAIN_REPAIR_SCOPE_POLICY_ID = "d2l_chained_runtime_paths_v1"
+LEGACY_CHAIN_REPAIR_SCOPE_POLICY_ID = "d2l_chained_runtime_paths_v1"
+CHAIN_REPAIR_SCOPE_POLICY_ID = "d2l_chained_revision_seals_v2"
 _GIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _SHA_RE = re.compile(r"^[0-9A-F]{64}$")
-_MECHANICAL_RUNTIME_PATHS = frozenset(
+_LEGACY_MECHANICAL_RUNTIME_PATHS = frozenset(
     {
         "THESIS_RUNTIME_TOOL/app/backend/routes/thesis_runs.py",
         "THESIS_RUNTIME_TOOL/app/backend/services/project_runtime.py",
@@ -76,11 +80,11 @@ _MECHANICAL_RUNTIME_PATHS = frozenset(
         "THESIS_RUNTIME_TOOL/pipeline/scripts/run_workflow_orchestrator_v1.py",
     }
 )
-_MECHANICAL_SUPPORT_PREFIXES = (
+_LEGACY_MECHANICAL_SUPPORT_PREFIXES = (
     "THESIS_RUNTIME_TOOL/pipeline/tests/",
     "THESIS_RUNTIME_TOOL/tasks/",
 )
-_CHAIN_NON_COMPONENT_INFRA_PATHS = frozenset(
+_LEGACY_CHAIN_NON_COMPONENT_INFRA_PATHS = frozenset(
     {
         "THESIS_RUNTIME_TOOL/app/backend/routes/thesis_runs.py",
         "THESIS_RUNTIME_TOOL/app/backend/services/project_runtime.py",
@@ -125,7 +129,7 @@ _CHAIN_NON_COMPONENT_INFRA_PATHS = frozenset(
         "THESIS_RUNTIME_TOOL/pipeline/workflow_replay/relay_v1.py",
     }
 )
-_CHAIN_COMPONENT_RUNTIME_PATHS = frozenset(
+_LEGACY_CHAIN_COMPONENT_RUNTIME_PATHS = frozenset(
     {
         (
             "THESIS_RUNTIME_TOOL/pipeline/prepass/"
@@ -181,23 +185,56 @@ def _payload(value: Mapping[str, Any]) -> dict[str, Any]:
     return row
 
 
-def validate_mechanical_repair_paths(paths: Sequence[str]) -> list[str]:
-    normalized = sorted(set(str(path) for path in paths))
-    if not normalized:
+def _validate_changed_paths(paths: Sequence[str]) -> list[str]:
+    if isinstance(paths, (str, bytes)) or not isinstance(paths, Sequence):
+        raise D2LRepairResumeError(
+            "repair changed_paths must be a sorted unique string array"
+        )
+    normalized = list(paths)
+    if not normalized or any(not isinstance(path, str) for path in normalized):
         raise D2LRepairResumeError("repair changed_paths cannot be empty")
+    if normalized != sorted(normalized) or len(normalized) != len(set(normalized)):
+        raise D2LRepairResumeError(
+            "repair changed_paths must be sorted unique relative paths"
+        )
+    folded = [path.casefold() for path in normalized]
+    if len(folded) != len(set(folded)):
+        raise D2LRepairResumeError(
+            "repair changed_paths contain case-confusable duplicates"
+        )
     for path in normalized:
+        segments = path.split("/")
         if (
             not path
             or "\\" in path
             or path.startswith("/")
-            or ".." in path.split("/")
+            or path.startswith("//")
+            or re.match(r"^[A-Za-z]:", path)
+            or any(segment in {"", ".", ".."} for segment in segments)
+            or any(ord(character) < 32 or ord(character) == 127 for character in path)
         ):
             raise D2LRepairResumeError(
                 "repair changed_paths must be sorted unique relative paths"
             )
-        if path in _MECHANICAL_RUNTIME_PATHS:
+    return normalized
+
+
+def validate_mechanical_repair_paths(paths: Sequence[str]) -> list[str]:
+    """Validate active V4 audit paths without using filenames as authority."""
+    return _validate_changed_paths(paths)
+
+
+def _validate_legacy_mechanical_repair_paths(
+    paths: Sequence[str],
+) -> list[str]:
+    normalized = _validate_changed_paths(paths)
+    for path in normalized:
+        if path in _LEGACY_MECHANICAL_RUNTIME_PATHS:
             continue
-        if any(path.startswith(prefix) for prefix in _MECHANICAL_SUPPORT_PREFIXES):
+        if any(
+            path.startswith(prefix)
+            for prefix in _LEGACY_MECHANICAL_SUPPORT_PREFIXES
+        ):
             continue
         raise D2LRepairResumeError(
             f"repair path is outside the closed mechanical scope: {path}"
@@ -206,24 +243,21 @@ def validate_mechanical_repair_paths(paths: Sequence[str]) -> list[str]:
 
 
 def validate_chain_repair_paths(paths: Sequence[str]) -> list[str]:
-    normalized = sorted(set(str(path) for path in paths))
-    if not normalized:
-        raise D2LRepairResumeError("repair changed_paths cannot be empty")
+    """Validate active V4 audit paths without using filenames as authority."""
+    return _validate_changed_paths(paths)
+
+
+def _validate_legacy_chain_repair_paths(paths: Sequence[str]) -> list[str]:
+    normalized = _validate_changed_paths(paths)
     for path in normalized:
-        if (
-            not path
-            or "\\" in path
-            or path.startswith("/")
-            or ".." in path.split("/")
+        if path in _LEGACY_CHAIN_NON_COMPONENT_INFRA_PATHS:
+            continue
+        if path in _LEGACY_CHAIN_COMPONENT_RUNTIME_PATHS:
+            continue
+        if any(
+            path.startswith(prefix)
+            for prefix in _LEGACY_MECHANICAL_SUPPORT_PREFIXES
         ):
-            raise D2LRepairResumeError(
-                "repair changed_paths must be sorted unique relative paths"
-            )
-        if path in _CHAIN_NON_COMPONENT_INFRA_PATHS:
-            continue
-        if path in _CHAIN_COMPONENT_RUNTIME_PATHS:
-            continue
-        if any(path.startswith(prefix) for prefix in _MECHANICAL_SUPPORT_PREFIXES):
             continue
         raise D2LRepairResumeError(
             f"repair path is outside the closed chained scope: {path}"
@@ -259,8 +293,10 @@ def _validate_v2_repair_receipt(
     }
     if set(row) != expected:
         raise D2LRepairResumeError("repair receipt keys mismatch")
-    if row["schema_version"] != SCHEMA_VERSION:
+    schema_version = row["schema_version"]
+    if schema_version not in {LEGACY_SCHEMA_VERSION, SCHEMA_VERSION}:
         raise D2LRepairResumeError("repair receipt schema is invalid")
+    legacy = schema_version == LEGACY_SCHEMA_VERSION
     for key in (
         "workflow_run_id",
         "component_run_id",
@@ -286,7 +322,10 @@ def _validate_v2_repair_receipt(
         )
     if row["repair_kind"] != REPAIR_KIND:
         raise D2LRepairResumeError("repair kind is invalid")
-    if row["repair_scope_policy_id"] != REPAIR_SCOPE_POLICY_ID:
+    expected_policy = (
+        LEGACY_REPAIR_SCOPE_POLICY_ID if legacy else REPAIR_SCOPE_POLICY_ID
+    )
+    if row["repair_scope_policy_id"] != expected_policy:
         raise D2LRepairResumeError("repair scope policy is invalid")
     if row["operator_attestation"] != ATTESTATION:
         raise D2LRepairResumeError("repair attestation is invalid")
@@ -324,7 +363,11 @@ def _validate_v2_repair_receipt(
         raise D2LRepairResumeError(
             "repair changed_paths must be sorted unique relative paths"
         )
-    changed_paths = validate_mechanical_repair_paths(changed_paths)
+    changed_paths = (
+        _validate_legacy_mechanical_repair_paths(changed_paths)
+        if legacy
+        else validate_mechanical_repair_paths(changed_paths)
+    )
     integrity = row["integrity"]
     if not isinstance(integrity, Mapping) or set(integrity) != {
         "payload_sha256"
@@ -376,8 +419,13 @@ def _validate_v3_repair_receipt(
     }
     if set(row) != expected:
         raise D2LRepairResumeError("chained repair receipt keys mismatch")
-    if row["schema_version"] != CHAIN_SCHEMA_VERSION:
+    schema_version = row["schema_version"]
+    if schema_version not in {
+        LEGACY_CHAIN_SCHEMA_VERSION,
+        CHAIN_SCHEMA_VERSION,
+    }:
         raise D2LRepairResumeError("chained repair receipt schema is invalid")
+    legacy = schema_version == LEGACY_CHAIN_SCHEMA_VERSION
     for key in (
         "workflow_run_id",
         "component_run_id",
@@ -414,7 +462,12 @@ def _validate_v3_repair_receipt(
         )
     if row["repair_kind"] != CHAIN_REPAIR_KIND:
         raise D2LRepairResumeError("chained repair kind is invalid")
-    if row["repair_scope_policy_id"] != CHAIN_REPAIR_SCOPE_POLICY_ID:
+    expected_policy = (
+        LEGACY_CHAIN_REPAIR_SCOPE_POLICY_ID
+        if legacy
+        else CHAIN_REPAIR_SCOPE_POLICY_ID
+    )
+    if row["repair_scope_policy_id"] != expected_policy:
         raise D2LRepairResumeError("chained repair scope policy is invalid")
     if row["operator_attestation"] != ATTESTATION:
         raise D2LRepairResumeError("repair attestation is invalid")
@@ -458,7 +511,11 @@ def _validate_v3_repair_receipt(
         raise D2LRepairResumeError(
             "repair changed_paths must be sorted unique relative paths"
         )
-    row["changed_paths"] = validate_chain_repair_paths(changed_paths)
+    row["changed_paths"] = (
+        _validate_legacy_chain_repair_paths(changed_paths)
+        if legacy
+        else validate_chain_repair_paths(changed_paths)
+    )
     integrity = row["integrity"]
     if not isinstance(integrity, Mapping) or set(integrity) != {
         "payload_sha256"
@@ -480,11 +537,21 @@ def _validate_v3_repair_receipt(
 
 def validate_repair_receipt(value: Mapping[str, Any]) -> dict[str, Any]:
     schema = value.get("schema_version")
-    if schema == SCHEMA_VERSION:
+    if isinstance(schema, str) and schema in {
+        LEGACY_SCHEMA_VERSION,
+        SCHEMA_VERSION,
+    }:
         return _validate_v2_repair_receipt(value)
-    if schema == CHAIN_SCHEMA_VERSION:
+    if is_chain_repair_schema_version(schema):
         return _validate_v3_repair_receipt(value)
     raise D2LRepairResumeError("repair receipt schema is invalid")
+
+
+def is_chain_repair_schema_version(value: Any) -> bool:
+    return isinstance(value, str) and value in {
+        LEGACY_CHAIN_SCHEMA_VERSION,
+        CHAIN_SCHEMA_VERSION,
+    }
 
 
 def build_repair_receipt(
@@ -522,7 +589,7 @@ def build_repair_receipt(
         "semantic_contract_sha256": semantic_contract_sha256,
         "runner_plan_sha256": runner_plan_sha256,
         "git_delta_sha256": git_delta_sha256,
-        "changed_paths": sorted(set(str(path) for path in changed_paths)),
+        "changed_paths": validate_mechanical_repair_paths(changed_paths),
         "created_at": created_at,
     }
     row["integrity"] = {"payload_sha256": canonical_sha256(row)}
@@ -574,7 +641,7 @@ def build_chain_repair_receipt(
         "semantic_contract_sha256": semantic_contract_sha256,
         "runner_plan_sha256": runner_plan_sha256,
         "git_delta_sha256": git_delta_sha256,
-        "changed_paths": sorted(set(str(path) for path in changed_paths)),
+        "changed_paths": validate_chain_repair_paths(changed_paths),
         "created_at": created_at,
     }
     row["integrity"] = {"payload_sha256": canonical_sha256(row)}
@@ -587,11 +654,16 @@ __all__ = [
     "CHAIN_REPAIR_SCOPE_POLICY_ID",
     "CHAIN_SCHEMA_VERSION",
     "D2LRepairResumeError",
+    "LEGACY_CHAIN_REPAIR_SCOPE_POLICY_ID",
+    "LEGACY_CHAIN_SCHEMA_VERSION",
+    "LEGACY_REPAIR_SCOPE_POLICY_ID",
+    "LEGACY_SCHEMA_VERSION",
     "REPAIR_SCOPE_POLICY_ID",
     "REPAIR_KIND",
     "SCHEMA_VERSION",
     "build_chain_repair_receipt",
     "build_repair_receipt",
+    "is_chain_repair_schema_version",
     "validate_chain_repair_paths",
     "validate_mechanical_repair_paths",
     "validate_repair_receipt",

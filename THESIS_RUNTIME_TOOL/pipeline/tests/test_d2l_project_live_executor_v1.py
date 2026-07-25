@@ -37,6 +37,8 @@ from pipeline.prepass.d2l_project_stage_runner_v1 import (
     execute_stage,
 )
 from pipeline.prepass.d2l_repair_resume_v1 import (
+    LEGACY_REPAIR_SCOPE_POLICY_ID,
+    LEGACY_SCHEMA_VERSION,
     build_chain_repair_receipt,
     build_repair_receipt,
 )
@@ -66,9 +68,15 @@ def _write_json(path: Path, value: dict) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "legacy_parent",
+    [False, True],
+    ids=["v4-parent", "v3-parent"],
+)
 def test_live_executor_accepts_only_fully_indexed_chained_repair(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    legacy_parent: bool,
 ) -> None:
     root = tmp_path / "component"
     parent_ref = "runtime/repair_receipts/repair_a0005.json"
@@ -94,6 +102,13 @@ def test_live_executor_accepts_only_fully_indexed_chained_repair(
         ],
         created_at="2026-07-25T00:00:00Z",
     )
+    if legacy_parent:
+        parent["schema_version"] = LEGACY_SCHEMA_VERSION
+        parent["repair_scope_policy_id"] = LEGACY_REPAIR_SCOPE_POLICY_ID
+        parent.pop("integrity", None)
+        parent["integrity"] = {
+            "payload_sha256": canonical_sha256(parent),
+        }
     _write_json(root / parent_ref, parent)
     parent_sha = file_sha256(root / parent_ref)
     current = build_chain_repair_receipt(

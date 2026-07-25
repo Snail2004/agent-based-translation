@@ -82,7 +82,7 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
 )
 from pipeline.prepass.d2l_stage_work_journal_v1 import D2LStageWorkJournal
 from pipeline.prepass.d2l_repair_resume_v1 import (
-    CHAIN_SCHEMA_VERSION,
+    is_chain_repair_schema_version,
     validate_repair_receipt,
 )
 from pipeline.prepass.d2l_terminology_memory_delta_v1 import commit_glossary_draft
@@ -164,7 +164,7 @@ def _effective_code_revision(
         or receipt["effective_code_revision"] != effective
     ):
         raise D2LProjectLiveExecutorError("repair receipt identity mismatch")
-    if receipt["schema_version"] != CHAIN_SCHEMA_VERSION:
+    if not is_chain_repair_schema_version(receipt["schema_version"]):
         if receipt["baseline_code_revision"] != baseline:
             raise D2LProjectLiveExecutorError(
                 "repair receipt identity mismatch"
@@ -189,7 +189,7 @@ def _repair_metadata(receipt: Mapping[str, Any]) -> dict[str, Any]:
         "baseline_code_revision": receipt["baseline_code_revision"],
         "effective_code_revision": receipt["effective_code_revision"],
     }
-    if receipt["schema_version"] == CHAIN_SCHEMA_VERSION:
+    if is_chain_repair_schema_version(receipt["schema_version"]):
         metadata["parent_repair_artifact_ref"] = receipt[
             "parent_repair_artifact_ref"
         ]
@@ -224,7 +224,9 @@ def _validate_indexed_chain_receipt(
         )
     current_artifact = current_matches[0]
     if (
-        current_artifact["schema_version"] != CHAIN_SCHEMA_VERSION
+        not is_chain_repair_schema_version(current_receipt["schema_version"])
+        or current_artifact["schema_version"]
+        != current_receipt["schema_version"]
         or current_artifact["sha256_kind"] != "physical"
         or int(current_artifact["component_attempt_id"])
         != int(current_receipt["next_component_attempt_id"])
@@ -275,7 +277,7 @@ def _validate_indexed_chain_receipt(
     )
     parent_sealed = (
         parent_receipt["sealed_code_revision"]
-        if parent_receipt["schema_version"] == CHAIN_SCHEMA_VERSION
+        if is_chain_repair_schema_version(parent_receipt["schema_version"])
         else parent_receipt["baseline_code_revision"]
     )
     if (

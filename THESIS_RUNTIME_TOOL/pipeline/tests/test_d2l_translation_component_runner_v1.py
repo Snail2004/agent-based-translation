@@ -37,6 +37,7 @@ from pipeline.prepass.d2l_component_writer_lease_v1 import (
 from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
 )
+from pipeline.prepass.d2l_repair_resume_v1 import REPAIR_SCOPE_POLICY_ID
 from pipeline.prepass.d2l_stage_work_journal_v1 import D2LStageWorkJournal
 from pipeline.prepass.d2l_translation_component_runner_v1 import (
     ComponentPlan,
@@ -1376,7 +1377,7 @@ def test_runner_requires_and_records_explicit_same_run_code_repair(
     assert receipt["baseline_code_revision"] == baseline
     assert receipt["effective_code_revision"] == effective
     assert receipt["changed_paths"] == [repair_relative]
-    assert receipt["repair_scope_policy_id"] == "d2l_mechanical_repair_paths_v1"
+    assert receipt["repair_scope_policy_id"] == REPAIR_SCOPE_POLICY_ID
     index = json.loads((root / "artifact_index.json").read_text(encoding="utf-8"))
     repair_artifact = next(
         row
@@ -1544,7 +1545,7 @@ def test_runner_chains_attempt_five_from_indexed_repair_receipt(
     assert matching[0]["parent_artifact_refs"] == ["art_component_repair_a0002"]
 
 
-def test_resume_revision_preflight_accepts_reviewed_app_delta_without_mutation(
+def test_resume_revision_preflight_accepts_arbitrary_delta_without_mutation(
     tmp_path: Path,
 ) -> None:
     code_root = tmp_path / "code"
@@ -1635,13 +1636,19 @@ def test_resume_revision_preflight_accepts_reviewed_app_delta_without_mutation(
     prompt.write_text('PROMPT = "changed"\n', encoding="utf-8")
     git("add", "THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py")
     git("commit", "-m", "semantic drift")
-    with pytest.raises(ComponentRunnerError, match="closed mechanical scope"):
-        preflight_resume_runtime_revision_from_plan_file(
-            plan_path,
-            root,
-            repair_code_root=code_root,
-            repair_reason="journal_publication_race_recovery",
-        )
+    post_prompt_preflight = preflight_resume_runtime_revision_from_plan_file(
+        plan_path,
+        root,
+        repair_code_root=code_root,
+        repair_reason="journal_publication_race_recovery",
+    )
+    assert post_prompt_preflight["mode"] == "direct"
+    assert post_prompt_preflight["effective_code_revision"] == git(
+        "rev-parse", "HEAD"
+    )
+    assert post_prompt_preflight["changed_paths"] == sorted(
+        [*app_paths, "THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py"]
+    )
     assert before == {
         name: (root / name).read_bytes()
         for name in (
@@ -1652,7 +1659,7 @@ def test_resume_revision_preflight_accepts_reviewed_app_delta_without_mutation(
     }
 
 
-def test_runner_rejects_semantic_code_change_before_resume_mutation(
+def test_runner_rejects_sealed_plan_identity_change_before_resume_mutation(
     tmp_path: Path,
 ) -> None:
     code_root = tmp_path / "code"
@@ -1701,12 +1708,20 @@ def test_runner_rejects_semantic_code_change_before_resume_mutation(
         )
     }
 
-    with pytest.raises(ComponentRunnerError, match="closed mechanical scope"):
+    drifted_raw_plan = _plan(attempt_id=2)
+    drifted_raw_plan["code_revision"] = baseline
+    drifted_raw_plan["pipeline_version"] = "changed-semantic-plan"
+    drifted_plan = ComponentPlan.from_mapping(drifted_raw_plan)
+
+    with pytest.raises(
+        ComponentRunnerError,
+        match="resume identity does not match the sealed plan",
+    ):
         D2LTranslationComponentRunner(
-            plan,
+            drifted_plan,
             root,
             repair_code_root=code_root,
-            repair_reason="incorrectly_claimed_mechanical_fix",
+            repair_reason="reviewed_revision",
         ).run(resume=True)
 
     assert before == {
@@ -1720,7 +1735,7 @@ def test_runner_rejects_semantic_code_change_before_resume_mutation(
     assert not (root / "runtime/repair_receipts/repair_a0002.json").exists()
 
 
-def test_stale_recovery_rejects_semantic_delta_before_package_mutation(
+def test_stale_recovery_rejects_sealed_plan_identity_before_package_mutation(
     tmp_path: Path,
 ) -> None:
     code_root = tmp_path / "code"
@@ -1770,13 +1785,21 @@ def test_stale_recovery_rejects_semantic_delta_before_package_mutation(
         )
     }
 
-    with pytest.raises(ComponentRunnerError, match="closed mechanical scope"):
+    drifted_raw_plan = _plan(attempt_id=2)
+    drifted_raw_plan["code_revision"] = baseline
+    drifted_raw_plan["pipeline_version"] = "changed-semantic-plan"
+    drifted_plan = ComponentPlan.from_mapping(drifted_raw_plan)
+
+    with pytest.raises(
+        ComponentRunnerError,
+        match="stale-attempt identity does not match the sealed plan",
+    ):
         D2LTranslationComponentRunner(
-            plan,
+            drifted_plan,
             root,
             recover_stale=True,
             repair_code_root=code_root,
-            repair_reason="incorrectly_claimed_mechanical_fix",
+            repair_reason="reviewed_revision",
         ).run(resume=True)
 
     assert before == {

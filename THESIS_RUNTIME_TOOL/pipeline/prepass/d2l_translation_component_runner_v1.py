@@ -62,10 +62,10 @@ from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
 )
 from pipeline.prepass.d2l_repair_resume_v1 import (
-    CHAIN_SCHEMA_VERSION,
     D2LRepairResumeError,
     build_chain_repair_receipt,
     build_repair_receipt,
+    is_chain_repair_schema_version,
     validate_chain_repair_paths,
     validate_mechanical_repair_paths,
     validate_repair_receipt,
@@ -1196,7 +1196,7 @@ class D2LTranslationComponentRunner:
             "baseline_code_revision": receipt["baseline_code_revision"],
             "effective_code_revision": receipt["effective_code_revision"],
         }
-        if receipt["schema_version"] == CHAIN_SCHEMA_VERSION:
+        if is_chain_repair_schema_version(receipt["schema_version"]):
             expected_metadata["parent_repair_artifact_ref"] = receipt[
                 "parent_repair_artifact_ref"
             ]
@@ -1284,7 +1284,7 @@ class D2LTranslationComponentRunner:
             )
         receipt_path = self.root / relative_ref
         if receipt_path.exists():
-            if receipt["schema_version"] == CHAIN_SCHEMA_VERSION:
+            if is_chain_repair_schema_version(receipt["schema_version"]):
                 raise ComponentRunnerError(
                     "unindexed chained repair receipt path collision"
                 )
@@ -1312,8 +1312,8 @@ class D2LTranslationComponentRunner:
             if not self.root.is_dir():
                 raise ComponentRunnerError("component root is missing during resume")
             current = _load_json(self.manifest_path, "component manifest")
-            # Git lineage and the closed mechanical path policy must pass
-            # before stale recovery can append a checkpoint or event.
+            # Git lineage and sealed revision identity must pass before stale
+            # recovery can append a checkpoint or event.
             self._preflight_runtime_revision()
             if current.get("status") == "running":
                 if not self.recover_stale:
@@ -1618,7 +1618,9 @@ class D2LTranslationComponentRunner:
             return
         if not self._repair_receipt_register:
             return
-        chained = self._repair_receipt["schema_version"] == CHAIN_SCHEMA_VERSION
+        chained = is_chain_repair_schema_version(
+            self._repair_receipt["schema_version"]
+        )
         artifact_ref = (
             f"art_component_repair_chain_a{self._current_attempt:04d}"
             if chained
