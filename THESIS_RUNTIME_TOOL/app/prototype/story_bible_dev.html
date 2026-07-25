@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Story Bible · 0-API UI fixture</title>
+<title>Story Bible · App UI preview</title>
 <link rel="icon" href="data:," />
 <link rel="stylesheet" href="styles.css" />
 <link rel="stylesheet" href="console.css" />
@@ -19,25 +19,98 @@
 <script src="i18n.js"></script>
 <script type="text/babel" src="parts_graph.jsx"></script>
 <script type="text/babel">
+const STORY_BIBLE_DEV_PARAMS = new URLSearchParams(window.location.search);
+const STORY_BIBLE_DEV_SOURCE = STORY_BIBLE_DEV_PARAMS.get("source") === "b4" ? "b4" : "fixture";
+const STORY_BIBLE_B4_RUN = /^[A-Za-z0-9_-]+$/.test(STORY_BIBLE_DEV_PARAMS.get("b4Run") || "")
+  ? STORY_BIBLE_DEV_PARAMS.get("b4Run")
+  : "20260726_compact_v4";
+const STORY_BIBLE_B4_MAX_CHAPTER = 6;
+
+function b4StoryGraphUrl(chapter) {
+  const id = String(chapter).padStart(2, "0");
+  return [
+    "/agent-based-translation-literary-b4-v1/THESIS_RUNTIME_TOOL/data/reports",
+    `literary_b4_story_bible_wh_ch${id}_${STORY_BIBLE_B4_RUN}`,
+    `story_graph_as_of_ch${id}.json`,
+  ].join("/");
+}
+
+function storyBibleDevError(code, message) {
+  const error = new Error(message || code);
+  error.code = code;
+  return error;
+}
+
 function StoryBibleDevApp() {
   const [locale, setLocale] = useThesisLocale();
   const [theme, setTheme] = React.useState(() => (
     localStorage.getItem("ailab.console_theme") === "dark" ? "dark" : "paper"
   ));
-  const [state, setState] = React.useState({ loading: true, data: null, error: null });
+  const [chapter, setChapter] = React.useState(STORY_BIBLE_B4_MAX_CHAPTER);
+  const [state, setState] = React.useState({
+    loading: true,
+    data: null,
+    snapshots: null,
+    meta: null,
+    error: null,
+  });
 
   React.useEffect(() => {
     let cancelled = false;
-    fetch("fixtures/story_bible_graph_v1/full_ch6.json", { cache: "no-store" })
-      .then(response => {
-        if (!response.ok) throw new Error("fixture_http_" + response.status);
-        return response.json();
-      })
-      .then(data => {
-        if (!cancelled) setState({ loading: false, data, error: null });
+    const load = STORY_BIBLE_DEV_SOURCE === "b4"
+      ? Promise.all(Array.from({ length: STORY_BIBLE_B4_MAX_CHAPTER }, (_, index) => {
+          const snapshotChapter = index + 1;
+          return fetch(b4StoryGraphUrl(snapshotChapter), { cache: "no-store" })
+            .then(response => {
+              if (!response.ok) {
+                throw storyBibleDevError(
+                  "b4_artifact_http_" + response.status,
+                  `Cannot load B4 chapter ${snapshotChapter}`,
+                );
+              }
+              return response.json();
+            })
+            .then(raw => {
+              const mapped = mapLiteraryB4StoryGraph(raw);
+              if (!mapped.valid) throw storyBibleDevError(mapped.code);
+              if (mapped.meta.chapter !== snapshotChapter) {
+                throw storyBibleDevError("b4_artifact_chapter_mismatch");
+              }
+              return mapped;
+            });
+        })).then(rows => {
+          const snapshots = {};
+          rows.forEach((row, index) => { snapshots[index + 1] = row.data; });
+          return {
+            data: snapshots[STORY_BIBLE_B4_MAX_CHAPTER],
+            snapshots,
+            meta: rows[rows.length - 1].meta,
+          };
+        })
+      : fetch("fixtures/story_bible_graph_v1/full_ch6.json", { cache: "no-store" })
+          .then(response => {
+            if (!response.ok) throw storyBibleDevError("fixture_http_" + response.status);
+            return response.json();
+          })
+          .then(data => ({ data, snapshots: null, meta: null }));
+
+    load.then(result => {
+        if (!cancelled) setState({
+          loading: false,
+          data: result.data,
+          snapshots: result.snapshots,
+          meta: result.meta,
+          error: null,
+        });
       })
       .catch(error => {
-        if (!cancelled) setState({ loading: false, data: null, error });
+        if (!cancelled) setState({
+          loading: false,
+          data: null,
+          snapshots: null,
+          meta: null,
+          error,
+        });
       });
     return () => { cancelled = true; };
   }, []);
@@ -50,18 +123,37 @@ function StoryBibleDevApp() {
     });
   }
 
+  const realB4 = STORY_BIBLE_DEV_SOURCE === "b4";
+  const selectedData = realB4 && state.snapshots
+    ? state.snapshots[chapter]
+    : state.data;
+  const artifactHash = state.meta?.story_bible_artifact_hash || state.meta?.artifact_hash || "";
+
   return (
     <StoryBiblePage
-      data={state.data}
+      data={selectedData}
+      layoutData={realB4 && state.snapshots
+        ? state.snapshots[STORY_BIBLE_B4_MAX_CHAPTER]
+        : state.data}
+      chapterSnapshots={realB4 ? state.snapshots : null}
       loading={state.loading}
       error={state.error}
-      initialChapter={6}
+      initialChapter={realB4 ? chapter : 6}
+      onChapterChange={realB4 ? setChapter : null}
       projectId="wuthering_heights"
-      runLabel="literary_fixture_ch1_06"
-      statusLabel="0-API"
-      sourceLabel="Wuthering Heights · ch1–6"
-      authorityLabel="FIXTURE · NOT PRODUCTION"
-      authorityTone="fixture"
+      runLabel={realB4
+        ? `literary_b4_wh_ch01_06_${STORY_BIBLE_B4_RUN}`
+        : "literary_fixture_ch1_06"}
+      statusLabel={realB4
+        ? `as_of_ch${String(chapter).padStart(2, "0")}`
+        : "0-API"}
+      sourceLabel={realB4
+        ? "Wuthering Heights · B4 real snapshots"
+        : "Wuthering Heights · ch1–6"}
+      authorityLabel={realB4
+        ? `B4 REAL ARTIFACT · ${artifactHash.slice(0, 12) || "loading"}`
+        : "FIXTURE · NOT PRODUCTION"}
+      authorityTone={realB4 ? "real" : "fixture"}
       theme={theme}
       lang={locale}
       onLocaleChange={setLocale}

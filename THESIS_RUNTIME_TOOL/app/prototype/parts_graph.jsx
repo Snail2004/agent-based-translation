@@ -29,6 +29,136 @@ function biblePositiveInt(value) {
   return Number.isInteger(+value) && +value > 0;
 }
 
+function bibleChapterNumber(value) {
+  if (biblePositiveInt(value)) return +value;
+  var match = String(value || "").match(/(?:^|_)ch(\d+)(?:_|$)/i);
+  return match && biblePositiveInt(match[1]) ? +match[1] : 0;
+}
+
+function bibleStringList(value) {
+  var values = Array.isArray(value) ? value : (value == null ? [] : [value]);
+  return values.map(function (item) { return String(item || "").trim(); })
+    .filter(Boolean);
+}
+
+function bibleClaimMap(value) {
+  var source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  var mapped = {};
+  Object.keys(source).forEach(function (key) {
+    var values = bibleStringList(source[key]);
+    if (values.length) mapped[key] = values;
+  });
+  return mapped;
+}
+
+function mapLiteraryB4StoryGraph(value) {
+  var allowedSchemas = {
+    literary_b4_ui_story_graph_v1: true,
+    literary_b4_ui_story_graph_v2: true
+  };
+  if (!value || typeof value !== "object" || Array.isArray(value) ||
+      !allowedSchemas[value.schema_version] ||
+      !Array.isArray(value.nodes) || !Array.isArray(value.edges) ||
+      !Array.isArray(value.pending)) {
+    return { valid: false, code: "literary_b4_story_graph_shape_invalid", data: BIBLE_EMPTY_DATA };
+  }
+
+  var chapter = bibleChapterNumber(value.chapter_id || value.chapter_order);
+  var ids = Object.create(null), labels = Object.create(null), mappedNodes = [];
+  for (var i = 0; i < value.nodes.length; i++) {
+    var sourceNode = value.nodes[i];
+    var id = String(sourceNode && sourceNode.node_id || "").trim();
+    var name = String(sourceNode && sourceNode.label || "").trim();
+    var chapters = bibleStringList(sourceNode && sourceNode.member_chapters)
+      .map(bibleChapterNumber).filter(biblePositiveInt);
+    chapters = Array.from(new Set(chapters)).sort(function (a, b) { return a - b; });
+    var first = bibleChapterNumber(sourceNode && sourceNode.established_in_chapter) ||
+      (chapters.length ? chapters[0] : 0);
+    if (!id || !name || ids[id] || !first || !chapters.length) {
+      return { valid: false, code: "literary_b4_story_graph_node_invalid", data: BIBLE_EMPTY_DATA };
+    }
+    ids[id] = true;
+    labels[id] = name;
+    mappedNodes.push({
+      id: id,
+      name: name,
+      kind: String(sourceNode.referent_kind || sourceNode.kind || "unknown"),
+      rc: String(sourceNode.record_class || "unknown"),
+      ch: chapters,
+      first: first,
+      surf: bibleStringList(sourceNode.surface_forms).length
+        ? bibleStringList(sourceNode.surface_forms)
+        : [name],
+      cl: bibleClaimMap(sourceNode.claims),
+      source_node_id: id,
+      effective_entity_id: String(sourceNode.effective_entity_id || id)
+    });
+  }
+
+  var mappedEdges = [];
+  for (var edgeIndex = 0; edgeIndex < value.edges.length; edgeIndex++) {
+    var sourceEdge = value.edges[edgeIndex];
+    var sourceId = String(sourceEdge && sourceEdge.source_node_id || "").trim();
+    var targetId = String(sourceEdge && sourceEdge.target_node_id || "").trim();
+    var relation = String(sourceEdge && sourceEdge.relation || "").trim();
+    var edgeChapter = bibleChapterNumber(
+      sourceEdge && (sourceEdge.established_in_chapter || sourceEdge.chapter_id)
+    );
+    if (!sourceId || !targetId || sourceId === targetId || !ids[sourceId] ||
+        !ids[targetId] || !relation || !edgeChapter) {
+      return { valid: false, code: "literary_b4_story_graph_edge_invalid", data: BIBLE_EMPTY_DATA };
+    }
+    mappedEdges.push({
+      id: String(sourceEdge.edge_id || ""),
+      s: sourceId,
+      t: targetId,
+      r: relation,
+      family: String(sourceEdge.relation_family || ""),
+      note: String(sourceEdge.relation_note || sourceEdge.semantic_status || ""),
+      ch: edgeChapter,
+      c: !!sourceEdge.structurally_contested,
+      contested_group_id: sourceEdge.contested_group_id || null,
+      a: []
+    });
+  }
+
+  var mappedPending = [];
+  for (var pendingIndex = 0; pendingIndex < value.pending.length; pendingIndex++) {
+    var sourcePending = value.pending[pendingIndex];
+    var pendingChapter = bibleChapterNumber(
+      sourcePending && (sourcePending.established_in_chapter || sourcePending.chapter_id)
+    );
+    var pendingKind = String(sourcePending && sourcePending.pending_kind || "").trim();
+    var entityIds = bibleStringList(sourcePending && sourcePending.effective_entity_ids);
+    if (!pendingChapter || !pendingKind ||
+        entityIds.some(function (entityId) { return !ids[entityId]; })) {
+      return { valid: false, code: "literary_b4_story_graph_pending_invalid", data: BIBLE_EMPTY_DATA };
+    }
+    mappedPending.push({
+      id: String(sourcePending.pending_id || ""),
+      ch: pendingChapter,
+      q: pendingKind,
+      cond: entityIds.map(function (entityId) { return labels[entityId]; }).join(" · "),
+      entity_ids: entityIds
+    });
+  }
+
+  return {
+    valid: true,
+    code: "",
+    data: { nodes: mappedNodes, edges: mappedEdges, pending: mappedPending },
+    meta: {
+      schema_version: value.schema_version,
+      book_id: String(value.book_id || ""),
+      chapter_id: String(value.chapter_id || ""),
+      chapter: chapter,
+      artifact_hash: String(value.artifact_hash || ""),
+      story_bible_artifact_hash: String(value.story_bible_artifact_hash || ""),
+      provider_calls: value.provider_calls
+    }
+  };
+}
+
 function validateStoryBibleGraphData(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return { valid: false, code: "story_bible_graph_missing", data: BIBLE_EMPTY_DATA, maxChapter: 1 };
@@ -37,7 +167,7 @@ function validateStoryBibleGraphData(value) {
     return { valid: false, code: "story_bible_graph_shape_invalid", data: BIBLE_EMPTY_DATA, maxChapter: 1 };
   }
 
-  var ids = {}, maxChapter = 1, i, row, chapter;
+  var ids = Object.create(null), maxChapter = 1, i, row, chapter;
   for (i = 0; i < value.nodes.length; i++) {
     row = value.nodes[i];
     if (!row || typeof row !== "object" || !String(row.id || "").trim() ||
@@ -66,7 +196,9 @@ function validateStoryBibleGraphData(value) {
   for (i = 0; i < value.pending.length; i++) {
     row = value.pending[i];
     if (!row || typeof row !== "object" || !biblePositiveInt(row.ch) ||
-        !String(row.q || "").trim() || !String(row.cond || "").trim()) {
+        !String(row.q || "").trim() ||
+        (row.cond != null && typeof row.cond !== "string") ||
+        (row.entity_ids != null && !Array.isArray(row.entity_ids))) {
       return { valid: false, code: "story_bible_graph_pending_invalid", data: BIBLE_EMPTY_DATA, maxChapter: 1 };
     }
     maxChapter = Math.max(maxChapter, +row.ch);
@@ -78,6 +210,42 @@ function validateStoryBibleGraphData(value) {
     data: { nodes: value.nodes, edges: value.edges, pending: value.pending },
     maxChapter: maxChapter
   };
+}
+
+function validateStoryBibleChapterSnapshots(value) {
+  if (value == null) return { valid: true, code: "", data: null, maxChapter: 0 };
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { valid: false, code: "story_bible_snapshot_set_invalid", data: null, maxChapter: 0 };
+  }
+  var chapters = Object.keys(value).map(function (key) { return +key; })
+    .filter(biblePositiveInt).sort(function (a, b) { return a - b; });
+  if (!chapters.length || chapters.length !== Object.keys(value).length) {
+    return { valid: false, code: "story_bible_snapshot_set_invalid", data: null, maxChapter: 0 };
+  }
+  var maxChapter = chapters[chapters.length - 1], checked = {};
+  for (var chapter = 1; chapter <= maxChapter; chapter++) {
+    if (chapters[chapter - 1] !== chapter) {
+      return { valid: false, code: "story_bible_snapshot_gap", data: null, maxChapter: 0 };
+    }
+    var result = validateStoryBibleGraphData(value[chapter]);
+    if (!result.valid || result.maxChapter > chapter) {
+      return {
+        valid: false,
+        code: result.valid ? "story_bible_snapshot_future_data" : result.code,
+        data: null,
+        maxChapter: 0
+      };
+    }
+    checked[chapter] = result.data;
+  }
+  var layoutIds = Object.create(null);
+  checked[maxChapter].nodes.forEach(function (node) { layoutIds[node.id] = true; });
+  for (var snapshotChapter = 1; snapshotChapter <= maxChapter; snapshotChapter++) {
+    if (checked[snapshotChapter].nodes.some(function (node) { return !layoutIds[node.id]; })) {
+      return { valid: false, code: "story_bible_snapshot_layout_drift", data: null, maxChapter: 0 };
+    }
+  }
+  return { valid: true, code: "", data: checked, maxChapter: maxChapter };
 }
 
 function bibleDegree(edges) {
@@ -93,6 +261,18 @@ function bibleNodeClass(kind) {
   if (kind === "person") return "is-person";
   if (kind === "place") return "is-place";
   return "is-other";
+}
+
+function biblePendingLabel(code) {
+  var labels = {
+    contested_relations: ["Quan hệ tranh chấp", "Contested relations"],
+    pending_identity_cases: ["Danh tính cần đối chiếu", "Identity review"],
+    pending_states: ["Trạng thái đang chờ", "Pending states"],
+    unknowable_windows: ["Khoảng thời gian chưa thể biết", "Unknowable windows"],
+    unresolved_address: ["Người được gọi chưa xác định", "Unresolved address"]
+  };
+  var pair = labels[code];
+  return pair ? uiText(pair[0], pair[1]) : String(code || "").replace(/_/g, " ");
 }
 
 /* ------------------------------------------------------------------
@@ -620,9 +800,13 @@ function BibleRightRail(props) {
             },
               React.createElement("div", { className: "bg-q-head" },
                 React.createElement("span", { className: "bg-q-ch" }, "ch" + p.ch),
-                React.createElement("span", null, p.q)
+                React.createElement("span", null, biblePendingLabel(p.q))
               ),
-              React.createElement("p", { className: "bg-q-cond" }, p.cond),
+              React.createElement("p", { className: "bg-q-cond" },
+                p.cond || uiText(
+                  "Không có thực thể ràng buộc trong snapshot này.",
+                  "No entity binding in this snapshot."
+                )),
               long ? React.createElement("button", {
                 className: "bg-more", type: "button",
                 onClick: function () {
@@ -718,6 +902,8 @@ function BibleSurfaceState(props) {
 
 function StoryBibleContent(props) {
   var data = props.data;
+  var layoutData = props.layoutData || data;
+  var chapterSnapshots = props.chapterSnapshots || null;
   var maxCh = props.maxChapter;
   var requestedInitial = biblePositiveInt(props.initialChapter) ? +props.initialChapter : maxCh;
   var chState = React.useState(Math.min(maxCh, Math.max(1, requestedInitial)));
@@ -734,21 +920,48 @@ function StoryBibleContent(props) {
   }, [ch, props.onChapterChange]);
 
   var G = React.useMemo(function () {
-    var deg = bibleDegree(data.edges);
-    var core = data.nodes.filter(function (n) { return deg[n.id]; });
-    var iso = data.nodes.filter(function (n) { return !deg[n.id]; });
-    var byId = {};
-    data.nodes.forEach(function (n) { byId[n.id] = n; });
-    var pos = bibleLayout(core, data.edges, BIBLE_W, BIBLE_H);
+    var layoutDeg = bibleDegree(layoutData.edges);
+    var layoutCore = layoutData.nodes.filter(function (n) { return layoutDeg[n.id]; });
+    var layoutPos = bibleLayout(layoutCore, layoutData.edges, BIBLE_W, BIBLE_H);
+    var coordinateById = Object.create(null);
+    layoutPos.forEach(function (position) { coordinateById[position.id] = position; });
+
+    var currentDeg = bibleDegree(data.edges);
+    var core = [], iso = [], pos = [], byId = Object.create(null);
+    data.nodes.forEach(function (node) {
+      byId[node.id] = node;
+      var coordinate = coordinateById[node.id];
+      if (!coordinate) {
+        iso.push(node);
+        return;
+      }
+      var degree = currentDeg[node.id] || 0;
+      var radius = Math.min(17, 6.2 + Math.min(degree, 11) * 1.05);
+      core.push(node);
+      pos.push({
+        id: node.id,
+        node: node,
+        deg: degree,
+        x: coordinate.x,
+        y: coordinate.y,
+        r: radius,
+        ly: coordinate.ly < 0 ? -(radius + 7) : radius + 13.5
+      });
+    });
     var conIds = {};
     data.edges.forEach(function (e) {
       if (e.c) { conIds[e.s] = 1; conIds[e.t] = 1; }
     });
     var growth = [];
     for (var c = 1; c <= maxCh; c++) {
+      var snapshot = chapterSnapshots && chapterSnapshots[c]
+        ? chapterSnapshots[c]
+        : data;
       growth.push({
-        total: data.nodes.filter(function (n) { return n.first <= c; }).length,
-        core: core.filter(function (n) { return n.first <= c; }).length
+        total: snapshot.nodes.filter(function (n) { return n.first <= c; }).length,
+        core: snapshot.nodes.filter(function (n) {
+          return n.first <= c && !!coordinateById[n.id];
+        }).length
       });
     }
     return {
@@ -756,7 +969,7 @@ function StoryBibleContent(props) {
       geom: bibleEdgeGeom(data.edges, pos),
       conIds: conIds, growth: growth
     };
-  }, [data, maxCh]);
+  }, [data, layoutData, chapterSnapshots, maxCh]);
 
   var V = React.useMemo(function () {
     var vis = {}, i, e;
@@ -905,6 +1118,16 @@ function StoryBiblePage(props) {
   var checked = React.useMemo(function () {
     return validateStoryBibleGraphData(props.data);
   }, [props.data]);
+  var snapshotsChecked = React.useMemo(function () {
+    return validateStoryBibleChapterSnapshots(props.chapterSnapshots);
+  }, [props.chapterSnapshots]);
+  var layoutSource = props.layoutData ||
+    (snapshotsChecked.valid && snapshotsChecked.data
+      ? snapshotsChecked.data[snapshotsChecked.maxChapter]
+      : props.data);
+  var layoutChecked = React.useMemo(function () {
+    return validateStoryBibleGraphData(layoutSource);
+  }, [layoutSource]);
   var shared = {
     theme: props.theme === "dark" ? "dark" : "paper",
     lang: props.lang === "en" ? "en" : "vi",
@@ -948,7 +1171,12 @@ function StoryBiblePage(props) {
       )
     }));
   }
-  if (!checked.valid) {
+  if (!checked.valid || !snapshotsChecked.valid || !layoutChecked.valid) {
+    var invalidCode = !checked.valid
+      ? checked.code
+      : !snapshotsChecked.valid
+        ? snapshotsChecked.code
+        : layoutChecked.code;
     return React.createElement(BibleSurfaceState, Object.assign({}, shared, {
       tone: "error",
       title: uiText("Dữ liệu Bộ hồ sơ không hợp lệ", "Invalid Story Bible data"),
@@ -956,13 +1184,15 @@ function StoryBiblePage(props) {
         "UI đã ẩn graph để không ghép hoặc suy diễn dữ liệu sai contract.",
         "The UI hid the graph rather than splicing or inferring data outside the contract."
       ),
-      code: checked.code
+      code: invalidCode
     }));
   }
 
   return React.createElement(StoryBibleContent, Object.assign({}, shared, {
     data: checked.data,
-    maxChapter: checked.maxChapter,
+    layoutData: layoutChecked.data,
+    chapterSnapshots: snapshotsChecked.data,
+    maxChapter: snapshotsChecked.data ? snapshotsChecked.maxChapter : checked.maxChapter,
     initialChapter: props.initialChapter,
     onChapterChange: props.onChapterChange,
     sourceLabel: props.sourceLabel
@@ -970,5 +1200,7 @@ function StoryBiblePage(props) {
 }
 
 window.GraphPanel = GraphPanel;
+window.mapLiteraryB4StoryGraph = mapLiteraryB4StoryGraph;
 window.validateStoryBibleGraphData = validateStoryBibleGraphData;
+window.validateStoryBibleChapterSnapshots = validateStoryBibleChapterSnapshots;
 window.StoryBiblePage = StoryBiblePage;
