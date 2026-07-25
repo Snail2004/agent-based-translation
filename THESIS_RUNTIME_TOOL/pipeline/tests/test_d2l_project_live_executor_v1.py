@@ -12,6 +12,7 @@ from pipeline.agents.llm_client import LLMUsage
 from pipeline.eval.common_input_v1 import validate_translation_artifact
 from pipeline.ingest.document_loader import load_document
 from pipeline.memory.store_init import migrate_db
+from pipeline.prepass import d2l_project_live_executor_v1 as live_executor
 from pipeline.prepass.d2l_console_replay_contract_v1 import (
     canonical_sha256,
     file_sha256,
@@ -34,6 +35,10 @@ from pipeline.prepass.d2l_project_stage_runner_v1 import (
     _STAGE_PRODUCERS,
     build_component_plan,
     execute_stage,
+)
+from pipeline.prepass.d2l_repair_resume_v1 import (
+    build_chain_repair_receipt,
+    build_repair_receipt,
 )
 from pipeline.prepass.d2l_shared_llm_adapter_v1 import D2LSharedClientResult
 from pipeline.prepass.d2l_terminology_memory_delta_v1 import (
@@ -59,6 +64,137 @@ def _write_json(path: Path, value: dict) -> None:
         encoding="utf-8",
         newline="\n",
     )
+
+
+def test_live_executor_accepts_only_fully_indexed_chained_repair(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "component"
+    parent_ref = "runtime/repair_receipts/repair_a0005.json"
+    current_ref = "runtime/repair_receipts/repair_chain_a0006.json"
+    parent = build_repair_receipt(
+        workflow_run_id="wf_chain",
+        component_run_id="tr_chain",
+        previous_component_attempt_id=4,
+        stage_id="b1_candidate_discovery",
+        checkpoint_ref="checkpoints/checkpoint_a4.json",
+        checkpoint_sha256="A" * 64,
+        reason_code="parent_fix",
+        baseline_code_revision="1" * 40,
+        effective_code_revision="2" * 40,
+        semantic_contract_sha256="B" * 64,
+        runner_plan_sha256="C" * 64,
+        git_delta_sha256="D" * 64,
+        changed_paths=[
+            (
+                "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+                "d2l_translation_component_runner_v1.py"
+            )
+        ],
+        created_at="2026-07-25T00:00:00Z",
+    )
+    _write_json(root / parent_ref, parent)
+    parent_sha = file_sha256(root / parent_ref)
+    current = build_chain_repair_receipt(
+        workflow_run_id="wf_chain",
+        component_run_id="tr_chain",
+        previous_component_attempt_id=5,
+        stage_id="b1_candidate_discovery",
+        checkpoint_ref="checkpoints/checkpoint_a5.json",
+        checkpoint_sha256="E" * 64,
+        reason_code="chain_fix",
+        sealed_code_revision="1" * 40,
+        baseline_code_revision="2" * 40,
+        effective_code_revision="3" * 40,
+        parent_repair_artifact_ref="art_component_repair_a0005",
+        parent_repair_receipt_ref=parent_ref,
+        parent_repair_receipt_sha256=parent_sha,
+        parent_effective_code_revision="2" * 40,
+        semantic_contract_sha256="B" * 64,
+        runner_plan_sha256="C" * 64,
+        git_delta_sha256="F" * 64,
+        changed_paths=[
+            "THESIS_RUNTIME_TOOL/app/backend/services/thesis_runs.py",
+            (
+                "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+                "d2l_project_live_executor_v1.py"
+            ),
+        ],
+        created_at="2026-07-25T00:01:00Z",
+    )
+    _write_json(root / current_ref, current)
+    current_sha = file_sha256(root / current_ref)
+    artifacts = [
+        {
+            "artifact_ref": "art_component_repair_a0005",
+            "artifact_kind": "d2l_component_repair_receipt",
+            "schema_version": parent["schema_version"],
+            "sha256": parent_sha,
+            "sha256_kind": "physical",
+            "component_attempt_id": 5,
+            "relative_path": parent_ref,
+            "parent_artifact_refs": [],
+            "metadata": {
+                "repair_kind": parent["repair_kind"],
+                "baseline_code_revision": parent["baseline_code_revision"],
+                "effective_code_revision": parent["effective_code_revision"],
+            },
+        },
+        {
+            "artifact_ref": "art_component_repair_chain_a0006",
+            "artifact_kind": "d2l_component_repair_receipt",
+            "schema_version": current["schema_version"],
+            "sha256": current_sha,
+            "sha256_kind": "physical",
+            "component_attempt_id": 6,
+            "relative_path": current_ref,
+            "parent_artifact_refs": ["art_component_repair_a0005"],
+            "metadata": {
+                "repair_kind": current["repair_kind"],
+                "baseline_code_revision": current["baseline_code_revision"],
+                "effective_code_revision": current["effective_code_revision"],
+                "parent_repair_artifact_ref": "art_component_repair_a0005",
+            },
+        },
+    ]
+    _write_json(root / "component_manifest.json", {"component_attempt_id": 6})
+    _write_json(root / "artifact_index.json", {"artifacts": artifacts})
+    monkeypatch.setattr(
+        live_executor,
+        "validate_component_manifest",
+        lambda value: value,
+    )
+    monkeypatch.setattr(
+        live_executor,
+        "validate_artifact_index",
+        lambda value, **_kwargs: value,
+    )
+    monkeypatch.setenv("THESIS_D2L_EFFECTIVE_CODE_REVISION", "3" * 40)
+    monkeypatch.setenv("THESIS_D2L_REPAIR_RECEIPT_REF", current_ref)
+    monkeypatch.setenv("THESIS_D2L_REPAIR_RECEIPT_SHA256", current_sha)
+    campaign = {
+        "config": {
+            "workflow_run_id": "wf_chain",
+            "component_run_id": "tr_chain",
+            "code_revision": "1" * 40,
+        }
+    }
+    assert live_executor._effective_code_revision(
+        campaign=campaign,
+        component_root=root,
+    ) == "3" * 40
+
+    artifacts[1]["parent_artifact_refs"] = []
+    _write_json(root / "artifact_index.json", {"artifacts": artifacts})
+    with pytest.raises(
+        D2LProjectLiveExecutorError,
+        match="artifact binding mismatch",
+    ):
+        live_executor._effective_code_revision(
+            campaign=campaign,
+            component_root=root,
+        )
 
 
 def _upgrade_fixture_runtime_db(job: Path) -> None:

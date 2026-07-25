@@ -62,9 +62,13 @@ from pipeline.prepass.d2l_shared_llm_adapter_v1 import (
     TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE,
 )
 from pipeline.prepass.d2l_repair_resume_v1 import (
+    CHAIN_SCHEMA_VERSION,
     D2LRepairResumeError,
+    build_chain_repair_receipt,
     build_repair_receipt,
+    validate_chain_repair_paths,
     validate_mechanical_repair_paths,
+    validate_repair_receipt,
 )
 from pipeline.prepass.d2l_stage_work_journal_v1 import (
     read_work_journal,
@@ -429,6 +433,7 @@ class D2LTranslationComponentRunner:
         self._effective_code_revision = self.plan.code_revision
         self._repair_receipt: dict[str, Any] | None = None
         self._repair_receipt_path: Path | None = None
+        self._repair_receipt_register = False
         self._repair_delta: dict[str, Any] | None = None
         self._revision_preflight_done = False
         self._pending_journal_recovery: (
@@ -1015,7 +1020,12 @@ class D2LTranslationComponentRunner:
         if self._revision_preflight_done:
             return
         observed_revision = self._runtime_code_revision()
+        parent = self._latest_indexed_repair_anchor()
         if observed_revision == self.plan.code_revision:
+            if parent is not None:
+                raise ComponentRunnerError(
+                    "runtime revision regressed behind the indexed repair chain"
+                )
             if self.repair_reason is not None:
                 raise ComponentRunnerError(
                     "repair reason was supplied without a code revision change"
@@ -1024,6 +1034,27 @@ class D2LTranslationComponentRunner:
             self._repair_delta = None
             self._revision_preflight_done = True
             return
+        baseline_revision = self.plan.code_revision
+        path_validator = validate_mechanical_repair_paths
+        if parent is not None:
+            if parent["sealed_code_revision"] != self.plan.code_revision:
+                raise ComponentRunnerError(
+                    "indexed repair chain does not bind the sealed revision"
+                )
+            baseline_revision = str(parent["effective_code_revision"])
+            if observed_revision == baseline_revision:
+                if self.repair_reason is not None:
+                    raise ComponentRunnerError(
+                        "repair reason was supplied without a new code revision"
+                    )
+                self._effective_code_revision = observed_revision
+                self._repair_delta = {
+                    "mode": "reuse",
+                    "parent": parent,
+                }
+                self._revision_preflight_done = True
+                return
+            path_validator = validate_chain_repair_paths
         if not isinstance(self.repair_reason, str) or not self.repair_reason:
             raise ComponentRunnerError(
                 "runtime code revision changed; explicit repair reason is required"
@@ -1035,7 +1066,7 @@ class D2LTranslationComponentRunner:
                 str(self.repair_code_root),
                 "merge-base",
                 "--is-ancestor",
-                self.plan.code_revision,
+                baseline_revision,
                 observed_revision,
             ],
             capture_output=True,
@@ -1049,7 +1080,7 @@ class D2LTranslationComponentRunner:
             "diff",
             "--name-only",
             "-z",
-            self.plan.code_revision,
+            baseline_revision,
             observed_revision,
         ).stdout
         changed_paths = sorted(
@@ -1062,22 +1093,120 @@ class D2LTranslationComponentRunner:
         if not changed_paths:
             raise ComponentRunnerError("repair Git delta is empty")
         try:
-            changed_paths = validate_mechanical_repair_paths(changed_paths)
+            changed_paths = path_validator(changed_paths)
         except D2LRepairResumeError as exc:
             raise ComponentRunnerError(str(exc)) from exc
         delta = self._git_command(
             "diff",
             "--binary",
-            self.plan.code_revision,
+            baseline_revision,
             observed_revision,
         ).stdout
         self._effective_code_revision = observed_revision
         self._repair_delta = {
+            "mode": "chain" if parent is not None else "direct",
             "observed_revision": observed_revision,
+            "baseline_revision": baseline_revision,
             "changed_paths": changed_paths,
             "git_delta_sha256": sha256(delta).hexdigest().upper(),
+            "parent": parent,
         }
         self._revision_preflight_done = True
+
+    def _latest_indexed_repair_anchor(self) -> dict[str, Any] | None:
+        if not self.manifest_path.is_file() or not self.index_path.is_file():
+            return None
+        validate_translation_component_package(
+            self.root,
+            require_terminal=False,
+        )
+        manifest = validate_component_manifest(
+            _load_json(self.manifest_path, "component manifest")
+        )
+        index = validate_artifact_index(
+            _load_json(self.index_path, "artifact index"),
+            manifest=manifest,
+            artifact_root=self.root,
+        )
+        repairs = [
+            dict(row)
+            for row in index["artifacts"]
+            if row["artifact_kind"] == "d2l_component_repair_receipt"
+        ]
+        if not repairs:
+            return None
+        latest_attempt = max(int(row["component_attempt_id"]) for row in repairs)
+        latest = [
+            row
+            for row in repairs
+            if int(row["component_attempt_id"]) == latest_attempt
+        ]
+        if len(latest) != 1:
+            raise ComponentRunnerError("indexed repair chain fork detected")
+        artifact = latest[0]
+        if (
+            artifact["availability"] != "available"
+            or artifact["sha256_kind"] != "physical"
+        ):
+            raise ComponentRunnerError(
+                "latest repair artifact is not physically available"
+            )
+        receipt_path = _relative_path(
+            self.root,
+            artifact["relative_path"],
+            "repair artifact relative_path",
+        )
+        if file_sha256(receipt_path) != artifact["sha256"]:
+            raise ComponentRunnerError("indexed repair receipt hash drift")
+        try:
+            receipt = validate_repair_receipt(
+                _load_json(receipt_path, "indexed repair receipt")
+            )
+        except D2LRepairResumeError as exc:
+            raise ComponentRunnerError(str(exc)) from exc
+        if (
+            artifact["schema_version"] != receipt["schema_version"]
+            or int(artifact["component_attempt_id"])
+            != int(receipt["next_component_attempt_id"])
+            or receipt["workflow_run_id"] != self.plan.workflow_run_id
+            or receipt["component_run_id"] != self.plan.component_run_id
+            or receipt["semantic_contract_sha256"]
+            != self._semantic_contract_sha256()
+            or receipt["runner_plan_sha256"] != self.plan.plan_sha256
+        ):
+            raise ComponentRunnerError(
+                "indexed repair receipt identity mismatch"
+            )
+        expected_metadata = {
+            "repair_kind": receipt["repair_kind"],
+            "baseline_code_revision": receipt["baseline_code_revision"],
+            "effective_code_revision": receipt["effective_code_revision"],
+        }
+        if receipt["schema_version"] == CHAIN_SCHEMA_VERSION:
+            expected_metadata["parent_repair_artifact_ref"] = receipt[
+                "parent_repair_artifact_ref"
+            ]
+            expected_parents = [receipt["parent_repair_artifact_ref"]]
+            sealed_revision = receipt["sealed_code_revision"]
+        else:
+            expected_parents = []
+            sealed_revision = receipt["baseline_code_revision"]
+        if (
+            artifact["metadata"] != expected_metadata
+            or artifact["parent_artifact_refs"] != expected_parents
+        ):
+            raise ComponentRunnerError(
+                "indexed repair artifact metadata mismatch"
+            )
+        return {
+            "artifact_ref": artifact["artifact_ref"],
+            "receipt_ref": artifact["relative_path"],
+            "receipt_sha256": artifact["sha256"],
+            "receipt": receipt,
+            "receipt_path": receipt_path,
+            "sealed_code_revision": sealed_revision,
+            "effective_code_revision": receipt["effective_code_revision"],
+        }
 
     def _prepare_repair_receipt(
         self,
@@ -1089,35 +1218,69 @@ class D2LTranslationComponentRunner:
         repair_delta = self._repair_delta
         if repair_delta is None:
             return
+        if repair_delta["mode"] == "reuse":
+            parent = repair_delta["parent"]
+            self._repair_receipt = dict(parent["receipt"])
+            self._repair_receipt_path = Path(parent["receipt_path"])
+            self._repair_receipt_register = False
+            return
         previous_attempt = int(current["component_attempt_id"])
-        receipt = build_repair_receipt(
-            workflow_run_id=str(current["workflow_run_id"]),
-            component_run_id=str(current["component_run_id"]),
-            previous_component_attempt_id=previous_attempt,
-            stage_id=str(resume["stage_id"]),
-            checkpoint_ref=str(resume["checkpoint_ref"]),
-            checkpoint_sha256=str(resume["checkpoint_sha256"]),
-            reason_code=self.repair_reason,
-            baseline_code_revision=self.plan.code_revision,
-            effective_code_revision=str(repair_delta["observed_revision"]),
-            semantic_contract_sha256=self._semantic_contract_sha256(),
-            runner_plan_sha256=self.plan.plan_sha256,
-            git_delta_sha256=str(repair_delta["git_delta_sha256"]),
-            changed_paths=list(repair_delta["changed_paths"]),
-            created_at=_timestamp(),
-        )
-        relative_ref = (
-            "runtime/repair_receipts/"
-            f"repair_a{previous_attempt + 1:04d}.json"
-        )
+        common = {
+            "workflow_run_id": str(current["workflow_run_id"]),
+            "component_run_id": str(current["component_run_id"]),
+            "previous_component_attempt_id": previous_attempt,
+            "stage_id": str(resume["stage_id"]),
+            "checkpoint_ref": str(resume["checkpoint_ref"]),
+            "checkpoint_sha256": str(resume["checkpoint_sha256"]),
+            "reason_code": self.repair_reason,
+            "effective_code_revision": str(repair_delta["observed_revision"]),
+            "semantic_contract_sha256": self._semantic_contract_sha256(),
+            "runner_plan_sha256": self.plan.plan_sha256,
+            "git_delta_sha256": str(repair_delta["git_delta_sha256"]),
+            "changed_paths": list(repair_delta["changed_paths"]),
+            "created_at": _timestamp(),
+        }
+        if repair_delta["mode"] == "chain":
+            parent = repair_delta["parent"]
+            receipt = build_chain_repair_receipt(
+                **common,
+                sealed_code_revision=self.plan.code_revision,
+                baseline_code_revision=str(
+                    repair_delta["baseline_revision"]
+                ),
+                parent_repair_artifact_ref=str(parent["artifact_ref"]),
+                parent_repair_receipt_ref=str(parent["receipt_ref"]),
+                parent_repair_receipt_sha256=str(parent["receipt_sha256"]),
+                parent_effective_code_revision=str(
+                    parent["effective_code_revision"]
+                ),
+            )
+            relative_ref = (
+                "runtime/repair_receipts/"
+                f"repair_chain_a{previous_attempt + 1:04d}.json"
+            )
+        else:
+            receipt = build_repair_receipt(
+                **common,
+                baseline_code_revision=self.plan.code_revision,
+            )
+            relative_ref = (
+                "runtime/repair_receipts/"
+                f"repair_a{previous_attempt + 1:04d}.json"
+            )
         receipt_path = self.root / relative_ref
         if receipt_path.exists():
+            if receipt["schema_version"] == CHAIN_SCHEMA_VERSION:
+                raise ComponentRunnerError(
+                    "unindexed chained repair receipt path collision"
+                )
             if _load_json(receipt_path, "repair receipt") != receipt:
                 raise ComponentRunnerError("repair receipt path already drifted")
         else:
             write_json(receipt_path, receipt)
         self._repair_receipt = receipt
         self._repair_receipt_path = receipt_path
+        self._repair_receipt_register = True
 
     def run(self, *, resume: bool = False) -> dict[str, Any]:
         try:
@@ -1433,9 +1596,34 @@ class D2LTranslationComponentRunner:
     def _register_repair_receipt(self, *, stage_id: str) -> None:
         if self._repair_receipt is None or self._repair_receipt_path is None:
             return
-        artifact_ref = f"art_component_repair_a{self._current_attempt:04d}"
+        if not self._repair_receipt_register:
+            return
+        chained = self._repair_receipt["schema_version"] == CHAIN_SCHEMA_VERSION
+        artifact_ref = (
+            f"art_component_repair_chain_a{self._current_attempt:04d}"
+            if chained
+            else f"art_component_repair_a{self._current_attempt:04d}"
+        )
         if artifact_ref in {row["artifact_ref"] for row in self.artifacts}:
             raise ComponentRunnerError("repair receipt was already registered")
+        parent_refs = (
+            [self._repair_receipt["parent_repair_artifact_ref"]]
+            if chained
+            else []
+        )
+        metadata = {
+            "repair_kind": self._repair_receipt["repair_kind"],
+            "baseline_code_revision": self._repair_receipt[
+                "baseline_code_revision"
+            ],
+            "effective_code_revision": self._repair_receipt[
+                "effective_code_revision"
+            ],
+        }
+        if chained:
+            metadata["parent_repair_artifact_ref"] = self._repair_receipt[
+                "parent_repair_artifact_ref"
+            ]
         row = {
             "workflow_run_id": self.manifest["workflow_run_id"],
             "flow_kind": self.manifest["flow_kind"],
@@ -1448,21 +1636,13 @@ class D2LTranslationComponentRunner:
             "sha256": file_sha256(self._repair_receipt_path),
             "sha256_kind": "physical",
             "producer_stage_id": stage_id,
-            "parent_artifact_refs": [],
+            "parent_artifact_refs": parent_refs,
             "created_event_id": self.writer.next_event_id,
             "relative_path": str(
                 self._repair_receipt_path.relative_to(self.root)
             ).replace("\\", "/"),
             "availability": "available",
-            "metadata": {
-                "repair_kind": self._repair_receipt["repair_kind"],
-                "baseline_code_revision": self._repair_receipt[
-                    "baseline_code_revision"
-                ],
-                "effective_code_revision": self._repair_receipt[
-                    "effective_code_revision"
-                ],
-            },
+            "metadata": metadata,
         }
         self.artifacts.append(row)
         self._write_index()
@@ -1476,7 +1656,7 @@ class D2LTranslationComponentRunner:
                 "schema_version": row["schema_version"],
                 "sha256": row["sha256"],
                 "sha256_kind": row["sha256_kind"],
-                "parent_artifact_refs": [],
+                "parent_artifact_refs": parent_refs,
             },
         )
 

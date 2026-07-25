@@ -5,7 +5,9 @@ from copy import deepcopy
 import pytest
 
 from pipeline.prepass.d2l_repair_resume_v1 import (
+    CHAIN_SCHEMA_VERSION,
     D2LRepairResumeError,
+    build_chain_repair_receipt,
     build_repair_receipt,
     validate_repair_receipt,
 )
@@ -77,6 +79,66 @@ def test_repair_receipt_rejects_semantic_or_identity_ambiguity() -> None:
             semantic_contract_sha256="B" * 64,
             runner_plan_sha256="C" * 64,
             git_delta_sha256="D" * 64,
+            changed_paths=["THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py"],
+            created_at="2026-07-25T00:00:00Z",
+        )
+
+
+def test_chained_repair_receipt_binds_parent_and_closed_paths() -> None:
+    receipt = build_chain_repair_receipt(
+        workflow_run_id="wf_repair",
+        component_run_id="tr_repair",
+        previous_component_attempt_id=5,
+        stage_id="b1_candidate_discovery",
+        checkpoint_ref="checkpoints/checkpoint_a5_b1.json",
+        checkpoint_sha256="A" * 64,
+        reason_code="runtime_infrastructure_sync",
+        sealed_code_revision="1" * 40,
+        baseline_code_revision="2" * 40,
+        effective_code_revision="3" * 40,
+        parent_repair_artifact_ref="art_component_repair_a0005",
+        parent_repair_receipt_ref="runtime/repair_receipts/repair_a0005.json",
+        parent_repair_receipt_sha256="B" * 64,
+        parent_effective_code_revision="2" * 40,
+        semantic_contract_sha256="C" * 64,
+        runner_plan_sha256="D" * 64,
+        git_delta_sha256="E" * 64,
+        changed_paths=[
+            "THESIS_RUNTIME_TOOL/app/backend/services/thesis_runs.py",
+            (
+                "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+                "d2l_translation_component_runner_v1.py"
+            ),
+        ],
+        created_at="2026-07-25T00:00:00Z",
+    )
+    assert receipt["schema_version"] == CHAIN_SCHEMA_VERSION
+    assert validate_repair_receipt(receipt) == receipt
+
+    tampered = deepcopy(receipt)
+    tampered["parent_repair_artifact_ref"] = "foreign"
+    with pytest.raises(D2LRepairResumeError, match="payload hash drift"):
+        validate_repair_receipt(tampered)
+
+    with pytest.raises(D2LRepairResumeError, match="closed chained scope"):
+        build_chain_repair_receipt(
+            workflow_run_id="wf_repair",
+            component_run_id="tr_repair",
+            previous_component_attempt_id=5,
+            stage_id="b1_candidate_discovery",
+            checkpoint_ref="checkpoints/checkpoint_a5_b1.json",
+            checkpoint_sha256="A" * 64,
+            reason_code="unsafe",
+            sealed_code_revision="1" * 40,
+            baseline_code_revision="2" * 40,
+            effective_code_revision="3" * 40,
+            parent_repair_artifact_ref="art_component_repair_a0005",
+            parent_repair_receipt_ref="runtime/repair_receipts/repair_a0005.json",
+            parent_repair_receipt_sha256="B" * 64,
+            parent_effective_code_revision="2" * 40,
+            semantic_contract_sha256="C" * 64,
+            runner_plan_sha256="D" * 64,
+            git_delta_sha256="E" * 64,
             changed_paths=["THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py"],
             created_at="2026-07-25T00:00:00Z",
         )

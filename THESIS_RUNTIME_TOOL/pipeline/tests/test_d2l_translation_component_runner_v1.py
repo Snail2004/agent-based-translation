@@ -1152,6 +1152,158 @@ def test_runner_requires_and_records_explicit_same_run_code_repair(
     assert resumed["payload"]["reason_code"] == "resume_after_code_repair"
 
 
+def test_runner_chains_attempt_five_from_indexed_repair_receipt(
+    tmp_path: Path,
+) -> None:
+    code_root = tmp_path / "code"
+    code_root.mkdir()
+
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(code_root), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    git("init")
+    git("config", "user.name", "CodeX")
+    git("config", "user.email", "codex@example.invalid")
+    repair_relative = (
+        "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+        "d2l_translation_component_runner_v1.py"
+    )
+    repair_target = code_root / repair_relative
+    repair_target.parent.mkdir(parents=True)
+    repair_target.write_text("VALUE = 0\n", encoding="utf-8")
+    git("add", repair_relative)
+    git("commit", "-m", "baseline")
+    baseline = git("rev-parse", "HEAD")
+
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=1)
+    raw_plan = _plan(attempt_id=1)
+    raw_plan["code_revision"] = baseline
+    plan = ComponentPlan.from_mapping(raw_plan)
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="candidate_index",
+        repair_code_root=code_root,
+    ).run()
+
+    def commit_value(value: int) -> str:
+        repair_target.write_text(f"VALUE = {value}\n", encoding="utf-8")
+        git("add", repair_relative)
+        git("commit", "-m", f"repair {value}")
+        return git("rev-parse", "HEAD")
+
+    first_effective = commit_value(1)
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="b2_admission_translation",
+        repair_code_root=code_root,
+        repair_reason="first_runtime_fix",
+    ).run(resume=True)
+
+    # The already indexed receipt is intentionally reused while the runtime
+    # remains on the same effective revision; no second receipt is minted.
+    for stage_id in (
+        "auditor_morphology",
+        "auditor_target_collision",
+        "auditor_multi_target",
+    ):
+        D2LTranslationComponentRunner(
+            plan,
+            root,
+            stop_after_stage=stage_id,
+            repair_code_root=code_root,
+        ).run(resume=True)
+
+    manifest_before = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest_before["component_attempt_id"] == 5
+    checkpoint_ref = manifest_before["resume"]["checkpoint_ref"]
+    checkpoint_before = (root / checkpoint_ref).read_bytes()
+    events_before = (root / "events.jsonl").read_bytes()
+    index_before = json.loads(
+        (root / "artifact_index.json").read_text(encoding="utf-8")
+    )
+    assert sum(
+        row["artifact_kind"] == "d2l_component_repair_receipt"
+        for row in index_before["artifacts"]
+    ) == 1
+    assert any(
+        json.loads(line)["event"] in {"request_sent", "response_received"}
+        for line in events_before.splitlines()
+    ) is False
+
+    second_effective = commit_value(2)
+    orphan_chain_path = (
+        root / "runtime/repair_receipts/repair_chain_a0006.json"
+    )
+    orphan_chain_path.write_text("{}\n", encoding="utf-8")
+    package_before_collision = {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+    with pytest.raises(
+        ComponentRunnerError,
+        match="unindexed chained repair receipt path collision",
+    ):
+        D2LTranslationComponentRunner(
+            plan,
+            root,
+            repair_code_root=code_root,
+            repair_reason="chain_runtime_infrastructure_sync",
+        ).run(resume=True)
+    assert package_before_collision == {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+    orphan_chain_path.unlink()
+    paused_after_chain = D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="translation_quality_audit",
+        repair_code_root=code_root,
+        repair_reason="chain_runtime_infrastructure_sync",
+    ).run(resume=True)
+
+    assert paused_after_chain["terminal_event"] is None
+    assert paused_after_chain["component_attempt_id"] == 6
+    assert first_effective != second_effective
+    assert (root / checkpoint_ref).read_bytes() == checkpoint_before
+    assert (root / "events.jsonl").read_bytes().startswith(events_before)
+    chain_path = root / "runtime/repair_receipts/repair_chain_a0006.json"
+    assert chain_path.is_file()
+    chain = json.loads(chain_path.read_text(encoding="utf-8"))
+    assert chain["previous_component_attempt_id"] == 5
+    assert chain["baseline_code_revision"] == first_effective
+    assert chain["effective_code_revision"] == second_effective
+    assert chain["parent_repair_artifact_ref"] == "art_component_repair_a0002"
+    index = json.loads((root / "artifact_index.json").read_text(encoding="utf-8"))
+    matching = [
+        row
+        for row in index["artifacts"]
+        if row["artifact_ref"] == "art_component_repair_chain_a0006"
+    ]
+    assert len(matching) == 1
+    assert matching[0]["sha256"] == file_sha256(chain_path)
+    assert matching[0]["parent_artifact_refs"] == ["art_component_repair_a0002"]
+
+
 def test_runner_rejects_semantic_code_change_before_resume_mutation(
     tmp_path: Path,
 ) -> None:

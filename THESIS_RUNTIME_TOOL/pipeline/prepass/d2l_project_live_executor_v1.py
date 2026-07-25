@@ -76,10 +76,15 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     build_stage_plan,
     canonical_sha256 as replay_sha256,
     file_sha256,
+    validate_artifact_index,
+    validate_component_manifest,
     validate_scoring_handoff_fragment,
 )
 from pipeline.prepass.d2l_stage_work_journal_v1 import D2LStageWorkJournal
-from pipeline.prepass.d2l_repair_resume_v1 import validate_repair_receipt
+from pipeline.prepass.d2l_repair_resume_v1 import (
+    CHAIN_SCHEMA_VERSION,
+    validate_repair_receipt,
+)
 from pipeline.prepass.d2l_terminology_memory_delta_v1 import commit_glossary_draft
 from pipeline.translate import d2l_latex_markup_line_protected_spans_v4 as spans_v4
 from pipeline.translate import d2l_latex_markup_line_protected_spans_v5 as spans_v5
@@ -156,11 +161,143 @@ def _effective_code_revision(
     if (
         receipt["workflow_run_id"] != config["workflow_run_id"]
         or receipt["component_run_id"] != config["component_run_id"]
-        or receipt["baseline_code_revision"] != baseline
         or receipt["effective_code_revision"] != effective
     ):
         raise D2LProjectLiveExecutorError("repair receipt identity mismatch")
+    if receipt["schema_version"] != CHAIN_SCHEMA_VERSION:
+        if receipt["baseline_code_revision"] != baseline:
+            raise D2LProjectLiveExecutorError(
+                "repair receipt identity mismatch"
+            )
+        return effective
+    if receipt["sealed_code_revision"] != baseline:
+        raise D2LProjectLiveExecutorError(
+            "chained repair receipt sealed revision mismatch"
+        )
+    _validate_indexed_chain_receipt(
+        component_root=component_root,
+        current_receipt_ref=relative_ref,
+        current_receipt_sha256=expected_sha,
+        current_receipt=receipt,
+    )
     return effective
+
+
+def _repair_metadata(receipt: Mapping[str, Any]) -> dict[str, Any]:
+    metadata = {
+        "repair_kind": receipt["repair_kind"],
+        "baseline_code_revision": receipt["baseline_code_revision"],
+        "effective_code_revision": receipt["effective_code_revision"],
+    }
+    if receipt["schema_version"] == CHAIN_SCHEMA_VERSION:
+        metadata["parent_repair_artifact_ref"] = receipt[
+            "parent_repair_artifact_ref"
+        ]
+    return metadata
+
+
+def _validate_indexed_chain_receipt(
+    *,
+    component_root: Path,
+    current_receipt_ref: str,
+    current_receipt_sha256: str,
+    current_receipt: Mapping[str, Any],
+) -> None:
+    manifest = validate_component_manifest(
+        _load_json(component_root / "component_manifest.json", "component manifest")
+    )
+    index = validate_artifact_index(
+        _load_json(component_root / "artifact_index.json", "artifact index"),
+        manifest=manifest,
+        artifact_root=component_root,
+    )
+    current_matches = [
+        row
+        for row in index["artifacts"]
+        if row["artifact_kind"] == "d2l_component_repair_receipt"
+        and row["relative_path"] == current_receipt_ref
+        and row["sha256"] == current_receipt_sha256.upper()
+    ]
+    if len(current_matches) != 1:
+        raise D2LProjectLiveExecutorError(
+            "chained repair receipt is not uniquely indexed"
+        )
+    current_artifact = current_matches[0]
+    if (
+        current_artifact["schema_version"] != CHAIN_SCHEMA_VERSION
+        or current_artifact["sha256_kind"] != "physical"
+        or int(current_artifact["component_attempt_id"])
+        != int(current_receipt["next_component_attempt_id"])
+        or current_artifact["metadata"] != _repair_metadata(current_receipt)
+        or current_artifact["parent_artifact_refs"]
+        != [current_receipt["parent_repair_artifact_ref"]]
+    ):
+        raise D2LProjectLiveExecutorError(
+            "chained repair artifact binding mismatch"
+        )
+    parent_matches = [
+        row
+        for row in index["artifacts"]
+        if row["artifact_ref"]
+        == current_receipt["parent_repair_artifact_ref"]
+    ]
+    if len(parent_matches) != 1:
+        raise D2LProjectLiveExecutorError(
+            "chained repair parent is not uniquely indexed"
+        )
+    parent_artifact = parent_matches[0]
+    if (
+        parent_artifact["artifact_kind"] != "d2l_component_repair_receipt"
+        or parent_artifact["relative_path"]
+        != current_receipt["parent_repair_receipt_ref"]
+        or parent_artifact["sha256"]
+        != current_receipt["parent_repair_receipt_sha256"]
+        or parent_artifact["sha256_kind"] != "physical"
+        or int(parent_artifact["component_attempt_id"])
+        >= int(current_artifact["component_attempt_id"])
+    ):
+        raise D2LProjectLiveExecutorError(
+            "chained repair parent artifact binding mismatch"
+        )
+    parent_path = (
+        component_root / str(parent_artifact["relative_path"])
+    ).resolve()
+    if (
+        component_root.resolve() not in parent_path.parents
+        or not parent_path.is_file()
+        or file_sha256(parent_path) != parent_artifact["sha256"]
+    ):
+        raise D2LProjectLiveExecutorError(
+            "chained repair parent physical hash drift"
+        )
+    parent_receipt = validate_repair_receipt(
+        _load_json(parent_path, "parent repair receipt")
+    )
+    parent_sealed = (
+        parent_receipt["sealed_code_revision"]
+        if parent_receipt["schema_version"] == CHAIN_SCHEMA_VERSION
+        else parent_receipt["baseline_code_revision"]
+    )
+    if (
+        parent_artifact["schema_version"] != parent_receipt["schema_version"]
+        or parent_artifact["metadata"] != _repair_metadata(parent_receipt)
+        or parent_receipt["workflow_run_id"]
+        != current_receipt["workflow_run_id"]
+        or parent_receipt["component_run_id"]
+        != current_receipt["component_run_id"]
+        or parent_receipt["effective_code_revision"]
+        != current_receipt["parent_effective_code_revision"]
+        or parent_receipt["effective_code_revision"]
+        != current_receipt["baseline_code_revision"]
+        or parent_sealed != current_receipt["sealed_code_revision"]
+        or parent_receipt["semantic_contract_sha256"]
+        != current_receipt["semantic_contract_sha256"]
+        or parent_receipt["runner_plan_sha256"]
+        != current_receipt["runner_plan_sha256"]
+    ):
+        raise D2LProjectLiveExecutorError(
+            "chained repair parent receipt mismatch"
+        )
 
 
 def _sealed(body: Mapping[str, Any]) -> dict[str, Any]:
