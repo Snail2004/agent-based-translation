@@ -12,6 +12,7 @@ import threading
 import time
 from collections import OrderedDict
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterator
 
@@ -106,6 +107,28 @@ _candidate_validation_inflight: dict[
     tuple[str, str, str, str, str, str], threading.Event
 ] = {}
 _candidate_validation_request_local = threading.local()
+
+_UNIT_READ_SNAPSHOT_CACHE_MAX_ENTRIES = 4
+_UNIT_READ_SNAPSHOT_CACHE_MAX_ENTRY_BYTES = 32 * 1024 * 1024
+_UNIT_READ_SNAPSHOT_CACHE_MAX_TOTAL_BYTES = 64 * 1024 * 1024
+
+
+@dataclass(frozen=True, slots=True)
+class _UnitReadSnapshot:
+    key: tuple[str, ...]
+    doc_id: str
+    lifecycle: str
+    pipeline_run_count: int
+    expected: tuple[tuple[str, str], ...]
+    units: tuple[tuple[str, bytes], ...]
+    retained_bytes: int
+
+
+_unit_read_snapshot_cache_lock = threading.RLock()
+_unit_read_snapshot_cache: OrderedDict[
+    tuple[str, ...], _UnitReadSnapshot
+] = OrderedDict()
+_unit_read_snapshot_cache_bytes = 0
 
 _STATE_FIELDS = {
     "schema_version",
@@ -659,11 +682,21 @@ def _managed_mutation_guard(project_path: Path) -> Iterator[None]:
 
 
 @contextmanager
+def _managed_source_mutation_guard(project_path: Path) -> Iterator[None]:
+    with _managed_mutation_guard(project_path):
+        _unit_read_snapshot_cache_evict_project(project_path)
+        try:
+            yield
+        finally:
+            _unit_read_snapshot_cache_evict_project(project_path)
+
+
+@contextmanager
 def source_lifecycle_mutation_guard(
     project_path: str | Path,
 ) -> Iterator[Path]:
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_source_mutation_guard(root):
         yield root
 
 
@@ -1199,6 +1232,87 @@ def _candidate_validation_cache_entry(
 def _candidate_validation_cache_clear() -> None:
     with _candidate_validation_cache_lock:
         _candidate_validation_cache.clear()
+
+
+def _normalized_cache_path(path: Path) -> str:
+    return os.path.normcase(os.path.normpath(str(path)))
+
+
+def _unit_read_snapshot_cache_key(
+    project_path: Path,
+    candidate_root: Path,
+    *,
+    source_path: Path,
+    source_format: str,
+    source_sha256: str,
+    doc_id: str,
+    expected: dict[str, str],
+) -> tuple[str, ...]:
+    return (
+        _normalized_cache_path(project_path),
+        _normalized_cache_path(candidate_root),
+        _normalized_cache_path(source_path),
+        doc_id,
+        source_format,
+        source_sha256,
+        *(expected[name] for name in SOURCE_PACKAGE_REVIEW_BINDING_FIELDS),
+    )
+
+
+def _unit_read_snapshot_cache_entry(
+    key: tuple[str, ...],
+) -> _UnitReadSnapshot | None:
+    with _unit_read_snapshot_cache_lock:
+        snapshot = _unit_read_snapshot_cache.get(key)
+        if snapshot is not None:
+            _unit_read_snapshot_cache.move_to_end(key)
+        return snapshot
+
+
+def _unit_read_snapshot_cache_remember(
+    snapshot: _UnitReadSnapshot,
+) -> _UnitReadSnapshot:
+    global _unit_read_snapshot_cache_bytes
+    if (
+        snapshot.retained_bytes > _UNIT_READ_SNAPSHOT_CACHE_MAX_ENTRY_BYTES
+        or snapshot.retained_bytes > _UNIT_READ_SNAPSHOT_CACHE_MAX_TOTAL_BYTES
+    ):
+        return snapshot
+    with _unit_read_snapshot_cache_lock:
+        existing = _unit_read_snapshot_cache.get(snapshot.key)
+        if existing is not None:
+            _unit_read_snapshot_cache.move_to_end(snapshot.key)
+            return existing
+        while _unit_read_snapshot_cache and (
+            len(_unit_read_snapshot_cache)
+            >= _UNIT_READ_SNAPSHOT_CACHE_MAX_ENTRIES
+            or _unit_read_snapshot_cache_bytes + snapshot.retained_bytes
+            > _UNIT_READ_SNAPSHOT_CACHE_MAX_TOTAL_BYTES
+        ):
+            _old_key, old = _unit_read_snapshot_cache.popitem(last=False)
+            _unit_read_snapshot_cache_bytes -= old.retained_bytes
+        _unit_read_snapshot_cache[snapshot.key] = snapshot
+        _unit_read_snapshot_cache_bytes += snapshot.retained_bytes
+        return snapshot
+
+
+def _unit_read_snapshot_cache_evict_project(project_path: Path) -> None:
+    global _unit_read_snapshot_cache_bytes
+    project_key = _normalized_cache_path(project_path)
+    with _unit_read_snapshot_cache_lock:
+        stale = [
+            key for key in _unit_read_snapshot_cache if key[0] == project_key
+        ]
+        for key in stale:
+            snapshot = _unit_read_snapshot_cache.pop(key)
+            _unit_read_snapshot_cache_bytes -= snapshot.retained_bytes
+
+
+def _unit_read_snapshot_cache_clear() -> None:
+    global _unit_read_snapshot_cache_bytes
+    with _unit_read_snapshot_cache_lock:
+        _unit_read_snapshot_cache.clear()
+        _unit_read_snapshot_cache_bytes = 0
 
 
 @contextmanager
@@ -3659,14 +3773,46 @@ def _source_package_review_expected(
     status: dict[str, Any],
     state: dict[str, Any],
 ) -> dict[str, Any]:
+    bindings = _source_package_review_bindings_from_state(state)
     return {
-        "state_sha256": status["state_sha256"],
-        "candidate_tree_sha256": status["candidate"]["tree_sha256"],
-        "document_sha256": status["package"]["document"]["sha256"],
-        "structure_sha256": status["package"]["structure"]["sha256"],
-        "report_sha256": status["draft_structure"]["report"]["sha256"],
+        **bindings,
         "hierarchy_sha256": (state.get("hierarchy") or {}).get("sha256"),
     }
+
+
+def _source_package_review_bindings_from_state(
+    state: dict[str, Any],
+) -> dict[str, str]:
+    return {
+        "state_sha256": state["integrity"]["payload_sha256"],
+        "candidate_tree_sha256": state["candidate"]["tree_sha256"],
+        "document_sha256": state["package"]["document"]["sha256"],
+        "structure_sha256": state["package"]["structure"]["sha256"],
+        "report_sha256": state["draft_structure"]["report"]["sha256"],
+    }
+
+
+def _unit_read_candidate_path(
+    project_path: Path,
+    state: dict[str, Any],
+) -> Path:
+    candidate_id = state["candidate"].get("candidate_id")
+    tree_sha256 = state["candidate"].get("tree_sha256")
+    if not isinstance(candidate_id, str) or candidate_id != f"srcpkg_{tree_sha256}":
+        raise SourceLifecycleError(
+            "source_lifecycle_invalid",
+            "Candidate ID is not content-addressed by its tree hash.",
+            409,
+        )
+    relative = state["candidate"].get("relative_path")
+    expected_relative = f"working/{CANDIDATE_DIRECTORY}/{candidate_id}"
+    if relative != expected_relative:
+        raise SourceLifecycleError(
+            "source_lifecycle_invalid",
+            "Candidate path differs from its immutable managed location.",
+            409,
+        )
+    return project_path / Path(*PurePosixPath(expected_relative).parts)
 
 
 def _review_document_indexes(
@@ -3703,6 +3849,144 @@ def _review_document_indexes(
         "block_owner": block_owner,
         "block_document_order": block_document_order,
     }
+
+
+def _build_unit_read_snapshot(
+    *,
+    key: tuple[str, ...],
+    doc_id: str,
+    lifecycle: str,
+    pipeline_run_count: int,
+    expected: dict[str, str],
+    evidence: dict[str, Any],
+) -> _UnitReadSnapshot:
+    indexes = _review_document_indexes(evidence)
+    units: list[tuple[str, bytes]] = []
+    retained_bytes = 1024 + sum(
+        len(part.encode("utf-8")) for part in key
+    )
+    for unit in evidence["report"]["units"]:
+        chapter = indexes["chapter_by_id"][unit["chapter_id"]]
+        blocks = [
+            {
+                "block_id": block["block_id"],
+                "order_index": block["order_index"],
+                "block_type": block["block_type"],
+                "source_text": block["source_text"],
+            }
+            for block in chapter["blocks"]
+        ]
+        row = {
+            "unit": {
+                "unit_id": unit["unit_id"],
+                "chapter_id": unit["chapter_id"],
+                "order_index": unit["order_index"],
+                "title": unit["title"],
+                "block_count": len(blocks),
+            },
+            "blocks": blocks,
+        }
+        rendered = json.dumps(
+            row,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        retained_bytes += len(rendered) + len(unit["unit_id"].encode("utf-8")) + 128
+        units.append((unit["unit_id"], rendered))
+    return _UnitReadSnapshot(
+        key=key,
+        doc_id=doc_id,
+        lifecycle=lifecycle,
+        pipeline_run_count=pipeline_run_count,
+        expected=tuple(
+            (name, expected[name])
+            for name in SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+        ),
+        units=tuple(units),
+        retained_bytes=retained_bytes,
+    )
+
+
+def _remember_unit_read_snapshot(
+    project_path: Path,
+    candidate_root: Path,
+    *,
+    source_path: Path,
+    source_format: str,
+    source_sha256: str,
+    doc_id: str,
+    lifecycle: str,
+    pipeline_run_count: int,
+    expected: dict[str, str],
+    evidence: dict[str, Any],
+) -> _UnitReadSnapshot:
+    key = _unit_read_snapshot_cache_key(
+        project_path,
+        candidate_root,
+        source_path=source_path,
+        source_format=source_format,
+        source_sha256=source_sha256,
+        doc_id=doc_id,
+        expected=expected,
+    )
+    with _unit_read_snapshot_cache_lock:
+        existing = _unit_read_snapshot_cache.get(key)
+        if existing is not None:
+            _unit_read_snapshot_cache.move_to_end(key)
+            return existing
+        snapshot = _build_unit_read_snapshot(
+            key=key,
+            doc_id=doc_id,
+            lifecycle=lifecycle,
+            pipeline_run_count=pipeline_run_count,
+            expected=expected,
+            evidence=evidence,
+        )
+        return _unit_read_snapshot_cache_remember(snapshot)
+
+
+def _unit_read_snapshot_payload(
+    snapshot: _UnitReadSnapshot,
+    unit_id: str,
+    *,
+    offset: int,
+    limit: int,
+) -> dict[str, Any]:
+    rendered = next(
+        (payload for candidate_id, payload in snapshot.units if candidate_id == unit_id),
+        None,
+    )
+    if rendered is None:
+        raise SourceLifecycleError(
+            "source_package_review_unit_missing",
+            "The requested unit is not part of the current structure review.",
+            404,
+        )
+    row = json.loads(rendered.decode("utf-8"))
+    all_blocks = row["blocks"]
+    blocks = all_blocks[offset : offset + limit]
+    payload: dict[str, Any] = {
+        "schema_version": SOURCE_PACKAGE_UNIT_BLOCKS_VERSION,
+        "doc_id": snapshot.doc_id,
+        "lifecycle": snapshot.lifecycle,
+        "pipeline_run_count": snapshot.pipeline_run_count,
+        "expected": dict(snapshot.expected),
+        "unit": row["unit"],
+        "blocks": blocks,
+        "pagination": {
+            "offset": offset,
+            "limit": limit,
+            "returned": len(blocks),
+            "total": len(all_blocks),
+            "has_more": offset + len(blocks) < len(all_blocks),
+        },
+    }
+    payload["integrity"] = {
+        "block_count": len(blocks),
+        "payload_sha256": canonical_json_sha256(payload),
+    }
+    return payload
 
 
 def _review_issue_queue(
@@ -3879,6 +4163,22 @@ def get_source_package_review(
         )
         editable = status["lifecycle"] != "run_started_frozen"
         expected = _source_package_review_expected(status, state)
+        current = {
+            name: expected[name]
+            for name in SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+        }
+        _remember_unit_read_snapshot(
+            root,
+            _candidate_root,
+            source_path=source_path,
+            source_format=source_format,
+            source_sha256=source_sha256,
+            doc_id=doc_id,
+            lifecycle=status["lifecycle"],
+            pipeline_run_count=status["pipeline_run_count"],
+            expected=current,
+            evidence=evidence,
+        )
         return {
             "schema_version": SOURCE_PACKAGE_REVIEW_VERSION,
             "doc_id": doc_id,
@@ -3946,74 +4246,64 @@ def get_source_package_unit_blocks(
                 "Normalize the source package before requesting unit blocks.",
                 409,
             )
-        status = _managed_status(root, doc_id=doc_id, state=state)
         source_path, source_format, source_sha256 = _server_source(root)
-        _candidate_root, evidence = _validated_candidate_for_state(
-            root,
-            doc_id=doc_id,
-            state=state,
-            source_path=source_path,
-            source_format=source_format,
-            source_sha256=source_sha256,
-        )
-        current_all = _source_package_review_expected(status, state)
-        current = {
-            name: current_all[name]
-            for name in SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+        current_source = {
+            "filename": source_path.name,
+            "format": source_format,
+            "sha256": source_sha256,
         }
+        if state.get("source") != current_source:
+            raise SourceLifecycleError(
+                "source_package_source_changed",
+                "Uploaded source differs from the managed lifecycle state.",
+                409,
+            )
+        current = _source_package_review_bindings_from_state(state)
         if expected != current:
             raise SourceLifecycleError(
                 "source_package_review_stale",
                 "Review identities changed; reload structure review before reading blocks.",
                 409,
             )
-        indexes = _review_document_indexes(evidence)
-        unit = indexes["unit_by_id"].get(unit_id)
-        if unit is None:
-            raise SourceLifecycleError(
-                "source_package_review_unit_missing",
-                "The requested unit is not part of the current structure review.",
-                404,
+        candidate_path = _unit_read_candidate_path(root, state)
+        key = _unit_read_snapshot_cache_key(
+            root,
+            candidate_path,
+            source_path=source_path,
+            source_format=source_format,
+            source_sha256=source_sha256,
+            doc_id=doc_id,
+            expected=current,
+        )
+        snapshot = _unit_read_snapshot_cache_entry(key)
+        if snapshot is None:
+            status = _managed_status(root, doc_id=doc_id, state=state)
+            candidate_root, evidence = _validated_candidate_for_state(
+                root,
+                doc_id=doc_id,
+                state=state,
+                source_path=source_path,
+                source_format=source_format,
+                source_sha256=source_sha256,
             )
-        chapter = indexes["chapter_by_id"][unit["chapter_id"]]
-        all_blocks = chapter["blocks"]
-        selected = all_blocks[offset : offset + limit]
-        blocks = [
-            {
-                "block_id": block["block_id"],
-                "order_index": block["order_index"],
-                "block_type": block["block_type"],
-                "source_text": block["source_text"],
-            }
-            for block in selected
-        ]
-        payload: dict[str, Any] = {
-            "schema_version": SOURCE_PACKAGE_UNIT_BLOCKS_VERSION,
-            "doc_id": doc_id,
-            "lifecycle": status["lifecycle"],
-            "pipeline_run_count": status["pipeline_run_count"],
-            "expected": current,
-            "unit": {
-                "unit_id": unit["unit_id"],
-                "chapter_id": unit["chapter_id"],
-                "order_index": unit["order_index"],
-                "title": unit["title"],
-                "block_count": len(all_blocks),
-            },
-            "blocks": blocks,
-            "pagination": {
-                "offset": offset,
-                "limit": limit,
-                "returned": len(blocks),
-                "total": len(all_blocks),
-                "has_more": offset + len(blocks) < len(all_blocks),
-            },
-        }
-        payload["integrity"] = {
-            "block_count": len(blocks),
-            "payload_sha256": canonical_json_sha256(payload),
-        }
-        return payload
+            snapshot = _remember_unit_read_snapshot(
+                root,
+                candidate_root,
+                source_path=source_path,
+                source_format=source_format,
+                source_sha256=source_sha256,
+                doc_id=doc_id,
+                lifecycle=status["lifecycle"],
+                pipeline_run_count=status["pipeline_run_count"],
+                expected=current,
+                evidence=evidence,
+            )
+        return _unit_read_snapshot_payload(
+            snapshot,
+            unit_id,
+            offset=offset,
+            limit=limit,
+        )
 
 
 def _publish_candidate_tree(
@@ -4102,7 +4392,7 @@ def apply_managed_source_corrections(
 ) -> dict[str, Any]:
     request_data = _validate_correction_request(request_payload)
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_source_mutation_guard(root):
         return _apply_managed_source_corrections_locked(root, doc_id, request_data)
 
 
@@ -4152,7 +4442,7 @@ def apply_managed_source_hierarchy(
 ) -> dict[str, Any]:
     request_data = _validate_hierarchy_request(request_payload)
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_source_mutation_guard(root):
         state = _read_authoritative_state(root, doc_id=doc_id)
         if state is None:
             raise SourceLifecycleError(
@@ -4314,7 +4604,7 @@ def finalize_managed_source_package(
 ) -> dict[str, Any]:
     request_data = _validate_finalization_request(request_payload)
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_source_mutation_guard(root):
         state = _read_authoritative_state(root, doc_id=doc_id)
         if state is None:
             raise SourceLifecycleError(
@@ -4774,7 +5064,7 @@ def freeze_managed_source_for_run(
     root = _require_project_root(project_path)
     job_id = _require_safe_runtime_identifier(job_id, owner="job_id")
     run_id = _require_safe_runtime_identifier(run_id, owner="run_id")
-    with _managed_mutation_guard(root):
+    with _managed_source_mutation_guard(root):
         state = _read_authoritative_state(root, doc_id=doc_id)
         if state is None or state.get("schema_version") != SOURCE_LIFECYCLE_V2_VERSION:
             raise SourceLifecycleError(
@@ -4881,7 +5171,7 @@ def publish_managed_translation(
             400,
         )
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_source_mutation_guard(root):
         state = _read_authoritative_state(root, doc_id=doc_id)
         if (
             state is None
@@ -5565,7 +5855,7 @@ def import_d2l_presegmented_source_package(
     """Import the sealed D2L marked-source capture without Markdown re-segmentation."""
 
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_source_mutation_guard(root):
         staging, staged = _stage_d2l_presegmented_capture(
             root,
             source_bytes=source_bytes,
@@ -5702,7 +5992,7 @@ def normalize_managed_source_package(
     write_fn: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     root = _require_project_root(project_path)
-    with _managed_mutation_guard(root):
+    with _managed_source_mutation_guard(root):
         return _normalize_managed_source_package_locked(
             root,
             doc_id,

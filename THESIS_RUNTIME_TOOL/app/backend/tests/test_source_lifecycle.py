@@ -103,6 +103,15 @@ def _load_source_lifecycle_after_test_collection():
         sys.modules.pop("config", None)
 
 
+@pytest.fixture(autouse=True)
+def _clear_unit_read_snapshot_cache():
+    source_lifecycle._unit_read_snapshot_cache_clear()
+    try:
+        yield
+    finally:
+        source_lifecycle._unit_read_snapshot_cache_clear()
+
+
 FORMATS = {
     "txt": (".txt", b"CHAPTER I\n\nStory text.\n"),
     "markdown": (".md", b"# Chapter I\n\nStory text.\n"),
@@ -592,7 +601,394 @@ def test_validation_cache_reuses_evidence_and_hashes_tree_once_per_request(
     )
     assert page["pagination"]["returned"] == 1
     assert uncached.call_count == 1
-    assert tree_identity.call_count == 3
+    assert tree_identity.call_count == 2
+    assert len(source_lifecycle._unit_read_snapshot_cache) == 1
+
+
+@pytest.mark.parametrize(
+    "field",
+    source_lifecycle.SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+    if source_lifecycle is not None
+    else (
+        "state_sha256",
+        "candidate_tree_sha256",
+        "document_sha256",
+        "structure_sha256",
+        "report_sha256",
+    ),
+)
+def test_unit_read_snapshot_rejects_every_stale_binding_without_candidate_read(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    doc_id = f"unit_snapshot_stale_{field}"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(),
+        write_fn=_fake_review_writer,
+    )
+    review = get_source_package_review(root, doc_id)
+    unit_id = review["report"]["units"][0]["unit_id"]
+    expected = {
+        name: review["expected"][name]
+        for name in source_lifecycle.SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+    }
+    stale = {**expected, field: "0" * 64}
+
+    with patch.object(
+        source_lifecycle,
+        "_tree_identity",
+        side_effect=AssertionError("stale reads must not touch candidate bytes"),
+    ):
+        with pytest.raises(SourceLifecycleError) as captured:
+            get_source_package_unit_blocks(
+                root,
+                doc_id,
+                unit_id,
+                expected=stale,
+            )
+    assert captured.value.code == "source_package_review_stale"
+
+
+def test_unit_read_snapshot_serves_sealed_evidence_then_cold_read_detects_tamper(
+    tmp_path: Path,
+) -> None:
+    doc_id = "unit_snapshot_sealed_evidence"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    status = normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(),
+        write_fn=_fake_review_writer,
+    )
+    review = get_source_package_review(root, doc_id)
+    unit_id = review["report"]["units"][0]["unit_id"]
+    expected = {
+        name: review["expected"][name]
+        for name in source_lifecycle.SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+    }
+    candidate = root / Path(*status["candidate"]["relative_path"].split("/"))
+    document_path = candidate / "document.json"
+    document = json.loads(document_path.read_text(encoding="utf-8"))
+    original_text = document["chapters"][0]["blocks"][0]["source_text"]
+    document["chapters"][0]["blocks"][0]["source_text"] = "tampered candidate text"
+    _write_json(document_path, document)
+
+    original_read_bytes = Path.read_bytes
+    original_stat = Path.stat
+    candidate_prefix = os.path.normcase(os.path.normpath(str(candidate))) + os.sep
+
+    def is_candidate_path(path: Path) -> bool:
+        rendered = os.path.normcase(os.path.normpath(str(path)))
+        return rendered == candidate_prefix[:-1] or rendered.startswith(
+            candidate_prefix
+        )
+
+    def guarded_read_bytes(path: Path) -> bytes:
+        if is_candidate_path(path):
+            raise AssertionError("warm unit read touched candidate bytes")
+        return original_read_bytes(path)
+
+    def guarded_stat(path: Path, *args, **kwargs):
+        if is_candidate_path(path):
+            raise AssertionError("warm unit read statted a candidate path")
+        return original_stat(path, *args, **kwargs)
+
+    with (
+        patch.object(
+            source_lifecycle,
+            "_tree_identity",
+            side_effect=AssertionError("warm unit read must not hash candidate bytes"),
+        ),
+        patch.object(Path, "read_bytes", guarded_read_bytes),
+        patch.object(Path, "stat", guarded_stat),
+    ):
+        warm = get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit_id,
+            expected=expected,
+        )
+        warm["blocks"][0]["source_text"] = "caller-local mutation"
+        repeated = get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit_id,
+            expected=expected,
+        )
+    assert repeated["blocks"][0]["source_text"] == original_text
+
+    source_lifecycle._unit_read_snapshot_cache_clear()
+    with pytest.raises(SourceLifecycleError) as captured:
+        get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit_id,
+            expected=expected,
+        )
+    assert captured.value.status == 409
+
+
+def test_unit_read_snapshot_isolated_by_project_source_state_and_candidate(
+    tmp_path: Path,
+) -> None:
+    projects: list[tuple[Path, Path, str, dict, str]] = []
+    for suffix in ("project", "source", "state", "candidate"):
+        doc_id = f"unit_snapshot_isolation_{suffix}"
+        root, source = _project(tmp_path, doc_id, "txt")
+        normalize_managed_source_package(
+            root,
+            doc_id,
+            normalize_fn=_fake_normalizer(),
+            write_fn=_fake_review_writer,
+        )
+        review = get_source_package_review(root, doc_id)
+        expected = {
+            name: review["expected"][name]
+            for name in source_lifecycle.SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+        }
+        projects.append(
+            (
+                root,
+                source,
+                doc_id,
+                expected,
+                review["report"]["units"][0]["unit_id"],
+            )
+        )
+    assert len(source_lifecycle._unit_read_snapshot_cache) == 4
+    assert len({key[0] for key in source_lifecycle._unit_read_snapshot_cache}) == 4
+
+    root, _source, doc_id, expected, unit_id = projects[0]
+    foreign_expected = projects[1][3]
+    with pytest.raises(SourceLifecycleError) as foreign_error:
+        get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit_id,
+            expected=foreign_expected,
+        )
+    assert foreign_error.value.code == "source_package_review_stale"
+
+    root, source, doc_id, expected, unit_id = projects[1]
+    source.write_bytes(source.read_bytes() + b"changed")
+    with pytest.raises(SourceLifecycleError) as source_error:
+        get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit_id,
+            expected=expected,
+        )
+    assert source_error.value.code == "source_package_source_changed"
+
+    root, _source, doc_id, _expected, unit_id = projects[2]
+    state = _lifecycle(root)
+    state["package"]["document"]["sha256"] = "0" * 64
+    _reseal_lifecycle(state)
+    _write_json(root / "working" / STATE_FILENAME, state)
+    changed_expected = source_lifecycle._source_package_review_bindings_from_state(
+        state
+    )
+    with pytest.raises(SourceLifecycleError) as state_error:
+        get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit_id,
+            expected=changed_expected,
+        )
+    assert state_error.value.code == "source_lifecycle_stale"
+
+    root, _source, doc_id, _expected, unit_id = projects[3]
+    state = _lifecycle(root)
+    state["candidate"]["relative_path"] = "working/source_package_candidates/foreign"
+    _reseal_lifecycle(state)
+    _write_json(root / "working" / STATE_FILENAME, state)
+    changed_expected = source_lifecycle._source_package_review_bindings_from_state(
+        state
+    )
+    with pytest.raises(SourceLifecycleError) as candidate_error:
+        get_source_package_unit_blocks(
+            root,
+            doc_id,
+            unit_id,
+            expected=changed_expected,
+        )
+    assert candidate_error.value.code == "source_lifecycle_invalid"
+
+
+def test_unit_read_snapshot_does_not_cache_failed_cold_validation(
+    tmp_path: Path,
+) -> None:
+    doc_id = "unit_snapshot_failure_not_cached"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    status = normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(),
+        write_fn=_fake_review_writer,
+    )
+    state = _lifecycle(root)
+    expected = source_lifecycle._source_package_review_bindings_from_state(state)
+    candidate = root / Path(*status["candidate"]["relative_path"].split("/"))
+    report = json.loads(
+        (candidate / source_lifecycle.REPORT_FILENAME).read_text(encoding="utf-8")
+    )
+    unit_id = report["units"][0]["unit_id"]
+    document_path = candidate / "document.json"
+    document_path.write_bytes(document_path.read_bytes() + b"\n")
+
+    for _attempt in range(2):
+        with pytest.raises(SourceLifecycleError):
+            get_source_package_unit_blocks(
+                root,
+                doc_id,
+                unit_id,
+                expected=expected,
+            )
+        assert source_lifecycle._unit_read_snapshot_cache == {}
+
+
+def test_unit_read_snapshot_cache_is_bounded_and_deduplicates_concurrent_reads(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        source_lifecycle,
+        "_UNIT_READ_SNAPSHOT_CACHE_MAX_ENTRIES",
+        2,
+    )
+    monkeypatch.setattr(
+        source_lifecycle,
+        "_UNIT_READ_SNAPSHOT_CACHE_MAX_TOTAL_BYTES",
+        2 * 1024 * 1024,
+    )
+    projects: list[tuple[Path, str, dict, str]] = []
+    for index in range(3):
+        doc_id = f"unit_snapshot_bound_{index}"
+        root, _source = _project(tmp_path, doc_id, "txt")
+        normalize_managed_source_package(
+            root,
+            doc_id,
+            normalize_fn=_fake_normalizer(),
+            write_fn=_fake_review_writer,
+        )
+        review = get_source_package_review(root, doc_id)
+        expected = {
+            name: review["expected"][name]
+            for name in source_lifecycle.SOURCE_PACKAGE_REVIEW_BINDING_FIELDS
+        }
+        projects.append(
+            (root, doc_id, expected, review["report"]["units"][0]["unit_id"])
+        )
+    assert len(source_lifecycle._unit_read_snapshot_cache) <= 2
+    assert (
+        source_lifecycle._unit_read_snapshot_cache_bytes
+        <= source_lifecycle._UNIT_READ_SNAPSHOT_CACHE_MAX_TOTAL_BYTES
+    )
+
+    root, doc_id, expected, unit_id = projects[-1]
+    source_lifecycle._unit_read_snapshot_cache_clear()
+    original_builder = source_lifecycle._build_unit_read_snapshot
+    entered = threading.Event()
+
+    def slow_builder(**kwargs):
+        entered.set()
+        time.sleep(0.1)
+        return original_builder(**kwargs)
+
+    results: list[dict] = []
+    failures: list[BaseException] = []
+
+    def read_unit() -> None:
+        try:
+            results.append(
+                get_source_package_unit_blocks(
+                    root,
+                    doc_id,
+                    unit_id,
+                    expected=expected,
+                )
+            )
+        except BaseException as exc:  # pragma: no cover - asserted below
+            failures.append(exc)
+
+    with patch.object(
+        source_lifecycle,
+        "_build_unit_read_snapshot",
+        side_effect=slow_builder,
+    ) as builder:
+        threads = [threading.Thread(target=read_unit) for _ in range(4)]
+        for thread in threads:
+            thread.start()
+        assert entered.wait(timeout=2)
+        for thread in threads:
+            thread.join(timeout=5)
+
+    assert failures == []
+    assert len(results) == 4
+    assert all(not thread.is_alive() for thread in threads)
+    assert builder.call_count == 1
+    assert all(result == results[0] for result in results)
+
+
+def test_oversized_unit_read_snapshot_is_not_retained(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        source_lifecycle,
+        "_UNIT_READ_SNAPSHOT_CACHE_MAX_ENTRY_BYTES",
+        1,
+    )
+    doc_id = "unit_snapshot_oversized"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(),
+        write_fn=_fake_review_writer,
+    )
+    get_source_package_review(root, doc_id)
+    assert source_lifecycle._unit_read_snapshot_cache == {}
+
+
+@pytest.mark.parametrize("operation", ("correction", "finalization"))
+def test_post_cache_tamper_is_fully_validated_before_mutation(
+    tmp_path: Path,
+    operation: str,
+) -> None:
+    doc_id = f"unit_snapshot_mutation_{operation}"
+    root, _source = _project(tmp_path, doc_id, "txt")
+    status = normalize_managed_source_package(
+        root,
+        doc_id,
+        normalize_fn=_fake_normalizer(),
+        write_fn=_fake_review_writer,
+    )
+    review = get_source_package_review(root, doc_id)
+    request = (
+        _correction_request(review, [_rename_first_unit(review)])
+        if operation == "correction"
+        else _finalization_request(review)
+    )
+    bootstrap_before = (root / "working" / STATE_FILENAME).read_bytes()
+    candidate = root / Path(*status["candidate"]["relative_path"].split("/"))
+    document_path = candidate / "document.json"
+    document = json.loads(document_path.read_text(encoding="utf-8"))
+    document["chapters"][0]["blocks"][0]["source_text"] = "tampered before mutation"
+    _write_json(document_path, document)
+
+    with pytest.raises(SourceLifecycleError) as captured:
+        if operation == "correction":
+            apply_managed_source_corrections(root, doc_id, request)
+        else:
+            finalize_managed_source_package(root, doc_id, request)
+    assert captured.value.status == 409
+    assert (root / "working" / STATE_FILENAME).read_bytes() == bootstrap_before
+    assert not (root / "working" / STATE_V2_FILENAME).exists()
+    assert source_lifecycle._unit_read_snapshot_cache == {}
 
 
 def test_validation_cache_hashes_bytes_and_does_not_cache_failure(
