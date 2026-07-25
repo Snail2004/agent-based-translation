@@ -48,6 +48,7 @@ from services.thesis_runs import (
     issue_estimate_token_for_argv,
     one_button_paths,
     pre_spawn_pause_binding,
+    read_estimate_confirmation_binding,
     read_events,
     read_log,
     resume_admission_guard,
@@ -824,6 +825,20 @@ def _append_resume_repair_reason(
 _RECOVERED_PAUSE_REPAIR_REASONS = {
     "journal_publication_race_recovered": "journal_publication_race_recovery",
 }
+_RESUME_CONFIRMATION_BINDING_SCHEMA = "resume_confirmation_binding_v1"
+_RESUME_LINEAGE_IDENTITY_FIELDS = (
+    "script",
+    "job_id",
+    "run_dir",
+    "manifest_path",
+    "event_log_path",
+    "workflow_run_id",
+    "component_id",
+    "component_run_id",
+    "selected_chapter_ids",
+    "source_binding_sha256",
+    "launch_binding_sha256",
+)
 
 
 def _resolved_resume_repair_reason(
@@ -832,6 +847,9 @@ def _resolved_resume_repair_reason(
 ) -> str | None:
     if supplied is not None and str(supplied).strip():
         return str(supplied).strip()
+    stored = entry.get("resume_repair_reason")
+    if stored is not None and str(stored).strip():
+        return str(stored).strip()
     if entry.get("script") not in _D2L_COMPONENT_SCRIPTS:
         return None
     component = _d2l_component_projection(entry)
@@ -844,6 +862,147 @@ def _resolved_resume_repair_reason(
     if not resume.get("resume_available"):
         return None
     return _RECOVERED_PAUSE_REPAIR_REASONS.get(resume.get("paused_reason"))
+
+
+def _resolved_resume_repair_reason_from_lineage(
+    registry: RunRegistry,
+    entry: dict,
+    supplied: object,
+) -> str | None:
+    """Resolve a repair reason through completed pre-provider wrappers."""
+
+    current = entry
+    seen: set[str] = set()
+    while True:
+        run_id = validate_run_id(current.get("run_id"), required=True)
+        if run_id in seen:
+            raise RunControlError(
+                "resume_lineage_cycle",
+                "Resume lineage contains a cycle.",
+                409,
+            )
+        seen.add(run_id)
+        reason = _resolved_resume_repair_reason(current, supplied)
+        if reason is not None:
+            return reason
+        parent_id = current.get("resumed_from")
+        if parent_id is None:
+            return None
+        parent = registry.get_run(validate_run_id(parent_id, required=True))
+        if parent is None:
+            raise RunControlError(
+                "resume_lineage_parent_missing",
+                "Resume lineage refers to a missing parent run.",
+                409,
+            )
+        drift = [
+            field
+            for field in _RESUME_LINEAGE_IDENTITY_FIELDS
+            if parent.get(field) != current.get(field)
+        ]
+        if drift:
+            raise RunControlError(
+                "resume_parent_binding_drift",
+                "Resume parent differs from its child identity: "
+                + ", ".join(drift),
+                409,
+            )
+        current = parent
+
+
+def _resume_confirmation_binding(
+    *,
+    requested_resume_run_id: str,
+    entry: dict,
+    repair_reason: str | None,
+    repair_revision_preflight: dict | None,
+) -> dict:
+    preflight_sha256 = (
+        repair_revision_preflight.get("preflight_sha256")
+        if isinstance(repair_revision_preflight, dict)
+        else None
+    )
+    if repair_reason is not None and (
+        not isinstance(preflight_sha256, str)
+        or len(preflight_sha256) != 64
+        or any(ch not in "0123456789abcdefABCDEF" for ch in preflight_sha256)
+    ):
+        raise RunControlError(
+            "resume_revision_preflight_invalid",
+            "Repair Resume preflight must expose a sealed SHA-256.",
+            500,
+        )
+    return {
+        "schema_version": _RESUME_CONFIRMATION_BINDING_SCHEMA,
+        "requested_resume_run_id": validate_run_id(
+            requested_resume_run_id,
+            required=True,
+        ),
+        "resume_run_id": validate_run_id(entry.get("run_id"), required=True),
+        "job_id": validate_job_id(entry.get("job_id"), required=True),
+        "script": entry.get("script") or "run_one_button",
+        "workflow_run_id": entry.get("workflow_run_id"),
+        "component_id": entry.get("component_id"),
+        "component_run_id": entry.get("component_run_id"),
+        "selected_chapter_ids": entry.get("selected_chapter_ids") or [],
+        "source_binding_sha256": entry.get("source_binding_sha256"),
+        "launch_binding_sha256": entry.get("launch_binding_sha256"),
+        "repair_reason": repair_reason,
+        "repair_revision_preflight_sha256": preflight_sha256,
+    }
+
+
+def _repair_reason_from_confirmation_binding(
+    *,
+    entry: dict,
+    body: dict,
+    binding: dict | None,
+) -> str | None:
+    if binding is None:
+        raise RunControlError(
+            "resume_confirmation_binding_required",
+            "A fresh Resume estimate is required before starting this live run.",
+            403,
+        )
+    expected = {
+        "schema_version": _RESUME_CONFIRMATION_BINDING_SCHEMA,
+        "resume_run_id": validate_run_id(entry.get("run_id"), required=True),
+        "job_id": validate_job_id(entry.get("job_id"), required=True),
+        "script": entry.get("script") or "run_one_button",
+        "workflow_run_id": entry.get("workflow_run_id"),
+        "component_id": entry.get("component_id"),
+        "component_run_id": entry.get("component_run_id"),
+        "selected_chapter_ids": entry.get("selected_chapter_ids") or [],
+        "source_binding_sha256": entry.get("source_binding_sha256"),
+        "launch_binding_sha256": entry.get("launch_binding_sha256"),
+    }
+    drift = [
+        field for field, value in expected.items() if binding.get(field) != value
+    ]
+    if drift:
+        raise RunControlError(
+            "resume_confirmation_binding_drift",
+            "Resume confirmation binding drifted: " + ", ".join(drift),
+            403,
+        )
+    repair_reason = binding.get("repair_reason")
+    if repair_reason is not None:
+        repair_reason = str(repair_reason).strip()
+        if not repair_reason:
+            raise RunControlError(
+                "resume_confirmation_binding_invalid",
+                "Token-bound repair_reason must be null or non-empty.",
+                403,
+            )
+    if "repair_reason" in body and body.get("repair_reason") is not None:
+        supplied = str(body.get("repair_reason")).strip()
+        if supplied != (repair_reason or ""):
+            raise RunControlError(
+                "resume_repair_reason_mismatch",
+                "Submitted repair_reason does not match the sealed estimate.",
+                403,
+            )
+    return repair_reason
 
 
 def _is_translation_component_entry(entry: dict) -> bool:
@@ -864,19 +1023,6 @@ def _resolve_resume_estimate_entry(
         return entry
     current = entry
     seen: set[str] = set()
-    identity_fields = (
-        "script",
-        "job_id",
-        "run_dir",
-        "manifest_path",
-        "event_log_path",
-        "workflow_run_id",
-        "component_id",
-        "component_run_id",
-        "selected_chapter_ids",
-        "source_binding_sha256",
-        "launch_binding_sha256",
-    )
     while True:
         run_id = str(current.get("run_id") or "")
         if not run_id or run_id in seen:
@@ -898,7 +1044,7 @@ def _resolve_resume_estimate_entry(
         child = children[0]
         drift = [
             field
-            for field in identity_fields
+            for field in _RESUME_LINEAGE_IDENTITY_FIELDS
             if child.get(field) != current.get(field)
         ]
         if drift:
@@ -1037,6 +1183,53 @@ def _existing_resume_child(
     return child
 
 
+def _existing_resume_child_for_consumed_token(
+    registry: RunRegistry,
+    source: dict,
+    *,
+    body: dict,
+) -> dict | None:
+    """Recover an exact idempotent POST after its one-time token was consumed."""
+
+    raw_token = body.get("confirm_token")
+    if raw_token is None or not str(raw_token).strip():
+        return None
+    token = str(raw_token).strip()
+    matches = [
+        child
+        for child in registry.find_resume_children(source["run_id"])
+        if child.get("prompt_preview_token") == token
+    ]
+    if not matches:
+        return None
+    if len(matches) != 1:
+        raise RunControlError(
+            "resume_lineage_ambiguous",
+            "The consumed confirmation token is bound to multiple Resume children.",
+            409,
+        )
+    child = matches[0]
+    repair_reason = child.get("resume_repair_reason")
+    if "repair_reason" in body and body.get("repair_reason") is not None:
+        supplied = str(body.get("repair_reason")).strip()
+        if supplied != (repair_reason or ""):
+            raise RunControlError(
+                "resume_repair_reason_mismatch",
+                "Submitted repair_reason does not match the durable Resume child.",
+                403,
+            )
+    resume_argv = _append_resume_repair_reason(
+        build_resume_argv_from_entry(source),
+        repair_reason,
+    )
+    return _existing_resume_child(
+        registry,
+        source,
+        resume_argv=resume_argv,
+        repair_reason=repair_reason,
+    )
+
+
 def _ensure_resume_child_started(
     registry: RunRegistry,
     child: dict,
@@ -1058,6 +1251,27 @@ def _ensure_resume_child_started(
         spawn_run(registry, child["run_id"])
         return registry.get_run(child["run_id"]) or child
     return child
+
+
+def _existing_resume_response(source: dict, child: dict):
+    script = source.get("script") or "run_one_button"
+    if (
+        script == WORKFLOW_ORCHESTRATOR_SCRIPT
+        and source.get("component_id") == EVALUATION_COMPONENT_ID
+    ):
+        return ok(_evaluation_launch_response(child, reused=True))
+    if script in _D2L_COMPONENT_SCRIPTS:
+        return ok(_d2l_launch_response(child, reused=True))
+    return ok(
+        {
+            "run_id": child["run_id"],
+            "resumed_from": source["run_id"],
+            "status": child["status"],
+            "attempt_index": child.get("attempt_index"),
+            "manifest_path": child.get("manifest_path"),
+            "reused": True,
+        }
+    )
 
 
 def _resume_admission_locked(handler):
@@ -1115,7 +1329,8 @@ def estimate_preview():
                 raise RunControlError("run_not_found", f"Run {resume_run_id} not found.", 404)
             requested_resume_run_id = resume_run_id
             supplied_repair_reason = request.args.get("repair_reason")
-            repair_reason = _resolved_resume_repair_reason(
+            repair_reason = _resolved_resume_repair_reason_from_lineage(
+                registry,
                 entry,
                 supplied_repair_reason,
             )
@@ -1125,7 +1340,8 @@ def estimate_preview():
                 required=True,
             )
             if repair_reason is None:
-                repair_reason = _resolved_resume_repair_reason(
+                repair_reason = _resolved_resume_repair_reason_from_lineage(
+                    registry,
                     entry,
                     supplied_repair_reason,
                 )
@@ -1138,11 +1354,18 @@ def estimate_preview():
                 repair_reason,
             )
             job_id = validate_job_id(entry.get("job_id"), required=True)
+            confirmation_binding = _resume_confirmation_binding(
+                requested_resume_run_id=requested_resume_run_id,
+                entry=entry,
+                repair_reason=repair_reason,
+                repair_revision_preflight=repair_revision_preflight,
+            )
             token = issue_estimate_token_for_argv(
                 job_id=job_id,
                 script=entry.get("script") or "run_one_button",
                 argv=argv,
                 preview_kind="resume_estimate_only",
+                confirmation_binding=confirmation_binding,
             )
             script = entry.get("script") or "run_one_button"
             return ok(
@@ -1742,14 +1965,64 @@ def resume_thesis_run(run_id: str):
         if entry is None:
             raise RunControlError("run_not_found", f"Run {run_id} not found.", 404)
         script = entry.get("script") or "run_one_button"
-        repair_reason = _resolved_resume_repair_reason(
+        job_id = validate_job_id(entry.get("job_id"), required=True)
+        consumed_retry = _existing_resume_child_for_consumed_token(
+            registry,
             entry,
-            body.get("repair_reason"),
+            body=body,
         )
+        if consumed_retry is not None:
+            consumed_retry = _ensure_resume_child_started(
+                registry,
+                consumed_retry,
+            )
+            return _existing_resume_response(entry, consumed_retry)
+        confirmation_binding = None
+        if bool(entry.get("allow_api")) and _is_translation_component_entry(entry):
+            confirmation_binding = read_estimate_confirmation_binding(
+                confirm_token=body.get("confirm_token"),
+                job_id=job_id,
+                script=script,
+            )
+            repair_reason = _repair_reason_from_confirmation_binding(
+                entry=entry,
+                body=body,
+                binding=confirmation_binding,
+            )
+        elif _is_translation_component_entry(entry):
+            repair_reason = _resolved_resume_repair_reason_from_lineage(
+                registry,
+                entry,
+                body.get("repair_reason"),
+            )
+        else:
+            repair_reason = _resolved_resume_repair_reason(
+                entry,
+                body.get("repair_reason"),
+            )
         argv = _append_resume_repair_reason(
             build_resume_argv_from_entry(entry),
             repair_reason,
         )
+        repair_revision_preflight = _preflight_d2l_resume_revision(
+            entry,
+            repair_reason=repair_reason,
+        )
+        if confirmation_binding is not None:
+            expected_preflight_sha256 = confirmation_binding.get(
+                "repair_revision_preflight_sha256"
+            )
+            actual_preflight_sha256 = (
+                repair_revision_preflight.get("preflight_sha256")
+                if isinstance(repair_revision_preflight, dict)
+                else None
+            )
+            if actual_preflight_sha256 != expected_preflight_sha256:
+                raise RunControlError(
+                    "resume_revision_preflight_drift",
+                    "Resume revision preflight changed after estimate; refresh and confirm again.",
+                    409,
+                )
         if _is_pid_alive(entry.get("pid")):
             raise RunControlError(
                 "run_still_active",
@@ -1768,29 +2041,7 @@ def resume_thesis_run(run_id: str):
                 registry,
                 existing_child,
             )
-            if (
-                script == WORKFLOW_ORCHESTRATOR_SCRIPT
-                and entry.get("component_id") == EVALUATION_COMPONENT_ID
-            ):
-                return ok(
-                    _evaluation_launch_response(existing_child, reused=True)
-                )
-            if script in _D2L_COMPONENT_SCRIPTS:
-                return ok(_d2l_launch_response(existing_child, reused=True))
-            return ok(
-                {
-                    "run_id": existing_child["run_id"],
-                    "resumed_from": run_id,
-                    "status": existing_child["status"],
-                    "attempt_index": existing_child.get("attempt_index"),
-                    "manifest_path": existing_child.get("manifest_path"),
-                    "reused": True,
-                }
-            )
-        repair_revision_preflight = _preflight_d2l_resume_revision(
-            entry,
-            repair_reason=repair_reason,
-        )
+            return _existing_resume_response(entry, existing_child)
         manifest_path = _manifest_path_for_entry(entry)
         manifest = {}
         if manifest_path.exists():
@@ -1820,7 +2071,6 @@ def resume_thesis_run(run_id: str):
                 "The previous Translation writer is still active; Resume is unsafe.",
                 409,
             )
-        job_id = validate_job_id(entry.get("job_id"), required=True)
         pause_path = _pause_file_from_entry(entry)
         if script in _D2L_COMPONENT_SCRIPTS:
             is_evaluation = (

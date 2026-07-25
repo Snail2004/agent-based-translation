@@ -203,6 +203,7 @@ class PreviewToken:
     issued_at: float
     preview_kind: str
     run_identity_digest: str | None = None
+    confirmation_binding_json: str | None = None
 
 
 _active_tokens: dict[str, PreviewToken] = {}
@@ -1290,6 +1291,54 @@ def validate_api_gate(
     return token
 
 
+def read_estimate_confirmation_binding(
+    *,
+    confirm_token: str | None,
+    job_id: str | None,
+    script: str,
+    expected_preview_kind: str = "resume_estimate_only",
+) -> dict[str, Any] | None:
+    """Read a token-sealed preflight binding without consuming the token."""
+
+    validate_script(script)
+    job = validate_job_id(job_id, required=True)
+    if not confirm_token or not str(confirm_token).strip():
+        raise RunControlError(
+            "confirm_token_required",
+            "Resume requires a confirm_token issued by estimate-preview.",
+            403,
+        )
+    token = str(confirm_token).strip()
+    with _token_lock:
+        issued = _active_tokens.get(token)
+        if issued is None:
+            raise RunControlError("confirm_token_invalid", "Unknown confirm_token.", 403)
+        if time.time() - issued.issued_at > _CONFIRM_TOKEN_TTL_SECONDS:
+            _active_tokens.pop(token, None)
+            raise RunControlError("confirm_token_expired", "confirm_token expired.", 403)
+        if (
+            issued.job_id != job
+            or issued.script != script
+            or issued.preview_kind != expected_preview_kind
+        ):
+            raise RunControlError(
+                "confirm_token_mismatch",
+                "confirm_token does not match this Resume estimate.",
+                403,
+            )
+        encoded = issued.confirmation_binding_json
+    if encoded is None:
+        return None
+    binding = json.loads(encoded)
+    if not isinstance(binding, dict):
+        raise RunControlError(
+            "confirm_token_binding_invalid",
+            "confirm_token has an invalid confirmation binding.",
+            403,
+        )
+    return binding
+
+
 def build_resume_argv_from_entry(entry: dict[str, Any]) -> list[str]:
     """Build the exact real argv for resuming a one-button run.
 
@@ -1348,6 +1397,7 @@ def issue_estimate_token_for_argv(
     argv: list[str],
     preview_kind: str = "estimate_only",
     run_identity_digest: str | None = None,
+    confirmation_binding: dict[str, Any] | None = None,
 ) -> str:
     job = validate_job_id(job_id, required=True)
     validate_script(script)
@@ -1357,6 +1407,7 @@ def issue_estimate_token_for_argv(
         argv=argv,
         preview_kind=preview_kind,
         run_identity_digest=run_identity_digest,
+        confirmation_binding=confirmation_binding,
     )
 
 
@@ -1669,7 +1720,22 @@ def _issue_preview_token(
     argv: list[str],
     preview_kind: str,
     run_identity_digest: str | None = None,
+    confirmation_binding: dict[str, Any] | None = None,
 ) -> str:
+    confirmation_binding_json = None
+    if confirmation_binding is not None:
+        if not isinstance(confirmation_binding, dict):
+            raise RunControlError(
+                "confirmation_binding_invalid",
+                "confirmation_binding must be an object.",
+                500,
+            )
+        confirmation_binding_json = json.dumps(
+            confirmation_binding,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
     token = uuid.uuid4().hex
     issued = PreviewToken(
         token=token,
@@ -1679,6 +1745,7 @@ def _issue_preview_token(
         issued_at=time.time(),
         preview_kind=preview_kind,
         run_identity_digest=run_identity_digest,
+        confirmation_binding_json=confirmation_binding_json,
     )
     with _token_lock:
         _active_tokens[token] = issued

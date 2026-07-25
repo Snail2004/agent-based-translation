@@ -482,7 +482,9 @@ def test_resume_repair_reason_is_bounded_and_argv_material():
         routes._append_resume_repair_reason(argv, "contains whitespace")
 
 
-def test_resume_repair_reason_defaults_only_from_valid_recovery_pause(monkeypatch):
+def test_resume_repair_reason_defaults_from_sealed_child_or_valid_recovery_pause(
+    monkeypatch,
+):
     import routes.thesis_runs as routes
 
     entry = {"script": routes.WORKFLOW_ORCHESTRATOR_SCRIPT}
@@ -510,6 +512,11 @@ def test_resume_repair_reason_defaults_only_from_valid_recovery_pause(monkeypatc
     projection["resume"]["paused_reason"] = "journal_publication_race_recovered"
     projection["validation"]["state"] = "not_ready"
     assert routes._resolved_resume_repair_reason(entry, None) is None
+    entry["resume_repair_reason"] = "journal_publication_race_recovery"
+    assert (
+        routes._resolved_resume_repair_reason(entry, None)
+        == "journal_publication_race_recovery"
+    )
 
 
 def test_build_resume_argv_d2l_removes_complete_two_value_chapter_range(tmp_path):
@@ -1685,7 +1692,11 @@ def test_resume_estimate_follows_completed_pre_provider_child(
         registry,
         run_id="run_resume_source",
     )
-    source = registry.get_run(source["run_id"])
+    source = registry.update_run(
+        source["run_id"],
+        script="run_workflow_orchestrator_v1",
+        allow_api=True,
+    )
     child = registry.create_run(
         script=source["script"],
         argv=build_resume_argv_from_entry(source),
@@ -1714,7 +1725,10 @@ def test_resume_estimate_follows_completed_pre_provider_child(
         ended_at="2026-07-26T00:00:00Z",
     )
     routes.set_registry(registry)
+    monkeypatch.setattr(routes, "LIVE_START_ALLOWED", True)
     seen: list[str] = []
+    spawned: list[str] = []
+    preflight_sha256 = ["B" * 64]
 
     def preflight(entry, *, repair_reason):
         seen.append(entry["run_id"])
@@ -1723,7 +1737,7 @@ def test_resume_estimate_follows_completed_pre_provider_child(
             "mode": "direct",
             "effective_code_revision": "A" * 40,
             "repair_reason": repair_reason,
-            "preflight_sha256": "B" * 64,
+            "preflight_sha256": preflight_sha256[0],
         }
 
     monkeypatch.setattr(
@@ -1738,6 +1752,18 @@ def test_resume_estimate_follows_completed_pre_provider_child(
             "test_repair"
             if entry["run_id"] == source["run_id"]
             else None
+        ),
+    )
+    def record_spawn(run_registry, run_id):
+        spawned.append(run_id)
+        run_registry.update_run(run_id, status="running")
+
+    monkeypatch.setattr(routes, "spawn_run", record_spawn)
+    monkeypatch.setattr(
+        routes,
+        "freeze_managed_runtime_for_run",
+        lambda *_args, **_kwargs: pytest.fail(
+            "managed-source freeze must not run in the request transaction"
         ),
     )
     client = app_module.create_app().test_client()
@@ -1755,6 +1781,83 @@ def test_resume_estimate_follows_completed_pre_provider_child(
     assert data["repair_revision_preflight"]["mode"] == "direct"
     assert data["confirm_token"]
     assert seen == [child["run_id"]]
+
+    latest_response = client.get(
+        "/api/thesis/runs/estimate-preview"
+        f"?resume_run_id={child['run_id']}"
+    )
+    assert latest_response.status_code == 200
+    latest = latest_response.get_json()["data"]
+    assert latest["requested_resume_run_id"] == child["run_id"]
+    assert latest["resume_run_id"] == child["run_id"]
+    assert latest["repair_reason"] == "test_repair"
+    assert seen == [child["run_id"], child["run_id"]]
+
+    preflight_sha256[0] = "C" * 64
+    stale = client.post(
+        f"/api/thesis/runs/{child['run_id']}/resume",
+        json={"confirm_token": latest["confirm_token"]},
+    )
+    assert stale.status_code == 409
+    assert stale.get_json()["errors"][0]["code"] == (
+        "resume_revision_preflight_drift"
+    )
+    assert registry.find_resume_children(child["run_id"]) == []
+    assert spawned == []
+    preflight_sha256[0] = "B" * 64
+
+    drift = client.post(
+        f"/api/thesis/runs/{child['run_id']}/resume",
+        json={
+            "confirm_token": latest["confirm_token"],
+            "repair_reason": "different_repair",
+        },
+    )
+    assert drift.status_code == 403
+    assert drift.get_json()["errors"][0]["code"] == (
+        "resume_repair_reason_mismatch"
+    )
+    assert registry.find_resume_children(child["run_id"]) == []
+    assert spawned == []
+
+    resumed = client.post(
+        f"/api/thesis/runs/{child['run_id']}/resume",
+        json={"confirm_token": latest["confirm_token"]},
+    )
+    assert resumed.status_code == 201
+    resumed_entry = registry.get_run(resumed.get_json()["data"]["run_id"])
+    assert resumed_entry["resumed_from"] == child["run_id"]
+    assert resumed_entry["resume_repair_reason"] == "test_repair"
+    assert resumed_entry["argv"][-2:] == ["--repair-reason", "test_repair"]
+    assert spawned == [resumed_entry["run_id"]]
+    assert seen == [
+        child["run_id"],
+        child["run_id"],
+        child["run_id"],
+        child["run_id"],
+    ]
+
+    retried = client.post(
+        f"/api/thesis/runs/{child['run_id']}/resume",
+        json={"confirm_token": latest["confirm_token"]},
+    )
+    assert retried.status_code == 200
+    assert retried.get_json()["data"]["reused"] is True
+    assert retried.get_json()["data"]["run_id"] == resumed_entry["run_id"]
+    assert spawned == [resumed_entry["run_id"]]
+
+    retried_drift = client.post(
+        f"/api/thesis/runs/{child['run_id']}/resume",
+        json={
+            "confirm_token": latest["confirm_token"],
+            "repair_reason": "different_repair",
+        },
+    )
+    assert retried_drift.status_code == 403
+    assert retried_drift.get_json()["errors"][0]["code"] == (
+        "resume_repair_reason_mismatch"
+    )
+    assert spawned == [resumed_entry["run_id"]]
 
 
 def test_route_repair_preflight_rejects_before_child_and_freeze(
