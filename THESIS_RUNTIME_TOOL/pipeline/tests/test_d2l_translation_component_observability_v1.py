@@ -32,6 +32,9 @@ from pipeline.translate.d2l_translation_quality_observation_v1 import (
     SCHEMA_VERSION as QUALITY_SCHEMA,
     build_quality_observation,
 )
+from pipeline.workflow_replay.adapters_v1 import (
+    D2LTranslationComponentAdapterV1,
+)
 
 
 WORKFLOW_ID = "wf_observability_test_v1"
@@ -495,10 +498,39 @@ def test_full_component_observability_includes_memory_and_quality_audit(tmp_path
     assert sum(row["event"] == "response_received" for row in events) == 7
     assert sum(row["event"] == "cost_snapshot" for row in events) == 7
     assert all(row["stage_id"] is None for row in events if row["event"] == "cost_snapshot")
+    lifecycle_events = [
+        row for row in events if row["event"] == "term_lifecycle"
+    ]
+    lifecycle_rows = [
+        term_row
+        for event in lifecycle_events
+        for term_row in event["payload"]["rows"]
+    ]
+    assert {row["state"] for row in lifecycle_rows} == {
+        "aggregated",
+        "committed",
+    }
+    assert sum(row["state"] == "aggregated" for row in lifecycle_rows) == 2
+    assert sum(row["state"] == "committed" for row in lifecycle_rows) == 2
+    assert {
+        row["authority"]
+        for row in lifecycle_rows
+        if row["state"] == "aggregated"
+    } == {"none"}
+    assert {
+        row["authority"]
+        for row in lifecycle_rows
+        if row["state"] == "committed"
+    } == {"glossary_commit"}
 
     delta = json.loads((root / "artifacts/glossary_seal/memory_delta_v1.json").read_text())
     assert delta["counts"] == {"added": 2, "reinforced": 0, "revised": 0, "total": 2}
     assert {row["lifecycle"] for row in delta["deltas"]} == {"committed"}
+    assert not any(
+        row["state"] != "committed"
+        for row in lifecycle_rows
+        if row["authority"] == "glossary_commit"
+    )
     quality = json.loads((root / "artifacts/quality/report.json").read_text())
     assert quality["counts"] == {"pass": 1, "issue": 1, "findings": 1, "total": 2}
     issue = next(row for row in quality["blocks"] if row["quality_status"] == "issue")
@@ -510,3 +542,15 @@ def test_full_component_observability_includes_memory_and_quality_audit(tmp_path
     assert "translation_quality_observation" in kinds
     assert not (root / "workflow_manifest.json").exists()
     assert not (root / "workflow_events.jsonl").exists()
+
+    snapshot = D2LTranslationComponentAdapterV1(
+        require_terminal=True
+    ).validate_and_snapshot(root, workflow_run_id=WORKFLOW_ID)
+    projected_lifecycle = [
+        event
+        for event in snapshot.events
+        if event.value["event"] == "term_lifecycle"
+    ]
+    assert [event.public_payload for event in projected_lifecycle] == [
+        event["payload"] for event in lifecycle_events
+    ]

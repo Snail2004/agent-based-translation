@@ -13,14 +13,19 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     build_checkpoint,
     build_component_manifest,
     build_component_usage_snapshot,
+    canonical_json_bytes,
     canonical_sha256,
     file_sha256,
+    project_work_journal_term_batches,
     scoring_fragment_sha256,
+    validate_component_event,
     validate_component_event_stream,
     validate_component_manifest,
     validate_component_usage_snapshot_sequence,
     validate_artifact_index,
     validate_scoring_handoff_fragment,
+    validate_term_lifecycle_batch,
+    validate_term_lifecycle_event_sequence,
     validate_translation_component_package,
     write_component_manifest_snapshot,
     write_json,
@@ -693,3 +698,524 @@ def test_d2l_fragment_cannot_claim_final_input_set_hash(tmp_path: Path) -> None:
 
     with pytest.raises(D2LConsoleContractError, match="unknown keys"):
         validate_scoring_handoff_fragment(fragment)
+
+
+def _term_work_entry(
+    observations: list[dict[str, object]],
+    *,
+    attempt: int = 2,
+    journal_seq: int = 1,
+    work_item_id: str = "b1_window_0001",
+) -> dict[str, object]:
+    return {
+        "schema_version": "d2l_stage_work_journal_v1",
+        "workflow_run_id": WORKFLOW_RUN_ID,
+        "component_run_id": COMPONENT_RUN_ID,
+        "component_attempt_id": attempt,
+        "stage_id": "b1_candidate_discovery",
+        "journal_seq": journal_seq,
+        "previous_entry_sha256": None,
+        "work_item_id": work_item_id,
+        "work_contract_id": "candidate_contract_v1",
+        "input_sha256": "A" * 64,
+        "result": {"candidate_observations": observations},
+        "result_sha256": "B" * 64,
+        "entry_sha256": f"{journal_seq:064X}",
+    }
+
+
+def _term_validation_event(
+    *,
+    attempt: int = 2,
+    component_seq: int = 8,
+    work_item_id: str = "b1_window_0001",
+) -> dict[str, object]:
+    return {
+        "event_id": f"evt_{COMPONENT_RUN_ID}_{component_seq:08d}",
+        "component_attempt_id": attempt,
+        "component_seq": component_seq,
+        "event": "validation_passed",
+        "stage_id": "b1_candidate_discovery",
+        "payload": {"subject_ref": work_item_id},
+    }
+
+
+def _project_term_observations(
+    observations: list[dict[str, object]],
+    *,
+    attempt: int = 2,
+) -> list[dict[str, object]]:
+    return project_work_journal_term_batches(
+        stage_id="b1_candidate_discovery",
+        journal_ref="runtime/work_items/b1_candidate_discovery.jsonl",
+        entry=_term_work_entry(observations, attempt=attempt),
+        validation_event=_term_validation_event(attempt=attempt),
+        previous_rows=[],
+        projection_mode="live",
+        completed=1,
+        total=179,
+        unit="windows",
+    )
+
+
+def _project_term_stage(
+    *,
+    stage_id: str,
+    work_item_id: str,
+    result: dict[str, object],
+    previous_rows: list[dict[str, object]],
+    component_seq: int,
+) -> list[dict[str, object]]:
+    entry = _term_work_entry(
+        [],
+        attempt=2,
+        work_item_id=work_item_id,
+    )
+    entry["stage_id"] = stage_id
+    entry["result"] = result
+    validation = _term_validation_event(
+        attempt=2,
+        component_seq=component_seq,
+        work_item_id=work_item_id,
+    )
+    validation["stage_id"] = stage_id
+    return project_work_journal_term_batches(
+        stage_id=stage_id,
+        journal_ref=f"runtime/work_items/{stage_id}.jsonl",
+        entry=entry,
+        validation_event=validation,
+        previous_rows=previous_rows,
+        projection_mode="live",
+        completed=1,
+        total=1,
+        unit="packets",
+    )
+
+
+def test_term_lifecycle_live_batch_is_deterministic_and_provisional() -> None:
+    observations = [
+        {
+            "source_surface": "gradient",
+            "anchor_block_ids": ["block_2", "block_1"],
+        },
+        {
+            "source_surface": "example",
+            "anchor_block_ids": ["block_3"],
+        },
+    ]
+    first = _project_term_observations(observations)
+    second = _project_term_observations(copy.deepcopy(observations))
+
+    assert first == second
+    assert len(first) == 1
+    batch = validate_term_lifecycle_batch(
+        first[0],
+        stage_id="b1_candidate_discovery",
+    )
+    assert batch["projection_mode"] == "live"
+    assert batch["timing_authority"] == "recorded"
+    assert {row["state"] for row in batch["rows"]} == {"proposed"}
+    assert {row["authority"] for row in batch["rows"]} == {"none"}
+    assert batch["summary"]["observations"] == 2
+    assert batch["summary"]["unique_surfaces"] == 2
+    assert validate_term_lifecycle_event_sequence(
+        [
+            {
+                "event": "term_lifecycle",
+                "stage_id": "b1_candidate_discovery",
+                "payload": batch,
+            }
+        ]
+    )["rows_by_id"]
+
+
+def test_term_lifecycle_over_cap_splits_with_exact_stable_cover() -> None:
+    observations = [
+        {
+            "source_surface": f"technical term {index:04d}",
+            "anchor_block_ids": [f"block_{index:04d}"],
+        }
+        for index in range(300)
+    ]
+    batches = _project_term_observations(observations)
+
+    assert len(batches) >= 3
+    row_ids = [
+        row["row_id"]
+        for batch in batches
+        for row in batch["rows"]
+    ]
+    assert len(row_ids) == len(set(row_ids)) == len(observations)
+    assert all(len(canonical_json_bytes(batch)) <= 60_000 for batch in batches)
+    state = validate_term_lifecycle_event_sequence(
+        [
+            {
+                "event": "term_lifecycle",
+                "stage_id": "b1_candidate_discovery",
+                "payload": batch,
+            }
+            for batch in batches
+        ]
+    )
+    assert len(state["rows_by_id"]) == len(observations)
+    assert _project_term_observations(observations) == batches
+
+
+def test_term_lifecycle_duplicate_batch_id_with_hash_drift_fails_closed() -> None:
+    batch = _project_term_observations(
+        [{"source_surface": "gradient", "anchor_block_ids": ["block_1"]}]
+    )[0]
+    drift = copy.deepcopy(batch)
+    drift["summary"]["through_work_id"] = "different_work"
+    unsigned = dict(drift)
+    unsigned.pop("batch_sha256")
+    drift["batch_sha256"] = canonical_sha256(unsigned)
+    validate_term_lifecycle_batch(
+        drift,
+        stage_id="b1_candidate_discovery",
+    )
+
+    with pytest.raises(D2LConsoleContractError, match="batch ID.*unequal hash"):
+        validate_term_lifecycle_event_sequence(
+            [
+                {
+                    "event": "term_lifecycle",
+                    "stage_id": "b1_candidate_discovery",
+                    "payload": batch,
+                },
+                {
+                    "event": "term_lifecycle",
+                    "stage_id": "b1_candidate_discovery",
+                    "payload": drift,
+                },
+            ]
+        )
+
+
+def test_term_lifecycle_rejects_future_origin_and_unbounded_rationale() -> None:
+    future_batch = _project_term_observations(
+        [{"source_surface": "gradient", "anchor_block_ids": ["block_1"]}],
+        attempt=2,
+    )[0]
+    manifest = _manifest(status="running", attempt=1)
+    event = {
+        "schema": "d2l_translation_component_event_v1",
+        "event_id": f"evt_{COMPONENT_RUN_ID}_00000001",
+        "workflow_run_id": WORKFLOW_RUN_ID,
+        "flow_kind": "terminology_translation",
+        "component_id": "translation",
+        "component_run_id": COMPONENT_RUN_ID,
+        "component_attempt_id": 1,
+        "component_seq": 1,
+        "ts": "2026-07-22T00:00:01Z",
+        "stage_id": "b1_candidate_discovery",
+        "agent": "builder",
+        "event": "term_lifecycle",
+        "severity": "info",
+        "payload": future_batch,
+    }
+    with pytest.raises(D2LConsoleContractError, match="future attempt"):
+        validate_component_event(
+            event,
+            manifest=manifest,
+            expected_component_seq=1,
+        )
+
+    b2_entry = _term_work_entry([], attempt=1)
+    b2_entry["stage_id"] = "b2_admission_translation"
+    b2_entry["work_item_id"] = "b2_packet_0001"
+    b2_entry["result"] = {
+        "decisions": [
+            {
+                "candidate_id": "cand_gradient",
+                "decision": "admit",
+                "canonical_source": "gradient",
+                "primary_target_vi": "gradient",
+                "primary_use": None,
+                "alternates": [],
+                "evidence_block_ids": ["block_1"],
+                "rationale": "x" * 513,
+            }
+        ]
+    }
+    validation = _term_validation_event(
+        attempt=1,
+        work_item_id="b2_packet_0001",
+    )
+    validation["stage_id"] = "b2_admission_translation"
+    with pytest.raises(D2LConsoleContractError, match="rationale.*exceeds"):
+        project_work_journal_term_batches(
+            stage_id="b2_admission_translation",
+            journal_ref=(
+                "runtime/work_items/b2_admission_translation.jsonl"
+            ),
+            entry=b2_entry,
+            validation_event=validation,
+            previous_rows=[],
+            projection_mode="live",
+            completed=1,
+            total=1,
+            unit="packets",
+        )
+
+
+def test_term_lifecycle_b2_and_auditors_follow_closed_transitions() -> None:
+    surfaces = [
+        "gradient",
+        "boilerplate",
+        "example",
+        "covariate shift",
+        "parameter",
+        "sample",
+    ]
+    batches = _project_term_observations(
+        [
+            {
+                "source_surface": surface,
+                "anchor_block_ids": [f"block_{index}"],
+            }
+            for index, surface in enumerate(surfaces, start=1)
+        ]
+    )
+    previous_rows = [
+        row for batch in batches for row in batch["rows"]
+    ]
+
+    b2_batches = _project_term_stage(
+        stage_id="b2_admission_translation",
+        work_item_id="b2_packet_0001",
+        result={
+            "decisions": [
+                {
+                    "candidate_id": f"cand_{surface.replace(' ', '_')}",
+                    "decision": decision,
+                    "canonical_source": surface,
+                    "primary_target_vi": (
+                        f"vi_{surface.replace(' ', '_')}"
+                        if decision == "admit"
+                        else None
+                    ),
+                    "primary_use": None,
+                    "alternates": [],
+                    "evidence_block_ids": [f"block_{index}"],
+                    "rationale": f"B2 {decision}.",
+                }
+                for index, (surface, decision) in enumerate(
+                    zip(
+                        surfaces,
+                        (
+                            "admit",
+                            "reject",
+                            "review",
+                            "admit",
+                            "admit",
+                            "admit",
+                        ),
+                        strict=True,
+                    ),
+                    start=1,
+                )
+            ]
+        },
+        previous_rows=previous_rows,
+        component_seq=18,
+    )
+    batches.extend(b2_batches)
+    previous_rows.extend(
+        row for batch in b2_batches for row in batch["rows"]
+    )
+
+    morphology_batches = _project_term_stage(
+        stage_id="auditor_morphology",
+        work_item_id="morphology_packet_0001",
+        result={
+            "decisions": [
+                {
+                    "component_id": "component_covariate_shift",
+                    "action": "pending",
+                    "pending_reason": "Needs more evidence.",
+                },
+                {
+                    "component_id": "component_resolved",
+                    "action": "keep",
+                    "resolved_entries": [
+                        {
+                            "canonical_source": surface,
+                            "canonical_target_vi": (
+                                f"vi_{surface.replace(' ', '_')}"
+                            ),
+                            "member_candidate_ids": [
+                                f"cand_{surface.replace(' ', '_')}"
+                            ],
+                            "alternative_targets": [],
+                            "evidence_block_ids": [f"block_{index}"],
+                            "rationale": "Morphology resolved.",
+                        }
+                        for index, surface in (
+                            (1, "gradient"),
+                            (5, "parameter"),
+                            (6, "sample"),
+                        )
+                    ],
+                },
+            ]
+        },
+        previous_rows=previous_rows,
+        component_seq=28,
+    )
+    batches.extend(morphology_batches)
+    previous_rows.extend(
+        row for batch in morphology_batches for row in batch["rows"]
+    )
+
+    collision_batches = _project_term_stage(
+        stage_id="auditor_target_collision",
+        work_item_id="collision_packet_0001",
+        result={
+            "decisions": [
+                {
+                    "component_id": "component_parameter",
+                    "action": "pending",
+                    "pending_reason": "Target collision remains ambiguous.",
+                },
+                {
+                    "component_id": "component_collision_resolved",
+                    "action": "keep",
+                    "resolved_entries": [
+                        {
+                            "canonical_source": surface,
+                            "canonical_target_vi": (
+                                f"vi_{surface.replace(' ', '_')}"
+                            ),
+                            "member_candidate_ids": [
+                                f"cand_{surface.replace(' ', '_')}"
+                            ],
+                            "alternative_targets": [],
+                            "evidence_block_ids": [f"block_{index}"],
+                            "rationale": "Collision resolved.",
+                        }
+                        for index, surface in (
+                            (1, "gradient"),
+                            (6, "sample"),
+                        )
+                    ],
+                },
+            ]
+        },
+        previous_rows=previous_rows,
+        component_seq=38,
+    )
+    batches.extend(collision_batches)
+    previous_rows.extend(
+        row for batch in collision_batches for row in batch["rows"]
+    )
+
+    multi_target_batches = _project_term_stage(
+        stage_id="auditor_multi_target",
+        work_item_id="multi_target_packet_0001",
+        result={
+            "decisions": [
+                {
+                    "candidate_id": "cand_gradient",
+                    "action": "resolve",
+                    "target_dispositions": [
+                        {
+                            "target_vi": "vi_gradient",
+                            "applicability": None,
+                            "disposition": "canonical",
+                        }
+                    ],
+                    "evidence_block_ids": ["block_1"],
+                    "rationale": "One stable target.",
+                },
+                {
+                    "candidate_id": "cand_sample",
+                    "action": "pending",
+                    "target_dispositions": [],
+                    "evidence_block_ids": ["block_6"],
+                    "pending_reason": "Context split remains unresolved.",
+                },
+            ]
+        },
+        previous_rows=previous_rows,
+        component_seq=48,
+    )
+    batches.extend(multi_target_batches)
+
+    events = [
+        {
+            "event": "term_lifecycle",
+            "stage_id": stage_id,
+            "payload": batch,
+        }
+        for stage_id, stage_batches in (
+            ("b1_candidate_discovery", batches[:1]),
+            ("b2_admission_translation", b2_batches),
+            ("auditor_morphology", morphology_batches),
+            ("auditor_target_collision", collision_batches),
+            ("auditor_multi_target", multi_target_batches),
+        )
+        for batch in stage_batches
+    ]
+    state = validate_term_lifecycle_event_sequence(events)
+    lifecycle_states = {
+        row["state"] for row in state["rows_by_id"].values()
+    }
+    assert lifecycle_states == {
+        "proposed",
+        "admitted",
+        "rejected",
+        "review_held",
+        "morphology_resolved",
+        "morphology_pending",
+        "collision_resolved",
+        "collision_pending",
+        "multi_target_resolved",
+        "multi_target_pending",
+    }
+    assert {
+        row["authority"] for row in state["rows_by_id"].values()
+    } == {"none"}
+
+    rejected = next(
+        row
+        for row in state["rows_by_id"].values()
+        if row["state"] == "rejected"
+    )
+    invalid_batch = copy.deepcopy(morphology_batches[0])
+    invalid_row = next(
+        row
+        for row in invalid_batch["rows"]
+        if row["state"] == "morphology_resolved"
+    )
+    invalid_row["supersedes_row_ids"] = [rejected["row_id"]]
+    unsigned_row = dict(invalid_row)
+    unsigned_row.pop("row_sha256")
+    invalid_row["row_sha256"] = canonical_sha256(unsigned_row)
+    unsigned_batch = dict(invalid_batch)
+    unsigned_batch.pop("batch_sha256")
+    invalid_batch["batch_sha256"] = canonical_sha256(unsigned_batch)
+    validate_term_lifecycle_batch(
+        invalid_batch,
+        stage_id="auditor_morphology",
+    )
+    invalid_events = [
+        event
+        for event in events
+        if event["stage_id"] in {
+            "b1_candidate_discovery",
+            "b2_admission_translation",
+        }
+    ]
+    invalid_events.append(
+        {
+            "event": "term_lifecycle",
+            "stage_id": "auditor_morphology",
+            "payload": invalid_batch,
+        }
+    )
+    with pytest.raises(
+        D2LConsoleContractError,
+        match="state transition is invalid",
+    ):
+        validate_term_lifecycle_event_sequence(invalid_events)

@@ -32,9 +32,14 @@ from pipeline.prepass.d2l_console_replay_contract_v1 import (
     build_stage_plan,
     canonical_sha256,
     file_sha256,
+    project_artifact_term_batches,
+    project_work_journal_term_batches,
+    term_work_completed,
     validate_artifact_index,
+    validate_component_event_stream,
     validate_component_manifest,
     validate_scoring_handoff_fragment,
+    validate_term_lifecycle_event_sequence,
     validate_translation_component_package,
     write_component_manifest_snapshot,
     write_json,
@@ -429,6 +434,16 @@ class D2LTranslationComponentRunner:
         self._pending_journal_recovery: (
             tuple[StagePlan, Path, dict[str, Any]] | None
         ) = None
+        self._term_state_initialized = False
+        self._term_rows_by_id: dict[str, dict[str, Any]] = {}
+        self._term_batches_by_id: dict[str, str] = {}
+        self._term_evidence_by_key: dict[str, dict[str, Any]] = {}
+        self._term_prior_rows_by_evidence: dict[
+            str, list[dict[str, Any]]
+        ] = {}
+        self._term_batch_ids_by_evidence: dict[str, list[str]] = {}
+        self._term_projection_mode_by_evidence: dict[str, str] = {}
+        self._term_checked_evidence_keys: set[str] = set()
 
     @property
     def manifest_path(self) -> Path:
@@ -468,6 +483,461 @@ class D2LTranslationComponentRunner:
                 "last_entry_sha256": state["last_entry_sha256"],
             }
         return journals
+
+    def _component_events(self) -> list[dict[str, Any]]:
+        path = self.root / "events.jsonl"
+        if not path.is_file():
+            return []
+        rows: list[dict[str, Any]] = []
+        for line_number, line in enumerate(
+            path.read_text(encoding="utf-8").splitlines(),
+            start=1,
+        ):
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ComponentRunnerError(
+                    f"component event line {line_number} is invalid"
+                ) from exc
+            if not isinstance(row, dict):
+                raise ComponentRunnerError(
+                    f"component event line {line_number} must be an object"
+                )
+            rows.append(row)
+        return rows
+
+    def _initialize_term_lifecycle_state(self) -> None:
+        if self._term_state_initialized:
+            return
+        validate_component_event_stream(
+            self.root / "events.jsonl",
+            manifest=self.manifest,
+            require_terminal=False,
+        )
+        events = self._component_events()
+        state = validate_term_lifecycle_event_sequence(events)
+        self._term_rows_by_id = {
+            str(row_id): dict(row)
+            for row_id, row in state["rows_by_id"].items()
+        }
+        self._term_batches_by_id = dict(state["batches_by_id"])
+        running_rows: dict[str, dict[str, Any]] = {}
+        seen_batches: set[str] = set()
+        for event in events:
+            if event["event"] != "term_lifecycle":
+                continue
+            batch = event["payload"]
+            evidence = dict(batch["evidence"])
+            evidence_key = canonical_sha256(evidence)
+            previous_evidence = self._term_evidence_by_key.get(evidence_key)
+            if previous_evidence is not None and previous_evidence != evidence:
+                raise ComponentRunnerError(
+                    "term lifecycle evidence identity drift"
+                )
+            if evidence_key not in self._term_prior_rows_by_evidence:
+                self._term_prior_rows_by_evidence[evidence_key] = [
+                    dict(row) for row in running_rows.values()
+                ]
+                self._term_batch_ids_by_evidence[evidence_key] = []
+            self._term_evidence_by_key[evidence_key] = evidence
+            prior_mode = self._term_projection_mode_by_evidence.get(
+                evidence_key
+            )
+            current_mode = str(batch["projection_mode"])
+            if prior_mode is not None and prior_mode != current_mode:
+                raise ComponentRunnerError(
+                    "one term lifecycle evidence has multiple projection modes"
+                )
+            self._term_projection_mode_by_evidence[evidence_key] = (
+                current_mode
+            )
+            if batch["batch_id"] in seen_batches:
+                continue
+            self._term_batch_ids_by_evidence[evidence_key].append(
+                str(batch["batch_id"])
+            )
+            seen_batches.add(str(batch["batch_id"]))
+            for row in batch["rows"]:
+                running_rows[str(row["row_id"])] = dict(row)
+        self._term_state_initialized = True
+
+    def _existing_term_evidence(
+        self,
+        *,
+        evidence_ref: str,
+        evidence_sha256: str,
+    ) -> dict[str, Any] | None:
+        matches = [
+            evidence
+            for evidence in self._term_evidence_by_key.values()
+            if (
+                (
+                    evidence["journal_ref"]
+                    if evidence["evidence_kind"] == "work_journal"
+                    else evidence["artifact_ref"]
+                )
+                == evidence_ref
+                and (
+                    evidence["entry_sha256"]
+                    if evidence["evidence_kind"] == "work_journal"
+                    else evidence["sha256"]
+                )
+                == evidence_sha256
+            )
+        ]
+        if len(matches) > 1:
+            raise ComponentRunnerError(
+                "one term evidence binding has multiple lifecycle identities"
+            )
+        return None if not matches else dict(matches[0])
+
+    def _validation_event_for_work_entry(
+        self,
+        *,
+        stage_id: str,
+        entry: Mapping[str, Any],
+        journal_ref: str,
+    ) -> dict[str, Any]:
+        existing = self._existing_term_evidence(
+            evidence_ref=journal_ref,
+            evidence_sha256=str(entry["entry_sha256"]),
+        )
+        events = self._component_events()
+        if existing is not None:
+            event = next(
+                (
+                    row
+                    for row in events
+                    if row["event_id"] == existing["validation_event_id"]
+                ),
+                None,
+            )
+            if event is None:
+                raise ComponentRunnerError(
+                    "existing term lifecycle validation event is missing"
+                )
+            return event
+        candidates = [
+            row
+            for row in events
+            if row["event"] == "validation_passed"
+            and row["stage_id"] == stage_id
+            and row["payload"]["subject_ref"] == entry["work_item_id"]
+        ]
+        if not candidates:
+            raise ComponentRunnerError(
+                "accepted work item lacks a validation_passed event"
+            )
+        candidates.sort(
+            key=lambda row: (
+                row["component_attempt_id"]
+                != entry["component_attempt_id"],
+                row["component_seq"],
+            )
+        )
+        return candidates[0]
+
+    def _emit_term_lifecycle_batches(
+        self,
+        *,
+        stage: StagePlan,
+        batches: Sequence[Mapping[str, Any]],
+        previous_rows: Sequence[Mapping[str, Any]],
+    ) -> None:
+        if not batches:
+            return
+        evidence = dict(batches[0]["evidence"])
+        evidence_key = canonical_sha256(evidence)
+        expected_ids = [str(batch["batch_id"]) for batch in batches]
+        existing_ids = self._term_batch_ids_by_evidence.get(
+            evidence_key,
+            [],
+        )
+        if existing_ids != expected_ids[: len(existing_ids)]:
+            raise ComponentRunnerError(
+                "existing term lifecycle batch does not match evidence projection"
+            )
+        stored_prior = self._term_prior_rows_by_evidence.get(evidence_key)
+        normalized_prior = [dict(row) for row in previous_rows]
+        if stored_prior is not None and stored_prior != normalized_prior:
+            raise ComponentRunnerError(
+                "term lifecycle prior-row projection drift"
+            )
+        self._term_prior_rows_by_evidence.setdefault(
+            evidence_key,
+            normalized_prior,
+        )
+        projection_mode = str(batches[0]["projection_mode"])
+        prior_projection_mode = self._term_projection_mode_by_evidence.get(
+            evidence_key
+        )
+        if (
+            prior_projection_mode is not None
+            and prior_projection_mode != projection_mode
+        ):
+            raise ComponentRunnerError(
+                "term lifecycle projection mode drift"
+            )
+        self._term_projection_mode_by_evidence[evidence_key] = projection_mode
+        for batch in batches:
+            if (
+                batch["evidence"] != evidence
+                or batch["projection_mode"] != projection_mode
+            ):
+                raise ComponentRunnerError(
+                    "term lifecycle batch group is inconsistent"
+                )
+            batch_id = str(batch["batch_id"])
+            batch_sha = str(batch["batch_sha256"])
+            existing_batch_sha = self._term_batches_by_id.get(batch_id)
+            if existing_batch_sha is not None:
+                if existing_batch_sha != batch_sha:
+                    raise ComponentRunnerError(
+                        "term lifecycle batch ID hash conflict"
+                    )
+                continue
+            for row in batch["rows"]:
+                existing = self._term_rows_by_id.get(str(row["row_id"]))
+                if existing is not None:
+                    if existing["row_sha256"] != row["row_sha256"]:
+                        raise ComponentRunnerError(
+                            "term lifecycle row ID hash conflict"
+                        )
+                    raise ComponentRunnerError(
+                        "term lifecycle row exists outside its deterministic batch"
+                    )
+            self.writer.emit(
+                "term_lifecycle",
+                stage_id=stage.stage_id,
+                agent=stage.producer,
+                payload=dict(batch),
+            )
+            self._term_batches_by_id[batch_id] = batch_sha
+            self._term_evidence_by_key[evidence_key] = evidence
+            self._term_batch_ids_by_evidence.setdefault(
+                evidence_key,
+                [],
+            ).append(batch_id)
+            for row in batch["rows"]:
+                self._term_rows_by_id[str(row["row_id"])] = dict(row)
+
+    def _project_term_work_entry(
+        self,
+        *,
+        stage: StagePlan,
+        journal_ref: str,
+        entries: Sequence[Mapping[str, Any]],
+        entry: Mapping[str, Any],
+        projection_mode: str,
+    ) -> None:
+        validation_event = self._validation_event_for_work_entry(
+            stage_id=stage.stage_id,
+            entry=entry,
+            journal_ref=journal_ref,
+        )
+        existing_evidence = self._existing_term_evidence(
+            evidence_ref=journal_ref,
+            evidence_sha256=str(entry["entry_sha256"]),
+        )
+        existing_evidence_key = (
+            None
+            if existing_evidence is None
+            else canonical_sha256(existing_evidence)
+        )
+        if (
+            existing_evidence_key is not None
+            and existing_evidence_key in self._term_checked_evidence_keys
+        ):
+            return
+        if existing_evidence is None:
+            previous_rows = list(self._term_rows_by_id.values())
+        else:
+            evidence_key = existing_evidence_key
+            assert evidence_key is not None
+            previous_rows = self._term_prior_rows_by_evidence[evidence_key]
+            projection_mode = self._term_projection_mode_by_evidence[
+                evidence_key
+            ]
+        completed = term_work_completed(
+            stage.stage_id,
+            entries,
+            through_journal_seq=int(entry["journal_seq"]),
+        )
+        batches = project_work_journal_term_batches(
+            stage_id=stage.stage_id,
+            journal_ref=journal_ref,
+            entry=entry,
+            validation_event=validation_event,
+            previous_rows=previous_rows,
+            projection_mode=projection_mode,
+            completed=completed,
+            total=stage.total,
+            unit=stage.unit,
+        )
+        self._emit_term_lifecycle_batches(
+            stage=stage,
+            batches=batches,
+            previous_rows=previous_rows,
+        )
+        evidence_key = (
+            canonical_sha256(batches[0]["evidence"])
+            if batches
+            else existing_evidence_key
+        )
+        if evidence_key is not None:
+            self._term_checked_evidence_keys.add(evidence_key)
+
+    def _drain_term_work_journal(
+        self,
+        stage: StagePlan,
+        *,
+        projection_mode: str,
+    ) -> None:
+        if stage.stage_id not in {
+            "b1_candidate_discovery",
+            "b2_admission_translation",
+            "auditor_morphology",
+            "auditor_target_collision",
+            "auditor_multi_target",
+        }:
+            return
+        self._initialize_term_lifecycle_state()
+        journal_ref = f"runtime/work_items/{stage.stage_id}.jsonl"
+        entries = read_work_journal(self.root / journal_ref)
+        for entry in entries:
+            self._project_term_work_entry(
+                stage=stage,
+                journal_ref=journal_ref,
+                entries=entries,
+                entry=entry,
+                projection_mode=projection_mode,
+            )
+
+    def _project_term_artifact(
+        self,
+        *,
+        stage: StagePlan,
+        artifact: Mapping[str, Any],
+    ) -> None:
+        if stage.stage_id not in {"candidate_index", "glossary_seal"}:
+            return
+        if (
+            stage.stage_id == "candidate_index"
+            and artifact["schema_version"] != "d2l_candidate_index_v2"
+        ) or (
+            stage.stage_id == "glossary_seal"
+            and artifact["schema_version"]
+            != "d2l_terminology_memory_delta_batch_v1"
+        ):
+            return
+        self._initialize_term_lifecycle_state()
+        events = self._component_events()
+        created_event = next(
+            (
+                row
+                for row in events
+                if row["event_id"] == artifact["created_event_id"]
+            ),
+            None,
+        )
+        if created_event is None:
+            raise ComponentRunnerError(
+                "term lifecycle artifact creation event is missing"
+            )
+        existing_evidence = self._existing_term_evidence(
+            evidence_ref=str(artifact["artifact_ref"]),
+            evidence_sha256=str(artifact["sha256"]),
+        )
+        existing_evidence_key = (
+            None
+            if existing_evidence is None
+            else canonical_sha256(existing_evidence)
+        )
+        if (
+            existing_evidence_key is not None
+            and existing_evidence_key in self._term_checked_evidence_keys
+        ):
+            return
+        if existing_evidence is None:
+            previous_rows = list(self._term_rows_by_id.values())
+        else:
+            evidence_key = existing_evidence_key
+            assert evidence_key is not None
+            previous_rows = self._term_prior_rows_by_evidence[evidence_key]
+        artifact_path = _relative_path(
+            self.root,
+            artifact["relative_path"],
+            "term lifecycle artifact relative_path",
+        )
+        stage_row = self._stage_row(stage.stage_id)
+        batches = project_artifact_term_batches(
+            artifact=artifact,
+            artifact_value=_load_json(
+                artifact_path,
+                "term lifecycle artifact",
+            ),
+            created_event=created_event,
+            previous_rows=previous_rows,
+            completed=int(stage_row["progress"]["completed"]),
+            total=stage_row["progress"]["total"],
+            unit=str(stage_row["progress"]["unit"]),
+            through_work_id=stage.work_id,
+        )
+        self._emit_term_lifecycle_batches(
+            stage=stage,
+            batches=batches,
+            previous_rows=previous_rows,
+        )
+        evidence_key = (
+            canonical_sha256(batches[0]["evidence"])
+            if batches
+            else existing_evidence_key
+        )
+        if evidence_key is not None:
+            self._term_checked_evidence_keys.add(evidence_key)
+
+    def _project_registered_stage_term_artifacts(
+        self,
+        stage: StagePlan,
+    ) -> None:
+        for artifact in sorted(
+            (
+                row
+                for row in self.artifacts
+                if row["producer_stage_id"] == stage.stage_id
+            ),
+            key=lambda row: row["created_event_id"],
+        ):
+            self._project_term_artifact(stage=stage, artifact=artifact)
+
+    def _backfill_term_lifecycle(self) -> None:
+        self._initialize_term_lifecycle_state()
+        stages = {stage.stage_id: stage for stage in self.plan.stages}
+        for stage_id in (
+            "b1_candidate_discovery",
+            "b2_admission_translation",
+            "auditor_morphology",
+            "auditor_target_collision",
+            "auditor_multi_target",
+        ):
+            self._drain_term_work_journal(
+                stages[stage_id],
+                projection_mode="resume_backfill",
+            )
+        created_seq: dict[str, int] = {
+            str(event["event_id"]): int(event["component_seq"])
+            for event in self._component_events()
+            if event["event"] == "artifact_created"
+        }
+        for artifact in sorted(
+            self.artifacts,
+            key=lambda row: created_seq.get(
+                str(row["created_event_id"]),
+                10**12,
+            ),
+        ):
+            stage = stages[str(artifact["producer_stage_id"])]
+            self._project_term_artifact(stage=stage, artifact=artifact)
 
     def _semantic_contract_sha256(self) -> str:
         plan = self.plan.canonical_mapping()
@@ -718,7 +1188,28 @@ class D2LTranslationComponentRunner:
             (row for row in self.plan.stages if row.stage_id == stage_id),
             None,
         )
-        if stage is None or self._stage_row(stage_id)["status"] != "running":
+        if stage is None:
+            raise ComponentRunnerError(
+                "stale-attempt active stage is not recoverable"
+            )
+        stage_status = self._stage_row(stage_id)["status"]
+        attempt_events = [
+            row
+            for row in self._component_events()
+            if row["component_attempt_id"]
+            == self.manifest["component_attempt_id"]
+        ]
+        pre_stage_resume_crash = (
+            stage_status in {"pending", "paused"}
+            and any(row["event"] == "run_resumed" for row in attempt_events)
+            and not any(row["event"] == "stage_start" for row in attempt_events)
+            and all(
+                row["event"]
+                in {"run_resumed", "artifact_created", "term_lifecycle"}
+                for row in attempt_events
+            )
+        )
+        if stage_status != "running" and not pre_stage_resume_crash:
             raise ComponentRunnerError(
                 "stale-attempt active stage is not recoverable"
             )
@@ -757,7 +1248,11 @@ class D2LTranslationComponentRunner:
             component_attempt_id=self._current_attempt,
             recover_existing_attempt=True,
         )
-        self._pause(stage_id, "stale_process_recovered")
+        self._pause(
+            stage_id,
+            "stale_process_recovered",
+            project_term_lifecycle=False,
+        )
 
     def _start_new(self) -> None:
         if (
@@ -931,6 +1426,9 @@ class D2LTranslationComponentRunner:
             previous_component_attempt_id=self._current_attempt - 1,
             paused_reason=str(resume["paused_reason"]),
         )
+        # Project accepted historical terminology only after the Resume
+        # boundary is durable and before any stage subprocess can run.
+        self._backfill_term_lifecycle()
 
     def _register_repair_receipt(self, *, stage_id: str) -> None:
         if self._repair_receipt is None or self._repair_receipt_path is None:
@@ -1193,6 +1691,7 @@ class D2LTranslationComponentRunner:
             )
             outcome = "reused" if stage.mode == "reused" else "succeeded"
             self._finish_stage(stage, outcome)
+            self._project_registered_stage_term_artifacts(stage)
             if self.stop_after_stage == stage.stage_id:
                 next_stage = self._next_pending_stage(stage.stage_id)
                 if next_stage is None:
@@ -1234,6 +1733,10 @@ class D2LTranslationComponentRunner:
 
     def _execute_command(self, stage: StagePlan) -> None:
         assert stage.command is not None
+        self._drain_term_work_journal(
+            stage,
+            projection_mode="live",
+        )
         cwd = self.root if stage.cwd is None else Path(stage.cwd).resolve()
         started = time.monotonic()
         process_log_root = (
@@ -1295,6 +1798,10 @@ class D2LTranslationComponentRunner:
                     self._drain_observation_journal(
                         stage, allow_incomplete_tail=True
                     )
+                    self._drain_term_work_journal(
+                        stage,
+                        projection_mode="live",
+                    )
                     if (
                         self.pause_file is not None
                         and self.pause_file.is_file()
@@ -1347,6 +1854,10 @@ class D2LTranslationComponentRunner:
                 stage,
                 allow_incomplete_tail=False,
             )
+            self._drain_term_work_journal(
+                stage,
+                projection_mode="live",
+            )
         except D2LStageReceiptError as exc:
             if "unterminated final row" not in str(exc):
                 raise
@@ -1354,6 +1865,10 @@ class D2LTranslationComponentRunner:
             self._drain_observation_journal(
                 stage,
                 allow_incomplete_tail=False,
+            )
+            self._drain_term_work_journal(
+                stage,
+                projection_mode="live",
             )
             self._emit_repairable_stage_failure(
                 stage,
@@ -1710,13 +2225,24 @@ class D2LTranslationComponentRunner:
             },
         )
 
-    def _pause(self, stage_id: str, reason: str) -> None:
+    def _pause(
+        self,
+        stage_id: str,
+        reason: str,
+        *,
+        project_term_lifecycle: bool = True,
+    ) -> None:
         stage = next(item for item in self.plan.stages if item.stage_id == stage_id)
         if self.observation_journal_path.is_file():
             self._drain_observation_journal(
                 stage,
                 allow_incomplete_tail=False,
             )
+            if project_term_lifecycle:
+                self._drain_term_work_journal(
+                    stage,
+                    projection_mode="live",
+                )
         journal_entries = read_observation_journal(self.observation_journal_path)
         journal_state = observation_journal_state(journal_entries)
         stage_row = self._stage_row(stage_id)

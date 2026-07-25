@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 
 from pipeline.prepass.d2l_console_replay_contract_v1 import (
+    D2LTranslationComponentEventWriter,
     STAGE_IDS,
     build_scoring_handoff_fragment,
     build_stage_plan,
@@ -618,6 +619,119 @@ def _write_streaming_stage_script(tmp_path: Path) -> Path:
                 observations=observations,
             )
             write_json(root / "artifacts/preflight_receipt.json", receipt)
+            """
+        ),
+        encoding="utf-8",
+    )
+    return script
+
+
+def _write_b1_term_stage_script(tmp_path: Path) -> Path:
+    script = tmp_path / "b1_term_stage.py"
+    script.write_text(
+        textwrap.dedent(
+            """
+            import json
+            import sys
+            from pathlib import Path
+
+            sys.path.insert(0, sys.argv[2])
+            from pipeline.prepass.d2l_component_stage_receipt_v1 import (
+                D2LStageObservationJournalWriter,
+            )
+            from pipeline.prepass.d2l_console_replay_contract_v1 import (
+                canonical_sha256,
+            )
+            from pipeline.prepass.d2l_stage_work_journal_v1 import (
+                D2LStageWorkJournal,
+            )
+
+            root = Path(sys.argv[1])
+            count_path = Path(sys.argv[3])
+            candidate_count = int(sys.argv[4])
+            manifest = json.loads(
+                (root / "component_manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            attempt = int(manifest["component_attempt_id"])
+            count = (
+                int(count_path.read_text(encoding="ascii"))
+                if count_path.exists()
+                else 0
+            )
+            count_path.write_text(str(count + 1), encoding="ascii")
+            stage_id = "b1_candidate_discovery"
+            producer = stage_id
+            stage_work_id = "work_b1_candidate_discovery"
+            item_id = "b1_window_0001"
+            observation_writer = D2LStageObservationJournalWriter(
+                path=root / "runtime/component_observations.jsonl",
+                workflow_run_id=manifest["workflow_run_id"],
+                component_run_id=manifest["component_run_id"],
+                component_attempt_id=attempt,
+                stage_id=stage_id,
+                producer=producer,
+                work_id=stage_work_id,
+            )
+            observation_writer.append(
+                {
+                    "event": "validation_passed",
+                    "agent": producer,
+                    "severity": "info",
+                    "ts": "2026-07-25T00:00:02Z",
+                    "payload": {
+                        "validator_id": "d2l_candidate_discovery_validator_v2",
+                        "subject_ref": item_id,
+                        "reason_codes": ["exact_local_validation"],
+                        "retryable": False,
+                    },
+                }
+            )
+            work_journal = D2LStageWorkJournal(
+                path=(
+                    root
+                    / "runtime/work_items/b1_candidate_discovery.jsonl"
+                ),
+                workflow_run_id=manifest["workflow_run_id"],
+                component_run_id=manifest["component_run_id"],
+                component_attempt_id=attempt,
+                stage_id=stage_id,
+            )
+            result = {
+                "candidate_observations": [
+                    {
+                        "source_surface": f"technical term {index:04d}",
+                        "anchor_block_ids": [f"block_{index:04d}"],
+                    }
+                    for index in range(candidate_count)
+                ],
+                "chapter_id": "d2l_selected_campaign_scope_v1",
+                "window_id": "window_0001",
+            }
+            work_journal.append(
+                work_item_id=item_id,
+                work_contract_id="candidate_contract_v1",
+                input_sha256=canonical_sha256({"window": "window_0001"}),
+                result=result,
+            )
+            observation_writer.append(
+                {
+                    "event": "work_progress",
+                    "agent": producer,
+                    "severity": "info",
+                    "ts": "2026-07-25T00:00:03Z",
+                    "payload": {
+                        "work_kind": "windows",
+                        "work_id": stage_work_id,
+                        "progress": {
+                            "completed": 1,
+                            "total": 1,
+                            "unit": "windows",
+                        },
+                    },
+                }
+            )
             """
         ),
         encoding="utf-8",
@@ -1468,3 +1582,334 @@ def test_runner_preserves_unpublished_stage_output_before_retry(
     assert json.loads(quarantined.read_text(encoding="utf-8")) == {
         "state": "unpublished"
     }
+
+
+def test_term_lifecycle_repair_resume_backfills_attempt_two_without_b1_replay(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    code_root = tmp_path / "code"
+    code_root.mkdir()
+
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(code_root), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    git("init")
+    git("config", "user.name", "CodeX")
+    git("config", "user.email", "codex@example.invalid")
+    repair_relative = (
+        "THESIS_RUNTIME_TOOL/pipeline/prepass/"
+        "d2l_console_replay_contract_v1.py"
+    )
+    repair_target = code_root / repair_relative
+    repair_target.parent.mkdir(parents=True)
+    repair_target.write_text("TERM_LIFECYCLE = 1\n", encoding="utf-8")
+    git("add", repair_relative)
+    git("commit", "-m", "baseline")
+    baseline = git("rev-parse", "HEAD")
+
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=3)
+    b1_calls = tmp_path / "b1_calls.txt"
+    b1_script = _write_b1_term_stage_script(tmp_path)
+    raw_plan = _plan(attempt_id=3)
+    raw_plan["code_revision"] = baseline
+    raw_plan["stages"][1]["command"] = [
+        sys.executable,
+        str(b1_script),
+        str(root),
+        str(TOOL_ROOT),
+        str(b1_calls),
+        "2",
+    ]
+    raw_plan["stages"][1]["total"] = 1
+    plan = ComponentPlan.from_mapping(raw_plan)
+
+    first = D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="preflight",
+        repair_code_root=code_root,
+    ).run()
+    assert first["component_attempt_id"] == 1
+
+    original_drain = (
+        D2LTranslationComponentRunner._drain_term_work_journal
+    )
+    monkeypatch.setattr(
+        D2LTranslationComponentRunner,
+        "_drain_term_work_journal",
+        lambda self, stage, *, projection_mode: None,
+    )
+    second = D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="b1_candidate_discovery",
+        repair_code_root=code_root,
+    ).run(resume=True)
+    monkeypatch.setattr(
+        D2LTranslationComponentRunner,
+        "_drain_term_work_journal",
+        original_drain,
+    )
+    assert second["component_attempt_id"] == 2
+    assert b1_calls.read_text(encoding="ascii") == "1"
+    assert _event_counts(root)["term_lifecycle"] == 0
+    paused_manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    checkpoint_path = root / paused_manifest["resume"]["checkpoint_ref"]
+    checkpoint_before = checkpoint_path.read_bytes()
+    checkpoint_sha = file_sha256(checkpoint_path)
+
+    repair_target.write_text("TERM_LIFECYCLE = 2\n", encoding="utf-8")
+    git("add", repair_relative)
+    git("commit", "-m", "add term lifecycle projection")
+
+    completed = D2LTranslationComponentRunner(
+        plan,
+        root,
+        repair_code_root=code_root,
+        repair_reason="add_term_lifecycle_observability",
+    ).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert completed["component_attempt_id"] == 3
+    assert b1_calls.read_text(encoding="ascii") == "1"
+    assert checkpoint_path.read_bytes() == checkpoint_before
+    assert file_sha256(checkpoint_path) == checkpoint_sha
+
+    events = [
+        json.loads(line)
+        for line in (root / "events.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+    term_events = [
+        row for row in events if row["event"] == "term_lifecycle"
+    ]
+    assert term_events
+    assert {
+        row["payload"]["projection_mode"] for row in term_events
+    } == {"resume_backfill"}
+    assert {
+        row["payload"]["origin_component_attempt_id"]
+        for row in term_events
+    } == {2}
+    attempt_three = [
+        row for row in events if row["component_attempt_id"] == 3
+    ]
+    resumed_index = next(
+        index
+        for index, row in enumerate(attempt_three)
+        if row["event"] == "run_resumed"
+    )
+    backfill_index = next(
+        index
+        for index, row in enumerate(attempt_three)
+        if row["event"] == "term_lifecycle"
+    )
+    next_stage_index = next(
+        index
+        for index, row in enumerate(attempt_three)
+        if row["event"] == "stage_start"
+    )
+    assert resumed_index < backfill_index < next_stage_index
+    assert not any(
+        row["event"] == "request_sent"
+        and row["stage_id"] == "b1_candidate_discovery"
+        and row["component_attempt_id"] == 3
+        for row in events
+    )
+    receipt = json.loads(
+        (
+            root / "runtime/repair_receipts/repair_a0003.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert receipt["changed_paths"] == [repair_relative]
+    validated = validate_translation_component_package(root)
+    assert validated["term_lifecycle_row_count"] == 2
+    assert validated["term_lifecycle_batch_count"] == 1
+
+
+def test_term_lifecycle_partial_backfill_crash_resumes_without_duplicates(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=4)
+    b1_calls = tmp_path / "b1_calls.txt"
+    b1_script = _write_b1_term_stage_script(tmp_path)
+    raw_plan = _plan(attempt_id=4)
+    raw_plan["stages"][1]["command"] = [
+        sys.executable,
+        str(b1_script),
+        str(root),
+        str(TOOL_ROOT),
+        str(b1_calls),
+        "200",
+    ]
+    raw_plan["stages"][1]["total"] = 1
+    plan = ComponentPlan.from_mapping(raw_plan)
+
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="preflight",
+    ).run()
+    original_drain = (
+        D2LTranslationComponentRunner._drain_term_work_journal
+    )
+    monkeypatch.setattr(
+        D2LTranslationComponentRunner,
+        "_drain_term_work_journal",
+        lambda self, stage, *, projection_mode: None,
+    )
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="b1_candidate_discovery",
+    ).run(resume=True)
+    monkeypatch.setattr(
+        D2LTranslationComponentRunner,
+        "_drain_term_work_journal",
+        original_drain,
+    )
+    assert b1_calls.read_text(encoding="ascii") == "1"
+
+    original_emit = D2LTranslationComponentEventWriter.emit
+    crashed = {"value": False}
+
+    def emit_then_crash(
+        writer: D2LTranslationComponentEventWriter,
+        event: str,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        result = original_emit(writer, event, **kwargs)
+        if event == "term_lifecycle" and not crashed["value"]:
+            crashed["value"] = True
+            raise KeyboardInterrupt("synthetic crash after durable batch")
+        return result
+
+    monkeypatch.setattr(
+        D2LTranslationComponentEventWriter,
+        "emit",
+        emit_then_crash,
+    )
+    with pytest.raises(
+        KeyboardInterrupt,
+        match="synthetic crash after durable batch",
+    ):
+        D2LTranslationComponentRunner(plan, root).run(resume=True)
+    monkeypatch.setattr(
+        D2LTranslationComponentEventWriter,
+        "emit",
+        original_emit,
+    )
+
+    crashed_manifest = json.loads(
+        (root / "component_manifest.json").read_text(encoding="utf-8")
+    )
+    assert crashed_manifest["status"] == "running"
+    assert crashed_manifest["component_attempt_id"] == 3
+    assert _event_counts(root)["term_lifecycle"] == 1
+
+    completed = D2LTranslationComponentRunner(
+        plan,
+        root,
+        recover_stale=True,
+    ).run(resume=True)
+    assert completed["terminal_event"] == "run_done"
+    assert completed["component_attempt_id"] == 4
+    assert b1_calls.read_text(encoding="ascii") == "1"
+    events = [
+        json.loads(line)
+        for line in (root / "events.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+    term_events = [
+        row for row in events if row["event"] == "term_lifecycle"
+    ]
+    assert len(term_events) >= 2
+    batch_ids = [row["payload"]["batch_id"] for row in term_events]
+    row_ids = [
+        term_row["row_id"]
+        for row in term_events
+        for term_row in row["payload"]["rows"]
+    ]
+    assert len(batch_ids) == len(set(batch_ids))
+    assert len(row_ids) == len(set(row_ids)) == 200
+    assert {
+        row["payload"]["origin_component_attempt_id"]
+        for row in term_events
+    } == {2}
+    assert {
+        row["component_attempt_id"] for row in term_events
+    } == {3, 4}
+    assert any(
+        row["event"] == "checkpoint"
+        and row["component_attempt_id"] == 3
+        and row["payload"]["paused_reason"] == "stale_process_recovered"
+        for row in events
+    )
+    validated = validate_translation_component_package(root)
+    assert validated["term_lifecycle_row_count"] == 200
+    assert validated["term_lifecycle_batch_count"] == len(term_events)
+
+
+def test_term_lifecycle_package_rejects_foreign_work_journal_evidence(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=1)
+    b1_calls = tmp_path / "b1_calls.txt"
+    b1_script = _write_b1_term_stage_script(tmp_path)
+    raw_plan = _plan(attempt_id=1)
+    raw_plan["stages"][1]["command"] = [
+        sys.executable,
+        str(b1_script),
+        str(root),
+        str(TOOL_ROOT),
+        str(b1_calls),
+        "1",
+    ]
+    raw_plan["stages"][1]["total"] = 1
+    plan = ComponentPlan.from_mapping(raw_plan)
+
+    D2LTranslationComponentRunner(
+        plan,
+        root,
+        stop_after_stage="b1_candidate_discovery",
+    ).run()
+    assert validate_translation_component_package(
+        root,
+        require_terminal=False,
+    )["term_lifecycle_row_count"] == 1
+
+    journal_path = (
+        root / "runtime/work_items/b1_candidate_discovery.jsonl"
+    )
+    entry = json.loads(journal_path.read_text(encoding="utf-8"))
+    entry["workflow_run_id"] = "wf_foreign_term_evidence"
+    unsigned = dict(entry)
+    unsigned.pop("entry_sha256")
+    entry["entry_sha256"] = canonical_sha256(unsigned)
+    journal_path.write_text(
+        json.dumps(entry, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="term lifecycle work-journal evidence drift",
+    ):
+        validate_translation_component_package(
+            root,
+            require_terminal=False,
+        )

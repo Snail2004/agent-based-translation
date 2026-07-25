@@ -17,6 +17,8 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from pipeline.prepass.concept_key import normalize_phrase
+
 
 COMPONENT_MANIFEST_SCHEMA = "d2l_translation_component_manifest_v1"
 COMPONENT_EVENT_SCHEMA = "d2l_translation_component_event_v1"
@@ -25,6 +27,7 @@ CHECKPOINT_SCHEMA = "d2l_translation_checkpoint_v1"
 SCORING_FRAGMENT_SCHEMA = "scoring_handoff_fragment_v1"
 SOURCE_BINDING_SCHEMA = "canonical_source_binding_v1"
 USAGE_SNAPSHOT_SCHEMA = "d2l_component_usage_snapshot_v1"
+TERM_LIFECYCLE_SCHEMA = "d2l_term_lifecycle_batch_v1"
 
 COMPONENT_ID = "translation"
 FLOW_KIND = "terminology_translation"
@@ -61,6 +64,7 @@ EVENT_NAMES = (
     "stage_done",
     "cost_snapshot",
     "usage_snapshot",
+    "term_lifecycle",
     "run_done",
     "run_failed",
 )
@@ -91,6 +95,72 @@ CACHE_MECHANISMS = {
 }
 TIMING_AUTHORITIES = {"recorded", "logical_order_only"}
 SHA256_KINDS = {"physical", "canonical:d2l_canonical_json_v1"}
+TERM_LIFECYCLE_STATES = (
+    "proposed",
+    "aggregated",
+    "admitted",
+    "rejected",
+    "review_held",
+    "morphology_resolved",
+    "morphology_pending",
+    "collision_resolved",
+    "collision_pending",
+    "multi_target_resolved",
+    "multi_target_pending",
+    "committed",
+)
+TERM_STAGE_STATES = {
+    "b1_candidate_discovery": {"proposed"},
+    "candidate_index": {"aggregated"},
+    "b2_admission_translation": {"admitted", "rejected", "review_held"},
+    "auditor_morphology": {"morphology_resolved", "morphology_pending"},
+    "auditor_target_collision": {"collision_resolved", "collision_pending"},
+    "auditor_multi_target": {"multi_target_resolved", "multi_target_pending"},
+    "glossary_seal": {"committed"},
+}
+TERM_LIFECYCLE_PROJECTION_MODES = {
+    "live",
+    "resume_backfill",
+    "stage_artifact_projection",
+}
+TERM_LIFECYCLE_PAYLOAD_MAX_BYTES = 60_000
+TERM_LIFECYCLE_MAX_ROWS_PER_BATCH = 128
+
+_TERM_PROVISIONAL_STATES = set(TERM_LIFECYCLE_STATES) - {"committed"}
+_TERM_TERMINAL_NEGATIVE_STATES = {
+    "rejected",
+    "review_held",
+    "morphology_pending",
+    "collision_pending",
+    "multi_target_pending",
+}
+_TERM_ALLOWED_TRANSITIONS = {
+    "proposed": {"aggregated", "admitted", "rejected", "review_held"},
+    "aggregated": {"admitted", "rejected", "review_held"},
+    "admitted": {
+        "morphology_resolved",
+        "morphology_pending",
+        "collision_resolved",
+        "collision_pending",
+        "multi_target_resolved",
+        "multi_target_pending",
+        "committed",
+    },
+    "morphology_resolved": {
+        "collision_resolved",
+        "collision_pending",
+        "multi_target_resolved",
+        "multi_target_pending",
+        "committed",
+    },
+    "collision_resolved": {
+        "multi_target_resolved",
+        "multi_target_pending",
+        "committed",
+    },
+    "multi_target_resolved": {"committed"},
+    "committed": {"committed"},
+}
 
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,190}$")
 _SHA_RE = re.compile(r"^[0-9A-Fa-f]{64}$")
@@ -977,6 +1047,1425 @@ def build_component_usage_snapshot(
     return row
 
 
+def _term_string(
+    value: Any,
+    label: str,
+    *,
+    maximum: int,
+    allow_none: bool = False,
+) -> str | None:
+    if value is None:
+        if allow_none:
+            return None
+        raise D2LConsoleContractError(f"{label} cannot be null")
+    text = _require_string(value, label)
+    if len(text) > maximum:
+        raise D2LConsoleContractError(f"{label} exceeds {maximum} characters")
+    if any(ord(character) < 32 or ord(character) == 127 for character in text):
+        raise D2LConsoleContractError(f"{label} contains a control character")
+    return text
+
+
+def _term_string_list(
+    value: Any,
+    label: str,
+    *,
+    maximum_items: int,
+    maximum_length: int,
+) -> list[str]:
+    rows = _require_list(value, label)
+    if len(rows) > maximum_items:
+        raise D2LConsoleContractError(
+            f"{label} exceeds {maximum_items} items"
+        )
+    normalized = [
+        str(
+            _term_string(
+                item,
+                f"{label}[{index}]",
+                maximum=maximum_length,
+            )
+        )
+        for index, item in enumerate(rows)
+    ]
+    if normalized != sorted(set(normalized), key=lambda item: (item.casefold(), item)):
+        raise D2LConsoleContractError(f"{label} must be sorted and unique")
+    return normalized
+
+
+def _sorted_term_strings(
+    values: Sequence[Any],
+    *,
+    maximum_items: int,
+    maximum_length: int,
+    label: str,
+) -> list[str]:
+    normalized = {
+        str(_term_string(value, label, maximum=maximum_length))
+        for value in values
+        if value is not None and str(value)
+    }
+    if len(normalized) > maximum_items:
+        raise D2LConsoleContractError(
+            f"{label} exceeds {maximum_items} items"
+        )
+    return sorted(normalized, key=lambda item: (item.casefold(), item))
+
+
+def _term_target(value: Any, label: str) -> dict[str, Any]:
+    row = dict(_require_mapping(value, label))
+    _require_exact_keys(
+        row,
+        {"target_vi", "applicability", "disposition"},
+        label,
+    )
+    row["target_vi"] = _term_string(
+        row["target_vi"],
+        f"{label}.target_vi",
+        maximum=256,
+    )
+    applicability = row["applicability"]
+    if isinstance(applicability, Mapping):
+        applicability = canonical_json_bytes(applicability).decode("utf-8")
+    row["applicability"] = _term_string(
+        applicability,
+        f"{label}.applicability",
+        maximum=384,
+        allow_none=True,
+    )
+    row["disposition"] = _term_string(
+        row["disposition"],
+        f"{label}.disposition",
+        maximum=64,
+    )
+    return row
+
+
+def _sorted_term_targets(values: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows = [
+        _term_target(value, f"targets[{index}]")
+        for index, value in enumerate(values)
+    ]
+    identities = [
+        (
+            str(row["target_vi"]).casefold(),
+            str(row["target_vi"]),
+            "" if row["applicability"] is None else str(row["applicability"]),
+            str(row["disposition"]),
+        )
+        for row in rows
+    ]
+    if len(identities) != len(set(identities)):
+        raise D2LConsoleContractError("targets contain duplicates")
+    if len(rows) > 16:
+        raise D2LConsoleContractError("targets exceed 16 items")
+    return [
+        row
+        for _, row in sorted(
+            zip(identities, rows, strict=True),
+            key=lambda item: item[0],
+        )
+    ]
+
+
+def _validate_term_evidence(value: Any, label: str) -> dict[str, Any]:
+    row = dict(_require_mapping(value, label))
+    kind = row.get("evidence_kind")
+    if kind == "work_journal":
+        _require_exact_keys(
+            row,
+            {
+                "evidence_kind",
+                "journal_ref",
+                "journal_seq",
+                "entry_sha256",
+                "producer_component_attempt_id",
+                "validation_event_id",
+                "validation_component_attempt_id",
+                "validation_component_seq",
+            },
+            label,
+        )
+        row["journal_ref"] = _validate_relative_ref(
+            row["journal_ref"],
+            f"{label}.journal_ref",
+        )
+        _require_int(row["journal_seq"], f"{label}.journal_seq", minimum=1)
+        row["entry_sha256"] = _require_sha(
+            row["entry_sha256"],
+            f"{label}.entry_sha256",
+        )
+        _require_int(
+            row["producer_component_attempt_id"],
+            f"{label}.producer_component_attempt_id",
+            minimum=1,
+        )
+        _require_id(row["validation_event_id"], f"{label}.validation_event_id")
+        _require_int(
+            row["validation_component_attempt_id"],
+            f"{label}.validation_component_attempt_id",
+            minimum=1,
+        )
+        _require_int(
+            row["validation_component_seq"],
+            f"{label}.validation_component_seq",
+            minimum=1,
+        )
+    elif kind == "artifact":
+        _require_exact_keys(
+            row,
+            {
+                "evidence_kind",
+                "artifact_ref",
+                "artifact_kind",
+                "schema_version",
+                "sha256",
+                "sha256_kind",
+                "created_event_id",
+                "producer_component_attempt_id",
+                "created_component_seq",
+            },
+            label,
+        )
+        _require_id(row["artifact_ref"], f"{label}.artifact_ref")
+        _term_string(
+            row["artifact_kind"],
+            f"{label}.artifact_kind",
+            maximum=128,
+        )
+        _term_string(
+            row["schema_version"],
+            f"{label}.schema_version",
+            maximum=128,
+        )
+        row["sha256"] = _require_sha(row["sha256"], f"{label}.sha256")
+        if row["sha256_kind"] not in SHA256_KINDS:
+            raise D2LConsoleContractError(f"{label}.sha256_kind is invalid")
+        _require_id(row["created_event_id"], f"{label}.created_event_id")
+        _require_int(
+            row["producer_component_attempt_id"],
+            f"{label}.producer_component_attempt_id",
+            minimum=1,
+        )
+        _require_int(
+            row["created_component_seq"],
+            f"{label}.created_component_seq",
+            minimum=1,
+        )
+    else:
+        raise D2LConsoleContractError(f"{label}.evidence_kind is invalid")
+    return row
+
+
+def _term_evidence_ref_sha(evidence: Mapping[str, Any]) -> tuple[str, str]:
+    if evidence["evidence_kind"] == "work_journal":
+        return str(evidence["journal_ref"]), str(evidence["entry_sha256"])
+    return str(evidence["artifact_ref"]), str(evidence["sha256"])
+
+
+def _term_origin(evidence: Mapping[str, Any]) -> tuple[int, int]:
+    if evidence["evidence_kind"] == "work_journal":
+        return (
+            int(evidence["validation_component_attempt_id"]),
+            int(evidence["validation_component_seq"]),
+        )
+    return (
+        int(evidence["producer_component_attempt_id"]),
+        int(evidence["created_component_seq"]),
+    )
+
+
+def _term_row_identity(stage_id: str, row: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": "d2l_term_lifecycle_row_identity_v1",
+        "stage_id": stage_id,
+        "state": row["state"],
+        "logical_term_id": row["logical_term_id"],
+        "candidate_ids": row["candidate_ids"],
+        "member_ids": row["member_ids"],
+        "surfaces": row["surfaces"],
+        "source_block_ids": row["source_block_ids"],
+        "targets": row["targets"],
+        "evidence_ref": row["evidence_ref"],
+        "evidence_sha256": row["evidence_sha256"],
+    }
+
+
+def _term_row_id(stage_id: str, row: Mapping[str, Any]) -> str:
+    return "tlr_" + canonical_sha256(_term_row_identity(stage_id, row))[:32].lower()
+
+
+def _term_row_sha256(row: Mapping[str, Any]) -> str:
+    payload = dict(row)
+    payload.pop("row_sha256", None)
+    return canonical_sha256(payload)
+
+
+def _term_batch_id(
+    *,
+    stage_id: str,
+    evidence: Mapping[str, Any],
+    row_ids: Sequence[str],
+) -> str:
+    return "tlb_" + canonical_sha256(
+        {
+            "schema_version": "d2l_term_lifecycle_batch_identity_v1",
+            "stage_id": stage_id,
+            "evidence": dict(evidence),
+            "row_ids": list(row_ids),
+        }
+    )[:32].lower()
+
+
+def _term_batch_sha256(value: Mapping[str, Any]) -> str:
+    payload = dict(value)
+    payload.pop("batch_sha256", None)
+    return canonical_sha256(payload)
+
+
+def _validate_term_lifecycle_row(
+    value: Any,
+    *,
+    stage_id: str,
+    evidence: Mapping[str, Any],
+    label: str,
+) -> dict[str, Any]:
+    row = dict(_require_mapping(value, label))
+    _require_exact_keys(
+        row,
+        {
+            "row_id",
+            "row_sha256",
+            "logical_term_id",
+            "state",
+            "lifecycle",
+            "authority",
+            "origin_component_attempt_id",
+            "origin_component_seq",
+            "candidate_ids",
+            "member_ids",
+            "surfaces",
+            "source_block_ids",
+            "targets",
+            "reason_codes",
+            "rationale",
+            "supersedes_row_ids",
+            "evidence_ref",
+            "evidence_sha256",
+        },
+        label,
+    )
+    _require_id(row["row_id"], f"{label}.row_id")
+    row["row_sha256"] = _require_sha(
+        row["row_sha256"],
+        f"{label}.row_sha256",
+    )
+    _require_id(row["logical_term_id"], f"{label}.logical_term_id")
+    if row["state"] not in TERM_STAGE_STATES.get(stage_id, set()):
+        raise D2LConsoleContractError(
+            f"{label}.state is not allowed for {stage_id}"
+        )
+    expected_lifecycle = (
+        "committed" if row["state"] == "committed" else "provisional"
+    )
+    expected_authority = (
+        "glossary_commit" if row["state"] == "committed" else "none"
+    )
+    if row["lifecycle"] != expected_lifecycle:
+        raise D2LConsoleContractError(f"{label}.lifecycle is invalid")
+    if row["authority"] != expected_authority:
+        raise D2LConsoleContractError(f"{label}.authority is invalid")
+    origin_attempt, origin_seq = _term_origin(evidence)
+    if (
+        _require_int(
+            row["origin_component_attempt_id"],
+            f"{label}.origin_component_attempt_id",
+            minimum=1,
+        )
+        != origin_attempt
+        or _require_int(
+            row["origin_component_seq"],
+            f"{label}.origin_component_seq",
+            minimum=1,
+        )
+        != origin_seq
+    ):
+        raise D2LConsoleContractError(f"{label} origin differs from evidence")
+    for key, maximum_items, maximum_length in (
+        ("candidate_ids", 256, 191),
+        ("member_ids", 256, 191),
+        ("surfaces", 32, 256),
+        ("source_block_ids", 512, 191),
+        ("reason_codes", 32, 96),
+        ("supersedes_row_ids", 512, 191),
+    ):
+        _term_string_list(
+            row[key],
+            f"{label}.{key}",
+            maximum_items=maximum_items,
+            maximum_length=maximum_length,
+        )
+    if row["row_id"] in row["supersedes_row_ids"]:
+        raise D2LConsoleContractError(f"{label} cannot supersede itself")
+    targets_raw = _require_list(row["targets"], f"{label}.targets")
+    targets = [
+        _term_target(target, f"{label}.targets[{index}]")
+        for index, target in enumerate(targets_raw)
+    ]
+    if targets != _sorted_term_targets(targets):
+        raise D2LConsoleContractError(f"{label}.targets must be sorted unique")
+    if row["rationale"] is not None:
+        _term_string(
+            row["rationale"],
+            f"{label}.rationale",
+            maximum=512,
+        )
+    evidence_ref, evidence_sha = _term_evidence_ref_sha(evidence)
+    if (
+        row["evidence_ref"] != evidence_ref
+        or _require_sha(
+            row["evidence_sha256"],
+            f"{label}.evidence_sha256",
+        )
+        != evidence_sha
+    ):
+        raise D2LConsoleContractError(f"{label} evidence binding mismatch")
+    if (
+        row["state"]
+        in {"proposed", "aggregated", "rejected", "review_held"}
+        and targets
+    ):
+        raise D2LConsoleContractError(
+            f"{label}.targets are forbidden for {row['state']}"
+        )
+    if row["state"] == "admitted" and not targets:
+        raise D2LConsoleContractError(f"{label}.admitted requires targets")
+    if row["state"] == "committed" and (
+        not row["surfaces"] or not targets or not row["candidate_ids"]
+    ):
+        raise D2LConsoleContractError(
+            f"{label}.committed lacks glossary identity or target"
+        )
+    expected_row_id = _term_row_id(stage_id, row)
+    if row["row_id"] != expected_row_id:
+        raise D2LConsoleContractError(f"{label}.row_id is not deterministic")
+    if row["row_sha256"] != _term_row_sha256(row):
+        raise D2LConsoleContractError(f"{label}.row_sha256 drift")
+    return row
+
+
+def _validate_term_summary(value: Any, label: str) -> dict[str, Any]:
+    row = dict(_require_mapping(value, label))
+    _require_exact_keys(
+        row,
+        {
+            "observations",
+            "unique_surfaces",
+            "logical_terms",
+            "state_counts",
+            "completed",
+            "total",
+            "unit",
+            "through_work_id",
+        },
+        label,
+    )
+    observations = _require_int(row["observations"], f"{label}.observations")
+    unique_surfaces = _require_int(
+        row["unique_surfaces"],
+        f"{label}.unique_surfaces",
+    )
+    logical_terms = _require_int(
+        row["logical_terms"],
+        f"{label}.logical_terms",
+    )
+    if unique_surfaces > observations or logical_terms > observations:
+        raise D2LConsoleContractError(f"{label} unique counts exceed observations")
+    counts = dict(_require_mapping(row["state_counts"], f"{label}.state_counts"))
+    if any(key not in TERM_LIFECYCLE_STATES for key in counts):
+        raise D2LConsoleContractError(f"{label}.state_counts has unknown state")
+    for state, count in counts.items():
+        _require_int(count, f"{label}.state_counts.{state}")
+    if sum(counts.values()) != observations:
+        raise D2LConsoleContractError(
+            f"{label}.state_counts do not cover observations"
+        )
+    completed = _require_int(row["completed"], f"{label}.completed")
+    if row["total"] is not None:
+        total = _require_int(row["total"], f"{label}.total")
+        if completed > total:
+            raise D2LConsoleContractError(f"{label}.completed exceeds total")
+    _term_string(row["unit"], f"{label}.unit", maximum=64)
+    if row["through_work_id"] is not None:
+        _require_id(row["through_work_id"], f"{label}.through_work_id")
+    return row
+
+
+def validate_term_lifecycle_batch(
+    value: Any,
+    *,
+    stage_id: str,
+) -> dict[str, Any]:
+    row = dict(_require_mapping(value, "term_lifecycle.payload"))
+    _require_exact_keys(
+        row,
+        {
+            "schema_version",
+            "batch_id",
+            "batch_sha256",
+            "projection_mode",
+            "timing_authority",
+            "origin_component_attempt_id",
+            "origin_component_seq",
+            "evidence",
+            "rows",
+            "summary",
+        },
+        "term_lifecycle.payload",
+    )
+    if row["schema_version"] != TERM_LIFECYCLE_SCHEMA:
+        raise D2LConsoleContractError("term_lifecycle schema is invalid")
+    _require_id(row["batch_id"], "term_lifecycle.batch_id")
+    row["batch_sha256"] = _require_sha(
+        row["batch_sha256"],
+        "term_lifecycle.batch_sha256",
+    )
+    if row["projection_mode"] not in TERM_LIFECYCLE_PROJECTION_MODES:
+        raise D2LConsoleContractError("term_lifecycle projection_mode is invalid")
+    if row["timing_authority"] not in TIMING_AUTHORITIES:
+        raise D2LConsoleContractError("term_lifecycle timing_authority is invalid")
+    evidence = _validate_term_evidence(row["evidence"], "term_lifecycle.evidence")
+    if row["projection_mode"] == "stage_artifact_projection":
+        if evidence["evidence_kind"] != "artifact" or row["timing_authority"] != "recorded":
+            raise D2LConsoleContractError(
+                "artifact projection requires recorded artifact evidence"
+            )
+    elif evidence["evidence_kind"] != "work_journal":
+        raise D2LConsoleContractError(
+            "live/backfill projection requires work-journal evidence"
+        )
+    elif row["projection_mode"] == "resume_backfill":
+        if row["timing_authority"] != "logical_order_only":
+            raise D2LConsoleContractError(
+                "resume backfill timing must be logical_order_only"
+            )
+    elif row["timing_authority"] != "recorded":
+        raise D2LConsoleContractError("live projection timing must be recorded")
+    origin_attempt, origin_seq = _term_origin(evidence)
+    if (
+        row["origin_component_attempt_id"] != origin_attempt
+        or row["origin_component_seq"] != origin_seq
+    ):
+        raise D2LConsoleContractError("term_lifecycle batch origin mismatch")
+    rows_raw = _require_list(row["rows"], "term_lifecycle.rows")
+    if not rows_raw or len(rows_raw) > TERM_LIFECYCLE_MAX_ROWS_PER_BATCH:
+        raise D2LConsoleContractError("term_lifecycle row count is invalid")
+    rows = [
+        _validate_term_lifecycle_row(
+            item,
+            stage_id=stage_id,
+            evidence=evidence,
+            label=f"term_lifecycle.rows[{index}]",
+        )
+        for index, item in enumerate(rows_raw)
+    ]
+    row_ids = [item["row_id"] for item in rows]
+    if row_ids != sorted(row_ids) or len(row_ids) != len(set(row_ids)):
+        raise D2LConsoleContractError(
+            "term_lifecycle rows must be row_id-sorted and unique"
+        )
+    _validate_term_summary(row["summary"], "term_lifecycle.summary")
+    expected_batch_id = _term_batch_id(
+        stage_id=stage_id,
+        evidence=evidence,
+        row_ids=row_ids,
+    )
+    if row["batch_id"] != expected_batch_id:
+        raise D2LConsoleContractError("term_lifecycle batch_id is not deterministic")
+    if row["batch_sha256"] != _term_batch_sha256(row):
+        raise D2LConsoleContractError("term_lifecycle batch_sha256 drift")
+    if len(canonical_json_bytes(row)) > TERM_LIFECYCLE_PAYLOAD_MAX_BYTES:
+        raise D2LConsoleContractError("term_lifecycle payload exceeds public cap")
+    return row
+
+
+def _logical_term_id(subject: str) -> str:
+    normalized = normalize_phrase(subject)
+    if not normalized:
+        normalized = subject.casefold().strip()
+    if not normalized:
+        raise D2LConsoleContractError("logical term subject cannot be empty")
+    return "term_" + canonical_sha256(
+        {
+            "normalization_policy": "normalize_phrase_exact_v1",
+            "normalized_subject": normalized,
+        }
+    )[:32].lower()
+
+
+def _matching_prior_row_ids(
+    previous_rows: Sequence[Mapping[str, Any]],
+    *,
+    logical_term_id: str,
+    candidate_ids: Sequence[str],
+    member_ids: Sequence[str],
+    allowed_states: set[str] | None = None,
+) -> list[str]:
+    subject_ids = set(candidate_ids) | set(member_ids)
+    matches: list[str] = []
+    for row in previous_rows:
+        if allowed_states is not None and row["state"] not in allowed_states:
+            continue
+        prior_ids = set(row["candidate_ids"]) | set(row["member_ids"])
+        if row["logical_term_id"] == logical_term_id or (
+            subject_ids and prior_ids.intersection(subject_ids)
+        ):
+            matches.append(str(row["row_id"]))
+    return sorted(set(matches))
+
+
+def _build_term_row(
+    *,
+    stage_id: str,
+    state: str,
+    logical_subject: str,
+    candidate_ids: Sequence[Any],
+    member_ids: Sequence[Any],
+    surfaces: Sequence[Any],
+    source_block_ids: Sequence[Any],
+    targets: Sequence[Mapping[str, Any]],
+    reason_codes: Sequence[Any],
+    rationale: Any,
+    supersedes_row_ids: Sequence[Any],
+    evidence: Mapping[str, Any],
+) -> dict[str, Any]:
+    evidence_row = _validate_term_evidence(evidence, "term_lifecycle.evidence")
+    evidence_ref, evidence_sha = _term_evidence_ref_sha(evidence_row)
+    origin_attempt, origin_seq = _term_origin(evidence_row)
+    row = {
+        "row_id": "",
+        "row_sha256": "",
+        "logical_term_id": _logical_term_id(logical_subject),
+        "state": state,
+        "lifecycle": "committed" if state == "committed" else "provisional",
+        "authority": "glossary_commit" if state == "committed" else "none",
+        "origin_component_attempt_id": origin_attempt,
+        "origin_component_seq": origin_seq,
+        "candidate_ids": _sorted_term_strings(
+            candidate_ids,
+            maximum_items=256,
+            maximum_length=191,
+            label="candidate_ids",
+        ),
+        "member_ids": _sorted_term_strings(
+            member_ids,
+            maximum_items=256,
+            maximum_length=191,
+            label="member_ids",
+        ),
+        "surfaces": _sorted_term_strings(
+            surfaces,
+            maximum_items=32,
+            maximum_length=256,
+            label="surfaces",
+        ),
+        "source_block_ids": _sorted_term_strings(
+            source_block_ids,
+            maximum_items=512,
+            maximum_length=191,
+            label="source_block_ids",
+        ),
+        "targets": _sorted_term_targets(targets),
+        "reason_codes": _sorted_term_strings(
+            reason_codes,
+            maximum_items=32,
+            maximum_length=96,
+            label="reason_codes",
+        ),
+        "rationale": _term_string(
+            rationale,
+            "rationale",
+            maximum=512,
+            allow_none=True,
+        ),
+        "supersedes_row_ids": _sorted_term_strings(
+            supersedes_row_ids,
+            maximum_items=512,
+            maximum_length=191,
+            label="supersedes_row_ids",
+        ),
+        "evidence_ref": evidence_ref,
+        "evidence_sha256": evidence_sha,
+    }
+    row["row_id"] = _term_row_id(stage_id, row)
+    row["row_sha256"] = _term_row_sha256(row)
+    return _validate_term_lifecycle_row(
+        row,
+        stage_id=stage_id,
+        evidence=evidence_row,
+        label="term_lifecycle.row",
+    )
+
+
+def _term_summary(
+    rows_by_id: Mapping[str, Mapping[str, Any]],
+    *,
+    completed: int,
+    total: int | None,
+    unit: str,
+    through_work_id: str | None,
+) -> dict[str, Any]:
+    state_counts = Counter(str(row["state"]) for row in rows_by_id.values())
+    return {
+        "observations": len(rows_by_id),
+        "unique_surfaces": len(
+            {
+                surface
+                for row in rows_by_id.values()
+                for surface in row["surfaces"]
+            }
+        ),
+        "logical_terms": len(
+            {str(row["logical_term_id"]) for row in rows_by_id.values()}
+        ),
+        "state_counts": dict(sorted(state_counts.items())),
+        "completed": completed,
+        "total": total,
+        "unit": unit,
+        "through_work_id": through_work_id,
+    }
+
+
+def _build_term_batches(
+    *,
+    stage_id: str,
+    evidence: Mapping[str, Any],
+    rows: Sequence[Mapping[str, Any]],
+    previous_rows: Sequence[Mapping[str, Any]],
+    projection_mode: str,
+    completed: int,
+    total: int | None,
+    unit: str,
+    through_work_id: str | None,
+) -> list[dict[str, Any]]:
+    evidence_row = _validate_term_evidence(evidence, "term_lifecycle.evidence")
+    ordered_rows = sorted((dict(row) for row in rows), key=lambda row: row["row_id"])
+    if not ordered_rows:
+        return []
+    prior_by_id = {str(row["row_id"]): dict(row) for row in previous_rows}
+    timing_authority = (
+        "logical_order_only"
+        if projection_mode == "resume_backfill"
+        else "recorded"
+    )
+
+    def make_batch(
+        batch_rows: Sequence[Mapping[str, Any]],
+        base_rows: Mapping[str, Mapping[str, Any]],
+    ) -> dict[str, Any]:
+        cumulative = dict(base_rows)
+        for item in batch_rows:
+            existing = cumulative.get(str(item["row_id"]))
+            if existing is not None and existing["row_sha256"] != item["row_sha256"]:
+                raise D2LConsoleContractError("term lifecycle row hash conflict")
+            cumulative[str(item["row_id"])] = dict(item)
+        row_ids = [str(item["row_id"]) for item in batch_rows]
+        origin_attempt, origin_seq = _term_origin(evidence_row)
+        batch = {
+            "schema_version": TERM_LIFECYCLE_SCHEMA,
+            "batch_id": _term_batch_id(
+                stage_id=stage_id,
+                evidence=evidence_row,
+                row_ids=row_ids,
+            ),
+            "batch_sha256": "",
+            "projection_mode": projection_mode,
+            "timing_authority": timing_authority,
+            "origin_component_attempt_id": origin_attempt,
+            "origin_component_seq": origin_seq,
+            "evidence": dict(evidence_row),
+            "rows": [dict(item) for item in batch_rows],
+            "summary": _term_summary(
+                cumulative,
+                completed=completed,
+                total=total,
+                unit=unit,
+                through_work_id=through_work_id,
+            ),
+        }
+        batch["batch_sha256"] = _term_batch_sha256(batch)
+        return batch
+
+    batches: list[dict[str, Any]] = []
+    current: list[dict[str, Any]] = []
+    cumulative = dict(prior_by_id)
+    for item in ordered_rows:
+        proposed = [*current, item]
+        candidate = make_batch(proposed, cumulative)
+        if (
+            len(proposed) > TERM_LIFECYCLE_MAX_ROWS_PER_BATCH
+            or len(canonical_json_bytes(candidate))
+            > TERM_LIFECYCLE_PAYLOAD_MAX_BYTES
+        ):
+            if not current:
+                raise D2LConsoleContractError(
+                    "one term lifecycle row exceeds the public payload cap"
+                )
+            finalized = make_batch(current, cumulative)
+            validate_term_lifecycle_batch(finalized, stage_id=stage_id)
+            batches.append(finalized)
+            for existing in current:
+                cumulative[str(existing["row_id"])] = dict(existing)
+            current = [item]
+            candidate = make_batch(current, cumulative)
+            if len(canonical_json_bytes(candidate)) > TERM_LIFECYCLE_PAYLOAD_MAX_BYTES:
+                raise D2LConsoleContractError(
+                    "one term lifecycle row exceeds the public payload cap"
+                )
+        else:
+            current = proposed
+    if current:
+        finalized = make_batch(current, cumulative)
+        validate_term_lifecycle_batch(finalized, stage_id=stage_id)
+        batches.append(finalized)
+    return batches
+
+
+def _term_supersedes(
+    previous_rows: Sequence[Mapping[str, Any]],
+    *,
+    logical_subject: str,
+    candidate_ids: Sequence[str],
+    member_ids: Sequence[str],
+    allowed_states: set[str] | None = None,
+) -> list[str]:
+    return _matching_prior_row_ids(
+        previous_rows,
+        logical_term_id=_logical_term_id(logical_subject),
+        candidate_ids=candidate_ids,
+        member_ids=member_ids,
+        allowed_states=allowed_states,
+    )
+
+
+def _work_term_evidence(
+    *,
+    journal_ref: str,
+    entry: Mapping[str, Any],
+    validation_event: Mapping[str, Any],
+) -> dict[str, Any]:
+    return _validate_term_evidence(
+        {
+            "evidence_kind": "work_journal",
+            "journal_ref": journal_ref,
+            "journal_seq": int(entry["journal_seq"]),
+            "entry_sha256": str(entry["entry_sha256"]).upper(),
+            "producer_component_attempt_id": int(
+                entry["component_attempt_id"]
+            ),
+            "validation_event_id": str(validation_event["event_id"]),
+            "validation_component_attempt_id": int(
+                validation_event["component_attempt_id"]
+            ),
+            "validation_component_seq": int(validation_event["component_seq"]),
+        },
+        "term_lifecycle.evidence",
+    )
+
+
+def _artifact_term_evidence(
+    *,
+    artifact: Mapping[str, Any],
+    created_event: Mapping[str, Any],
+) -> dict[str, Any]:
+    return _validate_term_evidence(
+        {
+            "evidence_kind": "artifact",
+            "artifact_ref": str(artifact["artifact_ref"]),
+            "artifact_kind": str(artifact["artifact_kind"]),
+            "schema_version": str(artifact["schema_version"]),
+            "sha256": str(artifact["sha256"]).upper(),
+            "sha256_kind": str(artifact["sha256_kind"]),
+            "created_event_id": str(created_event["event_id"]),
+            "producer_component_attempt_id": int(
+                artifact["component_attempt_id"]
+            ),
+            "created_component_seq": int(created_event["component_seq"]),
+        },
+        "term_lifecycle.evidence",
+    )
+
+
+def term_work_completed(
+    stage_id: str,
+    entries: Sequence[Mapping[str, Any]],
+    *,
+    through_journal_seq: int,
+) -> int:
+    prefix = [
+        entry
+        for entry in entries
+        if int(entry["journal_seq"]) <= through_journal_seq
+    ]
+    if stage_id in {"b1_candidate_discovery", "b2_admission_translation"}:
+        return len(prefix)
+    if stage_id in {
+        "auditor_morphology",
+        "auditor_target_collision",
+        "auditor_multi_target",
+    }:
+        return sum(
+            len(entry["result"].get("decisions") or [])
+            for entry in prefix
+        )
+    return len(prefix)
+
+
+def project_work_journal_term_batches(
+    *,
+    stage_id: str,
+    journal_ref: str,
+    entry: Mapping[str, Any],
+    validation_event: Mapping[str, Any],
+    previous_rows: Sequence[Mapping[str, Any]],
+    projection_mode: str,
+    completed: int,
+    total: int | None,
+    unit: str,
+) -> list[dict[str, Any]]:
+    if stage_id not in {
+        "b1_candidate_discovery",
+        "b2_admission_translation",
+        "auditor_morphology",
+        "auditor_target_collision",
+        "auditor_multi_target",
+    }:
+        return []
+    evidence = _work_term_evidence(
+        journal_ref=journal_ref,
+        entry=entry,
+        validation_event=validation_event,
+    )
+    result = dict(_require_mapping(entry["result"], "work_journal_entry.result"))
+    rows: list[dict[str, Any]] = []
+    if stage_id == "b1_candidate_discovery":
+        observations = _require_list(
+            result.get("candidate_observations"),
+            "candidate_observations",
+        )
+        for index, raw in enumerate(observations):
+            observation = dict(
+                _require_mapping(raw, f"candidate_observations[{index}]")
+            )
+            surface = str(
+                _term_string(
+                    observation.get("source_surface"),
+                    f"candidate_observations[{index}].source_surface",
+                    maximum=256,
+                )
+            )
+            blocks = list(observation.get("anchor_block_ids") or [])
+            proposal_id = "proposal_" + canonical_sha256(
+                {
+                    "entry_sha256": evidence["entry_sha256"],
+                    "surface": surface,
+                    "source_block_ids": sorted(set(blocks)),
+                }
+            )[:32].lower()
+            rows.append(
+                _build_term_row(
+                    stage_id=stage_id,
+                    state="proposed",
+                    logical_subject=surface,
+                    candidate_ids=[proposal_id],
+                    member_ids=[],
+                    surfaces=[surface],
+                    source_block_ids=blocks,
+                    targets=[],
+                    reason_codes=["b1_candidate_observed"],
+                    rationale=None,
+                    supersedes_row_ids=[],
+                    evidence=evidence,
+                )
+            )
+    elif stage_id == "b2_admission_translation":
+        decisions = _require_list(result.get("decisions"), "decisions")
+        state_by_decision = {
+            "admit": "admitted",
+            "reject": "rejected",
+            "review": "review_held",
+        }
+        for index, raw in enumerate(decisions):
+            decision = dict(_require_mapping(raw, f"decisions[{index}]"))
+            candidate_id = str(
+                _term_string(
+                    decision.get("candidate_id"),
+                    f"decisions[{index}].candidate_id",
+                    maximum=191,
+                )
+            )
+            state = state_by_decision.get(str(decision.get("decision")))
+            if state is None:
+                raise D2LConsoleContractError("B2 lifecycle decision is invalid")
+            canonical_source = decision.get("canonical_source")
+            logical_subject = (
+                candidate_id
+                if canonical_source is None
+                else str(canonical_source)
+            )
+            targets: list[dict[str, Any]] = []
+            if state == "admitted":
+                targets.append(
+                    {
+                        "target_vi": decision.get("primary_target_vi"),
+                        "applicability": decision.get("primary_use"),
+                        "disposition": "proposed_primary",
+                    }
+                )
+                for alternate in decision.get("alternates") or []:
+                    targets.append(
+                        {
+                            "target_vi": alternate.get("target_vi"),
+                            "applicability": (
+                                alternate.get("use_when")
+                                if "use_when" in alternate
+                                else alternate.get("applicability")
+                            ),
+                            "disposition": "proposed_alternative",
+                        }
+                    )
+            supersedes = _term_supersedes(
+                previous_rows,
+                logical_subject=logical_subject,
+                candidate_ids=[candidate_id],
+                member_ids=[],
+                allowed_states={"proposed", "aggregated"},
+            )
+            rows.append(
+                _build_term_row(
+                    stage_id=stage_id,
+                    state=state,
+                    logical_subject=logical_subject,
+                    candidate_ids=[candidate_id],
+                    member_ids=[],
+                    surfaces=(
+                        [] if canonical_source is None else [canonical_source]
+                    ),
+                    source_block_ids=decision.get("evidence_block_ids") or [],
+                    targets=targets,
+                    reason_codes=[f"b2_decision_{decision.get('decision')}"],
+                    rationale=decision.get("rationale"),
+                    supersedes_row_ids=supersedes,
+                    evidence=evidence,
+                )
+            )
+    elif stage_id in {"auditor_morphology", "auditor_target_collision"}:
+        decisions = _require_list(result.get("decisions"), "decisions")
+        prefix = (
+            "morphology"
+            if stage_id == "auditor_morphology"
+            else "collision"
+        )
+        for decision_index, raw in enumerate(decisions):
+            decision = dict(
+                _require_mapping(raw, f"decisions[{decision_index}]")
+            )
+            action = str(decision.get("action"))
+            if action == "pending":
+                component_id = str(
+                    _term_string(
+                        decision.get("component_id"),
+                        f"decisions[{decision_index}].component_id",
+                        maximum=191,
+                    )
+                )
+                rows.append(
+                    _build_term_row(
+                        stage_id=stage_id,
+                        state=f"{prefix}_pending",
+                        logical_subject=component_id,
+                        candidate_ids=[],
+                        member_ids=[component_id],
+                        surfaces=[],
+                        source_block_ids=[],
+                        targets=[],
+                        reason_codes=[f"{prefix}_pending"],
+                        rationale=decision.get("pending_reason"),
+                        supersedes_row_ids=_term_supersedes(
+                            previous_rows,
+                            logical_subject=component_id,
+                            candidate_ids=[],
+                            member_ids=[component_id],
+                            allowed_states=(
+                                {"admitted"}
+                                if stage_id == "auditor_morphology"
+                                else {"admitted", "morphology_resolved"}
+                            ),
+                        ),
+                        evidence=evidence,
+                    )
+                )
+                continue
+            resolved_entries = _require_list(
+                decision.get("resolved_entries"),
+                f"decisions[{decision_index}].resolved_entries",
+            )
+            for entry_index, raw_entry in enumerate(resolved_entries):
+                resolved = dict(
+                    _require_mapping(
+                        raw_entry,
+                        (
+                            f"decisions[{decision_index}]."
+                            f"resolved_entries[{entry_index}]"
+                        ),
+                    )
+                )
+                candidate_ids = list(
+                    resolved.get("member_candidate_ids") or []
+                )
+                canonical_source = str(
+                    _term_string(
+                        resolved.get("canonical_source"),
+                        "resolved_entry.canonical_source",
+                        maximum=256,
+                    )
+                )
+                targets = [
+                    {
+                        "target_vi": resolved.get("canonical_target_vi"),
+                        "applicability": None,
+                        "disposition": "canonical",
+                    }
+                ]
+                for alternate in resolved.get("alternative_targets") or []:
+                    targets.append(
+                        {
+                            "target_vi": alternate.get("target_vi"),
+                            "applicability": (
+                                alternate.get("applicability")
+                                if "applicability" in alternate
+                                else alternate.get("use_when")
+                            ),
+                            "disposition": "alternative",
+                        }
+                    )
+                rows.append(
+                    _build_term_row(
+                        stage_id=stage_id,
+                        state=f"{prefix}_resolved",
+                        logical_subject=canonical_source,
+                        candidate_ids=candidate_ids,
+                        member_ids=candidate_ids,
+                        surfaces=[canonical_source],
+                        source_block_ids=resolved.get("evidence_block_ids") or [],
+                        targets=targets,
+                        reason_codes=[f"{prefix}_{action}"],
+                        rationale=resolved.get("rationale"),
+                        supersedes_row_ids=_term_supersedes(
+                            previous_rows,
+                            logical_subject=canonical_source,
+                            candidate_ids=candidate_ids,
+                            member_ids=candidate_ids,
+                            allowed_states=(
+                                {"admitted"}
+                                if stage_id == "auditor_morphology"
+                                else {"admitted", "morphology_resolved"}
+                            ),
+                        ),
+                        evidence=evidence,
+                    )
+                )
+    else:
+        decisions = _require_list(result.get("decisions"), "decisions")
+        for index, raw in enumerate(decisions):
+            decision = dict(_require_mapping(raw, f"decisions[{index}]"))
+            candidate_id = str(
+                _term_string(
+                    decision.get("candidate_id"),
+                    f"decisions[{index}].candidate_id",
+                    maximum=191,
+                )
+            )
+            action = str(decision.get("action"))
+            state = (
+                "multi_target_pending"
+                if action == "pending"
+                else "multi_target_resolved"
+            )
+            targets = [
+                {
+                    "target_vi": target.get("target_vi"),
+                    "applicability": target.get("applicability"),
+                    "disposition": target.get("disposition"),
+                }
+                for target in decision.get("target_dispositions") or []
+            ]
+            rows.append(
+                _build_term_row(
+                    stage_id=stage_id,
+                    state=state,
+                    logical_subject=candidate_id,
+                    candidate_ids=[candidate_id],
+                    member_ids=[],
+                    surfaces=[],
+                    source_block_ids=decision.get("evidence_block_ids") or [],
+                    targets=targets,
+                    reason_codes=[f"multi_target_{action}"],
+                    rationale=(
+                        decision.get("pending_reason")
+                        if action == "pending"
+                        else decision.get("rationale")
+                    ),
+                    supersedes_row_ids=_term_supersedes(
+                        previous_rows,
+                        logical_subject=candidate_id,
+                        candidate_ids=[candidate_id],
+                        member_ids=[],
+                        allowed_states={
+                            "admitted",
+                            "morphology_resolved",
+                            "collision_resolved",
+                        },
+                    ),
+                    evidence=evidence,
+                )
+            )
+    return _build_term_batches(
+        stage_id=stage_id,
+        evidence=evidence,
+        rows=rows,
+        previous_rows=previous_rows,
+        projection_mode=projection_mode,
+        completed=completed,
+        total=total,
+        unit=unit,
+        through_work_id=str(entry["work_item_id"]),
+    )
+
+
+def project_artifact_term_batches(
+    *,
+    artifact: Mapping[str, Any],
+    artifact_value: Mapping[str, Any],
+    created_event: Mapping[str, Any],
+    previous_rows: Sequence[Mapping[str, Any]],
+    completed: int,
+    total: int | None,
+    unit: str,
+    through_work_id: str,
+) -> list[dict[str, Any]]:
+    stage_id = str(artifact["producer_stage_id"])
+    if stage_id not in {"candidate_index", "glossary_seal"}:
+        return []
+    evidence = _artifact_term_evidence(
+        artifact=artifact,
+        created_event=created_event,
+    )
+    rows: list[dict[str, Any]] = []
+    if stage_id == "candidate_index":
+        if artifact["schema_version"] != "d2l_candidate_index_v2":
+            return []
+        candidates = _require_list(
+            artifact_value.get("candidates"),
+            "candidate_index.candidates",
+        )
+        for index, raw in enumerate(candidates):
+            candidate = dict(
+                _require_mapping(raw, f"candidate_index.candidates[{index}]")
+            )
+            candidate_id = str(
+                _term_string(
+                    candidate.get("candidate_id"),
+                    f"candidate_index.candidates[{index}].candidate_id",
+                    maximum=191,
+                )
+            )
+            surfaces = list(candidate.get("surfaces") or [])
+            if not surfaces and candidate.get("surface"):
+                surfaces = [candidate["surface"]]
+            logical_subject = str(
+                candidate.get("normalized_surface")
+                or (surfaces[0] if surfaces else candidate_id)
+            )
+            rows.append(
+                _build_term_row(
+                    stage_id=stage_id,
+                    state="aggregated",
+                    logical_subject=logical_subject,
+                    candidate_ids=[candidate_id],
+                    member_ids=candidate.get("source_row_hashes") or [],
+                    surfaces=surfaces,
+                    source_block_ids=candidate.get("source_block_ids") or [],
+                    targets=[],
+                    reason_codes=["candidate_index_aggregated"],
+                    rationale=None,
+                    supersedes_row_ids=_matching_prior_row_ids(
+                        previous_rows,
+                        logical_term_id=_logical_term_id(logical_subject),
+                        candidate_ids=[],
+                        member_ids=[],
+                        allowed_states={"proposed"},
+                    ),
+                    evidence=evidence,
+                )
+            )
+    else:
+        if artifact["schema_version"] != "d2l_terminology_memory_delta_batch_v1":
+            return []
+        from pipeline.prepass.d2l_terminology_memory_delta_v1 import (
+            validate_memory_delta_batch,
+        )
+
+        memory_delta = validate_memory_delta_batch(artifact_value)
+        superseded_ids = {
+            str(row_id)
+            for row in previous_rows
+            for row_id in row["supersedes_row_ids"]
+        }
+        for delta in memory_delta["deltas"]:
+            after = delta["after"]
+            candidate_ids = list(after["source_member_candidate_ids"])
+            canonical_source = str(after["canonical_source"])
+            matching = [
+                row
+                for row in previous_rows
+                if row["row_id"] not in superseded_ids
+                and (
+                    row["logical_term_id"] == _logical_term_id(canonical_source)
+                    or set(row["candidate_ids"]).intersection(candidate_ids)
+                    or set(row["member_ids"]).intersection(candidate_ids)
+                )
+            ]
+            if any(
+                row["state"] in _TERM_TERMINAL_NEGATIVE_STATES
+                for row in matching
+            ):
+                raise D2LConsoleContractError(
+                    "pending or rejected terminology cannot become committed"
+                )
+            targets = [
+                {
+                    "target_vi": after["canonical_target_vi"],
+                    "applicability": after.get("canonical_applicability"),
+                    "disposition": "canonical",
+                }
+            ]
+            for alternate in after.get("alternative_targets") or []:
+                targets.append(
+                    {
+                        "target_vi": alternate["target_vi"],
+                        "applicability": alternate["applicability"],
+                        "disposition": "alternative",
+                    }
+                )
+            rows.append(
+                _build_term_row(
+                    stage_id=stage_id,
+                    state="committed",
+                    logical_subject=canonical_source,
+                    candidate_ids=candidate_ids,
+                    member_ids=[after["entry_id"]],
+                    surfaces=[
+                        canonical_source,
+                        *(after.get("surfaces") or []),
+                    ],
+                    source_block_ids=after["evidence_block_ids"],
+                    targets=targets,
+                    reason_codes=[
+                        str(delta["operation"]),
+                        str(delta["reason_code"]),
+                    ],
+                    rationale=after.get("decision_rationale"),
+                    supersedes_row_ids=_term_supersedes(
+                        previous_rows,
+                        logical_subject=canonical_source,
+                        candidate_ids=candidate_ids,
+                        member_ids=[after["entry_id"]],
+                        allowed_states={
+                            "admitted",
+                            "morphology_resolved",
+                            "collision_resolved",
+                            "multi_target_resolved",
+                            "committed",
+                        },
+                    ),
+                    evidence=evidence,
+                )
+            )
+    return _build_term_batches(
+        stage_id=stage_id,
+        evidence=evidence,
+        rows=rows,
+        previous_rows=previous_rows,
+        projection_mode="stage_artifact_projection",
+        completed=completed,
+        total=total,
+        unit=unit,
+        through_work_id=through_work_id,
+    )
+
+
+def validate_term_lifecycle_event_sequence(
+    events: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    rows_by_id: dict[str, dict[str, Any]] = {}
+    batches_by_id: dict[str, str] = {}
+    for event in events:
+        if event.get("event") != "term_lifecycle":
+            continue
+        stage_id = str(event["stage_id"])
+        batch = validate_term_lifecycle_batch(
+            event["payload"],
+            stage_id=stage_id,
+        )
+        existing_batch = batches_by_id.get(batch["batch_id"])
+        if existing_batch is not None:
+            if existing_batch != batch["batch_sha256"]:
+                raise D2LConsoleContractError(
+                    "term lifecycle batch ID was reused with unequal hash"
+                )
+            continue
+        for row in batch["rows"]:
+            existing = rows_by_id.get(row["row_id"])
+            if existing is not None:
+                if existing["row_sha256"] != row["row_sha256"]:
+                    raise D2LConsoleContractError(
+                        "term lifecycle row ID was reused with unequal hash"
+                    )
+                continue
+            for superseded_id in row["supersedes_row_ids"]:
+                superseded = rows_by_id.get(superseded_id)
+                if superseded is None:
+                    raise D2LConsoleContractError(
+                        "term lifecycle supersedes an unknown row"
+                    )
+                allowed = _TERM_ALLOWED_TRANSITIONS.get(
+                    str(superseded["state"]),
+                    set(),
+                )
+                if row["state"] not in allowed:
+                    raise D2LConsoleContractError(
+                        "term lifecycle state transition is invalid"
+                    )
+            rows_by_id[row["row_id"]] = dict(row)
+        batches_by_id[batch["batch_id"]] = batch["batch_sha256"]
+        expected_summary = _term_summary(
+            rows_by_id,
+            completed=batch["summary"]["completed"],
+            total=batch["summary"]["total"],
+            unit=batch["summary"]["unit"],
+            through_work_id=batch["summary"]["through_work_id"],
+        )
+        if batch["summary"] != expected_summary:
+            raise D2LConsoleContractError(
+                "term lifecycle cumulative summary drift"
+            )
+    return {
+        "rows_by_id": rows_by_id,
+        "batches_by_id": batches_by_id,
+    }
+
+
 def _reject_forbidden_event_keys(value: Any, label: str = "event.payload") -> None:
     if isinstance(value, Mapping):
         for key, child in value.items():
@@ -1101,6 +2590,18 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
             "stage_cumulative",
             "component_cumulative",
             "snapshot_sha256",
+        },
+        "term_lifecycle": {
+            "schema_version",
+            "batch_id",
+            "batch_sha256",
+            "projection_mode",
+            "timing_authority",
+            "origin_component_attempt_id",
+            "origin_component_seq",
+            "evidence",
+            "rows",
+            "summary",
         },
         "run_done": {
             "artifact_index_ref",
@@ -1338,6 +2839,10 @@ def _validate_event_payload(event_name: str, value: Any) -> dict[str, Any]:
             _require_int(count, f"cost_snapshot.cache_counters.{key}")
     elif event_name == "usage_snapshot":
         row = validate_component_usage_snapshot(row)
+    elif event_name == "term_lifecycle":
+        # Stage-specific validation is completed by validate_component_event,
+        # where the enclosing stage identity is authoritative.
+        pass
     elif event_name == "run_done":
         _validate_relative_ref(row["artifact_index_ref"], "run_done.artifact_index_ref")
         _require_sha(row["artifact_index_sha256"], "run_done.artifact_index_sha256")
@@ -1431,6 +2936,15 @@ def validate_component_event(
         if stage_id not in {stage["stage_id"] for stage in manifest_row["stages"]}:
             raise D2LConsoleContractError("event.stage_id is unknown")
     payload = _validate_event_payload(event_name, row["payload"])
+    if event_name == "term_lifecycle":
+        payload = validate_term_lifecycle_batch(
+            payload,
+            stage_id=str(row["stage_id"]),
+        )
+        if payload["origin_component_attempt_id"] > row["component_attempt_id"]:
+            raise D2LConsoleContractError(
+                "term lifecycle evidence comes from a future attempt"
+            )
     if event_name == "run_start":
         if payload["selected_chapter_ids"] != manifest_row["selected_chapter_ids"]:
             raise D2LConsoleContractError("run_start chapter scope does not match manifest")
@@ -1471,6 +2985,7 @@ def validate_component_event_stream(
     terminal_seen = False
     checkpoint_events: dict[tuple[str, str], int] = {}
     usage_snapshots: list[dict[str, Any]] = []
+    normalized_events: list[dict[str, Any]] = []
     with event_path.open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
             if not line.strip():
@@ -1538,6 +3053,7 @@ def validate_component_event_stream(
             last_seq = row["component_seq"]
             last_attempt = attempt
             last_event = event_name
+            normalized_events.append(row)
     if last_seq == 0:
         raise D2LConsoleContractError("component event log cannot be empty")
     if terminal_seen:
@@ -1549,6 +3065,7 @@ def validate_component_event_stream(
     if terminal_count > 1 or (require_terminal and terminal_count != 1):
         raise D2LConsoleContractError("component stream terminal event count is invalid")
     latest_usage = validate_component_usage_snapshot_sequence(usage_snapshots)
+    term_state = validate_term_lifecycle_event_sequence(normalized_events)
     return {
         "schema": "d2l_translation_component_event_summary_v1",
         "workflow_run_id": manifest_row["workflow_run_id"],
@@ -1564,6 +3081,8 @@ def validate_component_event_stream(
         "component_usage": (
             None if latest_usage is None else latest_usage["component_cumulative"]
         ),
+        "term_lifecycle_row_count": len(term_state["rows_by_id"]),
+        "term_lifecycle_batch_count": len(term_state["batches_by_id"]),
     }
 
 
@@ -2309,6 +3828,232 @@ def _require_binding_matches_index(
         raise D2LConsoleContractError(f"{label} producer attempt disagrees with the artifact index")
 
 
+def _validate_term_lifecycle_package_evidence(
+    *,
+    package_root: Path,
+    manifest: Mapping[str, Any],
+    events: Sequence[Mapping[str, Any]],
+    artifacts_by_ref: Mapping[str, Mapping[str, Any]],
+) -> dict[str, int]:
+    lifecycle_events = [
+        event for event in events if event["event"] == "term_lifecycle"
+    ]
+    if not lifecycle_events:
+        return {"rows": 0, "batches": 0}
+    events_by_id = {str(event["event_id"]): event for event in events}
+    stage_rows = {
+        str(stage["stage_id"]): stage for stage in manifest["stages"]
+    }
+    rows_by_id: dict[str, dict[str, Any]] = {}
+    batches_by_id: dict[str, str] = {}
+    expected_by_evidence: dict[str, dict[str, Any]] = {}
+    evidence_order: list[str] = []
+
+    for lifecycle_event in lifecycle_events:
+        stage_id = str(lifecycle_event["stage_id"])
+        batch = validate_term_lifecycle_batch(
+            lifecycle_event["payload"],
+            stage_id=stage_id,
+        )
+        evidence = batch["evidence"]
+        evidence_key = canonical_sha256(evidence)
+        if evidence_key not in expected_by_evidence:
+            if evidence_order:
+                previous_group = expected_by_evidence[evidence_order[-1]]
+                if previous_group["seen_count"] != len(
+                    previous_group["expected"]
+                ):
+                    raise D2LConsoleContractError(
+                        "term lifecycle evidence batches are not contiguous"
+                    )
+            prior_rows = list(rows_by_id.values())
+            if evidence["evidence_kind"] == "work_journal":
+                from pipeline.prepass.d2l_stage_work_journal_v1 import (
+                    read_work_journal,
+                )
+
+                journal_path = _resolve_ref(
+                    package_root,
+                    evidence["journal_ref"],
+                    "term_lifecycle.evidence.journal_ref",
+                )
+                entries = read_work_journal(journal_path)
+                journal_seq = int(evidence["journal_seq"])
+                if journal_seq > len(entries):
+                    raise D2LConsoleContractError(
+                        "term lifecycle journal sequence is absent"
+                    )
+                entry = entries[journal_seq - 1]
+                if (
+                    entry["entry_sha256"] != evidence["entry_sha256"]
+                    or entry["component_attempt_id"]
+                    != evidence["producer_component_attempt_id"]
+                    or entry["workflow_run_id"] != manifest["workflow_run_id"]
+                    or entry["component_run_id"] != manifest["component_run_id"]
+                    or entry["stage_id"] != stage_id
+                ):
+                    raise D2LConsoleContractError(
+                        "term lifecycle work-journal evidence drift"
+                    )
+                validation_event = events_by_id.get(
+                    str(evidence["validation_event_id"])
+                )
+                if validation_event is None or (
+                    validation_event["event"] != "validation_passed"
+                    or validation_event["stage_id"] != stage_id
+                    or validation_event["component_attempt_id"]
+                    != evidence["validation_component_attempt_id"]
+                    or validation_event["component_seq"]
+                    != evidence["validation_component_seq"]
+                    or validation_event["payload"]["subject_ref"]
+                    != entry["work_item_id"]
+                    or validation_event["component_seq"]
+                    >= lifecycle_event["component_seq"]
+                ):
+                    raise D2LConsoleContractError(
+                        "term lifecycle validation-event binding drift"
+                    )
+                stage = stage_rows[stage_id]
+                completed = term_work_completed(
+                    stage_id,
+                    entries,
+                    through_journal_seq=journal_seq,
+                )
+                expected = project_work_journal_term_batches(
+                    stage_id=stage_id,
+                    journal_ref=str(evidence["journal_ref"]),
+                    entry=entry,
+                    validation_event=validation_event,
+                    previous_rows=prior_rows,
+                    projection_mode=str(batch["projection_mode"]),
+                    completed=completed,
+                    total=stage["progress"]["total"],
+                    unit=str(stage["progress"]["unit"]),
+                )
+            else:
+                artifact = artifacts_by_ref.get(str(evidence["artifact_ref"]))
+                created_event = events_by_id.get(
+                    str(evidence["created_event_id"])
+                )
+                if artifact is None or created_event is None:
+                    raise D2LConsoleContractError(
+                        "term lifecycle artifact evidence is absent"
+                    )
+                if (
+                    artifact["artifact_kind"] != evidence["artifact_kind"]
+                    or artifact["schema_version"] != evidence["schema_version"]
+                    or artifact["sha256"] != evidence["sha256"]
+                    or artifact["sha256_kind"] != evidence["sha256_kind"]
+                    or artifact["component_attempt_id"]
+                    != evidence["producer_component_attempt_id"]
+                    or artifact["created_event_id"] != created_event["event_id"]
+                    or artifact["producer_stage_id"] != stage_id
+                    or created_event["event"] != "artifact_created"
+                    or created_event["stage_id"] != stage_id
+                    or created_event["component_seq"]
+                    != evidence["created_component_seq"]
+                    or created_event["component_seq"]
+                    >= lifecycle_event["component_seq"]
+                ):
+                    raise D2LConsoleContractError(
+                        "term lifecycle artifact-index binding drift"
+                    )
+                artifact_path = _resolve_ref(
+                    package_root,
+                    artifact["relative_path"],
+                    "term_lifecycle artifact relative_path",
+                )
+                artifact_value = _load_json(
+                    artifact_path,
+                    "term_lifecycle artifact",
+                )
+                work_events = [
+                    event
+                    for event in events
+                    if event["event"] == "work_started"
+                    and event["stage_id"] == stage_id
+                    and event["component_seq"] < created_event["component_seq"]
+                ]
+                if not work_events:
+                    raise D2LConsoleContractError(
+                        "term lifecycle artifact lacks stage work identity"
+                    )
+                through_work_id = str(
+                    work_events[-1]["payload"]["work_id"]
+                )
+                stage = stage_rows[stage_id]
+                expected = project_artifact_term_batches(
+                    artifact=artifact,
+                    artifact_value=artifact_value,
+                    created_event=created_event,
+                    previous_rows=prior_rows,
+                    completed=int(stage["progress"]["completed"]),
+                    total=stage["progress"]["total"],
+                    unit=str(stage["progress"]["unit"]),
+                    through_work_id=through_work_id,
+                )
+            if not expected:
+                raise D2LConsoleContractError(
+                    "term lifecycle evidence produced no rows"
+                )
+            expected_by_evidence[evidence_key] = {
+                "expected": expected,
+                "seen_count": 0,
+            }
+            evidence_order.append(evidence_key)
+        group = expected_by_evidence[evidence_key]
+        expected_rows = group["expected"]
+        seen_count = int(group["seen_count"])
+        if seen_count >= len(expected_rows):
+            raise D2LConsoleContractError(
+                "term lifecycle evidence emitted too many batches"
+            )
+        expected_batch = expected_rows[seen_count]
+        if batch != expected_batch:
+            raise D2LConsoleContractError(
+                "term lifecycle payload does not rederive from evidence"
+            )
+        existing_batch = batches_by_id.get(batch["batch_id"])
+        if (
+            existing_batch is not None
+            and existing_batch != batch["batch_sha256"]
+        ):
+            raise D2LConsoleContractError(
+                "term lifecycle batch hash drift"
+            )
+        batches_by_id[batch["batch_id"]] = batch["batch_sha256"]
+        for term_row in batch["rows"]:
+            existing_row = rows_by_id.get(term_row["row_id"])
+            if (
+                existing_row is not None
+                and existing_row["row_sha256"] != term_row["row_sha256"]
+            ):
+                raise D2LConsoleContractError(
+                    "term lifecycle row hash drift"
+                )
+            rows_by_id[term_row["row_id"]] = dict(term_row)
+        group["seen_count"] = seen_count + 1
+
+    incomplete = [
+        evidence_key
+        for evidence_key in evidence_order
+        if expected_by_evidence[evidence_key]["seen_count"]
+        != len(expected_by_evidence[evidence_key]["expected"])
+    ]
+    if incomplete:
+        if (
+            manifest["status"] in TERMINAL_COMPONENT_STATUSES
+            or incomplete != [evidence_order[-1]]
+        ):
+            raise D2LConsoleContractError(
+                "term lifecycle evidence batch exact-cover is incomplete"
+            )
+    return {
+        "rows": len(rows_by_id),
+        "batches": len(batches_by_id),
+    }
+
+
 def validate_translation_component_package(
     root: str | Path,
     *,
@@ -2339,6 +4084,7 @@ def validate_translation_component_package(
     )
     artifacts_by_ref = {item["artifact_ref"]: item for item in artifact_index["artifacts"]}
     events_by_id: dict[str, Mapping[str, Any]] = {}
+    ordered_events: list[Mapping[str, Any]] = []
     stage_start_counts: Counter[str] = Counter()
     stage_start_attempts: dict[str, set[int]] = {}
     stage_done_events: dict[str, Mapping[str, Any]] = {}
@@ -2347,6 +4093,7 @@ def validate_translation_component_package(
         for line in handle:
             event = json.loads(line)
             events_by_id[event["event_id"]] = event
+            ordered_events.append(event)
             payload = event["payload"]
             if event["event"] == "run_start":
                 revision_path = _resolve_ref(
@@ -2446,6 +4193,12 @@ def validate_translation_component_package(
                         if checkpoint[key] != payload[key]:
                             raise D2LConsoleContractError(f"checkpoint event {key} mismatch")
                 checkpoints += 1
+    term_lifecycle_counts = _validate_term_lifecycle_package_evidence(
+        package_root=package_root,
+        manifest=manifest,
+        events=ordered_events,
+        artifacts_by_ref=artifacts_by_ref,
+    )
     for artifact in artifact_index["artifacts"]:
         if artifact["created_event_id"] not in events_by_id:
             raise D2LConsoleContractError("artifact index cites an unknown creation event")
@@ -2532,6 +4285,11 @@ def validate_translation_component_package(
         "artifact_index_sha256": file_sha256(index_path),
         "scoring_handoff_fragment_sha256": scoring_fragment_sha,
     }
+    if term_lifecycle_counts["batches"]:
+        result["term_lifecycle_row_count"] = term_lifecycle_counts["rows"]
+        result["term_lifecycle_batch_count"] = term_lifecycle_counts[
+            "batches"
+        ]
     if event_summary["latest_usage_snapshot_sha256"] is not None:
         result["latest_usage_snapshot_sha256"] = event_summary[
             "latest_usage_snapshot_sha256"
@@ -2560,6 +4318,7 @@ __all__ = [
     "SCORING_FRAGMENT_SCHEMA",
     "SOURCE_BINDING_SCHEMA",
     "STAGE_IDS",
+    "TERM_LIFECYCLE_SCHEMA",
     "USAGE_SNAPSHOT_SCHEMA",
     "build_checkpoint",
     "build_component_usage_snapshot",
@@ -2570,7 +4329,10 @@ __all__ = [
     "canonical_sha256",
     "component_manifest_sha256",
     "file_sha256",
+    "project_artifact_term_batches",
+    "project_work_journal_term_batches",
     "scoring_fragment_sha256",
+    "term_work_completed",
     "usage_snapshot_sha256",
     "validate_artifact_index",
     "validate_checkpoint",
@@ -2581,6 +4343,8 @@ __all__ = [
     "validate_component_usage_snapshot_sequence",
     "validate_scoring_handoff_fragment",
     "validate_source_binding",
+    "validate_term_lifecycle_batch",
+    "validate_term_lifecycle_event_sequence",
     "validate_translation_component_package",
     "validate_typed_binding",
     "write_component_manifest_snapshot",
