@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -79,6 +80,37 @@ def _manifest(
 
 def _write_manifest(root: Path, manifest: dict) -> None:
     write_json(root / "component_manifest.json", manifest)
+
+
+def test_write_json_retries_transient_windows_replace_denial(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    destination = tmp_path / "artifact_index.json"
+    real_replace = os.replace
+    attempts = 0
+
+    def transient_replace(source, target):
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            raise PermissionError(5, "Access is denied", str(target))
+        real_replace(source, target)
+
+    monkeypatch.setattr(os, "replace", transient_replace)
+    monkeypatch.setattr(
+        "pipeline.prepass.d2l_console_replay_contract_v1.time.sleep",
+        lambda _seconds: None,
+    )
+
+    write_json(destination, {"schema": "fixture", "value": 1})
+
+    assert attempts == 3
+    assert json.loads(destination.read_text(encoding="utf-8")) == {
+        "schema": "fixture",
+        "value": 1,
+    }
+    assert not destination.with_name(destination.name + ".tmp").exists()
 
 
 def test_recorded_translation_component_fixture_is_valid(tmp_path: Path) -> None:

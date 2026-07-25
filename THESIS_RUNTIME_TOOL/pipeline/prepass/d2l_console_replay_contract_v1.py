@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from collections import Counter
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -4303,7 +4304,14 @@ def write_json(path: str | Path, value: Any) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_name(destination.name + ".tmp")
     temporary.write_bytes(canonical_json_bytes(value))
-    os.replace(temporary, destination)
+    for attempt in range(12):
+        try:
+            os.replace(temporary, destination)
+            return
+        except PermissionError:
+            if attempt == 11:
+                raise
+            time.sleep(min(0.5, 0.025 * (2**attempt)))
 
 
 __all__ = [
