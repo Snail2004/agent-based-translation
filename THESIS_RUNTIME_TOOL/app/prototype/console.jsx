@@ -1081,15 +1081,173 @@ function consoleLatestWorkProgressRows(rows, eventPreset) {
   ));
 }
 
+function consoleLogicalRequestId(payload) {
+  return String(
+    payload?.logical_request_id
+    || payload?.usage?.logical_request_id
+    || "",
+  ).trim();
+}
+
+function consoleDirectWorkId(payload) {
+  return String(
+    payload?.work_id
+    || payload?.current_work_id
+    || payload?.usage?.work_id
+    || "",
+  ).trim();
+}
+
+/* Resolve only producer-provided identities. Conflicting bindings are removed
+   instead of being guessed client-side. */
+function consoleLogicalRequestWorkMap(events) {
+  const workByRequest = new Map();
+  const conflicts = new Set();
+  (Array.isArray(events) ? events : []).forEach(raw => {
+    const payload = raw && typeof raw.payload === "object" && raw.payload ? raw.payload : {};
+    const logicalRequestId = consoleLogicalRequestId(payload);
+    const workId = consoleDirectWorkId(payload);
+    if (!logicalRequestId || !workId || conflicts.has(logicalRequestId)) return;
+    const previous = workByRequest.get(logicalRequestId);
+    if (previous && previous !== workId) {
+      workByRequest.delete(logicalRequestId);
+      conflicts.add(logicalRequestId);
+      return;
+    }
+    workByRequest.set(logicalRequestId, workId);
+  });
+  return workByRequest;
+}
+
+function consoleHumanWorkLabel(workId) {
+  const exact = String(workId || "").trim();
+  const match = /^b1_w_(.+)_([0-9]+)$/.exec(exact);
+  if (!match) return exact;
+  const ordinal = Number(match[2]);
+  return Number.isSafeInteger(ordinal) && ordinal > 0
+    ? `${match[1]} · window ${ordinal}`
+    : exact;
+}
+
+function consoleTermLifecyclePresentationRows(rows) {
+  const result = [];
+  let batch = [];
+  const flush = () => {
+    if (!batch.length) return;
+    if (batch.length === 1) {
+      result.push(batch[0]);
+      batch = [];
+      return;
+    }
+    const first = batch[0];
+    const latest = batch[batch.length - 1];
+    result.push({
+      ...latest,
+      key: `term-lifecycle:${first.key}:${latest.key}`,
+      rawEventCount: batch.reduce((sum, row) => sum + Number(row.rawEventCount || 1), 0),
+      presentationBatchCount: batch.length,
+      groupFirstLineNo: first.lineNo,
+      groupLastLineNo: latest.lineNo,
+      groupFirstSeq: first.seq,
+      groupLastSeq: latest.seq,
+    });
+    batch = [];
+  };
+  (Array.isArray(rows) ? rows : []).forEach(row => {
+    const previous = batch[batch.length - 1];
+    const sameLifecycleRun = row?.event === "term_lifecycle"
+      && (!previous || (
+        row.stage === previous.stage
+        && row.componentId === previous.componentId
+        && row.componentRunId === previous.componentRunId
+      ));
+    if (sameLifecycleRun) {
+      batch.push(row);
+      return;
+    }
+    flush();
+    result.push(row);
+  });
+  flush();
+  return result;
+}
+
+function consoleProgressFacts(row) {
+  const progress = row?.progress || row?.payload?.progress;
+  const completed = Number(progress?.completed);
+  const total = Number(progress?.total);
+  return Number.isFinite(completed) && Number.isFinite(total)
+    ? { progress, completed, total, unit: String(progress?.unit || "") }
+    : null;
+}
+
+function consoleProgressStageKey(row) {
+  const stage = String(row?.stage || "").trim();
+  const componentId = String(row?.componentId || "").trim();
+  const componentRunId = String(row?.componentRunId || "").trim();
+  return stage && componentId && componentRunId
+    ? `${componentId}|${componentRunId}|${stage}`
+    : "";
+}
+
+/* A later Resume attempt may emit a mechanical 0/N start snapshot after an
+   earlier producer-sealed cumulative work_progress. Preserve the raw payload,
+   but present the Resume boundary using that exact cumulative fact. */
+function consoleResumeProgressPresentationRows(rows) {
+  const priorProgressByStage = new Map();
+  return (Array.isArray(rows) ? rows : []).map(row => {
+    const stageKey = consoleProgressStageKey(row);
+    if (row?.event === "work_progress") {
+      const facts = consoleProgressFacts(row);
+      if (stageKey && facts) priorProgressByStage.set(stageKey, { row, facts });
+      return row;
+    }
+    if (!["stage_start", "stage_started", "work_started"].includes(row?.event)) return row;
+    const start = consoleProgressFacts(row);
+    const startAttempt = Number(row.attemptIndex ?? row.attempt);
+    if (!start || start.completed !== 0 || !Number.isInteger(startAttempt) || startAttempt <= 1) return row;
+    const cumulative = priorProgressByStage.get(stageKey);
+    const cumulativeAttempt = Number(cumulative?.row?.attemptIndex ?? cumulative?.row?.attempt);
+    const subject = row.event === "work_started"
+      ? (row.workId || row.stageLabel || row.stage)
+      : (row.stageLabel || row.stage);
+    if (
+      !cumulative
+      || !Number.isInteger(cumulativeAttempt)
+      || cumulativeAttempt >= startAttempt
+      || cumulative.facts.completed <= start.completed
+      || cumulative.facts.total !== start.total
+      || cumulative.facts.unit !== start.unit
+    ) {
+      return {
+        ...row,
+        message: `${subject} tiếp tục`,
+        displayProgress: null,
+        suppressProgressBadge: true,
+        resumeProgressOmitted: true,
+      };
+    }
+    const checkpointProgress = consoleWorkflowProgress(cumulative.facts.progress);
+    return {
+      ...row,
+      message: `${subject} tiếp tục từ checkpoint`,
+      displayProgress: cumulative.facts.progress,
+      resumeProgressSourceSeq: cumulative.row.seq,
+      resumeProgressSourceAttempt: cumulativeAttempt,
+      resumeProgressText: checkpointProgress,
+    };
+  });
+}
+
 function consoleEventSequenceLabel(row) {
-  const firstLine = row.heartbeatFirstLineNo;
-  const lastLine = row.heartbeatLastLineNo;
+  const firstLine = row.groupFirstLineNo ?? row.heartbeatFirstLineNo;
+  const lastLine = row.groupLastLineNo ?? row.heartbeatLastLineNo;
   const line = firstLine != null && lastLine != null && firstLine !== lastLine
     ? `#${firstLine}-${lastLine}`
     : `#${row.lineNo != null ? row.lineNo : "-"}`;
   if ((row.attempt == null && row.attemptIndex == null) || row.seq == null) return line;
-  const firstSeq = row.heartbeatFirstSeq;
-  const lastSeq = row.heartbeatLastSeq;
+  const firstSeq = row.groupFirstSeq ?? row.heartbeatFirstSeq;
+  const lastSeq = row.groupLastSeq ?? row.heartbeatLastSeq;
   const seq = firstSeq != null && lastSeq != null && firstSeq !== lastSeq
     ? `${firstSeq}-${lastSeq}`
     : row.seq;
@@ -1268,8 +1426,8 @@ function consoleMessageFor(row, ctx) {
     case "window_started": return `window ${ctx.win || "?"} bắt đầu`;
     case "prompt_built": return consolePackMessage(p.pack_summary || p.context_summary, ctx) || `window ${ctx.win || "?"} · prompt dựng xong`;
     case "pack_built": return consolePackMessage(p.pack_summary || p.context_summary || p, ctx) || `window ${ctx.win || "?"} · pack dựng xong`;
-    case "request_sent": return `window ${ctx.win || "?"} · gọi LLM`;
-    case "response_received": return `window ${ctx.win || "?"} · nhận kết quả`;
+    case "request_sent": return `${ctx.workLabel || `window ${ctx.win || "?"}`} · gọi LLM`;
+    case "response_received": return `${ctx.workLabel || `window ${ctx.win || "?"}`} · nhận kết quả`;
     case "json_parsed": return `window ${ctx.win || "?"} · parse JSON ok`;
     case "window_preview_available": return `window ${ctx.win || "?"} · bản dịch sẵn sàng`;
     case "persist_buffered": return `window ${ctx.win || "?"} · buffer ghi`;
@@ -1277,6 +1435,21 @@ function consoleMessageFor(row, ctx) {
     case "llm_call": return `LLM ${p.model || ""}${p.cache_hit ? " · cache hit" : ""}`;
     case "artifact_created": return consoleBaseName(p.artifact_ref || p.artifact_path) || "artifact";
     case "memory_delta": return consoleMemoryDeltaMessage(consoleMemoryDelta(row, p));
+    case "term_lifecycle": {
+      const summary = p.summary && typeof p.summary === "object" ? p.summary : {};
+      const facts = [];
+      if (Number.isFinite(Number(summary.observations))) facts.push(`${formatConsoleInt(summary.observations)} quan sát`);
+      if (Number.isFinite(Number(summary.logical_terms))) facts.push(`${formatConsoleInt(summary.logical_terms)} term logic`);
+      if (summary.completed != null && summary.total != null) {
+        const sealedProgress = consoleWorkflowProgress({
+          completed: summary.completed,
+          total: summary.total,
+          unit: summary.unit,
+        });
+        if (sealedProgress) facts.push(sealedProgress);
+      }
+      return `${ctx.label || row.stage}${facts.length ? ` · ${facts.join(" · ")}` : " · vòng đời thuật ngữ"}`;
+    }
     case "warning": return consoleShort(p.message || p.reason, 60);
     case "error": return consoleShort(p.error || p.message, 60);
     case "transport_attempt_failed":
@@ -1345,11 +1518,16 @@ function deriveConsoleState(events, stagePlan = CONSOLE_STAGE_PLAN, useDeclaredS
   let invalidMemoryDeltaCount = 0;
   const systemChecks = {};
   const normalized = [];
+  const logicalRequestWorkIds = consoleLogicalRequestWorkMap(events);
 
   events.forEach((raw, idx) => {
     const payload = raw && typeof raw.payload === "object" && raw.payload ? raw.payload : {};
     const stage = raw.stage || raw.stage_id || "";
     const event = raw.event || raw.event_type || "";
+    const logicalRequestId = consoleLogicalRequestId(payload);
+    const exactWorkId = consoleDirectWorkId(payload)
+      || logicalRequestWorkIds.get(logicalRequestId)
+      || "";
     let memoryDelta = null;
     const eventArm = String(payload.config || payload.arm || payload.variant || "translation");
     const payloadWindowOrdinal = consolePreviewWindowOrdinal(payload.window_id);
@@ -1367,6 +1545,7 @@ function deriveConsoleState(events, stagePlan = CONSOLE_STAGE_PLAN, useDeclaredS
     const ctx = {
       label: ctxPlan ? ctxPlan.label : stage,
       win: event.startsWith("window") || ["prompt_built", "request_sent", "response_received", "json_parsed", "persist_buffered"].includes(event) ? eventWindow : null,
+      workLabel: exactWorkId ? consoleHumanWorkLabel(exactWorkId) : "",
     };
     const severity = consoleEventSeverity(raw);
     if (!persistedFactsOnly && severity === "warning") warnings += 1;
@@ -1451,6 +1630,7 @@ function deriveConsoleState(events, stagePlan = CONSOLE_STAGE_PLAN, useDeclaredS
       key: raw.event_id || `${raw.seq}:${idx}`,
       ts: raw.ts || "",
       stage,
+      stageLabel: ctx.label,
       agent: raw.agent || "",
       componentId: String(raw.component?.component_id || ""),
       componentRunId: String(raw.component?.component_run_id || ""),
@@ -1473,7 +1653,8 @@ function deriveConsoleState(events, stagePlan = CONSOLE_STAGE_PLAN, useDeclaredS
       blockId: String(payload.block_id || ""),
       artifactPath: String(payload.artifact_ref || payload.artifact_path || ""),
       progress: raw.persistedProgress || null,
-      workId: String(raw.currentWorkId || ""),
+      logicalRequestId,
+      workId: String(exactWorkId || raw.currentWorkId || ""),
       optionalDetails: Array.isArray(raw.optionalDetails) ? raw.optionalDetails : [],
       payload,
       memoryDeltaId: memoryDelta ? memoryDelta.deltaId : "",
@@ -3883,9 +4064,17 @@ function AgentConsoleView(props) {
   const displayRows = React.useMemo(() => consoleHeartbeatRows(st.normalized, heartbeatMode), [st.normalized, heartbeatMode]);
   const agents = uniqueConsole(st.normalized.map(r => r.agent).filter(Boolean));
   const severities = uniqueConsole(st.normalized.map(r => r.severity).filter(Boolean));
+  const resumePresentationRows = React.useMemo(
+    () => consoleResumeProgressPresentationRows(displayRows),
+    [displayRows],
+  );
+  const termLifecyclePresentationRows = React.useMemo(
+    () => consoleTermLifecyclePresentationRows(resumePresentationRows),
+    [resumePresentationRows],
+  );
   const retryPresentationRows = React.useMemo(
-    () => consoleRetryPresentationRows(displayRows, eventPreset),
-    [displayRows, eventPreset],
+    () => consoleRetryPresentationRows(termLifecyclePresentationRows, eventPreset),
+    [termLifecyclePresentationRows, eventPreset],
   );
   const progressPresentationRows = React.useMemo(
     () => consoleLatestWorkProgressRows(retryPresentationRows, eventPreset),
@@ -4392,11 +4581,19 @@ function AgentConsoleView(props) {
                       <span className="ev-body">
                         <span className="ev-heading">
                           <ConsoleRoleBadge row={r} uiText={uiText} />
-                          <b className="ev-type">{r.event}{r.heartbeatCount > 1 ? ` ×${r.heartbeatCount}` : ""}</b>
+                          <b className="ev-type">{r.event}{
+                            r.heartbeatCount > 1
+                              ? ` ×${r.heartbeatCount}`
+                              : r.presentationBatchCount > 1
+                                ? ` ×${r.presentationBatchCount}`
+                                : ""
+                          }</b>
                         </span>
                         <span className="ev-src">{r.stage || "-"}{r.agent ? " · " + r.agent : ""}{r.workId ? " · " + r.workId : ""}</span>
                         <span className="ev-msg">{r.message}</span>
-                        {r.progress && <span className="ev-progress">{consoleWorkflowProgress(r.progress)}</span>}
+                        {!r.suppressProgressBadge && (r.displayProgress || r.progress) && (
+                          <span className="ev-progress">{consoleWorkflowProgress(r.displayProgress || r.progress)}</span>
+                        )}
                         {r.dur != null && <span className="ev-dur">({r.dur}s)</span>}
                       </span>
                       <span className="ev-seq">{consoleEventSequenceLabel(r)}{r.componentSeq != null ? ` · c${r.componentSeq}` : ""}</span>
