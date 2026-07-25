@@ -44,6 +44,8 @@
     <a href="?scenario=usage-component-live">live component total</a>
     <a href="?scenario=usage-component-replay">replay component hidden</a>
     <a href="?scenario=usage-component-multi-live">live multiple components</a>
+    <a href="?scenario=term-lifecycle">term lifecycle</a>
+    <a href="?scenario=term-lifecycle-invalid">term lifecycle invalid</a>
     <a href="?scenario=optional-details">typed details</a>
     <a href="?scenario=score-pending">score pending</a>
     <a href="?scenario=score-materialized">score ready</a>
@@ -76,6 +78,7 @@ function scenarioName() {
     "valid", "full-demo", "sequence-drift", "event-hash-drift", "arm-drift", "artifact-drift",
     "usage-valid", "usage-null", "usage-unknown-zero",
     "usage-component-live", "usage-component-replay", "usage-component-multi-live",
+    "term-lifecycle", "term-lifecycle-invalid",
     "optional-details", "cursor-drift",
     "score-pending", "score-materialized", "stale-live-replay",
     "resume-valid", "resume-sequence-gap", "resume-attempt-regression",
@@ -433,6 +436,246 @@ async function resealParentEvents(adapter, events) {
   }
 }
 
+function termEvidence(attempt, componentSeq, journalRef, journalSeq, hashSeed) {
+  return {
+    evidence_kind: "work_journal",
+    journal_ref: journalRef,
+    journal_seq: journalSeq,
+    entry_sha256: hashSeed.repeat(64),
+    producer_component_attempt_id: attempt,
+    validation_event_id: `evt_translation_run_1_${String(componentSeq).padStart(8, "0")}`,
+    validation_component_attempt_id: attempt,
+    validation_component_seq: componentSeq,
+  };
+}
+
+async function termRow(adapter, stageId, evidence, values) {
+  const row = {
+    row_id: "",
+    row_sha256: "",
+    logical_term_id: values.logical_term_id,
+    state: values.state,
+    lifecycle: values.state === "committed" ? "committed" : "provisional",
+    authority: values.state === "committed" ? "glossary_commit" : "none",
+    origin_component_attempt_id: evidence.validation_component_attempt_id,
+    origin_component_seq: evidence.validation_component_seq,
+    candidate_ids: values.candidate_ids || [],
+    member_ids: values.member_ids || [],
+    surfaces: values.surfaces || [],
+    source_block_ids: values.source_block_ids || [],
+    targets: values.targets || [],
+    reason_codes: values.reason_codes || [],
+    rationale: values.rationale ?? null,
+    supersedes_row_ids: values.supersedes_row_ids || [],
+    evidence_ref: evidence.journal_ref,
+    evidence_sha256: evidence.entry_sha256,
+  };
+  const identity = {
+    schema_version: "d2l_term_lifecycle_row_identity_v1",
+    stage_id: stageId,
+    state: row.state,
+    logical_term_id: row.logical_term_id,
+    candidate_ids: row.candidate_ids,
+    member_ids: row.member_ids,
+    surfaces: row.surfaces,
+    source_block_ids: row.source_block_ids,
+    targets: row.targets,
+    evidence_ref: row.evidence_ref,
+    evidence_sha256: row.evidence_sha256,
+  };
+  row.row_id = `tlr_${(await adapter.canonicalSha256(identity)).slice(0, 32)}`;
+  const unsigned = { ...row };
+  delete unsigned.row_sha256;
+  row.row_sha256 = await adapter.canonicalSha256(unsigned);
+  return row;
+}
+
+async function termBatch(adapter, stageId, evidence, rows, summary, projectionMode = "live") {
+  const orderedRows = [...rows].sort((left, right) => left.row_id.localeCompare(right.row_id));
+  const identity = {
+    schema_version: "d2l_term_lifecycle_batch_identity_v1",
+    stage_id: stageId,
+    evidence,
+    row_ids: orderedRows.map(row => row.row_id),
+  };
+  const batch = {
+    schema_version: "d2l_term_lifecycle_batch_v1",
+    batch_id: `tlb_${(await adapter.canonicalSha256(identity)).slice(0, 32)}`,
+    batch_sha256: "",
+    projection_mode: projectionMode,
+    timing_authority: projectionMode === "resume_backfill" ? "logical_order_only" : "recorded",
+    origin_component_attempt_id: evidence.validation_component_attempt_id,
+    origin_component_seq: evidence.validation_component_seq,
+    evidence,
+    rows: orderedRows,
+    summary,
+  };
+  const unsigned = { ...batch };
+  delete unsigned.batch_sha256;
+  batch.batch_sha256 = await adapter.canonicalSha256(unsigned);
+  return batch;
+}
+
+function termParentEvent(template, seq, componentSeq, stageId, agent, payload) {
+  const event = JSON.parse(JSON.stringify(template));
+  event.event_id = `workflow_event_${String(seq).padStart(8, "0")}`;
+  event.seq = seq;
+  event.accepted_at = `2026-07-22T00:00:0${Math.min(9, seq)}Z`;
+  event.component.component_seq = componentSeq;
+  event.component.source_event_id = `evt_translation_run_1_${String(componentSeq).padStart(8, "0")}`;
+  event.component.source_event_sha256 = String(componentSeq).padStart(64, "0");
+  event.stage_id = stageId;
+  event.agent = agent;
+  event.event = "term_lifecycle";
+  event.severity = "info";
+  event.payload = payload;
+  event.integrity = { previous_event_sha256: null, event_sha256: "" };
+  return event;
+}
+
+async function addTermLifecycleDemo(adapter, manifest, events, invalid = false) {
+  const proposedEvidence = termEvidence(
+    1,
+    1,
+    "runtime/work_items/b1_candidate_discovery.jsonl",
+    1,
+    "A",
+  );
+  const proposed = await termRow(adapter, "b1_candidate_discovery", proposedEvidence, {
+    logical_term_id: "term_gradient",
+    state: "proposed",
+    candidate_ids: ["cand_gradient"],
+    surfaces: ["gradient"],
+    source_block_ids: ["d2l_preliminaries_index_b0042"],
+    reason_codes: ["candidate_observation"],
+    rationale: "Observed repeatedly in the source window.",
+  });
+  const proposedBatch = await termBatch(
+    adapter,
+    "b1_candidate_discovery",
+    proposedEvidence,
+    [proposed],
+    {
+      observations: 1,
+      unique_surfaces: 1,
+      logical_terms: 1,
+      state_counts: { proposed: 1 },
+      completed: 13,
+      total: 179,
+      unit: "windows",
+      through_work_id: "b1_window_0013",
+    },
+  );
+
+  const admittedEvidence = termEvidence(
+    1,
+    2,
+    "runtime/work_items/b2_admission_translation.jsonl",
+    1,
+    "B",
+  );
+  const admitted = await termRow(adapter, "b2_admission_translation", admittedEvidence, {
+    logical_term_id: "term_gradient",
+    state: "admitted",
+    candidate_ids: ["cand_gradient"],
+    surfaces: ["gradient"],
+    source_block_ids: ["d2l_preliminaries_index_b0042"],
+    targets: [{ target_vi: "gradient", applicability: null, disposition: "canonical" }],
+    reason_codes: ["admit"],
+    rationale: "Accepted for the D2L glossary candidate set.",
+    supersedes_row_ids: [proposed.row_id],
+  });
+  const admittedBatch = await termBatch(
+    adapter,
+    "b2_admission_translation",
+    admittedEvidence,
+    [admitted],
+    {
+      observations: 2,
+      unique_surfaces: 1,
+      logical_terms: 1,
+      state_counts: { admitted: 1, proposed: 1 },
+      completed: 1,
+      total: 1,
+      unit: "packets",
+      through_work_id: "b2_packet_0001",
+    },
+  );
+  if (invalid) admittedBatch.batch_sha256 = "0".repeat(64);
+
+  const translateStage = manifest.stages.find(stage => stage.stage_id === "translation.translate");
+  const remainingStages = manifest.stages.filter(stage => stage.stage_id !== "translation.translate");
+  manifest.stages = [
+    {
+      stage_id: "translation.b1_candidate_discovery",
+      component_id: "translation",
+      local_stage_id: "b1_candidate_discovery",
+      order: 1,
+      label: "B1 Candidate Discovery",
+      producer: "d2l_candidate_builder",
+      status: "succeeded",
+      progress: { completed: 13, total: 179, unit: "windows" },
+      current_work_id: "b1_window_0013",
+      artifact_refs: [],
+    },
+    {
+      stage_id: "translation.b2_admission_translation",
+      component_id: "translation",
+      local_stage_id: "b2_admission_translation",
+      order: 2,
+      label: "B2 Admission & Translation",
+      producer: "d2l_b2_admission_builder",
+      status: "succeeded",
+      progress: { completed: 1, total: 1, unit: "packets" },
+      current_work_id: "b2_packet_0001",
+      artifact_refs: [],
+    },
+    { ...translateStage, order: 3 },
+    ...remainingStages.map((stage, index) => ({ ...stage, order: index + 4 })),
+  ];
+
+  const componentStart = events[0];
+  const stageCompleted = JSON.parse(JSON.stringify(events[2]));
+  stageCompleted.event_id = "workflow_event_00000004";
+  stageCompleted.seq = 4;
+  stageCompleted.component.component_seq = 4;
+  stageCompleted.component.source_event_id = "evt_translation_run_1_00000004";
+  const componentDone = JSON.parse(JSON.stringify(events[3]));
+  componentDone.event_id = "workflow_event_00000005";
+  componentDone.seq = 5;
+  componentDone.component.component_seq = 5;
+  componentDone.component.source_event_id = "evt_translation_run_1_00000005";
+  events.splice(
+    0,
+    events.length,
+    componentStart,
+    termParentEvent(
+      componentStart,
+      2,
+      2,
+      "translation.b1_candidate_discovery",
+      "d2l_candidate_builder",
+      proposedBatch,
+    ),
+    termParentEvent(
+      componentStart,
+      3,
+      3,
+      "translation.b2_admission_translation",
+      "d2l_b2_admission_builder",
+      admittedBatch,
+    ),
+    stageCompleted,
+    componentDone,
+  );
+  manifest.components[0].last_component_seq = 5;
+  manifest.latest_event_seq = 5;
+  manifest.updated_at = "2026-07-22T00:00:05Z";
+  await resealParentEvents(adapter, events);
+  delete manifest.integrity.manifest_sha256;
+  manifest.integrity.manifest_sha256 = await adapter.canonicalSha256(manifest);
+}
+
 async function evaluationScope(adapter, settingsStatus) {
   const basis = {
     settings_option_id: "evaluation_settings_v1",
@@ -603,6 +846,9 @@ async function loadAcceptedWorkflowPackage() {
     events[4].component.component_attempt_id = 1;
     events[4].component.component_attempt_index = 1;
     await resealParentEvents(adapter, events);
+  }
+  if (scenario === "term-lifecycle" || scenario === "term-lifecycle-invalid") {
+    await addTermLifecycleDemo(adapter, manifest, events, scenario === "term-lifecycle-invalid");
   }
   if (scenario === "optional-details") await addTypedDetails(adapter, manifest, events);
   if (scenario === "stale-live-replay") {

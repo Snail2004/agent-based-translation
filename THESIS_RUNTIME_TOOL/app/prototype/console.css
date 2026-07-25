@@ -1822,6 +1822,214 @@ body.console-resizing-ledger { cursor: row-resize; }
   background: var(--c-accent-bg);
   outline: 0;
 }
+.agentconsole .term-lifecycle-compact-grid {
+  margin-top: 6px;
+}
+.agentconsole .term-lifecycle-authority-note {
+  display: grid;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 5px 6px;
+  border-left: 2px solid var(--c-amber);
+  background: var(--c-bg-alt);
+  color: var(--c-ink-faint);
+  font-size: 8.5px;
+  line-height: 1.35;
+}
+.agentconsole .term-lifecycle-authority-note strong {
+  overflow: hidden;
+  color: var(--c-amber);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-lifecycle-authority-note > div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.agentconsole .term-lifecycle-detail {
+  min-width: 0;
+}
+.agentconsole .term-lifecycle-detail-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: end;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--c-border);
+}
+.agentconsole .term-lifecycle-detail-head > div:first-child {
+  min-width: 0;
+}
+.agentconsole .term-lifecycle-detail-head > div:first-child > span {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--c-ink-dim);
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-lifecycle-stage-label {
+  display: block;
+  overflow: hidden;
+  color: var(--c-ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-lifecycle-detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(76px, auto));
+  border: 1px solid var(--c-border);
+}
+.agentconsole .term-lifecycle-detail-metrics > span {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  color: var(--c-ink-faint);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+.agentconsole .term-lifecycle-detail-metrics > span + span {
+  border-left: 1px solid var(--c-border);
+}
+.agentconsole .term-lifecycle-detail-metrics strong {
+  color: var(--c-ink);
+  font-size: 12px;
+}
+.agentconsole .term-lifecycle-state-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+.agentconsole .term-state-chip,
+.agentconsole .term-state-clear {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border: 1px solid var(--c-border);
+  background: transparent;
+  color: var(--c-ink-dim);
+  font: 8.5px/1.25 var(--console-mono, ui-monospace, Consolas, monospace);
+}
+.agentconsole button.term-state-chip,
+.agentconsole .term-state-clear {
+  cursor: pointer;
+}
+.agentconsole button.term-state-chip:hover,
+.agentconsole button.term-state-chip:focus-visible,
+.agentconsole button.term-state-chip.active,
+.agentconsole .term-state-clear:hover,
+.agentconsole .term-state-clear:focus-visible {
+  border-color: currentColor;
+  outline: 0;
+}
+.agentconsole .term-state-chip strong {
+  color: currentColor;
+  font-size: 9px;
+}
+.agentconsole .term-state-proposed { color: #4d6fa5; background: color-mix(in srgb, #4d6fa5 8%, transparent); }
+.agentconsole .term-state-aggregate { color: #7460a8; background: color-mix(in srgb, #7460a8 8%, transparent); }
+.agentconsole .term-state-admitted { color: #287c64; background: color-mix(in srgb, #287c64 8%, transparent); }
+.agentconsole .term-state-rejected { color: var(--c-red); background: color-mix(in srgb, var(--c-red) 7%, transparent); }
+.agentconsole .term-state-pending { color: var(--c-amber); background: color-mix(in srgb, var(--c-amber) 8%, transparent); }
+.agentconsole .term-state-resolved { color: #347a91; background: color-mix(in srgb, #347a91 8%, transparent); }
+.agentconsole .term-state-committed { color: var(--c-green); background: color-mix(in srgb, var(--c-green) 8%, transparent); }
+.agentconsole .term-state-unknown { color: var(--c-ink-faint); }
+.agentconsole .term-lifecycle-list {
+  display: grid;
+  min-width: 0;
+}
+.agentconsole .term-lifecycle-row {
+  min-width: 0;
+  padding: 9px 0;
+  border-bottom: 1px dotted var(--c-border);
+}
+.agentconsole .term-lifecycle-row-main {
+  min-width: 0;
+}
+.agentconsole .term-lifecycle-row-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.agentconsole .term-lifecycle-row-title > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-ink);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-lifecycle-row-title > .term-state-chip {
+  flex: 0 0 auto;
+}
+.agentconsole .term-lifecycle-row-target {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: var(--c-accent);
+  line-height: 1.4;
+}
+.agentconsole .term-lifecycle-row-binding {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 5px;
+  color: var(--c-ink-faint);
+  font-size: 8.5px;
+}
+.agentconsole .term-authority-none { color: var(--c-amber); }
+.agentconsole .term-authority-committed { color: var(--c-green); }
+.agentconsole .term-lifecycle-row-details {
+  margin-top: 6px;
+  color: var(--c-ink-dim);
+}
+.agentconsole .term-lifecycle-row-details > summary {
+  width: fit-content;
+  color: var(--c-accent);
+  cursor: pointer;
+}
+.agentconsole .term-lifecycle-row-details dl {
+  display: grid;
+  grid-template-columns: minmax(95px, auto) minmax(0, 1fr);
+  gap: 4px 10px;
+  margin: 7px 0 0;
+  padding: 7px;
+  border-left: 2px solid var(--c-border);
+  background: var(--c-bg-alt);
+}
+.agentconsole .term-lifecycle-row-details dt {
+  color: var(--c-ink-faint);
+}
+.agentconsole .term-lifecycle-row-details dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.agentconsole .term-lifecycle-row-details code {
+  display: block;
+  overflow: hidden;
+  color: var(--c-ink-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agentconsole .term-lifecycle-contract-note {
+  margin-top: 10px;
+  padding: 7px 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg-alt);
+  color: var(--c-ink-dim);
+  line-height: 1.45;
+}
 .agentconsole .workflow-health-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2052,6 +2260,31 @@ body.console-resizing-ledger { cursor: row-resize; }
   .agentconsole .console-detail-head { grid-template-columns: minmax(0, 1fr) auto; }
   .agentconsole .console-detail-body { padding: 9px; }
   .agentconsole .console-detail-body .ev-expanded { grid-template-columns: 1fr; padding: 0; }
+  .agentconsole .term-lifecycle-detail-head {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .agentconsole .term-lifecycle-detail-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .agentconsole .term-lifecycle-detail-metrics > span {
+    min-width: 0;
+    padding-inline: 3px;
+  }
+  .agentconsole .term-lifecycle-row-title {
+    align-items: flex-start;
+  }
+  .agentconsole .term-lifecycle-row-title > strong {
+    white-space: normal;
+  }
+  .agentconsole .term-lifecycle-row-details dl {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .agentconsole .term-lifecycle-row-details dd + dt {
+    margin-top: 5px;
+  }
 }
 
 /* ============ WORKFLOW SETUP / PREFLIGHT MODAL ============ */

@@ -65,6 +65,34 @@ const CONSOLE_MEMORY_OPERATION_META = {
   reinforced: { glyph: "↑", label: "reinforced" },
   revised: { glyph: "~", label: "revised" },
 };
+const CONSOLE_TERM_STATE_ORDER = Object.freeze([
+  "proposed",
+  "aggregated",
+  "admitted",
+  "rejected",
+  "review_held",
+  "morphology_resolved",
+  "morphology_pending",
+  "collision_resolved",
+  "collision_pending",
+  "multi_target_resolved",
+  "multi_target_pending",
+  "committed",
+]);
+const CONSOLE_TERM_STATE_META = Object.freeze({
+  proposed: Object.freeze({ vi: "Đề xuất", en: "Proposed", tone: "proposed" }),
+  aggregated: Object.freeze({ vi: "Đã gộp", en: "Aggregated", tone: "aggregate" }),
+  admitted: Object.freeze({ vi: "Tiếp nhận", en: "Admitted", tone: "admitted" }),
+  rejected: Object.freeze({ vi: "Từ chối", en: "Rejected", tone: "rejected" }),
+  review_held: Object.freeze({ vi: "Chờ duyệt", en: "Review held", tone: "pending" }),
+  morphology_resolved: Object.freeze({ vi: "Hình thái đã xử lý", en: "Morphology resolved", tone: "resolved" }),
+  morphology_pending: Object.freeze({ vi: "Hình thái đang chờ", en: "Morphology pending", tone: "pending" }),
+  collision_resolved: Object.freeze({ vi: "Va chạm đã xử lý", en: "Collision resolved", tone: "resolved" }),
+  collision_pending: Object.freeze({ vi: "Va chạm đang chờ", en: "Collision pending", tone: "pending" }),
+  multi_target_resolved: Object.freeze({ vi: "Đa đích đã xử lý", en: "Multi-target resolved", tone: "resolved" }),
+  multi_target_pending: Object.freeze({ vi: "Đa đích đang chờ", en: "Multi-target pending", tone: "pending" }),
+  committed: Object.freeze({ vi: "Đã ghi glossary", en: "Glossary committed", tone: "committed" }),
+});
 const CONSOLE_ROLE_META = Object.freeze({
   system: Object.freeze({
     label: "SYSTEM",
@@ -2932,6 +2960,183 @@ function ConsoleUsageSummary({ usage, allowComponentFallback = false, onOpen, ui
   );
 }
 
+function consoleTermStateMeta(state) {
+  return CONSOLE_TERM_STATE_META[state] || { vi: state || "Không rõ", en: state || "Unknown", tone: "unknown" };
+}
+
+function consoleTermStateLabel(state, uiText) {
+  const meta = consoleTermStateMeta(state);
+  return uiText(meta.vi, meta.en);
+}
+
+function consoleTermProgress(summary) {
+  if (!summary) return "—";
+  const completed = Number.isInteger(summary.completed) ? formatConsoleInt(summary.completed) : "—";
+  const total = Number.isInteger(summary.total) ? `/${formatConsoleInt(summary.total)}` : "";
+  return `${completed}${total} ${summary.unit || ""}`.trim();
+}
+
+function ConsoleTermLifecycleSummary({ lifecycle, onOpen, uiText }) {
+  if (!lifecycle?.present || lifecycle.valid !== true || !lifecycle.summary) return null;
+  const summary = lifecycle.summary;
+  const rows = Array.isArray(lifecycle.rows) ? lifecycle.rows : [];
+  const hasCommitted = rows.some(row => row.authority === "glossary_commit");
+  const hasProvisional = rows.some(row => row.authority === "none");
+  return (
+    <section
+      className="workflow-compact-section term-lifecycle-compact"
+      aria-label={uiText("Tóm tắt vòng đời thuật ngữ", "Term lifecycle summary")}
+      data-term-lifecycle-surface="visible"
+    >
+      <div className="section-label">:: {uiText("vòng đời thuật ngữ", "term lifecycle")}</div>
+      <div className="workflow-compact-metrics term-lifecycle-metrics">
+        <span>
+          <strong>{formatConsoleInt(summary.observations)}</strong>
+          <small>{uiText("quan sát", "observations")}</small>
+        </span>
+        <span>
+          <strong>{formatConsoleInt(summary.unique_surfaces)}</strong>
+          <small>{uiText("bề mặt", "surfaces")}</small>
+        </span>
+        <span>
+          <strong>{formatConsoleInt(summary.logical_terms)}</strong>
+          <small>{uiText("term logic", "logical terms")}</small>
+        </span>
+      </div>
+      <div className="workflow-compact-grid term-lifecycle-compact-grid">
+        <span>{uiText("tầng", "stage")}</span>
+        <strong title={lifecycle.stageLabel || ""}>{lifecycle.stageLabel || "—"}</strong>
+        <span>{uiText("tiến độ", "progress")}</span>
+        <strong>{consoleTermProgress(summary)}</strong>
+      </div>
+      <div className="term-lifecycle-authority-note">
+        <span>{uiText("producer-sealed", "producer-sealed")}</span>
+        <div>
+          {hasProvisional && <strong>provisional · authority=none</strong>}
+          {hasCommitted && <strong>committed · authority=glossary_commit</strong>}
+        </div>
+      </div>
+      <button className="workflow-detail-trigger" type="button" onClick={onOpen}>
+        {uiText("Xem vòng đời chi tiết", "View lifecycle details")} →
+      </button>
+    </section>
+  );
+}
+
+function ConsoleTermLifecycleDetails({ lifecycle, uiText }) {
+  const [stateFilter, setStateFilter] = React.useState("");
+  if (!lifecycle?.present || lifecycle.valid !== true || !lifecycle.summary) return null;
+  const summary = lifecycle.summary;
+  const counts = summary.state_counts || {};
+  const availableStates = CONSOLE_TERM_STATE_ORDER.filter(state => Number.isInteger(counts[state]) && counts[state] > 0);
+  const rows = (lifecycle.rows || []).filter(row => !stateFilter || row.state === stateFilter);
+  return (
+    <section className="term-lifecycle-detail" aria-label={uiText("Vòng đời thuật ngữ", "Term lifecycle")}>
+      <div className="term-lifecycle-detail-head">
+        <div>
+          <div className="section-label">:: {uiText("summary do producer niêm phong", "producer-sealed summary")}</div>
+          <strong className="term-lifecycle-stage-label">{lifecycle.stageLabel || "—"}</strong>
+          <span>{consoleTermProgress(summary)} · {lifecycle.projectionMode} · {lifecycle.timingAuthority}</span>
+        </div>
+        <div className="term-lifecycle-detail-metrics">
+          <span><strong>{formatConsoleInt(summary.observations)}</strong>{uiText("quan sát", "observations")}</span>
+          <span><strong>{formatConsoleInt(summary.unique_surfaces)}</strong>{uiText("bề mặt", "surfaces")}</span>
+          <span><strong>{formatConsoleInt(summary.logical_terms)}</strong>{uiText("term logic", "logical terms")}</span>
+        </div>
+      </div>
+
+      <div className="term-lifecycle-state-summary" aria-label={uiText("Số quan sát theo trạng thái", "Observation counts by state")}>
+        {availableStates.map(state => {
+          const meta = consoleTermStateMeta(state);
+          return (
+            <button
+              type="button"
+              key={state}
+              className={`term-state-chip term-state-${meta.tone}${stateFilter === state ? " active" : ""}`}
+              aria-pressed={stateFilter === state}
+              onClick={() => setStateFilter(current => current === state ? "" : state)}
+            >
+              <span>{consoleTermStateLabel(state, uiText)}</span>
+              <strong>{formatConsoleInt(counts[state])}</strong>
+            </button>
+          );
+        })}
+        {stateFilter && (
+          <button type="button" className="term-state-clear" onClick={() => setStateFilter("")}>
+            {uiText("Bỏ lọc", "Clear filter")}
+          </button>
+        )}
+      </div>
+
+      <div className="term-lifecycle-list" role="list">
+        {rows.map(row => {
+          const meta = consoleTermStateMeta(row.state);
+          const surfaces = Array.isArray(row.surfaces) && row.surfaces.length
+            ? row.surfaces.join(" · ")
+            : row.logical_term_id;
+          const targets = (Array.isArray(row.targets) ? row.targets : []).map(target => {
+            const applicability = target.applicability === null
+              ? ""
+              : typeof target.applicability === "string"
+              ? target.applicability
+              : JSON.stringify(target.applicability);
+            return `${target.target_vi}${applicability ? ` · ${applicability}` : ""}`;
+          });
+          return (
+            <article
+              className="term-lifecycle-row"
+              key={row.row_id}
+              role="listitem"
+              data-term-state={row.state}
+              data-term-authority={row.authority}
+            >
+              <div className="term-lifecycle-row-main">
+                <div className="term-lifecycle-row-title">
+                  <strong title={surfaces}>{surfaces}</strong>
+                  <span className={`term-state-chip term-state-${meta.tone}`}>
+                    {consoleTermStateLabel(row.state, uiText)}
+                  </span>
+                </div>
+                <div className="term-lifecycle-row-target">
+                  {targets.length ? targets.join(" | ") : uiText("Chưa có đích được chấp nhận", "No accepted target yet")}
+                </div>
+                <div className="term-lifecycle-row-binding">
+                  <span>{row.stageLabel || row.stageId || "—"}</span>
+                  <span>#{row.parentSeq} · attempt {row.origin_component_attempt_id} · c{row.origin_component_seq}</span>
+                  <strong className={row.authority === "none" ? "term-authority-none" : "term-authority-committed"}>
+                    {row.lifecycle} · authority={row.authority}
+                  </strong>
+                </div>
+              </div>
+              <details className="term-lifecycle-row-details">
+                <summary>{uiText("Bằng chứng và liên kết", "Evidence and bindings")}</summary>
+                <dl>
+                  <dt>logical_term_id</dt><dd><code>{row.logical_term_id}</code></dd>
+                  <dt>row_id</dt><dd><code>{row.row_id}</code></dd>
+                  <dt>evidence</dt><dd><code>{row.evidence_ref}</code><code>{consoleWorkflowShortHash(row.evidence_sha256)}</code></dd>
+                  <dt>{uiText("block nguồn", "source blocks")}</dt>
+                  <dd>{row.source_block_ids?.length ? row.source_block_ids.slice(0, 6).join(", ") : "—"}{row.source_block_ids?.length > 6 ? ` +${row.source_block_ids.length - 6}` : ""}</dd>
+                  <dt>{uiText("lý do", "reasons")}</dt><dd>{row.reason_codes?.length ? row.reason_codes.join(", ") : "—"}</dd>
+                  <dt>{uiText("thay thế", "supersedes")}</dt><dd>{row.supersedes_row_ids?.length ? row.supersedes_row_ids.join(", ") : "—"}</dd>
+                  <dt>{uiText("giải thích", "rationale")}</dt><dd>{row.rationale || "—"}</dd>
+                </dl>
+              </details>
+            </article>
+          );
+        })}
+        {!rows.length && <div className="workflow-compact-empty">{uiText("Không có quan sát ở bộ lọc này.", "No observations match this filter.")}</div>}
+      </div>
+
+      <div className="term-lifecycle-contract-note">
+        {uiText(
+          "Các dòng provisional chỉ là bằng chứng đang xử lý và luôn authority=none. Chỉ dòng committed mới thuộc glossary; panel Bộ nhớ vẫn chỉ hiển thị memory_delta_v1 đã commit.",
+          "Provisional rows are in-process evidence with authority=none. Only committed rows belong to the glossary; Memory remains limited to committed memory_delta_v1.",
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ConsoleWorkflowEvidenceSummary({ workflowReplay, onOpen, uiText }) {
   if (!workflowReplay?.valid) return null;
   const scoring = workflowReplay.scoring || {};
@@ -3330,6 +3535,19 @@ function AgentConsoleView(props) {
   }, [onReplayStateChange]);
   const replayPosition = replayActive ? replayCursor : events.length;
   const shownEvents = replayActive ? events.slice(0, replayPosition) : events;
+  const shownEventSeq = shownEvents.length ? shownEvents[shownEvents.length - 1]?.seq : 0;
+  const termLifecycleView = React.useMemo(() => {
+    if (
+      !workflowReplay?.valid
+      || workflowReplay.termLifecycle?.valid !== true
+      || typeof window === "undefined"
+      || typeof window.WorkflowReplayAdapter?.foldTermLifecycleCursor !== "function"
+    ) return null;
+    return window.WorkflowReplayAdapter.foldTermLifecycleCursor(
+      workflowReplay.termLifecycle,
+      Number.isInteger(shownEventSeq) ? shownEventSeq : 0,
+    );
+  }, [workflowReplay, shownEventSeq]);
   const workflowReadOnly = Boolean(
     workflowReplay
     && (workflowInvalid || workflowReplay.sourceMode === "replay" || replayActive),
@@ -3740,6 +3958,11 @@ function AgentConsoleView(props) {
                 }
                 uiText={uiText}
                 onOpen={() => setDetailModal({ kind: "usage" })}
+              />
+              <ConsoleTermLifecycleSummary
+                lifecycle={termLifecycleView}
+                uiText={uiText}
+                onOpen={() => setDetailModal({ kind: "term-lifecycle" })}
               />
               <section className="workflow-compact-section" aria-label={uiText("Sức khỏe", "Health")}>
                 <div className="section-label">:: {uiText("sức khỏe", "health")}</div>
@@ -4168,10 +4391,12 @@ function AgentConsoleView(props) {
             ? uiText("Chi tiết lần chạy", "Run details")
             : detailModal.kind === "usage"
             ? uiText("Sử dụng API đã lưu", "Persisted API usage")
+            : detailModal.kind === "term-lifecycle"
+            ? uiText("Vòng đời thuật ngữ", "Term lifecycle")
             : detailModal.kind === "evidence"
             ? uiText("Bằng chứng workflow", "Workflow evidence")
             : uiText("Chi tiết sự kiện", "Event details")}
-          wide={detailModal.kind === "usage" || detailModal.kind === "evidence"}
+          wide={detailModal.kind === "usage" || detailModal.kind === "term-lifecycle" || detailModal.kind === "evidence"}
           onClose={closeDetailModal}
           uiText={uiText}
         >
@@ -4180,6 +4405,9 @@ function AgentConsoleView(props) {
           )}
           {detailModal.kind === "usage" && (
             <ConsoleUsageLedger usage={workflowReplay?.valid ? workflowReplay.usage : null} />
+          )}
+          {detailModal.kind === "term-lifecycle" && (
+            <ConsoleTermLifecycleDetails lifecycle={termLifecycleView} uiText={uiText} />
           )}
           {detailModal.kind === "evidence" && (
             <>
