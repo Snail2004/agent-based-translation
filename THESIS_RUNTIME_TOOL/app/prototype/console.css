@@ -1749,6 +1749,49 @@ body.console-resizing-ledger { cursor: row-resize; }
   font-size: 8.5px;
   text-transform: uppercase;
 }
+.agentconsole .workflow-usage-summary-total {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 7px 6px 6px;
+  border: 1px solid var(--c-line);
+  background: var(--c-panel-soft);
+}
+.agentconsole .workflow-usage-summary-total small,
+.agentconsole .workflow-usage-summary-split small {
+  color: var(--c-ink-faint);
+  font-size: 8.5px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.agentconsole .workflow-usage-summary-total strong {
+  color: var(--c-ink);
+  font-size: 16px;
+  line-height: 1.1;
+}
+.agentconsole .workflow-usage-summary-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--c-line);
+  border-top: 0;
+}
+.agentconsole .workflow-usage-summary-split > span {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 4px;
+}
+.agentconsole .workflow-usage-summary-split > span + span {
+  border-left: 1px solid var(--c-line);
+}
+.agentconsole .workflow-usage-summary-split strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--c-ink);
+  font-size: 11px;
+  text-overflow: ellipsis;
+}
 .agentconsole .workflow-compact-stream {
   display: flex;
   justify-content: space-between;

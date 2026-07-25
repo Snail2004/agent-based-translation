@@ -41,6 +41,9 @@
     <a href="?scenario=usage-valid">usage</a>
     <a href="?scenario=usage-null">usage null</a>
     <a href="?scenario=usage-unknown-zero">unknown≠0</a>
+    <a href="?scenario=usage-component-live">live component total</a>
+    <a href="?scenario=usage-component-replay">replay component hidden</a>
+    <a href="?scenario=usage-component-multi-live">live multiple components</a>
     <a href="?scenario=optional-details">typed details</a>
     <a href="?scenario=score-pending">score pending</a>
     <a href="?scenario=score-materialized">score ready</a>
@@ -71,7 +74,9 @@ function scenarioName() {
   const value = new URLSearchParams(window.location.search).get("scenario") || "valid";
   return new Set([
     "valid", "full-demo", "sequence-drift", "event-hash-drift", "arm-drift", "artifact-drift",
-    "usage-valid", "usage-null", "usage-unknown-zero", "optional-details", "cursor-drift",
+    "usage-valid", "usage-null", "usage-unknown-zero",
+    "usage-component-live", "usage-component-replay", "usage-component-multi-live",
+    "optional-details", "cursor-drift",
     "score-pending", "score-materialized", "stale-live-replay",
     "resume-valid", "resume-sequence-gap", "resume-attempt-regression",
   ]).has(value) ? value : "valid";
@@ -102,8 +107,65 @@ function usageTotal(overrides = {}) {
 
 function makeUsageReadModel(manifest, mode) {
   const unknown = mode === "null" || mode === "unknown-zero";
+  const componentOnly = mode === "component-live"
+    || mode === "component-replay"
+    || mode === "component-multi-live";
   const nullable = value => unknown ? null : value;
   const cost = mode === "unknown-zero" ? 0 : unknown ? null : 0.0042;
+  const liveComponentTotal = usageTotal({
+    snapshot_seq: 13,
+    accepted_through_component_seq: 13,
+    component_id: "translation",
+    component_run_id: "translation_run_1",
+    physical_call_count: 13,
+    cache_observation_count: 13,
+    prompt_tokens: 25395,
+    completion_tokens: 49568,
+    reasoning_tokens: 30032,
+    cached_input_tokens: 0,
+    total_tokens: 74963,
+    cache_hit_count: 0,
+    cache_miss_count: 13,
+    cost_status: "unknown",
+    cost_usd: null,
+    currency: null,
+    snapshot_sha256: "b".repeat(64),
+  });
+  const componentTotals = componentOnly
+    ? [
+      liveComponentTotal,
+      ...(mode === "component-multi-live" ? [usageTotal({
+        component_id: "evaluation",
+        component_run_id: "evaluation_run_1",
+        snapshot_seq: 1,
+        accepted_through_component_seq: 1,
+        physical_call_count: 1,
+        cache_observation_count: 1,
+        prompt_tokens: 200,
+        completion_tokens: 100,
+        reasoning_tokens: null,
+        cached_input_tokens: 0,
+        total_tokens: 300,
+        cache_hit_count: 0,
+        cache_miss_count: 1,
+        cost_status: "unknown",
+        cost_usd: null,
+        currency: null,
+        snapshot_sha256: "c".repeat(64),
+      })] : []),
+    ]
+    : [
+      usageTotal({
+        component_id: "translation",
+        component_run_id: "translation_run_1",
+        prompt_tokens: nullable(120),
+        completion_tokens: nullable(40),
+        cached_input_tokens: nullable(24),
+        total_tokens: nullable(160),
+        cost_status: unknown ? "unknown" : "recorded",
+        cost_usd: cost,
+      }),
+    ];
   return {
     schema_id: "WorkflowUsageReadModelV1",
     schema_version: "1.0.0",
@@ -192,19 +254,8 @@ function makeUsageReadModel(manifest, mode) {
         cost_usd: cost,
       }),
     ],
-    component_totals: [
-      usageTotal({
-        component_id: "translation",
-        component_run_id: "translation_run_1",
-        prompt_tokens: nullable(120),
-        completion_tokens: nullable(40),
-        cached_input_tokens: nullable(24),
-        total_tokens: nullable(160),
-        cost_status: unknown ? "unknown" : "recorded",
-        cost_usd: cost,
-      }),
-    ],
-    workflow_total: usageTotal({
+    component_totals: componentTotals,
+    workflow_total: componentOnly ? null : usageTotal({
       component_id: null,
       component_run_id: null,
       snapshot_binding: { authority: "relay_sealed" },
@@ -570,6 +621,12 @@ async function loadAcceptedWorkflowPackage() {
       ? "null"
       : scenario === "usage-unknown-zero"
         ? "unknown-zero"
+        : scenario === "usage-component-live"
+          ? "component-live"
+          : scenario === "usage-component-replay"
+            ? "component-replay"
+            : scenario === "usage-component-multi-live"
+              ? "component-multi-live"
         : null;
   const cursor = {
     through_seq: events.length,
@@ -598,7 +655,9 @@ async function loadAcceptedWorkflowPackage() {
       : { pause_allowed: false, resume_allowed: false, cancel_allowed: false },
     evaluationScope: scope,
     artifactLinks: {},
-    sourceMode: scoreScenario ? "live" : "replay",
+    sourceMode: scoreScenario || scenario === "usage-component-live" || scenario === "usage-component-multi-live"
+      ? "live"
+      : "replay",
   });
 }
 

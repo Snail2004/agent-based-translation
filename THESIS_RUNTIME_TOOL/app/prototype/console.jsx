@@ -2868,17 +2868,60 @@ function ConsoleWorkflowSummary({ workflowReplay, onOpen, uiText }) {
   );
 }
 
-function ConsoleUsageSummary({ usage, onOpen, uiText }) {
-  const total = usage?.present ? usage.workflowTotal : null;
+function consoleUsageSummaryTotal(usage, allowComponentFallback) {
+  if (!usage?.present) return { total: null, authority: null };
+  if (usage.workflowTotal) {
+    return usage.workflowTotal.binding?.authority === "relay_sealed"
+      ? { total: usage.workflowTotal, authority: "workflow" }
+      : { total: null, authority: null };
+  }
+  const componentTotals = Array.isArray(usage.componentTotals) ? usage.componentTotals : [];
+  const componentTotal = componentTotals.length === 1 ? componentTotals[0] : null;
+  if (
+    allowComponentFallback
+    && componentTotal
+    && componentTotal.binding?.authority === "producer_sealed"
+  ) {
+    return { total: componentTotal, authority: "component" };
+  }
+  return { total: null, authority: null };
+}
+
+function ConsoleUsageSummary({ usage, allowComponentFallback = false, onOpen, uiText }) {
+  const selection = consoleUsageSummaryTotal(usage, allowComponentFallback);
+  const total = selection.total;
   return (
-    <section className="workflow-compact-section" aria-label={uiText("Tóm tắt sử dụng API", "API usage summary")}>
+    <section
+      className="workflow-compact-section"
+      aria-label={uiText("Tóm tắt sử dụng API", "API usage summary")}
+      data-usage-summary-authority={selection.authority || "none"}
+    >
       <div className="section-label">:: {uiText("sử dụng API", "API usage")}</div>
       {total ? (
-        <div className="workflow-compact-metrics">
-          <span><strong>{consolePersistedValue(total.physicalCallCount, "int")}</strong><small>calls</small></span>
-          <span><strong>{consolePersistedValue(total.totalTokens, "int")}</strong><small>tokens</small></span>
-          <span><strong>{consolePersistedValue(total.costUsd, "usd")}</strong><small>{total.costStatus ?? uiText("không xác định", "unknown")}</small></span>
-        </div>
+        <>
+          <div className="workflow-usage-summary-total">
+            <small>{uiText("tổng token", "total tokens")}</small>
+            <strong>{consolePersistedValue(total.totalTokens, "int")}</strong>
+          </div>
+          <div className="workflow-usage-summary-split">
+            <span>
+              <small>input</small>
+              <strong>{consolePersistedValue(total.promptTokens, "int")}</strong>
+            </span>
+            <span>
+              <small>output</small>
+              <strong>{consolePersistedValue(total.completionTokens, "int")}</strong>
+            </span>
+          </div>
+          <div className="workflow-compact-stream">
+            <span>{uiText("phạm vi", "scope")}</span>
+            <strong>
+              {selection.authority === "workflow"
+                ? "workflow · relay-sealed"
+                : "component · producer-sealed"}
+            </strong>
+          </div>
+        </>
       ) : (
         <div className="workflow-compact-empty">{uiText("Chưa có tổng usage đã xác thực", "No validated usage total")}</div>
       )}
@@ -3690,6 +3733,11 @@ function AgentConsoleView(props) {
               </section>
               <ConsoleUsageSummary
                 usage={workflowReplay.valid ? workflowReplay.usage : null}
+                allowComponentFallback={
+                  workflowReplay.sourceMode === "live"
+                  && !replayActive
+                  && !sourceIsTerminal
+                }
                 uiText={uiText}
                 onOpen={() => setDetailModal({ kind: "usage" })}
               />
