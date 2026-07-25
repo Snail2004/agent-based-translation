@@ -1236,6 +1236,17 @@ class D2LTranslationComponentRunner:
         assert stage.command is not None
         cwd = self.root if stage.cwd is None else Path(stage.cwd).resolve()
         started = time.monotonic()
+        process_log_root = (
+            self.root
+            / "runtime"
+            / "stage_process_logs"
+            / f"attempt_{self._current_attempt:04d}"
+        )
+        process_log_root.mkdir(parents=True, exist_ok=True)
+        stdout_path = process_log_root / f"{stage.stage_id}.stdout.log"
+        stderr_path = process_log_root / f"{stage.stage_id}.stderr.log"
+        if stdout_path.exists() or stderr_path.exists():
+            raise ComponentRunnerError("stage process diagnostic path already exists")
         pause_was_present_at_start = bool(
             self.pause_file is not None and self.pause_file.is_file()
         )
@@ -1255,72 +1266,80 @@ class D2LTranslationComponentRunner:
             environment["THESIS_D2L_REPAIR_RECEIPT_SHA256"] = file_sha256(
                 self._repair_receipt_path
             )
-        try:
-            process = D2LGuardedStageProcess(
-                component_root=self.root,
-                stage_id=stage.stage_id,
-                command=list(stage.command),
-                cwd=cwd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                env=environment,
-            )
-        except (OSError, D2LStageProcessTreeError) as exc:
-            self._emit_repairable_stage_failure(
-                stage,
-                reason_code="stage_process_launch_failed",
-                detail_code=type(exc).__name__,
-            )
-            raise _PauseRun(
-                stage.stage_id,
-                "stage_process_launch_failed",
-            ) from exc
-        try:
-            while process.poll() is None:
-                self._drain_observation_journal(stage, allow_incomplete_tail=True)
-                if (
-                    self.pause_file is not None
-                    and self.pause_file.is_file()
-                    and not pause_was_present_at_start
-                ):
-                    process.terminate()
-                    try:
-                        process.wait(timeout=5)
-                    except subprocess.TimeoutExpired:
-                        process.kill()
-                        process.wait(timeout=5)
-                    self._drain_after_process(stage)
-                    self.pause_file.unlink(missing_ok=True)
-                    raise _PauseRun(stage.stage_id, "user_requested_pause")
-                if (
-                    stage.timeout_seconds is not None
-                    and time.monotonic() - started > stage.timeout_seconds
-                ):
-                    process.kill()
-                    process.wait(timeout=5)
-                    self._drain_after_process(stage)
-                    self._emit_repairable_stage_failure(
-                        stage,
-                        reason_code="stage_process_timeout",
-                        detail_code="timeout",
-                    )
-                    raise _PauseRun(stage.stage_id, "stage_process_timeout")
-                time.sleep(0.05)
-            self._drain_after_process(stage)
-            if process.returncode == TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE:
-                raise _PauseRun(stage.stage_id, "transport_retry_exhausted")
-            if process.returncode != 0:
+        process: D2LGuardedStageProcess | None = None
+        with stdout_path.open("xb") as stdout_handle, stderr_path.open(
+            "xb"
+        ) as stderr_handle:
+            try:
+                process = D2LGuardedStageProcess(
+                    component_root=self.root,
+                    stage_id=stage.stage_id,
+                    command=list(stage.command),
+                    cwd=cwd,
+                    stdout=stdout_handle,
+                    stderr=stderr_handle,
+                    env=environment,
+                )
+            except (OSError, D2LStageProcessTreeError) as exc:
                 self._emit_repairable_stage_failure(
                     stage,
-                    reason_code="stage_process_exit_nonzero",
-                    detail_code=f"exit_{process.returncode}",
+                    reason_code="stage_process_launch_failed",
+                    detail_code=type(exc).__name__,
                 )
                 raise _PauseRun(
                     stage.stage_id,
-                    f"stage_process_exit_{process.returncode}",
-                )
-        finally:
-            process.close()
+                    "stage_process_launch_failed",
+                ) from exc
+            try:
+                while process.poll() is None:
+                    self._drain_observation_journal(
+                        stage, allow_incomplete_tail=True
+                    )
+                    if (
+                        self.pause_file is not None
+                        and self.pause_file.is_file()
+                        and not pause_was_present_at_start
+                    ):
+                        process.terminate()
+                        try:
+                            process.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            process.wait(timeout=5)
+                        self._drain_after_process(stage)
+                        self.pause_file.unlink(missing_ok=True)
+                        raise _PauseRun(stage.stage_id, "user_requested_pause")
+                    if (
+                        stage.timeout_seconds is not None
+                        and time.monotonic() - started > stage.timeout_seconds
+                    ):
+                        process.kill()
+                        process.wait(timeout=5)
+                        self._drain_after_process(stage)
+                        self._emit_repairable_stage_failure(
+                            stage,
+                            reason_code="stage_process_timeout",
+                            detail_code="timeout",
+                        )
+                        raise _PauseRun(stage.stage_id, "stage_process_timeout")
+                    time.sleep(0.05)
+                self._drain_after_process(stage)
+                if process.returncode == TRANSPORT_RETRY_EXHAUSTED_EXIT_CODE:
+                    raise _PauseRun(
+                        stage.stage_id, "transport_retry_exhausted"
+                    )
+                if process.returncode != 0:
+                    self._emit_repairable_stage_failure(
+                        stage,
+                        reason_code="stage_process_exit_nonzero",
+                        detail_code=f"exit_{process.returncode}",
+                    )
+                    raise _PauseRun(
+                        stage.stage_id,
+                        f"stage_process_exit_{process.returncode}",
+                    )
+            finally:
+                process.close()
 
     def _drain_after_process(self, stage: StagePlan) -> None:
         try:

@@ -891,6 +891,7 @@ def test_runner_pauses_nonzero_stage_and_resumes_same_component(
             marker = Path(sys.argv[1])
             if not marker.exists():
                 marker.write_text("repairable", encoding="utf-8")
+                print("bounded stage diagnostic", file=sys.stderr)
                 raise SystemExit(7)
             """
         ),
@@ -920,6 +921,14 @@ def test_runner_pauses_nonzero_stage_and_resumes_same_component(
     counts = _event_counts(root)
     assert counts["validation_failed"] == 1
     assert counts["run_failed"] == 0
+    stderr_log = (
+        root
+        / "runtime/stage_process_logs/attempt_0001"
+        / "b2_admission_translation.stderr.log"
+    )
+    assert stderr_log.read_text(encoding="utf-8").strip() == (
+        "bounded stage diagnostic"
+    )
 
     completed = D2LTranslationComponentRunner(plan, root).run(resume=True)
     assert completed["terminal_event"] == "run_done"

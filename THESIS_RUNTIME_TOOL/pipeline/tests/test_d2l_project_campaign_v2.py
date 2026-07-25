@@ -486,9 +486,15 @@ def test_prepare_seals_routes_models_limits_and_isolated_state(tmp_path: Path) -
     }
     sources = loaded["config"]["transport_sources"]
     assert set(sources) == {
-        "shopaikey_gemini_proxy_v2",
+        "shopaikey_openai_proxy_v1",
         "modelapi_shared_v1",
     }
+    assert sources["shopaikey_openai_proxy_v1"]["protocol"] == (
+        "openai_chat_completions"
+    )
+    assert sources["shopaikey_openai_proxy_v1"]["base_url"] == (
+        "https://api.shopaikey.com/v1"
+    )
     assert all(
         row["output_mode"] == "prompt_generated_json"
         and row["native_schema_parameter_sent"] is False

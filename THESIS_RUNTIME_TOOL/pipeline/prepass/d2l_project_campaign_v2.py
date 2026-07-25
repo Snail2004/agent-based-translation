@@ -69,7 +69,7 @@ PIPELINE_ID = "d2l_terminology"
 PIPELINE_VERSION = "d2l_translation_component_v1_4_fixed_only_hardened"
 PROFILE_ID = "technical_d2l_v1"
 
-SHOPAI_SOURCE_ID = "shopaikey_gemini_proxy_v2"
+SHOPAI_SOURCE_ID = "shopaikey_openai_proxy_v1"
 MODELAPI_SOURCE_ID = "modelapi_shared_v1"
 DEFAULT_HARD_TOTAL_TOKEN_CAP = 6_000_000
 FORECAST_TOKEN_MULTIPLIER = 25
@@ -1215,15 +1215,15 @@ def semantic_role_profiles() -> list[dict[str, Any]]:
 def initial_transport_sources() -> dict[str, dict[str, Any]]:
     shop = {
         "source_id": SHOPAI_SOURCE_ID,
-        "source_revision": "prompt_json_v2",
+        "source_revision": "chat_completions_prompt_json_v1",
         # Shared Backend classifies the transport topology here. Third-party
         # trust is expressed by output_mode/native_schema_parameter_sent.
         "source_class": "remote_api",
         "endpoint_class": "remote",
-        "base_url": "https://api.shopaikey.com/v1beta",
-        "adapter_id": "shared_urllib_google_genai_v1",
-        "protocol": "google_genai_generate_content",
-        "route_id": "generate_content",
+        "base_url": "https://api.shopaikey.com/v1",
+        "adapter_id": "openai_python_v1",
+        "protocol": "openai_chat_completions",
+        "route_id": "chat_completions_create",
         "credential_ref": "credential.shopaikey_gemini_proxy_v1",
         "credential_family": "SHOPAIKEY_GEMINI_PROXY",
         "physical_quota_bucket_id": "shopaikey-gemini-d2l-v1.gemini-3.5-flash",

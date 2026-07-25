@@ -45,6 +45,34 @@ class D2LProjectTransportError(RuntimeError):
 
 _CAPABILITY_RECORDS: dict[tuple[str, str, str], dict[str, Any]] = {
     (
+        "shopaikey_openai_proxy_v1",
+        "chat_completions_prompt_json_v1",
+        "gemini-3.5-flash",
+    ): {
+        "schema_version": "capability_evidence_v1",
+        "capability_id": "d2l_shopaikey_openai_gemini35_text_generation_v1",
+        "capability_revision": "chat_completions_prompt_json_probe_v1",
+        "source_id": "shopaikey_openai_proxy_v1",
+        "source_revision": "chat_completions_prompt_json_v1",
+        "adapter_id": "openai_python_v1",
+        "protocol": "openai_chat_completions",
+        "route_id": "chat_completions_create",
+        "base_url": "https://api.shopaikey.com/v1",
+        "requested_model_id": "gemini-3.5-flash",
+        "observed_model_id": "gemini-3.5-flash",
+        "capability_kind": "text_generation",
+        "schema_dialect": None,
+        "schema_sha256": None,
+        "local_validator_id": None,
+        "local_validator_sha256": None,
+        "probe_id": "d2l_shopaikey_openai_gemini35_basic_generation_v1",
+        "evidence_sha256": (
+            "247389b6f8fc6f10a712865d3bea2000ae1ab9f0c867b2529e943970d3b88a4e"
+        ),
+        "observed_at_utc": "2026-07-25T00:25:00.000Z",
+        "verdict": "qualified",
+    },
+    (
         "shopaikey_gemini_proxy_v2",
         "prompt_json_v2",
         "gemini-3.5-flash",
@@ -329,7 +357,7 @@ class D2LProjectTransport:
         role_id: str,
         *,
         component_attempt_id: int = 1,
-        transport_attempt_index: int = 1,
+        transport_attempt_index: int | None = None,
         capability_override: Mapping[str, Any] | None = None,
     ) -> D2LSharedLlmClient:
         config = self.loaded["config"]
@@ -339,11 +367,16 @@ class D2LProjectTransport:
         )
         if role is None:
             raise D2LProjectTransportError(f"unknown semantic role: {role_id}")
+        selected_transport_attempt = (
+            component_attempt_id
+            if transport_attempt_index is None
+            else transport_attempt_index
+        )
         try:
             attempt = load_transport_attempt_seal(
                 self.campaign_root,
                 role_id=role_id,
-                transport_attempt_index=transport_attempt_index,
+                transport_attempt_index=selected_transport_attempt,
             )
         except D2LCampaignError as exc:
             raise D2LProjectTransportError(str(exc)) from exc

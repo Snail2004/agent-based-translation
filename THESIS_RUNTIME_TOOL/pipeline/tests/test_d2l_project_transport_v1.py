@@ -156,6 +156,19 @@ def test_capability_is_exact_source_revision_and_model() -> None:
         transport.trusted_capability_for(runtime, model_id="gpt-5.6")
 
 
+def test_shopaikey_openai_route_reports_the_exact_requested_gemini_model() -> None:
+    source = initial_transport_sources()["shopaikey_openai_proxy_v1"]
+    runtime = transport.build_runtime_api_source(
+        source, credential_provider=_provider(source)
+    )
+    capability = transport.trusted_capability_for(
+        runtime, model_id="gemini-3.5-flash"
+    )
+    assert capability["observed_model_id"] == "gemini-3.5-flash"
+    assert capability["protocol"] == "openai_chat_completions"
+    assert capability["base_url"] == "https://api.shopaikey.com/v1"
+
+
 def test_project_client_keeps_third_party_native_schema_off_wire(
     tmp_path, monkeypatch
 ) -> None:
@@ -213,6 +226,32 @@ def test_transport_attempt_component_identity_is_fail_closed(
         transport.D2LProjectTransportError, match="different component attempt"
     ):
         project.build_client(role["role_id"], component_attempt_id=1)
+
+
+def test_default_transport_attempt_tracks_component_attempt(
+    tmp_path, monkeypatch
+) -> None:
+    role = _role()
+    source = deepcopy(initial_transport_sources()["modelapi_shared_v1"])
+    monkeypatch.setattr(transport, "load_campaign", lambda _root: _loaded(role))
+    seen: list[int] = []
+
+    def load_attempt(*_args, **kwargs):
+        seen.append(kwargs["transport_attempt_index"])
+        attempt = _attempt(role, source)
+        attempt["component_attempt_id"] = 2
+        attempt["transport_attempt_index"] = 2
+        return attempt
+
+    monkeypatch.setattr(transport, "load_transport_attempt_seal", load_attempt)
+    project = transport.D2LProjectTransport(
+        campaign_root=tmp_path / "campaign",
+        runtime_root=tmp_path / "runtime",
+        credential_provider=_provider(source),
+        sender=_OpenAiSender(),
+    )
+    project.build_client(role["role_id"], component_attempt_id=2)
+    assert seen == [2]
 
 
 def test_historical_campaign_without_transport_policy_fails_closed(
