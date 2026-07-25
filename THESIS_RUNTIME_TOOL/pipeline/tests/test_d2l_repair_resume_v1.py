@@ -117,6 +117,19 @@ def test_journal_recovery_delta_is_closed_mechanical_scope() -> None:
     assert validate_mechanical_repair_paths(paths) == sorted(paths)
 
 
+def test_reviewed_app_resume_and_console_paths_are_nonsemantic_repair_scope() -> None:
+    paths = [
+        "THESIS_RUNTIME_TOOL/app/prototype/app.jsx",
+        "THESIS_RUNTIME_TOOL/app/prototype/console.jsx",
+        (
+            "THESIS_RUNTIME_TOOL/app/prototype/"
+            "workflow_live_progress_usage.test.cjs"
+        ),
+    ]
+
+    assert validate_mechanical_repair_paths(paths) == sorted(paths)
+
+
 def test_chained_repair_receipt_binds_parent_and_closed_paths() -> None:
     receipt = build_chain_repair_receipt(
         workflow_run_id="wf_repair",

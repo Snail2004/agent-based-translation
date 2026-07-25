@@ -2724,6 +2724,53 @@ class _PauseRun(Exception):
         self.reason = reason
 
 
+def preflight_resume_runtime_revision_from_plan_file(
+    plan_path: str | Path,
+    root: str | Path,
+    *,
+    repair_code_root: str | Path,
+    repair_reason: str,
+) -> dict[str, Any]:
+    """Validate a repair delta without mutating the component package."""
+
+    plan = ComponentPlan.from_mapping(_load_json(Path(plan_path), "runner plan"))
+    runner = D2LTranslationComponentRunner(
+        plan,
+        root,
+        repair_code_root=repair_code_root,
+        repair_reason=repair_reason,
+    )
+    runner._preflight_runtime_revision()
+    delta = runner._repair_delta
+    if delta is None:
+        mode = "sealed"
+        baseline_revision = plan.code_revision
+        changed_paths: list[str] = []
+        git_delta_sha256 = None
+    else:
+        mode = str(delta["mode"])
+        parent = delta.get("parent")
+        baseline_revision = str(
+            delta.get("baseline_revision")
+            or (parent or {}).get("effective_code_revision")
+            or plan.code_revision
+        )
+        changed_paths = list(delta.get("changed_paths") or [])
+        git_delta_sha256 = delta.get("git_delta_sha256")
+    result = {
+        "schema_version": "d2l_resume_revision_preflight_v1",
+        "mode": mode,
+        "sealed_code_revision": plan.code_revision,
+        "baseline_code_revision": baseline_revision,
+        "effective_code_revision": runner._effective_code_revision,
+        "repair_reason": repair_reason,
+        "changed_paths": changed_paths,
+        "git_delta_sha256": git_delta_sha256,
+    }
+    result["preflight_sha256"] = canonical_sha256(result)
+    return result
+
+
 def run_from_plan_file(
     plan_path: str | Path,
     root: str | Path,

@@ -43,6 +43,7 @@ from pipeline.prepass.d2l_translation_component_runner_v1 import (
     ComponentRunnerError,
     D2LTranslationComponentRunner,
     RUNNER_SCHEMA,
+    preflight_resume_runtime_revision_from_plan_file,
 )
 
 
@@ -1499,6 +1500,114 @@ def test_runner_chains_attempt_five_from_indexed_repair_receipt(
     assert len(matching) == 1
     assert matching[0]["sha256"] == file_sha256(chain_path)
     assert matching[0]["parent_artifact_refs"] == ["art_component_repair_a0002"]
+
+
+def test_resume_revision_preflight_accepts_reviewed_app_delta_without_mutation(
+    tmp_path: Path,
+) -> None:
+    code_root = tmp_path / "code"
+    code_root.mkdir()
+
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(code_root), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    git("init")
+    git("config", "user.name", "CodeX")
+    git("config", "user.email", "codex@example.invalid")
+    app_paths = [
+        "THESIS_RUNTIME_TOOL/app/prototype/app.jsx",
+        "THESIS_RUNTIME_TOOL/app/prototype/console.jsx",
+        (
+            "THESIS_RUNTIME_TOOL/app/prototype/"
+            "workflow_live_progress_usage.test.cjs"
+        ),
+    ]
+    for relative in app_paths:
+        target = code_root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("BASELINE = true\n", encoding="utf-8")
+    git("add", *app_paths)
+    git("commit", "-m", "baseline")
+    baseline = git("rev-parse", "HEAD")
+
+    root = tmp_path / "component"
+    _write_payloads(root, attempt_id=1)
+    raw_plan = _plan(attempt_id=1)
+    raw_plan["code_revision"] = baseline
+    plan_path = tmp_path / "component_plan.json"
+    plan_path.write_text(
+        json.dumps(raw_plan, ensure_ascii=False, sort_keys=True),
+        encoding="utf-8",
+    )
+    D2LTranslationComponentRunner(
+        ComponentPlan.from_mapping(raw_plan),
+        root,
+        stop_after_stage="candidate_index",
+        repair_code_root=code_root,
+    ).run()
+
+    for relative in app_paths:
+        (code_root / relative).write_text("UPDATED = true\n", encoding="utf-8")
+    git("add", *app_paths)
+    git("commit", "-m", "reviewed app changes")
+    effective = git("rev-parse", "HEAD")
+    before = {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+
+    preflight = preflight_resume_runtime_revision_from_plan_file(
+        plan_path,
+        root,
+        repair_code_root=code_root,
+        repair_reason="journal_publication_race_recovery",
+    )
+
+    assert preflight["mode"] == "direct"
+    assert preflight["sealed_code_revision"] == baseline
+    assert preflight["baseline_code_revision"] == baseline
+    assert preflight["effective_code_revision"] == effective
+    assert preflight["changed_paths"] == sorted(app_paths)
+    assert len(preflight["preflight_sha256"]) == 64
+    assert before == {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
+
+    prompt = code_root / "THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py"
+    prompt.parent.mkdir(parents=True, exist_ok=True)
+    prompt.write_text('PROMPT = "changed"\n', encoding="utf-8")
+    git("add", "THESIS_RUNTIME_TOOL/pipeline/translate/prompt.py")
+    git("commit", "-m", "semantic drift")
+    with pytest.raises(ComponentRunnerError, match="closed mechanical scope"):
+        preflight_resume_runtime_revision_from_plan_file(
+            plan_path,
+            root,
+            repair_code_root=code_root,
+            repair_reason="journal_publication_race_recovery",
+        )
+    assert before == {
+        name: (root / name).read_bytes()
+        for name in (
+            "component_manifest.json",
+            "artifact_index.json",
+            "events.jsonl",
+        )
+    }
 
 
 def test_runner_rejects_semantic_code_change_before_resume_mutation(

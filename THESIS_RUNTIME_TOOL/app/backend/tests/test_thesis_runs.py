@@ -1660,6 +1660,150 @@ def test_route_d2l_resume_exact_retry_reuses_one_registered_child(
     assert (campaign_root / "PAUSE").is_file()
 
 
+def test_resume_estimate_follows_completed_pre_provider_child(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv(
+        "THESIS_TOOL_PROJECTS_ROOT",
+        str(tmp_path / "projects"),
+    )
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import (
+        RunRegistry,
+        build_resume_argv_from_entry,
+    )
+
+    registry = RunRegistry(runs_root=tmp_path)
+    source, _campaign_root = _create_resumable_d2l_run(
+        tmp_path,
+        registry,
+        run_id="run_resume_source",
+    )
+    source = registry.get_run(source["run_id"])
+    child = registry.create_run(
+        script=source["script"],
+        argv=build_resume_argv_from_entry(source),
+        cwd=source.get("cwd"),
+        job_id=source["job_id"],
+        allow_api=source["allow_api"],
+        event_log_path=source["event_log_path"],
+        run_dir=source["run_dir"],
+        manifest_path=source["manifest_path"],
+        run_id="run_resume_pre_provider_child",
+        resumed_from=source["run_id"],
+        workflow_run_id=source["workflow_run_id"],
+        component_id=source["component_id"],
+        component_run_id=source["component_run_id"],
+        component_attempt_id=int(source["component_attempt_id"]) + 1,
+        selected_chapter_ids=source["selected_chapter_ids"],
+        profile_id=source.get("profile_id"),
+        source_binding_sha256=source.get("source_binding_sha256"),
+        launch_binding_sha256=source.get("launch_binding_sha256"),
+        resume_repair_reason="test_repair",
+    )
+    registry.update_run(
+        child["run_id"],
+        status="done",
+        exit_code=0,
+        ended_at="2026-07-26T00:00:00Z",
+    )
+    routes.set_registry(registry)
+    seen: list[str] = []
+
+    def preflight(entry, *, repair_reason):
+        seen.append(entry["run_id"])
+        return {
+            "schema_version": "d2l_resume_revision_preflight_v1",
+            "mode": "direct",
+            "effective_code_revision": "A" * 40,
+            "repair_reason": repair_reason,
+            "preflight_sha256": "B" * 64,
+        }
+
+    monkeypatch.setattr(
+        routes,
+        "_preflight_d2l_resume_revision",
+        preflight,
+    )
+    client = app_module.create_app().test_client()
+
+    response = client.get(
+        "/api/thesis/runs/estimate-preview"
+        "?resume_run_id=run_resume_source&repair_reason=test_repair"
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["requested_resume_run_id"] == "run_resume_source"
+    assert data["resume_run_id"] == child["run_id"]
+    assert data["repair_reason"] == "test_repair"
+    assert data["repair_revision_preflight"]["mode"] == "direct"
+    assert data["confirm_token"]
+    assert seen == [child["run_id"]]
+
+
+def test_route_repair_preflight_rejects_before_child_and_freeze(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("THESIS_JOBS_ROOT", str(tmp_path))
+    monkeypatch.setenv("THESIS_TOOL_ROOT", str(TOOL_ROOT))
+    monkeypatch.setenv(
+        "THESIS_TOOL_PROJECTS_ROOT",
+        str(tmp_path / "projects"),
+    )
+    monkeypatch.setenv("THESIS_APP_MODE", "cockpit")
+    _reset_app_modules()
+    app_module = importlib.import_module("app")
+    routes = importlib.import_module("routes.thesis_runs")
+    from services.thesis_runs import RunControlError, RunRegistry
+
+    registry = RunRegistry(runs_root=tmp_path)
+    source, campaign_root = _create_resumable_d2l_run(
+        tmp_path,
+        registry,
+        run_id="run_resume_scope_rejected",
+    )
+    routes.set_registry(registry)
+
+    def reject(*_args, **_kwargs):
+        raise RunControlError(
+            "resume_repair_scope_invalid",
+            "rejected before managed-source freeze",
+            409,
+        )
+
+    monkeypatch.setattr(
+        routes,
+        "_preflight_d2l_resume_revision",
+        reject,
+    )
+    monkeypatch.setattr(
+        routes,
+        "spawn_run",
+        lambda *_args, **_kwargs: pytest.fail("spawn must not run"),
+    )
+    client = app_module.create_app().test_client()
+
+    response = client.post(
+        f"/api/thesis/runs/{source['run_id']}/resume",
+        json={"repair_reason": "test_repair"},
+    )
+
+    assert response.status_code == 409
+    assert response.get_json()["errors"][0]["code"] == (
+        "resume_repair_scope_invalid"
+    )
+    assert registry.find_resume_children(source["run_id"]) == []
+    assert (campaign_root / "PAUSE").is_file()
+
+
 def test_route_d2l_resume_retry_reclaims_registered_pending_child(
     tmp_path,
     monkeypatch,

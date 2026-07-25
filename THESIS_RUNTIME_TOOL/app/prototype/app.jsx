@@ -2166,7 +2166,11 @@ function App() {
     setRunBusy(true);
     try {
       const estimate = await API.getThesisResumeEstimate(selectedRunId);
-      setModal({ kind: "resume-run", runId: selectedRunId, estimate });
+      setModal({
+        kind: "resume-run",
+        runId: estimate.resume_run_id || selectedRunId,
+        estimate,
+      });
     } catch (err) {
       toast(uiText("Không lấy được ước tính tiếp tục", "Could not load resume estimate"), "bad", errorMessage(err));
     } finally {

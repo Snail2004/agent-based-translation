@@ -846,6 +846,141 @@ def _resolved_resume_repair_reason(
     return _RECOVERED_PAUSE_REPAIR_REASONS.get(resume.get("paused_reason"))
 
 
+def _is_translation_component_entry(entry: dict) -> bool:
+    script = entry.get("script")
+    return script == D2L_PROJECT_CAMPAIGN_SCRIPT or (
+        script == WORKFLOW_ORCHESTRATOR_SCRIPT
+        and entry.get("component_id") == D2L_COMPONENT_ID
+    )
+
+
+def _resolve_resume_estimate_entry(
+    registry: RunRegistry,
+    entry: dict,
+) -> dict:
+    """Follow completed pre-provider wrappers to the current Resume source."""
+
+    if not _is_translation_component_entry(entry):
+        return entry
+    current = entry
+    seen: set[str] = set()
+    identity_fields = (
+        "script",
+        "job_id",
+        "run_dir",
+        "manifest_path",
+        "event_log_path",
+        "workflow_run_id",
+        "component_id",
+        "component_run_id",
+        "selected_chapter_ids",
+        "source_binding_sha256",
+        "launch_binding_sha256",
+    )
+    while True:
+        run_id = str(current.get("run_id") or "")
+        if not run_id or run_id in seen:
+            raise RunControlError(
+                "resume_lineage_cycle",
+                "Resume lineage contains a cycle.",
+                409,
+            )
+        seen.add(run_id)
+        children = registry.find_resume_children(run_id)
+        if not children:
+            return current
+        if len(children) != 1:
+            raise RunControlError(
+                "resume_lineage_ambiguous",
+                "Resume lineage contains multiple children.",
+                409,
+            )
+        child = children[0]
+        drift = [
+            field
+            for field in identity_fields
+            if child.get(field) != current.get(field)
+        ]
+        if drift:
+            raise RunControlError(
+                "resume_child_binding_drift",
+                "Resume child differs from its source identity: "
+                + ", ".join(drift),
+                409,
+            )
+        if _is_pid_alive(child.get("pid")) or child.get("status") in {
+            "pending",
+            "launching",
+            "running",
+            "cancelling",
+            "paused",
+        }:
+            raise RunControlError(
+                "resume_child_still_active",
+                "A newer Resume child is still active.",
+                409,
+            )
+        try:
+            from pipeline.prepass.d2l_console_replay_contract_v1 import (
+                D2LConsoleContractError,
+                validate_translation_component_package,
+            )
+
+            manifest_path = _manifest_path_for_entry(child)
+            validate_translation_component_package(
+                manifest_path.parent,
+                require_terminal=False,
+            )
+            manifest = json.loads(
+                manifest_path.read_text(encoding="utf-8")
+            )
+        except (D2LConsoleContractError, OSError, json.JSONDecodeError) as exc:
+            raise RunControlError(
+                "resume_child_not_recoverable",
+                "The latest Resume child is not a valid paused Resume source.",
+                409,
+            ) from exc
+        resume = manifest.get("resume") or {}
+        if manifest.get("status") != "paused" or not resume.get(
+            "resume_available"
+        ):
+            raise RunControlError(
+                "resume_child_not_recoverable",
+                "The latest Resume child is not a valid paused Resume source.",
+                409,
+            )
+        current = child
+
+
+def _preflight_d2l_resume_revision(
+    entry: dict,
+    *,
+    repair_reason: str | None,
+) -> dict | None:
+    if repair_reason is None or not _is_translation_component_entry(entry):
+        return None
+    manifest_path = _manifest_path_for_entry(entry)
+    campaign_root = manifest_path.parent.parent
+    try:
+        from pipeline.prepass.d2l_translation_component_runner_v1 import (
+            ComponentRunnerError,
+            preflight_resume_runtime_revision_from_plan_file,
+        )
+
+        return preflight_resume_runtime_revision_from_plan_file(
+            campaign_root / "component_plan.json",
+            manifest_path.parent,
+            repair_code_root=_tool_root(),
+            repair_reason=repair_reason,
+        )
+    except (ComponentRunnerError, OSError, subprocess.SubprocessError) as exc:
+        raise RunControlError(
+            "resume_repair_scope_invalid",
+            f"Resume repair preflight failed before managed-source freeze: {exc}",
+            409,
+        ) from exc
+
+
 def _existing_resume_child(
     registry: RunRegistry,
     source: dict,
@@ -978,9 +1113,19 @@ def estimate_preview():
             entry = registry.get_run(resume_run_id)
             if entry is None:
                 raise RunControlError("run_not_found", f"Run {resume_run_id} not found.", 404)
+            requested_resume_run_id = resume_run_id
+            entry = _resolve_resume_estimate_entry(registry, entry)
+            resume_run_id = validate_run_id(
+                entry.get("run_id"),
+                required=True,
+            )
             repair_reason = _resolved_resume_repair_reason(
                 entry,
                 request.args.get("repair_reason"),
+            )
+            repair_revision_preflight = _preflight_d2l_resume_revision(
+                entry,
+                repair_reason=repair_reason,
             )
             argv = _append_resume_repair_reason(
                 build_resume_argv_from_entry(entry),
@@ -1000,12 +1145,14 @@ def estimate_preview():
                     "job_id": job_id,
                     "script": script,
                     "resume_run_id": resume_run_id,
+                    "requested_resume_run_id": requested_resume_run_id,
                     "workflow_run_id": entry.get("workflow_run_id"),
                     "component_id": entry.get("component_id"),
                     "component_run_id": entry.get("component_run_id"),
                     "component_attempt_id": entry.get("component_attempt_id"),
                     "selected_chapter_ids": entry.get("selected_chapter_ids") or [],
                     "repair_reason": repair_reason,
+                    "repair_revision_preflight": repair_revision_preflight,
                     "confirm_token": token,
                     "confirm_token_ttl_seconds": 30 * 60,
                     "argv_preview": _public_argv_preview(entry, argv),
@@ -1634,6 +1781,10 @@ def resume_thesis_run(run_id: str):
                     "reused": True,
                 }
             )
+        repair_revision_preflight = _preflight_d2l_resume_revision(
+            entry,
+            repair_reason=repair_reason,
+        )
         manifest_path = _manifest_path_for_entry(entry)
         manifest = {}
         if manifest_path.exists():
@@ -1843,6 +1994,10 @@ def resume_thesis_run(run_id: str):
             "manifest_status": manifest.get("status"),
             "pause_marker_binding": pause_binding,
         }
+        if repair_revision_preflight is not None:
+            prestate["repair_revision_preflight"] = (
+                repair_revision_preflight
+            )
         if is_translation_component and not is_evaluation_resume:
             prestate.update(
                 {

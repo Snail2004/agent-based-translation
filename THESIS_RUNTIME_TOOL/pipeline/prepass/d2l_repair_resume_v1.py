@@ -23,6 +23,12 @@ _MECHANICAL_RUNTIME_PATHS = frozenset(
         "THESIS_RUNTIME_TOOL/app/backend/routes/thesis_runs.py",
         "THESIS_RUNTIME_TOOL/app/backend/services/thesis_runs.py",
         "THESIS_RUNTIME_TOOL/app/backend/tests/test_thesis_runs.py",
+        "THESIS_RUNTIME_TOOL/app/prototype/app.jsx",
+        "THESIS_RUNTIME_TOOL/app/prototype/console.jsx",
+        (
+            "THESIS_RUNTIME_TOOL/app/prototype/"
+            "workflow_live_progress_usage.test.cjs"
+        ),
         (
             "THESIS_RUNTIME_TOOL/pipeline/prepass/"
             "d2l_component_writer_lease_v1.py"
@@ -79,8 +85,13 @@ _CHAIN_NON_COMPONENT_INFRA_PATHS = frozenset(
         "THESIS_RUNTIME_TOOL/app/backend/services/thesis_runs.py",
         "THESIS_RUNTIME_TOOL/app/backend/tests/test_source_lifecycle.py",
         "THESIS_RUNTIME_TOOL/app/backend/tests/test_thesis_runs.py",
+        "THESIS_RUNTIME_TOOL/app/prototype/app.jsx",
         "THESIS_RUNTIME_TOOL/app/prototype/console.css",
         "THESIS_RUNTIME_TOOL/app/prototype/console.jsx",
+        (
+            "THESIS_RUNTIME_TOOL/app/prototype/"
+            "workflow_live_progress_usage.test.cjs"
+        ),
         "THESIS_RUNTIME_TOOL/app/prototype/workflow_replay.js",
         "THESIS_RUNTIME_TOOL/app/prototype/workflow_replay_dev.html",
         (
