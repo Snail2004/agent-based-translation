@@ -404,6 +404,22 @@ def test_d2l_semantic_role_preview_reads_nested_campaign_contract():
     assert preview["semantic_role_sha256"] == "D" * 64
 
 
+def test_resume_repair_reason_is_bounded_and_argv_material():
+    from routes.thesis_runs import _append_resume_repair_reason
+    from services.thesis_runs import RunControlError
+
+    argv = ["python", "-m", "pipeline.scripts.run_workflow_orchestrator_v1"]
+    reason = "repair_shopaikey_model_identity_route"
+    assert _append_resume_repair_reason(argv, reason) == [
+        *argv,
+        "--repair-reason",
+        reason,
+    ]
+    assert _append_resume_repair_reason(argv, None) == argv
+    with pytest.raises(RunControlError, match="bounded identifier"):
+        _append_resume_repair_reason(argv, "contains whitespace")
+
+
 def test_build_resume_argv_d2l_removes_complete_two_value_chapter_range(tmp_path):
     from services.thesis_runs import build_resume_argv_from_entry
 

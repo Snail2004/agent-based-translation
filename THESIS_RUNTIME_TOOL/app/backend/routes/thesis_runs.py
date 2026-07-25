@@ -787,6 +787,28 @@ def _is_sha256(value: object) -> bool:
     )
 
 
+def _append_resume_repair_reason(
+    argv: list[str], value: object
+) -> list[str]:
+    if value is None or not str(value).strip():
+        return argv
+    reason = str(value).strip()
+    if (
+        len(reason) > 120
+        or not reason[0].isalnum()
+        or any(
+            not (character.isalnum() or character in "._:-")
+            for character in reason
+        )
+    ):
+        raise RunControlError(
+            "repair_reason_invalid",
+            "repair_reason must be a bounded identifier.",
+            400,
+        )
+    return [*argv, "--repair-reason", reason]
+
+
 @bp.get("/thesis/runs")
 def list_runs():
     rows = _get_registry().list_runs()
@@ -827,7 +849,10 @@ def estimate_preview():
             entry = registry.get_run(resume_run_id)
             if entry is None:
                 raise RunControlError("run_not_found", f"Run {resume_run_id} not found.", 404)
-            argv = build_resume_argv_from_entry(entry)
+            argv = _append_resume_repair_reason(
+                build_resume_argv_from_entry(entry),
+                request.args.get("repair_reason"),
+            )
             job_id = validate_job_id(entry.get("job_id"), required=True)
             token = issue_estimate_token_for_argv(
                 job_id=job_id,
@@ -1456,7 +1481,10 @@ def resume_thesis_run(run_id: str):
                 "The previous Translation writer is still active; Resume is unsafe.",
                 409,
             )
-        argv = build_resume_argv_from_entry(entry)
+        argv = _append_resume_repair_reason(
+            build_resume_argv_from_entry(entry),
+            body.get("repair_reason"),
+        )
         job_id = validate_job_id(entry.get("job_id"), required=True)
         pause_path = _pause_file_from_entry(entry)
         if script in _D2L_COMPONENT_SCRIPTS:
